@@ -1,4 +1,3 @@
-
 # Gopkg.toml example
 #
 # Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
@@ -20,6 +19,11 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+ignored = [
+  "github.com/grafana/grafana/data/*",
+  "github.com/grafana/grafana/public/*",
+  "github.com/grafana/grafana/node_modules/*"
+ ]
 
 [[constraint]]
   name = "github.com/BurntSushi/toml"
@@ -37,10 +41,6 @@
 [[constraint]]
   branch = "master"
   name = "github.com/benbjohnson/clock"
-
-[[constraint]]
-  name = "github.com/bitly/go-simplejson"
-  version = "0.5.0"
 
 [[constraint]]
   branch = "master"
@@ -76,7 +76,8 @@
 
 [[constraint]]
   name = "github.com/go-sql-driver/mysql"
-  version = "1.3.0"
+  revision = "2cc627ac8defc45d65066ae98f898166f580f9a4"
+  #version = "1.3.0" //keeping this since we would rather depend on version then commit
 
 [[constraint]]
   name = "github.com/go-stack/stack"
@@ -174,7 +175,7 @@
 
 [[constraint]]
   name = "gopkg.in/gomail.v2"
-  branch = "v2" 
+  branch = "v2"
 
 [[constraint]]
   name = "gopkg.in/ini.v1"
@@ -190,5 +191,5 @@
 
 [prune]
   non-go = true
-  test-go = true
+  go-tests = true
   unused-packages = true

@@ -35,4 +35,22 @@ Each folder has its own page where you can set permisions for the folder or sing
 
 ## Teams
 
-Teams are a new concept for Grafana. Teams are simply a group of users that can be given persmisions for folders or dashboards. Only an admin can create teams.
+Teams are a new concept for Grafana. Teams are simply a group of users that can be given permissions for folders or dashboards. Only an admin can create teams.
+
+# Dashboard model
+
+We are introducing a new identifier in the dashboard JSON model. The new identifier will be a X long uid. We are also changing the route for getting dashboards to use this id instead (we will keep supporting the old route for backward compatibility). This will make it possible to change the title on dashboards without breaking links. Sharing dashboards between instances become much easier since the uid is unique (unique enough) and the old numeric id always depends on the instance and might cause a conflict. This might seem like a small change, but we are incredibly excited about it since it will make it much easier to manage, collaborate and navigate between dashboards
+
+# Provisioning Grafana from configuration
+
+In previous versions of Grafana, you could use the API for provisioning. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for authentication. In 5.0 we decided to improve this experience and enable people to provision using config files instead. Not only will this make gitops more natural, and it will also allow people to run Grafana as a stateless application.
+
+In 5.0 we added support for provisioning data sources and dashboards. We will add support for provisioning more parts of Grafana in the future.
+
+## Data sources
+
+It's now possible to create data sources in Grafana only using config files. These data sources are by default not editable from the Grafana GUI. Its also possible to update and delete data sources from the config, which makes it possible to manage data sources only thru configuration. More info in the [data source provisioning docs](/administration/provisioning/#datasources)
+
+## Dashboards
+
+We also deprecated [dashboard.json] in favor of our new dashboard provisioner that keeps dashboards on disk in sync with Grafana. The dashboard provisioner have multiple advantages over the old [dashboard.json] feature. Instead of storing the dashboard in memory we now insert the dashboard into the database, which makes it possible to use it with dashboard folders, permissions, built-in annotations and other features in Grafana that expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)

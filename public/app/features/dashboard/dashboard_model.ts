@@ -352,8 +352,10 @@ export class DashboardModel {
       copy.scopedVars[variable.name] = option;
 
       if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
+        if (index > 0) {
+          yPos += copy.gridPos.h;
+        }
         copy.gridPos.y = yPos;
-        yPos += copy.gridPos.h;
       } else {
         // set width based on how many are selected
         // assumed the repeated panels should take up full row width
@@ -368,6 +370,15 @@ export class DashboardModel {
           xPos = 0;
           yPos += copy.gridPos.h;
         }
+      }
+    }
+
+    // Update gridPos for panels below
+    let yOffset = yPos - panel.gridPos.y;
+    if (yOffset > 0) {
+      let panelBelowIndex = panelIndex + selectedOptions.length;
+      for (let i = panelBelowIndex; i < this.panels.length; i++) {
+        this.panels[i].gridPos.y += yOffset;
       }
     }
   }

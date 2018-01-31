@@ -215,6 +215,21 @@ func transformToTable(data []suggestData, result *tsdb.QueryResult) {
 	result.Meta.Set("rowCount", len(data))
 }
 
+func parseMultiSelectValue(input string) []string {
+	trimmedInput := strings.TrimSpace(input)
+
+	if strings.HasPrefix(trimmedInput, "{") {
+		values := strings.Split(strings.TrimRight(strings.TrimLeft(trimmedInput, "{"), "}"), ",")
+		trimValues := make([]string, len(values))
+		for i, v := range values {
+			trimValues[i] = strings.TrimSpace(v)
+		}
+		return trimValues
+	} else {
+		return []string{trimmedInput}
+	}
+}
+
 // Whenever this list is updated, frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
@@ -378,15 +393,19 @@ func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 		return nil, err
 	}
 
-	instanceIds := []*string{aws.String(instanceId)}
+	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
 	instances, err := e.ec2DescribeInstances(region, nil, instanceIds)
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]suggestData, 0)
-	for _, mapping := range instances.Reservations[0].Instances[0].BlockDeviceMappings {
-		result = append(result, suggestData{Text: *mapping.Ebs.VolumeId, Value: *mapping.Ebs.VolumeId})
+	for _, reservation := range instances.Reservations {
+		for _, instance := range reservation.Instances {
+			for _, mapping := range instance.BlockDeviceMappings {
+				result = append(result, suggestData{Text: *mapping.Ebs.VolumeId, Value: *mapping.Ebs.VolumeId})
+			}
+		}
 	}
 
 	return result, nil
