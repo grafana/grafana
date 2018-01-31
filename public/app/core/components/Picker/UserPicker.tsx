@@ -10,6 +10,7 @@ export interface IProps {
   toggleLoading: any;
   handlePicked: (user) => void;
   value?: string;
+  className?: string;
 }
 
 export interface User {
@@ -54,7 +55,7 @@ class UserPicker extends Component<IProps, any> {
 
   render() {
     const AsyncComponent = this.state.creatable ? Select.AsyncCreatable : Select.Async;
-    const { isLoading, handlePicked, value } = this.props;
+    const { isLoading, handlePicked, value, className } = this.props;
     return (
       <div className="user-picker">
         <AsyncComponent
@@ -67,7 +68,7 @@ class UserPicker extends Component<IProps, any> {
           loadingPlaceholder="Loading..."
           noResultsText="No users found"
           onChange={handlePicked}
-          className="width-12 gf-form-input gf-form-input--form-dropdown"
+          className={`gf-form-input gf-form-input--form-dropdown ${className || ''}`}
           optionComponent={PickerOption}
           placeholder="Choose"
           value={value}

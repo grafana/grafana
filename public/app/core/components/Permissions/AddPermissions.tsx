@@ -103,13 +103,23 @@ class AddPermissions extends Component<IProps, any> {
 
             {newItem.type === 'User' ? (
               <div className="gf-form">
-                <UserPicker backendSrv={backendSrv} handlePicked={this.userPicked} value={newItem.userId} />
+                <UserPicker
+                  backendSrv={backendSrv}
+                  handlePicked={this.userPicked}
+                  value={newItem.userId}
+                  className="width-8"
+                />
               </div>
             ) : null}
 
             {newItem.type === 'Group' ? (
               <div className="gf-form">
-                <TeamPicker backendSrv={backendSrv} handlePicked={this.teamPicked} value={newItem.teamId} />
+                <TeamPicker
+                  backendSrv={backendSrv}
+                  handlePicked={this.teamPicked}
+                  value={newItem.teamId}
+                  className="width-8"
+                />
               </div>
             ) : null}
 
