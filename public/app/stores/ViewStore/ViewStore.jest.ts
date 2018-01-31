@@ -26,7 +26,7 @@ describe('ViewStore', () => {
   });
 
   it('Query can contain boolean', () => {
-    store.updatePathAndQuery('/hello', { abool: true });
+    store.updatePathAndQuery('/hello', { abool: true }, { abool: true });
     expect(toJS(store.query.get('abool'))).toBe(true);
     expect(store.currentUrl).toBe('/hello?abool');
   });
