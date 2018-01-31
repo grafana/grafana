@@ -22,6 +22,7 @@ var (
 	ErrDashboardFolderCannotHaveParent   = errors.New("A Dashboard Folder cannot be added to another folder")
 	ErrDashboardContainsInvalidAlertData = errors.New("Invalid alert data. Cannot save dashboard")
 	ErrDashboardFailedToUpdateAlertData  = errors.New("Failed to save alert data")
+	ErrDashboardsWithSameSlugExists      = errors.New("Multiple dashboards with the same slug exists")
 )
 
 type UpdatePluginDashboardError struct {
@@ -165,7 +166,7 @@ func GetDashboardUrl(uid string, slug string) string {
 
 // GetFolderUrl return the html url for a folder
 func GetFolderUrl(folderUid string, slug string) string {
-	return fmt.Sprintf("%s/f/%v/%s", setting.AppSubUrl, folderUid, slug)
+	return fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, folderUid, slug)
 }
 
 //
@@ -230,4 +231,11 @@ type GetDashboardsByPluginIdQuery struct {
 type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
+}
+
+type GetDashboardsBySlugQuery struct {
+	OrgId int64
+	Slug  string
+
+	Result []*Dashboard
 }

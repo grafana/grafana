@@ -146,6 +146,16 @@ func getDashboardHelper(orgId int64, slug string, id int64, uid string) (*m.Dash
 }
 
 func DeleteDashboard(c *middleware.Context) Response {
+	query := m.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to retrieve dashboards by slug", err)
+	}
+
+	if len(query.Result) > 1 {
+		return Json(412, util.DynMap{"status": "multiple-slugs-exists", "message": m.ErrDashboardsWithSameSlugExists.Error()})
+	}
+
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, "")
 	if rsp != nil {
 		return rsp
