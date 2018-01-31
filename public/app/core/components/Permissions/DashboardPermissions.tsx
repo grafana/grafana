@@ -35,7 +35,7 @@ class DashboardPermissions extends Component<IProps, any> {
           permissions={this.permissions}
           isFolder={false}
           dashboardId={dashboardId}
-           folderInfo={{ title: folderTitle, slug: folderSlug, id: folderId }}
+          folderInfo={{ title: folderTitle, slug: folderSlug, id: folderId }}
           backendSrv={backendSrv}
         />
       </div>
