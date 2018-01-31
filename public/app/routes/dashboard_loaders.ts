@@ -22,7 +22,7 @@ export class LoadDashboardCtrl {
     if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {
       backendSrv.get(`/api/dashboards/db/${$routeParams.slug}`).then(res => {
         if (res) {
-          $location.path(res.meta.url);
+          $location.path(res.meta.url).replace();
         }
       });
       return;
