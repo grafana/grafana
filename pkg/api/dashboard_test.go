@@ -180,13 +180,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
-				CallPostDashboard(sc)
-				So(sc.resp.Code, ShouldEqual, 200)
-				result := sc.ToJson()
-				So(result.Get("status").MustString(), ShouldEqual, "success")
-				So(result.Get("id").MustInt64(), ShouldBeGreaterThan, 0)
-				So(result.Get("uid").MustString(), ShouldNotBeNil)
-				So(result.Get("slug").MustString(), ShouldNotBeNil)
+				CallPostDashboardShouldReturnSuccess(sc)
 			})
 
 			Convey("When saving a dashboard folder in another folder", func() {
@@ -423,13 +417,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
-				CallPostDashboard(sc)
-				So(sc.resp.Code, ShouldEqual, 200)
-				result := sc.ToJson()
-				So(result.Get("status").MustString(), ShouldEqual, "success")
-				So(result.Get("id").MustInt64(), ShouldBeGreaterThan, 0)
-				So(result.Get("uid").MustString(), ShouldNotBeNil)
-				So(result.Get("slug").MustString(), ShouldNotBeNil)
+				CallPostDashboardShouldReturnSuccess(sc)
 			})
 		})
 
@@ -544,13 +532,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
-				CallPostDashboard(sc)
-				So(sc.resp.Code, ShouldEqual, 200)
-				result := sc.ToJson()
-				So(result.Get("status").MustString(), ShouldEqual, "success")
-				So(result.Get("id").MustInt64(), ShouldBeGreaterThan, 0)
-				So(result.Get("uid").MustString(), ShouldNotBeNil)
-				So(result.Get("slug").MustString(), ShouldNotBeNil)
+				CallPostDashboardShouldReturnSuccess(sc)
 			})
 		})
 
@@ -676,6 +658,18 @@ func CallPostDashboard(sc *scenarioContext) {
 	})
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+}
+
+func CallPostDashboardShouldReturnSuccess(sc *scenarioContext) {
+	CallPostDashboard(sc)
+
+	So(sc.resp.Code, ShouldEqual, 200)
+	result := sc.ToJson()
+	So(result.Get("status").MustString(), ShouldEqual, "success")
+	So(result.Get("id").MustInt64(), ShouldBeGreaterThan, 0)
+	So(result.Get("uid").MustString(), ShouldNotBeNil)
+	So(result.Get("slug").MustString(), ShouldNotBeNil)
+	So(result.Get("url").MustString(), ShouldNotBeNil)
 }
 
 func postDashboardScenario(desc string, url string, routePattern string, role m.RoleType, cmd m.SaveDashboardCommand, fn scenarioFunc) {
