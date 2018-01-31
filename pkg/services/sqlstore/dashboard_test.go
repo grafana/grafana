@@ -276,10 +276,10 @@ func TestDashboardDataAccess(t *testing.T) {
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"uid":     "randomHash",
-						"title":   "folderId",
-						"style":   "light",
-						"tags":    []interface{}{},
+						"uid":   "randomHash",
+						"title": "folderId",
+						"style": "light",
+						"tags":  []interface{}{},
 					}),
 					FolderId: 2,
 				}
@@ -330,7 +330,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						"version": savedDash.Version,
 						"tags":    []interface{}{},
 					}),
-					FolderId: savedDash.FolderId,
+					FolderId:  savedDash.FolderId,
 					Overwrite: true,
 				}
 

@@ -20,8 +20,6 @@ func init() {
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 }
 
-
-
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		dash := cmd.GetDashboardModel()
