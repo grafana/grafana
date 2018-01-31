@@ -24,7 +24,7 @@ export const aclTypes = Object.keys(aclTypeValues).map(item => aclTypeValues[ite
 
 const defaultNewType = aclTypes[0].value;
 
-const NewPermissionsItem = types
+export const NewPermissionsItem = types
   .model('NewPermissionsItem', {
     type: types.optional(
       types.enumeration(Object.keys(aclTypeValues).map(item => aclTypeValues[item].value)),
