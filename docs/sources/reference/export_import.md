@@ -17,7 +17,7 @@ Dashboards are exported in Grafana JSON format, and contain everything you need 
 
 The export feature is accessed in the share window which you open by clicking the share button in the dashboard menu.
 
-{{< docs-imagebox img="/img/docs/v50/export_modal.png" >}}
+{{< docs-imagebox img="/img/docs/v50/export_modal.png" max-width="700px" >}}
 
 ### Making a dashboard portable
 
@@ -31,12 +31,12 @@ the dashboard, and will also be added as an required input when the dashboard is
 
 To import a dashboard open dashboard search and then hit the import button.
 
-{{< docs-imagebox img="/img/docs/v50/import_step1.png" >}}
+{{< docs-imagebox img="/img/docs/v50/import_step1.png" max-width="700px" >}}
 
 From here you can upload a dashboard json file, paste a [Grafana.com](https://grafana.com) dashboard
 url or paste dashboard json text directly into the text area.
 
-{{< docs-imagebox img="/img/docs/v50/import_step2.png" >}}
+{{< docs-imagebox img="/img/docs/v50/import_step2.png"  max-width="700px" >}}
 
 In step 2 of the import process Grafana will let you change the name of the dashboard, pick what
 data source you want the dashboard to use and specify any metric prefixes (if the dashboard use any).
@@ -45,7 +45,7 @@ data source you want the dashboard to use and specify any metric prefixes (if th
 
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
-{{< docs-imagebox img="/img/docs/v50/gcom_dashboard_list.png" >}}
+{{< docs-imagebox img="/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
 
 ## Import & Sharing with Grafana 2.x or 3.0
 
