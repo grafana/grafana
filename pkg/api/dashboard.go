@@ -165,6 +165,26 @@ func DeleteDashboard(c *middleware.Context) Response {
 	return Json(200, resp)
 }
 
+func DeleteDashboardByUid(c *middleware.Context) Response {
+	dash, rsp := getDashboardHelper(c.OrgId, "", 0, c.Params(":uid"))
+	if rsp != nil {
+		return rsp
+	}
+
+	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
+	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to delete dashboard", err)
+	}
+
+	var resp = map[string]interface{}{"title": dash.Title}
+	return Json(200, resp)
+}
+
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
