@@ -26,6 +26,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       reloadOnSearch: false,
       pageClass: 'page-dashboard',
     })
+    .when('/d-solo/:uid/:slug', {
+      templateUrl: 'public/app/features/panel/partials/soloPanel.html',
+      controller: 'SoloPanelCtrl',
+      reloadOnSearch: false,
+      pageClass: 'page-dashboard',
+    })
     .when('/dashboard-solo/:type/:slug', {
       templateUrl: 'public/app/features/panel/partials/soloPanel.html',
       controller: 'SoloPanelCtrl',
