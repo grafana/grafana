@@ -7,7 +7,7 @@ import Permissions from 'app/core/components/Permissions/Permissions';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
 import AddPermissions from 'app/core/components/Permissions/AddPermissions';
-
+import SlideDown from 'app/core/components/Animations/SlideDown';
 @inject('nav', 'folder', 'view', 'permissions')
 @observer
 export class FolderPermissions extends Component<IContainerProps, any> {
@@ -48,14 +48,18 @@ export class FolderPermissions extends Component<IContainerProps, any> {
               <i className="gicon gicon-question gicon--has-hover" />
             </Tooltip>
             <div className="page-action-bar__spacer" />
-            <button className="btn btn-success pull-right" onClick={this.handleAddPermission}>
+            <button
+              className="btn btn-success pull-right"
+              onClick={this.handleAddPermission}
+              disabled={permissions.isAddPermissionsVisible}
+            >
               <i className="fa fa-plus" />
               Add Permission
             </button>
           </div>
-          {permissions.isAddPermissionsVisible ? (
+          <SlideDown in={permissions.isAddPermissionsVisible}>
             <AddPermissions permissions={permissions} backendSrv={backendSrv} dashboardId={dashboardId} />
-          ) : null}
+          </SlideDown>
           <Permissions permissions={permissions} isFolder={true} dashboardId={dashboardId} backendSrv={backendSrv} />
         </div>
       </div>

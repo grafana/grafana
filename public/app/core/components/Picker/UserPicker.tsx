@@ -68,7 +68,7 @@ class UserPicker extends Component<IProps, any> {
           loadingPlaceholder="Loading..."
           noResultsText="No users found"
           onChange={handlePicked}
-          className="width-8 gf-form-input gf-form-input--form-dropdown"
+          className="width-12 gf-form-input gf-form-input--form-dropdown"
           optionComponent={PickerOption}
           placeholder="Choose"
           value={value}

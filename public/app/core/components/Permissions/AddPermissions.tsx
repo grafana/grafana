@@ -11,7 +11,6 @@ export interface IProps {
   backendSrv: any;
   dashboardId: any;
 }
-
 @observer
 class AddPermissions extends Component<IProps, any> {
   constructor(props) {
@@ -82,8 +81,11 @@ class AddPermissions extends Component<IProps, any> {
 
     return (
       <div className="gf-form-inline cta-form">
-        <form name="addPermission" className="gf-form-group" onSubmit={this.handleSubmit}>
-          <h6 className="muted">Add Permission For</h6>
+        <button className="cta-form__close btn btn-transparent" onClick={permissions.hideAddPermissions}>
+          <i className="fa fa-close" />
+        </button>
+        <form name="addPermission" onSubmit={this.handleSubmit}>
+          <h6>Add Permission For</h6>
           <div className="gf-form-inline">
             <div className="gf-form">
               <div className="gf-form-select-wrapper">
