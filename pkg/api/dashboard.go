@@ -473,6 +473,7 @@ func RestoreDashboardVersion(c *middleware.Context, apiCmd dtos.RestoreDashboard
 	saveCmd.UserId = c.UserId
 	saveCmd.Dashboard = version.Data
 	saveCmd.Dashboard.Set("version", dash.Version)
+	saveCmd.Dashboard.Set("uid", dash.Uid)
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
 
 	return PostDashboard(c, saveCmd)
