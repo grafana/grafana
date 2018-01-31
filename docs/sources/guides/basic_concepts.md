@@ -7,6 +7,7 @@ type = "docs"
 name = "Basic Concepts"
 identifier = "basic_concepts"
 parent = "guides"
+weight = 2
 +++
 
 # Basic Concepts
