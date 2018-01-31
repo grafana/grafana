@@ -124,7 +124,7 @@ class AddPermissions extends Component<IProps, any> {
             </div>
 
             <div className="gf-form">
-              <button className="btn btn-success" type="submit" disabled={!newItem.isValid()}>
+              <button data-save-permission className="btn btn-success" type="submit" disabled={!newItem.isValid()}>
                 Save
               </button>
             </div>
