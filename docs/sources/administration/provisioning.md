@@ -66,7 +66,6 @@ Tool | Project
 -----|------------
 Puppet | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)
 Ansible | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)
-Ansible | [https://github.com/picotrading/ansible-grafana](https://github.com/picotrading/ansible-grafana)
 Chef | [https://github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)
 Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)
 
