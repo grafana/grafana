@@ -14,13 +14,13 @@ weight = -6
 
 This is the most substantial update that Grafana has ever seen. This article will detail the major new features and enhancements.
 
-- [New Dashboard Layout Engine]({{< relref "#new-dashboard-layout-engine" >}}) enables a much easier drag, drop and resize experiance and new types of layouts.
+- [New Dashboard Layout Engine]({{< relref "#new-dashboard-layout-engine" >}}) enables a much easier drag, drop and resize experience and new types of layouts.
 - [New UX]({{< relref "#new-ux-layout-engine" >}}). The UI has big improvements in both look and function.
 - [New Light Theme]({{< relref "#new-light-theme" >}}) is now looking really nice.
 - [Dashboard Folders]({{< relref "#dashboard-folders" >}}) helps you keep your dashboards organized.
-- [Permissions]({{< relref "#dashboard-folders" >}}) on folders and dashboards helps managing a large Grafana installation.
+- [Permissions]({{< relref "#dashboard-folders" >}}) on folders and dashboards helps manage larger Grafana installations.
 - [Group users into teams]({{< relref "#teams" >}}) and use them in the new permission system.
-- [Datasource provisioning]({{< relref "#data-sources" >}}) makes it possible to setup data sources via config files.
+- [Datasource provisioning]({{< relref "#data-sources" >}}) makes it possible to setup datasources via config files.
 - [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to setup dashboards via config files.
 
 ### Video showing new features
@@ -32,8 +32,8 @@ This is the most substantial update that Grafana has ever seen. This article wil
 
 {{< docs-imagebox img="/img/docs/v50/new_grid.png" max-width="1000px" class="docs-image--right">}}
 
-The new dashboard layout engine allows for much easier movement & sizing of panels as other panels now move out of the way in
-a very intuitive way. No longer do you need to use rows to create layouts as panels are sized independently. This opens
+The new dashboard layout engine allows for much easier movement and sizing of panels, as other panels now move out of the way in
+a very intuitive way. Panels are sized independently, so rows are no longer necessary to create layouts. This opens
 up many new types of layouts where panels of different heights can be aligned easily. Checkout the new grid in the video
 above or on the [play site](http://play.grafana.org). All your existing dashboards will automatically migrate to the
 new position system and look close to identical. The new panel position makes dashboards saved in v5.0 not compatible
@@ -45,15 +45,15 @@ with older versions of Grafana.
 
 {{< docs-imagebox img="/img/docs/v50/new_ux_nav.png" max-width="1000px" class="docs-image--right" >}}
 
-Almost every page has been seen significant UX improvements. All pages (except dashboard) has new tab-based layout that improves navigation between pages. The side menu has also changed quite a bit. You can still hide the side menu completely if you click on the Grafana logo.
+Almost every page has seen significant UX improvements. All pages (except dashboard pages) have a new tab-based layout that improves navigation between pages. The side menu has also changed quite a bit. You can still hide the side menu completely if you click on the Grafana logo.
 
 <div class="clearfix"></div>
 
 ### Dashboard Settings
 
 {{< docs-imagebox img="/img/docs/v50/dashboard_settings.png" max-width="1000px" class="docs-image--right" >}}
-Dashboard has new header toolbar look where buttons and actions are now all moved to the right. All the dashboard
-settings views has been combined with a side nav which allows you to easily move between different setting categories.
+Dashboard pages have a new header toolbar where buttons and actions are now all moved to the right. All the dashboard
+settings views have been combined with a side nav which allows you to easily move between different setting categories.
 
 <div class="clearfix"></div>
 
@@ -69,23 +69,23 @@ This theme has not seen a lot of love in recent years and we felt it was time to
 
 {{< docs-imagebox img="/img/docs/v50/new_search.png" max-width="1000px" class="docs-image--right" >}}
 
-The big new feature that comes with Grafana v5.0 is dashboard folders. Now you can organize your dashboards in folders
+The big new feature that comes with Grafana v5.0 is dashboard folders. Now you can organize your dashboards in folders,
 which is very useful if you have a lot of dashboards or multiple teams.
 
-- New search design that adds expandable sections for each folder, starred & recently viewed dashboards.
-- New manage dashboard pages that enable batch actions and views for folder settings & permissions.
+- New search design adds expandable sections for each folder, starred and recently viewed dashboards.
+- New manage dashboard pages enable batch actions and views for folder settings and permissions.
 - Set permissions on folders and have dashboards inherit the permissions.
 
 ## Teams
 
 A team is a new concept in Grafana v5. They are simply a group of users that can be then be used in the new permission system for dashboards and folders. Only an admin can create teams.
-We hope to do more with teams in future releases like integration with LDAP & a team landing page.
+We hope to do more with teams in future releases like integration with LDAP and a team landing page.
 
 ## Permissions
 
 {{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="1000px" class="docs-image--right" >}}
 
-You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and replaced with specific teams or users enabling more control over what a user can see & edit.
+You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and replaced with specific teams or users enabling more control over what a user can see and edit.
 
 <div class="clearfix"></div>
 
@@ -106,7 +106,7 @@ It's also possible to update and delete data sources from the config file. More 
 ### Dashboards
 
 We also deprecated the [dashboard.json] in favor of our new dashboard provisioner that keeps dashboards on disk
-in sync with dashboards in Grafana's database. The dashboard provisioner have multiple advantages over the old
+in sync with dashboards in Grafana's database. The dashboard provisioner has multiple advantages over the old
 [dashboard.json] feature. Instead of storing the dashboard in memory we now insert the dashboard into the database,
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
@@ -114,7 +114,7 @@ expects the dashboards to exist in the database. More info in the [dashboard pro
 # Dashboard model & API
 
 We are introducing a new identifier (`uid`) in the dashboard JSON model. The new identifier will be a 9-12 character long unique id.
-We are also changing the route for getting dashboards to use this `uid` instead of the slug that the current route & API are using.
+We are also changing the route for getting dashboards to use this `uid` instead of the slug that the current route and API are using.
 We will keep supporting the old route for backward compatibility. This will make it possible to change the title on dashboards without breaking links.
-Sharing dashboards between instances become much easier since the uid is unique (unique enough). This might seem like a small change,
+Sharing dashboards between instances becomes much easier since the uid is unique (unique enough). This might seem like a small change,
 but we are incredibly excited about it since it will make it much easier to manage, collaborate and navigate between dashboards.
