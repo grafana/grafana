@@ -35,7 +35,7 @@ describe('given dashboard with panel repeat', function() {
     dashboard.processRepeats();
   });
 
-  it('should repeat panels when row is collapsed', function() {
+  it('should repeat panels when row is expanding', function() {
     expect(dashboard.panels.length).toBe(4);
 
     // toggle row
