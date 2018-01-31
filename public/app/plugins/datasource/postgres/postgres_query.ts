@@ -22,7 +22,7 @@ export default class PostgresQuery {
     target.alias = '';
 
     target.orderByTime = target.orderByTime || 'ASC';
-//    target.groupBy = target.groupBy || [{ type: 'time', params: ['$__interval'] }, { type: 'fill', params: ['null'] }];
+    target.groupBy = target.groupBy || [{ type: 'time', params: ['$__interval'] }, { type: 'fill', params: ['null'] }];
     target.select = target.select || [[{ type: 'field', params: ['value'] }]];
 
     this.updateProjection();
@@ -90,9 +90,6 @@ export default class PostgresQuery {
         return _.filter(s, (part: any) => {
           var partModel = queryPart.create(part);
           if (partModel.def.category === categories.Aggregations) {
-            return false;
-          }
-          if (partModel.def.category === categories.Selectors) {
             return false;
           }
           return true;

@@ -4,9 +4,6 @@ import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/c
 var index = [];
 var categories = {
   Aggregations: [],
-  Selectors: [],
-  Transformations: [],
-  Predictors: [],
   Math: [],
   Aliasing: [],
   Fields: [],
@@ -41,10 +38,6 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
   for (var i = 0; i < selectParts.length; i++) {
     var part = selectParts[i];
     if (part.def.category === categories.Aggregations) {
-      selectParts[i] = partModel;
-      return;
-    }
-    if (part.def.category === categories.Selectors) {
       selectParts[i] = partModel;
       return;
     }
@@ -148,33 +141,9 @@ register({
 // transformations
 
 register({
-  type: 'derivative',
-  addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
-  params: [
-    {
-      name: 'duration',
-      type: 'interval',
-      options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h'],
-    },
-  ],
-  defaultParams: ['10s'],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'spread',
-  addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
   type: 'non_negative_derivative',
   addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
+  category: categories.Aggregations,
   params: [
     {
       name: 'duration',
@@ -183,49 +152,13 @@ register({
     },
   ],
   defaultParams: ['10s'],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'difference',
-  addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'non_negative_difference',
-  addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'moving_average',
-  addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
-  params: [{ name: 'window', type: 'int', options: [5, 10, 20, 30, 40] }],
-  defaultParams: [10],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'cumulative_sum',
-  addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
-  params: [],
-  defaultParams: [],
   renderer: functionRenderer,
 });
 
 register({
   type: 'stddev',
   addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
+  category: categories.Aggregations,
   params: [],
   defaultParams: [],
   renderer: functionRenderer,
@@ -259,60 +192,11 @@ register({
   renderer: functionRenderer,
 });
 
-register({
-  type: 'elapsed',
-  addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
-  params: [
-    {
-      name: 'duration',
-      type: 'interval',
-      options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h'],
-    },
-  ],
-  defaultParams: ['10s'],
-  renderer: functionRenderer,
-});
-
-// predictions
-register({
-  type: 'holt_winters',
-  addStrategy: addTransformationStrategy,
-  category: categories.Predictors,
-  params: [
-    { name: 'number', type: 'int', options: [5, 10, 20, 30, 40] },
-    { name: 'season', type: 'int', options: [0, 1, 2, 5, 10] },
-  ],
-  defaultParams: [10, 2],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'holt_winters_with_fit',
-  addStrategy: addTransformationStrategy,
-  category: categories.Predictors,
-  params: [
-    { name: 'number', type: 'int', options: [5, 10, 20, 30, 40] },
-    { name: 'season', type: 'int', options: [0, 1, 2, 5, 10] },
-  ],
-  defaultParams: [10, 2],
-  renderer: functionRenderer,
-});
-
 // Selectors
-register({
-  type: 'bottom',
-  addStrategy: replaceAggregationAddStrategy,
-  category: categories.Selectors,
-  params: [{ name: 'count', type: 'int' }],
-  defaultParams: [3],
-  renderer: functionRenderer,
-});
-
 register({
   type: 'max',
   addStrategy: replaceAggregationAddStrategy,
-  category: categories.Selectors,
+  category: categories.Aggregations,
   params: [],
   defaultParams: [],
   renderer: functionRenderer,
@@ -321,36 +205,10 @@ register({
 register({
   type: 'min',
   addStrategy: replaceAggregationAddStrategy,
-  category: categories.Selectors,
+  category: categories.Aggregations,
   params: [],
   defaultParams: [],
   renderer: functionRenderer,
-});
-
-register({
-  type: 'percentile',
-  addStrategy: replaceAggregationAddStrategy,
-  category: categories.Selectors,
-  params: [{ name: 'nth', type: 'int' }],
-  defaultParams: [95],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'top',
-  addStrategy: replaceAggregationAddStrategy,
-  category: categories.Selectors,
-  params: [{ name: 'count', type: 'int' }],
-  defaultParams: [3],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'tag',
-  category: groupByTimeFunctions,
-  params: [{ name: 'tag', type: 'string', dynamicLookup: true }],
-  defaultParams: ['tag'],
-  renderer: fieldRenderer,
 });
 
 register({

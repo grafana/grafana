@@ -29,6 +29,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   tableSegment: any;
   timeColumnSegment: any;
   selectMenu: any;
+  groupBySegment: any;
 
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
@@ -59,6 +60,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
 
     this.buildSelectMenu();
+    this.groupBySegment = this.uiSegmentSrv.newPlusButton();
+
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
   }
@@ -222,6 +225,87 @@ export class PostgresQueryCtrl extends QueryCtrl {
         return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
+  }
+
+  handleGroupByPartEvent(part, index, evt) {
+    switch (evt.name) {
+      case 'get-param-options': {
+        var columnQuery = "SELECT column_name FROM information_schema.columns WHERE ";
+        columnQuery += " table_schema = '" + this.target.schema + "'";
+        columnQuery += " AND table_name = '" + this.target.table + "'";
+
+        return this.datasource
+          .metricFindQuery(columnQuery)
+          .then(this.transformToSegments(true))
+          .catch(this.handleQueryError.bind(this));
+      }
+      case 'part-param-changed': {
+        this.panelCtrl.refresh();
+        break;
+      }
+      case 'action': {
+        this.queryModel.removeGroupByPart(part, index);
+        this.panelCtrl.refresh();
+        break;
+      }
+      case 'get-part-actions': {
+        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+      }
+    }
+  }
+
+  getGroupByOptions() {
+    var columnQuery = "SELECT column_name FROM information_schema.columns WHERE ";
+    columnQuery += " table_schema = '" + this.target.schema + "'";
+    columnQuery += " AND table_name = '" + this.target.table + "'";
+
+
+    return this.datasource
+      .metricFindQuery(columnQuery)
+      .then(tags => {
+        var options = [];
+        if (!this.queryModel.hasFill()) {
+          options.push(this.uiSegmentSrv.newSegment({ value: 'fill(null)' }));
+        }
+        if (!this.target.limit) {
+          options.push(this.uiSegmentSrv.newSegment({ value: 'LIMIT' }));
+        }
+        if (!this.target.slimit) {
+          options.push(this.uiSegmentSrv.newSegment({ value: 'SLIMIT' }));
+        }
+        if (this.target.orderByTime === 'ASC') {
+          options.push(this.uiSegmentSrv.newSegment({ value: 'ORDER BY time DESC' }));
+        }
+        if (!this.queryModel.hasGroupByTime()) {
+          options.push(this.uiSegmentSrv.newSegment({ value: 'time($interval)' }));
+        }
+        for (let tag of tags) {
+          options.push(this.uiSegmentSrv.newSegment({ value: 'tag(' + tag.text + ')' }));
+        }
+        return options;
+      })
+      .catch(this.handleQueryError.bind(this));
+  }
+
+  groupByAction() {
+    switch (this.groupBySegment.value) {
+      case 'LIMIT': {
+        this.target.limit = 10;
+        break;
+      }
+      case 'ORDER BY time DESC': {
+        this.target.orderByTime = 'DESC';
+        break;
+      }
+      default: {
+        this.queryModel.addGroupBy(this.groupBySegment.value);
+      }
+    }
+
+    var plusButton = this.uiSegmentSrv.newPlusButton();
+    this.groupBySegment.value = plusButton.value;
+    this.groupBySegment.html = plusButton.html;
+    this.panelCtrl.refresh();
   }
 
   handleQueryError(err) {
