@@ -63,9 +63,22 @@ func GetAlerts(c *middleware.Context) Response {
 		return ApiError(500, "List alerts failed", err)
 	}
 
+	alertDTOs, resp := transformToDTOs(query.Result, c)
+	if resp != nil {
+		return resp
+	}
+
+	return Json(200, alertDTOs)
+}
+
+func transformToDTOs(alerts []*models.Alert, c *middleware.Context) ([]*dtos.AlertRule, Response) {
+	if len(alerts) == 0 {
+		return []*dtos.AlertRule{}, nil
+	}
+
 	dashboardIds := make([]int64, 0)
 	alertDTOs := make([]*dtos.AlertRule, 0)
-	for _, alert := range query.Result {
+	for _, alert := range alerts {
 		dashboardIds = append(dashboardIds, alert.DashboardId)
 		alertDTOs = append(alertDTOs, &dtos.AlertRule{
 			Id:             alert.Id,
@@ -84,10 +97,8 @@ func GetAlerts(c *middleware.Context) Response {
 		DashboardIds: dashboardIds,
 	}
 
-	if len(alertDTOs) > 0 {
-		if err := bus.Dispatch(&dashboardsQuery); err != nil {
-			return ApiError(500, "List alerts failed", err)
-		}
+	if err := bus.Dispatch(&dashboardsQuery); err != nil {
+		return nil, ApiError(500, "List alerts failed", err)
 	}
 
 	//TODO: should be possible to speed this up with lookup table
@@ -106,10 +117,8 @@ func GetAlerts(c *middleware.Context) Response {
 		OrgRole:      c.SignedInUser.OrgRole,
 	}
 
-	if len(alertDTOs) > 0 {
-		if err := bus.Dispatch(&permissionsQuery); err != nil {
-			return ApiError(500, "List alerts failed", err)
-		}
+	if err := bus.Dispatch(&permissionsQuery); err != nil {
+		return nil, ApiError(500, "List alerts failed", err)
 	}
 
 	for _, alert := range alertDTOs {
@@ -120,7 +129,7 @@ func GetAlerts(c *middleware.Context) Response {
 		}
 	}
 
-	return Json(200, alertDTOs)
+	return alertDTOs, nil
 }
 
 // POST /api/alerts/test
