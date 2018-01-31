@@ -33,7 +33,7 @@ This is the most substantial update that Grafana has ever seen. This article wil
 {{< docs-imagebox img="/img/docs/v50/new_grid.png" max-width="700px" class="docs-image--right">}}
 
 The new dashboard layout engine allows for much easier movement & sizing of panels as other panels now move out of the way in
-a very intutive way. No longer do you need to use rows to create layouts as panels are sized independantly. This opens
+a very intuitive way. No longer do you need to use rows to create layouts as panels are sized independently. This opens
 up many new types of layouts where panels of different heights can be aligned easily. Checkout the new grid in the video
 above or on the [play site](http://play.grafana.org). All your existing dashboards will automatically migrate to the
 new position system and look close to identical. The new panel position makes dashboards saved in v5.0 not compatible
@@ -45,9 +45,7 @@ with older versions of Grafana.
 
 {{< docs-imagebox img="/img/docs/v50/new_ux_nav.png" max-width="700px" class="docs-image--right" >}}
 
-Almost every page has been seen significant UX improvements. All non dashboard pages has new tab based layout that improves navigation between pages.
-The side menu has also changed quite a bit.  You can still hide the side menu completly if you click on the Grafana
-logo.
+Almost every page has been seen significant UX improvements. All pages (except dashboard) has new tab-based layout that improves navigation between pages. The side menu has also changed quite a bit. You can still hide the side menu completely if you click on the Grafana logo.
 
 <div class="clearfix"></div>
 
@@ -63,8 +61,7 @@ settings views has been combined with a side nav which allows you to easily move
 
 {{< docs-imagebox img="/img/docs/v50/new_white_theme.png" max-width="700px" class="docs-image--right" >}}
 
-The light theme has seen major revision in v5. This theme has not seen a lot of love in recent years and we felt it was time to
-rework it and give it a major overhaul.
+This theme has not seen a lot of love in recent years and we felt it was time to rework it and give it a major overhaul. We are very happy with the result.
 
 <div class="clearfix"></div>
 
@@ -72,49 +69,52 @@ rework it and give it a major overhaul.
 
 {{< docs-imagebox img="/img/docs/v50/new_search.png" max-width="700px" class="docs-image--right" >}}
 
-The big new feature that comes with Grafana v5.0 is dashboard folders. Now you can organize your dashbords in folders
+The big new feature that comes with Grafana v5.0 is dashboard folders. Now you can organize your dashboards in folders
 which is very useful if you have a lot of dashboards or multiple teams.
 
 - New search design that adds expandable sections for each folder, starred & recently viewed dashboards.
-- New manage dashboard pages that enables batch actions and views for folder permissions.
+- New manage dashboard pages that enable batch actions and views for folder settings & permissions.
 - Set permissions on folders and have dashboards inherit the permissions.
 
 ## Teams
 
-Teams is a new concept in Grafana v5. Teams are simply a group of users that can be given persmisions for folders or dashboards. Only an admin can create teams.
+A team is a new concept in Grafana v5. They are simply a group of users that can be then be used in the new permission system for dashboards and folders. Only an admin can create teams.
 We hope to do more with teams in future releases like integration with LDAP & a team landing page.
 
 ## Permissions
 
-TODO
+{{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="700px" class="docs-image--right" >}}
+
+You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and replaced with specific teams or users enabling more control over what a user can see & edit.
+
+<div class="clearfix"></div>
 
 # Provisioning from configuration
 
-In previous versions of Grafana you could only use the API for provisioning data sources and dashboards.
+In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards.
 But that required the service to be running before you started creating dashboards and you also needed to
 set up credentials for the HTTP API. In 5.0 we decided to improve this experience by adding a new active
-provisioning system that uses config files. This will make gitops more natural as datasources and dashboards can
-be defined in via files that can be version controlled.
+provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can
+be defined via files that can be version controlled. We hope to extend this system to later add support for users, orgs
+and alerts as well.
 
 ### Data sources
 
-It's now possible to setup data sources in Grafana using config files. These data sources are by default not editable from the Grafana GUI.
-Its also possible to update and delete data sources from the config file. More info in the [data source provisioning docs](/administration/provisioning/#datasources).
+Data sources can now be setup using config files. These data sources are by default not editable from the Grafana GUI.
+It's also possible to update and delete data sources from the config file. More info in the [data source provisioning docs](/administration/provisioning/#datasources).
 
 ### Dashboards
 
 We also deprecated the [dashboard.json] in favor of our new dashboard provisioner that keeps dashboards on disk
 in sync with dashboards in Grafana's database. The dashboard provisioner have multiple advantages over the old
 [dashboard.json] feature. Instead of storing the dashboard in memory we now insert the dashboard into the database,
-which makes it possible to star them, use one as home dashboard, set permissions and other features in Grafana that
+which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
 
 # Dashboard model & API
 
 We are introducing a new identifier (`uid`) in the dashboard JSON model. The new identifier will be a 9-12 character long unique id.
-We are also changing the route for getting dashboards to use this `uid` instead of the slug that that the current route & API are using.
+We are also changing the route for getting dashboards to use this `uid` instead of the slug that the current route & API are using.
 We will keep supporting the old route for backward compatibility. This will make it possible to change the title on dashboards without breaking links.
 Sharing dashboards between instances become much easier since the uid is unique (unique enough). This might seem like a small change,
 but we are incredibly excited about it since it will make it much easier to manage, collaborate and navigate between dashboards.
-
-
