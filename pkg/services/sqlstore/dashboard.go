@@ -270,7 +270,6 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 				Title:       item.Title,
 				Uri:         "db/" + item.Slug,
 				Url:         url,
-				Slug:        item.Slug,
 				Type:        getHitType(item),
 				FolderId:    item.FolderId,
 				FolderTitle: item.FolderTitle,

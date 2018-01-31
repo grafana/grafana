@@ -134,7 +134,6 @@ export class SearchSrv {
           items: [],
           toggle: this.toggleFolder.bind(this),
           url: hit.url,
-          slug: hit.slug,
           icon: 'fa fa-folder',
           score: _.keys(sections).length,
         };
@@ -154,7 +153,6 @@ export class SearchSrv {
             uid: hit.uid,
             title: hit.folderTitle,
             url: hit.url,
-            slug: hit.slug,
             items: [],
             icon: 'fa fa-folder-open',
             toggle: this.toggleFolder.bind(this),
