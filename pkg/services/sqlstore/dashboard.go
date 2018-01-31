@@ -20,6 +20,8 @@ func init() {
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 }
 
+
+
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		dash := cmd.GetDashboardModel()
@@ -67,6 +69,11 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 					return m.ErrDashboardWithSameUIDExists
 				}
 			}
+		}
+
+		err = guaranteeDashboardNameIsUniqueInFolder(sess, dash)
+		if err != nil {
+			return err
 		}
 
 		err = setHasAcl(sess, dash)
@@ -138,6 +145,23 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 
 		return err
 	})
+}
+
+func guaranteeDashboardNameIsUniqueInFolder(sess *DBSession, dash *m.Dashboard) error {
+	var sameNameInFolder m.Dashboard
+	sameNameInFolderExist, err := sess.Where("org_id=? AND title=? AND folder_id = ? AND uid <> ?",
+		dash.OrgId, dash.Title, dash.FolderId, dash.Uid).
+		Get(&sameNameInFolder)
+
+	if err != nil {
+		return err
+	}
+
+	if sameNameInFolderExist {
+		return m.ErrDashboardWithSameNameInFolderExists
+	}
+
+	return nil
 }
 
 func setHasAcl(sess *DBSession, dash *m.Dashboard) error {

@@ -14,14 +14,15 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound                 = errors.New("Dashboard not found")
-	ErrDashboardSnapshotNotFound         = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameUIDExists        = errors.New("A dashboard with the same uid already exists")
-	ErrDashboardVersionMismatch          = errors.New("The dashboard has been changed by someone else")
-	ErrDashboardTitleEmpty               = errors.New("Dashboard title cannot be empty")
-	ErrDashboardFolderCannotHaveParent   = errors.New("A Dashboard Folder cannot be added to another folder")
-	ErrDashboardContainsInvalidAlertData = errors.New("Invalid alert data. Cannot save dashboard")
-	ErrDashboardFailedToUpdateAlertData  = errors.New("Failed to save alert data")
+	ErrDashboardNotFound                   = errors.New("Dashboard not found")
+	ErrDashboardSnapshotNotFound           = errors.New("Dashboard snapshot not found")
+	ErrDashboardWithSameUIDExists          = errors.New("A dashboard with the same uid already exists")
+	ErrDashboardWithSameNameInFolderExists = errors.New("A dashboard with the same name in the folder already exists")
+	ErrDashboardVersionMismatch            = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty                 = errors.New("Dashboard title cannot be empty")
+	ErrDashboardFolderCannotHaveParent     = errors.New("A Dashboard Folder cannot be added to another folder")
+	ErrDashboardContainsInvalidAlertData   = errors.New("Invalid alert data. Cannot save dashboard")
+	ErrDashboardFailedToUpdateAlertData    = errors.New("Failed to save alert data")
 )
 
 type UpdatePluginDashboardError struct {
