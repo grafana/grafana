@@ -14,7 +14,7 @@ export class SoloPanelCtrl {
       $scope.onAppEvent('dashboard-initialized', $scope.initPanelScope);
 
       // if no uid, redirect to new route based on slug
-      if (!$routeParams.uid) {
+      if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {
         backendSrv.get(`/api/dashboards/db/${$routeParams.slug}`).then(res => {
           if (res) {
             $location.path(res.meta.url.replace('/d/', '/d-solo/'));

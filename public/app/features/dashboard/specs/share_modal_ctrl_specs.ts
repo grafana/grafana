@@ -53,6 +53,17 @@ describe('ShareModalCtrl', function() {
       expect(ctx.scope.imageUrl).to.contain(base + params);
     });
 
+    it('should generate render url for scripted dashboard', function() {
+      ctx.$location.$$absUrl = 'http://dashboards.grafana.com/dashboard/script/my-dash.js';
+
+      ctx.scope.panel = { id: 22 };
+
+      ctx.scope.init();
+      var base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
+      var params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      expect(ctx.scope.imageUrl).to.contain(base + params);
+    });
+
     it('should remove panel id when no panel in scope', function() {
       ctx.$location.path('/test');
       ctx.scope.options.forCurrent = true;

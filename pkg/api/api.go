@@ -67,9 +67,11 @@ func (hs *HttpServer) registerRoutes() {
 
 	r.Get("/d/:uid/:slug", reqSignedIn, Index)
 	r.Get("/dashboard/db/:slug", reqSignedIn, redirectFromLegacyDashboardUrl, Index)
+	r.Get("/dashboard/script/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/snapshot/*", Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, Index)
 	r.Get("/dashboard-solo/db/:slug", reqSignedIn, redirectFromLegacyDashboardSoloUrl, Index)
+	r.Get("/dashboard-solo/script/*", reqSignedIn, Index)
 	r.Get("/import/dashboard", reqSignedIn, Index)
 	r.Get("/dashboards/", reqSignedIn, Index)
 	r.Get("/dashboards/*", reqSignedIn, Index)
