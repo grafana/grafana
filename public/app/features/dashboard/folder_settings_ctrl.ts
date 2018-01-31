@@ -37,7 +37,7 @@ export class FolderSettingsCtrl {
     this.dashboard.title = this.title.trim();
 
     return this.backendSrv
-      .saveDashboard(this.dashboard, { overwrite: false })
+      .updateDashboardFolder(this.dashboard, { overwrite: false })
       .then(result => {
         if (result.url !== this.$location.path()) {
           this.$location.url(result.url + '/settings');
@@ -84,7 +84,7 @@ export class FolderSettingsCtrl {
         yesText: 'Save & Overwrite',
         icon: 'fa-warning',
         onConfirm: () => {
-          this.backendSrv.saveDashboard(this.dashboard, { overwrite: true });
+          this.backendSrv.updateDashboardFolder(this.dashboard, { overwrite: true });
         },
       });
     }

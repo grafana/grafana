@@ -257,6 +257,17 @@ export class BackendSrv {
     });
   }
 
+  updateDashboardFolder(dash, options) {
+    options = options || {};
+
+    return this.post('/api/dashboards/db/', {
+      dashboard: dash,
+      isFolder: true,
+      overwrite: options.overwrite === true,
+      message: options.message || '',
+    });
+  }
+
   deleteDashboard(uid) {
     let deferred = this.$q.defer();
 
