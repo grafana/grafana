@@ -91,9 +91,15 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		timeout = 15
 	}
 
+	phantomDebugArg := "--debug=false"
+	if log.GetLogLevelFor("png-renderer") >= log.LvlDebug {
+		phantomDebugArg = "--debug=true"
+	}
+
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
 		"--web-security=false",
+		phantomDebugArg,
 		scriptPath,
 		"url=" + url,
 		"width=" + params.Width,
