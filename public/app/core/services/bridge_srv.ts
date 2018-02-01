@@ -1,28 +1,16 @@
 import coreModule from 'app/core/core_module';
-import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import { store } from 'app/stores/store';
 import { reaction } from 'mobx';
+import locationUtil from 'app/core/utils/location_util';
 
 // Services that handles angular -> mobx store sync & other react <-> angular sync
 export class BridgeSrv {
-  private appSubUrl;
   private fullPageReloadRoutes;
 
   /** @ngInject */
   constructor(private $location, private $timeout, private $window, private $rootScope, private $route) {
-    this.appSubUrl = config.appSubUrl;
     this.fullPageReloadRoutes = ['/logout'];
-  }
-
-  // Angular's $location does not like <base href...> and absolute urls
-  stripBaseFromUrl(url = '') {
-    const appSubUrl = this.appSubUrl;
-    const stripExtraChars = appSubUrl.endsWith('/') ? 1 : 0;
-    const urlWithoutBase =
-      url.length > 0 && url.indexOf(appSubUrl) === 0 ? url.slice(appSubUrl.length - stripExtraChars) : url;
-
-    return urlWithoutBase;
   }
 
   init() {
@@ -41,17 +29,18 @@ export class BridgeSrv {
       () => store.view.currentUrl,
       currentUrl => {
         let angularUrl = this.$location.url();
-        if (angularUrl !== currentUrl) {
+        const url = locationUtil.stripBaseFromUrl(currentUrl);
+        if (angularUrl !== url) {
           this.$timeout(() => {
-            this.$location.url(currentUrl);
+            this.$location.url(url);
           });
-          console.log('store updating angular $location.url', currentUrl);
+          console.log('store updating angular $location.url', url);
         }
       }
     );
 
     appEvents.on('location-change', payload => {
-      const urlWithoutBase = this.stripBaseFromUrl(payload.href);
+      const urlWithoutBase = locationUtil.stripBaseFromUrl(payload.href);
       if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
         this.$window.location.href = payload.href;
         return;

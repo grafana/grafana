@@ -1,4 +1,5 @@
 import { FolderPageLoader } from './folder_page_loader';
+import locationUtil from 'app/core/utils/location_util';
 
 export class FolderDashboardsCtrl {
   navModel: any;
@@ -13,8 +14,10 @@ export class FolderDashboardsCtrl {
       const loader = new FolderPageLoader(this.backendSrv);
 
       loader.load(this, this.uid, 'manage-folder-dashboards').then(folder => {
-        if ($location.path() !== folder.meta.url) {
-          $location.path(folder.meta.url).replace();
+        const url = locationUtil.stripBaseFromUrl(folder.meta.url);
+
+        if (url !== $location.path()) {
+          $location.path(url).replace();
         }
       });
     }

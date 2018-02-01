@@ -1,8 +1,9 @@
 import coreModule from 'app/core/core_module';
+import locationUtil from 'app/core/utils/location_util';
 
 export class LoadDashboardCtrl {
   /** @ngInject */
-  constructor($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location) {
+  constructor($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location, $browser) {
     $scope.appEvent('dashboard-fetch-start');
 
     if (!$routeParams.uid && !$routeParams.slug) {
@@ -22,15 +23,18 @@ export class LoadDashboardCtrl {
     if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {
       backendSrv.get(`/api/dashboards/db/${$routeParams.slug}`).then(res => {
         if (res) {
-          $location.path(res.meta.url).replace();
+          const url = locationUtil.stripBaseFromUrl(res.meta.url);
+          $location.path(url).replace();
         }
       });
       return;
     }
 
     dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
-      if ($location.path() !== result.meta.url) {
-        $location.path(result.meta.url).replace();
+      const url = locationUtil.stripBaseFromUrl(result.meta.url);
+
+      if (url !== $location.path()) {
+        $location.path(url).replace();
       }
 
       if ($routeParams.keepRows) {

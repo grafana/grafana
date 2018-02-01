@@ -1,4 +1,5 @@
 import angular from 'angular';
+import locationUtil from 'app/core/utils/location_util';
 
 export class SoloPanelCtrl {
   /** @ngInject */
@@ -17,7 +18,8 @@ export class SoloPanelCtrl {
       if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {
         backendSrv.get(`/api/dashboards/db/${$routeParams.slug}`).then(res => {
           if (res) {
-            $location.path(res.meta.url.replace('/d/', '/d-solo/'));
+            const url = locationUtil.stripBaseFromUrl(res.meta.url.replace('/d/', '/d-solo/'));
+            $location.path(url).replace();
           }
         });
         return;
