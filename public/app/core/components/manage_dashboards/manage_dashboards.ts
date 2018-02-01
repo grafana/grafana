@@ -34,7 +34,7 @@ export class ManageDashboardsCtrl {
 
   // used when managing dashboards for a specific folder
   folderId?: number;
-  folderSlug?: string;
+  folderUid?: string;
 
   // if user can add new folders and/or add new dashboards
   canSave: boolean;
@@ -74,11 +74,11 @@ export class ManageDashboardsCtrl {
         return this.initDashboardList(result);
       })
       .then(() => {
-        if (!this.folderSlug) {
+        if (!this.folderUid) {
           return;
         }
 
-        return this.backendSrv.getDashboard('db', this.folderSlug).then(dash => {
+        return this.backendSrv.getDashboardByUid(this.folderUid).then(dash => {
           this.canSave = dash.meta.canSave;
         });
       });
@@ -179,8 +179,8 @@ export class ManageDashboardsCtrl {
     });
   }
 
-  private deleteFoldersAndDashboards(slugs) {
-    this.backendSrv.deleteDashboards(slugs).then(result => {
+  private deleteFoldersAndDashboards(uids) {
+    this.backendSrv.deleteDashboards(uids).then(result => {
       const folders = _.filter(result, dash => dash.meta.isFolder);
       const folderCount = folders.length;
       const dashboards = _.filter(result, dash => !dash.meta.isFolder);
@@ -334,7 +334,7 @@ export function manageDashboardsDirective() {
     controllerAs: 'ctrl',
     scope: {
       folderId: '=',
-      folderSlug: '=',
+      folderUid: '=',
     },
   };
 }

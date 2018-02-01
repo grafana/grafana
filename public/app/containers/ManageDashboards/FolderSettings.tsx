@@ -20,9 +20,11 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
   loadStore() {
     const { nav, folder, view } = this.props;
 
-    return folder.load(view.routeParams.get('slug') as string).then(res => {
+    return folder.load(view.routeParams.get('uid') as string).then(res => {
       this.formSnapshot = getSnapshot(folder);
       this.dashboard = res.dashboard;
+
+      view.updatePathAndQuery(`${res.meta.url}/settings`, {}, {});
 
       return nav.initFolderNav(toJS(folder.folder), 'manage-folder-settings');
     });
@@ -51,7 +53,7 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
     folder
       .saveFolder(this.dashboard, { overwrite: false })
       .then(newUrl => {
-        view.updatePathAndQuery(newUrl, '', '');
+        view.updatePathAndQuery(newUrl, {}, {});
 
         appEvents.emit('dashboard-saved');
         appEvents.emit('alert-success', ['Folder saved']);

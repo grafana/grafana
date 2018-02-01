@@ -257,7 +257,7 @@ export class BackendSrv {
     });
   }
 
-  updateDashboardFolder(dash, options) {
+  saveFolder(dash, options) {
     options = options || {};
 
     return this.post('/api/dashboards/db/', {
