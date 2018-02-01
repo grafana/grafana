@@ -248,10 +248,11 @@ func (hs *HttpServer) registerRoutes() {
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute RouteRegister) {
-			folderRoute.Get("/:id", wrap(GetFolderById))
+			folderRoute.Get("/:uid", wrap(GetFolder))
+			folderRoute.Get("/id/:id", wrap(GetFolder))
 			folderRoute.Post("/", bind(m.CreateFolderCommand{}), wrap(CreateFolder))
-			folderRoute.Put("/:id", bind(m.UpdateFolderCommand{}), wrap(UpdateFolder))
-			folderRoute.Delete("/:id", wrap(DeleteFolder))
+			folderRoute.Put("/:uid", bind(m.UpdateFolderCommand{}), wrap(UpdateFolder))
+			folderRoute.Delete("/:uid", wrap(DeleteFolder))
 		})
 
 		// Dashboard

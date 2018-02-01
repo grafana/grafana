@@ -4,8 +4,9 @@ import "time"
 
 type Folder struct {
 	Id        int64     `json:"id"`
+	Uid       string    `json:"uid"`
 	Title     string    `json:"title"`
-	Slug      string    `json:"slug"`
+	Url       string    `json:"url"`
 	HasAcl    bool      `json:"hasAcl"`
 	CanSave   bool      `json:"canSave"`
 	CanEdit   bool      `json:"canEdit"`
