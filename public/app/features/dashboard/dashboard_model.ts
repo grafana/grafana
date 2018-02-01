@@ -571,6 +571,7 @@ export class DashboardModel {
 
     if (row.collapsed) {
       row.collapsed = false;
+      let hasRepeat = false;
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
@@ -591,6 +592,10 @@ export class DashboardModel {
           // update insert post and y max
           insertPos += 1;
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
+
+          if (panel.repeat) {
+            hasRepeat = true;
+          }
         }
 
         const pushDownAmount = yMax - row.gridPos.y;
@@ -601,6 +606,10 @@ export class DashboardModel {
         }
 
         row.panels = [];
+
+        if (hasRepeat) {
+          this.processRepeats();
+        }
       }
 
       // sort panels

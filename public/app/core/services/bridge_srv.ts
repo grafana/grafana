@@ -10,7 +10,7 @@ export class BridgeSrv {
   private fullPageReloadRoutes;
 
   /** @ngInject */
-  constructor(private $location, private $timeout, private $window, private $rootScope) {
+  constructor(private $location, private $timeout, private $window, private $rootScope, private $route) {
     this.appSubUrl = config.appSubUrl;
     this.fullPageReloadRoutes = ['/logout'];
   }
@@ -29,14 +29,14 @@ export class BridgeSrv {
     this.$rootScope.$on('$routeUpdate', (evt, data) => {
       let angularUrl = this.$location.url();
       if (store.view.currentUrl !== angularUrl) {
-        store.view.updatePathAndQuery(this.$location.path(), this.$location.search());
+        store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
       }
     });
 
     this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
       let angularUrl = this.$location.url();
       if (store.view.currentUrl !== angularUrl) {
-        store.view.updatePathAndQuery(this.$location.path(), this.$location.search());
+        store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
       }
     });
 

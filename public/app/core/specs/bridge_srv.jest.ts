@@ -10,7 +10,7 @@ describe('BridgeSrv', () => {
   let searchSrv;
 
   beforeEach(() => {
-    searchSrv = new BridgeSrv(null, null, null, null);
+    searchSrv = new BridgeSrv(null, null, null, null, null);
   });
 
   describe('With /subUrl as appSubUrl', () => {

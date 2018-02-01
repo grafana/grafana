@@ -4,6 +4,8 @@ export class FolderPermissionsCtrl {
   navModel: any;
   folderId: number;
   uid: string;
+  dashboard: any;
+  meta: any;
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $routeParams, $location) {
@@ -14,6 +16,9 @@ export class FolderPermissionsCtrl {
         if ($location.path() !== folder.meta.url) {
           $location.path(`${folder.meta.url}/permissions`).replace();
         }
+
+        this.dashboard = folder.dashboard;
+        this.meta = folder.meta;
       });
     }
   }

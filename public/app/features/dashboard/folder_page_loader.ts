@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 export class FolderPageLoader {
   constructor(private backendSrv) {}
 
@@ -11,7 +9,7 @@ export class FolderPageLoader {
         subTitle: 'Manage folder dashboards & permissions',
         url: '',
         text: '',
-        breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }, { title: ' ' }],
+        breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
         children: [
           {
             active: activeChildId === 'manage-folder-dashboards',
@@ -41,25 +39,21 @@ export class FolderPageLoader {
     return this.backendSrv.getDashboardByUid(uid).then(result => {
       ctrl.folderId = result.dashboard.id;
       const folderTitle = result.dashboard.title;
-      ctrl.navModel.main.text = '';
-      ctrl.navModel.main.breadcrumbs = [{ title: 'Dashboards', url: 'dashboards' }, { title: folderTitle }];
-
       const folderUrl = result.meta.url;
+      ctrl.navModel.main.text = folderTitle;
 
-      const dashTab = _.find(ctrl.navModel.main.children, {
-        id: 'manage-folder-dashboards',
-      });
+      const dashTab = ctrl.navModel.main.children.find(child => child.id === 'manage-folder-dashboards');
       dashTab.url = folderUrl;
 
-      const permTab = _.find(ctrl.navModel.main.children, {
-        id: 'manage-folder-permissions',
-      });
-      permTab.url = folderUrl + '/permissions';
+      if (result.meta.canAdmin) {
+        const permTab = ctrl.navModel.main.children.find(child => child.id === 'manage-folder-permissions');
+        permTab.url = folderUrl + '/permissions';
 
-      const settingsTab = _.find(ctrl.navModel.main.children, {
-        id: 'manage-folder-settings',
-      });
-      settingsTab.url = folderUrl + '/settings';
+        const settingsTab = ctrl.navModel.main.children.find(child => child.id === 'manage-folder-settings');
+        settingsTab.url = folderUrl + '/settings';
+      } else {
+        ctrl.navModel.main.children = [dashTab];
+      }
 
       return result;
     });

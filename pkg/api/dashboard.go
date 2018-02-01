@@ -38,9 +38,9 @@ func isDashboardStarredByUser(c *middleware.Context, dashId int64) (bool, error)
 func dashboardGuardianResponse(err error) Response {
 	if err != nil {
 		return ApiError(500, "Error while checking dashboard permissions", err)
-	} else {
-		return ApiError(403, "Access denied to this dashboard", nil)
 	}
+
+	return ApiError(403, "Access denied to this dashboard", nil)
 }
 
 func GetDashboard(c *middleware.Context) Response {
@@ -51,7 +51,6 @@ func GetDashboard(c *middleware.Context) Response {
 
 	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
 	if canView, err := guardian.CanView(); err != nil || !canView {
-		fmt.Printf("%v", err)
 		return dashboardGuardianResponse(err)
 	}
 
@@ -90,6 +89,7 @@ func GetDashboard(c *middleware.Context) Response {
 		IsFolder:    dash.IsFolder,
 		FolderId:    dash.FolderId,
 		FolderTitle: "Root",
+		Url:         dash.GetUrl(),
 	}
 
 	// lookup folder title
@@ -99,12 +99,7 @@ func GetDashboard(c *middleware.Context) Response {
 			return ApiError(500, "Dashboard folder could not be read", err)
 		}
 		meta.FolderTitle = query.Result.Title
-	}
-
-	if dash.IsFolder {
-		meta.Url = m.GetFolderUrl(dash.Uid, dash.Slug)
-	} else {
-		meta.Url = m.GetDashboardUrl(dash.Uid, dash.Slug)
+		meta.FolderSlug = query.Result.Slug
 	}
 
 	// make sure db version is in sync with json model version
@@ -201,7 +196,14 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 
 	dash := cmd.GetDashboardModel()
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	dashId := dash.Id
+
+	// if new dashboard, use parent folder permissions instead
+	if dashId == 0 {
+		dashId = cmd.FolderId
+	}
+
+	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -244,7 +246,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	}
 
 	if err != nil {
-		if err == m.ErrDashboardWithSameNameExists {
+		if err == m.ErrDashboardWithSameUIDExists {
 			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
 		}
 		if err == m.ErrDashboardVersionMismatch {
@@ -268,12 +270,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
 	}
 
-	var url string
-	if dash.IsFolder {
-		url = m.GetFolderUrl(dashboard.Uid, dashboard.Slug)
-	} else {
-		url = m.GetDashboardUrl(dashboard.Uid, dashboard.Slug)
-	}
+	dashboard.IsFolder = dash.IsFolder
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
 	return Json(200, util.DynMap{
@@ -282,7 +279,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		"version": dashboard.Version,
 		"id":      dashboard.Id,
 		"uid":     dashboard.Uid,
-		"url":     url,
+		"url":     dashboard.GetUrl(),
 	})
 }
 
@@ -488,4 +485,20 @@ func GetDashboardTags(c *middleware.Context) {
 	}
 
 	c.JSON(200, query.Result)
+}
+
+func GetFoldersForSignedInUser(c *middleware.Context) Response {
+	title := c.Query("query")
+	query := m.GetFoldersForSignedInUserQuery{
+		OrgId:        c.OrgId,
+		SignedInUser: c.SignedInUser,
+		Title:        title,
+	}
+
+	err := bus.Dispatch(&query)
+	if err != nil {
+		return ApiError(500, "Failed to get folders from database", err)
+	}
+
+	return Json(200, query.Result)
 }

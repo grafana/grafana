@@ -6,7 +6,7 @@ describe('Tooltip', () => {
   it('renders correctly', () => {
     const tree = renderer
       .create(
-        <Tooltip placement="auto" content="Tooltip text">
+        <Tooltip className="test-class" placement="auto" content="Tooltip text">
           <a href="http://www.grafana.com">Link with tooltip</a>
         </Tooltip>
       )

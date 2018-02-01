@@ -654,7 +654,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           return;
         }
 
-        if ((ranges.ctrlKey || ranges.metaKey) && contextSrv.isEditor) {
+        if ((ranges.ctrlKey || ranges.metaKey) && dashboard.meta.canEdit) {
           // Add annotation
           setTimeout(() => {
             eventManager.updateTime(ranges.xaxis);
@@ -675,7 +675,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           return;
         }
 
-        if ((pos.ctrlKey || pos.metaKey) && contextSrv.isEditor) {
+        if ((pos.ctrlKey || pos.metaKey) && dashboard.meta.canEdit) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {

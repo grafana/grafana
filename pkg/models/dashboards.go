@@ -9,20 +9,21 @@ import (
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // Typed errors
 var (
-	ErrDashboardNotFound                 = errors.New("Dashboard not found")
-	ErrDashboardSnapshotNotFound         = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameNameExists       = errors.New("A dashboard with the same name already exists")
-	ErrDashboardVersionMismatch          = errors.New("The dashboard has been changed by someone else")
-	ErrDashboardTitleEmpty               = errors.New("Dashboard title cannot be empty")
-	ErrDashboardFolderCannotHaveParent   = errors.New("A Dashboard Folder cannot be added to another folder")
-	ErrDashboardContainsInvalidAlertData = errors.New("Invalid alert data. Cannot save dashboard")
-	ErrDashboardFailedToUpdateAlertData  = errors.New("Failed to save alert data")
-	ErrDashboardsWithSameSlugExists      = errors.New("Multiple dashboards with the same slug exists")
+	ErrDashboardNotFound                   = errors.New("Dashboard not found")
+	ErrDashboardSnapshotNotFound           = errors.New("Dashboard snapshot not found")
+	ErrDashboardWithSameUIDExists          = errors.New("A dashboard with the same uid already exists")
+	ErrDashboardWithSameNameInFolderExists = errors.New("A dashboard with the same name in the folder already exists")
+	ErrDashboardVersionMismatch            = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty                 = errors.New("Dashboard title cannot be empty")
+	ErrDashboardFolderCannotHaveParent     = errors.New("A Dashboard Folder cannot be added to another folder")
+	ErrDashboardContainsInvalidAlertData   = errors.New("Invalid alert data. Cannot save dashboard")
+	ErrDashboardFailedToUpdateAlertData    = errors.New("Failed to save alert data")
+	ErrDashboardsWithSameSlugExists        = errors.New("Multiple dashboards with the same slug exists")
+	ErrDashboardFailedGenerateUniqueUid    = errors.New("Failed to generate unique dashboard id")
 )
 
 type UpdatePluginDashboardError struct {
@@ -66,7 +67,6 @@ type Dashboard struct {
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
-	dash.Uid = util.GenerateShortUid()
 	dash.Data = simplejson.New()
 	dash.Data.Set("title", title)
 	dash.Title = title
@@ -115,8 +115,6 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 
 	if uid, err := dash.Data.Get("uid").String(); err == nil {
 		dash.Uid = uid
-	} else {
-		dash.Uid = util.GenerateShortUid()
 	}
 
 	return dash
@@ -157,6 +155,20 @@ func (dash *Dashboard) UpdateSlug() {
 
 func SlugifyTitle(title string) string {
 	return slug.Make(strings.ToLower(title))
+}
+
+// GetUrl return the html url for a folder if it's folder, otherwise for a dashboard
+func (dash *Dashboard) GetUrl() string {
+	return GetDashboardFolderUrl(dash.IsFolder, dash.Uid, dash.Slug)
+}
+
+// GetDashboardFolderUrl return the html url for a folder if it's folder, otherwise for a dashboard
+func GetDashboardFolderUrl(isFolder bool, uid string, slug string) string {
+	if isFolder {
+		return GetFolderUrl(uid, slug)
+	}
+
+	return GetDashboardUrl(uid, slug)
 }
 
 // GetDashboardUrl return the html url for a dashboard
@@ -222,6 +234,14 @@ type GetDashboardsQuery struct {
 	Result       []*Dashboard
 }
 
+type GetDashboardPermissionsForUserQuery struct {
+	DashboardIds []int64
+	OrgId        int64
+	UserId       int64
+	OrgRole      RoleType
+	Result       []*DashboardPermissionForUser
+}
+
 type GetDashboardsByPluginIdQuery struct {
 	OrgId    int64
 	PluginId string
@@ -238,4 +258,22 @@ type GetDashboardsBySlugQuery struct {
 	Slug  string
 
 	Result []*Dashboard
+}
+
+type GetFoldersForSignedInUserQuery struct {
+	OrgId        int64
+	SignedInUser *SignedInUser
+	Title        string
+	Result       []*DashboardFolder
+}
+
+type DashboardFolder struct {
+	Id    int64  `json:"id"`
+	Title string `json:"title"`
+}
+
+type DashboardPermissionForUser struct {
+	DashboardId    int64          `json:"dashboardId"`
+	Permission     PermissionType `json:"permission"`
+	PermissionName string         `json:"permissionName"`
 }

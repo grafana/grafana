@@ -2,12 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"path/filepath"
 	"testing"
 
-	macaron "gopkg.in/macaron.v1"
-
-	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -31,6 +27,10 @@ func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardItem)
 }
 
 var fakeRepo *fakeDashboardRepo
+
+// This tests two main scenarios. If a user has access to execute an action on a dashboard:
+// 1. and the dashboard is in a folder which does not have an acl
+// 2. and the dashboard is in a folder which does have an acl
 
 func TestDashboardApiEndpoint(t *testing.T) {
 	Convey("Given a dashboard with a parent folder which does not have an acl", t, func() {
@@ -78,6 +78,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				"id":       fakeDash.Id,
 			}),
 		}
+
+		// This tests two scenarios:
+		// 1. user is an org viewer
+		// 2. user is an org editor
 
 		Convey("When user is an Org Viewer", func() {
 			role := m.ROLE_VIEWER
@@ -278,6 +282,14 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				"title":    fakeDash.Title,
 			}),
 		}
+
+		// This tests six scenarios:
+		// 1. user is an org viewer AND has no permissions for this dashboard
+		// 2. user is an org editor AND has no permissions for this dashboard
+		// 3. user is an org viewer AND has been granted edit permission for the dashboard
+		// 4. user is an org viewer AND all viewers have edit permission for this dashboard
+		// 5. user is an org viewer AND has been granted an admin permission
+		// 6. user is an org editor AND has been granted a view permission
 
 		Convey("When user is an Org Viewer and has no permissions for this dashboard", func() {
 			role := m.ROLE_VIEWER
@@ -800,20 +812,7 @@ func postDashboardScenario(desc string, url string, routePattern string, role m.
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := &scenarioContext{
-			url: url,
-		}
-		viewsPath, _ := filepath.Abs("../../public/views")
-
-		sc.m = macaron.New()
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
-
-		sc.m.Use(middleware.GetContextHandler())
-		sc.m.Use(middleware.Sessioner(&session.Options{}))
-
+		sc := setupScenarioContext(url)
 		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID

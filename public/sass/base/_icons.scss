@@ -11,6 +11,14 @@
   vertical-align: middle;
 }
 
+.gicon--has-hover {
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
 .mini {
   width: 0.8em;
   height: 0.8em;
@@ -189,4 +197,9 @@
   .gicon-question {
     background-image: url('../img/icons_dark_theme/icon_question.svg');
   }
+}
+
+.fa--permissions-list {
+  min-width: 20px;
+  padding-right: 5px;
 }

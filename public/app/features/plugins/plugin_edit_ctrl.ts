@@ -32,8 +32,8 @@ export class PluginEditCtrl {
         img: model.info.logos.large,
         subTitle: model.info.author.name,
         url: '',
-        text: '',
-        breadcrumbs: [{ title: 'Plugins', url: 'plugins' }, { title: model.name }],
+        text: model.name,
+        breadcrumbs: [{ title: 'Plugins', url: 'plugins' }],
         children: [
           {
             icon: 'fa fa-fw fa-file-text-o',
