@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func getFolderHelper(orgId int64, slug string, id int64) (*m.Dashboard, Response) {
-	query := m.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgId}
+func getFolderHelper(orgId int64, id int64, uid string) (*m.Dashboard, Response) {
+	query := m.GetDashboardQuery{OrgId: orgId, Id: id, Uid: uid}
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrDashboardNotFound {
 			err = m.ErrFolderNotFound
@@ -53,8 +53,8 @@ func GetFoldersForSignedInUser(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-func GetFolderById(c *middleware.Context) Response {
-	folder, rsp := getFolderHelper(c.OrgId, "", c.ParamsInt64(":id"))
+func GetFolder(c *middleware.Context) Response {
+	folder, rsp := getFolderHelper(c.OrgId, c.ParamsInt64(":id"), c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -72,14 +72,13 @@ func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 
-	dashFolder := m.NewDashboardFolder(cmd.Title)
+	dashFolder := cmd.GetDashboardModel()
 
 	guardian := guardian.NewDashboardGuardian(0, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return folderGuardianResponse(err)
 	}
 
-	// Check if Title is empty
 	if dashFolder.Title == "" {
 		return ApiError(400, m.ErrFolderTitleEmpty.Error(), nil)
 	}
@@ -91,9 +90,6 @@ func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
 	if limitReached {
 		return ApiError(403, "Quota reached", nil)
 	}
-
-	dashFolder.CreatedBy = c.UserId
-	dashFolder.UpdatedBy = c.UserId
 
 	dashItem := &dashboards.SaveDashboardItem{
 		Dashboard: dashFolder,
@@ -113,8 +109,9 @@ func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
 func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
+	uid := c.Params(":uid")
 
-	dashFolder, rsp := getFolderHelper(c.OrgId, "", c.ParamsInt64(":id"))
+	dashFolder, rsp := getFolderHelper(c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -124,13 +121,8 @@ func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
 		return folderGuardianResponse(err)
 	}
 
-	dashFolder.Data.Set("title", cmd.Title)
-	dashFolder.Title = cmd.Title
-	dashFolder.Data.Set("version", cmd.Version)
-	dashFolder.Version = cmd.Version
-	dashFolder.UpdatedBy = c.UserId
+	cmd.UpdateDashboardModel(dashFolder)
 
-	// Check if Title is empty
 	if dashFolder.Title == "" {
 		return ApiError(400, m.ErrFolderTitleEmpty.Error(), nil)
 	}
@@ -139,6 +131,7 @@ func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
 		Dashboard: dashFolder,
 		OrgId:     c.OrgId,
 		UserId:    c.UserId,
+		Overwrite: cmd.Overwrite,
 	}
 
 	folder, err := dashboards.GetRepository().SaveDashboard(dashItem)
@@ -151,7 +144,7 @@ func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
 }
 
 func DeleteFolder(c *middleware.Context) Response {
-	dashFolder, rsp := getFolderHelper(c.OrgId, "", c.ParamsInt64(":id"))
+	dashFolder, rsp := getFolderHelper(c.OrgId, 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -177,17 +170,18 @@ func toDto(guardian *guardian.DashboardGuardian, folder *m.Dashboard) dtos.Folde
 
 	// Finding creator and last updater of the folder
 	updater, creator := "Anonymous", "Anonymous"
-	if folder.UpdatedBy > 0 {
-		updater = getUserLogin(folder.UpdatedBy)
-	}
 	if folder.CreatedBy > 0 {
 		creator = getUserLogin(folder.CreatedBy)
+	}
+	if folder.UpdatedBy > 0 {
+		updater = getUserLogin(folder.UpdatedBy)
 	}
 
 	return dtos.Folder{
 		Id:        folder.Id,
+		Uid:       folder.Uid,
 		Title:     folder.Title,
-		Slug:      folder.Slug,
+		Url:       folder.GetUrl(),
 		HasAcl:    folder.HasAcl,
 		CanSave:   canSave,
 		CanEdit:   canEdit,
@@ -203,6 +197,10 @@ func toDto(guardian *guardian.DashboardGuardian, folder *m.Dashboard) dtos.Folde
 func toFolderError(err error) Response {
 	if err == m.ErrDashboardTitleEmpty {
 		return ApiError(400, m.ErrFolderTitleEmpty.Error(), nil)
+	}
+
+	if err == m.ErrDashboardWithSameNameInFolderExists {
+		return Json(412, util.DynMap{"status": "name-exists", "message": m.ErrFolderSameNameExists.Error()})
 	}
 
 	if err == m.ErrDashboardWithSameUIDExists {

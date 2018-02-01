@@ -23,8 +23,11 @@ func TestFoldersApiEndpoint(t *testing.T) {
 		fakeDash.FolderId = 1
 		fakeDash.HasAcl = false
 
+		var getDashboardQueries []*m.GetDashboardQuery
+
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
+			getDashboardQueries = append(getDashboardQueries, query)
 			return nil
 		})
 
@@ -33,19 +36,40 @@ func TestFoldersApiEndpoint(t *testing.T) {
 		Convey("When user is an Org Editor", func() {
 			role := m.ROLE_EDITOR
 
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
+				callGetFolder(sc)
+				So(sc.resp.Code, ShouldEqual, 404)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
+			})
+
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
 				callGetFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 404)
+
+				Convey("Should lookup folder by id", func() {
+					So(getDashboardQueries[0].Id, ShouldEqual, 1)
+				})
 			})
 
-			updateFolderScenario("When calling PUT on", "/api/folders/1", "/api/folders/:id", role, updateFolderCmd, func(sc *scenarioContext) {
+			updateFolderScenario("When calling PUT on", "/api/folders/uid", "/api/folders/:uid", role, updateFolderCmd, func(sc *scenarioContext) {
 				callUpdateFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 404)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
 				callDeleteFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 404)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 			})
 		})
 	})
@@ -55,8 +79,11 @@ func TestFoldersApiEndpoint(t *testing.T) {
 		fakeFolder.Id = 1
 		fakeFolder.HasAcl = false
 
+		var getDashboardQueries []*m.GetDashboardQuery
+
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			query.Result = fakeFolder
+			getDashboardQueries = append(getDashboardQueries, query)
 			return nil
 		})
 
@@ -82,11 +109,19 @@ func TestFoldersApiEndpoint(t *testing.T) {
 			Title: fakeFolder.Title,
 		}
 
+		updateFolderCmd := m.UpdateFolderCommand{
+			Title: fakeFolder.Title,
+		}
+
 		Convey("When user is an Org Viewer", func() {
 			role := m.ROLE_VIEWER
 
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
 				folder := getFolderShouldReturn200(sc)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 
 				Convey("Should not be able to edit or save folder", func() {
 					So(folder.CanEdit, ShouldBeFalse)
@@ -95,22 +130,53 @@ func TestFoldersApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+				folder := getFolderShouldReturn200(sc)
+
+				Convey("Should lookup folder by id", func() {
+					So(getDashboardQueries[0].Id, ShouldEqual, 1)
+				})
+
+				Convey("Should not be able to edit or save folder", func() {
+					So(folder.CanEdit, ShouldBeFalse)
+					So(folder.CanSave, ShouldBeFalse)
+					So(folder.CanAdmin, ShouldBeFalse)
+				})
+			})
+
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
 				callDeleteFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 			})
 
 			createFolderScenario("When calling POST on", "/api/folders", "/api/folders", role, cmd, func(sc *scenarioContext) {
 				callCreateFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
+
+			updateFolderScenario("When calling PUT on", "/api/folders/uid", "/api/folders/:uid", role, updateFolderCmd, func(sc *scenarioContext) {
+				callUpdateFolder(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
+			})
 		})
 
 		Convey("When user is an Org Editor", func() {
 			role := m.ROLE_EDITOR
 
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
 				folder := getFolderShouldReturn200(sc)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 
 				Convey("Should be able to edit or save folder", func() {
 					So(folder.CanEdit, ShouldBeTrue)
@@ -119,14 +185,41 @@ func TestFoldersApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+				folder := getFolderShouldReturn200(sc)
+
+				Convey("Should lookup folder by id", func() {
+					So(getDashboardQueries[0].Id, ShouldEqual, 1)
+				})
+
+				Convey("Should be able to edit or save folder", func() {
+					So(folder.CanEdit, ShouldBeTrue)
+					So(folder.CanSave, ShouldBeTrue)
+					So(folder.CanAdmin, ShouldBeFalse)
+				})
+			})
+
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
 				callDeleteFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 			})
 
 			createFolderScenario("When calling POST on", "/api/folders", "/api/folders", role, cmd, func(sc *scenarioContext) {
 				callCreateFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			updateFolderScenario("When calling PUT on", "/api/folders/uid", "/api/folders/:uid", role, updateFolderCmd, func(sc *scenarioContext) {
+				callUpdateFolder(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 			})
 		})
 	})
@@ -136,8 +229,11 @@ func TestFoldersApiEndpoint(t *testing.T) {
 		fakeFolder.Id = 1
 		fakeFolder.HasAcl = true
 
+		var getDashboardQueries []*m.GetDashboardQuery
+
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			query.Result = fakeFolder
+			getDashboardQueries = append(getDashboardQueries, query)
 			return nil
 		})
 
@@ -163,49 +259,109 @@ func TestFoldersApiEndpoint(t *testing.T) {
 			Title: fakeFolder.Title,
 		}
 
+		updateFolderCmd := m.UpdateFolderCommand{
+			Title: fakeFolder.Title,
+		}
+
 		Convey("When user is an Org Viewer and has no permissions for this folder", func() {
 			role := m.ROLE_VIEWER
 
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetFolderById
-				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
+				callGetFolder(sc)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 
 				Convey("Should be denied access", func() {
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+				callGetFolder(sc)
+
+				Convey("Should lookup folder by id", func() {
+					So(getDashboardQueries[0].Id, ShouldEqual, 1)
+				})
+
+				Convey("Should be denied access", func() {
+					So(sc.resp.Code, ShouldEqual, 403)
+				})
+			})
+
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
 				callDeleteFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 			})
 
 			createFolderScenario("When calling POST on", "/api/folders", "/api/folders", role, cmd, func(sc *scenarioContext) {
 				callCreateFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
+			updateFolderScenario("When calling PUT on", "/api/folders/uid", "/api/folders/:uid", role, updateFolderCmd, func(sc *scenarioContext) {
+				callUpdateFolder(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 			})
 		})
 
 		Convey("When user is an Org Editor and has no permissions for this folder", func() {
 			role := m.ROLE_EDITOR
 
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetFolderById
-				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
+				callGetFolder(sc)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 
 				Convey("Should be denied access", func() {
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/1", "/api/folders/:id", role, func(sc *scenarioContext) {
+				callGetFolder(sc)
+
+				Convey("Should lookup folder by id", func() {
+					So(getDashboardQueries[0].Id, ShouldEqual, 1)
+				})
+
+				Convey("Should be denied access", func() {
+					So(sc.resp.Code, ShouldEqual, 403)
+				})
+			})
+
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/folders/uid", "/api/folders/:uid", role, func(sc *scenarioContext) {
 				callDeleteFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 			})
 
 			createFolderScenario("When calling POST on", "/api/folders", "/api/folders", role, cmd, func(sc *scenarioContext) {
 				callCreateFolder(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
+			updateFolderScenario("When calling PUT on", "/api/folders/uid", "/api/folders/:uid", role, updateFolderCmd, func(sc *scenarioContext) {
+				callUpdateFolder(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+
+				Convey("Should lookup folder by uid", func() {
+					So(getDashboardQueries[0].Uid, ShouldEqual, "uid")
+				})
 			})
 		})
 	})
@@ -224,7 +380,7 @@ func getFolderShouldReturn200(sc *scenarioContext) dtos.Folder {
 }
 
 func callGetFolder(sc *scenarioContext) {
-	sc.handlerFunc = GetFolderById
+	sc.handlerFunc = GetFolder
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
