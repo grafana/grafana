@@ -115,6 +115,10 @@
     "*.scss": [
       "prettier --write",
       "git add"
+    ],
+    "*.go": [
+      "gofmt -w -s",
+      "git add"
     ]
   },
   "prettier": {
