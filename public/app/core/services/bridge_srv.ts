@@ -34,10 +34,7 @@ export class BridgeSrv {
     });
 
     this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
-      let angularUrl = this.$location.url();
-      if (store.view.currentUrl !== angularUrl) {
-        store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
-      }
+      store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
     });
 
     reaction(
@@ -45,7 +42,9 @@ export class BridgeSrv {
       currentUrl => {
         let angularUrl = this.$location.url();
         if (angularUrl !== currentUrl) {
-          this.$location.url(currentUrl);
+          this.$timeout(() => {
+            this.$location.url(currentUrl);
+          });
           console.log('store updating angular $location.url', currentUrl);
         }
       }
