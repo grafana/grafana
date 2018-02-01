@@ -71,6 +71,7 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 		qr := &tsdb.QueryResult{
 			RefId:  r.RefId,
 			Series: []*tsdb.TimeSeries{},
+			Tables: []*tsdb.Table{},
 		}
 
 		if r.Error != "" {
@@ -124,6 +125,7 @@ func (tw *DatasourcePluginWrapper) mapTable(t *datasource.Table) (*tsdb.Table, e
 		})
 	}
 
+	table.Rows = make([]tsdb.RowValues, 0)
 	for _, r := range t.GetRows() {
 		row := tsdb.RowValues{}
 		for _, rv := range r.Values {

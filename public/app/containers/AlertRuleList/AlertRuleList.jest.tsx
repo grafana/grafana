@@ -24,6 +24,7 @@ describe('AlertRuleList', () => {
           evalData: {},
           executionError: '',
           dashboardUri: 'db/mygool',
+          canEdit: true,
         },
       ])
     );

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -18,6 +19,8 @@ func init() {
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
+	bus.AddHandler("sql", GetFoldersForSignedInUser)
+	bus.AddHandler("sql", GetDashboardPermissionsForUser)
 }
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
@@ -291,6 +294,52 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 	return err
 }
 
+func GetFoldersForSignedInUser(query *m.GetFoldersForSignedInUserQuery) error {
+	query.Result = make([]*m.DashboardFolder, 0)
+	var err error
+
+	if query.SignedInUser.OrgRole == m.ROLE_ADMIN {
+		sql := `SELECT distinct d.id, d.title
+		FROM dashboard AS d WHERE d.is_folder = ?
+		ORDER BY d.title ASC`
+
+		err = x.Sql(sql, dialect.BooleanStr(true)).Find(&query.Result)
+	} else {
+		params := make([]interface{}, 0)
+		sql := `SELECT distinct d.id, d.title
+		FROM dashboard AS d
+			LEFT JOIN dashboard_acl AS da ON d.id = da.dashboard_id
+			LEFT JOIN team_member AS ugm ON ugm.team_id =  da.team_id
+			LEFT JOIN org_user ou ON ou.role = da.role AND ou.user_id = ?
+			LEFT JOIN org_user ouRole ON ouRole.role = 'Editor' AND ouRole.user_id = ? AND ouRole.org_id = ?`
+		params = append(params, query.SignedInUser.UserId)
+		params = append(params, query.SignedInUser.UserId)
+		params = append(params, query.OrgId)
+
+		sql += `WHERE
+			d.org_id = ? AND
+			d.is_folder = 1 AND
+			(
+				(d.has_acl = 1 AND da.permission > 1 AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
+				OR (d.has_acl = 0 AND ouRole.id IS NOT NULL)
+			)`
+		params = append(params, query.OrgId)
+		params = append(params, query.SignedInUser.UserId)
+		params = append(params, query.SignedInUser.UserId)
+
+		if len(query.Title) > 0 {
+			sql += " AND d.title " + dialect.LikeStr() + " ?"
+			params = append(params, "%"+query.Title+"%")
+		}
+
+		sql += ` ORDER BY d.title ASC`
+
+		err = x.Sql(sql, params...).Find(&query.Result)
+	}
+
+	return err
+}
+
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		dashboard := m.Dashboard{Id: cmd.Id, OrgId: cmd.OrgId}
@@ -341,6 +390,76 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 	}
 
 	return nil
+}
+
+// GetDashboardPermissionsForUser returns the maximum permission the specified user has for a dashboard(s)
+// The function takes in a list of dashboard ids and the user id and role
+func GetDashboardPermissionsForUser(query *m.GetDashboardPermissionsForUserQuery) error {
+	if len(query.DashboardIds) == 0 {
+		return m.ErrCommandValidationFailed
+	}
+
+	if query.OrgRole == m.ROLE_ADMIN {
+		var permissions = make([]*m.DashboardPermissionForUser, 0)
+		for _, d := range query.DashboardIds {
+			permissions = append(permissions, &m.DashboardPermissionForUser{
+				DashboardId:    d,
+				Permission:     m.PERMISSION_ADMIN,
+				PermissionName: m.PERMISSION_ADMIN.String(),
+			})
+		}
+		query.Result = permissions
+
+		return nil
+	}
+
+	params := make([]interface{}, 0)
+
+	// check dashboards that have ACLs via user id, team id or role
+	sql := `SELECT d.id AS dashboard_id, MAX(COALESCE(da.permission, pt.permission)) AS permission
+	FROM dashboard AS d
+		LEFT JOIN dashboard_acl as da on d.folder_id = da.dashboard_id or d.id = da.dashboard_id
+		LEFT JOIN team_member as ugm on ugm.team_id =  da.team_id
+		LEFT JOIN org_user ou ON ou.role = da.role AND ou.user_id = ?
+	`
+	params = append(params, query.UserId)
+
+	//check the user's role for dashboards that do not have hasAcl set
+	sql += `LEFT JOIN org_user ouRole ON ouRole.user_id = ? AND ouRole.org_id = ?`
+	params = append(params, query.UserId)
+	params = append(params, query.OrgId)
+
+	sql += `
+		LEFT JOIN (SELECT 1 AS permission, 'Viewer' AS 'role'
+			UNION SELECT 2 AS permission, 'Editor' AS 'role'
+			UNION SELECT 4 AS permission, 'Admin' AS 'role') pt ON ouRole.role = pt.role
+	WHERE
+	d.Id IN (?` + strings.Repeat(",?", len(query.DashboardIds)-1) + `) `
+	for _, id := range query.DashboardIds {
+		params = append(params, id)
+	}
+
+	sql += ` AND
+	d.org_id = ? AND
+	  (
+		(d.has_acl = ?  AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
+		OR (d.has_acl = ? AND ouRole.id IS NOT NULL)
+	)
+	group by d.id
+	order by d.id asc`
+	params = append(params, dialect.BooleanStr(true))
+	params = append(params, query.OrgId)
+	params = append(params, query.UserId)
+	params = append(params, query.UserId)
+	params = append(params, dialect.BooleanStr(false))
+
+	err := x.Sql(sql, params...).Find(&query.Result)
+
+	for _, p := range query.Result {
+		p.PermissionName = p.Permission.String()
+	}
+
+	return err
 }
 
 func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {

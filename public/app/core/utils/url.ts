@@ -12,7 +12,11 @@ export function toUrlParams(a) {
 
   let add = function(k, v) {
     v = typeof v === 'function' ? v() : v === null ? '' : v === undefined ? '' : v;
-    s[s.length] = encodeURIComponent(k) + '=' + encodeURIComponent(v);
+    if (typeof v !== 'boolean') {
+      s[s.length] = encodeURIComponent(k) + '=' + encodeURIComponent(v);
+    } else {
+      s[s.length] = encodeURIComponent(k);
+    }
   };
 
   let buildParams = function(prefix, obj) {

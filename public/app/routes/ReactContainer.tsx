@@ -13,13 +13,15 @@ function WrapInProvider(store, Component, props) {
 }
 
 /** @ngInject */
-export function reactContainer($route, $location) {
+export function reactContainer($route, $location, backendSrv) {
   return {
     restrict: 'E',
     template: '',
     link(scope, elem) {
       let component = $route.current.locals.component;
-      let props = {};
+      let props = {
+        backendSrv: backendSrv,
+      };
 
       ReactDOM.render(WrapInProvider(store, component, props), elem[0]);
 

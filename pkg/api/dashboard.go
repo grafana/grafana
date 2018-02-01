@@ -38,9 +38,9 @@ func isDashboardStarredByUser(c *middleware.Context, dashId int64) (bool, error)
 func dashboardGuardianResponse(err error) Response {
 	if err != nil {
 		return ApiError(500, "Error while checking dashboard permissions", err)
-	} else {
-		return ApiError(403, "Access denied to this dashboard", nil)
 	}
+
+	return ApiError(403, "Access denied to this dashboard", nil)
 }
 
 func GetDashboard(c *middleware.Context) Response {
@@ -51,7 +51,6 @@ func GetDashboard(c *middleware.Context) Response {
 
 	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
 	if canView, err := guardian.CanView(); err != nil || !canView {
-		fmt.Printf("%v", err)
 		return dashboardGuardianResponse(err)
 	}
 
@@ -99,6 +98,7 @@ func GetDashboard(c *middleware.Context) Response {
 			return ApiError(500, "Dashboard folder could not be read", err)
 		}
 		meta.FolderTitle = query.Result.Title
+		meta.FolderSlug = query.Result.Slug
 	}
 
 	// make sure db version is in sync with json model version
@@ -158,7 +158,14 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 
 	dash := cmd.GetDashboardModel()
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	dashId := dash.Id
+
+	// if new dashboard, use parent folder permissions instead
+	if dashId == 0 {
+		dashId = cmd.FolderId
+	}
+
+	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -430,4 +437,20 @@ func GetDashboardTags(c *middleware.Context) {
 	}
 
 	c.JSON(200, query.Result)
+}
+
+func GetFoldersForSignedInUser(c *middleware.Context) Response {
+	title := c.Query("query")
+	query := m.GetFoldersForSignedInUserQuery{
+		OrgId:        c.OrgId,
+		SignedInUser: c.SignedInUser,
+		Title:        title,
+	}
+
+	err := bus.Dispatch(&query)
+	if err != nil {
+		return ApiError(500, "Failed to get folders from database", err)
+	}
+
+	return Json(200, query.Result)
 }

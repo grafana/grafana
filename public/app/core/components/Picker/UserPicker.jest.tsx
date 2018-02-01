@@ -8,8 +8,7 @@ const model = {
       return new Promise((resolve, reject) => {});
     },
   },
-  refreshList: () => {},
-  teamId: '1',
+  handlePicked: () => {},
 };
 
 describe('UserPicker', () => {
