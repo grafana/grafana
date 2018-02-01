@@ -1,4 +1,5 @@
 import angular from 'angular';
+import appEvents from 'app/core/app_events';
 
 export class SoloPanelCtrl {
   /** @ngInject */
@@ -7,6 +8,7 @@ export class SoloPanelCtrl {
 
     $scope.init = function() {
       contextSrv.sidemenu = false;
+      appEvents.emit('toggle-sidemenu');
 
       var params = $location.search();
       panelId = parseInt(params.panelId);
