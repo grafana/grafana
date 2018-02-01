@@ -19,9 +19,11 @@ func init() {
 	bus.AddHandler("sql", SearchDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
+	bus.AddHandler("sql", GetDashboardUIDById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 	bus.AddHandler("sql", GetFoldersForSignedInUser)
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
+	bus.AddHandler("sql", GetDashboardsBySlug)
 }
 
 var generateNewUid func() string = util.GenerateShortUid
@@ -159,6 +161,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		return err
 	})
 }
+
 func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := generateNewUid()
@@ -539,7 +542,7 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 	var rawSql = `SELECT slug from dashboard WHERE Id=?`
 	var slug = DashboardSlugDTO{}
 
-	exists, err := x.Sql(rawSql, query.Id).Get(&slug)
+	exists, err := x.SQL(rawSql, query.Id).Get(&slug)
 
 	if err != nil {
 		return err
@@ -552,12 +555,29 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 }
 
 func GetDashboardsBySlug(query *m.GetDashboardsBySlugQuery) error {
-	var dashboards = make([]*m.Dashboard, 0)
+	var dashboards []*m.Dashboard
 
 	if err := x.Where("org_id=? AND slug=?", query.OrgId, query.Slug).Find(&dashboards); err != nil {
 		return err
 	}
 
 	query.Result = dashboards
+	return nil
+}
+
+func GetDashboardUIDById(query *m.GetDashboardUIDByIdQuery) error {
+	var rawSql = `SELECT uid, slug from dashboard WHERE Id=?`
+
+	us := &m.DashboardRef{}
+
+	exists, err := x.SQL(rawSql, query.Id).Get(us)
+
+	if err != nil {
+		return err
+	} else if exists == false {
+		return m.ErrDashboardNotFound
+	}
+
+	query.Result = us
 	return nil
 }
