@@ -7,10 +7,11 @@ import (
 
 // Typed errors
 var (
-	ErrFolderNotFound           = errors.New("Folder not found")
-	ErrFolderVersionMismatch    = errors.New("The folder has been changed by someone else")
-	ErrFolderTitleEmpty         = errors.New("Folder title cannot be empty")
-	ErrFolderWithSameNameExists = errors.New("A folder/dashboard with the same title already exists")
+	ErrFolderNotFound                = errors.New("Folder not found")
+	ErrFolderVersionMismatch         = errors.New("The folder has been changed by someone else")
+	ErrFolderTitleEmpty              = errors.New("Folder title cannot be empty")
+	ErrFolderWithSameUIDExists       = errors.New("A folder with the same uid already exists")
+	ErrFolderFailedGenerateUniqueUid = errors.New("Failed to generate unique folder id")
 )
 
 type Folder struct {
@@ -26,12 +27,6 @@ type Folder struct {
 	UpdatedBy int64
 	CreatedBy int64
 	HasAcl    bool
-}
-
-type GetFoldersQueryHitResult struct {
-	Id    int64  `json:"id"`
-	Title string `json:"title"`
-	Slug  string `json:"slug"`
 }
 
 //
@@ -55,9 +50,18 @@ type UpdateFolderCommand struct {
 	Result *Folder
 }
 
-type GetFoldersQuery struct {
+//
+// QUERIES
+//
+
+type DashboardFolder struct {
+	Id    int64  `json:"id"`
+	Title string `json:"title"`
+}
+
+type GetFoldersForSignedInUserQuery struct {
 	OrgId        int64
 	SignedInUser *SignedInUser
 	Title        string
-	Result       []*GetFoldersQueryHitResult
+	Result       []*DashboardFolder
 }

@@ -113,6 +113,10 @@
   //border: 1px solid $tight-form-func-highlight-bg;
 }
 
+.btn-transparent {
+  background-color: transparent;
+}
+
 .btn-outline-primary {
   @include button-outline-variant($btn-primary-bg);
 }

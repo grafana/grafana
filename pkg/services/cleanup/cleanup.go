@@ -46,6 +46,7 @@ func (service *CleanUpService) start(ctx context.Context) error {
 			service.cleanUpTmpFiles()
 			service.deleteExpiredSnapshots()
 			service.deleteExpiredDashboardVersions()
+			service.deleteOldLoginAttempts()
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -87,4 +88,19 @@ func (service *CleanUpService) deleteExpiredSnapshots() {
 
 func (service *CleanUpService) deleteExpiredDashboardVersions() {
 	bus.Dispatch(&m.DeleteExpiredVersionsCommand{})
+}
+
+func (service *CleanUpService) deleteOldLoginAttempts() {
+	if setting.DisableBruteForceLoginProtection {
+		return
+	}
+
+	cmd := m.DeleteOldLoginAttemptsCommand{
+		OlderThan: time.Now().Add(time.Minute * -10),
+	}
+	if err := bus.Dispatch(&cmd); err != nil {
+		service.log.Error("Problem deleting expired login attempts", "error", err.Error())
+	} else {
+		service.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
+	}
 }

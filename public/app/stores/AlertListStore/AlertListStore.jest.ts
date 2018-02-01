@@ -20,6 +20,7 @@ function getRule(name, state, info) {
     stateClass: 'asd',
     stateAge: '10m',
     info: info,
+    canEdit: true,
   };
 }
 

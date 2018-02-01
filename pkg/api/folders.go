@@ -37,9 +37,9 @@ func folderGuardianResponse(err error) Response {
 	return ApiError(403, "Access denied to this folder", nil)
 }
 
-func GetFolders(c *middleware.Context) Response {
+func GetFoldersForSignedInUser(c *middleware.Context) Response {
 	title := c.Query("query")
-	query := m.GetFoldersQuery{
+	query := m.GetFoldersForSignedInUserQuery{
 		OrgId:        c.OrgId,
 		SignedInUser: c.SignedInUser,
 		Title:        title,
@@ -205,8 +205,8 @@ func toFolderError(err error) Response {
 		return ApiError(400, m.ErrFolderTitleEmpty.Error(), nil)
 	}
 
-	if err == m.ErrDashboardWithSameNameExists {
-		return Json(412, util.DynMap{"status": "name-exists", "message": m.ErrFolderWithSameNameExists.Error()})
+	if err == m.ErrDashboardWithSameUIDExists {
+		return Json(412, util.DynMap{"status": "uid-exists", "message": m.ErrFolderWithSameUIDExists.Error()})
 	}
 
 	if err == m.ErrDashboardVersionMismatch {
@@ -215,6 +215,10 @@ func toFolderError(err error) Response {
 
 	if err == m.ErrDashboardNotFound {
 		return Json(404, util.DynMap{"status": "not-found", "message": m.ErrFolderNotFound.Error()})
+	}
+
+	if err == m.ErrDashboardFailedGenerateUniqueUid {
+		err = m.ErrFolderFailedGenerateUniqueUid
 	}
 
 	return ApiError(500, "Failed to create folder", err)

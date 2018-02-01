@@ -274,6 +274,10 @@ $input-border: 1px solid $input-border-color;
     }
   }
 
+  .gf-form-input {
+    margin-right: 0;
+  }
+
   select.gf-form-input {
     text-indent: 0.01px;
     text-overflow: '';
@@ -391,4 +395,18 @@ select.gf-form-input ~ .gf-form-help-icon {
   right: $spacer;
   top: 10px;
   color: $text-muted;
+}
+
+.cta-form {
+  position: relative;
+  padding: 1rem;
+  background-color: $empty-list-cta-bg;
+  margin-bottom: 1rem;
+  border-top: 3px solid $green;
+}
+
+.cta-form__close {
+  position: absolute;
+  right: 0;
+  top: 0;
 }

@@ -9,14 +9,14 @@ describe('FolderSettings', () => {
   let page;
 
   beforeAll(() => {
-    backendSrv.getDashboard.mockReturnValue(
+    backendSrv.getDashboardByUid.mockReturnValue(
       Promise.resolve({
         dashboard: {
           id: 1,
           title: 'Folder Name',
         },
         meta: {
-          slug: 'folder-name',
+          url: '/dashboards/f/uid/folder-name',
           canSave: true,
         },
       })

@@ -75,13 +75,14 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey             string
-	LogInRememberDays     int
-	CookieUserName        string
-	CookieRememberName    string
-	DisableGravatar       bool
-	EmailCodeValidMinutes int
-	DataProxyWhiteList    map[string]bool
+	SecretKey                        string
+	LogInRememberDays                int
+	CookieUserName                   string
+	CookieRememberName               string
+	DisableGravatar                  bool
+	EmailCodeValidMinutes            int
+	DataProxyWhiteList               map[string]bool
+	DisableBruteForceLoginProtection bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -514,6 +515,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+	DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 
 	// read snapshots settings
 	snapshots := Cfg.Section("snapshots")
@@ -578,7 +580,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
-	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
+	PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

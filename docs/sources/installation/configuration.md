@@ -671,31 +671,6 @@ session provider you have configured.
 - **memcache:** ex:  127.0.0.1:11211
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
 
-If you use MySQL or Postgres as the session store you need to create the
-session table manually.
-
-Mysql Example:
-
-```bash
-CREATE TABLE `session` (
-    `key`       CHAR(16) NOT NULL,
-    `data`      BLOB,
-    `expiry`    INT(11) UNSIGNED NOT NULL,
-    PRIMARY KEY (`key`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-```
-
-Postgres Example:
-
-```bash
-CREATE TABLE session (
-    key       CHAR(16) NOT NULL,
-    data      BYTEA,
-    expiry    INTEGER NOT NULL,
-    PRIMARY KEY (key)
-);
-```
-
 Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 
 ### cookie_name

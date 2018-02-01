@@ -71,6 +71,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       body.toggleClass('sidemenu-open', sidemenuOpen);
 
       appEvents.on('toggle-sidemenu', () => {
+        sidemenuOpen = scope.contextSrv.sidemenu;
         body.toggleClass('sidemenu-open');
       });
 
@@ -167,6 +168,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       // mouse and keyboard is user activity
       body.mousemove(userActivityDetected);
       body.keydown(userActivityDetected);
+      // set useCapture = true to catch event here
+      document.addEventListener('wheel', userActivityDetected, true);
       // treat tab change as activity
       document.addEventListener('visibilitychange', userActivityDetected);
 

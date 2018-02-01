@@ -33,7 +33,7 @@
   border-top: 4px solid $text-color-weak;
   border-right: 4px solid transparent;
   border-left: 4px solid transparent;
-  content: "";
+  content: '';
 }
 
 // Place the caret
@@ -218,7 +218,7 @@
   .caret {
     border-top: 0;
     border-bottom: 4px solid $black;
-    content: "";
+    content: '';
   }
   // Different positioning for bottom up menu
   .dropdown-menu {
@@ -255,9 +255,9 @@
 }
 
 // Caret to indicate there is a submenu
-.dropdown-submenu > a::after {
+.dropdown-submenu > a::before {
   display: block;
-  content: " ";
+  content: ' ';
   float: right;
   width: 0;
   height: 0;
@@ -312,7 +312,7 @@
     width: 2rem;
     display: inline-block;
     text-align: center;
-    content: "\f11c";
+    content: '\f11c';
   }
 }
 

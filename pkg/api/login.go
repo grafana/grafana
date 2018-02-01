@@ -102,12 +102,13 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
 	}
 
 	authQuery := login.LoginUserQuery{
-		Username: cmd.User,
-		Password: cmd.Password,
+		Username:  cmd.User,
+		Password:  cmd.Password,
+		IpAddress: c.Req.RemoteAddr,
 	}
 
 	if err := bus.Dispatch(&authQuery); err != nil {
-		if err == login.ErrInvalidCredentials {
+		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
 			return ApiError(401, "Invalid username or password", err)
 		}
 

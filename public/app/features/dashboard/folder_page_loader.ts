@@ -1,7 +1,7 @@
 export class FolderPageLoader {
-  constructor(private backendSrv, private $routeParams) {}
+  constructor(private backendSrv) {}
 
-  load(ctrl, folderId, activeChildId) {
+  load(ctrl, uid, activeChildId) {
     ctrl.navModel = {
       main: {
         icon: 'fa fa-folder-open',
@@ -36,11 +36,12 @@ export class FolderPageLoader {
       },
     };
 
-    return this.backendSrv.getDashboard('db', this.$routeParams.slug).then(result => {
+    return this.backendSrv.getDashboardByUid(uid).then(result => {
+      ctrl.folderId = result.dashboard.id;
       const folderTitle = result.dashboard.title;
+      const folderUrl = result.meta.url;
       ctrl.navModel.main.text = folderTitle;
 
-      const folderUrl = this.createFolderUrl(folderId, result.meta.slug);
       const dashTab = ctrl.navModel.main.children.find(child => child.id === 'manage-folder-dashboards');
       dashTab.url = folderUrl;
 
@@ -56,9 +57,5 @@ export class FolderPageLoader {
 
       return result;
     });
-  }
-
-  createFolderUrl(folderId: number, slug: string) {
-    return `dashboards/folder/${folderId}/${slug}`;
   }
 }

@@ -3,12 +3,12 @@ import { NavStore } from './NavStore';
 describe('NavStore', () => {
   const folderId = 1;
   const folderTitle = 'Folder Name';
-  const folderSlug = 'folder-name';
+  const folderUrl = '/dashboards/f/uid/folder-name';
   const canAdmin = true;
 
   const folder = {
     id: folderId,
-    slug: folderSlug,
+    url: folderUrl,
     title: folderTitle,
     canAdmin: canAdmin,
   };
@@ -33,9 +33,9 @@ describe('NavStore', () => {
 
   it('Should set correct urls for each tab', () => {
     expect(store.main.children.length).toBe(3);
-    expect(store.main.children[0].url).toBe(`dashboards/folder/${folderId}/${folderSlug}`);
-    expect(store.main.children[1].url).toBe(`dashboards/folder/${folderId}/${folderSlug}/permissions`);
-    expect(store.main.children[2].url).toBe(`dashboards/folder/${folderId}/${folderSlug}/settings`);
+    expect(store.main.children[0].url).toBe(folderUrl);
+    expect(store.main.children[1].url).toBe(`${folderUrl}/permissions`);
+    expect(store.main.children[2].url).toBe(`${folderUrl}/settings`);
   });
 
   it('Should set active tab', () => {

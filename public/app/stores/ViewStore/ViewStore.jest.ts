@@ -24,4 +24,10 @@ describe('ViewStore', () => {
     expect(toJS(store.query.get('values'))).toMatchObject(['A', 'B']);
     expect(store.currentUrl).toBe('/hello?values=A&values=B');
   });
+
+  it('Query can contain boolean', () => {
+    store.updatePathAndQuery('/hello', { abool: true }, { abool: true });
+    expect(toJS(store.query.get('abool'))).toBe(true);
+    expect(store.currentUrl).toBe('/hello?abool');
+  });
 });
