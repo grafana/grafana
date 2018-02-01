@@ -115,6 +115,10 @@
     "*.scss": [
       "prettier --write",
       "git add"
+    ],
+    "*.go": [
+      "gofmt -w -s",
+      "git add"
     ]
   },
   "prettier": {
@@ -153,6 +157,7 @@
     "react-popper": "^0.7.5",
     "react-select": "^1.1.0",
     "react-sizeme": "^2.3.6",
+    "react-transition-group": "^2.2.1",
     "remarkable": "^1.7.1",
     "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "^5.4.3",
