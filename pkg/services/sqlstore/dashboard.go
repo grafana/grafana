@@ -374,16 +374,19 @@ func GetFoldersForSignedInUser(query *m.GetFoldersForSignedInUserQuery) error {
 		params = append(params, query.SignedInUser.UserId)
 		params = append(params, query.OrgId)
 
-		sql += `WHERE
+		sql += ` WHERE
 			d.org_id = ? AND
-			d.is_folder = 1 AND
+			d.is_folder = ? AND
 			(
-				(d.has_acl = 1 AND da.permission > 1 AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
-				OR (d.has_acl = 0 AND ouRole.id IS NOT NULL)
+				(d.has_acl = ? AND da.permission > 1 AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
+				OR (d.has_acl = ? AND ouRole.id IS NOT NULL)
 			)`
 		params = append(params, query.OrgId)
+		params = append(params, dialect.BooleanStr(true))
+		params = append(params, dialect.BooleanStr(true))
 		params = append(params, query.SignedInUser.UserId)
 		params = append(params, query.SignedInUser.UserId)
+		params = append(params, dialect.BooleanStr(false))
 
 		if len(query.Title) > 0 {
 			sql += " AND d.title " + dialect.LikeStr() + " ?"
@@ -391,7 +394,6 @@ func GetFoldersForSignedInUser(query *m.GetFoldersForSignedInUserQuery) error {
 		}
 
 		sql += ` ORDER BY d.title ASC`
-
 		err = x.Sql(sql, params...).Find(&query.Result)
 	}
 
@@ -488,9 +490,9 @@ func GetDashboardPermissionsForUser(query *m.GetDashboardPermissionsForUserQuery
 	params = append(params, query.OrgId)
 
 	sql += `
-		LEFT JOIN (SELECT 1 AS permission, 'Viewer' AS 'role'
-			UNION SELECT 2 AS permission, 'Editor' AS 'role'
-			UNION SELECT 4 AS permission, 'Admin' AS 'role') pt ON ouRole.role = pt.role
+		LEFT JOIN (SELECT 1 AS permission, 'Viewer' AS role
+			UNION SELECT 2 AS permission, 'Editor' AS role
+			UNION SELECT 4 AS permission, 'Admin' AS role) pt ON ouRole.role = pt.role
 	WHERE
 	d.Id IN (?` + strings.Repeat(",?", len(query.DashboardIds)-1) + `) `
 	for _, id := range query.DashboardIds {
@@ -505,13 +507,15 @@ func GetDashboardPermissionsForUser(query *m.GetDashboardPermissionsForUserQuery
 	)
 	group by d.id
 	order by d.id asc`
-	params = append(params, dialect.BooleanStr(true))
 	params = append(params, query.OrgId)
+	params = append(params, dialect.BooleanStr(true))
 	params = append(params, query.UserId)
 	params = append(params, query.UserId)
 	params = append(params, dialect.BooleanStr(false))
 
+	x.ShowSQL(true)
 	err := x.Sql(sql, params...).Find(&query.Result)
+	x.ShowSQL(false)
 
 	for _, p := range query.Result {
 		p.PermissionName = p.Permission.String()

@@ -1,4 +1,4 @@
-import { PermissionsStore } from './PermissionsStore';
+import { PermissionsStore, aclTypeValues } from './PermissionsStore';
 import { backendSrv } from 'test/mocks/common';
 
 describe('PermissionsStore', () => {
@@ -47,21 +47,6 @@ describe('PermissionsStore', () => {
     expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
   });
 
-  it('should save newly added permissions automatically', () => {
-    expect(store.items.length).toBe(3);
-
-    const newItem = {
-      userId: 10,
-      userLogin: 'tester1',
-      permission: 1,
-    };
-    store.addStoreItem(newItem);
-
-    expect(store.items.length).toBe(4);
-    expect(backendSrv.post.mock.calls.length).toBe(1);
-    expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
-  });
-
   it('should save removed permissions automatically', () => {
     expect(store.items.length).toBe(3);
 
@@ -72,54 +57,48 @@ describe('PermissionsStore', () => {
     expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
   });
 
+  describe('when duplicate team permissions are added', () => {
+    beforeEach(() => {
+      const newItem = {
+        teamId: 10,
+        team: 'tester-team',
+        permission: 1,
+        dashboardId: 1,
+      };
+      store.resetNewType();
+      store.newItem.setTeam(newItem.teamId, newItem.team);
+      store.newItem.setPermission(newItem.permission);
+      store.addStoreItem();
+
+      store.newItem.setTeam(newItem.teamId, newItem.team);
+      store.newItem.setPermission(newItem.permission);
+      store.addStoreItem();
+    });
+
+    it('should return a validation error', () => {
+      expect(store.items.length).toBe(4);
+      expect(store.error).toBe('This permission exists already.');
+      expect(backendSrv.post.mock.calls.length).toBe(1);
+    });
+  });
+
   describe('when duplicate user permissions are added', () => {
     beforeEach(() => {
+      expect(store.items.length).toBe(3);
       const newItem = {
         userId: 10,
         userLogin: 'tester1',
         permission: 1,
         dashboardId: 1,
       };
-      store.addStoreItem(newItem);
-      store.addStoreItem(newItem);
-    });
-
-    it('should return a validation error', () => {
-      expect(store.items.length).toBe(4);
-      expect(store.error).toBe('This permission exists already.');
-      expect(backendSrv.post.mock.calls.length).toBe(1);
-    });
-  });
-
-  describe('when duplicate team permissions are added', () => {
-    beforeEach(() => {
-      const newItem = {
-        teamId: 1,
-        teamName: 'testerteam',
-        permission: 1,
-        dashboardId: 1,
-      };
-      store.addStoreItem(newItem);
-      store.addStoreItem(newItem);
-    });
-
-    it('should return a validation error', () => {
-      expect(store.items.length).toBe(4);
-      expect(store.error).toBe('This permission exists already.');
-      expect(backendSrv.post.mock.calls.length).toBe(1);
-    });
-  });
-
-  describe('when duplicate role permissions are added', () => {
-    beforeEach(() => {
-      const newItem = {
-        team: 'MyTestTeam',
-        teamId: 1,
-        permission: 1,
-        dashboardId: 1,
-      };
-      store.addStoreItem(newItem);
-      store.addStoreItem(newItem);
+      store.setNewType(aclTypeValues.USER.value);
+      store.newItem.setUser(newItem.userId, newItem.userLogin);
+      store.newItem.setPermission(newItem.permission);
+      store.addStoreItem();
+      store.setNewType(aclTypeValues.USER.value);
+      store.newItem.setUser(newItem.userId, newItem.userLogin);
+      store.newItem.setPermission(newItem.permission);
+      store.addStoreItem();
     });
 
     it('should return a validation error', () => {
@@ -131,20 +110,24 @@ describe('PermissionsStore', () => {
 
   describe('when one inherited and one not inherited team permission are added', () => {
     beforeEach(() => {
-      const teamItem = {
+      const overridingItemForChildDashboard = {
         team: 'MyTestTeam',
         dashboardId: 1,
         teamId: 1,
         permission: 2,
       };
-      store.addStoreItem(teamItem);
+
+      store.resetNewType();
+      store.newItem.setTeam(overridingItemForChildDashboard.teamId, overridingItemForChildDashboard.team);
+      store.newItem.setPermission(overridingItemForChildDashboard.permission);
+      store.addStoreItem();
     });
 
-    it('should not throw a validation error', () => {
+    it('should allowing overriding the inherited permission and not throw a validation error', () => {
       expect(store.error).toBe(null);
     });
 
-    it('should add both permissions', () => {
+    it('should add new overriding permission', () => {
       expect(store.items.length).toBe(4);
     });
   });

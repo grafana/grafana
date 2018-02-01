@@ -1,9 +1,6 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
 import PermissionsList from './PermissionsList';
 import { observer } from 'mobx-react';
-import UserPicker, { User } from 'app/core/components/Picker/UserPicker';
-import TeamPicker, { Team } from 'app/core/components/Picker/TeamPicker';
-import { aclTypes } from 'app/stores/PermissionsStore/PermissionsStore';
 import { FolderInfo } from './FolderInfo';
 
 export interface DashboardAcl {
@@ -40,8 +37,6 @@ class Permissions extends Component<IProps, any> {
     this.permissionChanged = this.permissionChanged.bind(this);
     this.typeChanged = this.typeChanged.bind(this);
     this.removeItem = this.removeItem.bind(this);
-    this.userPicked = this.userPicked.bind(this);
-    this.teamPicked = this.teamPicked.bind(this);
     this.loadStore(dashboardId, isFolder, folderInfo && folderInfo.id === 0);
   }
 
@@ -77,28 +72,8 @@ class Permissions extends Component<IProps, any> {
     permissions.setNewType(value);
   }
 
-  userPicked(user: User) {
-    const { permissions, dashboardId } = this.props;
-    return permissions.addStoreItem({
-      userId: user.id,
-      userLogin: user.login,
-      permission: 1,
-      dashboardId: dashboardId,
-    });
-  }
-
-  teamPicked(team: Team) {
-    const { permissions, dashboardId } = this.props;
-    return permissions.addStoreItem({
-      teamId: team.id,
-      team: team.name,
-      permission: 1,
-      dashboardId: dashboardId,
-    });
-  }
-
   render() {
-    const { permissions, folderInfo, backendSrv } = this.props;
+    const { permissions, folderInfo } = this.props;
 
     return (
       <div className="gf-form-group">
@@ -109,50 +84,6 @@ class Permissions extends Component<IProps, any> {
           fetching={permissions.fetching}
           folderInfo={folderInfo}
         />
-        <div className="gf-form-inline">
-          <form name="addPermission" className="gf-form-group">
-            <h6 className="muted">Add Permission For</h6>
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <div className="gf-form-select-wrapper">
-                  <select
-                    className="gf-form-input gf-size-auto"
-                    value={permissions.newType}
-                    onChange={this.typeChanged}
-                  >
-                    {aclTypes.map((option, idx) => {
-                      return (
-                        <option key={idx} value={option.value}>
-                          {option.text}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              </div>
-
-              {permissions.newType === 'User' ? (
-                <div className="gf-form">
-                  <UserPicker backendSrv={backendSrv} handlePicked={this.userPicked} />
-                </div>
-              ) : null}
-
-              {permissions.newType === 'Group' ? (
-                <div className="gf-form">
-                  <TeamPicker backendSrv={backendSrv} handlePicked={this.teamPicked} />
-                </div>
-              ) : null}
-            </div>
-          </form>
-          {permissions.error ? (
-            <div className="gf-form width-17">
-              <span ng-if="ctrl.error" className="text-error p-l-1">
-                <i className="fa fa-warning" />
-                {permissions.error}
-              </span>
-            </div>
-          ) : null}
-        </div>
       </div>
     );
   }

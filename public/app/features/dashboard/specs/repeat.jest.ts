@@ -629,4 +629,23 @@ describe('given dashboard with row and panel repeat', () => {
       region: { text: 'reg2', value: 'reg2' },
     });
   });
+
+  it('should repeat panels when row is expanding', function() {
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    expect(dashboard.panels.length).toBe(6);
+
+    // toggle row
+    dashboard.toggleRow(dashboard.panels[0]);
+    dashboard.toggleRow(dashboard.panels[1]);
+    expect(dashboard.panels.length).toBe(2);
+
+    // change variable
+    dashboard.templating.list[1].current.value = ['se1', 'se2', 'se3'];
+
+    // toggle row back
+    dashboard.toggleRow(dashboard.panels[1]);
+    expect(dashboard.panels.length).toBe(4);
+  });
 });

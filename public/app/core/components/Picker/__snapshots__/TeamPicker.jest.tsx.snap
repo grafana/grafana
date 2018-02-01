@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`UserPicker renders correctly 1`] = `
+exports[`TeamPicker renders correctly 1`] = `
 <div
   className="user-picker"
 >
