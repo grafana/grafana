@@ -99,6 +99,7 @@
   "scripts": {
     "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "watch": "webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
+    "build-tools": "tsc -p tools/",
     "build": "grunt build",
     "test": "grunt test",
     "test:coverage": "grunt test --coverage=true",

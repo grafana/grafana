@@ -10,6 +10,7 @@ awsconfig
 /public_gen
 /public/vendor/npm
 /tmp
+tools/dist
 tools/phantomjs/phantomjs
 tools/phantomjs/phantomjs.exe
 profile.out
