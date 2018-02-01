@@ -57,30 +57,30 @@ describe('PermissionsStore', () => {
     expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
   });
 
-  // describe('when duplicate team permissions are added', () => {
-  //   beforeEach(() => {
-  //     const newItem = {
-  //       teamId: 10,
-  //       team: 'tester-team',
-  //       permission: 1,
-  //       dashboardId: 1,
-  //     };
-  //     store.resetNewType();
-  //     store.newItem.setTeam(newItem.teamId, newItem.team);
-  //     store.newItem.setPermission(newItem.permission);
-  //     store.addStoreItem();
+  describe('when duplicate team permissions are added', () => {
+    beforeEach(() => {
+      const newItem = {
+        teamId: 10,
+        team: 'tester-team',
+        permission: 1,
+        dashboardId: 1,
+      };
+      store.resetNewType();
+      store.newItem.setTeam(newItem.teamId, newItem.team);
+      store.newItem.setPermission(newItem.permission);
+      store.addStoreItem();
 
-  //     store.newItem.setTeam(newItem.teamId, newItem.team);
-  //     store.newItem.setPermission(newItem.permission);
-  //     store.addStoreItem();
-  //   });
+      store.newItem.setTeam(newItem.teamId, newItem.team);
+      store.newItem.setPermission(newItem.permission);
+      store.addStoreItem();
+    });
 
-  //   it('should return a validation error', () => {
-  //     expect(store.items.length).toBe(4);
-  //     expect(store.error).toBe('This permission exists already.');
-  //     expect(backendSrv.post.mock.calls.length).toBe(1);
-  //   });
-  // });
+    it('should return a validation error', () => {
+      expect(store.items.length).toBe(4);
+      expect(store.error).toBe('This permission exists already.');
+      expect(backendSrv.post.mock.calls.length).toBe(1);
+    });
+  });
 
   describe('when duplicate user permissions are added', () => {
     beforeEach(() => {
