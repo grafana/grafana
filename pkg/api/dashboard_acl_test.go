@@ -1,16 +1,13 @@
 package api
 
 import (
-	"path/filepath"
 	"testing"
 
-	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	macaron "gopkg.in/macaron.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -42,6 +39,12 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		// This tests four scenarios:
+		// 1. user is an org admin
+		// 2. user is an org editor AND has been granted admin permission for the dashboard
+		// 3. user is an org viewer AND has been granted edit permission for the dashboard
+		// 4. user is an org editor AND has no permissions for the dashboard
+
 		Convey("When user is org admin", func() {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardsId/acl", m.ROLE_ADMIN, func(sc *scenarioContext) {
 				Convey("Should be able to access ACL", func() {
@@ -59,7 +62,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			})
 		})
 
-		Convey("When user is editor and has admin permission in the ACL", func() {
+		Convey("When user is org editor and has admin permission in the ACL", func() {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 6, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
 
@@ -150,11 +153,12 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			})
 		})
 
-		Convey("When user is editor and has edit permission in the ACL", func() {
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_EDITOR, func(sc *scenarioContext) {
+		Convey("When user is org viewer and has edit permission in the ACL", func() {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_VIEWER, func(sc *scenarioContext) {
 				mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_EDIT})
 
-				Convey("Should not be able to access ACL", func() {
+				// Getting the permissions is an Admin permission
+				Convey("Should not be able to get list of permissions from ACL", func() {
 					sc.handlerFunc = GetDashboardAclList
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -162,7 +166,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/id/1/acl/1", "/api/dashboards/id/:dashboardId/acl/:aclId", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/id/1/acl/1", "/api/dashboards/id/:dashboardId/acl/:aclId", m.ROLE_VIEWER, func(sc *scenarioContext) {
 				mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_EDIT})
 
 				bus.AddHandler("test3", func(cmd *m.RemoveDashboardAclCommand) error {
@@ -178,7 +182,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			})
 		})
 
-		Convey("When user is editor and not in the ACL", func() {
+		Convey("When user is org editor and not in the ACL", func() {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardsId/acl", m.ROLE_EDITOR, func(sc *scenarioContext) {
 
 				Convey("Should not be able to access ACL", func() {
@@ -236,19 +240,7 @@ func postAclScenario(desc string, url string, routePattern string, role m.RoleTy
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := &scenarioContext{
-			url: url,
-		}
-		viewsPath, _ := filepath.Abs("../../public/views")
-
-		sc.m = macaron.New()
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
-
-		sc.m.Use(middleware.GetContextHandler())
-		sc.m.Use(middleware.Sessioner(&session.Options{}))
+		sc := setupScenarioContext(url)
 
 		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
 			sc.context = c

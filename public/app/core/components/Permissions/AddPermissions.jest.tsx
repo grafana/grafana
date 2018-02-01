@@ -6,41 +6,33 @@ import { shallow } from 'enzyme';
 
 describe('AddPermissions', () => {
   let wrapper;
+  let store;
+  let instance;
 
   beforeAll(() => {
     backendSrv.get.mockReturnValue(
       Promise.resolve([
         { id: 2, dashboardId: 1, role: 'Viewer', permission: 1, permissionName: 'View' },
         { id: 3, dashboardId: 1, role: 'Editor', permission: 1, permissionName: 'Edit' },
-        {
-          id: 4,
-          dashboardId: 1,
-          userId: 2,
-          userLogin: 'danlimerick',
-          userEmail: 'dan.limerick@gmail.com',
-          permission: 4,
-          permissionName: 'Admin',
-        },
       ])
     );
 
     backendSrv.post = jest.fn();
 
-    const store = RootStore.create(
+    store = RootStore.create(
       {},
       {
         backendSrv: backendSrv,
       }
     );
 
-    // wrapper = shallow(<Permissions backendSrv={backendSrv} isFolder={true} dashboardId={1} {...store} />);
     wrapper = shallow(<AddPermissions permissions={store.permissions} backendSrv={backendSrv} dashboardId={1} />);
-    //<AddPermissions permissions={permissions} backendSrv={backendSrv} dashboardId={dashboardId} />
-    // return wrapper.instance().loadStore(1, true);
+    instance = wrapper.instance();
+    return store.permissions.load(1, true, false);
   });
 
   describe('when permission for a user is added', () => {
-    it('should save permission to db', async () => {
+    it('should save permission to db', () => {
       const evt = {
         target: {
           value: 'User',
@@ -51,29 +43,48 @@ describe('AddPermissions', () => {
         login: 'user2',
       };
 
-      const instance = wrapper.instance();
       instance.typeChanged(evt);
       instance.userPicked(userItem);
-      wrapper.find('[data-save-permission]').simulate('click');
+
+      wrapper.update();
+
+      expect(wrapper.find('[data-save-permission]').prop('disabled')).toBe(false);
+
+      wrapper.find('form').simulate('submit', { preventDefault() {} });
+
       expect(backendSrv.post.mock.calls.length).toBe(1);
       expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
     });
   });
 
-  //   describe('when permission for team is added', () => {
-  //     it('should save permission to db', () => {
-  //       const teamItem = {
-  //         id: 2,
-  //         name: 'ug1',
-  //       };
+  describe('when permission for team is added', () => {
+    it('should save permission to db', () => {
+      const evt = {
+        target: {
+          value: 'Group',
+        },
+      };
 
-  //       wrapper
-  //         .instance()
-  //         .teamPicked(teamItem)
-  //         .then(() => {
-  //           expect(backendSrv.post.mock.calls.length).toBe(1);
-  //           expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
-  //         });
-  //     });
-  //   });
+      const teamItem = {
+        id: 2,
+        name: 'ug1',
+      };
+
+      instance.typeChanged(evt);
+      instance.teamPicked(teamItem);
+
+      wrapper.update();
+
+      expect(wrapper.find('[data-save-permission]').prop('disabled')).toBe(false);
+
+      wrapper.find('form').simulate('submit', { preventDefault() {} });
+
+      expect(backendSrv.post.mock.calls.length).toBe(1);
+      expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
+    });
+  });
+
+  afterEach(() => {
+    backendSrv.post.mockClear();
+  });
 });

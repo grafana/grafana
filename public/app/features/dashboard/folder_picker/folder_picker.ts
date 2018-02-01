@@ -115,6 +115,9 @@ export class FolderPickerCtrl {
     if (this.initialFolderId && this.initialFolderId > 0) {
       this.getOptions('').then(result => {
         this.folder = _.find(result, { value: this.initialFolderId });
+        if (!this.folder) {
+          this.folder = { text: this.initialTitle, value: this.initialFolderId };
+        }
         this.onFolderLoad();
       });
     } else {

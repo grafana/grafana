@@ -46,8 +46,7 @@ class AddPermissions extends Component<IProps, any> {
       permissions.newItem.setUser(null, null);
       return;
     }
-    permissions.newItem.setUser(user.id, user.login);
-    // return permissions.addStoreItem({ userId: user.id, userLogin: user.login, permission: 1 });
+    return permissions.newItem.setUser(user.id, user.login);
   }
 
   teamPicked(team: Team) {
@@ -56,17 +55,17 @@ class AddPermissions extends Component<IProps, any> {
       permissions.newItem.setTeam(null, null);
       return;
     }
-    permissions.newItem.setTeam(team.id, team.name);
+    return permissions.newItem.setTeam(team.id, team.name);
   }
 
   permissionPicked(permission: OptionWithDescription) {
     const { permissions } = this.props;
-    permissions.newItem.setPermission(permission.value);
+    return permissions.newItem.setPermission(permission.value);
   }
 
   resetNewType() {
     const { permissions } = this.props;
-    permissions.resetNewType();
+    return permissions.resetNewType();
   }
 
   handleSubmit(evt) {
@@ -79,6 +78,8 @@ class AddPermissions extends Component<IProps, any> {
     const { permissions, backendSrv } = this.props;
     const newItem = permissions.newItem;
     const pickerClassName = 'width-20';
+
+    const isValid = newItem.isValid();
 
     return (
       <div className="gf-form-inline cta-form">
@@ -135,7 +136,7 @@ class AddPermissions extends Component<IProps, any> {
             </div>
 
             <div className="gf-form">
-              <button data-save-permission className="btn btn-success" type="submit" disabled={!newItem.isValid()}>
+              <button data-save-permission className="btn btn-success" type="submit" disabled={!isValid}>
                 Save
               </button>
             </div>

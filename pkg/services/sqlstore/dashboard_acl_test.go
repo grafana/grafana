@@ -232,5 +232,23 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 			})
 		})
+
+		Convey("Given a root folder", func() {
+			var rootFolderId int64 = 0
+
+			Convey("When reading dashboard acl should return default permissions", func() {
+				query := m.GetDashboardAclInfoListQuery{DashboardId: rootFolderId, OrgId: 1}
+
+				err := GetDashboardAclInfoList(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 2)
+				defaultPermissionsId := -1
+				So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
+				So(*query.Result[0].Role, ShouldEqual, m.ROLE_VIEWER)
+				So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
+				So(*query.Result[1].Role, ShouldEqual, m.ROLE_EDITOR)
+			})
+		})
 	})
 }

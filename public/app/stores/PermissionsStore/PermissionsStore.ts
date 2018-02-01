@@ -1,4 +1,4 @@
-﻿import { types, getEnv, flow } from 'mobx-state-tree';
+import { types, getEnv, flow } from 'mobx-state-tree';
 import { PermissionsStoreItem } from './PermissionsStoreItem';
 
 const duplicateError = 'This permission exists already.';
@@ -42,7 +42,7 @@ export const NewPermissionsItem = types
         case aclTypeValues.GROUP.value:
           return self.teamId && self.team;
         case aclTypeValues.USER.value:
-          return self.userId && self.userLogin;
+          return !!self.userId && !!self.userLogin;
         case aclTypeValues.VIEWER.value:
         case aclTypeValues.EDITOR.value:
           return true;
@@ -80,13 +80,13 @@ export const PermissionsStore = types
     newType: types.optional(types.string, defaultNewType),
     newItem: types.maybe(NewPermissionsItem),
     isAddPermissionsVisible: types.optional(types.boolean, false),
+    isInRoot: types.maybe(types.boolean),
   })
   .views(self => ({
     isValid: item => {
       const dupe = self.items.find(it => {
         return isDuplicate(it, item);
       });
-
       if (dupe) {
         self.error = duplicateError;
         return false;
@@ -102,22 +102,25 @@ export const PermissionsStore = types
     };
 
     return {
-      load: flow(function* load(dashboardId: number, isFolder: boolean) {
+      load: flow(function* load(dashboardId: number, isFolder: boolean, isInRoot: boolean) {
         const backendSrv = getEnv(self).backendSrv;
         self.fetching = true;
         self.isFolder = isFolder;
+        self.isInRoot = isInRoot;
         self.dashboardId = dashboardId;
         const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`);
-        const items = prepareServerResponse(res, dashboardId, isFolder);
+        const items = prepareServerResponse(res, dashboardId, isFolder, isInRoot);
         self.items = items;
         self.originalItems = items;
         self.fetching = false;
+        self.error = null;
       }),
       addStoreItem: flow(function* addStoreItem() {
         self.error = null;
         let item = {
           type: self.newItem.type,
           permission: self.newItem.permission,
+          dashboardId: self.dashboardId,
           team: undefined,
           teamId: undefined,
           userLogin: undefined,
@@ -142,10 +145,10 @@ export const PermissionsStore = types
         }
 
         if (!self.isValid(item)) {
-          throw Error('New item not valid');
+          return undefined;
         }
 
-        self.items.push(prepareItem(item, self.dashboardId, self.isFolder));
+        self.items.push(prepareItem(item, self.dashboardId, self.isFolder, self.isInRoot));
         resetNewType();
         return updateItems(self);
       }),
@@ -205,37 +208,34 @@ const updateItems = self => {
       items: updated,
     });
   } catch (error) {
-    console.error(error);
+    self.error = error;
   }
 
   return res;
 };
 
-const prepareServerResponse = (response, dashboardId: number, isFolder: boolean) => {
+const prepareServerResponse = (response, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
   return response.map(item => {
-    return prepareItem(item, dashboardId, isFolder);
+    return prepareItem(item, dashboardId, isFolder, isInRoot);
   });
 };
 
-const prepareItem = (item, dashboardId: number, isFolder: boolean) => {
-  item.inherited = !isFolder && item.dashboardId > 0 && dashboardId !== item.dashboardId;
+const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
+  item.inherited = !isFolder && !isInRoot && dashboardId !== item.dashboardId;
+
   item.sortRank = 0;
   if (item.userId > 0) {
     item.icon = 'fa fa-fw fa-user';
-    // TODO: Check what sce.trustAsHtml did
-    //   item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
     item.nameHtml = item.userLogin;
     item.sortName = item.userLogin;
     item.sortRank = 10;
   } else if (item.teamId > 0) {
     item.icon = 'fa fa-fw fa-users';
-    //   item.nameHtml = this.$sce.trustAsHtml(item.team);
     item.nameHtml = item.team;
     item.sortName = item.team;
     item.sortRank = 20;
   } else if (item.role) {
     item.icon = 'fa fa-fw fa-street-view';
-    //   item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
     item.nameHtml = `Everyone with <span class="query-keyword">${item.role}</span> Role`;
     item.sortName = item.role;
     item.sortRank = 30;

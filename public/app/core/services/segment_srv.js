@@ -89,7 +89,7 @@ function (angular, _, coreModule) {
         if (addTemplateVars) {
           _.each(templateSrv.variables, function(variable) {
             if (variableTypeFilter === void 0 || variableTypeFilter === variable.type) {
-              segments.unshift(self.newSegment({ type: 'template', value: '$' + variable.name, expandable: true }));
+              segments.unshift(self.newSegment({ type: 'value', value: '$' + variable.name, expandable: true }));
             }
           });
         }
