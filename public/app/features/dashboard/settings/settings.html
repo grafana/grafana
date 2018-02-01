@@ -95,6 +95,16 @@
 	</div>
 </div>
 
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'permissions'" >
+  <dashboard-permissions ng-if="ctrl.dashboard"
+    dashboardId="ctrl.dashboard.id"
+    backendSrv="ctrl.backendSrv"
+    folderTitle="ctrl.dashboard.meta.folderTitle"
+    folderSlug="ctrl.dashboard.meta.folderSlug"
+    folderId="ctrl.dashboard.meta.folderId"
+  />
+</div>
+
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === '404'">
   <h3 class="dashboard-settings__header">Settings view not found</h3>
 

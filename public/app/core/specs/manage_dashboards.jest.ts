@@ -49,7 +49,7 @@ describe('ManageDashboards', () => {
         },
       ];
       ctrl = createCtrlWithStubs(response);
-      return ctrl.getDashboards();
+      return ctrl.refreshList();
     });
 
     it('should set checked to false on all sections and children', () => {
@@ -88,7 +88,7 @@ describe('ManageDashboards', () => {
       ];
       ctrl = createCtrlWithStubs(response);
       ctrl.folderId = 410;
-      return ctrl.getDashboards();
+      return ctrl.refreshList();
     });
 
     it('should set hide header to true on section', () => {
@@ -137,7 +137,7 @@ describe('ManageDashboards', () => {
         ctrl.canMove = true;
         ctrl.canDelete = true;
         ctrl.selectAllChecked = true;
-        return ctrl.getDashboards();
+        return ctrl.refreshList();
       });
 
       it('should set checked to false on all sections and children', () => {
@@ -567,5 +567,5 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
     },
   };
 
-  return new ManageDashboardsCtrl({}, { getNav: () => {} }, <SearchSrv>searchSrvStub);
+  return new ManageDashboardsCtrl({}, { getNav: () => {} }, <SearchSrv>searchSrvStub, { isEditor: true });
 }

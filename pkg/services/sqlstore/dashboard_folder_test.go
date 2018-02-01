@@ -215,5 +215,135 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 			})
 		})
 
+		Convey("Given two dashboard folders", func() {
+
+			folder1 := insertTestDashboard("1 test dash folder", 1, 0, true, "prod")
+			folder2 := insertTestDashboard("2 test dash folder", 1, 0, true, "prod")
+
+			adminUser := createUser("admin", "Admin", true)
+			editorUser := createUser("editor", "Editor", false)
+			viewerUser := createUser("viewer", "Viewer", false)
+
+			Convey("Admin users", func() {
+				Convey("Should have write access to all dashboard folders", func() {
+					query := m.GetFoldersForSignedInUserQuery{
+						OrgId:        1,
+						SignedInUser: &m.SignedInUser{UserId: adminUser.Id, OrgRole: m.ROLE_ADMIN},
+					}
+
+					err := GetFoldersForSignedInUser(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 2)
+					So(query.Result[0].Id, ShouldEqual, folder1.Id)
+					So(query.Result[1].Id, ShouldEqual, folder2.Id)
+				})
+
+				Convey("should have write access to all folders and dashboards", func() {
+					query := m.GetDashboardPermissionsForUserQuery{
+						DashboardIds: []int64{folder1.Id, folder2.Id},
+						OrgId:        1,
+						UserId:       adminUser.Id,
+						OrgRole:      m.ROLE_ADMIN,
+					}
+
+					err := GetDashboardPermissionsForUser(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 2)
+					So(query.Result[0].DashboardId, ShouldEqual, folder1.Id)
+					So(query.Result[0].Permission, ShouldEqual, m.PERMISSION_ADMIN)
+					So(query.Result[1].DashboardId, ShouldEqual, folder2.Id)
+					So(query.Result[1].Permission, ShouldEqual, m.PERMISSION_ADMIN)
+				})
+			})
+
+			Convey("Editor users", func() {
+				query := m.GetFoldersForSignedInUserQuery{
+					OrgId:        1,
+					SignedInUser: &m.SignedInUser{UserId: editorUser.Id, OrgRole: m.ROLE_EDITOR},
+				}
+
+				Convey("Should have write access to all dashboard folders with default ACL", func() {
+					err := GetFoldersForSignedInUser(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 2)
+					So(query.Result[0].Id, ShouldEqual, folder1.Id)
+					So(query.Result[1].Id, ShouldEqual, folder2.Id)
+				})
+
+				Convey("should have edit access to folders with default ACL", func() {
+					query := m.GetDashboardPermissionsForUserQuery{
+						DashboardIds: []int64{folder1.Id, folder2.Id},
+						OrgId:        1,
+						UserId:       editorUser.Id,
+						OrgRole:      m.ROLE_EDITOR,
+					}
+
+					err := GetDashboardPermissionsForUser(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 2)
+					So(query.Result[0].DashboardId, ShouldEqual, folder1.Id)
+					So(query.Result[0].Permission, ShouldEqual, m.PERMISSION_EDIT)
+					So(query.Result[1].DashboardId, ShouldEqual, folder2.Id)
+					So(query.Result[1].Permission, ShouldEqual, m.PERMISSION_EDIT)
+				})
+
+				Convey("Should have write access to one dashboard folder if default role changed to view for one folder", func() {
+					updateTestDashboardWithAcl(folder1.Id, editorUser.Id, m.PERMISSION_VIEW)
+
+					err := GetFoldersForSignedInUser(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].Id, ShouldEqual, folder2.Id)
+				})
+
+			})
+
+			Convey("Viewer users", func() {
+				query := m.GetFoldersForSignedInUserQuery{
+					OrgId:        1,
+					SignedInUser: &m.SignedInUser{UserId: viewerUser.Id, OrgRole: m.ROLE_VIEWER},
+				}
+
+				Convey("Should have no write access to any dashboard folders with default ACL", func() {
+					err := GetFoldersForSignedInUser(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 0)
+				})
+
+				Convey("should have view access to folders with default ACL", func() {
+					query := m.GetDashboardPermissionsForUserQuery{
+						DashboardIds: []int64{folder1.Id, folder2.Id},
+						OrgId:        1,
+						UserId:       viewerUser.Id,
+						OrgRole:      m.ROLE_VIEWER,
+					}
+
+					err := GetDashboardPermissionsForUser(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 2)
+					So(query.Result[0].DashboardId, ShouldEqual, folder1.Id)
+					So(query.Result[0].Permission, ShouldEqual, m.PERMISSION_VIEW)
+					So(query.Result[1].DashboardId, ShouldEqual, folder2.Id)
+					So(query.Result[1].Permission, ShouldEqual, m.PERMISSION_VIEW)
+				})
+
+				Convey("Should be able to get one dashboard folder if default role changed to edit for one folder", func() {
+					updateTestDashboardWithAcl(folder1.Id, viewerUser.Id, m.PERMISSION_EDIT)
+
+					err := GetFoldersForSignedInUser(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].Id, ShouldEqual, folder1.Id)
+				})
+			})
+		})
 	})
 }

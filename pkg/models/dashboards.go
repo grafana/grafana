@@ -233,6 +233,14 @@ type GetDashboardsQuery struct {
 	Result       []*Dashboard
 }
 
+type GetDashboardPermissionsForUserQuery struct {
+	DashboardIds []int64
+	OrgId        int64
+	UserId       int64
+	OrgRole      RoleType
+	Result       []*DashboardPermissionForUser
+}
+
 type GetDashboardsByPluginIdQuery struct {
 	OrgId    int64
 	PluginId string
@@ -242,4 +250,22 @@ type GetDashboardsByPluginIdQuery struct {
 type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
+}
+
+type GetFoldersForSignedInUserQuery struct {
+	OrgId        int64
+	SignedInUser *SignedInUser
+	Title        string
+	Result       []*DashboardFolder
+}
+
+type DashboardFolder struct {
+	Id    int64  `json:"id"`
+	Title string `json:"title"`
+}
+
+type DashboardPermissionForUser struct {
+	DashboardId    int64          `json:"dashboardId"`
+	Permission     PermissionType `json:"permission"`
+	PermissionName string         `json:"permissionName"`
 }

@@ -38,7 +38,7 @@ export class FolderSettingsCtrl {
     return this.backendSrv
       .saveDashboard(this.dashboard, { overwrite: false })
       .then(result => {
-        var folderUrl = this.folderPageLoader.createFolderUrl(this.folderId, this.meta.type, result.slug);
+        var folderUrl = this.folderPageLoader.createFolderUrl(this.folderId, result.slug);
         if (folderUrl !== this.$location.path()) {
           this.$location.url(folderUrl + '/settings');
         }

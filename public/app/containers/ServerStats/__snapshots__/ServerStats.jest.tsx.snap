@@ -41,9 +41,9 @@ exports[`ServerStats Should render table with stats 1`] = `
             />
             <select
               className="gf-select-nav gf-form-input"
-              defaultValue="/url/server-stats"
               id="page-header-select-nav"
               onChange={[Function]}
+              value="/url/server-stats"
             >
               <option
                 value="/url/server-stats"

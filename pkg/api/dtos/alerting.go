@@ -20,6 +20,7 @@ type AlertRule struct {
 	EvalData       *simplejson.Json `json:"evalData"`
 	ExecutionError string           `json:"executionError"`
 	DashbboardUri  string           `json:"dashboardUri"`
+	CanEdit        bool             `json:"canEdit"`
 }
 
 type AlertNotification struct {
