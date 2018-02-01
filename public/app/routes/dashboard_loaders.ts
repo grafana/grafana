@@ -29,6 +29,10 @@ export class LoadDashboardCtrl {
     }
 
     dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
+      if ($location.path() !== result.meta.url) {
+        $location.path(result.meta.url).replace();
+      }
+
       if ($routeParams.keepRows) {
         result.meta.keepRows = true;
       }

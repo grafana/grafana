@@ -141,7 +141,37 @@ func getDashboardHelper(orgId int64, slug string, id int64, uid string) (*m.Dash
 }
 
 func DeleteDashboard(c *middleware.Context) Response {
+	query := m.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to retrieve dashboards by slug", err)
+	}
+
+	if len(query.Result) > 1 {
+		return Json(412, util.DynMap{"status": "multiple-slugs-exists", "message": m.ErrDashboardsWithSameSlugExists.Error()})
+	}
+
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, "")
+	if rsp != nil {
+		return rsp
+	}
+
+	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
+	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to delete dashboard", err)
+	}
+
+	var resp = map[string]interface{}{"title": dash.Title}
+	return Json(200, resp)
+}
+
+func DeleteDashboardByUid(c *middleware.Context) Response {
+	dash, rsp := getDashboardHelper(c.OrgId, "", 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -440,6 +470,7 @@ func RestoreDashboardVersion(c *middleware.Context, apiCmd dtos.RestoreDashboard
 	saveCmd.UserId = c.UserId
 	saveCmd.Dashboard = version.Data
 	saveCmd.Dashboard.Set("version", dash.Version)
+	saveCmd.Dashboard.Set("uid", dash.Uid)
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
 
 	return PostDashboard(c, saveCmd)

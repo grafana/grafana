@@ -2,8 +2,8 @@ import { types, getEnv, flow } from 'mobx-state-tree';
 
 export const Folder = types.model('Folder', {
   id: types.identifier(types.number),
-  slug: types.string,
   title: types.string,
+  url: types.string,
   canSave: types.boolean,
   hasChanged: types.boolean,
 });
@@ -13,13 +13,13 @@ export const FolderStore = types
     folder: types.maybe(Folder),
   })
   .actions(self => ({
-    load: flow(function* load(slug: string) {
+    load: flow(function* load(uid: string) {
       const backendSrv = getEnv(self).backendSrv;
-      const res = yield backendSrv.getDashboard('db', slug);
+      const res = yield backendSrv.getDashboardByUid(uid);
       self.folder = Folder.create({
         id: res.dashboard.id,
         title: res.dashboard.title,
-        slug: res.meta.slug,
+        url: res.meta.url,
         canSave: res.meta.canSave,
         hasChanged: false,
       });
@@ -35,14 +35,15 @@ export const FolderStore = types
       const backendSrv = getEnv(self).backendSrv;
       dashboard.title = self.folder.title.trim();
 
-      const res = yield backendSrv.saveDashboard(dashboard, options);
-      self.folder.slug = res.slug;
-      return `dashboards/folder/${self.folder.id}/${res.slug}/settings`;
+      const res = yield backendSrv.saveFolder(dashboard, options);
+      self.folder.url = res.url;
+
+      return `${self.folder.url}/settings`;
     }),
 
     deleteFolder: flow(function* deleteFolder() {
       const backendSrv = getEnv(self).backendSrv;
 
-      return backendSrv.deleteDashboard(self.folder.slug);
+      return backendSrv.deleteDashboard(self.folder.url);
     }),
   }));

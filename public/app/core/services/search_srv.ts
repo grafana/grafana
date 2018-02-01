@@ -128,12 +128,12 @@ export class SearchSrv {
       if (hit.type === 'dash-folder') {
         sections[hit.id] = {
           id: hit.id,
+          uid: hit.uid,
           title: hit.title,
           expanded: false,
           items: [],
           toggle: this.toggleFolder.bind(this),
-          url: `dashboards/folder/${hit.id}/${hit.slug}`,
-          slug: hit.slug,
+          url: hit.url,
           icon: 'fa fa-folder',
           score: _.keys(sections).length,
         };
@@ -150,9 +150,9 @@ export class SearchSrv {
         if (hit.folderId) {
           section = {
             id: hit.folderId,
+            uid: hit.uid,
             title: hit.folderTitle,
-            url: `dashboards/folder/${hit.folderId}/${hit.folderSlug}`,
-            slug: hit.slug,
+            url: hit.url,
             items: [],
             icon: 'fa fa-folder-open',
             toggle: this.toggleFolder.bind(this),

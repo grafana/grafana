@@ -81,19 +81,19 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'CreateFolderCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/dashboards/folder/:folderId/:slug/permissions', {
+    .when('/dashboards/f/:uid/:slug/permissions', {
       template: '<react-container />',
       resolve: {
         component: () => FolderPermissions,
       },
     })
-    .when('/dashboards/folder/:folderId/:slug/settings', {
+    .when('/dashboards/f/:uid/:slug/settings', {
       template: '<react-container />',
       resolve: {
         component: () => FolderSettings,
       },
     })
-    .when('/dashboards/folder/:folderId/:slug', {
+    .when('/dashboards/f/:uid/:slug', {
       templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
       controller: 'FolderDashboardsCtrl',
       controllerAs: 'ctrl',

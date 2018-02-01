@@ -314,10 +314,10 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 		if !exists {
 			hit = &search.Hit{
 				Id:          item.Id,
+				Uid:         item.Uid,
 				Title:       item.Title,
 				Uri:         "db/" + item.Slug,
 				Url:         m.GetDashboardFolderUrl(item.IsFolder, item.Uid, item.Slug),
-				Slug:        item.Slug,
 				Type:        getHitType(item),
 				FolderId:    item.FolderId,
 				FolderTitle: item.FolderTitle,
@@ -548,5 +548,16 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 	}
 
 	query.Result = slug.Slug
+	return nil
+}
+
+func GetDashboardsBySlug(query *m.GetDashboardsBySlugQuery) error {
+	var dashboards = make([]*m.Dashboard, 0)
+
+	if err := x.Where("org_id=? AND slug=?", query.OrgId, query.Slug).Find(&dashboards); err != nil {
+		return err
+	}
+
+	query.Result = dashboards
 	return nil
 }
