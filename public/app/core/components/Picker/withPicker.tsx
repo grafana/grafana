@@ -3,6 +3,8 @@
 export interface IProps {
   backendSrv: any;
   handlePicked: (data) => void;
+  value?: string;
+  className?: string;
 }
 
 export default function withPicker(WrappedComponent) {
