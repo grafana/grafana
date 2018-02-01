@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 export default class ResponseParser {
@@ -9,7 +7,7 @@ export default class ResponseParser {
     var data = [];
 
     if (!res.data.results) {
-      return {data: data};
+      return { data: data };
     }
 
     for (let key in res.data.results) {
@@ -36,11 +34,13 @@ export default class ResponseParser {
       }
     }
 
-    return {data: data};
+    return { data: data };
   }
 
   parseMetricFindQueryResult(refId, results) {
-    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) { return []; }
+    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
+      return [];
+    }
 
     const columns = results.data.results[refId].tables[0].columns;
     const rows = results.data.results[refId].tables[0].rows;
@@ -59,7 +59,10 @@ export default class ResponseParser {
 
     for (let i = 0; i < rows.length; i++) {
       if (!this.containsKey(res, rows[i][textColIndex])) {
-        res.push({text: rows[i][textColIndex], value: rows[i][valueColIndex]});
+        res.push({
+          text: rows[i][textColIndex],
+          value: rows[i][valueColIndex],
+        });
       }
     }
 
@@ -72,14 +75,14 @@ export default class ResponseParser {
     for (let i = 0; i < rows.length; i++) {
       for (let j = 0; j < rows[i].length; j++) {
         const value = rows[i][j];
-        if ( res.indexOf( value ) === -1 ) {
+        if (res.indexOf(value) === -1) {
           res.push(value);
         }
       }
     }
 
     return _.map(res, value => {
-      return { text: value};
+      return { text: value };
     });
   }
 
@@ -121,7 +124,9 @@ export default class ResponseParser {
     }
 
     if (timeColumnIndex === -1) {
-      return this.$q.reject({message: 'Missing mandatory time column in annotation query.'});
+      return this.$q.reject({
+        message: 'Missing mandatory time column in annotation query.',
+      });
     }
 
     const list = [];
@@ -132,7 +137,7 @@ export default class ResponseParser {
         time: Math.floor(row[timeColumnIndex]) * 1000,
         title: row[titleColumnIndex],
         text: row[textColumnIndex],
-        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : []
+        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });
     }
 

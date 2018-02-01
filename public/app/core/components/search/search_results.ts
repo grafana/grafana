@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
+import appEvents from 'app/core/app_events';
 
 export class SearchResultsCtrl {
   results: any;
@@ -61,9 +62,15 @@ export class SearchResultsCtrl {
     }
   }
 
+  onItemClick(item) {
+    if (this.$location.path().indexOf(item.url) > -1) {
+      appEvents.emit('hide-dash-search');
+    }
+  }
+
   selectTag(tag, evt) {
     if (this.onTagSelected) {
-      this.onTagSelected({$tag: tag});
+      this.onTagSelected({ $tag: tag });
     }
 
     if (evt) {
@@ -85,7 +92,7 @@ export function searchResultsDirective() {
       results: '=',
       onSelectionChanged: '&',
       onTagSelected: '&',
-      onFolderExpanding: '&'
+      onFolderExpanding: '&',
     },
   };
 }

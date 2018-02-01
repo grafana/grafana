@@ -1,7 +1,6 @@
 $gf-form-margin: 3px;
 $input-border: 1px solid $input-border-color;
 
-
 .gf-form {
   margin-bottom: $gf-form-margin;
   display: flex;
@@ -34,6 +33,7 @@ $input-border: 1px solid $input-border-color;
 
 .gf-form--has-input-icon {
   position: relative;
+  margin-right: $gf-form-margin;
 
   .gf-form-input-icon {
     position: absolute;
@@ -48,8 +48,13 @@ $input-border: 1px solid $input-border-color;
     padding-left: 35px;
 
     &:focus + .gf-form-input-icon {
-      color: $text-muted
+      color: $text-muted;
     }
+  }
+
+  .Select--multi .Select-multi-value-wrapper,
+  .Select-placeholder {
+    padding-left: 30px;
   }
 }
 
@@ -83,7 +88,8 @@ $input-border: 1px solid $input-border-color;
 
 .gf-form-button-row {
   padding-top: $spacer * 1.5;
-  a, button {
+  a,
+  button {
     margin-right: $spacer;
   }
 }
@@ -103,11 +109,15 @@ $input-border: 1px solid $input-border-color;
 
   &--grow {
     flex-grow: 1;
-    min-height: 2.60rem;
+    min-height: 2.6rem;
   }
 
   &--error {
     color: $critical;
+  }
+
+  &:disabled {
+    color: $text-color-weak;
   }
 }
 
@@ -198,7 +208,9 @@ $input-border: 1px solid $input-border-color;
     cursor: $cursor-disabled;
   }
 
-  &.gf-size-auto { width: auto; }
+  &.gf-size-auto {
+    width: auto;
+  }
 
   &--dropdown {
     padding-right: $input-padding-x*2;
@@ -240,13 +252,32 @@ $input-border: 1px solid $input-border-color;
 .gf-form-select-wrapper {
   margin-right: $gf-form-margin;
   position: relative;
+  background-color: $input-bg;
+
+  .gf-form-select-icon {
+    position: absolute;
+    z-index: 1;
+    left: $input-padding-x;
+    top: 50%;
+    margin-top: -7px;
+
+    & + .gf-form-input {
+      position: relative;
+      z-index: 2;
+      padding-left: $input-padding-x*3;
+      background-color: transparent;
+
+      option {
+        // Firefox
+        color: $black;
+      }
+    }
+  }
 
   select.gf-form-input {
-    text-indent: .01px;
+    text-indent: 0.01px;
     text-overflow: '';
-    padding-right: $input-padding-x*4;
-    -webkit-appearance: none;
-    -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
+    padding-right: $input-padding-x*3;
     appearance: none;
 
     &:-moz-focusring {
@@ -294,7 +325,7 @@ $input-border: 1px solid $input-border-color;
 }
 
 .natural-language-input {
-  &input[type="number"] {
+  &input[type='number'] {
     font-size: $font-size-base;
     line-height: $input-line-height;
     margin: -6px -5px 0 5px;
@@ -347,7 +378,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   &--header {
-    margin-bottom: $gf-form-margin
+    margin-bottom: $gf-form-margin;
   }
 }
 

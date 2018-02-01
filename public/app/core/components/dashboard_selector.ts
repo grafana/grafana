@@ -9,15 +9,14 @@ export class DashboardSelectorCtrl {
   options: any;
 
   /** @ngInject */
-  constructor(private backendSrv) {
-  }
+  constructor(private backendSrv) {}
 
   $onInit() {
-    this.options = [{value: 0, text: 'Default'}];
+    this.options = [{ value: 0, text: 'Default' }];
 
-    return this.backendSrv.search({starred: true}).then(res => {
+    return this.backendSrv.search({ starred: true }).then(res => {
       res.forEach(dash => {
-        this.options.push({value: dash.id, text: dash.title});
+        this.options.push({ value: dash.id, text: dash.title });
       });
     });
   }
@@ -31,8 +30,8 @@ export function dashboardSelector() {
     controllerAs: 'ctrl',
     template: template,
     scope: {
-      model: '='
-    }
+      model: '=',
+    },
   };
 }
 

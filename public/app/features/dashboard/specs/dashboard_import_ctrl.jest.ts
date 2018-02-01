@@ -1,4 +1,4 @@
-import {DashboardImportCtrl} from '../dashboard_import_ctrl';
+import { DashboardImportCtrl } from '../dashboard_import_ctrl';
 import config from '../../../core/config';
 
 describe('DashboardImportCtrl', function() {
@@ -6,18 +6,23 @@ describe('DashboardImportCtrl', function() {
 
   let navModelSrv;
   let backendSrv;
+  let validationSrv;
 
   beforeEach(() => {
     navModelSrv = {
-      getNav: () => {}
+      getNav: () => {},
     };
 
     backendSrv = {
       search: jest.fn().mockReturnValue(Promise.resolve([])),
-      get: jest.fn()
+      get: jest.fn(),
     };
 
-    ctx.ctrl = new DashboardImportCtrl(backendSrv, navModelSrv, {}, {}, {});
+    validationSrv = {
+      validateNewDashboardOrFolderName: jest.fn().mockReturnValue(Promise.resolve()),
+    };
+
+    ctx.ctrl = new DashboardImportCtrl(backendSrv, validationSrv, navModelSrv, {}, {}, {});
   });
 
   describe('when uploading json', function() {
@@ -25,13 +30,18 @@ describe('DashboardImportCtrl', function() {
       config.datasources = {
         ds: {
           type: 'test-db',
-        }
+        },
       };
 
       ctx.ctrl.onUpload({
-        '__inputs': [
-          {name: 'ds', pluginId: 'test-db', type: 'datasource', pluginName: 'Test DB'}
-        ]
+        __inputs: [
+          {
+            name: 'ds',
+            pluginId: 'test-db',
+            type: 'datasource',
+            pluginName: 'Test DB',
+          },
+        ],
       });
     });
 
@@ -52,7 +62,7 @@ describe('DashboardImportCtrl', function() {
       // setup api mock
       backendSrv.get = jest.fn(() => {
         return Promise.resolve({
-          json: {}
+          json: {},
         });
       });
       return ctx.ctrl.checkGnetDashboard();
@@ -69,7 +79,7 @@ describe('DashboardImportCtrl', function() {
       // setup api mock
       backendSrv.get = jest.fn(() => {
         return Promise.resolve({
-          json: {}
+          json: {},
         });
       });
       return ctx.ctrl.checkGnetDashboard();
@@ -79,5 +89,4 @@ describe('DashboardImportCtrl', function() {
       expect(backendSrv.get.mock.calls[0][0]).toBe('api/gnet/dashboards/2342');
     });
   });
-
 });

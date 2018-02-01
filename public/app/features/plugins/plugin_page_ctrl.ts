@@ -22,7 +22,7 @@ export class AppPageCtrl {
 
   initPage(app) {
     this.appModel = app;
-    this.page = _.find(app.includes, {slug: this.$routeParams.slug});
+    this.page = _.find(app.includes, { slug: this.$routeParams.slug });
 
     pluginInfoCache[this.pluginId] = app;
 
@@ -41,11 +41,8 @@ export class AppPageCtrl {
         subTitle: app.name,
         url: '',
         text: '',
-        breadcrumbs: [
-          { title: app.name, url: pluginNav.main.url },
-          { title: this.page.name },
-        ],
-      }
+        breadcrumbs: [{ title: app.name, url: pluginNav.main.url }, { title: this.page.name }],
+      },
     };
   }
 
@@ -57,4 +54,3 @@ export class AppPageCtrl {
 }
 
 angular.module('grafana.controllers').controller('AppPageCtrl', AppPageCtrl);
-

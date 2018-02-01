@@ -1,4 +1,3 @@
-
 .navbar {
   position: relative;
   padding-left: 40px;
@@ -19,7 +18,6 @@
   border-bottom: $navbarBorder;
 }
 
-
 .dashboard-page--settings-open {
   .navbar {
     @include navbar-alt-look();
@@ -27,6 +25,7 @@
 
   .navbar-button--add-panel,
   .navbar-button--star,
+  .navbar-button--save,
   .navbar-button--share,
   .navbar-button--settings,
   .navbar-page-btn .fa-caret-down,
@@ -40,14 +39,12 @@
 }
 
 .panel-in-fullscreen {
- .navbar {
+  .navbar {
     @include navbar-alt-look();
   }
 
   .navbar-button--add-panel,
   .navbar-button--star,
-  .navbar-button--save,
-  .navbar-button--settings,
   .navbar-page-btn .fa-caret-down {
     display: none;
   }
@@ -168,4 +165,3 @@
     }
   }
 }
-

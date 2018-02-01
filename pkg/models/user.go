@@ -162,12 +162,23 @@ type SignedInUser struct {
 	ApiKeyId       int64
 	OrgCount       int
 	IsGrafanaAdmin bool
+	IsAnonymous    bool
 	HelpFlags1     HelpFlags1
 	LastSeenAt     time.Time
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
 	return u.UserId > 0 && time.Since(u.LastSeenAt) > time.Minute*5
+}
+
+func (u *SignedInUser) NameOrFallback() string {
+	if u.Name != "" {
+		return u.Name
+	} else if u.Login != "" {
+		return u.Login
+	} else {
+		return u.Email
+	}
 }
 
 type UpdateUserLastSeenAtCommand struct {

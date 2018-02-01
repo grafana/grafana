@@ -1,4 +1,3 @@
-
 .page-header-canvas {
   background: $page-header-bg;
   box-shadow: $page-header-shadow;
@@ -33,10 +32,8 @@
 }
 
 .page-header__img {
-  border-radius: 50%;
   position: relative;
   top: 10px;
-  width: 50px;
   height: 50px;
 }
 
@@ -72,8 +69,9 @@
   text-transform: uppercase;
 }
 
-.page-header__select_nav {
+.page-header__select-nav {
   margin-bottom: 10px;
+  max-width: 100%;
 
   @include media-breakpoint-up(lg) {
     display: none;
@@ -171,4 +169,3 @@
     content: none;
   }
 }
-

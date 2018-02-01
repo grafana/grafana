@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 export class DashboardRowCtrl {
@@ -26,7 +24,6 @@ export class DashboardRowCtrl {
   </div>
   `;
 
-
   dashboard: any;
   panel: any;
 
@@ -39,8 +36,8 @@ export class DashboardRowCtrl {
       let panelIndex = _.indexOf(this.dashboard.panels, this.panel);
 
       for (let child of this.panel.hiddenPanels) {
-        this.dashboard.panels.splice(panelIndex+1, 0, child);
-        child.y = this.panel.y+1;
+        this.dashboard.panels.splice(panelIndex + 1, 0, child);
+        child.y = this.panel.y + 1;
         console.log('restoring child', child);
       }
 
@@ -101,4 +98,3 @@ export class DashboardRowCtrl {
     });
   }
 }
-

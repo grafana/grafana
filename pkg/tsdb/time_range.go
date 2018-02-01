@@ -11,14 +11,14 @@ func NewTimeRange(from, to string) *TimeRange {
 	return &TimeRange{
 		From: from,
 		To:   to,
-		Now:  time.Now(),
+		now:  time.Now(),
 	}
 }
 
 type TimeRange struct {
 	From string
 	To   string
-	Now  time.Time
+	now  time.Time
 }
 
 func (tr *TimeRange) GetFromAsMsEpoch() int64 {
@@ -65,12 +65,12 @@ func (tr *TimeRange) ParseFrom() (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	return tr.Now.Add(diff), nil
+	return tr.now.Add(diff), nil
 }
 
 func (tr *TimeRange) ParseTo() (time.Time, error) {
 	if tr.To == "now" {
-		return tr.Now, nil
+		return tr.now, nil
 	} else if strings.HasPrefix(tr.To, "now-") {
 		withoutNow := strings.Replace(tr.To, "now-", "", 1)
 
@@ -79,7 +79,7 @@ func (tr *TimeRange) ParseTo() (time.Time, error) {
 			return time.Time{}, nil
 		}
 
-		return tr.Now.Add(diff), nil
+		return tr.now.Add(diff), nil
 	}
 
 	if res, ok := tryParseUnixMsEpoch(tr.To); ok {

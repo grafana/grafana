@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/prometheus/procfs/nfsd"
 	"github.com/prometheus/procfs/xfs"
 )
 
@@ -43,4 +44,15 @@ func (fs FS) XFSStats() (*xfs.Stats, error) {
 	defer f.Close()
 
 	return xfs.ParseStats(f)
+}
+
+// NFSdRPCStats retrieves NFS daemon RPC statistics.
+func (fs FS) NFSdRPCStats() (*nfsd.RPCStats, error) {
+	f, err := os.Open(fs.Path("net/rpc/nfsd"))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return nfsd.ParseRPCStats(f)
 }

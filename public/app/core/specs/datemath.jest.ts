@@ -4,9 +4,9 @@ import * as dateMath from 'app/core/utils/datemath';
 import moment from 'moment';
 import _ from 'lodash';
 
-describe("DateMath", () => {
+describe('DateMath', () => {
   var spans = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
-  var anchor =  '2014-01-01T06:06:06.666Z';
+  var anchor = '2014-01-01T06:06:06.666Z';
   var unix = moment(anchor).valueOf();
   var format = 'YYYY-MM-DDTHH:mm:ss.SSSZ';
   var clock;
@@ -35,7 +35,7 @@ describe("DateMath", () => {
     });
   });
 
-  it("now/d should set to start of current day", () => {
+  it('now/d should set to start of current day', () => {
     var expected = new Date();
     expected.setHours(0);
     expected.setMinutes(0);
@@ -46,7 +46,7 @@ describe("DateMath", () => {
     expect(startOfDay).toBe(expected.getTime());
   });
 
-  it("now/d on a utc dashboard should be start of the current day in UTC time", () => {
+  it('now/d on a utc dashboard should be start of the current day in UTC time', () => {
     var today = new Date();
     var expected = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
 
@@ -64,9 +64,9 @@ describe("DateMath", () => {
       anchored = moment(anchor);
     });
 
-    _.each(spans, (span) => {
+    _.each(spans, span => {
       var nowEx = 'now-5' + span;
-      var thenEx =  anchor + '||-5' + span;
+      var thenEx = anchor + '||-5' + span;
 
       it('should return 5' + span + ' ago', () => {
         expect(dateMath.parse(nowEx).format(format)).toEqual(now.subtract(5, span).format(format));
@@ -90,12 +90,12 @@ describe("DateMath", () => {
       now = moment();
     });
 
-    _.each(spans, (span) => {
-      it('should round now to the beginning of the ' + span, function () {
+    _.each(spans, span => {
+      it('should round now to the beginning of the ' + span, function() {
         expect(dateMath.parse('now/' + span).format(format)).toEqual(now.startOf(span).format(format));
       });
 
-      it('should round now to the end of the ' + span, function () {
+      it('should round now to the end of the ' + span, function() {
         expect(dateMath.parse('now/' + span, true).format(format)).toEqual(now.endOf(span).format(format));
       });
     });
@@ -130,7 +130,4 @@ describe("DateMath", () => {
       expect(date).toEqual(undefined);
     });
   });
-
 });
-
-

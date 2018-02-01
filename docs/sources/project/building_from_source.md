@@ -57,7 +57,7 @@ For this you need nodejs (v.6+).
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-npm run build
+npm run watch
 ```
 
 ## Running Grafana Locally

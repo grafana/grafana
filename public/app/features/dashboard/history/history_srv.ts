@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {DashboardModel} from '../dashboard_model';
+import { DashboardModel } from '../dashboard_model';
 
 export interface HistoryListOpts {
   limit: number;

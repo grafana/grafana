@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {PanelCtrl} from 'app/plugins/sdk';
+import { PanelCtrl } from 'app/plugins/sdk';
 import impressionSrv from 'app/core/services/impression_srv';
 
 class DashListCtrl extends PanelCtrl {
@@ -34,9 +34,9 @@ class DashListCtrl extends PanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
     this.groups = [
-      {list: [], show: false, header: "Starred dashboards",},
-      {list: [], show: false, header: "Recently viewed dashboards"},
-      {list: [], show: false, header: "Search"},
+      { list: [], show: false, header: 'Starred dashboards' },
+      { list: [], show: false, header: 'Recently viewed dashboards' },
+      { list: [], show: false, header: 'Search' },
     ];
 
     // update capability
@@ -72,8 +72,7 @@ class DashListCtrl extends PanelCtrl {
     promises.push(this.getStarred());
     promises.push(this.getSearch());
 
-    return Promise.all(promises)
-      .then(this.renderingCompleted.bind(this));
+    return Promise.all(promises).then(this.renderingCompleted.bind(this));
   }
 
   getSearch() {
@@ -86,7 +85,7 @@ class DashListCtrl extends PanelCtrl {
       limit: this.panel.limit,
       query: this.panel.query,
       tag: this.panel.tags,
-      folderId: this.panel.folderId
+      folderId: this.panel.folderId,
     };
 
     return this.backendSrv.search(params).then(result => {
@@ -100,7 +99,7 @@ class DashListCtrl extends PanelCtrl {
       return Promise.resolve();
     }
 
-    var params = {limit: this.panel.limit, starred: "true"};
+    var params = { limit: this.panel.limit, starred: 'true' };
     return this.backendSrv.search(params).then(result => {
       this.groups[0].list = result;
     });
@@ -124,14 +123,16 @@ class DashListCtrl extends PanelCtrl {
     }
 
     var dashIds = _.take(impressionSrv.getDashboardOpened(), this.panel.limit);
-    return this.backendSrv.search({dashboardIds: dashIds, limit: this.panel.limit}).then(result => {
-      this.groups[1].list = dashIds.map(orderId => {
-        return _.find(result, dashboard => {
-          return dashboard.id === orderId;
+    return this.backendSrv.search({ dashboardIds: dashIds, limit: this.panel.limit }).then(result => {
+      this.groups[1].list = dashIds
+        .map(orderId => {
+          return _.find(result, dashboard => {
+            return dashboard.id === orderId;
+          });
+        })
+        .filter(el => {
+          return el !== undefined;
         });
-      }).filter(el => {
-        return el !== undefined;
-      });
     });
   }
 
@@ -141,4 +142,4 @@ class DashListCtrl extends PanelCtrl {
   }
 }
 
-export {DashListCtrl, DashListCtrl as PanelCtrl};
+export { DashListCtrl, DashListCtrl as PanelCtrl };

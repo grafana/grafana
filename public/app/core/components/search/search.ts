@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
 import { SearchSrv } from 'app/core/services/search_srv';
+import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -16,11 +17,13 @@ export class SearchCtrl {
   initialFolderFilterTitle: string;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv, $rootScope) {
-    $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
-    $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
+  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
+    appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
+    appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
 
-    this.initialFolderFilterTitle = "All";
+    this.initialFolderFilterTitle = 'All';
+    this.getTags = this.getTags.bind(this);
+    this.onTagSelect = this.onTagSelect.bind(this);
   }
 
   closeSearch() {
@@ -74,6 +77,7 @@ export class SearchCtrl {
           if (selectedDash) {
             this.$location.search({});
             this.$location.path(selectedDash.url);
+            this.closeSearch();
           }
         } else {
           const selectedFolder = this.results[currentItem.folderIndex];
@@ -84,6 +88,19 @@ export class SearchCtrl {
         }
       }
     }
+  }
+
+  onFilterboxClick() {
+    this.giveSearchFocus = 0;
+    this.preventClose();
+  }
+
+  preventClose() {
+    this.ignoreClose = true;
+
+    this.$timeout(() => {
+      this.ignoreClose = false;
+    }, 100);
   }
 
   moveSelection(direction) {
@@ -109,7 +126,7 @@ export class SearchCtrl {
 
     const max = flattenedResult.length;
     let newIndex = this.selectedIndex + direction;
-    this.selectedIndex = ((newIndex %= max) < 0) ? newIndex + max : newIndex;
+    this.selectedIndex = (newIndex %= max) < 0 ? newIndex + max : newIndex;
     const selectedItem = flattenedResult[this.selectedIndex];
 
     if (selectedItem.dashboardIndex === undefined && this.results[selectedItem.folderIndex].id === 0) {
@@ -140,7 +157,9 @@ export class SearchCtrl {
     var localSearchId = this.currentSearchId;
 
     return this.searchSrv.search(this.query).then(results => {
-      if (localSearchId < this.currentSearchId) { return; }
+      if (localSearchId < this.currentSearchId) {
+        return;
+      }
       this.results = results || [];
       this.isLoading = false;
       this.moveSelection(1);
@@ -156,7 +175,6 @@ export class SearchCtrl {
     if (_.indexOf(this.query.tag, tag) === -1) {
       this.query.tag.push(tag);
       this.search();
-      this.giveSearchFocus = this.giveSearchFocus + 1;
     }
   }
 
@@ -169,10 +187,17 @@ export class SearchCtrl {
   }
 
   getTags() {
-    return this.searchSrv.getDashboardTags().then((results) => {
-      this.results = results;
-      this.giveSearchFocus = this.giveSearchFocus + 1;
-    });
+    return this.searchSrv.getDashboardTags();
+  }
+
+  onTagSelect(newTags) {
+    this.query.tag = _.map(newTags, tag => tag.value);
+    this.search();
+  }
+
+  clearSearchFilter() {
+    this.query.tag = [];
+    this.search();
   }
 
   showStarred() {
@@ -194,21 +219,23 @@ export class SearchCtrl {
   private getFlattenedResultForNavigation() {
     let folderIndex = 0;
 
-    return _.flatMap(this.results, (s) => {
+    return _.flatMap(this.results, s => {
       let result = [];
 
       result.push({
-        folderIndex: folderIndex
+        folderIndex: folderIndex,
       });
 
       let dashboardIndex = 0;
 
-      result = result.concat(_.map(s.items || [], (i) => {
-        return {
-          folderIndex: folderIndex,
-          dashboardIndex: dashboardIndex++
-        };
-      }));
+      result = result.concat(
+        _.map(s.items || [], i => {
+          return {
+            folderIndex: folderIndex,
+            dashboardIndex: dashboardIndex++,
+          };
+        })
+      );
 
       folderIndex++;
       return result;

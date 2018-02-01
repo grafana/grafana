@@ -8,7 +8,8 @@
   margin: 0 0 $panel-margin 0;
 }
 
-.annotation-disabled, .annotation-disabled a {
+.annotation-disabled,
+.annotation-disabled a {
   color: $link-color-disabled;
 }
 
@@ -52,7 +53,7 @@
   }
 }
 
-.variable-link-wrapper  {
+.variable-link-wrapper {
   display: inline-block;
   position: relative;
 }
@@ -66,28 +67,28 @@
   overflow-y: auto;
   overflow-x: hidden;
   background-color: $dropdownBackground;
-  box-shadow: 0 0 25px 0 rgba(0,0,0,0.4);
-  z-index: 1000;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.4);
+  z-index: $zindex-typeahead;
   font-size: $font-size-base;
   border-radius: 3px 3px 0 0;
   border: 1px solid $tight-form-func-bg;
 
   &.multi {
-   .selected {
-     .variable-option-icon{
-       background: url($checkboxImageUrl) 0px -18px no-repeat;
-     }
-   }
- }
+    .selected {
+      .variable-option-icon {
+        background: url($checkboxImageUrl) 0px -18px no-repeat;
+      }
+    }
+  }
 
- &.single {
-   .variable-option-icon {
-     display: none;
-   }
-   .selected {
-     background-color: $tight-form-func-highlight-bg;
-   }
- }
+  &.single {
+    .variable-option-icon {
+      display: none;
+    }
+    .selected {
+      background-color: $tight-form-func-highlight-bg;
+    }
+  }
 }
 
 .variable-options-wrapper {
@@ -135,7 +136,8 @@
 }
 
 .variable-option {
-  &:hover, &.highlighted {
+  &:hover,
+  &.highlighted {
     background-color: $blue-dark;
   }
 }

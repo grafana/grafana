@@ -2,7 +2,6 @@
 // Dropdown menus
 // --------------------------------------------------
 
-
 // Use the .menu class on any <li> element within the topbar or ul.tabs and you'll get some superfancy dropdowns
 .dropup,
 .dropdown {
@@ -31,10 +30,10 @@
   width: 0;
   height: 0;
   vertical-align: top;
-  border-top:   4px solid $text-color-weak;
+  border-top: 4px solid $text-color-weak;
   border-right: 4px solid transparent;
-  border-left:  4px solid transparent;
-  content: "";
+  border-left: 4px solid transparent;
+  content: '';
 }
 
 // Place the caret
@@ -138,7 +137,6 @@
   flex-grow: 1;
 }
 
-
 // Hover/Focus state
 // -----------
 .dropdown-menu > li > a:hover,
@@ -220,7 +218,7 @@
   .caret {
     border-top: 0;
     border-bottom: 4px solid $black;
-    content: "";
+    content: '';
   }
   // Different positioning for bottom up menu
   .dropdown-menu {
@@ -257,9 +255,9 @@
 }
 
 // Caret to indicate there is a submenu
-.dropdown-submenu > a::after {
+.dropdown-submenu > a::before {
   display: block;
-  content: " ";
+  content: ' ';
   float: right;
   width: 0;
   height: 0;
@@ -314,7 +312,7 @@
     width: 2rem;
     display: inline-block;
     text-align: center;
-    content: "\f11c";
+    content: '\f11c';
   }
 }
 

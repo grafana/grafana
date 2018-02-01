@@ -1,7 +1,6 @@
 import angular from 'angular';
 
-export class SoloPanelCtrl{
-
+export class SoloPanelCtrl {
   /** @ngInject */
   constructor($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv) {
     var panelId;
@@ -12,7 +11,7 @@ export class SoloPanelCtrl{
       var params = $location.search();
       panelId = parseInt(params.panelId);
 
-      $scope.onAppEvent("dashboard-initialized", $scope.initPanelScope);
+      $scope.onAppEvent('dashboard-initialized', $scope.initPanelScope);
 
       dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
         result.meta.soloMode = true;

@@ -44,7 +44,9 @@ export class TableRenderer {
   }
 
   getColorForValue(value, style) {
-    if (!style.thresholds) { return null; }
+    if (!style.thresholds) {
+      return null;
+    }
 
     for (var i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
@@ -87,7 +89,9 @@ export class TableRenderer {
           return '-';
         }
 
-        if (_.isArray(v)) { v = v[0]; }
+        if (_.isArray(v)) {
+          v = v[0];
+        }
         var date = moment(v);
         if (this.isUtc) {
           date = date.utc();
@@ -99,7 +103,7 @@ export class TableRenderer {
     if (column.style.type === 'number') {
       let valueFormatter = kbn.valueFormats[column.unit || column.style.unit];
 
-      return v =>  {
+      return v => {
         if (v === null || v === void 0) {
           return '-';
         }
@@ -116,7 +120,7 @@ export class TableRenderer {
       };
     }
 
-    return (value) => {
+    return value => {
       return this.defaultCellFormatter(value, column.style);
     };
   }
@@ -168,7 +172,7 @@ export class TableRenderer {
     }
 
     if (column.style && column.style.preserveFormat) {
-      cellClasses.push("table-panel-cell-pre");
+      cellClasses.push('table-panel-cell-pre');
     }
 
     if (column.style && column.style.link) {
@@ -180,7 +184,7 @@ export class TableRenderer {
       var cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
       var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
-      cellClasses.push("table-panel-cell-link");
+      cellClasses.push('table-panel-cell-link');
       columnHtml += `
         <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right">
           ${value}
@@ -191,7 +195,7 @@ export class TableRenderer {
     }
 
     if (column.filterable) {
-      cellClasses.push("table-panel-cell-filterable");
+      cellClasses.push('table-panel-cell-filterable');
       columnHtml += `
         <a class="table-panel-filter-link" data-link-tooltip data-original-title="Filter out value" data-placement="bottom"
            data-row="${rowIndex}" data-column="${columnIndex}" data-operator="!=">
@@ -215,7 +219,7 @@ export class TableRenderer {
     let pageSize = this.panel.pageSize || 100;
     let startPos = page * pageSize;
     let endPos = Math.min(startPos + pageSize, this.table.rows.length);
-    var html = "";
+    var html = '';
 
     for (var y = startPos; y < endPos; y++) {
       let row = this.table.rows[y];
@@ -248,8 +252,8 @@ export class TableRenderer {
       rows.push(new_row);
     }
     return {
-        columns: this.table.columns,
-        rows: rows,
+      columns: this.table.columns,
+      rows: rows,
     };
   }
 }

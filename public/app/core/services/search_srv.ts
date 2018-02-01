@@ -18,7 +18,7 @@ export class SearchSrv {
     return this.queryForRecentDashboards().then(result => {
       if (result.length > 0) {
         sections['recent'] = {
-          title: 'Recent Boards',
+          title: 'Recent',
           icon: 'fa fa-clock-o',
           score: -1,
           removable: true,
@@ -37,9 +37,11 @@ export class SearchSrv {
     }
 
     return this.backendSrv.search({ dashboardIds: dashIds }).then(result => {
-      return dashIds.map(orderId => {
-        return _.find(result, { id: orderId });
-      }).filter(hit => hit && !hit.isStarred)
+      return dashIds
+        .map(orderId => {
+          return _.find(result, { id: orderId });
+        })
+        .filter(hit => hit && !hit.isStarred)
         .map(hit => {
           return this.transformToViewModel(hit);
         });
@@ -71,10 +73,10 @@ export class SearchSrv {
       return Promise.resolve();
     }
 
-    return this.backendSrv.search({starred: true, limit: 5}).then(result => {
+    return this.backendSrv.search({ starred: true, limit: 5 }).then(result => {
       if (result.length > 0) {
         sections['starred'] = {
-          title: 'Starred Boards',
+          title: 'Starred',
           icon: 'fa fa-star-o',
           score: -2,
           expanded: this.starredIsOpen,
@@ -94,8 +96,10 @@ export class SearchSrv {
     let sections: any = {};
     let promises = [];
     let query = _.clone(options);
-    let hasFilters = options.query ||
-      (options.tag && options.tag.length > 0) || options.starred ||
+    let hasFilters =
+      options.query ||
+      (options.tag && options.tag.length > 0) ||
+      options.starred ||
       (options.folderIds && options.folderIds.length > 0);
 
     if (!options.skipRecent && !hasFilters) {
@@ -111,9 +115,11 @@ export class SearchSrv {
       query.folderIds = [0];
     }
 
-    promises.push(this.backendSrv.search(query).then(results => {
-      return this.handleSearchResult(sections, results);
-    }));
+    promises.push(
+      this.backendSrv.search(query).then(results => {
+        return this.handleSearchResult(sections, results);
+      })
+    );
 
     return this.$q.all(promises).then(() => {
       return _.sortBy(_.values(sections), 'score');

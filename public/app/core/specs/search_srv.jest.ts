@@ -35,7 +35,7 @@ describe('SearchSrv', () => {
       backendSrvMock.search = jest
         .fn()
         .mockReturnValueOnce(
-          Promise.resolve([{ id: 2, title: 'second but first' }, { id: 1, title: 'first but second' }]),
+          Promise.resolve([{ id: 2, title: 'second but first' }, { id: 1, title: 'first but second' }])
         )
         .mockReturnValue(Promise.resolve([]));
 
@@ -47,7 +47,7 @@ describe('SearchSrv', () => {
     });
 
     it('should include recent dashboards section', () => {
-      expect(results[0].title).toBe('Recent Boards');
+      expect(results[0].title).toBe('Recent');
     });
 
     it('should return order decided by impressions store not api', () => {
@@ -61,9 +61,7 @@ describe('SearchSrv', () => {
       beforeEach(() => {
         backendSrvMock.search = jest
           .fn()
-          .mockReturnValueOnce(
-            Promise.resolve([{ id: 2, title: 'two' }, { id: 1, title: 'one' }]),
-          )
+          .mockReturnValueOnce(Promise.resolve([{ id: 2, title: 'two' }, { id: 1, title: 'one' }]))
           .mockReturnValue(Promise.resolve([]));
 
         impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([4, 5, 1, 2, 3]);
@@ -85,11 +83,7 @@ describe('SearchSrv', () => {
     let results;
 
     beforeEach(() => {
-      backendSrvMock.search = jest
-        .fn()
-        .mockReturnValue(Promise.resolve([
-          {id: 1, title: 'starred'}
-        ]));
+      backendSrvMock.search = jest.fn().mockReturnValue(Promise.resolve([{ id: 1, title: 'starred' }]));
 
       return searchSrv.search({ query: '' }).then(res => {
         results = res;
@@ -97,7 +91,7 @@ describe('SearchSrv', () => {
     });
 
     it('should include starred dashboards section', () => {
-      expect(results[0].title).toBe('Starred Boards');
+      expect(results[0].title).toBe('Starred');
       expect(results[0].items.length).toBe(1);
     });
   });
@@ -108,30 +102,26 @@ describe('SearchSrv', () => {
     beforeEach(() => {
       backendSrvMock.search = jest
         .fn()
-        .mockReturnValueOnce(Promise.resolve([
-          {id: 1, title: 'starred and recent', isStarred: true},
-          {id: 2, title: 'recent'}
-        ]))
-        .mockReturnValue(Promise.resolve([
-          {id: 1, title: 'starred and recent'}
-        ]));
+        .mockReturnValueOnce(
+          Promise.resolve([{ id: 1, title: 'starred and recent', isStarred: true }, { id: 2, title: 'recent' }])
+        )
+        .mockReturnValue(Promise.resolve([{ id: 1, title: 'starred and recent' }]));
 
-      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1,2]);
+      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
       return searchSrv.search({ query: '' }).then(res => {
         results = res;
       });
     });
 
     it('should not show starred in recent', () => {
-      expect(results[1].title).toBe('Recent Boards');
+      expect(results[1].title).toBe('Recent');
       expect(results[1].items[0].title).toBe('recent');
     });
 
     it('should show starred', () => {
-      expect(results[0].title).toBe('Starred Boards');
+      expect(results[0].title).toBe('Starred');
       expect(results[0].items[0].title).toBe('starred and recent');
     });
-
   });
 
   describe('with no query string and dashboards with folders returned', () => {
@@ -165,7 +155,7 @@ describe('SearchSrv', () => {
               id: 4,
               folderId: 1,
             },
-          ]),
+          ])
         );
 
       return searchSrv.search({ query: '' }).then(res => {
@@ -202,7 +192,7 @@ describe('SearchSrv', () => {
             folderId: 1,
             folderTitle: 'folder1',
           },
-        ]),
+        ])
       );
 
       return searchSrv.search({ query: 'search' }).then(res => {

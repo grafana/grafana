@@ -10,11 +10,13 @@
 	</a>
 
 	<div class="dashboard-settings__aside-actions">
+    <button class="btn btn-success" ng-click="ctrl.saveDashboard()" ng-show="ctrl.canSave">
+			<i class="fa fa-save"></i> Save
+		</button>
 		<button class="btn btn-inverse" ng-click="ctrl.openSaveAsModal()" ng-show="ctrl.canSaveAs">
 			<i class="fa fa-copy"></i>
 			Save As...
 		</button>
-
 		<button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete">
 			<i class="fa fa-trash"></i>
 			Delete
@@ -45,9 +47,11 @@
 			</bootstrap-tagsinput>
 		</div>
 		<folder-picker initial-title="ctrl.dashboard.meta.folderTitle"
-								 initial-folder-id="ctrl.dashboard.meta.folderId"
-				 on-change="ctrl.onFolderChange($folder)"
-		 label-class="width-7">
+									 initial-folder-id="ctrl.dashboard.meta.folderId"
+									 on-change="ctrl.onFolderChange($folder)"
+									 enable-create-new="true"
+									 is-valid-selection="true"
+									 label-class="width-7">
 		</folder-picker>
 		<gf-form-switch class="gf-form" label="Editable" tooltip="Uncheck, then save and reload to disable all dashboard editing" checked="ctrl.dashboard.editable" label-class="width-7">
 		</gf-form-switch>
@@ -87,7 +91,7 @@
 	<h3 class="dashboard-settings__header">View JSON</h3>
 
 	<div class="gf-form">
-		<textarea class="gf-form-input" ng-model="ctrl.json" rows="30" spellcheck="false"></textarea>
+		<code-editor content="ctrl.json" data-mode="json" data-max-lines=30 ></code-editor>
 	</div>
 </div>
 

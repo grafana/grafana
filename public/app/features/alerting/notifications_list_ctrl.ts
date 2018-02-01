@@ -1,6 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
-
-import {coreModule} from  'app/core/core';
+import { coreModule } from 'app/core/core';
 
 export class AlertNotificationsListCtrl {
   notifications: any;
@@ -28,5 +26,3 @@ export class AlertNotificationsListCtrl {
 }
 
 coreModule.controller('AlertNotificationsListCtrl', AlertNotificationsListCtrl);
-
-

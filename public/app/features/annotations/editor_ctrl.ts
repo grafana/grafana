@@ -20,10 +20,7 @@ export class AnnotationsEditorCtrl {
     hide: false,
   };
 
-  showOptions: any = [
-    {text: 'All Panels', value: 0},
-    {text: 'Specific Panels', value: 1},
-  ];
+  showOptions: any = [{ text: 'All Panels', value: 0 }, { text: 'Specific Panels', value: 1 }];
 
   /** @ngInject */
   constructor($scope, private datasourceSrv) {
@@ -49,7 +46,7 @@ export class AnnotationsEditorCtrl {
     this.currentIsNew = false;
     this.datasourceChanged();
     this.mode = 'edit';
-    $(".tooltip.in").remove();
+    $('.tooltip.in').remove();
   }
 
   reset() {

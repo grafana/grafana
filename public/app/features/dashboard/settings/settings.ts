@@ -2,6 +2,7 @@ import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import { DashboardModel } from '../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
+import config from 'app/core/config';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -10,6 +11,7 @@ export class SettingsCtrl {
   json: string;
   alertCount: number;
   canSaveAs: boolean;
+  canSave: boolean;
   canDelete: boolean;
   sections: any[];
 
@@ -25,6 +27,7 @@ export class SettingsCtrl {
     });
 
     this.canSaveAs = contextSrv.isEditor;
+    this.canSave = this.dashboard.meta.canSave;
     this.canDelete = this.dashboard.meta.canSave;
 
     this.buildSectionList();
@@ -35,30 +38,58 @@ export class SettingsCtrl {
 
   buildSectionList() {
     this.sections = [];
+
     if (this.dashboard.meta.canEdit) {
-      this.sections.push({ title: 'General', id: 'settings', icon: 'gicon gicon-preferences' });
-      this.sections.push({ title: 'Annotations', id: 'annotations', icon: 'gicon gicon-annotation' });
-      this.sections.push({ title: 'Variables', id: 'templating', icon: 'gicon gicon-variable' });
-      this.sections.push({ title: 'Links', id: 'links', icon: 'gicon gicon-link' });
-
-      if (this.dashboard.id) {
-        this.sections.push({ title: 'Versions', id: 'versions', icon: 'fa fa-fw fa-history' });
-      }
+      this.sections.push({
+        title: 'General',
+        id: 'settings',
+        icon: 'gicon gicon-preferences',
+      });
+      this.sections.push({
+        title: 'Annotations',
+        id: 'annotations',
+        icon: 'gicon gicon-annotation',
+      });
+      this.sections.push({
+        title: 'Variables',
+        id: 'templating',
+        icon: 'gicon gicon-variable',
+      });
+      this.sections.push({
+        title: 'Links',
+        id: 'links',
+        icon: 'gicon gicon-link',
+      });
     }
 
-    if (contextSrv.isEditor && !this.dashboard.editable) {
-      this.sections.push({ title: 'Make Editable', icon: 'fa fa-fw fa-edit', id: 'make_editable' });
-      this.viewId = 'make_editable';
+    if (this.dashboard.id && this.dashboard.meta.canSave) {
+      this.sections.push({
+        title: 'Versions',
+        id: 'versions',
+        icon: 'fa fa-fw fa-history',
+      });
     }
 
-    this.sections.push({ title: 'View JSON', id: 'view_json', icon: 'gicon gicon-json' });
+    if (this.dashboard.meta.canMakeEditable) {
+      this.sections.push({
+        title: 'General',
+        icon: 'gicon gicon-preferences',
+        id: 'make_editable',
+      });
+    }
+
+    this.sections.push({
+      title: 'View JSON',
+      id: 'view_json',
+      icon: 'gicon gicon-json',
+    });
 
     const params = this.$location.search();
     const url = this.$location.path();
 
     for (let section of this.sections) {
       const sectionParams = _.defaults({ editview: section.id }, params);
-      section.url = url + '?' + $.param(sectionParams);
+      section.url = config.appSubUrl + url + '?' + $.param(sectionParams);
     }
   }
 
@@ -69,16 +100,27 @@ export class SettingsCtrl {
       this.json = JSON.stringify(this.dashboard.getSaveModelClone(), null, 2);
     }
 
+    if (this.viewId === 'settings' && this.dashboard.meta.canMakeEditable) {
+      this.viewId = 'make_editable';
+    }
+
     const currentSection = _.find(this.sections, { id: this.viewId });
     if (!currentSection) {
-      this.sections.unshift({ title: 'Not found', id: '404', icon: 'fa fa-fw fa-warning' });
+      this.sections.unshift({
+        title: 'Not found',
+        id: '404',
+        icon: 'fa fa-fw fa-warning',
+      });
       this.viewId = '404';
-      return;
     }
   }
 
   openSaveAsModal() {
     this.dashboardSrv.showSaveAsModal();
+  }
+
+  saveDashboard() {
+    this.dashboardSrv.saveDashboard();
   }
 
   hideSettings() {
@@ -93,11 +135,15 @@ export class SettingsCtrl {
 
   makeEditable() {
     this.dashboard.editable = true;
+    this.dashboard.meta.canMakeEditable = false;
+    this.dashboard.meta.canEdit = true;
+    this.dashboard.meta.canSave = true;
+    this.canDelete = true;
+    this.viewId = 'settings';
+    this.buildSectionList();
 
-    return this.dashboardSrv.saveDashboard({ makeEditable: true, overwrite: false }).then(() => {
-      // force refresh whole page
-      window.location.href = window.location.href;
-    });
+    const currentSection = _.find(this.sections, { id: this.viewId });
+    this.$location.url(currentSection.url);
   }
 
   deleteDashboard() {
@@ -123,7 +169,7 @@ export class SettingsCtrl {
       onConfirm: () => {
         this.dashboard.meta.canSave = false;
         this.deleteDashboardConfirmed();
-      }
+      },
     });
   }
 
@@ -135,7 +181,6 @@ export class SettingsCtrl {
   }
 
   onFolderChange(folder) {
-    this.dashboard.folderId = folder.id;
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
   }

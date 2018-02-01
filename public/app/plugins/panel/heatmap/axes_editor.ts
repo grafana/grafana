@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import kbn from 'app/core/utils/kbn';
 
 export class AxesEditorCtrl {
@@ -17,16 +15,16 @@ export class AxesEditorCtrl {
     this.unitFormats = kbn.getUnitFormats();
 
     this.logScales = {
-      'linear': 1,
+      linear: 1,
       'log (base 2)': 2,
       'log (base 10)': 10,
       'log (base 32)': 32,
-      'log (base 1024)': 1024
+      'log (base 1024)': 1024,
     };
 
     this.dataFormats = {
       'Time series': 'timeseries',
-      'Time series buckets': 'tsbuckets'
+      'Time series buckets': 'tsbuckets',
     };
   }
 

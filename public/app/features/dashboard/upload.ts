@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 
 var template = `
@@ -33,12 +31,12 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
             }
 
             scope.$apply(function() {
-              scope.onUpload({dash: dash});
+              scope.onUpload({ dash: dash });
             });
           };
         };
 
-        for (var i = 0, f; f = files[i]; i++) {
+        for (var i = 0, f; (f = files[i]); i++) {
           var reader = new FileReader();
           reader.onload = readerOnload();
           reader.readAsText(f);
@@ -51,9 +49,9 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
         // Something
         document.getElementById('dashupload').addEventListener('change', file_selected, false);
       } else {
-        alertSrv.set('Oops','Sorry, the HTML5 File APIs are not fully supported in this browser.','error');
+        alertSrv.set('Oops', 'Sorry, the HTML5 File APIs are not fully supported in this browser.', 'error');
       }
-    }
+    },
   };
 }
 

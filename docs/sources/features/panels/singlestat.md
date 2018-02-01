@@ -47,7 +47,7 @@ The coloring options of the Singlestat Panel config allow you to dynamically cha
 2. **Thresholds**: Change the background and value colors dynamically within the panel, depending on the Singlestat value. The threshold field accepts **2 comma-separated** values which represent 3 ranges that correspond to the three colors directly to the right. For example: if the thresholds are 70, 90 then the first color represents < 70, the second color represents between 70 and 90 and the third color represents > 90.
 3. **Colors**: Select a color and opacity
 4. **Value**: This checkbox applies the configured thresholds and colors to the summary stat.
-5. **Invert order**: This link toggles the threshold color order.</br>For example: Green, Orange, Red (<img class="no-shadow" src="/img/docs(v1/gyr.png">) will become Red, Orange, Green (<img class="no-shadow" src="/img/docs/v1/ryg.png">).
+5. **Invert order**: This link toggles the threshold color order.</br>For example: Green, Orange, Red (<img class="no-shadow" src="/img/docs/v1/gyr.png">) will become Red, Orange, Green (<img class="no-shadow" src="/img/docs/v1/ryg.png">).
 
 ### Spark Lines
 

@@ -19,7 +19,14 @@ export class ManageDashboardsCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private searchSrv: SearchSrv) {
-    this.query = { query: '', mode: 'tree', tag: [], starred: false, skipRecent: true, skipStarred: true };
+    this.query = {
+      query: '',
+      mode: 'tree',
+      tag: [],
+      starred: false,
+      skipRecent: true,
+      skipStarred: true,
+    };
 
     if (this.folderId) {
       this.query.folderIds = [this.folderId];
@@ -33,7 +40,7 @@ export class ManageDashboardsCtrl {
   }
 
   getDashboards() {
-    return this.searchSrv.search(this.query).then((result) => {
+    return this.searchSrv.search(this.query).then(result => {
       return this.initDashboardList(result);
     });
   }
@@ -79,7 +86,7 @@ export class ManageDashboardsCtrl {
   getFoldersAndDashboardsToDelete() {
     let selectedDashboards = {
       folders: [],
-      dashboards: []
+      dashboards: [],
     };
 
     for (const section of this.sections) {
@@ -129,7 +136,7 @@ export class ManageDashboardsCtrl {
       onConfirm: () => {
         const foldersAndDashboards = data.folders.concat(data.dashboards);
         this.deleteFoldersAndDashboards(foldersAndDashboards);
-      }
+      },
     });
   }
 
@@ -187,18 +194,22 @@ export class ManageDashboardsCtrl {
   moveTo() {
     const selectedDashboards = this.getDashboardsToMove();
 
-    const template = '<move-to-folder-modal dismiss="dismiss()" ' +
+    const template =
+      '<move-to-folder-modal dismiss="dismiss()" ' +
       'dashboards="model.dashboards" after-save="model.afterSave()">' +
       '</move-to-folder-modal>`';
     appEvents.emit('show-modal', {
       templateHtml: template,
       modalClass: 'modal--narrow',
-      model: { dashboards: selectedDashboards, afterSave: this.getDashboards.bind(this) }
+      model: {
+        dashboards: selectedDashboards,
+        afterSave: this.getDashboards.bind(this),
+      },
     });
   }
 
   getTags() {
-    return this.searchSrv.getDashboardTags().then((results) => {
+    return this.searchSrv.getDashboardTags().then(results => {
       this.tagFilterOptions = [{ term: 'Filter By Tag', disabled: true }].concat(results);
       this.selectedTagFilter = this.tagFilterOptions[0];
     });
@@ -248,7 +259,7 @@ export class ManageDashboardsCtrl {
         section.checked = this.selectAllChecked;
       }
 
-      section.items = _.map(section.items, (item) => {
+      section.items = _.map(section.items, item => {
         item.checked = this.selectAllChecked;
         return item;
       });
@@ -263,6 +274,16 @@ export class ManageDashboardsCtrl {
     this.query.starred = false;
     this.getDashboards();
   }
+
+  createDashboardUrl() {
+    let url = 'dashboard/new';
+
+    if (this.folderId) {
+      url += `?folderId=${this.folderId}`;
+    }
+
+    return url;
+  }
 }
 
 export function manageDashboardsDirective() {
@@ -273,8 +294,8 @@ export function manageDashboardsDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      folderId: '='
-    }
+      folderId: '=',
+    },
   };
 }
 

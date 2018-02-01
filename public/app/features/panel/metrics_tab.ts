@@ -1,4 +1,4 @@
-import {DashboardModel} from '../dashboard/dashboard_model';
+import { DashboardModel } from '../dashboard/dashboard_model';
 import Remarkable from 'remarkable';
 
 export class MetricsTabCtrl {
@@ -34,7 +34,7 @@ export class MetricsTabCtrl {
       }
     }
 
-    this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
+    this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
 
     // update next ref id
     this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
@@ -49,11 +49,15 @@ export class MetricsTabCtrl {
   }
 
   getOptions(includeBuiltin) {
-    return Promise.resolve(this.datasources.filter(value => {
-      return includeBuiltin || !value.meta.builtIn;
-    }).map(ds => {
-      return {value: ds.value, text: ds.name, datasource: ds};
-    }));
+    return Promise.resolve(
+      this.datasources
+        .filter(value => {
+          return includeBuiltin || !value.meta.builtIn;
+        })
+        .map(ds => {
+          return { value: ds.value, text: ds.name, datasource: ds };
+        })
+    );
   }
 
   datasourceChanged(option) {
@@ -71,12 +75,15 @@ export class MetricsTabCtrl {
       return;
     }
 
-    this.panelCtrl.addQuery({isNew: true, datasource: option.datasource.name});
-    this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
+    this.panelCtrl.addQuery({
+      isNew: true,
+      datasource: option.datasource.name,
+    });
+    this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
   }
 
   addQuery() {
-    this.panelCtrl.addQuery({isNew: true});
+    this.panelCtrl.addQuery({ isNew: true });
   }
 
   toggleHelp() {
@@ -113,4 +120,3 @@ export function metricsTabDirective() {
     controller: MetricsTabCtrl,
   };
 }
-

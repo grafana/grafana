@@ -3,31 +3,34 @@ import _ from 'lodash';
 import $ from 'jquery';
 
 import coreModule from 'app/core/core_module';
-import {profiler} from 'app/core/profiler';
+import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
 import Drop from 'tether-drop';
+import { createStore } from 'app/stores/store';
+import colors from 'app/core/utils/colors';
 
 export class GrafanaCtrl {
-
   /** @ngInject */
-  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, globalEventSrv) {
+  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, bridgeSrv, backendSrv) {
+    createStore(backendSrv);
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
-
-      $rootScope.appSubUrl = config.appSubUrl;
+      $scope.appSubUrl = config.appSubUrl;
       $scope._ = _;
 
       profiler.init(config, $rootScope);
       alertSrv.init();
       utilSrv.init();
-      globalEventSrv.init();
+      bridgeSrv.init();
 
       $scope.dashAlerts = alertSrv;
     };
 
+    $rootScope.colors = colors;
+
     $scope.initDashboard = function(dashboardData, viewScope) {
-      $scope.appEvent("dashboard-fetch-end", dashboardData);
+      $scope.appEvent('dashboard-fetch-end', dashboardData);
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
     };
 
@@ -48,22 +51,12 @@ export class GrafanaCtrl {
       appEvents.emit(name, payload);
     };
 
-    $rootScope.colors = [
-      "#7EB26D","#EAB839","#6ED0E0","#EF843C","#E24D42","#1F78C1","#BA43A9","#705DA0",
-      "#508642","#CCA300","#447EBC","#C15C17","#890F02","#0A437C","#6D1F62","#584477",
-      "#B7DBAB","#F4D598","#70DBED","#F9BA8F","#F29191","#82B5D8","#E5A8E2","#AEA2E0",
-      "#629E51","#E5AC0E","#64B0C8","#E0752D","#BF1B00","#0A50A1","#962D82","#614D93",
-      "#9AC48A","#F2C96D","#65C5DB","#F9934E","#EA6460","#5195CE","#D683CE","#806EB7",
-      "#3F6833","#967302","#2F575E","#99440A","#58140C","#052B51","#511749","#3F2B5B",
-      "#E0F9D7","#FCEACA","#CFFAFF","#F9E2D2","#FCE2DE","#BADFF4","#F9D9F9","#DEDAF7"
-    ];
-
     $scope.init();
   }
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope) {
+export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope, $location) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
@@ -78,6 +71,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       body.toggleClass('sidemenu-open', sidemenuOpen);
 
       appEvents.on('toggle-sidemenu', () => {
+        sidemenuOpen = scope.contextSrv.sidemenu;
         body.toggleClass('sidemenu-open');
       });
 
@@ -92,7 +86,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       // tooltip removal fix
       // manage page classes
       var pageClass;
-      scope.$on("$routeChangeSuccess", function(evt, data) {
+      scope.$on('$routeChangeSuccess', function(evt, data) {
         if (pageClass) {
           body.removeClass(pageClass);
         }
@@ -107,7 +101,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         // clear body class sidemenu states
         body.removeClass('sidemenu-open--xs');
 
-        $("#tooltip, .tooltip").remove();
+        $('#tooltip, .tooltip').remove();
 
         // check for kiosk url param
         if (data.params.kiosk) {
@@ -140,7 +134,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           return;
         }
 
-        if ((new Date().getTime() - lastActivity) > inActiveTimeLimit) {
+        if (new Date().getTime() - lastActivity > inActiveTimeLimit) {
           activeUser = false;
           body.addClass('user-activity-low');
           // hide sidemenu
@@ -148,7 +142,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
             sidemenuHidden = true;
             body.removeClass('sidemenu-open');
             $timeout(function() {
-              $rootScope.$broadcast("render");
+              $rootScope.$broadcast('render');
             }, 100);
           }
         }
@@ -165,7 +159,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
             sidemenuHidden = false;
             body.addClass('sidemenu-open');
             $timeout(function() {
-              $rootScope.$broadcast("render");
+              $rootScope.$broadcast('render');
             }, 100);
           }
         }
@@ -174,6 +168,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       // mouse and keyboard is user activity
       body.mousemove(userActivityDetected);
       body.keydown(userActivityDetected);
+      // set useCapture = true to catch event here
+      document.addEventListener('wheel', userActivityDetected, true);
       // treat tab change as activity
       document.addEventListener('visibilitychange', userActivityDetected);
 
@@ -222,7 +218,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           popover.hide();
         }
       });
-    }
+    },
   };
 }
 

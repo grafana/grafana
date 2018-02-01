@@ -43,7 +43,7 @@ function getRegions(events, range) {
           return region_obj;
         }
       }
-    }),
+    })
   );
 
   return regions;

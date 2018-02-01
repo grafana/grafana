@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import queryPart from './query_part';
 import kbn from 'app/core/utils/kbn';
@@ -22,14 +20,8 @@ export default class InfluxQuery {
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
-    target.groupBy = target.groupBy || [
-      {type: 'time', params: ['$__interval']},
-      {type: 'fill', params: ['null']},
-    ];
-    target.select = target.select || [[
-      {type: 'field', params: ['value']},
-      {type: 'mean', params: []},
-    ]];
+    target.groupBy = target.groupBy || [{ type: 'time', params: ['$__interval'] }, { type: 'fill', params: ['null'] }];
+    target.select = target.select || [[{ type: 'field', params: ['value'] }, { type: 'mean', params: [] }]];
 
     this.updateProjection();
   }
@@ -44,7 +36,7 @@ export default class InfluxQuery {
   updatePersistedParts() {
     this.target.select = _.map(this.selectModels, function(selectParts) {
       return _.map(selectParts, function(part: any) {
-        return {type: part.def.type, params: part.params};
+        return { type: part.def.type, params: part.params };
       });
     });
   }
@@ -61,7 +53,7 @@ export default class InfluxQuery {
     var stringParts = value.match(/^(\w+)\((.*)\)$/);
     var typePart = stringParts[1];
     var arg = stringParts[2];
-    var partModel = queryPart.create({type: typePart, params: [arg]});
+    var partModel = queryPart.create({ type: typePart, params: [arg] });
     var partCount = this.target.groupBy.length;
 
     if (partCount === 0) {
@@ -69,8 +61,8 @@ export default class InfluxQuery {
     } else if (typePart === 'time') {
       this.target.groupBy.splice(0, 0, partModel.part);
     } else if (typePart === 'tag') {
-      if (this.target.groupBy[partCount-1].type === 'fill') {
-        this.target.groupBy.splice(partCount-1, 0, partModel.part);
+      if (this.target.groupBy[partCount - 1].type === 'fill') {
+        this.target.groupBy.splice(partCount - 1, 0, partModel.part);
       } else {
         this.target.groupBy.push(partModel.part);
       }
@@ -127,13 +119,13 @@ export default class InfluxQuery {
   }
 
   addSelectPart(selectParts, type) {
-    var partModel = queryPart.create({type: type});
+    var partModel = queryPart.create({ type: type });
     partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
   }
 
   private renderTagCondition(tag, index, interpolate) {
-    var str = "";
+    var str = '';
     var operator = tag.operator;
     var value = tag.value;
     if (index > 0) {
@@ -168,7 +160,7 @@ export default class InfluxQuery {
     var measurement = this.target.measurement || 'measurement';
 
     if (!measurement.match('^/.*/$')) {
-      measurement = '"' + measurement+ '"';
+      measurement = '"' + measurement + '"';
     } else if (interpolate) {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
@@ -176,7 +168,7 @@ export default class InfluxQuery {
     if (policy !== 'default') {
       policy = '"' + this.target.policy + '".';
     } else {
-      policy = "";
+      policy = '';
     }
 
     return policy + measurement;
@@ -211,7 +203,7 @@ export default class InfluxQuery {
     var i, y;
     for (i = 0; i < this.selectModels.length; i++) {
       let parts = this.selectModels[i];
-      var selectText = "";
+      var selectText = '';
       for (y = 0; y < parts.length; y++) {
         let part = parts[y];
         selectText = part.render(selectText);
@@ -234,7 +226,7 @@ export default class InfluxQuery {
 
     query += '$timeFilter';
 
-    var groupBySection = "";
+    var groupBySection = '';
     for (i = 0; i < this.groupByParts.length; i++) {
       var part = this.groupByParts[i];
       if (i > 0) {

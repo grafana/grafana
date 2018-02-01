@@ -1,7 +1,7 @@
-import  AdminListUsersCtrl from './admin_list_users_ctrl';
-import  './admin_list_orgs_ctrl';
-import  './admin_edit_org_ctrl';
-import  './admin_edit_user_ctrl';
+import AdminListUsersCtrl from './admin_list_users_ctrl';
+import './admin_list_orgs_ctrl';
+import './admin_edit_org_ctrl';
+import './admin_edit_user_ctrl';
 
 import coreModule from 'app/core/core_module';
 
@@ -15,7 +15,6 @@ class AdminSettingsCtrl {
     backendSrv.get('/api/admin/settings').then(function(settings) {
       $scope.settings = settings;
     });
-
   }
 }
 

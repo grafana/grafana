@@ -1,7 +1,6 @@
 import angular from 'angular';
 
 export class AdminEditOrgCtrl {
-
   /** @ngInject */
   constructor($scope, $routeParams, backendSrv, $location, navModelSrv) {
     $scope.init = function() {
@@ -26,14 +25,16 @@ export class AdminEditOrgCtrl {
     };
 
     $scope.update = function() {
-      if (!$scope.orgDetailsForm.$valid) { return; }
+      if (!$scope.orgDetailsForm.$valid) {
+        return;
+      }
 
       backendSrv.put('/api/orgs/' + $scope.org.id, $scope.org).then(function() {
         $location.path('/admin/orgs');
       });
     };
 
-    $scope.updateOrgUser= function(orgUser) {
+    $scope.updateOrgUser = function(orgUser) {
       backendSrv.patch('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId, orgUser);
     };
 

@@ -10,43 +10,43 @@ describe('ManageDashboards', () => {
       const response = [
         {
           id: 410,
-          title: "afolder",
-          type: "dash-folder",
+          title: 'afolder',
+          type: 'dash-folder',
           items: [
             {
               id: 399,
-              title: "Dashboard Test",
-              url: "dashboard/db/dashboard-test",
+              title: 'Dashboard Test',
+              url: 'dashboard/db/dashboard-test',
               icon: 'fa fa-folder',
               tags: [],
               isStarred: false,
               folderId: 410,
-              folderTitle: "afolder",
-              folderSlug: "afolder"
-            }
-          ],
-          tags: [],
-          isStarred: false
-        },
-        {
-          id: 0,
-          title: "Root",
-          icon: 'fa fa-folder-open',
-          uri: "db/something-else",
-          type: "dash-db",
-          items: [
-            {
-              id: 500,
-              title: "Dashboard Test",
-              url: "dashboard/db/dashboard-test",
-              icon: 'fa fa-folder',
-              tags: [],
-              isStarred: false
-            }
+              folderTitle: 'afolder',
+              folderSlug: 'afolder',
+            },
           ],
           tags: [],
           isStarred: false,
-        }
+        },
+        {
+          id: 0,
+          title: 'Root',
+          icon: 'fa fa-folder-open',
+          uri: 'db/something-else',
+          type: 'dash-db',
+          items: [
+            {
+              id: 500,
+              title: 'Dashboard Test',
+              url: 'dashboard/db/dashboard-test',
+              icon: 'fa fa-folder',
+              tags: [],
+              isStarred: false,
+            },
+          ],
+          tags: [],
+          isStarred: false,
+        },
       ];
       ctrl = createCtrlWithStubs(response);
       return ctrl.getDashboards();
@@ -67,24 +67,24 @@ describe('ManageDashboards', () => {
       const response = [
         {
           id: 410,
-          title: "afolder",
-          type: "dash-folder",
+          title: 'afolder',
+          type: 'dash-folder',
           items: [
             {
               id: 399,
-              title: "Dashboard Test",
-              url: "dashboard/db/dashboard-test",
+              title: 'Dashboard Test',
+              url: 'dashboard/db/dashboard-test',
               icon: 'fa fa-folder',
               tags: [],
               isStarred: false,
               folderId: 410,
-              folderTitle: "afolder",
-              folderSlug: "afolder"
-            }
+              folderTitle: 'afolder',
+              folderSlug: 'afolder',
+            },
           ],
           tags: [],
-          isStarred: false
-        }
+          isStarred: false,
+        },
       ];
       ctrl = createCtrlWithStubs(response);
       ctrl.folderId = 410;
@@ -106,26 +106,26 @@ describe('ManageDashboards', () => {
           items: [
             {
               id: 399,
-              title: "Dashboard Test",
-              url: "dashboard/db/dashboard-test",
+              title: 'Dashboard Test',
+              url: 'dashboard/db/dashboard-test',
               icon: 'fa fa-folder',
               tags: [],
               isStarred: false,
               folderId: 410,
-              folderTitle: "afolder",
-              folderSlug: "afolder"
+              folderTitle: 'afolder',
+              folderSlug: 'afolder',
             },
             {
               id: 500,
-              title: "Dashboard Test",
-              url: "dashboard/db/dashboard-test",
+              title: 'Dashboard Test',
+              url: 'dashboard/db/dashboard-test',
               icon: 'fa fa-folder',
               tags: [],
               folderId: 499,
-              isStarred: false
-            }
-          ]
-        }
+              isStarred: false,
+            },
+          ],
+        },
       ];
 
       ctrl = createCtrlWithStubs(response);
@@ -261,18 +261,14 @@ describe('ManageDashboards', () => {
         ctrl.sections = [
           {
             id: 1,
-            items: [
-              { id: 2, checked: false }
-            ],
-            checked: false
+            items: [{ id: 2, checked: false }],
+            checked: false,
           },
           {
             id: 0,
-            items: [
-              { id: 3, checked: false }
-            ],
-            checked: false
-          }
+            items: [{ id: 3, checked: false }],
+            checked: false,
+          },
         ];
         ctrl.selectionChanged();
       });
@@ -313,18 +309,14 @@ describe('ManageDashboards', () => {
         ctrl.sections = [
           {
             id: 1,
-            items: [
-              { id: 2, checked: true }
-            ],
-            checked: true
+            items: [{ id: 2, checked: true }],
+            checked: true,
           },
           {
             id: 0,
-            items: [
-              { id: 3, checked: true }
-            ],
-            checked: true
-          }
+            items: [{ id: 3, checked: true }],
+            checked: true,
+          },
         ];
         ctrl.selectionChanged();
       });
@@ -366,19 +358,15 @@ describe('ManageDashboards', () => {
           {
             id: 1,
             title: 'folder',
-            items: [
-              { id: 2, checked: false }
-            ],
-            checked: false
+            items: [{ id: 2, checked: false }],
+            checked: false,
           },
           {
             id: 0,
             title: 'Root',
-            items: [
-              { id: 3, checked: true }
-            ],
-            checked: false
-          }
+            items: [{ id: 3, checked: true }],
+            checked: false,
+          },
         ];
         ctrl.selectionChanged();
       });
@@ -398,19 +386,15 @@ describe('ManageDashboards', () => {
           {
             id: 1,
             title: 'folder',
-            items: [
-              { id: 2, checked: true }
-            ],
-            checked: false
+            items: [{ id: 2, checked: true }],
+            checked: false,
           },
           {
             id: 0,
             title: 'Root',
-            items: [
-              { id: 3, checked: false }
-            ],
-            checked: false
-          }
+            items: [{ id: 3, checked: false }],
+            checked: false,
+          },
         ];
 
         ctrl.selectionChanged();
@@ -431,19 +415,15 @@ describe('ManageDashboards', () => {
           {
             id: 1,
             title: 'folder',
-            items: [
-              { id: 2, checked: true }
-            ],
-            checked: false
+            items: [{ id: 2, checked: true }],
+            checked: false,
           },
           {
             id: 0,
             title: 'Root',
-            items: [
-              { id: 3, checked: true }
-            ],
-            checked: false
-          }
+            items: [{ id: 3, checked: true }],
+            checked: false,
+          },
         ];
 
         ctrl.selectionChanged();
@@ -464,27 +444,21 @@ describe('ManageDashboards', () => {
           {
             id: 1,
             title: 'folder',
-            items: [
-              { id: 2, checked: false }
-            ],
-            checked: true
+            items: [{ id: 2, checked: false }],
+            checked: true,
           },
           {
             id: 3,
             title: 'folder',
-            items: [
-              { id: 4, checked: true }
-            ],
-            checked: false
+            items: [{ id: 4, checked: true }],
+            checked: false,
           },
           {
             id: 0,
             title: 'Root',
-            items: [
-              { id: 3, checked: false }
-            ],
-            checked: false
-          }
+            items: [{ id: 3, checked: false }],
+            checked: false,
+          },
         ];
 
         ctrl.selectionChanged();
@@ -510,29 +484,23 @@ describe('ManageDashboards', () => {
         {
           id: 1,
           title: 'folder',
-          items: [
-            { id: 2, checked: true, slug: 'folder-dash' }
-          ],
+          items: [{ id: 2, checked: true, slug: 'folder-dash' }],
           checked: true,
-          slug: 'folder'
+          slug: 'folder',
         },
         {
           id: 3,
           title: 'folder-2',
-          items: [
-            { id: 3, checked: true, slug: 'folder-2-dash' }
-          ],
+          items: [{ id: 3, checked: true, slug: 'folder-2-dash' }],
           checked: false,
-          slug: 'folder-2'
+          slug: 'folder-2',
         },
         {
           id: 0,
           title: 'Root',
-          items: [
-            { id: 3, checked: true, slug: 'root-dash' }
-          ],
-          checked: true
-        }
+          items: [{ id: 3, checked: true, slug: 'root-dash' }],
+          checked: true,
+        },
       ];
 
       toBeDeleted = ctrl.getFoldersAndDashboardsToDelete();
@@ -567,20 +535,16 @@ describe('ManageDashboards', () => {
         {
           id: 1,
           title: 'folder',
-          items: [
-            { id: 2, checked: true, slug: 'dash' }
-          ],
+          items: [{ id: 2, checked: true, slug: 'dash' }],
           checked: false,
-          slug: 'folder'
+          slug: 'folder',
         },
         {
           id: 0,
           title: 'Root',
-          items: [
-            { id: 3, checked: true, slug: 'dash-2' }
-          ],
-          checked: false
-        }
+          items: [{ id: 3, checked: true, slug: 'dash-2' }],
+          checked: false,
+        },
       ];
     });
 
@@ -600,8 +564,8 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
     },
     getDashboardTags: () => {
       return q.resolve(tags || []);
-    }
+    },
   };
 
-  return new ManageDashboardsCtrl({}, { getNav: () => { } }, <SearchSrv>searchSrvStub);
+  return new ManageDashboardsCtrl({}, { getNav: () => {} }, <SearchSrv>searchSrvStub);
 }

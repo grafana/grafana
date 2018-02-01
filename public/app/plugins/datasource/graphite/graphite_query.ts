@@ -1,8 +1,8 @@
 import _ from 'lodash';
-import gfunc from './gfunc';
-import {Parser} from './parser';
+import { Parser } from './parser';
 
 export default class GraphiteQuery {
+  datasource: any;
   target: any;
   functions: any[];
   segments: any[];
@@ -15,7 +15,8 @@ export default class GraphiteQuery {
   scopedVars: any;
 
   /** @ngInject */
-  constructor(target, templateSrv?, scopedVars?) {
+  constructor(datasource, target, templateSrv?, scopedVars?) {
+    this.datasource = datasource;
     this.target = target;
     this.parseTarget();
 
@@ -40,7 +41,7 @@ export default class GraphiteQuery {
     }
 
     if (astNode.type === 'error') {
-      this.error = astNode.message + " at position: " + astNode.pos;
+      this.error = astNode.message + ' at position: ' + astNode.pos;
       this.target.textEditor = true;
       return;
     }
@@ -58,7 +59,7 @@ export default class GraphiteQuery {
   }
 
   checkForSeriesByTag() {
-    let seriesByTagFunc = _.find(this.functions, (func) => func.def.name === 'seriesByTag');
+    let seriesByTagFunc = _.find(this.functions, func => func.def.name === 'seriesByTag');
     if (seriesByTagFunc) {
       this.seriesByTagUsed = true;
       seriesByTagFunc.hidden = true;
@@ -70,9 +71,13 @@ export default class GraphiteQuery {
   getSegmentPathUpTo(index) {
     var arr = this.segments.slice(0, index);
 
-    return _.reduce(arr, function(result, segment) {
-      return result ? (result + "." + segment.value) : segment.value;
-    }, "");
+    return _.reduce(
+      arr,
+      function(result, segment) {
+        return result ? result + '.' + segment.value : segment.value;
+      },
+      ''
+    );
   }
 
   parseTargetRecursive(astNode, func) {
@@ -82,7 +87,9 @@ export default class GraphiteQuery {
 
     switch (astNode.type) {
       case 'function':
-        var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
+        var innerFunc = this.datasource.createFuncInstance(astNode.name, {
+          withDefaultParams: false,
+        });
         _.each(astNode.params, param => {
           this.parseTargetRecursive(param, innerFunc);
         });
@@ -117,7 +124,7 @@ export default class GraphiteQuery {
   }
 
   addSelectMetricSegment() {
-    this.segments.push({value: "select metric"});
+    this.segments.push({ value: 'select metric' });
   }
 
   addFunction(newFunc) {
@@ -127,9 +134,7 @@ export default class GraphiteQuery {
 
   moveAliasFuncLast() {
     var aliasFunc = _.find(this.functions, function(func) {
-      return func.def.name === 'alias' ||
-        func.def.name === 'aliasByNode' ||
-        func.def.name === 'aliasByMetric';
+      return func.def.name.startsWith('alias');
     });
 
     if (aliasFunc) {
@@ -139,7 +144,7 @@ export default class GraphiteQuery {
   }
 
   addFunctionParameter(func, value) {
-    if (func.params.length >= func.def.params.length) {
+    if (func.params.length >= func.def.params.length && !_.get(_.last(func.def.params), 'multiple', false)) {
       throw { message: 'too many parameters for function ' + func.def.name };
     }
     func.params.push(value);
@@ -176,6 +181,22 @@ export default class GraphiteQuery {
     var nestedSeriesRefRegex = /\#([A-Z])/g;
     var targetWithNestedQueries = target.target;
 
+    // Use ref count to track circular references
+    function countTargetRefs(targetsByRefId, refId) {
+      let refCount = 0;
+      _.each(targetsByRefId, (t, id) => {
+        if (id !== refId) {
+          let match = nestedSeriesRefRegex.exec(t.target);
+          let count = match && match.length ? match.length - 1 : 0;
+          refCount += count;
+        }
+      });
+      targetsByRefId[refId].refCount = refCount;
+    }
+    _.each(targetsByRefId, (t, id) => {
+      countTargetRefs(targetsByRefId, id);
+    });
+
     // Keep interpolating until there are no query references
     // The reason for the loop is that the referenced query might contain another reference to another query
     while (targetWithNestedQueries.match(nestedSeriesRefRegex)) {
@@ -186,7 +207,11 @@ export default class GraphiteQuery {
         }
 
         // no circular references
-        delete targetsByRefId[g1];
+        if (t.refCount === 0) {
+          delete targetsByRefId[g1];
+        }
+        t.refCount--;
+
         return t.target;
       });
 
@@ -204,25 +229,27 @@ export default class GraphiteQuery {
   }
 
   splitSeriesByTagParams(func) {
-    const tagPattern = /([^\!=~]+)([\!=~]+)([^\!=~]+)/;
-    return _.flatten(_.map(func.params, (param: string) => {
-      let matches = tagPattern.exec(param);
-      if (matches) {
-        let tag = matches.slice(1);
-        if (tag.length === 3) {
-          return {
-            key: tag[0],
-            operator: tag[1],
-            value: tag[2]
-          };
+    const tagPattern = /([^\!=~]+)(\!?=~?)(.*)/;
+    return _.flatten(
+      _.map(func.params, (param: string) => {
+        let matches = tagPattern.exec(param);
+        if (matches) {
+          let tag = matches.slice(1);
+          if (tag.length === 3) {
+            return {
+              key: tag[0],
+              operator: tag[1],
+              value: tag[2],
+            };
+          }
         }
-      }
-      return [];
-    }));
+        return [];
+      })
+    );
   }
 
   getSeriesByTagFuncIndex() {
-    return _.findIndex(this.functions, (func) => func.def.name === 'seriesByTag');
+    return _.findIndex(this.functions, func => func.def.name === 'seriesByTag');
   }
 
   getSeriesByTagFunc() {
@@ -259,12 +286,14 @@ export default class GraphiteQuery {
   }
 
   renderTagExpressions(excludeIndex = -1) {
-    return _.compact(_.map(this.tags, (tagExpr, index) => {
-      // Don't render tag that we want to lookup
-      if (index !== excludeIndex) {
-        return tagExpr.key + tagExpr.operator + tagExpr.value;
-      }
-    }));
+    return _.compact(
+      _.map(this.tags, (tagExpr, index) => {
+        // Don't render tag that we want to lookup
+        if (index !== excludeIndex) {
+          return tagExpr.key + tagExpr.operator + tagExpr.value;
+        }
+      })
+    );
   }
 }
 

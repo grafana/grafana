@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from '../../core/core_module';
 import kbn from 'app/core/utils/kbn';
 import appEvents from 'app/core/app_events';
@@ -13,12 +11,7 @@ class PlaylistSrv {
   public isPlaying: boolean;
 
   /** @ngInject */
-  constructor(
-    private $location: any,
-    private $timeout: any,
-    private backendSrv: any,
-    private $routeParams: any
-    ) { }
+  constructor(private $location: any, private $timeout: any, private backendSrv: any, private $routeParams: any) {}
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
@@ -47,7 +40,7 @@ class PlaylistSrv {
 
     // check if should remove kiosk query param
     if (!inKioskMode) {
-      return this.startUrl.split("?")[0];
+      return this.startUrl.split('?')[0];
     }
 
     // already has kiosk query param, just return startUrl

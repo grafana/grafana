@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
@@ -7,8 +5,7 @@ export class UtilSrv {
   modalScope: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private $modal) {
-  }
+  constructor(private $rootScope, private $modal) {}
 
   init() {
     appEvents.on('show-modal', this.showModal.bind(this), this.$rootScope);
@@ -43,7 +40,7 @@ export class UtilSrv {
       show: false,
       scope: this.modalScope,
       keyboard: false,
-      backdrop: options.backdrop
+      backdrop: options.backdrop,
     });
 
     Promise.resolve(modal).then(function(modalEl) {

@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	ber "gopkg.in/asn1-ber.v1"
+	"gopkg.in/asn1-ber.v1"
 )
 
 // LDAP Application Codes
@@ -36,6 +36,7 @@ const (
 	ApplicationExtendedResponse      = 24
 )
 
+// ApplicationMap contains human readable descriptions of LDAP Application Codes
 var ApplicationMap = map[uint8]string{
 	ApplicationBindRequest:           "Bind Request",
 	ApplicationBindResponse:          "Bind Response",
@@ -72,6 +73,7 @@ const (
 	BeheraPasswordInHistory           = 8
 )
 
+// BeheraPasswordPolicyErrorMap contains human readable descriptions of Behera Password Policy error codes
 var BeheraPasswordPolicyErrorMap = map[int8]string{
 	BeheraPasswordExpired:             "Password expired",
 	BeheraAccountLocked:               "Account locked",
@@ -151,16 +153,47 @@ func addLDAPDescriptions(packet *ber.Packet) (err error) {
 func addControlDescriptions(packet *ber.Packet) {
 	packet.Description = "Controls"
 	for _, child := range packet.Children {
+		var value *ber.Packet
+		controlType := ""
 		child.Description = "Control"
-		child.Children[0].Description = "Control Type (" + ControlTypeMap[child.Children[0].Value.(string)] + ")"
-		value := child.Children[1]
-		if len(child.Children) == 3 {
-			child.Children[1].Description = "Criticality"
-			value = child.Children[2]
-		}
-		value.Description = "Control Value"
+		switch len(child.Children) {
+		case 0:
+			// at least one child is required for control type
+			continue
 
-		switch child.Children[0].Value.(string) {
+		case 1:
+			// just type, no criticality or value
+			controlType = child.Children[0].Value.(string)
+			child.Children[0].Description = "Control Type (" + ControlTypeMap[controlType] + ")"
+
+		case 2:
+			controlType = child.Children[0].Value.(string)
+			child.Children[0].Description = "Control Type (" + ControlTypeMap[controlType] + ")"
+			// Children[1] could be criticality or value (both are optional)
+			// duck-type on whether this is a boolean
+			if _, ok := child.Children[1].Value.(bool); ok {
+				child.Children[1].Description = "Criticality"
+			} else {
+				child.Children[1].Description = "Control Value"
+				value = child.Children[1]
+			}
+
+		case 3:
+			// criticality and value present
+			controlType = child.Children[0].Value.(string)
+			child.Children[0].Description = "Control Type (" + ControlTypeMap[controlType] + ")"
+			child.Children[1].Description = "Criticality"
+			child.Children[2].Description = "Control Value"
+			value = child.Children[2]
+
+		default:
+			// more than 3 children is invalid
+			continue
+		}
+		if value == nil {
+			continue
+		}
+		switch controlType {
 		case ControlTypePaging:
 			value.Description += " (Paging)"
 			if value.Value != nil {
@@ -186,18 +219,18 @@ func addControlDescriptions(packet *ber.Packet) {
 			for _, child := range sequence.Children {
 				if child.Tag == 0 {
 					//Warning
-					child := child.Children[0]
-					packet := ber.DecodePacket(child.Data.Bytes())
+					warningPacket := child.Children[0]
+					packet := ber.DecodePacket(warningPacket.Data.Bytes())
 					val, ok := packet.Value.(int64)
 					if ok {
-						if child.Tag == 0 {
+						if warningPacket.Tag == 0 {
 							//timeBeforeExpiration
 							value.Description += " (TimeBeforeExpiration)"
-							child.Value = val
-						} else if child.Tag == 1 {
+							warningPacket.Value = val
+						} else if warningPacket.Tag == 1 {
 							//graceAuthNsRemaining
 							value.Description += " (GraceAuthNsRemaining)"
-							child.Value = val
+							warningPacket.Value = val
 						}
 					}
 				} else if child.Tag == 1 {
@@ -237,6 +270,7 @@ func addDefaultLDAPResponseDescriptions(packet *ber.Packet) {
 	}
 }
 
+// DebugBinaryFile reads and prints packets from the given filename
 func DebugBinaryFile(fileName string) error {
 	file, err := ioutil.ReadFile(fileName)
 	if err != nil {

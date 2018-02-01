@@ -44,7 +44,7 @@ select:-webkit-autofill:focus {
 .login-form-input {
   border: 1px solid $login-border;
   border-radius: 4px;
-  opacity: .6;
+  opacity: 0.6;
 
   &:focus {
     border: 1px solid $login-border;
@@ -55,9 +55,9 @@ select:-webkit-autofill:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content:space-between;
+  justify-content: space-between;
   width: 100%;
-  margin-top: .5rem
+  margin-top: 0.5rem;
 }
 
 .login-button-forgot-password {
@@ -95,7 +95,7 @@ select:-webkit-autofill:focus {
     color: $link-color;
     position: relative;
     font-size: 2rem;
-    text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -211,7 +211,7 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: flex-end;
   width: 100%;
-  margin-top: 1rem
+  margin-top: 1rem;
 }
 
 .login-signup-title {
@@ -328,7 +328,6 @@ select:-webkit-autofill:focus {
   }
 }
 
-
 .login-bg {
   position: absolute;
   top: 0;
@@ -364,14 +363,15 @@ select:-webkit-autofill:focus {
       transform: rotateY(180deg);
     }
 
-    &:before, &:after {
+    &:before,
+    &:after {
       backface-visibility: hidden;
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: 100%;
-      content: '';
+      content: "";
       display: block;
     }
 
@@ -388,6 +388,12 @@ select:-webkit-autofill:focus {
   left: 0;
   right: 0;
   height: 100%;
-  background-image: -webkit-radial-gradient(center center, ellipse farthest-corner, transparent 0%, transparent 10%, rgba(18, 22, 29, 1) 100%);
-  z-index:2;
+  background-image: -webkit-radial-gradient(
+    center center,
+    ellipse farthest-corner,
+    transparent 0%,
+    transparent 10%,
+    rgba(18, 22, 29, 1) 100%
+  );
+  z-index: 2;
 }

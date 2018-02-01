@@ -6,7 +6,7 @@
   text-align: center;
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 100% 100%;
+  background-size: contain;
   display: inline-block;
   vertical-align: middle;
 }
@@ -46,6 +46,10 @@
 
 .gicon-add-variable {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_variable.svg');
+}
+
+.gicon-add-alert-notification-channel {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_notification_channel.svg');
 }
 
 .gicon-alert {
@@ -171,7 +175,6 @@
 .gicon-zoom-out {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_zoom_out.svg');
 }
-
 
 .sidemenu {
   .gicon-dashboard {

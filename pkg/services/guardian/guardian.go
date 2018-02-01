@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DashboardGuardian struct {
@@ -29,6 +30,10 @@ func (g *DashboardGuardian) CanSave() (bool, error) {
 }
 
 func (g *DashboardGuardian) CanEdit() (bool, error) {
+	if setting.ViewersCanEdit {
+		return g.HasPermission(m.PERMISSION_VIEW)
+	}
+
 	return g.HasPermission(m.PERMISSION_EDIT)
 }
 
@@ -55,8 +60,10 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 
 	for _, p := range acl {
 		// user match
-		if p.UserId == g.user.UserId && p.Permission >= permission {
-			return true, nil
+		if !g.user.IsAnonymous {
+			if p.UserId == g.user.UserId && p.Permission >= permission {
+				return true, nil
+			}
 		}
 
 		// role match

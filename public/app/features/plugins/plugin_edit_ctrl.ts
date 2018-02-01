@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 import Remarkable from 'remarkable';
@@ -18,15 +16,7 @@ export class PluginEditCtrl {
   postUpdateHook: () => any;
 
   /** @ngInject */
-  constructor(
-    private $scope,
-    private $rootScope,
-    private backendSrv,
-    private $sce,
-    private $routeParams,
-    navModelSrv,
-  ) {
-
+  constructor(private $scope, private $rootScope, private backendSrv, private $sce, private $routeParams, navModelSrv) {
     this.pluginId = $routeParams.pluginId;
     this.preUpdateHook = () => Promise.resolve();
     this.postUpdateHook = () => Promise.resolve();
@@ -40,44 +30,41 @@ export class PluginEditCtrl {
     this.navModel = {
       main: {
         img: model.info.logos.large,
-        subTitle: model.info.description,
+        subTitle: model.info.author.name,
         url: '',
         text: '',
-        breadcrumbs: [
-          { title: 'Plugins', url: '/plugins' },
-          { title: model.name },
-        ],
+        breadcrumbs: [{ title: 'Plugins', url: 'plugins' }, { title: model.name }],
         children: [
           {
             icon: 'fa fa-fw fa-file-text-o',
             id: 'readme',
             text: 'Readme',
-            url: `plugins/${this.model.id}/edit?tab=readme`
-          }
-        ]
-      }
+            url: `plugins/${this.model.id}/edit?tab=readme`,
+          },
+        ],
+      },
     };
 
     if (model.type === 'app') {
+      this.navModel.main.children.push({
+        icon: 'gicon gicon-cog',
+        id: 'config',
+        text: 'Config',
+        url: `plugins/${this.model.id}/edit?tab=config`,
+      });
+
+      let hasDashboards = _.find(model.includes, { type: 'dashboard' });
+
+      if (hasDashboards) {
         this.navModel.main.children.push({
-            icon: 'gicon gicon-cog',
-            id: 'config',
-            text: 'Config',
-            url: `plugins/${this.model.id}/edit?tab=config`
+          icon: 'gicon gicon-dashboard',
+          id: 'dashboards',
+          text: 'Dashboards',
+          url: `plugins/${this.model.id}/edit?tab=dashboards`,
         });
+      }
 
-        let hasDashboards = _.find(model.includes, {type: 'dashboard'});
-
-        if (hasDashboards) {
-          this.navModel.main.children.push({
-            icon: 'gicon gicon-dashboard',
-            id: 'dashboards',
-            text: 'Dashboards',
-            url: `plugins/${this.model.id}/edit?tab=dashboards`
-          });
-        }
-
-        defaultTab = 'config';
+      defaultTab = 'config';
     }
 
     this.tab = this.$routeParams.tab || defaultTab;
@@ -117,29 +104,39 @@ export class PluginEditCtrl {
 
   getPluginIcon(type) {
     switch (type) {
-      case 'datasource':  return 'icon-gf icon-gf-datasources';
-      case 'panel':  return 'icon-gf icon-gf-panel';
-      case 'app':  return 'icon-gf icon-gf-apps';
-      case 'page':  return 'icon-gf icon-gf-endpoint-tiny';
-      case 'dashboard':  return 'icon-gf icon-gf-dashboard';
-      default: return 'icon-gf icon-gf-apps';
+      case 'datasource':
+        return 'icon-gf icon-gf-datasources';
+      case 'panel':
+        return 'icon-gf icon-gf-panel';
+      case 'app':
+        return 'icon-gf icon-gf-apps';
+      case 'page':
+        return 'icon-gf icon-gf-endpoint-tiny';
+      case 'dashboard':
+        return 'icon-gf icon-gf-dashboard';
+      default:
+        return 'icon-gf icon-gf-apps';
     }
   }
 
   update() {
-    this.preUpdateHook().then(() => {
-      var updateCmd = _.extend({
-        enabled: this.model.enabled,
-        pinned: this.model.pinned,
-        jsonData: this.model.jsonData,
-        secureJsonData: this.model.secureJsonData,
-      }, {});
-      return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
-    })
-    .then(this.postUpdateHook)
-    .then((res) => {
-      window.location.href = window.location.href;
-    });
+    this.preUpdateHook()
+      .then(() => {
+        var updateCmd = _.extend(
+          {
+            enabled: this.model.enabled,
+            pinned: this.model.pinned,
+            jsonData: this.model.jsonData,
+            secureJsonData: this.model.secureJsonData,
+          },
+          {}
+        );
+        return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
+      })
+      .then(this.postUpdateHook)
+      .then(res => {
+        window.location.href = window.location.href;
+      });
   }
 
   importDashboards() {
@@ -160,7 +157,7 @@ export class PluginEditCtrl {
 
     this.$rootScope.appEvent('show-modal', {
       src: 'public/app/features/plugins/partials/update_instructions.html',
-      scope: modalScope
+      scope: modalScope,
     });
   }
 

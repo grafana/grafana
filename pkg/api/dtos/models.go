@@ -3,6 +3,7 @@ package dtos
 import (
 	"crypto/md5"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -56,4 +57,20 @@ func GetGravatarUrl(text string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(strings.ToLower(text)))
 	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
+}
+
+func GetGravatarUrlWithDefault(text string, defaultText string) string {
+	if text != "" {
+		return GetGravatarUrl(text)
+	}
+
+	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
+
+	if err != nil {
+		return ""
+	}
+
+	text = reg.ReplaceAllString(defaultText, "") + "@localhost"
+
+	return GetGravatarUrl(text)
 }

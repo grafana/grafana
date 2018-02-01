@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, expect, sinon, angularMocks} from 'test/lib/common';
+import { describe, beforeEach, it, expect, sinon, angularMocks } from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import '../shareModalCtrl';
 import config from 'app/core/config';
@@ -14,8 +14,8 @@ describe('ShareModalCtrl', function() {
   beforeEach(function() {
     config.bootData = {
       user: {
-        orgId: 1
-      }
+        orgId: 1,
+      },
     };
   });
 
@@ -23,9 +23,11 @@ describe('ShareModalCtrl', function() {
 
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(angularMocks.module(function($compileProvider) {
-    $compileProvider.preAssignBindingsEnabled(true);
-  }));
+  beforeEach(
+    angularMocks.module(function($compileProvider) {
+      $compileProvider.preAssignBindingsEnabled(true);
+    })
+  );
 
   beforeEach(ctx.providePhase());
 
@@ -78,7 +80,6 @@ describe('ShareModalCtrl', function() {
 
       expect(ctx.scope.shareUrl).to.contain('?fullscreen&edit&from=1000&to=2000&orgId=1&panelId=1');
       expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
-
     });
 
     it('should remove edit from image url when is first param in querystring and modeSharePanel is true', function() {
@@ -90,7 +91,6 @@ describe('ShareModalCtrl', function() {
 
       expect(ctx.scope.shareUrl).to.contain('?edit&fullscreen&from=1000&to=2000&orgId=1&panelId=1');
       expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
-
     });
 
     it('should include template variables in url', function() {
@@ -103,8 +103,9 @@ describe('ShareModalCtrl', function() {
       };
 
       ctx.scope.buildUrl();
-      expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1&var-app=mupp&var-server=srv-01');
+      expect(ctx.scope.shareUrl).to.be(
+        'http://server/#!/test?from=1000&to=2000&orgId=1&var-app=mupp&var-server=srv-01'
+      );
     });
   });
 });
-

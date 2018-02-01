@@ -1,7 +1,6 @@
 import coreModule from '../core_module';
 
 export class ResetPasswordCtrl {
-
   /** @ngInject */
   constructor($scope, contextSrv, backendSrv, $location) {
     contextSrv.sidemenu = false;
@@ -18,11 +17,8 @@ export class ResetPasswordCtrl {
       main: {
         icon: 'gicon gicon-branding',
         subTitle: 'Reset your Grafana password',
-        breadcrumbs: [
-          { title: 'Login', url: '/login' },
-          { title: 'Reset Password' },
-        ]
-      }
+        breadcrumbs: [{ title: 'Login', url: 'login' }, { title: 'Reset Password' }],
+      },
     };
 
     $scope.sendResetEmail = function() {
@@ -35,7 +31,9 @@ export class ResetPasswordCtrl {
     };
 
     $scope.submitReset = function() {
-      if (!$scope.resetForm.$valid) { return; }
+      if (!$scope.resetForm.$valid) {
+        return;
+      }
 
       if ($scope.formModel.newPassword !== $scope.formModel.confirmPassword) {
         $scope.appEvent('alert-warning', ['New passwords do not match', '']);

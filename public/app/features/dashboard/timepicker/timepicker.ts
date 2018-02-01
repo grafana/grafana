@@ -5,7 +5,6 @@ import moment from 'moment';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 
 export class TimePickerCtrl {
-
   static tooltipFormat = 'MMM D, YYYY HH:mm:ss';
   static defaults = {
     time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
@@ -62,7 +61,7 @@ export class TimePickerCtrl {
     }
 
     this.rangeString = rangeUtil.describeTimeRange(timeRaw);
-    this.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
+    this.absolute = { fromJs: time.from.toDate(), toJs: time.to.toDate() };
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
     this.timeRaw = timeRaw;
@@ -92,7 +91,7 @@ export class TimePickerCtrl {
       from = range.from.valueOf();
     }
 
-    this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to)});
+    this.timeSrv.setTime({ from: moment.utc(from), to: moment.utc(to) });
   }
 
   openDropdown() {
@@ -107,11 +106,11 @@ export class TimePickerCtrl {
     this.refresh = {
       value: this.dashboard.refresh,
       options: _.map(this.panel.refresh_intervals, (interval: any) => {
-        return {text: interval, value: interval};
-      })
+        return { text: interval, value: interval };
+      }),
     };
 
-    this.refresh.options.unshift({text: 'off'});
+    this.refresh.options.unshift({ text: 'off' });
     this.isOpen = true;
   }
 
@@ -137,7 +136,7 @@ export class TimePickerCtrl {
   }
 
   setRelativeFilter(timespan) {
-    var range = {from: timespan.from, to: timespan.to};
+    var range = { from: timespan.from, to: timespan.to };
 
     if (this.panel.nowDelay && range.to === 'now') {
       range.to = 'now-' + this.panel.nowDelay;
@@ -146,7 +145,6 @@ export class TimePickerCtrl {
     this.timeSrv.setTime(range);
     this.isOpen = false;
   }
-
 }
 
 export function settingsDirective() {
@@ -157,8 +155,8 @@ export function settingsDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      dashboard: "="
-    }
+      dashboard: '=',
+    },
   };
 }
 
@@ -170,13 +168,13 @@ export function timePickerDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      dashboard: "="
-    }
+      dashboard: '=',
+    },
   };
 }
 
 angular.module('grafana.directives').directive('gfTimePickerSettings', settingsDirective);
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);
 
-import {inputDateDirective} from './input_date';
-angular.module("grafana.directives").directive('inputDatetime', inputDateDirective);
+import { inputDateDirective } from './input_date';
+angular.module('grafana.directives').directive('inputDatetime', inputDateDirective);

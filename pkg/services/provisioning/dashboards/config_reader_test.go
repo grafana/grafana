@@ -3,6 +3,7 @@ package dashboards
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/log"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,8 +17,8 @@ func TestDashboardsAsConfig(t *testing.T) {
 
 		Convey("Can read config file", func() {
 
-			cfgProvifer := configReader{path: simpleDashboardConfig}
-			cfg, err := cfgProvifer.readConfig()
+			cfgProvider := configReader{path: simpleDashboardConfig, log: log.New("test-logger")}
+			cfg, err := cfgProvider.readConfig()
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -33,7 +34,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			So(ds.Editable, ShouldBeTrue)
 
 			So(len(ds.Options), ShouldEqual, 1)
-			So(ds.Options["folder"], ShouldEqual, "/var/lib/grafana/dashboards")
+			So(ds.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 
 			ds2 := cfg[1]
 
@@ -44,19 +45,29 @@ func TestDashboardsAsConfig(t *testing.T) {
 			So(ds2.Editable, ShouldBeFalse)
 
 			So(len(ds2.Options), ShouldEqual, 1)
-			So(ds2.Options["folder"], ShouldEqual, "/var/lib/grafana/dashboards")
+			So(ds2.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 		})
 
-		Convey("Should skip broken config files", func() {
+		Convey("Should skip invalid path", func() {
 
-			cfgProvifer := configReader{path: brokenConfigs}
-			cfg, err := cfgProvifer.readConfig()
+			cfgProvider := configReader{path: "/invalid-directory", log: log.New("test-logger")}
+			cfg, err := cfgProvider.readConfig()
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
 
 			So(len(cfg), ShouldEqual, 0)
+		})
 
+		Convey("Should skip broken config files", func() {
+
+			cfgProvider := configReader{path: brokenConfigs, log: log.New("test-logger")}
+			cfg, err := cfgProvider.readConfig()
+			if err != nil {
+				t.Fatalf("readConfig return an error %v", err)
+			}
+
+			So(len(cfg), ShouldEqual, 0)
 		})
 	})
 }

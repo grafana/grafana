@@ -36,7 +36,7 @@ export class ContextSrv {
       config.buildInfo = {};
     }
     if (!config.bootData) {
-      config.bootData = {user: {}, settings: {}};
+      config.bootData = { user: {}, settings: {} };
     }
 
     this.version = config.buildInfo.version;
@@ -61,7 +61,7 @@ export class ContextSrv {
 }
 
 var contextSrv = new ContextSrv();
-export {contextSrv};
+export { contextSrv };
 
 coreModule.factory('contextSrv', function() {
   return contextSrv;

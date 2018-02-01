@@ -1,7 +1,6 @@
 import angular from 'angular';
 
 export class OrgDetailsCtrl {
-
   /** @ngInject **/
   constructor($scope, $http, backendSrv, contextSrv, navModelSrv) {
     $scope.init = function() {
@@ -18,13 +17,17 @@ export class OrgDetailsCtrl {
     };
 
     $scope.update = function() {
-      if (!$scope.orgForm.$valid) { return; }
-      var data = {name: $scope.org.name};
+      if (!$scope.orgForm.$valid) {
+        return;
+      }
+      var data = { name: $scope.org.name };
       backendSrv.put('/api/org', data).then($scope.getOrgInfo);
     };
 
     $scope.updateAddress = function() {
-      if (!$scope.addressForm.$valid) { return; }
+      if (!$scope.addressForm.$valid) {
+        return;
+      }
       backendSrv.put('/api/org/address', $scope.address).then($scope.getOrgInfo);
     };
 

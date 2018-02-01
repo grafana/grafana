@@ -1,4 +1,4 @@
-import {Emitter} from 'app/core/utils/emitter';
+import { Emitter } from 'app/core/utils/emitter';
 import _ from 'lodash';
 
 export interface GridPos {
@@ -9,15 +9,15 @@ export interface GridPos {
   static?: boolean;
 }
 
-const notPersistedProperties: {[str: string]: boolean} = {
-  "events": true,
-  "fullscreen": true,
-  "isEditing": true,
+const notPersistedProperties: { [str: string]: boolean } = {
+  events: true,
+  fullscreen: true,
+  isEditing: true,
 };
 
 export class PanelModel {
   id: number;
-  gridPos:  GridPos;
+  gridPos: GridPos;
   type: string;
   title: string;
   alert?: any;
@@ -26,6 +26,7 @@ export class PanelModel {
   repeatIteration?: number;
   repeatPanelId?: number;
   repeatDirection?: string;
+  repeatedByRow?: boolean;
   minSpan?: number;
   collapsed?: boolean;
   panels?: any;
@@ -45,7 +46,7 @@ export class PanelModel {
     }
 
     if (!this.gridPos) {
-      this.gridPos = {x: 0, y: 0, h: 3, w: 6};
+      this.gridPos = { x: 0, y: 0, h: 3, w: 6 };
     }
   }
 
@@ -94,4 +95,3 @@ export class PanelModel {
     this.events.removeAllListeners();
   }
 }
-

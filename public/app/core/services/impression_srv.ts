@@ -15,7 +15,7 @@ export class ImpressionSrv {
       }
     }
 
-    impressions = impressions.filter((imp) => {
+    impressions = impressions.filter(imp => {
       return dashboardId !== imp;
     });
 
@@ -28,7 +28,7 @@ export class ImpressionSrv {
   }
 
   getDashboardOpened() {
-    var impressions = store.get(this.impressionKey(config)) || "[]";
+    var impressions = store.get(this.impressionKey(config)) || '[]';
 
     impressions = JSON.parse(impressions);
 
@@ -40,7 +40,7 @@ export class ImpressionSrv {
   }
 
   impressionKey(config) {
-    return "dashboard_impressions-" + config.bootData.user.orgId;
+    return 'dashboard_impressions-' + config.bootData.user.orgId;
   }
 }
 

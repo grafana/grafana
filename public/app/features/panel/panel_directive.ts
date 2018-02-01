@@ -58,7 +58,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
     restrict: 'E',
     template: panelTemplate,
     transclude: true,
-    scope: { ctrl: "=" },
+    scope: { ctrl: '=' },
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
       var panelContent = elem.find('.panel-content');
@@ -85,7 +85,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       }
 
       function panelHeightUpdated() {
-        panelContent.css({height: ctrl.height + 'px'});
+        panelContent.css({ height: ctrl.height + 'px' });
         if (panelScrollbar) {
           panelScrollbar.update();
         }
@@ -157,7 +157,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
           infoDrop = new Drop({
             target: cornerInfoElem[0],
             content: function() {
-              return ctrl.getInfoContent({mode: 'tooltip'});
+              return ctrl.getInfoContent({ mode: 'tooltip' });
             },
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
@@ -169,10 +169,10 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
                 {
                   to: 'window',
                   attachment: 'together',
-                  pin: true
-                }
+                  pin: true,
+                },
               ],
-            }
+            },
           });
         }
       }
@@ -200,7 +200,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
           panelScrollbar.update();
         }
       });
-    }
+    },
   };
 });
 
@@ -214,9 +214,6 @@ module.directive('panelHelpCorner', function($rootScope) {
     </span>
     </span>
     `,
-    link: function(scope, elem) {
-    }
+    link: function(scope, elem) {},
   };
 });
-
-

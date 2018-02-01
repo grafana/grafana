@@ -3,24 +3,24 @@ import appEvents from 'app/core/app_events';
 export class CreateFolderCtrl {
   title = '';
   navModel: any;
-  nameExists = false;
   titleTouched = false;
+  hasValidationError: boolean;
+  validationError: any;
 
-  constructor(private backendSrv, private $location, navModelSrv) {
+  /** @ngInject **/
+  constructor(private backendSrv, private $location, private validationSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
   }
 
   create() {
-    if (!this.title || this.title.trim().length === 0) {
+    if (this.hasValidationError) {
       return;
     }
 
-    const title = this.title.trim();
-
-    return this.backendSrv.createDashboardFolder(title).then(result => {
+    return this.backendSrv.createDashboardFolder(this.title).then(result => {
       appEvents.emit('alert-success', ['Folder Created', 'OK']);
 
-      var folderUrl = `/dashboards/folder/${result.dashboard.id}/${result.meta.slug}`;
+      var folderUrl = `dashboards/folder/${result.dashboard.id}/${result.meta.slug}`;
       this.$location.url(folderUrl);
     });
   }
@@ -28,14 +28,14 @@ export class CreateFolderCtrl {
   titleChanged() {
     this.titleTouched = true;
 
-    this.backendSrv.search({query: this.title}).then(res => {
-      this.nameExists = false;
-      for (let hit of res) {
-        if (this.title === hit.title) {
-          this.nameExists = true;
-          break;
-        }
-      }
-    });
+    this.validationSrv
+      .validateNewDashboardOrFolderName(this.title)
+      .then(() => {
+        this.hasValidationError = false;
+      })
+      .catch(err => {
+        this.hasValidationError = true;
+        this.validationError = err.message;
+      });
   }
 }

@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import angular from 'angular';
 import coreModule from 'app/core/core_module';
@@ -10,8 +8,18 @@ export class AdHocFiltersCtrl {
   removeTagFilterSegment: any;
 
   /** @ngInject */
-  constructor(private uiSegmentSrv, private datasourceSrv, private $q, private variableSrv, $scope, private $rootScope) {
-    this.removeTagFilterSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove filter --'});
+  constructor(
+    private uiSegmentSrv,
+    private datasourceSrv,
+    private $q,
+    private variableSrv,
+    $scope,
+    private $rootScope
+  ) {
+    this.removeTagFilterSegment = uiSegmentSrv.newSegment({
+      fake: true,
+      value: '-- remove filter --',
+    });
     this.buildSegmentModel();
     this.$rootScope.onAppEvent('template-variable-value-updated', this.buildSegmentModel.bind(this), $scope);
   }
@@ -53,13 +61,13 @@ export class AdHocFiltersCtrl {
       if (segment.type !== 'value') {
         promise = ds.getTagKeys();
       } else {
-        options.key = this.segments[index-2].value;
+        options.key = this.segments[index - 2].value;
         promise = ds.getTagValues(options);
       }
 
       return promise.then(results => {
         results = _.map(results, segment => {
-          return this.uiSegmentSrv.newSegment({value: segment.text});
+          return this.uiSegmentSrv.newSegment({ value: segment.text });
         });
 
         // add remove option for keys
@@ -80,8 +88,8 @@ export class AdHocFiltersCtrl {
       if (this.segments.length === 0) {
         this.segments.push(this.uiSegmentSrv.newPlusButton());
       } else if (this.segments.length > 2) {
-        this.segments.splice(Math.max(index-1, 0), 1);
-        if (this.segments[this.segments.length-1].type !== 'plus-button') {
+        this.segments.splice(Math.max(index - 1, 0), 1);
+        if (this.segments[this.segments.length - 1].type !== 'plus-button') {
           this.segments.push(this.uiSegmentSrv.newPlusButton());
         }
       }
@@ -96,7 +104,7 @@ export class AdHocFiltersCtrl {
         segment.cssClass = 'query-segment-key';
       }
 
-      if ((index+1) === this.segments.length) {
+      if (index + 1 === this.segments.length) {
         this.segments.push(this.uiSegmentSrv.newPlusButton());
       }
     }
@@ -117,7 +125,7 @@ export class AdHocFiltersCtrl {
 
       switch (segment.type) {
         case 'key': {
-          filters.push({key: segment.value});
+          filters.push({ key: segment.value });
           filterIndex += 1;
           break;
         }
@@ -162,8 +170,8 @@ export function adHocFiltersComponent() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      variable: "="
-    }
+      variable: '=',
+    },
   };
 }
 

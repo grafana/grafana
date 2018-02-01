@@ -1,5 +1,4 @@
 export class Store {
-
   get(key) {
     return window.localStorage[key];
   }
@@ -22,7 +21,6 @@ export class Store {
   delete(key) {
     window.localStorage.removeItem(key);
   }
-
 }
 
 const store = new Store();

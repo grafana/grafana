@@ -1,7 +1,6 @@
 import queryPart from '../query_part';
 
 describe('InfluxQueryPart', () => {
-
   describe('series with measurement only', () => {
     it('should handle nested function parts', () => {
       var part = queryPart.create({
@@ -15,7 +14,7 @@ describe('InfluxQueryPart', () => {
 
     it('should nest spread function', () => {
       var part = queryPart.create({
-        type: 'spread'
+        type: 'spread',
       });
 
       expect(part.text).toBe('spread()');
@@ -41,7 +40,5 @@ describe('InfluxQueryPart', () => {
       expect(part.text).toBe('alias(test)');
       expect(part.render('mean(value)')).toBe('mean(value) AS "test"');
     });
-
   });
-
 });

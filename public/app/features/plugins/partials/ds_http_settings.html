@@ -122,3 +122,17 @@
   </div>
 </div>
 
+<h3 class="page-heading" ng-if="current.access=='proxy'">Advanced HTTP Settings</h3>
+<div class="gf-form-group" ng-if="current.access=='proxy'">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Whitelisted Cookies</span>
+      <bootstrap-tagsinput ng-model="current.jsonData.keepCookies" tagclass="label label-tag" placeholder="Add Name">
+      </bootstrap-tagsinput>
+      <info-popover mode="right-absolute">
+        Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.
+      </info-popover>
+    </div>
+  </div>
+</div>
+

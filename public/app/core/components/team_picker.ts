@@ -17,24 +17,29 @@ export class TeamPickerCtrl {
 
   /** @ngInject */
   constructor(private backendSrv) {
-    this.debouncedSearchGroups = _.debounce(this.searchGroups, 500, {'leading': true, 'trailing': false});
+    this.debouncedSearchGroups = _.debounce(this.searchGroups, 500, {
+      leading: true,
+      trailing: false,
+    });
     this.reset();
   }
 
   reset() {
-    this.group = {text: 'Choose', value: null};
+    this.group = { text: 'Choose', value: null };
   }
 
   searchGroups(query: string) {
-    return Promise.resolve(this.backendSrv.get('/api/teams/search?perpage=10&page=1&query=' + query).then(result => {
-      return _.map(result.teams, ug => {
-        return {text: ug.name, value: ug};
-      });
-    }));
+    return Promise.resolve(
+      this.backendSrv.get('/api/teams/search?perpage=10&page=1&query=' + query).then(result => {
+        return _.map(result.teams, ug => {
+          return { text: ug.name, value: ug };
+        });
+      })
+    );
   }
 
   onChange(option) {
-    this.teamPicked({$group: option.value});
+    this.teamPicked({ $group: option.value });
   }
 }
 
@@ -49,10 +54,10 @@ export function teamPicker() {
       teamPicked: '&',
     },
     link: function(scope, elem, attrs, ctrl) {
-      scope.$on("team-picker-reset", () => {
+      scope.$on('team-picker-reset', () => {
         ctrl.reset();
       });
-    }
+    },
   };
 }
 

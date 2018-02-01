@@ -90,7 +90,7 @@
 }
 
 .input-datetime-format {
-  color: $link-color-disabled
+  color: $link-color-disabled;
 }
 
 .fa {
@@ -118,4 +118,3 @@
   @extend .fa;
   @extend .fa-chevron-left;
 }
-

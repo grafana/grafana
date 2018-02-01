@@ -1,7 +1,5 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import {MysqlDatasource} from './datasource';
-import {MysqlQueryCtrl} from './query_ctrl';
+import { MysqlDatasource } from './datasource';
+import { MysqlQueryCtrl } from './query_ctrl';
 
 class MysqlConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -35,4 +33,3 @@ export {
   MysqlConfigCtrl as ConfigCtrl,
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
-

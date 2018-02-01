@@ -17,7 +17,7 @@ function ngModelOnBlur() {
           ngModelCtrl.$setViewValue(elm.val());
         });
       });
-    }
+    },
   };
 }
 
@@ -25,12 +25,14 @@ function emptyToNull() {
   return {
     restrict: 'A',
     require: 'ngModel',
-    link: function (scope, elm, attrs, ctrl) {
-      ctrl.$parsers.push(function (viewValue) {
-        if (viewValue === "") { return null; }
+    link: function(scope, elm, attrs, ctrl) {
+      ctrl.$parsers.push(function(viewValue) {
+        if (viewValue === '') {
+          return null;
+        }
         return viewValue;
       });
-    }
+    },
   };
 }
 
@@ -48,7 +50,7 @@ function validTimeSpan() {
         var info = rangeUtil.describeTextRange(viewValue);
         return info.invalid !== true;
       };
-    }
+    },
   };
 }
 

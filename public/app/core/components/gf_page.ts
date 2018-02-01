@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 
 const template = `
@@ -27,15 +25,15 @@ export function gfPageDirective() {
     restrict: 'E',
     template: template,
     scope: {
-      "model": "=",
+      model: '=',
     },
     transclude: {
-      'header': '?gfPageHeader',
-      'body': 'gfPageBody',
+      header: '?gfPageHeader',
+      body: 'gfPageBody',
     },
     link: function(scope, elem, attrs) {
       console.log(scope);
-    }
+    },
   };
 }
 

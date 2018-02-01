@@ -10,5 +10,6 @@ package sqlite3
 #cgo CFLAGS: -DUSE_LIBSQLITE3
 #cgo linux LDFLAGS: -lsqlite3
 #cgo darwin LDFLAGS: -L/usr/local/opt/sqlite/lib -lsqlite3
+#cgo solaris LDFLAGS: -lsqlite3
 */
 import "C"

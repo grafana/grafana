@@ -7,7 +7,7 @@ func addTeamMigrations(mg *Migrator) {
 		Name: "team",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
@@ -45,4 +45,9 @@ func addTeamMigrations(mg *Migrator) {
 	//-------  indexes ------------------
 	mg.AddMigration("add index team_member.org_id", NewAddIndexMigration(teamMemberV1, teamMemberV1.Indices[0]))
 	mg.AddMigration("add unique index team_member_org_id_team_id_user_id", NewAddIndexMigration(teamMemberV1, teamMemberV1.Indices[1]))
+
+	// add column email
+	mg.AddMigration("Add column email to team table", NewAddColumnMigration(teamV1, &Column{
+		Name: "email", Type: DB_NVarchar, Nullable: true, Length: 190,
+	}))
 }

@@ -7,10 +7,10 @@
 		<form name="folderSettingsForm" ng-submit="ctrl.save()">
 			<div class="gf-form">
 				<label class="gf-form-label width-7">Name</label>
-				<input type="text" class="gf-form-input width-30" ng-model='ctrl.dashboard.title'></input>
+				<input type="text" class="gf-form-input width-30" ng-model='ctrl.title' ng-change="ctrl.titleChanged()"></input>
 			</div>
 			<div class="gf-form-button-row">
-				<button type="submit" class="btn btn-success" ng-disabled="!ctrl.canSave">
+				<button type="submit" class="btn btn-success" ng-disabled="!ctrl.canSave || !ctrl.hasChanged">
 					<i class="fa fa-trash"></i>
 					Save
 				</button>

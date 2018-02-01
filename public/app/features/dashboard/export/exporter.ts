@@ -1,11 +1,9 @@
 import config from 'app/core/config';
 import _ from 'lodash';
-import {DashboardModel} from '../dashboard_model';
+import { DashboardModel } from '../dashboard_model';
 
 export class DashboardExporter {
-
-  constructor(private datasourceSrv) {
-  }
+  constructor(private datasourceSrv) {}
 
   makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
@@ -38,29 +36,31 @@ export class DashboardExporter {
         }
       }
 
-      promises.push(this.datasourceSrv.get(obj.datasource).then(ds => {
-        if (ds.meta.builtIn) {
-          return;
-        }
+      promises.push(
+        this.datasourceSrv.get(obj.datasource).then(ds => {
+          if (ds.meta.builtIn) {
+            return;
+          }
 
-        var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
-        datasources[refName] = {
-          name: refName,
-          label: ds.name,
-          description: '',
-          type: 'datasource',
-          pluginId: ds.meta.id,
-          pluginName: ds.meta.name,
-        };
-        obj.datasource = '${' + refName  +'}';
+          var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+          datasources[refName] = {
+            name: refName,
+            label: ds.name,
+            description: '',
+            type: 'datasource',
+            pluginId: ds.meta.id,
+            pluginName: ds.meta.name,
+          };
+          obj.datasource = '${' + refName + '}';
 
-        requires['datasource' + ds.meta.id] = {
-          type: 'datasource',
-          id: ds.meta.id,
-          name: ds.meta.name,
-          version: ds.meta.info.version || "1.0.0",
-        };
-      }));
+          requires['datasource' + ds.meta.id] = {
+            type: 'datasource',
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
+          };
+        })
+      );
     };
 
     // check up panel data sources
@@ -108,49 +108,48 @@ export class DashboardExporter {
       type: 'grafana',
       id: 'grafana',
       name: 'Grafana',
-      version: config.buildInfo.version
+      version: config.buildInfo.version,
     };
 
-    return Promise.all(promises).then(() => {
-      _.each(datasources, (value, key) => {
-        inputs.push(value);
-      });
+    return Promise.all(promises)
+      .then(() => {
+        _.each(datasources, (value, key) => {
+          inputs.push(value);
+        });
 
-      // templatize constants
-      for (let variable of saveModel.templating.list) {
-        if (variable.type === 'constant') {
-          var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
-          inputs.push({
-            name: refName,
-            type: 'constant',
-            label: variable.label || variable.name,
-            value: variable.current.value,
-            description: '',
-          });
-          // update current and option
-          variable.query = '${' + refName + '}';
-          variable.options[0] = variable.current = {
-            value: variable.query,
-            text: variable.query,
-          };
+        // templatize constants
+        for (let variable of saveModel.templating.list) {
+          if (variable.type === 'constant') {
+            var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
+            inputs.push({
+              name: refName,
+              type: 'constant',
+              label: variable.label || variable.name,
+              value: variable.current.value,
+              description: '',
+            });
+            // update current and option
+            variable.query = '${' + refName + '}';
+            variable.options[0] = variable.current = {
+              value: variable.query,
+              text: variable.query,
+            };
+          }
         }
-      }
 
-      // make inputs and requires a top thing
-      var newObj = {};
-      newObj["__inputs"] = inputs;
-      newObj["__requires"] = _.sortBy(requires, ['id']);
+        // make inputs and requires a top thing
+        var newObj = {};
+        newObj['__inputs'] = inputs;
+        newObj['__requires'] = _.sortBy(requires, ['id']);
 
-      _.defaults(newObj, saveModel);
-      return newObj;
-
-    }).catch(err => {
-      console.log('Export failed:', err);
-      return {
-        error: err
-      };
-    });
+        _.defaults(newObj, saveModel);
+        return newObj;
+      })
+      .catch(err => {
+        console.log('Export failed:', err);
+        return {
+          error: err,
+        };
+      });
   }
-
 }
-

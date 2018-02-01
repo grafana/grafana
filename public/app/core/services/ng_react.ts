@@ -2,7 +2,6 @@
 // This is using ng-react with this PR applied https://github.com/ngReact/ngReact/pull/199
 //
 
-
 // # ngReact
 // ### Use React Components inside of your Angular applications
 //
@@ -85,10 +84,10 @@ function applyFunctions(obj, scope, propsConfig?) {
     var value = obj[key];
     var config = (propsConfig || {})[key] || {};
     /**
-       * wrap functions in a function that ensures they are scope.$applied
-       * ensures that when function is called from a React component
-       * the Angular digest cycle is run
-       */
+     * wrap functions in a function that ensures they are scope.$applied
+     * ensures that when function is called from a React component
+     * the Angular digest cycle is run
+     */
     prev[key] = angular.isFunction(value) && config.wrapApply !== false ? applied(value, scope) : value;
 
     return prev;
@@ -96,13 +95,13 @@ function applyFunctions(obj, scope, propsConfig?) {
 }
 
 /**
-   *
-   * @param watchDepth (value of HTML watch-depth attribute)
-   * @param scope (angular scope)
-   *
-   * Uses the watchDepth attribute to determine how to watch props on scope.
-   * If watchDepth attribute is NOT reference or collection, watchDepth defaults to deep watching by value
-   */
+ *
+ * @param watchDepth (value of HTML watch-depth attribute)
+ * @param scope (angular scope)
+ *
+ * Uses the watchDepth attribute to determine how to watch props on scope.
+ * If watchDepth attribute is NOT reference or collection, watchDepth defaults to deep watching by value
+ */
 function watchProps(watchDepth, scope, watchExpressions, listener) {
   var supportsWatchCollection = angular.isFunction(scope.$watchCollection);
   var supportsWatchGroup = angular.isFunction(scope.$watchGroup);

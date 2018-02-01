@@ -36,14 +36,14 @@
 }
 
 .pluginlist-message--update {
-   &:hover {
+  &:hover {
     border-bottom: 1px solid $text-color;
   }
 }
 
-.pluginlist-message--enable{
+.pluginlist-message--enable {
   color: $external-link-color;
-   &:hover {
+  &:hover {
     border-bottom: 1px solid $external-link-color;
   }
 }

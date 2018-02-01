@@ -1,4 +1,4 @@
-import {FolderPageLoader} from './folder_page_loader';
+import { FolderPageLoader } from './folder_page_loader';
 
 export class FolderPermissionsCtrl {
   navModel: any;

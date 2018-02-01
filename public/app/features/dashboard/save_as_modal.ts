@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 
-const  template = `
+const template = `
 <div class="modal-body">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
@@ -13,7 +13,7 @@ const  template = `
 		</a>
 	</div>
 
-	<form name="ctrl.saveForm" ng-submit="ctrl.save()" class="modal-content" novalidate>
+	<form name="ctrl.saveForm" class="modal-content" novalidate>
 		<div class="p-t-2">
 			<div class="gf-form">
 				<label class="gf-form-label width-7">New name</label>
@@ -22,13 +22,14 @@ const  template = `
       <div class="gf-form">
         <folder-picker initial-folder-id="ctrl.folderId"
                        on-change="ctrl.onFolderChange($folder)"
+                       enable-create-new="true"
                        label-class="width-7">
         </folder-picker>
       </div>
 		</div>
 
 		<div class="gf-form-button-row text-center">
-			<button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid">Save</button>
+			<button type="submit" class="btn btn-success" ng-click="ctrl.save()">Save</button>
 			<a class="btn-text" ng-click="ctrl.dismiss();">Cancel</a>
 		</div>
 	</form>
@@ -48,13 +49,13 @@ export class SaveDashboardAsModalCtrl {
     this.clone.title += ' Copy';
     this.clone.editable = true;
     this.clone.hideControls = false;
-    this.folderId = dashboard.folderId;
+    this.folderId = dashboard.meta.folderId;
 
     // remove alerts if source dashboard is already persisted
     // do not want to create alert dupes
     if (dashboard.id > 0) {
       this.clone.panels.forEach(panel => {
-        if (panel.type === "graph" && panel.alert) {
+        if (panel.type === 'graph' && panel.alert) {
           delete panel.thresholds;
         }
         delete panel.alert;
@@ -65,7 +66,7 @@ export class SaveDashboardAsModalCtrl {
   }
 
   save() {
-    return this.dashboardSrv.save(this.clone).then(this.dismiss);
+    return this.dashboardSrv.save(this.clone, { folderId: this.folderId }).then(this.dismiss);
   }
 
   keyDown(evt) {
@@ -75,7 +76,7 @@ export class SaveDashboardAsModalCtrl {
   }
 
   onFolderChange(folder) {
-    this.clone.folderId = folder.id;
+    this.folderId = folder.id;
   }
 }
 
@@ -86,8 +87,8 @@ export function saveDashboardAsDirective() {
     controller: SaveDashboardAsModalCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {dismiss: "&"}
+    scope: { dismiss: '&' },
   };
 }
 
-coreModule.directive('saveDashboardAsModal',  saveDashboardAsDirective);
+coreModule.directive('saveDashboardAsModal', saveDashboardAsDirective);

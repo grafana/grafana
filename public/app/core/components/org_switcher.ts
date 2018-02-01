@@ -1,7 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
-import {contextSrv} from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 const template = `
 <div class="modal-body">
@@ -83,7 +81,7 @@ export function orgSwitcher() {
     controller: OrgSwitchCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {dismiss: "&"},
+    scope: { dismiss: '&' },
   };
 }
 

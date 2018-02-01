@@ -66,8 +66,9 @@ type Dialer struct {
 	// HandshakeTimeout specifies the duration for the handshake to complete.
 	HandshakeTimeout time.Duration
 
-	// Input and output buffer sizes. If the buffer size is zero, then a
-	// default value of 4096 is used.
+	// ReadBufferSize and WriteBufferSize specify I/O buffer sizes. If a buffer
+	// size is zero, then a useful default size is used. The I/O buffer sizes
+	// do not limit the size of the messages that can be sent or received.
 	ReadBufferSize, WriteBufferSize int
 
 	// Subprotocols specifies the client's requested subprotocols.
@@ -368,7 +369,7 @@ func (d *Dialer) Dial(urlStr string, requestHeader http.Header) (*Conn, *http.Re
 		return nil, resp, ErrBadHandshake
 	}
 
-	for _, ext := range parseExtensions(req.Header) {
+	for _, ext := range parseExtensions(resp.Header) {
 		if ext[""] != "permessage-deflate" {
 			continue
 		}
@@ -388,33 +389,4 @@ func (d *Dialer) Dial(urlStr string, requestHeader http.Header) (*Conn, *http.Re
 	netConn.SetDeadline(time.Time{})
 	netConn = nil // to avoid close in defer.
 	return conn, resp, nil
-}
-
-// cloneTLSConfig clones all public fields except the fields
-// SessionTicketsDisabled and SessionTicketKey. This avoids copying the
-// sync.Mutex in the sync.Once and makes it safe to call cloneTLSConfig on a
-// config in active use.
-func cloneTLSConfig(cfg *tls.Config) *tls.Config {
-	if cfg == nil {
-		return &tls.Config{}
-	}
-	return &tls.Config{
-		Rand:                     cfg.Rand,
-		Time:                     cfg.Time,
-		Certificates:             cfg.Certificates,
-		NameToCertificate:        cfg.NameToCertificate,
-		GetCertificate:           cfg.GetCertificate,
-		RootCAs:                  cfg.RootCAs,
-		NextProtos:               cfg.NextProtos,
-		ServerName:               cfg.ServerName,
-		ClientAuth:               cfg.ClientAuth,
-		ClientCAs:                cfg.ClientCAs,
-		InsecureSkipVerify:       cfg.InsecureSkipVerify,
-		CipherSuites:             cfg.CipherSuites,
-		PreferServerCipherSuites: cfg.PreferServerCipherSuites,
-		ClientSessionCache:       cfg.ClientSessionCache,
-		MinVersion:               cfg.MinVersion,
-		MaxVersion:               cfg.MaxVersion,
-		CurvePreferences:         cfg.CurvePreferences,
-	}
 }

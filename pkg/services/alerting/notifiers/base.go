@@ -15,7 +15,7 @@ type NotifierBase struct {
 }
 
 func NewNotifierBase(id int64, isDefault bool, name, notifierType string, model *simplejson.Json) NotifierBase {
-	uploadImage := model.Get("uploadImage").MustBool(true)
+	uploadImage := model.Get("uploadImage").MustBool(false)
 
 	return NotifierBase{
 		Id:          id,

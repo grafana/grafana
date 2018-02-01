@@ -7,7 +7,7 @@ import './new_org_ctrl';
 import './user_invite_ctrl';
 import './teams_ctrl';
 import './team_details_ctrl';
-import './create_team_modal';
+import './create_team_ctrl';
 import './org_api_keys_ctrl';
 import './org_details_ctrl';
 import './prefs_control';

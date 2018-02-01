@@ -6,7 +6,7 @@
   position: relative;
   max-width: 4.5rem;
   flex-grow: 1;
-  min-width: 4.0rem;
+  min-width: 4rem;
   margin-right: $gf-form-margin;
 
   input {
@@ -30,7 +30,8 @@
     border-radius: $input-border-radius;
   }
 
-  input + label::before, input + label::after {
+  input + label::before,
+  input + label::after {
     @include buttonBackground($input-bg, $input-bg);
 
     display: block;
@@ -60,11 +61,10 @@
       color: lighten($orange, 10%);
       text-shadow: $text-shadow-strong;
     }
-
   }
 
   input + label::before {
-    font-family: 'FontAwesome';
+    font-family: "FontAwesome";
     content: "\f096"; // square-o
     color: $text-color-weak;
     transition: transform 0.4s;
@@ -77,7 +77,7 @@
     color: $orange;
     text-shadow: $text-shadow-strong;
 
-    font-family: 'FontAwesome';
+    font-family: "FontAwesome";
     transition: transform 0.4s;
     transform: rotateY(180deg);
     backface-visibility: hidden;
@@ -107,7 +107,8 @@
     border: none;
   }
 
-  input + label::before, input + label::after {
+  input + label::before,
+  input + label::after {
     background: transparent;
     border: none;
   }
@@ -148,7 +149,7 @@
   }
 }
 
-gf-form-switch[disabled]  {
+gf-form-switch[disabled] {
   .gf-form-label,
   .gf-form-switch input + label {
     cursor: default;

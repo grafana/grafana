@@ -34,15 +34,13 @@ export class OrgUsersCtrl {
   }
 
   get() {
-    this.backendSrv.get('/api/org/users')
-      .then((users) => {
-        this.users = users;
-        this.unfiltered = users;
-      });
-    this.backendSrv.get('/api/org/invites')
-      .then((pendingInvites) => {
-        this.pendingInvites = pendingInvites;
-      });
+    this.backendSrv.get('/api/org/users').then(users => {
+      this.users = users;
+      this.unfiltered = users;
+    });
+    this.backendSrv.get('/api/org/invites').then(pendingInvites => {
+      this.pendingInvites = pendingInvites;
+    });
   }
 
   onQueryUpdated() {
@@ -60,23 +58,21 @@ export class OrgUsersCtrl {
     this.$scope.appEvent('confirm-modal', {
       title: 'Delete',
       text: 'Are you sure you want to delete user ' + user.login + '?',
-      yesText: "Delete",
-      icon: "fa-warning",
+      yesText: 'Delete',
+      icon: 'fa-warning',
       onConfirm: () => {
         this.removeUserConfirmed(user);
-      }
+      },
     });
   }
 
   removeUserConfirmed(user) {
-    this.backendSrv.delete('/api/org/users/' + user.userId)
-    .then(this.get.bind(this));
+    this.backendSrv.delete('/api/org/users/' + user.userId).then(this.get.bind(this));
   }
 
   revokeInvite(invite, evt) {
     evt.stopPropagation();
-    this.backendSrv.patch('/api/org/invites/' + invite.code + '/revoke')
-    .then(this.get.bind(this));
+    this.backendSrv.patch('/api/org/invites/' + invite.code + '/revoke').then(this.get.bind(this));
   }
 
   copyInviteToClipboard(evt) {

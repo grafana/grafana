@@ -1,4 +1,3 @@
-
 .page-kiosk-mode {
   dashnav {
     display: none;
@@ -7,8 +6,7 @@
 
 .playlist-active,
 .user-activity-low {
-  .react-resizable-handle
-  .add-row-panel-hint,
+  .react-resizable-handle .add-row-panel-hint,
   .dash-row-menu-container,
   .navbar-button--refresh,
   .navbar-buttons--zoom,
@@ -37,4 +35,3 @@
     transform: translate3d(40px, 0, 0);
   }
 }
-

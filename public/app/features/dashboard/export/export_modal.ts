@@ -1,8 +1,8 @@
 import angular from 'angular';
-import {saveAs} from 'file-saver';
+import { saveAs } from 'file-saver';
 
 import coreModule from 'app/core/core_module';
-import {DashboardExporter} from './exporter';
+import { DashboardExporter } from './exporter';
 
 export class DashExportCtrl {
   dash: any;
@@ -21,7 +21,9 @@ export class DashExportCtrl {
   }
 
   save() {
-    var blob = new Blob([angular.toJson(this.dash, true)], {type: 'application/json;charset=utf-8'});
+    var blob = new Blob([angular.toJson(this.dash, true)], {
+      type: 'application/json;charset=utf-8',
+    });
     saveAs(blob, this.dash.title + '-' + new Date().getTime() + '.json');
   }
 
@@ -29,10 +31,11 @@ export class DashExportCtrl {
     var clone = this.dash;
     let editScope = this.$rootScope.$new();
     editScope.object = clone;
+    editScope.enableCopy = true;
 
     this.$rootScope.appEvent('show-modal', {
       src: 'public/app/partials/edit_json.html',
-      scope: editScope
+      scope: editScope,
     });
 
     this.dismiss();
@@ -46,7 +49,7 @@ export function dashExportDirective() {
     controller: DashExportCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {dismiss: '&'},
+    scope: { dismiss: '&' },
   };
 }
 
