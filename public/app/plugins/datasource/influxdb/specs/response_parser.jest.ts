@@ -105,9 +105,9 @@ describe('influxdb response parser', () => {
 
     it('should return second column', () => {
       expect(_.size(result)).toBe(3);
-      expect(result[0].text).toBe(0);
-      expect(result[1].text).toBe(15);
-      expect(result[2].text).toBe(20.2);
+      expect(result[0].text).toBe('0');
+      expect(result[1].text).toBe('15');
+      expect(result[2].text).toBe('20.2');
     });
   });
 
