@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -19,6 +20,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		fakeDash.Id = 1
 		fakeDash.FolderId = 1
 		fakeDash.HasAcl = false
+		fakeDash.Uid = util.GenerateShortUid()
 
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			query.Result = fakeDash

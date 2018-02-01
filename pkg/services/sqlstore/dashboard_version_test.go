@@ -12,7 +12,7 @@ import (
 )
 
 func updateTestDashboard(dashboard *m.Dashboard, data map[string]interface{}) {
-	data["title"] = dashboard.Title
+	data["uid"] = dashboard.Uid
 
 	saveCmd := m.SaveDashboardCommand{
 		OrgId:     dashboard.OrgId,
@@ -44,12 +44,11 @@ func TestGetDashboardVersion(t *testing.T) {
 
 			dashCmd := m.GetDashboardQuery{
 				OrgId: savedDash.OrgId,
-				Slug:  savedDash.Slug,
+				Uid:   savedDash.Uid,
 			}
 
 			err = GetDashboard(&dashCmd)
 			So(err, ShouldBeNil)
-			dashCmd.Result.Data.Del("uid")
 			eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
 			So(eq, ShouldEqual, true)
 		})

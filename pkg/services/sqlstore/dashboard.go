@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -20,14 +21,16 @@ func init() {
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 }
 
+var generateNewUid func() string = util.GenerateShortUid
+
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		dash := cmd.GetDashboardModel()
 
 		// try get existing dashboard
-		var existing, sameTitle m.Dashboard
+		var existing m.Dashboard
 
-		if dash.Id > 0 {
+		if dash.Id != 0 {
 			dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
 			if err != nil {
 				return err
@@ -49,23 +52,38 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			if existing.PluginId != "" && cmd.Overwrite == false {
 				return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
 			}
-		}
+		} else if dash.Uid != "" {
+			var sameUid m.Dashboard
+			sameUidExists, err := sess.Where("org_id=? AND uid=?", dash.OrgId, dash.Uid).Get(&sameUid)
+			if err != nil {
+				return err
+			}
 
-		sameTitleExists, err := sess.Where("org_id=? AND slug=?", dash.OrgId, dash.Slug).Get(&sameTitle)
-		if err != nil {
-			return err
-		}
-
-		if sameTitleExists {
-			// another dashboard with same name
-			if dash.Id != sameTitle.Id {
-				if cmd.Overwrite {
-					dash.Id = sameTitle.Id
-					dash.Version = sameTitle.Version
-				} else {
-					return m.ErrDashboardWithSameNameExists
+			if sameUidExists {
+				// another dashboard with same uid
+				if dash.Id != sameUid.Id {
+					if cmd.Overwrite {
+						dash.Id = sameUid.Id
+						dash.Version = sameUid.Version
+					} else {
+						return m.ErrDashboardWithSameUIDExists
+					}
 				}
 			}
+		}
+
+		if dash.Uid == "" {
+			uid, err := generateNewDashboardUid(sess, dash.OrgId)
+			if err != nil {
+				return err
+			}
+			dash.Uid = uid
+			dash.Data.Set("uid", uid)
+		}
+
+		err := guaranteeDashboardNameIsUniqueInFolder(sess, dash)
+		if err != nil {
+			return err
 		}
 
 		err = setHasAcl(sess, dash)
@@ -89,7 +107,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 				dash.Updated = cmd.UpdatedAt
 			}
 
-			affectedRows, err = sess.MustCols("folder_id", "has_acl").Id(dash.Id).Update(dash)
+			affectedRows, err = sess.MustCols("folder_id", "has_acl").ID(dash.Id).Update(dash)
 		}
 
 		if err != nil {
@@ -137,6 +155,39 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 
 		return err
 	})
+}
+func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := generateNewUid()
+
+		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&m.Dashboard{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
+	}
+
+	return "", m.ErrDashboardFailedGenerateUniqueUid
+}
+
+func guaranteeDashboardNameIsUniqueInFolder(sess *DBSession, dash *m.Dashboard) error {
+	var sameNameInFolder m.Dashboard
+	sameNameInFolderExist, err := sess.Where("org_id=? AND title=? AND folder_id = ? AND uid <> ?",
+		dash.OrgId, dash.Title, dash.FolderId, dash.Uid).
+		Get(&sameNameInFolder)
+
+	if err != nil {
+		return err
+	}
+
+	if sameNameInFolderExist {
+		return m.ErrDashboardWithSameNameInFolderExists
+	}
+
+	return nil
 }
 
 func setHasAcl(sess *DBSession, dash *m.Dashboard) error {

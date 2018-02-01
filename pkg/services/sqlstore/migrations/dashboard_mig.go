@@ -163,4 +163,8 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add unique index dashboard_org_id_uid", NewAddIndexMigration(dashboardV2, &Index{
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
 	}))
+
+	mg.AddMigration("Remove unique index org_id_slug", NewDropIndexMigration(dashboardV2, &Index{
+		Cols: []string{"org_id", "slug"}, Type: UniqueIndex,
+	}))
 }

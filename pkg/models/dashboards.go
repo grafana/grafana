@@ -9,19 +9,20 @@ import (
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // Typed errors
 var (
-	ErrDashboardNotFound                 = errors.New("Dashboard not found")
-	ErrDashboardSnapshotNotFound         = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameNameExists       = errors.New("A dashboard with the same name already exists")
-	ErrDashboardVersionMismatch          = errors.New("The dashboard has been changed by someone else")
-	ErrDashboardTitleEmpty               = errors.New("Dashboard title cannot be empty")
-	ErrDashboardFolderCannotHaveParent   = errors.New("A Dashboard Folder cannot be added to another folder")
-	ErrDashboardContainsInvalidAlertData = errors.New("Invalid alert data. Cannot save dashboard")
-	ErrDashboardFailedToUpdateAlertData  = errors.New("Failed to save alert data")
+	ErrDashboardNotFound                   = errors.New("Dashboard not found")
+	ErrDashboardSnapshotNotFound           = errors.New("Dashboard snapshot not found")
+	ErrDashboardWithSameUIDExists          = errors.New("A dashboard with the same uid already exists")
+	ErrDashboardWithSameNameInFolderExists = errors.New("A dashboard with the same name in the folder already exists")
+	ErrDashboardVersionMismatch            = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty                 = errors.New("Dashboard title cannot be empty")
+	ErrDashboardFolderCannotHaveParent     = errors.New("A Dashboard Folder cannot be added to another folder")
+	ErrDashboardContainsInvalidAlertData   = errors.New("Invalid alert data. Cannot save dashboard")
+	ErrDashboardFailedToUpdateAlertData    = errors.New("Failed to save alert data")
+	ErrDashboardFailedGenerateUniqueUid    = errors.New("Failed to generate unique dashboard uid.")
 )
 
 type UpdatePluginDashboardError struct {
@@ -65,7 +66,6 @@ type Dashboard struct {
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
-	dash.Uid = util.GenerateShortUid()
 	dash.Data = simplejson.New()
 	dash.Data.Set("title", title)
 	dash.Title = title
@@ -114,8 +114,6 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 
 	if uid, err := dash.Data.Get("uid").String(); err == nil {
 		dash.Uid = uid
-	} else {
-		dash.Uid = util.GenerateShortUid()
 	}
 
 	return dash
