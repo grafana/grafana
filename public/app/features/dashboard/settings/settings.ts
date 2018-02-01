@@ -24,6 +24,9 @@ export class SettingsCtrl {
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
       this.$rootScope.$broadcast('refresh');
+      setTimeout(() => {
+        this.$rootScope.appEvent('dash-scroll', { restore: true });
+      });
     });
 
     this.canSaveAs = contextSrv.isEditor;
@@ -33,7 +36,8 @@ export class SettingsCtrl {
     this.buildSectionList();
     this.onRouteUpdated();
 
-    $rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
+    this.$rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
+    this.$rootScope.appEvent('dash-scroll', { animate: false, pos: 0 });
   }
 
   buildSectionList() {
