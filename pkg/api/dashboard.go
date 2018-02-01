@@ -138,10 +138,6 @@ func getDashboardHelper(orgId int64, slug string, id int64, uid string) (*m.Dash
 		return nil, ApiError(404, "Dashboard not found", err)
 	}
 
-	if query.Result.IsFolder {
-		return nil, ApiError(404, "Dashboard not found", m.ErrDashboardNotFound)
-	}
-
 	return query.Result, nil
 }
 
@@ -206,11 +202,6 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	// if new dashboard, use parent folder permissions instead
 	if dashId == 0 {
 		dashId = cmd.FolderId
-	} else {
-		_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
-		if rsp != nil {
-			return rsp
-		}
 	}
 
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
