@@ -23,6 +23,7 @@ func init() {
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 	bus.AddHandler("sql", GetFoldersForSignedInUser)
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
+	bus.AddHandler("sql", GetDashboardsBySlug)
 }
 
 var generateNewUid func() string = util.GenerateShortUid
@@ -554,7 +555,7 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 }
 
 func GetDashboardsBySlug(query *m.GetDashboardsBySlugQuery) error {
-	var dashboards = make([]*m.Dashboard, 0)
+	var dashboards []*m.Dashboard
 
 	if err := x.Where("org_id=? AND slug=?", query.OrgId, query.Slug).Find(&dashboards); err != nil {
 		return err
