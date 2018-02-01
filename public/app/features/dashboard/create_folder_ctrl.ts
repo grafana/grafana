@@ -17,9 +17,9 @@ export class CreateFolderCtrl {
       return;
     }
 
-    return this.backendSrv.createDashboardFolder(this.title).then(result => {
+    return this.backendSrv.createFolder({ title: this.title }).then(result => {
       appEvents.emit('alert-success', ['Folder Created', 'OK']);
-      this.$location.url(result.meta.url);
+      this.$location.url(result.url);
     });
   }
 

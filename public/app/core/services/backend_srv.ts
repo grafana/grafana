@@ -229,6 +229,10 @@ export class BackendSrv {
     return this.get(`/api/dashboards/uid/${uid}`);
   }
 
+  getFolderByUid(uid: string) {
+    return this.get(`/api/folders/${uid}`);
+  }
+
   saveDashboard(dash, options) {
     options = options || {};
 
@@ -240,32 +244,34 @@ export class BackendSrv {
     });
   }
 
-  createDashboardFolder(name) {
-    const dash = {
-      schemaVersion: 16,
-      title: name.trim(),
-      editable: true,
-      panels: [],
-    };
+  createFolder(payload: any) {
+    return this.post('/api/folders', payload);
+  }
 
-    return this.post('/api/dashboards/db/', {
-      dashboard: dash,
-      isFolder: true,
-      overwrite: false,
-    }).then(res => {
-      return this.getDashboard('db', res.slug);
+  updateFolder(folder, options) {
+    options = options || {};
+
+    return this.put(`/api/folders/${folder.uid}`, {
+      title: folder.title,
+      version: folder.version,
+      overwrite: options.overwrite === true,
     });
   }
 
-  saveFolder(dash, options) {
-    options = options || {};
+  deleteFolder(uid: string) {
+    let deferred = this.$q.defer();
 
-    return this.post('/api/dashboards/db/', {
-      dashboard: dash,
-      isFolder: true,
-      overwrite: options.overwrite === true,
-      message: options.message || '',
+    this.getFolderByUid(uid).then(folder => {
+      this.delete(`/api/folders/${uid}`)
+        .then(() => {
+          deferred.resolve(folder);
+        })
+        .catch(err => {
+          deferred.reject(err);
+        });
     });
+
+    return deferred.promise;
   }
 
   deleteDashboard(uid) {
@@ -284,11 +290,15 @@ export class BackendSrv {
     return deferred.promise;
   }
 
-  deleteDashboards(dashboardUids) {
+  deleteFoldersAndDashboards(folderUids, dashboardUids) {
     const tasks = [];
 
-    for (let uid of dashboardUids) {
-      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, uid));
+    for (let folderUid of folderUids) {
+      tasks.push(this.createTask(this.deleteFolder.bind(this), true, folderUid));
+    }
+
+    for (let dashboardUid of dashboardUids) {
+      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, dashboardUid));
     }
 
     return this.executeInOrder(tasks, []);

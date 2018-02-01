@@ -173,17 +173,16 @@ export class ManageDashboardsCtrl {
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
-        const foldersAndDashboards = data.folders.concat(data.dashboards);
-        this.deleteFoldersAndDashboards(foldersAndDashboards);
+        this.deleteFoldersAndDashboards(data.folders, data.dashboards);
       },
     });
   }
 
-  private deleteFoldersAndDashboards(uids) {
-    this.backendSrv.deleteDashboards(uids).then(result => {
-      const folders = _.filter(result, dash => dash.meta.isFolder);
+  private deleteFoldersAndDashboards(folderUids, dashboardUids) {
+    this.backendSrv.deleteFoldersAndDashboards(folderUids, dashboardUids).then(result => {
+      const folders = _.filter(result, dash => !dash.dashboard);
       const folderCount = folders.length;
-      const dashboards = _.filter(result, dash => !dash.meta.isFolder);
+      const dashboards = _.filter(result, dash => dash.dashboard);
       const dashCount = dashboards.length;
 
       if (result.length > 0) {
@@ -198,7 +197,7 @@ export class ManageDashboardsCtrl {
           header = `Folder${folderCount === 1 ? '' : 's'} Deleted`;
 
           if (folderCount === 1) {
-            msg = `${folders[0].dashboard.title} has been deleted`;
+            msg = `${folders[0].title} has been deleted`;
           } else {
             msg = `${folderCount} folder${folderCount === 1 ? '' : 's'} has been deleted`;
           }
