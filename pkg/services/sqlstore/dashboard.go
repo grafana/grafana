@@ -34,6 +34,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 
 		// try get existing dashboard
 		var existing m.Dashboard
+		var err error
 
 		if dash.Id != 0 {
 			dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
@@ -86,9 +87,11 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			dash.Data.Set("uid", uid)
 		}
 
-		err := guaranteeDashboardNameIsUniqueInFolder(sess, dash)
-		if err != nil {
-			return err
+		if !cmd.Overwrite {
+			err = guaranteeDashboardNameIsUniqueInFolder(sess, cmd, dash)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = setHasAcl(sess, dash)
@@ -179,7 +182,7 @@ func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
 	return "", m.ErrDashboardFailedGenerateUniqueUid
 }
 
-func guaranteeDashboardNameIsUniqueInFolder(sess *DBSession, dash *m.Dashboard) error {
+func guaranteeDashboardNameIsUniqueInFolder(sess *DBSession, cmd *m.SaveDashboardCommand, dash *m.Dashboard) error {
 	var sameNameInFolder m.Dashboard
 	sameNameInFolderExist, err := sess.Where("org_id=? AND title=? AND folder_id = ? AND uid <> ?",
 		dash.OrgId, dash.Title, dash.FolderId, dash.Uid).
