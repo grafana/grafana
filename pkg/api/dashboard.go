@@ -249,6 +249,9 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		if err == m.ErrDashboardWithSameUIDExists {
 			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
 		}
+		if err == m.ErrDashboardWithSameNameInFolderExists {
+			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
+		}
 		if err == m.ErrDashboardVersionMismatch {
 			return Json(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 		}
