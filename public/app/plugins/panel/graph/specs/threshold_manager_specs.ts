@@ -1,5 +1,3 @@
-///<reference path="../../../../headers/common.d.ts" />
-
 import { describe, it, expect } from '../../../../../test/lib/common';
 
 import { ThresholdManager } from '../threshold_manager';

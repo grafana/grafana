@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import coreModule from '../core_module';
 
@@ -24,7 +22,7 @@ export class SignUpCtrl {
       main: {
         icon: 'gicon gicon-branding',
         subTitle: 'Register your Grafana account',
-        breadcrumbs: [{ title: 'Login', url: '/login' }, { title: 'Sign Up' }],
+        breadcrumbs: [{ title: 'Login', url: 'login' }, { title: 'Sign Up' }],
       },
     };
 

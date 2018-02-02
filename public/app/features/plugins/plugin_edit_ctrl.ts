@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 import Remarkable from 'remarkable';
@@ -34,8 +32,8 @@ export class PluginEditCtrl {
         img: model.info.logos.large,
         subTitle: model.info.author.name,
         url: '',
-        text: '',
-        breadcrumbs: [{ title: 'Plugins', url: '/plugins' }, { title: model.name }],
+        text: model.name,
+        breadcrumbs: [{ title: 'Plugins', url: 'plugins' }],
         children: [
           {
             icon: 'fa fa-fw fa-file-text-o',

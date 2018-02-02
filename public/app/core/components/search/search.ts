@@ -22,6 +22,8 @@ export class SearchCtrl {
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
 
     this.initialFolderFilterTitle = 'All';
+    this.getTags = this.getTags.bind(this);
+    this.onTagSelect = this.onTagSelect.bind(this);
   }
 
   closeSearch() {
@@ -86,6 +88,19 @@ export class SearchCtrl {
         }
       }
     }
+  }
+
+  onFilterboxClick() {
+    this.giveSearchFocus = 0;
+    this.preventClose();
+  }
+
+  preventClose() {
+    this.ignoreClose = true;
+
+    this.$timeout(() => {
+      this.ignoreClose = false;
+    }, 100);
   }
 
   moveSelection(direction) {
@@ -160,7 +175,6 @@ export class SearchCtrl {
     if (_.indexOf(this.query.tag, tag) === -1) {
       this.query.tag.push(tag);
       this.search();
-      this.giveSearchFocus = this.giveSearchFocus + 1;
     }
   }
 
@@ -173,10 +187,17 @@ export class SearchCtrl {
   }
 
   getTags() {
-    return this.searchSrv.getDashboardTags().then(results => {
-      this.results = results;
-      this.giveSearchFocus = this.giveSearchFocus + 1;
-    });
+    return this.searchSrv.getDashboardTags();
+  }
+
+  onTagSelect(newTags) {
+    this.query.tag = _.map(newTags, tag => tag.value);
+    this.search();
+  }
+
+  clearSearchFilter() {
+    this.query.tag = [];
+    this.search();
   }
 
   showStarred() {

@@ -66,9 +66,7 @@
 }
 
 .sidebar-content {
-  width: calc(
-    100% - #{$page-sidebar-width + $page-sidebar-margin}
-  ); // sidebar width + margin
+  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
 }
 
 .sidebar-container {
@@ -88,6 +86,12 @@
 
 .page-sub-heading {
   margin-bottom: $spacer;
+}
+
+.page-sub-heading-icon {
+  margin-left: $spacer;
+  vertical-align: 6px;
+  font-size: 13px;
 }
 
 .page-sidebar {

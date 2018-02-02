@@ -214,6 +214,9 @@ func (d Duration) String() string {
 		ms   = int64(time.Duration(d) / time.Millisecond)
 		unit = "ms"
 	)
+	if ms == 0 {
+		return "0s"
+	}
 	factors := map[string]int64{
 		"y":  1000 * 60 * 60 * 24 * 365,
 		"w":  1000 * 60 * 60 * 24 * 7,

@@ -6,20 +6,22 @@ import { Provider } from 'mobx-react';
 
 function WrapInProvider(store, Component, props) {
   return (
-    <Provider store={store}>
+    <Provider {...store}>
       <Component {...props} />
     </Provider>
   );
 }
 
 /** @ngInject */
-export function reactContainer($route, $location) {
+export function reactContainer($route, $location, backendSrv) {
   return {
     restrict: 'E',
     template: '',
     link(scope, elem) {
       let component = $route.current.locals.component;
-      let props = {};
+      let props = {
+        backendSrv: backendSrv,
+      };
 
       ReactDOM.render(WrapInProvider(store, component, props), elem[0]);
 

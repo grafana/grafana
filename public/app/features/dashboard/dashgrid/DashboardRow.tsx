@@ -21,6 +21,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     this.toggle = this.toggle.bind(this);
     this.openSettings = this.openSettings.bind(this);
     this.delete = this.delete.bind(this);
+    this.update = this.update.bind(this);
   }
 
   toggle() {
@@ -31,13 +32,18 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   }
 
+  update() {
+    this.dashboard.processRepeats();
+    this.forceUpdate();
+  }
+
   openSettings() {
     appEvents.emit('show-modal', {
       templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
       modalClass: 'modal--narrow',
       model: {
         row: this.props.panel,
-        onUpdated: this.forceUpdate.bind(this),
+        onUpdated: this.update.bind(this),
       },
     });
   }

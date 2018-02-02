@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
@@ -227,6 +225,10 @@ export class BackendSrv {
     return this.get('/api/dashboards/' + type + '/' + slug);
   }
 
+  getDashboardByUid(uid: string) {
+    return this.get(`/api/dashboards/uid/${uid}`);
+  }
+
   saveDashboard(dash, options) {
     options = options || {};
 
@@ -255,11 +257,22 @@ export class BackendSrv {
     });
   }
 
-  deleteDashboard(slug) {
+  saveFolder(dash, options) {
+    options = options || {};
+
+    return this.post('/api/dashboards/db/', {
+      dashboard: dash,
+      isFolder: true,
+      overwrite: options.overwrite === true,
+      message: options.message || '',
+    });
+  }
+
+  deleteDashboard(uid) {
     let deferred = this.$q.defer();
 
-    this.getDashboard('db', slug).then(fullDash => {
-      this.delete(`/api/dashboards/db/${slug}`)
+    this.getDashboardByUid(uid).then(fullDash => {
+      this.delete(`/api/dashboards/uid/${uid}`)
         .then(() => {
           deferred.resolve(fullDash);
         })
@@ -271,21 +284,21 @@ export class BackendSrv {
     return deferred.promise;
   }
 
-  deleteDashboards(dashboardSlugs) {
+  deleteDashboards(dashboardUids) {
     const tasks = [];
 
-    for (let slug of dashboardSlugs) {
-      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, slug));
+    for (let uid of dashboardUids) {
+      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, uid));
     }
 
     return this.executeInOrder(tasks, []);
   }
 
-  moveDashboards(dashboardSlugs, toFolder) {
+  moveDashboards(dashboardUids, toFolder) {
     const tasks = [];
 
-    for (let slug of dashboardSlugs) {
-      tasks.push(this.createTask(this.moveDashboard.bind(this), true, slug, toFolder));
+    for (let uid of dashboardUids) {
+      tasks.push(this.createTask(this.moveDashboard.bind(this), true, uid, toFolder));
     }
 
     return this.executeInOrder(tasks, []).then(result => {
@@ -297,10 +310,10 @@ export class BackendSrv {
     });
   }
 
-  private moveDashboard(slug, toFolder) {
+  private moveDashboard(uid, toFolder) {
     let deferred = this.$q.defer();
 
-    this.getDashboard('db', slug).then(fullDash => {
+    this.getDashboardByUid(uid).then(fullDash => {
       const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
 
       if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {

@@ -12,8 +12,7 @@
 						ng-model-options="{ debounce: 500 }"
 						spellcheck='false'
 						ng-change="ctrl.search()"
-						ng-blur="ctrl.searchInputBlur()"
-						/>
+            />
 
 		<div class="search-field-spacer"></div>
 	</div>
@@ -31,37 +30,28 @@
     </div>
 
     <div class="search-dropdown__col_2">
-      <!-- <div class="search&#45;filter&#45;box"> -->
-      <!--   <div class="search&#45;filter&#45;box__header"> -->
-      <!--     <i class="fa fa&#45;filter"></i> -->
-      <!--     Filter by: -->
-      <!--     <a class="pointer pull&#45;right small"> -->
-      <!--       <i class="fa fa&#45;remove"></i> Clear -->
-      <!--     </a> -->
-      <!--   </div> -->
-      <!--  -->
-      <!--   <div class="gf&#45;form"> -->
-      <!--     <folder&#45;picker initial&#45;title="ctrl.initialFolderFilterTitle" -->
-      <!--                    on&#45;change="ctrl.onFolderChange($folder)" -->
-      <!--                    label&#45;class="width&#45;4"> -->
-      <!--     </folder&#45;picker> -->
-      <!--   </div> -->
-      <!--  -->
-      <!--   <div class="gf&#45;form"> -->
-      <!--     <label class="gf&#45;form&#45;label width&#45;4">Tags</label> -->
-      <!--     <bootstrap&#45;tagsinput ng&#45;model="ctrl.dashboard.tags" tagclass="label label&#45;tag" placeholder="add tags"> -->
-      <!--     </bootstrap&#45;tagsinput> -->
-      <!--   </div> -->
-      <!-- </div> -->
+      <div class="search-filter-box" ng-click="ctrl.onFilterboxClick()">
+        <div class="search-filter-box__header">
+          <i class="fa fa-filter"></i>
+          Filter by:
+          <a class="pointer pull-right small" ng-click="ctrl.clearSearchFilter()">
+            <i class="fa fa-remove"></i> Clear
+          </a>
+        </div>
+
+        <tag-filter tags="ctrl.query.tag" tagOptions="ctrl.getTags" onSelect="ctrl.onTagSelect">
+        </tag-filter>
+      </div>
 
       <div class="search-filter-box">
         <a href="dashboard/new" class="search-filter-box-link">
-          <i class="gicon gicon-dashboard-new"></i>
-          New dashboard
+          <i class="gicon gicon-dashboard-new"></i> New dashboard
         </a>
         <a href="dashboards/folder/new" class="search-filter-box-link">
-          <i class="gicon gicon-folder-new"></i>
-          New folder
+          <i class="gicon gicon-folder-new"></i> New folder
+        </a>
+        <a href="dashboard/import" class="search-filter-box-link">
+          <i class="gicon gicon-dashboard-import"></i> Import dashboard
         </a>
         <a class="search-filter-box-link" target="_blank" href="https://grafana.com/dashboards?utm_source=grafana_search">
           <img src="public/img/icn-dashboard-tiny.svg" width="20" /> Find  dashboards on Grafana.com

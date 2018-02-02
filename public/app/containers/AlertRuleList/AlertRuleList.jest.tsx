@@ -1,7 +1,7 @@
 import React from 'react';
 import moment from 'moment';
 import { AlertRuleList } from './AlertRuleList';
-import { RootStore } from 'app/stores/RootStore';
+import { RootStore } from 'app/stores/RootStore/RootStore';
 import { backendSrv, createNavTree } from 'test/mocks/common';
 import { mount } from 'enzyme';
 import toJson from 'enzyme-to-json';
@@ -23,7 +23,8 @@ describe('AlertRuleList', () => {
             .format(),
           evalData: {},
           executionError: '',
-          dashboardUri: 'db/mygool',
+          dashboardUri: 'd/ufkcofof/my-goal',
+          canEdit: true,
         },
       ])
     );
@@ -36,7 +37,7 @@ describe('AlertRuleList', () => {
       }
     );
 
-    page = mount(<AlertRuleList store={store} />);
+    page = mount(<AlertRuleList {...store} />);
   });
 
   it('should call api to get rules', () => {
@@ -45,7 +46,7 @@ describe('AlertRuleList', () => {
 
   it('should render 1 rule', () => {
     page.update();
-    let ruleNode = page.find('.card-item-wrapper');
+    let ruleNode = page.find('.alert-rule-item');
     expect(toJson(ruleNode)).toMatchSnapshot();
   });
 

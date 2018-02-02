@@ -35,8 +35,7 @@ export class DashNavCtrl {
     let search = this.$location.search();
     if (search.editview) {
       delete search.editview;
-    }
-    if (search.fullscreen) {
+    } else if (search.fullscreen) {
       delete search.fullscreen;
       delete search.edit;
     }
@@ -73,9 +72,10 @@ export class DashNavCtrl {
   }
 
   addPanel() {
+    appEvents.emit('dash-scroll', { animate: true, evt: 0 });
+
     if (this.dashboard.panels.length > 0 && this.dashboard.panels[0].type === 'add-panel') {
-      this.dashboard.removePanel(this.dashboard.panels[0]);
-      return;
+      return; // Return if the "Add panel" exists already
     }
 
     this.dashboard.addPanel({

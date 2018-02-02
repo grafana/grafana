@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from '../../core/core_module';
 
 export class PlaylistSearchCtrl {
@@ -14,6 +12,7 @@ export class PlaylistSearchCtrl {
 
     $timeout(() => {
       this.query.query = '';
+      this.query.type = 'dash-db';
       this.searchDashboards();
     }, 100);
   }

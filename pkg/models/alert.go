@@ -159,10 +159,6 @@ type SetAlertStateCommand struct {
 	Timestamp time.Time
 }
 
-type DeleteAlertCommand struct {
-	AlertId int64
-}
-
 //Queries
 type GetAlertsQuery struct {
 	OrgId       int64

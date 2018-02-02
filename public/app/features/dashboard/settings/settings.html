@@ -10,11 +10,13 @@
 	</a>
 
 	<div class="dashboard-settings__aside-actions">
+    <button class="btn btn-success" ng-click="ctrl.saveDashboard()" ng-show="ctrl.canSave">
+			<i class="fa fa-save"></i> Save
+		</button>
 		<button class="btn btn-inverse" ng-click="ctrl.openSaveAsModal()" ng-show="ctrl.canSaveAs">
 			<i class="fa fa-copy"></i>
 			Save As...
 		</button>
-
 		<button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete">
 			<i class="fa fa-trash"></i>
 			Delete
@@ -91,6 +93,16 @@
 	<div class="gf-form">
 		<code-editor content="ctrl.json" data-mode="json" data-max-lines=30 ></code-editor>
 	</div>
+</div>
+
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'permissions'" >
+  <dashboard-permissions ng-if="ctrl.dashboard"
+    dashboardId="ctrl.dashboard.id"
+    backendSrv="ctrl.backendSrv"
+    folderTitle="ctrl.dashboard.meta.folderTitle"
+    folderSlug="ctrl.dashboard.meta.folderSlug"
+    folderId="ctrl.dashboard.meta.folderId"
+  />
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === '404'">

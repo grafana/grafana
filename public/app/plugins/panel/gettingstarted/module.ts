@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import { PanelCtrl } from 'app/plugins/sdk';
 
 import { contextSrv } from 'app/core/core';

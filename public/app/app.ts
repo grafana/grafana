@@ -29,6 +29,8 @@ _.move = function(array, fromIndex, toIndex) {
 import { coreModule, registerAngularDirectives } from './core/core';
 import { setupAngularRoutes } from './routes/routes';
 
+declare var System: any;
+
 export class GrafanaApp {
   registerFunctions: any;
   ngModuleDependencies: any[];

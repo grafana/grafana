@@ -4,10 +4,6 @@ description = "Install guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
 aliases = ["v1.1", "guides/reference/admin"]
-[menu.docs]
-name = "Welcome to the Docs"
-identifier = "root"
-weight = -1
 +++
 
 # Welcome to the Grafana Documentation
@@ -22,7 +18,7 @@ other domains including industrial sensors, home automation, weather, and proces
 - [Installing on Mac OS X](installation/mac)
 - [Installing on Windows](installation/windows)
 - [Installing on Docker](installation/docker)
-- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](installation/provisioning)
+- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](administration/provisioning#configuration-management-tools)
 - [Nightly Builds](https://grafana.com/grafana/download)
 
 For other platforms Read the [build from source]({{< relref "project/building_from_source.md" >}})

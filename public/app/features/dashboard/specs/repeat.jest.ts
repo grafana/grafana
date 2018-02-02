@@ -4,6 +4,57 @@ import { expect } from 'test/lib/common';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
+describe('given dashboard with panel repeat', function() {
+  var dashboard;
+
+  beforeEach(function() {
+    let dashboardJSON = {
+      panels: [
+        { id: 1, type: 'row', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+        { id: 2, repeat: 'apps', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+      ],
+      templating: {
+        list: [
+          {
+            name: 'apps',
+            current: {
+              text: 'se1, se2, se3',
+              value: ['se1', 'se2', 'se3'],
+            },
+            options: [
+              { text: 'se1', value: 'se1', selected: true },
+              { text: 'se2', value: 'se2', selected: true },
+              { text: 'se3', value: 'se3', selected: true },
+              { text: 'se4', value: 'se4', selected: false },
+            ],
+          },
+        ],
+      },
+    };
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+  });
+
+  it('should repeat panels when row is expanding', function() {
+    expect(dashboard.panels.length).toBe(4);
+
+    // toggle row
+    dashboard.toggleRow(dashboard.panels[0]);
+    expect(dashboard.panels.length).toBe(1);
+
+    // change variable
+    dashboard.templating.list[0].options[2].selected = false;
+    dashboard.templating.list[0].current = {
+      text: 'se1, se2',
+      value: ['se1', 'se2'],
+    };
+
+    // toggle row back
+    dashboard.toggleRow(dashboard.panels[0]);
+    expect(dashboard.panels.length).toBe(3);
+  });
+});
+
 describe('given dashboard with panel repeat in horizontal direction', function() {
   var dashboard;
 
@@ -142,12 +193,9 @@ describe('given dashboard with panel repeat in vertical direction', function() {
   beforeEach(function() {
     dashboard = new DashboardModel({
       panels: [
-        {
-          id: 2,
-          repeat: 'apps',
-          repeatDirection: 'v',
-          gridPos: { x: 5, y: 0, h: 2, w: 8 },
-        },
+        { id: 1, type: 'row', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+        { id: 2, repeat: 'apps', repeatDirection: 'v', gridPos: { x: 5, y: 1, h: 2, w: 8 } },
+        { id: 3, type: 'row', gridPos: { x: 0, y: 3, h: 1, w: 24 } },
       ],
       templating: {
         list: [
@@ -171,24 +219,95 @@ describe('given dashboard with panel repeat in vertical direction', function() {
   });
 
   it('should place on items on top of each other and keep witdh', function() {
-    expect(dashboard.panels[0].gridPos).toMatchObject({
-      x: 5,
-      y: 0,
-      h: 2,
-      w: 8,
-    });
-    expect(dashboard.panels[1].gridPos).toMatchObject({
-      x: 5,
-      y: 2,
-      h: 2,
-      w: 8,
-    });
-    expect(dashboard.panels[2].gridPos).toMatchObject({
-      x: 5,
-      y: 4,
-      h: 2,
-      w: 8,
-    });
+    expect(dashboard.panels[0].gridPos).toMatchObject({ x: 0, y: 0, h: 1, w: 24 }); // first row
+
+    expect(dashboard.panels[1].gridPos).toMatchObject({ x: 5, y: 1, h: 2, w: 8 });
+    expect(dashboard.panels[2].gridPos).toMatchObject({ x: 5, y: 3, h: 2, w: 8 });
+    expect(dashboard.panels[3].gridPos).toMatchObject({ x: 5, y: 5, h: 2, w: 8 });
+
+    expect(dashboard.panels[4].gridPos).toMatchObject({ x: 0, y: 7, h: 1, w: 24 }); // last row
+  });
+});
+
+describe('given dashboard with row repeat and panel repeat in horizontal direction', () => {
+  let dashboard, dashboardJSON;
+
+  beforeEach(() => {
+    dashboardJSON = {
+      panels: [
+        { id: 1, type: 'row', repeat: 'region', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+        { id: 2, type: 'graph', repeat: 'app', gridPos: { x: 0, y: 1, h: 2, w: 6 } },
+      ],
+      templating: {
+        list: [
+          {
+            name: 'region',
+            current: {
+              text: 'reg1, reg2',
+              value: ['reg1', 'reg2'],
+            },
+            options: [{ text: 'reg1', value: 'reg1', selected: true }, { text: 'reg2', value: 'reg2', selected: true }],
+          },
+          {
+            name: 'app',
+            current: {
+              text: 'se1, se2, se3, se4, se5, se6',
+              value: ['se1', 'se2', 'se3', 'se4', 'se5', 'se6'],
+            },
+            options: [
+              { text: 'se1', value: 'se1', selected: true },
+              { text: 'se2', value: 'se2', selected: true },
+              { text: 'se3', value: 'se3', selected: true },
+              { text: 'se4', value: 'se4', selected: true },
+              { text: 'se5', value: 'se5', selected: true },
+              { text: 'se6', value: 'se6', selected: true },
+            ],
+          },
+        ],
+      },
+    };
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats(false);
+  });
+
+  it('should panels in self row', () => {
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual([
+      'row',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'row',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+    ]);
+  });
+
+  it('should be placed in their places', function() {
+    expect(dashboard.panels[0].gridPos).toMatchObject({ x: 0, y: 0, h: 1, w: 24 }); // 1st row
+
+    expect(dashboard.panels[1].gridPos).toMatchObject({ x: 0, y: 1, h: 2, w: 6 });
+    expect(dashboard.panels[2].gridPos).toMatchObject({ x: 6, y: 1, h: 2, w: 6 });
+    expect(dashboard.panels[3].gridPos).toMatchObject({ x: 12, y: 1, h: 2, w: 6 });
+    expect(dashboard.panels[4].gridPos).toMatchObject({ x: 18, y: 1, h: 2, w: 6 });
+    expect(dashboard.panels[5].gridPos).toMatchObject({ x: 0, y: 3, h: 2, w: 6 }); // next row
+    expect(dashboard.panels[6].gridPos).toMatchObject({ x: 6, y: 3, h: 2, w: 6 });
+
+    expect(dashboard.panels[7].gridPos).toMatchObject({ x: 0, y: 5, h: 1, w: 24 });
+
+    expect(dashboard.panels[8].gridPos).toMatchObject({ x: 0, y: 6, h: 2, w: 6 }); // 2nd row
+    expect(dashboard.panels[9].gridPos).toMatchObject({ x: 6, y: 6, h: 2, w: 6 });
+    expect(dashboard.panels[10].gridPos).toMatchObject({ x: 12, y: 6, h: 2, w: 6 });
+    expect(dashboard.panels[11].gridPos).toMatchObject({ x: 18, y: 6, h: 2, w: 6 }); // next row
+    expect(dashboard.panels[12].gridPos).toMatchObject({ x: 0, y: 8, h: 2, w: 6 });
+    expect(dashboard.panels[13].gridPos).toMatchObject({ x: 6, y: 8, h: 2, w: 6 });
   });
 });
 
@@ -380,5 +499,153 @@ describe('given dashboard with row repeat', function() {
       })
     );
     expect(panel_ids.length).toEqual(_.uniq(panel_ids).length);
+  });
+});
+
+describe('given dashboard with row and panel repeat', () => {
+  let dashboard, dashboardJSON;
+
+  beforeEach(() => {
+    dashboardJSON = {
+      panels: [
+        {
+          id: 1,
+          type: 'row',
+          repeat: 'region',
+          gridPos: { x: 0, y: 0, h: 1, w: 24 },
+        },
+        { id: 2, type: 'graph', repeat: 'app', gridPos: { x: 0, y: 1, h: 1, w: 6 } },
+      ],
+      templating: {
+        list: [
+          {
+            name: 'region',
+            current: {
+              text: 'reg1, reg2',
+              value: ['reg1', 'reg2'],
+            },
+            options: [
+              { text: 'reg1', value: 'reg1', selected: true },
+              { text: 'reg2', value: 'reg2', selected: true },
+              { text: 'reg3', value: 'reg3', selected: false },
+            ],
+          },
+          {
+            name: 'app',
+            current: {
+              text: 'se1, se2',
+              value: ['se1', 'se2'],
+            },
+            options: [
+              { text: 'se1', value: 'se1', selected: true },
+              { text: 'se2', value: 'se2', selected: true },
+              { text: 'se3', value: 'se3', selected: false },
+            ],
+          },
+        ],
+      },
+    };
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+  });
+
+  it('should repeat row and panels for each row', () => {
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
+  });
+
+  it('should clean up old repeated panels', () => {
+    dashboardJSON.panels = [
+      {
+        id: 1,
+        type: 'row',
+        repeat: 'region',
+        gridPos: { x: 0, y: 0, h: 1, w: 24 },
+      },
+      { id: 2, type: 'graph', repeat: 'app', gridPos: { x: 0, y: 1, h: 1, w: 6 } },
+      { id: 3, type: 'graph', repeatPanelId: 2, repeatIteration: 101, gridPos: { x: 7, y: 1, h: 1, w: 6 } },
+      {
+        id: 11,
+        type: 'row',
+        repeatPanelId: 1,
+        repeatIteration: 101,
+        gridPos: { x: 0, y: 2, h: 1, w: 24 },
+      },
+      { id: 12, type: 'graph', repeatPanelId: 2, repeatIteration: 101, gridPos: { x: 0, y: 3, h: 1, w: 6 } },
+    ];
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
+  });
+
+  it('should set scopedVars for each row', () => {
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    expect(dashboard.panels[0].scopedVars).toMatchObject({
+      region: { text: 'reg1', value: 'reg1' },
+    });
+    expect(dashboard.panels[3].scopedVars).toMatchObject({
+      region: { text: 'reg2', value: 'reg2' },
+    });
+  });
+
+  it('should set panel-repeat variable for each panel', () => {
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    expect(dashboard.panels[1].scopedVars).toMatchObject({
+      app: { text: 'se1', value: 'se1' },
+    });
+    expect(dashboard.panels[2].scopedVars).toMatchObject({
+      app: { text: 'se2', value: 'se2' },
+    });
+
+    expect(dashboard.panels[4].scopedVars).toMatchObject({
+      app: { text: 'se1', value: 'se1' },
+    });
+    expect(dashboard.panels[5].scopedVars).toMatchObject({
+      app: { text: 'se2', value: 'se2' },
+    });
+  });
+
+  it('should set row-repeat variable for each panel', () => {
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    expect(dashboard.panels[1].scopedVars).toMatchObject({
+      region: { text: 'reg1', value: 'reg1' },
+    });
+    expect(dashboard.panels[2].scopedVars).toMatchObject({
+      region: { text: 'reg1', value: 'reg1' },
+    });
+
+    expect(dashboard.panels[4].scopedVars).toMatchObject({
+      region: { text: 'reg2', value: 'reg2' },
+    });
+    expect(dashboard.panels[5].scopedVars).toMatchObject({
+      region: { text: 'reg2', value: 'reg2' },
+    });
+  });
+
+  it('should repeat panels when row is expanding', function() {
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    expect(dashboard.panels.length).toBe(6);
+
+    // toggle row
+    dashboard.toggleRow(dashboard.panels[0]);
+    dashboard.toggleRow(dashboard.panels[1]);
+    expect(dashboard.panels.length).toBe(2);
+
+    // change variable
+    dashboard.templating.list[1].current.value = ['se1', 'se2', 'se3'];
+
+    // toggle row back
+    dashboard.toggleRow(dashboard.panels[1]);
+    expect(dashboard.panels.length).toBe(4);
   });
 });

@@ -18,6 +18,7 @@ import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { EventManager } from 'app/features/annotations/all';
 import { convertValuesToHistogram, getSeriesValues } from './histogram';
+import config from 'app/core/config';
 
 /** @ngInject **/
 function graphDirective(timeSrv, popoverSrv, contextSrv) {
@@ -286,6 +287,10 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       }
 
       function buildFlotOptions(panel) {
+        let gridColor = '#c8c8c8';
+        if (config.bootData.user.lightTheme === true) {
+          gridColor = '#a1a1a1';
+        }
         const stack = panel.stack ? true : null;
         let options = {
           hooks: {
@@ -332,7 +337,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
             borderWidth: 0,
             hoverable: true,
             clickable: true,
-            color: '#c8c8c8',
+            color: gridColor,
             margin: { left: 0, right: 0 },
             labelMarginX: 0,
           },
@@ -350,33 +355,16 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       function sortSeries(series, panel) {
         var sortBy = panel.legend.sort;
         var sortOrder = panel.legend.sortDesc;
-        var haveSortBy = sortBy !== null || sortBy !== undefined;
-        var haveSortOrder = sortOrder !== null || sortOrder !== undefined;
+        var haveSortBy = sortBy !== null && sortBy !== undefined;
+        var haveSortOrder = sortOrder !== null && sortOrder !== undefined;
         var shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
         var sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
-        series.sort((x, y) => {
-          if (x.zindex > y.zindex) {
-            return 1;
-          }
-
-          if (x.zindex < y.zindex) {
-            return -1;
-          }
-
-          if (shouldSortBy) {
-            if (x.stats[sortBy] > y.stats[sortBy]) {
-              return 1 * sortDesc;
-            }
-            if (x.stats[sortBy] < y.stats[sortBy]) {
-              return -1 * sortDesc;
-            }
-          }
-
-          return 0;
-        });
-
-        return series;
+        if (shouldSortBy) {
+          return _.sortBy(series, s => s.stats[sortBy] * sortDesc);
+        } else {
+          return _.sortBy(series, s => s.zindex);
+        }
       }
 
       function translateFillOption(fill) {
@@ -666,7 +654,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           return;
         }
 
-        if ((ranges.ctrlKey || ranges.metaKey) && contextSrv.isEditor) {
+        if ((ranges.ctrlKey || ranges.metaKey) && dashboard.meta.canEdit) {
           // Add annotation
           setTimeout(() => {
             eventManager.updateTime(ranges.xaxis);
@@ -687,7 +675,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           return;
         }
 
-        if ((pos.ctrlKey || pos.metaKey) && contextSrv.isEditor) {
+        if ((pos.ctrlKey || pos.metaKey) && dashboard.meta.canEdit) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {

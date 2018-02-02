@@ -26,3 +26,6 @@ test: test-go test-js
 
 run:
 	./bin/grafana-server
+
+protoc:
+	protoc -I pkg/tsdb/models pkg/tsdb/models/*.proto --go_out=plugins=grpc:pkg/tsdb/models/.

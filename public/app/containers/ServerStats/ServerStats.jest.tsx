@@ -1,7 +1,7 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
 import { ServerStats } from './ServerStats';
-import { RootStore } from 'app/stores/RootStore';
+import { RootStore } from 'app/stores/RootStore/RootStore';
 import { backendSrv, createNavTree } from 'test/mocks/common';
 
 describe('ServerStats', () => {
@@ -20,7 +20,7 @@ describe('ServerStats', () => {
       }
     );
 
-    const page = renderer.create(<ServerStats store={store} />);
+    const page = renderer.create(<ServerStats backendSrv={backendSrv} {...store} />);
 
     setTimeout(() => {
       expect(page.toJSON()).toMatchSnapshot();

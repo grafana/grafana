@@ -347,11 +347,11 @@ func ChangeWorkingDir(dir string) {
 }
 
 func grunt(params ...string) {
-  if runtime.GOOS == "windows" {
-    runPrint(`.\node_modules\.bin\grunt`, params...)
-  } else {
-    runPrint("./node_modules/.bin/grunt", params...)
-  }
+	if runtime.GOOS == "windows" {
+		runPrint(`.\node_modules\.bin\grunt`, params...)
+	} else {
+		runPrint("./node_modules/.bin/grunt", params...)
+	}
 }
 
 func gruntBuildArg(task string) []string {
@@ -371,7 +371,7 @@ func gruntBuildArg(task string) []string {
 }
 
 func setup() {
-	runPrint("go", "get", "-v", "github.com/kardianos/govendor")
+	runPrint("go", "get", "-v", "github.com/golang/dep")
 	runPrint("go", "install", "-v", "./pkg/cmd/grafana-server")
 }
 
