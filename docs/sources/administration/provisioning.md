@@ -179,7 +179,11 @@ The dashboard provider config file looks somewhat like this:
   folder: ''
   type: file
   options:
-    folder: /var/lib/grafana/dashboards
+    path: /var/lib/grafana/dashboards
 ```
 
-When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
+When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
+
+### Reuseable dashboard urls
+
+If the dashboard in the json file contains an [uid](http://localhost:3004/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifer.
