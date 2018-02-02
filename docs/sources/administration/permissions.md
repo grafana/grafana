@@ -28,10 +28,10 @@ in that organization.
 
 Can do everything scoped to the organization. For example:
 
-- Add & Edit data data sources.
+- Add & Edit data sources.
 - Add & Edit organization users & teams.
 - Configure App plugins & set org settings.
-
+  
 ### Editor Role
 
 - Can create and modify dashboards & alert rules. This can be disabled on specific folders and dashboards.

@@ -36,7 +36,7 @@ The new dashboard layout engine allows for much easier movement and sizing of pa
 a very intuitive way. Panels are sized independently, so rows are no longer necessary to create layouts. This opens
 up many new types of layouts where panels of different heights can be aligned easily. Checkout the new grid in the video
 above or on the [play site](http://play.grafana.org). All your existing dashboards will automatically migrate to the
-new position system and look close to identical. The new panel position makes dashboards saved in v5.0 not compatible
+new position system and look close to identical. The new panel position makes dashboards saved in v5.0 incompatible
 with older versions of Grafana.
 
 <div class="clearfix"></div>
@@ -61,7 +61,7 @@ settings views have been combined with a side nav which allows you to easily mov
 
 {{< docs-imagebox img="/img/docs/v50/new_white_theme.png" max-width="1000px" class="docs-image--right" >}}
 
-This theme has not seen a lot of love in recent years and we felt it was time to rework it and give it a major overhaul. We are very happy with the result.
+This theme has not seen a lot of love in recent years and we felt it was time to give it a major overhaul. We are very happy with the result.
 
 <div class="clearfix"></div>
 
@@ -78,7 +78,7 @@ which is very useful if you have a lot of dashboards or multiple teams.
 
 ## Teams
 
-A team is a new concept in Grafana v5. They are simply a group of users that can be then be used in the new permission system for dashboards and folders. Only an admin can create teams.
+A team is a new concept in Grafana v5. They are simply a group of users that can be used in the new permission system for dashboards and folders. Only an admin can create teams.
 We hope to do more with teams in future releases like integration with LDAP and a team landing page.
 
 ## Permissions
@@ -93,7 +93,7 @@ You can assign permissions to folders and dashboards. The default user role-base
 
 In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards.
 But that required the service to be running before you started creating dashboards and you also needed to
-set up credentials for the HTTP API. In 5.0 we decided to improve this experience by adding a new active
+set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active
 provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can
 be defined via files that can be version controlled. We hope to extend this system to later add support for users, orgs
 and alerts as well.
