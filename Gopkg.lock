@@ -413,6 +413,12 @@
   version = "1.6.3"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/teris-io/shortid"
+  packages = ["."]
+  revision = "771a37caa5cf0c81f585d7b6df4dfc77e0615b5c"
+
+[[projects]]
   name = "github.com/uber/jaeger-client-go"
   packages = [
     ".",
@@ -625,6 +631,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "98e8d8f5fb21fe448aeb3db41c9fed85fe3bf80400e553211cf39a9c05720e01"
+  inputs-digest = "4de68f1342ba98a637ec8ca7496aeeae2021bf9e4c7c80db7924e14709151a62"
   solver-name = "gps-cdcl"
   solver-version = 1

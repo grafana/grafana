@@ -5,6 +5,7 @@ export class FolderSettingsCtrl {
   folderPageLoader: FolderPageLoader;
   navModel: any;
   folderId: number;
+  uid: string;
   canSave = false;
   dashboard: any;
   meta: any;
@@ -13,14 +14,18 @@ export class FolderSettingsCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $routeParams, private $location) {
-    if (this.$routeParams.folderId && this.$routeParams.slug) {
-      this.folderId = $routeParams.folderId;
+    if (this.$routeParams.uid) {
+      this.uid = $routeParams.uid;
 
-      this.folderPageLoader = new FolderPageLoader(this.backendSrv, this.$routeParams);
-      this.folderPageLoader.load(this, this.folderId, 'manage-folder-settings').then(result => {
-        this.dashboard = result.dashboard;
-        this.meta = result.meta;
-        this.canSave = result.meta.canSave;
+      this.folderPageLoader = new FolderPageLoader(this.backendSrv);
+      this.folderPageLoader.load(this, this.uid, 'manage-folder-settings').then(folder => {
+        if ($location.path() !== folder.meta.url) {
+          $location.path(`${folder.meta.url}/settings`).replace();
+        }
+
+        this.dashboard = folder.dashboard;
+        this.meta = folder.meta;
+        this.canSave = folder.meta.canSave;
         this.title = this.dashboard.title;
       });
     }
@@ -36,11 +41,10 @@ export class FolderSettingsCtrl {
     this.dashboard.title = this.title.trim();
 
     return this.backendSrv
-      .saveDashboard(this.dashboard, { overwrite: false })
+      .updateDashboardFolder(this.dashboard, { overwrite: false })
       .then(result => {
-        var folderUrl = this.folderPageLoader.createFolderUrl(this.folderId, result.slug);
-        if (folderUrl !== this.$location.path()) {
-          this.$location.url(folderUrl + '/settings');
+        if (result.url !== this.$location.path()) {
+          this.$location.url(result.url + '/settings');
         }
 
         appEvents.emit('dashboard-saved');
@@ -65,7 +69,7 @@ export class FolderSettingsCtrl {
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
-        return this.backendSrv.deleteDashboard(this.meta.slug).then(() => {
+        return this.backendSrv.deleteDashboard(this.dashboard.uid).then(() => {
           appEvents.emit('alert-success', ['Folder Deleted', `${this.dashboard.title} has been deleted`]);
           this.$location.url('dashboards');
         });
@@ -84,7 +88,7 @@ export class FolderSettingsCtrl {
         yesText: 'Save & Overwrite',
         icon: 'fa-warning',
         onConfirm: () => {
-          this.backendSrv.saveDashboard(this.dashboard, { overwrite: true });
+          this.backendSrv.updateDashboardFolder(this.dashboard, { overwrite: true });
         },
       });
     }

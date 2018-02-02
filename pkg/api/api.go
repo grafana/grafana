@@ -15,6 +15,8 @@ func (hs *HttpServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
 	reqOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
+	redirectFromLegacyDashboardUrl := middleware.RedirectFromLegacyDashboardUrl()
+	redirectFromLegacyDashboardSoloUrl := middleware.RedirectFromLegacyDashboardSoloUrl()
 	quota := middleware.Quota
 	bind := binding.Bind
 
@@ -63,9 +65,13 @@ func (hs *HttpServer) registerRoutes() {
 	r.Get("/plugins/:id/edit", reqSignedIn, Index)
 	r.Get("/plugins/:id/page/:page", reqSignedIn, Index)
 
-	r.Get("/dashboard/*", reqSignedIn, Index)
+	r.Get("/d/:uid/:slug", reqSignedIn, Index)
+	r.Get("/dashboard/db/:slug", reqSignedIn, redirectFromLegacyDashboardUrl, Index)
+	r.Get("/dashboard/script/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/snapshot/*", Index)
-	r.Get("/dashboard-solo/*", reqSignedIn, Index)
+	r.Get("/d-solo/:uid/:slug", reqSignedIn, Index)
+	r.Get("/dashboard-solo/db/:slug", reqSignedIn, redirectFromLegacyDashboardSoloUrl, Index)
+	r.Get("/dashboard-solo/script/*", reqSignedIn, Index)
 	r.Get("/import/dashboard", reqSignedIn, Index)
 	r.Get("/dashboards/", reqSignedIn, Index)
 	r.Get("/dashboards/*", reqSignedIn, Index)
@@ -242,6 +248,9 @@ func (hs *HttpServer) registerRoutes() {
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute RouteRegister) {
+			dashboardRoute.Get("/uid/:uid", wrap(GetDashboard))
+			dashboardRoute.Delete("/uid/:uid", wrap(DeleteDashboardByUid))
+
 			dashboardRoute.Get("/db/:slug", wrap(GetDashboard))
 			dashboardRoute.Delete("/db/:slug", wrap(DeleteDashboard))
 

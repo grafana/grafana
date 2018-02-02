@@ -41,10 +41,7 @@ export class SearchSrv {
         .map(orderId => {
           return _.find(result, { id: orderId });
         })
-        .filter(hit => hit && !hit.isStarred)
-        .map(hit => {
-          return this.transformToViewModel(hit);
-        });
+        .filter(hit => hit && !hit.isStarred);
     });
   }
 
@@ -81,15 +78,10 @@ export class SearchSrv {
           score: -2,
           expanded: this.starredIsOpen,
           toggle: this.toggleStarred.bind(this),
-          items: result.map(this.transformToViewModel),
+          items: result,
         };
       }
     });
-  }
-
-  private transformToViewModel(hit) {
-    hit.url = 'dashboard/db/' + hit.slug;
-    return hit;
   }
 
   search(options) {
@@ -136,12 +128,12 @@ export class SearchSrv {
       if (hit.type === 'dash-folder') {
         sections[hit.id] = {
           id: hit.id,
+          uid: hit.uid,
           title: hit.title,
           expanded: false,
           items: [],
           toggle: this.toggleFolder.bind(this),
-          url: `dashboards/folder/${hit.id}/${hit.slug}`,
-          slug: hit.slug,
+          url: hit.url,
           icon: 'fa fa-folder',
           score: _.keys(sections).length,
         };
@@ -158,9 +150,9 @@ export class SearchSrv {
         if (hit.folderId) {
           section = {
             id: hit.folderId,
+            uid: hit.uid,
             title: hit.folderTitle,
-            url: `dashboards/folder/${hit.folderId}/${hit.folderSlug}`,
-            slug: hit.slug,
+            url: hit.url,
             items: [],
             icon: 'fa fa-folder-open',
             toggle: this.toggleFolder.bind(this),
@@ -181,7 +173,7 @@ export class SearchSrv {
       }
 
       section.expanded = true;
-      section.items.push(this.transformToViewModel(hit));
+      section.items.push(hit);
     }
   }
 
@@ -198,7 +190,7 @@ export class SearchSrv {
     };
 
     return this.backendSrv.search(query).then(results => {
-      section.items = _.map(results, this.transformToViewModel);
+      section.items = results;
       return Promise.resolve(section);
     });
   }
