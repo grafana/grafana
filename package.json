@@ -79,6 +79,7 @@
     "postcss-loader": "^2.0.6",
     "postcss-reporter": "^5.0.0",
     "prettier": "1.9.2",
+    "puppeteer": "^1.0.0",
     "react-test-renderer": "^16.0.0",
     "sass-lint": "^1.10.2",
     "sass-loader": "^6.0.6",
@@ -99,6 +100,7 @@
   "scripts": {
     "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "watch": "webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
+    "build-tools": "tsc -p tools/",
     "build": "grunt build",
     "test": "grunt test",
     "test:coverage": "grunt test --coverage=true",

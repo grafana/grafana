@@ -139,9 +139,15 @@ var (
 	ConfRootPath string
 	IsWindows    bool
 
-	// PhantomJs Rendering
-	ImagesDir  string
-	PhantomDir string
+	// Chrome Headless Rendering
+	RenderingEngine         string
+	ImagesDir               string
+	PhantomDir              string
+	RenderingChromiumPath   string
+	RenderingHeadless       bool
+	RenderingSlowMo         int
+	RenderingDomain         string
+	RenderingHeadlessScript string
 
 	// for logging purposes
 	configFiles                  []string
@@ -578,9 +584,16 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// global plugin settings
 	PluginAppsSkipVerifyTLS = Cfg.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
-	// PhantomJS rendering
-	ImagesDir = filepath.Join(DataPath, "png")
+	// rendering
+	renderingCfg := Cfg.Section("rendering")
+	RenderingEngine = renderingCfg.Key("engine").MustString("phantom")
+	ImagesDir = renderingCfg.Key("images_dir").MustString(filepath.Join(DataPath, "png"))
 	PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
+	RenderingChromiumPath = renderingCfg.Key("chromium_executable").String()
+	RenderingHeadless = renderingCfg.Key("headless_mode").MustBool(true)
+	RenderingSlowMo = renderingCfg.Key("slow_mo").MustInt(0)
+	RenderingDomain = renderingCfg.Key("rendering_domain").String()
+	RenderingHeadlessScript = filepath.Join(HomePath, "tools/dist/puppeteer/screenshot.js")
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
