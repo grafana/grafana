@@ -157,11 +157,11 @@ export class HeatmapTooltip {
       return x-bucket.x <= data.xBucketSize && x-bucket.x >0;
     });
     let xBucketIndex;
-    if(!xBucket)
+    if (!xBucket) {
       xBucketIndex = getValueBucketBound(x, data.xBucketSize, 1);
-    else
+    } else {
       xBucketIndex = xBucket.x;
-
+    }
     return xBucketIndex;
   }
 
