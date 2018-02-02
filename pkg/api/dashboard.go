@@ -88,8 +88,8 @@ func GetDashboard(c *middleware.Context) Response {
 		HasAcl:      dash.HasAcl,
 		IsFolder:    dash.IsFolder,
 		FolderId:    dash.FolderId,
-		FolderTitle: "Root",
 		Url:         dash.GetUrl(),
+		FolderTitle: "General",
 	}
 
 	// lookup folder title
@@ -250,6 +250,9 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		if err == m.ErrDashboardWithSameUIDExists {
 			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
 		}
+		if err == m.ErrDashboardWithSameNameInFolderExists {
+			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
+		}
 		if err == m.ErrDashboardVersionMismatch {
 			return Json(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 		}
@@ -310,7 +313,7 @@ func GetHomeDashboard(c *middleware.Context) Response {
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
 	dash.Meta.CanEdit = c.SignedInUser.HasRole(m.ROLE_EDITOR)
-	dash.Meta.FolderTitle = "Root"
+	dash.Meta.FolderTitle = "General"
 
 	jsonParser := json.NewDecoder(file)
 	if err := jsonParser.Decode(&dash.Dashboard); err != nil {

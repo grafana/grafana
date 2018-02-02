@@ -105,9 +105,9 @@ It's also possible to update and delete data sources from the config file. More 
 
 ### Dashboards
 
-We also deprecated the [dashboard.json] in favor of our new dashboard provisioner that keeps dashboards on disk
+We also deprecated the `[dashboard.json]` in favor of our new dashboard provisioner that keeps dashboards on disk
 in sync with dashboards in Grafana's database. The dashboard provisioner has multiple advantages over the old
-[dashboard.json] feature. Instead of storing the dashboard in memory we now insert the dashboard into the database,
+`[dashboard.json]` feature. Instead of storing the dashboard in memory we now insert the dashboard into the database,
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
 

@@ -30,7 +30,7 @@ describe('ManageDashboards', () => {
         },
         {
           id: 0,
-          title: 'Root',
+          title: 'General',
           icon: 'fa fa-folder-open',
           uri: 'db/something-else',
           type: 'dash-db',
@@ -363,7 +363,7 @@ describe('ManageDashboards', () => {
           },
           {
             id: 0,
-            title: 'Root',
+            title: 'General',
             items: [{ id: 3, checked: true }],
             checked: false,
           },
@@ -391,7 +391,7 @@ describe('ManageDashboards', () => {
           },
           {
             id: 0,
-            title: 'Root',
+            title: 'General',
             items: [{ id: 3, checked: false }],
             checked: false,
           },
@@ -420,7 +420,7 @@ describe('ManageDashboards', () => {
           },
           {
             id: 0,
-            title: 'Root',
+            title: 'General',
             items: [{ id: 3, checked: true }],
             checked: false,
           },
@@ -455,7 +455,7 @@ describe('ManageDashboards', () => {
           },
           {
             id: 0,
-            title: 'Root',
+            title: 'General',
             items: [{ id: 3, checked: false }],
             checked: false,
           },
@@ -497,7 +497,7 @@ describe('ManageDashboards', () => {
         },
         {
           id: 0,
-          title: 'Root',
+          title: 'General',
           items: [{ id: 3, checked: true, uid: 'root-dash' }],
           checked: true,
         },
@@ -541,7 +541,7 @@ describe('ManageDashboards', () => {
         },
         {
           id: 0,
-          title: 'Root',
+          title: 'General',
           items: [{ id: 3, checked: true, uid: 'dash-2' }],
           checked: false,
         },
