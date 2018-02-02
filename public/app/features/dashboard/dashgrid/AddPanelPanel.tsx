@@ -56,6 +56,16 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     return _.sortBy(panels, 'sort');
   }
 
+  getFilteredPlugins() {
+    if (this.state.filter.length > 0) {
+      const check = this.state.filter.toLowerCase();
+      return this.state.panelPlugins.filter(p => {
+        return p.name.toLowerCase().indexOf(check) >= 0;
+      });
+    }
+    return this.state.panelPlugins;
+  }
+
   onAddPanel = panelPluginInfo => {
     const panelContainer = this.props.getPanelContainer();
     const dashboard = panelContainer.getDashboard();
@@ -85,6 +95,10 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     dashboard.removePanel(this.props.panel);
   };
 
+  onFilterChange = event => {
+    this.setState({ filter: event.target.value });
+  };
+
   handleCloseAddPanel(evt) {
     evt.preventDefault();
     const panelContainer = this.props.getPanelContainer();
@@ -93,7 +107,6 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   renderPanelItem(panel, index) {
-    console.log('render panel', index);
     return (
       <div key={index} className="add-panel__item" onClick={() => this.onAddPanel(panel)} title={panel.name}>
         <img className="add-panel__item-img" src={panel.info.logos.small} />
@@ -109,12 +122,18 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
           <div className="add-panel__header">
             <i className="gicon gicon-add-panel" />
             <span className="add-panel__title">New Panel</span>
-            <span className="add-panel__sub-title">Select a visualization</span>
+            <input
+              type="text"
+              autoFocus
+              className="add-panel__sub-title"
+              onChange={this.onFilterChange.bind(this)}
+              placeholder="Select a visualization"
+            />
             <button className="add-panel__close" onClick={this.handleCloseAddPanel}>
               <i className="fa fa-close" />
             </button>
           </div>
-          <ScrollBar className="add-panel__items">{this.state.panelPlugins.map(this.renderPanelItem)}</ScrollBar>
+          <ScrollBar className="add-panel__items">{this.getFilteredPlugins().map(this.renderPanelItem)}</ScrollBar>
         </div>
       </div>
     );
