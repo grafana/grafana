@@ -161,7 +161,7 @@ export class SearchSrv {
         } else {
           section = {
             id: 0,
-            title: 'Root',
+            title: 'General',
             items: [],
             icon: 'fa fa-folder-open',
             toggle: this.toggleFolder.bind(this),

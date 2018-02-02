@@ -1,7 +1,7 @@
 import coreModule from 'app/core/core_module';
 
 export class ValidationSrv {
-  rootName = 'root';
+  rootName = 'general';
 
   /** @ngInject */
   constructor(private $q, private backendSrv) {}
@@ -19,7 +19,7 @@ export class ValidationSrv {
     if (name.toLowerCase() === this.rootName) {
       return this.$q.reject({
         type: 'EXISTING',
-        message: 'A folder or dashboard with the same name already exists',
+        message: 'This is a reserved name and cannot be used for a folder.',
       });
     }
 
