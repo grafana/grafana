@@ -86,9 +86,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
 
   handleCloseAddPanel(evt) {
     evt.preventDefault();
-    const panelContainer = this.props.getPanelContainer();
-    const dashboard = panelContainer.getDashboard();
-    dashboard.removePanel(dashboard.panels[0]);
+    this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
   }
 
   renderPanelItem(panel, index) {

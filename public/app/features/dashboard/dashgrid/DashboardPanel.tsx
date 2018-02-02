@@ -1,7 +1,6 @@
 import React from 'react';
 import config from 'app/core/config';
 import classNames from 'classnames';
-import appEvents from 'app/core/app_events';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { AttachedPanel } from './PanelLoader';

@@ -33,7 +33,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   }
 
   update() {
-    this.dashboard.processRepeats();
+    this.props.dashboard.processRepeats();
     this.forceUpdate();
   }
 
