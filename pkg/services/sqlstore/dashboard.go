@@ -569,7 +569,7 @@ func GetDashboardsBySlug(query *m.GetDashboardsBySlugQuery) error {
 	return nil
 }
 
-func GetDashboardUIDById(query *m.GetDashboardUIDByIdQuery) error {
+func GetDashboardUIDById(query *m.GetDashboardRefByIdQuery) error {
 	var rawSql = `SELECT uid, slug from dashboard WHERE Id=?`
 
 	us := &m.DashboardRef{}
