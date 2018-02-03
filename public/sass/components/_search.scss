@@ -207,7 +207,7 @@
 
 .search-item__tags {
   display: none;
-  //padding: 10px;
+  padding: 10px;
 }
 
 .search-item__actions {
@@ -243,6 +243,10 @@
 @include media-breakpoint-up(sm) {
   .search-container {
     left: $side-menu-width;
+  }
+
+  .search-item__tags {
+    display: block;
   }
 
   .search-dropdown__col_2 {
