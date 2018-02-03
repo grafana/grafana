@@ -27,7 +27,7 @@ export class CreateFolderCtrl {
     this.titleTouched = true;
 
     this.validationSrv
-      .validateNewDashboardOrFolderName(this.title)
+      .validateNewFolderName(this.title)
       .then(() => {
         this.hasValidationError = false;
       })
