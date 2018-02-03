@@ -21,6 +21,7 @@ import (
 
 var Root log15.Logger
 var loggersToClose []DisposableHandler
+var filters map[string]log15.Lvl
 
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
@@ -114,6 +115,25 @@ func Close() {
 	loggersToClose = make([]DisposableHandler, 0)
 }
 
+func GetLogLevelFor(name string) Lvl {
+	if level, ok := filters[name]; ok {
+		switch level {
+		case log15.LvlWarn:
+			return LvlWarn
+		case log15.LvlInfo:
+			return LvlInfo
+		case log15.LvlError:
+			return LvlError
+		case log15.LvlCrit:
+			return LvlCrit
+		default:
+			return LvlDebug
+		}
+	}
+
+	return LvlInfo
+}
+
 var logLevels = map[string]log15.Lvl{
 	"trace":    log15.LvlDebug,
 	"debug":    log15.LvlDebug,
@@ -187,7 +207,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 
 		// Log level.
 		_, level := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
-		modeFilters := getFilters(util.SplitString(sec.Key("filters").String()))
+		filters := getFilters(util.SplitString(sec.Key("filters").String()))
 		format := getLogFormat(sec.Key("format").MustString(""))
 
 		var handler log15.Handler
@@ -219,12 +239,12 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 		}
 
 		for key, value := range defaultFilters {
-			if _, exist := modeFilters[key]; !exist {
-				modeFilters[key] = value
+			if _, exist := filters[key]; !exist {
+				filters[key] = value
 			}
 		}
 
-		handler = LogFilterHandler(level, modeFilters, handler)
+		handler = LogFilterHandler(level, filters, handler)
 		handlers = append(handlers, handler)
 	}
 

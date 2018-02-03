@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -22,13 +23,18 @@ type BasicUserInfo struct {
 
 type SocialConnector interface {
 	Type() int
-	UserInfo(client *http.Client) (*BasicUserInfo, error)
+	UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
 	IsSignupAllowed() bool
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
 	Exchange(ctx context.Context, code string) (*oauth2.Token, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
+}
+
+type SocialBase struct {
+	*oauth2.Config
+	log log.Logger
 }
 
 type Error struct {
@@ -91,10 +97,15 @@ func NewOAuthService() {
 			Scopes:      info.Scopes,
 		}
 
+		logger := log.New("oauth." + name)
+
 		// GitHub.
 		if name == "github" {
 			SocialMap["github"] = &SocialGithub{
-				Config:               &config,
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
 				allowedDomains:       info.AllowedDomains,
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
@@ -106,7 +117,10 @@ func NewOAuthService() {
 		// Google.
 		if name == "google" {
 			SocialMap["google"] = &SocialGoogle{
-				Config:         &config,
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
 				allowedDomains: info.AllowedDomains,
 				hostedDomain:   info.HostedDomain,
 				apiUrl:         info.ApiUrl,
@@ -116,8 +130,11 @@ func NewOAuthService() {
 
 		// Generic - Uses the same scheme as Github.
 		if name == "generic_oauth" {
-			SocialMap["generic_oauth"] = &GenericOAuth{
-				Config:               &config,
+			SocialMap["generic_oauth"] = &SocialGenericOAuth{
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
 				allowedDomains:       info.AllowedDomains,
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
@@ -139,7 +156,10 @@ func NewOAuthService() {
 			}
 
 			SocialMap["grafana_com"] = &SocialGrafanaCom{
-				Config:               &config,
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
 				url:                  setting.GrafanaComUrl,
 				allowSignup:          info.AllowSignup,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),

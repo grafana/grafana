@@ -137,7 +137,7 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
       'fa-pause': !rule.isPaused,
     });
 
-    let ruleUrl = `dashboard/${rule.dashboardUri}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
+    let ruleUrl = `${rule.dashboardUri}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
 
     return (
       <li className="alert-rule-item">
@@ -147,7 +147,8 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
         <div className="alert-rule-item__body">
           <div className="alert-rule-item__header">
             <div className="alert-rule-item__name">
-              <a href={ruleUrl}>{this.renderText(rule.name)}</a>
+              {rule.canEdit && <a href={ruleUrl}>{this.renderText(rule.name)}</a>}
+              {!rule.canEdit && <span>{this.renderText(rule.name)}</span>}
             </div>
             <div className="alert-rule-item__text">
               <span className={`${rule.stateClass}`}>{this.renderText(rule.stateText)}</span>
@@ -156,17 +157,30 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
           </div>
           {rule.info && <div className="small muted alert-rule-item__info">{this.renderText(rule.info)}</div>}
         </div>
+
         <div className="alert-rule-item__actions">
-          <a
+          <button
             className="btn btn-small btn-inverse alert-list__btn width-2"
             title="Pausing an alert rule prevents it from executing"
             onClick={this.toggleState}
+            disabled={!rule.canEdit}
           >
             <i className={stateClass} />
-          </a>
-          <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-            <i className="icon-gf icon-gf-settings" />
-          </a>
+          </button>
+          {rule.canEdit && (
+            <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
+              <i className="icon-gf icon-gf-settings" />
+            </a>
+          )}
+          {!rule.canEdit && (
+            <button
+              className="btn btn-small btn-inverse alert-list__btn width-2"
+              title="Edit alert rule"
+              disabled={true}
+            >
+              <i className="icon-gf icon-gf-settings" />
+            </button>
+          )}
         </div>
       </li>
     );

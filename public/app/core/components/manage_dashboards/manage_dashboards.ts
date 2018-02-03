@@ -3,22 +3,49 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { SearchSrv } from 'app/core/services/search_srv';
 
+class Query {
+  query: string;
+  mode: string;
+  tag: any[];
+  starred: boolean;
+  skipRecent: boolean;
+  skipStarred: boolean;
+  folderIds: number[];
+}
+
 export class ManageDashboardsCtrl {
   public sections: any[];
-  tagFilterOptions: any[];
-  selectedTagFilter: any;
-  query: any;
+
+  query: Query;
   navModel: any;
+
+  selectAllChecked = false;
+
+  // enable/disable actions depending on the folders or dashboards selected
   canDelete = false;
   canMove = false;
+
+  // filter variables
   hasFilters = false;
-  selectAllChecked = false;
+  tagFilterOptions: any[];
+  selectedTagFilter: any;
   starredFilterOptions = [{ text: 'Filter by Starred', disabled: true }, { text: 'Yes' }, { text: 'No' }];
   selectedStarredFilter: any;
+
+  // used when managing dashboards for a specific folder
   folderId?: number;
+  folderUid?: string;
+
+  // if user can add new folders and/or add new dashboards
+  canSave: boolean;
+
+  // if user has editor role or higher
+  isEditor: boolean;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private searchSrv: SearchSrv) {
+  constructor(private backendSrv, navModelSrv, private searchSrv: SearchSrv, private contextSrv) {
+    this.isEditor = this.contextSrv.isEditor;
+
     this.query = {
       query: '',
       mode: 'tree',
@@ -26,6 +53,7 @@ export class ManageDashboardsCtrl {
       starred: false,
       skipRecent: true,
       skipStarred: true,
+      folderIds: [],
     };
 
     if (this.folderId) {
@@ -34,15 +62,26 @@ export class ManageDashboardsCtrl {
 
     this.selectedStarredFilter = this.starredFilterOptions[0];
 
-    this.getDashboards().then(() => {
-      this.getTags();
+    this.refreshList().then(() => {
+      this.initTagFilter();
     });
   }
 
-  getDashboards() {
-    return this.searchSrv.search(this.query).then(result => {
-      return this.initDashboardList(result);
-    });
+  refreshList() {
+    return this.searchSrv
+      .search(this.query)
+      .then(result => {
+        return this.initDashboardList(result);
+      })
+      .then(() => {
+        if (!this.folderUid) {
+          return;
+        }
+
+        return this.backendSrv.getDashboardByUid(this.folderUid).then(dash => {
+          this.canSave = dash.meta.canSave;
+        });
+      });
   }
 
   initDashboardList(result: any) {
@@ -91,10 +130,10 @@ export class ManageDashboardsCtrl {
 
     for (const section of this.sections) {
       if (section.checked && section.id !== 0) {
-        selectedDashboards.folders.push(section.slug);
+        selectedDashboards.folders.push(section.uid);
       } else {
         const selected = _.filter(section.items, { checked: true });
-        selectedDashboards.dashboards.push(..._.map(selected, 'slug'));
+        selectedDashboards.dashboards.push(..._.map(selected, 'uid'));
       }
     }
 
@@ -140,8 +179,8 @@ export class ManageDashboardsCtrl {
     });
   }
 
-  private deleteFoldersAndDashboards(slugs) {
-    this.backendSrv.deleteDashboards(slugs).then(result => {
+  private deleteFoldersAndDashboards(uids) {
+    this.backendSrv.deleteDashboards(uids).then(result => {
       const folders = _.filter(result, dash => dash.meta.isFolder);
       const folderCount = folders.length;
       const dashboards = _.filter(result, dash => !dash.meta.isFolder);
@@ -176,7 +215,7 @@ export class ManageDashboardsCtrl {
         appEvents.emit('alert-success', [header, msg]);
       }
 
-      this.getDashboards();
+      this.refreshList();
     });
   }
 
@@ -185,7 +224,7 @@ export class ManageDashboardsCtrl {
 
     for (const section of this.sections) {
       const selected = _.filter(section.items, { checked: true });
-      selectedDashboards.push(..._.map(selected, 'slug'));
+      selectedDashboards.push(..._.map(selected, 'uid'));
     }
 
     return selectedDashboards;
@@ -203,12 +242,12 @@ export class ManageDashboardsCtrl {
       modalClass: 'modal--narrow',
       model: {
         dashboards: selectedDashboards,
-        afterSave: this.getDashboards.bind(this),
+        afterSave: this.refreshList.bind(this),
       },
     });
   }
 
-  getTags() {
+  initTagFilter() {
     return this.searchSrv.getDashboardTags().then(results => {
       this.tagFilterOptions = [{ term: 'Filter By Tag', disabled: true }].concat(results);
       this.selectedTagFilter = this.tagFilterOptions[0];
@@ -220,11 +259,11 @@ export class ManageDashboardsCtrl {
       this.query.tag.push(tag);
     }
 
-    return this.getDashboards();
+    return this.refreshList();
   }
 
   onQueryChange() {
-    return this.getDashboards();
+    return this.refreshList();
   }
 
   onTagFilterChange() {
@@ -235,7 +274,7 @@ export class ManageDashboardsCtrl {
 
   removeTag(tag, evt) {
     this.query.tag = _.without(this.query.tag, tag);
-    this.getDashboards();
+    this.refreshList();
     if (evt) {
       evt.stopPropagation();
       evt.preventDefault();
@@ -244,13 +283,13 @@ export class ManageDashboardsCtrl {
 
   removeStarred() {
     this.query.starred = false;
-    return this.getDashboards();
+    return this.refreshList();
   }
 
   onStarredFilterChange() {
     this.query.starred = this.selectedStarredFilter.text === 'Yes';
     this.selectedStarredFilter = this.starredFilterOptions[0];
-    return this.getDashboards();
+    return this.refreshList();
   }
 
   onSelectAllChanged() {
@@ -272,7 +311,7 @@ export class ManageDashboardsCtrl {
     this.query.query = '';
     this.query.tag = [];
     this.query.starred = false;
-    this.getDashboards();
+    this.refreshList();
   }
 
   createDashboardUrl() {
@@ -295,6 +334,7 @@ export function manageDashboardsDirective() {
     controllerAs: 'ctrl',
     scope: {
       folderId: '=',
+      folderUid: '=',
     },
   };
 }

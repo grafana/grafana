@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
+import gfunc from './gfunc';
 
 /** @ngInject */
 export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -12,6 +13,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.cacheTimeout = instanceSettings.cacheTimeout;
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
+  this.funcDefs = null;
+  this.funcDefsPromise = null;
 
   this.getQueryOptionsInfo = function() {
     return {
@@ -200,6 +203,35 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     let options = optionalOptions || {};
     let interpolatedQuery = templateSrv.replace(query);
 
+    // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
+    let matches = interpolatedQuery.match(/^tag_values\(([^,]+)((, *[^,]+)*)\)$/);
+    if (matches) {
+      const expressions = [];
+      const exprRegex = /, *([^,]+)/g;
+      let match;
+      while ((match = exprRegex.exec(matches[2])) !== null) {
+        expressions.push(match[1]);
+      }
+      options.limit = 10000;
+      return this.getTagValuesAutoComplete(expressions, matches[1], undefined, options);
+    }
+
+    // special handling for tags(<expression>[,<expression>]*), this is used for template variables
+    matches = interpolatedQuery.match(/^tags\(([^,]*)((, *[^,]+)*)\)$/);
+    if (matches) {
+      const expressions = [];
+      if (matches[1]) {
+        expressions.push(matches[1]);
+        const exprRegex = /, *([^,]+)/g;
+        let match;
+        while ((match = exprRegex.exec(matches[2])) !== null) {
+          expressions.push(match[1]);
+        }
+      }
+      options.limit = 10000;
+      return this.getTagsAutoComplete(expressions, undefined, options);
+    }
+
     let httpOptions: any = {
       method: 'GET',
       url: '/metrics/find',
@@ -210,7 +242,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       requestId: options.requestId,
     };
 
-    if (options && options.range) {
+    if (options.range) {
       httpOptions.params.from = this.translateTime(options.range.from, false);
       httpOptions.params.until = this.translateTime(options.range.to, true);
     }
@@ -235,7 +267,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       requestId: options.requestId,
     };
 
-    if (options && options.range) {
+    if (options.range) {
       httpOptions.params.from = this.translateTime(options.range.from, false);
       httpOptions.params.until = this.translateTime(options.range.to, true);
     }
@@ -255,12 +287,12 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
     let httpOptions: any = {
       method: 'GET',
-      url: '/tags/' + tag,
+      url: '/tags/' + templateSrv.replace(tag),
       // for cancellations
       requestId: options.requestId,
     };
 
-    if (options && options.range) {
+    if (options.range) {
       httpOptions.params.from = this.translateTime(options.range.from, false);
       httpOptions.params.until = this.translateTime(options.range.to, true);
     }
@@ -279,17 +311,28 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
-  this.getTagsAutoComplete = (expression, tagPrefix) => {
+  this.getTagsAutoComplete = (expressions, tagPrefix, optionalOptions) => {
+    let options = optionalOptions || {};
+
     let httpOptions: any = {
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
-        expr: expression,
+        expr: _.map(expressions, expression => templateSrv.replace(expression)),
       },
+      // for cancellations
+      requestId: options.requestId,
     };
 
     if (tagPrefix) {
       httpOptions.params.tagPrefix = tagPrefix;
+    }
+    if (options.limit) {
+      httpOptions.params.limit = options.limit;
+    }
+    if (options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {
@@ -303,18 +346,29 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
-  this.getTagValuesAutoComplete = (expression, tag, valuePrefix) => {
+  this.getTagValuesAutoComplete = (expressions, tag, valuePrefix, optionalOptions) => {
+    let options = optionalOptions || {};
+
     let httpOptions: any = {
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: expression,
-        tag: tag,
+        expr: _.map(expressions, expression => templateSrv.replace(expression)),
+        tag: templateSrv.replace(tag),
       },
+      // for cancellations
+      requestId: options.requestId,
     };
 
     if (valuePrefix) {
       httpOptions.params.valuePrefix = valuePrefix;
+    }
+    if (options.limit) {
+      httpOptions.params.limit = options.limit;
+    }
+    if (options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {
@@ -328,10 +382,13 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
-  this.getVersion = function() {
+  this.getVersion = function(optionalOptions) {
+    let options = optionalOptions || {};
+
     let httpOptions = {
       method: 'GET',
-      url: '/version/_', // Prevent last / trimming
+      url: '/version',
+      requestId: options.requestId,
     };
 
     return this.doGraphiteRequest(httpOptions)
@@ -345,6 +402,52 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       .catch(() => {
         return '';
       });
+  };
+
+  this.createFuncInstance = function(funcDef, options?) {
+    return gfunc.createFuncInstance(funcDef, options, this.funcDefs);
+  };
+
+  this.getFuncDef = function(name) {
+    return gfunc.getFuncDef(name, this.funcDefs);
+  };
+
+  this.waitForFuncDefsLoaded = function() {
+    return this.getFuncDefs();
+  };
+
+  this.getFuncDefs = function() {
+    if (this.funcDefsPromise !== null) {
+      return this.funcDefsPromise;
+    }
+
+    if (!supportsFunctionIndex(this.graphiteVersion)) {
+      this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+      this.funcDefsPromise = Promise.resolve(this.funcDefs);
+      return this.funcDefsPromise;
+    }
+
+    let httpOptions = {
+      method: 'GET',
+      url: '/functions',
+    };
+
+    this.funcDefsPromise = this.doGraphiteRequest(httpOptions)
+      .then(results => {
+        if (results.status !== 200 || typeof results.data !== 'object') {
+          this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+        } else {
+          this.funcDefs = gfunc.parseFuncDefs(results.data);
+        }
+        return this.funcDefs;
+      })
+      .catch(err => {
+        console.log('Fetching graphite functions error', err);
+        this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+        return this.funcDefs;
+      });
+
+    return this.funcDefsPromise;
   };
 
   this.testDatasource = function() {
@@ -438,5 +541,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 }
 
 function supportsTags(version: string): boolean {
+  return isVersionGtOrEq(version, '1.1');
+}
+
+function supportsFunctionIndex(version: string): boolean {
   return isVersionGtOrEq(version, '1.1');
 }

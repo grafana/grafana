@@ -1,0 +1,76 @@
++++
+title = "Permissions"
+description = "Grafana user permissions"
+keywords = ["grafana", "configuration", "documentation", "admin", "users", "permissions"]
+type = "docs"
+aliases = ["/reference/admin"]
+[menu.docs]
+name = "Permissions"
+parent = "admin"
+weight = 3
++++
+
+# Permissions
+
+Grafana users have permissions that are determined by their:
+
+- **Organization Role** (Admin, Editor, Viewer)
+- Via **Team** memberships where the **Team** has been assigned specific permissions.
+- Via permissions assigned directly to user (on folders or dashboards)
+- The Grafana Admin (i.e. Super Admin) user flag.
+
+## Organization Roles
+
+Users can be belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do
+in that organization.
+
+### Admin Role
+
+Can do everything scoped to the organization. For example:
+
+- Add & Edit data data sources.
+- Add & Edit organization users & teams.
+- Configure App plugins & set org settings.
+
+### Editor Role
+
+- Can create and modify dashboards & alert rules. This can be disabled on specific folders and dashboards.
+- **Cannot** create or edit data sources nor invite new users.
+
+### Viewer Role
+
+- View any dashboard. This can be disabled on specific folders and dashboards.
+- **Cannot** create or edit dashboards nor data sources.
+
+This role can be tweaked via Grafana server setting [viewers_can_edit]({{< relref "installation/configuration.md#viewers-can-edit" >}}). If you set this to true users
+with **Viewer** can also make transient dashboard edits, meaning they can modify panels & queries but not save the changes (nor create new dashboards).
+Useful for public Grafana installations where you want anonymous users to be able to edit panels & queries but not save or create new dashboards.
+
+## Grafana Admin
+
+This admin flag makes a user a `Super Admin`. This means they can access the `Server Admin` views where all users and organizations can be administrated.
+
+### Dashboard & Folder Permissions
+
+> Introduced in Grafana v5.0
+
+{{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="500px" class="docs-image--right" >}}
+
+For dashboards and dashboard folders there is a **Permissions** page that make it possible to
+remove the default role based permssions for Editors and Viewers. It's here you can add and assign permissions to specific **Users** and **Teams**.
+
+You can assign & remove permissions for **Organization Roles**, **Users** and **Teams**.
+
+Permission levels:
+
+- **Admin**: Can edit & create dashboards and edit permissions.
+- **Edit**: Can edit & create dashboards. **Cannot** edit folder/dashboard permissions.
+- **View**: Can only view existing dashboars/folders.
+
+#### Restricting access
+
+The highest permission always wins so if you for example want to hide a folder or dashboard from others you need to remove the **Organization Role** based permission from the
+Access Control List (ACL).
+
+- You cannot override permissions for users with **Org Admin Role**
+- A more specific permission with lower permission level will not have any effect if a more general rule exists with higher permission level. For example if "Everyone with Editor Role Can Edit" exists in the ACL list then **John Doe** will still have Edit permission even after you have specifically added a permission for this user with the permission set to **View**. You need to remove or lower the permission level of the more general rule.

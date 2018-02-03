@@ -12,8 +12,11 @@ import (
 	"gopkg.in/asn1-ber.v1"
 )
 
+// DelRequest implements an LDAP deletion request
 type DelRequest struct {
-	DN       string
+	// DN is the name of the directory entry to delete
+	DN string
+	// Controls hold optional controls to send with the request
 	Controls []Control
 }
 
@@ -23,6 +26,7 @@ func (d DelRequest) encode() *ber.Packet {
 	return request
 }
 
+// NewDelRequest creates a delete request for the given DN and controls
 func NewDelRequest(DN string,
 	Controls []Control) *DelRequest {
 	return &DelRequest{
@@ -31,10 +35,10 @@ func NewDelRequest(DN string,
 	}
 }
 
+// Del executes the given delete request
 func (l *Conn) Del(delRequest *DelRequest) error {
-	messageID := l.nextMessageID()
 	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Request")
-	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, messageID, "MessageID"))
+	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, l.nextMessageID(), "MessageID"))
 	packet.AppendChild(delRequest.encode())
 	if delRequest.Controls != nil {
 		packet.AppendChild(encodeControls(delRequest.Controls))
@@ -42,20 +46,21 @@ func (l *Conn) Del(delRequest *DelRequest) error {
 
 	l.Debug.PrintPacket(packet)
 
-	channel, err := l.sendMessage(packet)
+	msgCtx, err := l.sendMessage(packet)
 	if err != nil {
 		return err
 	}
-	if channel == nil {
-		return NewError(ErrorNetwork, errors.New("ldap: could not send message"))
-	}
-	defer l.finishMessage(messageID)
+	defer l.finishMessage(msgCtx)
 
-	l.Debug.Printf("%d: waiting for response", messageID)
-	packet = <-channel
-	l.Debug.Printf("%d: got response %p", messageID, packet)
-	if packet == nil {
-		return NewError(ErrorNetwork, errors.New("ldap: could not retrieve message"))
+	l.Debug.Printf("%d: waiting for response", msgCtx.id)
+	packetResponse, ok := <-msgCtx.responses
+	if !ok {
+		return NewError(ErrorNetwork, errors.New("ldap: response channel closed"))
+	}
+	packet, err = packetResponse.ReadPacket()
+	l.Debug.Printf("%d: got response %p", msgCtx.id, packet)
+	if err != nil {
+		return err
 	}
 
 	if l.Debug {
@@ -74,6 +79,6 @@ func (l *Conn) Del(delRequest *DelRequest) error {
 		log.Printf("Unexpected Response: %d", packet.Children[1].Tag)
 	}
 
-	l.Debug.Printf("%d: returning", messageID)
+	l.Debug.Printf("%d: returning", msgCtx.id)
 	return nil
 }

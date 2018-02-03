@@ -8,6 +8,7 @@ export default class TeamDetailsCtrl {
   /** @ngInject **/
   constructor(private $scope, private backendSrv, private $routeParams, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'teams', 0);
+    this.userPicked = this.userPicked.bind(this);
     this.get = this.get.bind(this);
     this.get();
   }

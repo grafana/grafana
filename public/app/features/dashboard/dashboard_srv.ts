@@ -73,9 +73,8 @@ export class DashboardSrv {
   postSave(clone, data) {
     this.dash.version = data.version;
 
-    var dashboardUrl = '/dashboard/db/' + data.slug;
-    if (dashboardUrl !== this.$location.path()) {
-      this.$location.url(dashboardUrl);
+    if (data.url !== this.$location.path()) {
+      this.$location.url(data.url);
     }
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);
@@ -86,7 +85,7 @@ export class DashboardSrv {
 
   save(clone, options) {
     options = options || {};
-    options.folderId = options.folderId || this.dash.meta.folderId;
+    options.folderId = options.folderId || this.dash.meta.folderId || clone.folderId;
 
     return this.backendSrv
       .saveDashboard(clone, options)

@@ -40,8 +40,8 @@ export class AppPageCtrl {
         img: app.info.logos.large,
         subTitle: app.name,
         url: '',
-        text: '',
-        breadcrumbs: [{ title: app.name, url: pluginNav.main.url }, { title: this.page.name }],
+        text: this.page.name,
+        breadcrumbs: [{ title: app.name, url: pluginNav.main.url }],
       },
     };
   }

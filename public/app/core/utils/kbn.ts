@@ -493,6 +493,7 @@ kbn.valueFormats.kvolt = kbn.formatBuilders.decimalSIPrefix('V', 1);
 kbn.valueFormats.mvolt = kbn.formatBuilders.decimalSIPrefix('V', -1);
 kbn.valueFormats.dBm = kbn.formatBuilders.decimalSIPrefix('dBm');
 kbn.valueFormats.ohm = kbn.formatBuilders.decimalSIPrefix('Ω');
+kbn.valueFormats.lumens = kbn.formatBuilders.decimalSIPrefix('Lm');
 
 // Temperature
 kbn.valueFormats.celsius = kbn.formatBuilders.fixedUnit('°C');
@@ -958,6 +959,7 @@ kbn.getUnitFormats = function() {
         { text: 'Millivolt (mV)', value: 'mvolt' },
         { text: 'Decibel-milliwatt (dBm)', value: 'dBm' },
         { text: 'Ohm (Ω)', value: 'ohm' },
+        { text: 'Lumens (Lm)', value: 'lumens' },
       ],
     },
     {
