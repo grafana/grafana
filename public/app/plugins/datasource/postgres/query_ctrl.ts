@@ -27,7 +27,9 @@ export class PostgresQueryCtrl extends QueryCtrl {
   showHelp: boolean;
   schemaSegment: any;
   tableSegment: any;
+  whereSegment: any;
   timeColumnSegment: any;
+  metricColumnSegment: any;
   selectMenu: any;
   groupBySegment: any;
 
@@ -58,6 +60,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
 
     this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
+    this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
 
     this.buildSelectMenu();
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
@@ -122,11 +125,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryError.bind(this));
   }
 
-  getColumnSegments() {
+  getMetricColumnSegments() {
     var columnQuery = "SELECT column_name FROM information_schema.columns WHERE ";
     columnQuery += " table_schema = '" + this.target.schema + "'";
     columnQuery += " AND table_name = '" + this.target.table + "'";
-    columnQuery += " AND data_type IN ('bigint','integer','double precision','real');";
+    columnQuery += " AND data_type IN ('text','char','varchar');";
 
     return this.datasource
       .metricFindQuery(columnQuery)
@@ -145,7 +148,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   timeColumnChanged() {
-    this.target.time = this.timeColumnSegment.value;
+    this.target.timeColumn = this.timeColumnSegment.value;
+    this.panelCtrl.refresh();
+  }
+
+  metricColumnChanged() {
+    this.target.metricColumn = this.metricColumnSegment.value;
     this.panelCtrl.refresh();
   }
 
