@@ -17,6 +17,15 @@
         <metric-segment segment="ctrl.tableSegment" get-options="ctrl.getTableSegments()" on-change="ctrl.tableChanged()"></metric-segment>
         <label class="gf-form-label query-keyword width-5">WHERE</label>
       </div>
+
+      <div class="gf-form" ng-repeat="segment in ctrl.whereSegments">
+        <metric-segment segment="segment" get-options="ctrl.getTagsOrValues(segment, $index)" on-change="ctrl.tagSegmentUpdated(segment, $index)"></metric-segment>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+
     </div>
 
     <div class="gf-form-inline" ng-repeat="selectParts in ctrl.queryModel.selectModels">
@@ -46,9 +55,15 @@
     <div class="gf-form-inline">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-7">Time column</label>
-        <metric-segment segment="ctrl.timeColumnSegment" get-options="ctrl.getTimeColumnSegments()" on-change="ctrl.timeChanged()"></metric-segment>
+        <metric-segment segment="ctrl.timeColumnSegment" get-options="ctrl.getTimeColumnSegments()" on-change="ctrl.timeColumnChanged()"></metric-segment>
         <label class="gf-form-label query-keyword width-8">Metric column</label>
+        <metric-segment segment="ctrl.metricColumnSegment" get-options="ctrl.getMetricColumnSegments()" on-change="ctrl.metricColumnChanged()"></metric-segment>
       </div>
+
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+
     </div>
 
     <div class="gf-form-inline">
