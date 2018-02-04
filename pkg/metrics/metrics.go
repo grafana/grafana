@@ -49,6 +49,7 @@ var (
 	// Timers
 	M_DataSource_ProxyReq_Timer prometheus.Summary
 	M_Alerting_Execution_Time   prometheus.Summary
+	M_Render_Time               prometheus.Summary
 
 	// StatTotals
 	M_Alerting_Active_Alerts prometheus.Gauge
@@ -226,6 +227,12 @@ func init() {
 	M_DataSource_ProxyReq_Timer = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:      "api_dataproxy_request_all_milliseconds",
 		Help:      "summary for dataproxy request duration",
+		Namespace: exporterName,
+	})
+
+	M_Render_Time = prometheus.NewSummary(prometheus.SummaryOpts{
+		Name:      "render_time_all_milliseconds",
+		Help:      "summary for all render requests",
 		Namespace: exporterName,
 	})
 
