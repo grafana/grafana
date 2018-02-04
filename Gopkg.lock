@@ -87,6 +87,63 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/chromedp/cdproto"
+  packages = [
+    ".",
+    "accessibility",
+    "animation",
+    "applicationcache",
+    "audits",
+    "browser",
+    "cachestorage",
+    "cdp",
+    "css",
+    "database",
+    "debugger",
+    "deviceorientation",
+    "dom",
+    "domdebugger",
+    "domsnapshot",
+    "domstorage",
+    "emulation",
+    "headlessexperimental",
+    "heapprofiler",
+    "indexeddb",
+    "input",
+    "inspector",
+    "io",
+    "layertree",
+    "log",
+    "memory",
+    "network",
+    "overlay",
+    "page",
+    "performance",
+    "profiler",
+    "runtime",
+    "security",
+    "serviceworker",
+    "storage",
+    "systeminfo",
+    "target",
+    "tethering",
+    "tracing"
+  ]
+  revision = "861b49d6c4ac9bf684dd1a46032d7c8750d0d7da"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/chromedp/chromedp"
+  packages = [
+    ".",
+    "client",
+    "kb",
+    "runner"
+  ]
+  revision = "46a6388474e20ef92c34290f62602e9fa18c9e95"
+
+[[projects]]
+  branch = "master"
   name = "github.com/codahale/hdrhistogram"
   packages = ["."]
   revision = "3a0bb77429bd3a61596f5e8a3172445844342120"
@@ -102,6 +159,12 @@
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/disintegration/imaging"
+  packages = ["."]
+  revision = "1884593a19ddc6f2ea050403430d02c1d0fc1283"
+  version = "v1.3.0"
 
 [[projects]]
   name = "github.com/fatih/color"
@@ -277,6 +340,18 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/knq/snaker"
+  packages = ["."]
+  revision = "3b39b7d38b659cf4f16986c62359955695b78a5c"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/knq/sysutil"
+  packages = ["."]
+  revision = "840643935d35cb81c833b4c142357dc9d519e390"
+
+[[projects]]
+  branch = "master"
   name = "github.com/kr/pretty"
   packages = ["."]
   revision = "cfb55aafdaf3ec08f0db22699ab822c50091b1c4"
@@ -295,6 +370,17 @@
     "oid"
   ]
   revision = "61fe37aa2ee24fabcdbe5c4ac1d4ac566f88f345"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mailru/easyjson"
+  packages = [
+    ".",
+    "buffer",
+    "jlexer",
+    "jwriter"
+  ]
+  revision = "32fa128f234d041f196a9f3e0fea5ac9772c08e1"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
@@ -467,6 +553,16 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/image"
+  packages = [
+    "bmp",
+    "tiff",
+    "tiff/lzw"
+  ]
+  revision = "12117c17ca67ffa1ce22e9409f3b0b0a93ac08c7"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -631,6 +727,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4de68f1342ba98a637ec8ca7496aeeae2021bf9e4c7c80db7924e14709151a62"
+  inputs-digest = "081702b567b6aa8f61d6e95073534cad0959289a3624f6ed44369e367a5bc83b"
   solver-name = "gps-cdcl"
   solver-version = 1
