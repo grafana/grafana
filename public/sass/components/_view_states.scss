@@ -1,5 +1,6 @@
 .page-kiosk-mode {
-  dashnav {
+  .sidemenu,
+  .navbar {
     display: none;
   }
 }
@@ -29,6 +30,10 @@
     i {
       opacity: 0;
     }
+  }
+
+  .sidemenu {
+    display: none;
   }
 
   .gf-timepicker-nav-btn {
