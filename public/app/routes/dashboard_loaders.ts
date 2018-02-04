@@ -31,10 +31,12 @@ export class LoadDashboardCtrl {
     }
 
     dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
-      const url = locationUtil.stripBaseFromUrl(result.meta.url);
+      if (result.meta.url) {
+        const url = locationUtil.stripBaseFromUrl(result.meta.url);
 
-      if (url !== $location.path()) {
-        $location.path(url).replace();
+        if (url !== $location.path()) {
+          $location.path(url).replace();
+        }
       }
 
       if ($routeParams.keepRows) {
