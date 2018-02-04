@@ -30,19 +30,20 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		middlewareScenario("GET dashboard by legacy url", func(sc *scenarioContext) {
 			sc.m.Get("/dashboard/db/:slug", redirectFromLegacyDashboardUrl, sc.defaultHandler)
 
-			sc.fakeReqWithParams("GET", "/dashboard/db/dash", map[string]string{}).exec()
+			sc.fakeReqWithParams("GET", "/dashboard/db/dash?orgId=1&panelId=2", map[string]string{}).exec()
 
 			Convey("Should redirect to new dashboard url with a 301 Moved Permanently", func() {
 				So(sc.resp.Code, ShouldEqual, 301)
 				redirectUrl, _ := sc.resp.Result().Location()
 				So(redirectUrl.Path, ShouldEqual, m.GetDashboardUrl(fakeDash.Uid, fakeDash.Slug))
+				So(len(redirectUrl.Query()), ShouldEqual, 2)
 			})
 		})
 
 		middlewareScenario("GET dashboard solo by legacy url", func(sc *scenarioContext) {
 			sc.m.Get("/dashboard-solo/db/:slug", redirectFromLegacyDashboardSoloUrl, sc.defaultHandler)
 
-			sc.fakeReqWithParams("GET", "/dashboard-solo/db/dash", map[string]string{}).exec()
+			sc.fakeReqWithParams("GET", "/dashboard-solo/db/dash?orgId=1&panelId=2", map[string]string{}).exec()
 
 			Convey("Should redirect to new dashboard url with a 301 Moved Permanently", func() {
 				So(sc.resp.Code, ShouldEqual, 301)
@@ -50,6 +51,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 				expectedUrl := m.GetDashboardUrl(fakeDash.Uid, fakeDash.Slug)
 				expectedUrl = strings.Replace(expectedUrl, "/d/", "/d-solo/", 1)
 				So(redirectUrl.Path, ShouldEqual, expectedUrl)
+				So(len(redirectUrl.Query()), ShouldEqual, 2)
 			})
 		})
 	})
