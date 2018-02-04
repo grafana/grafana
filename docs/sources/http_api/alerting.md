@@ -62,7 +62,7 @@ Content-Type: application/json
       }
     "newStateDate": "2016-12-25",
     "executionError": "",
-    "dashboardUri": "http://grafana.com/dashboard/db/sensors"
+    "url": "http://grafana.com/dashboard/db/sensors"
   }
 ]
 ```
@@ -94,7 +94,7 @@ Content-Type: application/json
   "state": "alerting",
   "newStateDate": "2016-12-25",
   "executionError": "",
-  "dashboardUri": "http://grafana.com/dashboard/db/sensors"
+  "url": "http://grafana.com/dashboard/db/sensors"
 }
 ```
 
@@ -196,7 +196,7 @@ Content-Type: application/json
 
 ## Create alert notification
 
-You can find the full list of [supported notifers](/alerting/notifications/#all-supported-notifier) at the alert notifiers page. 
+You can find the full list of [supported notifers](/alerting/notifications/#all-supported-notifier) at the alert notifiers page.
 
 `POST /api/alert-notifications`
 
