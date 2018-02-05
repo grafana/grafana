@@ -9,7 +9,7 @@ export class LoadDashboardCtrl {
     if (!$routeParams.uid && !$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(homeDash) {
         if (homeDash.redirectUri) {
-          $location.path('dashboard/' + homeDash.redirectUri);
+          $location.path(homeDash.redirectUri);
         } else {
           var meta = homeDash.meta;
           meta.canSave = meta.canShare = meta.canStar = false;

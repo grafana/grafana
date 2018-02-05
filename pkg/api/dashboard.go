@@ -293,10 +293,11 @@ func GetHomeDashboard(c *middleware.Context) Response {
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
-		slugQuery := m.GetDashboardSlugByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
+		slugQuery := m.GetDashboardRefByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
 		err := bus.Dispatch(&slugQuery)
 		if err == nil {
-			dashRedirect := dtos.DashboardRedirect{RedirectUri: "db/" + slugQuery.Result}
+			url := m.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
+			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return Json(200, &dashRedirect)
 		} else {
 			log.Warn("Failed to get slug from database, %s", err.Error())
