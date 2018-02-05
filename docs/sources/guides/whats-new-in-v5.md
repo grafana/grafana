@@ -24,6 +24,7 @@ This is the most substantial update that Grafana has ever seen. This article wil
 - [Group users into teams]({{< relref "#teams" >}}) and use them in the new permission system.
 - [Datasource provisioning]({{< relref "#data-sources" >}}) makes it possible to setup datasources via config files.
 - [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to setup dashboards via config files.
+- [Persistent dashboard url's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
 
 ### Video showing new features
 
@@ -51,7 +52,7 @@ Almost every page has seen significant UX improvements. All pages (except dashbo
 
 <div class="clearfix"></div>
 
-### Dashboard Settings
+## Dashboard Settings
 
 {{< docs-imagebox img="/img/docs/v50/dashboard_settings.png" max-width="1000px" class="docs-image--right" >}}
 Dashboard pages have a new header toolbar where buttons and actions are now all moved to the right. All the dashboard
@@ -95,7 +96,7 @@ data sources a user can access nor what queries a user can issue.
 
 <div class="clearfix"></div>
 
-# Provisioning from configuration
+## Provisioning from configuration
 
 In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards.
 But that required the service to be running before you started creating dashboards and you also needed to
@@ -117,17 +118,22 @@ in sync with dashboards in Grafana's database. The dashboard provisioner has mul
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
 
-# Dashboard model, new url structure & API changes
+## Dashboard model, persistent url's and API changes
 
 We are introducing a new unique identifier (`uid`) in the dashboard JSON model. It's automatically
 generated if not provided when creating a dashboard and will have a length of 9-12 characters.
 
-The unique identifier allows having consistent URL's for accessing dashboards and sharing them
-between instances. The new routes and API's for accessing dashboards will use the `uid` instead
-of the `slug`. We'll keep supporting the old routes for accessing dashboards for backward
-compatibility, but please note that we'll deprecate the old slug-based routes in the future.
-This means that changing the title of dashboards will not break any bookmarked links.
+The unique identifier allows having persistent URL's for accessing dashboards, sharing them
+between instances and when using [dashboard provisioning](#dashboards). This means that dashboard can
+be renamed without breaking any links. We're changing the url format for dashboards
+from `/dashboard/db/:slug` to `/d/:uid/:slug`. We'll keep supporting the old slug-based url's for dashboards
+and redirects to the new one for backward compatibility. Please note that the old slug-based url's
+have been deprecated and will be removed in a future release.
 
 Sharing dashboards between instances becomes much easier since the `uid` is unique (unique enough).
 This might seem like a small change, but we are incredibly excited about it since it will make it
 much easier to manage, collaborate and navigate between dashboards.
+
+### API changes
+New uid-based routes in the dashboard API have been introduced to retrieve and delete dashboards.
+The corresponding slug-based routes have been deprecated and will be removed in a future release.
