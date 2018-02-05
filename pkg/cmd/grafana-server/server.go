@@ -115,7 +115,7 @@ func (g *GrafanaServerImpl) initLogging() {
 		os.Exit(1)
 	}
 
-	g.log.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
+	g.log.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0), "chromium-rev", chromiumRevision)
 	setting.LogConfigurationInfo()
 }
 

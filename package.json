@@ -129,6 +129,9 @@
     "printWidth": 120
   },
   "license": "Apache-2.0",
+  "grafana": {
+    "chromium_revision": "533271"
+  },
   "dependencies": {
     "angular": "^1.6.6",
     "angular-bindonce": "^0.3.1",
