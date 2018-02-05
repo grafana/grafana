@@ -102,6 +102,17 @@ Permissions for a dashboard:
 - `user1 Can Admin (inherited from parent folder)`
 - `user1 Can Edit`
 
-
 Result: You cannot override to a lower permission. `user1` has Admin permission as the highest permission always wins.
+
 - **View**: Can only view existing dashboars/folders.
+- You cannot override permissions for users with **Org Admin Role**
+- A more specific permission with lower permission level will not have any effect if a more general rule exists with higher permission level. For example if "Everyone with Editor Role Can Edit" exists in the ACL list then **John Doe** will still have Edit permission even after you have specifically added a permission for this user with the permission set to **View**. You need to remove or lower the permission level of the more general rule.
+
+### Data source permissions
+
+Permissions on dashboards and folders **do not** include permissions on data sources. A user with `Viewer` role
+can still issue any possible query to a data source, not just those queries that exist on dashboards he/she has access to.
+We hope to add permissions on data sources in a future release. Until then **do not** view dashboard permissions as a secure
+way to restrict user data access. Dashboard permissions only limits what dashboards & folders a user can view & edit not which
+data sources a user can access nor what queries a user can issue.
+

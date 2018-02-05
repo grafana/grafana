@@ -12,6 +12,8 @@ weight = -6
 
 # What's New in Grafana v5.0
 
+> Out in beta: [Download now!](https://www.youtube.com/watch?v=Izr0IBgoTZQ)
+
 This is the most substantial update that Grafana has ever seen. This article will detail the major new features and enhancements.
 
 - [New Dashboard Layout Engine]({{< relref "#new-dashboard-layout-engine" >}}) enables a much easier drag, drop and resize experience and new types of layouts.
@@ -85,7 +87,11 @@ We hope to do more with teams in future releases like integration with LDAP and 
 
 {{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="1000px" class="docs-image--right" >}}
 
-You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and replaced with specific teams or users enabling more control over what a user can see and edit.
+You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and
+replaced with specific teams or users enabling more control over what a user can see and edit.
+
+Dashboard permissions only limits what dashboards & folders a user can view & edit not which
+data sources a user can access nor what queries a user can issue.
 
 <div class="clearfix"></div>
 
@@ -111,10 +117,17 @@ in sync with dashboards in Grafana's database. The dashboard provisioner has mul
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
 
-# Dashboard model & API
+# Dashboard model, new url structure & API changes
 
-We are introducing a new identifier (`uid`) in the dashboard JSON model. The new identifier will be a 9-12 character long unique id.
-We are also changing the route for getting dashboards to use this `uid` instead of the slug that the current route and API are using.
-We will keep supporting the old route for backward compatibility. This will make it possible to change the title on dashboards without breaking links.
-Sharing dashboards between instances becomes much easier since the uid is unique (unique enough). This might seem like a small change,
-but we are incredibly excited about it since it will make it much easier to manage, collaborate and navigate between dashboards.
+We are introducing a new unique identifier (`uid`) in the dashboard JSON model. It's automatically
+generated if not provided when creating a dashboard and will have a length of 9-12 characters.
+
+The unique identifier allows having consistent URL's for accessing dashboards and sharing them
+between instances. The new routes and API's for accessing dashboards will use the `uid` instead
+of the `slug`. We'll keep supporting the old routes for accessing dashboards for backward
+compatibility, but please note that we'll deprecate the old slug-based routes in the future.
+This means that changing the title of dashboards will not break any bookmarked links.
+
+Sharing dashboards between instances becomes much easier since the `uid` is unique (unique enough).
+This might seem like a small change, but we are incredibly excited about it since it will make it
+much easier to manage, collaborate and navigate between dashboards.
