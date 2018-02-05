@@ -137,7 +137,7 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
       'fa-pause': !rule.isPaused,
     });
 
-    let ruleUrl = `${rule.dashboardUri}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
+    let ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
 
     return (
       <li className="alert-rule-item">
