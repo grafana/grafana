@@ -24,6 +24,12 @@ func GetDashboardAclList(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get dashboard acl", err)
 	}
 
+	for _, perm := range acl {
+		if perm.Slug != "" {
+			perm.Url = m.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
+		}
+	}
+
 	return Json(200, acl)
 }
 

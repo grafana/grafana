@@ -9,7 +9,6 @@ import { permissionOptions } from 'app/stores/PermissionsStore/PermissionsStore'
 export interface IProps {
   permissions: any;
   backendSrv: any;
-  dashboardId: any;
 }
 @observer
 class AddPermissions extends Component<IProps, any> {
@@ -30,12 +29,6 @@ class AddPermissions extends Component<IProps, any> {
   typeChanged(evt) {
     const { value } = evt.target;
     const { permissions } = this.props;
-
-    // if (value === 'Viewer' || value === 'Editor') {
-    // //   permissions.addStoreItem({ permission: 1, role: value, dashboardId: dashboardId }, dashboardId);
-    // //   this.resetNewType();
-    //   return;
-    // }
 
     permissions.setNewType(value);
   }

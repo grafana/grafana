@@ -53,7 +53,7 @@ class DashboardPermissions extends Component<IProps, any> {
           </div>
         </div>
         <SlideDown in={this.permissions.isAddPermissionsVisible}>
-          <AddPermissions permissions={this.permissions} backendSrv={backendSrv} dashboardId={dashboardId} />
+          <AddPermissions permissions={this.permissions} backendSrv={backendSrv} />
         </SlideDown>
         <Permissions
           permissions={this.permissions}

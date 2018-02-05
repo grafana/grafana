@@ -14,6 +14,7 @@ export class SettingsCtrl {
   canSave: boolean;
   canDelete: boolean;
   sections: any[];
+  hasUnsavedFolderChange: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $location, private $rootScope, private backendSrv, private dashboardSrv) {
@@ -38,6 +39,7 @@ export class SettingsCtrl {
 
     this.$rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
     this.$rootScope.appEvent('dash-scroll', { animate: false, pos: 0 });
+    this.$rootScope.onAppEvent('dashboard-saved', this.onPostSave.bind(this), $scope);
   }
 
   buildSectionList() {
@@ -135,6 +137,10 @@ export class SettingsCtrl {
     this.dashboardSrv.saveDashboard();
   }
 
+  onPostSave() {
+    this.hasUnsavedFolderChange = false;
+  }
+
   hideSettings() {
     var urlParams = this.$location.search();
     delete urlParams.editview;
@@ -195,7 +201,7 @@ export class SettingsCtrl {
   onFolderChange(folder) {
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
-    this.dashboard.meta.folderSlug = folder.slug;
+    this.hasUnsavedFolderChange = true;
   }
 
   getFolder() {
