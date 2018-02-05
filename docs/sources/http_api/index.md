@@ -21,6 +21,7 @@ dashboards, creating users and updating data sources.
 * [Authentication API]({{< relref "/http_api/auth.md" >}})
 * [Dashboard API]({{< relref "/http_api/dashboard.md" >}})
 * [Dashboard Versions API]({{< relref "http_api/dashboard_versions.md" >}})
+* [Folder/dashboard search API]({{< relref "/http_api/folder_dashboard_search.md" >}})
 * [Data Source API]({{< relref "http_api/data_source.md" >}})
 * [Organisation API]({{< relref "http_api/org.md" >}})
 * [Snapshot API]({{< relref "http_api/snapshot.md" >}})
