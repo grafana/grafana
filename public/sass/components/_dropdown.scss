@@ -255,7 +255,7 @@
 }
 
 // Caret to indicate there is a submenu
-.dropdown-submenu > a::before {
+.dropdown-submenu > a::after {
   display: block;
   content: ' ';
   float: right;
