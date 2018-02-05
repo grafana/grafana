@@ -28,7 +28,7 @@ This is the most substantial update that Grafana has ever seen. This article wil
 
 ### Video showing new features
 
-<iframe height="215" src="https://www.youtube.com/watch?v=Izr0IBgoTZQ?rel=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+<iframe height="250" src="https://www.youtube.com/embed/Izr0IBgoTZQ?rel=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 <br />
 
 ## New Dashboard Layout Engine
