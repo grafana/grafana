@@ -107,6 +107,7 @@ func (sb *SearchBuilder) buildSelect() {
 			dashboard_tag.term,
 			dashboard.is_folder,
 			dashboard.folder_id,
+			folder.uid as folder_uid,
 			folder.slug as folder_slug,
 			folder.title as folder_title
 		FROM `)

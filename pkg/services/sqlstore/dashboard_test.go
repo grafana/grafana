@@ -147,6 +147,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				hit := query.Result[0]
 				So(hit.Type, ShouldEqual, search.DashHitFolder)
 				So(hit.Url, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
+				So(hit.FolderTitle, ShouldEqual, "")
 			})
 
 			Convey("Should be able to search for a dashboard folder's children", func() {
@@ -163,6 +164,10 @@ func TestDashboardDataAccess(t *testing.T) {
 				hit := query.Result[0]
 				So(hit.Id, ShouldEqual, savedDash.Id)
 				So(hit.Url, ShouldEqual, fmt.Sprintf("/d/%s/%s", savedDash.Uid, savedDash.Slug))
+				So(hit.FolderId, ShouldEqual, savedFolder.Id)
+				So(hit.FolderUid, ShouldEqual, savedFolder.Uid)
+				So(hit.FolderTitle, ShouldEqual, savedFolder.Title)
+				So(hit.FolderUrl, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
 			})
 
 			Convey("Should be able to search for dashboard by dashboard ids", func() {

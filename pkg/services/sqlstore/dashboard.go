@@ -245,6 +245,7 @@ type DashboardSearchProjection struct {
 	Term        string
 	IsFolder    bool
 	FolderId    int64
+	FolderUid   string
 	FolderSlug  string
 	FolderTitle string
 }
@@ -323,9 +324,13 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 				Url:         m.GetDashboardFolderUrl(item.IsFolder, item.Uid, item.Slug),
 				Type:        getHitType(item),
 				FolderId:    item.FolderId,
+				FolderUid:   item.FolderUid,
 				FolderTitle: item.FolderTitle,
-				FolderSlug:  item.FolderSlug,
 				Tags:        []string{},
+			}
+
+			if item.FolderId > 0 {
+				hit.FolderUrl = m.GetFolderUrl(item.FolderUid, item.FolderSlug)
 			}
 
 			query.Result = append(query.Result, hit)

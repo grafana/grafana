@@ -21,8 +21,9 @@ type Hit struct {
 	Tags        []string `json:"tags"`
 	IsStarred   bool     `json:"isStarred"`
 	FolderId    int64    `json:"folderId,omitempty"`
+	FolderUid   string   `json:"folderUid,omitempty"`
 	FolderTitle string   `json:"folderTitle,omitempty"`
-	FolderSlug  string   `json:"folderSlug,omitempty"`
+	FolderUrl   string   `json:"folderUrl,omitempty"`
 }
 
 type HitList []*Hit
