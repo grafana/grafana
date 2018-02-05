@@ -2,7 +2,7 @@
 
 # 5.0.0-beta1 (2018-02-05)
 
-Grafana v5.0 is going to be the biggest and most foundational release Grafana has ever had, coming with a ton of UX improvements, a new dashboard grid engine, dashboard folders, user teams and permissions. Checkout out this [video preview](https://www.youtube.com/watch?v=BC_YRNpqj5k) of Grafana v5.
+Grafana v5.0 is going to be the biggest and most foundational release Grafana has ever had, coming with a ton of UX improvements, a new dashboard grid engine, dashboard folders, user teams and permissions. Checkout out this [video preview](https://www.youtube.com/watch?v=Izr0IBgoTZQ) of Grafana v5.
 
 ### New Major Features
 - **Dashboards** Dashboard folders, [#1611](https://github.com/grafana/grafana/issues/1611)
@@ -68,6 +68,17 @@ Dashboard panels and rows are positioned using a gridPos object `{x: 0, y: 0, w:
 
 ## Tech
 * **RabbitMq**: Remove support for publishing events to RabbitMQ [#9645](https://github.com/grafana/grafana/issues/9645)
+
+## Deprecation notes
+
+### HTTP API
+The following operations have been deprecated and will be removed in a future release:
+  - `GET /api/dashboards/db/:slug` -> Use `GET /api/dashboards/uid/:uid` instead
+  - `DELETE /api/dashboards/db/:slug` -> Use `DELETE /api/dashboards/uid/:uid` instead
+
+The following properties have been deprecated and will be removed in a future release:
+  - `uri` property in `GET /api/search` -> Use new `url` or `uid` property instead
+  - `meta.slug` property in `GET /api/dashboards/uid/:uid` and `GET /api/dashboards/db/:slug` -> Use new `meta.url` or `dashboard.uid` property instead
 
 # 4.6.3 (2017-12-14)
 
