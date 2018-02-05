@@ -17,6 +17,11 @@ export class FolderPermissions extends Component<IContainerProps, any> {
     this.loadStore();
   }
 
+  componentWillUnmount() {
+    const { permissions } = this.props;
+    permissions.hideAddPermissions();
+  }
+
   loadStore() {
     const { nav, folder, view } = this.props;
     return folder.load(view.routeParams.get('uid') as string).then(res => {

@@ -30,7 +30,7 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
           folderInfo && (
             <em className="muted no-wrap">
               Inherited from folder{' '}
-              <a className="text-link" href={`dashboards/folder/${folderInfo.id}/${folderInfo.slug}/permissions`}>
+              <a className="text-link" href={`${folderInfo.url}/permissions`}>
                 {folderInfo.title}
               </a>{' '}
             </em>
