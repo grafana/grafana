@@ -5,6 +5,7 @@ export const Folder = types.model('Folder', {
   title: types.string,
   url: types.string,
   canSave: types.boolean,
+  uid: types.string,
   hasChanged: types.boolean,
 });
 
@@ -14,15 +15,23 @@ export const FolderStore = types
   })
   .actions(self => ({
     load: flow(function* load(uid: string) {
+      // clear folder state
+      if (self.folder && self.folder.uid !== uid) {
+        self.folder = null;
+      }
+
       const backendSrv = getEnv(self).backendSrv;
       const res = yield backendSrv.getDashboardByUid(uid);
+
       self.folder = Folder.create({
         id: res.dashboard.id,
         title: res.dashboard.title,
         url: res.meta.url,
+        uid: res.dashboard.uid,
         canSave: res.meta.canSave,
         hasChanged: false,
       });
+
       return res;
     }),
 
