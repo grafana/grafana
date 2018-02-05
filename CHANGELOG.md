@@ -1,4 +1,6 @@
-# 5.0.0 (unreleased / master branch)
+# 5.0.0-beta2 (unrelased)
+
+# 5.0.0-beta1 (2018-02-05)
 
 Grafana v5.0 is going to be the biggest and most foundational release Grafana has ever had, coming with a ton of UX improvements, a new dashboard grid engine, dashboard folders, user teams and permissions. Checkout out this [video preview](https://www.youtube.com/watch?v=BC_YRNpqj5k) of Grafana v5.
 
