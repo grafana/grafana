@@ -143,6 +143,11 @@ var (
 	ImagesDir  string
 	PhantomDir string
 
+	// Rendering
+	RendererChromiumExecPath string
+	RendererChromiumRevision string
+	RendererChromiumHeadless bool
+
 	// for logging purposes
 	configFiles                  []string
 	appliedCommandLineProperties []string
@@ -581,6 +586,11 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
 	PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
+
+	// Renderer
+	rendererCfg := Cfg.Section("renderer")
+	RendererChromiumExecPath = rendererCfg.Key("chromium_exec_path").String()
+	RendererChromiumHeadless = rendererCfg.Key("chromium_headless").MustBool(true)
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

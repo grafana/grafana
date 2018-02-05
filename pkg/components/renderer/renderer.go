@@ -5,8 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"time"
+
+	"github.com/chromedp/chromedp/runner"
 
 	"github.com/chromedp/cdproto/page"
 
@@ -62,6 +66,28 @@ func getRenderKey(params *RenderOpts) string {
 	}
 	rendererLog.Debug("adding render authkey", "orgid", params.OrgId, "userid", params.UserId, "role", orgRole)
 	return middleware.AddRenderAuthKey(params.OrgId, params.UserId, orgRole)
+}
+
+func getExecPath() (string, error) {
+	if setting.RendererChromiumExecPath != "" {
+		return setting.RendererChromiumExecPath, nil
+	}
+
+	if setting.RendererChromiumRevision == "" {
+		return "", fmt.Errorf("Revision of bundled chromium unknown you need to manually set exec path")
+	}
+
+	basePath := filepath.Join(setting.HomePath, "tools/chromium", setting.RendererChromiumRevision)
+	if runtime.GOOS == "windows" {
+		// the same for both 32 and 64bit
+		return filepath.Join(basePath, "chrome-win32/chrome.exe"), nil
+	} else if runtime.GOOS == "darwin" {
+		return filepath.Join(basePath, "chrome-mac/Chromium.app/Contents/MacOS/Chromium"), nil
+	} else if runtime.GOOS == "linux" {
+		return filepath.Join(basePath, "chrome-linux/chrome"), nil
+	}
+
+	return "", fmt.Errorf("Unexpected OS %s you need to manually set chromium exec path", runtime.GOOS)
 }
 
 func screenshotAction(width, height int, url, renderKey, pngPath string) chromedp.Tasks {
@@ -140,6 +166,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	execPath, err := getExecPath()
+	if err != nil {
+		rendererLog.Error("could not get exec path", "err", err)
+		return "", err
+	}
+
 	chrome, err := chromedp.New(ctx,
 		chromedp.WithDebugf(func(msg string, data ...interface{}) {
 			logFuncProxy(chromeLog.Debug, msg, data...)
@@ -150,9 +182,43 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		chromedp.WithLogf(func(msg string, data ...interface{}) {
 			logFuncProxy(chromeLog.Info, msg, data...)
 		}),
+		chromedp.WithRunnerOptions(
+			runner.Path(execPath),
+			runner.StartURL("about:blank"),
+			runner.Flag("no-sandbox", true),
+			runner.Flag("headless", setting.RendererChromiumHeadless),
+			runner.Flag("disable-gpu", true),
+			runner.Flag("disable-background-networking", true),
+			runner.Flag("disable-background-timer-throttling", true),
+			runner.Flag("disable-client-side-phishing-detection", true),
+			runner.Flag("disable-default-apps", true),
+			runner.Flag("disable-extensions", true),
+			runner.Flag("disable-hang-monitor", true),
+			runner.Flag("disable-popup-blocking", true),
+			runner.Flag("disable-prompt-on-repost", true),
+			runner.Flag("disable-sync", true),
+			runner.Flag("disable-translate", true),
+			runner.Flag("metrics-recording-only", true),
+			runner.Flag("no-first-run", true),
+			runner.Flag("remote-debugging-port", 9222),
+			runner.Flag("safebrowsing-disable-auto-update", true),
+			runner.Flag("enable-automation", true),
+			runner.Flag("password-store=basic", true),
+			runner.Flag("use-mock-keychain", true),
+			runner.Flag("headless", true),
+			runner.Flag("disable-gpu", true),
+			runner.Flag("hide-scrollbars", true),
+			runner.Flag("mute-audio", true),
+			runner.CmdOpt(func(cmd *exec.Cmd) error {
+				cmd.Stdout = log.NewLogWriter(chromeLog, log.LvlDebug, "[stdout] ")
+				cmd.Stderr = log.NewLogWriter(chromeLog, log.LvlDebug, "[stderr] ")
+
+				return nil
+			}),
+		),
 	)
 	if err != nil {
-		rendererLog.Error("could not start chrome", "error", err)
+		rendererLog.Error("could not start chrome", "err", err, "exec-path", execPath)
 		return "", fmt.Errorf("Could not start chrome: %s", err)
 	}
 
