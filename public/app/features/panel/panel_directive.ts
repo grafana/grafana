@@ -100,7 +100,9 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       // update scrollbar after mounting
       ctrl.events.on('component-did-mount', () => {
         if (ctrl.__proto__.constructor.scrollable) {
-          panelScrollbar = new PerfectScrollbar(panelContent[0]);
+          panelScrollbar = new PerfectScrollbar(panelContent[0], {
+            wheelPropagation: true,
+          });
         }
       });
 
