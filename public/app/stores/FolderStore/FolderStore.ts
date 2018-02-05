@@ -2,6 +2,7 @@ import { types, getEnv, flow } from 'mobx-state-tree';
 
 export const Folder = types.model('Folder', {
   id: types.identifier(types.number),
+  uid: types.string,
   title: types.string,
   url: types.string,
   canSave: types.boolean,
@@ -18,6 +19,7 @@ export const FolderStore = types
       const res = yield backendSrv.getDashboardByUid(uid);
       self.folder = Folder.create({
         id: res.dashboard.id,
+        uid: uid,
         title: res.dashboard.title,
         url: res.meta.url,
         canSave: res.meta.canSave,
