@@ -12,7 +12,7 @@ weight = -6
 
 # What's New in Grafana v5.0
 
-> Out in beta: [Download now!](https://www.youtube.com/watch?v=Izr0IBgoTZQ)
+> Out in beta: [Download now!](https://grafana.com/grafana/download/5.0.0-beta1)
 
 This is the most substantial update that Grafana has ever seen. This article will detail the major new features and enhancements.
 
@@ -27,7 +27,7 @@ This is the most substantial update that Grafana has ever seen. This article wil
 
 ### Video showing new features
 
-<iframe height="215" src="https://www.youtube.com/embed/BC_YRNpqj5k?rel=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+<iframe height="215" src="https://www.youtube.com/watch?v=Izr0IBgoTZQ?rel=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 <br />
 
 ## New Dashboard Layout Engine
