@@ -21,4 +21,8 @@
   .fa-star {
     color: $orange;
   }
+
+  &--no-margintop {
+    margin-top: 0;
+  }
 }
