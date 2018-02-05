@@ -1,19 +1,24 @@
 import { FolderPageLoader } from './folder_page_loader';
+import locationUtil from 'app/core/utils/location_util';
 
 export class FolderDashboardsCtrl {
   navModel: any;
   folderId: number;
-  folderSlug: string;
+  uid: string;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private $routeParams) {
-    if (this.$routeParams.folderId && this.$routeParams.slug) {
-      this.folderId = $routeParams.folderId;
+  constructor(private backendSrv, navModelSrv, private $routeParams, $location) {
+    if (this.$routeParams.uid) {
+      this.uid = $routeParams.uid;
 
-      const loader = new FolderPageLoader(this.backendSrv, this.$routeParams);
+      const loader = new FolderPageLoader(this.backendSrv);
 
-      loader.load(this, this.folderId, 'manage-folder-dashboards').then(result => {
-        this.folderSlug = result.meta.slug;
+      loader.load(this, this.uid, 'manage-folder-dashboards').then(folder => {
+        const url = locationUtil.stripBaseFromUrl(folder.meta.url);
+
+        if (url !== $location.path()) {
+          $location.path(url).replace();
+        }
       });
     }
   }

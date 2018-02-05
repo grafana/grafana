@@ -12,6 +12,7 @@ import { DashboardMigrator } from './dashboard_migration';
 
 export class DashboardModel {
   id: any;
+  uid: any;
   title: any;
   autoUpdate: any;
   description: any;
@@ -56,6 +57,7 @@ export class DashboardModel {
 
     this.events = new Emitter();
     this.id = data.id || null;
+    this.uid = data.uid || null;
     this.revision = data.revision;
     this.title = data.title || 'No Title';
     this.autoUpdate = data.autoUpdate;
@@ -277,6 +279,40 @@ export class DashboardModel {
 
     this.sortPanelsByGridPos();
     this.events.emit('repeats-processed');
+  }
+
+  cleanUpRowRepeats(rowPanels) {
+    let panelsToRemove = [];
+    for (let i = 0; i < rowPanels.length; i++) {
+      let panel = rowPanels[i];
+      if (!panel.repeat && panel.repeatPanelId) {
+        panelsToRemove.push(panel);
+      }
+    }
+    _.pull(rowPanels, ...panelsToRemove);
+    _.pull(this.panels, ...panelsToRemove);
+  }
+
+  processRowRepeats(row: PanelModel) {
+    if (this.snapshot || this.templating.list.length === 0) {
+      return;
+    }
+
+    let rowPanels = row.panels;
+    if (!row.collapsed) {
+      let rowPanelIndex = _.findIndex(this.panels, p => p.id === row.id);
+      rowPanels = this.getRowPanels(rowPanelIndex);
+    }
+
+    this.cleanUpRowRepeats(rowPanels);
+
+    for (let i = 0; i < rowPanels.length; i++) {
+      let panel = rowPanels[i];
+      if (panel.repeat) {
+        let panelIndex = _.findIndex(this.panels, p => p.id === panel.id);
+        this.repeatPanel(panel, panelIndex);
+      }
+    }
   }
 
   getPanelRepeatClone(sourcePanel, valueIndex, sourcePanelIndex) {
@@ -569,7 +605,7 @@ export class DashboardModel {
 
     if (row.collapsed) {
       row.collapsed = false;
-      let hasRepeat = false;
+      let hasRepeat = _.some(row.panels, p => p.repeat);
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
@@ -590,10 +626,6 @@ export class DashboardModel {
           // update insert post and y max
           insertPos += 1;
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
-
-          if (panel.repeat) {
-            hasRepeat = true;
-          }
         }
 
         const pushDownAmount = yMax - row.gridPos.y;
@@ -606,7 +638,7 @@ export class DashboardModel {
         row.panels = [];
 
         if (hasRepeat) {
-          this.processRepeats();
+          this.processRowRepeats(row);
         }
       }
 

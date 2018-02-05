@@ -83,6 +83,10 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         body.toggleClass('sidemenu-hidden');
       });
 
+      scope.$watch(() => playlistSrv.isPlaying, function(newValue) {
+        elem.toggleClass('playlist-active', newValue === true);
+      });
+
       // tooltip removal fix
       // manage page classes
       var pageClass;

@@ -49,7 +49,7 @@ describe('SearchCtrl', () => {
         },
         {
           id: 0,
-          title: 'Root',
+          title: 'General',
           items: [{ id: 3, selected: false }, { id: 5, selected: false }],
           selected: false,
           expanded: true,
@@ -146,7 +146,7 @@ describe('SearchCtrl', () => {
         },
         {
           id: 0,
-          title: 'Root',
+          title: 'General',
           items: [{ id: 3, selected: false }, { id: 5, selected: false }],
           selected: false,
           expanded: true,

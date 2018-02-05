@@ -12,7 +12,7 @@ export class FolderPickerCtrl {
   enterFolderCreation: any;
   exitFolderCreation: any;
   enableCreateNew: boolean;
-  rootName = 'Root';
+  rootName = 'General';
   folder: any;
   createNewFolder: boolean;
   newFolderName: string;
@@ -33,10 +33,13 @@ export class FolderPickerCtrl {
     return this.backendSrv.get('api/dashboards/folders', { query: query }).then(result => {
       if (
         query === '' ||
-        query.toLowerCase() === 'r' ||
-        query.toLowerCase() === 'ro' ||
-        query.toLowerCase() === 'roo' ||
-        query.toLowerCase() === 'root'
+        query.toLowerCase() === 'g' ||
+        query.toLowerCase() === 'ge' ||
+        query.toLowerCase() === 'gen' ||
+        query.toLowerCase() === 'gene' ||
+        query.toLowerCase() === 'gener' ||
+        query.toLowerCase() === 'genera' ||
+        query.toLowerCase() === 'general'
       ) {
         result.unshift({ title: this.rootName, id: 0 });
       }
@@ -64,7 +67,7 @@ export class FolderPickerCtrl {
     this.newFolderNameTouched = true;
 
     this.validationSrv
-      .validateNewDashboardOrFolderName(this.newFolderName)
+      .validateNewFolderName(this.newFolderName)
       .then(() => {
         this.hasValidationError = false;
       })

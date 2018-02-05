@@ -16,6 +16,7 @@ type DashboardMeta struct {
 	CanAdmin    bool      `json:"canAdmin"`
 	CanStar     bool      `json:"canStar"`
 	Slug        string    `json:"slug"`
+	Url         string    `json:"url"`
 	Expires     time.Time `json:"expires"`
 	Created     time.Time `json:"created"`
 	Updated     time.Time `json:"updated"`
@@ -26,7 +27,7 @@ type DashboardMeta struct {
 	IsFolder    bool      `json:"isFolder"`
 	FolderId    int64     `json:"folderId"`
 	FolderTitle string    `json:"folderTitle"`
-	FolderSlug  string    `json:"folderSlug"`
+	FolderUrl   string    `json:"folderUrl"`
 }
 
 type DashboardFullWithMeta struct {

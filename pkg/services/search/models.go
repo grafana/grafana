@@ -13,15 +13,17 @@ const (
 
 type Hit struct {
 	Id          int64    `json:"id"`
+	Uid         string   `json:"uid"`
 	Title       string   `json:"title"`
 	Uri         string   `json:"uri"`
-	Slug        string   `json:"slug"`
+	Url         string   `json:"url"`
 	Type        HitType  `json:"type"`
 	Tags        []string `json:"tags"`
 	IsStarred   bool     `json:"isStarred"`
 	FolderId    int64    `json:"folderId,omitempty"`
+	FolderUid   string   `json:"folderUid,omitempty"`
 	FolderTitle string   `json:"folderTitle,omitempty"`
-	FolderSlug  string   `json:"folderSlug,omitempty"`
+	FolderUrl   string   `json:"folderUrl,omitempty"`
 }
 
 type HitList []*Hit

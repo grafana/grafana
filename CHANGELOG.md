@@ -18,6 +18,9 @@ From `/etc/grafana/datasources` to `/etc/grafana/provisioning/datasources` when 
 
 * **Pagerduty** The notifier now defaults to not auto resolve incidents. More details at [#10222](https://github.com/grafana/grafana/issues/10222)
 
+* **HTTP API**
+- `GET /api/alerts` property dashboardUri renamed to url and is now the full url (that is including app sub url). 
+
 ## New Dashboard Grid
 
 The new grid engine is a major upgrade for how you can position and move panels. It enables new layouts and a much easier dashboard building experience. The change is backward compatible. So you can upgrade your current version to 5.0 without breaking dashboards, but you cannot downgrade from 5.0 to previous versions. Grafana will automatically upgrade your dashboards to the new schema and position panels to match your existing layout. There might be minor differences in panel height. If you upgrade to 5.0 and for some reason want to rollback to the previous version you can restore dashboards to previous versions using dashboard history. But that should only be seen as an emergency solution.

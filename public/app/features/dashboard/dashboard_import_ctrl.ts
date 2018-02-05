@@ -93,7 +93,7 @@ export class DashboardImportCtrl {
     this.nameExists = false;
 
     this.validationSrv
-      .validateNewDashboardOrFolderName(this.dash.title)
+      .validateNewDashboardName(0, this.dash.title)
       .then(() => {
         this.hasNameValidationError = false;
       })

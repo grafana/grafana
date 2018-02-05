@@ -35,18 +35,18 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type, slug) {
+  loadDashboard(type, slug, uid) {
     var promise;
 
     if (type === 'script') {
       promise = this._loadScriptedDashboard(slug);
     } else if (type === 'snapshot') {
-      promise = this.backendSrv.get('/api/snapshots/' + this.$routeParams.slug).catch(() => {
+      promise = this.backendSrv.get('/api/snapshots/' + slug).catch(() => {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
     } else {
       promise = this.backendSrv
-        .getDashboard(this.$routeParams.type, this.$routeParams.slug)
+        .getDashboardByUid(uid)
         .then(result => {
           if (result.meta.isFolder) {
             this.$rootScope.appEvent('alert-error', ['Dashboard not found']);
