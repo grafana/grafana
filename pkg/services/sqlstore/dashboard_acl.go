@@ -113,6 +113,7 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 	})
 }
 
+// RemoveDashboardAcl removes a specified permission from the dashboard acl
 func RemoveDashboardAcl(cmd *m.RemoveDashboardAclCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSQL = "DELETE FROM " + dialect.Quote("dashboard_acl") + " WHERE org_id =? and id=?"
@@ -125,15 +126,16 @@ func RemoveDashboardAcl(cmd *m.RemoveDashboardAclCommand) error {
 	})
 }
 
+// GetDashboardAclInfoList returns a list of permissions for a dashboard. They can be fetched from three
+// different places.
+// 1) Permissions for the dashboard
+// 2) permissions for its parent folder
+// 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
 func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
-	dashboardFilter := fmt.Sprintf(`IN (
-    SELECT %d
-    UNION
-    SELECT folder_id from dashboard where id = %d
-  )`, query.DashboardId, query.DashboardId)
+	var err error
 
-	rawSQL := `
-	SELECT
+	if query.DashboardId == 0 {
+		sql := `SELECT
 		da.id,
 		da.org_id,
 		da.dashboard_id,
@@ -143,44 +145,85 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 		da.role,
 		da.created,
 		da.updated,
-		u.login AS user_login,
-		u.email AS user_email,
-		ug.name AS team
-  FROM` + dialect.Quote("dashboard_acl") + ` as da
-		LEFT OUTER JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
-		LEFT OUTER JOIN team ug on ug.id = da.team_id
-	WHERE dashboard_id ` + dashboardFilter + ` AND da.org_id = ?
+		'' as user_login,
+		'' as user_email,
+		'' as team,
+		'' as title,
+		'' as slug,
+		'' as uid,` +
+			dialect.BooleanStr(false) + ` AS is_folder
+		FROM dashboard_acl as da
+		WHERE da.dashboard_id = -1`
+		query.Result = make([]*m.DashboardAclInfoDTO, 0)
+		err = x.SQL(sql).Find(&query.Result)
 
-	-- Also include default permission if has_acl = 0
+	} else {
+		dashboardFilter := fmt.Sprintf(`IN (
+			SELECT %d
+			UNION
+			SELECT folder_id from dashboard where id = %d
+		  )`, query.DashboardId, query.DashboardId)
 
-	UNION
-		SELECT
-			da.id,
-			da.org_id,
-			da.dashboard_id,
-			da.user_id,
-			da.team_id,
-			da.permission,
-			da.role,
-			da.created,
-			da.updated,
-			'' as user_login,
-			'' as user_email,
-			'' as team
-			FROM dashboard_acl as da,
-        dashboard as dash
-        LEFT JOIN dashboard folder on dash.folder_id = folder.id
-			WHERE
-				dash.id = ? AND (
-					dash.has_acl = ` + dialect.BooleanStr(false) + ` or
-					folder.has_acl = ` + dialect.BooleanStr(false) + `
-				) AND
-				da.dashboard_id = -1
-	ORDER BY 1 ASC
-	`
+		rawSQL := `
+			-- get permissions for the dashboard and its parent folder
+			SELECT
+				da.id,
+				da.org_id,
+				da.dashboard_id,
+				da.user_id,
+				da.team_id,
+				da.permission,
+				da.role,
+				da.created,
+				da.updated,
+				u.login AS user_login,
+				u.email AS user_email,
+				ug.name AS team,
+				d.title,
+				d.slug,
+				d.uid,
+				d.is_folder
+		  FROM` + dialect.Quote("dashboard_acl") + ` as da
+				LEFT OUTER JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
+				LEFT OUTER JOIN team ug on ug.id = da.team_id
+				LEFT OUTER JOIN dashboard d on da.dashboard_id = d.id
+			WHERE dashboard_id ` + dashboardFilter + ` AND da.org_id = ?
 
-	query.Result = make([]*m.DashboardAclInfoDTO, 0)
-	err := x.SQL(rawSQL, query.OrgId, query.DashboardId).Find(&query.Result)
+			-- Also include default permissions if folder or dashboard field "has_acl" is false
+
+			UNION
+				SELECT
+					da.id,
+					da.org_id,
+					da.dashboard_id,
+					da.user_id,
+					da.team_id,
+					da.permission,
+					da.role,
+					da.created,
+					da.updated,
+					'' as user_login,
+					'' as user_email,
+					'' as team,
+					folder.title,
+					folder.slug,
+					folder.uid,
+					folder.is_folder
+				FROM dashboard_acl as da,
+				dashboard as dash
+				LEFT OUTER JOIN dashboard folder on dash.folder_id = folder.id
+					WHERE
+						dash.id = ? AND (
+							dash.has_acl = ` + dialect.BooleanStr(false) + ` or
+							folder.has_acl = ` + dialect.BooleanStr(false) + `
+						) AND
+						da.dashboard_id = -1
+			ORDER BY 1 ASC
+			`
+
+		query.Result = make([]*m.DashboardAclInfoDTO, 0)
+		err = x.SQL(rawSQL, query.OrgId, query.DashboardId).Find(&query.Result)
+	}
 
 	for _, p := range query.Result {
 		p.PermissionName = p.Permission.String()

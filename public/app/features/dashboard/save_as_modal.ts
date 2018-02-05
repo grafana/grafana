@@ -46,6 +46,7 @@ export class SaveDashboardAsModalCtrl {
     var dashboard = this.dashboardSrv.getCurrent();
     this.clone = dashboard.getSaveModelClone();
     this.clone.id = null;
+    this.clone.uid = '';
     this.clone.title += ' Copy';
     this.clone.editable = true;
     this.clone.hideControls = false;

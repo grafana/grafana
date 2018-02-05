@@ -14,6 +14,7 @@ export class SettingsCtrl {
   canSave: boolean;
   canDelete: boolean;
   sections: any[];
+  hasUnsavedFolderChange: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $location, private $rootScope, private backendSrv, private dashboardSrv) {
@@ -24,6 +25,9 @@ export class SettingsCtrl {
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
       this.$rootScope.$broadcast('refresh');
+      setTimeout(() => {
+        this.$rootScope.appEvent('dash-scroll', { restore: true });
+      });
     });
 
     this.canSaveAs = contextSrv.isEditor;
@@ -33,7 +37,9 @@ export class SettingsCtrl {
     this.buildSectionList();
     this.onRouteUpdated();
 
-    $rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
+    this.$rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
+    this.$rootScope.appEvent('dash-scroll', { animate: false, pos: 0 });
+    this.$rootScope.onAppEvent('dashboard-saved', this.onPostSave.bind(this), $scope);
   }
 
   buildSectionList() {
@@ -67,6 +73,14 @@ export class SettingsCtrl {
         title: 'Versions',
         id: 'versions',
         icon: 'fa fa-fw fa-history',
+      });
+    }
+
+    if (this.dashboard.id && this.dashboard.meta.canAdmin) {
+      this.sections.push({
+        title: 'Permissions',
+        id: 'permissions',
+        icon: 'fa fa-fw fa-lock',
       });
     }
 
@@ -123,6 +137,10 @@ export class SettingsCtrl {
     this.dashboardSrv.saveDashboard();
   }
 
+  onPostSave() {
+    this.hasUnsavedFolderChange = false;
+  }
+
   hideSettings() {
     var urlParams = this.$location.search();
     delete urlParams.editview;
@@ -174,7 +192,7 @@ export class SettingsCtrl {
   }
 
   deleteDashboardConfirmed() {
-    this.backendSrv.deleteDashboard(this.dashboard.meta.slug).then(() => {
+    this.backendSrv.deleteDashboard(this.dashboard.uid).then(() => {
       appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
       this.$location.url('/');
     });
@@ -183,6 +201,15 @@ export class SettingsCtrl {
   onFolderChange(folder) {
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
+    this.hasUnsavedFolderChange = true;
+  }
+
+  getFolder() {
+    return {
+      id: this.dashboard.meta.folderId,
+      title: this.dashboard.meta.folderTitle,
+      url: this.dashboard.meta.folderUrl,
+    };
   }
 }
 

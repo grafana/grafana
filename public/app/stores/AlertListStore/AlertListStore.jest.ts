@@ -14,12 +14,13 @@ function getRule(name, state, info) {
       .format(),
     evalData: {},
     executionError: '',
-    dashboardUri: 'db/mygool',
+    url: 'db/mygool',
     stateText: state,
     stateIcon: 'fa',
     stateClass: 'asd',
     stateAge: '10m',
     info: info,
+    canEdit: true,
   };
 }
 

@@ -28,7 +28,7 @@ in that organization.
 
 Can do everything scoped to the organization. For example:
 
-- Add & Edit data data sources.
+- Add & Edit data sources.
 - Add & Edit organization users & teams.
 - Configure App plugins & set org settings.
 
@@ -52,10 +52,12 @@ This admin flag makes a user a `Super Admin`. This means they can access the `Se
 
 ### Dashboard & Folder Permissions
 
+> Introduced in Grafana v5.0
+
 {{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="500px" class="docs-image--right" >}}
 
 For dashboards and dashboard folders there is a **Permissions** page that make it possible to
-remove the default role based permissions for Editors and Viewers. It is here you can add and assign permissions to specific **Users** and **Teams**.
+remove the default role based permssions for Editors and Viewers. It's here you can add and assign permissions to specific **Users** and **Teams**.
 
 You can assign & remove permissions for **Organization Roles**, **Users** and **Teams**.
 
@@ -102,3 +104,4 @@ Permissions for a dashboard:
 
 
 Result: You cannot override to a lower permission. `user1` has Admin permission as the highest permission always wins.
+- **View**: Can only view existing dashboars/folders.

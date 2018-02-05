@@ -91,9 +91,15 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		timeout = 15
 	}
 
+	phantomDebugArg := "--debug=false"
+	if log.GetLogLevelFor("png-renderer") >= log.LvlDebug {
+		phantomDebugArg = "--debug=true"
+	}
+
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
 		"--web-security=false",
+		phantomDebugArg,
 		scriptPath,
 		"url=" + url,
 		"width=" + params.Width,
@@ -109,15 +115,13 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	}
 
 	cmd := exec.Command(binPath, cmdArgs...)
-	stdout, err := cmd.StdoutPipe()
+	output, err := cmd.StdoutPipe()
 
 	if err != nil {
+		rendererLog.Error("Could not acquire stdout pipe", err)
 		return "", err
 	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return "", err
-	}
+	cmd.Stderr = cmd.Stdout
 
 	if params.Timezone != "" {
 		baseEnviron := os.Environ()
@@ -126,11 +130,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	err = cmd.Start()
 	if err != nil {
+		rendererLog.Error("Could not start command", err)
 		return "", err
 	}
 
-	go io.Copy(os.Stdout, stdout)
-	go io.Copy(os.Stdout, stderr)
+	logWriter := log.NewLogWriter(rendererLog, log.LvlDebug, "[phantom] ")
+	go io.Copy(logWriter, output)
 
 	done := make(chan error)
 	go func() {

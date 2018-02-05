@@ -59,7 +59,8 @@ $critical: #ec2128;
 $body-bg: $gray-7;
 $page-bg: $gray-7;
 $body-color: $gray-1;
-$text-color: $dark-4;
+//$text-color: $dark-4;
+$text-color: $gray-1;
 $text-color-strong: $white;
 $text-color-weak: $gray-2;
 $text-color-faint: $gray-4;
@@ -133,6 +134,7 @@ $list-item-bg: linear-gradient(135deg, $gray-5, $gray-6); //$card-background;
 $list-item-hover-bg: darken($gray-5, 5%);
 $list-item-link-color: $text-color;
 $list-item-shadow: $card-shadow;
+$empty-list-cta-bg: $gray-6;
 
 // Tables
 // -------------------------

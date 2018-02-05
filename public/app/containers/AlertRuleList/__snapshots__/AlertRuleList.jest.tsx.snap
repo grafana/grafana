@@ -21,7 +21,7 @@ exports[`AlertRuleList should render 1 rule 1`] = `
         className="alert-rule-item__name"
       >
         <a
-          href="dashboard/db/mygool?panelId=3&fullscreen&edit&tab=alert"
+          href="d/ufkcofof/my-goal?panelId=3&fullscreen=true&edit=true&tab=alert"
         >
           <Highlighter
             highlightClassName="highlight-search-match"
@@ -80,18 +80,19 @@ exports[`AlertRuleList should render 1 rule 1`] = `
   <div
     className="alert-rule-item__actions"
   >
-    <a
+    <button
       className="btn btn-small btn-inverse alert-list__btn width-2"
+      disabled={false}
       onClick={[Function]}
       title="Pausing an alert rule prevents it from executing"
     >
       <i
         className="fa fa-pause"
       />
-    </a>
+    </button>
     <a
       className="btn btn-small btn-inverse alert-list__btn width-2"
-      href="dashboard/db/mygool?panelId=3&fullscreen&edit&tab=alert"
+      href="d/ufkcofof/my-goal?panelId=3&fullscreen=true&edit=true&tab=alert"
       title="Edit alert rule"
     >
       <i

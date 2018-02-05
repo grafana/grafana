@@ -68,6 +68,7 @@
     "karma-webpack": "^2.0.4",
     "lint-staged": "^6.0.0",
     "load-grunt-tasks": "3.5.2",
+    "mobx-react-devtools": "^4.2.15",
     "mocha": "^4.0.1",
     "ng-annotate-loader": "^0.6.1",
     "ng-annotate-webpack-plugin": "^0.2.1-pre",
@@ -91,7 +92,7 @@
     "typescript": "^2.6.2",
     "webpack": "^3.10.0",
     "webpack-bundle-analyzer": "^2.9.0",
-    "webpack-cleanup-plugin": "^0.5.1",    
+    "webpack-cleanup-plugin": "^0.5.1",
     "webpack-merge": "^4.1.0",
     "zone.js": "^0.7.2"
   },
@@ -113,6 +114,10 @@
     ],
     "*.scss": [
       "prettier --write",
+      "git add"
+    ],
+    "*.go": [
+      "gofmt -w -s",
       "git add"
     ]
   },
@@ -148,10 +153,11 @@
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-grid-layout": "^0.16.2",
-    "react-popper": "^0.7.5",
     "react-highlight-words": "^0.10.0",
+    "react-popper": "^0.7.5",
     "react-select": "^1.1.0",
     "react-sizeme": "^2.3.6",
+    "react-transition-group": "^2.2.1",
     "remarkable": "^1.7.1",
     "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "^5.4.3",

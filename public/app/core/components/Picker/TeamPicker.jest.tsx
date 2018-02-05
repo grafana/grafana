@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import renderer from 'react-test-renderer';
-import UserPicker from './UserPicker';
+import TeamPicker from './TeamPicker';
 
 const model = {
   backendSrv: {
@@ -8,13 +8,12 @@ const model = {
       return new Promise((resolve, reject) => {});
     },
   },
-  refreshList: () => {},
-  teamId: '1',
+  handlePicked: () => {},
 };
 
-describe('UserPicker', () => {
+describe('TeamPicker', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<UserPicker {...model} />).toJSON();
+    const tree = renderer.create(<TeamPicker {...model} />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });
