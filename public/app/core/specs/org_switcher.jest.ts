@@ -7,6 +7,12 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
+jest.mock('app/core/config', () => {
+  return {
+    appSubUrl: '/subUrl',
+  };
+});
+
 describe('OrgSwitcher', () => {
   describe('when switching org', () => {
     let expectedHref;
@@ -25,8 +31,7 @@ describe('OrgSwitcher', () => {
 
       const orgSwitcherCtrl = new OrgSwitchCtrl(backendSrvStub);
 
-      orgSwitcherCtrl.getWindowLocationHref = () => 'http://localhost:3000?orgId=1&from=now-3h&to=now';
-      orgSwitcherCtrl.setWindowLocationHref = href => (expectedHref = href);
+      orgSwitcherCtrl.setWindowLocation = href => (expectedHref = href);
 
       return orgSwitcherCtrl.setUsingOrg({ orgId: 2 });
     });
@@ -35,8 +40,8 @@ describe('OrgSwitcher', () => {
       expect(expectedUsingUrl).toBe('/api/user/using/2');
     });
 
-    it('should switch orgId in url', () => {
-      expect(expectedHref).toBe('http://localhost:3000?orgId=2&from=now-3h&to=now');
+    it('should switch orgId in url and redirect to home page', () => {
+      expect(expectedHref).toBe('/subUrl/?orgId=2');
     });
   });
 });
