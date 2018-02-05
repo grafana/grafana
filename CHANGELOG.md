@@ -22,7 +22,7 @@ From `/etc/grafana/datasources` to `/etc/grafana/provisioning/datasources` when 
 * **Pagerduty** The notifier now defaults to not auto resolve incidents. More details at [#10222](https://github.com/grafana/grafana/issues/10222)
 
 * **HTTP API**
-- `GET /api/alerts` property dashboardUri renamed to url and is now the full url (that is including app sub url).
+  - `GET /api/alerts` property dashboardUri renamed to url and is now the full url (that is including app sub url).
 
 ## New Dashboard Grid
 
