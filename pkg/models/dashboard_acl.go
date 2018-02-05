@@ -59,6 +59,11 @@ type DashboardAclInfoDTO struct {
 	Role           *RoleType      `json:"role,omitempty"`
 	Permission     PermissionType `json:"permission"`
 	PermissionName string         `json:"permissionName"`
+	Uid            string         `json:"uid"`
+	Title          string         `json:"title"`
+	Slug           string         `json:"slug"`
+	IsFolder       bool           `json:"isFolder"`
+	Url            string         `json:"url"`
 }
 
 //
