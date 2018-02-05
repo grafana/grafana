@@ -197,6 +197,14 @@ export class SettingsCtrl {
     this.dashboard.meta.folderTitle = folder.title;
     this.dashboard.meta.folderSlug = folder.slug;
   }
+
+  getFolder() {
+    return {
+      id: this.dashboard.meta.folderId,
+      title: this.dashboard.meta.folderTitle,
+      url: this.dashboard.meta.folderUrl,
+    };
+  }
 }
 
 export function dashboardSettings() {
