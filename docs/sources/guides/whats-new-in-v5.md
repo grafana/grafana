@@ -12,7 +12,7 @@ weight = -6
 
 # What's New in Grafana v5.0
 
-> Out in beta: [Download now!](https://grafana.com/grafana/download/5.0.0-beta1)
+> Out in beta: [Download now!](https://www.youtube.com/watch?v=Izr0IBgoTZQ)
 
 This is the most substantial update that Grafana has ever seen. This article will detail the major new features and enhancements.
 
@@ -87,7 +87,11 @@ We hope to do more with teams in future releases like integration with LDAP and 
 
 {{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="1000px" class="docs-image--right" >}}
 
-You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and replaced with specific teams or users enabling more control over what a user can see and edit.
+You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and
+replaced with specific teams or users enabling more control over what a user can see and edit.
+
+Dashboard permissions only limits what dashboards & folders a user can view & edit not which
+data sources a user can access nor what queries a user can issue.
 
 <div class="clearfix"></div>
 
