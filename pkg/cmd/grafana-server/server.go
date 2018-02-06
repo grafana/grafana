@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/renderer"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 
 	"golang.org/x/sync/errgroup"
@@ -62,6 +63,7 @@ func (g *GrafanaServerImpl) Start() error {
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
+	renderer.Init()
 
 	pluginManager, err := plugins.NewPluginManager(g.context)
 	if err != nil {
@@ -134,6 +136,7 @@ func (g *GrafanaServerImpl) startHttpServer() error {
 func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
 	g.log.Info("Shutdown started", "code", code, "reason", reason)
 
+	renderer.Close()
 	err := g.httpServer.Shutdown(g.context)
 	if err != nil {
 		g.log.Error("Failed to shutdown server", "error", err)

@@ -20,8 +20,6 @@ import (
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 
-	"strconv"
-
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -30,22 +28,102 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type RenderOpts struct {
-	Path           string
-	Width          string
-	Height         string
-	Timeout        string
-	OrgId          int64
-	UserId         int64
-	OrgRole        models.RoleType
-	Timezone       string
-	IsAlertContext bool
-	Encoding       string
+var chromeLog = log.New("chrome")
+
+type rendererImpl struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+	cdp    *chromedp.CDP
+	closed bool
 }
 
-var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with &timeout url parameter")
-var rendererLog = log.New("png-renderer")
-var chromeLog = log.New("chrome")
+func NewRenderer(execPath string, headless bool) (Renderer, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	cdp, err := chromedp.New(ctx,
+		chromedp.WithDebugf(func(msg string, data ...interface{}) {
+			logFuncProxy(chromeLog.Debug, msg, data...)
+		}),
+		chromedp.WithErrorf(func(msg string, data ...interface{}) {
+			logFuncProxy(chromeLog.Error, msg, data...)
+		}),
+		chromedp.WithLogf(func(msg string, data ...interface{}) {
+			logFuncProxy(chromeLog.Info, msg, data...)
+		}),
+		chromedp.WithRunnerOptions(
+			runner.Path(execPath),
+			runner.StartURL("about:blank"),
+			runner.Flag("no-sandbox", true),
+			runner.Flag("headless", headless),
+			runner.Flag("disable-gpu", true),
+			runner.Flag("disable-background-networking", true),
+			runner.Flag("disable-background-timer-throttling", true),
+			runner.Flag("disable-client-side-phishing-detection", true),
+			runner.Flag("disable-default-apps", true),
+			runner.Flag("disable-extensions", true),
+			runner.Flag("disable-hang-monitor", true),
+			runner.Flag("disable-popup-blocking", true),
+			runner.Flag("disable-prompt-on-repost", true),
+			runner.Flag("disable-sync", true),
+			runner.Flag("disable-translate", true),
+			runner.Flag("metrics-recording-only", true),
+			runner.Flag("no-first-run", true),
+			runner.Flag("remote-debugging-port", 9222),
+			runner.Flag("safebrowsing-disable-auto-update", true),
+			runner.Flag("enable-automation", true),
+			runner.Flag("password-store=basic", true),
+			runner.Flag("use-mock-keychain", true),
+			runner.Flag("headless", true),
+			runner.Flag("disable-gpu", true),
+			runner.Flag("hide-scrollbars", true),
+			runner.Flag("mute-audio", true),
+			runner.CmdOpt(func(cmd *exec.Cmd) error {
+				cmd.Stdout = log.NewLogWriter(chromeLog, log.LvlDebug, "[stdout] ")
+				cmd.Stderr = log.NewLogWriter(chromeLog, log.LvlDebug, "[stderr] ")
+
+				return nil
+			}),
+		),
+	)
+
+	if err != nil {
+		if cancel != nil {
+			cancel()
+		}
+		return nil, err
+	}
+
+	r := &rendererImpl{
+		ctx:    ctx,
+		cancel: cancel,
+		cdp:    cdp,
+		closed: false,
+	}
+
+	return r, nil
+}
+
+func NewRendererFromSettings() (Renderer, error) {
+	execPath, err := getExecPath()
+	if err != nil {
+		return nil, err
+	}
+
+	return NewRenderer(execPath, setting.RendererChromiumHeadless)
+}
+
+func (i *rendererImpl) Render(opts Opts) (string, error) {
+	if i.closed {
+		return "", fmt.Errorf("renderer already closed")
+	}
+
+	return i.performRender(opts.Width, opts.Height, opts.OrgID, opts.UserID, opts.OrgRole, opts.Path, opts.Timeout)
+}
+
+func (i *rendererImpl) Close() {
+	i.cancel()
+	i.closed = true
+}
 
 func getLocalDomain() string {
 	if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
@@ -59,13 +137,9 @@ func getURL(path string) string {
 	return fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, getLocalDomain(), setting.HttpPort, path)
 }
 
-func getRenderKey(params *RenderOpts) string {
-	orgRole := params.OrgRole
-	if params.IsAlertContext {
-		orgRole = models.ROLE_ADMIN
-	}
-	rendererLog.Debug("adding render authkey", "orgid", params.OrgId, "userid", params.UserId, "role", orgRole)
-	return middleware.AddRenderAuthKey(params.OrgId, params.UserId, orgRole)
+func getRenderKey(OrgID, UserID int64, OrgRole models.RoleType) string {
+	rendererLog.Debug("adding render authkey", "orgid", OrgID, "userid", UserID, "role", OrgRole)
+	return middleware.AddRenderAuthKey(OrgID, UserID, OrgRole)
 }
 
 func getExecPath() (string, error) {
@@ -111,7 +185,13 @@ func setViewportAction(width, height int) chromedp.ActionFunc {
 		scaleFactor := 1.0
 
 		viewportScale := 2.0
-		viewport := page.Viewport{0.0, 0.0, float64(width), float64(height), viewportScale}
+		viewport := page.Viewport{
+			X:      0.0,
+			Y:      0.0,
+			Width:  float64(width),
+			Height: float64(height),
+			Scale:  viewportScale,
+		}
 
 		err := emulation.SetDeviceMetricsOverride(deviceWidth, deviceHeigth, scaleFactor, false).
 			WithViewport(&viewport).Do(ctx, h)
@@ -142,98 +222,22 @@ func logFuncProxy(f chromedp.LogFunc, msg string, data ...interface{}) {
 	f(formatted)
 }
 
-func RenderToPng(params *RenderOpts) (string, error) {
-	renderKey := getRenderKey(params)
+func (i *rendererImpl) performRender(width, height int, orgID, userID int64, orgRole models.RoleType, path string, timeout time.Duration) (string, error) {
+	renderKey := getRenderKey(orgID, userID, orgRole)
 	defer middleware.RemoveRenderAuthKey(renderKey)
-
-	timeout, err := strconv.Atoi(params.Timeout)
-	if err != nil {
-		timeout = 15
-	}
-
-	width, err := strconv.Atoi(params.Width)
-	if err != nil {
-		rendererLog.Error("could not convert width to int", "width", params.Width, "err", err)
-		return "", fmt.Errorf("Could not convert width to int: %s", err)
-	}
-
-	height, err := strconv.Atoi(params.Height)
-	if err != nil {
-		rendererLog.Error("could not convert height to int", "height", params.Height, "err", err)
-		return "", fmt.Errorf("Could not convert height to int: %s", err)
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	execPath, err := getExecPath()
-	if err != nil {
-		rendererLog.Error("could not get exec path", "err", err)
-		return "", err
-	}
-
-	chrome, err := chromedp.New(ctx,
-		chromedp.WithDebugf(func(msg string, data ...interface{}) {
-			logFuncProxy(chromeLog.Debug, msg, data...)
-		}),
-		chromedp.WithErrorf(func(msg string, data ...interface{}) {
-			logFuncProxy(chromeLog.Error, msg, data...)
-		}),
-		chromedp.WithLogf(func(msg string, data ...interface{}) {
-			logFuncProxy(chromeLog.Info, msg, data...)
-		}),
-		chromedp.WithRunnerOptions(
-			runner.Path(execPath),
-			runner.StartURL("about:blank"),
-			runner.Flag("no-sandbox", true),
-			runner.Flag("headless", setting.RendererChromiumHeadless),
-			runner.Flag("disable-gpu", true),
-			runner.Flag("disable-background-networking", true),
-			runner.Flag("disable-background-timer-throttling", true),
-			runner.Flag("disable-client-side-phishing-detection", true),
-			runner.Flag("disable-default-apps", true),
-			runner.Flag("disable-extensions", true),
-			runner.Flag("disable-hang-monitor", true),
-			runner.Flag("disable-popup-blocking", true),
-			runner.Flag("disable-prompt-on-repost", true),
-			runner.Flag("disable-sync", true),
-			runner.Flag("disable-translate", true),
-			runner.Flag("metrics-recording-only", true),
-			runner.Flag("no-first-run", true),
-			runner.Flag("remote-debugging-port", 9222),
-			runner.Flag("safebrowsing-disable-auto-update", true),
-			runner.Flag("enable-automation", true),
-			runner.Flag("password-store=basic", true),
-			runner.Flag("use-mock-keychain", true),
-			runner.Flag("headless", true),
-			runner.Flag("disable-gpu", true),
-			runner.Flag("hide-scrollbars", true),
-			runner.Flag("mute-audio", true),
-			runner.CmdOpt(func(cmd *exec.Cmd) error {
-				cmd.Stdout = log.NewLogWriter(chromeLog, log.LvlDebug, "[stdout] ")
-				cmd.Stderr = log.NewLogWriter(chromeLog, log.LvlDebug, "[stderr] ")
-
-				return nil
-			}),
-		),
-	)
-	if err != nil {
-		rendererLog.Error("could not start chrome", "err", err, "exec-path", execPath)
-		return "", fmt.Errorf("Could not start chrome: %s", err)
-	}
 
 	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
 	pngPath = pngPath + ".png"
 
-	url := getURL(params.Path)
+	url := getURL(path)
 	rendererLog.Debug("taking screenshot", "url", url, "png", pngPath)
 
 	// run task list
 	start := time.Now()
 
-	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+	timeoutCtx, timeoutCancel := context.WithTimeout(i.ctx, timeout)
 	defer timeoutCancel()
-	err = chrome.Run(timeoutCtx, screenshotAction(width, height, getURL(params.Path), renderKey, pngPath))
+	err := i.cdp.Run(timeoutCtx, screenshotAction(width, height, url, renderKey, pngPath))
 	if err != nil {
 		rendererLog.Error("could not take screenshot", "error", err)
 		return "", fmt.Errorf("Could not run tasklist: %s", err)
@@ -241,12 +245,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	if err = timeoutCtx.Err(); err != nil {
 		rendererLog.Error("error during rendering", "err", err)
-		return "", err
+		return "", fmt.Errorf("Error during rendering: %s", err)
 	}
 
-	timeTaken := time.Since(start) / time.Millisecond
-	metrics.M_Render_Time.Observe(float64(timeTaken))
+	timeTaken := time.Since(start)
+	metrics.M_Render_Time.Observe(float64(timeTaken / time.Millisecond))
 
-	rendererLog.Debug("Image rendered", "path", pngPath)
+	rendererLog.Debug("Image rendered", "path", pngPath, "time", timeTaken)
 	return pngPath, nil
 }
