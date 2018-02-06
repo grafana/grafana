@@ -25,7 +25,7 @@ This is the most substantial update that Grafana has ever seen. This article wil
 - [Datasource provisioning]({{< relref "#data-sources" >}}) makes it possible to setup datasources via config files.
 - [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to setup dashboards via config files.
 - [Persistent dashboard url's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
-- [Graphite Tags & Integrated Function Docs]({{< relref "#graphite-tags-and-integrated-function-docs" >}}).
+- [Graphite Tags & Integrated Function Docs]({{< relref "#graphite-tags-integrated-function-docs" >}}).
 
 ### Video showing new features
 
