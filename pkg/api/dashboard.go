@@ -242,8 +242,11 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 
 	dashboard, err := dashboards.GetRepository().SaveDashboard(dashItem)
 
-	if err == m.ErrDashboardTitleEmpty {
-		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
+	if err == m.ErrDashboardTitleEmpty ||
+		err == m.ErrDashboardWithSameNameAsFolder ||
+		err == m.ErrDashboardFolderWithSameNameAsDashboard ||
+		err == m.ErrDashboardTypeMismatch {
+		return ApiError(400, err.Error(), nil)
 	}
 
 	if err == m.ErrDashboardContainsInvalidAlertData {
