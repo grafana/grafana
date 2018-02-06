@@ -5,6 +5,7 @@
 
 .dashlist-section {
   margin-bottom: $spacer;
+  padding-top: 3px;
 }
 
 .dashlist-link {
@@ -20,9 +21,5 @@
 
   .fa-star {
     color: $orange;
-  }
-
-  &--no-section-header {
-    margin-top: 0;
   }
 }

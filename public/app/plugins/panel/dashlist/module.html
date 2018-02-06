@@ -4,7 +4,7 @@
       {{group.header}}
     </h6>
     <div class="dashlist-item" ng-repeat="dash in group.list">
-      <a class="dashlist-link dashlist-link-{{dash.type}}" ng-class="{'dashlist-link--no-section-header ':$first && !ctrl.panel.headings}" href="{{dash.url}}">
+      <a class="dashlist-link dashlist-link-{{dash.type}}" href="{{dash.url}}">
         <span class="dashlist-title">
           {{dash.title}}
         </span>
