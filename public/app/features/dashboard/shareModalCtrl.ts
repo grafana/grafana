@@ -88,7 +88,6 @@ export class ShareModalCtrl {
       $scope.imageUrl = $scope.imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
-      $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format('Z'));
     };
 
     $scope.getShareUrl = function() {

@@ -49,7 +49,7 @@ describe('ShareModalCtrl', function() {
 
       ctx.scope.init();
       var base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
-      var params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      var params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500';
       expect(ctx.scope.imageUrl).to.contain(base + params);
     });
 
@@ -60,7 +60,7 @@ describe('ShareModalCtrl', function() {
 
       ctx.scope.init();
       var base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
-      var params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      var params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500';
       expect(ctx.scope.imageUrl).to.contain(base + params);
     });
 
@@ -90,7 +90,7 @@ describe('ShareModalCtrl', function() {
       ctx.scope.buildUrl();
 
       expect(ctx.scope.shareUrl).to.contain('?fullscreen&edit&from=1000&to=2000&orgId=1&panelId=1');
-      expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
+      expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500');
     });
 
     it('should remove edit from image url when is first param in querystring and modeSharePanel is true', function() {
@@ -101,7 +101,7 @@ describe('ShareModalCtrl', function() {
       ctx.scope.buildUrl();
 
       expect(ctx.scope.shareUrl).to.contain('?edit&fullscreen&from=1000&to=2000&orgId=1&panelId=1');
-      expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
+      expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500');
     });
 
     it('should include template variables in url', function() {
