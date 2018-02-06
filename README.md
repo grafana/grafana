@@ -1,4 +1,4 @@
-[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana) [![codecov](https://codecov.io/gh/grafana/grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/grafana/grafana)
+[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana) [![codecov](https://codecov.io/gh/grafana/grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/grafana/grafana) [![Open Source Helpers](https://www.codetriage.com/grafana/grafana/badges/users.svg)](https://www.codetriage.com/grafana/grafana)
 ================
 [Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
@@ -48,7 +48,7 @@ yarn install --pure-lockfile
 npm run watch
 ```
 
-Run tests 
+Run tests
 ```bash
 npm run jest
 ```
