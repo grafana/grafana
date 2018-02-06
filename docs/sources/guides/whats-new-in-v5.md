@@ -25,10 +25,11 @@ This is the most substantial update that Grafana has ever seen. This article wil
 - [Datasource provisioning]({{< relref "#data-sources" >}}) makes it possible to setup datasources via config files.
 - [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to setup dashboards via config files.
 - [Persistent dashboard url's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
+- [Graphite Tags & Integrated Function Docs]({{< relref "#graphite-tags-and-integrated-function-docs" >}}).
 
 ### Video showing new features
 
-<iframe width="450" height="260" src="https://www.youtube.com/embed/Izr0IBgoTZQ?rel=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+<iframe width="450" height="270" src="https://www.youtube.com/embed/Izr0IBgoTZQ?rel=0&amp;" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 <br />
 
 ## New Dashboard Layout Engine
@@ -137,3 +138,10 @@ much easier to manage, collaborate and navigate between dashboards.
 ### API changes
 New uid-based routes in the dashboard API have been introduced to retrieve and delete dashboards.
 The corresponding slug-based routes have been deprecated and will be removed in a future release.
+
+### Graphite Tags & Integrated Function Docs
+
+The Graphite query editor has been updated to support the latest v1.2 Graphite version that adds
+many new functions and support for querying by tags. You can now also view functions documentation
+right in the query editor!
+
