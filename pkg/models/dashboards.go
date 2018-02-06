@@ -24,6 +24,7 @@ var (
 	ErrDashboardFailedToUpdateAlertData    = errors.New("Failed to save alert data")
 	ErrDashboardsWithSameSlugExists        = errors.New("Multiple dashboards with the same slug exists")
 	ErrDashboardFailedGenerateUniqueUid    = errors.New("Failed to generate unique dashboard id")
+	RootFolderName                         = "General"
 )
 
 type UpdatePluginDashboardError struct {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
@@ -215,6 +216,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	// Check if Title is empty
 	if dash.Title == "" {
 		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
+	}
+
+	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(m.RootFolderName) {
+		return ApiError(400, "A folder already exists with that name", nil)
 	}
 
 	if dash.Id == 0 {
