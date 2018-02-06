@@ -231,6 +231,22 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
+			Convey("Should be able to overwrite dashboards in same folder", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId: 1,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"id":    savedDash.Id,
+						"title": savedDash.Title,
+						"uid":   savedDash.Uid,
+					}),
+					FolderId:  savedDash.FolderId,
+					Overwrite: true,
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+			})
+
 			Convey("Should not be able to save dashboard with same name in the same folder", func() {
 				firstSaveCmd := m.SaveDashboardCommand{
 					OrgId: 1,
