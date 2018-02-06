@@ -153,16 +153,12 @@ export class HeatmapTooltip {
 
   getXBucketIndex(offsetX, data) {
     let x = this.scope.xScale.invert(offsetX - this.scope.yAxisWidth).valueOf();
-    let xBucket = _.find(data.buckets, (bucket, bucketIndex) => {
-      return x-bucket.x <= data.xBucketSize && x-bucket.x >0;
+    // First try to find X bucket by checking x pos is in the
+    // [bucket.x, bucket.x + xBucketSize] interval
+    let xBucket = _.find(data.buckets, bucket => {
+      return x > bucket.x && x - bucket.x <= data.xBucketSize;
     });
-    let xBucketIndex;
-    if (!xBucket) {
-      xBucketIndex = getValueBucketBound(x, data.xBucketSize, 1);
-    } else {
-      xBucketIndex = xBucket.x;
-    }
-    return xBucketIndex;
+    return xBucket ? xBucket.x : getValueBucketBound(x, data.xBucketSize, 1);
   }
 
   getYBucketIndex(offsetY, data) {
