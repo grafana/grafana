@@ -119,6 +119,18 @@ in sync with dashboards in Grafana's database. The dashboard provisioner has mul
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs](/administration/provisioning/#dashboards)
 
+
+## Graphite Tags & Integrated Function Docs
+
+{{< docs-imagebox img="/img/docs/v50/graphite_tags.png" max-width="1000px" class="docs-image--right" >}}
+
+The Graphite query editor has been updated to support the latest Graphite version (v1.2) that adds
+many new functions and support for querying by tags. You can now also view function documentation right in the query editor!
+
+Read more on [Graphite Tag Support](http://graphite.readthedocs.io/en/latest/tags.html?highlight=tags).
+
+<div class="clearfix"></div>
+
 ## Dashboard model, persistent url's and API changes
 
 We are introducing a new unique identifier (`uid`) in the dashboard JSON model. It's automatically
@@ -139,9 +151,4 @@ much easier to manage, collaborate and navigate between dashboards.
 New uid-based routes in the dashboard API have been introduced to retrieve and delete dashboards.
 The corresponding slug-based routes have been deprecated and will be removed in a future release.
 
-### Graphite Tags & Integrated Function Docs
-
-The Graphite query editor has been updated to support the latest v1.2 Graphite version that adds
-many new functions and support for querying by tags. You can now also view functions documentation
-right in the query editor!
 
