@@ -184,7 +184,7 @@ func setViewportAction(width, height int) chromedp.ActionFunc {
 		var deviceHeigth int64
 		scaleFactor := 1.0
 
-		viewportScale := 2.0
+		viewportScale := 1.0
 		viewport := page.Viewport{
 			X:      0.0,
 			Y:      0.0,
