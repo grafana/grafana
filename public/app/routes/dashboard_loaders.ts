@@ -9,7 +9,7 @@ export class LoadDashboardCtrl {
     if (!$routeParams.uid && !$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(homeDash) {
         if (homeDash.redirectUri) {
-          $location.path('dashboard/' + homeDash.redirectUri);
+          $location.path(homeDash.redirectUri);
         } else {
           var meta = homeDash.meta;
           meta.canSave = meta.canShare = meta.canStar = false;
@@ -23,18 +23,19 @@ export class LoadDashboardCtrl {
     if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {
       backendSrv.get(`/api/dashboards/db/${$routeParams.slug}`).then(res => {
         if (res) {
-          const url = locationUtil.stripBaseFromUrl(res.meta.url);
-          $location.path(url).replace();
+          $location.path(locationUtil.stripBaseFromUrl(res.meta.url)).replace();
         }
       });
       return;
     }
 
     dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
-      const url = locationUtil.stripBaseFromUrl(result.meta.url);
+      if (result.meta.url) {
+        const url = locationUtil.stripBaseFromUrl(result.meta.url);
 
-      if (url !== $location.path()) {
-        $location.path(url).replace();
+        if (url !== $location.path()) {
+          $location.path(url).replace();
+        }
       }
 
       if ($routeParams.keepRows) {

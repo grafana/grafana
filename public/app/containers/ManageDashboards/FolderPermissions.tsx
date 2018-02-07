@@ -1,4 +1,4 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
 import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
 import IContainerProps from 'app/containers/IContainerProps';
@@ -8,6 +8,7 @@ import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
 import AddPermissions from 'app/core/components/Permissions/AddPermissions';
 import SlideDown from 'app/core/components/Animations/SlideDown';
+
 @inject('nav', 'folder', 'view', 'permissions')
 @observer
 export class FolderPermissions extends Component<IContainerProps, any> {
@@ -15,6 +16,11 @@ export class FolderPermissions extends Component<IContainerProps, any> {
     super(props);
     this.handleAddPermission = this.handleAddPermission.bind(this);
     this.loadStore();
+  }
+
+  componentWillUnmount() {
+    const { permissions } = this.props;
+    permissions.hideAddPermissions();
   }
 
   loadStore() {
@@ -58,7 +64,7 @@ export class FolderPermissions extends Component<IContainerProps, any> {
             </button>
           </div>
           <SlideDown in={permissions.isAddPermissionsVisible}>
-            <AddPermissions permissions={permissions} backendSrv={backendSrv} dashboardId={dashboardId} />
+            <AddPermissions permissions={permissions} backendSrv={backendSrv} />
           </SlideDown>
           <Permissions permissions={permissions} isFolder={true} dashboardId={dashboardId} backendSrv={backendSrv} />
         </div>

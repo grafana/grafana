@@ -26,7 +26,7 @@ describe('AddPermissions', () => {
       }
     );
 
-    wrapper = shallow(<AddPermissions permissions={store.permissions} backendSrv={backendSrv} dashboardId={1} />);
+    wrapper = shallow(<AddPermissions permissions={store.permissions} backendSrv={backendSrv} />);
     instance = wrapper.instance();
     return store.permissions.load(1, true, false);
   });

@@ -7,7 +7,6 @@ export interface Props {
 }
 
 export default class ScrollBar extends React.Component<Props, any> {
-
   private container: any;
   private ps: PerfectScrollbar;
 
@@ -16,7 +15,9 @@ export default class ScrollBar extends React.Component<Props, any> {
   }
 
   componentDidMount() {
-    this.ps = new PerfectScrollbar(this.container);
+    this.ps = new PerfectScrollbar(this.container, {
+      wheelPropagation: true,
+    });
   }
 
   componentDidUpdate() {

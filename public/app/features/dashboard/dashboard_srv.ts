@@ -1,5 +1,6 @@
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from './dashboard_model';
+import locationUtil from 'app/core/utils/location_util';
 
 export class DashboardSrv {
   dash: any;
@@ -74,7 +75,7 @@ export class DashboardSrv {
     this.dash.version = data.version;
 
     if (data.url !== this.$location.path()) {
-      this.$location.url(data.url);
+      this.$location.url(locationUtil.stripBaseFromUrl(data.url)).replace();
     }
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);

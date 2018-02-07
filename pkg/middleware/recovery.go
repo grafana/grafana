@@ -137,7 +137,7 @@ func Recovery() macaron.Handler {
 
 					c.JSON(500, resp)
 				} else {
-					c.HTML(500, "500")
+					c.HTML(500, "error")
 				}
 			}
 		}()

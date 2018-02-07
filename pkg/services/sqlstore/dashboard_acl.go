@@ -113,6 +113,7 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 	})
 }
 
+// RemoveDashboardAcl removes a specified permission from the dashboard acl
 func RemoveDashboardAcl(cmd *m.RemoveDashboardAclCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSQL = "DELETE FROM " + dialect.Quote("dashboard_acl") + " WHERE org_id =? and id=?"
@@ -125,6 +126,11 @@ func RemoveDashboardAcl(cmd *m.RemoveDashboardAclCommand) error {
 	})
 }
 
+// GetDashboardAclInfoList returns a list of permissions for a dashboard. They can be fetched from three
+// different places.
+// 1) Permissions for the dashboard
+// 2) permissions for its parent folder
+// 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
 func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 	var err error
 
@@ -141,7 +147,11 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 		da.updated,
 		'' as user_login,
 		'' as user_email,
-		'' as team
+		'' as team,
+		'' as title,
+		'' as slug,
+		'' as uid,` +
+			dialect.BooleanStr(false) + ` AS is_folder
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
 		query.Result = make([]*m.DashboardAclInfoDTO, 0)
@@ -155,6 +165,7 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 		  )`, query.DashboardId, query.DashboardId)
 
 		rawSQL := `
+			-- get permissions for the dashboard and its parent folder
 			SELECT
 				da.id,
 				da.org_id,
@@ -167,13 +178,18 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 				da.updated,
 				u.login AS user_login,
 				u.email AS user_email,
-				ug.name AS team
+				ug.name AS team,
+				d.title,
+				d.slug,
+				d.uid,
+				d.is_folder
 		  FROM` + dialect.Quote("dashboard_acl") + ` as da
 				LEFT OUTER JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
 				LEFT OUTER JOIN team ug on ug.id = da.team_id
+				LEFT OUTER JOIN dashboard d on da.dashboard_id = d.id
 			WHERE dashboard_id ` + dashboardFilter + ` AND da.org_id = ?
 
-			-- Also include default permission if has_acl = 0
+			-- Also include default permissions if folder or dashboard field "has_acl" is false
 
 			UNION
 				SELECT
@@ -188,10 +204,14 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 					da.updated,
 					'' as user_login,
 					'' as user_email,
-					'' as team
-					FROM dashboard_acl as da,
+					'' as team,
+					folder.title,
+					folder.slug,
+					folder.uid,
+					folder.is_folder
+				FROM dashboard_acl as da,
 				dashboard as dash
-				LEFT JOIN dashboard folder on dash.folder_id = folder.id
+				LEFT OUTER JOIN dashboard folder on dash.folder_id = folder.id
 					WHERE
 						dash.id = ? AND (
 							dash.has_acl = ` + dialect.BooleanStr(false) + ` or

@@ -19,7 +19,6 @@ export class HelpCtrl {
       ],
       Dashboard: [
         { keys: ['mod+s'], description: 'Save dashboard' },
-        { keys: ['mod+h'], description: 'Hide row controls' },
         { keys: ['d', 'r'], description: 'Refresh all panels' },
         { keys: ['d', 's'], description: 'Dashboard settings' },
         { keys: ['d', 'v'], description: 'Toggle in-active / view mode' },

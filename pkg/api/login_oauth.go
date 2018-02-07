@@ -40,14 +40,14 @@ func GenStateString() string {
 
 func OAuthLogin(ctx *middleware.Context) {
 	if setting.OAuthService == nil {
-		ctx.Handle(404, "login.OAuthLogin(oauth service not enabled)", nil)
+		ctx.Handle(404, "OAuth not enabled", nil)
 		return
 	}
 
 	name := ctx.Params(":name")
 	connect, ok := social.SocialMap[name]
 	if !ok {
-		ctx.Handle(404, "login.OAuthLogin(social login not enabled)", errors.New(name))
+		ctx.Handle(404, fmt.Sprintf("No OAuth with name %s configured", name), nil)
 		return
 	}
 

@@ -293,7 +293,7 @@ type DashboardRef struct {
 	Slug string
 }
 
-type GetDashboardUIDByIdQuery struct {
+type GetDashboardRefByIdQuery struct {
 	Id     int64
 	Result *DashboardRef
 }

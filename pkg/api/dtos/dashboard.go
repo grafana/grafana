@@ -27,7 +27,7 @@ type DashboardMeta struct {
 	IsFolder    bool      `json:"isFolder"`
 	FolderId    int64     `json:"folderId"`
 	FolderTitle string    `json:"folderTitle"`
-	FolderSlug  string    `json:"folderSlug"`
+	FolderUrl   string    `json:"folderUrl"`
 }
 
 type DashboardFullWithMeta struct {

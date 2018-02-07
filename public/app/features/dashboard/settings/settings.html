@@ -96,13 +96,14 @@
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'permissions'" >
-  <dashboard-permissions ng-if="ctrl.dashboard"
+  <dashboard-permissions ng-if="ctrl.dashboard && !ctrl.hasUnsavedFolderChange"
     dashboardId="ctrl.dashboard.id"
     backendSrv="ctrl.backendSrv"
-    folderTitle="ctrl.dashboard.meta.folderTitle"
-    folderSlug="ctrl.dashboard.meta.folderSlug"
-    folderId="ctrl.dashboard.meta.folderId"
+    folder="ctrl.getFolder()"
   />
+  <div ng-if="ctrl.hasUnsavedFolderChange">
+    <h5>You have changed folder, please save to view permissions.</h5>
+  </div>
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === '404'">

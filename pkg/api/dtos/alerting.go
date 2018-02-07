@@ -19,7 +19,7 @@ type AlertRule struct {
 	EvalDate       time.Time        `json:"evalDate"`
 	EvalData       *simplejson.Json `json:"evalData"`
 	ExecutionError string           `json:"executionError"`
-	DashbboardUri  string           `json:"dashboardUri"`
+	Url            string           `json:"url"`
 	CanEdit        bool             `json:"canEdit"`
 }
 

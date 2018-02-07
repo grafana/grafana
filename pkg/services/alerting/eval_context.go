@@ -90,7 +90,7 @@ func (c *EvalContext) GetDashboardUID() (*m.DashboardRef, error) {
 		return c.dashboardRef, nil
 	}
 
-	uidQuery := &m.GetDashboardUIDByIdQuery{Id: c.Rule.DashboardId}
+	uidQuery := &m.GetDashboardRefByIdQuery{Id: c.Rule.DashboardId}
 	if err := bus.Dispatch(uidQuery); err != nil {
 		return nil, err
 	}
