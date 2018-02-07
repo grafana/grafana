@@ -1,5 +1,4 @@
 import angular from 'angular';
-import moment from 'moment';
 import config from 'app/core/config';
 
 export class ShareModalCtrl {

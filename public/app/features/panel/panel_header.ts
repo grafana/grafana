@@ -26,6 +26,12 @@ var template = `
     </ul>
   </span>
   <span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>
+  <span class="panel-time-info" ng-show="ctrl.panel.soloMode">
+    <i class="fa fa-clock-o"></i>
+    {{ctrl.timeRangeString}}
+    <span class="gf-timepicker-utc" ng-show="ctrl.dashboard.isTimezoneUtc()">UTC</span>
+    <span class="gf-timepicker-utc" ng-show="!ctrl.dashboard.isTimezoneUtc()">{{ctrl.dashboard.getTimezone()}}</span>
+  </span>
 </span>`;
 
 function renderMenuItem(item, ctrl) {

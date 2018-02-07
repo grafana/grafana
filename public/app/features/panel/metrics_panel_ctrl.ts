@@ -24,6 +24,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   intervalMs: any;
   resolution: any;
   timeInfo: any;
+  timeRangeString: string;
   skipDataOnInit: boolean;
   dataStream: any;
   dataSubscription: any;
@@ -134,6 +135,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   updateTimeRange(datasource?) {
     this.datasource = datasource || this.datasource;
     this.range = this.timeSrv.timeRange();
+    this.timeRangeString = rangeUtil.describeTimeRange(this.range);
 
     this.applyPanelTimeOverrides();
 
