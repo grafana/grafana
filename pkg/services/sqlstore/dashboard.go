@@ -279,6 +279,7 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	var res []DashboardSearchProjection
 
 	sql, params := sb.ToSql()
+	sqlog.Info("sql", "sql", sql, "params", params)
 	err := x.Sql(sql, params...).Find(&res)
 	if err != nil {
 		return nil, err
