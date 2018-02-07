@@ -363,10 +363,10 @@ func GetFoldersForSignedInUser(query *m.GetFoldersForSignedInUserQuery) error {
 
 	if query.SignedInUser.OrgRole == m.ROLE_ADMIN {
 		sql := `SELECT distinct d.id, d.title
-		FROM dashboard AS d WHERE d.is_folder = ?
+		FROM dashboard AS d WHERE d.is_folder = ? AND d.org_id = ?
 		ORDER BY d.title ASC`
 
-		err = x.Sql(sql, dialect.BooleanStr(true)).Find(&query.Result)
+		err = x.Sql(sql, dialect.BooleanStr(true), query.OrgId).Find(&query.Result)
 	} else {
 		params := make([]interface{}, 0)
 		sql := `SELECT distinct d.id, d.title
