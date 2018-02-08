@@ -4,7 +4,7 @@
 	 width="64px" height="64px" viewBox="0 0 64 64" style="enable-background:new 0 0 64 64;" xml:space="preserve">
 <style type="text/css">
 	.st0{fill:none;}
-	.st1{fill:#555555;}
+	.st1{fill:#f7f8fa;}
 	.st2{fill:url(#SVGID_1_);}
 </style>
 <g>
@@ -13,7 +13,7 @@
 	<path class="st1" d="M31,41.9c0-2.9,2.4-5.3,5.3-5.3h4.1v-4.1c0-1.7,0.8-3.2,2.1-4.2V16.1v-3.9c0-4.5-3.7-8.2-8.2-8.2H17.8l0,0H8.2
 		C3.7,4,0,7.7,0,12.2v19.4c0,4.5,3.7,8.2,8.2,8.2h12.2l10.6,10v-0.1V41.9z M27.4,37.5L23,33.3H8.2c-0.9,0-1.7-0.7-1.7-1.7V12.2
 		c0-0.9,0.7-1.7,1.7-1.7h23.2l0,0h3.1c0.9,0,1.7,0.7,1.7,1.7v10.4v9l0,0c0,0.9-0.7,1.7-1.7,1.7h-7L27.4,37.5z"/>
-	
+
 		<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="49.6596" y1="-13.1545" x2="49.6596" y2="47.3804" gradientTransform="matrix(1 0 0 -1 0 66)">
 		<stop  offset="0" style="stop-color:#FFF23A"/>
 		<stop  offset="4.010540e-02" style="stop-color:#FEE62D"/>

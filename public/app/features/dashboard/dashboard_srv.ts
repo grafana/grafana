@@ -1,5 +1,6 @@
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from './dashboard_model';
+import locationUtil from 'app/core/utils/location_util';
 
 export class DashboardSrv {
   dash: any;
@@ -73,9 +74,8 @@ export class DashboardSrv {
   postSave(clone, data) {
     this.dash.version = data.version;
 
-    var dashboardUrl = '/dashboard/db/' + data.slug;
-    if (dashboardUrl !== this.$location.path()) {
-      this.$location.url(dashboardUrl);
+    if (data.url !== this.$location.path()) {
+      this.$location.url(locationUtil.stripBaseFromUrl(data.url)).replace();
     }
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);
@@ -86,7 +86,7 @@ export class DashboardSrv {
 
   save(clone, options) {
     options = options || {};
-    options.folderId = options.folderId || this.dash.meta.folderId;
+    options.folderId = options.folderId || this.dash.meta.folderId || clone.folderId;
 
     return this.backendSrv
       .saveDashboard(clone, options)

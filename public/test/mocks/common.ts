@@ -1,5 +1,7 @@
 export const backendSrv = {
   get: jest.fn(),
+  getDashboard: jest.fn(),
+  getDashboardByUid: jest.fn(),
   post: jest.fn(),
 };
 
@@ -11,5 +13,6 @@ export function createNavTree(...args) {
     node.push(child);
     node = child.children;
   }
+
   return root;
 }

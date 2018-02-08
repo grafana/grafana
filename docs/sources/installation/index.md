@@ -7,6 +7,7 @@ aliases = ["installation/installation/", "v2.1/installation/install/"]
 [menu.docs]
 name = "Installation"
 identifier = "installation"
+weight = 1
 +++
 
 ## Installing Grafana

@@ -24,6 +24,10 @@ func init() {
         <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiKey" placeholder="OpsGenie API Key"></input>
       </div>
       <div class="gf-form">
+        <span class="gf-form-label width-14">Alert API Url</span>
+        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiUrl" placeholder="https://api.opsgenie.com/v2/alerts"></input>
+      </div>
+      <div class="gf-form">
         <gf-form-switch
            class="gf-form"
            label="Auto close incidents"
@@ -43,13 +47,18 @@ var (
 func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	apiKey := model.Settings.Get("apiKey").MustString()
+	apiUrl := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find api key property in settings"}
+	}
+	if apiUrl == "" {
+		apiUrl = opsgenieAlertURL
 	}
 
 	return &OpsGenieNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		ApiKey:       apiKey,
+		ApiUrl:       apiUrl,
 		AutoClose:    autoClose,
 		log:          log.New("alerting.notifier.opsgenie"),
 	}, nil
@@ -58,6 +67,7 @@ func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 type OpsGenieNotifier struct {
 	NotifierBase
 	ApiKey    string
+	ApiUrl    string
 	AutoClose bool
 	log       log.Logger
 }
@@ -105,7 +115,7 @@ func (this *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) err
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
-		Url:        opsgenieAlertURL,
+		Url:        this.ApiUrl,
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -129,7 +139,7 @@ func (this *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) erro
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
-		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", opsgenieAlertURL, evalContext.Rule.Id),
+		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", this.ApiUrl, evalContext.Rule.Id),
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{

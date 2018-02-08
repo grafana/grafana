@@ -1,19 +1,21 @@
 package social
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/models"
 
 	"golang.org/x/oauth2"
 )
 
-type GenericOAuth struct {
-	*oauth2.Config
+type SocialGenericOAuth struct {
+	*SocialBase
 	allowedDomains       []string
 	allowedOrganizations []string
 	apiUrl               string
@@ -21,19 +23,19 @@ type GenericOAuth struct {
 	teamIds              []int
 }
 
-func (s *GenericOAuth) Type() int {
+func (s *SocialGenericOAuth) Type() int {
 	return int(models.GENERIC)
 }
 
-func (s *GenericOAuth) IsEmailAllowed(email string) bool {
+func (s *SocialGenericOAuth) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }
 
-func (s *GenericOAuth) IsSignupAllowed() bool {
+func (s *SocialGenericOAuth) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *GenericOAuth) IsTeamMember(client *http.Client) bool {
+func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
 	if len(s.teamIds) == 0 {
 		return true
 	}
@@ -54,7 +56,7 @@ func (s *GenericOAuth) IsTeamMember(client *http.Client) bool {
 	return false
 }
 
-func (s *GenericOAuth) IsOrganizationMember(client *http.Client) bool {
+func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
@@ -75,7 +77,7 @@ func (s *GenericOAuth) IsOrganizationMember(client *http.Client) bool {
 	return false
 }
 
-func (s *GenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
+func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
 	type Record struct {
 		Email       string `json:"email"`
 		Primary     bool   `json:"primary"`
@@ -116,7 +118,7 @@ func (s *GenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
 	return email, nil
 }
 
-func (s *GenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, error) {
+func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, error) {
 	type Record struct {
 		Id int `json:"id"`
 	}
@@ -141,7 +143,7 @@ func (s *GenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, error) 
 	return ids, nil
 }
 
-func (s *GenericOAuth) FetchOrganizations(client *http.Client) ([]string, error) {
+func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, error) {
 	type Record struct {
 		Login string `json:"login"`
 	}
@@ -176,17 +178,19 @@ type UserInfoJson struct {
 	Attributes  map[string][]string `json:"attributes"`
 }
 
-func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
+func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data UserInfoJson
 
-	response, err := HttpGet(client, s.apiUrl)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting user info: %s", err)
-	}
+	if s.extractToken(&data, token) != true {
+		response, err := HttpGet(client, s.apiUrl)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting user info: %s", err)
+		}
 
-	err = json.Unmarshal(response.Body, &data)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting user info: %s", err)
+		err = json.Unmarshal(response.Body, &data)
+		if err != nil {
+			return nil, fmt.Errorf("Error decoding user info JSON: %s", err)
+		}
 	}
 
 	name, err := s.extractName(data)
@@ -221,7 +225,37 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	return userInfo, nil
 }
 
-func (s *GenericOAuth) extractEmail(data UserInfoJson, client *http.Client) (string, error) {
+func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
+	idToken := token.Extra("id_token")
+	if idToken == nil {
+		s.log.Debug("No id_token found", "token", token)
+		return false
+	}
+
+	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9]+)[.]([-_a-zA-Z0-9]+)[.]([-_a-zA-Z0-9]+)$")
+	matched := jwtRegexp.FindStringSubmatch(idToken.(string))
+	if matched == nil {
+		s.log.Debug("id_token is not in JWT format", "id_token", idToken.(string))
+		return false
+	}
+
+	payload, err := base64.RawURLEncoding.DecodeString(matched[2])
+	if err != nil {
+		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "err", err)
+		return false
+	}
+
+	err = json.Unmarshal(payload, data)
+	if err != nil {
+		s.log.Error("Error decoding id_token JSON", "payload", string(payload), "err", err)
+		return false
+	}
+
+	s.log.Debug("Received id_token", "json", string(payload), "data", data)
+	return true
+}
+
+func (s *SocialGenericOAuth) extractEmail(data UserInfoJson, client *http.Client) (string, error) {
 	if data.Email != "" {
 		return data.Email, nil
 	}
@@ -240,7 +274,7 @@ func (s *GenericOAuth) extractEmail(data UserInfoJson, client *http.Client) (str
 	return s.FetchPrivateEmail(client)
 }
 
-func (s *GenericOAuth) extractLogin(data UserInfoJson, email string) (string, error) {
+func (s *SocialGenericOAuth) extractLogin(data UserInfoJson, email string) (string, error) {
 	if data.Login != "" {
 		return data.Login, nil
 	}
@@ -252,7 +286,7 @@ func (s *GenericOAuth) extractLogin(data UserInfoJson, email string) (string, er
 	return email, nil
 }
 
-func (s *GenericOAuth) extractName(data UserInfoJson) (string, error) {
+func (s *SocialGenericOAuth) extractName(data UserInfoJson) (string, error) {
 	if data.Name != "" {
 		return data.Name, nil
 	}

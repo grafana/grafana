@@ -93,7 +93,6 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   renderPanelItem(panel, index) {
-    console.log('render panel', index);
     return (
       <div key={index} className="add-panel__item" onClick={() => this.onAddPanel(panel)} title={panel.name}>
         <img className="add-panel__item-img" src={panel.info.logos.small} />

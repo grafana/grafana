@@ -1,4 +1,5 @@
 import appEvents from 'app/core/app_events';
+import locationUtil from 'app/core/utils/location_util';
 
 export class CreateFolderCtrl {
   title = '';
@@ -19,9 +20,7 @@ export class CreateFolderCtrl {
 
     return this.backendSrv.createDashboardFolder(this.title).then(result => {
       appEvents.emit('alert-success', ['Folder Created', 'OK']);
-
-      var folderUrl = `dashboards/folder/${result.dashboard.id}/${result.meta.slug}`;
-      this.$location.url(folderUrl);
+      this.$location.url(locationUtil.stripBaseFromUrl(result.meta.url));
     });
   }
 
@@ -29,7 +28,7 @@ export class CreateFolderCtrl {
     this.titleTouched = true;
 
     this.validationSrv
-      .validateNewDashboardOrFolderName(this.title)
+      .validateNewFolderName(this.title)
       .then(() => {
         this.hasValidationError = false;
       })

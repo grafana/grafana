@@ -36,7 +36,7 @@ export default class CloudWatchDatasource {
       item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
       item.namespace = this.templateSrv.replace(item.namespace, options.scopedVars);
       item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
-      item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopeVars);
+      item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
 
       return _.extend(

@@ -6,7 +6,7 @@ describe('Popover', () => {
   it('renders correctly', () => {
     const tree = renderer
       .create(
-        <Popover placement="auto" content="Popover text">
+        <Popover className="test-class" placement="auto" content="Popover text">
           <button>Button with Popover</button>
         </Popover>
       )

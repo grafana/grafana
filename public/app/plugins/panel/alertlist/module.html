@@ -1,18 +1,18 @@
 <div class="panel-alert-list">
-	<div class="panel-alert-list__no-alerts" ng-show="ctrl.noAlertsMessage">
-		{{ctrl.noAlertsMessage}}
-	</div>
+  <div class="panel-alert-list__no-alerts" ng-show="ctrl.noAlertsMessage">
+    {{ctrl.noAlertsMessage}}
+  </div>
 
   <section ng-if="ctrl.panel.show === 'current'">
     <ol class="alert-rule-list">
       <li class="alert-rule-item" ng-repeat="alert in ctrl.currentAlerts">
+        <div class="alert-rule-item__icon  {{alert.stateModel.stateClass}}">
+          <i class="{{alert.stateModel.iconClass}}"></i>
+        </div>
         <div class="alert-rule-item__body">
-          <div class="alert-rule-item__icon  {{alert.stateModel.stateClass}}">
-            <i class="{{alert.stateModel.iconClass}}"></i>
-          </div>
           <div class="alert-rule-item__header">
             <p class="alert-rule-item__name">
-              <a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
+              <a href="{{alert.url}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
                 {{alert.name}}
               </a>
             </p>

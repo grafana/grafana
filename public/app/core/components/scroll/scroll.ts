@@ -6,26 +6,32 @@ export function geminiScrollbar() {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
-      let scrollbar = new PerfectScrollbar(elem[0]);
+      let scrollbar = new PerfectScrollbar(elem[0], {
+        wheelPropagation: true,
+      });
+      let lastPos = 0;
 
       appEvents.on(
-        'smooth-scroll-top',
-        () => {
-          elem.animate(
-            {
-              scrollTop: 0,
-            },
-            500
-          );
+        'dash-scroll',
+        evt => {
+          if (evt.restore) {
+            elem[0].scrollTop = lastPos;
+            return;
+          }
+
+          lastPos = elem[0].scrollTop;
+
+          if (evt.animate) {
+            elem.animate({ scrollTop: evt.pos }, 500);
+          } else {
+            elem[0].scrollTop = evt.pos;
+          }
         },
         scope
       );
 
       scope.$on('$routeChangeSuccess', () => {
-        elem[0].scrollTop = 0;
-      });
-
-      scope.$on('$routeUpdate', () => {
+        lastPos = 0;
         elem[0].scrollTop = 0;
       });
 
