@@ -10,7 +10,6 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-ldap/ldap"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,10 +23,9 @@ type ILdapConn interface {
 }
 
 type ILdapAuther interface {
-	Login(query *LoginUserQuery) error
-	SyncSignedInUser(signedInUser *m.SignedInUser) error
-	GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error)
-	SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error
+	Login(ctx *m.ReqContext, query *m.LoginUserQuery) error
+	SyncSignedInUser(ctx *m.ReqContext, signedInUser *m.SignedInUser) error
+	GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error)
 }
 
 type ldapAuther struct {
@@ -89,89 +87,36 @@ func (a *ldapAuther) Dial() error {
 	return err
 }
 
-func (a *ldapAuther) Login(query *LoginUserQuery) error {
-	if err := a.Dial(); err != nil {
+func (a *ldapAuther) Login(ctx *m.ReqContext, query *m.LoginUserQuery) error {
+	// connect to ldap server
+	err := a.Dial()
+	if err != nil {
 		return err
 	}
 	defer a.conn.Close()
 
 	// perform initial authentication
-	if err := a.initialBind(query.Username, query.Password); err != nil {
+	err = a.initialBind(query.Username, query.Password)
+	if err != nil {
 		return err
 	}
 
 	// find user entry & attributes
-	if ldapUser, err := a.searchForUser(query.Username); err != nil {
-		return err
-	} else {
-		a.log.Debug("Ldap User found", "info", spew.Sdump(ldapUser))
-
-		// check if a second user bind is needed
-		if a.requireSecondBind {
-			if err := a.secondBind(ldapUser, query.Password); err != nil {
-				return err
-			}
-		}
-
-		if grafanaUser, err := a.GetGrafanaUserFor(ldapUser); err != nil {
-			return err
-		} else {
-			if syncErr := a.syncInfoAndOrgRoles(grafanaUser, ldapUser); syncErr != nil {
-				return syncErr
-			}
-			query.User = grafanaUser
-			return nil
-		}
-	}
-}
-
-func (a *ldapAuther) SyncSignedInUser(signedInUser *m.SignedInUser) error {
-	grafanaUser := m.User{
-		Id:    signedInUser.UserId,
-		Login: signedInUser.Login,
-		Email: signedInUser.Email,
-		Name:  signedInUser.Name,
-	}
-
-	if err := a.Dial(); err != nil {
+	ldapUser, err := a.searchForUser(query.Username)
+	if err != nil {
 		return err
 	}
 
-	defer a.conn.Close()
-	if err := a.serverBind(); err != nil {
-		return err
-	}
+	a.log.Debug("Ldap User found", "info", spew.Sdump(ldapUser))
 
-	if ldapUser, err := a.searchForUser(signedInUser.Login); err != nil {
-		a.log.Error("Failed searching for user in ldap", "error", err)
-
-		return err
-	} else {
-		if err := a.syncInfoAndOrgRoles(&grafanaUser, ldapUser); err != nil {
+	// check if a second user bind is needed
+	if a.requireSecondBind {
+		err = a.secondBind(ldapUser, query.Password)
+		if err != nil {
 			return err
 		}
-
-		a.log.Debug("Got Ldap User Info", "user", spew.Sdump(ldapUser))
 	}
 
-	return nil
-}
-
-// Sync info for ldap user and grafana user
-func (a *ldapAuther) syncInfoAndOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
-	// sync user details
-	if err := a.syncUserInfo(user, ldapUser); err != nil {
-		return err
-	}
-	// sync org roles
-	if err := a.SyncOrgRoles(user, ldapUser); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (a *ldapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) {
 	// validate that the user has access
 	// if there are no ldap group mappings access is true
 	// otherwise a single group must match
@@ -184,123 +129,85 @@ func (a *ldapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) 
 	}
 
 	if !access {
-		a.log.Info("Ldap Auth: user does not belong in any of the specified ldap groups", "username", ldapUser.Username, "groups", ldapUser.MemberOf)
-		return nil, ErrInvalidCredentials
+		a.log.Info(
+			"Ldap Auth: user does not belong in any of the specified ldap groups",
+			"username", ldapUser.Username,
+			"groups", ldapUser.MemberOf)
+		return ErrInvalidCredentials
 	}
 
-	// get user from grafana db
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: ldapUser.Username}
-	if err := bus.Dispatch(&userQuery); err != nil {
-		if err == m.ErrUserNotFound && setting.LdapAllowSignup {
-			return a.createGrafanaUser(ldapUser)
-		} else if err == m.ErrUserNotFound {
-			a.log.Warn("Not allowing LDAP login, user not found in internal user database, and ldap allow signup = false")
-			return nil, ErrInvalidCredentials
-		} else {
-			return nil, err
-		}
-	}
-
-	return userQuery.Result, nil
-
-}
-func (a *ldapAuther) createGrafanaUser(ldapUser *LdapUserInfo) (*m.User, error) {
-	cmd := m.CreateUserCommand{
-		Login: ldapUser.Username,
-		Email: ldapUser.Email,
-		Name:  fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName),
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return nil, err
-	}
-
-	return &cmd.Result, nil
-}
-
-func (a *ldapAuther) syncUserInfo(user *m.User, ldapUser *LdapUserInfo) error {
-	var name = fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName)
-	if user.Email == ldapUser.Email && user.Name == name {
-		return nil
-	}
-
-	a.log.Debug("Syncing user info", "username", ldapUser.Username)
-	updateCmd := m.UpdateUserCommand{}
-	updateCmd.UserId = user.Id
-	updateCmd.Login = user.Login
-	updateCmd.Email = ldapUser.Email
-	updateCmd.Name = fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName)
-	return bus.Dispatch(&updateCmd)
-}
-
-func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
-	if len(a.server.LdapGroups) == 0 {
-		a.log.Warn("No group mappings defined")
-		return nil
-	}
-
-	orgsQuery := m.GetUserOrgListQuery{UserId: user.Id}
-	if err := bus.Dispatch(&orgsQuery); err != nil {
+	grafanaUser, err := a.GetGrafanaUserFor(ctx, ldapUser)
+	if err != nil {
 		return err
 	}
 
-	handledOrgIds := map[int64]bool{}
+	query.User = grafanaUser
+	return nil
+}
 
-	// update or remove org roles
-	for _, org := range orgsQuery.Result {
-		match := false
-		handledOrgIds[org.OrgId] = true
-
-		for _, group := range a.server.LdapGroups {
-			if org.OrgId != group.OrgId {
-				continue
-			}
-
-			if ldapUser.isMemberOf(group.GroupDN) {
-				match = true
-				if org.Role != group.OrgRole {
-					// update role
-					cmd := m.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: group.OrgRole}
-					if err := bus.Dispatch(&cmd); err != nil {
-						return err
-					}
-				}
-				// ignore subsequent ldap group mapping matches
-				break
-			}
-		}
-
-		// remove role if no mappings match
-		if !match {
-			cmd := m.RemoveOrgUserCommand{OrgId: org.OrgId, UserId: user.Id}
-			if err := bus.Dispatch(&cmd); err != nil {
-				return err
-			}
-		}
+func (a *ldapAuther) SyncSignedInUser(ctx *m.ReqContext, signedInUser *m.SignedInUser) error {
+	err := a.Dial()
+	if err != nil {
+		return err
 	}
 
-	// add missing org roles
-	for _, group := range a.server.LdapGroups {
-		if !ldapUser.isMemberOf(group.GroupDN) {
-			continue
-		}
+	defer a.conn.Close()
 
-		if _, exists := handledOrgIds[group.OrgId]; exists {
-			continue
-		}
-
-		// add role
-		cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: group.OrgId}
-		err := bus.Dispatch(&cmd)
-		if err != nil && err != m.ErrOrgNotFound {
-			return err
-		}
-
-		// mark this group has handled so we do not process it again
-		handledOrgIds[group.OrgId] = true
+	err = a.serverBind()
+	if err != nil {
+		return err
 	}
+
+	ldapUser, err := a.searchForUser(signedInUser.Login)
+	if err != nil {
+		a.log.Error("Failed searching for user in ldap", "error", err)
+		return err
+	}
+
+	grafanaUser, err := a.GetGrafanaUserFor(ctx, ldapUser)
+	if err != nil {
+		return err
+	}
+
+	signedInUser.Login = grafanaUser.Login
+	signedInUser.Email = grafanaUser.Email
+	signedInUser.Name = grafanaUser.Name
 
 	return nil
+}
+
+func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error) {
+	extUser := m.ExternalUserInfo{
+		AuthModule: "ldap",
+		AuthId:     ldapUser.DN,
+		Name:       fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName),
+		Login:      ldapUser.Username,
+		Email:      ldapUser.Email,
+		OrgRoles:   map[int64]m.RoleType{},
+	}
+
+	for _, group := range a.server.LdapGroups {
+		// only use the first match for each org
+		if extUser.OrgRoles[group.OrgId] != "" {
+			continue
+		}
+
+		if ldapUser.isMemberOf(group.GroupDN) {
+			extUser.OrgRoles[group.OrgId] = group.OrgRole
+		}
+	}
+
+	// add/update user in grafana
+	userQuery := m.UpsertUserCommand{
+		ExternalUser:  &extUser,
+		SignupAllowed: setting.LdapAllowSignup,
+	}
+	err := UpsertUser(ctx, &userQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return userQuery.User, nil
 }
 
 func (a *ldapAuther) serverBind() error {
@@ -469,8 +376,4 @@ func getLdapAttrArray(name string, result *ldap.SearchResult) []string {
 		}
 	}
 	return []string{}
-}
-
-func createUserFromLdapInfo() error {
-	return nil
 }

@@ -79,7 +79,7 @@ func TestLdapLogin(t *testing.T) {
 
 			ldapLoginScenario("When login", func(sc *ldapLoginScenarioContext) {
 				sc.withLoginResult(false)
-				enabled, err := loginUsingLdap(&LoginUserQuery{
+				enabled, err := loginUsingLdap(&m.LoginUserQuery{
 					Username: "user",
 					Password: "pwd",
 				})
@@ -117,7 +117,7 @@ type mockLdapAuther struct {
 	loginCalled bool
 }
 
-func (a *mockLdapAuther) Login(query *LoginUserQuery) error {
+func (a *mockLdapAuther) Login(query *m.LoginUserQuery) error {
 	a.loginCalled = true
 
 	if !a.validLogin {
@@ -140,7 +140,7 @@ func (a *mockLdapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) erro
 }
 
 type ldapLoginScenarioContext struct {
-	loginUserQuery        *LoginUserQuery
+	loginUserQuery        *m.LoginUserQuery
 	ldapAuthenticatorMock *mockLdapAuther
 }
 
@@ -151,7 +151,7 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 		origNewLdapAuthenticator := NewLdapAuthenticator
 
 		sc := &ldapLoginScenarioContext{
-			loginUserQuery: &LoginUserQuery{
+			loginUserQuery: &m.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",

@@ -116,7 +116,7 @@ type mockLdapAuthenticator struct {
 	syncSignedInUserCalled bool
 }
 
-func (a *mockLdapAuthenticator) Login(query *login.LoginUserQuery) error {
+func (a *mockLdapAuthenticator) Login(query *m.LoginUserQuery) error {
 	return nil
 }
 
