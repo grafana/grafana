@@ -124,7 +124,7 @@ func (dr *DashboardRepository) SaveDashboard(dto *SaveDashboardDTO) (*models.Das
 		return nil, err
 	}
 
-	err = bus.Dispatch(&cmd)
+	err = bus.Dispatch(cmd)
 	if err != nil {
 		return nil, err
 	}
