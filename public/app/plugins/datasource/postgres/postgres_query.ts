@@ -19,17 +19,22 @@ export default class PostgresQuery {
     target.schema = target.schema || 'public';
     target.format = target.format || 'time_series';
     target.timeColumn = target.timeColumn || 'time';
-    target.alias = '';
+    target.metricColumn = target.metricColumn || 'None';
 
     target.orderByTime = target.orderByTime || 'ASC';
-    target.groupBy = target.groupBy || [{ type: 'time', params: ['$__interval'] }, { type: 'fill', params: ['null'] }];
+    target.groupBy = target.groupBy || [];
+    target.where = target.where || [];
     target.select = target.select || [[{ type: 'field', params: ['value'] }]];
 
     this.updateProjection();
   }
 
-  quoteIdentifier(field) {
-    return '"' + field + '"';
+  quoteIdentifier(value) {
+    return '"' + value + '"';
+  }
+
+  quoteLiteral(value) {
+    return "'" + value + "'";
   }
 
   updateProjection() {
@@ -202,7 +207,7 @@ export default class PostgresQuery {
     }
 
     query += ' FROM ' + target.schema + '.' + target.table + ' WHERE ';
-    var conditions = _.map(target.tags, (tag, index) => {
+    var conditions = _.map(target.where, (tag, index) => {
       return this.renderTagCondition(tag, index, interpolate);
     });
 

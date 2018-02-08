@@ -1,4 +1,6 @@
+import angular from 'angular';
 import _ from 'lodash';
+import { PostgresQueryBuilder } from './query_builder';
 import { QueryCtrl } from 'app/plugins/sdk';
 import queryPart from './query_part';
 import PostgresQuery from './postgres_query';
@@ -22,22 +24,25 @@ export class PostgresQueryCtrl extends QueryCtrl {
   showLastQuerySQL: boolean;
   formats: any[];
   queryModel: PostgresQuery;
+  queryBuilder: PostgresQueryBuilder;
   lastQueryMeta: QueryMeta;
   lastQueryError: string;
   showHelp: boolean;
   schemaSegment: any;
   tableSegment: any;
-  whereSegment: any;
+  whereSegments: any;
   timeColumnSegment: any;
   metricColumnSegment: any;
   selectMenu: any;
   groupBySegment: any;
+  removeWhereFilterSegment: any;
 
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
     this.target = this.target;
     this.queryModel = new PostgresQuery(this.target, templateSrv, this.panel.scopedVars);
+    this.queryBuilder = new PostgresQueryBuilder(this.target, this.queryModel);
 
     this.formats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
 
@@ -63,8 +68,32 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
 
     this.buildSelectMenu();
+    this.whereSegments = [];
+    for (let tag of this.target.where) {
+      if (!tag.operator) {
+        if (/^\/.*\/$/.test(tag.value)) {
+          tag.operator = '=~';
+        } else {
+          tag.operator = '=';
+        }
+      }
+
+      if (tag.condition) {
+        this.whereSegments.push(uiSegmentSrv.newCondition(tag.condition));
+      }
+
+      this.whereSegments.push(uiSegmentSrv.newKey(tag.key));
+      this.whereSegments.push(uiSegmentSrv.newOperator(tag.operator));
+      this.whereSegments.push(uiSegmentSrv.newKeyValue(tag.value));
+    }
+
+    this.fixWhereSegments();
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
 
+    this.removeWhereFilterSegment = uiSegmentSrv.newSegment({
+      fake: true,
+      value: '-- remove tag filter --',
+    });
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
   }
@@ -97,42 +126,29 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   getSchemaSegments() {
-    var schemaQuery = "SELECT schema_name FROM information_schema.schemata WHERE";
-    schemaQuery += " schema_name NOT LIKE 'pg_%' AND schema_name <> 'information_schema';";
     return this.datasource
-      .metricFindQuery(schemaQuery)
+      .metricFindQuery(this.queryBuilder.buildSchemaQuery())
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));
   }
 
   getTableSegments() {
-    var tableQuery = "SELECT table_name FROM information_schema.tables WHERE table_schema = '" + this.target.schema + "';";
     return this.datasource
-      .metricFindQuery(tableQuery)
+      .metricFindQuery(this.queryBuilder.buildTableQuery())
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));
   }
 
   getTimeColumnSegments() {
-    var columnQuery = "SELECT column_name FROM information_schema.columns WHERE ";
-    columnQuery += " table_schema = '" + this.target.schema + "'";
-    columnQuery += " AND table_name = '" + this.target.table + "'";
-    columnQuery += " AND data_type IN ('timestamp without time zone','timestamp with time zone','bigint','integer','double precision','real');";
-
     return this.datasource
-      .metricFindQuery(columnQuery)
+      .metricFindQuery(this.queryBuilder.buildColumnQuery("time"))
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));
   }
 
   getMetricColumnSegments() {
-    var columnQuery = "SELECT column_name FROM information_schema.columns WHERE ";
-    columnQuery += " table_schema = '" + this.target.schema + "'";
-    columnQuery += " AND table_name = '" + this.target.table + "'";
-    columnQuery += " AND data_type IN ('text','char','varchar');";
-
     return this.datasource
-      .metricFindQuery(columnQuery)
+      .metricFindQuery(this.queryBuilder.buildColumnQuery("metric"))
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));
   }
@@ -210,13 +226,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
   handleSelectPartEvent(selectParts, part, evt) {
     switch (evt.name) {
       case 'get-param-options': {
-        var columnQuery = "SELECT column_name FROM information_schema.columns WHERE ";
-        columnQuery += " table_schema = '" + this.target.schema + "'";
-        columnQuery += " AND table_name = '" + this.target.table + "'";
-        columnQuery += " AND data_type IN ('bigint','integer','double precision','real');";
-
         return this.datasource
-          .metricFindQuery(columnQuery)
+          .metricFindQuery(this.queryBuilder.buildColumnQuery("value"))
           .then(this.transformToSegments(true))
           .catch(this.handleQueryError.bind(this));
       }
@@ -238,12 +249,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
   handleGroupByPartEvent(part, index, evt) {
     switch (evt.name) {
       case 'get-param-options': {
-        var columnQuery = "SELECT column_name FROM information_schema.columns WHERE ";
-        columnQuery += " table_schema = '" + this.target.schema + "'";
-        columnQuery += " AND table_name = '" + this.target.table + "'";
-
         return this.datasource
-          .metricFindQuery(columnQuery)
+          .metricFindQuery(this.queryBuilder.buildColumnQuery())
           .then(this.transformToSegments(true))
           .catch(this.handleQueryError.bind(this));
       }
@@ -262,14 +269,125 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
   }
 
-  getGroupByOptions() {
-    var columnQuery = "SELECT column_name FROM information_schema.columns WHERE ";
-    columnQuery += " table_schema = '" + this.target.schema + "'";
-    columnQuery += " AND table_name = '" + this.target.table + "'";
+  fixWhereSegments() {
+    var count = this.whereSegments.length;
+    var lastSegment = this.whereSegments[Math.max(count - 1, 0)];
 
+    if (!lastSegment || lastSegment.type !== 'plus-button') {
+      this.whereSegments.push(this.uiSegmentSrv.newPlusButton());
+    }
+  }
+
+  getTagsOrValues(segment, index) {
+    if (segment.type === 'condition') {
+      return this.$q.when([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
+    }
+    if (segment.type === 'operator') {
+      var nextValue = this.whereSegments[index + 1].value;
+      if (/^\/.*\/$/.test(nextValue)) {
+        return this.$q.when(this.uiSegmentSrv.newOperators(['=~', '!~']));
+      } else {
+        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
+      }
+    }
+
+    var query, addTemplateVars;
+    if (segment.type === 'key' || segment.type === 'plus-button') {
+      query = this.queryBuilder.buildColumnQuery();
+
+      addTemplateVars = false;
+    } else if (segment.type === 'value') {
+      query = this.queryBuilder.buildValueQuery(this.whereSegments[index -2].value);
+      addTemplateVars = true;
+    }
 
     return this.datasource
-      .metricFindQuery(columnQuery)
+      .metricFindQuery(query)
+      .then(this.transformToSegments(addTemplateVars))
+      .then(results => {
+        if (segment.type === 'key') {
+          results.splice(0, 0, angular.copy(this.removeWhereFilterSegment));
+        }
+        return results;
+      })
+      .catch(this.handleQueryError.bind(this));
+  }
+
+  getTagValueOperator(tagValue, tagOperator): string {
+    if (tagOperator !== '=~' && tagOperator !== '!~' && /^\/.*\/$/.test(tagValue)) {
+      return '=~';
+    } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
+      return '=';
+    }
+    return null;
+  }
+
+  whereSegmentUpdated(segment, index) {
+    this.whereSegments[index] = segment;
+
+    // handle remove where condition
+    if (segment.value === this.removeWhereFilterSegment.value) {
+      this.whereSegments.splice(index, 3);
+      if (this.whereSegments.length === 0) {
+        this.whereSegments.push(this.uiSegmentSrv.newPlusButton());
+      } else if (this.whereSegments.length > 2) {
+        this.whereSegments.splice(Math.max(index - 1, 0), 1);
+        if (this.whereSegments[this.whereSegments.length - 1].type !== 'plus-button') {
+          this.whereSegments.push(this.uiSegmentSrv.newPlusButton());
+        }
+      }
+    } else {
+      if (segment.type === 'plus-button') {
+        if (index > 2) {
+          this.whereSegments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
+        }
+        this.whereSegments.push(this.uiSegmentSrv.newOperator('='));
+        this.whereSegments.push(this.uiSegmentSrv.newFake('select value', 'value', 'query-segment-value'));
+        segment.type = 'key';
+        segment.cssClass = 'query-segment-key';
+      }
+
+      if (index + 1 === this.whereSegments.length) {
+        this.whereSegments.push(this.uiSegmentSrv.newPlusButton());
+      }
+    }
+
+    this.rebuildTargetWhereConditions();
+  }
+
+  rebuildTargetWhereConditions() {
+    var where = [];
+    var tagIndex = 0;
+    var tagOperator = '';
+
+    _.each(this.whereSegments, (segment2, index) => {
+      if (segment2.type === 'key') {
+        if (where.length === 0) {
+          where.push({});
+        }
+        where[tagIndex].key = segment2.value;
+      } else if (segment2.type === 'value') {
+        tagOperator = this.getTagValueOperator(segment2.value, where[tagIndex].operator);
+        if (tagOperator) {
+          this.whereSegments[index - 1] = this.uiSegmentSrv.newOperator(tagOperator);
+          where[tagIndex].operator = tagOperator;
+        }
+        where[tagIndex].value = segment2.value;
+      } else if (segment2.type === 'condition') {
+        where.push({ condition: segment2.value });
+        tagIndex += 1;
+      } else if (segment2.type === 'operator') {
+        where[tagIndex].operator = segment2.value;
+      }
+    });
+
+    this.target.where = where;
+    this.panelCtrl.refresh();
+  }
+
+  getGroupByOptions() {
+    return this.datasource
+      .metricFindQuery(this.queryBuilder.buildColumnQuery())
       .then(tags => {
         var options = [];
         if (!this.queryModel.hasFill()) {
@@ -277,12 +395,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
         }
         if (!this.target.limit) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'LIMIT' }));
-        }
-        if (!this.target.slimit) {
-          options.push(this.uiSegmentSrv.newSegment({ value: 'SLIMIT' }));
-        }
-        if (this.target.orderByTime === 'ASC') {
-          options.push(this.uiSegmentSrv.newSegment({ value: 'ORDER BY time DESC' }));
         }
         if (!this.queryModel.hasGroupByTime()) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'time($interval)' }));

@@ -19,7 +19,7 @@
       </div>
 
       <div class="gf-form" ng-repeat="segment in ctrl.whereSegments">
-        <metric-segment segment="segment" get-options="ctrl.getTagsOrValues(segment, $index)" on-change="ctrl.tagSegmentUpdated(segment, $index)"></metric-segment>
+        <metric-segment segment="segment" get-options="ctrl.getTagsOrValues(segment, $index)" on-change="ctrl.whereSegmentUpdated(segment, $index)"></metric-segment>
       </div>
 
       <div class="gf-form gf-form--grow">
