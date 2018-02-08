@@ -222,7 +222,7 @@ export class ThresholdManager {
 
       // fill
       if (threshold.fill) {
-        if (threshold.yaxis === 'right' && this.shouldDrawHandles) {
+        if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: limit },
             color: fillColor,
@@ -235,7 +235,7 @@ export class ThresholdManager {
         }
       }
       if (threshold.line) {
-        if (threshold.yaxis === 'right' && this.shouldDrawHandles) {
+        if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: threshold.value },
             color: lineColor,
