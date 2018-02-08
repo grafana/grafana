@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-xorm/xorm"
@@ -11,10 +13,33 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 )
 
+var (
+	dbSqlite   = "sqlite"
+	dbMySql    = "mysql"
+	dbPostgres = "postgres"
+)
+
 func InitTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
-	//x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
-	//x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
+	selectedDb := dbSqlite
+	//selectedDb := dbMySql
+	//selectedDb := dbPostgres
+
+	var x *xorm.Engine
+	var err error
+
+	// environment variable present for test db?
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		selectedDb = db
+	}
+
+	switch strings.ToLower(selectedDb) {
+	case dbMySql:
+		x, err = xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
+	case dbPostgres:
+		x, err = xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
+	default:
+		x, err = xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
+	}
 
 	// x.ShowSQL()
 
