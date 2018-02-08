@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
@@ -217,6 +218,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
 	}
 
+	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(m.RootFolderName) {
+		return ApiError(400, "A folder already exists with that name", nil)
+	}
+
 	if dash.Id == 0 {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
 		if err != nil {
@@ -237,8 +242,11 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 
 	dashboard, err := dashboards.GetRepository().SaveDashboard(dashItem)
 
-	if err == m.ErrDashboardTitleEmpty {
-		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
+	if err == m.ErrDashboardTitleEmpty ||
+		err == m.ErrDashboardWithSameNameAsFolder ||
+		err == m.ErrDashboardFolderWithSameNameAsDashboard ||
+		err == m.ErrDashboardTypeMismatch {
+		return ApiError(400, err.Error(), nil)
 	}
 
 	if err == m.ErrDashboardContainsInvalidAlertData {

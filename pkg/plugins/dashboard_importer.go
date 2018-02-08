@@ -82,6 +82,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		Path:             cmd.Path,
 		Revision:         dashboard.Data.Get("revision").MustInt64(1),
 		ImportedUri:      "db/" + saveCmd.Result.Slug,
+		ImportedUrl:      saveCmd.Result.GetUrl(),
 		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
 		Imported:         true,
 	}
