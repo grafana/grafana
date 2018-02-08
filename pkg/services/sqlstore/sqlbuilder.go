@@ -12,7 +12,7 @@ type SqlBuilder struct {
 	params []interface{}
 }
 
-func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, minPermission m.PermissionType) {
+func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permission m.PermissionType) {
 
 	if user.OrgRole == m.ROLE_ADMIN {
 		return
@@ -40,6 +40,6 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, minPe
 		)
 	)`)
 
-	sb.params = append(sb.params, user.OrgId, minPermission, user.UserId, user.UserId)
+	sb.params = append(sb.params, user.OrgId, permission, user.UserId, user.UserId)
 	sb.params = append(sb.params, okRoles...)
 }

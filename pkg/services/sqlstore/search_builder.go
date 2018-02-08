@@ -18,12 +18,14 @@ type SearchBuilder struct {
 	whereTypeFolder     bool
 	whereTypeDash       bool
 	whereFolderIds      []int64
+	permission          m.PermissionType
 }
 
-func NewSearchBuilder(signedInUser *m.SignedInUser, limit int) *SearchBuilder {
+func NewSearchBuilder(signedInUser *m.SignedInUser, limit int, permission m.PermissionType) *SearchBuilder {
 	searchBuilder := &SearchBuilder{
 		signedInUser: signedInUser,
 		limit:        limit,
+		permission:   permission,
 	}
 
 	return searchBuilder
@@ -174,7 +176,7 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 		}
 	}
 
-	sb.writeDashboardPermissionFilter(sb.signedInUser, m.PERMISSION_VIEW)
+	sb.writeDashboardPermissionFilter(sb.signedInUser, sb.permission)
 
 	if len(sb.whereTitle) > 0 {
 		sb.sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")

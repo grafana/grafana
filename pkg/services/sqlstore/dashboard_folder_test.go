@@ -227,12 +227,14 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 			Convey("Admin users", func() {
 				Convey("Should have write access to all dashboard folders in their org", func() {
-					query := m.GetFoldersForSignedInUserQuery{
+					query := search.FindPersistedDashboardsQuery{
 						OrgId:        1,
-						SignedInUser: &m.SignedInUser{UserId: adminUser.Id, OrgRole: m.ROLE_ADMIN},
+						SignedInUser: &m.SignedInUser{UserId: adminUser.Id, OrgRole: m.ROLE_ADMIN, OrgId: 1},
+						Permission:   m.PERMISSION_VIEW,
+						Type:         "dash-folder",
 					}
 
-					err := GetFoldersForSignedInUser(&query)
+					err := SearchDashboards(&query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -260,13 +262,14 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 			})
 
 			Convey("Editor users", func() {
-				query := m.GetFoldersForSignedInUserQuery{
+				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					SignedInUser: &m.SignedInUser{UserId: editorUser.Id, OrgRole: m.ROLE_EDITOR},
+					SignedInUser: &m.SignedInUser{UserId: editorUser.Id, OrgRole: m.ROLE_EDITOR, OrgId: 1},
+					Permission:   m.PERMISSION_EDIT,
 				}
 
 				Convey("Should have write access to all dashboard folders with default ACL", func() {
-					err := GetFoldersForSignedInUser(&query)
+					err := SearchDashboards(&query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -295,7 +298,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				Convey("Should have write access to one dashboard folder if default role changed to view for one folder", func() {
 					updateTestDashboardWithAcl(folder1.Id, editorUser.Id, m.PERMISSION_VIEW)
 
-					err := GetFoldersForSignedInUser(&query)
+					err := SearchDashboards(&query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
@@ -305,13 +308,14 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 			})
 
 			Convey("Viewer users", func() {
-				query := m.GetFoldersForSignedInUserQuery{
+				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					SignedInUser: &m.SignedInUser{UserId: viewerUser.Id, OrgRole: m.ROLE_VIEWER},
+					SignedInUser: &m.SignedInUser{UserId: viewerUser.Id, OrgRole: m.ROLE_VIEWER, OrgId: 1},
+					Permission:   m.PERMISSION_EDIT,
 				}
 
 				Convey("Should have no write access to any dashboard folders with default ACL", func() {
-					err := GetFoldersForSignedInUser(&query)
+					err := SearchDashboards(&query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 0)
@@ -338,7 +342,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				Convey("Should be able to get one dashboard folder if default role changed to edit for one folder", func() {
 					updateTestDashboardWithAcl(folder1.Id, viewerUser.Id, m.PERMISSION_EDIT)
 
-					err := GetFoldersForSignedInUser(&query)
+					err := SearchDashboards(&query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
