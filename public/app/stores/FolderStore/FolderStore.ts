@@ -53,6 +53,6 @@ export const FolderStore = types
     deleteFolder: flow(function* deleteFolder() {
       const backendSrv = getEnv(self).backendSrv;
 
-      return backendSrv.deleteDashboard(self.folder.url);
+      return backendSrv.deleteDashboard(self.folder.uid);
     }),
   }));
