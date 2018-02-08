@@ -46,26 +46,30 @@ func addOrgUserHelper(cmd m.AddOrgUserCommand) Response {
 
 // GET /api/org/users
 func GetOrgUsersForCurrentOrg(c *middleware.Context) Response {
-	return getOrgUsersHelper(c.OrgId)
+	return getOrgUsersHelper(c.OrgId, c.Params("query"), c.ParamsInt("limit"))
 }
 
 // GET /api/orgs/:orgId/users
 func GetOrgUsers(c *middleware.Context) Response {
-	return getOrgUsersHelper(c.ParamsInt64(":orgId"))
+	return getOrgUsersHelper(c.ParamsInt64(":orgId"), "", 0)
 }
 
-func getOrgUsersHelper(orgId int64) Response {
-	query := m.GetOrgUsersQuery{OrgId: orgId}
+func getOrgUsersHelper(orgId int64, query string, limit int) Response {
+	q := m.GetOrgUsersQuery{
+		OrgId: orgId,
+		Query: query,
+		Limit: limit,
+	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.Dispatch(&q); err != nil {
 		return ApiError(500, "Failed to get account user", err)
 	}
 
-	for _, user := range query.Result {
+	for _, user := range q.Result {
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
 	}
 
-	return Json(200, query.Result)
+	return Json(200, q.Result)
 }
 
 // PATCH /api/org/users/:userId
