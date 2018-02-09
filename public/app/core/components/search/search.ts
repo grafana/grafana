@@ -3,7 +3,6 @@ import coreModule from '../../core_module';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
 
 export class SearchCtrl {
   isOpen: boolean;
