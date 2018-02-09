@@ -18,7 +18,11 @@ func (fr *dashboardCache) addDashboardCache(key string, json *dashboards.SaveDas
 	fr.internalCache.Add(key, json, time.Minute*10)
 }
 
-func (fr *dashboardCache) getCache(key string) (*dashboards.SaveDashboardDTO, bool) {
+func (fr *dashboardCache) deleteDashboard(key string) {
+	fr.internalCache.Delete(key)
+}
+
+func (fr *dashboardCache) getDashboard(key string) (*dashboards.SaveDashboardDTO, bool) {
 	obj, exist := fr.internalCache.Get(key)
 	if !exist {
 		return nil, exist

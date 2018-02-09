@@ -62,8 +62,8 @@ func TestDashboardFileReader(t *testing.T) {
 					}
 				}
 
-				So(dashboards, ShouldEqual, 2)
 				So(folders, ShouldEqual, 1)
+				So(dashboards, ShouldEqual, 2)
 			})
 
 			Convey("Should not update dashboards when db is newer", func() {
@@ -174,16 +174,15 @@ func TestDashboardFileReader(t *testing.T) {
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
 			So(err, ShouldBeNil)
 
-			emptyProvisioned := map[string]*models.DashboardProvisioning{}
-			noFiles := map[string]bool{}
+			noFiles := map[string]os.FileInfo{}
 
 			Convey("should skip dirs that starts with .", func() {
-				shouldSkip := reader.createWalk(reader, 0, emptyProvisioned, noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
+				shouldSkip := reader.createWalk(noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
 				So(shouldSkip, ShouldEqual, filepath.SkipDir)
 			})
 
 			Convey("should keep walking if file is not .json", func() {
-				shouldSkip := reader.createWalk(reader, 0, emptyProvisioned, noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
+				shouldSkip := reader.createWalk(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
 			})
 		})
@@ -260,6 +259,7 @@ func (repo *fakeDashboardRepo) GetProvisionedDashboardData(name string) ([]*mode
 
 func (repo *fakeDashboardRepo) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	repo.inserted = append(repo.inserted, dto)
+	repo.provisioned = append(repo.provisioned, provisioning)
 	return dto.Dashboard, nil
 }
 
