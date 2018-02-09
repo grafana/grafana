@@ -24,6 +24,26 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permi
 		okRoles = append(okRoles, m.ROLE_VIEWER)
 	}
 
+	// SELECT dash.id, dash.title, dash.folder_id
+	// FROM dashboard AS dash
+	// 	LEFT JOIN dashboard folder on folder.id = dash.folder_id
+	// 	LEFT JOIN dashboard_acl AS da ON
+	// 			da.dashboard_id = dash.id OR
+	// 			da.dashboard_id = dash.folder_id OR
+	// 			(
+	// 				-- include default permissions -->
+	// 				da.org_id = -1 AND (folder.has_acl = 0 OR (dash.has_acl = 0 AND  dash.folder_id = 0))
+	// 			)
+	// 	LEFT JOIN team_member as ugm on ugm.team_id =  da.team_id
+	// WHERE
+	// 	 dash.org_id = 5 AND
+	// 	 (
+	// 		da.user_id = 8 or
+	// 		ugm.user_id = 8 or
+	// 		da.role in ('Viewer', 'Editor')
+	// 	) AND
+	// 	da.permission > 1
+	//
 	sb.sql.WriteString(` AND
 	(
 		dashboard.has_acl = ` + dialect.BooleanStr(false) + ` OR
