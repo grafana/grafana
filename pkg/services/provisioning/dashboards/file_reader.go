@@ -120,16 +120,15 @@ func (fr *fileReader) startWalkingDisk() error {
 		cmd := &models.DeleteDashboardCommand{OrgId: fr.Cfg.OrgId, Id: dashboardId}
 		err := bus.Dispatch(cmd)
 		if err != nil {
-			return err
+			fr.log.Error("failed to delete dashboard", "id", cmd.Id)
 		}
 	}
 
-	// insert/update dashboards based on json files
+	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
 		err = fr.saveDashboard(path, folderId, fileInfo, provisionedDashboardRefs)
 		if err != nil {
-			fr.log.Error("Failed to save dashboard", "error", err)
-			return err
+			fr.log.Error("failed to save dashboard", "error", err)
 		}
 	}
 
@@ -142,8 +141,8 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 		return err
 	}
 
-	provisionedData, allReadyProvisioned := provisionedDashboardRefs[path]
-	if allReadyProvisioned && provisionedData.Updated.Unix() == resolvedFileInfo.ModTime().Unix() {
+	provisionedData, alreadyProvisioned := provisionedDashboardRefs[path]
+	if alreadyProvisioned && provisionedData.Updated.Unix() == resolvedFileInfo.ModTime().Unix() {
 		return nil // dashboard is already in sync with the database
 	}
 
@@ -153,7 +152,12 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 		return nil
 	}
 
-	if allReadyProvisioned {
+	if dash.Dashboard.Id != 0 {
+		fr.log.Error("provisioned dashboard json files cannot contain id")
+		return nil
+	}
+
+	if alreadyProvisioned {
 		dash.Dashboard.SetId(provisionedData.DashboardId)
 	}
 
