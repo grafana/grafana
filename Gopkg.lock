@@ -209,71 +209,6 @@
   version = "v1.1.1"
 
 [[projects]]
-  name = "github.com/grafana/grafana"
-  packages = [
-    "pkg/api",
-    "pkg/api/avatar",
-    "pkg/api/dtos",
-    "pkg/api/live",
-    "pkg/api/pluginproxy",
-    "pkg/api/static",
-    "pkg/bus",
-    "pkg/cmd/grafana-cli/commands",
-    "pkg/cmd/grafana-cli/commands/commandstest",
-    "pkg/cmd/grafana-cli/logger",
-    "pkg/cmd/grafana-cli/models",
-    "pkg/cmd/grafana-cli/services",
-    "pkg/cmd/grafana-cli/utils",
-    "pkg/components/apikeygen",
-    "pkg/components/dashdiffs",
-    "pkg/components/imguploader",
-    "pkg/components/null",
-    "pkg/components/renderer",
-    "pkg/components/securejsondata",
-    "pkg/components/simplejson",
-    "pkg/events",
-    "pkg/log",
-    "pkg/login",
-    "pkg/metrics",
-    "pkg/metrics/graphitebridge",
-    "pkg/middleware",
-    "pkg/models",
-    "pkg/plugins",
-    "pkg/plugins/datasource/wrapper",
-    "pkg/services/alerting",
-    "pkg/services/alerting/conditions",
-    "pkg/services/alerting/notifiers",
-    "pkg/services/annotations",
-    "pkg/services/cleanup",
-    "pkg/services/dashboards",
-    "pkg/services/guardian",
-    "pkg/services/notifications",
-    "pkg/services/provisioning",
-    "pkg/services/provisioning/dashboards",
-    "pkg/services/provisioning/datasources",
-    "pkg/services/search",
-    "pkg/services/sqlstore",
-    "pkg/services/sqlstore/migrations",
-    "pkg/services/sqlstore/migrator",
-    "pkg/services/sqlstore/sqlutil",
-    "pkg/setting",
-    "pkg/social",
-    "pkg/tracing",
-    "pkg/tsdb",
-    "pkg/tsdb/cloudwatch",
-    "pkg/tsdb/graphite",
-    "pkg/tsdb/influxdb",
-    "pkg/tsdb/mysql",
-    "pkg/tsdb/opentsdb",
-    "pkg/tsdb/postgres",
-    "pkg/tsdb/prometheus",
-    "pkg/tsdb/testdata",
-    "pkg/util"
-  ]
-  revision = "3e2da1fee53675ec9254995472ae403000b94e83"
-  version = "v5.0.0-beta1"
-
-[[projects]]
   branch = "master"
   name = "github.com/grafana/grafana_plugin_model"
   packages = ["go/datasource"]
@@ -696,6 +631,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b643d3f62f346625b8be7e41b99e719b5d9d4c24f82141f1af5c01b20d2bac7c"
+  inputs-digest = "4de68f1342ba98a637ec8ca7496aeeae2021bf9e4c7c80db7924e14709151a62"
   solver-name = "gps-cdcl"
   solver-version = 1
