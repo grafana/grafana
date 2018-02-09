@@ -15,6 +15,7 @@
           model="tag.key"
           allow-custom="true"
           label-mode="true"
+          debounce="true"
           placeholder="Tag key"
           css-class="query-segment-key"
           get-options="ctrl.getTags($index, $query)"
@@ -32,6 +33,7 @@
           model="tag.value"
           allow-custom="true"
           label-mode="true"
+          debounce="true"
           css-class="query-segment-value"
           placeholder="Tag value"
           get-options="ctrl.getTagValues(tag, $index, $query)"
@@ -41,7 +43,7 @@
       </div>
 
       <div ng-if="ctrl.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.addTagSegments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.addNewTag(segment)" />
+        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.addNewTag(segment)" debounce="true" />
       </div>
 
       <div ng-if="!ctrl.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
