@@ -29,7 +29,6 @@ type fileReader struct {
 	Path          string
 	log           log.Logger
 	dashboardRepo dashboards.Repository
-	createWalk    func(filesOnDisk map[string]os.FileInfo) filepath.WalkFunc
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -53,7 +52,6 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		Path:          path,
 		log:           log,
 		dashboardRepo: dashboards.GetRepository(),
-		createWalk:    createWalkFn,
 	}, nil
 }
 
@@ -102,7 +100,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	}
 
 	filesFoundOnDisk := map[string]os.FileInfo{}
-	err = filepath.Walk(fr.Path, fr.createWalk(filesFoundOnDisk))
+	err = filepath.Walk(fr.Path, createWalkFn(filesFoundOnDisk))
 	if err != nil {
 		return err
 	}

@@ -144,28 +144,15 @@ func TestDashboardFileReader(t *testing.T) {
 		})
 
 		Convey("Walking the folder with dashboards", func() {
-			cfg := &DashboardsAsConfig{
-				Name:   "Default",
-				Type:   "file",
-				OrgId:  1,
-				Folder: "",
-				Options: map[string]interface{}{
-					"path": defaultDashboards,
-				},
-			}
-
-			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
-			So(err, ShouldBeNil)
-
 			noFiles := map[string]os.FileInfo{}
 
 			Convey("should skip dirs that starts with .", func() {
-				shouldSkip := reader.createWalk(noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
+				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
 				So(shouldSkip, ShouldEqual, filepath.SkipDir)
 			})
 
 			Convey("should keep walking if file is not .json", func() {
-				shouldSkip := reader.createWalk(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
+				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
 			})
 		})
