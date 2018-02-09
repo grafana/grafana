@@ -13,7 +13,6 @@
       <div ng-if="ctrl.queryModel.seriesByTagUsed" ng-repeat="tag in ctrl.queryModel.tags" class="gf-form">
         <gf-form-dropdown
           model="tag.key"
-          lookup-text="false"
           allow-custom="true"
           label-mode="true"
           placeholder="Tag key"
@@ -23,8 +22,6 @@
         />
         <gf-form-dropdown
           model="tag.operator"
-          lookup-text="false"
-          allow-custom="false"
           label-mode="true"
           css-class="query-segment-operator"
           get-options="ctrl.getTagOperators()"
@@ -33,7 +30,6 @@
         />
         <gf-form-dropdown
           model="tag.value"
-          lookup-text="false"
           allow-custom="true"
           label-mode="true"
           css-class="query-segment-value"
