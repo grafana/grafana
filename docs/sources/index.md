@@ -6,9 +6,7 @@ type = "docs"
 aliases = ["v1.1", "guides/reference/admin"]
 +++
 
-# Welcome to the Grafana Documentation
-
-Grafana is an open source metric analytics & visualization platform. It is most commonly used for visualizing time series data for infrastructure and application analytics but many use it in other domains including industrial sensors, home automation, weather, and process control.
+# Grafana Documentation
 
 <h2>Installing Grafana</h2>
 <div class="nav-cards">
