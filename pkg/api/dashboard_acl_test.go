@@ -23,6 +23,14 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 		}
 		dtoRes := transformDashboardAclsToDTOs(mockResult)
 
+		getDashboardQueryResult := m.NewDashboard("Dash")
+		var getDashboardNotFoundError error
+
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			query.Result = getDashboardQueryResult
+			return getDashboardNotFoundError
+		})
+
 		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = dtoRes
 			return nil
@@ -58,6 +66,40 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 					So(len(respJSON.MustArray()), ShouldEqual, 5)
 					So(respJSON.GetIndex(0).Get("userId").MustInt(), ShouldEqual, 2)
 					So(respJSON.GetIndex(0).Get("permission").MustInt(), ShouldEqual, m.PERMISSION_VIEW)
+				})
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_ADMIN, func(sc *scenarioContext) {
+				getDashboardNotFoundError = m.ErrDashboardNotFound
+				sc.handlerFunc = GetDashboardAclList
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+				Convey("Should not be able to access ACL", func() {
+					So(sc.resp.Code, ShouldEqual, 404)
+				})
+			})
+
+			Convey("Should not be able to update permissions for non-existing dashboard", func() {
+				cmd := dtos.UpdateDashboardAclCommand{
+					Items: []dtos.DashboardAclUpdateItem{
+						{UserId: 1000, Permission: m.PERMISSION_ADMIN},
+					},
+				}
+
+				postAclScenario("When calling POST on", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_ADMIN, cmd, func(sc *scenarioContext) {
+					getDashboardNotFoundError = m.ErrDashboardNotFound
+					CallPostAcl(sc)
+					So(sc.resp.Code, ShouldEqual, 404)
+				})
+			})
+
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/id/2/acl/6", "/api/dashboards/id/:dashboardId/acl/:aclId", m.ROLE_ADMIN, func(sc *scenarioContext) {
+				getDashboardNotFoundError = m.ErrDashboardNotFound
+				sc.handlerFunc = DeleteDashboardAcl
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+
+				Convey("Should not be able to delete non-existing dashboard", func() {
+					So(sc.resp.Code, ShouldEqual, 404)
 				})
 			})
 		})
