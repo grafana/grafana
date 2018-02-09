@@ -83,7 +83,7 @@ In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = 
 #### Frontend
 Execute all frontend tests
 ```bash
-$ npm run test
+npm run test
 ```
 
 Writing & watching frontend tests (we have two test runners)
@@ -98,13 +98,13 @@ Writing & watching frontend tests (we have two test runners)
 #### Backend
 ```bash
 # Run Golang tests using sqlite3 as database (default)
-$ go test ./pkg/... 
+go test ./pkg/... 
 
-# Run Golang tests using mysql as database - convenient to use /docker/block/mysql_tests
-$ GRAFANA_TEST_DB=mysql go test ./pkg/... 
+# Run Golang tests using mysql as database - convenient to use /docker/blocks/mysql_tests
+GRAFANA_TEST_DB=mysql go test ./pkg/... 
 
 # Run Golang tests using postgres as database - convenient to use /docker/blocks/postgres_tests
-$ GRAFANA_TEST_DB=postgres go test ./pkg/... 
+GRAFANA_TEST_DB=postgres go test ./pkg/... 
 ```
 
 ## Contribute
