@@ -18,7 +18,7 @@ export class DashboardImportCtrl {
   nameValidationError: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private validationSrv, navModelSrv, private $location, private $scope, $routeParams) {
+  constructor(private backendSrv, private validationSrv, navModelSrv, private $location, $routeParams) {
     this.navModel = navModelSrv.getNav('create', 'import');
 
     this.step = 1;
@@ -124,8 +124,7 @@ export class DashboardImportCtrl {
         inputs: inputs,
       })
       .then(res => {
-        this.$location.url('dashboard/' + res.importedUri);
-        this.$scope.dismiss();
+        this.$location.url(res.importedUrl);
       });
   }
 
