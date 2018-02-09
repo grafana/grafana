@@ -37,18 +37,22 @@ type UpdateTeamCommand struct {
 	Id    int64
 	Name  string
 	Email string
+	OrgId int64 `json:"-"`
 }
 
 type DeleteTeamCommand struct {
-	Id int64
+	OrgId int64
+	Id    int64
 }
 
 type GetTeamByIdQuery struct {
+	OrgId  int64
 	Id     int64
 	Result *Team
 }
 
 type GetTeamsByUserQuery struct {
+	OrgId  int64
 	UserId int64   `json:"userId"`
 	Result []*Team `json:"teams"`
 }

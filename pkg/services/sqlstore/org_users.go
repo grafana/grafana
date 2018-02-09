@@ -82,7 +82,7 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 
 	if query.Query != "" {
 		queryWithWildcards := "%" + query.Query + "%"
-		whereConditions = append(whereConditions, "(user.email "+dialect.LikeStr()+" ? OR user.name "+dialect.LikeStr()+" ? OR user.login "+dialect.LikeStr()+" ?)")
+		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
 		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 	}
 

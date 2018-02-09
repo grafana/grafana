@@ -160,7 +160,7 @@ func (g *DashboardGuardian) getTeams() ([]*m.Team, error) {
 		return g.groups, nil
 	}
 
-	query := m.GetTeamsByUserQuery{UserId: g.user.UserId}
+	query := m.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId}
 	err := bus.Dispatch(&query)
 
 	g.groups = query.Result

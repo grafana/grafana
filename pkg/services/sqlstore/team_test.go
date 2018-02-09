@@ -27,8 +27,9 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				userIds = append(userIds, userCmd.Result.Id)
 			}
 
-			group1 := m.CreateTeamCommand{Name: "group1 name", Email: "test1@test.com"}
-			group2 := m.CreateTeamCommand{Name: "group2 name", Email: "test2@test.com"}
+			var testOrgId int64 = 1
+			group1 := m.CreateTeamCommand{OrgId: testOrgId, Name: "group1 name", Email: "test1@test.com"}
+			group2 := m.CreateTeamCommand{OrgId: testOrgId, Name: "group2 name", Email: "test2@test.com"}
 
 			err := CreateTeam(&group1)
 			So(err, ShouldBeNil)
@@ -36,7 +37,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to create teams and add users", func() {
-				query := &m.SearchTeamsQuery{Name: "group1 name", Page: 1, Limit: 10}
+				query := &m.SearchTeamsQuery{OrgId: testOrgId, Name: "group1 name", Page: 1, Limit: 10}
 				err = SearchTeams(query)
 				So(err, ShouldBeNil)
 				So(query.Page, ShouldEqual, 1)
@@ -44,25 +45,27 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				team1 := query.Result.Teams[0]
 				So(team1.Name, ShouldEqual, "group1 name")
 				So(team1.Email, ShouldEqual, "test1@test.com")
+				So(team1.OrgId, ShouldEqual, testOrgId)
 
-				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: 1, TeamId: team1.Id, UserId: userIds[0]})
+				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: team1.Id, UserId: userIds[0]})
 				So(err, ShouldBeNil)
 
-				q1 := &m.GetTeamMembersQuery{TeamId: team1.Id}
+				q1 := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team1.Id}
 				err = GetTeamMembers(q1)
 				So(err, ShouldBeNil)
 				So(q1.Result[0].TeamId, ShouldEqual, team1.Id)
 				So(q1.Result[0].Login, ShouldEqual, "loginuser0")
+				So(q1.Result[0].OrgId, ShouldEqual, testOrgId)
 			})
 
 			Convey("Should be able to search for teams", func() {
-				query := &m.SearchTeamsQuery{Query: "group", Page: 1}
+				query := &m.SearchTeamsQuery{OrgId: testOrgId, Query: "group", Page: 1}
 				err = SearchTeams(query)
 				So(err, ShouldBeNil)
 				So(len(query.Result.Teams), ShouldEqual, 2)
 				So(query.Result.TotalCount, ShouldEqual, 2)
 
-				query2 := &m.SearchTeamsQuery{Query: ""}
+				query2 := &m.SearchTeamsQuery{OrgId: testOrgId, Query: ""}
 				err = SearchTeams(query2)
 				So(err, ShouldBeNil)
 				So(len(query2.Result.Teams), ShouldEqual, 2)
@@ -70,9 +73,9 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 			Convey("Should be able to return all teams a user is member of", func() {
 				groupId := group2.Result.Id
-				err := AddTeamMember(&m.AddTeamMemberCommand{OrgId: 1, TeamId: groupId, UserId: userIds[0]})
+				err := AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[0]})
 
-				query := &m.GetTeamsByUserQuery{UserId: userIds[0]}
+				query := &m.GetTeamsByUserQuery{OrgId: testOrgId, UserId: userIds[0]}
 				err = GetTeamsByUser(query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 1)
@@ -81,7 +84,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able to remove users from a group", func() {
-				err = RemoveTeamMember(&m.RemoveTeamMemberCommand{TeamId: group1.Result.Id, UserId: userIds[0]})
+				err = RemoveTeamMember(&m.RemoveTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0]})
 				So(err, ShouldBeNil)
 
 				q1 := &m.GetTeamMembersQuery{TeamId: group1.Result.Id}
@@ -92,20 +95,20 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 			Convey("Should be able to remove a group with users and permissions", func() {
 				groupId := group2.Result.Id
-				err := AddTeamMember(&m.AddTeamMemberCommand{OrgId: 1, TeamId: groupId, UserId: userIds[1]})
+				err := AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[1]})
 				So(err, ShouldBeNil)
-				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: 1, TeamId: groupId, UserId: userIds[2]})
+				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[2]})
 				So(err, ShouldBeNil)
-				err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 1, OrgId: 1, Permission: m.PERMISSION_EDIT, TeamId: groupId})
+				err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 1, OrgId: testOrgId, Permission: m.PERMISSION_EDIT, TeamId: groupId})
 
-				err = DeleteTeam(&m.DeleteTeamCommand{Id: groupId})
+				err = DeleteTeam(&m.DeleteTeamCommand{OrgId: testOrgId, Id: groupId})
 				So(err, ShouldBeNil)
 
-				query := &m.GetTeamByIdQuery{Id: groupId}
+				query := &m.GetTeamByIdQuery{OrgId: testOrgId, Id: groupId}
 				err = GetTeamById(query)
 				So(err, ShouldEqual, m.ErrTeamNotFound)
 
-				permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: 1}
+				permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: testOrgId}
 				err = GetDashboardAclInfoList(permQuery)
 				So(err, ShouldBeNil)
 
