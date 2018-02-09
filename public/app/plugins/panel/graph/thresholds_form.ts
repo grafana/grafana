@@ -111,7 +111,7 @@ var template = `
       </div>
 
       <div class="gf-form">
-        <label class="gf-form-label">Y-axis</label>
+        <label class="gf-form-label">Y-Axis</label>
         <div class="gf-form-select-wrapper">
           <select class="gf-form-input" ng-model="threshold.yaxis"
                   ng-options="f for f in ['left', 'right']" ng-change="ctrl.render()" ng-disabled="ctrl.disabled">
