@@ -123,6 +123,31 @@ func TestAccountDataAccess(t *testing.T) {
 					So(query.Result[0].Role, ShouldEqual, "Admin")
 				})
 
+				Convey("Can get organization users with query", func() {
+					query := m.GetOrgUsersQuery{
+						OrgId: ac1.OrgId,
+						Query: "ac1",
+					}
+					err := GetOrgUsers(&query)
+
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].Email, ShouldEqual, ac1.Email)
+				})
+
+				Convey("Can get organization users with query and limit", func() {
+					query := m.GetOrgUsersQuery{
+						OrgId: ac1.OrgId,
+						Query: "ac",
+						Limit: 1,
+					}
+					err := GetOrgUsers(&query)
+
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].Email, ShouldEqual, ac1.Email)
+				})
+
 				Convey("Can set using org", func() {
 					cmd := m.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.Id}
 					err := SetUsingOrg(&cmd)
