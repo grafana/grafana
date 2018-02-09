@@ -7,6 +7,8 @@ export class DatasourceVariable implements Variable {
   options: any;
   current: any;
   refresh: any;
+  multi: boolean;
+  includeAll: boolean;
 
   defaults = {
     type: 'datasource',
@@ -18,6 +20,9 @@ export class DatasourceVariable implements Variable {
     options: [],
     query: '',
     refresh: 1,
+    multi: false,
+    includeAll: false,
+    allValue: null,
   };
 
   /** @ngInject **/
@@ -64,6 +69,8 @@ export class DatasourceVariable implements Variable {
 
     if (options.length === 0) {
       options.push({ text: 'No data sources found', value: '' });
+    } else if (this.includeAll) {
+      options.unshift({ text: 'All', value: '$__all' });
     }
 
     this.options = options;
@@ -82,6 +89,9 @@ export class DatasourceVariable implements Variable {
   }
 
   getValueForUrl() {
+    if (this.current.text === 'All') {
+      return 'All';
+    }
     return this.current.value;
   }
 }
@@ -90,4 +100,5 @@ variableTypes['datasource'] = {
   name: 'Datasource',
   ctor: DatasourceVariable,
   description: 'Enabled you to dynamically switch the datasource for multiple panels',
+  supportsMulti: true,
 };
