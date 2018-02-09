@@ -152,6 +152,13 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           var panelOptions = panel.yaxes[i];
           axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
           axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
+          if (axis.options.max === null && axis.options.zero === -1) {
+            axis.options.max = 0;
+          } else {
+            if (axis.options.min === null && axis.options.zero === 1) {
+              axis.options.min = 0;
+            }
+          }
         }
       }
 
@@ -475,6 +482,17 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       }
 
       function configureYAxisOptions(data, options) {
+        let zero = 0;
+        if (panel.yaxes[0].zero) {
+          let y1data = _.filter(data, { yaxis: 1 });
+          if (y1data) {
+            let yMin = _.min(_.map(y1data, s => s.stats.min));
+            let yMax = _.max(_.map(y1data, s => s.stats.max));
+            // zero = 1 mean graph above zero, -1 - below zero
+            zero = yMin > 0 ? 1 : yMax < 0 ? -1 : 0;
+          }
+        }
+
         var defaults = {
           position: 'left',
           show: panel.yaxes[0].show,
@@ -482,12 +500,21 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           logBase: panel.yaxes[0].logBase || 1,
           min: parseNumber(panel.yaxes[0].min),
           max: parseNumber(panel.yaxes[0].max),
+          zero: zero,
           tickDecimals: panel.yaxes[0].decimals,
         };
 
         options.yaxes.push(defaults);
 
-        if (_.find(data, { yaxis: 2 })) {
+        let y2data = _.filter(data, { yaxis: 2 });
+        if (y2data) {
+          zero = 0;
+          if (panel.yaxes[1].zero) {
+            let yMin = _.min(_.map(y2data, s => s.stats.min));
+            let yMax = _.max(_.map(y2data, s => s.stats.max));
+            zero = yMin > 0 ? 1 : yMax < 0 ? -1 : 0;
+          }
+
           var secondY = _.clone(defaults);
           secondY.index = 2;
           secondY.show = panel.yaxes[1].show;
@@ -495,6 +522,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           secondY.position = 'right';
           secondY.min = parseNumber(panel.yaxes[1].min);
           secondY.max = parseNumber(panel.yaxes[1].max);
+          secondY.zero = zero;
           secondY.tickDecimals = panel.yaxes[1].decimals;
           options.yaxes.push(secondY);
 
