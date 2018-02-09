@@ -183,7 +183,7 @@ func addDashboardMigration(mg *Migrator) {
 			{Name: "dashboard_id", Type: DB_BigInt, Nullable: true},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "external_id", Type: DB_Text, Nullable: false},
-			{Name: "updated", Type: DB_Int, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"dashboard_id"}},

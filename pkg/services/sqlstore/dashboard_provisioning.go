@@ -1,8 +1,6 @@
 package sqlstore
 
 import (
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -28,6 +26,9 @@ func SaveProvisionedDashboard(cmd *models.SaveProvisionedDashboardCommand) error
 		}
 
 		cmd.Result = cmd.DashboardCmd.Result
+		if cmd.DashboardProvisioning.Updated.IsZero() {
+			cmd.DashboardProvisioning.Updated = cmd.Result.Updated
+		}
 
 		return saveProvionedData(sess, cmd.DashboardProvisioning, cmd.Result)
 	})
@@ -42,7 +43,6 @@ func saveProvionedData(sess *DBSession, cmd *models.DashboardProvisioning, dashb
 	}
 
 	cmd.Id = result.Id
-	cmd.Updated = time.Now()
 	cmd.DashboardId = dashboard.Id
 
 	if exist {

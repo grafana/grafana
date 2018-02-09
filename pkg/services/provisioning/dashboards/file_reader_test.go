@@ -66,23 +66,6 @@ func TestDashboardFileReader(t *testing.T) {
 				So(dashboards, ShouldEqual, 2)
 			})
 
-			Convey("Should not update dashboards when db is newer", func() {
-				cfg.Options["path"] = oneDashboard
-
-				fakeRepo.getDashboard = append(fakeRepo.getDashboard, &models.Dashboard{
-					Updated: time.Now().Add(time.Hour),
-					Slug:    "grafana",
-				})
-
-				reader, err := NewDashboardFileReader(cfg, logger)
-				So(err, ShouldBeNil)
-
-				err = reader.startWalkingDisk()
-				So(err, ShouldBeNil)
-
-				So(len(fakeRepo.inserted), ShouldEqual, 0)
-			})
-
 			Convey("Can read default dashboard and replace old version in database", func() {
 				cfg.Options["path"] = oneDashboard
 
