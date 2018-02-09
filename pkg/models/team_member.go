@@ -31,6 +31,7 @@ type AddTeamMemberCommand struct {
 }
 
 type RemoveTeamMemberCommand struct {
+	OrgId  int64 `json:"-"`
 	UserId int64
 	TeamId int64
 }
@@ -39,6 +40,7 @@ type RemoveTeamMemberCommand struct {
 // QUERIES
 
 type GetTeamMembersQuery struct {
+	OrgId  int64
 	TeamId int64
 	Result []*TeamMemberDTO
 }
