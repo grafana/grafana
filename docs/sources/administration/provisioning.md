@@ -155,7 +155,7 @@ Since not all datasources have the same configuration settings we only have the 
 
 #### Secure Json data
 
-{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}
+`{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
 Secure json data is a map of settings that will be encrypted with [secret key](/installation/configuration/#secret-key) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
@@ -169,7 +169,7 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 
 ### Dashboards
 
-It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana. Currently we only support reading dashboards from file but we will add more providers in the future.
+It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -183,3 +183,8 @@ The dashboard provider config file looks somewhat like this:
 ```
 
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
+
+> **Note.** Provisioning allows you to overwrite existing dashboards
+> which leads to problems if you re-use settings that are supposed to be unique.
+> Be careful not to re-use the same `title` multiple times within a folder
+> or `uid` within the same installation as this will cause weird behaviours.

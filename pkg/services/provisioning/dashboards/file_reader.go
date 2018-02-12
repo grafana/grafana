@@ -124,37 +124,48 @@ func (fr *fileReader) startWalkingDisk() error {
 		}
 	}
 
+	sanityChecker := newProvisioningSanityChecker()
+
 	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
-		err = fr.saveDashboard(path, folderId, fileInfo, provisionedDashboardRefs)
+		provisioningMetadata, err := fr.saveDashboard(path, folderId, fileInfo, provisionedDashboardRefs)
+		sanityChecker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
 		}
 	}
+	sanityChecker.logWarnings(fr.log)
 
 	return nil
 }
 
-func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) error {
+func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (map[string]string, error) {
+	provisioningMetadata := map[string]string{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
 	if err != nil {
-		return err
+		return provisioningMetadata, err
 	}
 
 	provisionedData, alreadyProvisioned := provisionedDashboardRefs[path]
-	if alreadyProvisioned && provisionedData.Updated.Unix() == resolvedFileInfo.ModTime().Unix() {
-		return nil // dashboard is already in sync with the database
-	}
+	upToDate := alreadyProvisioned && provisionedData.Updated.Unix() == resolvedFileInfo.ModTime().Unix()
 
 	dash, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderId)
 	if err != nil {
 		fr.log.Error("failed to load dashboard from ", "file", path, "error", err)
-		return nil
+		return provisioningMetadata, nil
+	}
+
+	// keeps track of what uid's and title's we have already provisioned
+	provisioningMetadata["uid"] = dash.Dashboard.Uid
+	provisioningMetadata["title"] = dash.Dashboard.Title
+
+	if upToDate {
+		return provisioningMetadata, nil
 	}
 
 	if dash.Dashboard.Id != 0 {
 		fr.log.Error("provisioned dashboard json files cannot contain id")
-		return nil
+		return provisioningMetadata, nil
 	}
 
 	if alreadyProvisioned {
@@ -164,7 +175,7 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	fr.log.Debug("saving new dashboard", "file", path)
 	dp := &models.DashboardProvisioning{ExternalId: path, Name: fr.Cfg.Name, Updated: resolvedFileInfo.ModTime()}
 	_, err = fr.dashboardRepo.SaveProvisionedDashboard(dash, dp)
-	return err
+	return provisioningMetadata, err
 }
 
 func getProvisionedDashboardByPath(repo dashboards.Repository, name string) (map[string]*models.DashboardProvisioning, error) {
@@ -279,4 +290,42 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 	}
 
 	return dash, nil
+}
+
+func newProvisioningSanityChecker() provisioningSanityChecker {
+	return provisioningSanityChecker{
+		uidUsage:   map[string]uint8{},
+		titleUsage: map[string]uint8{}}
+}
+
+type provisioningSanityChecker struct {
+	uidUsage   map[string]uint8
+	titleUsage map[string]uint8
+}
+
+func (checker provisioningSanityChecker) track(provisioningMetadata map[string]string) {
+	dashUid := provisioningMetadata["uid"]
+	dashTitle := provisioningMetadata["title"]
+	if len(dashUid) > 0 {
+		checker.uidUsage[dashUid] += 1
+	}
+	if len(dashTitle) > 0 {
+		checker.titleUsage[dashTitle] += 1
+	}
+
+}
+
+func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
+	for uid, times := range checker.uidUsage {
+		if times > 1 {
+			log.Error("the same 'uid' is used more than once", "uid", uid)
+		}
+	}
+
+	for title, times := range checker.titleUsage {
+		if times > 1 {
+			log.Error("the same 'title' is used more than once", "title", title)
+		}
+	}
+
 }
