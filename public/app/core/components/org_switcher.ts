@@ -1,5 +1,6 @@
 import coreModule from 'app/core/core_module';
 import { contextSrv } from 'app/core/services/context_srv';
+import config from 'app/core/config';
 
 const template = `
 <div class="modal-body">
@@ -60,16 +61,11 @@ export class OrgSwitchCtrl {
 
   setUsingOrg(org) {
     return this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
-      const re = /orgId=\d+/gi;
-      this.setWindowLocationHref(this.getWindowLocationHref().replace(re, 'orgId=' + org.orgId));
+      this.setWindowLocation(config.appSubUrl + (config.appSubUrl.endsWith('/') ? '' : '/') + '?orgId=' + org.orgId);
     });
   }
 
-  getWindowLocationHref() {
-    return window.location.href;
-  }
-
-  setWindowLocationHref(href: string) {
+  setWindowLocation(href: string) {
     window.location.href = href;
   }
 }

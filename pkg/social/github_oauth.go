@@ -210,7 +210,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
-
+	data.OrganizationsUrl = s.apiUrl + "/user/orgs"
 	userInfo := &BasicUserInfo{
 		Name:  data.Login,
 		Login: data.Login,

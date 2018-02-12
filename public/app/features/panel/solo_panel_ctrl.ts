@@ -9,7 +9,7 @@ export class SoloPanelCtrl {
 
     $scope.init = function() {
       contextSrv.sidemenu = false;
-      appEvents.emit('toggle-sidemenu');
+      appEvents.emit('toggle-sidemenu-hidden');
 
       var params = $location.search();
       panelId = parseInt(params.panelId);

@@ -13,17 +13,22 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound                   = errors.New("Dashboard not found")
-	ErrDashboardSnapshotNotFound           = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameUIDExists          = errors.New("A dashboard with the same uid already exists")
-	ErrDashboardWithSameNameInFolderExists = errors.New("A dashboard with the same name in the folder already exists")
-	ErrDashboardVersionMismatch            = errors.New("The dashboard has been changed by someone else")
-	ErrDashboardTitleEmpty                 = errors.New("Dashboard title cannot be empty")
-	ErrDashboardFolderCannotHaveParent     = errors.New("A Dashboard Folder cannot be added to another folder")
-	ErrDashboardContainsInvalidAlertData   = errors.New("Invalid alert data. Cannot save dashboard")
-	ErrDashboardFailedToUpdateAlertData    = errors.New("Failed to save alert data")
-	ErrDashboardsWithSameSlugExists        = errors.New("Multiple dashboards with the same slug exists")
-	ErrDashboardFailedGenerateUniqueUid    = errors.New("Failed to generate unique dashboard id")
+	ErrDashboardNotFound                        = errors.New("Dashboard not found")
+	ErrDashboardSnapshotNotFound                = errors.New("Dashboard snapshot not found")
+	ErrDashboardWithSameUIDExists               = errors.New("A dashboard with the same uid already exists")
+	ErrDashboardWithSameNameInFolderExists      = errors.New("A dashboard with the same name in the folder already exists")
+	ErrDashboardVersionMismatch                 = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty                      = errors.New("Dashboard title cannot be empty")
+	ErrDashboardFolderCannotHaveParent          = errors.New("A Dashboard Folder cannot be added to another folder")
+	ErrDashboardContainsInvalidAlertData        = errors.New("Invalid alert data. Cannot save dashboard")
+	ErrDashboardFailedToUpdateAlertData         = errors.New("Failed to save alert data")
+	ErrDashboardsWithSameSlugExists             = errors.New("Multiple dashboards with the same slug exists")
+	ErrDashboardFailedGenerateUniqueUid         = errors.New("Failed to generate unique dashboard id")
+	ErrDashboardExistingCannotChangeToDashboard = errors.New("An existing folder cannot be changed to a dashboard")
+	ErrDashboardTypeMismatch                    = errors.New("Dashboard cannot be changed to a folder")
+	ErrDashboardFolderWithSameNameAsDashboard   = errors.New("Folder name cannot be the same as one of its dashboards")
+	ErrDashboardWithSameNameAsFolder            = errors.New("Dashboard name cannot be the same as folder")
+	RootFolderName                              = "General"
 )
 
 type UpdatePluginDashboardError struct {
@@ -95,14 +100,21 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	dash.Data = data
 	dash.Title = dash.Data.Get("title").MustString()
 	dash.UpdateSlug()
+	update := false
 
 	if id, err := dash.Data.Get("id").Float64(); err == nil {
 		dash.Id = int64(id)
+		update = true
+	}
 
-		if version, err := dash.Data.Get("version").Float64(); err == nil {
-			dash.Version = int(version)
-			dash.Updated = time.Now()
-		}
+	if uid, err := dash.Data.Get("uid").String(); err == nil {
+		dash.Uid = uid
+		update = true
+	}
+
+	if version, err := dash.Data.Get("version").Float64(); err == nil && update {
+		dash.Version = int(version)
+		dash.Updated = time.Now()
 	} else {
 		dash.Data.Set("version", 0)
 		dash.Created = time.Now()
@@ -111,10 +123,6 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 
 	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {
 		dash.GnetId = int64(gnetId)
-	}
-
-	if uid, err := dash.Data.Get("uid").String(); err == nil {
-		dash.Uid = uid
 	}
 
 	return dash

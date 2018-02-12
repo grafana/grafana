@@ -41,8 +41,15 @@
 
 .theme-dark {
   .react-grid-item > .react-resizable-handle::after {
-    border-right: 2px solid rgba(255, 255, 255, 0.4);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+    border-right: 2px solid $gray-4;
+    border-bottom: 2px solid $gray-4;
+  }
+}
+
+.theme-light {
+  .react-grid-item > .react-resizable-handle::after {
+    border-right: 2px solid $gray-3;
+    border-bottom: 2px solid $gray-3;
   }
 }
 

@@ -1,5 +1,6 @@
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from './dashboard_model';
+import locationUtil from 'app/core/utils/location_util';
 
 export class DashboardSrv {
   dash: any;
@@ -19,7 +20,10 @@ export class DashboardSrv {
     return this.dash;
   }
 
-  handleSaveDashboardError(clone, err) {
+  handleSaveDashboardError(clone, options, err) {
+    options = options || {};
+    options.overwrite = true;
+
     if (err.data && err.data.status === 'version-mismatch') {
       err.isHandled = true;
 
@@ -30,7 +34,7 @@ export class DashboardSrv {
         yesText: 'Save & Overwrite',
         icon: 'fa-warning',
         onConfirm: () => {
-          this.save(clone, { overwrite: true });
+          this.save(clone, options);
         },
       });
     }
@@ -40,12 +44,12 @@ export class DashboardSrv {
 
       this.$rootScope.appEvent('confirm-modal', {
         title: 'Conflict',
-        text: 'Dashboard with the same name exists.',
+        text: 'A dashboard with the same name in selected folder already exists.',
         text2: 'Would you still like to save this dashboard?',
         yesText: 'Save & Overwrite',
         icon: 'fa-warning',
         onConfirm: () => {
-          this.save(clone, { overwrite: true });
+          this.save(clone, options);
         },
       });
     }
@@ -74,7 +78,7 @@ export class DashboardSrv {
     this.dash.version = data.version;
 
     if (data.url !== this.$location.path()) {
-      this.$location.url(data.url);
+      this.$location.url(locationUtil.stripBaseFromUrl(data.url)).replace();
     }
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);
@@ -90,7 +94,7 @@ export class DashboardSrv {
     return this.backendSrv
       .saveDashboard(clone, options)
       .then(this.postSave.bind(this, clone))
-      .catch(this.handleSaveDashboardError.bind(this, clone));
+      .catch(this.handleSaveDashboardError.bind(this, clone, options));
   }
 
   saveDashboard(options, clone) {

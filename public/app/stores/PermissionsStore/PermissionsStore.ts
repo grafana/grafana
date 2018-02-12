@@ -108,6 +108,8 @@ export const PermissionsStore = types
         self.isFolder = isFolder;
         self.isInRoot = isInRoot;
         self.dashboardId = dashboardId;
+        self.items.clear();
+
         const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`);
         const items = prepareServerResponse(res, dashboardId, isFolder, isInRoot);
         self.items = items;

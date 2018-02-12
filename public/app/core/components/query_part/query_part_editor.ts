@@ -23,11 +23,13 @@ export function queryPartEditorDirective($compile, templateSrv) {
     scope: {
       part: '=',
       handleEvent: '&',
+      debounce: '@',
     },
     link: function postLink($scope, elem) {
       var part = $scope.part;
       var partDef = part.def;
       var $paramsContainer = elem.find('.query-part-parameters');
+      var debounceLookup = $scope.debounce;
 
       $scope.partActions = [];
 
@@ -128,6 +130,10 @@ export function queryPartEditorDirective($compile, templateSrv) {
           var items = this.source(this.query, $.proxy(this.process, this));
           return items ? this.process(items) : items;
         };
+
+        if (debounceLookup) {
+          typeahead.lookup = _.debounce(typeahead.lookup, 500, { leading: true });
+        }
       }
 
       $scope.showActionsMenu = function() {

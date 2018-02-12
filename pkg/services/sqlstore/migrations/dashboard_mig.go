@@ -168,7 +168,12 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"org_id", "slug"}, Type: UniqueIndex,
 	}))
 
+	mg.AddMigration("Update dashboard title length", NewTableCharsetMigration("dashboard", []*Column{
+		{Name: "title", Type: DB_NVarchar, Length: 189, Nullable: false},
+	}))
+
 	mg.AddMigration("Add unique index for dashboard_org_id_title_folder_id", NewAddIndexMigration(dashboardV2, &Index{
 		Cols: []string{"org_id", "folder_id", "title"}, Type: UniqueIndex,
 	}))
+
 }
