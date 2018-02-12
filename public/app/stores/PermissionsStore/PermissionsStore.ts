@@ -108,6 +108,8 @@ export const PermissionsStore = types
         self.isFolder = isFolder;
         self.isInRoot = isInRoot;
         self.dashboardId = dashboardId;
+        self.items.clear();
+
         const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`);
         const items = prepareServerResponse(res, dashboardId, isFolder, isInRoot);
         self.items = items;
@@ -115,6 +117,7 @@ export const PermissionsStore = types
         self.fetching = false;
         self.error = null;
       }),
+
       addStoreItem: flow(function* addStoreItem() {
         self.error = null;
         let item = {
@@ -152,11 +155,13 @@ export const PermissionsStore = types
         resetNewType();
         return updateItems(self);
       }),
+
       removeStoreItem: flow(function* removeStoreItem(idx: number) {
         self.error = null;
         self.items.splice(idx, 1);
         return updateItems(self);
       }),
+
       updatePermissionOnIndex: flow(function* updatePermissionOnIndex(
         idx: number,
         permission: number,
@@ -166,18 +171,19 @@ export const PermissionsStore = types
         self.items[idx].updatePermission(permission, permissionName);
         return updateItems(self);
       }),
+
       setNewType(newType: string) {
         self.newItem = NewPermissionsItem.create({ type: newType });
       },
+
       resetNewType() {
         resetNewType();
       },
+
       toggleAddPermissions() {
         self.isAddPermissionsVisible = !self.isAddPermissionsVisible;
       },
-      showAddPermissions() {
-        self.isAddPermissionsVisible = true;
-      },
+
       hideAddPermissions() {
         self.isAddPermissionsVisible = false;
       },

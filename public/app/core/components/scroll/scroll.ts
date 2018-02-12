@@ -6,7 +6,9 @@ export function geminiScrollbar() {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
-      let scrollbar = new PerfectScrollbar(elem[0]);
+      let scrollbar = new PerfectScrollbar(elem[0], {
+        wheelPropagation: true,
+      });
       let lastPos = 0;
 
       appEvents.on(

@@ -18,8 +18,8 @@ type DashboardsAsConfig struct {
 	Options  map[string]interface{} `json:"options" yaml:"options"`
 }
 
-func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig, folderId int64) (*dashboards.SaveDashboardItem, error) {
-	dash := &dashboards.SaveDashboardItem{}
+func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig, folderId int64) (*dashboards.SaveDashboardDTO, error) {
+	dash := &dashboards.SaveDashboardDTO{}
 	dash.Dashboard = models.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified
 	dash.Overwrite = true

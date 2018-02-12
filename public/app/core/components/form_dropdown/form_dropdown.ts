@@ -34,6 +34,7 @@ export class FormDropdownCtrl {
   lookupText: boolean;
   placeholder: any;
   startOpen: any;
+  debounce: number;
 
   /** @ngInject **/
   constructor(private $scope, $element, private $sce, private templateSrv, private $q) {
@@ -71,6 +72,10 @@ export class FormDropdownCtrl {
       this.query = this.$element.val() || '';
       this.source(this.query, this.process.bind(this));
     };
+
+    if (this.debounce) {
+      typeahead.lookup = _.debounce(typeahead.lookup, 500, { leading: true });
+    }
 
     this.linkElement.keydown(evt => {
       // trigger typeahead on down arrow or enter key
@@ -263,6 +268,7 @@ export function formDropdownDirective() {
       lookupText: '@',
       placeholder: '@',
       startOpen: '@',
+      debounce: '@',
     },
   };
 }

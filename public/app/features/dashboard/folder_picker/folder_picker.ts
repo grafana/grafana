@@ -67,7 +67,7 @@ export class FolderPickerCtrl {
     this.newFolderNameTouched = true;
 
     this.validationSrv
-      .validateNewDashboardOrFolderName(this.newFolderName)
+      .validateNewFolderName(this.newFolderName)
       .then(() => {
         this.hasValidationError = false;
       })

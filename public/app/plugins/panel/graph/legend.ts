@@ -246,6 +246,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           // Number of pixels the content height can surpass the container height without enabling the scroll bar.
           scrollYMarginOffset: 2,
           suppressScrollX: true,
+          wheelPropagation: true,
         };
 
         if (!legendScrollbar) {

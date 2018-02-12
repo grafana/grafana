@@ -62,25 +62,8 @@ func TestDashboardFileReader(t *testing.T) {
 					}
 				}
 
-				So(dashboards, ShouldEqual, 2)
 				So(folders, ShouldEqual, 1)
-			})
-
-			Convey("Should not update dashboards when db is newer", func() {
-				cfg.Options["path"] = oneDashboard
-
-				fakeRepo.getDashboard = append(fakeRepo.getDashboard, &models.Dashboard{
-					Updated: time.Now().Add(time.Hour),
-					Slug:    "grafana",
-				})
-
-				reader, err := NewDashboardFileReader(cfg, logger)
-				So(err, ShouldBeNil)
-
-				err = reader.startWalkingDisk()
-				So(err, ShouldBeNil)
-
-				So(len(fakeRepo.inserted), ShouldEqual, 0)
+				So(dashboards, ShouldEqual, 2)
 			})
 
 			Convey("Can read default dashboard and replace old version in database", func() {
@@ -161,26 +144,15 @@ func TestDashboardFileReader(t *testing.T) {
 		})
 
 		Convey("Walking the folder with dashboards", func() {
-			cfg := &DashboardsAsConfig{
-				Name:   "Default",
-				Type:   "file",
-				OrgId:  1,
-				Folder: "",
-				Options: map[string]interface{}{
-					"path": defaultDashboards,
-				},
-			}
-
-			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
-			So(err, ShouldBeNil)
+			noFiles := map[string]os.FileInfo{}
 
 			Convey("should skip dirs that starts with .", func() {
-				shouldSkip := reader.createWalk(reader, 0)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
+				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
 				So(shouldSkip, ShouldEqual, filepath.SkipDir)
 			})
 
 			Convey("should keep walking if file is not .json", func() {
-				shouldSkip := reader.createWalk(reader, 0)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
+				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
 			})
 		})
@@ -241,13 +213,24 @@ func (ffi FakeFileInfo) Sys() interface{} {
 }
 
 type fakeDashboardRepo struct {
-	inserted     []*dashboards.SaveDashboardItem
+	inserted     []*dashboards.SaveDashboardDTO
+	provisioned  []*models.DashboardProvisioning
 	getDashboard []*models.Dashboard
 }
 
-func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardItem) (*models.Dashboard, error) {
+func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
 	repo.inserted = append(repo.inserted, json)
 	return json.Dashboard, nil
+}
+
+func (repo *fakeDashboardRepo) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+	return repo.provisioned, nil
+}
+
+func (repo *fakeDashboardRepo) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	repo.inserted = append(repo.inserted, dto)
+	repo.provisioned = append(repo.provisioned, provisioning)
+	return dto.Dashboard, nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {

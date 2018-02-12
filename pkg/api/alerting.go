@@ -105,7 +105,7 @@ func transformToDTOs(alerts []*models.Alert, c *middleware.Context) ([]*dtos.Ale
 	for _, alert := range alertDTOs {
 		for _, dash := range dashboardsQuery.Result {
 			if alert.DashboardId == dash.Id {
-				alert.DashbboardUri = dash.GenerateUrl()
+				alert.Url = dash.GenerateUrl()
 				break
 			}
 		}

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,6 +25,7 @@ func RedirectFromLegacyDashboardUrl() macaron.Handler {
 
 		if slug != "" {
 			if url, err := getDashboardUrlBySlug(c.OrgId, slug); err == nil {
+				url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
 				c.Redirect(url, 301)
 				return
 			}
@@ -38,6 +40,7 @@ func RedirectFromLegacyDashboardSoloUrl() macaron.Handler {
 		if slug != "" {
 			if url, err := getDashboardUrlBySlug(c.OrgId, slug); err == nil {
 				url = strings.Replace(url, "/d/", "/d-solo/", 1)
+				url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
 				c.Redirect(url, 301)
 				return
 			}

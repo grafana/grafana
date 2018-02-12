@@ -20,11 +20,5 @@ export function registerAngularDirectives() {
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('selectUserPicker', UserPicker, ['backendSrv', 'handlePicked']);
-  react2AngularDirective('dashboardPermissions', DashboardPermissions, [
-    'backendSrv',
-    'dashboardId',
-    'folderTitle',
-    'folderSlug',
-    'folderId',
-  ]);
+  react2AngularDirective('dashboardPermissions', DashboardPermissions, ['backendSrv', 'dashboardId', 'folder']);
 }

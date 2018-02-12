@@ -91,13 +91,13 @@ func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
 		return ApiError(403, "Quota reached", nil)
 	}
 
-	dashItem := &dashboards.SaveDashboardItem{
+	saveDashboardDto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
 		OrgId:     c.OrgId,
 		UserId:    c.UserId,
 	}
 
-	folder, err := dashboards.GetRepository().SaveDashboard(dashItem)
+	folder, err := dashboards.GetRepository().SaveDashboard(saveDashboardDto)
 
 	if err != nil {
 		return toFolderError(err)
@@ -127,14 +127,14 @@ func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
 		return ApiError(400, m.ErrFolderTitleEmpty.Error(), nil)
 	}
 
-	dashItem := &dashboards.SaveDashboardItem{
+	saveDashboardDto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
 		OrgId:     c.OrgId,
 		UserId:    c.UserId,
 		Overwrite: cmd.Overwrite,
 	}
 
-	folder, err := dashboards.GetRepository().SaveDashboard(dashItem)
+	folder, err := dashboards.GetRepository().SaveDashboard(saveDashboardDto)
 
 	if err != nil {
 		return toFolderError(err)

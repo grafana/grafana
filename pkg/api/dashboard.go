@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
@@ -99,7 +100,7 @@ func GetDashboard(c *middleware.Context) Response {
 			return ApiError(500, "Dashboard folder could not be read", err)
 		}
 		meta.FolderTitle = query.Result.Title
-		meta.FolderSlug = query.Result.Slug
+		meta.FolderUrl = query.Result.GetUrl()
 	}
 
 	// make sure db version is in sync with json model version
@@ -218,6 +219,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
 	}
 
+	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(m.RootFolderName) {
+		return ApiError(400, "A folder already exists with that name", nil)
+	}
+
 	if dash.Id == 0 {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
 		if err != nil {
@@ -228,7 +233,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		}
 	}
 
-	dashItem := &dashboards.SaveDashboardItem{
+	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     c.OrgId,
@@ -238,8 +243,11 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 
 	dashboard, err := dashboards.GetRepository().SaveDashboard(dashItem)
 
-	if err == m.ErrDashboardTitleEmpty {
-		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
+	if err == m.ErrDashboardTitleEmpty ||
+		err == m.ErrDashboardWithSameNameAsFolder ||
+		err == m.ErrDashboardFolderWithSameNameAsDashboard ||
+		err == m.ErrDashboardTypeMismatch {
+		return ApiError(400, err.Error(), nil)
 	}
 
 	if err == m.ErrDashboardContainsInvalidAlertData {
@@ -294,10 +302,11 @@ func GetHomeDashboard(c *middleware.Context) Response {
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
-		slugQuery := m.GetDashboardSlugByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
+		slugQuery := m.GetDashboardRefByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
 		err := bus.Dispatch(&slugQuery)
 		if err == nil {
-			dashRedirect := dtos.DashboardRedirect{RedirectUri: "db/" + slugQuery.Result}
+			url := m.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
+			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return Json(200, &dashRedirect)
 		} else {
 			log.Warn("Failed to get slug from database, %s", err.Error())

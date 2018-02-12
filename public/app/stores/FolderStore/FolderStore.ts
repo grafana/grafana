@@ -16,6 +16,11 @@ export const FolderStore = types
   })
   .actions(self => ({
     load: flow(function* load(uid: string) {
+      // clear folder state
+      if (self.folder && self.folder.uid !== uid) {
+        self.folder = null;
+      }
+
       const backendSrv = getEnv(self).backendSrv;
       const res = yield backendSrv.getFolderByUid(uid);
       self.folder = Folder.create({
@@ -27,6 +32,7 @@ export const FolderStore = types
         hasChanged: false,
         version: res.version,
       });
+
       return res;
     }),
 

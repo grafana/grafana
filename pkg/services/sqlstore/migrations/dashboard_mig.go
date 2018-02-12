@@ -167,4 +167,29 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Remove unique index org_id_slug", NewDropIndexMigration(dashboardV2, &Index{
 		Cols: []string{"org_id", "slug"}, Type: UniqueIndex,
 	}))
+
+	mg.AddMigration("Update dashboard title length", NewTableCharsetMigration("dashboard", []*Column{
+		{Name: "title", Type: DB_NVarchar, Length: 189, Nullable: false},
+	}))
+
+	mg.AddMigration("Add unique index for dashboard_org_id_title_folder_id", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"org_id", "folder_id", "title"}, Type: UniqueIndex,
+	}))
+
+	dashboardExtrasTable := Table{
+		Name: "dashboard_provisioning",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "dashboard_id", Type: DB_BigInt, Nullable: true},
+			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "external_id", Type: DB_Text, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"dashboard_id"}},
+			{Cols: []string{"dashboard_id", "name"}, Type: IndexType},
+		},
+	}
+
+	mg.AddMigration("create dashboard_provisioning", NewAddTableMigration(dashboardExtrasTable))
 }

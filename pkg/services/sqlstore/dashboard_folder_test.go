@@ -219,13 +219,14 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 			folder1 := insertTestDashboard("1 test dash folder", 1, 0, true, "prod")
 			folder2 := insertTestDashboard("2 test dash folder", 1, 0, true, "prod")
+			insertTestDashboard("folder in another org", 2, 0, true, "prod")
 
 			adminUser := createUser("admin", "Admin", true)
 			editorUser := createUser("editor", "Editor", false)
 			viewerUser := createUser("viewer", "Viewer", false)
 
 			Convey("Admin users", func() {
-				Convey("Should have write access to all dashboard folders", func() {
+				Convey("Should have write access to all dashboard folders in their org", func() {
 					query := m.GetFoldersForSignedInUserQuery{
 						OrgId:        1,
 						SignedInUser: &m.SignedInUser{UserId: adminUser.Id, OrgRole: m.ROLE_ADMIN},

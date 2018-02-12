@@ -21,19 +21,27 @@ describe('FolderSettings', () => {
     );
 
     const store = RootStore.create(
-      {},
+      {
+        view: {
+          path: 'asd',
+          query: {},
+          routeParams: {
+            uid: 'uid-str',
+          },
+        },
+      },
       {
         backendSrv: backendSrv,
       }
     );
 
     wrapper = shallow(<FolderSettings backendSrv={backendSrv} {...store} />);
-    return wrapper
-      .dive()
+    page = wrapper.dive();
+    return page
       .instance()
       .loadStore()
       .then(() => {
-        page = wrapper.dive();
+        page.update();
       });
   });
 

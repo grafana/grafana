@@ -13,6 +13,11 @@ import (
 func GetDashboardAclList(c *middleware.Context) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
+	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
+	if rsp != nil {
+		return rsp
+	}
+
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
@@ -24,11 +29,22 @@ func GetDashboardAclList(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get dashboard acl", err)
 	}
 
+	for _, perm := range acl {
+		if perm.Slug != "" {
+			perm.Url = m.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
+		}
+	}
+
 	return Json(200, acl)
 }
 
 func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	dashId := c.ParamsInt64(":dashboardId")
+
+	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
+	if rsp != nil {
+		return rsp
+	}
 
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
 	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
@@ -72,6 +88,11 @@ func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCom
 func DeleteDashboardAcl(c *middleware.Context) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 	aclId := c.ParamsInt64(":aclId")
+
+	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
+	if rsp != nil {
+		return rsp
+	}
 
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
 	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
