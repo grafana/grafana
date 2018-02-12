@@ -30,120 +30,125 @@ var generateNewUid func() string = util.GenerateShortUid
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		dash := cmd.GetDashboardModel()
+		return saveDashboard(sess, cmd)
+	})
+}
 
-		if err := getExistingDashboardForUpdate(sess, dash, cmd); err != nil {
-			return err
+func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
+	dash := cmd.GetDashboardModel()
+
+	if err := getExistingDashboardForUpdate(sess, dash, cmd); err != nil {
+		return err
+	}
+
+	var existingByTitleAndFolder m.Dashboard
+
+	dashWithTitleAndFolderExists, err := sess.Where("org_id=? AND slug=? AND (is_folder=? OR folder_id=?)", dash.OrgId, dash.Slug, dialect.BooleanStr(true), dash.FolderId).Get(&existingByTitleAndFolder)
+	if err != nil {
+		return err
+	}
+
+	if dashWithTitleAndFolderExists {
+		if dash.Id != existingByTitleAndFolder.Id {
+			if existingByTitleAndFolder.IsFolder && !cmd.IsFolder {
+				return m.ErrDashboardWithSameNameAsFolder
+			}
+
+			if !existingByTitleAndFolder.IsFolder && cmd.IsFolder {
+				return m.ErrDashboardFolderWithSameNameAsDashboard
+			}
+
+			if cmd.Overwrite {
+				dash.Id = existingByTitleAndFolder.Id
+				dash.Version = existingByTitleAndFolder.Version
+
+				if dash.Uid == "" {
+					dash.Uid = existingByTitleAndFolder.Uid
+				}
+			} else {
+				return m.ErrDashboardWithSameNameInFolderExists
+			}
 		}
+	}
 
-		var existingByTitleAndFolder m.Dashboard
-
-		dashWithTitleAndFolderExists, err := sess.Where("org_id=? AND slug=? AND (is_folder=? OR folder_id=?)", dash.OrgId, dash.Slug, dialect.BooleanStr(true), dash.FolderId).Get(&existingByTitleAndFolder)
+	if dash.Uid == "" {
+		uid, err := generateNewDashboardUid(sess, dash.OrgId)
 		if err != nil {
 			return err
 		}
+		dash.Uid = uid
+		dash.Data.Set("uid", uid)
+	}
 
-		if dashWithTitleAndFolderExists {
-			if dash.Id != existingByTitleAndFolder.Id {
-				if existingByTitleAndFolder.IsFolder && !cmd.IsFolder {
-					return m.ErrDashboardWithSameNameAsFolder
-				}
+	err = setHasAcl(sess, dash)
+	if err != nil {
+		return err
+	}
 
-				if !existingByTitleAndFolder.IsFolder && cmd.IsFolder {
-					return m.ErrDashboardFolderWithSameNameAsDashboard
-				}
+	parentVersion := dash.Version
+	affectedRows := int64(0)
 
-				if cmd.Overwrite {
-					dash.Id = existingByTitleAndFolder.Id
-					dash.Version = existingByTitleAndFolder.Version
+	if dash.Id == 0 {
+		dash.Version = 1
+		metrics.M_Api_Dashboard_Insert.Inc()
+		dash.Data.Set("version", dash.Version)
+		affectedRows, err = sess.Insert(dash)
+	} else {
+		dash.Version++
+		dash.Data.Set("version", dash.Version)
 
-					if dash.Uid == "" {
-						dash.Uid = existingByTitleAndFolder.Uid
-					}
-				} else {
-					return m.ErrDashboardWithSameNameInFolderExists
-				}
-			}
+		if !cmd.UpdatedAt.IsZero() {
+			dash.Updated = cmd.UpdatedAt
 		}
 
-		if dash.Uid == "" {
-			uid, err := generateNewDashboardUid(sess, dash.OrgId)
-			if err != nil {
+		affectedRows, err = sess.MustCols("folder_id", "has_acl").ID(dash.Id).Update(dash)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if affectedRows == 0 {
+		return m.ErrDashboardNotFound
+	}
+
+	dashVersion := &m.DashboardVersion{
+		DashboardId:   dash.Id,
+		ParentVersion: parentVersion,
+		RestoredFrom:  cmd.RestoredFrom,
+		Version:       dash.Version,
+		Created:       time.Now(),
+		CreatedBy:     dash.UpdatedBy,
+		Message:       cmd.Message,
+		Data:          dash.Data,
+	}
+
+	// insert version entry
+	if affectedRows, err = sess.Insert(dashVersion); err != nil {
+		return err
+	} else if affectedRows == 0 {
+		return m.ErrDashboardNotFound
+	}
+
+	// delete existing tags
+	_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
+	if err != nil {
+		return err
+	}
+
+	// insert new tags
+	tags := dash.GetTags()
+	if len(tags) > 0 {
+		for _, tag := range tags {
+			if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
 				return err
 			}
-			dash.Uid = uid
-			dash.Data.Set("uid", uid)
 		}
+	}
 
-		err = setHasAcl(sess, dash)
-		if err != nil {
-			return err
-		}
+	cmd.Result = dash
 
-		parentVersion := dash.Version
-		affectedRows := int64(0)
-
-		if dash.Id == 0 {
-			dash.Version = 1
-			metrics.M_Api_Dashboard_Insert.Inc()
-			dash.Data.Set("version", dash.Version)
-			affectedRows, err = sess.Insert(dash)
-		} else {
-			dash.Version++
-			dash.Data.Set("version", dash.Version)
-
-			if !cmd.UpdatedAt.IsZero() {
-				dash.Updated = cmd.UpdatedAt
-			}
-
-			affectedRows, err = sess.MustCols("folder_id", "has_acl").ID(dash.Id).Update(dash)
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if affectedRows == 0 {
-			return m.ErrDashboardNotFound
-		}
-
-		dashVersion := &m.DashboardVersion{
-			DashboardId:   dash.Id,
-			ParentVersion: parentVersion,
-			RestoredFrom:  cmd.RestoredFrom,
-			Version:       dash.Version,
-			Created:       time.Now(),
-			CreatedBy:     dash.UpdatedBy,
-			Message:       cmd.Message,
-			Data:          dash.Data,
-		}
-
-		// insert version entry
-		if affectedRows, err = sess.Insert(dashVersion); err != nil {
-			return err
-		} else if affectedRows == 0 {
-			return m.ErrDashboardNotFound
-		}
-
-		// delete existing tags
-		_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
-		if err != nil {
-			return err
-		}
-
-		// insert new tags
-		tags := dash.GetTags()
-		if len(tags) > 0 {
-			for _, tag := range tags {
-				if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
-					return err
-				}
-			}
-		}
-		cmd.Result = dash
-
-		return err
-	})
+	return err
 }
 
 func getExistingDashboardForUpdate(sess *DBSession, dash *m.Dashboard, cmd *m.SaveDashboardCommand) (err error) {
@@ -456,6 +461,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM dashboard_version WHERE dashboard_id = ?",
 			"DELETE FROM dashboard WHERE folder_id = ?",
 			"DELETE FROM annotation WHERE dashboard_id = ?",
+			"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
 		}
 
 		for _, sql := range deletes {

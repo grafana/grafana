@@ -17,13 +17,23 @@ import (
 )
 
 type fakeDashboardRepo struct {
-	inserted     []*dashboards.SaveDashboardItem
+	inserted     []*dashboards.SaveDashboardDTO
+	provisioned  []*m.DashboardProvisioning
 	getDashboard []*m.Dashboard
 }
 
-func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardItem) (*m.Dashboard, error) {
+func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardDTO) (*m.Dashboard, error) {
 	repo.inserted = append(repo.inserted, json)
 	return json.Dashboard, nil
+}
+
+func (repo *fakeDashboardRepo) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *m.DashboardProvisioning) (*m.Dashboard, error) {
+	repo.inserted = append(repo.inserted, dto)
+	return dto.Dashboard, nil
+}
+
+func (repo *fakeDashboardRepo) GetProvisionedDashboardData(name string) ([]*m.DashboardProvisioning, error) {
+	return repo.provisioned, nil
 }
 
 var fakeRepo *fakeDashboardRepo

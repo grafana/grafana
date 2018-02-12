@@ -232,7 +232,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		}
 	}
 
-	dashItem := &dashboards.SaveDashboardItem{
+	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     c.OrgId,

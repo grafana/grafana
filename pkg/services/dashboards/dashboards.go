@@ -9,7 +9,9 @@ import (
 )
 
 type Repository interface {
-	SaveDashboard(*SaveDashboardItem) (*models.Dashboard, error)
+	SaveDashboard(*SaveDashboardDTO) (*models.Dashboard, error)
+	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
+	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 }
 
 var repositoryInstance Repository
@@ -22,7 +24,7 @@ func SetRepository(rep Repository) {
 	repositoryInstance = rep
 }
 
-type SaveDashboardItem struct {
+type SaveDashboardDTO struct {
 	OrgId     int64
 	UpdatedAt time.Time
 	UserId    int64
@@ -33,15 +35,25 @@ type SaveDashboardItem struct {
 
 type DashboardRepository struct{}
 
-func (dr *DashboardRepository) SaveDashboard(json *SaveDashboardItem) (*models.Dashboard, error) {
-	dashboard := json.Dashboard
+func (dr *DashboardRepository) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+	cmd := &models.GetProvisionedDashboardDataQuery{Name: name}
+	err := bus.Dispatch(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.Result, nil
+}
+
+func (dr *DashboardRepository) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*models.SaveDashboardCommand, error) {
+	dashboard := dto.Dashboard
 
 	if dashboard.Title == "" {
 		return nil, models.ErrDashboardTitleEmpty
 	}
 
 	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
-		OrgId:     json.OrgId,
+		OrgId:     dto.OrgId,
 		Dashboard: dashboard,
 	}
 
@@ -49,33 +61,77 @@ func (dr *DashboardRepository) SaveDashboard(json *SaveDashboardItem) (*models.D
 		return nil, models.ErrDashboardContainsInvalidAlertData
 	}
 
-	cmd := models.SaveDashboardCommand{
+	cmd := &models.SaveDashboardCommand{
 		Dashboard: dashboard.Data,
-		Message:   json.Message,
-		OrgId:     json.OrgId,
-		Overwrite: json.Overwrite,
-		UserId:    json.UserId,
+		Message:   dto.Message,
+		OrgId:     dto.OrgId,
+		Overwrite: dto.Overwrite,
+		UserId:    dto.UserId,
 		FolderId:  dashboard.FolderId,
 		IsFolder:  dashboard.IsFolder,
 	}
 
-	if !json.UpdatedAt.IsZero() {
-		cmd.UpdatedAt = json.UpdatedAt
+	if !dto.UpdatedAt.IsZero() {
+		cmd.UpdatedAt = dto.UpdatedAt
 	}
 
-	err := bus.Dispatch(&cmd)
-	if err != nil {
-		return nil, err
-	}
+	return cmd, nil
+}
 
+func (dr *DashboardRepository) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
 	alertCmd := alerting.UpdateDashboardAlertsCommand{
-		OrgId:     json.OrgId,
-		UserId:    json.UserId,
+		OrgId:     dto.OrgId,
+		UserId:    dto.UserId,
 		Dashboard: cmd.Result,
 	}
 
 	if err := bus.Dispatch(&alertCmd); err != nil {
-		return nil, models.ErrDashboardFailedToUpdateAlertData
+		return models.ErrDashboardFailedToUpdateAlertData
+	}
+
+	return nil
+}
+
+func (dr *DashboardRepository) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	cmd, err := dr.buildSaveDashboardCommand(dto)
+	if err != nil {
+		return nil, err
+	}
+
+	saveCmd := &models.SaveProvisionedDashboardCommand{
+		DashboardCmd:          cmd,
+		DashboardProvisioning: provisioning,
+	}
+
+	// dashboard
+	err = bus.Dispatch(saveCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	//alerts
+	err = dr.updateAlerting(cmd, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.Result, nil
+}
+
+func (dr *DashboardRepository) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+	cmd, err := dr.buildSaveDashboardCommand(dto)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bus.Dispatch(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dr.updateAlerting(cmd, dto)
+	if err != nil {
+		return nil, err
 	}
 
 	return cmd.Result, nil
