@@ -13,9 +13,9 @@
       <div ng-if="ctrl.queryModel.seriesByTagUsed" ng-repeat="tag in ctrl.queryModel.tags" class="gf-form">
         <gf-form-dropdown
           model="tag.key"
-          lookup-text="false"
           allow-custom="true"
           label-mode="true"
+          debounce="true"
           placeholder="Tag key"
           css-class="query-segment-key"
           get-options="ctrl.getTags($index, $query)"
@@ -23,8 +23,6 @@
         />
         <gf-form-dropdown
           model="tag.operator"
-          lookup-text="false"
-          allow-custom="false"
           label-mode="true"
           css-class="query-segment-operator"
           get-options="ctrl.getTagOperators()"
@@ -33,9 +31,9 @@
         />
         <gf-form-dropdown
           model="tag.value"
-          lookup-text="false"
           allow-custom="true"
           label-mode="true"
+          debounce="true"
           css-class="query-segment-value"
           placeholder="Tag value"
           get-options="ctrl.getTagValues(tag, $index, $query)"
@@ -45,7 +43,7 @@
       </div>
 
       <div ng-if="ctrl.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.addTagSegments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.addNewTag(segment)" />
+        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.addNewTag(segment)" debounce="true" />
       </div>
 
       <div ng-if="!ctrl.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
