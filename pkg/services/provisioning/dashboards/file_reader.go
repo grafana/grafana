@@ -108,8 +108,8 @@ func (fr *fileReader) startWalkingDisk() error {
 	// find dashboards to delete since json file is missing
 	var dashboardToDelete []int64
 	for path, provisioningData := range provisionedDashboardRefs {
-		_, existsInDatabase := filesFoundOnDisk[path]
-		if !existsInDatabase {
+		_, existsOnDisk := filesFoundOnDisk[path]
+		if !existsOnDisk {
 			dashboardToDelete = append(dashboardToDelete, provisioningData.DashboardId)
 		}
 	}
