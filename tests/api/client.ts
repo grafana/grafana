@@ -13,7 +13,18 @@ export function getClient(options) {
 
 export function getAdminClient() {
   return getClient({
-    username: 'api-test-admin',
-    password: 'password',
+    username: 'admin',
+    password: 'admin',
   });
 }
+
+let client = getAdminClient();
+
+client.callAs = function(user) {
+  return getClient({
+    username: user.login,
+    password: 'password',
+  });
+};
+
+export default client;
