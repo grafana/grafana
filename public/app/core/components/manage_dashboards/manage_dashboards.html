@@ -103,13 +103,15 @@
       />
     </div>
   </div>
+
+  <div class="search-results" ng-show="!ctrl.canSave && !ctrl.hasFilters && ctrl.sections.length === 0">
+    <em class="muted">
+        This org has no dashboards or folders.
+    </em>
+  </div>
 </div>
 
-<div class="search-results" ng-show="!ctrl.canSave && !ctrl.hasFilters && ctrl.sections.length === 0">
-  <em class="muted">
-      This org has no dashboards or folders.
-  </em>
-</div>
+
 
 <div ng-if="ctrl.canSave && ctrl.folderId && !ctrl.hasFilters && ctrl.sections.length === 0">
   <empty-list-cta model="{
