@@ -9,11 +9,11 @@ name = "Dashboard Permissions"
 parent = "http_api"
 +++
 
-# Dashboard Permissions/ACL API
+# Dashboard Permissions API
 
-This API can be used to update/get the ACL for a dashboard or a folder.
+This API can be used to update/get the permissions for a dashboard or a folder.
 
-Permissions with dashboardId set to `-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.
+Permissions with `dashboardId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.
 
 The permission levels for the permission field:
 
@@ -21,13 +21,13 @@ The permission levels for the permission field:
 - 2 = Edit
 - 4 = Admin
 
-## Get ACL/Permissions for a Dashboard or Folder
+## Get permissions for a dashboard or folder
 
 `GET /api/dashboards/id/:dashboardId/acl`
 
-Gets all existing dashboard permissions for the dashboard or folder with the given `dashboardId`.
+Gets all existing permissions for the dashboard or folder with the given `dashboardId`.
 
-**Example request for getting the ACL/Permissions**:
+**Example request**:
 
 ```http
 GET /api/dashboards/id/1/acl HTTP/1.1
@@ -88,16 +88,17 @@ Content-Length: 551
 Status Codes:
 
 - **200** - Ok
+- **401** - Unauthorized
 - **403** - Access denied
-- **404** - Dashboard not found
+- **404** - Dashboard/folder not found
 
-## Save Dashboard Permissions/ACL for a Dashboard or Folder
+## Update permissions for a dashboard or folder
 
 `POST /api/dashboards/id/:dashboardId/acl`
 
-Updates the ACL for a dashboard or folder. Takes in a list of permissions and adds, remove or updates permissions in the list in the database.
+Updates permissions for a dashboard or folder. This operation will remove existing permissions if they're not included in the request.
 
-**Example request for saving a list of permission items**:
+**Example request**:
 
 ```http
 POST /api/dashboards/id/1/acl
@@ -128,7 +129,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON body schema:
 
-- **items** - The permission items to add/update. Items that are omitted from the list will be removed from the db.
+- **items** - The permission items to add/update. Items that are omitted from the list will be removed.
 
 **Example response**:
 
@@ -143,15 +144,16 @@ Content-Length: 35
 Status Codes:
 
 - **200** - Ok
+- **401** - Unauthorized
 - **403** - Access denied
 - **404** - Dashboard not found
 
 
-## Delete Permission from the Dashboard ACL/Permissions List for a Dashboard or Folder
+## Delete permission for a dashboard or folder
 
 `DELETE /api/dashboards/id/:dashboardId/acl/:aclId`
 
-The above will delete an item from a dashboard or folder ACL given the id of the permission item.
+The above will delete a permission from a dashboard or folder given the permission id.
 
 **Example Request**:
 
@@ -173,6 +175,7 @@ Content-Length: 0
 Status Codes:
 
 - **200** - Ok
+- **401** - Unauthorized
 - **403** - Access denied
 - **404** - Dashboard permission not found
 
