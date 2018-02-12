@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
@@ -30,6 +31,7 @@ import (
 
 type DatabaseConfig struct {
 	Type, Host, Name, User, Pwd, Path, SslMode string
+	Replicas                                   []string
 	CaCertPath                                 string
 	ClientKeyPath                              string
 	ClientCertPath                             string
@@ -40,7 +42,7 @@ type DatabaseConfig struct {
 }
 
 var (
-	x       *xorm.Engine
+	x       *xorm.EngineGroup
 	dialect migrator.Dialect
 
 	HasEngine bool
@@ -77,7 +79,7 @@ func EnsureAdminUser() {
 	log.Info("Created default admin user: %v", setting.AdminUser)
 }
 
-func NewEngine() *xorm.Engine {
+func NewEngine() *xorm.EngineGroup {
 	x, err := getEngine()
 
 	if err != nil {
@@ -95,7 +97,7 @@ func NewEngine() *xorm.Engine {
 	return x
 }
 
-func SetEngine(engine *xorm.Engine) (err error) {
+func SetEngine(engine *xorm.EngineGroup) (err error) {
 	x = engine
 	dialect = migrator.NewDialect(x.DriverName())
 
@@ -111,14 +113,12 @@ func SetEngine(engine *xorm.Engine) (err error) {
 	return nil
 }
 
-func getEngine() (*xorm.Engine, error) {
-	LoadConfig()
-
+func getConnectionString(dbHost string) (string, error) {
 	cnnstr := ""
 	switch DbCfg.Type {
 	case "mysql":
 		protocol := "tcp"
-		if strings.HasPrefix(DbCfg.Host, "/") {
+		if strings.HasPrefix(dbHost, "/") {
 			protocol = "unix"
 		}
 
@@ -128,14 +128,14 @@ func getEngine() (*xorm.Engine, error) {
 		if DbCfg.SslMode == "true" || DbCfg.SslMode == "skip-verify" {
 			tlsCert, err := makeCert("custom", DbCfg)
 			if err != nil {
-				return nil, err
+				return "", err
 			}
 			mysql.RegisterTLSConfig("custom", tlsCert)
 			cnnstr += "&tls=custom"
 		}
 	case "postgres":
 		var host, port = "127.0.0.1", "5432"
-		fields := strings.Split(DbCfg.Host, ":")
+		fields := strings.Split(dbHost, ":")
 		if len(fields) > 0 && len(strings.TrimSpace(fields[0])) > 0 {
 			host = fields[0]
 		}
@@ -160,11 +160,25 @@ func getEngine() (*xorm.Engine, error) {
 		os.MkdirAll(path.Dir(DbCfg.Path), os.ModePerm)
 		cnnstr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc"
 	default:
-		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
+		return "", fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}
 
+	return cnnstr, nil
+}
+
+func getEngine() (*xorm.EngineGroup, error) {
+	LoadConfig()
+
 	sqlog.Info("Initializing DB", "dbtype", DbCfg.Type)
-	engine, err := xorm.NewEngine(DbCfg.Type, cnnstr)
+	cnnstrSlice := []string{}
+	for _, host := range append([]string{DbCfg.Host}, DbCfg.Replicas...) {
+		cnnstr, err := getConnectionString(host)
+		if err != nil {
+			return nil, err
+		}
+		cnnstrSlice = append(cnnstrSlice, cnnstr)
+	}
+	engine, err := xorm.NewEngineGroup(DbCfg.Type, cnnstrSlice)
 	if err != nil {
 		return nil, err
 	}
@@ -206,6 +220,7 @@ func LoadConfig() {
 	} else {
 		DbCfg.Type = sec.Key("type").String()
 		DbCfg.Host = sec.Key("host").String()
+		DbCfg.Replicas = util.SplitString(sec.Key("replicas").String())
 		DbCfg.Name = sec.Key("name").String()
 		DbCfg.User = sec.Key("user").String()
 		if len(DbCfg.Pwd) == 0 {
@@ -236,12 +251,12 @@ var (
 	dbPostgres = "postgres"
 )
 
-func InitTestDB(t *testing.T) *xorm.Engine {
+func InitTestDB(t *testing.T) *xorm.EngineGroup {
 	selectedDb := dbSqlite
 	// selectedDb := dbMySql
 	// selectedDb := dbPostgres
 
-	var x *xorm.Engine
+	var x *xorm.EngineGroup
 	var err error
 
 	// environment variable present for test db?
@@ -251,11 +266,11 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 
 	switch strings.ToLower(selectedDb) {
 	case dbMySql:
-		x, err = xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
+		x, err = xorm.NewEngineGroup(sqlutil.TestDB_Mysql.DriverName, []string{sqlutil.TestDB_Mysql.ConnStr})
 	case dbPostgres:
-		x, err = xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
+		x, err = xorm.NewEngineGroup(sqlutil.TestDB_Postgres.DriverName, []string{sqlutil.TestDB_Postgres.ConnStr})
 	default:
-		x, err = xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
+		x, err = xorm.NewEngineGroup(sqlutil.TestDB_Sqlite3.DriverName, []string{sqlutil.TestDB_Sqlite3.ConnStr})
 	}
 
 	x.DatabaseTZ = time.UTC

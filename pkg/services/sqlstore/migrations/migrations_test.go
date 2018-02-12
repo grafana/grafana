@@ -22,7 +22,7 @@ func TestMigrations(t *testing.T) {
 		}{}
 
 		Convey("Initial "+testDB.DriverName+" migration", t, func() {
-			x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+			x, err := xorm.NewEngineGroup(testDB.DriverName, []string{testDB.ConnStr})
 			So(err, ShouldBeNil)
 
 			sqlutil.CleanDB(x)

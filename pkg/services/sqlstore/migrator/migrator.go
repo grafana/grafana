@@ -11,7 +11,7 @@ import (
 )
 
 type Migrator struct {
-	x          *xorm.Engine
+	x          *xorm.EngineGroup
 	dialect    Dialect
 	migrations []Migration
 	Logger     log.Logger
@@ -26,7 +26,7 @@ type MigrationLog struct {
 	Timestamp   time.Time
 }
 
-func NewMigrator(engine *xorm.Engine) *Migrator {
+func NewMigrator(engine *xorm.EngineGroup) *Migrator {
 	mg := &Migrator{}
 	mg.x = engine
 	mg.Logger = log.New("migrator")

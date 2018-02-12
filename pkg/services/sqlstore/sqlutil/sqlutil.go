@@ -16,8 +16,8 @@ var TestDB_Mysql = TestDB{DriverName: "mysql", ConnStr: "grafana:password@tcp(lo
 var TestDB_Postgres = TestDB{DriverName: "postgres", ConnStr: "user=grafanatest password=grafanatest host=localhost port=5432 dbname=grafanatest sslmode=disable"}
 var TestDB_Mssql = TestDB{DriverName: "mssql", ConnStr: "server=localhost;port=1433;database=grafanatest;user id=grafana;password=Password!"}
 
-func CleanDB(x *xorm.Engine) {
-	if x.DriverName() == "postgres" {
+func CleanDB(x xorm.EngineInterface) {
+	if x.Dialect().DriverName() == "postgres" {
 		sess := x.NewSession()
 		defer sess.Close()
 
@@ -28,7 +28,7 @@ func CleanDB(x *xorm.Engine) {
 		if _, err := sess.Exec("CREATE SCHEMA public;"); err != nil {
 			panic("Failed to create schema public")
 		}
-	} else if x.DriverName() == "mysql" {
+	} else if x.Dialect().DriverName() == "mysql" {
 		tables, _ := x.DBMetas()
 		sess := x.NewSession()
 		defer sess.Close()

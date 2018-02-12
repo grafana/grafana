@@ -194,6 +194,12 @@ Only applicable to MySQL or Postgres. Includes IP or hostname and port.
 For example, for MySQL running on the same host as Grafana: `host =
 127.0.0.1:3306`
 
+### replicas
+
+Only applicable to MySQL or Postgres. Defines a list of ips/hostnames to use
+to contact replicas. Format: `ip_or_hostname:port` separated by spaces: `replicas =
+replica1:3306 replica2:3306`
+
 ### name
 
 The name of the Grafana database. Leave it set to `grafana` or some

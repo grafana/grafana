@@ -149,7 +149,7 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 	})
 }
 
-func createTestSnapshot(x *xorm.Engine, key string, expires int64) *m.DashboardSnapshot {
+func createTestSnapshot(x *xorm.EngineGroup, key string, expires int64) *m.DashboardSnapshot {
 	cmd := m.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
