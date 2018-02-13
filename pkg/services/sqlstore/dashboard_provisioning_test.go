@@ -48,7 +48,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 				So(len(query.Result), ShouldEqual, 1)
 				So(query.Result[0].DashboardId, ShouldEqual, dashId)
-				So(query.Result[0].Updated, ShouldEqual, now)
+				So(query.Result[0].Updated.Unix(), ShouldEqual, now.Unix())
 			})
 		})
 	})
