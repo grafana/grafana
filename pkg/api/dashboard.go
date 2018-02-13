@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
@@ -197,32 +196,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 
 	dash := cmd.GetDashboardModel()
 
-	dashId := dash.Id
-
-	// if new dashboard, use parent folder permissions instead
-	if dashId == 0 {
-		dashId = cmd.FolderId
-	}
-
-	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
-		return dashboardGuardianResponse(err)
-	}
-
-	if dash.IsFolder && dash.FolderId > 0 {
-		return ApiError(400, m.ErrDashboardFolderCannotHaveParent.Error(), nil)
-	}
-
-	// Check if Title is empty
-	if dash.Title == "" {
-		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
-	}
-
-	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(m.RootFolderName) {
-		return ApiError(400, "A folder already exists with that name", nil)
-	}
-
-	if dash.Id == 0 {
+	if dash.Id == 0 && dash.Uid == "" {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
 		if err != nil {
 			return ApiError(500, "failed to get quota", err)
@@ -236,7 +210,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     c.OrgId,
-		UserId:    c.UserId,
+		User:      c.SignedInUser,
 		Overwrite: cmd.Overwrite,
 	}
 
@@ -247,6 +221,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		err == m.ErrDashboardFolderWithSameNameAsDashboard ||
 		err == m.ErrDashboardTypeMismatch {
 		return ApiError(400, err.Error(), nil)
+	}
+
+	if err == m.ErrDashboardUpdateAccessDenied {
+		return ApiError(403, err.Error(), err)
 	}
 
 	if err == m.ErrDashboardContainsInvalidAlertData {
