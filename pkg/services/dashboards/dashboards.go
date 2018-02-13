@@ -1,16 +1,19 @@
 package dashboards
 
 import (
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
 type Repository interface {
-	SaveDashboard(*SaveDashboardDTO) (*models.Dashboard, error)
+	SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
+	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 }
 
@@ -27,7 +30,7 @@ func SetRepository(rep Repository) {
 type SaveDashboardDTO struct {
 	OrgId     int64
 	UpdatedAt time.Time
-	UserId    int64
+	User      *models.SignedInUser
 	Message   string
 	Overwrite bool
 	Dashboard *models.Dashboard
@@ -46,29 +49,66 @@ func (dr *DashboardRepository) GetProvisionedDashboardData(name string) ([]*mode
 }
 
 func (dr *DashboardRepository) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*models.SaveDashboardCommand, error) {
-	dashboard := dto.Dashboard
+	dash := dto.Dashboard
 
-	if dashboard.Title == "" {
+	dash.Title = strings.TrimSpace(dash.Title)
+	dash.Data.Set("title", dash.Title)
+	dash.Uid = strings.TrimSpace(dash.Uid)
+	dash.Data.Set("uid", dash.Uid)
+
+	if dash.Title == "" {
 		return nil, models.ErrDashboardTitleEmpty
+	}
+
+	if dash.IsFolder && dash.FolderId > 0 {
+		return nil, models.ErrDashboardFolderCannotHaveParent
+	}
+
+	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(models.RootFolderName) {
+		return nil, models.ErrDashboardFolderNameExists
 	}
 
 	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
-		Dashboard: dashboard,
+		Dashboard: dash,
 	}
 
 	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
 		return nil, models.ErrDashboardContainsInvalidAlertData
 	}
 
+	validateDashForUpdateCmd := models.ValidateDashboardForUpdateCommand{
+		OrgId:     dto.OrgId,
+		Dashboard: dash,
+		Overwrite: dto.Overwrite,
+	}
+
+	if err := bus.Dispatch(&validateDashForUpdateCmd); err != nil {
+		return nil, err
+	}
+
+	dashId := dash.Id
+
+	if dashId == 0 {
+		dashId = dash.FolderId
+	}
+
+	guard := guardian.NewDashboardGuardian(dashId, dto.OrgId, dto.User)
+	if canSave, err := guard.CanSave(); err != nil || !canSave {
+		if err != nil {
+			return nil, err
+		}
+		return nil, models.ErrDashboardUpdateAccessDenied
+	}
+
 	cmd := &models.SaveDashboardCommand{
-		Dashboard: dashboard.Data,
+		Dashboard: dash.Data,
 		Message:   dto.Message,
 		OrgId:     dto.OrgId,
 		Overwrite: dto.Overwrite,
-		UserId:    dto.UserId,
-		FolderId:  dashboard.FolderId,
-		IsFolder:  dashboard.IsFolder,
+		UserId:    dto.User.UserId,
+		FolderId:  dash.FolderId,
+		IsFolder:  dash.IsFolder,
 	}
 
 	if !dto.UpdatedAt.IsZero() {
@@ -81,7 +121,7 @@ func (dr *DashboardRepository) buildSaveDashboardCommand(dto *SaveDashboardDTO) 
 func (dr *DashboardRepository) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
 	alertCmd := alerting.UpdateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
-		UserId:    dto.UserId,
+		UserId:    dto.User.UserId,
 		Dashboard: cmd.Result,
 	}
 
@@ -93,6 +133,10 @@ func (dr *DashboardRepository) updateAlerting(cmd *models.SaveDashboardCommand, 
 }
 
 func (dr *DashboardRepository) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	dto.User = &models.SignedInUser{
+		UserId:  0,
+		OrgRole: models.ROLE_ADMIN,
+	}
 	cmd, err := dr.buildSaveDashboardCommand(dto)
 	if err != nil {
 		return nil, err
@@ -110,6 +154,29 @@ func (dr *DashboardRepository) SaveProvisionedDashboard(dto *SaveDashboardDTO, p
 	}
 
 	//alerts
+	err = dr.updateAlerting(cmd, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.Result, nil
+}
+
+func (dr *DashboardRepository) SaveFolderForProvisionedDashboards(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+	dto.User = &models.SignedInUser{
+		UserId:  0,
+		OrgRole: models.ROLE_ADMIN,
+	}
+	cmd, err := dr.buildSaveDashboardCommand(dto)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bus.Dispatch(cmd)
+	if err != nil {
+		return nil, err
+	}
+
 	err = dr.updateAlerting(cmd, dto)
 	if err != nil {
 		return nil, err

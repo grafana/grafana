@@ -207,11 +207,11 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, repo dashboards.Repository) (i
 	// dashboard folder not found. create one.
 	if err == models.ErrDashboardNotFound {
 		dash := &dashboards.SaveDashboardDTO{}
-		dash.Dashboard = models.NewDashboard(cfg.Folder)
+		dash.Dashboard = models.NewDashboardFolder(cfg.Folder)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
 		dash.OrgId = cfg.OrgId
-		dbDash, err := repo.SaveDashboard(dash)
+		dbDash, err := repo.SaveFolderForProvisionedDashboards(dash)
 		if err != nil {
 			return 0, err
 		}

@@ -233,6 +233,11 @@ func (repo *fakeDashboardRepo) SaveProvisionedDashboard(dto *dashboards.SaveDash
 	return dto.Dashboard, nil
 }
 
+func (repo *fakeDashboardRepo) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
+	repo.inserted = append(repo.inserted, dto)
+	return dto.Dashboard, nil
+}
+
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
 	for _, d := range fakeRepo.getDashboard {
 		if d.Slug == cmd.Slug {

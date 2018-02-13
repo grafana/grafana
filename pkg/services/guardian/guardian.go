@@ -7,6 +7,17 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type IDashboardGuardian interface {
+	CanSave() (bool, error)
+	CanEdit() (bool, error)
+	CanView() (bool, error)
+	CanAdmin() (bool, error)
+	HasPermission(permission m.PermissionType) (bool, error)
+	CheckPermissionBeforeRemove(permission m.PermissionType, aclIdToRemove int64) (bool, error)
+	CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error)
+	GetAcl() ([]*m.DashboardAclInfoDTO, error)
+}
+
 type DashboardGuardian struct {
 	user   *m.SignedInUser
 	dashId int64
@@ -16,7 +27,7 @@ type DashboardGuardian struct {
 	log    log.Logger
 }
 
-func NewDashboardGuardian(dashId int64, orgId int64, user *m.SignedInUser) *DashboardGuardian {
+var NewDashboardGuardian = func(dashId int64, orgId int64, user *m.SignedInUser) IDashboardGuardian {
 	return &DashboardGuardian{
 		user:   user,
 		dashId: dashId,
