@@ -4,7 +4,7 @@
 #     org_id: 1
 
 # # list of datasources to insert/update depending
-# # whats available in the datbase
+# # on what's available in the datbase
 #datasources:
 #   # <string, required> name of the datasource. Required
 # - name: Graphite
