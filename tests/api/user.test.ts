@@ -1,5 +1,5 @@
-import client from '../client';
-import * as setup from '../setup';
+import client from './client';
+import * as setup from './setup';
 
 describe('GET /api/user', () => {
   it('should return current authed user', async () => {
@@ -10,7 +10,7 @@ describe('GET /api/user', () => {
 
 describe('PUT /api/user', () => {
   it('should update current authed user', async () => {
-    const user = await setup.getUser(setup.editorUser);
+    const user = await setup.getUser(setup.editor);
     user.name = 'Updated via test';
 
     const rsp = await client.callAs(user).put('/api/user', user);
