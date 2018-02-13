@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -14,7 +15,13 @@ type configReader struct {
 	log  log.Logger
 }
 
-func parseConfigs(yamlFile []byte) ([]*DashboardsAsConfig, error) {
+func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, error) {
+	filename, _ := filepath.Abs(filepath.Join(cr.path, file.Name()))
+	yamlFile, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
 	apiVersion := &ConfigVersion{ApiVersion: 0}
 	yaml.Unmarshal(yamlFile, &apiVersion)
 
@@ -38,6 +45,7 @@ func parseConfigs(yamlFile []byte) ([]*DashboardsAsConfig, error) {
 		}
 
 		if v0 != nil {
+			cr.log.Warn("[Deprecated] the dashboard provisioning config is outdated. please upgrade", "filename", filename)
 			return convertv0ToDashboardAsConfig(v0), nil
 		}
 	}
@@ -49,7 +57,6 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 	var dashboards []*DashboardsAsConfig
 
 	files, err := ioutil.ReadDir(cr.path)
-
 	if err != nil {
 		cr.log.Error("cant read dashboard provisioning files from directory", "path", cr.path)
 		return dashboards, nil
@@ -60,13 +67,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 			continue
 		}
 
-		filename, _ := filepath.Abs(filepath.Join(cr.path, file.Name()))
-		yamlFile, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return nil, err
-		}
-
-		parsedDashboards, err := parseConfigs(yamlFile)
+		parsedDashboards, err := cr.parseConfigs(file)
 		if err != nil {
 
 		}
