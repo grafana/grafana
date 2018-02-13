@@ -52,7 +52,7 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*D
 	}
 
 	var apiVersion *ConfigVersion
-	err := yaml.Unmarshal(yamlFile, &apiVersion)
+	err = yaml.Unmarshal(yamlFile, &apiVersion)
 	if err != nil {
 		return nil, err
 	}

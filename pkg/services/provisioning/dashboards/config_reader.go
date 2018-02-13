@@ -46,7 +46,7 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 
 		if v0 != nil {
 			cr.log.Warn("[Deprecated] the dashboard provisioning config is outdated. please upgrade", "filename", filename)
-			return convertv0ToDashboardAsConfig(v0), nil
+			return mapV0ToDashboardAsConfig(v0), nil
 		}
 	}
 
