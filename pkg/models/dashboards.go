@@ -28,6 +28,8 @@ var (
 	ErrDashboardTypeMismatch                    = errors.New("Dashboard cannot be changed to a folder")
 	ErrDashboardFolderWithSameNameAsDashboard   = errors.New("Folder name cannot be the same as one of its dashboards")
 	ErrDashboardWithSameNameAsFolder            = errors.New("Dashboard name cannot be the same as folder")
+	ErrDashboardFolderNameExists                = errors.New("A folder with that name already exists")
+	ErrDashboardUpdateAccessDenied              = errors.New("Access denied to save dashboard")
 	RootFolderName                              = "General"
 )
 
@@ -92,6 +94,7 @@ func NewDashboardFolder(title string) *Dashboard {
 	folder.Data.Set("schemaVersion", 16)
 	folder.Data.Set("editable", true)
 	folder.Data.Set("hideControls", true)
+	folder.IsFolder = true
 	return folder
 }
 
@@ -242,6 +245,12 @@ type SaveProvisionedDashboardCommand struct {
 type DeleteDashboardCommand struct {
 	Id    int64
 	OrgId int64
+}
+
+type ValidateDashboardForUpdateCommand struct {
+	OrgId     int64
+	Dashboard *Dashboard
+	Overwrite bool
 }
 
 //
