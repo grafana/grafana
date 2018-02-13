@@ -124,7 +124,7 @@ func (fr *fileReader) startWalkingDisk() error {
 		}
 	}
 
-	sanityChecker := newProvisioningSanityChecker()
+	sanityChecker := newProvisioningSanityChecker(fr.Cfg.Name)
 
 	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
@@ -139,8 +139,8 @@ func (fr *fileReader) startWalkingDisk() error {
 	return nil
 }
 
-func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (map[string]string, error) {
-	provisioningMetadata := map[string]string{}
+func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
+	provisioningMetadata := provisioningMetadata{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
 	if err != nil {
 		return provisioningMetadata, err
@@ -156,8 +156,8 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	}
 
 	// keeps track of what uid's and title's we have already provisioned
-	provisioningMetadata["uid"] = dash.Dashboard.Uid
-	provisioningMetadata["title"] = dash.Dashboard.Title
+	provisioningMetadata.uid = dash.Dashboard.Uid
+	provisioningMetadata.title = dash.Dashboard.Title
 
 	if upToDate {
 		return provisioningMetadata, nil
@@ -292,25 +292,30 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 	return dash, nil
 }
 
-func newProvisioningSanityChecker() provisioningSanityChecker {
+type provisioningMetadata struct {
+	uid   string
+	title string
+}
+
+func newProvisioningSanityChecker(provisioningProvider string) provisioningSanityChecker {
 	return provisioningSanityChecker{
-		uidUsage:   map[string]uint8{},
-		titleUsage: map[string]uint8{}}
+		provisioningProvider: provisioningProvider,
+		uidUsage:             map[string]uint8{},
+		titleUsage:           map[string]uint8{}}
 }
 
 type provisioningSanityChecker struct {
-	uidUsage   map[string]uint8
-	titleUsage map[string]uint8
+	provisioningProvider string
+	uidUsage             map[string]uint8
+	titleUsage           map[string]uint8
 }
 
-func (checker provisioningSanityChecker) track(provisioningMetadata map[string]string) {
-	dashUid := provisioningMetadata["uid"]
-	dashTitle := provisioningMetadata["title"]
-	if len(dashUid) > 0 {
-		checker.uidUsage[dashUid] += 1
+func (checker provisioningSanityChecker) track(pm provisioningMetadata) {
+	if len(pm.uid) > 0 {
+		checker.uidUsage[pm.uid] += 1
 	}
-	if len(dashTitle) > 0 {
-		checker.titleUsage[dashTitle] += 1
+	if len(pm.title) > 0 {
+		checker.titleUsage[pm.title] += 1
 	}
 
 }
@@ -318,13 +323,13 @@ func (checker provisioningSanityChecker) track(provisioningMetadata map[string]s
 func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
 	for uid, times := range checker.uidUsage {
 		if times > 1 {
-			log.Error("the same 'uid' is used more than once", "uid", uid)
+			log.Error("the same 'uid' is used more than once", "uid", uid, "provider", checker.provisioningProvider)
 		}
 	}
 
 	for title, times := range checker.titleUsage {
 		if times > 1 {
-			log.Error("the same 'title' is used more than once", "title", title)
+			log.Error("the same 'title' is used more than once", "title", title, "provider", checker.provisioningProvider)
 		}
 	}
 
