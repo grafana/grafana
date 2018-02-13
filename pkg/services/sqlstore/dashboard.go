@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -312,8 +311,6 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	var res []DashboardSearchProjection
 
 	sql, params := sb.ToSql()
-	fmt.Printf("%s, %v", sql, params)
-	sqlog.Info("sql", "sql", sql, "params", params)
 	err := x.Sql(sql, params...).Find(&res)
 	if err != nil {
 		return nil, err
