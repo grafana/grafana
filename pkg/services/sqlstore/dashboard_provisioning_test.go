@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -23,11 +24,14 @@ func TestDashboardProvisioningTest(t *testing.T) {
 		}
 
 		Convey("Saving dashboards with extras", func() {
+			now := time.Now()
+
 			cmd := &models.SaveProvisionedDashboardCommand{
 				DashboardCmd: saveDashboardCmd,
 				DashboardProvisioning: &models.DashboardProvisioning{
 					Name:       "default",
 					ExternalId: "/var/grafana.json",
+					Updated:    now,
 				},
 			}
 
@@ -44,6 +48,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 				So(len(query.Result), ShouldEqual, 1)
 				So(query.Result[0].DashboardId, ShouldEqual, dashId)
+				So(query.Result[0].Updated, ShouldEqual, now)
 			})
 		})
 	})
