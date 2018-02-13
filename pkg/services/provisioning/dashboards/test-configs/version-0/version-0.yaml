@@ -1,8 +1,5 @@
-apiVersion: 1
-
-providers:
 - name: 'general dashboards'
-  orgId: 2
+  org_id: 2
   folder: 'developers'
   editable: true
   type: file

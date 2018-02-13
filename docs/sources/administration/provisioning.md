@@ -177,8 +177,11 @@ It's possible to manage dashboards in Grafana by adding one or more yaml config 
 The dashboard provider config file looks somewhat like this:
 
 ```yaml
+apiVersion: 1
+
+providers:
 - name: 'default'
-  org_id: 1
+  orgId: 1
   folder: ''
   type: file
   options:

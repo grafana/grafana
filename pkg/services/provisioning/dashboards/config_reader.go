@@ -14,6 +14,37 @@ type configReader struct {
 	log  log.Logger
 }
 
+func parseConfigs(yamlFile []byte) ([]*DashboardsAsConfig, error) {
+	apiVersion := &ConfigVersion{ApiVersion: 0}
+	yaml.Unmarshal(yamlFile, &apiVersion)
+
+	if apiVersion.ApiVersion > 0 {
+
+		v1 := &DashboardAsConfigV1{}
+		err := yaml.Unmarshal(yamlFile, &v1)
+		if err != nil {
+			return nil, err
+		}
+
+		if v1 != nil {
+			return v1.mapToDashboardAsConfig(), nil
+		}
+
+	} else {
+		var v0 []*DashboardsAsConfigV0
+		err := yaml.Unmarshal(yamlFile, &v0)
+		if err != nil {
+			return nil, err
+		}
+
+		if v0 != nil {
+			return convertv0ToDashboardAsConfig(v0), nil
+		}
+	}
+
+	return []*DashboardsAsConfig{}, nil
+}
+
 func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 	var dashboards []*DashboardsAsConfig
 
@@ -35,13 +66,14 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 			return nil, err
 		}
 
-		var dashCfg []*DashboardsAsConfig
-		err = yaml.Unmarshal(yamlFile, &dashCfg)
+		parsedDashboards, err := parseConfigs(yamlFile)
 		if err != nil {
-			return nil, err
+
 		}
 
-		dashboards = append(dashboards, dashCfg...)
+		if len(parsedDashboards) > 0 {
+			dashboards = append(dashboards, parsedDashboards...)
+		}
 	}
 
 	for i := range dashboards {
