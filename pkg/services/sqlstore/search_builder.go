@@ -153,10 +153,7 @@ func (sb *SearchBuilder) buildMainQuery() {
 	sb.sql.WriteString(` WHERE `)
 	sb.buildSearchWhereClause()
 
-	sb.sql.WriteString(`
-		LIMIT ?) as ids
-	INNER JOIN dashboard on ids.id = dashboard.id
-	`)
+	sb.sql.WriteString(` LIMIT ?) as ids INNER JOIN dashboard on ids.id = dashboard.id `)
 	sb.params = append(sb.params, sb.limit)
 }
 
