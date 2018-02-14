@@ -16,33 +16,22 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-type fakeDashboardRepo struct {
-	inserted     []*dashboards.SaveDashboardDTO
-	provisioned  []*m.DashboardProvisioning
-	getDashboard []*m.Dashboard
+type fakeDashboardService struct {
+	inserted []*dashboards.SaveDashboardDTO
 }
 
-func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardDTO) (*m.Dashboard, error) {
-	repo.inserted = append(repo.inserted, json)
-	return json.Dashboard, nil
-}
-
-func (repo *fakeDashboardRepo) GetProvisionedDashboardData(name string) ([]*m.DashboardProvisioning, error) {
-	return repo.provisioned, nil
-}
-
-func (repo *fakeDashboardRepo) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *m.DashboardProvisioning) (*m.Dashboard, error) {
-	repo.inserted = append(repo.inserted, dto)
-	repo.provisioned = append(repo.provisioned, provisioning)
+func (s *fakeDashboardService) SaveDashboard(dto *dashboards.SaveDashboardDTO) (*m.Dashboard, error) {
+	s.inserted = append(s.inserted, dto)
 	return dto.Dashboard, nil
 }
 
-func (repo *fakeDashboardRepo) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*m.Dashboard, error) {
-	repo.inserted = append(repo.inserted, dto)
-	return dto.Dashboard, nil
+func mockDashboardService() *fakeDashboardService {
+	mock := fakeDashboardService{}
+	dashboards.NewDashboardService = func() dashboards.IDashboardService {
+		return &mock
+	}
+	return &mock
 }
-
-var fakeRepo *fakeDashboardRepo
 
 // This tests two main scenarios. If a user has access to execute an action on a dashboard:
 // 1. and the dashboard is in a folder which does not have an acl
@@ -838,10 +827,14 @@ func postDashboardScenario(desc string, url string, routePattern string, role m.
 			return PostDashboard(c, cmd)
 		})
 
-		fakeRepo = &fakeDashboardRepo{}
-		dashboards.SetRepository(fakeRepo)
+		origNewDashboardService := dashboards.NewDashboardService
+		mockDashboardService()
 
 		sc.m.Post(routePattern, sc.defaultHandler)
+
+		defer func() {
+			dashboards.NewDashboardService = origNewDashboardService
+		}()
 
 		fn(sc)
 	})

@@ -25,10 +25,10 @@ var (
 )
 
 type fileReader struct {
-	Cfg           *DashboardsAsConfig
-	Path          string
-	log           log.Logger
-	dashboardRepo dashboards.Repository
+	Cfg              *DashboardsAsConfig
+	Path             string
+	log              log.Logger
+	dashboardService dashboards.IDashboardProvisioningService
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -48,10 +48,10 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}
 
 	return &fileReader{
-		Cfg:           cfg,
-		Path:          path,
-		log:           log,
-		dashboardRepo: dashboards.GetRepository(),
+		Cfg:              cfg,
+		Path:             path,
+		log:              log,
+		dashboardService: dashboards.NewDashboardProvisioningService(),
 	}, nil
 }
 
@@ -89,12 +89,12 @@ func (fr *fileReader) startWalkingDisk() error {
 		}
 	}
 
-	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardRepo)
+	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardService)
 	if err != nil && err != ErrFolderNameMissing {
 		return err
 	}
 
-	provisionedDashboardRefs, err := getProvisionedDashboardByPath(fr.dashboardRepo, fr.Cfg.Name)
+	provisionedDashboardRefs, err := getProvisionedDashboardByPath(fr.dashboardService, fr.Cfg.Name)
 	if err != nil {
 		return err
 	}
@@ -174,12 +174,12 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 
 	fr.log.Debug("saving new dashboard", "file", path)
 	dp := &models.DashboardProvisioning{ExternalId: path, Name: fr.Cfg.Name, Updated: resolvedFileInfo.ModTime()}
-	_, err = fr.dashboardRepo.SaveProvisionedDashboard(dash, dp)
+	_, err = fr.dashboardService.SaveProvisionedDashboard(dash, dp)
 	return provisioningMetadata, err
 }
 
-func getProvisionedDashboardByPath(repo dashboards.Repository, name string) (map[string]*models.DashboardProvisioning, error) {
-	arr, err := repo.GetProvisionedDashboardData(name)
+func getProvisionedDashboardByPath(service dashboards.IDashboardProvisioningService, name string) (map[string]*models.DashboardProvisioning, error) {
+	arr, err := service.GetProvisionedDashboardData(name)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func getProvisionedDashboardByPath(repo dashboards.Repository, name string) (map
 	return byPath, nil
 }
 
-func getOrCreateFolderId(cfg *DashboardsAsConfig, repo dashboards.Repository) (int64, error) {
+func getOrCreateFolderId(cfg *DashboardsAsConfig, service dashboards.IDashboardProvisioningService) (int64, error) {
 	if cfg.Folder == "" {
 		return 0, ErrFolderNameMissing
 	}
@@ -211,7 +211,7 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, repo dashboards.Repository) (i
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
 		dash.OrgId = cfg.OrgId
-		dbDash, err := repo.SaveFolderForProvisionedDashboards(dash)
+		dbDash, err := service.SaveFolderForProvisionedDashboards(dash)
 		if err != nil {
 			return 0, err
 		}

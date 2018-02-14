@@ -13,8 +13,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestDashboardRepository(t *testing.T) {
-	repo := DashboardRepository{}
+func TestDashboardService(t *testing.T) {
+	service := DashboardService{}
 
 	Convey("Validate create/update dashboard", t, func() {
 		bus.ClearBusHandlers()
@@ -25,7 +25,7 @@ func TestDashboardRepository(t *testing.T) {
 
 			for _, title := range titles {
 				dto.Dashboard = m.NewDashboard(title)
-				_, err := repo.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto)
 				So(err, ShouldEqual, m.ErrDashboardTitleEmpty)
 			}
 		})
@@ -33,13 +33,13 @@ func TestDashboardRepository(t *testing.T) {
 		Convey("Should return validation error if it's a folder and have a folder id", func() {
 			dto.Dashboard = m.NewDashboardFolder("Folder")
 			dto.Dashboard.FolderId = 1
-			_, err := repo.SaveDashboard(dto)
+			_, err := service.SaveDashboard(dto)
 			So(err, ShouldEqual, m.ErrDashboardFolderCannotHaveParent)
 		})
 
 		Convey("Should return validation error if folder is named General", func() {
 			dto.Dashboard = m.NewDashboardFolder("General")
-			_, err := repo.SaveDashboard(dto)
+			_, err := service.SaveDashboard(dto)
 			So(err, ShouldEqual, m.ErrDashboardFolderNameExists)
 		})
 
@@ -49,7 +49,7 @@ func TestDashboardRepository(t *testing.T) {
 			})
 
 			dto.Dashboard = m.NewDashboard("Dash")
-			_, err := repo.SaveDashboard(dto)
+			_, err := service.SaveDashboard(dto)
 			So(err, ShouldEqual, m.ErrDashboardContainsInvalidAlertData)
 		})
 	})
@@ -60,7 +60,7 @@ func TestDashboardRepository(t *testing.T) {
 			return nil
 		})
 
-		permissionToSaveDashboardScenario(func(sc *dashboardGuardianScenarioContext) {
+		permissionToSaveDashboardScenario(func(sc *scenarioContext) {
 			Convey("When validate dashboard for update returns error", func() {
 				dash := m.NewDashboard("Dash")
 				dash.Id = 1
@@ -73,7 +73,7 @@ func TestDashboardRepository(t *testing.T) {
 				dto := &SaveDashboardDTO{
 					Dashboard: m.NewDashboard("Dash"),
 				}
-				_, err := repo.SaveDashboard(dto)
+				_, err := service.SaveDashboard(dto)
 
 				Convey("Should return error", func() {
 					So(err, ShouldEqual, m.ErrDashboardNotFound)
@@ -85,7 +85,7 @@ func TestDashboardRepository(t *testing.T) {
 			})
 		})
 
-		noPermissionToSaveDashboardScenario(func(sc *dashboardGuardianScenarioContext) {
+		noPermissionToSaveDashboardScenario(func(sc *scenarioContext) {
 			dash := m.NewDashboard("Dash")
 			dash.Id = 1
 			dash.Uid = "dash"
@@ -98,7 +98,7 @@ func TestDashboardRepository(t *testing.T) {
 			dto := &SaveDashboardDTO{
 				Dashboard: m.NewDashboard("Dash"),
 			}
-			_, err := repo.SaveDashboard(dto)
+			_, err := service.SaveDashboard(dto)
 
 			Convey("Should return access denied error", func() {
 				So(err, ShouldEqual, m.ErrDashboardUpdateAccessDenied)
@@ -174,18 +174,18 @@ func TestDashboardRepository(t *testing.T) {
 	// 		dash.Uid = "non-existing"
 	// 		item.Dashboard = dash
 
-	// 		_, err := repo.SaveDashboard(&item)
+	// 		_, err := service.SaveDashboard(&item)
 	// 		expected := m.Errors.NotFound(m.ErrDashboardNotFound)
 	// 		soNotFoundErrorShouldEqual(err, expected)
 	// 	})
 
-	// 	permissionToSaveDashboardScenario(func(sc *dashboardGuardianScenarioContext) {
+	// 	permissionToSaveDashboardScenario(func(sc *scenarioContext) {
 	// 		Convey("Should populate uid from existing when updating dashboard and providing id without uid", func() {
 	// 			dash := m.NewDashboard("Dash")
 	// 			dash.Id = savedDash.Id
 	// 			item.Dashboard = dash
 
-	// 			repo.SaveDashboard(&item)
+	// 			service.SaveDashboard(&item)
 	// 			model := saveDashboardCmd.GetDashboardModel()
 	// 			So(model.Uid, ShouldEqual, savedDash.Uid)
 	// 		})
@@ -309,32 +309,57 @@ func (g *mockDashboardGuarder) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	return nil, nil
 }
 
-type dashboardGuardianScenarioContext struct {
+type scenarioContext struct {
 	dashboardGuardianMock *mockDashboardGuarder
 }
 
-type dashboardGuardianScenarioFunc func(c *dashboardGuardianScenarioContext)
+type scenarioFunc func(c *scenarioContext)
 
-func noPermissionToSaveDashboardScenario(fn dashboardGuardianScenarioFunc) {
+func noPermissionToSaveDashboardScenario(fn scenarioFunc) {
 	mock := &mockDashboardGuarder{
 		canSave: false,
 	}
 	dashboardGuardianScenario("Given user has no permission to save", mock, fn)
 }
 
-func permissionToSaveDashboardScenario(fn dashboardGuardianScenarioFunc) {
+func permissionToSaveDashboardScenario(fn scenarioFunc) {
 	mock := &mockDashboardGuarder{
 		canSave: true,
 	}
 	dashboardGuardianScenario("Given user has permission to save", mock, fn)
 }
 
-func dashboardGuardianScenario(desc string, mock *mockDashboardGuarder, fn dashboardGuardianScenarioFunc) {
+func dashboardGuardianScenario(desc string, mock *mockDashboardGuarder, fn scenarioFunc) {
 	Convey(desc, func() {
 		origNewDashboardGuardian := guardian.NewDashboardGuardian
 		mockDashboardGuardian(mock)
 
-		sc := &dashboardGuardianScenarioContext{
+		sc := &scenarioContext{
+			dashboardGuardianMock: mock,
+		}
+
+		defer func() {
+			guardian.NewDashboardGuardian = origNewDashboardGuardian
+		}()
+
+		fn(sc)
+	})
+}
+
+func withPermissionToSave(fn scenarioFunc) {
+	mock := &mockDashboardGuarder{
+		canSave: true,
+	}
+	dashboardGuardianScenario("Given user has permission to save", mock, fn)
+}
+
+func repositoryScenario(desc string, mock *mockDashboardGuarder, fn scenarioFunc) {
+	Convey(desc, func() {
+		bus.ClearBusHandlers()
+		origNewDashboardGuardian := guardian.NewDashboardGuardian
+		mockDashboardGuardian(mock)
+
+		sc := &scenarioContext{
 			dashboardGuardianMock: mock,
 		}
 

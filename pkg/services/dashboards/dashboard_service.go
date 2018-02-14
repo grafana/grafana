@@ -10,21 +10,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-type Repository interface {
+type IDashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
+}
+
+type IDashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 }
 
-var repositoryInstance Repository
-
-func GetRepository() Repository {
-	return repositoryInstance
+var NewDashboardService = func() IDashboardService {
+	return &DashboardService{}
 }
 
-func SetRepository(rep Repository) {
-	repositoryInstance = rep
+var NewDashboardProvisioningService = func() IDashboardProvisioningService {
+	return &DashboardService{}
 }
 
 type SaveDashboardDTO struct {
@@ -36,9 +37,9 @@ type SaveDashboardDTO struct {
 	Dashboard *models.Dashboard
 }
 
-type DashboardRepository struct{}
+type DashboardService struct{}
 
-func (dr *DashboardRepository) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+func (dr *DashboardService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
 	cmd := &models.GetProvisionedDashboardDataQuery{Name: name}
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -48,7 +49,7 @@ func (dr *DashboardRepository) GetProvisionedDashboardData(name string) ([]*mode
 	return cmd.Result, nil
 }
 
-func (dr *DashboardRepository) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*models.SaveDashboardCommand, error) {
+func (dr *DashboardService) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.Title = strings.TrimSpace(dash.Title)
@@ -118,7 +119,7 @@ func (dr *DashboardRepository) buildSaveDashboardCommand(dto *SaveDashboardDTO) 
 	return cmd, nil
 }
 
-func (dr *DashboardRepository) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
+func (dr *DashboardService) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
 	alertCmd := alerting.UpdateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
 		UserId:    dto.User.UserId,
@@ -132,7 +133,7 @@ func (dr *DashboardRepository) updateAlerting(cmd *models.SaveDashboardCommand, 
 	return nil
 }
 
-func (dr *DashboardRepository) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+func (dr *DashboardService) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
@@ -162,7 +163,7 @@ func (dr *DashboardRepository) SaveProvisionedDashboard(dto *SaveDashboardDTO, p
 	return cmd.Result, nil
 }
 
-func (dr *DashboardRepository) SaveFolderForProvisionedDashboards(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+func (dr *DashboardService) SaveFolderForProvisionedDashboards(dto *SaveDashboardDTO) (*models.Dashboard, error) {
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
@@ -185,7 +186,7 @@ func (dr *DashboardRepository) SaveFolderForProvisionedDashboards(dto *SaveDashb
 	return cmd.Result, nil
 }
 
-func (dr *DashboardRepository) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+func (dr *DashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
 	cmd, err := dr.buildSaveDashboardCommand(dto)
 	if err != nil {
 		return nil, err
