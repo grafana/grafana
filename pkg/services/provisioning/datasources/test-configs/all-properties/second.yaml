@@ -3,5 +3,5 @@ datasources:
   - name: name2
     type: type2
     access: proxy
-    org_id: 2
+    orgId: 2
     url: url2

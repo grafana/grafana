@@ -81,13 +81,16 @@ If you are running multiple instances of Grafana you might run into problems if 
 
 ### Example datasource config file
 ```yaml
+# config file version
+apiVersion: 1
+
 # list of datasources that should be deleted from the database
-delete_datasources:
+deleteDatasources:
   - name: Graphite
-    org_id: 1
+    orgId: 1
 
 # list of datasources to insert/update depending
-# whats available in the datbase
+# whats available in the database
 datasources:
   # <string, required> name of the datasource. Required
 - name: Graphite
@@ -95,8 +98,8 @@ datasources:
   type: graphite
   # <string, required> access mode. direct or proxy. Required
   access: proxy
-  # <int> org id. will default to org_id 1 if not specified
-  org_id: 1
+  # <int> org id. will default to orgId 1 if not specified
+  orgId: 1
   # <string> url
   url: http://localhost:8080
   # <string> database password, if used
@@ -106,22 +109,22 @@ datasources:
   # <string> database name, if used
   database:
   # <bool> enable/disable basic auth
-  basic_auth:
+  basicAuth:
   # <string> basic auth username
-  basic_auth_user:
+  basicAuthUser:
   # <string> basic auth password
-  basic_auth_password:
+  basicAuthPassword:
   # <bool> enable/disable with credentials headers
-  with_credentials:
+  withCredentials:
   # <bool> mark as default datasource. Max one per org
-  is_default:
+  isDefault:
   # <map> fields that will be converted to json and stored in json_data
-  json_data:
+  jsonData:
      graphiteVersion: "1.1"
      tlsAuth: true
      tlsAuthWithCACert: true
   # <string> json object of data that will be encrypted.
-  secure_json_data:
+  secureJsonData:
     tlsCACert: "..."
     tlsClientCert: "..."
     tlsClientKey: "..."
@@ -174,8 +177,11 @@ It's possible to manage dashboards in Grafana by adding one or more yaml config 
 The dashboard provider config file looks somewhat like this:
 
 ```yaml
+apiVersion: 1
+
+providers:
 - name: 'default'
-  org_id: 1
+  orgId: 1
   folder: ''
   type: file
   options:

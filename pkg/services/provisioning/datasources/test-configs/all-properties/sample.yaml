@@ -1,3 +1,6 @@
+# Should not be included
+
+
 apiVersion: 1
 
 datasources:
@@ -13,7 +16,6 @@ datasources:
     basicAuthUser: basic_auth_user
     basicAuthPassword: basic_auth_password
     withCredentials: true
-    isDefault: true
     jsonData:
       graphiteVersion: "1.1"
       tlsAuth: true

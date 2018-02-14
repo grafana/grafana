@@ -1,15 +1,10 @@
 apiVersion: 1
 
 providers:
-- name: 'general dashboards'
+- name: 'gasdf'
   orgId: 2
   folder: 'developers'
   editable: true
-  type: file
-  options:
-    path: /var/lib/grafana/dashboards
-
-- name: 'default'
   type: file
   options:
     path: /var/lib/grafana/dashboards

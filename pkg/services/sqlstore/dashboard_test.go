@@ -554,7 +554,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					Title:        "1 test dash folder",
 					OrgId:        1,
-					SignedInUser: &m.SignedInUser{OrgId: 1},
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
 				}
 
 				err := SearchDashboards(&query)
@@ -571,7 +571,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
 					FolderIds:    []int64{savedFolder.Id},
-					SignedInUser: &m.SignedInUser{OrgId: 1},
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
 				}
 
 				err := SearchDashboards(&query)
@@ -591,7 +591,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				Convey("should be able to find two dashboards by id", func() {
 					query := search.FindPersistedDashboardsQuery{
 						DashboardIds: []int64{2, 3},
-						SignedInUser: &m.SignedInUser{OrgId: 1},
+						SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
 					}
 
 					err := SearchDashboards(&query)
@@ -620,7 +620,10 @@ func TestDashboardDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to search for starred dashboards", func() {
-					query := search.FindPersistedDashboardsQuery{SignedInUser: &m.SignedInUser{UserId: 10, OrgId: 1}, IsStarred: true}
+					query := search.FindPersistedDashboardsQuery{
+						SignedInUser: &m.SignedInUser{UserId: 10, OrgId: 1, OrgRole: m.ROLE_EDITOR},
+						IsStarred:    true,
+					}
 					err := SearchDashboards(&query)
 
 					So(err, ShouldBeNil)
