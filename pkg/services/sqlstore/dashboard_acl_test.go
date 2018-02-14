@@ -41,6 +41,23 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 			})
 
+			Convey("Given dashboard folder with removed default permissions", func() {
+				err := UpdateDashboardAcl(&m.UpdateDashboardAclCommand{
+					DashboardId: savedFolder.Id,
+					Items:       []*m.DashboardAcl{},
+				})
+				So(err, ShouldBeNil)
+
+				Convey("When reading dashboard acl should return no acl items", func() {
+					query := m.GetDashboardAclInfoListQuery{DashboardId: childDash.Id, OrgId: 1}
+
+					err := GetDashboardAclInfoList(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 0)
+				})
+			})
+
 			Convey("Given dashboard folder permission", func() {
 				err := SetDashboardAcl(&m.SetDashboardAclCommand{
 					OrgId:       1,

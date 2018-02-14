@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -40,7 +39,7 @@ func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
 
 		// Update dashboard HasAcl flag
 		dashboard := m.Dashboard{HasAcl: true}
-		if _, err := sess.Cols("has_acl").Where("id=? OR folder_id=?", cmd.DashboardId, cmd.DashboardId).Update(&dashboard); err != nil {
+		if _, err := sess.Cols("has_acl").Where("id=?", cmd.DashboardId).Update(&dashboard); err != nil {
 			return err
 		}
 		return nil
@@ -134,6 +133,8 @@ func RemoveDashboardAcl(cmd *m.RemoveDashboardAclCommand) error {
 func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 	var err error
 
+	falseStr := dialect.BooleanStr(false)
+
 	if query.DashboardId == 0 {
 		sql := `SELECT
 		da.id,
@@ -151,18 +152,13 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 		'' as title,
 		'' as slug,
 		'' as uid,` +
-			dialect.BooleanStr(false) + ` AS is_folder
+			falseStr + ` AS is_folder
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
 		query.Result = make([]*m.DashboardAclInfoDTO, 0)
 		err = x.SQL(sql).Find(&query.Result)
 
 	} else {
-		dashboardFilter := fmt.Sprintf(`IN (
-			SELECT %d
-			UNION
-			SELECT folder_id from dashboard where id = %d
-		  )`, query.DashboardId, query.DashboardId)
 
 		rawSQL := `
 			-- get permissions for the dashboard and its parent folder
@@ -183,41 +179,21 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 				d.slug,
 				d.uid,
 				d.is_folder
-		  FROM` + dialect.Quote("dashboard_acl") + ` as da
-				LEFT OUTER JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
-				LEFT OUTER JOIN team ug on ug.id = da.team_id
-				LEFT OUTER JOIN dashboard d on da.dashboard_id = d.id
-			WHERE dashboard_id ` + dashboardFilter + ` AND da.org_id = ?
-
-			-- Also include default permissions if folder or dashboard field "has_acl" is false
-
-			UNION
-				SELECT
-					da.id,
-					da.org_id,
-					da.dashboard_id,
-					da.user_id,
-					da.team_id,
-					da.permission,
-					da.role,
-					da.created,
-					da.updated,
-					'' as user_login,
-					'' as user_email,
-					'' as team,
-					folder.title,
-					folder.slug,
-					folder.uid,
-					folder.is_folder
-				FROM dashboard_acl as da,
-				dashboard as dash
-				LEFT OUTER JOIN dashboard folder on dash.folder_id = folder.id
-					WHERE
-						dash.id = ? AND (
-							dash.has_acl = ` + dialect.BooleanStr(false) + ` or
-							folder.has_acl = ` + dialect.BooleanStr(false) + `
-						) AND
-						da.dashboard_id = -1
+			FROM dashboard as d
+				LEFT JOIN dashboard folder on folder.id = d.folder_id
+				LEFT JOIN dashboard_acl AS da ON
+				da.dashboard_id = d.id OR
+				da.dashboard_id = d.folder_id OR
+				(
+					-- include default permissions -->
+					da.org_id = -1 AND (
+					  (folder.id IS NOT NULL AND folder.has_acl = ` + falseStr + `) OR
+					  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
+					)
+				)
+				LEFT JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
+				LEFT JOIN team ug on ug.id = da.team_id
+			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
 			ORDER BY 1 ASC
 			`
 
