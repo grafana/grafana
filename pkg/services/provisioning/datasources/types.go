@@ -111,6 +111,10 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 
 	r.ApiVersion = apiVersion
 
+	if cfg == nil {
+		return r
+	}
+
 	for _, ds := range cfg.Datasources {
 		r.Datasources = append(r.Datasources, &DataSourceFromConfig{
 			OrgId:             ds.OrgId,
@@ -147,6 +151,10 @@ func (cfg *DatasourcesAsConfigV0) mapToDatasourceFromConfig(apiVersion int64) *D
 	r := &DatasourcesAsConfig{}
 
 	r.ApiVersion = apiVersion
+
+	if cfg == nil {
+		return r
+	}
 
 	for _, ds := range cfg.Datasources {
 		r.Datasources = append(r.Datasources, &DataSourceFromConfig{
