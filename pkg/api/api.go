@@ -269,7 +269,6 @@ func (hs *HttpServer) registerRoutes() {
 				dashIdRoute.Group("/acl", func(aclRoute RouteRegister) {
 					aclRoute.Get("/", wrap(GetDashboardAclList))
 					aclRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardAcl))
-					aclRoute.Delete("/:aclId", wrap(DeleteDashboardAcl))
 				})
 			})
 		})

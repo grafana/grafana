@@ -84,33 +84,3 @@ func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCom
 
 	return ApiSuccess("Dashboard acl updated")
 }
-
-func DeleteDashboardAcl(c *middleware.Context) Response {
-	dashId := c.ParamsInt64(":dashboardId")
-	aclId := c.ParamsInt64(":aclId")
-
-	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
-	if rsp != nil {
-		return rsp
-	}
-
-	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
-	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
-		return dashboardGuardianResponse(err)
-	}
-
-	if okToDelete, err := guardian.CheckPermissionBeforeRemove(m.PERMISSION_ADMIN, aclId); err != nil || !okToDelete {
-		if err != nil {
-			return ApiError(500, "Error while checking dashboard permissions", err)
-		}
-
-		return ApiError(403, "Cannot remove own admin permission for a folder", nil)
-	}
-
-	cmd := m.RemoveDashboardAclCommand{OrgId: c.OrgId, AclId: aclId}
-	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to delete permission for user", err)
-	}
-
-	return Json(200, "")
-}
