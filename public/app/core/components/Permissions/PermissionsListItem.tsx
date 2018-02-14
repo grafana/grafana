@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { observer } from 'mobx-react';
 import DescriptionPicker from 'app/core/components/Picker/DescriptionPicker';
 import { permissionOptions } from 'app/stores/PermissionsStore/PermissionsStore';
@@ -6,6 +6,16 @@ import { permissionOptions } from 'app/stores/PermissionsStore/PermissionsStore'
 const setClassNameHelper = inherited => {
   return inherited ? 'gf-form-disabled' : '';
 };
+
+function ItemAvatar({ item }) {
+  if (item.userAvatarUrl) {
+    return <img className="filter-table__avatar" src={item.userAvatarUrl} />;
+  }
+  if (item.teamAvatarUrl) {
+    return <img className="filter-table__avatar" src={item.teamAvatarUrl} />;
+  }
+  return <span className={item.icon} />;
+}
 
 export default observer(({ item, removeItem, permissionChanged, itemIndex, folderInfo }) => {
   const handleRemoveItem = evt => {
@@ -18,13 +28,14 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
   };
 
   const inheritedFromRoot = item.dashboardId === -1 && folderInfo && folderInfo.id === 0;
+  console.log(item.name);
 
   return (
     <tr className={setClassNameHelper(item.inherited)}>
-      <td style={{ width: '100%' }}>
-        <i className={`fa--permissions-list ${item.icon}`} />
-        <span dangerouslySetInnerHTML={{ __html: item.nameHtml }} />
+      <td style={{ width: '1%' }}>
+        <ItemAvatar item={item} />
       </td>
+      <td style={{ width: '90%' }}>{item.name}</td>
       <td>
         {item.inherited &&
           folderInfo && (

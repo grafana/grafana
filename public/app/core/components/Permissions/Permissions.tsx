@@ -15,9 +15,8 @@ export interface DashboardAcl {
   permissionName?: string;
   role?: string;
   icon?: string;
-  nameHtml?: string;
+  name?: string;
   inherited?: boolean;
-  sortName?: string;
   sortRank?: number;
 }
 

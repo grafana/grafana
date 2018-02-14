@@ -1,4 +1,4 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
 import DescriptionPicker from 'app/core/components/Picker/DescriptionPicker';
 import { permissionOptions } from 'app/stores/PermissionsStore/PermissionsStore';
 
@@ -12,10 +12,10 @@ export default class DisabledPermissionListItem extends Component<IProps, any> {
 
     return (
       <tr className="gf-form-disabled">
-        <td style={{ width: '100%' }}>
+        <td style={{ width: '1%' }}>
           <i className={`fa--permissions-list ${item.icon}`} />
-          <span dangerouslySetInnerHTML={{ __html: item.nameHtml }} />
         </td>
+        <td style={{ width: '90%' }}>{item.name}</td>
         <td />
         <td className="query-keyword">Can</td>
         <td>

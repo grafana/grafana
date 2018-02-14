@@ -30,6 +30,8 @@ func GetDashboardAclList(c *middleware.Context) Response {
 	}
 
 	for _, perm := range acl {
+		perm.UserAvatarUrl = dtos.GetGravatarUrl(perm.UserEmail)
+		perm.TeamAvatarUrl = dtos.GetGravatarUrl(perm.TeamEmail)
 		if perm.Slug != "" {
 			perm.Url = m.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}

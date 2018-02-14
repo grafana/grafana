@@ -231,19 +231,14 @@ const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boo
 
   item.sortRank = 0;
   if (item.userId > 0) {
-    item.icon = 'fa fa-fw fa-user';
-    item.nameHtml = item.userLogin;
-    item.sortName = item.userLogin;
+    item.name = item.userLogin;
     item.sortRank = 10;
   } else if (item.teamId > 0) {
-    item.icon = 'fa fa-fw fa-users';
-    item.nameHtml = item.team;
-    item.sortName = item.team;
+    item.name = item.team;
     item.sortRank = 20;
   } else if (item.role) {
     item.icon = 'fa fa-fw fa-street-view';
-    item.nameHtml = `Everyone with <span class="query-keyword">${item.role}</span> Role`;
-    item.sortName = item.role;
+    item.name = item.role;
     item.sortRank = 30;
     if (item.role === 'Viewer') {
       item.sortRank += 1;

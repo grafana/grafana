@@ -92,6 +92,7 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 				u.login AS user_login,
 				u.email AS user_email,
 				ug.name AS team,
+				ug.email AS team_email,
 				d.title,
 				d.slug,
 				d.uid,
