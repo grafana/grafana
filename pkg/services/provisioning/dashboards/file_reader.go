@@ -105,24 +105,7 @@ func (fr *fileReader) startWalkingDisk() error {
 		return err
 	}
 
-	// find dashboards to delete since json file is missing
-	var dashboardToDelete []int64
-	for path, provisioningData := range provisionedDashboardRefs {
-		_, existsOnDisk := filesFoundOnDisk[path]
-		if !existsOnDisk {
-			dashboardToDelete = append(dashboardToDelete, provisioningData.DashboardId)
-		}
-	}
-
-	// delete dashboard that are missing json file
-	for _, dashboardId := range dashboardToDelete {
-		fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardId)
-		cmd := &models.DeleteDashboardCommand{OrgId: fr.Cfg.OrgId, Id: dashboardId}
-		err := bus.Dispatch(cmd)
-		if err != nil {
-			fr.log.Error("failed to delete dashboard", "id", cmd.Id)
-		}
-	}
+	fr.deleteDashboardIfFileIsMissing(provisionedDashboardRefs, filesFoundOnDisk)
 
 	sanityChecker := newProvisioningSanityChecker(fr.Cfg.Name)
 
@@ -137,6 +120,29 @@ func (fr *fileReader) startWalkingDisk() error {
 	sanityChecker.logWarnings(fr.log)
 
 	return nil
+}
+func (fr *fileReader) deleteDashboardIfFileIsMissing(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
+	if fr.Cfg.DisableDeletion {
+		return
+	}
+
+	// find dashboards to delete since json file is missing
+	var dashboardToDelete []int64
+	for path, provisioningData := range provisionedDashboardRefs {
+		_, existsOnDisk := filesFoundOnDisk[path]
+		if !existsOnDisk {
+			dashboardToDelete = append(dashboardToDelete, provisioningData.DashboardId)
+		}
+	}
+	// delete dashboard that are missing json file
+	for _, dashboardId := range dashboardToDelete {
+		fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardId)
+		cmd := &models.DeleteDashboardCommand{OrgId: fr.Cfg.OrgId, Id: dashboardId}
+		err := bus.Dispatch(cmd)
+		if err != nil {
+			fr.log.Error("failed to delete dashboard", "id", cmd.Id)
+		}
+	}
 }
 
 func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
