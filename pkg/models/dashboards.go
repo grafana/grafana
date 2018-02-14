@@ -229,7 +229,7 @@ type DashboardProvisioning struct {
 	DashboardId int64
 	Name        string
 	ExternalId  string
-	Updated     time.Time
+	Updated     int64
 }
 
 type SaveProvisionedDashboardCommand struct {

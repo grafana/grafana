@@ -147,7 +147,7 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	}
 
 	provisionedData, alreadyProvisioned := provisionedDashboardRefs[path]
-	upToDate := alreadyProvisioned && provisionedData.Updated.Unix() == resolvedFileInfo.ModTime().Unix()
+	upToDate := alreadyProvisioned && provisionedData.Updated == resolvedFileInfo.ModTime().Unix()
 
 	dash, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderId)
 	if err != nil {
@@ -173,7 +173,7 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	}
 
 	fr.log.Debug("saving new dashboard", "file", path)
-	dp := &models.DashboardProvisioning{ExternalId: path, Name: fr.Cfg.Name, Updated: resolvedFileInfo.ModTime()}
+	dp := &models.DashboardProvisioning{ExternalId: path, Name: fr.Cfg.Name, Updated: resolvedFileInfo.ModTime().Unix()}
 	_, err = fr.dashboardRepo.SaveProvisionedDashboard(dash, dp)
 	return provisioningMetadata, err
 }
