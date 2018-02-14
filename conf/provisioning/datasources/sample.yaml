@@ -1,3 +1,6 @@
+# This file is only an example.
+# Grafana will never read sample.yaml files
+
 # # config file version
 # apiVersion: 1
 

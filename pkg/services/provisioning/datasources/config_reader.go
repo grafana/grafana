@@ -24,7 +24,7 @@ func (cr *configReader) readConfig(path string) ([]*DatasourcesAsConfig, error) 
 	}
 
 	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
+		if (strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml")) && file.Name() != "sample.yaml" {
 			datasource, err := cr.parseDatasourceConfig(path, file)
 			if err != nil {
 				return nil, err

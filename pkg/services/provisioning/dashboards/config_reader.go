@@ -63,7 +63,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 	}
 
 	for _, file := range files {
-		if !strings.HasSuffix(file.Name(), ".yaml") && !strings.HasSuffix(file.Name(), ".yml") {
+		if (!strings.HasSuffix(file.Name(), ".yaml") && !strings.HasSuffix(file.Name(), ".yml")) || file.Name() == "sample.yaml" {
 			continue
 		}
 
