@@ -34,12 +34,14 @@ describe('grafanaGraph', function() {
                   {
                     min: null,
                     max: null,
+                    zero: false,
                     format: 'short',
                     logBase: 1,
                   },
                   {
                     min: null,
                     max: null,
+                    zero: false,
                     format: 'short',
                     logBase: 1,
                   },
@@ -407,4 +409,31 @@ describe('grafanaGraph', function() {
     },
     10
   );
+
+  graphScenario('when graph place above or below zero with enabled y-zero', function(ctx) {
+    ctx.setup(function(ctrl, data) {
+      ctrl.panel.yaxes[0].zero = true;
+      ctrl.panel.yaxes[1].zero = true;
+      data[0] = new TimeSeries({
+        datapoints: [[100, 1], [200, 2]],
+        alias: 'series1',
+      });
+      data[0].yaxis = 1;
+      data[1] = new TimeSeries({
+        datapoints: [[-100, 1], [-200, 2]],
+        alias: 'series2',
+      });
+      data[1].yaxis = 2;
+    });
+
+    it('should set min to zero', function() {
+      var y1axis = ctx.plotOptions.yaxes[0];
+      expect(y1axis.min).to.be(0);
+    });
+
+    it('should set max to zero', function() {
+      var y2axis = ctx.plotOptions.yaxes[1];
+      expect(y2axis.max).to.be(0);
+    });
+  });
 });

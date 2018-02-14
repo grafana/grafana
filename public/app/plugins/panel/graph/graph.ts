@@ -152,13 +152,6 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           var panelOptions = panel.yaxes[i];
           axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
           axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
-          if (axis.options.max === null && axis.options.zero === -1) {
-            axis.options.max = 0;
-          } else {
-            if (axis.options.min === null && axis.options.zero === 1) {
-              axis.options.min = 0;
-            }
-          }
         }
       }
 
@@ -482,47 +475,49 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       }
 
       function configureYAxisOptions(data, options) {
-        let zero = 0;
-        if (panel.yaxes[0].zero) {
-          let y1data = _.filter(data, { yaxis: 1 });
-          if (y1data) {
-            let yMin = _.min(_.map(y1data, s => s.stats.min));
-            let yMax = _.max(_.map(y1data, s => s.stats.max));
-            // zero = 1 mean graph above zero, -1 - below zero
-            zero = yMin > 0 ? 1 : yMax < 0 ? -1 : 0;
+        let getMinMaxY = function(i, isMin) {
+          let value = parseNumber(isMin ? panel.yaxes[i].min : panel.yaxes[i].max);
+          if (value !== null) {
+            return value;
           }
-        }
+
+          if (!panel.yaxes[i].zero) {
+            return null;
+          }
+
+          let yData = _.filter(data, { yaxis: i + 1 });
+          if (!yData) {
+            return null;
+          }
+
+          value = isMin ? _.min(_.map(yData, s => s.stats.min)) : _.max(_.map(yData, s => s.stats.max));
+          if ((isMin && value > 0) || (!isMin && value < 0)) {
+            return 0;
+          }
+
+          return null;
+        };
 
         var defaults = {
           position: 'left',
           show: panel.yaxes[0].show,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
-          min: parseNumber(panel.yaxes[0].min),
-          max: parseNumber(panel.yaxes[0].max),
-          zero: zero,
+          min: getMinMaxY(0, true),
+          max: getMinMaxY(0, false),
           tickDecimals: panel.yaxes[0].decimals,
         };
 
         options.yaxes.push(defaults);
 
-        let y2data = _.filter(data, { yaxis: 2 });
-        if (y2data) {
-          zero = 0;
-          if (panel.yaxes[1].zero) {
-            let yMin = _.min(_.map(y2data, s => s.stats.min));
-            let yMax = _.max(_.map(y2data, s => s.stats.max));
-            zero = yMin > 0 ? 1 : yMax < 0 ? -1 : 0;
-          }
-
+        if (_.filter(data, { yaxis: 2 })) {
           var secondY = _.clone(defaults);
           secondY.index = 2;
           secondY.show = panel.yaxes[1].show;
           secondY.logBase = panel.yaxes[1].logBase || 1;
           secondY.position = 'right';
-          secondY.min = parseNumber(panel.yaxes[1].min);
-          secondY.max = parseNumber(panel.yaxes[1].max);
-          secondY.zero = zero;
+          secondY.min = getMinMaxY(1, true);
+          secondY.max = getMinMaxY(1, false);
           secondY.tickDecimals = panel.yaxes[1].decimals;
           options.yaxes.push(secondY);
 
