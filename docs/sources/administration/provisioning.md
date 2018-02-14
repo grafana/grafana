@@ -186,4 +186,4 @@ When Grafana starts, it will update/insert all dashboards available in the confi
 
 ### Reuseable dashboard urls
 
-If the dashboard in the json file contains an [uid](http://localhost:3004/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifer.
+If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifer.
