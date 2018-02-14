@@ -663,25 +663,6 @@ func createUser(name string, role string, isAdmin bool) m.User {
 	return currentUserCmd.Result
 }
 
-func updateTestDashboardWithAcl(dashId int64, userId int64, permissions m.PermissionType) int64 {
-	cmd := &m.SetDashboardAclCommand{
-		OrgId:       1,
-		UserId:      userId,
-		DashboardId: dashId,
-		Permission:  permissions,
-	}
-
-	err := SetDashboardAcl(cmd)
-	So(err, ShouldBeNil)
-
-	return cmd.Result.Id
-}
-
-func removeAcl(aclId int64) {
-	err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{AclId: aclId, OrgId: 1})
-	So(err, ShouldBeNil)
-}
-
 func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *m.Dashboard {
 	cmd := m.SaveDashboardCommand{
 		OrgId:     orgId,

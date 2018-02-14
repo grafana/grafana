@@ -106,26 +106,6 @@ func (g *DashboardGuardian) checkAcl(permission m.PermissionType, acl []*m.Dashb
 	return false, nil
 }
 
-func (g *DashboardGuardian) CheckPermissionBeforeRemove(permission m.PermissionType, aclIdToRemove int64) (bool, error) {
-	if g.user.OrgRole == m.ROLE_ADMIN {
-		return true, nil
-	}
-
-	acl, err := g.GetAcl()
-	if err != nil {
-		return false, err
-	}
-
-	for i, p := range acl {
-		if p.Id == aclIdToRemove {
-			acl = append(acl[:i], acl[i+1:]...)
-			break
-		}
-	}
-
-	return g.checkAcl(permission, acl)
-}
-
 func (g *DashboardGuardian) CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error) {
 	if g.user.OrgRole == m.ROLE_ADMIN {
 		return true, nil

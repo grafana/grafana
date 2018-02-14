@@ -79,11 +79,6 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 		dash.Data.Set("uid", uid)
 	}
 
-	err = setHasAcl(sess, dash)
-	if err != nil {
-		return err
-	}
-
 	parentVersion := dash.Version
 	affectedRows := int64(0)
 
@@ -100,7 +95,7 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 			dash.Updated = cmd.UpdatedAt
 		}
 
-		affectedRows, err = sess.MustCols("folder_id", "has_acl").ID(dash.Id).Update(dash)
+		affectedRows, err = sess.MustCols("folder_id").ID(dash.Id).Update(dash)
 	}
 
 	if err != nil {
@@ -231,31 +226,6 @@ func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
 	}
 
 	return "", m.ErrDashboardFailedGenerateUniqueUid
-}
-
-func setHasAcl(sess *DBSession, dash *m.Dashboard) error {
-	// check if parent has acl
-	if dash.FolderId > 0 {
-		var parent m.Dashboard
-		if hasParent, err := sess.Where("folder_id=?", dash.FolderId).Get(&parent); err != nil {
-			return err
-		} else if hasParent && parent.HasAcl {
-			dash.HasAcl = true
-		}
-	}
-
-	// check if dash has its own acl
-	if dash.Id > 0 {
-		if res, err := sess.Query("SELECT 1 from dashboard_acl WHERE dashboard_id =?", dash.Id); err != nil {
-			return err
-		} else {
-			if len(res) > 0 {
-				dash.HasAcl = true
-			}
-		}
-	}
-
-	return nil
 }
 
 func GetDashboard(query *m.GetDashboardQuery) error {
