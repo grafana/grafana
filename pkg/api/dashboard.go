@@ -498,19 +498,3 @@ func GetDashboardTags(c *middleware.Context) {
 
 	c.JSON(200, query.Result)
 }
-
-func GetFoldersForSignedInUser(c *middleware.Context) Response {
-	title := c.Query("query")
-	query := m.GetFoldersForSignedInUserQuery{
-		OrgId:        c.OrgId,
-		SignedInUser: c.SignedInUser,
-		Title:        title,
-	}
-
-	err := bus.Dispatch(&query)
-	if err != nil {
-		return ApiError(500, "Failed to get folders from database", err)
-	}
-
-	return Json(200, query.Result)
-}

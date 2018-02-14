@@ -304,18 +304,6 @@ type GetDashboardsBySlugQuery struct {
 	Result []*Dashboard
 }
 
-type GetFoldersForSignedInUserQuery struct {
-	OrgId        int64
-	SignedInUser *SignedInUser
-	Title        string
-	Result       []*DashboardFolder
-}
-
-type DashboardFolder struct {
-	Id    int64  `json:"id"`
-	Title string `json:"title"`
-}
-
 type DashboardPermissionForUser struct {
 	DashboardId    int64          `json:"dashboardId"`
 	Permission     PermissionType `json:"permission"`

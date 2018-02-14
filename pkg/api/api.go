@@ -261,8 +261,6 @@ func (hs *HttpServer) registerRoutes() {
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 
-			dashboardRoute.Get("/folders", wrap(GetFoldersForSignedInUser))
-
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute RouteRegister) {
 				dashIdRoute.Get("/versions", wrap(GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
