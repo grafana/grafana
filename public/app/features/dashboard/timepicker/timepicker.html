@@ -25,7 +25,7 @@
 	</button>
 </div>
 
-<div ng-if="ctrl.isOpen" class="gf-timepicker-dropdown">
+<div ng-if="ctrl.isOpen" class="gf-timepicker-dropdown" ng-click="ctrl.preventClose()">
   <form name="timeForm" class="gf-timepicker-absolute-section">
     <h3 class="section-heading">Custom range</h3>
 

@@ -216,6 +216,16 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           }
         }
 
+        // close timepicker
+        if (body.find('.gf-timepicker-dropdown').length > 0) {
+          if (target.parents('.gf-timepicker-absolute-section, .gf-timepicker-relative-section').length === 0) {
+            //console.log(target.parents('.gf-timepicker-absolute-section, .gf-timepicker-relative-section').length)
+            scope.$apply(function() {
+              scope.appEvent('close-timepicker');
+            });
+          }
+        }
+
         // hide popovers
         var popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
