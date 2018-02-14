@@ -115,11 +115,11 @@ func Recovery() macaron.Handler {
 				c.Data["Title"] = "Server Error"
 				c.Data["AppSubUrl"] = setting.AppSubUrl
 
-				if theErr, ok := err.(error); ok {
-					c.Data["Title"] = theErr.Error()
-				}
-
 				if setting.Env == setting.DEV {
+					if theErr, ok := err.(error); ok {
+						c.Data["Title"] = theErr.Error()
+					}
+
 					c.Data["ErrorMsg"] = string(stack)
 				}
 
