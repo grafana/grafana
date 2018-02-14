@@ -83,7 +83,7 @@ Content-Length: 97
 }
 ```
 
-In in case of title already exists the `status` property will be `name-exists`.
+In case of title already exists the `status` property will be `name-exists`.
 
 ## Get dashboard
 
