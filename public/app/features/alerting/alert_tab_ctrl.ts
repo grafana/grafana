@@ -24,6 +24,7 @@ export class AlertTabCtrl {
   error: string;
   appSubUrl: string;
   alertHistory: any;
+  newExternalTag: any;
 
   /** @ngInject */
   constructor(
@@ -153,6 +154,18 @@ export class AlertTabCtrl {
     this.alertNotifications.splice(index, 1);
   }
 
+  addExternalTag() {
+    if (this.newExternalTag.name) {
+      this.alert.externalTags[this.newExternalTag.name] = this.newExternalTag.value;
+    }
+    this.newExternalTag.name = '';
+    this.newExternalTag.value = '';
+  }
+
+  removeExternalTag(tagName) {
+    delete this.alert.externalTags[tagName];
+  }
+
   initModel() {
     var alert = (this.alert = this.panel.alert);
     if (!alert) {
@@ -169,6 +182,7 @@ export class AlertTabCtrl {
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
+    alert.externalTags = alert.externalTags || {};
 
     var defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;

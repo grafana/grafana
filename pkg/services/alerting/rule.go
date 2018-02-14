@@ -23,6 +23,7 @@ type Rule struct {
 	State               m.AlertStateType
 	Conditions          []Condition
 	Notifications       []int64
+	ExternalTags        map[string]string
 }
 
 type ValidationError struct {
@@ -108,6 +109,10 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 		} else {
 			model.Notifications = append(model.Notifications, id)
 		}
+	}
+	model.ExternalTags = map[string]string{}
+	for tagName, tagValue := range ruleDef.Settings.Get("externalTags").MustMap() {
+		model.ExternalTags[tagName] = tagValue.(string)
 	}
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {

@@ -64,7 +64,8 @@ func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) erro
 			alertJSON.SetPath([]string{"annotations", "description"}, evalContext.Rule.Message)
 		}
 
-		tags := make(map[string]string)
+		tags := map[string]string{"alertname": evalContext.Rule.Name}
+		// Add tags from EvalMatch.
 		if len(match.Tags) == 0 {
 			tags["metric"] = match.Metric
 		} else {
@@ -72,7 +73,10 @@ func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) erro
 				tags[k] = v
 			}
 		}
-		tags["alertname"] = evalContext.Rule.Name
+		// Add tags from ExternalTags in alert rule.
+		for k, v := range evalContext.Rule.ExternalTags {
+			tags[k] = v
+		}
 		alertJSON.Set("labels", tags)
 
 		alerts = append(alerts, alertJSON)

@@ -128,22 +128,22 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 ### All supported notifier
 
-Name | Type |Support images
+Name | Type |Support images |Support external tags
 -----|------------ | ------
-Slack | `slack` | yes
-Pagerduty | `pagerduty` | yes
-Email | `email` | yes
-Webhook | `webhook` | link
-Kafka | `kafka` | no
-Hipchat | `hipchat` | yes
-VictorOps | `victorops` | yes
-Sensu | `sensu` | yes
-OpsGenie | `opsgenie` | yes
-Threema | `threema` | yes
-Pushover | `pushover` | no
-Telegram | `telegram` | no
-Line | `line` | no
-Prometheus Alertmanager | `prometheus-alertmanager` | no
+Slack | `slack` | yes | no
+Pagerduty | `pagerduty` | yes | no
+Email | `email` | yes | no
+Webhook | `webhook` | link | no
+Kafka | `kafka` | no | no
+Hipchat | `hipchat` | yes | no
+VictorOps | `victorops` | yes | no
+Sensu | `sensu` | yes | no
+OpsGenie | `opsgenie` | yes | no
+Threema | `threema` | yes | no
+Pushover | `pushover` | no | no
+Telegram | `telegram` | no | no
+Line | `line` | no | no
+Prometheus Alertmanager | `prometheus-alertmanager` | no | yes
 
 
 
@@ -157,6 +157,15 @@ Be aware that some notifiers requires public access to the image to be able to i
 Currently only the Email Channels attaches images if no external image store is specified. To include images in alert notifications for other channels then you need to set up an external image store.
 
 This is an optional requirement. You can get Slack and email notifications without setting this up.
+
+
+# Use external tags in notifications {#external-tags}
+
+Grafana can include a list of tags (key/value) in the notification.
+It's called external tags to contrast with tags parsed from timeseries.
+It currently supports only the Prometheus Alertmanager notifier.
+
+This is an optional feature. You can get notifications without using external tags.
 
 # Configure the link back to Grafana from alert notifications
 
