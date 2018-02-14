@@ -510,7 +510,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
         options.yaxes.push(defaults);
 
-        if (_.filter(data, { yaxis: 2 })) {
+        if (_.find(data, { yaxis: 2 })) {
           var secondY = _.clone(defaults);
           secondY.index = 2;
           secondY.show = panel.yaxes[1].show;
