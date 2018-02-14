@@ -26,13 +26,21 @@ func addTableRenameMigration(mg *Migrator, oldName string, newName string, versi
 }
 
 func addTableReplaceMigrations(mg *Migrator, from Table, to Table, migrationVersion int64, tableDataMigration map[string]string) {
-	fromV := fmt.Sprintf("v%v", migrationVersion-1)
-	toV := fmt.Sprintf("v%v", migrationVersion)
-	tmpTableName := "dashboard_provisioning_" + fromV
+	fromV := version(migrationVersion - 1)
+	toV := version(migrationVersion)
+	tmpTableName := to.Name + "_tmp_qwerty"
+
+	createTable := fmt.Sprintf("create %v %v", to.Name, toV)
+	copyTableData := fmt.Sprintf("copy %v %v to %v", to.Name, fromV, toV)
+	dropTable := fmt.Sprintf("drop %v", tmpTableName)
 
 	addTableRenameMigration(mg, from.Name, tmpTableName, fromV)
-	mg.AddMigration(fmt.Sprintf("create %v %v", to.Name, toV), NewAddTableMigration(to))
+	mg.AddMigration(createTable, NewAddTableMigration(to))
 	addTableIndicesMigrations(mg, toV, to)
-	mg.AddMigration(fmt.Sprintf("copy %v %v to %v", to.Name, fromV, toV), NewCopyTableDataMigration(to.Name, tmpTableName, tableDataMigration))
-	mg.AddMigration(fmt.Sprintf("drop %v", tmpTableName), NewDropTableMigration(tmpTableName))
+	mg.AddMigration(copyTableData, NewCopyTableDataMigration(to.Name, tmpTableName, tableDataMigration))
+	mg.AddMigration(dropTable, NewDropTableMigration(tmpTableName))
+}
+
+func version(v int64) string {
+	return fmt.Sprintf("v%v", v)
 }
