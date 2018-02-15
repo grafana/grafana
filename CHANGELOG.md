@@ -1,4 +1,16 @@
-# 5.0.0-beta2 (unrelased)
+# 5.0.0-beta2 (2018-02-15)
+
+### Fixes
+
+- **Permissions** Fixed search permissions issues [#10822](https://github.com/grafana/grafana/issues/10822)
+- **Permissions** Fixed problem issues displaying permissions lists [#10864](https://github.com/grafana/grafana/issues/10864)
+- **PNG-Rendering** Fixed problem rendering legend to the right [#10526](https://github.com/grafana/grafana/issues/10526)
+- **Reset password** Fixed problem with reset password form [#10870](https://github.com/grafana/grafana/issues/10870)
+- **Light theme** Fixed problem with light theme in safari, [#10869](https://github.com/grafana/grafana/issues/10869)
+- **Provisioning** Now handles deletes when dashboard json files removed from disk [#10865](https://github.com/grafana/grafana/issues/10865)
+- **MySQL** Fixed issue with schema migration on old mysql (index too long) [#10779](https://github.com/grafana/grafana/issues/10779)
+- **Github OAuth** Fixed fetching github orgs from private github org [#10823](https://github.com/grafana/grafana/issues/10823)
+- **Embedding** Fixed issues embedding panel [#10787](https://github.com/grafana/grafana/issues/10787)
 
 # 5.0.0-beta1 (2018-02-05)
 

@@ -59,10 +59,6 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 		plog.Info("Registering plugin", "name", pb.Name)
 	}
 
-	if len(pb.Dependencies.Plugins) == 0 {
-		pb.Dependencies.Plugins = []PluginDependencyItem{}
-	}
-
 	if pb.Dependencies.GrafanaVersion == "" {
 		pb.Dependencies.GrafanaVersion = "*"
 	}
@@ -79,8 +75,7 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 }
 
 type PluginDependencies struct {
-	GrafanaVersion string                 `json:"grafanaVersion"`
-	Plugins        []PluginDependencyItem `json:"plugins"`
+	GrafanaVersion string `json:"grafanaVersion"`
 }
 
 type PluginInclude struct {
@@ -94,13 +89,6 @@ type PluginInclude struct {
 	Slug       string     `json:"slug"`
 
 	Id string `json:"-"`
-}
-
-type PluginDependencyItem struct {
-	Type    string `json:"type"`
-	Id      string `json:"id"`
-	Name    string `json:"name"`
-	Version string `json:"version"`
 }
 
 type PluginInfo struct {

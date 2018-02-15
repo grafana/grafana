@@ -67,6 +67,8 @@ func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
 	So(ds.Editable, ShouldBeTrue)
 	So(len(ds.Options), ShouldEqual, 1)
 	So(ds.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
+	So(ds.DisableDeletion, ShouldBeTrue)
+
 	ds2 := cfg[1]
 	So(ds2.Name, ShouldEqual, "default")
 	So(ds2.Type, ShouldEqual, "file")
@@ -75,4 +77,5 @@ func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
 	So(ds2.Editable, ShouldBeFalse)
 	So(len(ds2.Options), ShouldEqual, 1)
 	So(ds2.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
+	So(ds2.DisableDeletion, ShouldBeFalse)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type IDashboardService interface {
@@ -66,6 +67,12 @@ func (dr *DashboardService) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*m
 
 	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(models.RootFolderName) {
 		return nil, models.ErrDashboardFolderNameExists
+	}
+
+	if !util.IsValidShortUid(dash.Uid) {
+		return nil, models.ErrDashboardInvalidUid
+	} else if len(dash.Uid) > 40 {
+		return nil, models.ErrDashboardUidToLong
 	}
 
 	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{

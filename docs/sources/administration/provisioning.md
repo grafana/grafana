@@ -184,11 +184,14 @@ providers:
   orgId: 1
   folder: ''
   type: file
+  disableDeletion: false
+  editable: false
   options:
-    folder: /var/lib/grafana/dashboards
+    path: /var/lib/grafana/dashboards
 ```
 
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
+By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting. 
 
 > **Note.** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.

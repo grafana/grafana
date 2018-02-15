@@ -31,6 +31,8 @@ var (
 	ErrDashboardWithSameNameAsFolder            = errors.New("Dashboard name cannot be the same as folder")
 	ErrDashboardFolderNameExists                = errors.New("A folder with that name already exists")
 	ErrDashboardUpdateAccessDenied              = errors.New("Access denied to save dashboard")
+	ErrDashboardInvalidUid                      = errors.New("uid contains illegal characters")
+	ErrDashboardUidToLong                       = errors.New("uid to long. max 40 characters")
 	RootFolderName                              = "General"
 )
 
@@ -243,7 +245,7 @@ type DashboardProvisioning struct {
 	DashboardId int64
 	Name        string
 	ExternalId  string
-	Updated     time.Time
+	Updated     int64
 }
 
 type SaveProvisionedDashboardCommand struct {

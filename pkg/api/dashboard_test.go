@@ -426,7 +426,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := m.ROLE_VIEWER
 
 			mockResult := []*m.DashboardAclInfoDTO{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_EDIT},
+				{OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_EDIT},
 			}
 
 			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
@@ -500,7 +500,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			setting.ViewersCanEdit = true
 
 			mockResult := []*m.DashboardAclInfoDTO{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_VIEW},
+				{OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_VIEW},
 			}
 
 			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
@@ -559,7 +559,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := m.ROLE_VIEWER
 
 			mockResult := []*m.DashboardAclInfoDTO{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_ADMIN},
+				{OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_ADMIN},
 			}
 
 			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
@@ -632,7 +632,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := m.ROLE_EDITOR
 
 			mockResult := []*m.DashboardAclInfoDTO{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_VIEW},
+				{OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_VIEW},
 			}
 
 			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
