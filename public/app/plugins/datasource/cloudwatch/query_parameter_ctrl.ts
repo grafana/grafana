@@ -27,6 +27,7 @@ export class CloudWatchQueryParameterCtrl {
       target.dimensions = target.dimensions || {};
       target.period = target.period || '';
       target.region = target.region || 'default';
+      target.highResolution = target.highResolution || false;
 
       $scope.regionSegment = uiSegmentSrv.getSegmentForValue($scope.target.region, 'select region');
       $scope.namespaceSegment = uiSegmentSrv.getSegmentForValue($scope.target.namespace, 'select namespace');

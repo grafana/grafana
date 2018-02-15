@@ -31,6 +31,7 @@ func TestCloudWatch(t *testing.T) {
 						"p90.00"
 					],
 					"period": "60",
+					"highResolution": false,
 					"alias": "{{metric}}_{{stat}}"
 				}
 			`

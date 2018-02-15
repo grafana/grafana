@@ -106,7 +106,7 @@ export default class CloudWatchDatasource {
     if (period < 1) {
       period = 1;
     }
-    if (range / period >= 1440) {
+    if (!target.highResolution && range / period >= 1440) {
       period = Math.ceil(range / 1440 / periodUnit) * periodUnit;
     }
 
