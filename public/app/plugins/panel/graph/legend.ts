@@ -234,6 +234,24 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           elem.append(seriesElements);
         }
 
+        // Phantomjs has rendering issue for CSS float property, so when legend values are present, legend takes
+        // all graph width and rendering fails. So it should be handled to avoid rendering timeout.
+        // See issue #10526 https://github.com/grafana/grafana/issues/10526
+        if (panel.legend.rightSide) {
+          const legendWidth = elem.parent().width();
+          const panelWidth = elem.parent().width();
+          let maxLegendElementWidth = _.max(_.map(seriesElements, el => $(el).width()));
+          maxLegendElementWidth = _.isNumber(maxLegendElementWidth) ? maxLegendElementWidth : 0;
+          const widthDiff = Math.abs(panelWidth - maxLegendElementWidth);
+          // Set width to content size, but table takes all space anyway, so width shouldn't be more
+          // than 40% of panel in this case.
+          if (widthDiff < panelWidth * 0.1 || legendWidth > panelWidth * 0.9) {
+            const maxTableWidthPercent = 0.4;
+            const maxWidth = Math.min(Math.ceil(maxLegendElementWidth * 1.05), panelWidth * maxTableWidthPercent);
+            elem.css('max-width', maxWidth);
+          }
+        }
+
         if (!panel.legend.rightSide) {
           addScrollbar();
         } else {
