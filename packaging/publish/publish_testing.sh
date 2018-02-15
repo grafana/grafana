@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
-deb_ver=5.0.0-beta1
-rpm_ver=5.0.0-beta1
+deb_ver=5.0.0-beta2
+rpm_ver=5.0.0-beta2
 
 wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_${deb_ver}_amd64.deb
 
