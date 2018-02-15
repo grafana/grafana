@@ -435,7 +435,7 @@ func TestDashboardDataAccess(t *testing.T) {
 							"tags":  []interface{}{},
 							"uid":   "randomHash",
 						}),
-						FolderId: 3,
+						FolderId: savedFolder.Id,
 					}
 
 					err := SaveDashboard(&firstSaveCmd)
@@ -449,7 +449,7 @@ func TestDashboardDataAccess(t *testing.T) {
 							"tags":  []interface{}{},
 							"uid":   "moreRandomHash",
 						}),
-						FolderId: 3,
+						FolderId: savedFolder.Id,
 					}
 
 					_, err = callValidateDashboardBeforeSave(&secondSaveCmd)
@@ -497,12 +497,12 @@ func TestDashboardDataAccess(t *testing.T) {
 							"style": "light",
 							"tags":  []interface{}{},
 						}),
-						FolderId: 2,
+						FolderId: savedFolder.Id,
 					}
 
 					err := SaveDashboard(&firstCmd)
 					So(err, ShouldBeNil)
-					So(firstCmd.Result.FolderId, ShouldEqual, 2)
+					So(firstCmd.Result.FolderId, ShouldEqual, savedFolder.Id)
 
 					secondCmd := m.SaveDashboardCommand{
 						OrgId: 1,
@@ -514,7 +514,7 @@ func TestDashboardDataAccess(t *testing.T) {
 							"version": firstCmd.Result.Version,
 							"tags":    []interface{}{},
 						}),
-						FolderId: 2,
+						FolderId: savedFolder.Id,
 					}
 
 					valCmd, err := callValidateDashboardBeforeSave(&secondCmd)
