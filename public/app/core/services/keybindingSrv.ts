@@ -5,6 +5,7 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
 import Mousetrap from 'mousetrap';
+import 'mousetrap-global-bind';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -64,6 +65,19 @@ export class KeybindingSrv {
 
   bind(keyArg, fn) {
     Mousetrap.bind(
+      keyArg,
+      evt => {
+        evt.preventDefault();
+        evt.stopPropagation();
+        evt.returnValue = false;
+        return this.$rootScope.$apply(fn.bind(this));
+      },
+      'keydown'
+    );
+  }
+
+  bindGlobal(keyArg, fn) {
+    Mousetrap.bindGlobal(
       keyArg,
       evt => {
         evt.preventDefault();
@@ -207,7 +221,7 @@ export class KeybindingSrv {
       appEvents.emit('toggle-view-mode');
     });
 
-    this.bind('esc', () => {
+    this.bindGlobal('esc', () => {
       var popups = $('.popover.in');
       if (popups.length > 0) {
         return;

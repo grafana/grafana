@@ -150,6 +150,7 @@
     "mobx-state-tree": "^1.3.1",
     "moment": "^2.18.1",
     "mousetrap": "^1.6.0",
+    "mousetrap-global-bind": "^1.1.0",
     "perfect-scrollbar": "^1.2.0",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
