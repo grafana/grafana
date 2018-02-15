@@ -475,13 +475,36 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       }
 
       function configureYAxisOptions(data, options) {
+        let getMinMaxY = function(i, isMin) {
+          let value = parseNumber(isMin ? panel.yaxes[i].min : panel.yaxes[i].max);
+          if (value !== null) {
+            return value;
+          }
+
+          if (!panel.yaxes[i].zero) {
+            return null;
+          }
+
+          let yData = _.filter(data, { yaxis: i + 1 });
+          if (!yData) {
+            return null;
+          }
+
+          value = isMin ? _.min(_.map(yData, s => s.stats.min)) : _.max(_.map(yData, s => s.stats.max));
+          if ((isMin && value > 0) || (!isMin && value < 0)) {
+            return 0;
+          }
+
+          return null;
+        };
+
         var defaults = {
           position: 'left',
           show: panel.yaxes[0].show,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
-          min: parseNumber(panel.yaxes[0].min),
-          max: parseNumber(panel.yaxes[0].max),
+          min: getMinMaxY(0, true),
+          max: getMinMaxY(0, false),
           tickDecimals: panel.yaxes[0].decimals,
         };
 
@@ -493,8 +516,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           secondY.show = panel.yaxes[1].show;
           secondY.logBase = panel.yaxes[1].logBase || 1;
           secondY.position = 'right';
-          secondY.min = parseNumber(panel.yaxes[1].min);
-          secondY.max = parseNumber(panel.yaxes[1].max);
+          secondY.min = getMinMaxY(1, true);
+          secondY.max = getMinMaxY(1, false);
           secondY.tickDecimals = panel.yaxes[1].decimals;
           options.yaxes.push(secondY);
 
