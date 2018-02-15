@@ -33,6 +33,7 @@ export class KeybindingSrv {
     this.bind('s o', this.openSearch);
     this.bind('s t', this.openSearchTags);
     this.bind('f', this.openSearch);
+    this.bindGlobal('esc', this.exit);
   }
 
   openSearchStarred() {
@@ -61,6 +62,28 @@ export class KeybindingSrv {
 
   showHelpModal() {
     appEvents.emit('show-modal', { templateHtml: '<help-modal></help-modal>' });
+  }
+
+  exit() {
+    var popups = $('.popover.in');
+    if (popups.length > 0) {
+      return;
+    }
+
+    appEvents.emit('hide-modal');
+
+    if (!this.modalOpen) {
+      appEvents.emit('panel-change-view', { fullscreen: false, edit: false });
+    } else {
+      this.modalOpen = false;
+    }
+
+    // close settings view
+    var search = this.$location.search();
+    if (search.editview) {
+      delete search.editview;
+      this.$location.search(search);
+    }
   }
 
   bind(keyArg, fn) {
@@ -219,28 +242,6 @@ export class KeybindingSrv {
 
     this.bind('d v', () => {
       appEvents.emit('toggle-view-mode');
-    });
-
-    this.bindGlobal('esc', () => {
-      var popups = $('.popover.in');
-      if (popups.length > 0) {
-        return;
-      }
-
-      scope.appEvent('hide-modal');
-
-      if (!this.modalOpen) {
-        scope.appEvent('panel-change-view', { fullscreen: false, edit: false });
-      } else {
-        this.modalOpen = false;
-      }
-
-      // close settings view
-      var search = this.$location.search();
-      if (search.editview) {
-        delete search.editview;
-        this.$location.search(search);
-      }
     });
   }
 }
