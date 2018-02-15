@@ -14,6 +14,7 @@ import (
 // Typed errors
 var (
 	ErrDashboardNotFound                        = errors.New("Dashboard not found")
+	ErrFolderNotFound                           = errors.New("Folder not found")
 	ErrDashboardSnapshotNotFound                = errors.New("Dashboard snapshot not found")
 	ErrDashboardWithSameUIDExists               = errors.New("A dashboard with the same uid already exists")
 	ErrDashboardWithSameNameInFolderExists      = errors.New("A dashboard with the same name in the folder already exists")
@@ -74,6 +75,16 @@ type Dashboard struct {
 func (d *Dashboard) SetId(id int64) {
 	d.Id = id
 	d.Data.Set("id", id)
+}
+
+func (d *Dashboard) SetUid(uid string) {
+	d.Uid = uid
+	d.Data.Set("uid", uid)
+}
+
+func (d *Dashboard) SetVersion(version int) {
+	d.Version = version
+	d.Data.Set("version", version)
 }
 
 // NewDashboard creates a new dashboard
@@ -247,7 +258,7 @@ type DeleteDashboardCommand struct {
 	OrgId int64
 }
 
-type ValidateDashboardForUpdateCommand struct {
+type ValidateDashboardBeforeSaveCommand struct {
 	OrgId     int64
 	Dashboard *Dashboard
 	Overwrite bool

@@ -54,8 +54,7 @@ func (dr *DashboardService) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*m
 
 	dash.Title = strings.TrimSpace(dash.Title)
 	dash.Data.Set("title", dash.Title)
-	dash.Uid = strings.TrimSpace(dash.Uid)
-	dash.Data.Set("uid", dash.Uid)
+	dash.SetUid(strings.TrimSpace(dash.Uid))
 
 	if dash.Title == "" {
 		return nil, models.ErrDashboardTitleEmpty
@@ -78,13 +77,13 @@ func (dr *DashboardService) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*m
 		return nil, models.ErrDashboardContainsInvalidAlertData
 	}
 
-	validateDashForUpdateCmd := models.ValidateDashboardForUpdateCommand{
+	validateBeforeSaveCmd := models.ValidateDashboardBeforeSaveCommand{
 		OrgId:     dto.OrgId,
 		Dashboard: dash,
 		Overwrite: dto.Overwrite,
 	}
 
-	if err := bus.Dispatch(&validateDashForUpdateCmd); err != nil {
+	if err := bus.Dispatch(&validateBeforeSaveCmd); err != nil {
 		return nil, err
 	}
 

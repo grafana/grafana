@@ -223,7 +223,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						}),
 					}
 
-					_, err := callValidateDashboardBeforeUpdate(&cmd)
+					_, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldEqual, m.ErrDashboardNotFound)
 				})
 
@@ -241,11 +241,11 @@ func TestDashboardDataAccess(t *testing.T) {
 						}),
 					}
 
-					_, err := callValidateDashboardBeforeUpdate(&cmd)
+					_, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldEqual, m.ErrDashboardNotFound)
 				})
 
-				Convey("Should not be able to overwrite dashboard by uid in another org", func() {
+				Convey("Should be able to save dashboard by uid in another org", func() {
 					query := m.GetDashboardQuery{Slug: "test-dash-23", OrgId: 1}
 					GetDashboard(&query)
 
@@ -260,7 +260,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						}),
 					}
 
-					valCmd, err := callValidateDashboardBeforeUpdate(&cmd)
+					valCmd, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldBeNil)
 					So(valCmd.Dashboard.Id, ShouldNotEqual, query.Result.Id)
 				})
@@ -291,7 +291,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						FolderId: 1,
 					}
 
-					valCmd, err := callValidateDashboardBeforeUpdate(&secondSaveCmd)
+					valCmd, err := callValidateDashboardBeforeSave(&secondSaveCmd)
 					So(err, ShouldBeNil)
 					So(firstSaveCmd.Result.Id, ShouldNotEqual, valCmd.Dashboard.Id)
 				})
@@ -310,7 +310,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						Overwrite: true,
 					}
 
-					valCmd, err := callValidateDashboardBeforeUpdate(&cmd)
+					valCmd, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldBeNil)
 					So(valCmd.Dashboard.Id, ShouldEqual, dashInFolder.Id)
 					So(valCmd.Dashboard.Uid, ShouldEqual, dashInFolder.Uid)
@@ -330,7 +330,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						Overwrite: true,
 					}
 
-					valCmd, err := callValidateDashboardBeforeUpdate(&cmd)
+					valCmd, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldBeNil)
 					So(valCmd.Dashboard.Id, ShouldEqual, dashInGeneral.Id)
 					So(valCmd.Dashboard.Uid, ShouldEqual, dashInGeneral.Uid)
@@ -347,7 +347,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						Overwrite: true,
 					}
 
-					_, err := callValidateDashboardBeforeUpdate(&cmd)
+					_, err := callValidateDashboardBeforeSave(&cmd)
 					So(err.Error(), ShouldEqual, m.ErrDashboardWithSameNameAsFolder.Error())
 				})
 
@@ -362,7 +362,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						Overwrite: true,
 					}
 
-					_, err := callValidateDashboardBeforeUpdate(&cmd)
+					_, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldEqual, m.ErrDashboardWithSameNameAsFolder)
 				})
 
@@ -377,7 +377,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						Overwrite: true,
 					}
 
-					_, err := callValidateDashboardBeforeUpdate(&cmd)
+					_, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldEqual, m.ErrDashboardTypeMismatch)
 				})
 
@@ -392,7 +392,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						Overwrite: true,
 					}
 
-					_, err := callValidateDashboardBeforeUpdate(&cmd)
+					_, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldEqual, m.ErrDashboardTypeMismatch)
 				})
 
@@ -407,7 +407,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						Overwrite: true,
 					}
 
-					_, err := callValidateDashboardBeforeUpdate(&cmd)
+					_, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldEqual, m.ErrDashboardTypeMismatch)
 				})
 
@@ -422,7 +422,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						Overwrite: true,
 					}
 
-					_, err := callValidateDashboardBeforeUpdate(&cmd)
+					_, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldEqual, m.ErrDashboardTypeMismatch)
 				})
 
@@ -452,7 +452,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						FolderId: 3,
 					}
 
-					_, err = callValidateDashboardBeforeUpdate(&secondSaveCmd)
+					_, err = callValidateDashboardBeforeSave(&secondSaveCmd)
 					So(err, ShouldEqual, m.ErrDashboardWithSameNameInFolderExists)
 				})
 
@@ -468,7 +468,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 					err := SaveDashboard(&cmd)
 					So(err, ShouldBeNil)
-					_, err = callValidateDashboardBeforeUpdate(&cmd)
+					_, err = callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldBeNil)
 				})
 
@@ -483,7 +483,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						Overwrite: true,
 					}
 
-					valCmd, err := callValidateDashboardBeforeUpdate(&cmd)
+					valCmd, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldBeNil)
 					So(valCmd.Dashboard.Id, ShouldEqual, savedDash.Id)
 				})
@@ -517,7 +517,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						FolderId: 2,
 					}
 
-					valCmd, err := callValidateDashboardBeforeUpdate(&secondCmd)
+					valCmd, err := callValidateDashboardBeforeSave(&secondCmd)
 					So(err, ShouldBeNil)
 					So(valCmd.Dashboard.Id, ShouldEqual, firstCmd.Result.Id)
 					So(valCmd.Dashboard.Uid, ShouldEqual, firstCmd.Result.Uid)
@@ -535,7 +535,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						FolderId: savedDash.FolderId,
 					}
 
-					valCmd, err := callValidateDashboardBeforeUpdate(&cmd)
+					valCmd, err := callValidateDashboardBeforeSave(&cmd)
 					So(err, ShouldBeNil)
 					So(valCmd.Dashboard.Id, ShouldEqual, savedDash.Id)
 				})
@@ -741,13 +741,13 @@ func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *
 	return cmd.Result
 }
 
-func callValidateDashboardBeforeUpdate(cmd *m.SaveDashboardCommand) (*m.ValidateDashboardForUpdateCommand, error) {
-	valCmd := m.ValidateDashboardForUpdateCommand{
+func callValidateDashboardBeforeSave(cmd *m.SaveDashboardCommand) (*m.ValidateDashboardBeforeSaveCommand, error) {
+	valCmd := m.ValidateDashboardBeforeSaveCommand{
 		OrgId:     cmd.OrgId,
 		Dashboard: cmd.GetDashboardModel(),
 		Overwrite: cmd.Overwrite,
 	}
 
-	err := ValidateDashboardForUpdate(&valCmd)
+	err := ValidateDashboardBeforeSave(&valCmd)
 	return &valCmd, err
 }

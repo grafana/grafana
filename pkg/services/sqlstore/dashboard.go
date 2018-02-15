@@ -23,7 +23,7 @@ func init() {
 	bus.AddHandler("sql", GetDashboardsByPluginId)
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
 	bus.AddHandler("sql", GetDashboardsBySlug)
-	bus.AddHandler("sql", ValidateDashboardForUpdate)
+	bus.AddHandler("sql", ValidateDashboardBeforeSave)
 }
 
 var generateNewUid func() string = util.GenerateShortUid
@@ -50,7 +50,7 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 		// check for is someone else has written in between
 		if dash.Version != existing.Version {
 			if cmd.Overwrite {
-				dash.Version = existing.Version
+				dash.SetVersion(existing.Version)
 			} else {
 				return m.ErrDashboardVersionMismatch
 			}
@@ -67,8 +67,7 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 		if err != nil {
 			return err
 		}
-		dash.Uid = uid
-		dash.Data.Set("uid", uid)
+		dash.SetUid(uid)
 	}
 
 	err := setHasAcl(sess, dash)
@@ -80,13 +79,13 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 	affectedRows := int64(0)
 
 	if dash.Id == 0 {
-		dash.Version = 1
+		dash.SetVersion(1)
 		metrics.M_Api_Dashboard_Insert.Inc()
-		dash.Data.Set("version", dash.Version)
 		affectedRows, err = sess.Insert(dash)
 	} else {
-		dash.Version++
-		dash.Data.Set("version", dash.Version)
+		v := dash.Version
+		v++
+		dash.SetVersion(v)
 
 		if !cmd.UpdatedAt.IsZero() {
 			dash.Updated = cmd.UpdatedAt
@@ -194,8 +193,8 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 		return m.ErrDashboardNotFound
 	}
 
-	dashboard.Data.Set("id", dashboard.Id)
-	dashboard.Data.Set("uid", dashboard.Uid)
+	dashboard.SetId(dashboard.Id)
+	dashboard.SetUid(dashboard.Uid)
 	query.Result = &dashboard
 	return nil
 }
@@ -505,7 +504,7 @@ func GetDashboardUIDById(query *m.GetDashboardRefByIdQuery) error {
 	return nil
 }
 
-func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDashboardForUpdateCommand) (err error) {
+func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDashboardBeforeSaveCommand) (err error) {
 	dash := cmd.Dashboard
 
 	dashWithIdExists := false
@@ -522,7 +521,7 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 		}
 
 		if dash.Uid == "" {
-			dash.Uid = existingById.Uid
+			dash.SetUid(existingById.Uid)
 		}
 	}
 
@@ -533,6 +532,18 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 		dashWithUidExists, err = sess.Where("org_id=? AND uid=?", dash.OrgId, dash.Uid).Get(&existingByUid)
 		if err != nil {
 			return err
+		}
+	}
+
+	if dash.FolderId > 0 {
+		var existingFolder m.Dashboard
+		folderExists, folderErr := sess.Where("org_id=? AND id=? AND is_folder=?", dash.OrgId, dash.FolderId, dialect.BooleanStr(true)).Get(&existingFolder)
+		if folderErr != nil {
+			return folderErr
+		}
+
+		if !folderExists {
+			return m.ErrFolderNotFound
 		}
 	}
 
@@ -547,8 +558,8 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 	existing := existingById
 
 	if !dashWithIdExists && dashWithUidExists {
-		dash.Id = existingByUid.Id
-		dash.Uid = existingByUid.Uid
+		dash.SetId(existingByUid.Id)
+		dash.SetUid(existingByUid.Uid)
 		existing = existingByUid
 	}
 
@@ -560,7 +571,7 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 	// check for is someone else has written in between
 	if dash.Version != existing.Version {
 		if cmd.Overwrite {
-			dash.Version = existing.Version
+			dash.SetVersion(existing.Version)
 		} else {
 			return m.ErrDashboardVersionMismatch
 		}
@@ -574,7 +585,7 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 	return nil
 }
 
-func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *m.ValidateDashboardForUpdateCommand) error {
+func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *m.ValidateDashboardBeforeSaveCommand) error {
 	dash := cmd.Dashboard
 	var existing m.Dashboard
 
@@ -593,9 +604,9 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *m.ValidateDashbo
 		}
 
 		if cmd.Overwrite {
-			dash.Id = existing.Id
-			dash.Uid = existing.Uid
-			dash.Version = existing.Version
+			dash.SetId(existing.Id)
+			dash.SetUid(existing.Uid)
+			dash.SetVersion(existing.Version)
 		} else {
 			return m.ErrDashboardWithSameNameInFolderExists
 		}
@@ -604,7 +615,7 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *m.ValidateDashbo
 	return nil
 }
 
-func ValidateDashboardForUpdate(cmd *m.ValidateDashboardForUpdateCommand) (err error) {
+func ValidateDashboardBeforeSave(cmd *m.ValidateDashboardBeforeSaveCommand) (err error) {
 	return inTransaction(func(sess *DBSession) error {
 		if err = getExistingDashboardByIdOrUidForUpdate(sess, cmd); err != nil {
 			return err
