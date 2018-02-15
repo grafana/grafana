@@ -70,19 +70,19 @@
   font-size: 85%;
   text-align: left;
   &.current::before {
-    content: "Current: ";
+    content: 'Current: ';
   }
   &.max::before {
-    content: "Max: ";
+    content: 'Max: ';
   }
   &.min::before {
-    content: "Min: ";
+    content: 'Min: ';
   }
   &.total::before {
-    content: "Total: ";
+    content: 'Total: ';
   }
   &.avg::before {
-    content: "Avg: ";
+    content: 'Avg: ';
   }
 }
 
@@ -106,6 +106,12 @@
   padding-left: 6px;
 }
 
+.body--phantomjs {
+  .graph-legend-table {
+    display: table;
+  }
+}
+
 .graph-legend-table {
   tbody {
     display: block;
@@ -124,7 +130,7 @@
       float: none;
 
       .graph-legend-alias::after {
-        content: "(right-y)";
+        content: '(right-y)';
         padding: 0 5px;
         color: $text-color-weak;
       }
@@ -175,7 +181,7 @@
     &.total,
     &.avg {
       &::before {
-        content: "";
+        content: '';
       }
     }
   }
