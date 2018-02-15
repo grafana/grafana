@@ -8,6 +8,7 @@ import Mousetrap from 'mousetrap';
 
 export class KeybindingSrv {
   helpModal: boolean;
+  modalOpen = false;
 
   /** @ngInject */
   constructor(private $rootScope, private $location) {
@@ -19,6 +20,7 @@ export class KeybindingSrv {
     });
 
     this.setupGlobal();
+    appEvents.on('show-modal', () => (this.modalOpen = true));
   }
 
   setupGlobal() {
@@ -212,7 +214,12 @@ export class KeybindingSrv {
       }
 
       scope.appEvent('hide-modal');
-      scope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+
+      if (!this.modalOpen) {
+        scope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      } else {
+        this.modalOpen = false;
+      }
 
       // close settings view
       var search = this.$location.search();
