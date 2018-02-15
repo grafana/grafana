@@ -16,6 +16,10 @@
       padding-left: 0px;
     }
 
+    .graph-legend-table {
+      width: auto;
+    }
+
     .graph-legend-table .graph-legend-series {
       display: table-row;
     }
@@ -45,7 +49,7 @@
 .graph-legend {
   flex: 0 1 auto;
   max-height: 30%;
-  margin: 0 $spacer;
+  margin: 0;
   text-align: center;
   padding-top: 6px;
   position: relative;
@@ -106,9 +110,12 @@
   padding-left: 6px;
 }
 
+// fix for phantomjs
 .body--phantomjs {
-  .graph-legend-table {
-    display: table;
+  .graph-panel--legend-right {
+    .graph-legend-table {
+      display: table;
+    }
   }
 }
 
@@ -120,6 +127,7 @@
     height: 100%;
     padding-bottom: 1px;
     padding-right: 5px;
+    padding-left: 5px;
   }
 
   .graph-legend-series {
