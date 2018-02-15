@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Repository interface {
@@ -50,6 +51,10 @@ func (dr *DashboardRepository) buildSaveDashboardCommand(dto *SaveDashboardDTO) 
 
 	if dashboard.Title == "" {
 		return nil, models.ErrDashboardTitleEmpty
+	}
+
+	if err := util.VerifyUid(dashboard.Uid); err != nil {
+		return nil, err
 	}
 
 	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
