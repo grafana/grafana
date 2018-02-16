@@ -500,6 +500,22 @@ describe('given dashboard with row repeat', function() {
     );
     expect(panel_ids.length).toEqual(_.uniq(panel_ids).length);
   });
+
+  it('should place new panels in proper order', function() {
+    dashboardJSON.panels = [
+      { id: 1, type: 'row', gridPos: { x: 0, y: 0, h: 1, w: 24 }, repeat: 'apps' },
+      { id: 2, type: 'graph', gridPos: { x: 0, y: 1, h: 3, w: 12 } },
+      { id: 3, type: 'graph', gridPos: { x: 6, y: 1, h: 4, w: 12 } },
+      { id: 4, type: 'graph', gridPos: { x: 0, y: 5, h: 2, w: 12 } },
+    ];
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual(['row', 'graph', 'graph', 'graph', 'row', 'graph', 'graph', 'graph']);
+    const panel_y_positions = _.map(dashboard.panels, p => p.gridPos.y);
+    expect(panel_y_positions).toEqual([0, 1, 1, 5, 7, 8, 8, 12]);
+  });
 });
 
 describe('given dashboard with row and panel repeat', () => {
