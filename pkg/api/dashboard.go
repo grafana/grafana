@@ -219,7 +219,13 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	if err == m.ErrDashboardTitleEmpty ||
 		err == m.ErrDashboardWithSameNameAsFolder ||
 		err == m.ErrDashboardFolderWithSameNameAsDashboard ||
-		err == m.ErrDashboardTypeMismatch {
+		err == m.ErrDashboardTypeMismatch ||
+		err == m.ErrDashboardInvalidUid ||
+		err == m.ErrDashboardUidToLong ||
+		err == m.ErrDashboardWithSameUIDExists ||
+		err == m.ErrFolderNotFound ||
+		err == m.ErrDashboardFolderCannotHaveParent ||
+		err == m.ErrDashboardFolderNameExists {
 		return ApiError(400, err.Error(), nil)
 	}
 
@@ -232,9 +238,6 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	}
 
 	if err != nil {
-		if err == m.ErrDashboardWithSameUIDExists {
-			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
-		}
 		if err == m.ErrDashboardWithSameNameInFolderExists {
 			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
 		}
