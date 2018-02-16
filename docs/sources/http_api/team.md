@@ -67,6 +67,7 @@ Status Codes:
 - **200** - Ok
 - **401** - Unauthorized
 - **403** - Permission denied
+- **404** - Team not found (if searching by name)
 
 ## Get Team By Id
 
@@ -168,6 +169,14 @@ Content-Type: application/json
 
 {"message":"Team updated"}
 ```
+
+Status Codes:
+
+- **200** - Ok
+- **401** - Unauthorized
+- **403** - Permission denied
+- **404** - Team not found
+- **409** - Team name is taken
 
 ## Delete Team By Id
 
@@ -275,7 +284,7 @@ Status Codes:
 - **400** - User is already added to this team
 - **401** - Unauthorized
 - **403** - Permission denied
-- **500** - Failed to add Member to Team
+- **404** - Team not found
 
 ## Remove Member From Team
 
@@ -304,3 +313,4 @@ Status Codes:
 - **200** - Ok
 - **401** - Unauthorized
 - **403** - Permission denied
+- **404** - Team not found/Team member not found
