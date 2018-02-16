@@ -71,15 +71,13 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Can read properties", func() {
-			alertQuery := m.GetAlertsQuery{DashboardId: testDash.Id, PanelId: 1, OrgId: 1}
+			alertQuery := m.GetAlertsQuery{DashboardId: testDash.Id, PanelId: 1, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 			err2 := HandleAlertsQuery(&alertQuery)
 
 			alert := alertQuery.Result[0]
 			So(err2, ShouldBeNil)
 			So(alert.Name, ShouldEqual, "Alerting title")
-			So(alert.Message, ShouldEqual, "Alerting message")
 			So(alert.State, ShouldEqual, "pending")
-			So(alert.Frequency, ShouldEqual, 1)
 		})
 
 		Convey("Alerts with same dashboard id and panel id should update", func() {
@@ -100,7 +98,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 
 			Convey("Alerts should be updated", func() {
-				query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1}
+				query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
 				So(err2, ShouldBeNil)
@@ -149,7 +147,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			Convey("Should save 3 dashboards", func() {
 				So(err, ShouldBeNil)
 
-				queryForDashboard := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1}
+				queryForDashboard := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&queryForDashboard)
 
 				So(err2, ShouldBeNil)
@@ -163,7 +161,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				err = SaveAlerts(&cmd)
 
 				Convey("should delete the missing alert", func() {
-					query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1}
+					query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 					err2 := HandleAlertsQuery(&query)
 					So(err2, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
@@ -198,7 +196,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Alerts should be removed", func() {
-				query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1}
+				query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
 				So(testDash.Id, ShouldEqual, 1)
