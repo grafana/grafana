@@ -9,6 +9,7 @@
   "alerting": true,
 
   "info": {
+    "description": "OpenTSDB Data Source for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -16,6 +17,7 @@
     "logos": {
       "small": "img/opentsdb_logo.png",
       "large": "img/opentsdb_logo.png"
-    }
+    },
+    "version": "5.0.0"
   }
 }
