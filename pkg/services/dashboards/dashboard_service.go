@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -75,7 +74,7 @@ func (dr *DashboardService) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*m
 		return nil, models.ErrDashboardUidToLong
 	}
 
-	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
+	validateAlertsCmd := models.ValidateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
 		Dashboard: dash,
 	}
@@ -120,7 +119,7 @@ func (dr *DashboardService) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*m
 }
 
 func (dr *DashboardService) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
-	alertCmd := alerting.UpdateDashboardAlertsCommand{
+	alertCmd := models.UpdateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
 		UserId:    dto.User.UserId,
 		Dashboard: cmd.Result,
@@ -203,4 +202,26 @@ func (dr *DashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashbo
 	}
 
 	return cmd.Result, nil
+}
+
+type FakeDashboardService struct {
+	SaveDashboardResult *models.Dashboard
+	SaveDashboardError  error
+	SavedDashboards     []*SaveDashboardDTO
+}
+
+func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+	s.SavedDashboards = append(s.SavedDashboards, dto)
+
+	if s.SaveDashboardResult == nil && s.SaveDashboardError == nil {
+		s.SaveDashboardResult = dto.Dashboard
+	}
+
+	return s.SaveDashboardResult, s.SaveDashboardError
+}
+
+func MockDashboardService(mock *FakeDashboardService) {
+	NewDashboardService = func() IDashboardService {
+		return mock
+	}
 }

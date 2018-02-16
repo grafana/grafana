@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -47,7 +46,7 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			Convey("When saving a dashboard should validate uid", func() {
-				bus.AddHandler("test", func(cmd *alerting.ValidateDashboardAlertsCommand) error {
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
 					return nil
 				})
 
@@ -79,7 +78,7 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			Convey("Should return validation error if alert data is invalid", func() {
-				bus.AddHandler("test", func(cmd *alerting.ValidateDashboardAlertsCommand) error {
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
 					return errors.New("error")
 				})
 

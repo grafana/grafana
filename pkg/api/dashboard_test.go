@@ -9,29 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
-
-type fakeDashboardService struct {
-	inserted []*dashboards.SaveDashboardDTO
-}
-
-func (s *fakeDashboardService) SaveDashboard(dto *dashboards.SaveDashboardDTO) (*m.Dashboard, error) {
-	s.inserted = append(s.inserted, dto)
-	return dto.Dashboard, nil
-}
-
-func mockDashboardService() *fakeDashboardService {
-	mock := fakeDashboardService{}
-	dashboards.NewDashboardService = func() dashboards.IDashboardService {
-		return &mock
-	}
-	return &mock
-}
 
 // This tests two main scenarios. If a user has access to execute an action on a dashboard:
 // 1. and the dashboard is in a folder which does not have an acl
@@ -785,16 +767,8 @@ func CallDeleteDashboardByUid(sc *scenarioContext) {
 }
 
 func CallPostDashboard(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *alerting.ValidateDashboardAlertsCommand) error {
-		return nil
-	})
-
 	bus.AddHandler("test", func(cmd *m.SaveDashboardCommand) error {
 		cmd.Result = &m.Dashboard{Id: 2, Slug: "Dash", Version: 2}
-		return nil
-	})
-
-	bus.AddHandler("test", func(cmd *alerting.UpdateDashboardAlertsCommand) error {
 		return nil
 	})
 
@@ -828,7 +802,8 @@ func postDashboardScenario(desc string, url string, routePattern string, role m.
 		})
 
 		origNewDashboardService := dashboards.NewDashboardService
-		mockDashboardService()
+		mock := &dashboards.FakeDashboardService{}
+		dashboards.MockDashboardService(mock)
 
 		sc.m.Post(routePattern, sc.defaultHandler)
 

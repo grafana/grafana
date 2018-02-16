@@ -47,7 +47,7 @@ func autoUpdateAppDashboard(pluginDashInfo *PluginDashboardInfoDTO, orgId int64)
 			PluginId:  pluginDashInfo.PluginId,
 			Overwrite: true,
 			Dashboard: dash.Data,
-			UserId:    0,
+			User:      &m.SignedInUser{UserId: 0, OrgRole: m.ROLE_ADMIN},
 			Path:      pluginDashInfo.Path,
 		}
 
