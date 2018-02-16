@@ -187,10 +187,7 @@ func addDashboardMigration(mg *Migrator) {
 			{Name: "external_id", Type: DB_Text, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
-		Indices: []*Index{
-			{Cols: []string{"dashboard_id"}},
-			{Cols: []string{"dashboard_id", "name"}, Type: IndexType},
-		},
+		Indices: []*Index{},
 	}
 
 	mg.AddMigration("create dashboard_provisioning", NewAddTableMigration(dashboardExtrasTable))
