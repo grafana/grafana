@@ -73,7 +73,7 @@ export class KeybindingSrv {
     appEvents.emit('hide-modal');
 
     if (!this.modalOpen) {
-      appEvents.emit('panel-change-view', { fullscreen: false, edit: false });
+      this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
     } else {
       this.modalOpen = false;
     }
