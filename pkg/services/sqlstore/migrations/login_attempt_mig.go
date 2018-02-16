@@ -38,6 +38,5 @@ func addLoginAttemptMigrations(mg *Migrator) {
 		"id":         "id",
 		"username":   "username",
 		"ip_address": "ip_address",
-		"created":    "created",
 	})
 }
