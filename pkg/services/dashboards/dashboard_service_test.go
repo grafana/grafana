@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/guardian"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -15,6 +16,9 @@ import (
 func TestDashboardService(t *testing.T) {
 	Convey("Dashboard service tests", t, func() {
 		service := DashboardService{}
+
+		origNewDashboardGuardian := guardian.NewDashboardGuardian
+		mockDashboardGuardian(&fakeDashboardGuardian{canSave: true})
 
 		Convey("Save dashboard validation", func() {
 			dto := &SaveDashboardDTO{}
@@ -51,29 +55,27 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				permissionScenario("Given user has permission to save", true, func(sc *dashboardPermissionScenarioContext) {
-					testCases := []struct {
-						Uid   string
-						Error error
-					}{
-						{Uid: "", Error: nil},
-						{Uid: "   ", Error: nil},
-						{Uid: "  \t  ", Error: nil},
-						{Uid: "asdf90_-", Error: nil},
-						{Uid: "asdf/90", Error: models.ErrDashboardInvalidUid},
-						{Uid: "   asdfghjklqwertyuiopzxcvbnmasdfghjklqwer   ", Error: nil},
-						{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: models.ErrDashboardUidToLong},
-					}
+				testCases := []struct {
+					Uid   string
+					Error error
+				}{
+					{Uid: "", Error: nil},
+					{Uid: "   ", Error: nil},
+					{Uid: "  \t  ", Error: nil},
+					{Uid: "asdf90_-", Error: nil},
+					{Uid: "asdf/90", Error: models.ErrDashboardInvalidUid},
+					{Uid: "   asdfghjklqwertyuiopzxcvbnmasdfghjklqwer   ", Error: nil},
+					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: models.ErrDashboardUidToLong},
+				}
 
-					for _, tc := range testCases {
-						dto.Dashboard = models.NewDashboard("title")
-						dto.Dashboard.SetUid(tc.Uid)
-						dto.User = &models.SignedInUser{}
+				for _, tc := range testCases {
+					dto.Dashboard = models.NewDashboard("title")
+					dto.Dashboard.SetUid(tc.Uid)
+					dto.User = &models.SignedInUser{}
 
-						_, err := service.buildSaveDashboardCommand(dto)
-						So(err, ShouldEqual, tc.Error)
-					}
-				})
+					_, err := service.buildSaveDashboardCommand(dto)
+					So(err, ShouldEqual, tc.Error)
+				}
 			})
 
 			Convey("Should return validation error if alert data is invalid", func() {
@@ -86,5 +88,58 @@ func TestDashboardService(t *testing.T) {
 				So(err, ShouldEqual, models.ErrDashboardContainsInvalidAlertData)
 			})
 		})
+
+		Reset(func() {
+			guardian.NewDashboardGuardian = origNewDashboardGuardian
+		})
 	})
+}
+
+func mockDashboardGuardian(mock *fakeDashboardGuardian) {
+	guardian.NewDashboardGuardian = func(dashId int64, orgId int64, user *models.SignedInUser) guardian.IDashboardGuardian {
+		mock.orgId = orgId
+		mock.dashId = dashId
+		mock.user = user
+		return mock
+	}
+}
+
+type fakeDashboardGuardian struct {
+	dashId                      int64
+	orgId                       int64
+	user                        *models.SignedInUser
+	canSave                     bool
+	canEdit                     bool
+	canView                     bool
+	canAdmin                    bool
+	hasPermission               bool
+	checkPermissionBeforeUpdate bool
+}
+
+func (g *fakeDashboardGuardian) CanSave() (bool, error) {
+	return g.canSave, nil
+}
+
+func (g *fakeDashboardGuardian) CanEdit() (bool, error) {
+	return g.canEdit, nil
+}
+
+func (g *fakeDashboardGuardian) CanView() (bool, error) {
+	return g.canView, nil
+}
+
+func (g *fakeDashboardGuardian) CanAdmin() (bool, error) {
+	return g.canAdmin, nil
+}
+
+func (g *fakeDashboardGuardian) HasPermission(permission models.PermissionType) (bool, error) {
+	return g.hasPermission, nil
+}
+
+func (g *fakeDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
+	return g.checkPermissionBeforeUpdate, nil
+}
+
+func (g *fakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
+	return nil, nil
 }

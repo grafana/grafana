@@ -1,11 +1,11 @@
-package dashboards
+package sqlstore
 
 import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -15,15 +15,15 @@ import (
 
 func TestIntegratedDashboardService(t *testing.T) {
 	Convey("Dashboard service integration tests", t, func() {
-		sqlstore.InitTestDB(t)
+		InitTestDB(t)
 		var testOrgId int64 = 1
 
 		Convey("Given saved folders and dashboards in organization A", func() {
-			savedFolder := insertTestFolder("Saved folder", testOrgId)
-			savedDashInFolder := insertTestDashboard("Saved dash in folder", testOrgId, savedFolder.Id)
-			insertTestDashboard("Other saved dash in folder", testOrgId, savedFolder.Id)
-			savedDashInGeneralFolder := insertTestDashboard("Saved dashboard in general folder", testOrgId, 0)
-			otherSavedFolder := insertTestFolder("Other saved folder", testOrgId)
+			savedFolder := saveTestFolder("Saved folder", testOrgId)
+			savedDashInFolder := saveTestDashboard("Saved dash in folder", testOrgId, savedFolder.Id)
+			saveTestDashboard("Other saved dash in folder", testOrgId, savedFolder.Id)
+			savedDashInGeneralFolder := saveTestDashboard("Saved dashboard in general folder", testOrgId, 0)
+			otherSavedFolder := saveTestFolder("Other saved folder", testOrgId)
 
 			Convey("Should return dashboard model", func() {
 				So(savedFolder.Title, ShouldEqual, "Saved folder")
@@ -777,65 +777,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							So(err, ShouldEqual, models.ErrDashboardFolderWithSameNameAsDashboard)
 						})
 					})
-
-					// Convey("When creating a dashboard with same name as dashboard in General folder", func() {
-					// 	cmd := models.SaveDashboardCommand{
-					// 		OrgId: testOrgId,
-					// 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-					// 			"id":    nil,
-					// 			"title": savedDashInGeneralFolder.Title,
-					// 		}),
-					// 		FolderId:  savedDashInGeneralFolder.FolderId,
-					// 		Overwrite: shouldOverwrite,
-					// 	}
-
-					// 	err := callSaveWithError(cmd)
-
-					// 	Convey("It should result in dashboard with same name in folder error", func() {
-					// 		So(err, ShouldNotBeNil)
-					// 		So(err, ShouldEqual, models.ErrDashboardWithSameNameInFolderExists)
-					// 	})
-					// })
-
-					// Convey("When creating a folder with same name as existing folder", func() {
-					// 	cmd := models.SaveDashboardCommand{
-					// 		OrgId: testOrgId,
-					// 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-					// 			"id":    nil,
-					// 			"title": savedFolder.Title,
-					// 		}),
-					// 		IsFolder:  true,
-					// 		Overwrite: shouldOverwrite,
-					// 	}
-
-					// 	err := callSaveWithError(cmd)
-
-					// 	Convey("It should result in dashboard with same name in folder error", func() {
-					// 		So(err, ShouldNotBeNil)
-					// 		So(err, ShouldEqual, models.ErrDashboardWithSameNameInFolderExists)
-					// 	})
-					// })
 				})
-
-				// 	Convey("Should be able to overwrite dashboard in General folder using title", func() {
-				// 		dashInGeneral := insertTestDashboard("Dash", 1, 0, false, "prod", "webapp")
-				// 		folder := insertTestDashboard("Folder", 1, 0, true, "prod", "webapp")
-				// 		insertTestDashboard("Dash", 1, folder.Id, false, "prod", "webapp")
-
-				// 		cmd := models.SaveDashboardCommand{
-				// 			OrgId: testOrgId,
-				// 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				// 				"title": "Dash",
-				// 			}),
-				// 			FolderId:  0,
-				// 			Overwrite: true,
-				// 		}
-
-				// 		valCmd, err := callValidateDashboardBeforeSave(&cmd)
-				// 		So(err, ShouldBeNil)
-				// 		So(valCmd.Dashboard.Id, ShouldEqual, dashInGeneral.Id)
-				// 		So(valCmd.Dashboard.Uid, ShouldEqual, dashInGeneral.Uid)
-				// 	})
 			})
 		})
 	})
@@ -883,10 +825,6 @@ func (g *mockDashboardGuarder) CanAdmin() (bool, error) {
 
 func (g *mockDashboardGuarder) HasPermission(permission models.PermissionType) (bool, error) {
 	return g.hasPermission, nil
-}
-
-func (g *mockDashboardGuarder) CheckPermissionBeforeRemove(permission models.PermissionType, aclIdToRemove int64) (bool, error) {
-	return g.checkPermissionBeforeRemove, nil
 }
 
 func (g *mockDashboardGuarder) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
@@ -952,13 +890,13 @@ func permissionScenario(desc string, canSave bool, fn dashboardPermissionScenari
 
 func callSaveWithResult(cmd models.SaveDashboardCommand) *models.Dashboard {
 	dto := toSaveDashboardDto(cmd)
-	res, _ := NewDashboardService().SaveDashboard(&dto)
+	res, _ := dashboards.NewDashboardService().SaveDashboard(&dto)
 	return res
 }
 
 func callSaveWithError(cmd models.SaveDashboardCommand) error {
 	dto := toSaveDashboardDto(cmd)
-	_, err := NewDashboardService().SaveDashboard(&dto)
+	_, err := dashboards.NewDashboardService().SaveDashboard(&dto)
 	return err
 }
 
@@ -979,7 +917,7 @@ func dashboardServiceScenario(desc string, mock *mockDashboardGuarder, fn scenar
 	})
 }
 
-func insertTestDashboard(title string, orgId int64, folderId int64) *models.Dashboard {
+func saveTestDashboard(title string, orgId int64, folderId int64) *models.Dashboard {
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: folderId,
@@ -990,7 +928,7 @@ func insertTestDashboard(title string, orgId int64, folderId int64) *models.Dash
 		}),
 	}
 
-	dto := SaveDashboardDTO{
+	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgId,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -999,13 +937,13 @@ func insertTestDashboard(title string, orgId int64, folderId int64) *models.Dash
 		},
 	}
 
-	res, err := NewDashboardService().SaveDashboard(&dto)
+	res, err := dashboards.NewDashboardService().SaveDashboard(&dto)
 	So(err, ShouldBeNil)
 
 	return res
 }
 
-func insertTestFolder(title string, orgId int64) *models.Dashboard {
+func saveTestFolder(title string, orgId int64) *models.Dashboard {
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: 0,
@@ -1016,7 +954,7 @@ func insertTestFolder(title string, orgId int64) *models.Dashboard {
 		}),
 	}
 
-	dto := SaveDashboardDTO{
+	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgId,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -1025,16 +963,16 @@ func insertTestFolder(title string, orgId int64) *models.Dashboard {
 		},
 	}
 
-	res, err := NewDashboardService().SaveDashboard(&dto)
+	res, err := dashboards.NewDashboardService().SaveDashboard(&dto)
 	So(err, ShouldBeNil)
 
 	return res
 }
 
-func toSaveDashboardDto(cmd models.SaveDashboardCommand) SaveDashboardDTO {
+func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashboards.SaveDashboardDTO {
 	dash := (&cmd).GetDashboardModel()
 
-	return SaveDashboardDTO{
+	return dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     cmd.OrgId,
