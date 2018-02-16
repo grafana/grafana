@@ -67,8 +67,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			alert, err := getAlertById(1)
-			So(err, ShouldBeNil)
+			alert, _ := getAlertById(1)
 			stateDateBeforePause := alert.NewStateDate
 
 			Convey("can pause all alerts", func() {
@@ -237,14 +236,6 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 	})
 }
-func pauseAllAlerts(pauseState bool) error {
-	cmd := &m.PauseAllAlertCommand{
-		Paused: pauseState,
-	}
-	err := PauseAllAlerts(cmd)
-	So(err, ShouldBeNil)
-	return err
-}
 
 func TestPausingAlerts(t *testing.T) {
 	mockTimeNow()
@@ -262,8 +253,7 @@ func TestPausingAlerts(t *testing.T) {
 			pauseAlert(testDash.OrgId, 1, true)
 
 			Convey("the NewStateDate should be updated", func() {
-				alert, err := getAlertById(1)
-				So(err, ShouldBeNil)
+				alert, _ := getAlertById(1)
 
 				stateDateAfterPause = alert.NewStateDate
 				So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
@@ -274,8 +264,7 @@ func TestPausingAlerts(t *testing.T) {
 			pauseAlert(testDash.OrgId, 1, false)
 
 			Convey("the NewStateDate should be updated again", func() {
-				alert, err := getAlertById(1)
-				So(err, ShouldBeNil)
+				alert, _ := getAlertById(1)
 
 				stateDateAfterUnpause := alert.NewStateDate
 				So(stateDateAfterPause, ShouldHappenBefore, stateDateAfterUnpause)
@@ -324,4 +313,13 @@ func getAlertById(id int64) (*m.Alert, error) {
 	err := GetAlertById(q)
 	So(err, ShouldBeNil)
 	return q.Result, err
+}
+
+func pauseAllAlerts(pauseState bool) error {
+	cmd := &m.PauseAllAlertCommand{
+		Paused: pauseState,
+	}
+	err := PauseAllAlerts(cmd)
+	So(err, ShouldBeNil)
+	return err
 }
