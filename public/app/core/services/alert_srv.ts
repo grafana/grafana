@@ -7,7 +7,7 @@ export class AlertSrv {
   list: any[];
 
   /** @ngInject */
-  constructor(private $timeout, private $rootScope, private $modal) {
+  constructor(private $timeout, private $rootScope) {
     this.list = [];
   }
 
@@ -39,7 +39,6 @@ export class AlertSrv {
     appEvents.on('alert-warning', options => this.set(options[0], options[1], 'warning', 5000));
     appEvents.on('alert-success', options => this.set(options[0], options[1], 'success', 3000));
     appEvents.on('alert-error', options => this.set(options[0], options[1], 'error', 7000));
-    appEvents.on('confirm-modal', this.showConfirmModal.bind(this));
   }
 
   getIconForSeverity(severity) {
@@ -95,45 +94,6 @@ export class AlertSrv {
 
   clearAll() {
     this.list = [];
-  }
-
-  showConfirmModal(payload) {
-    var scope = this.$rootScope.$new();
-
-    scope.onConfirm = function() {
-      payload.onConfirm();
-      scope.dismiss();
-    };
-
-    scope.updateConfirmText = function(value) {
-      scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
-    };
-
-    scope.title = payload.title;
-    scope.text = payload.text;
-    scope.text2 = payload.text2;
-    scope.confirmText = payload.confirmText;
-
-    scope.onConfirm = payload.onConfirm;
-    scope.onAltAction = payload.onAltAction;
-    scope.altActionText = payload.altActionText;
-    scope.icon = payload.icon || 'fa-check';
-    scope.yesText = payload.yesText || 'Yes';
-    scope.noText = payload.noText || 'Cancel';
-    scope.confirmTextValid = scope.confirmText ? false : true;
-
-    var confirmModal = this.$modal({
-      template: 'public/app/partials/confirm_modal.html',
-      persist: false,
-      modalClass: 'confirm-modal',
-      show: false,
-      scope: scope,
-      keyboard: false,
-    });
-
-    confirmModal.then(function(modalEl) {
-      modalEl.modal('show');
-    });
   }
 }
 

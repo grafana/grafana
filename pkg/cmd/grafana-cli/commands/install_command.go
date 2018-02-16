@@ -91,7 +91,14 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 	}
 
 	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), pluginName)
-	return nil
+
+	res, _ := s.ReadPlugin(pluginFolder, pluginName)
+	for _, v := range res.Dependencies.Plugins {
+		InstallPlugin(v.Id, "", c)
+		logger.Infof("Installed dependency: %v ✔\n", v.Id)
+	}
+
+	return err
 }
 
 func SelectVersion(plugin m.Plugin, version string) (m.Version, error) {

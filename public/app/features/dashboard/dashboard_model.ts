@@ -500,11 +500,12 @@ export class DashboardModel {
     if (!rowPanel.panels || rowPanel.panels.length === 0) {
       return 0;
     }
+    const rowYPos = rowPanel.gridPos.y;
     const positions = _.map(rowPanel.panels, 'gridPos');
     const maxPos = _.maxBy(positions, pos => {
       return pos.y + pos.h;
     });
-    return maxPos.h + 1;
+    return maxPos.y + maxPos.h - rowYPos;
   }
 
   removePanel(panel: PanelModel) {
