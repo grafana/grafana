@@ -19,7 +19,6 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 		Convey("Given saved folders and dashboards in organization A", func() {
 			InitTestDB(t)
-			t.Log("InitTestDB called")
 
 			savedFolder := saveTestFolder("Saved folder", testOrgId)
 			savedDashInFolder := saveTestDashboard("Saved dash in folder", testOrgId, savedFolder.Id)
