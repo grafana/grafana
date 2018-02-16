@@ -84,13 +84,16 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able to remove users from a group", func() {
+				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0]})
+				So(err, ShouldBeNil)
+
 				err = RemoveTeamMember(&m.RemoveTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0]})
 				So(err, ShouldBeNil)
 
-				q1 := &m.GetTeamMembersQuery{TeamId: group1.Result.Id}
-				err = GetTeamMembers(q1)
+				q2 := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: group1.Result.Id}
+				err = GetTeamMembers(q2)
 				So(err, ShouldBeNil)
-				So(len(q1.Result), ShouldEqual, 0)
+				So(len(q2.Result), ShouldEqual, 0)
 			})
 
 			Convey("Should be able to remove a group with users and permissions", func() {
