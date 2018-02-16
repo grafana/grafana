@@ -183,7 +183,7 @@ func addDashboardMigration(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "dashboard_id", Type: DB_BigInt, Nullable: true},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 150, Nullable: false},
 			{Name: "external_id", Type: DB_Text, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
@@ -200,7 +200,7 @@ func addDashboardMigration(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "dashboard_id", Type: DB_BigInt, Nullable: true},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 150, Nullable: false},
 			{Name: "external_id", Type: DB_Text, Nullable: false},
 			{Name: "updated", Type: DB_Int, Default: "0", Nullable: false},
 		},

@@ -52,6 +52,7 @@ func GetAlerts(c *middleware.Context) Response {
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
 		Limit:       c.QueryInt64("limit"),
+		User:        c.SignedInUser,
 	}
 
 	states := c.QueryStrings("state")
@@ -63,74 +64,11 @@ func GetAlerts(c *middleware.Context) Response {
 		return ApiError(500, "List alerts failed", err)
 	}
 
-	alertDTOs, resp := transformToDTOs(query.Result, c)
-	if resp != nil {
-		return resp
+	for _, alert := range query.Result {
+		alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
 	}
 
-	return Json(200, alertDTOs)
-}
-
-func transformToDTOs(alerts []*models.Alert, c *middleware.Context) ([]*dtos.AlertRule, Response) {
-	if len(alerts) == 0 {
-		return []*dtos.AlertRule{}, nil
-	}
-
-	dashboardIds := make([]int64, 0)
-	alertDTOs := make([]*dtos.AlertRule, 0)
-	for _, alert := range alerts {
-		dashboardIds = append(dashboardIds, alert.DashboardId)
-		alertDTOs = append(alertDTOs, &dtos.AlertRule{
-			Id:             alert.Id,
-			DashboardId:    alert.DashboardId,
-			PanelId:        alert.PanelId,
-			Name:           alert.Name,
-			Message:        alert.Message,
-			State:          alert.State,
-			NewStateDate:   alert.NewStateDate,
-			ExecutionError: alert.ExecutionError,
-			EvalData:       alert.EvalData,
-		})
-	}
-
-	dashboardsQuery := models.GetDashboardsQuery{
-		DashboardIds: dashboardIds,
-	}
-
-	if err := bus.Dispatch(&dashboardsQuery); err != nil {
-		return nil, ApiError(500, "List alerts failed", err)
-	}
-
-	//TODO: should be possible to speed this up with lookup table
-	for _, alert := range alertDTOs {
-		for _, dash := range dashboardsQuery.Result {
-			if alert.DashboardId == dash.Id {
-				alert.Url = dash.GenerateUrl()
-				break
-			}
-		}
-	}
-
-	permissionsQuery := models.GetDashboardPermissionsForUserQuery{
-		DashboardIds: dashboardIds,
-		OrgId:        c.OrgId,
-		UserId:       c.SignedInUser.UserId,
-		OrgRole:      c.SignedInUser.OrgRole,
-	}
-
-	if err := bus.Dispatch(&permissionsQuery); err != nil {
-		return nil, ApiError(500, "List alerts failed", err)
-	}
-
-	for _, alert := range alertDTOs {
-		for _, perm := range permissionsQuery.Result {
-			if alert.DashboardId == perm.DashboardId {
-				alert.CanEdit = perm.Permission > 1
-			}
-		}
-	}
-
-	return alertDTOs, nil
+	return Json(200, query.Result)
 }
 
 // POST /api/alerts/test

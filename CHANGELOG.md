@@ -1,3 +1,13 @@
+# 5.0.0-beta3 (2018-02-16)
+
+### Fixes
+
+- **MySQL** Fixed new migration issue with index length [#10931](https://github.com/grafana/grafana/issues/10931)
+- **Modal** Escape key no closes modals everywhere, fixes [#10887]https://github.com/grafana/grafana/issues/10887)
+- **Row repeats** Fix for repeating rows issue, fixes [#10932]https://github.com/grafana/grafana/issues/10932)
+- **Docs** Team api documented, fixes [#10832]https://github.com/grafana/grafana/issues/10832)
+- **Plugins** Plugin info page broken, fixes [#10943]https://github.com/grafana/grafana/issues/10943)
+
 # 5.0.0-beta2 (2018-02-15)
 
 ### Fixes

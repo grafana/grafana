@@ -166,8 +166,9 @@ type GetAlertsQuery struct {
 	DashboardId int64
 	PanelId     int64
 	Limit       int64
+	User        *SignedInUser
 
-	Result []*Alert
+	Result []*AlertListItemDTO
 }
 
 type GetAllAlertsQuery struct {
@@ -185,6 +186,21 @@ type GetAlertStatesForDashboardQuery struct {
 	DashboardId int64
 
 	Result []*AlertStateInfoDTO
+}
+
+type AlertListItemDTO struct {
+	Id             int64            `json:"id"`
+	DashboardId    int64            `json:"dashboardId"`
+	DashboardUid   string           `json:"dashboardUid"`
+	DashboardSlug  string           `json:"dashboardSlug"`
+	PanelId        int64            `json:"panelId"`
+	Name           string           `json:"name"`
+	State          AlertStateType   `json:"state"`
+	NewStateDate   time.Time        `json:"newStateDate"`
+	EvalDate       time.Time        `json:"evalDate"`
+	EvalData       *simplejson.Json `json:"evalData"`
+	ExecutionError string           `json:"executionError"`
+	Url            string           `json:"url"`
 }
 
 type AlertStateInfoDTO struct {

@@ -78,11 +78,12 @@ func UpdateTeam(cmd *m.UpdateTeamCommand) error {
 	})
 }
 
+// DeleteTeam will delete a team, its member and any permissions connected to the team
 func DeleteTeam(cmd *m.DeleteTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if res, err := sess.Query("SELECT 1 from team WHERE org_id=? and id=?", cmd.OrgId, cmd.Id); err != nil {
+		if teamExists, err := teamExists(cmd.OrgId, cmd.Id, sess); err != nil {
 			return err
-		} else if len(res) != 1 {
+		} else if !teamExists {
 			return m.ErrTeamNotFound
 		}
 
@@ -100,6 +101,16 @@ func DeleteTeam(cmd *m.DeleteTeamCommand) error {
 		}
 		return nil
 	})
+}
+
+func teamExists(orgId int64, teamId int64, sess *DBSession) (bool, error) {
+	if res, err := sess.Query("SELECT 1 from team WHERE org_id=? and id=?", orgId, teamId); err != nil {
+		return false, err
+	} else if len(res) != 1 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func isTeamNameTaken(orgId int64, name string, existingId int64, sess *DBSession) (bool, error) {
@@ -190,6 +201,7 @@ func GetTeamById(query *m.GetTeamByIdQuery) error {
 	return nil
 }
 
+// GetTeamsByUser is used by the Guardian when checking a users' permissions
 func GetTeamsByUser(query *m.GetTeamsByUserQuery) error {
 	query.Result = make([]*m.Team, 0)
 
@@ -205,6 +217,7 @@ func GetTeamsByUser(query *m.GetTeamsByUserQuery) error {
 	return nil
 }
 
+// AddTeamMember adds a user to a team
 func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from team_member WHERE org_id=? and team_id=? and user_id=?", cmd.OrgId, cmd.TeamId, cmd.UserId); err != nil {
@@ -213,9 +226,9 @@ func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 			return m.ErrTeamMemberAlreadyAdded
 		}
 
-		if res, err := sess.Query("SELECT 1 from team WHERE org_id=? and id=?", cmd.OrgId, cmd.TeamId); err != nil {
+		if teamExists, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
 			return err
-		} else if len(res) != 1 {
+		} else if !teamExists {
 			return m.ErrTeamNotFound
 		}
 
@@ -232,18 +245,30 @@ func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 	})
 }
 
+// RemoveTeamMember removes a member from a team
 func RemoveTeamMember(cmd *m.RemoveTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		if teamExists, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+			return err
+		} else if !teamExists {
+			return m.ErrTeamNotFound
+		}
+
 		var rawSql = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
-		_, err := sess.Exec(rawSql, cmd.OrgId, cmd.TeamId, cmd.UserId)
+		res, err := sess.Exec(rawSql, cmd.OrgId, cmd.TeamId, cmd.UserId)
 		if err != nil {
 			return err
+		}
+		rows, err := res.RowsAffected()
+		if rows == 0 {
+			return m.ErrTeamMemberNotFound
 		}
 
 		return err
 	})
 }
 
+// GetTeamMembers return a list of members for the specified team
 func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 	query.Result = make([]*m.TeamMemberDTO, 0)
 	sess := x.Table("team_member")

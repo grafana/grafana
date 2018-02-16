@@ -82,7 +82,6 @@ exports[`AlertRuleList should render 1 rule 1`] = `
   >
     <button
       className="btn btn-small btn-inverse alert-list__btn width-2"
-      disabled={false}
       onClick={[Function]}
       title="Pausing an alert rule prevents it from executing"
     >
