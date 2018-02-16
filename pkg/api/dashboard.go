@@ -262,8 +262,6 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
 	}
 
-	dashboard.IsFolder = dash.IsFolder
-
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
 	return Json(200, util.DynMap{
 		"status":  "success",
