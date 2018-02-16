@@ -94,13 +94,7 @@ func (dr *DashboardService) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*m
 		return nil, err
 	}
 
-	dashId := dash.Id
-
-	if dashId == 0 {
-		dashId = dash.FolderId
-	}
-
-	guard := guardian.NewDashboardGuardian(dashId, dto.OrgId, dto.User)
+	guard := guardian.NewDashboardGuardian(dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
 	if canSave, err := guard.CanSave(); err != nil || !canSave {
 		if err != nil {
 			return nil, err
