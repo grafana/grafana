@@ -15,10 +15,12 @@ import (
 
 func TestIntegratedDashboardService(t *testing.T) {
 	Convey("Dashboard service integration tests", t, func() {
-		InitTestDB(t)
 		var testOrgId int64 = 1
 
 		Convey("Given saved folders and dashboards in organization A", func() {
+			InitTestDB(t)
+			t.Log("InitTestDB called")
+
 			savedFolder := saveTestFolder("Saved folder", testOrgId)
 			savedDashInFolder := saveTestDashboard("Saved dash in folder", testOrgId, savedFolder.Id)
 			saveTestDashboard("Other saved dash in folder", testOrgId, savedFolder.Id)
@@ -96,9 +98,10 @@ func TestIntegratedDashboardService(t *testing.T) {
 						}
 
 						res := callSaveWithResult(cmd)
-						So(res, ShouldNotBeNil)
 
 						Convey("It should create dashboard in other organization", func() {
+							So(res, ShouldNotBeNil)
+
 							query := models.GetDashboardQuery{OrgId: otherOrgId, Uid: savedDashInFolder.Uid}
 
 							err := bus.Dispatch(&query)
@@ -128,15 +131,13 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					err := callSaveWithError(cmd)
 
-					Convey("It should call dashboard guardian with correct arguments", func() {
+					Convey("It should call dashboard guardian with correct arguments and result in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
 						So(sc.dashboardGuardianMock.dashId, ShouldEqual, 0)
 						So(sc.dashboardGuardianMock.orgId, ShouldEqual, cmd.OrgId)
 						So(sc.dashboardGuardianMock.user.UserId, ShouldEqual, cmd.UserId)
-					})
-
-					Convey("It should result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 					})
 				})
 
@@ -153,15 +154,13 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					err := callSaveWithError(cmd)
 
-					Convey("It should call dashboard guardian with correct arguments", func() {
+					Convey("It should call dashboard guardian with correct arguments and rsult in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
 						So(sc.dashboardGuardianMock.dashId, ShouldEqual, otherSavedFolder.Id)
 						So(sc.dashboardGuardianMock.orgId, ShouldEqual, cmd.OrgId)
 						So(sc.dashboardGuardianMock.user.UserId, ShouldEqual, cmd.UserId)
-					})
-
-					Convey("It should result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 					})
 				})
 
@@ -179,15 +178,13 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					err := callSaveWithError(cmd)
 
-					Convey("It should call dashboard guardian with correct arguments", func() {
+					Convey("It should call dashboard guardian with correct arguments and result in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
 						So(sc.dashboardGuardianMock.dashId, ShouldEqual, savedDashInGeneralFolder.Id)
 						So(sc.dashboardGuardianMock.orgId, ShouldEqual, cmd.OrgId)
 						So(sc.dashboardGuardianMock.user.UserId, ShouldEqual, cmd.UserId)
-					})
-
-					Convey("It should result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 					})
 				})
 
@@ -205,15 +202,13 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					err := callSaveWithError(cmd)
 
-					Convey("It should call dashboard guardian with correct arguments", func() {
+					Convey("It should call dashboard guardian with correct arguments and result in access denied error", func() {
+						So(err, ShouldNotBeNil)
+						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
+
 						So(sc.dashboardGuardianMock.dashId, ShouldEqual, savedDashInFolder.Id)
 						So(sc.dashboardGuardianMock.orgId, ShouldEqual, cmd.OrgId)
 						So(sc.dashboardGuardianMock.user.UserId, ShouldEqual, cmd.UserId)
-					})
-
-					Convey("It should result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 					})
 				})
 			})
