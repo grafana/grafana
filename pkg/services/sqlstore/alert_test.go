@@ -80,6 +80,14 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alert.State, ShouldEqual, "pending")
 		})
 
+		Convey("Viewer cannot read alerts", func() {
+			alertQuery := m.GetAlertsQuery{DashboardId: testDash.Id, PanelId: 1, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_VIEWER}}
+			err2 := HandleAlertsQuery(&alertQuery)
+
+			So(err2, ShouldBeNil)
+			So(alertQuery.Result, ShouldHaveLength, 0)
+		})
+
 		Convey("Alerts with same dashboard id and panel id should update", func() {
 			modifiedItems := items
 			modifiedItems[0].Name = "Name"
