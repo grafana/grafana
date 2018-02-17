@@ -632,6 +632,7 @@ Licensed under the MIT license.
             processRawData: [],
             processDatapoints: [],
             processOffset: [],
+            processRange: [],
             drawBackground: [],
             drawSeries: [],
             draw: [],
@@ -1612,6 +1613,8 @@ Licensed under the MIT license.
                 axis.reserveSpace = axisOpts.reserveSpace == null ? axis.show : axisOpts.reserveSpace;
                 setRange(axis);
             });
+
+            executeHooks(hooks.processRange, []);
 
             if (showGrid) {
 
