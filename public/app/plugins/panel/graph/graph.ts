@@ -155,6 +155,116 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         }
       }
 
+      function processRangeHook(plot) {
+        var yaxis = plot.getYAxes();
+        if (yaxis.length > 1 && panel.yaxes[1].shareZero) {
+          shareYLevel(yaxis[0].min, yaxis[0].max, yaxis[1].min, yaxis[1].max, 0);
+        }
+      }
+
+      function shareYLevel(minLeft, maxLeft, minRight, maxRight, shareLevel) {
+        if (shareLevel !== 0) {
+          minLeft -= shareLevel;
+          maxLeft -= shareLevel;
+          minRight -= shareLevel;
+          maxRight -= shareLevel;
+        }
+
+        // wide Y min and max using increased wideFactor
+        var deltaLeft = maxLeft - minLeft;
+        var deltaRight = maxRight - minRight;
+        var wideFactor = 0.25;
+        if (deltaLeft === 0) {
+          minLeft -= wideFactor;
+          maxLeft += wideFactor;
+        }
+        if (deltaRight === 0) {
+          minRight -= wideFactor;
+          maxRight += wideFactor;
+        }
+
+        // on the opposite sides with respect to zero
+        if ((minLeft >= 0 && maxRight <= 0) || (maxLeft <= 0 && minRight >= 0)) {
+          if (minLeft >= 0) {
+            minLeft = -maxLeft;
+            maxRight = -minRight;
+          } else {
+            maxLeft = -minLeft;
+            minRight = -maxRight;
+          }
+        } else {
+          var limitTop = Infinity;
+          var limitBottom = -Infinity;
+          var absLeftMin = Math.abs(minLeft);
+          var absLeftMax = Math.abs(maxLeft);
+          var absRightMin = Math.abs(minRight);
+          var absRightMax = Math.abs(maxRight);
+          var upLeft = _.max([absLeftMin, absLeftMax]);
+          var downLeft = _.min([absLeftMin, absLeftMax]);
+          var upRight = _.max([absRightMin, absRightMax]);
+          var downRight = _.min([absRightMin, absRightMax]);
+          var oneSide = (minLeft >= 0 && minRight >= 0) || (maxLeft <= 0 && maxRight <= 0);
+          var rateLeft, rateRight, rate;
+
+          // on the one hand with respect to zero
+          if (oneSide) {
+            rateLeft = downLeft ? upLeft / downLeft : downLeft >= 0 ? limitTop : limitBottom;
+            rateRight = downRight ? upRight / downRight : downRight >= 0 ? limitTop : limitBottom;
+            rate = _.max([rateLeft, rateRight]);
+
+            if (rate === limitTop) {
+              if (maxLeft > 0) {
+                minLeft = 0;
+                minRight = 0;
+              } else {
+                maxLeft = 0;
+                maxRight = 0;
+              }
+            } else {
+              var coef = deltaLeft / deltaRight;
+              if ((rate === rateLeft && minLeft > 0) || (rate === rateRight && maxRight < 0)) {
+                maxLeft = maxRight * coef;
+                minRight = minLeft / coef;
+              } else {
+                minLeft = minRight * coef;
+                maxRight = maxLeft / coef;
+              }
+            }
+          } else {
+            rateLeft =
+              minLeft && maxLeft
+                ? minLeft < 0 ? maxLeft / minLeft : limitBottom
+                : minLeft < 0 || maxRight >= 0 ? limitBottom : limitTop;
+            rateRight =
+              minRight && maxRight
+                ? minRight < 0 ? maxRight / minRight : limitBottom
+                : minRight < 0 || maxLeft >= 0 ? limitBottom : limitTop;
+            rate = _.max([rateLeft, rateRight]);
+
+            if (rate === rateLeft) {
+              minRight =
+                upRight === absRightMin && (absRightMin !== absRightMax || upLeft !== absLeftMin)
+                  ? -upRight
+                  : upRight / rate;
+              maxRight = upRight === absRightMax ? upRight : -upRight * rate;
+            } else {
+              minLeft =
+                upLeft === absLeftMin && (absLeftMin !== absLeftMax || upRight !== absRightMin)
+                  ? -upLeft
+                  : upLeft / rate;
+              maxLeft = upLeft === absLeftMax ? upLeft : -upLeft * rate;
+            }
+          }
+        }
+
+        if (shareLevel !== 0) {
+          minLeft += shareLevel;
+          maxLeft += shareLevel;
+          minRight += shareLevel;
+          maxRight += shareLevel;
+        }
+      }
+
       // Series could have different timeSteps,
       // let's find the smallest one so that bars are correctly rendered.
       // In addition, only take series which are rendered as bars for this.
@@ -296,6 +406,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           hooks: {
             draw: [drawHook],
             processOffset: [processOffsetHook],
+            processRange: [processRangeHook],
           },
           legend: { show: false },
           series: {

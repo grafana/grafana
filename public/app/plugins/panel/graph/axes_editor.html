@@ -29,6 +29,7 @@
 					<input type="text" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="yaxis.max" ng-change="ctrl.render()" ng-model-onblur>
 				</div>
       </div>
+                        <gf-form-switch class="gf-form" label="Share Zero" label-class="width-6" checked="yaxis.shareZero" on-change="ctrl.render()" ng-show="$index === 1"></gf-form-switch>
       <div class="gf-form">
 				<label class="gf-form-label width-6">Decimals</label>
 				<input type="number" class="gf-form-input max-width-20" placeholder="auto" empty-to-null bs-tooltip="'Override automatic decimal precision for y-axis'" data-placement="right" ng-model="yaxis.decimals" ng-change="ctrl.render()" ng-model-onblur>
