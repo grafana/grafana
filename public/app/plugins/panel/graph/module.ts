@@ -232,6 +232,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   changeSeriesColor(series, color) {
     series.color = color;
+    series.bars.fillColor = color;
     this.panel.aliasColors[series.alias] = series.color;
     this.render();
   }

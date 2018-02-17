@@ -112,7 +112,7 @@ export default class TimeSeries {
       dashLength: [],
     };
     this.points = {};
-    this.bars = {};
+    this.bars = this.bars || {};
     this.yaxis = 1;
     this.zindex = 0;
     this.nullPointMode = null;
