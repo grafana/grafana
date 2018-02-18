@@ -168,6 +168,7 @@ export default class TimeSeries {
         this.fillBelowTo = override.fillBelowTo;
       }
       if (override.color !== void 0) {
+        this.bars.fillColor = override.color;
         this.color = override.color;
       }
       if (override.transform !== void 0) {
