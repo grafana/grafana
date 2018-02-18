@@ -281,6 +281,20 @@ describe('TimeSeries', function() {
         expect(series.zindex).toBe(2);
       });
     });
+
+    describe('override color', function() {
+      beforeEach(function() {
+        series.applySeriesOverrides([{ alias: 'test', color: '#112233' }]);
+      });
+
+      it('should set color', function() {
+        expect(series.color).toBe('#112233');
+      });
+
+      it('should set bars.fillColor', function() {
+        expect(series.bars.fillColor).toBe('#112233');
+      });
+    });
   });
 
   describe('value formatter', function() {
