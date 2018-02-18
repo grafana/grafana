@@ -215,7 +215,10 @@ THE SOFTWARE.
             ];
         return r;
     }
-    var between = $.plot.JUMlib.library.between;
+    function between(v,limit1,limit2){
+        if(limit2 > limit1){ return (v >= limit1 && v <= limit2); }
+        else{ return(v >=limit2 && v <= limit1); }
+    }
     $.plot.candlestick = {};
     $.plot.candlestick.createCandlestick = createCandlestick;
     $.plot.plugins.push({
