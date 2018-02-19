@@ -18,7 +18,7 @@ export class DashboardMigrator {
   }
 
   updateSchema(old) {
-    var i, j, k;
+    var i, j, k, n;
     var oldVersion = this.dashboard.schemaVersion;
     var panelUpgrades = [];
     this.dashboard.schemaVersion = 16;
@@ -372,6 +372,11 @@ export class DashboardMigrator {
     for (j = 0; j < this.dashboard.panels.length; j++) {
       for (k = 0; k < panelUpgrades.length; k++) {
         panelUpgrades[k].call(this, this.dashboard.panels[j]);
+        if (this.dashboard.panels[j].panels) {
+          for (n = 0; n < this.dashboard.panels[j].panels.length; n++) {
+            panelUpgrades[k].call(this, this.dashboard.panels[j].panels[n]);
+          }
+        }
       }
     }
   }

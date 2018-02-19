@@ -371,6 +371,14 @@ describe('DashboardModel', function() {
       let dashboard = new DashboardModel(model);
       expect(dashboard.panels[0].minSpan).toBe(24);
     });
+
+    it('should assign id', function() {
+      model.rows = [createRow({ collapse: true, height: 8 }, [[6], [6]])];
+      model.rows[0].panels[0] = { };
+
+      let dashboard = new DashboardModel(model);
+      expect(dashboard.panels[0].id).toBe(1);
+    });
   });
 });
 
