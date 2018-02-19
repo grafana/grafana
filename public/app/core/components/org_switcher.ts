@@ -15,8 +15,7 @@ const template = `
 		</a>
 	</div>
 
-	<div class="modal-content">
-    <div class="gf-form-group">
+  <div class="modal-content modal-content--has-scroll" grafana-scrollbar>
     <table class="filter-table form-inline">
 			<thead>
 				<tr>
@@ -71,6 +70,7 @@ export class OrgSwitchCtrl {
 }
 
 export function orgSwitcher() {
+  console.log('hej');
   return {
     restrict: 'E',
     template: template,
