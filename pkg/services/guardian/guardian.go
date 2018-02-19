@@ -7,7 +7,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type DashboardGuardian struct {
+// DashboardGuardian to be used for guard against operations without access on dashboard and acl
+type DashboardGuardian interface {
+	CanSave() (bool, error)
+	CanEdit() (bool, error)
+	CanView() (bool, error)
+	CanAdmin() (bool, error)
+	HasPermission(permission m.PermissionType) (bool, error)
+	CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error)
+	GetAcl() ([]*m.DashboardAclInfoDTO, error)
+}
+
+type dashboardGuardianImpl struct {
 	user   *m.SignedInUser
 	dashId int64
 	orgId  int64
@@ -16,8 +27,9 @@ type DashboardGuardian struct {
 	log    log.Logger
 }
 
-func NewDashboardGuardian(dashId int64, orgId int64, user *m.SignedInUser) *DashboardGuardian {
-	return &DashboardGuardian{
+// New factory for creating a new dashboard guardian instance
+var New = func(dashId int64, orgId int64, user *m.SignedInUser) DashboardGuardian {
+	return &dashboardGuardianImpl{
 		user:   user,
 		dashId: dashId,
 		orgId:  orgId,
@@ -25,11 +37,11 @@ func NewDashboardGuardian(dashId int64, orgId int64, user *m.SignedInUser) *Dash
 	}
 }
 
-func (g *DashboardGuardian) CanSave() (bool, error) {
+func (g *dashboardGuardianImpl) CanSave() (bool, error) {
 	return g.HasPermission(m.PERMISSION_EDIT)
 }
 
-func (g *DashboardGuardian) CanEdit() (bool, error) {
+func (g *dashboardGuardianImpl) CanEdit() (bool, error) {
 	if setting.ViewersCanEdit {
 		return g.HasPermission(m.PERMISSION_VIEW)
 	}
@@ -37,15 +49,15 @@ func (g *DashboardGuardian) CanEdit() (bool, error) {
 	return g.HasPermission(m.PERMISSION_EDIT)
 }
 
-func (g *DashboardGuardian) CanView() (bool, error) {
+func (g *dashboardGuardianImpl) CanView() (bool, error) {
 	return g.HasPermission(m.PERMISSION_VIEW)
 }
 
-func (g *DashboardGuardian) CanAdmin() (bool, error) {
+func (g *dashboardGuardianImpl) CanAdmin() (bool, error) {
 	return g.HasPermission(m.PERMISSION_ADMIN)
 }
 
-func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, error) {
+func (g *dashboardGuardianImpl) HasPermission(permission m.PermissionType) (bool, error) {
 	if g.user.OrgRole == m.ROLE_ADMIN {
 		return true, nil
 	}
@@ -58,7 +70,7 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 	return g.checkAcl(permission, acl)
 }
 
-func (g *DashboardGuardian) checkAcl(permission m.PermissionType, acl []*m.DashboardAclInfoDTO) (bool, error) {
+func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.DashboardAclInfoDTO) (bool, error) {
 	orgRole := g.user.OrgRole
 	teamAclItems := []*m.DashboardAclInfoDTO{}
 
@@ -106,7 +118,7 @@ func (g *DashboardGuardian) checkAcl(permission m.PermissionType, acl []*m.Dashb
 	return false, nil
 }
 
-func (g *DashboardGuardian) CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error) {
+func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error) {
 	if g.user.OrgRole == m.ROLE_ADMIN {
 		return true, nil
 	}
@@ -121,7 +133,7 @@ func (g *DashboardGuardian) CheckPermissionBeforeUpdate(permission m.PermissionT
 }
 
 // GetAcl returns dashboard acl
-func (g *DashboardGuardian) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
+func (g *dashboardGuardianImpl) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	if g.acl != nil {
 		return g.acl, nil
 	}
@@ -135,7 +147,7 @@ func (g *DashboardGuardian) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	return g.acl, nil
 }
 
-func (g *DashboardGuardian) getTeams() ([]*m.Team, error) {
+func (g *dashboardGuardianImpl) getTeams() ([]*m.Team, error) {
 	if g.groups != nil {
 		return g.groups, nil
 	}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
@@ -50,7 +49,7 @@ func GetDashboard(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canView, err := guardian.CanView(); err != nil || !canView {
 		return dashboardGuardianResponse(err)
 	}
@@ -157,7 +156,7 @@ func DeleteDashboard(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -177,7 +176,7 @@ func DeleteDashboardByUid(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -197,32 +196,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 
 	dash := cmd.GetDashboardModel()
 
-	dashId := dash.Id
-
-	// if new dashboard, use parent folder permissions instead
-	if dashId == 0 {
-		dashId = cmd.FolderId
-	}
-
-	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
-		return dashboardGuardianResponse(err)
-	}
-
-	if dash.IsFolder && dash.FolderId > 0 {
-		return ApiError(400, m.ErrDashboardFolderCannotHaveParent.Error(), nil)
-	}
-
-	// Check if Title is empty
-	if dash.Title == "" {
-		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
-	}
-
-	if dash.IsFolder && strings.ToLower(dash.Title) == strings.ToLower(m.RootFolderName) {
-		return ApiError(400, "A folder already exists with that name", nil)
-	}
-
-	if dash.Id == 0 {
+	if dash.Id == 0 && dash.Uid == "" {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
 		if err != nil {
 			return ApiError(500, "failed to get quota", err)
@@ -236,17 +210,27 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     c.OrgId,
-		UserId:    c.UserId,
+		User:      c.SignedInUser,
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.GetRepository().SaveDashboard(dashItem)
+	dashboard, err := dashboards.NewService().SaveDashboard(dashItem)
 
 	if err == m.ErrDashboardTitleEmpty ||
 		err == m.ErrDashboardWithSameNameAsFolder ||
 		err == m.ErrDashboardFolderWithSameNameAsDashboard ||
-		err == m.ErrDashboardTypeMismatch {
+		err == m.ErrDashboardTypeMismatch ||
+		err == m.ErrDashboardInvalidUid ||
+		err == m.ErrDashboardUidToLong ||
+		err == m.ErrDashboardWithSameUIDExists ||
+		err == m.ErrFolderNotFound ||
+		err == m.ErrDashboardFolderCannotHaveParent ||
+		err == m.ErrDashboardFolderNameExists {
 		return ApiError(400, err.Error(), nil)
+	}
+
+	if err == m.ErrDashboardUpdateAccessDenied {
+		return ApiError(403, err.Error(), err)
 	}
 
 	if err == m.ErrDashboardContainsInvalidAlertData {
@@ -254,9 +238,6 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	}
 
 	if err != nil {
-		if err == m.ErrDashboardWithSameUIDExists {
-			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
-		}
 		if err == m.ErrDashboardWithSameNameInFolderExists {
 			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
 		}
@@ -280,8 +261,6 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	if err == m.ErrDashboardFailedToUpdateAlertData {
 		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
 	}
-
-	dashboard.IsFolder = dash.IsFolder
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
 	return Json(200, util.DynMap{
@@ -357,7 +336,7 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 func GetDashboardVersions(c *middleware.Context) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -396,7 +375,7 @@ func GetDashboardVersions(c *middleware.Context) Response {
 func GetDashboardVersion(c *middleware.Context) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -464,7 +443,7 @@ func RestoreDashboardVersion(c *middleware.Context, apiCmd dtos.RestoreDashboard
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}

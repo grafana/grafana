@@ -210,3 +210,17 @@ type AlertStateInfoDTO struct {
 	State        AlertStateType `json:"state"`
 	NewStateDate time.Time      `json:"newStateDate"`
 }
+
+// "Internal" commands
+
+type UpdateDashboardAlertsCommand struct {
+	UserId    int64
+	OrgId     int64
+	Dashboard *Dashboard
+}
+
+type ValidateDashboardAlertsCommand struct {
+	UserId    int64
+	OrgId     int64
+	Dashboard *Dashboard
+}

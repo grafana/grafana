@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 type ImportDashboardCommand struct {
@@ -17,7 +18,7 @@ type ImportDashboardCommand struct {
 	Overwrite bool
 
 	OrgId    int64
-	UserId   int64
+	User     *m.SignedInUser
 	PluginId string
 	Result   *PluginDashboardInfoDTO
 }
@@ -66,23 +67,32 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 	saveCmd := m.SaveDashboardCommand{
 		Dashboard: generatedDash,
 		OrgId:     cmd.OrgId,
-		UserId:    cmd.UserId,
+		UserId:    cmd.User.UserId,
 		Overwrite: cmd.Overwrite,
 		PluginId:  cmd.PluginId,
 		FolderId:  dashboard.FolderId,
 	}
 
-	if err := bus.Dispatch(&saveCmd); err != nil {
+	dto := &dashboards.SaveDashboardDTO{
+		OrgId:     cmd.OrgId,
+		Dashboard: saveCmd.GetDashboardModel(),
+		Overwrite: saveCmd.Overwrite,
+		User:      cmd.User,
+	}
+
+	savedDash, err := dashboards.NewService().SaveDashboard(dto)
+
+	if err != nil {
 		return err
 	}
 
 	cmd.Result = &PluginDashboardInfoDTO{
 		PluginId:         cmd.PluginId,
-		Title:            dashboard.Title,
+		Title:            savedDash.Title,
 		Path:             cmd.Path,
-		Revision:         dashboard.Data.Get("revision").MustInt64(1),
-		ImportedUri:      "db/" + saveCmd.Result.Slug,
-		ImportedUrl:      saveCmd.Result.GetUrl(),
+		Revision:         savedDash.Data.Get("revision").MustInt64(1),
+		ImportedUri:      "db/" + savedDash.Slug,
+		ImportedUrl:      savedDash.GetUrl(),
 		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
 		Imported:         true,
 	}

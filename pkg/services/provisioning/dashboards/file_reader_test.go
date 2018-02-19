@@ -19,16 +19,16 @@ var (
 	brokenDashboards  string = "./test-dashboards/broken-dashboards"
 	oneDashboard      string = "./test-dashboards/one-dashboard"
 
-	fakeRepo *fakeDashboardRepo
+	fakeService *fakeDashboardProvisioningService
 )
 
 func TestDashboardFileReader(t *testing.T) {
 	Convey("Dashboard file reader", t, func() {
 		bus.ClearBusHandlers()
-		fakeRepo = &fakeDashboardRepo{}
+		origNewDashboardProvisioningService := dashboards.NewProvisioningService
+		fakeService = mockDashboardProvisioningService()
 
 		bus.AddHandler("test", mockGetDashboardQuery)
-		dashboards.SetRepository(fakeRepo)
 		logger := log.New("test.logger")
 
 		Convey("Reading dashboards from disk", func() {
@@ -54,7 +54,7 @@ func TestDashboardFileReader(t *testing.T) {
 				folders := 0
 				dashboards := 0
 
-				for _, i := range fakeRepo.inserted {
+				for _, i := range fakeService.inserted {
 					if i.Dashboard.IsFolder {
 						folders++
 					} else {
@@ -71,7 +71,7 @@ func TestDashboardFileReader(t *testing.T) {
 
 				stat, _ := os.Stat(oneDashboard + "/dashboard1.json")
 
-				fakeRepo.getDashboard = append(fakeRepo.getDashboard, &models.Dashboard{
+				fakeService.getDashboard = append(fakeService.getDashboard, &models.Dashboard{
 					Updated: stat.ModTime().AddDate(0, 0, -1),
 					Slug:    "grafana",
 				})
@@ -82,7 +82,7 @@ func TestDashboardFileReader(t *testing.T) {
 				err = reader.startWalkingDisk()
 				So(err, ShouldBeNil)
 
-				So(len(fakeRepo.inserted), ShouldEqual, 1)
+				So(len(fakeService.inserted), ShouldEqual, 1)
 			})
 
 			Convey("Invalid configuration should return error", func() {
@@ -116,7 +116,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			_, err := getOrCreateFolderId(cfg, fakeRepo)
+			_, err := getOrCreateFolderId(cfg, fakeService)
 			So(err, ShouldEqual, ErrFolderNameMissing)
 		})
 
@@ -131,15 +131,15 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			folderId, err := getOrCreateFolderId(cfg, fakeRepo)
+			folderId, err := getOrCreateFolderId(cfg, fakeService)
 			So(err, ShouldBeNil)
 			inserted := false
-			for _, d := range fakeRepo.inserted {
+			for _, d := range fakeService.inserted {
 				if d.Dashboard.IsFolder && d.Dashboard.Id == folderId {
 					inserted = true
 				}
 			}
-			So(len(fakeRepo.inserted), ShouldEqual, 1)
+			So(len(fakeService.inserted), ShouldEqual, 1)
 			So(inserted, ShouldBeTrue)
 		})
 
@@ -180,6 +180,10 @@ func TestDashboardFileReader(t *testing.T) {
 				So(reader.Path, ShouldEqual, defaultDashboards)
 			})
 		})
+
+		Reset(func() {
+			dashboards.NewProvisioningService = origNewDashboardProvisioningService
+		})
 	})
 }
 
@@ -212,29 +216,37 @@ func (ffi FakeFileInfo) Sys() interface{} {
 	return nil
 }
 
-type fakeDashboardRepo struct {
+func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
+	mock := fakeDashboardProvisioningService{}
+	dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
+		return &mock
+	}
+	return &mock
+}
+
+type fakeDashboardProvisioningService struct {
 	inserted     []*dashboards.SaveDashboardDTO
 	provisioned  []*models.DashboardProvisioning
 	getDashboard []*models.Dashboard
 }
 
-func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
-	repo.inserted = append(repo.inserted, json)
-	return json.Dashboard, nil
+func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+	return s.provisioned, nil
 }
 
-func (repo *fakeDashboardRepo) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
-	return repo.provisioned, nil
+func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	s.inserted = append(s.inserted, dto)
+	s.provisioned = append(s.provisioned, provisioning)
+	return dto.Dashboard, nil
 }
 
-func (repo *fakeDashboardRepo) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
-	repo.inserted = append(repo.inserted, dto)
-	repo.provisioned = append(repo.provisioned, provisioning)
+func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
+	s.inserted = append(s.inserted, dto)
 	return dto.Dashboard, nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
-	for _, d := range fakeRepo.getDashboard {
+	for _, d := range fakeService.getDashboard {
 		if d.Slug == cmd.Slug {
 			cmd.Result = d
 			return nil
