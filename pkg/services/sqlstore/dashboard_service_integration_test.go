@@ -892,13 +892,13 @@ func permissionScenario(desc string, canSave bool, fn dashboardPermissionScenari
 
 func callSaveWithResult(cmd models.SaveDashboardCommand) *models.Dashboard {
 	dto := toSaveDashboardDto(cmd)
-	res, _ := dashboards.NewDashboardService().SaveDashboard(&dto)
+	res, _ := dashboards.NewService().SaveDashboard(&dto)
 	return res
 }
 
 func callSaveWithError(cmd models.SaveDashboardCommand) error {
 	dto := toSaveDashboardDto(cmd)
-	_, err := dashboards.NewDashboardService().SaveDashboard(&dto)
+	_, err := dashboards.NewService().SaveDashboard(&dto)
 	return err
 }
 
@@ -939,7 +939,7 @@ func saveTestDashboard(title string, orgId int64, folderId int64) *models.Dashbo
 		},
 	}
 
-	res, err := dashboards.NewDashboardService().SaveDashboard(&dto)
+	res, err := dashboards.NewService().SaveDashboard(&dto)
 	So(err, ShouldBeNil)
 
 	return res
@@ -965,7 +965,7 @@ func saveTestFolder(title string, orgId int64) *models.Dashboard {
 		},
 	}
 
-	res, err := dashboards.NewDashboardService().SaveDashboard(&dto)
+	res, err := dashboards.NewService().SaveDashboard(&dto)
 	So(err, ShouldBeNil)
 
 	return res

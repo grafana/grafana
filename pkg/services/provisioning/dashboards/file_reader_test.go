@@ -25,7 +25,7 @@ var (
 func TestDashboardFileReader(t *testing.T) {
 	Convey("Dashboard file reader", t, func() {
 		bus.ClearBusHandlers()
-		origNewDashboardProvisioningService := dashboards.NewDashboardProvisioningService
+		origNewDashboardProvisioningService := dashboards.NewProvisioningService
 		fakeService = mockDashboardProvisioningService()
 
 		bus.AddHandler("test", mockGetDashboardQuery)
@@ -182,7 +182,7 @@ func TestDashboardFileReader(t *testing.T) {
 		})
 
 		Reset(func() {
-			dashboards.NewDashboardProvisioningService = origNewDashboardProvisioningService
+			dashboards.NewProvisioningService = origNewDashboardProvisioningService
 		})
 	})
 }
@@ -218,7 +218,7 @@ func (ffi FakeFileInfo) Sys() interface{} {
 
 func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
 	mock := fakeDashboardProvisioningService{}
-	dashboards.NewDashboardProvisioningService = func() dashboards.IDashboardProvisioningService {
+	dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
 		return &mock
 	}
 	return &mock

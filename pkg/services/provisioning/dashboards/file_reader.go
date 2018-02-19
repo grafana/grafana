@@ -28,7 +28,7 @@ type fileReader struct {
 	Cfg              *DashboardsAsConfig
 	Path             string
 	log              log.Logger
-	dashboardService dashboards.IDashboardProvisioningService
+	dashboardService dashboards.DashboardProvisioningService
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -51,7 +51,7 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		Cfg:              cfg,
 		Path:             path,
 		log:              log,
-		dashboardService: dashboards.NewDashboardProvisioningService(),
+		dashboardService: dashboards.NewProvisioningService(),
 	}, nil
 }
 
@@ -184,7 +184,7 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	return provisioningMetadata, err
 }
 
-func getProvisionedDashboardByPath(service dashboards.IDashboardProvisioningService, name string) (map[string]*models.DashboardProvisioning, error) {
+func getProvisionedDashboardByPath(service dashboards.DashboardProvisioningService, name string) (map[string]*models.DashboardProvisioning, error) {
 	arr, err := service.GetProvisionedDashboardData(name)
 	if err != nil {
 		return nil, err
@@ -198,7 +198,7 @@ func getProvisionedDashboardByPath(service dashboards.IDashboardProvisioningServ
 	return byPath, nil
 }
 
-func getOrCreateFolderId(cfg *DashboardsAsConfig, service dashboards.IDashboardProvisioningService) (int64, error) {
+func getOrCreateFolderId(cfg *DashboardsAsConfig, service dashboards.DashboardProvisioningService) (int64, error) {
 	if cfg.Folder == "" {
 		return 0, ErrFolderNameMissing
 	}

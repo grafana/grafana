@@ -10,22 +10,26 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type IDashboardService interface {
+// DashboardService service for operating on dashboards
+type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 }
 
-type IDashboardProvisioningService interface {
+// DashboardProvisioningService service for operating on provisioned dashboards
+type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 }
 
-var NewDashboardService = func() IDashboardService {
-	return &DashboardService{}
+// NewService factory for creating a new dashboard service
+var NewService = func() DashboardService {
+	return &dashboardServiceImpl{}
 }
 
-var NewDashboardProvisioningService = func() IDashboardProvisioningService {
-	return &DashboardService{}
+// NewProvisioningService factory for creating a new dashboard provisioning service
+var NewProvisioningService = func() DashboardProvisioningService {
+	return &dashboardServiceImpl{}
 }
 
 type SaveDashboardDTO struct {
@@ -37,9 +41,9 @@ type SaveDashboardDTO struct {
 	Dashboard *models.Dashboard
 }
 
-type DashboardService struct{}
+type dashboardServiceImpl struct{}
 
-func (dr *DashboardService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
 	cmd := &models.GetProvisionedDashboardDataQuery{Name: name}
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -49,7 +53,7 @@ func (dr *DashboardService) GetProvisionedDashboardData(name string) ([]*models.
 	return cmd.Result, nil
 }
 
-func (dr *DashboardService) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*models.SaveDashboardCommand, error) {
+func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.Title = strings.TrimSpace(dash.Title)
@@ -118,7 +122,7 @@ func (dr *DashboardService) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*m
 	return cmd, nil
 }
 
-func (dr *DashboardService) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
+func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
 	alertCmd := models.UpdateDashboardAlertsCommand{
 		OrgId:     dto.OrgId,
 		UserId:    dto.User.UserId,
@@ -132,7 +136,7 @@ func (dr *DashboardService) updateAlerting(cmd *models.SaveDashboardCommand, dto
 	return nil
 }
 
-func (dr *DashboardService) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
@@ -162,7 +166,7 @@ func (dr *DashboardService) SaveProvisionedDashboard(dto *SaveDashboardDTO, prov
 	return cmd.Result, nil
 }
 
-func (dr *DashboardService) SaveFolderForProvisionedDashboards(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDashboardDTO) (*models.Dashboard, error) {
 	dto.User = &models.SignedInUser{
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
@@ -185,7 +189,7 @@ func (dr *DashboardService) SaveFolderForProvisionedDashboards(dto *SaveDashboar
 	return cmd.Result, nil
 }
 
-func (dr *DashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
 	cmd, err := dr.buildSaveDashboardCommand(dto)
 	if err != nil {
 		return nil, err
@@ -221,7 +225,7 @@ func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Das
 }
 
 func MockDashboardService(mock *FakeDashboardService) {
-	NewDashboardService = func() IDashboardService {
+	NewService = func() DashboardService {
 		return mock
 	}
 }

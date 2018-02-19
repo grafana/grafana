@@ -214,7 +214,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.NewDashboardService().SaveDashboard(dashItem)
+	dashboard, err := dashboards.NewService().SaveDashboard(dashItem)
 
 	if err == m.ErrDashboardTitleEmpty ||
 		err == m.ErrDashboardWithSameNameAsFolder ||

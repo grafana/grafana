@@ -818,13 +818,13 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 			return PostDashboard(c, cmd)
 		})
 
-		origNewDashboardService := dashboards.NewDashboardService
+		origNewDashboardService := dashboards.NewService
 		dashboards.MockDashboardService(mock)
 
 		sc.m.Post(routePattern, sc.defaultHandler)
 
 		defer func() {
-			dashboards.NewDashboardService = origNewDashboardService
+			dashboards.NewService = origNewDashboardService
 		}()
 
 		fn(sc)

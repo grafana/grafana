@@ -14,7 +14,7 @@ import (
 
 func TestDashboardService(t *testing.T) {
 	Convey("Dashboard service tests", t, func() {
-		service := DashboardService{}
+		service := dashboardServiceImpl{}
 
 		origNewDashboardGuardian := guardian.NewDashboardGuardian
 		mockDashboardGuardian(&fakeDashboardGuardian{canSave: true})

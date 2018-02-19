@@ -80,7 +80,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		User:      cmd.User,
 	}
 
-	savedDash, err := dashboards.NewDashboardService().SaveDashboard(dto)
+	savedDash, err := dashboards.NewService().SaveDashboard(dto)
 
 	if err != nil {
 		return err

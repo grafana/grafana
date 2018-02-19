@@ -15,7 +15,7 @@ import (
 
 func TestDashboardImport(t *testing.T) {
 	pluginScenario("When importing a plugin dashboard", t, func() {
-		origNewDashboardService := dashboards.NewDashboardService
+		origNewDashboardService := dashboards.NewService
 		mock := &dashboards.FakeDashboardService{}
 		dashboards.MockDashboardService(mock)
 
@@ -47,7 +47,7 @@ func TestDashboardImport(t *testing.T) {
 		})
 
 		Reset(func() {
-			dashboards.NewDashboardService = origNewDashboardService
+			dashboards.NewService = origNewDashboardService
 		})
 	})
 
