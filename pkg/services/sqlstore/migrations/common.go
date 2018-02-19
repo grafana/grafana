@@ -34,6 +34,7 @@ func addTableReplaceMigrations(mg *Migrator, from Table, to Table, migrationVers
 	copyTableData := fmt.Sprintf("copy %v %v to %v", to.Name, fromV, toV)
 	dropTable := fmt.Sprintf("drop %v", tmpTableName)
 
+	addDropAllIndicesMigrations(mg, fromV, from)
 	addTableRenameMigration(mg, from.Name, tmpTableName, fromV)
 	mg.AddMigration(createTable, NewAddTableMigration(to))
 	addTableIndicesMigrations(mg, toV, to)
