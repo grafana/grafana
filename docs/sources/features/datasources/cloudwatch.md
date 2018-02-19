@@ -13,7 +13,7 @@ weight = 10
 
 # Using AWS CloudWatch in Grafana
 
-Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will be ready to build dashboards for you CloudWatch metrics.
+Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will be ready to build dashboards for your CloudWatch metrics.
 
 ## Adding the data source to Grafana
 

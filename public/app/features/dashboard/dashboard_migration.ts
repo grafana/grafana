@@ -18,7 +18,7 @@ export class DashboardMigrator {
   }
 
   updateSchema(old) {
-    var i, j, k;
+    var i, j, k, n;
     var oldVersion = this.dashboard.schemaVersion;
     var panelUpgrades = [];
     this.dashboard.schemaVersion = 16;
@@ -372,6 +372,11 @@ export class DashboardMigrator {
     for (j = 0; j < this.dashboard.panels.length; j++) {
       for (k = 0; k < panelUpgrades.length; k++) {
         panelUpgrades[k].call(this, this.dashboard.panels[j]);
+        if (this.dashboard.panels[j].panels) {
+          for (n = 0; n < this.dashboard.panels[j].panels.length; n++) {
+            panelUpgrades[k].call(this, this.dashboard.panels[j].panels[n]);
+          }
+        }
       }
     }
   }
@@ -429,6 +434,9 @@ export class DashboardMigrator {
 
       for (let panel of row.panels) {
         panel.span = panel.span || DEFAULT_PANEL_SPAN;
+        if (panel.minSpan) {
+          panel.minSpan = Math.min(GRID_COLUMN_COUNT, GRID_COLUMN_COUNT / 12 * panel.minSpan);
+        }
         const panelWidth = Math.floor(panel.span) * widthFactor;
         const panelHeight = panel.height ? getGridHeight(panel.height) : rowGridHeight;
 

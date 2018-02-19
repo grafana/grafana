@@ -4,7 +4,7 @@
   "bitwise":false,
   "curly": true,
   "eqnull": true,
-  "strict": true,
+  "strict": false,
   "devel": true,
   "eqeqeq": true,
   "forin": false,

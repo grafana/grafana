@@ -147,8 +147,7 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
         <div className="alert-rule-item__body">
           <div className="alert-rule-item__header">
             <div className="alert-rule-item__name">
-              {rule.canEdit && <a href={ruleUrl}>{this.renderText(rule.name)}</a>}
-              {!rule.canEdit && <span>{this.renderText(rule.name)}</span>}
+              <a href={ruleUrl}>{this.renderText(rule.name)}</a>
             </div>
             <div className="alert-rule-item__text">
               <span className={`${rule.stateClass}`}>{this.renderText(rule.stateText)}</span>
@@ -163,24 +162,12 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
             className="btn btn-small btn-inverse alert-list__btn width-2"
             title="Pausing an alert rule prevents it from executing"
             onClick={this.toggleState}
-            disabled={!rule.canEdit}
           >
             <i className={stateClass} />
           </button>
-          {rule.canEdit && (
-            <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-              <i className="icon-gf icon-gf-settings" />
-            </a>
-          )}
-          {!rule.canEdit && (
-            <button
-              className="btn btn-small btn-inverse alert-list__btn width-2"
-              title="Edit alert rule"
-              disabled={true}
-            >
-              <i className="icon-gf icon-gf-settings" />
-            </button>
-          )}
+          <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
+            <i className="icon-gf icon-gf-settings" />
+          </a>
         </div>
       </li>
     );

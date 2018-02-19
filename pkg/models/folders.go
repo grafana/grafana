@@ -93,19 +93,3 @@ type UpdateFolderCommand struct {
 
 	Result *Folder
 }
-
-//
-// QUERIES
-//
-
-type DashboardFolder struct {
-	Id    int64  `json:"id"`
-	Title string `json:"title"`
-}
-
-type GetFoldersForSignedInUserQuery struct {
-	OrgId        int64
-	SignedInUser *SignedInUser
-	Title        string
-	Result       []*DashboardFolder
-}

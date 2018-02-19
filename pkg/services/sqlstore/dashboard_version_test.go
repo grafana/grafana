@@ -12,7 +12,7 @@ import (
 )
 
 func updateTestDashboard(dashboard *m.Dashboard, data map[string]interface{}) {
-	data["uid"] = dashboard.Uid
+	data["id"] = dashboard.Id
 
 	saveCmd := m.SaveDashboardCommand{
 		OrgId:     dashboard.OrgId,

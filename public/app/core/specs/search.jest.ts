@@ -1,6 +1,12 @@
 import { SearchCtrl } from '../components/search/search';
 import { SearchSrv } from '../services/search_srv';
 
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    user: { orgId: 1 },
+  },
+}));
+
 describe('SearchCtrl', () => {
   const searchSrvStub = {
     search: (options: any) => {},

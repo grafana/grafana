@@ -37,35 +37,19 @@ func folderGuardianResponse(err error) Response {
 	return ApiError(403, "Access denied to this folder", nil)
 }
 
-func GetFoldersForSignedInUser(c *middleware.Context) Response {
-	title := c.Query("query")
-	query := m.GetFoldersForSignedInUserQuery{
-		OrgId:        c.OrgId,
-		SignedInUser: c.SignedInUser,
-		Title:        title,
-	}
-
-	err := bus.Dispatch(&query)
-	if err != nil {
-		return ApiError(500, "Failed to retrieve folders", err)
-	}
-
-	return Json(200, query.Result)
-}
-
 func GetFolder(c *middleware.Context) Response {
 	folder, rsp := getFolderHelper(c.OrgId, c.ParamsInt64(":id"), c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(folder.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
 	if canView, err := guardian.CanView(); err != nil || !canView {
 		fmt.Printf("%v", err)
 		return folderGuardianResponse(err)
 	}
 
-	return Json(200, toDto(guardian, folder))
+	return Json(200, toFolderDto(&guardian, folder))
 }
 
 func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
@@ -74,7 +58,7 @@ func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
 
 	dashFolder := cmd.GetDashboardModel()
 
-	guardian := guardian.NewDashboardGuardian(0, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(0, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return folderGuardianResponse(err)
 	}
@@ -103,7 +87,7 @@ func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
 		return toFolderError(err)
 	}
 
-	return Json(200, toDto(guardian, folder))
+	return Json(200, toFolderDto(&guardian, folder))
 }
 
 func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
@@ -116,7 +100,7 @@ func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dashFolder.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashFolder.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return folderGuardianResponse(err)
 	}
@@ -140,7 +124,7 @@ func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
 		return toFolderError(err)
 	}
 
-	return Json(200, toDto(guardian, folder))
+	return Json(200, toFolderDto(&guardian, folder))
 }
 
 func DeleteFolder(c *middleware.Context) Response {
@@ -149,7 +133,7 @@ func DeleteFolder(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dashFolder.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashFolder.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return folderGuardianResponse(err)
 	}
@@ -163,10 +147,10 @@ func DeleteFolder(c *middleware.Context) Response {
 	return Json(200, resp)
 }
 
-func toDto(guardian *guardian.DashboardGuardian, folder *m.Dashboard) dtos.Folder {
-	canEdit, _ := guardian.CanEdit()
-	canSave, _ := guardian.CanSave()
-	canAdmin, _ := guardian.CanAdmin()
+func toFolderDto(g *guardian.DashboardGuardian, folder *m.Dashboard) dtos.Folder {
+	canEdit, _ := g.CanEdit()
+	canSave, _ := g.CanSave()
+	canAdmin, _ := g.CanAdmin()
 
 	// Finding creator and last updater of the folder
 	updater, creator := "Anonymous", "Anonymous"

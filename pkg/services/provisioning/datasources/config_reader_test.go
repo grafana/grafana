@@ -17,6 +17,7 @@ var (
 	twoDatasourcesConfigPurgeOthers string     = "./test-configs/insert-two-delete-two"
 	doubleDatasourcesConfig         string     = "./test-configs/double-default"
 	allProperties                   string     = "./test-configs/all-properties"
+	versionZero                     string     = "./test-configs/version-0"
 	brokenYaml                      string     = "./test-configs/broken-yaml"
 
 	fakeRepo *fakeRepository
@@ -130,7 +131,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 			So(len(cfg), ShouldEqual, 0)
 		})
 
-		Convey("can read all properties", func() {
+		Convey("can read all properties from version 1", func() {
 			cfgProvifer := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvifer.readConfig(allProperties)
 			if err != nil {
@@ -140,37 +141,64 @@ func TestDatasourceAsConfig(t *testing.T) {
 			So(len(cfg), ShouldEqual, 2)
 
 			dsCfg := cfg[0]
-			ds := dsCfg.Datasources[0]
 
-			So(ds.Name, ShouldEqual, "name")
-			So(ds.Type, ShouldEqual, "type")
-			So(ds.Access, ShouldEqual, models.DS_ACCESS_PROXY)
-			So(ds.OrgId, ShouldEqual, 2)
-			So(ds.Url, ShouldEqual, "url")
-			So(ds.User, ShouldEqual, "user")
-			So(ds.Password, ShouldEqual, "password")
-			So(ds.Database, ShouldEqual, "database")
-			So(ds.BasicAuth, ShouldBeTrue)
-			So(ds.BasicAuthUser, ShouldEqual, "basic_auth_user")
-			So(ds.BasicAuthPassword, ShouldEqual, "basic_auth_password")
-			So(ds.WithCredentials, ShouldBeTrue)
-			So(ds.IsDefault, ShouldBeTrue)
-			So(ds.Editable, ShouldBeTrue)
+			So(dsCfg.ApiVersion, ShouldEqual, 1)
 
-			So(len(ds.JsonData), ShouldBeGreaterThan, 2)
-			So(ds.JsonData["graphiteVersion"], ShouldEqual, "1.1")
-			So(ds.JsonData["tlsAuth"], ShouldEqual, true)
-			So(ds.JsonData["tlsAuthWithCACert"], ShouldEqual, true)
+			validateDatasource(dsCfg)
+			validateDeleteDatasources(dsCfg)
+		})
 
-			So(len(ds.SecureJsonData), ShouldBeGreaterThan, 2)
-			So(ds.SecureJsonData["tlsCACert"], ShouldEqual, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==")
-			So(ds.SecureJsonData["tlsClientCert"], ShouldEqual, "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ==")
-			So(ds.SecureJsonData["tlsClientKey"], ShouldEqual, "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==")
+		Convey("can read all properties from version 0", func() {
+			cfgProvifer := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvifer.readConfig(versionZero)
+			if err != nil {
+				t.Fatalf("readConfig return an error %v", err)
+			}
 
-			dstwo := cfg[1].Datasources[0]
-			So(dstwo.Name, ShouldEqual, "name2")
+			So(len(cfg), ShouldEqual, 1)
+
+			dsCfg := cfg[0]
+
+			So(dsCfg.ApiVersion, ShouldEqual, 0)
+
+			validateDatasource(dsCfg)
+			validateDeleteDatasources(dsCfg)
 		})
 	})
+}
+func validateDeleteDatasources(dsCfg *DatasourcesAsConfig) {
+	So(len(dsCfg.DeleteDatasources), ShouldEqual, 1)
+	deleteDs := dsCfg.DeleteDatasources[0]
+	So(deleteDs.Name, ShouldEqual, "old-graphite3")
+	So(deleteDs.OrgId, ShouldEqual, 2)
+}
+func validateDatasource(dsCfg *DatasourcesAsConfig) {
+	ds := dsCfg.Datasources[0]
+	So(ds.Name, ShouldEqual, "name")
+	So(ds.Type, ShouldEqual, "type")
+	So(ds.Access, ShouldEqual, models.DS_ACCESS_PROXY)
+	So(ds.OrgId, ShouldEqual, 2)
+	So(ds.Url, ShouldEqual, "url")
+	So(ds.User, ShouldEqual, "user")
+	So(ds.Password, ShouldEqual, "password")
+	So(ds.Database, ShouldEqual, "database")
+	So(ds.BasicAuth, ShouldBeTrue)
+	So(ds.BasicAuthUser, ShouldEqual, "basic_auth_user")
+	So(ds.BasicAuthPassword, ShouldEqual, "basic_auth_password")
+	So(ds.WithCredentials, ShouldBeTrue)
+	So(ds.IsDefault, ShouldBeTrue)
+	So(ds.Editable, ShouldBeTrue)
+	So(ds.Version, ShouldEqual, 10)
+
+	So(len(ds.JsonData), ShouldBeGreaterThan, 2)
+	So(ds.JsonData["graphiteVersion"], ShouldEqual, "1.1")
+	So(ds.JsonData["tlsAuth"], ShouldEqual, true)
+	So(ds.JsonData["tlsAuthWithCACert"], ShouldEqual, true)
+
+	So(len(ds.SecureJsonData), ShouldBeGreaterThan, 2)
+	So(ds.SecureJsonData["tlsCACert"], ShouldEqual, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==")
+	So(ds.SecureJsonData["tlsClientCert"], ShouldEqual, "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ==")
+	So(ds.SecureJsonData["tlsClientKey"], ShouldEqual, "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==")
 }
 
 type fakeRepository struct {

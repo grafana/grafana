@@ -21,6 +21,7 @@ func searchHandler(query *Query) error {
 		FolderIds:    query.FolderIds,
 		Tags:         query.Tags,
 		Limit:        query.Limit,
+		Permission:   query.Permission,
 	}
 
 	if err := bus.Dispatch(&dashQuery); err != nil {

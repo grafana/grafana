@@ -4,6 +4,7 @@
   "id": "table",
 
   "info": {
+    "description": "Table Panel for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -11,7 +12,8 @@
     "logos": {
       "small": "img/icn-table-panel.svg",
       "large": "img/icn-table-panel.svg"
-    }
+    },
+    "version": "5.0.0"
   }
 }
 

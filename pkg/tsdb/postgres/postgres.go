@@ -220,14 +220,14 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 		case time.Time:
 			timestamp = float64(columnValue.UnixNano() / 1e6)
 		default:
-			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp")
+			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp, got: %T %v", columnValue, columnValue)
 		}
 
 		if metricIndex >= 0 {
 			if columnValue, ok := values[metricIndex].(string); ok == true {
 				metric = columnValue
 			} else {
-				return fmt.Errorf("Column metric must be of type char,varchar or text")
+				return fmt.Errorf("Column metric must be of type char,varchar or text, got: %T %v", values[metricIndex], values[metricIndex])
 			}
 		}
 

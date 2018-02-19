@@ -4,7 +4,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "5.0.0-beta1",
+  "version": "5.0.0-beta3",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -19,6 +19,7 @@
     "angular-mocks": "^1.6.6",
     "autoprefixer": "^6.4.0",
     "awesome-typescript-loader": "^3.2.3",
+    "axios": "^0.17.1",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-preset-es2015": "^6.24.1",
@@ -105,6 +106,7 @@
     "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
     "karma": "node ./node_modules/grunt-cli/bin/grunt karma:dev",
     "jest": "node ./node_modules/jest-cli/bin/jest.js --notify --watch",
+    "api-tests": "node ./node_modules/jest-cli/bin/jest.js --notify --watch --config=tests/api/jest.js",
     "precommit": "lint-staged && node ./node_modules/grunt-cli/bin/grunt precommit"
   },
   "lint-staged": {
@@ -148,6 +150,7 @@
     "mobx-state-tree": "^1.3.1",
     "moment": "^2.18.1",
     "mousetrap": "^1.6.0",
+    "mousetrap-global-bind": "^1.1.0",
     "perfect-scrollbar": "^1.2.0",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
