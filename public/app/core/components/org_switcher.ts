@@ -70,7 +70,6 @@ export class OrgSwitchCtrl {
 }
 
 export function orgSwitcher() {
-  console.log('hej');
   return {
     restrict: 'E',
     template: template,
