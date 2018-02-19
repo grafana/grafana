@@ -786,7 +786,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 }
 
 func mockDashboardGuardian(mock *mockDashboardGuarder) {
-	guardian.NewDashboardGuardian = func(dashId int64, orgId int64, user *models.SignedInUser) guardian.IDashboardGuardian {
+	guardian.New = func(dashId int64, orgId int64, user *models.SignedInUser) guardian.DashboardGuardian {
 		mock.orgId = orgId
 		mock.dashId = dashId
 		mock.user = user
@@ -845,7 +845,7 @@ type scenarioFunc func(c *scenarioContext)
 
 func dashboardGuardianScenario(desc string, mock *mockDashboardGuarder, fn scenarioFunc) {
 	Convey(desc, func() {
-		origNewDashboardGuardian := guardian.NewDashboardGuardian
+		origNewDashboardGuardian := guardian.New
 		mockDashboardGuardian(mock)
 
 		sc := &scenarioContext{
@@ -853,7 +853,7 @@ func dashboardGuardianScenario(desc string, mock *mockDashboardGuarder, fn scena
 		}
 
 		defer func() {
-			guardian.NewDashboardGuardian = origNewDashboardGuardian
+			guardian.New = origNewDashboardGuardian
 		}()
 
 		fn(sc)
@@ -868,7 +868,7 @@ type dashboardPermissionScenarioFunc func(sc *dashboardPermissionScenarioContext
 
 func dashboardPermissionScenario(desc string, mock *mockDashboardGuarder, fn dashboardPermissionScenarioFunc) {
 	Convey(desc, func() {
-		origNewDashboardGuardian := guardian.NewDashboardGuardian
+		origNewDashboardGuardian := guardian.New
 		mockDashboardGuardian(mock)
 
 		sc := &dashboardPermissionScenarioContext{
@@ -876,7 +876,7 @@ func dashboardPermissionScenario(desc string, mock *mockDashboardGuarder, fn das
 		}
 
 		defer func() {
-			guardian.NewDashboardGuardian = origNewDashboardGuardian
+			guardian.New = origNewDashboardGuardian
 		}()
 
 		fn(sc)
@@ -904,7 +904,7 @@ func callSaveWithError(cmd models.SaveDashboardCommand) error {
 
 func dashboardServiceScenario(desc string, mock *mockDashboardGuarder, fn scenarioFunc) {
 	Convey(desc, func() {
-		origNewDashboardGuardian := guardian.NewDashboardGuardian
+		origNewDashboardGuardian := guardian.New
 		mockDashboardGuardian(mock)
 
 		sc := &scenarioContext{
@@ -912,7 +912,7 @@ func dashboardServiceScenario(desc string, mock *mockDashboardGuarder, fn scenar
 		}
 
 		defer func() {
-			guardian.NewDashboardGuardian = origNewDashboardGuardian
+			guardian.New = origNewDashboardGuardian
 		}()
 
 		fn(sc)

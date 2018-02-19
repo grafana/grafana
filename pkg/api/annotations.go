@@ -278,7 +278,7 @@ func canSaveByDashboardId(c *middleware.Context, dashboardId int64) (bool, error
 	}
 
 	if dashboardId > 0 {
-		guardian := guardian.NewDashboardGuardian(dashboardId, c.OrgId, c.SignedInUser)
+		guardian := guardian.New(dashboardId, c.OrgId, c.SignedInUser)
 		if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
 			return false, err
 		}

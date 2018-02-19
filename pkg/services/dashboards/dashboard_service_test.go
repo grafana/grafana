@@ -16,7 +16,7 @@ func TestDashboardService(t *testing.T) {
 	Convey("Dashboard service tests", t, func() {
 		service := dashboardServiceImpl{}
 
-		origNewDashboardGuardian := guardian.NewDashboardGuardian
+		origNewDashboardGuardian := guardian.New
 		mockDashboardGuardian(&fakeDashboardGuardian{canSave: true})
 
 		Convey("Save dashboard validation", func() {
@@ -89,13 +89,13 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		Reset(func() {
-			guardian.NewDashboardGuardian = origNewDashboardGuardian
+			guardian.New = origNewDashboardGuardian
 		})
 	})
 }
 
 func mockDashboardGuardian(mock *fakeDashboardGuardian) {
-	guardian.NewDashboardGuardian = func(dashId int64, orgId int64, user *models.SignedInUser) guardian.IDashboardGuardian {
+	guardian.New = func(dashId int64, orgId int64, user *models.SignedInUser) guardian.DashboardGuardian {
 		mock.orgId = orgId
 		mock.dashId = dashId
 		mock.user = user

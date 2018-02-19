@@ -49,7 +49,7 @@ func GetDashboard(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canView, err := guardian.CanView(); err != nil || !canView {
 		return dashboardGuardianResponse(err)
 	}
@@ -156,7 +156,7 @@ func DeleteDashboard(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -176,7 +176,7 @@ func DeleteDashboardByUid(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -336,7 +336,7 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 func GetDashboardVersions(c *middleware.Context) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -375,7 +375,7 @@ func GetDashboardVersions(c *middleware.Context) Response {
 func GetDashboardVersion(c *middleware.Context) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -443,7 +443,7 @@ func RestoreDashboardVersion(c *middleware.Context, apiCmd dtos.RestoreDashboard
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}

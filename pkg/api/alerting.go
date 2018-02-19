@@ -226,7 +226,7 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 		return ApiError(500, "Get Alert failed", err)
 	}
 
-	guardian := guardian.NewDashboardGuardian(query.Result.DashboardId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(query.Result.DashboardId, c.OrgId, c.SignedInUser)
 	if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
 		if err != nil {
 			return ApiError(500, "Error while checking permissions for Alert", err)
