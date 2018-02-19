@@ -4,7 +4,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "5.0.0-beta3",
+  "version": "5.0.0-beta4",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
