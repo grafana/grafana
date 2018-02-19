@@ -348,3 +348,10 @@ describe('duration', function() {
     expect(str).toBe('1 year, 2 months, 0 weeks, 3 days, 4 hours, 5 minutes, 6 seconds, 7 milliseconds');
   });
 });
+
+describe('volume', function() {
+  it('1000m3', function() {
+    var str = kbn.valueFormats['m3'](1000, 1, null);
+    expect(str).toBe('1000.0 m3');
+  });
+});

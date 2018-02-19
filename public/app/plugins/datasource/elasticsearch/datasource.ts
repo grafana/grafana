@@ -166,7 +166,7 @@ export class ElasticDatasource {
 
       for (var i = 0; i < hits.length; i++) {
         var source = hits[i]._source;
-        var time = source[timeField];
+        var time = getFieldFromSource(source, timeField);
         if (typeof hits[i].fields !== 'undefined') {
           var fields = hits[i].fields;
           if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
