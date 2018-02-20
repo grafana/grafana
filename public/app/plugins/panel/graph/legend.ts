@@ -153,7 +153,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           seriesList = _.sortBy(seriesList, function(series) {
             let sort = series.stats[panel.legend.sort];
             if (sort === null) {
-              sort = 0;
+              sort = -Infinity;
             }
             return sort;
           });
