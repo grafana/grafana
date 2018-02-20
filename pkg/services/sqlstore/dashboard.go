@@ -60,6 +60,8 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 		if existing.PluginId != "" && cmd.Overwrite == false {
 			return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
 		}
+	} else {
+		dash.Created = time.Now()
 	}
 
 	if dash.Uid == "" {
