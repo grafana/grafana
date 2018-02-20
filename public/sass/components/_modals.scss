@@ -67,6 +67,11 @@
 
 .modal-content {
   padding: $spacer*2;
+
+  &--has-scroll {
+    max-height: calc(100vh - 400px);
+    position: relative;
+  }
 }
 
 // Remove bottom margin if need be
