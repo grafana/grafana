@@ -63,11 +63,17 @@ export class DashboardMigrator {
         }
 
         if (panel.y_format) {
+          if (!panel.y_formats) {
+            panel.y_formats = [];
+          }
           panel.y_formats[0] = panel.y_format;
           delete panel.y_format;
         }
 
         if (panel.y2_format) {
+          if (!panel.y_formats) {
+            panel.y_formats = [];
+          }
           panel.y_formats[1] = panel.y2_format;
           delete panel.y2_format;
         }
