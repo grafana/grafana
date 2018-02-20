@@ -1,5 +1,10 @@
 package api
 
+import (
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+)
+
 // import (
 // 	"encoding/json"
 // 	"path/filepath"
@@ -482,3 +487,50 @@ package api
 // 		fn(sc)
 // 	})
 // }
+
+type fakeFolderService struct {
+	GetFoldersResult     []*models.Folder
+	GetFoldersError      error
+	GetFolderByUidResult *models.Folder
+	GetFolderByUidError  error
+	GetFolderByIdResult  *models.Folder
+	GetFolderByIdError   error
+	CreateFolderError    error
+	UpdateFolderError    error
+	DeleteFolderResult   *models.Folder
+	DeleteFolderError    error
+	CreatedFolders       []*models.CreateFolderCommand
+	UpdatedFolders       []*models.UpdateFolderCommand
+	DeletedFolderUids    []string
+}
+
+func (s *fakeFolderService) GetFolders(limit int) ([]*models.Folder, error) {
+	return s.GetFoldersResult, s.GetFoldersError
+}
+
+func (s *fakeFolderService) GetFolderById(id int64) (*models.Folder, error) {
+	return s.GetFolderByIdResult, s.GetFolderByIdError
+}
+
+func (s *fakeFolderService) GetFolderByUid(uid string) (*models.Folder, error) {
+	return s.GetFolderByUidResult, s.GetFolderByUidError
+}
+
+func (s *fakeFolderService) CreateFolder(cmd *models.CreateFolderCommand) error {
+	return s.CreateFolderError
+}
+
+func (s *fakeFolderService) UpdateFolder(existingUid string, cmd *models.UpdateFolderCommand) error {
+	return s.UpdateFolderError
+}
+
+func (s *fakeFolderService) DeleteFolder(uid string) (*models.Folder, error) {
+	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
+	return s.DeleteFolderResult, s.DeleteFolderError
+}
+
+func mockFolderService(mock *fakeFolderService) {
+	dashboards.NewFolderService = func(orgId int64, user *models.SignedInUser) dashboards.FolderService {
+		return mock
+	}
+}

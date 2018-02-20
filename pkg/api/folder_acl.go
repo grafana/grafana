@@ -51,8 +51,13 @@ func UpdateFolderPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardA
 	}
 
 	guardian := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
+	canAdmin, err := guardian.CanAdmin()
+	if err != nil {
 		return toFolderError(err)
+	}
+
+	if !canAdmin {
+		return toFolderError(m.ErrFolderAccessDenied)
 	}
 
 	cmd := m.UpdateDashboardAclCommand{}
