@@ -16,20 +16,23 @@ func init() {
 	bus.AddHandler("sql", DeleteExpiredSnapshots)
 }
 
+// DeleteExpiredSnapshots removes snapshots with old expiry dates.
+// SnapShotRemoveExpired is deprecated and should be removed in the future.
+// Snapshot expiry is decided by the user when they share the snapshot.
 func DeleteExpiredSnapshots(cmd *m.DeleteExpiredSnapshotsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var expiredCount int64 = 0
-
-		if setting.SnapShotRemoveExpired {
-			deleteExpiredSql := "DELETE FROM dashboard_snapshot WHERE expires < ?"
-			expiredResponse, err := x.Exec(deleteExpiredSql, time.Now)
-			if err != nil {
-				return err
-			}
-			expiredCount, _ = expiredResponse.RowsAffected()
+		if !setting.SnapShotRemoveExpired {
+			sqlog.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
+			return nil
 		}
 
-		sqlog.Debug("Deleted old/expired snaphots", "expired", expiredCount)
+		deleteExpiredSql := "DELETE FROM dashboard_snapshot WHERE expires < ?"
+		expiredResponse, err := sess.Exec(deleteExpiredSql, time.Now())
+		if err != nil {
+			return err
+		}
+		cmd.DeletedRows, _ = expiredResponse.RowsAffected()
+
 		return nil
 	})
 }

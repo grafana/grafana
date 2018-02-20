@@ -64,6 +64,7 @@ type DeleteDashboardSnapshotCommand struct {
 }
 
 type DeleteExpiredSnapshotsCommand struct {
+	DeletedRows int64
 }
 
 type GetDashboardSnapshotQuery struct {
