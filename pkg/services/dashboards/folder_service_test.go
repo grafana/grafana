@@ -20,7 +20,7 @@ func TestFolderService(t *testing.T) {
 
 		Convey("Given user has no permissions", func() {
 			origNewGuardian := guardian.New
-			mockDashboardGuardian(&fakeDashboardGuardian{})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 
 			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
 				query.Result = models.NewDashboardFolder("Folder")
@@ -77,7 +77,7 @@ func TestFolderService(t *testing.T) {
 
 		Convey("Given user has permission to save", func() {
 			origNewGuardian := guardian.New
-			mockDashboardGuardian(&fakeDashboardGuardian{canSave: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 			dash := models.NewDashboardFolder("Folder")
 			dash.Id = 1
@@ -135,7 +135,7 @@ func TestFolderService(t *testing.T) {
 
 		Convey("Given user has permission to view", func() {
 			origNewGuardian := guardian.New
-			mockDashboardGuardian(&fakeDashboardGuardian{canView: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
 
 			dashFolder := models.NewDashboardFolder("Folder")
 			dashFolder.Id = 1
@@ -153,7 +153,7 @@ func TestFolderService(t *testing.T) {
 				So(f.Title, ShouldEqual, dashFolder.Title)
 			})
 
-			Convey("When get folder by uid should not return access denied error", func() {
+			Convey("When get folder by uid should return folder", func() {
 				f, _ := service.GetFolderByUid("uid")
 				So(f.Id, ShouldEqual, dashFolder.Id)
 				So(f.Uid, ShouldEqual, dashFolder.Uid)
