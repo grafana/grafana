@@ -138,7 +138,7 @@ func toFolderError(err error) Response {
 		return Json(412, util.DynMap{"status": "version-mismatch", "message": m.ErrFolderVersionMismatch.Error()})
 	}
 
-	if err == m.ErrDashboardNotFound {
+	if err == m.ErrFolderNotFound {
 		return Json(404, util.DynMap{"status": "not-found", "message": m.ErrFolderNotFound.Error()})
 	}
 
@@ -146,5 +146,5 @@ func toFolderError(err error) Response {
 		err = m.ErrFolderFailedGenerateUniqueUid
 	}
 
-	return ApiError(500, "Failed to create folder", err)
+	return ApiError(500, "Folder API error", err)
 }
