@@ -408,6 +408,10 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 			if a.server.GroupSearchFilterUserAttribute == "" {
 				filter_replace = getLdapAttr(a.server.Attr.Username, searchResult)
 			}
+			if a.server.GroupSearchFilterUserAttribute == "dn" {
+				filter_replace = searchResult.Entries[0].DN
+			}
+
 			filter := strings.Replace(a.server.GroupSearchFilter, "%s", ldap.EscapeFilter(filter_replace), -1)
 
 			a.log.Info("Searching for user's groups", "filter", filter)
@@ -430,7 +434,11 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 
 			if len(groupSearchResult.Entries) > 0 {
 				for i := range groupSearchResult.Entries {
-					memberOf = append(memberOf, getLdapAttrN(a.server.Attr.MemberOf, groupSearchResult, i))
+					if a.server.Attr.MemberOf == "dn" {
+						memberOf = append(memberOf, groupSearchResult.Entries[i].DN)
+					} else {
+						memberOf = append(memberOf, getLdapAttrN(a.server.Attr.MemberOf, groupSearchResult, i))
+					}
 				}
 				break
 			}
