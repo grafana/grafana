@@ -1,10 +1,7 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -12,142 +9,84 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func getFolderHelper(orgId int64, id int64, uid string) (*m.Dashboard, Response) {
-	query := m.GetDashboardQuery{OrgId: orgId, Id: id, Uid: uid}
-	if err := bus.Dispatch(&query); err != nil {
-		if err == m.ErrDashboardNotFound {
-			err = m.ErrFolderNotFound
-		}
+func GetFolders(c *middleware.Context) Response {
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+	folders, err := s.GetFolders(c.QueryInt("limit"))
 
-		return nil, ApiError(404, "Folder not found", err)
-	}
-
-	if !query.Result.IsFolder {
-		return nil, ApiError(404, "Folder not found", m.ErrFolderNotFound)
-	}
-
-	return query.Result, nil
-}
-
-func folderGuardianResponse(err error) Response {
 	if err != nil {
-		return ApiError(500, "Error while checking folder permissions", err)
+		return toFolderError(err)
 	}
 
-	return ApiError(403, "Access denied to this folder", nil)
+	result := make([]dtos.FolderSearchHit, 0)
+
+	for _, f := range folders {
+		result = append(result, dtos.FolderSearchHit{
+			Id:    f.Id,
+			Uid:   f.Uid,
+			Title: f.Title,
+		})
+	}
+
+	return Json(200, result)
 }
 
-func GetFolder(c *middleware.Context) Response {
-	folder, rsp := getFolderHelper(c.OrgId, c.ParamsInt64(":id"), c.Params(":uid"))
-	if rsp != nil {
-		return rsp
+func GetFolderByUid(c *middleware.Context) Response {
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+	folder, err := s.GetFolderByUid(c.Params(":uid"))
+
+	if err != nil {
+		return toFolderError(err)
 	}
 
-	guardian := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	if canView, err := guardian.CanView(); err != nil || !canView {
-		fmt.Printf("%v", err)
-		return folderGuardianResponse(err)
+	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	return Json(200, toFolderDto(g, folder))
+}
+
+func GetFolderById(c *middleware.Context) Response {
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+	folder, err := s.GetFolderById(c.ParamsInt64(":id"))
+	if err != nil {
+		return toFolderError(err)
 	}
 
-	return Json(200, toFolderDto(&guardian, folder))
+	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	return Json(200, toFolderDto(g, folder))
 }
 
 func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
-	cmd.OrgId = c.OrgId
-	cmd.UserId = c.UserId
-
-	dashFolder := cmd.GetDashboardModel()
-
-	guardian := guardian.New(0, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
-		return folderGuardianResponse(err)
-	}
-
-	if dashFolder.Title == "" {
-		return ApiError(400, m.ErrFolderTitleEmpty.Error(), nil)
-	}
-
-	limitReached, err := middleware.QuotaReached(c, "folder")
-	if err != nil {
-		return ApiError(500, "failed to get quota", err)
-	}
-	if limitReached {
-		return ApiError(403, "Quota reached", nil)
-	}
-
-	saveDashboardDto := &dashboards.SaveDashboardDTO{
-		Dashboard: dashFolder,
-		OrgId:     c.OrgId,
-		UserId:    c.UserId,
-	}
-
-	folder, err := dashboards.GetRepository().SaveDashboard(saveDashboardDto)
-
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+	err := s.CreateFolder(&cmd)
 	if err != nil {
 		return toFolderError(err)
 	}
 
-	return Json(200, toFolderDto(&guardian, folder))
+	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
+	return Json(200, toFolderDto(g, cmd.Result))
 }
 
 func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
-	cmd.OrgId = c.OrgId
-	cmd.UserId = c.UserId
-	uid := c.Params(":uid")
-
-	dashFolder, rsp := getFolderHelper(c.OrgId, 0, uid)
-	if rsp != nil {
-		return rsp
-	}
-
-	guardian := guardian.New(dashFolder.Id, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
-		return folderGuardianResponse(err)
-	}
-
-	cmd.UpdateDashboardModel(dashFolder)
-
-	if dashFolder.Title == "" {
-		return ApiError(400, m.ErrFolderTitleEmpty.Error(), nil)
-	}
-
-	saveDashboardDto := &dashboards.SaveDashboardDTO{
-		Dashboard: dashFolder,
-		OrgId:     c.OrgId,
-		UserId:    c.UserId,
-		Overwrite: cmd.Overwrite,
-	}
-
-	folder, err := dashboards.GetRepository().SaveDashboard(saveDashboardDto)
-
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+	err := s.UpdateFolder(c.Params(":uid"), &cmd)
 	if err != nil {
 		return toFolderError(err)
 	}
 
-	return Json(200, toFolderDto(&guardian, folder))
+	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
+	return Json(200, toFolderDto(g, cmd.Result))
 }
 
 func DeleteFolder(c *middleware.Context) Response {
-	dashFolder, rsp := getFolderHelper(c.OrgId, 0, c.Params(":uid"))
-	if rsp != nil {
-		return rsp
+	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
+	f, err := s.DeleteFolder(c.Params(":uid"))
+	if err != nil {
+		return toFolderError(err)
 	}
 
-	guardian := guardian.New(dashFolder.Id, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
-		return folderGuardianResponse(err)
-	}
-
-	deleteCmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dashFolder.Id}
-	if err := bus.Dispatch(&deleteCmd); err != nil {
-		return ApiError(500, "Failed to delete folder", err)
-	}
-
-	var resp = map[string]interface{}{"title": dashFolder.Title}
+	var resp = map[string]interface{}{"title": f.Title}
 	return Json(200, resp)
 }
 
-func toFolderDto(g *guardian.DashboardGuardian, folder *m.Dashboard) dtos.Folder {
+func toFolderDto(g guardian.DashboardGuardian, folder *m.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -165,7 +104,7 @@ func toFolderDto(g *guardian.DashboardGuardian, folder *m.Dashboard) dtos.Folder
 		Id:        folder.Id,
 		Uid:       folder.Uid,
 		Title:     folder.Title,
-		Url:       folder.GetUrl(),
+		Url:       folder.Url,
 		HasAcl:    folder.HasAcl,
 		CanSave:   canSave,
 		CanEdit:   canEdit,
@@ -181,6 +120,10 @@ func toFolderDto(g *guardian.DashboardGuardian, folder *m.Dashboard) dtos.Folder
 func toFolderError(err error) Response {
 	if err == m.ErrDashboardTitleEmpty {
 		return ApiError(400, m.ErrFolderTitleEmpty.Error(), nil)
+	}
+
+	if err == m.ErrFolderAccessDenied {
+		return ApiError(403, "Access denied", err)
 	}
 
 	if err == m.ErrDashboardWithSameNameInFolderExists {

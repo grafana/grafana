@@ -17,3 +17,9 @@ type Folder struct {
 	Updated   time.Time `json:"updated"`
 	Version   int       `json:"version"`
 }
+
+type FolderSearchHit struct {
+	Id    int64  `json:"id"`
+	Uid   string `json:"uid"`
+	Title string `json:"title"`
+}
