@@ -1,3 +1,5 @@
+$font-size-heatmap-tick: 11px;
+
 .heatmap-canvas-wrapper {
   // position: relative;
   cursor: crosshair;
@@ -10,7 +12,7 @@
     text {
       fill: $text-color;
       color: $text-color;
-      font-size: $font-size-sm;
+      font-size: $font-size-heatmap-tick;
     }
 
     line {
@@ -75,7 +77,7 @@
     text {
       fill: $text-color;
       color: $text-color;
-      font-size: $font-size-sm;
+      font-size: $font-size-heatmap-tick;
     }
 
     line {
