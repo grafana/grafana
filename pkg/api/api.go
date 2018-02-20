@@ -249,11 +249,19 @@ func (hs *HttpServer) registerRoutes() {
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute RouteRegister) {
 			folderRoute.Get("/", wrap(GetFolders))
-			folderRoute.Get("/:uid", wrap(GetFolderByUid))
 			folderRoute.Get("/id/:id", wrap(GetFolderById))
 			folderRoute.Post("/", bind(m.CreateFolderCommand{}), wrap(CreateFolder))
-			folderRoute.Put("/:uid", bind(m.UpdateFolderCommand{}), wrap(UpdateFolder))
-			folderRoute.Delete("/:uid", wrap(DeleteFolder))
+
+			folderRoute.Group("/:uid", func(folderUidRoute RouteRegister) {
+				folderUidRoute.Get("/", wrap(GetFolderByUid))
+				folderUidRoute.Put("/", bind(m.UpdateFolderCommand{}), wrap(UpdateFolder))
+				folderUidRoute.Delete("/", wrap(DeleteFolder))
+
+				folderUidRoute.Group("/permissions", func(folderAclRoute RouteRegister) {
+					folderAclRoute.Get("/", wrap(GetFolderPermissionList))
+					folderAclRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateFolderPermissions))
+				})
+			})
 		})
 
 		// Dashboard
