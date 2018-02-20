@@ -72,7 +72,7 @@ func TestDashboardService(t *testing.T) {
 					dto.Dashboard.SetUid(tc.Uid)
 					dto.User = &models.SignedInUser{}
 
-					_, err := service.buildSaveDashboardCommand(dto)
+					_, err := service.buildSaveDashboardCommand(dto, true)
 					So(err, ShouldEqual, tc.Error)
 				}
 			})

@@ -14,6 +14,7 @@ var (
 	ErrFolderWithSameUIDExists       = errors.New("A folder/dashboard with the same uid already exists")
 	ErrFolderSameNameExists          = errors.New("A folder or dashboard in the general folder with the same name already exists")
 	ErrFolderFailedGenerateUniqueUid = errors.New("Failed to generate unique folder id")
+	ErrFolderAccessDenied            = errors.New("Access denied to folder")
 )
 
 type Folder struct {
@@ -21,7 +22,6 @@ type Folder struct {
 	Uid     string
 	Title   string
 	Url     string
-	OrgId   int64
 	Version int
 
 	Created time.Time
@@ -33,13 +33,10 @@ type Folder struct {
 }
 
 // GetDashboardModel turns the command into the savable model
-func (cmd *CreateFolderCommand) GetDashboardModel() *Dashboard {
+func (cmd *CreateFolderCommand) GetDashboardModel(orgId int64, userId int64) *Dashboard {
 	dashFolder := NewDashboardFolder(strings.TrimSpace(cmd.Title))
-	dashFolder.OrgId = cmd.OrgId
-	dashFolder.Uid = strings.TrimSpace(cmd.Uid)
-	dashFolder.Data.Set("uid", cmd.Uid)
-
-	userId := cmd.UserId
+	dashFolder.OrgId = orgId
+	dashFolder.SetUid(strings.TrimSpace(cmd.Uid))
 
 	if userId == 0 {
 		userId = -1
@@ -53,15 +50,17 @@ func (cmd *CreateFolderCommand) GetDashboardModel() *Dashboard {
 }
 
 // UpdateDashboardModel updates an existing model from command into model for update
-func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *Dashboard) {
+func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *Dashboard, orgId int64, userId int64) {
+	dashFolder.OrgId = orgId
 	dashFolder.Title = strings.TrimSpace(cmd.Title)
-	dashFolder.Data.Set("title", cmd.Title)
-	dashFolder.Uid = dashFolder.Data.MustString("uid")
-	dashFolder.Data.Set("version", cmd.Version)
-	dashFolder.Version = cmd.Version
-	dashFolder.IsFolder = true
+	dashFolder.Data.Set("title", dashFolder.Title)
 
-	userId := cmd.UserId
+	if cmd.Uid != "" {
+		dashFolder.SetUid(cmd.Uid)
+	}
+
+	dashFolder.SetVersion(cmd.Version)
+	dashFolder.IsFolder = true
 
 	if userId == 0 {
 		userId = -1
@@ -76,17 +75,16 @@ func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *Dashboard) {
 //
 
 type CreateFolderCommand struct {
-	OrgId  int64  `json:"-"`
-	UserId int64  `json:"userId"`
-	Uid    string `json:"uid"`
-	Title  string `json:"title"`
+	Uid       string `json:"uid"`
+	Title     string `json:"title"`
+	Version   int    `json:"version"`
+	Overwrite bool   `json:"overwrite"`
 
 	Result *Folder
 }
 
 type UpdateFolderCommand struct {
-	OrgId     int64  `json:"-"`
-	UserId    int64  `json:"userId"`
+	Uid       string `json:"uid"`
 	Title     string `json:"title"`
 	Version   int    `json:"version"`
 	Overwrite bool   `json:"overwrite"`
