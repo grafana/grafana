@@ -72,7 +72,7 @@ func DeleteDashboardSnapshot(cmd *m.DeleteDashboardSnapshotCommand) error {
 }
 
 func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
-	snapshot := m.DashboardSnapshot{Key: query.Key}
+	snapshot := m.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
 	has, err := x.Get(&snapshot)
 
 	if err != nil {
@@ -85,6 +85,8 @@ func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
 	return nil
 }
 
+// SearchDashboardSnapshots returns a list of all snapshots for admins
+// for other roles, it returns snapshots created by the user
 func SearchDashboardSnapshots(query *m.GetDashboardSnapshotsQuery) error {
 	var snapshots = make(m.DashboardSnapshotsList, 0)
 
@@ -95,7 +97,16 @@ func SearchDashboardSnapshots(query *m.GetDashboardSnapshotsQuery) error {
 		sess.Where("name LIKE ?", query.Name)
 	}
 
-	sess.Where("org_id = ?", query.OrgId)
+	// admins can see all snapshots, everyone else can only see their own snapshots
+	if query.SignedInUser.OrgRole == m.ROLE_ADMIN {
+		sess.Where("org_id = ?", query.OrgId)
+	} else if !query.SignedInUser.IsAnonymous {
+		sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserId)
+	} else {
+		query.Result = snapshots
+		return nil
+	}
+
 	err := sess.Find(&snapshots)
 	query.Result = snapshots
 	return err
