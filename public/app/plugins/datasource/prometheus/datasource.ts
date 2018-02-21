@@ -106,17 +106,29 @@ export class PrometheusDatasource {
     });
 
     return this.$q.all(allQueryPromise).then(responseList => {
-      var result = [];
+      let result = [];
 
       _.each(responseList, (response, index) => {
         if (response.status === 'error') {
           throw response.error;
         }
 
+        let prometheusResult = response.data.data.result;
+
         if (activeTargets[index].format === 'table') {
-          result.push(self.transformMetricDataToTable(response.data.data.result, responseList.length, index));
+          result.push(self.transformMetricDataToTable(prometheusResult, responseList.length, index));
+        } else if (activeTargets[index].format === 'heatmap') {
+          let seriesList = [];
+          prometheusResult.sort(sortSeriesByLabel);
+          for (let metricData of prometheusResult) {
+            seriesList.push(
+              self.transformMetricData(metricData, activeTargets[index], start, end, queries[index].step)
+            );
+          }
+          seriesList = self.transformToHistogramOverTime(seriesList);
+          result.push(...seriesList);
         } else {
-          for (let metricData of response.data.data.result) {
+          for (let metricData of prometheusResult) {
             if (response.data.data.resultType === 'matrix') {
               result.push(self.transformMetricData(metricData, activeTargets[index], start, end, queries[index].step));
             } else if (response.data.data.resultType === 'vector') {
@@ -378,6 +390,24 @@ export class PrometheusDatasource {
     return { target: metricLabel, datapoints: dps };
   }
 
+  transformToHistogramOverTime(seriesList, options?) {
+    /*      t1 = timestamp1, t2 = timestamp2 etc.
+            t1  t2  t3          t1  t2  t3
+    le10    10  10  0     =>    10  10  0
+    le20    20  10  30    =>    10  0   30
+    le30    30  10  35    =>    10  0   5
+    */
+    for (let i = seriesList.length - 1; i > 0; i--) {
+      let topSeries = seriesList[i].datapoints;
+      let bottomSeries = seriesList[i - 1].datapoints;
+      for (let j = 0; j < topSeries.length; j++) {
+        topSeries[j][0] -= bottomSeries[j][0];
+      }
+    }
+
+    return seriesList;
+  }
+
   createMetricLabel(labelData, options) {
     if (_.isUndefined(options) || _.isEmpty(options.legendFormat)) {
       return this.getOriginalMetricName(labelData);
@@ -411,4 +441,34 @@ export class PrometheusDatasource {
     }
     return Math.ceil(date.valueOf() / 1000);
   }
+}
+
+function sortSeriesByLabel(s1, s2) {
+  let le1, le2;
+
+  try {
+    // fail if not integer. might happen with bad queries
+    le1 = parseHistogramLabel(s1.metric.le);
+    le2 = parseHistogramLabel(s2.metric.le);
+  } catch (err) {
+    console.log(err);
+    return 0;
+  }
+
+  if (le1 > le2) {
+    return 1;
+  }
+
+  if (le1 < le2) {
+    return -1;
+  }
+
+  return 0;
+}
+
+function parseHistogramLabel(le: string): number {
+  if (le === '+Inf') {
+    return +Infinity;
+  }
+  return parseInt(le);
 }
