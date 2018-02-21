@@ -52,6 +52,7 @@ type Query struct {
 	Type         string
 	DashboardIds []int64
 	FolderIds    []int64
+	Permission   models.PermissionType
 
 	Result HitList
 }
@@ -66,7 +67,7 @@ type FindPersistedDashboardsQuery struct {
 	FolderIds    []int64
 	Tags         []string
 	Limit        int
-	IsBrowse     bool
+	Permission   models.PermissionType
 
 	Result HitList
 }

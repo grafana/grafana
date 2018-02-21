@@ -19,16 +19,16 @@ var (
 	brokenDashboards  string = "./test-dashboards/broken-dashboards"
 	oneDashboard      string = "./test-dashboards/one-dashboard"
 
-	fakeRepo *fakeDashboardRepo
+	fakeService *fakeDashboardProvisioningService
 )
 
 func TestDashboardFileReader(t *testing.T) {
 	Convey("Dashboard file reader", t, func() {
 		bus.ClearBusHandlers()
-		fakeRepo = &fakeDashboardRepo{}
+		origNewDashboardProvisioningService := dashboards.NewProvisioningService
+		fakeService = mockDashboardProvisioningService()
 
 		bus.AddHandler("test", mockGetDashboardQuery)
-		dashboards.SetRepository(fakeRepo)
 		logger := log.New("test.logger")
 
 		Convey("Reading dashboards from disk", func() {
@@ -54,7 +54,7 @@ func TestDashboardFileReader(t *testing.T) {
 				folders := 0
 				dashboards := 0
 
-				for _, i := range fakeRepo.inserted {
+				for _, i := range fakeService.inserted {
 					if i.Dashboard.IsFolder {
 						folders++
 					} else {
@@ -62,25 +62,8 @@ func TestDashboardFileReader(t *testing.T) {
 					}
 				}
 
-				So(dashboards, ShouldEqual, 2)
 				So(folders, ShouldEqual, 1)
-			})
-
-			Convey("Should not update dashboards when db is newer", func() {
-				cfg.Options["path"] = oneDashboard
-
-				fakeRepo.getDashboard = append(fakeRepo.getDashboard, &models.Dashboard{
-					Updated: time.Now().Add(time.Hour),
-					Slug:    "grafana",
-				})
-
-				reader, err := NewDashboardFileReader(cfg, logger)
-				So(err, ShouldBeNil)
-
-				err = reader.startWalkingDisk()
-				So(err, ShouldBeNil)
-
-				So(len(fakeRepo.inserted), ShouldEqual, 0)
+				So(dashboards, ShouldEqual, 2)
 			})
 
 			Convey("Can read default dashboard and replace old version in database", func() {
@@ -88,7 +71,7 @@ func TestDashboardFileReader(t *testing.T) {
 
 				stat, _ := os.Stat(oneDashboard + "/dashboard1.json")
 
-				fakeRepo.getDashboard = append(fakeRepo.getDashboard, &models.Dashboard{
+				fakeService.getDashboard = append(fakeService.getDashboard, &models.Dashboard{
 					Updated: stat.ModTime().AddDate(0, 0, -1),
 					Slug:    "grafana",
 				})
@@ -99,7 +82,7 @@ func TestDashboardFileReader(t *testing.T) {
 				err = reader.startWalkingDisk()
 				So(err, ShouldBeNil)
 
-				So(len(fakeRepo.inserted), ShouldEqual, 1)
+				So(len(fakeService.inserted), ShouldEqual, 1)
 			})
 
 			Convey("Invalid configuration should return error", func() {
@@ -133,7 +116,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			_, err := getOrCreateFolderId(cfg, fakeRepo)
+			_, err := getOrCreateFolderId(cfg, fakeService)
 			So(err, ShouldEqual, ErrFolderNameMissing)
 		})
 
@@ -148,39 +131,28 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			folderId, err := getOrCreateFolderId(cfg, fakeRepo)
+			folderId, err := getOrCreateFolderId(cfg, fakeService)
 			So(err, ShouldBeNil)
 			inserted := false
-			for _, d := range fakeRepo.inserted {
+			for _, d := range fakeService.inserted {
 				if d.Dashboard.IsFolder && d.Dashboard.Id == folderId {
 					inserted = true
 				}
 			}
-			So(len(fakeRepo.inserted), ShouldEqual, 1)
+			So(len(fakeService.inserted), ShouldEqual, 1)
 			So(inserted, ShouldBeTrue)
 		})
 
 		Convey("Walking the folder with dashboards", func() {
-			cfg := &DashboardsAsConfig{
-				Name:   "Default",
-				Type:   "file",
-				OrgId:  1,
-				Folder: "",
-				Options: map[string]interface{}{
-					"path": defaultDashboards,
-				},
-			}
-
-			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
-			So(err, ShouldBeNil)
+			noFiles := map[string]os.FileInfo{}
 
 			Convey("should skip dirs that starts with .", func() {
-				shouldSkip := reader.createWalk(reader, 0)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
+				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
 				So(shouldSkip, ShouldEqual, filepath.SkipDir)
 			})
 
 			Convey("should keep walking if file is not .json", func() {
-				shouldSkip := reader.createWalk(reader, 0)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
+				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
 			})
 		})
@@ -207,6 +179,10 @@ func TestDashboardFileReader(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(reader.Path, ShouldEqual, defaultDashboards)
 			})
+		})
+
+		Reset(func() {
+			dashboards.NewProvisioningService = origNewDashboardProvisioningService
 		})
 	})
 }
@@ -240,18 +216,37 @@ func (ffi FakeFileInfo) Sys() interface{} {
 	return nil
 }
 
-type fakeDashboardRepo struct {
-	inserted     []*dashboards.SaveDashboardItem
+func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
+	mock := fakeDashboardProvisioningService{}
+	dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
+		return &mock
+	}
+	return &mock
+}
+
+type fakeDashboardProvisioningService struct {
+	inserted     []*dashboards.SaveDashboardDTO
+	provisioned  []*models.DashboardProvisioning
 	getDashboard []*models.Dashboard
 }
 
-func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardItem) (*models.Dashboard, error) {
-	repo.inserted = append(repo.inserted, json)
-	return json.Dashboard, nil
+func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+	return s.provisioned, nil
+}
+
+func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	s.inserted = append(s.inserted, dto)
+	s.provisioned = append(s.provisioned, provisioning)
+	return dto.Dashboard, nil
+}
+
+func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
+	s.inserted = append(s.inserted, dto)
+	return dto.Dashboard, nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
-	for _, d := range fakeRepo.getDashboard {
+	for _, d := range fakeService.getDashboard {
 		if d.Slug == cmd.Slug {
 			cmd.Result = d
 			return nil

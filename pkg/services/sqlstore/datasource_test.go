@@ -3,33 +3,10 @@ package sqlstore
 import (
 	"testing"
 
-	"github.com/go-xorm/xorm"
-
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 )
-
-func InitTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
-	//x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
-	//x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
-
-	// x.ShowSQL()
-
-	if err != nil {
-		t.Fatalf("Failed to init in memory sqllite3 db %v", err)
-	}
-
-	sqlutil.CleanDB(x)
-
-	if err := SetEngine(x); err != nil {
-		t.Fatal(err)
-	}
-
-	return x
-}
 
 type Test struct {
 	Id   int64

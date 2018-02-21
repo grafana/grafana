@@ -37,7 +37,7 @@ export class ManageDashboardsCtrl {
   folderUid?: string;
 
   // if user can add new folders and/or add new dashboards
-  canSave: boolean;
+  canSave = false;
 
   // if user has editor role or higher
   isEditor: boolean;

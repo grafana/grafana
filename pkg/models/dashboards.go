@@ -13,22 +13,26 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound                        = errors.New("Dashboard not found")
-	ErrDashboardSnapshotNotFound                = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameUIDExists               = errors.New("A dashboard with the same uid already exists")
-	ErrDashboardWithSameNameInFolderExists      = errors.New("A dashboard with the same name in the folder already exists")
-	ErrDashboardVersionMismatch                 = errors.New("The dashboard has been changed by someone else")
-	ErrDashboardTitleEmpty                      = errors.New("Dashboard title cannot be empty")
-	ErrDashboardFolderCannotHaveParent          = errors.New("A Dashboard Folder cannot be added to another folder")
-	ErrDashboardContainsInvalidAlertData        = errors.New("Invalid alert data. Cannot save dashboard")
-	ErrDashboardFailedToUpdateAlertData         = errors.New("Failed to save alert data")
-	ErrDashboardsWithSameSlugExists             = errors.New("Multiple dashboards with the same slug exists")
-	ErrDashboardFailedGenerateUniqueUid         = errors.New("Failed to generate unique dashboard id")
-	ErrDashboardExistingCannotChangeToDashboard = errors.New("An existing folder cannot be changed to a dashboard")
-	ErrDashboardTypeMismatch                    = errors.New("Dashboard cannot be changed to a folder")
-	ErrDashboardFolderWithSameNameAsDashboard   = errors.New("Folder name cannot be the same as one of its dashboards")
-	ErrDashboardWithSameNameAsFolder            = errors.New("Dashboard name cannot be the same as folder")
-	RootFolderName                              = "General"
+	ErrDashboardNotFound                      = errors.New("Dashboard not found")
+	ErrFolderNotFound                         = errors.New("Folder not found")
+	ErrDashboardSnapshotNotFound              = errors.New("Dashboard snapshot not found")
+	ErrDashboardWithSameUIDExists             = errors.New("A dashboard with the same uid already exists")
+	ErrDashboardWithSameNameInFolderExists    = errors.New("A dashboard with the same name in the folder already exists")
+	ErrDashboardVersionMismatch               = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty                    = errors.New("Dashboard title cannot be empty")
+	ErrDashboardFolderCannotHaveParent        = errors.New("A Dashboard Folder cannot be added to another folder")
+	ErrDashboardContainsInvalidAlertData      = errors.New("Invalid alert data. Cannot save dashboard")
+	ErrDashboardFailedToUpdateAlertData       = errors.New("Failed to save alert data")
+	ErrDashboardsWithSameSlugExists           = errors.New("Multiple dashboards with the same slug exists")
+	ErrDashboardFailedGenerateUniqueUid       = errors.New("Failed to generate unique dashboard id")
+	ErrDashboardTypeMismatch                  = errors.New("Dashboard cannot be changed to a folder")
+	ErrDashboardFolderWithSameNameAsDashboard = errors.New("Folder name cannot be the same as one of its dashboards")
+	ErrDashboardWithSameNameAsFolder          = errors.New("Dashboard name cannot be the same as folder")
+	ErrDashboardFolderNameExists              = errors.New("A folder with that name already exists")
+	ErrDashboardUpdateAccessDenied            = errors.New("Access denied to save dashboard")
+	ErrDashboardInvalidUid                    = errors.New("uid contains illegal characters")
+	ErrDashboardUidToLong                     = errors.New("uid to long. max 40 characters")
+	RootFolderName                            = "General"
 )
 
 type UpdatePluginDashboardError struct {
@@ -69,6 +73,30 @@ type Dashboard struct {
 	Data  *simplejson.Json
 }
 
+func (d *Dashboard) SetId(id int64) {
+	d.Id = id
+	d.Data.Set("id", id)
+}
+
+func (d *Dashboard) SetUid(uid string) {
+	d.Uid = uid
+	d.Data.Set("uid", uid)
+}
+
+func (d *Dashboard) SetVersion(version int) {
+	d.Version = version
+	d.Data.Set("version", version)
+}
+
+// GetDashboardIdForSavePermissionCheck return the dashboard id to be used for checking permission of dashboard
+func (d *Dashboard) GetDashboardIdForSavePermissionCheck() int64 {
+	if d.Id == 0 {
+		return d.FolderId
+	}
+
+	return d.Id
+}
+
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
@@ -87,6 +115,7 @@ func NewDashboardFolder(title string) *Dashboard {
 	folder.Data.Set("schemaVersion", 16)
 	folder.Data.Set("editable", true)
 	folder.Data.Set("hideControls", true)
+	folder.IsFolder = true
 	return folder
 }
 
@@ -219,9 +248,30 @@ type SaveDashboardCommand struct {
 	Result *Dashboard
 }
 
+type DashboardProvisioning struct {
+	Id          int64
+	DashboardId int64
+	Name        string
+	ExternalId  string
+	Updated     int64
+}
+
+type SaveProvisionedDashboardCommand struct {
+	DashboardCmd          *SaveDashboardCommand
+	DashboardProvisioning *DashboardProvisioning
+
+	Result *Dashboard
+}
+
 type DeleteDashboardCommand struct {
 	Id    int64
 	OrgId int64
+}
+
+type ValidateDashboardBeforeSaveCommand struct {
+	OrgId     int64
+	Dashboard *Dashboard
+	Overwrite bool
 }
 
 //
@@ -271,23 +321,17 @@ type GetDashboardSlugByIdQuery struct {
 	Result string
 }
 
+type GetProvisionedDashboardDataQuery struct {
+	Name string
+
+	Result []*DashboardProvisioning
+}
+
 type GetDashboardsBySlugQuery struct {
 	OrgId int64
 	Slug  string
 
 	Result []*Dashboard
-}
-
-type GetFoldersForSignedInUserQuery struct {
-	OrgId        int64
-	SignedInUser *SignedInUser
-	Title        string
-	Result       []*DashboardFolder
-}
-
-type DashboardFolder struct {
-	Id    int64  `json:"id"`
-	Title string `json:"title"`
 }
 
 type DashboardPermissionForUser struct {

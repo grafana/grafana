@@ -61,52 +61,61 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 }
 
 func HandleAlertsQuery(query *m.GetAlertsQuery) error {
-	var sql bytes.Buffer
-	params := make([]interface{}, 0)
+	builder := SqlBuilder{}
 
-	sql.WriteString(`SELECT *
-						from alert
-						`)
+	builder.Write(`SELECT
+		alert.id,
+		alert.dashboard_id,
+		alert.panel_id,
+		alert.name,
+		alert.state,
+		alert.new_state_date,
+		alert.eval_date,
+		alert.execution_error,
+		dashboard.uid as dashboard_uid,
+		dashboard.slug as dashboard_slug
+		FROM alert
+		INNER JOIN dashboard on dashboard.id = alert.dashboard_id `)
 
-	sql.WriteString(`WHERE org_id = ?`)
-	params = append(params, query.OrgId)
+	builder.Write(`WHERE alert.org_id = ?`, query.OrgId)
 
 	if query.DashboardId != 0 {
-		sql.WriteString(` AND dashboard_id = ?`)
-		params = append(params, query.DashboardId)
+		builder.Write(` AND alert.dashboard_id = ?`, query.DashboardId)
 	}
 
 	if query.PanelId != 0 {
-		sql.WriteString(` AND panel_id = ?`)
-		params = append(params, query.PanelId)
+		builder.Write(` AND alert.panel_id = ?`, query.PanelId)
 	}
 
 	if len(query.State) > 0 && query.State[0] != "all" {
-		sql.WriteString(` AND (`)
+		builder.Write(` AND (`)
 		for i, v := range query.State {
 			if i > 0 {
-				sql.WriteString(" OR ")
+				builder.Write(" OR ")
 			}
 			if strings.HasPrefix(v, "not_") {
-				sql.WriteString("state <> ? ")
+				builder.Write("state <> ? ")
 				v = strings.TrimPrefix(v, "not_")
 			} else {
-				sql.WriteString("state = ? ")
+				builder.Write("state = ? ")
 			}
-			params = append(params, v)
+			builder.AddParams(v)
 		}
-		sql.WriteString(")")
+		builder.Write(")")
 	}
 
-	sql.WriteString(" ORDER BY name ASC")
+	if query.User.OrgRole != m.ROLE_ADMIN {
+		builder.writeDashboardPermissionFilter(query.User, m.PERMISSION_EDIT)
+	}
+
+	builder.Write(" ORDER BY name ASC")
 
 	if query.Limit != 0 {
-		sql.WriteString(" LIMIT ?")
-		params = append(params, query.Limit)
+		builder.Write(" LIMIT ?", query.Limit)
 	}
 
-	alerts := make([]*m.Alert, 0)
-	if err := x.SQL(sql.String(), params...).Find(&alerts); err != nil {
+	alerts := make([]*m.AlertListItemDTO, 0)
+	if err := x.SQL(builder.GetSqlString(), builder.params...).Find(&alerts); err != nil {
 		return err
 	}
 

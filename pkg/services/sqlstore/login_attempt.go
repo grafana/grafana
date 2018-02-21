@@ -21,7 +21,7 @@ func CreateLoginAttempt(cmd *m.CreateLoginAttemptCommand) error {
 		loginAttempt := m.LoginAttempt{
 			Username:  cmd.Username,
 			IpAddress: cmd.IpAddress,
-			Created:   getTimeNow(),
+			Created:   getTimeNow().Unix(),
 		}
 
 		if _, err := sess.Insert(&loginAttempt); err != nil {
@@ -37,8 +37,8 @@ func CreateLoginAttempt(cmd *m.CreateLoginAttemptCommand) error {
 func DeleteOldLoginAttempts(cmd *m.DeleteOldLoginAttemptsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var maxId int64
-		sql := "SELECT max(id) as id FROM login_attempt WHERE created < " + dialect.DateTimeFunc("?")
-		result, err := sess.Query(sql, cmd.OlderThan)
+		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"
+		result, err := sess.Query(sql, cmd.OlderThan.Unix())
 
 		if err != nil {
 			return err
@@ -66,7 +66,7 @@ func GetUserLoginAttemptCount(query *m.GetUserLoginAttemptCountQuery) error {
 	loginAttempt := new(m.LoginAttempt)
 	total, err := x.
 		Where("username = ?", query.Username).
-		And("created >="+dialect.DateTimeFunc("?"), query.Since).
+		And("created >= ?", query.Since.Unix()).
 		Count(loginAttempt)
 
 	if err != nil {

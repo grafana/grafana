@@ -72,7 +72,7 @@ $textShadow: none;
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
-$page-gradient: linear-gradient(-60deg, transparent 70%, $gray-7 98%);
+$page-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------

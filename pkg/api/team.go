@@ -26,6 +26,7 @@ func CreateTeam(c *middleware.Context, cmd m.CreateTeamCommand) Response {
 
 // PUT /api/teams/:teamId
 func UpdateTeam(c *middleware.Context, cmd m.UpdateTeamCommand) Response {
+	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrTeamNameTaken {
@@ -39,7 +40,7 @@ func UpdateTeam(c *middleware.Context, cmd m.UpdateTeamCommand) Response {
 
 // DELETE /api/teams/:teamId
 func DeleteTeamById(c *middleware.Context) Response {
-	if err := bus.Dispatch(&m.DeleteTeamCommand{Id: c.ParamsInt64(":teamId")}); err != nil {
+	if err := bus.Dispatch(&m.DeleteTeamCommand{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return ApiError(404, "Failed to delete Team. ID not found", nil)
 		}
@@ -60,11 +61,11 @@ func SearchTeams(c *middleware.Context) Response {
 	}
 
 	query := m.SearchTeamsQuery{
+		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Name:  c.Query("name"),
 		Page:  page,
 		Limit: perPage,
-		OrgId: c.OrgId,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -83,7 +84,7 @@ func SearchTeams(c *middleware.Context) Response {
 
 // GET /api/teams/:teamId
 func GetTeamById(c *middleware.Context) Response {
-	query := m.GetTeamByIdQuery{Id: c.ParamsInt64(":teamId")}
+	query := m.GetTeamByIdQuery{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrTeamNotFound {

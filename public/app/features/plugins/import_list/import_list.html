@@ -9,9 +9,7 @@
 					<a href="{{dash.importedUrl}}" ng-show="dash.imported">
 						{{dash.title}}
 					</a>
-					<span ng-show="!dash.imported">
-						{{dash.title}}
-					</span>
+					<span ng-show="!dash.imported">{{dash.title}}</span>
 				</td>
 				<td style="text-align: right">
 					<button class="btn btn-secondary btn-small" ng-click="ctrl.import(dash, false)" ng-show="!dash.imported">

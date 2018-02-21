@@ -10,7 +10,7 @@ import (
 
 // GET /api/teams/:teamId/members
 func GetTeamMembers(c *middleware.Context) Response {
-	query := m.GetTeamMembersQuery{TeamId: c.ParamsInt64(":teamId")}
+	query := m.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get Team Members", err)
@@ -29,9 +29,14 @@ func AddTeamMember(c *middleware.Context, cmd m.AddTeamMemberCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrTeamMemberAlreadyAdded {
-			return ApiError(400, "User is already added to this team", err)
+		if err == m.ErrTeamNotFound {
+			return ApiError(404, "Team not found", nil)
 		}
+
+		if err == m.ErrTeamMemberAlreadyAdded {
+			return ApiError(400, "User is already added to this team", nil)
+		}
+
 		return ApiError(500, "Failed to add Member to Team", err)
 	}
 
@@ -42,7 +47,15 @@ func AddTeamMember(c *middleware.Context, cmd m.AddTeamMemberCommand) Response {
 
 // DELETE /api/teams/:teamId/members/:userId
 func RemoveTeamMember(c *middleware.Context) Response {
-	if err := bus.Dispatch(&m.RemoveTeamMemberCommand{TeamId: c.ParamsInt64(":teamId"), UserId: c.ParamsInt64(":userId")}); err != nil {
+	if err := bus.Dispatch(&m.RemoveTeamMemberCommand{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId"), UserId: c.ParamsInt64(":userId")}); err != nil {
+		if err == m.ErrTeamNotFound {
+			return ApiError(404, "Team not found", nil)
+		}
+
+		if err == m.ErrTeamMemberNotFound {
+			return ApiError(404, "Team member not found", nil)
+		}
+
 		return ApiError(500, "Failed to remove Member from Team", err)
 	}
 	return ApiSuccess("Team Member removed")

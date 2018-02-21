@@ -27,6 +27,9 @@ func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
 
 	datasource := m.DataSource{OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&datasource)
+	if err != nil {
+		return err
+	}
 
 	if !has {
 		return m.ErrDataSourceNotFound

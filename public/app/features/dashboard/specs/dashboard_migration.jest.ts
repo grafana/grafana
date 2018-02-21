@@ -363,6 +363,22 @@ describe('DashboardModel', function() {
       expect(dashboard.panels[0].repeat).toBe('server');
       expect(dashboard.panels.length).toBe(2);
     });
+
+    it('minSpan should be twice', function() {
+      model.rows = [createRow({ height: 8 }, [[6]])];
+      model.rows[0].panels[0] = { minSpan: 12 };
+
+      let dashboard = new DashboardModel(model);
+      expect(dashboard.panels[0].minSpan).toBe(24);
+    });
+
+    it('should assign id', function() {
+      model.rows = [createRow({ collapse: true, height: 8 }, [[6], [6]])];
+      model.rows[0].panels[0] = { };
+
+      let dashboard = new DashboardModel(model);
+      expect(dashboard.panels[0].id).toBe(1);
+    });
   });
 });
 

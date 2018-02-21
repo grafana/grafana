@@ -7,14 +7,15 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
@@ -101,7 +102,6 @@ func SetEngine(engine *xorm.Engine) (err error) {
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
-	dashboards.SetRepository(&dashboards.DashboardRepository{})
 	return nil
 }
 
@@ -215,4 +215,47 @@ func LoadConfig() {
 	DbCfg.ClientCertPath = sec.Key("client_cert_path").String()
 	DbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+}
+
+var (
+	dbSqlite   = "sqlite"
+	dbMySql    = "mysql"
+	dbPostgres = "postgres"
+)
+
+func InitTestDB(t *testing.T) *xorm.Engine {
+	selectedDb := dbSqlite
+	//selectedDb := dbMySql
+	//selectedDb := dbPostgres
+
+	var x *xorm.Engine
+	var err error
+
+	// environment variable present for test db?
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		selectedDb = db
+	}
+
+	switch strings.ToLower(selectedDb) {
+	case dbMySql:
+		x, err = xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
+	case dbPostgres:
+		x, err = xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
+	default:
+		x, err = xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
+	}
+
+	// x.ShowSQL()
+
+	if err != nil {
+		t.Fatalf("Failed to init in memory sqllite3 db %v", err)
+	}
+
+	sqlutil.CleanDB(x)
+
+	if err := SetEngine(x); err != nil {
+		t.Fatal(err)
+	}
+
+	return x
 }

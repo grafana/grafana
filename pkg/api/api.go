@@ -150,13 +150,13 @@ func (hs *HttpServer) registerRoutes() {
 		apiRoute.Group("/teams", func(teamsRoute RouteRegister) {
 			teamsRoute.Get("/:teamId", wrap(GetTeamById))
 			teamsRoute.Get("/search", wrap(SearchTeams))
-			teamsRoute.Post("/", quota("teams"), reqOrgAdmin, bind(m.CreateTeamCommand{}), wrap(CreateTeam))
-			teamsRoute.Put("/:teamId", reqOrgAdmin, bind(m.UpdateTeamCommand{}), wrap(UpdateTeam))
-			teamsRoute.Delete("/:teamId", reqOrgAdmin, wrap(DeleteTeamById))
-			teamsRoute.Get("/:teamId/members", reqOrgAdmin, wrap(GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", reqOrgAdmin, quota("teams"), bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
-			teamsRoute.Delete("/:teamId/members/:userId", reqOrgAdmin, wrap(RemoveTeamMember))
-		})
+			teamsRoute.Post("/", quota("teams"), bind(m.CreateTeamCommand{}), wrap(CreateTeam))
+			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), wrap(UpdateTeam))
+			teamsRoute.Delete("/:teamId", wrap(DeleteTeamById))
+			teamsRoute.Get("/:teamId/members", wrap(GetTeamMembers))
+			teamsRoute.Post("/:teamId/members", quota("teams"), bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
+			teamsRoute.Delete("/:teamId/members/:userId", wrap(RemoveTeamMember))
+		}, reqOrgAdmin)
 
 		// org information available to all users.
 		apiRoute.Group("/org", func(orgRoute RouteRegister) {
@@ -261,8 +261,6 @@ func (hs *HttpServer) registerRoutes() {
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 
-			dashboardRoute.Get("/folders", wrap(GetFoldersForSignedInUser))
-
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute RouteRegister) {
 				dashIdRoute.Get("/versions", wrap(GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
@@ -271,7 +269,6 @@ func (hs *HttpServer) registerRoutes() {
 				dashIdRoute.Group("/acl", func(aclRoute RouteRegister) {
 					aclRoute.Get("/", wrap(GetDashboardAclList))
 					aclRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardAcl))
-					aclRoute.Delete("/:aclId", wrap(DeleteDashboardAcl))
 				})
 			})
 		})

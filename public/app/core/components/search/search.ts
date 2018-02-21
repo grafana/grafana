@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
 import { SearchSrv } from 'app/core/services/search_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
@@ -15,6 +16,7 @@ export class SearchCtrl {
   ignoreClose: any;
   isLoading: boolean;
   initialFolderFilterTitle: string;
+  isEditor: string;
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
@@ -24,6 +26,7 @@ export class SearchCtrl {
     this.initialFolderFilterTitle = 'All';
     this.getTags = this.getTags.bind(this);
     this.onTagSelect = this.onTagSelect.bind(this);
+    this.isEditor = contextSrv.isEditor;
   }
 
   closeSearch() {

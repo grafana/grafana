@@ -77,8 +77,11 @@ export class DashboardSrv {
   postSave(clone, data) {
     this.dash.version = data.version;
 
-    if (data.url !== this.$location.path()) {
-      this.$location.url(locationUtil.stripBaseFromUrl(data.url)).replace();
+    const newUrl = locationUtil.stripBaseFromUrl(data.url);
+    const currentPath = this.$location.path();
+
+    if (newUrl !== currentPath) {
+      this.$location.url(newUrl).replace();
     }
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);
