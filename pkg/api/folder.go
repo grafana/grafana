@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -82,8 +84,10 @@ func DeleteFolder(c *middleware.Context) Response {
 		return toFolderError(err)
 	}
 
-	var resp = map[string]interface{}{"title": f.Title}
-	return Json(200, resp)
+	return Json(200, util.DynMap{
+		"title":   f.Title,
+		"message": fmt.Sprintf("Folder %s deleted", f.Title),
+	})
 }
 
 func toFolderDto(g guardian.DashboardGuardian, folder *m.Folder) dtos.Folder {

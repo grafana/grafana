@@ -258,47 +258,27 @@ export class BackendSrv {
     });
   }
 
-  deleteFolder(uid: string) {
-    let deferred = this.$q.defer();
-
-    this.getFolderByUid(uid).then(folder => {
-      this.delete(`/api/folders/${uid}`)
-        .then(() => {
-          deferred.resolve(folder);
-        })
-        .catch(err => {
-          deferred.reject(err);
-        });
-    });
-
-    return deferred.promise;
+  deleteFolder(uid: string, showSuccessAlert) {
+    return this.request({ method: 'DELETE', url: `/api/folders/${uid}`, showSuccessAlert: showSuccessAlert === true });
   }
 
-  deleteDashboard(uid) {
-    let deferred = this.$q.defer();
-
-    this.getDashboardByUid(uid).then(fullDash => {
-      this.delete(`/api/dashboards/uid/${uid}`)
-        .then(() => {
-          deferred.resolve(fullDash);
-        })
-        .catch(err => {
-          deferred.reject(err);
-        });
+  deleteDashboard(uid, showSuccessAlert) {
+    return this.request({
+      method: 'DELETE',
+      url: `/api/dashboards/uid/${uid}`,
+      showSuccessAlert: showSuccessAlert === true,
     });
-
-    return deferred.promise;
   }
 
   deleteFoldersAndDashboards(folderUids, dashboardUids) {
     const tasks = [];
 
     for (let folderUid of folderUids) {
-      tasks.push(this.createTask(this.deleteFolder.bind(this), true, folderUid));
+      tasks.push(this.createTask(this.deleteFolder.bind(this), true, folderUid, true));
     }
 
     for (let dashboardUid of dashboardUids) {
-      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, dashboardUid));
+      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, dashboardUid, true));
     }
 
     return this.executeInOrder(tasks, []);

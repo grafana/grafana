@@ -167,8 +167,10 @@ func DeleteDashboard(c *middleware.Context) Response {
 		return ApiError(500, "Failed to delete dashboard", err)
 	}
 
-	var resp = map[string]interface{}{"title": dash.Title}
-	return Json(200, resp)
+	return Json(200, util.DynMap{
+		"title":   dash.Title,
+		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
+	})
 }
 
 func DeleteDashboardByUid(c *middleware.Context) Response {
@@ -187,8 +189,10 @@ func DeleteDashboardByUid(c *middleware.Context) Response {
 		return ApiError(500, "Failed to delete dashboard", err)
 	}
 
-	var resp = map[string]interface{}{"title": dash.Title}
-	return Json(200, resp)
+	return Json(200, util.DynMap{
+		"title":   dash.Title,
+		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
+	})
 }
 
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
