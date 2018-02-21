@@ -7,6 +7,7 @@ import { PanelContainer } from './PanelContainer';
 import ScrollBar from 'app/core/components/ScrollBar/ScrollBar';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import Highlighter from 'react-highlight-words';
 
 export interface AddPanelPanelProps {
   panel: PanelModel;
@@ -110,19 +111,29 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     dashboard.removePanel(dashboard.panels[0]);
   }
 
+  renderText(text: string) {
+    //if(this.state.filter) {
+    let searchWords = this.state.filter.split('');
+    return <Highlighter highlightClassName="highlight-search-match" textToHighlight={text} searchWords={searchWords} />;
+    //}
+    //return text;
+  }
+
   renderPanelItem(panel, index) {
     return (
       <div key={index} className="add-panel__item" onClick={() => this.onAddPanel(panel)} title={panel.name}>
         <img className="add-panel__item-img" src={panel.info.logos.small} />
-        <div className="add-panel__item-name">{panel.name}</div>
+        <div className="add-panel__item-name">{this.renderText(panel.name)}</div>
       </div>
     );
   }
 
   filterChange(evt) {
-    this.setState({ filter: evt.target.value });
-    this.setState({ panelPlugins: this.getPanelPlugins(evt.target.value) });
-    this.setState({ copiedPanelPlugins: this.getCopiedPanelPlugins(evt.target.value) });
+    this.setState({
+      filter: evt.target.value,
+      panelPlugins: this.getPanelPlugins(evt.target.value),
+      copiedPanelPlugins: this.getCopiedPanelPlugins(evt.target.value),
+    });
   }
 
   filterPanels(panels, filter) {
@@ -133,17 +144,21 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   openCopy() {
-    this.setState({ tab: 'Copy' });
-    this.setState({ filter: '' });
-    this.setState({ panelPlugins: this.getPanelPlugins('') });
-    this.setState({ copiedPanelPlugins: this.getCopiedPanelPlugins('') });
+    this.setState({
+      tab: 'Copy',
+      filter: '',
+      panelPlugins: this.getPanelPlugins(''),
+      copiedPanelPlugins: this.getCopiedPanelPlugins(''),
+    });
   }
 
   openAdd() {
-    this.setState({ tab: 'Add' });
-    this.setState({ filter: '' });
-    this.setState({ panelPlugins: this.getPanelPlugins('') });
-    this.setState({ copiedPanelPlugins: this.getCopiedPanelPlugins('') });
+    this.setState({
+      tab: 'Add',
+      filter: '',
+      panelPlugins: this.getPanelPlugins(''),
+      copiedPanelPlugins: this.getCopiedPanelPlugins(''),
+    });
   }
 
   render() {

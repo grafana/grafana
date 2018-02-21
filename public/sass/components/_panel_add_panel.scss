@@ -44,7 +44,7 @@
   overflow: auto;
   height: calc(100% - 50px);
   align-content: flex-start;
-  justify-content: space-between;
+  justify-content: space-around;
   position: relative;
 }
 
@@ -54,7 +54,7 @@
 
   border-radius: 3px;
   padding: $spacer/3 $spacer;
-  width: 32%;
+  width: 31%;
   height: 60px;
   text-align: center;
   margin: $gf-form-margin;
