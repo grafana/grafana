@@ -221,8 +221,8 @@ export class BackendSrv {
     return this.get('/api/search', query);
   }
 
-  getDashboard(type, slug) {
-    return this.get('/api/dashboards/' + type + '/' + slug);
+  getDashboardBySlug(slug) {
+    return this.get(`/api/dashboards/db/${slug}`);
   }
 
   getDashboardByUid(uid: string) {
