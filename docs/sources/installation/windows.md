@@ -14,7 +14,7 @@ weight = 3
 Description | Download
 ------------ | -------------
 Latest stable package for Windows | [grafana.4.6.3.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.6.3.windows-x64.zip)
-Latest beta package for Windows | [grafana.5.0.0-beta3.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.0-beta3.windows-x64.zip)
+Latest beta package for Windows | [grafana.5.0.0-beta4.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.0-beta4.windows-x64.zip)
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.

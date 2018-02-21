@@ -1,3 +1,5 @@
+$font-size-heatmap-tick: 11px;
+
 .heatmap-canvas-wrapper {
   // position: relative;
   cursor: crosshair;
@@ -10,7 +12,7 @@
     text {
       fill: $text-color;
       color: $text-color;
-      font-size: $font-size-sm;
+      font-size: $font-size-heatmap-tick;
     }
 
     line {
@@ -56,12 +58,12 @@
 .heatmap-legend-wrapper {
   @include clearfix();
   margin: 0 $spacer;
-  padding-top: 10px;
+  padding-top: 4px;
 
   svg {
     width: 100%;
     max-width: 300px;
-    height: 33px;
+    height: 18px;
     float: left;
     white-space: nowrap;
     padding-left: 10px;
@@ -75,7 +77,7 @@
     text {
       fill: $text-color;
       color: $text-color;
-      font-size: $font-size-sm;
+      font-size: $font-size-heatmap-tick;
     }
 
     line {

@@ -1,3 +1,11 @@
+# 5.0.0-beta4 (2018-02-19)
+
+### Fixes
+
+- **Dashboard** Fixed dashboard overwrite permission issue [#10814](https://github.com/grafana/grafana/issues/10814)
+- **Keyboard shortcuts** Fixed Esc key when in panel edit/view mode [#10945](https://github.com/grafana/grafana/issues/10945)
+- **Save dashboard** Fixed issue with time range & variable reset after saving [#10946](https://github.com/grafana/grafana/issues/10946)
+
 # 5.0.0-beta3 (2018-02-16)
 
 ### Fixes

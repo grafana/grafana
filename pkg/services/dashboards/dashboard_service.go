@@ -118,6 +118,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		UserId:    dto.User.UserId,
 		FolderId:  dash.FolderId,
 		IsFolder:  dash.IsFolder,
+		PluginId:  dash.PluginId,
 	}
 
 	if !dto.UpdatedAt.IsZero() {
