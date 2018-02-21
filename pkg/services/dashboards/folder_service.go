@@ -221,7 +221,7 @@ func toFolderError(err error) error {
 		return models.ErrFolderAccessDenied
 	}
 
-	if err == models.ErrDashbloardWithSameNameInFolderExists {
+	if err == models.ErrDashboardWithSameNameInFolderExists {
 		return models.ErrFolderSameNameExists
 	}
 
