@@ -110,7 +110,7 @@ export const PermissionsStore = types
         self.dashboardId = dashboardId;
         self.items.clear();
 
-        const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`);
+        const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/permissions`);
         const items = prepareServerResponse(res, dashboardId, isFolder, isInRoot);
         self.items = items;
         self.originalItems = items;
@@ -210,7 +210,7 @@ const updateItems = self => {
 
   let res;
   try {
-    res = backendSrv.post(`/api/dashboards/id/${self.dashboardId}/acl`, {
+    res = backendSrv.post(`/api/dashboards/id/${self.dashboardId}/permissions`, {
       items: updated,
     });
   } catch (error) {
