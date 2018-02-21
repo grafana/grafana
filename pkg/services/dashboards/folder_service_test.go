@@ -164,5 +164,28 @@ func TestFolderService(t *testing.T) {
 				guardian.New = origNewGuardian
 			})
 		})
+
+		Convey("Should map errors correct", func() {
+			testCases := []struct {
+				ActualError   error
+				ExpectedError error
+			}{
+				{ActualError: models.ErrDashboardTitleEmpty, ExpectedError: models.ErrFolderTitleEmpty},
+				{ActualError: models.ErrDashboardUpdateAccessDenied, ExpectedError: models.ErrFolderAccessDenied},
+				{ActualError: models.ErrDashboardWithSameNameInFolderExists, ExpectedError: models.ErrFolderSameNameExists},
+				{ActualError: models.ErrDashboardWithSameUIDExists, ExpectedError: models.ErrFolderWithSameUIDExists},
+				{ActualError: models.ErrDashboardVersionMismatch, ExpectedError: models.ErrFolderVersionMismatch},
+				{ActualError: models.ErrDashboardNotFound, ExpectedError: models.ErrFolderNotFound},
+				{ActualError: models.ErrDashboardFailedGenerateUniqueUid, ExpectedError: models.ErrFolderFailedGenerateUniqueUid},
+				{ActualError: models.ErrDashboardInvalidUid, ExpectedError: models.ErrDashboardInvalidUid},
+			}
+
+			for _, tc := range testCases {
+				actualError := toFolderError(tc.ActualError)
+				if actualError != tc.ExpectedError {
+					t.Errorf("For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
+				}
+			}
+		})
 	})
 }
