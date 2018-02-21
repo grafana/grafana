@@ -78,8 +78,8 @@ export class ManageDashboardsCtrl {
           return;
         }
 
-        return this.backendSrv.getDashboardByUid(this.folderUid).then(dash => {
-          this.canSave = dash.meta.canSave;
+        return this.backendSrv.getFolderByUid(this.folderUid).then(folder => {
+          this.canSave = folder.canSave;
         });
       });
   }
