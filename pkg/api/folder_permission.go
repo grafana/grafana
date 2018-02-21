@@ -99,5 +99,5 @@ func UpdateFolderPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardA
 		return ApiError(500, "Failed to create permission", err)
 	}
 
-	return ApiSuccess("Folder acl updated")
+	return ApiSuccess("Folder permissions updated")
 }

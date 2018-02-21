@@ -26,7 +26,7 @@ func GetDashboardPermissionList(c *middleware.Context) Response {
 
 	acl, err := guardian.GetAcl()
 	if err != nil {
-		return ApiError(500, "Failed to get dashboard acl", err)
+		return ApiError(500, "Failed to get dashboard permissions", err)
 	}
 
 	for _, perm := range acl {
@@ -82,5 +82,5 @@ func UpdateDashboardPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboa
 		return ApiError(500, "Failed to create permission", err)
 	}
 
-	return ApiSuccess("Dashboard acl updated")
+	return ApiSuccess("Dashboard permissions updated")
 }

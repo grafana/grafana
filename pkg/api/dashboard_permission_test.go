@@ -54,7 +54,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 		// 4. user is an org editor AND has no permissions for the dashboard
 
 		Convey("When user is org admin", func() {
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardsId/acl", m.ROLE_ADMIN, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:dashboardsId/permissions", m.ROLE_ADMIN, func(sc *scenarioContext) {
 				Convey("Should be able to access ACL", func() {
 					sc.handlerFunc = GetDashboardPermissionList
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -69,7 +69,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_ADMIN, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/permissions", "/api/dashboards/id/:dashboardId/permissions", m.ROLE_ADMIN, func(sc *scenarioContext) {
 				getDashboardNotFoundError = m.ErrDashboardNotFound
 				sc.handlerFunc = GetDashboardPermissionList
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -86,7 +86,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 					},
 				}
 
-				postAclScenario("When calling POST on", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_ADMIN, cmd, func(sc *scenarioContext) {
+				postAclScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:dashboardId/permissions", m.ROLE_ADMIN, cmd, func(sc *scenarioContext) {
 					getDashboardNotFoundError = m.ErrDashboardNotFound
 					CallPostAcl(sc)
 					So(sc.resp.Code, ShouldEqual, 404)
@@ -95,7 +95,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is org editor and has admin permission in the ACL", func() {
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:dashboardId/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockResult = append(mockResult, &m.DashboardAclInfoDTO{OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
 
 				Convey("Should be able to access ACL", func() {
@@ -113,7 +113,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 					},
 				}
 
-				postAclScenario("When calling POST on", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
+				postAclScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:dashboardId/permissions", m.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
 					mockResult = append(mockResult, &m.DashboardAclInfoDTO{OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
 
 					CallPostAcl(sc)
@@ -129,7 +129,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 					},
 				}
 
-				postAclScenario("When calling POST on", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
+				postAclScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:dashboardId/permissions", m.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
 					mockResult = append(mockResult, &m.DashboardAclInfoDTO{OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
 
 					CallPostAcl(sc)
@@ -140,7 +140,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is org viewer and has edit permission in the ACL", func() {
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_VIEWER, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:dashboardId/permissions", m.ROLE_VIEWER, func(sc *scenarioContext) {
 				mockResult = append(mockResult, &m.DashboardAclInfoDTO{OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_EDIT})
 
 				// Getting the permissions is an Admin permission
@@ -154,7 +154,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is org editor and not in the ACL", func() {
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardsId/acl", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:dashboardsId/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
 
 				Convey("Should not be able to access ACL", func() {
 					sc.handlerFunc = GetDashboardPermissionList
