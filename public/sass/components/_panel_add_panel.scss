@@ -3,9 +3,12 @@
 }
 
 .add-panel__header {
-  padding: 5px 15px;
+  padding: 0 15px;
   display: flex;
   align-items: center;
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
 
   .gicon {
     font-size: 30px;
@@ -23,7 +26,7 @@
 
 .add-panel__title {
   font-size: $font-size-md;
-  margin-right: $spacer/2;
+  margin-right: $spacer*2;
 }
 
 .add-panel__sub-title {
@@ -39,9 +42,9 @@
   flex-direction: row;
   flex-wrap: wrap;
   overflow: auto;
-  height: calc(100% - 43px);
+  height: calc(100% - 50px);
   align-content: flex-start;
-  justify-content: space-around;
+  justify-content: space-between;
   position: relative;
 }
 
@@ -51,7 +54,7 @@
 
   border-radius: 3px;
   padding: $spacer/3 $spacer;
-  width: 31%;
+  width: 32%;
   height: 60px;
   text-align: center;
   margin: $gf-form-margin;
@@ -76,4 +79,10 @@
 
 .add-panel__item-icon {
   padding: 2px;
+}
+
+.add-panel__searchbar {
+  width: 100%;
+  margin-bottom: 10px;
+  margin-top: 7px;
 }
