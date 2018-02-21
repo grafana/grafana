@@ -13,7 +13,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestFolderAclApiEndpoint(t *testing.T) {
+func TestFolderPermissionApiEndpoint(t *testing.T) {
 	Convey("Folder permissions test", t, func() {
 		Convey("Given user has no admin permissions", func() {
 			origNewGuardian := guardian.New
