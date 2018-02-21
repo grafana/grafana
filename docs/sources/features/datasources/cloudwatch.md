@@ -87,7 +87,7 @@ Name | Description
 *namespaces()* | Returns a list of namespaces CloudWatch support.
 *metrics(namespace, [region])* | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)
 *dimension_keys(namespace)* | Returns a list of dimension keys in the namespace.
-*dimension_values(region, namespace, metric, dimension_key)* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric` and `dimension_key`.
+*dimension_values(region, namespace, metric, dimension_key, [filters])* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well.
 *ebs_volume_ids(region, instance_id)* | Returns a list of volume ids matching the specified `region`, `instance_id`.
 *ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.
 
@@ -104,6 +104,7 @@ Query | Service
 *dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)* | RedShift
 *dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)* | RDS
 *dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)* | S3
+*dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})* | CloudWatch Agent
 
 ## ec2_instance_attribute examples
 
