@@ -118,32 +118,25 @@ func toFolderDto(g guardian.DashboardGuardian, folder *m.Folder) dtos.Folder {
 }
 
 func toFolderError(err error) Response {
-	if err == m.ErrDashboardTitleEmpty {
-		return ApiError(400, m.ErrFolderTitleEmpty.Error(), nil)
+	if err == m.ErrFolderTitleEmpty ||
+		err == m.ErrFolderSameNameExists ||
+		err == m.ErrFolderWithSameUIDExists ||
+		err == m.ErrDashboardTypeMismatch ||
+		err == m.ErrDashboardInvalidUid ||
+		err == m.ErrDashboardUidToLong {
+		return ApiError(400, err.Error(), nil)
 	}
 
 	if err == m.ErrFolderAccessDenied {
 		return ApiError(403, "Access denied", err)
 	}
 
-	if err == m.ErrDashboardWithSameNameInFolderExists {
-		return Json(412, util.DynMap{"status": "name-exists", "message": m.ErrFolderSameNameExists.Error()})
-	}
-
-	if err == m.ErrDashboardWithSameUIDExists {
-		return Json(412, util.DynMap{"status": "uid-exists", "message": m.ErrFolderWithSameUIDExists.Error()})
-	}
-
-	if err == m.ErrDashboardVersionMismatch {
-		return Json(412, util.DynMap{"status": "version-mismatch", "message": m.ErrFolderVersionMismatch.Error()})
-	}
-
 	if err == m.ErrFolderNotFound {
 		return Json(404, util.DynMap{"status": "not-found", "message": m.ErrFolderNotFound.Error()})
 	}
 
-	if err == m.ErrDashboardFailedGenerateUniqueUid {
-		err = m.ErrFolderFailedGenerateUniqueUid
+	if err == m.ErrFolderVersionMismatch {
+		return Json(412, util.DynMap{"status": "version-mismatch", "message": m.ErrFolderVersionMismatch.Error()})
 	}
 
 	return ApiError(500, "Folder API error", err)

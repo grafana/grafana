@@ -102,7 +102,6 @@ func (dr *dashboardServiceImpl) CreateFolder(cmd *models.CreateFolderCommand) er
 		Dashboard: dashFolder,
 		OrgId:     dr.orgId,
 		User:      dr.user,
-		Overwrite: cmd.Overwrite,
 	}
 
 	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false)
@@ -222,7 +221,7 @@ func toFolderError(err error) error {
 		return models.ErrFolderAccessDenied
 	}
 
-	if err == models.ErrDashboardWithSameNameInFolderExists {
+	if err == models.ErrDashbloardWithSameNameInFolderExists {
 		return models.ErrFolderSameNameExists
 	}
 
