@@ -1,19 +1,19 @@
 +++
-title = "Dashboard Permissions HTTP API "
-description = "Grafana Dashboard Permissions HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "dashboard", "permission", "permissions", "acl"]
+title = "Folder Permissions HTTP API "
+description = "Grafana Folder Permissions HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "folder", "permission", "permissions", "acl"]
 aliases = ["/http_api/dashboardpermissions/"]
 type = "docs"
 [menu.docs]
-name = "Dashboard Permissions"
+name = "Folder Permissions"
 parent = "http_api"
 +++
 
-# Dashboard Permissions API
+# Folder Permissions API
 
-This API can be used to update/get the permissions for a dashboard.
+This API can be used to update/get the permissions for a folder.
 
-Permissions with `dashboardId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.
+Permissions with `folderId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.
 
 The permission levels for the permission field:
 
@@ -21,16 +21,16 @@ The permission levels for the permission field:
 - 2 = Edit
 - 4 = Admin
 
-## Get permissions for a dashboard
+## Get permissions for a folder
 
-`GET /api/dashboards/id/:dashboardId/permissions`
+`GET /api/folders/:uid/permissions`
 
-Gets all existing permissions for the dashboard with the given `dashboardId`.
+Gets all existing permissions for the folder with the given `uid`.
 
 **Example request**:
 
 ```http
-GET /api/dashboards/id/1/permissions HTTP/1.1
+GET /api/folders/nErXDvCkzz/permissions HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -46,7 +46,7 @@ Content-Length: 551
 [
   {
     "id": 1,
-    "dashboardId": -1,
+    "folderId": -1,
     "created": "2017-06-20T02:00:00+02:00",
     "updated": "2017-06-20T02:00:00+02:00",
     "userId": 0,
@@ -57,7 +57,7 @@ Content-Length: 551
     "role": "Viewer",
     "permission": 1,
     "permissionName": "View",
-    "uid": "",
+    "uid": "nErXDvCkzz",
     "title": "",
     "slug": "",
     "isFolder": false,
@@ -90,18 +90,18 @@ Status Codes:
 - **200** - Ok
 - **401** - Unauthorized
 - **403** - Access denied
-- **404** - Dashboard not found
+- **404** - Folder not found
 
-## Update permissions for a dashboard
+## Update permissions for a folder
 
-`POST /api/dashboards/id/:dashboardId/permissions`
+`POST /api/folders/:uid/permissions`
 
-Updates permissions for a dashboard. This operation will remove existing permissions if they're not included in the request.
+Updates permissions for a folder. This operation will remove existing permissions if they're not included in the request.
 
 **Example request**:
 
 ```http
-POST /api/dashboards/id/1/permissions
+POST /api/folders/nErXDvCkzz/permissions
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -138,7 +138,7 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 Content-Length: 35
 
-{"message":"Dashboard permissions updated"}
+{"message":"Folder permissions updated"}
 ```
 
 Status Codes:
