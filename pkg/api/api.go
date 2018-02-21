@@ -257,9 +257,9 @@ func (hs *HttpServer) registerRoutes() {
 				folderUidRoute.Put("/", bind(m.UpdateFolderCommand{}), wrap(UpdateFolder))
 				folderUidRoute.Delete("/", wrap(DeleteFolder))
 
-				folderUidRoute.Group("/permissions", func(folderAclRoute RouteRegister) {
-					folderAclRoute.Get("/", wrap(GetFolderPermissionList))
-					folderAclRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateFolderPermissions))
+				folderUidRoute.Group("/permissions", func(folderPermissionRoute RouteRegister) {
+					folderPermissionRoute.Get("/", wrap(GetFolderPermissionList))
+					folderPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateFolderPermissions))
 				})
 			})
 		})
@@ -284,9 +284,9 @@ func (hs *HttpServer) registerRoutes() {
 				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
 				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
 
-				dashIdRoute.Group("/acl", func(aclRoute RouteRegister) {
-					aclRoute.Get("/", wrap(GetDashboardAclList))
-					aclRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardAcl))
+				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute RouteRegister) {
+					dashboardPermissionRoute.Get("/", wrap(GetDashboardPermissionList))
+					dashboardPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardPermissions))
 				})
 			})
 		})
