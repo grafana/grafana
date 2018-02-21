@@ -547,8 +547,8 @@ kbn.valueFormats.accG = kbn.formatBuilders.fixedUnit('g');
 // Volume
 kbn.valueFormats.litre = kbn.formatBuilders.decimalSIPrefix('L');
 kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
-kbn.valueFormats.m3 = kbn.formatBuilders.decimalSIPrefix('m3');
-kbn.valueFormats.dm3 = kbn.formatBuilders.decimalSIPrefix('dm3');
+kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m3');
+kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm3');
 kbn.valueFormats.gallons = kbn.formatBuilders.fixedUnit('gal');
 
 // Flow

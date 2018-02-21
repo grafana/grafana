@@ -99,7 +99,7 @@ func TestUserDataAccess(t *testing.T) {
 				err = AddOrgUser(&m.AddOrgUserCommand{LoginOrEmail: users[0].Login, Role: m.ROLE_VIEWER, OrgId: users[0].OrgId})
 				So(err, ShouldBeNil)
 
-				err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 1, OrgId: users[0].OrgId, UserId: users[0].Id, Permission: m.PERMISSION_EDIT})
+				testHelperUpdateDashboardAcl(1, m.DashboardAcl{DashboardId: 1, OrgId: users[0].OrgId, UserId: users[0].Id, Permission: m.PERMISSION_EDIT})
 				So(err, ShouldBeNil)
 
 				err = SavePreferences(&m.SavePreferencesCommand{UserId: users[0].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark"})

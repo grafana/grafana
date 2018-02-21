@@ -1,7 +1,11 @@
+apiVersion: 1
+
+providers:
 - name: 'general dashboards'
-  org_id: 2
+  orgId: 2
   folder: 'developers'
   editable: true
+  disableDeletion: true
   type: file
   options:
     path: /var/lib/grafana/dashboards

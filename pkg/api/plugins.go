@@ -168,7 +168,7 @@ func ImportDashboard(c *middleware.Context, apiCmd dtos.ImportDashboardCommand) 
 
 	cmd := plugins.ImportDashboardCommand{
 		OrgId:     c.OrgId,
-		UserId:    c.UserId,
+		User:      c.SignedInUser,
 		PluginId:  apiCmd.PluginId,
 		Path:      apiCmd.Path,
 		Inputs:    apiCmd.Inputs,

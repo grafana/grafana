@@ -51,6 +51,9 @@ describe('grafanaHeatmap', function() {
                   colorScheme: 'interpolateOranges',
                   fillBackground: false,
                 },
+                legend: {
+                  show: false,
+                },
                 xBucketSize: 1000,
                 xBucketNumber: null,
                 yBucketSize: 1,

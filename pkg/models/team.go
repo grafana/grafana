@@ -7,8 +7,9 @@ import (
 
 // Typed errors
 var (
-	ErrTeamNotFound  = errors.New("Team not found")
-	ErrTeamNameTaken = errors.New("Team name is taken")
+	ErrTeamNotFound       = errors.New("Team not found")
+	ErrTeamNameTaken      = errors.New("Team name is taken")
+	ErrTeamMemberNotFound = errors.New("Team member not found")
 )
 
 // Team model

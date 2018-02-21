@@ -19,7 +19,7 @@ ssl_skip_verify = false
 # Search user bind dn
 bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
-# If the password contains # or ; you have to wrap it with trippel quotes. Ex """#password;"""
+# If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
 bind_password = 'grafana'
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"

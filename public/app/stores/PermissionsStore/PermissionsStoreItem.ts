@@ -1,9 +1,8 @@
-﻿import { types } from 'mobx-state-tree';
+import { types } from 'mobx-state-tree';
 
 export const PermissionsStoreItem = types
   .model('PermissionsStoreItem', {
     dashboardId: types.optional(types.number, -1),
-    id: types.maybe(types.number),
     permission: types.number,
     permissionName: types.maybe(types.string),
     role: types.maybe(types.string),
