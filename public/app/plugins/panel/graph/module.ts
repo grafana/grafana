@@ -46,8 +46,7 @@ class GraphCtrl extends MetricsPanelCtrl {
         min: null,
         max: null,
         format: 'short',
-        shareLevel: false,
-        shareY: 0,
+        align: null,
       },
     ],
     xaxis: {
