@@ -246,6 +246,24 @@ func (hs *HttpServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 
+		// Folders
+		apiRoute.Group("/folders", func(folderRoute RouteRegister) {
+			folderRoute.Get("/", wrap(GetFolders))
+			folderRoute.Get("/id/:id", wrap(GetFolderById))
+			folderRoute.Post("/", bind(m.CreateFolderCommand{}), wrap(CreateFolder))
+
+			folderRoute.Group("/:uid", func(folderUidRoute RouteRegister) {
+				folderUidRoute.Get("/", wrap(GetFolderByUid))
+				folderUidRoute.Put("/", bind(m.UpdateFolderCommand{}), wrap(UpdateFolder))
+				folderUidRoute.Delete("/", wrap(DeleteFolder))
+
+				folderUidRoute.Group("/permissions", func(folderPermissionRoute RouteRegister) {
+					folderPermissionRoute.Get("/", wrap(GetFolderPermissionList))
+					folderPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateFolderPermissions))
+				})
+			})
+		})
+
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", wrap(GetDashboard))
@@ -266,9 +284,9 @@ func (hs *HttpServer) registerRoutes() {
 				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
 				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
 
-				dashIdRoute.Group("/acl", func(aclRoute RouteRegister) {
-					aclRoute.Get("/", wrap(GetDashboardAclList))
-					aclRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardAcl))
+				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute RouteRegister) {
+					dashboardPermissionRoute.Get("/", wrap(GetDashboardPermissionList))
+					dashboardPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardPermissions))
 				})
 			})
 		})

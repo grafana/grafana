@@ -746,8 +746,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 }
 
 func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
-	sc.handlerFunc = GetDashboard
-	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+	CallGetDashboard(sc)
 
 	So(sc.resp.Code, ShouldEqual, 200)
 
@@ -756,6 +755,11 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 	So(err, ShouldBeNil)
 
 	return dash
+}
+
+func CallGetDashboard(sc *scenarioContext) {
+	sc.handlerFunc = GetDashboard
+	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
 func CallGetDashboardVersion(sc *scenarioContext) {

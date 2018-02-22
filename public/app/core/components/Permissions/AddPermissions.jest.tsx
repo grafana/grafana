@@ -53,7 +53,7 @@ describe('AddPermissions', () => {
       wrapper.find('form').simulate('submit', { preventDefault() {} });
 
       expect(backendSrv.post.mock.calls.length).toBe(1);
-      expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
+      expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/permissions');
     });
   });
 
@@ -80,7 +80,7 @@ describe('AddPermissions', () => {
       wrapper.find('form').simulate('submit', { preventDefault() {} });
 
       expect(backendSrv.post.mock.calls.length).toBe(1);
-      expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
+      expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/permissions');
     });
   });
 

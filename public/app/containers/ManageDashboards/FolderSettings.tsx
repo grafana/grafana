@@ -10,7 +10,6 @@ import appEvents from 'app/core/app_events';
 @observer
 export class FolderSettings extends React.Component<IContainerProps, any> {
   formSnapshot: any;
-  dashboard: any;
 
   constructor(props) {
     super(props);
@@ -22,9 +21,7 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
 
     return folder.load(view.routeParams.get('uid') as string).then(res => {
       this.formSnapshot = getSnapshot(folder);
-      this.dashboard = res.dashboard;
-
-      view.updatePathAndQuery(`${res.meta.url}/settings`, {}, {});
+      view.updatePathAndQuery(`${res.url}/settings`, {}, {});
 
       return nav.initFolderNav(toJS(folder.folder), 'manage-folder-settings');
     });
@@ -51,7 +48,7 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
     const { nav, folder, view } = this.props;
 
     folder
-      .saveFolder(this.dashboard, { overwrite: false })
+      .saveFolder({ overwrite: false })
       .then(newUrl => {
         view.updatePathAndQuery(newUrl, {}, {});
 
@@ -61,7 +58,7 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
       .then(() => {
         return nav.initFolderNav(toJS(folder.folder), 'manage-folder-settings');
       })
-      .catch(this.handleSaveFolderError);
+      .catch(this.handleSaveFolderError.bind(this));
   }
 
   delete(evt) {
@@ -79,7 +76,7 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
-        return this.props.folder.deleteFolder().then(() => {
+        return folder.deleteFolder().then(() => {
           appEvents.emit('alert-success', ['Folder Deleted', `${title} has been deleted`]);
           view.updatePathAndQuery('dashboards', '', '');
         });
@@ -91,6 +88,8 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
     if (err.data && err.data.status === 'version-mismatch') {
       err.isHandled = true;
 
+      const { nav, folder, view } = this.props;
+
       appEvents.emit('confirm-modal', {
         title: 'Conflict',
         text: 'Someone else has updated this folder.',
@@ -98,15 +97,19 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
         yesText: 'Save & Overwrite',
         icon: 'fa-warning',
         onConfirm: () => {
-          this.props.folder.saveFolder(this.dashboard, { overwrite: true });
+          folder
+            .saveFolder({ overwrite: true })
+            .then(newUrl => {
+              view.updatePathAndQuery(newUrl, {}, {});
+
+              appEvents.emit('dashboard-saved');
+              appEvents.emit('alert-success', ['Folder saved']);
+            })
+            .then(() => {
+              return nav.initFolderNav(toJS(folder.folder), 'manage-folder-settings');
+            });
         },
       });
-    }
-
-    if (err.data && err.data.status === 'name-exists') {
-      err.isHandled = true;
-
-      appEvents.emit('alert-error', ['A folder or dashboard with this name exists already.']);
     }
   }
 

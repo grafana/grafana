@@ -158,3 +158,52 @@ func (g *dashboardGuardianImpl) getTeams() ([]*m.Team, error) {
 	g.groups = query.Result
 	return query.Result, err
 }
+
+type FakeDashboardGuardian struct {
+	DashId                           int64
+	OrgId                            int64
+	User                             *m.SignedInUser
+	CanSaveValue                     bool
+	CanEditValue                     bool
+	CanViewValue                     bool
+	CanAdminValue                    bool
+	HasPermissionValue               bool
+	CheckPermissionBeforeUpdateValue bool
+}
+
+func (g *FakeDashboardGuardian) CanSave() (bool, error) {
+	return g.CanSaveValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanEdit() (bool, error) {
+	return g.CanEditValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanView() (bool, error) {
+	return g.CanViewValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanAdmin() (bool, error) {
+	return g.CanAdminValue, nil
+}
+
+func (g *FakeDashboardGuardian) HasPermission(permission m.PermissionType) (bool, error) {
+	return g.HasPermissionValue, nil
+}
+
+func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error) {
+	return g.CheckPermissionBeforeUpdateValue, nil
+}
+
+func (g *FakeDashboardGuardian) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
+	return nil, nil
+}
+
+func MockDashboardGuardian(mock *FakeDashboardGuardian) {
+	New = func(dashId int64, orgId int64, user *m.SignedInUser) DashboardGuardian {
+		mock.OrgId = orgId
+		mock.DashId = dashId
+		mock.User = user
+		return mock
+	}
+}

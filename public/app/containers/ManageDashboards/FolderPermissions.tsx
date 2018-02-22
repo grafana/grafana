@@ -26,7 +26,7 @@ export class FolderPermissions extends Component<IContainerProps, any> {
   loadStore() {
     const { nav, folder, view } = this.props;
     return folder.load(view.routeParams.get('uid') as string).then(res => {
-      view.updatePathAndQuery(`${res.meta.url}/permissions`, {}, {});
+      view.updatePathAndQuery(`${res.url}/permissions`, {}, {});
       return nav.initFolderNav(toJS(folder.folder), 'manage-folder-permissions');
     });
   }
