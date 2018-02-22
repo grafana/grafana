@@ -7,9 +7,9 @@ But it will give you an idea of our current vision and plan.
 
 - v5.1
   - Crossplatform builds & build speed improvements
+  - Enterprise LDAP
   - New template interpolation syntax
   - Provisioning workflow
-  - Enterprise LDAP
   - First login registration view
   - IFQL Initial support
   
