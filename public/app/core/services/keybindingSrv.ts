@@ -171,8 +171,9 @@ export class KeybindingSrv {
     // delete panel
     this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        panelInfo.row.removePanel(panelInfo.panel);
+        this.$rootScope.appEvent('panel-remove', {
+          panelId: dashboard.meta.focusPanelId,
+        });
         dashboard.meta.focusPanelId = 0;
       }
     });
