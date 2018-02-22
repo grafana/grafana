@@ -213,16 +213,12 @@ export class KeybindingSrv {
 
     // collapse all rows
     this.bind('d shift+c', () => {
-      for (let row of dashboard.rows) {
-        row.collapse = true;
-      }
+      dashboard.collapseRows();
     });
 
     // expand all rows
     this.bind('d shift+e', () => {
-      for (let row of dashboard.rows) {
-        row.collapse = false;
-      }
+      dashboard.expandRows();
     });
 
     this.bind('d n', e => {

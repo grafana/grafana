@@ -524,6 +524,34 @@ export class DashboardModel {
     this.removePanel(row);
   }
 
+  expandRows() {
+    for (let i = 0; i < this.panels.length; i++) {
+      var panel = this.panels[i];
+
+      if (panel.type !== 'row') {
+        continue;
+      }
+
+      if (panel.collapsed) {
+        this.toggleRow(panel);
+      }
+    }
+  }
+
+  collapseRows() {
+    for (let i = 0; i < this.panels.length; i++) {
+      var panel = this.panels[i];
+
+      if (panel.type !== 'row') {
+        continue;
+      }
+
+      if (!panel.collapsed) {
+        this.toggleRow(panel);
+      }
+    }
+  }
+
   setPanelFocus(id) {
     this.meta.focusPanelId = id;
   }
