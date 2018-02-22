@@ -141,6 +141,8 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       heatmapStats = this.parseHistogramSeries(this.series);
       bucketsData = histogramToHeatmap(this.series);
       tsBuckets = _.map(this.series, 'label');
+      // Add empty bottom bucket label
+      tsBuckets = [''].concat(tsBuckets);
 
       // Calculate bucket size based on ES heatmap data
       let xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
