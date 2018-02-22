@@ -112,11 +112,8 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   renderText(text: string) {
-    //if(this.state.filter) {
     let searchWords = this.state.filter.split('');
     return <Highlighter highlightClassName="highlight-search-match" textToHighlight={text} searchWords={searchWords} />;
-    //}
-    //return text;
   }
 
   renderPanelItem(panel, index) {
@@ -126,6 +123,10 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
         <div className="add-panel__item-name">{this.renderText(panel.name)}</div>
       </div>
     );
+  }
+
+  noCopiedPanelPlugins() {
+    return <div className="add-panel__no-panels">No copied panels yet.</div>;
   }
 
   filterChange(evt) {
@@ -173,7 +174,12 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     } else if (this.state.tab === 'Copy') {
       addClass = '';
       copyClass = 'active active--panel';
-      panelTab = this.state.copiedPanelPlugins.map(this.renderPanelItem);
+      console.log(this.state.copiedPanelPlugins);
+      if (this.state.copiedPanelPlugins.length > 0) {
+        panelTab = this.state.copiedPanelPlugins.map(this.renderPanelItem);
+      } else {
+        panelTab = this.noCopiedPanelPlugins();
+      }
     }
 
     return (
