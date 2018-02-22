@@ -193,24 +193,6 @@ export class KeybindingSrv {
       }
     });
 
-    // delete row
-    this.bind('r r', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        dashboard.removeRow(panelInfo.row);
-        dashboard.meta.focusPanelId = 0;
-      }
-    });
-
-    // collapse row
-    this.bind('r c', () => {
-      if (dashboard.meta.focusPanelId) {
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        panelInfo.row.toggleCollapse();
-        dashboard.meta.focusPanelId = 0;
-      }
-    });
-
     // collapse all rows
     this.bind('d shift+c', () => {
       dashboard.collapseRows();
