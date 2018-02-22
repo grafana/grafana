@@ -296,6 +296,42 @@ export default function link(scope, elem, attrs, ctrl) {
       .remove();
   }
 
+  function addYAxisFromBuckets() {
+    const tsBuckets = data.tsBuckets;
+
+    scope.yScale = yScale = d3
+      .scaleLinear()
+      .domain([0, tsBuckets.length - 1])
+      .range([chartHeight, 0]);
+
+    const tick_values = _.map(tsBuckets, (b, i) => i);
+    const tickFormatter = val => tsBuckets[val];
+
+    let yAxis = d3
+      .axisLeft(yScale)
+      .tickValues(tick_values)
+      .tickFormat(tickFormatter)
+      .tickSizeInner(0 - width)
+      .tickSizeOuter(0)
+      .tickPadding(Y_AXIS_TICK_PADDING);
+
+    heatmap
+      .append('g')
+      .attr('class', 'axis axis-y')
+      .call(yAxis);
+
+    // Calculate Y axis width first, then move axis into visible area
+    const posY = margin.top;
+    const posX = getYAxisWidth(heatmap) + Y_AXIS_TICK_PADDING;
+    heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
+
+    // Remove vertical line in the right of axis labels (called domain in d3)
+    heatmap
+      .select('.axis-y')
+      .select('.domain')
+      .remove();
+  }
+
   // Adjust data range to log base
   function adjustLogRange(min, max, logBase) {
     let y_min, y_max;
@@ -362,10 +398,14 @@ export default function link(scope, elem, attrs, ctrl) {
     chartTop = margin.top;
     chartBottom = chartTop + chartHeight;
 
-    if (panel.yAxis.logBase === 1) {
-      addYAxis();
+    if (panel.dataFormat === 'tsbuckets') {
+      addYAxisFromBuckets();
     } else {
-      addLogYAxis();
+      if (panel.yAxis.logBase === 1) {
+        addYAxis();
+      } else {
+        addLogYAxis();
+      }
     }
 
     yAxisWidth = getYAxisWidth(heatmap) + Y_AXIS_TICK_PADDING;
@@ -414,7 +454,7 @@ export default function link(scope, elem, attrs, ctrl) {
     addHeatmapCanvas();
     addAxes();
 
-    if (panel.yAxis.logBase !== 1) {
+    if (panel.yAxis.logBase !== 1 && panel.dataFormat !== 'tsbuckets') {
       let log_base = panel.yAxis.logBase;
       let domain = yScale.domain();
       let tick_values = logScaleTickValues(domain, log_base);

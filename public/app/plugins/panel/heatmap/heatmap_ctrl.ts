@@ -5,12 +5,7 @@ import TimeSeries from 'app/core/time_series2';
 import { axesEditor } from './axes_editor';
 import { heatmapDisplayEditor } from './display_editor';
 import rendering from './rendering';
-import {
-  convertToHeatMap,
-  convertToCards,
-  elasticHistogramToHeatmap,
-  calculateBucketSize,
-} from './heatmap_data_converter';
+import { convertToHeatMap, convertToCards, histogramToHeatmap, calculateBucketSize } from './heatmap_data_converter';
 
 let X_BUCKET_NUMBER_DEFAULT = 30;
 let Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -139,12 +134,13 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    let xBucketSize, yBucketSize, heatmapStats, bucketsData;
+    let xBucketSize, yBucketSize, heatmapStats, bucketsData, tsBuckets;
     let logBase = this.panel.yAxis.logBase;
 
     if (this.panel.dataFormat === 'tsbuckets') {
       heatmapStats = this.parseHistogramSeries(this.series);
-      bucketsData = elasticHistogramToHeatmap(this.series);
+      bucketsData = histogramToHeatmap(this.series);
+      tsBuckets = _.map(this.series, 'label');
 
       // Calculate bucket size based on ES heatmap data
       let xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
@@ -210,6 +206,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       cards: cards,
       cardStats: cardStats,
     };
+
+    if (tsBuckets) {
+      this.data.tsBuckets = tsBuckets;
+    }
   }
 
   onDataReceived(dataList) {

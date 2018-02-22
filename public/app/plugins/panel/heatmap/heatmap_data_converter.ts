@@ -51,6 +51,45 @@ function elasticHistogramToHeatmap(seriesList) {
   return heatmap;
 }
 
+function histogramToHeatmap(seriesList) {
+  let heatmap = {};
+
+  for (let i = 0; i < seriesList.length; i++) {
+    let series = seriesList[i];
+    let bound = i;
+    if (isNaN(bound)) {
+      return heatmap;
+    }
+
+    for (let point of series.datapoints) {
+      let count = point[VALUE_INDEX];
+      let time = point[TIME_INDEX];
+
+      if (!_.isNumber(count)) {
+        continue;
+      }
+
+      let bucket = heatmap[time];
+      if (!bucket) {
+        bucket = heatmap[time] = { x: time, buckets: {} };
+      }
+
+      bucket.buckets[bound] = {
+        y: bound,
+        count: count,
+        bounds: {
+          top: null,
+          bottom: bound,
+        },
+        values: [],
+        points: [],
+      };
+    }
+  }
+
+  return heatmap;
+}
+
 /**
  * Convert buckets into linear array of "cards" - objects, represented heatmap elements.
  * @param  {Object} buckets
@@ -433,6 +472,7 @@ function emptyXOR(foo: any, bar: any): boolean {
 
 export {
   convertToHeatMap,
+  histogramToHeatmap,
   elasticHistogramToHeatmap,
   convertToCards,
   mergeZeroBuckets,
