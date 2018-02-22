@@ -196,7 +196,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
               </li>
               <li className="gf-tabs-item">
                 <div className={'gf-tabs-link pointer ' + copyClass} onClick={this.openCopy.bind(this)}>
-                  Copy
+                  Paste
                 </div>
               </li>
             </ul>
