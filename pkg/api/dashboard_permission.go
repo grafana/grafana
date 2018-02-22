@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetDashboardAclList(c *middleware.Context) Response {
+func GetDashboardPermissionList(c *middleware.Context) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
@@ -26,7 +26,7 @@ func GetDashboardAclList(c *middleware.Context) Response {
 
 	acl, err := guardian.GetAcl()
 	if err != nil {
-		return ApiError(500, "Failed to get dashboard acl", err)
+		return ApiError(500, "Failed to get dashboard permissions", err)
 	}
 
 	for _, perm := range acl {
@@ -38,7 +38,7 @@ func GetDashboardAclList(c *middleware.Context) Response {
 	return Json(200, acl)
 }
 
-func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func UpdateDashboardPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
@@ -82,5 +82,5 @@ func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCom
 		return ApiError(500, "Failed to create permission", err)
 	}
 
-	return ApiSuccess("Dashboard acl updated")
+	return ApiSuccess("Dashboard permissions updated")
 }

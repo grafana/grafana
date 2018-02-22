@@ -89,13 +89,13 @@ export class FolderPickerCtrl {
       evt.preventDefault();
     }
 
-    return this.backendSrv.createDashboardFolder(this.newFolderName).then(result => {
+    return this.backendSrv.createFolder({ title: this.newFolderName }).then(result => {
       appEvents.emit('alert-success', ['Folder Created', 'OK']);
 
       this.closeCreateFolder();
       this.folder = {
-        text: result.dashboard.title,
-        value: result.dashboard.id,
+        text: result.title,
+        value: result.id,
       };
       this.onFolderChange(this.folder);
     });

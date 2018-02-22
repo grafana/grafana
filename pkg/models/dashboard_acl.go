@@ -26,6 +26,8 @@ func (p PermissionType) String() string {
 var (
 	ErrDashboardAclInfoMissing           = errors.New("User id and team id cannot both be empty for a dashboard permission.")
 	ErrDashboardPermissionDashboardEmpty = errors.New("Dashboard Id must be greater than zero for a dashboard permission.")
+	ErrFolderAclInfoMissing              = errors.New("User id and team id cannot both be empty for a folder permission.")
+	ErrFolderPermissionFolderEmpty       = errors.New("Folder Id must be greater than zero for a folder permission.")
 )
 
 // Dashboard ACL model
@@ -45,7 +47,8 @@ type DashboardAcl struct {
 
 type DashboardAclInfoDTO struct {
 	OrgId       int64 `json:"-"`
-	DashboardId int64 `json:"dashboardId"`
+	DashboardId int64 `json:"dashboardId,omitempty"`
+	FolderId    int64 `json:"folderId,omitempty"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
