@@ -113,10 +113,15 @@ export class HeatmapTooltip {
 
     if (yData) {
       if (yData.bounds) {
-        // Display 0 if bucket is a special 'zero' bucket
-        let bottom = yData.y ? yData.bounds.bottom : 0;
-        boundBottom = valueFormatter(bottom);
-        boundTop = valueFormatter(yData.bounds.top);
+        if (data.tsBuckets) {
+          boundBottom = data.tsBuckets[yBucketIndex];
+          boundTop = yBucketIndex < data.tsBuckets.length - 1 ? data.tsBuckets[yBucketIndex + 1] : '';
+        } else {
+          // Display 0 if bucket is a special 'zero' bucket
+          let bottom = yData.y ? yData.bounds.bottom : 0;
+          boundBottom = valueFormatter(bottom);
+          boundTop = valueFormatter(yData.bounds.top);
+        }
         valuesNumber = valueFormatter(yData.count);
         tooltipHtml += `<div>
           bucket: <b>${boundBottom} - ${boundTop}</b> <br>
@@ -163,6 +168,9 @@ export class HeatmapTooltip {
 
   getYBucketIndex(offsetY, data) {
     let y = this.scope.yScale.invert(offsetY - this.scope.chartTop);
+    if (data.tsBuckets) {
+      return Math.floor(y);
+    }
     let yBucketIndex = getValueBucketBound(y, data.yBucketSize, this.panel.yAxis.logBase);
     return yBucketIndex;
   }
