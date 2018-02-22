@@ -177,7 +177,16 @@ export class HeatmapTooltip {
   addHistogram(data) {
     let xBucket = this.scope.ctrl.data.buckets[data.x];
     let yBucketSize = this.scope.ctrl.data.yBucketSize;
-    let { min, max, ticks } = this.scope.ctrl.data.yAxis;
+    let min, max, ticks;
+    if (this.scope.ctrl.data.tsBuckets) {
+      min = 0;
+      max = this.scope.ctrl.data.tsBuckets.length - 1;
+      ticks = this.scope.ctrl.data.tsBuckets.length;
+    } else {
+      min = this.scope.ctrl.data.yAxis.min;
+      max = this.scope.ctrl.data.yAxis.max;
+      ticks = this.scope.ctrl.data.yAxis.ticks;
+    }
     let histogramData = _.map(xBucket.buckets, bucket => {
       let count = bucket.count !== undefined ? bucket.count : bucket.values.length;
       return [bucket.bounds.bottom, count];
