@@ -159,26 +159,6 @@ Status Codes:
 - **400** – Errors (invalid json, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access Denied
-- **412** – Precondition failed
-
-The **412** status code is used for explaing that you cannot create the folder and why.
-There can be different reasons for this:
-
-- A folder or dashboard in the general folder with the same name already exists, `status=name-exists`
-- A folder/dashboard with the same uid already exists, `status=uid-exists`
-
- The response body will have the following properties:
-
-```http
-HTTP/1.1 412 Precondition Failed
-Content-Type: application/json; charset=UTF-8
-Content-Length: 97
-
-{
-  "message": "A folder or dashboard in the general folder with the same name already exists",
-  "status": "name-exists"
-}
-```
 
 ## Update folder
 
@@ -202,6 +182,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
+- **uid** – Provide another [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) than stored to change the unique identifier.
 - **title** – The title of the folder.
 - **version** – Provide the current version to be able to update the folder. Not needed if `overwrite=true`.
 - **overwrite** – Set to true if you want to overwrite existing folder with newer version.
@@ -241,7 +222,6 @@ Status Codes:
 The **412** status code is used for explaing that you cannot update the folder and why.
 There can be different reasons for this:
 
-- A folder or dashboard in the general folder with the same name already exists, `status=name-exists`
 - The folder has been changed by someone else, `status=version-mismatch`
 
  The response body will have the following properties:
