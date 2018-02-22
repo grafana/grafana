@@ -166,10 +166,6 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 		userId = -1
 	}
 
-	if dash.Data.Get("version").MustInt(0) == 0 {
-		dash.CreatedBy = userId
-	}
-
 	dash.UpdatedBy = userId
 	dash.OrgId = cmd.OrgId
 	dash.PluginId = cmd.PluginId
