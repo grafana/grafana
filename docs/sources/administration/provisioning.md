@@ -169,6 +169,8 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
 | password | string | Postgre | password |
 | user | string | Postgre | user |
+| accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
+| secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
 
 ### Dashboards
 
