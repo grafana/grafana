@@ -8,6 +8,12 @@ function luceneEscape(value) {
 export class TemplateSrv {
   variables: any[];
 
+  /*
+   * This regex matches 3 types of variable reference with an optional format specifier
+   * \$(\w+)                          $var1
+   * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
+   * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
+   */
   private regex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?::(\w+))?}/g;
   private index = {};
   private grafanaVariables = {};
@@ -143,8 +149,8 @@ export class TemplateSrv {
 
     str = _.escape(str);
     this.regex.lastIndex = 0;
-    return str.replace(this.regex, (match, g1, g2, g3, g4) => {
-      if (this.index[g1 || g2 || g4] || this.builtIns[g1 || g2 || g4]) {
+    return str.replace(this.regex, (match, var1, var2, fmt2, var3) => {
+      if (this.index[var1 || var2 || var3] || this.builtIns[var1 || var2 || var3]) {
         return '<span class="template-variable">' + match + '</span>';
       }
       return match;
@@ -170,11 +176,11 @@ export class TemplateSrv {
     var variable, systemValue, value;
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, g1, g2, g3, g4, g5) => {
-      variable = this.index[g1 || g2 || g4];
-      format = g3 || g5 || format;
+    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fmt3) => {
+      variable = this.index[var1 || var2 || var3];
+      format = fmt2 || fmt3 || format;
       if (scopedVars) {
-        value = scopedVars[g1 || g2 || g4];
+        value = scopedVars[var1 || var2 || var3];
         if (value) {
           return this.formatValue(value.value, format, variable);
         }
@@ -215,15 +221,15 @@ export class TemplateSrv {
     var variable;
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, g1, g2, g3, g4) => {
+    return target.replace(this.regex, (match, var1, var2, fmt2, var3) => {
       if (scopedVars) {
-        var option = scopedVars[g1 || g2 || g4];
+        var option = scopedVars[var1 || var2 || var3];
         if (option) {
           return option.text;
         }
       }
 
-      variable = this.index[g1 || g2 || g4];
+      variable = this.index[var1 || var2 || var3];
       if (!variable) {
         return match;
       }
