@@ -69,7 +69,6 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 
 func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		expiredCount := int64(0)
 		versions := []DashboardVersionExp{}
 		versionsToKeep := setting.DashboardVersionsToKeep
 
@@ -98,8 +97,7 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 			if err != nil {
 				return err
 			}
-			expiredCount, _ = expiredResponse.RowsAffected()
-			sqlog.Debug("Deleted old/expired dashboard versions", "expired", expiredCount)
+			cmd.DeletedRows, _ = expiredResponse.RowsAffected()
 		}
 
 		return nil

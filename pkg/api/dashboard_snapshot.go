@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -56,6 +57,7 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 	})
 }
 
+// GET /api/snapshots/:key
 func GetDashboardSnapshot(c *middleware.Context) {
 	key := c.Params(":key")
 	query := &m.GetDashboardSnapshotQuery{Key: key}
@@ -90,18 +92,43 @@ func GetDashboardSnapshot(c *middleware.Context) {
 	c.JSON(200, dto)
 }
 
-func DeleteDashboardSnapshot(c *middleware.Context) {
+// GET /api/snapshots-delete/:key
+func DeleteDashboardSnapshot(c *middleware.Context) Response {
 	key := c.Params(":key")
+
+	query := &m.GetDashboardSnapshotQuery{DeleteKey: key}
+
+	err := bus.Dispatch(query)
+	if err != nil {
+		return ApiError(500, "Failed to get dashboard snapshot", err)
+	}
+
+	if query.Result == nil {
+		return ApiError(404, "Failed to get dashboard snapshot", nil)
+	}
+	dashboard := query.Result.Dashboard
+	dashboardId := dashboard.Get("id").MustInt64()
+
+	guardian := guardian.New(dashboardId, c.OrgId, c.SignedInUser)
+	canEdit, err := guardian.CanEdit()
+	if err != nil {
+		return ApiError(500, "Error while checking permissions for snapshot", err)
+	}
+
+	if !canEdit && query.Result.UserId != c.SignedInUser.UserId {
+		return ApiError(403, "Access denied to this snapshot", nil)
+	}
+
 	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: key}
 
 	if err := bus.Dispatch(cmd); err != nil {
-		c.JsonApiErr(500, "Failed to delete dashboard snapshot", err)
-		return
+		return ApiError(500, "Failed to delete dashboard snapshot", err)
 	}
 
-	c.JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from a CDN cache."})
+	return Json(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from a CDN cache."})
 }
 
+// GET /api/dashboard/snapshots
 func SearchDashboardSnapshots(c *middleware.Context) Response {
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
@@ -111,9 +138,10 @@ func SearchDashboardSnapshots(c *middleware.Context) Response {
 	}
 
 	searchQuery := m.GetDashboardSnapshotsQuery{
-		Name:  query,
-		Limit: limit,
-		OrgId: c.OrgId,
+		Name:         query,
+		Limit:        limit,
+		OrgId:        c.OrgId,
+		SignedInUser: c.SignedInUser,
 	}
 
 	err := bus.Dispatch(&searchQuery)

@@ -106,7 +106,7 @@ func (hs *HttpServer) registerRoutes() {
 	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
 	r.Get("/api/snapshot/shared-options/", GetSharingOptions)
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
-	r.Get("/api/snapshots-delete/:key", reqEditorRole, DeleteDashboardSnapshot)
+	r.Get("/api/snapshots-delete/:key", reqEditorRole, wrap(DeleteDashboardSnapshot))
 
 	// api renew session based on remember cookie
 	r.Get("/api/login/ping", quota("session"), LoginApiPing)
