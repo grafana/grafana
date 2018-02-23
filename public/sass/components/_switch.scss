@@ -28,6 +28,9 @@
     border: 1px solid $input-border-color;
     border-left: none;
     border-radius: $input-border-radius;
+    &.height-54 {
+      height: 54px;
+    }
   }
 
   input + label::before,
@@ -64,8 +67,8 @@
   }
 
   input + label::before {
-    font-family: "FontAwesome";
-    content: "\f096"; // square-o
+    font-family: 'FontAwesome';
+    content: '\f096'; // square-o
     color: $text-color-weak;
     transition: transform 0.4s;
     backface-visibility: hidden;
@@ -73,11 +76,11 @@
   }
 
   input + label::after {
-    content: "\f046"; // check-square-o
+    content: '\f046'; // check-square-o
     color: $orange;
     text-shadow: $text-shadow-strong;
 
-    font-family: "FontAwesome";
+    font-family: 'FontAwesome';
     transition: transform 0.4s;
     transform: rotateY(180deg);
     backface-visibility: hidden;

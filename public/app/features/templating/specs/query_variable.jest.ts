@@ -12,6 +12,7 @@ describe('QueryVariable', () => {
       expect(variable.options.length).toBe(0);
       expect(variable.multi).toBe(false);
       expect(variable.includeAll).toBe(false);
+      expect(variable.disableWrapWithQuotes).toBe(false);
     });
 
     it('get model should copy changes back to model', () => {
