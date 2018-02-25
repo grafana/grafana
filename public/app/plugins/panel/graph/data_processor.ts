@@ -109,7 +109,6 @@ export class DataProcessor {
       color: color,
       unit: seriesData.unit,
     });
-    series.bars = { fillColor: color };
 
     if (datapoints && datapoints.length > 0) {
       var last = datapoints[datapoints.length - 1][1];
