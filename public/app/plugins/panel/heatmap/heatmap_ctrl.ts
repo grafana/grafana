@@ -146,13 +146,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
       // Calculate bucket size based on ES heatmap data
       let xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
-      let yBucketBoundSet = _.map(this.series, series => Number(series.alias));
       xBucketSize = calculateBucketSize(xBucketBoundSet);
-      yBucketSize = calculateBucketSize(yBucketBoundSet, logBase);
-      if (logBase !== 1) {
-        // Use yBucketSize in meaning of "Split factor" for log scales
-        yBucketSize = 1 / yBucketSize;
-      }
+      // Always let yBucketSize=1 in 'tsbuckets' mode
+      yBucketSize = 1;
     } else {
       let xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
       let xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
