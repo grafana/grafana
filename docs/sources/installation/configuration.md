@@ -875,6 +875,4 @@ Defaults to true. Set to false to disable alerting engine and hide Alerting from
 
 ### execute_alerts
 
-### execute_alerts = true
-
 Makes it possible to turn off alert rule execution.
