@@ -7,8 +7,7 @@ export class FolderSettingsCtrl {
   folderId: number;
   uid: string;
   canSave = false;
-  dashboard: any;
-  meta: any;
+  folder: any;
   title: string;
   hasChanged: boolean;
 
@@ -23,10 +22,9 @@ export class FolderSettingsCtrl {
           $location.path(`${folder.meta.url}/settings`).replace();
         }
 
-        this.dashboard = folder.dashboard;
-        this.meta = folder.meta;
-        this.canSave = folder.meta.canSave;
-        this.title = this.dashboard.title;
+        this.folder = folder;
+        this.canSave = this.folder.canSave;
+        this.title = this.folder.title;
       });
     }
   }
@@ -38,10 +36,10 @@ export class FolderSettingsCtrl {
       return;
     }
 
-    this.dashboard.title = this.title.trim();
+    this.folder.title = this.title.trim();
 
     return this.backendSrv
-      .updateDashboardFolder(this.dashboard, { overwrite: false })
+      .updateFolder(this.folder)
       .then(result => {
         if (result.url !== this.$location.path()) {
           this.$location.url(result.url + '/settings');
@@ -54,7 +52,7 @@ export class FolderSettingsCtrl {
   }
 
   titleChanged() {
-    this.hasChanged = this.dashboard.title.toLowerCase() !== this.title.trim().toLowerCase();
+    this.hasChanged = this.folder.title.toLowerCase() !== this.title.trim().toLowerCase();
   }
 
   delete(evt) {
@@ -69,8 +67,8 @@ export class FolderSettingsCtrl {
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
-        return this.backendSrv.deleteDashboard(this.dashboard.uid).then(() => {
-          appEvents.emit('alert-success', ['Folder Deleted', `${this.dashboard.title} has been deleted`]);
+        return this.backendSrv.deleteFolder(this.uid).then(() => {
+          appEvents.emit('alert-success', ['Folder Deleted', `${this.folder.title} has been deleted`]);
           this.$location.url('dashboards');
         });
       },
@@ -88,15 +86,9 @@ export class FolderSettingsCtrl {
         yesText: 'Save & Overwrite',
         icon: 'fa-warning',
         onConfirm: () => {
-          this.backendSrv.updateDashboardFolder(this.dashboard, { overwrite: true });
+          this.backendSrv.updateFolder(this.folder, { overwrite: true });
         },
       });
-    }
-
-    if (err.data && err.data.status === 'name-exists') {
-      err.isHandled = true;
-
-      appEvents.emit('alert-error', ['A folder or dashboard with this name exists already.']);
     }
   }
 }

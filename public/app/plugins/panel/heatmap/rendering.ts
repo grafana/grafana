@@ -66,8 +66,7 @@ export default function link(scope, elem, attrs, ctrl) {
         height = parseInt(height.replace('px', ''), 10);
       }
 
-      height -= 5; // padding
-      height -= panel.title ? 24 : 9; // subtract panel title bar
+      height -= panel.legend.show ? 28 : 11; // bottom padding and space for legend
 
       $heatmap.css('height', height + 'px');
 

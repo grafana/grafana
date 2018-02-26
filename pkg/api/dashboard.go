@@ -137,6 +137,7 @@ func getDashboardHelper(orgId int64, slug string, id int64, uid string) (*m.Dash
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, ApiError(404, "Dashboard not found", err)
 	}
+
 	return query.Result, nil
 }
 
@@ -166,8 +167,10 @@ func DeleteDashboard(c *middleware.Context) Response {
 		return ApiError(500, "Failed to delete dashboard", err)
 	}
 
-	var resp = map[string]interface{}{"title": dash.Title}
-	return Json(200, resp)
+	return Json(200, util.DynMap{
+		"title":   dash.Title,
+		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
+	})
 }
 
 func DeleteDashboardByUid(c *middleware.Context) Response {
@@ -186,8 +189,10 @@ func DeleteDashboardByUid(c *middleware.Context) Response {
 		return ApiError(500, "Failed to delete dashboard", err)
 	}
 
-	var resp = map[string]interface{}{"title": dash.Title}
-	return Json(200, resp)
+	return Json(200, util.DynMap{
+		"title":   dash.Title,
+		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
+	})
 }
 
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {

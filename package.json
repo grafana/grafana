@@ -165,7 +165,7 @@
     "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "^5.4.3",
     "tether": "^1.4.0",
-    "tether-drop": "https://github.com/torkelo/drop",
+    "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "^1.4.1"
   }
 }

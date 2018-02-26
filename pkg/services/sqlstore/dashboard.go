@@ -37,6 +37,12 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 	dash := cmd.GetDashboardModel()
 
+	userId := cmd.UserId
+
+	if userId == 0 {
+		userId = -1
+	}
+
 	if dash.Id > 0 {
 		var existing m.Dashboard
 		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
@@ -76,16 +82,22 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 
 	if dash.Id == 0 {
 		dash.SetVersion(1)
+		dash.Created = time.Now()
+		dash.CreatedBy = userId
+		dash.Updated = time.Now()
+		dash.UpdatedBy = userId
 		metrics.M_Api_Dashboard_Insert.Inc()
 		affectedRows, err = sess.Insert(dash)
 	} else {
-		v := dash.Version
-		v++
-		dash.SetVersion(v)
+		dash.SetVersion(dash.Version + 1)
 
 		if !cmd.UpdatedAt.IsZero() {
 			dash.Updated = cmd.UpdatedAt
+		} else {
+			dash.Updated = time.Now()
 		}
+
+		dash.UpdatedBy = userId
 
 		affectedRows, err = sess.MustCols("folder_id").ID(dash.Id).Update(dash)
 	}
@@ -514,7 +526,7 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 		}
 
 		if !folderExists {
-			return m.ErrFolderNotFound
+			return m.ErrDashboardFolderNotFound
 		}
 	}
 

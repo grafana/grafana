@@ -8,13 +8,18 @@ import { getColorScale, getOpacityScale } from './color_scale';
 
 let module = angular.module('grafana.directives');
 
+const LEGEND_HEIGHT_PX = 6;
+const LEGEND_WIDTH_PX = 100;
+const LEGEND_TICK_SIZE = 0;
+const LEGEND_VALUE_MARGIN = 0;
+
 /**
  * Color legend for heatmap editor.
  */
 module.directive('colorLegend', function() {
   return {
     restrict: 'E',
-    template: '<div class="heatmap-color-legend"><svg width="16.8rem" height="24px"></svg></div>',
+    template: '<div class="heatmap-color-legend"><svg width="16.5rem" height="24px"></svg></div>',
     link: function(scope, elem, attrs) {
       let ctrl = scope.ctrl;
       let panel = scope.ctrl.panel;
@@ -50,7 +55,7 @@ module.directive('colorLegend', function() {
 module.directive('heatmapLegend', function() {
   return {
     restrict: 'E',
-    template: '<div class="heatmap-color-legend"><svg width="100px" height="14px"></svg></div>',
+    template: `<div class="heatmap-color-legend"><svg width="${LEGEND_WIDTH_PX}px" height="${LEGEND_HEIGHT_PX}px"></svg></div>`,
     link: function(scope, elem, attrs) {
       let ctrl = scope.ctrl;
       let panel = scope.ctrl.panel;
@@ -163,10 +168,10 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
   let xAxis = d3
     .axisBottom(legendValueScale)
     .tickValues(ticks)
-    .tickSize(2);
+    .tickSize(LEGEND_TICK_SIZE);
 
   let colorRect = legendElem.find(':first-child');
-  let posY = getSvgElemHeight(legendElem) + 2;
+  let posY = getSvgElemHeight(legendElem) + LEGEND_VALUE_MARGIN;
   let posX = getSvgElemX(colorRect);
 
   d3

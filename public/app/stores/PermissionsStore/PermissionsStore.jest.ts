@@ -44,7 +44,7 @@ describe('PermissionsStore', () => {
     expect(store.items[0].permission).toBe(2);
     expect(store.items[0].permissionName).toBe('Edit');
     expect(backendSrv.post.mock.calls.length).toBe(1);
-    expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
+    expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/permissions');
   });
 
   it('should save removed permissions automatically', () => {
@@ -54,7 +54,7 @@ describe('PermissionsStore', () => {
 
     expect(store.items.length).toBe(2);
     expect(backendSrv.post.mock.calls.length).toBe(1);
-    expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/acl');
+    expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/permissions');
   });
 
   describe('when duplicate team permissions are added', () => {

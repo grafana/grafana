@@ -171,8 +171,9 @@ export class KeybindingSrv {
     // delete panel
     this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        panelInfo.row.removePanel(panelInfo.panel);
+        this.$rootScope.appEvent('panel-remove', {
+          panelId: dashboard.meta.focusPanelId,
+        });
         dashboard.meta.focusPanelId = 0;
       }
     });
@@ -192,36 +193,14 @@ export class KeybindingSrv {
       }
     });
 
-    // delete row
-    this.bind('r r', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        dashboard.removeRow(panelInfo.row);
-        dashboard.meta.focusPanelId = 0;
-      }
-    });
-
-    // collapse row
-    this.bind('r c', () => {
-      if (dashboard.meta.focusPanelId) {
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        panelInfo.row.toggleCollapse();
-        dashboard.meta.focusPanelId = 0;
-      }
-    });
-
     // collapse all rows
     this.bind('d shift+c', () => {
-      for (let row of dashboard.rows) {
-        row.collapse = true;
-      }
+      dashboard.collapseRows();
     });
 
     // expand all rows
     this.bind('d shift+e', () => {
-      for (let row of dashboard.rows) {
-        row.collapse = false;
-      }
+      dashboard.expandRows();
     });
 
     this.bind('d n', e => {

@@ -21,7 +21,7 @@ export class LoadDashboardCtrl {
 
     // if no uid, redirect to new route based on slug
     if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {
-      backendSrv.get(`/api/dashboards/db/${$routeParams.slug}`).then(res => {
+      backendSrv.getDashboardBySlug($routeParams.slug).then(res => {
         if (res) {
           $location.path(locationUtil.stripBaseFromUrl(res.meta.url)).replace();
         }

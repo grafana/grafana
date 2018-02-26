@@ -36,16 +36,16 @@ export class FolderPageLoader {
       },
     };
 
-    return this.backendSrv.getDashboardByUid(uid).then(result => {
-      ctrl.folderId = result.dashboard.id;
-      const folderTitle = result.dashboard.title;
-      const folderUrl = result.meta.url;
+    return this.backendSrv.getFolderByUid(uid).then(folder => {
+      ctrl.folderId = folder.id;
+      const folderTitle = folder.title;
+      const folderUrl = folder.url;
       ctrl.navModel.main.text = folderTitle;
 
       const dashTab = ctrl.navModel.main.children.find(child => child.id === 'manage-folder-dashboards');
       dashTab.url = folderUrl;
 
-      if (result.meta.canAdmin) {
+      if (folder.canAdmin) {
         const permTab = ctrl.navModel.main.children.find(child => child.id === 'manage-folder-permissions');
         permTab.url = folderUrl + '/permissions';
 
@@ -55,7 +55,7 @@ export class FolderPageLoader {
         ctrl.navModel.main.children = [dashTab];
       }
 
-      return result;
+      return folder;
     });
   }
 }

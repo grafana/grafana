@@ -9773,9 +9773,9 @@ test-exclude@^4.1.1:
     read-pkg-up "^1.0.1"
     require-main-filename "^1.0.1"
 
-"tether-drop@https://github.com/torkelo/drop":
+"tether-drop@https://github.com/torkelo/drop/tarball/master":
   version "1.5.0"
-  resolved "https://github.com/torkelo/drop#fc83ca88db0076fbf6359cbe1743a9ef0f1ee6e1"
+  resolved "https://github.com/torkelo/drop/tarball/master#6a3eb15b882b416f06e1e7ae04c7e57d08418020"
   dependencies:
     tether "^1.1.0"
 
