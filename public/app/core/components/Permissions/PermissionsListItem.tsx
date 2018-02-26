@@ -14,7 +14,17 @@ function ItemAvatar({ item }) {
   if (item.teamAvatarUrl) {
     return <img className="filter-table__avatar" src={item.teamAvatarUrl} />;
   }
-  return <span className={item.icon} />;
+  return <span style={{ width: '25px' }} className={item.icon} />;
+}
+
+function ItemDescription({ item }) {
+  if (item.userId) {
+    return <span className="filter-table__weak-italic">(User)</span>;
+  }
+  if (item.teamId) {
+    return <span className="filter-table__weak-italic">(Team)</span>;
+  }
+  return <span className="filter-table__weak-italic">(Role)</span>;
 }
 
 export default observer(({ item, removeItem, permissionChanged, itemIndex, folderInfo }) => {
@@ -35,7 +45,9 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
       <td style={{ width: '1%' }}>
         <ItemAvatar item={item} />
       </td>
-      <td style={{ width: '90%' }}>{item.name}</td>
+      <td style={{ width: '90%' }}>
+        {item.name} <ItemDescription item={item} />
+      </td>
       <td>
         {item.inherited &&
           folderInfo && (
