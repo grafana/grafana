@@ -200,9 +200,17 @@ describe('PostgreSQLDatasource', function() {
       ctx.variable = new CustomVariable({}, {});
     });
 
-    describe('and value is a string', () => {
+    describe('and value is a string and wrap with quotes is disabled', () => {
       it('should return an unquoted value', () => {
+        ctx.variable.disableWrapWithQuotes = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql('abc');
+      });
+    });
+
+    describe('and value is a string and wrap with quotes is enabled', () => {
+      it('should return an unquoted value', () => {
+        ctx.variable.disableWrapWithQuotes = false;
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql("'abc'");
       });
     });
 
