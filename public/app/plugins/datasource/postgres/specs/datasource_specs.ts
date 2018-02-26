@@ -208,7 +208,7 @@ describe('PostgreSQLDatasource', function() {
     });
 
     describe('and value is a string and wrap with quotes is enabled', () => {
-      it('should return an unquoted value', () => {
+      it('should return an quoted value', () => {
         ctx.variable.disableWrapWithQuotes = false;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql("'abc'");
       });
