@@ -1,10 +1,17 @@
 package guardian
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	ErrGuardianDuplicatePermission     = errors.New("You cannot add multiple permissions for a user, team or role")
+	ErrGuardianOverrideLowerPresedence = errors.New("You cannot override a permission with a lower presedence permission")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
@@ -119,14 +126,41 @@ func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.D
 }
 
 func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error) {
-	if g.user.OrgRole == m.ROLE_ADMIN {
-		return true, nil
-	}
-
 	acl := []*m.DashboardAclInfoDTO{}
 
 	for _, p := range updatePermissions {
-		acl = append(acl, &m.DashboardAclInfoDTO{UserId: p.UserId, TeamId: p.TeamId, Role: p.Role, Permission: p.Permission})
+		for _, a := range acl {
+			if (a.UserId <= 0 && a.TeamId <= 0 && a.UserId == p.UserId && a.TeamId == p.TeamId && a.Role == p.Role) ||
+				(a.UserId > 0 && a.UserId == p.UserId) ||
+				(a.TeamId > 0 && a.TeamId == p.TeamId) {
+				return false, ErrGuardianDuplicatePermission
+			}
+		}
+
+		acl = append(acl, &m.DashboardAclInfoDTO{DashboardId: p.DashboardId, UserId: p.UserId, TeamId: p.TeamId, Role: p.Role, Permission: p.Permission})
+	}
+
+	existingPermissions, err := g.GetAcl()
+	if err != nil {
+		return false, err
+	}
+
+	for _, a := range acl {
+		for _, existingPerm := range existingPermissions {
+			if a.DashboardId == existingPerm.DashboardId {
+				continue
+			}
+
+			if (a.UserId <= 0 && a.TeamId <= 0 && a.UserId == existingPerm.UserId && a.TeamId == existingPerm.TeamId && *a.Role == *existingPerm.Role && a.Permission <= existingPerm.Permission) ||
+				(a.UserId > 0 && a.UserId == existingPerm.UserId && a.Permission <= existingPerm.Permission) ||
+				(a.TeamId > 0 && a.TeamId == existingPerm.TeamId && a.Permission <= existingPerm.Permission) {
+				return false, ErrGuardianOverrideLowerPresedence
+			}
+		}
+	}
+
+	if g.user.OrgRole == m.ROLE_ADMIN {
+		return true, nil
 	}
 
 	return g.checkAcl(permission, acl)
@@ -169,6 +203,8 @@ type FakeDashboardGuardian struct {
 	CanAdminValue                    bool
 	HasPermissionValue               bool
 	CheckPermissionBeforeUpdateValue bool
+	CheckPermissionBeforeUpdateError error
+	GetAclValue                      []*m.DashboardAclInfoDTO
 }
 
 func (g *FakeDashboardGuardian) CanSave() (bool, error) {
@@ -192,11 +228,11 @@ func (g *FakeDashboardGuardian) HasPermission(permission m.PermissionType) (bool
 }
 
 func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error) {
-	return g.CheckPermissionBeforeUpdateValue, nil
+	return g.CheckPermissionBeforeUpdateValue, g.CheckPermissionBeforeUpdateError
 }
 
 func (g *FakeDashboardGuardian) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
-	return nil, nil
+	return g.GetAclValue, nil
 }
 
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
