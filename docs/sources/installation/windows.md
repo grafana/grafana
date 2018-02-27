@@ -31,9 +31,9 @@ on windows. Edit `custom.ini` and uncomment the `http_port`
 configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar.
 That port should not require extra Windows privileges.
 
-Start Grafana by executing `grafana-server.exe`, preferably from the
+Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the
 command line. If you want to run Grafana as windows service, download
-[NSSM](https://nssm.cc/). It is very easy add Grafana as a Windows
+[NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows
 service using that tool.
 
 Read more about the [configuration options]({{< relref "configuration.md" >}}).
@@ -43,7 +43,3 @@ Read more about the [configuration options]({{< relref "configuration.md" >}}).
 The Grafana backend includes Sqlite3 which requires GCC to compile. So
 in order to compile Grafana on Windows you need to install GCC. We
 recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
-
-Copy `conf/sample.ini` to a file named `conf/custom.ini` and change the
-web server port to something like 8080. The default Grafana port, 3000,
-requires special privileges on Windows.
