@@ -139,7 +139,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,
 				CheckPermissionBeforeUpdateValue: false,
-				CheckPermissionBeforeUpdateError: guardian.ErrGuardianDuplicatePermission,
+				CheckPermissionBeforeUpdateError: guardian.ErrGuardianPermissionExists,
 			})
 
 			mock := &fakeFolderService{
@@ -175,7 +175,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,
 				CheckPermissionBeforeUpdateValue: false,
-				CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverrideLowerPresedence},
+				CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverride},
 			)
 
 			mock := &fakeFolderService{

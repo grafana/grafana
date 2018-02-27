@@ -119,7 +119,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,
 				CheckPermissionBeforeUpdateValue: false,
-				CheckPermissionBeforeUpdateError: guardian.ErrGuardianDuplicatePermission,
+				CheckPermissionBeforeUpdateError: guardian.ErrGuardianPermissionExists,
 			})
 
 			getDashboardQueryResult := m.NewDashboard("Dash")
@@ -149,7 +149,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,
 				CheckPermissionBeforeUpdateValue: false,
-				CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverrideLowerPresedence},
+				CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverride},
 			)
 
 			getDashboardQueryResult := m.NewDashboard("Dash")

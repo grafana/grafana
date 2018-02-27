@@ -78,8 +78,8 @@ func UpdateFolderPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardA
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
-			if err == guardian.ErrGuardianDuplicatePermission ||
-				err == guardian.ErrGuardianOverrideLowerPresedence {
+			if err == guardian.ErrGuardianPermissionExists ||
+				err == guardian.ErrGuardianOverride {
 				return ApiError(400, err.Error(), err)
 			}
 

@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrGuardianDuplicatePermission     = errors.New("You cannot add multiple permissions for a user, team or role")
-	ErrGuardianOverrideLowerPresedence = errors.New("You cannot override a permission with a lower presedence permission")
+	ErrGuardianPermissionExists = errors.New("This permission already exists")
+	ErrGuardianOverride         = errors.New("You can only override a permission to be higher")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
@@ -133,7 +133,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.Permiss
 			if (a.UserId <= 0 && a.TeamId <= 0 && a.UserId == p.UserId && a.TeamId == p.TeamId && a.Role == p.Role) ||
 				(a.UserId > 0 && a.UserId == p.UserId) ||
 				(a.TeamId > 0 && a.TeamId == p.TeamId) {
-				return false, ErrGuardianDuplicatePermission
+				return false, ErrGuardianPermissionExists
 			}
 		}
 
@@ -154,7 +154,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.Permiss
 			if (a.UserId <= 0 && a.TeamId <= 0 && a.UserId == existingPerm.UserId && a.TeamId == existingPerm.TeamId && *a.Role == *existingPerm.Role && a.Permission <= existingPerm.Permission) ||
 				(a.UserId > 0 && a.UserId == existingPerm.UserId && a.Permission <= existingPerm.Permission) ||
 				(a.TeamId > 0 && a.TeamId == existingPerm.TeamId && a.Permission <= existingPerm.Permission) {
-				return false, ErrGuardianOverrideLowerPresedence
+				return false, ErrGuardianOverride
 			}
 		}
 	}

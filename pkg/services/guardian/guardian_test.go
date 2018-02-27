@@ -29,7 +29,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianDuplicatePermission)
+					So(err, ShouldEqual, ErrGuardianPermissionExists)
 				})
 
 				Convey("With duplicate team/role permissions should return error", func() {
@@ -38,7 +38,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 1, TeamId: 1, Permission: m.PERMISSION_ADMIN},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianDuplicatePermission)
+					So(err, ShouldEqual, ErrGuardianPermissionExists)
 				})
 
 				Convey("With duplicate everyone/role permissions should return error", func() {
@@ -47,7 +47,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 1, Permission: m.PERMISSION_ADMIN},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianDuplicatePermission)
+					So(err, ShouldEqual, ErrGuardianPermissionExists)
 				})
 			})
 
@@ -66,7 +66,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, UserId: 1, Permission: m.PERMISSION_ADMIN},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 
 				Convey("When trying to update dashboard permissions with edit user permission should return error", func() {
@@ -74,7 +74,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, UserId: 1, Permission: m.PERMISSION_EDIT},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 
 				Convey("When trying to update dashboard permissions with view user permission should return error", func() {
@@ -82,7 +82,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, UserId: 1, Permission: m.PERMISSION_VIEW},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 			})
 
@@ -109,7 +109,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, UserId: 1, Permission: m.PERMISSION_EDIT},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 
 				Convey("When trying to update dashboard permissions with view user permission should return error", func() {
@@ -117,7 +117,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, UserId: 1, Permission: m.PERMISSION_VIEW},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 			})
 
@@ -152,7 +152,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, UserId: 1, Permission: m.PERMISSION_VIEW},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 			})
 
@@ -171,7 +171,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, TeamId: 1, Permission: m.PERMISSION_ADMIN},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 
 				Convey("When trying to update dashboard permissions with edit team permission should return error", func() {
@@ -179,7 +179,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, TeamId: 1, Permission: m.PERMISSION_EDIT},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 
 				Convey("When trying to update dashboard permissions with view team permission should return error", func() {
@@ -187,7 +187,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, TeamId: 1, Permission: m.PERMISSION_VIEW},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 			})
 
@@ -214,7 +214,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, TeamId: 1, Permission: m.PERMISSION_EDIT},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 
 				Convey("When trying to update dashboard permissions with view team permission should return error", func() {
@@ -222,7 +222,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, TeamId: 1, Permission: m.PERMISSION_VIEW},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 			})
 
@@ -257,7 +257,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, TeamId: 1, Permission: m.PERMISSION_VIEW},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 			})
 
@@ -285,7 +285,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, Role: &r, Permission: m.PERMISSION_EDIT},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 
 				Convey("When trying to update dashboard permissions with everyone with editor role can view permission should return error", func() {
@@ -293,7 +293,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, Role: &r, Permission: m.PERMISSION_VIEW},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 			})
 
@@ -329,7 +329,7 @@ func TestGuardian(t *testing.T) {
 						{OrgId: 1, DashboardId: 3, Role: &r, Permission: m.PERMISSION_VIEW},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
-					So(err, ShouldEqual, ErrGuardianOverrideLowerPresedence)
+					So(err, ShouldEqual, ErrGuardianOverride)
 				})
 			})
 		})
