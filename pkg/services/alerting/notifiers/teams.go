@@ -83,7 +83,7 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	} else {
-		message += " "  // summary must not be empty
+		message += " " // summary must not be empty
 	}
 
 	body := map[string]interface{}{
