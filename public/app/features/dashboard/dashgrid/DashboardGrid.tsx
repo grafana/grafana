@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactGridLayout from 'react-grid-layout';
+import ReactGridLayout from 'react-grid-layout-grafana';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel } from '../dashboard_model';
@@ -50,7 +50,8 @@ function GridWrapper({
       onResize={onResize}
       onResizeStop={onResizeStop}
       onDragStop={onDragStop}
-      onLayoutChange={onLayoutChange}>
+      onLayoutChange={onLayoutChange}
+    >
       {children}
     </ReactGridLayout>
   );
@@ -178,7 +179,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
       panelElements.push(
         <div key={panel.id.toString()} className={panelClasses}>
           <DashboardPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />
-        </div>,
+        </div>
       );
     }
 
@@ -196,7 +197,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         onWidthChange={this.onWidthChange}
         onDragStop={this.onDragStop}
         onResize={this.onResize}
-        onResizeStop={this.onResizeStop}>
+        onResizeStop={this.onResizeStop}
+      >
         {this.renderPanels()}
       </SizedReactLayoutGrid>
     );
