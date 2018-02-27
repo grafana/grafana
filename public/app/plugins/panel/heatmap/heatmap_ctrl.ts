@@ -204,11 +204,17 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     let xBucketSize, yBucketSize, bucketsData, tsBuckets;
 
     // Convert histogram to heatmap. Each histogram bucket represented by the series which name is
-    // a top bucket bound. Further, these values will be used as X axis labels.
+    // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as X axis labels.
     bucketsData = histogramToHeatmap(this.series);
     tsBuckets = _.map(this.series, 'label');
-    // Add empty bottom bucket label
-    tsBuckets = [''].concat(tsBuckets);
+
+    if (this.datasource && this.datasource.type === 'prometheus') {
+      // Prometheus labels are upper inclusive bounds, so add empty bottom bucket label.
+      tsBuckets = [''].concat(tsBuckets);
+    } else {
+      // Elasticsearch uses labels as bottom bucket bounds, so add empty top bucket label.
+      tsBuckets.push('');
+    }
 
     // Calculate bucket size based on heatmap data
     let xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
