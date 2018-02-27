@@ -411,6 +411,18 @@ func GetDashboardVersion(c *middleware.Context) Response {
 // POST /api/dashboards/calculate-diff performs diffs on two dashboards
 func CalculateDashboardDiff(c *middleware.Context, apiOptions dtos.CalculateDiffOptions) Response {
 
+	guardianBase := guardian.New(apiOptions.Base.DashboardId, c.OrgId, c.SignedInUser)
+	if canSave, err := guardianBase.CanSave(); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
+	if apiOptions.Base.DashboardId != apiOptions.New.DashboardId {
+		guardianNew := guardian.New(apiOptions.New.DashboardId, c.OrgId, c.SignedInUser)
+		if canSave, err := guardianNew.CanSave(); err != nil || !canSave {
+			return dashboardGuardianResponse(err)
+		}
+	}
+
 	options := dashdiffs.Options{
 		OrgId:    c.OrgId,
 		DiffType: dashdiffs.ParseDiffType(apiOptions.DiffType),
@@ -436,9 +448,9 @@ func CalculateDashboardDiff(c *middleware.Context, apiOptions dtos.CalculateDiff
 
 	if options.DiffType == dashdiffs.DiffDelta {
 		return Respond(200, result.Delta).Header("Content-Type", "application/json")
-	} else {
-		return Respond(200, result.Delta).Header("Content-Type", "text/html")
 	}
+
+	return Respond(200, result.Delta).Header("Content-Type", "text/html")
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.
