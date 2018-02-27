@@ -55,9 +55,6 @@ func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *Das
 	dash.OrgId = cfg.OrgId
 	dash.Dashboard.OrgId = cfg.OrgId
 	dash.Dashboard.FolderId = folderId
-	if !cfg.Editable {
-		dash.Dashboard.Data.Set("editable", cfg.Editable)
-	}
 
 	if dash.Dashboard.Title == "" {
 		return nil, models.ErrDashboardTitleEmpty

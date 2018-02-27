@@ -317,6 +317,12 @@ type GetDashboardSlugByIdQuery struct {
 	Result string
 }
 
+type GetProvisionedDashboardByDashboardId struct {
+	DashboardId int64
+
+	Result *DashboardProvisioning
+}
+
 type GetProvisionedDashboardDataQuery struct {
 	Name string
 

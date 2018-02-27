@@ -102,6 +102,13 @@ func GetDashboard(c *m.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
+	dpQuery := &m.GetProvisionedDashboardByDashboardId{DashboardId: dash.Id}
+	err = bus.Dispatch(dpQuery)
+	if dpQuery.Result != nil {
+		meta.CanEdit = true
+		meta.Provisioned = true
+	}
+
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 

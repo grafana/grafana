@@ -8,6 +8,7 @@ import (
 func init() {
 	bus.AddHandler("sql", GetProvisionedDashboardDataQuery)
 	bus.AddHandler("sql", SaveProvisionedDashboard)
+	bus.AddHandler("sql", GetProvisionedDataByDashboardId)
 }
 
 type DashboardExtras struct {
@@ -15,6 +16,18 @@ type DashboardExtras struct {
 	DashboardId int64
 	Key         string
 	Value       string
+}
+
+func GetProvisionedDataByDashboardId(cmd *models.GetProvisionedDashboardByDashboardId) error {
+	result := &models.DashboardProvisioning{}
+
+	_, err := x.Where("dashboard_id = ?", cmd.DashboardId).Get(result)
+	if err != nil {
+		return err
+	}
+
+	cmd.Result = result
+	return nil
 }
 
 func SaveProvisionedDashboard(cmd *models.SaveProvisionedDashboardCommand) error {
