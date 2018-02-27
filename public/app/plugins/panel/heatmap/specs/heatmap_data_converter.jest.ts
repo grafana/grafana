@@ -4,7 +4,7 @@ import TimeSeries from 'app/core/time_series2';
 import {
   convertToHeatMap,
   convertToCards,
-  elasticHistogramToHeatmap,
+  histogramToHeatmap,
   calculateBucketSize,
   isHeatmapDataEqual,
 } from '../heatmap_data_converter';
@@ -216,7 +216,7 @@ describe('HeatmapDataConverter', () => {
   });
 });
 
-describe('ES Histogram converter', () => {
+describe('Histogram converter', () => {
   let ctx: any = {};
 
   beforeEach(() => {
@@ -244,7 +244,7 @@ describe('ES Histogram converter', () => {
     );
   });
 
-  describe('when converting ES histogram', () => {
+  describe('when converting histogram', () => {
     beforeEach(() => {});
 
     it('should build proper heatmap data', () => {
@@ -252,59 +252,71 @@ describe('ES Histogram converter', () => {
         '1422774000000': {
           x: 1422774000000,
           buckets: {
-            '1': {
-              y: 1,
+            '0': {
+              y: 0,
               count: 1,
+              bounds: { bottom: 0, top: null },
               values: [],
               points: [],
+            },
+            '1': {
+              y: 1,
+              count: 5,
               bounds: { bottom: 1, top: null },
+              values: [],
+              points: [],
             },
             '2': {
               y: 2,
-              count: 5,
-              values: [],
-              points: [],
-              bounds: { bottom: 2, top: null },
-            },
-            '3': {
-              y: 3,
               count: 0,
+              bounds: { bottom: 2, top: null },
               values: [],
               points: [],
-              bounds: { bottom: 3, top: null },
             },
           },
         },
         '1422774060000': {
           x: 1422774060000,
           buckets: {
-            '1': {
-              y: 1,
+            '0': {
+              y: 0,
               count: 0,
+              bounds: { bottom: 0, top: null },
               values: [],
               points: [],
+            },
+            '1': {
+              y: 1,
+              count: 3,
               bounds: { bottom: 1, top: null },
+              values: [],
+              points: [],
             },
             '2': {
               y: 2,
-              count: 3,
-              values: [],
-              points: [],
-              bounds: { bottom: 2, top: null },
-            },
-            '3': {
-              y: 3,
               count: 1,
+              bounds: { bottom: 2, top: null },
               values: [],
               points: [],
-              bounds: { bottom: 3, top: null },
             },
           },
         },
       };
 
-      let heatmap = elasticHistogramToHeatmap(ctx.series);
+      const heatmap = histogramToHeatmap(ctx.series);
       expect(heatmap).toEqual(expectedHeatmap);
+    });
+
+    it('should use bucket index as a bound', () => {
+      const heatmap = histogramToHeatmap(ctx.series);
+      const bucketLabels = _.map(heatmap['1422774000000'].buckets, (b, label) => label);
+      const bucketYs = _.map(heatmap['1422774000000'].buckets, 'y');
+      const bucketBottoms = _.map(heatmap['1422774000000'].buckets, b => b.bounds.bottom);
+      const expectedBounds = [0, 1, 2];
+
+      expect(bucketLabels).toEqual(_.map(expectedBounds, b => b.toString()));
+      expect(bucketYs).toEqual(expectedBounds);
+      expect(bucketBottoms).toEqual(expectedBounds);
     });
   });
 });
