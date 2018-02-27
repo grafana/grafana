@@ -39,6 +39,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     ],
     columns: [],
     scroll: true,
+    stickyHeader: true,
     fontSize: '100%',
     sort: { col: 0, desc: true },
   };
@@ -230,6 +231,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       appendPaginationControls(footerElem);
 
       rootElem.css({ 'max-height': panel.scroll ? getTableHeight() : '' });
+
+      ctrl.table.stickyHeaderStyle = { position: panel.stickyHeader ? 'absolute' : 'relative' };
     }
 
     // hook up link tooltips
