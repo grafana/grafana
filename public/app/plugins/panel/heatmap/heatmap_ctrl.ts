@@ -134,59 +134,53 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    let xBucketSize, yBucketSize, heatmapStats, bucketsData, tsBuckets;
-    let logBase = this.panel.yAxis.logBase;
-
     if (this.panel.dataFormat === 'tsbuckets') {
-      heatmapStats = this.parseHistogramSeries(this.series);
-      bucketsData = histogramToHeatmap(this.series);
-      tsBuckets = _.map(this.series, 'label');
-      // Add empty bottom bucket label
-      tsBuckets = [''].concat(tsBuckets);
-
-      // Calculate bucket size based on ES heatmap data
-      let xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
-      xBucketSize = calculateBucketSize(xBucketBoundSet);
-      // Always let yBucketSize=1 in 'tsbuckets' mode
-      yBucketSize = 1;
+      this.convertHistogramToHeatmapData();
     } else {
-      let xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
-      let xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
-
-      // Parse X bucket size (number or interval)
-      let isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
-      if (isIntervalString) {
-        xBucketSize = kbn.interval_to_ms(this.panel.xBucketSize);
-      } else if (
-        isNaN(Number(this.panel.xBucketSize)) ||
-        this.panel.xBucketSize === '' ||
-        this.panel.xBucketSize === null
-      ) {
-        xBucketSize = xBucketSizeByNumber;
-      } else {
-        xBucketSize = Number(this.panel.xBucketSize);
-      }
-
-      // Calculate Y bucket size
-      heatmapStats = this.parseSeries(this.series);
-      let yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
-      if (logBase !== 1) {
-        yBucketSize = this.panel.yAxis.splitFactor;
-      } else {
-        if (heatmapStats.max === heatmapStats.min) {
-          if (heatmapStats.max) {
-            yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
-          } else {
-            yBucketSize = 1;
-          }
-        } else {
-          yBucketSize = (heatmapStats.max - heatmapStats.min) / yBucketNumber;
-        }
-        yBucketSize = this.panel.yBucketSize || yBucketSize;
-      }
-
-      bucketsData = convertToHeatMap(this.series, yBucketSize, xBucketSize, logBase);
+      this.convertTimeSeriesToHeatmapData();
     }
+  }
+
+  convertTimeSeriesToHeatmapData() {
+    let xBucketSize, yBucketSize, bucketsData, heatmapStats;
+    const logBase = this.panel.yAxis.logBase;
+
+    let xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
+    let xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
+
+    // Parse X bucket size (number or interval)
+    let isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
+    if (isIntervalString) {
+      xBucketSize = kbn.interval_to_ms(this.panel.xBucketSize);
+    } else if (
+      isNaN(Number(this.panel.xBucketSize)) ||
+      this.panel.xBucketSize === '' ||
+      this.panel.xBucketSize === null
+    ) {
+      xBucketSize = xBucketSizeByNumber;
+    } else {
+      xBucketSize = Number(this.panel.xBucketSize);
+    }
+
+    // Calculate Y bucket size
+    heatmapStats = this.parseSeries(this.series);
+    let yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
+    if (logBase !== 1) {
+      yBucketSize = this.panel.yAxis.splitFactor;
+    } else {
+      if (heatmapStats.max === heatmapStats.min) {
+        if (heatmapStats.max) {
+          yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
+        } else {
+          yBucketSize = 1;
+        }
+      } else {
+        yBucketSize = (heatmapStats.max - heatmapStats.min) / yBucketNumber;
+      }
+      yBucketSize = this.panel.yBucketSize || yBucketSize;
+    }
+
+    bucketsData = convertToHeatMap(this.series, yBucketSize, xBucketSize, logBase);
 
     // Set default Y range if no data
     if (!heatmapStats.min && !heatmapStats.max) {
@@ -204,10 +198,34 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       cards: cards,
       cardStats: cardStats,
     };
+  }
 
-    if (tsBuckets) {
-      this.data.tsBuckets = tsBuckets;
-    }
+  convertHistogramToHeatmapData() {
+    let xBucketSize, yBucketSize, bucketsData, tsBuckets;
+
+    // Convert histogram to heatmap. Each histogram bucket represented by the series which name is
+    // a top bucket bound. Further, these values will be used as X axis labels.
+    bucketsData = histogramToHeatmap(this.series);
+    tsBuckets = _.map(this.series, 'label');
+    // Add empty bottom bucket label
+    tsBuckets = [''].concat(tsBuckets);
+
+    // Calculate bucket size based on heatmap data
+    let xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
+    xBucketSize = calculateBucketSize(xBucketBoundSet);
+    // Always let yBucketSize=1 in 'tsbuckets' mode
+    yBucketSize = 1;
+
+    let { cards, cardStats } = convertToCards(bucketsData);
+
+    this.data = {
+      buckets: bucketsData,
+      xBucketSize: xBucketSize,
+      yBucketSize: yBucketSize,
+      tsBuckets: tsBuckets,
+      cards: cards,
+      cardStats: cardStats,
+    };
   }
 
   onDataReceived(dataList) {

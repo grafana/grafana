@@ -13,44 +13,10 @@ interface YBucket {
   values: number[];
 }
 
-function elasticHistogramToHeatmap(seriesList) {
-  let heatmap = {};
-
-  for (let series of seriesList) {
-    let bound = Number(series.alias);
-    if (isNaN(bound)) {
-      return heatmap;
-    }
-
-    for (let point of series.datapoints) {
-      let count = point[VALUE_INDEX];
-      let time = point[TIME_INDEX];
-
-      if (!_.isNumber(count)) {
-        continue;
-      }
-
-      let bucket = heatmap[time];
-      if (!bucket) {
-        bucket = heatmap[time] = { x: time, buckets: {} };
-      }
-
-      bucket.buckets[bound] = {
-        y: bound,
-        count: count,
-        bounds: {
-          top: null,
-          bottom: bound,
-        },
-        values: [],
-        points: [],
-      };
-    }
-  }
-
-  return heatmap;
-}
-
+/**
+ * Convert histogram represented by the list of series to heatmap object.
+ * @param seriesList List of time series
+ */
 function histogramToHeatmap(seriesList) {
   let heatmap = {};
 
@@ -473,7 +439,6 @@ function emptyXOR(foo: any, bar: any): boolean {
 export {
   convertToHeatMap,
   histogramToHeatmap,
-  elasticHistogramToHeatmap,
   convertToCards,
   mergeZeroBuckets,
   getValueBucketBound,
