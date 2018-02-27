@@ -17,7 +17,7 @@ describe('AddPermissions', () => {
       ])
     );
 
-    backendSrv.post = jest.fn();
+    backendSrv.post = jest.fn(() => Promise.resolve({}));
 
     store = RootStore.create(
       {},

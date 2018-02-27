@@ -1,8 +1,6 @@
 import { types, getEnv, flow } from 'mobx-state-tree';
 import { PermissionsStoreItem } from './PermissionsStoreItem';
 
-const duplicateError = 'This permission exists already.';
-
 export const permissionOptions = [
   { value: 1, label: 'View', description: 'Can view dashboards.' },
   { value: 2, label: 'Edit', description: 'Can add, edit and delete dashboards.' },
@@ -75,7 +73,6 @@ export const PermissionsStore = types
     isFolder: types.maybe(types.boolean),
     dashboardId: types.maybe(types.number),
     items: types.optional(types.array(PermissionsStoreItem), []),
-    error: types.maybe(types.string),
     originalItems: types.optional(types.array(PermissionsStoreItem), []),
     newType: types.optional(types.string, defaultNewType),
     newItem: types.maybe(NewPermissionsItem),
@@ -88,7 +85,6 @@ export const PermissionsStore = types
         return isDuplicate(it, item);
       });
       if (dupe) {
-        self.error = duplicateError;
         return false;
       }
 
@@ -96,8 +92,7 @@ export const PermissionsStore = types
     },
   }))
   .actions(self => {
-    const resetNewType = () => {
-      self.error = null;
+    const resetNewTypeInternal = () => {
       self.newItem = NewPermissionsItem.create();
     };
 
@@ -115,11 +110,9 @@ export const PermissionsStore = types
         self.items = items;
         self.originalItems = items;
         self.fetching = false;
-        self.error = null;
       }),
 
       addStoreItem: flow(function* addStoreItem() {
-        self.error = null;
         let item = {
           type: self.newItem.type,
           permission: self.newItem.permission,
@@ -147,19 +140,21 @@ export const PermissionsStore = types
             throw Error('Unknown type: ' + self.newItem.type);
         }
 
-        if (!self.isValid(item)) {
-          return undefined;
-        }
+        const updatedItems = self.items.peek();
+        const newItem = prepareItem(item, self.dashboardId, self.isFolder, self.isInRoot);
+        updatedItems.push(newItem);
 
-        self.items.push(prepareItem(item, self.dashboardId, self.isFolder, self.isInRoot));
-        resetNewType();
-        return updateItems(self);
+        try {
+          yield updateItems(self, updatedItems);
+          self.items.push(newItem);
+          resetNewTypeInternal();
+        } catch {}
+        yield Promise.resolve();
       }),
 
       removeStoreItem: flow(function* removeStoreItem(idx: number) {
-        self.error = null;
         self.items.splice(idx, 1);
-        return updateItems(self);
+        yield updateItems(self, self.items.peek());
       }),
 
       updatePermissionOnIndex: flow(function* updatePermissionOnIndex(
@@ -167,9 +162,8 @@ export const PermissionsStore = types
         permission: number,
         permissionName: string
       ) {
-        self.error = null;
         self.items[idx].updatePermission(permission, permissionName);
-        return updateItems(self);
+        yield updateItems(self, self.items.peek());
       }),
 
       setNewType(newType: string) {
@@ -177,7 +171,7 @@ export const PermissionsStore = types
       },
 
       resetNewType() {
-        resetNewType();
+        resetNewTypeInternal();
       },
 
       toggleAddPermissions() {
@@ -190,12 +184,10 @@ export const PermissionsStore = types
     };
   });
 
-const updateItems = self => {
-  self.error = null;
-
+const updateItems = (self, items) => {
   const backendSrv = getEnv(self).backendSrv;
   const updated = [];
-  for (let item of self.items) {
+  for (let item of items) {
     if (item.inherited) {
       continue;
     }
@@ -208,16 +200,9 @@ const updateItems = self => {
     });
   }
 
-  let res;
-  try {
-    res = backendSrv.post(`/api/dashboards/id/${self.dashboardId}/permissions`, {
-      items: updated,
-    });
-  } catch (error) {
-    self.error = error;
-  }
-
-  return res;
+  return backendSrv.post(`/api/dashboards/id/${self.dashboardId}/permissions`, {
+    items: updated,
+  });
 };
 
 const prepareServerResponse = (response, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
