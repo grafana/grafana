@@ -305,7 +305,15 @@ export default function link(scope, elem, attrs, ctrl) {
       .range([chartHeight, 0]);
 
     const tick_values = _.map(tsBuckets, (b, i) => i);
-    const tickFormatter = val => tsBuckets[val];
+
+    function tickFormatter(valIndex) {
+      let valueFormatted = tsBuckets[valIndex];
+      if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
+        // Try to format numeric tick labels
+        valueFormatted = tickValueFormatter(0)(valueFormatted);
+      }
+      return valueFormatted;
+    }
 
     let yAxis = d3
       .axisLeft(yScale)
