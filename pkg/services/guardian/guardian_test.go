@@ -23,7 +23,7 @@ func TestGuardian(t *testing.T) {
 			So(canView, ShouldBeTrue)
 
 			Convey("When trying to update permissions", func() {
-				Convey("With duplicate user/role permissions should return error", func() {
+				Convey("With duplicate user permissions should return error", func() {
 					p := []*m.DashboardAcl{
 						{OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_VIEW},
 						{OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN},
@@ -32,7 +32,7 @@ func TestGuardian(t *testing.T) {
 					So(err, ShouldEqual, ErrGuardianPermissionExists)
 				})
 
-				Convey("With duplicate team/role permissions should return error", func() {
+				Convey("With duplicate team permissions should return error", func() {
 					p := []*m.DashboardAcl{
 						{OrgId: 1, DashboardId: 1, TeamId: 1, Permission: m.PERMISSION_VIEW},
 						{OrgId: 1, DashboardId: 1, TeamId: 1, Permission: m.PERMISSION_ADMIN},
@@ -41,13 +41,65 @@ func TestGuardian(t *testing.T) {
 					So(err, ShouldEqual, ErrGuardianPermissionExists)
 				})
 
-				Convey("With duplicate everyone/role permissions should return error", func() {
+				Convey("With duplicate everyone with editor role permission should return error", func() {
+					r := m.ROLE_EDITOR
 					p := []*m.DashboardAcl{
-						{OrgId: 1, DashboardId: 1, Permission: m.PERMISSION_VIEW},
-						{OrgId: 1, DashboardId: 1, Permission: m.PERMISSION_ADMIN},
+						{OrgId: 1, DashboardId: 1, Role: &r, Permission: m.PERMISSION_VIEW},
+						{OrgId: 1, DashboardId: 1, Role: &r, Permission: m.PERMISSION_ADMIN},
 					}
 					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
 					So(err, ShouldEqual, ErrGuardianPermissionExists)
+				})
+
+				Convey("With duplicate everyone with viewer role permission should return error", func() {
+					r := m.ROLE_VIEWER
+					p := []*m.DashboardAcl{
+						{OrgId: 1, DashboardId: 1, Role: &r, Permission: m.PERMISSION_VIEW},
+						{OrgId: 1, DashboardId: 1, Role: &r, Permission: m.PERMISSION_ADMIN},
+					}
+					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
+					So(err, ShouldEqual, ErrGuardianPermissionExists)
+				})
+
+				Convey("With everyone with admin role permission should return error", func() {
+					r := m.ROLE_ADMIN
+					p := []*m.DashboardAcl{
+						{OrgId: 1, DashboardId: 1, Role: &r, Permission: m.PERMISSION_ADMIN},
+					}
+					_, err := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
+					So(err, ShouldEqual, ErrGuardianPermissionExists)
+				})
+			})
+
+			Convey("Given default permissions", func() {
+				editor := m.ROLE_EDITOR
+				viewer := m.ROLE_VIEWER
+				existingPermissions := []*m.DashboardAclInfoDTO{
+					{OrgId: 1, DashboardId: -1, Role: &editor, Permission: m.PERMISSION_EDIT},
+					{OrgId: 1, DashboardId: -1, Role: &viewer, Permission: m.PERMISSION_VIEW},
+				}
+
+				bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+					query.Result = existingPermissions
+					return nil
+				})
+
+				Convey("When trying to update dashboard permissions without everyone with role editor can edit should be allowed", func() {
+					r := m.ROLE_VIEWER
+					p := []*m.DashboardAcl{
+						{OrgId: 1, DashboardId: 1, Role: &r, Permission: m.PERMISSION_VIEW},
+					}
+					ok, _ := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
+					So(ok, ShouldBeTrue)
+				})
+
+				Convey("When trying to update dashboard permissions without everyone with role viewer can view should be allowed", func() {
+					r := m.ROLE_EDITOR
+					p := []*m.DashboardAcl{
+						{OrgId: 1, DashboardId: 1, Role: &r, Permission: m.PERMISSION_EDIT},
+					}
+					ok, _ := sc.g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, p)
+					So(ok, ShouldBeTrue)
 				})
 			})
 

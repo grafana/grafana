@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrGuardianPermissionExists = errors.New("This permission already exists")
+	ErrGuardianPermissionExists = errors.New("Permission already exists")
 	ErrGuardianOverride         = errors.New("You can only override a permission to be higher")
 )
 
@@ -127,17 +127,23 @@ func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.D
 
 func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error) {
 	acl := []*m.DashboardAclInfoDTO{}
+	adminRole := m.ROLE_ADMIN
+	everyoneWithAdminRole := &m.DashboardAclInfoDTO{DashboardId: g.dashId, UserId: 0, TeamId: 0, Role: &adminRole, Permission: m.PERMISSION_ADMIN}
 
+	// validate that duplicate permissions don't exists
 	for _, p := range updatePermissions {
+		aclItem := &m.DashboardAclInfoDTO{DashboardId: p.DashboardId, UserId: p.UserId, TeamId: p.TeamId, Role: p.Role, Permission: p.Permission}
+		if aclItem.IsDuplicateOf(everyoneWithAdminRole) {
+			return false, ErrGuardianPermissionExists
+		}
+
 		for _, a := range acl {
-			if (a.UserId <= 0 && a.TeamId <= 0 && a.UserId == p.UserId && a.TeamId == p.TeamId && a.Role == p.Role) ||
-				(a.UserId > 0 && a.UserId == p.UserId) ||
-				(a.TeamId > 0 && a.TeamId == p.TeamId) {
+			if a.IsDuplicateOf(aclItem) {
 				return false, ErrGuardianPermissionExists
 			}
 		}
 
-		acl = append(acl, &m.DashboardAclInfoDTO{DashboardId: p.DashboardId, UserId: p.UserId, TeamId: p.TeamId, Role: p.Role, Permission: p.Permission})
+		acl = append(acl, aclItem)
 	}
 
 	existingPermissions, err := g.GetAcl()
@@ -145,15 +151,19 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.Permiss
 		return false, err
 	}
 
+	// validate overridden permissions to be higher
 	for _, a := range acl {
 		for _, existingPerm := range existingPermissions {
+			// handle default permissions
+			if existingPerm.DashboardId == -1 {
+				existingPerm.DashboardId = g.dashId
+			}
+
 			if a.DashboardId == existingPerm.DashboardId {
 				continue
 			}
 
-			if (a.UserId <= 0 && a.TeamId <= 0 && a.UserId == existingPerm.UserId && a.TeamId == existingPerm.TeamId && *a.Role == *existingPerm.Role && a.Permission <= existingPerm.Permission) ||
-				(a.UserId > 0 && a.UserId == existingPerm.UserId && a.Permission <= existingPerm.Permission) ||
-				(a.TeamId > 0 && a.TeamId == existingPerm.TeamId && a.Permission <= existingPerm.Permission) {
+			if a.IsDuplicateOf(existingPerm) && a.Permission <= existingPerm.Permission {
 				return false, ErrGuardianOverride
 			}
 		}
@@ -175,6 +185,13 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	query := m.GetDashboardAclInfoListQuery{DashboardId: g.dashId, OrgId: g.orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
+	}
+
+	for _, a := range query.Result {
+		// handle default permissions
+		if a.DashboardId == -1 {
+			a.DashboardId = g.dashId
+		}
 	}
 
 	g.acl = query.Result

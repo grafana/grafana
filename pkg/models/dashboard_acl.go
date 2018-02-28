@@ -68,6 +68,27 @@ type DashboardAclInfoDTO struct {
 	Url            string         `json:"url"`
 }
 
+func (dto *DashboardAclInfoDTO) hasSameRoleAs(other *DashboardAclInfoDTO) bool {
+	if dto.Role == nil || other.Role == nil {
+		return false
+	}
+
+	return dto.UserId <= 0 && dto.TeamId <= 0 && dto.UserId == other.UserId && dto.TeamId == other.TeamId && *dto.Role == *other.Role
+}
+
+func (dto *DashboardAclInfoDTO) hasSameUserAs(other *DashboardAclInfoDTO) bool {
+	return dto.UserId > 0 && dto.UserId == other.UserId
+}
+
+func (dto *DashboardAclInfoDTO) hasSameTeamAs(other *DashboardAclInfoDTO) bool {
+	return dto.TeamId > 0 && dto.TeamId == other.TeamId
+}
+
+// IsDuplicateOf returns true if other item has same role, same user or same team
+func (dto *DashboardAclInfoDTO) IsDuplicateOf(other *DashboardAclInfoDTO) bool {
+	return dto.hasSameRoleAs(other) || dto.hasSameUserAs(other) || dto.hasSameTeamAs(other)
+}
+
 //
 // COMMANDS
 //
