@@ -354,7 +354,7 @@ enabled = true
 allow_sign_up = true
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-scopes = user:email
+scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
@@ -387,6 +387,7 @@ scopes = user:email,read:org
 team_ids = 150,300
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 ```
 
@@ -405,6 +406,7 @@ client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
