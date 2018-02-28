@@ -31,8 +31,36 @@ describe('templateSrv', function() {
       expect(target).toBe('this.mupp.filters');
     });
 
+    it('should replace ${test} with scoped value', function() {
+      var target = _templateSrv.replace('this.${test}.filters', {
+        test: { value: 'mupp', text: 'asd' },
+      });
+      expect(target).toBe('this.mupp.filters');
+    });
+
+    it('should replace ${test:glob} with scoped value', function() {
+      var target = _templateSrv.replace('this.${test:glob}.filters', {
+        test: { value: 'mupp', text: 'asd' },
+      });
+      expect(target).toBe('this.mupp.filters');
+    });
+
     it('should replace $test with scoped text', function() {
       var target = _templateSrv.replaceWithText('this.$test.filters', {
+        test: { value: 'mupp', text: 'asd' },
+      });
+      expect(target).toBe('this.asd.filters');
+    });
+
+    it('should replace ${test} with scoped text', function() {
+      var target = _templateSrv.replaceWithText('this.${test}.filters', {
+        test: { value: 'mupp', text: 'asd' },
+      });
+      expect(target).toBe('this.asd.filters');
+    });
+
+    it('should replace ${test:glob} with scoped text', function() {
+      var target = _templateSrv.replaceWithText('this.${test:glob}.filters', {
         test: { value: 'mupp', text: 'asd' },
       });
       expect(target).toBe('this.asd.filters');
@@ -79,8 +107,19 @@ describe('templateSrv', function() {
       ]);
     });
 
+
     it('should replace $test with globbed value', function() {
       var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+      expect(target).toBe('this.{value1,value2}.filters');
+    });
+
+    it('should replace ${test} with globbed value', function() {
+      var target = _templateSrv.replace('this.${test}.filters', {}, 'glob');
+      expect(target).toBe('this.{value1,value2}.filters');
+    });
+
+    it('should replace ${test:glob} with globbed value', function() {
+      var target = _templateSrv.replace('this.${test:glob}.filters', {});
       expect(target).toBe('this.{value1,value2}.filters');
     });
 
@@ -89,8 +128,13 @@ describe('templateSrv', function() {
       expect(target).toBe('this=value1|value2');
     });
 
-    it('should replace $test with piped value', function() {
-      var target = _templateSrv.replace('this=$test', {}, 'pipe');
+    it('should replace ${test} with piped value', function() {
+      var target = _templateSrv.replace('this=${test}', {}, 'pipe');
+      expect(target).toBe('this=value1|value2');
+    });
+
+    it('should replace ${test:pipe} with piped value', function() {
+      var target = _templateSrv.replace('this=${test:pipe}', {});
       expect(target).toBe('this=value1|value2');
     });
   });
@@ -109,6 +153,16 @@ describe('templateSrv', function() {
 
     it('should replace $test with formatted all value', function() {
       var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+      expect(target).toBe('this.{value1,value2}.filters');
+    });
+
+    it('should replace ${test} with formatted all value', function() {
+      var target = _templateSrv.replace('this.${test}.filters', {}, 'glob');
+      expect(target).toBe('this.{value1,value2}.filters');
+    });
+
+    it('should replace ${test:glob} with formatted all value', function() {
+      var target = _templateSrv.replace('this.${test:glob}.filters', {});
       expect(target).toBe('this.{value1,value2}.filters');
     });
   });
@@ -131,6 +185,16 @@ describe('templateSrv', function() {
       expect(target).toBe('this.*.filters');
     });
 
+    it('should replace ${test} with formatted all value', function() {
+      var target = _templateSrv.replace('this.${test}.filters', {}, 'glob');
+      expect(target).toBe('this.*.filters');
+    });
+
+    it('should replace ${test:glob} with formatted all value', function() {
+      var target = _templateSrv.replace('this.${test:glob}.filters', {});
+      expect(target).toBe('this.*.filters');
+    });
+
     it('should not escape custom all value', function() {
       var target = _templateSrv.replace('this.$test', {}, 'regex');
       expect(target).toBe('this.*');
@@ -141,6 +205,18 @@ describe('templateSrv', function() {
     it('should properly escape $test with lucene escape sequences', function() {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
       var target = _templateSrv.replace('this:$test', {}, 'lucene');
+      expect(target).toBe('this:value\\/4');
+    });
+
+    it('should properly escape ${test} with lucene escape sequences', function() {
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
+      var target = _templateSrv.replace('this:${test}', {}, 'lucene');
+      expect(target).toBe('this:value\\/4');
+    });
+
+    it('should properly escape ${test:lucene} with lucene escape sequences', function() {
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
+      var target = _templateSrv.replace('this:${test:lucene}', {});
       expect(target).toBe('this:value\\/4');
     });
   });

@@ -348,6 +348,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     let tagKey = tag.key;
     return this.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix).then(values => {
       let altValues = _.map(values, 'text');
+      // Add template variables as additional values
+      _.eachRight(this.templateSrv.variables, variable => {
+        altValues.push('${' + variable.name + ':regex}');
+      });
       return mapToDropdownOptions(altValues);
     });
   }
