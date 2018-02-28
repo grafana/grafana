@@ -8,7 +8,7 @@ import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
 import { Emitter } from 'app/core/core';
 import rendering from '../rendering';
-import { convertToHeatMap, convertToCards } from '../heatmap_data_converter';
+import { convertToHeatMap, convertToCards, histogramToHeatmap, calculateBucketSize } from '../heatmap_data_converter';
 
 describe('grafanaHeatmap', function() {
   beforeEach(angularMocks.module('grafana.core'));
@@ -119,7 +119,12 @@ describe('grafanaHeatmap', function() {
             setupFunc(ctrl, ctx);
 
             let logBase = ctrl.panel.yAxis.logBase;
-            let bucketsData = convertToHeatMap(ctx.series, ctx.data.yBucketSize, ctx.data.xBucketSize, logBase);
+            let bucketsData;
+            if (ctrl.panel.dataFormat === 'tsbuckets') {
+              bucketsData = histogramToHeatmap(ctx.series);
+            } else {
+              bucketsData = convertToHeatMap(ctx.series, ctx.data.yBucketSize, ctx.data.xBucketSize, logBase);
+            }
             ctx.data.buckets = bucketsData;
 
             let { cards, cardStats } = convertToCards(bucketsData);
@@ -263,6 +268,38 @@ describe('grafanaHeatmap', function() {
     it('should draw correct Y axis', function() {
       var yTicks = getTicks(ctx.element, '.axis-y');
       expect(yTicks).to.eql(['0 ns', '17 min', '33 min', '50 min', '1.11 hour']);
+    });
+  });
+
+  heatmapScenario('when data format is Time series buckets', function(ctx) {
+    ctx.setup(function(ctrl, ctx) {
+      ctrl.panel.dataFormat = 'tsbuckets';
+
+      const series = [
+        {
+          alias: '1',
+          datapoints: [[1000, 1422774000000], [200000, 1422774060000]],
+        },
+        {
+          alias: '2',
+          datapoints: [[3000, 1422774000000], [400000, 1422774060000]],
+        },
+        {
+          alias: '3',
+          datapoints: [[2000, 1422774000000], [300000, 1422774060000]],
+        },
+      ];
+      ctx.series = series.map(s => new TimeSeries(s));
+
+      ctx.data.tsBuckets = series.map(s => s.alias).concat('');
+      ctx.data.yBucketSize = 1;
+      let xBucketBoundSet = series[0].datapoints.map(dp => dp[1]);
+      ctx.data.xBucketSize = calculateBucketSize(xBucketBoundSet);
+    });
+
+    it('should draw correct Y axis', function() {
+      var yTicks = getTicks(ctx.element, '.axis-y');
+      expect(yTicks).to.eql(['1', '2', '3', '']);
     });
   });
 });
