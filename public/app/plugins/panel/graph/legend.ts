@@ -15,6 +15,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       var seriesList;
       var i;
       var legendScrollbar;
+      var highlighting = false;
 
       scope.$on('$destroy', function() {
         if (legendScrollbar) {
@@ -79,6 +80,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         var el = $(e.currentTarget);
         var index = getSeriesIndexForElement(el);
         var seriesInfo = seriesList[index];
+        highlighting = true;
         ctrl.toggleHighlight(seriesInfo, e.type === 'mouseenter');
       }
 
@@ -121,6 +123,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         if (!ctrl.panel.legend.show) {
           elem.empty();
           firstRender = true;
+          return;
+        }
+
+        if (highlighting) {
+          highlighting = false;
           return;
         }
 
