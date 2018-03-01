@@ -1,3 +1,11 @@
+# 5.0.0-stable (2018-03-01)
+
+### Fixes
+
+- **oauth** Fix Github OAuth not working with private Organizations [#11028](https://github.com/grafana/grafana/pull/11028) [@lostick](https://github.com/lostick)
+- **kiosk** white area over bottom panels in kiosk mode [#11010](https://github.com/grafana/grafana/issues/11010)
+- **alerting** Fix OK state doesn't show up in Microsoft Teams [#11032](https://github.com/grafana/grafana/pull/11032), thx [@manacker](https://github.com/manacker)
+
 # 5.0.0-beta5 (2018-02-26)
 
 ### Fixes
