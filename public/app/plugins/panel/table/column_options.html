@@ -129,6 +129,20 @@
           </span>
         </info-popover>
       </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Parameterize by</label>
+        <input type="text" placeholder="Name or regex" class="gf-form-input width-29" ng-model="style.parameterizePattern" bs-tooltip="'Specify regex using /my.*regex/ syntax'"
+          ng-model-onblur ng-blur="editor.render()" data-placement="right">
+        <info-popover mode="right-absolute">
+          <p>Specify an regular expression</p>
+          <span>
+            Use a regular expression to parameterize a cell's content:
+            <br>
+            <em>$__pattern_n</em> refers to Nth sub-string after splitting the cell's content. Sub-string indexes are started from 0. For instance,
+            <em>$__pattern_1</em> refers to second sub-string of a cell's content.
+          </span>
+        </info-popover>
+      </div>
       <gf-form-switch class="gf-form" label-class="width-9" label="Open in new tab" checked="style.linkTargetBlank"></gf-form-switch>
     </div>
 
