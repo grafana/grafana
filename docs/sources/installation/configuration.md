@@ -354,7 +354,7 @@ enabled = true
 allow_sign_up = true
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-scopes = user:email
+scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
@@ -387,6 +387,7 @@ scopes = user:email,read:org
 team_ids = 150,300
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 ```
 
@@ -405,6 +406,7 @@ client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
@@ -795,11 +797,8 @@ Set root url to a Grafana instance where you want to publish external snapshots 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
 
-### remove expired snapshot
+### snapshot_remove_expired
 Enabled to automatically remove expired snapshots
-
-### remove snapshots after 90 days
-Time to live for snapshots.
 
 ## [external_image_storage]
 These options control how images should be made public so they can be shared on services like slack.
@@ -877,7 +876,5 @@ Container name where to store "Blob" images with random names. Creating the blob
 Defaults to true. Set to false to disable alerting engine and hide Alerting from UI.
 
 ### execute_alerts
-
-### execute_alerts = true
 
 Makes it possible to turn off alert rule execution.

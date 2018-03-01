@@ -137,6 +137,7 @@ func getDashboardHelper(orgId int64, slug string, id int64, uid string) (*m.Dash
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, ApiError(404, "Dashboard not found", err)
 	}
+
 	return query.Result, nil
 }
 
@@ -166,8 +167,10 @@ func DeleteDashboard(c *middleware.Context) Response {
 		return ApiError(500, "Failed to delete dashboard", err)
 	}
 
-	var resp = map[string]interface{}{"title": dash.Title}
-	return Json(200, resp)
+	return Json(200, util.DynMap{
+		"title":   dash.Title,
+		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
+	})
 }
 
 func DeleteDashboardByUid(c *middleware.Context) Response {
@@ -186,8 +189,10 @@ func DeleteDashboardByUid(c *middleware.Context) Response {
 		return ApiError(500, "Failed to delete dashboard", err)
 	}
 
-	var resp = map[string]interface{}{"title": dash.Title}
-	return Json(200, resp)
+	return Json(200, util.DynMap{
+		"title":   dash.Title,
+		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
+	})
 }
 
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
@@ -406,6 +411,18 @@ func GetDashboardVersion(c *middleware.Context) Response {
 // POST /api/dashboards/calculate-diff performs diffs on two dashboards
 func CalculateDashboardDiff(c *middleware.Context, apiOptions dtos.CalculateDiffOptions) Response {
 
+	guardianBase := guardian.New(apiOptions.Base.DashboardId, c.OrgId, c.SignedInUser)
+	if canSave, err := guardianBase.CanSave(); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
+	if apiOptions.Base.DashboardId != apiOptions.New.DashboardId {
+		guardianNew := guardian.New(apiOptions.New.DashboardId, c.OrgId, c.SignedInUser)
+		if canSave, err := guardianNew.CanSave(); err != nil || !canSave {
+			return dashboardGuardianResponse(err)
+		}
+	}
+
 	options := dashdiffs.Options{
 		OrgId:    c.OrgId,
 		DiffType: dashdiffs.ParseDiffType(apiOptions.DiffType),
@@ -431,9 +448,9 @@ func CalculateDashboardDiff(c *middleware.Context, apiOptions dtos.CalculateDiff
 
 	if options.DiffType == dashdiffs.DiffDelta {
 		return Respond(200, result.Delta).Header("Content-Type", "application/json")
-	} else {
-		return Respond(200, result.Delta).Header("Content-Type", "text/html")
 	}
+
+	return Respond(200, result.Delta).Header("Content-Type", "text/html")
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.

@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetDashboardAclList(c *middleware.Context) Response {
+func GetDashboardPermissionList(c *middleware.Context) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
@@ -18,15 +18,15 @@ func GetDashboardAclList(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
+	g := guardian.New(dashId, c.OrgId, c.SignedInUser)
 
-	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
+	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
 
-	acl, err := guardian.GetAcl()
+	acl, err := g.GetAcl()
 	if err != nil {
-		return ApiError(500, "Failed to get dashboard acl", err)
+		return ApiError(500, "Failed to get dashboard permissions", err)
 	}
 
 	for _, perm := range acl {
@@ -38,7 +38,7 @@ func GetDashboardAclList(c *middleware.Context) Response {
 	return Json(200, acl)
 }
 
-func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func UpdateDashboardPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
@@ -46,8 +46,8 @@ func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCom
 		return rsp
 	}
 
-	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
-	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
+	g := guardian.New(dashId, c.OrgId, c.SignedInUser)
+	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -67,8 +67,13 @@ func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCom
 		})
 	}
 
-	if okToUpdate, err := guardian.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
+			if err == guardian.ErrGuardianPermissionExists ||
+				err == guardian.ErrGuardianOverride {
+				return ApiError(400, err.Error(), err)
+			}
+
 			return ApiError(500, "Error while checking dashboard permissions", err)
 		}
 
@@ -82,5 +87,5 @@ func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCom
 		return ApiError(500, "Failed to create permission", err)
 	}
 
-	return ApiSuccess("Dashboard acl updated")
+	return ApiSuccess("Dashboard permissions updated")
 }

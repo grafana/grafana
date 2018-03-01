@@ -135,14 +135,6 @@ class AddPermissions extends Component<IProps, any> {
             </div>
           </div>
         </form>
-        {permissions.error ? (
-          <div className="gf-form width-17">
-            <span ng-if="ctrl.error" className="text-error p-l-1">
-              <i className="fa fa-warning" />
-              {permissions.error}
-            </span>
-          </div>
-        ) : null}
       </div>
     );
   }

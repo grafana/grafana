@@ -90,6 +90,18 @@ export async function createDashboard(user, dashboard) {
   return dashboard;
 }
 
+export async function createFolder(user, folder) {
+  const rsp = await client.callAs(user).post(`/api/folders`, {
+    uid: folder.uid,
+    title: folder.title,
+    overwrite: true,
+  });
+  folder.id = rsp.id;
+  folder.url = rsp.url;
+
+  return folder;
+}
+
 export async function ensureState(state) {
   const org = await getOrg(state.orgName);
 
@@ -99,8 +111,12 @@ export async function ensureState(state) {
     await setUsingOrg(user, org);
   }
 
-  for (let dashboard of state.dashboards) {
+  for (let dashboard of state.dashboards || []) {
     await createDashboard(state.admin, dashboard);
+  }
+
+  for (let folder of state.folders || []) {
+    await createFolder(state.admin, folder);
   }
 
   return state;

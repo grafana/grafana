@@ -1,10 +1,17 @@
 package guardian
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	ErrGuardianPermissionExists = errors.New("Permission already exists")
+	ErrGuardianOverride         = errors.New("You can only override a permission to be higher")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
@@ -119,14 +126,51 @@ func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.D
 }
 
 func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error) {
-	if g.user.OrgRole == m.ROLE_ADMIN {
-		return true, nil
+	acl := []*m.DashboardAclInfoDTO{}
+	adminRole := m.ROLE_ADMIN
+	everyoneWithAdminRole := &m.DashboardAclInfoDTO{DashboardId: g.dashId, UserId: 0, TeamId: 0, Role: &adminRole, Permission: m.PERMISSION_ADMIN}
+
+	// validate that duplicate permissions don't exists
+	for _, p := range updatePermissions {
+		aclItem := &m.DashboardAclInfoDTO{DashboardId: p.DashboardId, UserId: p.UserId, TeamId: p.TeamId, Role: p.Role, Permission: p.Permission}
+		if aclItem.IsDuplicateOf(everyoneWithAdminRole) {
+			return false, ErrGuardianPermissionExists
+		}
+
+		for _, a := range acl {
+			if a.IsDuplicateOf(aclItem) {
+				return false, ErrGuardianPermissionExists
+			}
+		}
+
+		acl = append(acl, aclItem)
 	}
 
-	acl := []*m.DashboardAclInfoDTO{}
+	existingPermissions, err := g.GetAcl()
+	if err != nil {
+		return false, err
+	}
 
-	for _, p := range updatePermissions {
-		acl = append(acl, &m.DashboardAclInfoDTO{UserId: p.UserId, TeamId: p.TeamId, Role: p.Role, Permission: p.Permission})
+	// validate overridden permissions to be higher
+	for _, a := range acl {
+		for _, existingPerm := range existingPermissions {
+			// handle default permissions
+			if existingPerm.DashboardId == -1 {
+				existingPerm.DashboardId = g.dashId
+			}
+
+			if a.DashboardId == existingPerm.DashboardId {
+				continue
+			}
+
+			if a.IsDuplicateOf(existingPerm) && a.Permission <= existingPerm.Permission {
+				return false, ErrGuardianOverride
+			}
+		}
+	}
+
+	if g.user.OrgRole == m.ROLE_ADMIN {
+		return true, nil
 	}
 
 	return g.checkAcl(permission, acl)
@@ -143,6 +187,13 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 		return nil, err
 	}
 
+	for _, a := range query.Result {
+		// handle default permissions
+		if a.DashboardId == -1 {
+			a.DashboardId = g.dashId
+		}
+	}
+
 	g.acl = query.Result
 	return g.acl, nil
 }
@@ -157,4 +208,55 @@ func (g *dashboardGuardianImpl) getTeams() ([]*m.Team, error) {
 
 	g.groups = query.Result
 	return query.Result, err
+}
+
+type FakeDashboardGuardian struct {
+	DashId                           int64
+	OrgId                            int64
+	User                             *m.SignedInUser
+	CanSaveValue                     bool
+	CanEditValue                     bool
+	CanViewValue                     bool
+	CanAdminValue                    bool
+	HasPermissionValue               bool
+	CheckPermissionBeforeUpdateValue bool
+	CheckPermissionBeforeUpdateError error
+	GetAclValue                      []*m.DashboardAclInfoDTO
+}
+
+func (g *FakeDashboardGuardian) CanSave() (bool, error) {
+	return g.CanSaveValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanEdit() (bool, error) {
+	return g.CanEditValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanView() (bool, error) {
+	return g.CanViewValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanAdmin() (bool, error) {
+	return g.CanAdminValue, nil
+}
+
+func (g *FakeDashboardGuardian) HasPermission(permission m.PermissionType) (bool, error) {
+	return g.HasPermissionValue, nil
+}
+
+func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission m.PermissionType, updatePermissions []*m.DashboardAcl) (bool, error) {
+	return g.CheckPermissionBeforeUpdateValue, g.CheckPermissionBeforeUpdateError
+}
+
+func (g *FakeDashboardGuardian) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
+	return g.GetAclValue, nil
+}
+
+func MockDashboardGuardian(mock *FakeDashboardGuardian) {
+	New = func(dashId int64, orgId int64, user *m.SignedInUser) DashboardGuardian {
+		mock.OrgId = orgId
+		mock.DashId = dashId
+		mock.User = user
+		return mock
+	}
 }

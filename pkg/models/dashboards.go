@@ -14,7 +14,7 @@ import (
 // Typed errors
 var (
 	ErrDashboardNotFound                      = errors.New("Dashboard not found")
-	ErrFolderNotFound                         = errors.New("Folder not found")
+	ErrDashboardFolderNotFound                = errors.New("Folder not found")
 	ErrDashboardSnapshotNotFound              = errors.New("Dashboard snapshot not found")
 	ErrDashboardWithSameUIDExists             = errors.New("A dashboard with the same uid already exists")
 	ErrDashboardWithSameNameInFolderExists    = errors.New("A dashboard with the same name in the folder already exists")
@@ -112,9 +112,9 @@ func NewDashboard(title string) *Dashboard {
 // NewDashboardFolder creates a new dashboard folder
 func NewDashboardFolder(title string) *Dashboard {
 	folder := NewDashboard(title)
+	folder.IsFolder = true
 	folder.Data.Set("schemaVersion", 16)
-	folder.Data.Set("editable", true)
-	folder.Data.Set("hideControls", true)
+	folder.Data.Set("version", 0)
 	folder.IsFolder = true
 	return folder
 }
@@ -164,10 +164,6 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 
 	if userId == 0 {
 		userId = -1
-	}
-
-	if dash.Data.Get("version").MustInt(0) == 0 {
-		dash.CreatedBy = userId
 	}
 
 	dash.UpdatedBy = userId
