@@ -772,6 +772,10 @@ kbn.valueFormats.dtdurations = function(size, decimals) {
   return kbn.toDuration(size, decimals, 'second');
 };
 
+kbn.valueFormats.dthms = function(size, decimals) {
+  return kbn.secondsToHms(size);
+};
+
 kbn.valueFormats.dateTimeAsIso = function(epoch) {
   var time = moment(epoch);
 
@@ -843,6 +847,7 @@ kbn.getUnitFormats = function() {
         { text: 'days (d)', value: 'd' },
         { text: 'duration (ms)', value: 'dtdurationms' },
         { text: 'duration (s)', value: 'dtdurations' },
+        { text: 'duration (hh:mm:ss)', value: 'dthms' },
       ],
     },
     {
