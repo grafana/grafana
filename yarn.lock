@@ -8275,16 +8275,23 @@ react-dom@^16.2.0:
     object-assign "^4.1.1"
     prop-types "^15.6.0"
 
-"react-draggable@^2.2.6 || ^3.0.3", react-draggable@^3.0.3:
+"react-draggable@^2.2.6 || ^3.0.3":
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/react-draggable/-/react-draggable-3.0.3.tgz#a6f9b3a7171981b76dadecf238316925cb9eacf4"
   dependencies:
     classnames "^2.2.5"
     prop-types "^15.5.10"
 
-react-grid-layout@^0.16.2:
-  version "0.16.2"
-  resolved "https://registry.yarnpkg.com/react-grid-layout/-/react-grid-layout-0.16.2.tgz#ef09b0b6db4a9635799663658277ee2d26fa2994"
+react-draggable@^3.0.3:
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/react-draggable/-/react-draggable-3.0.5.tgz#c031e0ed4313531f9409d6cd84c8ebcec0ddfe2d"
+  dependencies:
+    classnames "^2.2.5"
+    prop-types "^15.6.0"
+
+react-grid-layout-grafana@0.16.0:
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/react-grid-layout-grafana/-/react-grid-layout-grafana-0.16.0.tgz#12242153fcd0bb80a26af8e41694bc2fde788b3a"
   dependencies:
     classnames "2.x"
     lodash.isequal "^4.0.0"

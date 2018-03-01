@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -15,6 +16,35 @@ import (
 
 func TestFolderPermissionApiEndpoint(t *testing.T) {
 	Convey("Folder permissions test", t, func() {
+		Convey("Given folder not exists", func() {
+			mock := &fakeFolderService{
+				GetFolderByUidError: m.ErrFolderNotFound,
+			}
+
+			origNewFolderService := dashboards.NewFolderService
+			mockFolderService(mock)
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
+				callGetFolderPermissions(sc)
+				So(sc.resp.Code, ShouldEqual, 404)
+			})
+
+			cmd := dtos.UpdateDashboardAclCommand{
+				Items: []dtos.DashboardAclUpdateItem{
+					{UserId: 1000, Permission: m.PERMISSION_ADMIN},
+				},
+			}
+
+			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
+				callUpdateFolderPermissions(sc)
+				So(sc.resp.Code, ShouldEqual, 404)
+			})
+
+			Reset(func() {
+				dashboards.NewFolderService = origNewFolderService
+			})
+		})
+
 		Convey("Given user has no admin permissions", func() {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
@@ -54,7 +84,17 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 
 		Convey("Given user has admin permissions and permissions to update", func() {
 			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: true, CheckPermissionBeforeUpdateValue: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+				CanAdminValue:                    true,
+				CheckPermissionBeforeUpdateValue: true,
+				GetAclValue: []*m.DashboardAclInfoDTO{
+					{OrgId: 1, DashboardId: 1, UserId: 2, Permission: m.PERMISSION_VIEW},
+					{OrgId: 1, DashboardId: 1, UserId: 3, Permission: m.PERMISSION_EDIT},
+					{OrgId: 1, DashboardId: 1, UserId: 4, Permission: m.PERMISSION_ADMIN},
+					{OrgId: 1, DashboardId: 1, TeamId: 1, Permission: m.PERMISSION_VIEW},
+					{OrgId: 1, DashboardId: 1, TeamId: 2, Permission: m.PERMISSION_ADMIN},
+				},
+			})
 
 			mock := &fakeFolderService{
 				GetFolderByUidResult: &m.Folder{
@@ -70,6 +110,11 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", m.ROLE_ADMIN, func(sc *scenarioContext) {
 				callGetFolderPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				So(err, ShouldBeNil)
+				So(len(respJSON.MustArray()), ShouldEqual, 5)
+				So(respJSON.GetIndex(0).Get("userId").MustInt(), ShouldEqual, 2)
+				So(respJSON.GetIndex(0).Get("permission").MustInt(), ShouldEqual, m.PERMISSION_VIEW)
 			})
 
 			cmd := dtos.UpdateDashboardAclCommand{
@@ -81,6 +126,78 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
 				callUpdateFolderPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			Reset(func() {
+				guardian.New = origNewGuardian
+				dashboards.NewFolderService = origNewFolderService
+			})
+		})
+
+		Convey("When trying to update permissions with duplicate permissions", func() {
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+				CanAdminValue:                    true,
+				CheckPermissionBeforeUpdateValue: false,
+				CheckPermissionBeforeUpdateError: guardian.ErrGuardianPermissionExists,
+			})
+
+			mock := &fakeFolderService{
+				GetFolderByUidResult: &m.Folder{
+					Id:    1,
+					Uid:   "uid",
+					Title: "Folder",
+				},
+			}
+
+			origNewFolderService := dashboards.NewFolderService
+			mockFolderService(mock)
+
+			cmd := dtos.UpdateDashboardAclCommand{
+				Items: []dtos.DashboardAclUpdateItem{
+					{UserId: 1000, Permission: m.PERMISSION_ADMIN},
+				},
+			}
+
+			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
+				callUpdateFolderPermissions(sc)
+				So(sc.resp.Code, ShouldEqual, 400)
+			})
+
+			Reset(func() {
+				guardian.New = origNewGuardian
+				dashboards.NewFolderService = origNewFolderService
+			})
+		})
+
+		Convey("When trying to override inherited permissions with lower presedence", func() {
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+				CanAdminValue:                    true,
+				CheckPermissionBeforeUpdateValue: false,
+				CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverride},
+			)
+
+			mock := &fakeFolderService{
+				GetFolderByUidResult: &m.Folder{
+					Id:    1,
+					Uid:   "uid",
+					Title: "Folder",
+				},
+			}
+
+			origNewFolderService := dashboards.NewFolderService
+			mockFolderService(mock)
+
+			cmd := dtos.UpdateDashboardAclCommand{
+				Items: []dtos.DashboardAclUpdateItem{
+					{UserId: 1000, Permission: m.PERMISSION_ADMIN},
+				},
+			}
+
+			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
+				callUpdateFolderPermissions(sc)
+				So(sc.resp.Code, ShouldEqual, 400)
 			})
 
 			Reset(func() {

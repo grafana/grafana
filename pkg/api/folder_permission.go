@@ -19,13 +19,13 @@ func GetFolderPermissionList(c *middleware.Context) Response {
 		return toFolderError(err)
 	}
 
-	guardian := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
 
-	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
+	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return toFolderError(m.ErrFolderAccessDenied)
 	}
 
-	acl, err := guardian.GetAcl()
+	acl, err := g.GetAcl()
 	if err != nil {
 		return ApiError(500, "Failed to get folder permissions", err)
 	}
@@ -50,8 +50,8 @@ func UpdateFolderPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardA
 		return toFolderError(err)
 	}
 
-	guardian := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	canAdmin, err := guardian.CanAdmin()
+	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	canAdmin, err := g.CanAdmin()
 	if err != nil {
 		return toFolderError(err)
 	}
@@ -76,8 +76,13 @@ func UpdateFolderPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardA
 		})
 	}
 
-	if okToUpdate, err := guardian.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
+			if err == guardian.ErrGuardianPermissionExists ||
+				err == guardian.ErrGuardianOverride {
+				return ApiError(400, err.Error(), err)
+			}
+
 			return ApiError(500, "Error while checking folder permissions", err)
 		}
 

@@ -18,13 +18,13 @@ func GetDashboardPermissionList(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
+	g := guardian.New(dashId, c.OrgId, c.SignedInUser)
 
-	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
+	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
 
-	acl, err := guardian.GetAcl()
+	acl, err := g.GetAcl()
 	if err != nil {
 		return ApiError(500, "Failed to get dashboard permissions", err)
 	}
@@ -46,8 +46,8 @@ func UpdateDashboardPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboa
 		return rsp
 	}
 
-	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
-	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
+	g := guardian.New(dashId, c.OrgId, c.SignedInUser)
+	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -67,8 +67,13 @@ func UpdateDashboardPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboa
 		})
 	}
 
-	if okToUpdate, err := guardian.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
+			if err == guardian.ErrGuardianPermissionExists ||
+				err == guardian.ErrGuardianOverride {
+				return ApiError(400, err.Error(), err)
+			}
+
 			return ApiError(500, "Error while checking dashboard permissions", err)
 		}
 

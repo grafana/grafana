@@ -743,6 +743,53 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			}
 		})
 	})
+
+	Convey("Given two dashboards being compared", t, func() {
+		mockResult := []*m.DashboardAclInfoDTO{}
+		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+			query.Result = mockResult
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+			query.Result = &m.DashboardVersion{
+				Data: simplejson.NewFromAny(map[string]interface{}{
+					"title": "Dash" + string(query.DashboardId),
+				}),
+			}
+			return nil
+		})
+
+		cmd := dtos.CalculateDiffOptions{
+			Base: dtos.CalculateDiffTarget{
+				DashboardId: 1,
+				Version:     1,
+			},
+			New: dtos.CalculateDiffTarget{
+				DashboardId: 2,
+				Version:     2,
+			},
+			DiffType: "basic",
+		}
+
+		Convey("when user does not have permission", func() {
+			role := m.ROLE_VIEWER
+
+			postDiffScenario("When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
+				CallPostDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+		})
+
+		Convey("when user does have permission", func() {
+			role := m.ROLE_ADMIN
+
+			postDiffScenario("When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
+				CallPostDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+		})
+	})
 }
 
 func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
@@ -830,6 +877,28 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 		defer func() {
 			dashboards.NewService = origNewDashboardService
 		}()
+
+		fn(sc)
+	})
+}
+
+func postDiffScenario(desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions, role m.RoleType, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		sc := setupScenarioContext(url)
+		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+			sc.context = c
+			sc.context.SignedInUser = &m.SignedInUser{
+				OrgId:  TestOrgID,
+				UserId: TestUserID,
+			}
+			sc.context.OrgRole = role
+
+			return CalculateDashboardDiff(c, cmd)
+		})
+
+		sc.m.Post(routePattern, sc.defaultHandler)
 
 		fn(sc)
 	})
