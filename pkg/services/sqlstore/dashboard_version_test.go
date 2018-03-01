@@ -12,7 +12,7 @@ import (
 )
 
 func updateTestDashboard(dashboard *m.Dashboard, data map[string]interface{}) {
-	data["title"] = dashboard.Title
+	data["id"] = dashboard.Id
 
 	saveCmd := m.SaveDashboardCommand{
 		OrgId:     dashboard.OrgId,
@@ -29,7 +29,7 @@ func TestGetDashboardVersion(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Get a Dashboard ID and version ID", func() {
-			savedDash := insertTestDashboard("test dash 26", 1, "diff")
+			savedDash := insertTestDashboard("test dash 26", 1, 0, false, "diff")
 
 			query := m.GetDashboardVersionQuery{
 				DashboardId: savedDash.Id,
@@ -44,7 +44,7 @@ func TestGetDashboardVersion(t *testing.T) {
 
 			dashCmd := m.GetDashboardQuery{
 				OrgId: savedDash.OrgId,
-				Slug:  savedDash.Slug,
+				Uid:   savedDash.Uid,
 			}
 
 			err = GetDashboard(&dashCmd)
@@ -70,7 +70,7 @@ func TestGetDashboardVersion(t *testing.T) {
 func TestGetDashboardVersions(t *testing.T) {
 	Convey("Testing dashboard versions retrieval", t, func() {
 		InitTestDB(t)
-		savedDash := insertTestDashboard("test dash 43", 1, "diff-all")
+		savedDash := insertTestDashboard("test dash 43", 1, 0, false, "diff-all")
 
 		Convey("Get all versions for a given Dashboard ID", func() {
 			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
@@ -110,7 +110,7 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		versionsToWrite := 10
 		setting.DashboardVersionsToKeep = versionsToKeep
 
-		savedDash := insertTestDashboard("test dash 53", 1, "diff-all")
+		savedDash := insertTestDashboard("test dash 53", 1, 0, false, "diff-all")
 		for i := 0; i < versionsToWrite-1; i++ {
 			updateTestDashboard(savedDash, map[string]interface{}{
 				"tags": "different-tag",

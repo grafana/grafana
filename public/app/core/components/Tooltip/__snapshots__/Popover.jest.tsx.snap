@@ -1,0 +1,16 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Popover renders correctly 1`] = `
+<div
+  className="popper__manager test-class"
+>
+  <div
+    className="popper__target"
+    onClick={[Function]}
+  >
+    <button>
+      Button with Popover
+    </button>
+  </div>
+</div>
+`;

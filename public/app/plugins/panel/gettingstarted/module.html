@@ -1,19 +1,16 @@
 <div class="dashlist" ng-if="ctrl.checksDone">
   <div class="dashlist-section">
-    <h6 class="dashlist-section-header">
-      Getting Started with Grafana
-      <button class="dashlist-cta-close-btn" ng-click="ctrl.dismiss()">
-        <i class="fa fa-remove"></i>
-      </button>
-    </h6>
-    <ul class="progress-tracker">
-      <li class="progress-step" ng-repeat="step in ctrl.steps" ng-class="step.cssClass">
-        <a class="progress-link" ng-href="{{step.href}}" target="{{step.target}}" title="{{step.note}}">
-          <span class="progress-marker" ng-class="step.cssClass"><i class="{{step.icon}}"></i></span>
-          <span class="progress-text" ng-href="{{step.href}}" target="{{step.target}}">{{step.title}}</span>
-        </a>
-        <a class="btn progress-step-cta" ng-href="{{step.href}}" target="{{step.target}}">{{step.cta}}</a>
-      </li>
-    </ul>
-  </div>
+		<button class="dashlist-cta-close-btn" ng-click="ctrl.dismiss()">
+			<i class="fa fa-remove"></i>
+		</button>
+		<ul class="progress-tracker">
+			<li class="progress-step" ng-repeat="step in ctrl.steps" ng-class="step.cssClass">
+				<a class="progress-link" ng-href="{{step.href}}" target="{{step.target}}" title="{{step.note}}">
+					<span class="progress-marker" ng-class="step.cssClass"><i class="{{step.icon}}"></i></span>
+					<span class="progress-text" ng-href="{{step.href}}" target="{{step.target}}">{{step.title}}</span>
+				</a>
+				<a class="btn progress-step-cta" ng-href="{{step.href}}" target="{{step.target}}">{{step.cta}}</a>
+			</li>
+		</ul>
+	</div>
 </div>

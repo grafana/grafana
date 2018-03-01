@@ -9,6 +9,9 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
 ![](http://docs.grafana.org/assets/img/features/dashboard_ex1.png)
 
+## Grafana v5 Alpha Preview
+Grafana master is now v5.0 alpha. This is going to be the biggest and most foundational release Grafana has ever had, coming with a ton of UX improvements, a new dashboard grid engine, dashboard folders, user teams and permissions. Checkout out this [video preview](https://www.youtube.com/watch?v=BC_YRNpqj5k) of Grafana v5.
+
 ## Installation
 Head to [docs.grafana.org](http://docs.grafana.org/installation/) and [download](https://grafana.com/get)
 the latest release.
@@ -19,7 +22,7 @@ If you have any problems please read the [troubleshooting guide](http://docs.gra
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
 
 ## Run from master
-If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
+If you want to build a package yourself, or contribute - Here is a guide for how to do that. You can always find
 the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
@@ -42,23 +45,17 @@ For this you need nodejs (v.6+).
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-npm run build
-```
-
-To rebuild frontend assets (typescript, sass etc) as you change them start the watcher via.
-
-```bash
 npm run watch
 ```
 
-Run tests
+Run tests 
 ```bash
-npm run test
+npm run jest
 ```
 
-Run tests in watch mode
+Run karma tests
 ```bash
-npm run watch-test
+npm run karma
 ```
 
 ### Recompile backend on source change
@@ -83,8 +80,11 @@ In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = 
 
 ### Running tests
 
-- You can run backend Golang tests using "go test ./pkg/...".
-- Execute all frontend tests with "npm run test"
+#### Frontend
+Execute all frontend tests
+```bash
+npm run test
+```
 
 Writing & watching frontend tests (we have two test runners)
 
@@ -95,9 +95,21 @@ Writing & watching frontend tests (we have two test runners)
   - Start watcher: `npm run karma`
   - Karma+Mocha runs all files that end with the name "_specs.ts".
 
+#### Backend
+```bash
+# Run Golang tests using sqlite3 as database (default)
+go test ./pkg/... 
+
+# Run Golang tests using mysql as database - convenient to use /docker/blocks/mysql_tests
+GRAFANA_TEST_DB=mysql go test ./pkg/... 
+
+# Run Golang tests using postgres as database - convenient to use /docker/blocks/postgres_tests
+GRAFANA_TEST_DB=postgres go test ./pkg/... 
+```
+
 ## Contribute
 
-If you have any idea for an improvement or found a bug do not hesitate to open an issue.
+If you have any idea for an improvement or found a bug, do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!
 

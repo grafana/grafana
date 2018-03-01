@@ -2,7 +2,6 @@
 // Forms
 // --------------------------------------------------
 
-
 // GENERAL STYLES
 // --------------
 
@@ -20,7 +19,7 @@ legend {
 
   // Small
   small {
-    font-size: $line-height-base * .75;
+    font-size: $line-height-base * 0.75;
     color: $gray-2;
   }
 }
@@ -100,11 +99,11 @@ input[type="checkbox"]:focus {
 // not a big fan of number fields
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
 input[type="number"] {
-    -moz-appearance: textfield;
+  -moz-appearance: textfield;
 }
 // Placeholder
 // -------------------------
@@ -119,12 +118,24 @@ textarea {
 // -----------
 
 // General classes for quick sizes
-.input-mini       { width: 60px; }
-.input-small      { width: 90px; }
-.input-medium     { width: 150px; }
-.input-large      { width: 210px; }
-.input-xlarge     { width: 270px; }
-.input-xxlarge    { width: 530px; }
+.input-mini {
+  width: 60px;
+}
+.input-small {
+  width: 90px;
+}
+.input-medium {
+  width: 150px;
+}
+.input-large {
+  width: 210px;
+}
+.input-xlarge {
+  width: 270px;
+}
+.input-xxlarge {
+  width: 530px;
+}
 
 // GRID SIZING FOR INPUTS
 // ----------------------
@@ -152,7 +163,7 @@ input[type="checkbox"][readonly] {
   background-color: transparent;
 }
 
-input[type=text].input-fluid {
+input[type="text"].input-fluid {
   width: 100%;
   box-sizing: border-box;
   padding: 10px;
@@ -180,10 +191,10 @@ label.cr1 {
   padding: 0 0 0 20px;
   vertical-align: top;
   background: url($checkboxImageUrl) left top no-repeat;
-  cursor:pointer;
+  cursor: pointer;
 }
 
-input[type="checkbox"].cr1:checked+label {
+input[type="checkbox"].cr1:checked + label {
   background: url($checkboxImageUrl) 0px -18px no-repeat;
 }
 
@@ -192,7 +203,7 @@ input[type="checkbox"].cr1:checked+label {
   display: block;
   overflow: hidden;
   padding-right: 10px;
-  input[type=text] {
+  input[type="text"] {
     width: 100%;
     padding: 5px 6px;
     height: 100%;

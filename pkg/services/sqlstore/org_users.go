@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -69,9 +70,30 @@ func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
 
 func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 	query.Result = make([]*m.OrgUserDTO, 0)
+
 	sess := x.Table("org_user")
 	sess.Join("INNER", "user", fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
-	sess.Where("org_user.org_id=?", query.OrgId)
+
+	whereConditions := make([]string, 0)
+	whereParams := make([]interface{}, 0)
+
+	whereConditions = append(whereConditions, "org_user.org_id = ?")
+	whereParams = append(whereParams, query.OrgId)
+
+	if query.Query != "" {
+		queryWithWildcards := "%" + query.Query + "%"
+		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
+		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+
+	if len(whereConditions) > 0 {
+		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+	}
+
+	if query.Limit > 0 {
+		sess.Limit(query.Limit, 0)
+	}
+
 	sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role", "user.last_seen_at")
 	sess.Asc("user.email", "user.login")
 
@@ -88,10 +110,17 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 
 func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM org_user WHERE org_id=? and user_id=?"
-		_, err := sess.Exec(rawSql, cmd.OrgId, cmd.UserId)
-		if err != nil {
-			return err
+		deletes := []string{
+			"DELETE FROM org_user WHERE org_id=? and user_id=?",
+			"DELETE FROM dashboard_acl WHERE org_id=? and user_id = ?",
+			"DELETE FROM team_member WHERE org_id=? and user_id = ?",
+		}
+
+		for _, sql := range deletes {
+			_, err := sess.Exec(sql, cmd.OrgId, cmd.UserId)
+			if err != nil {
+				return err
+			}
 		}
 
 		return validateOneAdminLeftInOrg(cmd.OrgId, sess)

@@ -18,6 +18,7 @@
   },
 
   "info": {
+    "description": "Prometheus Data Source for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -25,6 +26,10 @@
     "logos": {
       "small": "img/prometheus_logo.svg",
       "large": "img/prometheus_logo.svg"
-    }
+    },
+    "links": [
+      {"name": "Prometheus", "url": "https://prometheus.io/"}
+    ],
+    "version": "5.0.0"
   }
 }

@@ -1,11 +1,10 @@
 import angular from 'angular';
 
 export class AdminListOrgsCtrl {
-
   /** @ngInject */
   constructor($scope, backendSrv, navModelSrv) {
     $scope.init = function() {
-      $scope.navModel = navModelSrv.getAdminNav();
+      $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs', 1);
       $scope.getOrgs();
     };
 
@@ -26,7 +25,7 @@ export class AdminListOrgsCtrl {
           backendSrv.delete('/api/orgs/' + org.id).then(function() {
             $scope.getOrgs();
           });
-        }
+        },
       });
     };
 

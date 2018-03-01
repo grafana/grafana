@@ -1,7 +1,6 @@
-import {Parser} from '../parser';
+import { Parser } from '../parser';
 
 describe('when parsing', function() {
-
   it('simple metric expression', function() {
     var parser = new Parser('metric.test.*.asd.count');
     var rootNode = parser.getAst();
@@ -75,7 +74,7 @@ describe('when parsing', function() {
   });
 
   it('function with nested function', function() {
-    var parser = new Parser("sum(scaleToSeconds(test, 1))");
+    var parser = new Parser('sum(scaleToSeconds(test, 1))');
     var rootNode = parser.getAst();
 
     expect(rootNode.type).toBe('function');
@@ -88,7 +87,7 @@ describe('when parsing', function() {
   });
 
   it('function with multiple series', function() {
-    var parser = new Parser("sum(test.test.*.count, test.timers.*.count)");
+    var parser = new Parser('sum(test.test.*.count, test.timers.*.count)');
     var rootNode = parser.getAst();
 
     expect(rootNode.type).toBe('function');
@@ -98,7 +97,7 @@ describe('when parsing', function() {
   });
 
   it('function with templated series', function() {
-    var parser = new Parser("sum(test.[[server]].count)");
+    var parser = new Parser('sum(test.[[server]].count)');
     var rootNode = parser.getAst();
 
     expect(rootNode.message).toBe(undefined);

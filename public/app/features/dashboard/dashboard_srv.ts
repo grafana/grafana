@@ -1,14 +1,12 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
-import {DashboardModel} from './model';
+import { DashboardModel } from './dashboard_model';
+import locationUtil from 'app/core/utils/location_util';
 
 export class DashboardSrv {
   dash: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $rootScope, private $location) {
-  }
+  constructor(private backendSrv, private $rootScope, private $location) {}
 
   create(dashboard, meta) {
     return new DashboardModel(dashboard, meta);
@@ -22,53 +20,56 @@ export class DashboardSrv {
     return this.dash;
   }
 
-  handleSaveDashboardError(clone, err) {
-    if (err.data && err.data.status === "version-mismatch") {
+  handleSaveDashboardError(clone, options, err) {
+    options = options || {};
+    options.overwrite = true;
+
+    if (err.data && err.data.status === 'version-mismatch') {
       err.isHandled = true;
 
       this.$rootScope.appEvent('confirm-modal', {
         title: 'Conflict',
         text: 'Someone else has updated this dashboard.',
         text2: 'Would you still like to save this dashboard?',
-        yesText: "Save & Overwrite",
-        icon: "fa-warning",
+        yesText: 'Save & Overwrite',
+        icon: 'fa-warning',
         onConfirm: () => {
-          this.save(clone, {overwrite: true});
-        }
+          this.save(clone, options);
+        },
       });
     }
 
-    if (err.data && err.data.status === "name-exists") {
+    if (err.data && err.data.status === 'name-exists') {
       err.isHandled = true;
 
       this.$rootScope.appEvent('confirm-modal', {
         title: 'Conflict',
-        text: 'Dashboard with the same name exists.',
+        text: 'A dashboard with the same name in selected folder already exists.',
         text2: 'Would you still like to save this dashboard?',
-        yesText: "Save & Overwrite",
-        icon: "fa-warning",
+        yesText: 'Save & Overwrite',
+        icon: 'fa-warning',
         onConfirm: () => {
-          this.save(clone, {overwrite: true});
-        }
+          this.save(clone, options);
+        },
       });
     }
 
-    if (err.data && err.data.status === "plugin-dashboard") {
+    if (err.data && err.data.status === 'plugin-dashboard') {
       err.isHandled = true;
 
       this.$rootScope.appEvent('confirm-modal', {
         title: 'Plugin Dashboard',
         text: err.data.message,
         text2: 'Your changes will be lost when you update the plugin. Use Save As to create custom version.',
-        yesText: "Overwrite",
-        icon: "fa-warning",
-        altActionText: "Save As",
+        yesText: 'Overwrite',
+        icon: 'fa-warning',
+        altActionText: 'Save As',
         onAltAction: () => {
           this.showSaveAsModal();
         },
         onConfirm: () => {
-          this.save(clone, {overwrite: true});
-        }
+          this.save(clone, { overwrite: true });
+        },
       });
     }
   }
@@ -76,19 +77,27 @@ export class DashboardSrv {
   postSave(clone, data) {
     this.dash.version = data.version;
 
-    var dashboardUrl = '/dashboard/db/' + data.slug;
-    if (dashboardUrl !== this.$location.path()) {
-      this.$location.url(dashboardUrl);
+    const newUrl = locationUtil.stripBaseFromUrl(data.url);
+    const currentPath = this.$location.path();
+
+    if (newUrl !== currentPath) {
+      this.$location.url(newUrl).replace();
     }
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);
     this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
+
+    return this.dash;
   }
 
   save(clone, options) {
-    return this.backendSrv.saveDashboard(clone, options)
+    options = options || {};
+    options.folderId = options.folderId >= 0 ? options.folderId : this.dash.meta.folderId || clone.folderId;
+
+    return this.backendSrv
+      .saveDashboard(clone, options)
       .then(this.postSave.bind(this, clone))
-      .catch(this.handleSaveDashboardError.bind(this, clone));
+      .catch(this.handleSaveDashboardError.bind(this, clone, options));
   }
 
   saveDashboard(options, clone) {
@@ -112,23 +121,16 @@ export class DashboardSrv {
   }
 
   showSaveAsModal() {
-    var newScope = this.$rootScope.$new();
-    newScope.clone = this.dash.getSaveModelClone();
-    newScope.clone.editable = true;
-    newScope.clone.hideControls = false;
-
     this.$rootScope.appEvent('show-modal', {
       templateHtml: '<save-dashboard-as-modal dismiss="dismiss()"></save-dashboard-as-modal>',
-      scope: newScope,
-      modalClass: 'modal--narrow'
+      modalClass: 'modal--narrow',
     });
   }
 
   showSaveModal() {
     this.$rootScope.appEvent('show-modal', {
       templateHtml: '<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>',
-      scope: this.$rootScope.$new(),
-      modalClass: 'modal--narrow'
+      modalClass: 'modal--narrow',
     });
   }
 
@@ -136,7 +138,7 @@ export class DashboardSrv {
     let promise;
 
     if (isStarred) {
-      promise = this.backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() =>  {
+      promise = this.backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() => {
         return false;
       });
     } else {
@@ -155,4 +157,3 @@ export class DashboardSrv {
 }
 
 coreModule.service('dashboardSrv', DashboardSrv);
-

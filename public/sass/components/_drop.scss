@@ -3,7 +3,7 @@ $color: inherit;
 $color: $text-color;
 $useDropShadow: false;
 $attachmentOffset: 0%;
-$easing: cubic-bezier(0, 0, 0.265, 1.00);
+$easing: cubic-bezier(0, 0, 0.265, 1);
 
 @include drop-theme("error", $popover-error-bg, $popover-color);
 @include drop-theme("popover", $popover-bg, $popover-color, $popover-border-color);
@@ -22,9 +22,10 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
   &.drop-open {
     display: block;
   }
- }
+}
 
-.drop-element, .drop-element * {
+.drop-element,
+.drop-element * {
   box-sizing: border-box;
 }
 

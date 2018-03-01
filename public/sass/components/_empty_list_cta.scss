@@ -1,0 +1,24 @@
+.empty-list-cta {
+  background-color: $empty-list-cta-bg;
+  text-align: center;
+  padding: $spacer*2;
+  border-radius: $border-radius;
+
+  .grafana-info-box {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+}
+
+.empty-list-cta__title {
+  padding-bottom: $spacer*3;
+  font-style: italic;
+}
+
+.empty-list-cta__button {
+  margin-bottom: $spacer*3;
+}
+
+.empty-list-cta__pro-tip-link {
+  margin-left: 5px;
+}

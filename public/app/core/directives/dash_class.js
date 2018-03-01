@@ -18,21 +18,16 @@ function (_, $, coreModule) {
           elem.toggleClass('panel-in-fullscreen', false);
         });
 
-        var lastHideControlsVal;
-        $scope.$watch('dashboard.hideControls', function() {
-          if (!$scope.dashboard) {
-            return;
+        $scope.$watch('ctrl.dashboardViewState.state.editview', function(newValue) {
+          if (newValue) {
+            elem.toggleClass('dashboard-page--settings-opening', _.isString(newValue));
+            setTimeout(function() {
+              elem.toggleClass('dashboard-page--settings-open', _.isString(newValue));
+            }, 10);
+          } else {
+            elem.removeClass('dashboard-page--settings-opening');
+            elem.removeClass('dashboard-page--settings-open');
           }
-
-          var hideControls = $scope.dashboard.hideControls;
-          if (lastHideControlsVal !== hideControls) {
-            elem.toggleClass('hide-controls', hideControls);
-            lastHideControlsVal = hideControls;
-          }
-        });
-
-        $scope.$watch('playlistSrv.isPlaying', function(newValue) {
-          elem.toggleClass('playlist-active', newValue === true);
         });
       }
     };

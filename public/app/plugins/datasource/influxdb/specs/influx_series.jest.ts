@@ -7,11 +7,11 @@ describe('when generating timeseries from influxdb response', function() {
       series: [
         {
           name: 'cpu',
-          tags:  {app: 'test', server: 'server1'},
+          tags: { app: 'test', server: 'server1' },
           columns: ['time', 'mean', 'max', 'min'],
-          values: [[1431946625000, 10, 11, 9], [1431946626000, 20, 21, 19]]
-        }
-      ]
+          values: [[1431946625000, 10, 11, 9], [1431946626000, 20, 21, 19]],
+        },
+      ],
     };
     describe('and no alias', function() {
       it('should generate multiple datapoints for each column', function() {
@@ -36,7 +36,6 @@ describe('when generating timeseries from influxdb response', function() {
         expect(result[2].datapoints[0][1]).toBe(1431946625000);
         expect(result[2].datapoints[1][0]).toBe(19);
         expect(result[2].datapoints[1][1]).toBe(1431946626000);
-
       });
     });
 
@@ -50,7 +49,6 @@ describe('when generating timeseries from influxdb response', function() {
         expect(result[1].target).toBe('new series');
         expect(result[2].target).toBe('new series');
       });
-
     });
 
     describe('and alias patterns', function() {
@@ -63,28 +61,28 @@ describe('when generating timeseries from influxdb response', function() {
         expect(result[1].target).toBe('alias: cpu -> server1 (cpu)');
         expect(result[2].target).toBe('alias: cpu -> server1 (cpu)');
       });
-
     });
   });
 
   describe('given measurement with default fieldname', function() {
-    var options = { series: [
-      {
-        name: 'cpu',
-        tags:  {app: 'test', server: 'server1'},
-        columns: ['time', 'value'],
-        values: [["2015-05-18T10:57:05Z", 10], ["2015-05-18T10:57:06Z", 12]]
-      },
-      {
-        name: 'cpu',
-        tags:  {app: 'test2', server: 'server2'},
-        columns: ['time', 'value'],
-        values: [["2015-05-18T10:57:05Z", 15], ["2015-05-18T10:57:06Z", 16]]
-      }
-    ]};
+    var options = {
+      series: [
+        {
+          name: 'cpu',
+          tags: { app: 'test', server: 'server1' },
+          columns: ['time', 'value'],
+          values: [['2015-05-18T10:57:05Z', 10], ['2015-05-18T10:57:06Z', 12]],
+        },
+        {
+          name: 'cpu',
+          tags: { app: 'test2', server: 'server2' },
+          columns: ['time', 'value'],
+          values: [['2015-05-18T10:57:05Z', 15], ['2015-05-18T10:57:06Z', 16]],
+        },
+      ],
+    };
 
     describe('and no alias', function() {
-
       it('should generate label with no field', function() {
         var series = new InfluxSeries(options);
         var result = series.getTimeSeries();
@@ -93,7 +91,6 @@ describe('when generating timeseries from influxdb response', function() {
         expect(result[1].target).toBe('cpu {app: test2, server: server2}');
       });
     });
-
   });
 
   describe('given two series', function() {
@@ -102,21 +99,20 @@ describe('when generating timeseries from influxdb response', function() {
       series: [
         {
           name: 'cpu',
-          tags:  {app: 'test', server: 'server1'},
+          tags: { app: 'test', server: 'server1' },
           columns: ['time', 'mean'],
-          values: [[1431946625000, 10], [1431946626000, 12]]
+          values: [[1431946625000, 10], [1431946626000, 12]],
         },
         {
           name: 'cpu',
-          tags:  {app: 'test2', server: 'server2'},
+          tags: { app: 'test2', server: 'server2' },
           columns: ['time', 'mean'],
-          values: [[1431946625000, 15], [1431946626000, 16]]
-        }
-      ]
+          values: [[1431946625000, 15], [1431946626000, 16]],
+        },
+      ],
     };
 
     describe('and no alias', function() {
-
       it('should generate two time series', function() {
         var series = new InfluxSeries(options);
         var result = series.getTimeSeries();
@@ -144,7 +140,6 @@ describe('when generating timeseries from influxdb response', function() {
 
         expect(result[0].target).toBe('new series');
       });
-
     });
 
     describe('and alias patterns', function() {
@@ -156,9 +151,7 @@ describe('when generating timeseries from influxdb response', function() {
         expect(result[0].target).toBe('alias: cpu -> server1 (cpu)');
         expect(result[1].target).toBe('alias: cpu -> server2 (cpu)');
       });
-
     });
-
   });
 
   describe('given measurement with dots', function() {
@@ -167,11 +160,11 @@ describe('when generating timeseries from influxdb response', function() {
       series: [
         {
           name: 'app.prod.server1.count',
-          tags:  {},
+          tags: {},
           columns: ['time', 'mean'],
-          values: [[1431946625000, 10], [1431946626000, 12]]
-        }
-      ]
+          values: [[1431946625000, 10], [1431946626000, 12]],
+        },
+      ],
     };
 
     it('should replace patterns', function() {
@@ -189,11 +182,11 @@ describe('when generating timeseries from influxdb response', function() {
       series: [
         {
           name: 'app.prod.server1.count',
-          tags:  {datacenter: 'Africa', server: 'server2'},
+          tags: { datacenter: 'Africa', server: 'server2' },
           columns: ['time', 'value2', 'value'],
-          values: [[1431946625000, 23, 10], [1431946626000, 25, 12]]
-        }
-      ]
+          values: [[1431946625000, 23, 10], [1431946626000, 25, 12]],
+        },
+      ],
     };
 
     it('should return table', function() {
@@ -213,14 +206,12 @@ describe('when generating timeseries from influxdb response', function() {
         annotation: {},
         series: [
           {
-            name: "logins.count",
-            tags:  {datacenter: 'Africa', server: 'server2'},
-            columns: ["time", "datacenter", "hostname", "source", "value"],
-            values: [
-              [1481549440372, "America", "10.1.100.10", "backend", 215.7432653659507],
-            ]
-          }
-        ]
+            name: 'logins.count',
+            tags: { datacenter: 'Africa', server: 'server2' },
+            columns: ['time', 'datacenter', 'hostname', 'source', 'value'],
+            values: [[1481549440372, 'America', '10.1.100.10', 'backend', 215.7432653659507]],
+          },
+        ],
       };
 
       it('should multiple tags', function() {
@@ -235,18 +226,16 @@ describe('when generating timeseries from influxdb response', function() {
       var options = {
         alias: '',
         annotation: {
-          tagsColumn: 'datacenter, source'
+          tagsColumn: 'datacenter, source',
         },
         series: [
           {
-            name: "logins.count",
-            tags:  {datacenter: 'Africa', server: 'server2'},
-            columns: ["time", "datacenter", "hostname", "source", "value"],
-            values: [
-              [1481549440372, "America", "10.1.100.10", "backend", 215.7432653659507],
-            ]
-          }
-        ]
+            name: 'logins.count',
+            tags: { datacenter: 'Africa', server: 'server2' },
+            columns: ['time', 'datacenter', 'hostname', 'source', 'value'],
+            values: [[1481549440372, 'America', '10.1.100.10', 'backend', 215.7432653659507]],
+          },
+        ],
       };
 
       it('should multiple tags', function() {
@@ -260,4 +249,3 @@ describe('when generating timeseries from influxdb response', function() {
     });
   });
 });
-

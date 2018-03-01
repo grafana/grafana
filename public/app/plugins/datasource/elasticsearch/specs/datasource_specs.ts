@@ -1,9 +1,9 @@
 import _ from 'lodash';
-import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
 import angular from 'angular';
 import helpers from 'test/specs/helpers';
-import {ElasticDatasource} from "../datasource";
+import { ElasticDatasource } from '../datasource';
 
 describe('ElasticDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -12,36 +12,44 @@ describe('ElasticDatasource', function() {
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv', 'timeSrv']));
 
-  beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-    ctx.$q = $q;
-    ctx.$httpBackend =  $httpBackend;
-    ctx.$rootScope = $rootScope;
-    ctx.$injector = $injector;
-    $httpBackend.when('GET', /\.html$/).respond('');
-  }));
+  beforeEach(
+    angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+      ctx.$q = $q;
+      ctx.$httpBackend = $httpBackend;
+      ctx.$rootScope = $rootScope;
+      ctx.$injector = $injector;
+      $httpBackend.when('GET', /\.html$/).respond('');
+    })
+  );
 
   function createDatasource(instanceSettings) {
     instanceSettings.jsonData = instanceSettings.jsonData || {};
-    ctx.ds = ctx.$injector.instantiate(ElasticDatasource, {instanceSettings: instanceSettings});
+    ctx.ds = ctx.$injector.instantiate(ElasticDatasource, {
+      instanceSettings: instanceSettings,
+    });
   }
 
   describe('When testing datasource with index pattern', function() {
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily', esVersion: '2'}});
+      createDatasource({
+        url: 'http://es.com',
+        index: '[asd-]YYYY.MM.DD',
+        jsonData: { interval: 'Daily', esVersion: '2' },
+      });
     });
 
     it('should translate index pattern to current day', function() {
       var requestOptions;
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
-        return ctx.$q.when({data: {}});
+        return ctx.$q.when({ data: {} });
       };
 
       ctx.ds.testDatasource();
       ctx.$rootScope.$apply();
 
-      var today = moment.utc().format("YYYY.MM.DD");
-      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_mapping');
+      var today = moment.utc().format('YYYY.MM.DD');
+      expect(requestOptions.url).to.be('http://es.com/asd-' + today + '/_mapping');
     });
   });
 
@@ -49,19 +57,29 @@ describe('ElasticDatasource', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily', esVersion: '2'}});
+      createDatasource({
+        url: 'http://es.com',
+        index: '[asd-]YYYY.MM.DD',
+        jsonData: { interval: 'Daily', esVersion: '2' },
+      });
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
-        return ctx.$q.when({data: {responses: []}});
+        return ctx.$q.when({ data: { responses: [] } });
       };
 
       ctx.ds.query({
         range: {
           from: moment.utc([2015, 4, 30, 10]),
-          to: moment.utc([2015, 5, 1, 10])
+          to: moment.utc([2015, 5, 1, 10]),
         },
-        targets: [{ bucketAggs: [], metrics: [{type: 'raw_document'}], query: 'escape\\:test' }]
+        targets: [
+          {
+            bucketAggs: [],
+            metrics: [{ type: 'raw_document' }],
+            query: 'escape\\:test',
+          },
+        ],
       });
 
       ctx.$rootScope.$apply();
@@ -84,16 +102,29 @@ describe('ElasticDatasource', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '2'}});
+      createDatasource({
+        url: 'http://es.com',
+        index: 'test',
+        jsonData: { esVersion: '2' },
+      });
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
-        return ctx.$q.when({data: {responses: []}});
+        return ctx.$q.when({ data: { responses: [] } });
       };
 
       ctx.ds.query({
-        range: { from: moment([2015, 4, 30, 10]), to: moment([2015, 5, 1, 10]) },
-        targets: [{ bucketAggs: [], metrics: [{type: 'raw_document'}], query: 'test' }]
+        range: {
+          from: moment([2015, 4, 30, 10]),
+          to: moment([2015, 5, 1, 10]),
+        },
+        targets: [
+          {
+            bucketAggs: [],
+            metrics: [{ type: 'raw_document' }],
+            query: 'test',
+          },
+        ],
       });
 
       ctx.$rootScope.$apply();
@@ -112,101 +143,100 @@ describe('ElasticDatasource', function() {
   });
 
   describe('When getting fields', function() {
-    var requestOptions;
-
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: 'metricbeat'});
+      createDatasource({ url: 'http://es.com', index: 'metricbeat' });
 
       ctx.backendSrv.datasourceRequest = function(options) {
-        requestOptions = options;
-        return ctx.$q.when({data: {
-          metricbeat: {
-            mappings: {
-              metricsets: {
-                _all: {},
-                properties: {
-                  '@timestamp': {type: 'date'},
-                  beat: {
-                    properties: {
-                      name: {
-                        fields: {raw: {type: 'keyword'}},
-                        type: 'string'
+        return ctx.$q.when({
+          data: {
+            metricbeat: {
+              mappings: {
+                metricsets: {
+                  _all: {},
+                  properties: {
+                    '@timestamp': { type: 'date' },
+                    beat: {
+                      properties: {
+                        name: {
+                          fields: { raw: { type: 'keyword' } },
+                          type: 'string',
+                        },
+                        hostname: { type: 'string' },
                       },
-                      hostname: {type: 'string'},
-                    }
-                  },
-                  system: {
-                    properties: {
-                      cpu: {
-                        properties: {
-                          system: {type: 'float'},
-                          user: {type: 'float'},
-                        }
-                      },
-                      process: {
-                        properties: {
-                          cpu: {
-                            properties: {
-                              total: {type: 'float'}
-                            }
+                    },
+                    system: {
+                      properties: {
+                        cpu: {
+                          properties: {
+                            system: { type: 'float' },
+                            user: { type: 'float' },
                           },
-                          name: {type: 'string'},
-                        }
+                        },
+                        process: {
+                          properties: {
+                            cpu: {
+                              properties: {
+                                total: { type: 'float' },
+                              },
+                            },
+                            name: { type: 'string' },
+                          },
+                        },
                       },
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }});
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
       };
     });
 
     it('should return nested fields', function() {
-      ctx.ds.getFields({
-        find: 'fields',
-        query: '*'
-      }).then((fieldObjects) => {
-        var fields = _.map(fieldObjects, 'text');
-        expect(fields).to.eql([
-          '@timestamp',
-          'beat.name.raw',
-          'beat.name',
-          'beat.hostname',
-          'system.cpu.system',
-          'system.cpu.user',
-          'system.process.cpu.total',
-          'system.process.name'
-        ]);
-      });
+      ctx.ds
+        .getFields({
+          find: 'fields',
+          query: '*',
+        })
+        .then(fieldObjects => {
+          var fields = _.map(fieldObjects, 'text');
+          expect(fields).to.eql([
+            '@timestamp',
+            'beat.name.raw',
+            'beat.name',
+            'beat.hostname',
+            'system.cpu.system',
+            'system.cpu.user',
+            'system.process.cpu.total',
+            'system.process.name',
+          ]);
+        });
       ctx.$rootScope.$apply();
     });
 
     it('should return fields related to query type', function() {
-      ctx.ds.getFields({
-        find: 'fields',
-        query: '*',
-        type: 'number'
-      }).then((fieldObjects) => {
-        var fields = _.map(fieldObjects, 'text');
-        expect(fields).to.eql([
-          'system.cpu.system',
-          'system.cpu.user',
-          'system.process.cpu.total'
-        ]);
-      });
+      ctx.ds
+        .getFields({
+          find: 'fields',
+          query: '*',
+          type: 'number',
+        })
+        .then(fieldObjects => {
+          var fields = _.map(fieldObjects, 'text');
+          expect(fields).to.eql(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
+        });
 
-      ctx.ds.getFields({
-        find: 'fields',
-        query: '*',
-        type: 'date'
-      }).then((fieldObjects) => {
-        var fields = _.map(fieldObjects, 'text');
-        expect(fields).to.eql([
-          '@timestamp'
-        ]);
-      });
+      ctx.ds
+        .getFields({
+          find: 'fields',
+          query: '*',
+          type: 'date',
+        })
+        .then(fieldObjects => {
+          var fields = _.map(fieldObjects, 'text');
+          expect(fields).to.eql(['@timestamp']);
+        });
 
       ctx.$rootScope.$apply();
     });
@@ -216,22 +246,29 @@ describe('ElasticDatasource', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '5'}});
+      createDatasource({
+        url: 'http://es.com',
+        index: 'test',
+        jsonData: { esVersion: '5' },
+      });
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
-        return ctx.$q.when({data: {responses: []}});
+        return ctx.$q.when({ data: { responses: [] } });
       };
 
       ctx.ds.query({
-        range: { from: moment([2015, 4, 30, 10]), to: moment([2015, 5, 1, 10]) },
-        targets: [{
-            bucketAggs: [
-                {type: 'date_histogram', field: '@timestamp', id: '2'}
-            ],
-            metrics: [
-                {type: 'count'}], query: 'test' }
-            ]
+        range: {
+          from: moment([2015, 4, 30, 10]),
+          to: moment([2015, 5, 1, 10]),
+        },
+        targets: [
+          {
+            bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
+            metrics: [{ type: 'count' }],
+            query: 'test',
+          },
+        ],
       });
 
       ctx.$rootScope.$apply();
@@ -247,14 +284,17 @@ describe('ElasticDatasource', function() {
       var body = angular.fromJson(parts[1]);
       expect(body.size).to.be(0);
     });
-
   });
 
   describe('When issuing metricFind query on es5.x', function() {
     var requestOptions, parts, header, body, results;
 
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '5'}});
+      createDatasource({
+        url: 'http://es.com',
+        index: 'test',
+        jsonData: { esVersion: '5' },
+      });
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
@@ -263,16 +303,20 @@ describe('ElasticDatasource', function() {
             responses: [
               {
                 aggregations: {
-                  "1": {
+                  '1': {
                     buckets: [
-                      {doc_count: 1, key: 'test'},
-                      {doc_count: 2, key: 'test2', key_as_string: 'test2_as_string'},
-                    ]
-                  }
-                }
-              }
-            ]
-          }
+                      { doc_count: 1, key: 'test' },
+                      {
+                        doc_count: 2,
+                        key: 'test2',
+                        key_as_string: 'test2_as_string',
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
         });
       };
 
@@ -308,6 +352,4 @@ describe('ElasticDatasource', function() {
       expect(body['aggs']['1']['terms'].size).to.not.be(0);
     });
   });
-
 });
-

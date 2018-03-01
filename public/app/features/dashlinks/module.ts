@@ -1,35 +1,16 @@
 import angular from 'angular';
 import _ from 'lodash';
-
-var iconMap = {
-  "external link": "fa-external-link",
-  "dashboard": "fa-th-large",
-  "question": "fa-question",
-  "info": "fa-info",
-  "bolt": "fa-bolt",
-  "doc": "fa-file-text-o",
-  "cloud": "fa-cloud",
-};
-
-function dashLinksEditor() {
-  return {
-    restrict: 'E',
-    controller: 'DashLinkEditorCtrl',
-    templateUrl: 'public/app/features/dashlinks/editor.html',
-    link: function() {
-    }
-  };
-}
+import { iconMap } from './editor';
 
 function dashLinksContainer() {
   return {
     scope: {
-      links: "="
+      links: '=',
     },
     restrict: 'E',
     controller: 'DashLinksContainerCtrl',
     template: '<dash-link ng-repeat="link in generatedLinks" link="link"></dash-link>',
-    link: function() { }
+    link: function() {},
   };
 }
 
@@ -39,14 +20,19 @@ function dashLink($compile, linkSrv) {
     restrict: 'E',
     link: function(scope, elem) {
       var link = scope.link;
-      var template = '<div class="gf-form">' +
+      var template =
+        '<div class="gf-form">' +
         '<a class="pointer gf-form-label" data-placement="bottom"' +
-        (link.asDropdown ? ' ng-click="fillDropdown(link)" data-toggle="dropdown"'  : "") + '>' +
+        (link.asDropdown ? ' ng-click="fillDropdown(link)" data-toggle="dropdown"' : '') +
+        '>' +
         '<i></i> <span></span></a>';
 
       if (link.asDropdown) {
-        template += '<ul class="dropdown-menu" role="menu">' +
-          '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}">{{dash.title}}</a></li>' +
+        template +=
+          '<ul class="dropdown-menu" role="menu">' +
+          '<li ng-repeat="dash in link.searchHits">' +
+          '<a href="{{dash.url}}" target="{{dash.target}}">{{dash.title}}</a>' +
+          '</li>' +
           '</ul>';
       }
 
@@ -62,7 +48,7 @@ function dashLink($compile, linkSrv) {
       function update() {
         var linkInfo = linkSrv.getAnchorInfo(link);
         span.text(linkInfo.title);
-        anchor.attr("href", linkInfo.href);
+        anchor.attr('href', linkInfo.href);
       }
 
       // tooltip
@@ -77,7 +63,7 @@ function dashLink($compile, linkSrv) {
 
       update();
       scope.$on('refresh', update);
-    }
+    },
   };
 }
 
@@ -94,29 +80,34 @@ export class DashLinksContainerCtrl {
         }
 
         if (linkDef.asDropdown) {
-          return $q.when([{
-            title: linkDef.title,
-            tags: linkDef.tags,
-            keepTime: linkDef.keepTime,
-            includeVars: linkDef.includeVars,
-            icon: "fa fa-bars",
-            asDropdown: true
-          }]);
+          return $q.when([
+            {
+              title: linkDef.title,
+              tags: linkDef.tags,
+              keepTime: linkDef.keepTime,
+              includeVars: linkDef.includeVars,
+              target: linkDef.targetBlank ? '_blank' : '_self',
+              icon: 'fa fa-bars',
+              asDropdown: true,
+            },
+          ]);
         }
 
         return $scope.searchDashboards(linkDef, 7);
       }
 
       if (linkDef.type === 'link') {
-        return $q.when([{
-          url: linkDef.url,
-          title: linkDef.title,
-          icon: iconMap[linkDef.icon],
-          tooltip: linkDef.tooltip,
-          target: linkDef.targetBlank ? "_blank" : "_self",
-          keepTime: linkDef.keepTime,
-          includeVars: linkDef.includeVars,
-        }]);
+        return $q.when([
+          {
+            url: linkDef.url,
+            title: linkDef.title,
+            icon: iconMap[linkDef.icon],
+            tooltip: linkDef.tooltip,
+            target: linkDef.targetBlank ? '_blank' : '_self',
+            keepTime: linkDef.keepTime,
+            includeVars: linkDef.includeVars,
+          },
+        ]);
       }
 
       return $q.when([]);
@@ -131,20 +122,25 @@ export class DashLinksContainerCtrl {
     }
 
     $scope.searchDashboards = function(link, limit) {
-      return backendSrv.search({tag: link.tags, limit: limit}).then(function(results) {
-        return _.reduce(results, function(memo, dash) {
-          // do not add current dashboard
-          if (dash.id !== currentDashId) {
-            memo.push({
-              title: dash.title,
-              url: 'dashboard/' + dash.uri,
-              icon: 'fa fa-th-large',
-              keepTime: link.keepTime,
-              includeVars: link.includeVars
-            });
-          }
-          return memo;
-        }, []);
+      return backendSrv.search({ tag: link.tags, limit: limit }).then(function(results) {
+        return _.reduce(
+          results,
+          function(memo, dash) {
+            // do not add current dashboard
+            if (dash.id !== currentDashId) {
+              memo.push({
+                title: dash.title,
+                url: 'dashboard/' + dash.uri,
+                target: link.target,
+                icon: 'fa fa-th-large',
+                keepTime: link.keepTime,
+                includeVars: link.includeVars,
+              });
+            }
+            return memo;
+          },
+          []
+        );
       });
     };
 
@@ -162,37 +158,6 @@ export class DashLinksContainerCtrl {
   }
 }
 
-export class DashLinkEditorCtrl {
-  /** @ngInject */
-  constructor($scope, $rootScope) {
-    $scope.iconMap = iconMap;
-    $scope.dashboard.links = $scope.dashboard.links || [];
-
-    $scope.addLink = function() {
-      $scope.dashboard.links.push({ type: 'dashboards', icon: 'external link' });
-      $scope.dashboard.updateSubmenuVisibility();
-      $scope.updated();
-    };
-
-    $scope.moveLink = function(index, dir) {
-      _.move($scope.dashboard.links, index, index+dir);
-      $scope.updated();
-    };
-
-    $scope.updated = function() {
-      $rootScope.appEvent('dash-links-updated');
-    };
-
-    $scope.deleteLink = function(index) {
-      $scope.dashboard.links.splice(index, 1);
-      $scope.dashboard.updateSubmenuVisibility();
-      $scope.updated();
-    };
-  }
-}
-
-angular.module('grafana.directives').directive('dashLinksEditor', dashLinksEditor);
 angular.module('grafana.directives').directive('dashLinksContainer', dashLinksContainer);
 angular.module('grafana.directives').directive('dashLink', dashLink);
-angular.module('grafana.directives').controller("DashLinksContainerCtrl", DashLinksContainerCtrl);
-angular.module('grafana.directives').controller('DashLinkEditorCtrl', DashLinkEditorCtrl);
+angular.module('grafana.directives').controller('DashLinksContainerCtrl', DashLinksContainerCtrl);

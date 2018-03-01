@@ -205,7 +205,7 @@ The database user (not applicable for `sqlite3`).
 
 ### password
 
-The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with trippel quotes. Ex `"""#password;"""`
+The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with triple quotes. Ex `"""#password;"""`
 
 ### ssl_mode
 
@@ -214,19 +214,19 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### ca_cert_path
 
-(MySQL only) The path to the CA certificate to use. On many linux systems, certs can be found in `/etc/ssl/certs`.
+The path to the CA certificate to use. On many linux systems, certs can be found in `/etc/ssl/certs`.
 
 ### client_key_path
 
-(MySQL only) The path to the client key. Only if server requires client authentication.
+The path to the client key. Only if server requires client authentication.
 
 ### client_cert_path
 
-(MySQL only) The path to the client cert. Only if server requires client authentication.
+The path to the client cert. Only if server requires client authentication.
 
 ### server_cert_name
 
-(MySQL only) The common name field of the certificate used by the `mysql` server. Not necessary if `ssl_mode` is set to `skip-verify`.
+The common name field of the certificate used by the `mysql` or `postgres` server. Not necessary if `ssl_mode` is set to `skip-verify`.
 
 ### max_idle_conn
 The maximum number of connections in the idle connection pool.
@@ -292,10 +292,14 @@ organization to be created for that new user.
 
 The role new users will be assigned for the main organization (if the
 above setting is set to true).  Defaults to `Viewer`, other valid
-options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
+options are `Admin` and `Editor`. e.g. :
 
-`auto_assign_org_role = Read Only Editor`
+`auto_assign_org_role = Viewer`
 
+### viewers_can_edit
+
+Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
+Defaults to `false`.
 
 <hr>
 
@@ -350,7 +354,7 @@ enabled = true
 allow_sign_up = true
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-scopes = user:email
+scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
@@ -383,6 +387,7 @@ scopes = user:email,read:org
 team_ids = 150,300
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 ```
 
@@ -401,6 +406,7 @@ client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
@@ -492,7 +498,7 @@ name = BitBucket
 enabled = true
 allow_sign_up = true
 client_id = <client id>
-client_secret = <secret>
+client_secret = <client secret>
 scopes = account email
 auth_url = https://bitbucket.org/site/oauth2/authorize
 token_url = https://bitbucket.org/site/oauth2/access_token
@@ -500,6 +506,105 @@ api_url = https://api.bitbucket.org/2.0/user
 team_ids =
 allowed_organizations =
 ```
+
+### Set up oauth2 with OneLogin
+
+1.  Create a new Custom Connector with the following settings:
+    - Name: Grafana
+    - Sign On Method: OpenID Connect
+    - Redirect URI: `https://<grafana domain>/login/generic_oauth`
+    - Signing Algorithm: RS256
+    - Login URL: `https://<grafana domain>/login/generic_oauth`
+
+    then:
+2.  Add an App to the Grafana Connector:
+    - Display Name: Grafana
+
+    then:
+3.  Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
+
+    Your OneLogin Domain will match the url you use to access OneLogin.
+
+    Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = OneLogin
+    enabled = true
+    allow_sign_up = true
+    client_id = <client id>
+    client_secret = <client secret>
+    scopes = openid email name
+    auth_url = https://<onelogin domain>.onelogin.com/oidc/auth
+    token_url = https://<onelogin domain>.onelogin.com/oidc/token
+    api_url = https://<onelogin domain>.onelogin.com/oidc/me
+    team_ids =
+    allowed_organizations =
+    ```
+
+### Set up oauth2 with Auth0
+
+1.  Create a new Client in Auth0
+    - Name: Grafana
+    - Type: Regular Web Application
+
+2.  Go to the Settings tab and set:
+    - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
+
+3. Click Save Changes, then use the values at the top of the page to configure Grafana:
+
+    ```bash
+    [auth.generic_oauth]
+    enabled = true
+    allow_sign_up = true
+    team_ids =
+    allowed_organizations =
+    name = Auth0
+    client_id = <client id>
+    client_secret = <client secret>
+    scopes = openid profile email
+    auth_url = https://<domain>/authorize
+    token_url = https://<domain>/oauth/token
+    api_url = https://<domain>/userinfo
+    ```
+
+### Set up oauth2 with Azure Active Directory
+
+1.  Log in to portal.azure.com and click "Azure Active Directory" in the side menu, then click the "Properties" sub-menu item.
+
+2.  Copy the "Directory ID", this is needed for setting URLs later
+
+3.  Click "App Registrations" and add a new application registration:
+    - Name: Grafana
+    - Application type: Web app / API
+    - Sign-on URL: `https://<grafana domain>/login/generic_oauth`
+
+4.  Click the name of the new application to open the application details page.
+
+5.  Note down the "Application ID", this will be the OAuth client id.
+
+6.  Click "Settings", then click "Keys" and add a new entry under Passwords
+    - Key Description: Grafana OAuth
+    - Duration: Never Expires
+
+7.  Click Save then copy the key value, this will be the OAuth client secret.
+
+8.  Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = Azure AD
+    enabled = true
+    allow_sign_up = true
+    client_id = <application id>
+    client_secret = <key value>
+    scopes = openid email name
+    auth_url = https://login.microsoftonline.com/<directory id>/oauth2/authorize
+    token_url = https://login.microsoftonline.com/<directory id>/oauth2/token
+    api_url =
+    team_ids =
+    allowed_organizations =
+    ```
 
 <hr>
 
@@ -567,31 +672,6 @@ session provider you have configured.
 - **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full
 - **memcache:** ex:  127.0.0.1:11211
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
-
-If you use MySQL or Postgres as the session store you need to create the
-session table manually.
-
-Mysql Example:
-
-```bash
-CREATE TABLE `session` (
-    `key`       CHAR(16) NOT NULL,
-    `data`      BLOB,
-    `expiry`    INT(11) UNSIGNED NOT NULL,
-    PRIMARY KEY (`key`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-```
-
-Postgres Example:
-
-```bash
-CREATE TABLE session (
-    key       CHAR(16) NOT NULL,
-    data      BYTEA,
-    expiry    INTEGER NOT NULL,
-    PRIMARY KEY (key)
-);
-```
 
 Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 
@@ -717,17 +797,14 @@ Set root url to a Grafana instance where you want to publish external snapshots 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
 
-### remove expired snapshot
+### snapshot_remove_expired
 Enabled to automatically remove expired snapshots
-
-### remove snapshots after 90 days
-Time to live for snapshots.
 
 ## [external_image_storage]
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav, gcs). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
@@ -782,13 +859,22 @@ Bucket Name on Google Cloud Storage.
 ### path
 Optional extra path inside bucket
 
+## [external_image_storage.azure_blob]
+
+### account_name
+Storage account name
+
+### account_key
+Storage account key
+
+### container_name
+Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
+
 ## [alerting]
 
 ### enabled
 Defaults to true. Set to false to disable alerting engine and hide Alerting from UI.
 
 ### execute_alerts
-
-### execute_alerts = true
 
 Makes it possible to turn off alert rule execution.

@@ -3,6 +3,7 @@ title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
 type = "docs"
+aliases = ["/installation/provisioning"]
 [menu.docs]
 parent = "admin"
 weight = 8
@@ -12,7 +13,7 @@ weight = 8
 
 ## Config file
 
-Checkout the [configuration](/installation/configuration) page for more information about what you can configure in `grafana.ini`
+Checkout the [configuration](/installation/configuration) page for more information on what you can configure in `grafana.ini`
 
 ### Config file locations
 
@@ -35,7 +36,7 @@ GF_<SectionName>_<KeyName>
 ```
 
 Where the section name is the text within the brackets. Everything
-should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
+should be upper case and `.` should be replaced by `_`. For example, given these configuration settings:
 
 ```bash
 # default section
@@ -48,7 +49,7 @@ admin_user = admin
 client_secret = 0ldS3cretKey
 ```
 
-Then you can override them using:
+Overriding will be done like so:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
@@ -60,34 +61,36 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 ## Configuration management tools
 
-Currently we do not provide any scripts/manifests for configuring Grafana. Rather then spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefor, we heavily relay on the expertise of he community. 
+Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily relay on the expertise of the community.
 
 Tool | Project
 -----|------------
 Puppet | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)
 Ansible | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)
-Ansible | [https://github.com/picotrading/ansible-grafana](https://github.com/picotrading/ansible-grafana)
 Chef | [https://github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)
 Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)
 
-## Datasources 
+## Datasources
 
 > This feature is available from v5.0
 
 It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `delete_datasources`. Grafana will delete datasources listed in `delete_datasources` before inserting/updating those in the `datasource` list.
 
-### Running multiple grafana instances.
-If you are running multiple instances of Grafana you might run into problems if they have different versions of the datasource.yaml configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way old configs cannot overwrite newer configs if they restart at the same time. 
+### Running multiple Grafana instances.
+If you are running multiple instances of Grafana you might run into problems if they have different versions of the `datasource.yaml` configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way, old configs cannot overwrite newer configs if they restart at the same time.
 
 ### Example datasource config file
 ```yaml
-# list of datasources that should be deleted from the database
-delete_datasources:
-  - name: Graphite
-    org_id: 1
+# config file version
+apiVersion: 1
 
-# list of datasources to insert/update depending 
-# whats available in the datbase
+# list of datasources that should be deleted from the database
+deleteDatasources:
+  - name: Graphite
+    orgId: 1
+
+# list of datasources to insert/update depending
+# whats available in the database
 datasources:
   # <string, required> name of the datasource. Required
 - name: Graphite
@@ -95,8 +98,8 @@ datasources:
   type: graphite
   # <string, required> access mode. direct or proxy. Required
   access: proxy
-  # <int> org id. will default to org_id 1 if not specified
-  org_id: 1
+  # <int> org id. will default to orgId 1 if not specified
+  orgId: 1
   # <string> url
   url: http://localhost:8080
   # <string> database password, if used
@@ -106,22 +109,22 @@ datasources:
   # <string> database name, if used
   database:
   # <bool> enable/disable basic auth
-  basic_auth:
+  basicAuth:
   # <string> basic auth username
-  basic_auth_user:
+  basicAuthUser:
   # <string> basic auth password
-  basic_auth_password:
+  basicAuthPassword:
   # <bool> enable/disable with credentials headers
-  with_credentials:
+  withCredentials:
   # <bool> mark as default datasource. Max one per org
-  is_default:
+  isDefault:
   # <map> fields that will be converted to json and stored in json_data
-  json_data: 
+  jsonData:
      graphiteVersion: "1.1"
      tlsAuth: true
      tlsAuthWithCACert: true
   # <string> json object of data that will be encrypted.
-  secure_json_data:
+  secureJsonData:
     tlsCACert: "..."
     tlsClientCert: "..."
     tlsClientKey: "..."
@@ -132,53 +135,72 @@ datasources:
 
 #### Json data
 
-Since all datasources dont have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `json_data` field. Here are the most common settings that the core datasources use. 
+Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `json_data` field. Here are the most common settings that the core datasources use.
 
 | Name | Type | Datasource |Description |
 | ----| ---- | ---- | --- |
 | tlsAuth | boolean | *All* |  Enable TLS authentication using client cert configured in secure json data |
 | tlsAuthWithCACert | boolean | *All* | Enable TLS authtication using CA cert |
+| tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Elastic, Influxdb & Prometheus | Lowest interval/step value that should be used for this data source |
-| esVersion | string | Elastic | Elasticsearch version | 
-| timeField | string | Elastic | Which field that should be used as timestamp | 
+| esVersion | string | Elastic | Elasticsearch version |
+| timeField | string | Elastic | Which field that should be used as timestamp |
 | interval | string | Elastic | Index date time format |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
-| assumeRoleArn | string | Cloudwatch | ARN of Assume Role | 
+| assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
-| customMetricsNamespaces | string | Cloudwatch | Namespaces of Custom Metrics | 
+| customMetricsNamespaces | string | Cloudwatch | Namespaces of Custom Metrics |
 | tsdbVersion | string | OpenTsdb | Version |
 | tsdbResolution | string | OpenTsdb | Resolution |
-| sslmode | string | Postgre | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' | 
+| sslmode | string | Postgre | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
 
 
 #### Secure Json data
 
-{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}
+`{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
-Secure json data is a map of settings that will be encrypted with [secret key](/installation/configuration/#secret-key) from the grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to request on the server side. All these settings are optional.
+Secure json data is a map of settings that will be encrypted with [secret key](/installation/configuration/#secret-key) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
 | Name | Type | Datasource | Description |
 | ----| ---- | ---- | --- |
 | tlsCACert | string | *All* |CA cert for out going requests |
 | tlsClientCert | string | *All* |TLS Client cert for outgoing requests |
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
-| password | string | Postgre | password | 
-| user | string | Postgre | user | 
+| password | string | Postgre | password |
+| user | string | Postgre | user |
+| accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
+| secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
 
 ### Dashboards
 
-It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into grafana. Currently we only support reading dashboards from file but we will add more providers in the future. 
+It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
 
-The dashboard provider config file looks like this
+The dashboard provider config file looks somewhat like this:
 
 ```yaml
+apiVersion: 1
+
+providers:
 - name: 'default'
-  org_id: 1
+  orgId: 1
   folder: ''
   type: file
+  disableDeletion: false
+  editable: false
   options:
-    folder: /var/lib/grafana/dashboards
+    path: /var/lib/grafana/dashboards
 ```
 
-When grafana starts it will update/insert all dashboards available in the configured folders. If you modify the file the dashboard will also be updated. 
+When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
+
+### Reuseable dashboard urls
+
+If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifer.
+When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
+By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
+
+> **Note.** Provisioning allows you to overwrite existing dashboards
+> which leads to problems if you re-use settings that are supposed to be unique.
+> Be careful not to re-use the same `title` multiple times within a folder
+> or `uid` within the same installation as this will cause weird behaviours.

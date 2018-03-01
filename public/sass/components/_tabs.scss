@@ -1,41 +1,8 @@
-.nav-tabs-alt {
-	& > li > a {
-	  color: darken($link-color, 20%);
-	}
-
-	li > a:hover {
-    border-bottom: none;
-	}
-
-	li.active > a,
-	li.active > a:focus,
-	li.active > a:hover {
-    @include border-radius(3px);
-	  border: 1px solid $divider-border-color;
-	  background-color: transparent;
-	  border-bottom: 1px solid $page-bg;
-	  color: $link-color;
-	}
-
-	li.disabled > a {
-		color: $text-color;
-	}
-
-	.open .dropdown-toggle {
-		background-color: #060606;
-		border-color: transparent;
-	}
-
-  .tab-content {
-    padding: 10px;
-    background-color: $panel-bg;
-  }
-}
-
 .gf-tabs {
   @include clearfix();
   float: left;
-  margin: $tabs-top-margin 0 0 0;
+  position: relative;
+  top: 1px;
 }
 
 .gf-tabs-item {
@@ -44,13 +11,23 @@
 }
 
 .gf-tabs-link {
-  padding: $tabs-padding-top $spacer $tabs-padding-bottom $spacer;
+  padding: $tabs-padding;
   margin-right: $spacer/2;
-  border: 1px solid transparent;
   position: relative;
   display: block;
+  border: solid transparent;
+  border-width: 0 1px 1px;
+  border-radius: 3px 3px 0 0;
+  color: $text-color;
 
-  @include border-radius(2px 2px 0 0);
+  i {
+    margin-right: 5px;
+  }
+
+  .gicon {
+    position: relative;
+    top: -2px;
+  }
 
   &:hover,
   &:focus {
@@ -60,20 +37,25 @@
   &.active,
   &.active:hover,
   &.active:focus {
-    @include border-radius(3px);
-    border-color: rgba(216, 131, 40, 0.77);
-    border-bottom: 2px solid $panel-bg;
+    border-color: $orange $tab-border-color transparent;
+    background: $page-bg;
     color: $link-color;
-    position: relative;
-    top: 1px;
+    overflow: hidden;
+
+    &::before {
+      display: block;
+      content: " ";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      top: 0;
+      background-image: linear-gradient(
+        to right,
+        #ffd500 0%,
+        #ff4400 99%,
+        #ff4400 100%
+      );
+    }
   }
-}
-
-.form-tabs-wrapper {
-  @include brand-bottom-border();
-  @include clearfix();
-}
-
-.form-tabs-content {
-  padding: $spacer*2 $spacer;
 }

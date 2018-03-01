@@ -1,9 +1,15 @@
 import _ from 'lodash';
 import moment from 'moment';
 import tinycolor from 'tinycolor2';
-import {MetricsPanelCtrl} from 'app/plugins/sdk';
-import {AnnotationEvent} from './event';
-import {OK_COLOR, ALERTING_COLOR, NO_DATA_COLOR, DEFAULT_ANNOTATION_COLOR, REGION_FILL_ALPHA} from 'app/core/utils/colors';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { AnnotationEvent } from './event';
+import {
+  OK_COLOR,
+  ALERTING_COLOR,
+  NO_DATA_COLOR,
+  DEFAULT_ANNOTATION_COLOR,
+  REGION_FILL_ALPHA,
+} from 'app/core/utils/colors';
 
 export class EventManager {
   event: AnnotationEvent;
@@ -153,7 +159,10 @@ function addRegionMarking(regions, flotOptions) {
     }
 
     fillColor = addAlphaToRGB(fillColor, REGION_FILL_ALPHA);
-    markings.push({xaxis: {from: region.min, to: region.timeEnd}, color: fillColor});
+    markings.push({
+      xaxis: { from: region.min, to: region.timeEnd },
+      color: fillColor,
+    });
   });
 }
 

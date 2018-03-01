@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
@@ -14,27 +15,44 @@ func Search(c *middleware.Context) {
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
 	limit := c.QueryInt("limit")
+	dashboardType := c.Query("type")
+	permission := models.PERMISSION_VIEW
 
 	if limit == 0 {
 		limit = 1000
 	}
 
-	dbids := make([]int, 0)
+	if c.Query("permission") == "Edit" {
+		permission = models.PERMISSION_EDIT
+	}
+
+	dbids := make([]int64, 0)
 	for _, id := range c.QueryStrings("dashboardIds") {
-		dashboardId, err := strconv.Atoi(id)
+		dashboardId, err := strconv.ParseInt(id, 10, 64)
 		if err == nil {
 			dbids = append(dbids, dashboardId)
+		}
+	}
+
+	folderIds := make([]int64, 0)
+	for _, id := range c.QueryStrings("folderIds") {
+		folderId, err := strconv.ParseInt(id, 10, 64)
+		if err == nil {
+			folderIds = append(folderIds, folderId)
 		}
 	}
 
 	searchQuery := search.Query{
 		Title:        query,
 		Tags:         tags,
-		UserId:       c.UserId,
+		SignedInUser: c.SignedInUser,
 		Limit:        limit,
 		IsStarred:    starred == "true",
 		OrgId:        c.OrgId,
 		DashboardIds: dbids,
+		Type:         dashboardType,
+		FolderIds:    folderIds,
+		Permission:   permission,
 	}
 
 	err := bus.Dispatch(&searchQuery)

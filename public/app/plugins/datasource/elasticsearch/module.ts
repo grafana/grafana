@@ -1,6 +1,6 @@
-import {ElasticDatasource} from './datasource';
-import {ElasticQueryCtrl} from './query_ctrl';
-import {ElasticConfigCtrl} from './config_ctrl';
+import { ElasticDatasource } from './datasource';
+import { ElasticQueryCtrl } from './query_ctrl';
+import { ElasticConfigCtrl } from './config_ctrl';
 
 class ElasticQueryOptionsCtrl {
   static templateUrl = 'partials/query.options.html';

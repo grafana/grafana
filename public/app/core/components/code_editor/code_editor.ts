@@ -38,10 +38,12 @@ import 'brace/mode/sql';
 import 'brace/snippets/sql';
 import 'brace/mode/markdown';
 import 'brace/snippets/markdown';
+import 'brace/mode/json';
+import 'brace/snippets/json';
 
-const DEFAULT_THEME_DARK = "ace/theme/grafana-dark";
-const DEFAULT_THEME_LIGHT = "ace/theme/textmate";
-const DEFAULT_MODE = "text";
+const DEFAULT_THEME_DARK = 'ace/theme/grafana-dark';
+const DEFAULT_THEME_LIGHT = 'ace/theme/textmate';
+const DEFAULT_MODE = 'text';
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
 const DEFAULT_BEHAVIOURS = true;
@@ -68,7 +70,7 @@ function link(scope, elem, attrs) {
     behavioursEnabled: behavioursEnabled,
     highlightActiveLine: false,
     showPrintMargin: false,
-    autoScrollEditorIntoView: true // this is needed if editor is inside scrollable page
+    autoScrollEditorIntoView: true, // this is needed if editor is inside scrollable page
   };
 
   // Set options
@@ -84,12 +86,12 @@ function link(scope, elem, attrs) {
   setEditorContent(scope.content);
 
   // Add classes
-  elem.addClass("gf-code-editor");
-  let textarea = elem.find("textarea");
+  elem.addClass('gf-code-editor');
+  let textarea = elem.find('textarea');
   textarea.addClass('gf-form-input');
 
   if (scope.codeEditorFocus) {
-    setTimeout(function () {
+    setTimeout(function() {
       textarea.focus();
       var domEl = textarea[0];
       if (domEl.setSelectionRange) {
@@ -100,7 +102,7 @@ function link(scope, elem, attrs) {
   }
 
   // Event handlers
-  editorSession.on('change', (e) => {
+  editorSession.on('change', e => {
     scope.$apply(() => {
       let newValue = codeEditor.getValue();
       scope.content = newValue;
@@ -121,25 +123,25 @@ function link(scope, elem, attrs) {
     scope.onChange();
   });
 
-  scope.$on("$destroy", () => {
+  scope.$on('$destroy', () => {
     codeEditor.destroy();
   });
 
   // Keybindings
   codeEditor.commands.addCommand({
     name: 'executeQuery',
-    bindKey: {win: 'Ctrl-Enter', mac: 'Command-Enter'},
+    bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
     exec: () => {
       scope.onChange();
-    }
+    },
   });
 
   function setLangMode(lang) {
-    ace.acequire("ace/ext/language_tools");
+    ace.acequire('ace/ext/language_tools');
     codeEditor.setOptions({
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
-      enableSnippets: true
+      enableSnippets: true,
     });
 
     if (scope.getCompleter()) {
@@ -173,13 +175,13 @@ export function codeEditorDirective() {
     restrict: 'E',
     template: editorTemplate,
     scope: {
-      content: "=",
-      datasource: "=",
-      codeEditorFocus: "<",
-      onChange: "&",
-      getCompleter: "&"
+      content: '=',
+      datasource: '=',
+      codeEditorFocus: '<',
+      onChange: '&',
+      getCompleter: '&',
     },
-    link: link
+    link: link,
   };
 }
 

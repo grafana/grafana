@@ -1,0 +1,32 @@
+.dashboard-list {
+  .search-results-container {
+    padding: 5px 0 0 0;
+  }
+}
+
+.search-results {
+  margin-top: 2rem;
+}
+
+.search-results-filter-row {
+  height: 35px;
+  display: flex;
+  justify-content: space-between;
+
+  .gf-form-button-row {
+    padding-top: 0;
+
+    button:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+.search-results-filter-row__filters {
+  display: flex;
+}
+
+.search-results-filter-row__filters-item {
+  width: 150px;
+  margin-right: 0;
+}

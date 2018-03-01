@@ -78,7 +78,6 @@ func TestSlackNotifier(t *testing.T) {
 				So(slackNotifier.Mention, ShouldEqual, "@carl")
 				So(slackNotifier.Token, ShouldEqual, "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
 			})
-
 		})
 	})
 }

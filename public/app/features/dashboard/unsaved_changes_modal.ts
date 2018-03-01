@@ -1,8 +1,6 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 
-const  template = `
+const template = `
 <div class="modal-body">
   <div class="modal-header">
     <h2 class="modal-header-title">
@@ -22,9 +20,9 @@ const  template = `
     </div>
 
     <div class="confirm-modal-buttons">
-      <button type="button" class="btn btn-inverse" ng-click="ctrl.dismiss()">Cancel</button>
-      <button type="button" class="btn btn-danger" ng-click="ctrl.discard()">Discard</button>
       <button type="button" class="btn btn-success" ng-click="ctrl.save()">Save</button>
+      <button type="button" class="btn btn-danger" ng-click="ctrl.discard()">Discard</button>
+      <button type="button" class="btn btn-inverse" ng-click="ctrl.dismiss()">Cancel</button>
     </div>
   </div>
 </div>
@@ -35,8 +33,7 @@ export class UnsavedChangesModalCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private unsavedChangesSrv) {
-  }
+  constructor(private unsavedChangesSrv) {}
 
   discard() {
     this.dismiss();
@@ -56,7 +53,7 @@ export function unsavedChangesModalDirective() {
     controller: UnsavedChangesModalCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {dismiss: "&"}
+    scope: { dismiss: '&' },
   };
 }
 

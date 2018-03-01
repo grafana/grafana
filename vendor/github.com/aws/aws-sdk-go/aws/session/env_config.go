@@ -7,6 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 )
 
+// EnvProviderName provides a name of the provider when config is loaded from environment.
+const EnvProviderName = "EnvConfigCredentials"
+
 // envConfig is a collection of environment values the SDK will read
 // setup config from. All environment values are optional. But some values
 // such as credentials require multiple values to be complete or the values
@@ -76,7 +79,7 @@ type envConfig struct {
 	SharedConfigFile string
 
 	// Sets the path to a custom Credentials Authroity (CA) Bundle PEM file
-	// that the SDK will use instead of the the system's root CA bundle.
+	// that the SDK will use instead of the system's root CA bundle.
 	// Only use this if you want to configure the SDK to use a custom set
 	// of CAs.
 	//
@@ -157,7 +160,7 @@ func envConfigLoad(enableSharedConfig bool) envConfig {
 	if len(cfg.Creds.AccessKeyID) == 0 || len(cfg.Creds.SecretAccessKey) == 0 {
 		cfg.Creds = credentials.Value{}
 	} else {
-		cfg.Creds.ProviderName = "EnvConfigCredentials"
+		cfg.Creds.ProviderName = EnvProviderName
 	}
 
 	regionKeys := regionEnvKeys

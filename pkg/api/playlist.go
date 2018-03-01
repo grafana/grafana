@@ -130,7 +130,7 @@ func GetPlaylistItems(c *middleware.Context) Response {
 func GetPlaylistDashboards(c *middleware.Context) Response {
 	playlistId := c.ParamsInt64(":id")
 
-	playlists, err := LoadPlaylistDashboards(c.OrgId, c.UserId, playlistId)
+	playlists, err := LoadPlaylistDashboards(c.OrgId, c.SignedInUser, playlistId)
 	if err != nil {
 		return ApiError(500, "Could not load dashboards", err)
 	}

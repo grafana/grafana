@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
@@ -15,22 +13,23 @@ var template = `
 </ul>
 `;
 
-  /** @ngInject */
+/** @ngInject */
 export function queryPartEditorDirective($compile, templateSrv) {
-
   var paramTemplate = '<input type="text" class="hide input-mini tight-form-func-param"></input>';
 
   return {
     restrict: 'E',
     template: template,
     scope: {
-      part: "=",
-      handleEvent: "&",
+      part: '=',
+      handleEvent: '&',
+      debounce: '@',
     },
     link: function postLink($scope, elem) {
       var part = $scope.part;
       var partDef = part.def;
       var $paramsContainer = elem.find('.query-part-parameters');
+      var debounceLookup = $scope.debounce;
 
       $scope.partActions = [];
 
@@ -40,7 +39,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
         var $input = $link.next();
 
         $input.val(part.params[paramIndex]);
-        $input.css('width', ($link.width() + 16) + 'px');
+        $input.css('width', $link.width() + 16 + 'px');
 
         $link.hide();
         $input.show();
@@ -65,7 +64,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
 
           part.updateParam($input.val(), paramIndex);
           $scope.$apply(() => {
-            $scope.handleEvent({$event: {name: 'part-param-changed'}});
+            $scope.handleEvent({ $event: { name: 'part-param-changed' } });
           });
         }
 
@@ -90,18 +89,22 @@ export function queryPartEditorDirective($compile, templateSrv) {
           return;
         }
 
-        var typeaheadSource = function (query, callback) {
+        var typeaheadSource = function(query, callback) {
           if (param.options) {
             var options = param.options;
             if (param.type === 'int') {
-              options = _.map(options, function(val) { return val.toString(); });
+              options = _.map(options, function(val) {
+                return val.toString();
+              });
             }
             return options;
           }
 
           $scope.$apply(function() {
-            $scope.handleEvent({$event: {name: 'get-param-options'}}).then(function(result) {
-              var dynamicOptions = _.map(result, function(op) { return op.value; });
+            $scope.handleEvent({ $event: { name: 'get-param-options' } }).then(function(result) {
+              var dynamicOptions = _.map(result, function(op) {
+                return op.value;
+              });
               callback(dynamicOptions);
             });
           });
@@ -113,30 +116,34 @@ export function queryPartEditorDirective($compile, templateSrv) {
           source: typeaheadSource,
           minLength: 0,
           items: 1000,
-          updater: function (value) {
+          updater: function(value) {
             setTimeout(function() {
               inputBlur.call($input[0], paramIndex);
             }, 0);
             return value;
-          }
+          },
         });
 
         var typeahead = $input.data('typeahead');
-        typeahead.lookup = function () {
+        typeahead.lookup = function() {
           this.query = this.$element.val() || '';
           var items = this.source(this.query, $.proxy(this.process, this));
           return items ? this.process(items) : items;
         };
+
+        if (debounceLookup) {
+          typeahead.lookup = _.debounce(typeahead.lookup, 500, { leading: true });
+        }
       }
 
       $scope.showActionsMenu = function() {
-        $scope.handleEvent({$event: {name: 'get-part-actions'}}).then(res => {
+        $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then(res => {
           $scope.partActions = res;
         });
       };
 
       $scope.triggerPartAction = function(action) {
-        $scope.handleEvent({$event: {name: 'action', action: action}});
+        $scope.handleEvent({ $event: { name: 'action', action: action } });
       };
 
       function addElementsAndCompile() {
@@ -171,7 +178,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
       }
 
       relink();
-    }
+    },
   };
 }
 

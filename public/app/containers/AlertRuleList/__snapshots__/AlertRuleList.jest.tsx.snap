@@ -1,0 +1,103 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AlertRuleList should render 1 rule 1`] = `
+<li
+  className="alert-rule-item"
+>
+  <span
+    className="alert-rule-item__icon alert-state-ok"
+  >
+    <i
+      className="icon-gf icon-gf-online"
+    />
+  </span>
+  <div
+    className="alert-rule-item__body"
+  >
+    <div
+      className="alert-rule-item__header"
+    >
+      <div
+        className="alert-rule-item__name"
+      >
+        <a
+          href="d/ufkcofof/my-goal?panelId=3&fullscreen=true&edit=true&tab=alert"
+        >
+          <Highlighter
+            highlightClassName="highlight-search-match"
+            searchWords={
+              Array [
+                "",
+              ]
+            }
+            textToHighlight="Panel Title alert"
+          >
+            <span>
+              <span
+                className=""
+                key="0"
+              >
+                Panel Title alert
+              </span>
+            </span>
+          </Highlighter>
+        </a>
+      </div>
+      <div
+        className="alert-rule-item__text"
+      >
+        <span
+          className="alert-state-ok"
+        >
+          <Highlighter
+            highlightClassName="highlight-search-match"
+            searchWords={
+              Array [
+                "",
+              ]
+            }
+            textToHighlight="OK"
+          >
+            <span>
+              <span
+                className=""
+                key="0"
+              >
+                OK
+              </span>
+            </span>
+          </Highlighter>
+        </span>
+        <span
+          className="alert-rule-item__time"
+        >
+           for 
+          5 minutes
+        </span>
+      </div>
+    </div>
+  </div>
+  <div
+    className="alert-rule-item__actions"
+  >
+    <button
+      className="btn btn-small btn-inverse alert-list__btn width-2"
+      onClick={[Function]}
+      title="Pausing an alert rule prevents it from executing"
+    >
+      <i
+        className="fa fa-pause"
+      />
+    </button>
+    <a
+      className="btn btn-small btn-inverse alert-list__btn width-2"
+      href="d/ufkcofof/my-goal?panelId=3&fullscreen=true&edit=true&tab=alert"
+      title="Edit alert rule"
+    >
+      <i
+        className="icon-gf icon-gf-settings"
+      />
+    </a>
+  </div>
+</li>
+`;

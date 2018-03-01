@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
@@ -9,34 +7,48 @@ export class AlertSrv {
   list: any[];
 
   /** @ngInject */
-  constructor(private $timeout, private $rootScope, private $modal) {
+  constructor(private $timeout, private $rootScope) {
     this.list = [];
   }
 
   init() {
-    this.$rootScope.onAppEvent('alert-error', (e, alert) => {
-      this.set(alert[0], alert[1], 'error', 12000);
-    }, this.$rootScope);
+    this.$rootScope.onAppEvent(
+      'alert-error',
+      (e, alert) => {
+        this.set(alert[0], alert[1], 'error', 12000);
+      },
+      this.$rootScope
+    );
 
-    this.$rootScope.onAppEvent('alert-warning', (e, alert) => {
-      this.set(alert[0], alert[1], 'warning', 5000);
-    }, this.$rootScope);
+    this.$rootScope.onAppEvent(
+      'alert-warning',
+      (e, alert) => {
+        this.set(alert[0], alert[1], 'warning', 5000);
+      },
+      this.$rootScope
+    );
 
-    this.$rootScope.onAppEvent('alert-success', (e, alert) => {
-      this.set(alert[0], alert[1], 'success', 3000);
-    }, this.$rootScope);
+    this.$rootScope.onAppEvent(
+      'alert-success',
+      (e, alert) => {
+        this.set(alert[0], alert[1], 'success', 3000);
+      },
+      this.$rootScope
+    );
 
     appEvents.on('alert-warning', options => this.set(options[0], options[1], 'warning', 5000));
     appEvents.on('alert-success', options => this.set(options[0], options[1], 'success', 3000));
     appEvents.on('alert-error', options => this.set(options[0], options[1], 'error', 7000));
-    appEvents.on('confirm-modal', this.showConfirmModal.bind(this));
   }
 
   getIconForSeverity(severity) {
     switch (severity) {
-      case 'success': return 'fa fa-check';
-      case 'error': return 'fa fa-exclamation-triangle';
-      default: return 'fa fa-exclamation';
+      case 'success':
+        return 'fa fa-check';
+      case 'error':
+        return 'fa fa-exclamation-triangle';
+      default:
+        return 'fa fa-exclamation';
     }
   }
 
@@ -52,7 +64,7 @@ export class AlertSrv {
       title: title || '',
       text: text || '',
       severity: severity || 'info',
-      icon: this.getIconForSeverity(severity)
+      icon: this.getIconForSeverity(severity),
     };
 
     var newAlertJson = angular.toJson(newAlert);
@@ -73,7 +85,7 @@ export class AlertSrv {
       this.$rootScope.$digest();
     }
 
-    return(newAlert);
+    return newAlert;
   }
 
   clear(alert) {
@@ -82,45 +94,6 @@ export class AlertSrv {
 
   clearAll() {
     this.list = [];
-  }
-
-  showConfirmModal(payload) {
-    var scope = this.$rootScope.$new();
-
-    scope.onConfirm = function() {
-      payload.onConfirm();
-      scope.dismiss();
-    };
-
-    scope.updateConfirmText = function(value) {
-      scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
-    };
-
-    scope.title = payload.title;
-    scope.text = payload.text;
-    scope.text2 = payload.text2;
-    scope.confirmText = payload.confirmText;
-
-    scope.onConfirm = payload.onConfirm;
-    scope.onAltAction = payload.onAltAction;
-    scope.altActionText = payload.altActionText;
-    scope.icon = payload.icon || "fa-check";
-    scope.yesText = payload.yesText || "Yes";
-    scope.noText = payload.noText || "Cancel";
-    scope.confirmTextValid = scope.confirmText ? false : true;
-
-    var confirmModal = this.$modal({
-      template: 'public/app/partials/confirm_modal.html',
-      persist: false,
-      modalClass: 'confirm-modal',
-      show: false,
-      scope: scope,
-      keyboard: false
-    });
-
-    confirmModal.then(function(modalEl) {
-      modalEl.modal('show');
-    });
   }
 }
 

@@ -1,85 +1,73 @@
-<div class="login-container container">
-
-	<div class="login-box">
-
-		<div class="login-box-logo">
-			<img class="logo-icon" src="public/img/grafana_icon.svg"></img><br>
-			<i class="icon-gf icon-gf-grafana_wordmark"></i>
-		</div>
-
+<div class="login container">
+  <div class="login-content">
+    <div class="login-branding">
+      <img class="logo-icon" src="public/img/grafana_icon.svg" alt="Grafana" />
+      <i class="icon-gf icon-gf-grafana_wordmark"></i>
+    </div>
     <div class="login-inner-box">
-			<div class="login-tab-header">
-				<button class="btn-login-tab" ng-click="loginMode = true;" ng-class="{active: loginMode}">
-					Log in
-				</button>
-				<button class="btn-login-tab" ng-click="loginMode = false;" ng-class="{active: !loginMode}" ng-show="!disableUserSignUp">
-					Sign up
-				</button>
-			</div>
-
-      <form name="loginForm" class="login-form gf-form-group" ng-hide="disableLoginForm">
-				<div class="gf-form" ng-if="loginMode">
-					<span class="gf-form-label width-7">User</span>
-					<input type="text" name="username" class="gf-form-input max-width-14" required ng-model='formModel.user' placeholder={{loginHint}} autofocus>
-				</div>
-				<div class="gf-form" ng-if="loginMode">
-					<span class="gf-form-label width-7">Password</span>
-					<input type="password" name="password" class="gf-form-input max-width-14" required ng-model="formModel.password" id="inputPassword" placeholder="password">
-				</div>
-
-				<div class="gf-form" ng-if="!loginMode">
-						<span class="gf-form-label width-7">Email</span>
-						<input type="email" class="gf-form-input max-width-14" required ng-model='formModel.email' placeholder="email">
-				</div>
-
-				<div class="gf-form-button-row">
-					<button type="submit" class="btn btn-large p-x-3" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
-						{{submitBtnText}}
-					</button>
-				</div>
-			</form>
-
-			<div ng-if="loginMode">
-				<div class="text-center login-divider" ng-show="oauthEnabled">
-					<div class="login-divider-line">
-						<span class="login-divider-text">
-							<span ng-hide="disableLoginForm">Or</span> Login With
-						</span>
-					</div>
-				</div>
-
-				<div class="clearfix"></div>
-
-				<div class="login-oauth text-center" ng-show="oauthEnabled">
-					<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="oauth.google">
-						<i class="fa fa-google"></i>
-						Google
-					</a>
-					<a class="btn btn-large btn-github" href="login/github" target="_self" ng-if="oauth.github">
-						<i class="fa fa-github"></i>
-						GitHub
-					</a>
-					<a class="btn btn-large btn-grafana-com" href="login/grafana_com" target="_self" ng-if="oauth.grafana_com">
-						<img src="public/img/grafana_com_auth_icon.svg"></img>
-						<span>Grafana.com</span>
-					</a>
-					<a class="btn btn-large btn-generic-oauth" href="login/generic_oauth" target="_self" ng-if="oauth.generic_oauth">
-						<i class="fa fa-gear"></i>
-						{{oauth.generic_oauth.name}}
-					</a>
-				</div>
-			</div>
-		</div>
-
-		<div class="clearfix"></div>
-
-		<div class="text-center password-recovery" ng-hide="disableLoginForm">
-			<div class="text-center">
-				<a href="user/password/send-reset-email">
-					Forgot your password?
-				</a>
-			</div>
-		</div>
-
-	</div>
+      <form name="loginForm" class="login-form-group gf-form-group" ng-hide="disableLoginForm">
+        <div class="login-form">
+          <input type="text" name="username" class="gf-form-input login-form-input" required ng-model='formModel.user' placeholder={{loginHint}}
+            autofocus>
+        </div>
+        <div class="login-form">
+          <input type="password" name="password" class="gf-form-input login-form-input" required ng-model="formModel.password" id="inputPassword"
+            placeholder="password">
+        </div>
+        <div class="login-button-group">
+          <button type="submit" class="btn btn-large p-x-2" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
+            Log In
+          </button>
+            <div class="small login-button-forgot-password">
+              <a href="user/password/send-reset-email">
+                Forgot your password?
+              </a>
+          </div>
+        </div>
+      </form>
+      <div class="text-center login-divider" ng-show="oauthEnabled">
+        <div>
+          <div class="login-divider-line">
+          </div>
+        </div>
+        <div>
+          <span class="login-divider-text">
+            <span ng-hide="disableLoginForm">or</span>
+          </span>
+        </div>
+        <div>
+          <div class="login-divider-line">
+          </div>
+        </div>
+      </div>
+      <div class="clearfix"></div>
+      <div class="login-oauth text-center" ng-show="oauthEnabled">
+        <a class="btn btn-medium btn-service btn-service--google login-btn" href="login/google" target="_self" ng-if="oauth.google">
+          <i class="btn-service-icon fa fa-google"></i>
+          Sign in with Google
+        </a>
+        <a class="btn btn-medium btn-service btn-service--github login-btn" href="login/github" target="_self" ng-if="oauth.github">
+          <i class="btn-service-icon fa fa-github"></i>
+          Sign in with GitHub
+        </a>
+        <a class="btn btn-medium btn-inverse btn-service btn-service--grafanacom login-btn" href="login/grafana_com" target="_self" ng-if="oauth.grafana_com">
+          <i class="btn-service-icon"></i>
+          Sign in with Grafana.com
+        </a>
+        <a class="btn btn-medium btn-inverse btn-service btn-service--oauth login-btn" href="login/generic_oauth" target="_self" ng-if="oauth.generic_oauth">
+          <i class="btn-service-icon fa fa-sign-in"></i>
+          Sign in with {{oauth.generic_oauth.name}}
+        </a>
+      </div>
+      <div class="login-signup-box" ng-show="!disableUserSignUp">
+        <div class="login-signup-title p-r-1">
+          New to Grafana?
+        </div>
+        <a href="signup" class="btn btn-medium btn-signup btn-p-x-2">
+          Sign Up
+        </a>
+      </div>
+    </div>
+    <div class="clearfix"></div>
+  </div>
 </div>

@@ -6,7 +6,7 @@ import (
 	"gopkg.in/asn1-ber.v1"
 )
 
-// debbuging type
+// debugging type
 //     - has a Printf method to write the debug output
 type debugging bool
 

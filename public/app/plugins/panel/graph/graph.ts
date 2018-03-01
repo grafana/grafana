@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.time';
@@ -14,15 +12,16 @@ import $ from 'jquery';
 import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
-import {tickStep} from 'app/core/utils/ticks';
-import {appEvents, coreModule} from 'app/core/core';
+import { tickStep } from 'app/core/utils/ticks';
+import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
-import {ThresholdManager} from './threshold_manager';
-import {EventManager} from 'app/features/annotations/all';
-import {convertValuesToHistogram, getSeriesValues} from './histogram';
+import { ThresholdManager } from './threshold_manager';
+import { EventManager } from 'app/features/annotations/all';
+import { convertValuesToHistogram, getSeriesValues } from './histogram';
+import config from 'app/core/config';
 
 /** @ngInject **/
-function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
+function graphDirective(timeSrv, popoverSrv, contextSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -34,8 +33,6 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       var data;
       var plot;
       var sortedSeries;
-      var legendSideLastValue = null;
-      var rootScope = scope.$root;
       var panelWidth = 0;
       var eventManager = new EventManager(ctrl);
       var thresholdManager = new ThresholdManager(ctrl);
@@ -53,70 +50,61 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         }
       });
 
-      ctrl.events.on('render', function(renderData) {
+      /**
+       * Split graph rendering into two parts.
+       * First, calculate series stats in buildFlotPairs() function. Then legend rendering started
+       * (see ctrl.events.on('render') in legend.ts).
+       * When legend is rendered it emits 'legend-rendering-complete' and graph rendered.
+       */
+      ctrl.events.on('render', renderData => {
         data = renderData || data;
         if (!data) {
           return;
         }
         annotations = ctrl.annotations || [];
+        buildFlotPairs(data);
+        updateLegendValues(data, panel);
+
+        ctrl.events.emit('render-legend');
+      });
+
+      ctrl.events.on('legend-rendering-complete', () => {
         render_panel();
       });
 
       // global events
-      appEvents.on('graph-hover', function(evt) {
-        // ignore other graph hover events if shared tooltip is disabled
-        if (!dashboard.sharedTooltipModeEnabled()) {
-          return;
-        }
+      appEvents.on(
+        'graph-hover',
+        evt => {
+          // ignore other graph hover events if shared tooltip is disabled
+          if (!dashboard.sharedTooltipModeEnabled()) {
+            return;
+          }
 
-        // ignore if we are the emitter
-        if (!plot || evt.panel.id === panel.id || ctrl.otherPanelInFullscreenMode()) {
-          return;
-        }
+          // ignore if we are the emitter
+          if (!plot || evt.panel.id === panel.id || ctrl.otherPanelInFullscreenMode()) {
+            return;
+          }
 
-        tooltip.show(evt.pos);
-      }, scope);
+          tooltip.show(evt.pos);
+        },
+        scope
+      );
 
-      appEvents.on('graph-hover-clear', function(event, info) {
-        if (plot) {
-          tooltip.clear(plot);
-        }
-      }, scope);
-
-      function getLegendHeight(panelHeight) {
-        if (!panel.legend.show || panel.legend.rightSide) {
-          return 0;
-        }
-
-        if (panel.legend.alignAsTable) {
-          var legendSeries = _.filter(data, function(series) {
-            return series.hideFromLegend(panel.legend) === false;
-          });
-          var total = 23 + (21 * legendSeries.length);
-          return Math.min(total, Math.floor(panelHeight/2));
-        } else {
-          return 26;
-        }
-      }
-
-      function setElementHeight() {
-        try {
-          var height = ctrl.height - getLegendHeight(ctrl.height);
-          elem.css('height', height + 'px');
-
-          return true;
-        } catch (e) { // IE throws errors sometimes
-          console.log(e);
-          return false;
-        }
-      }
+      appEvents.on(
+        'graph-hover-clear',
+        (event, info) => {
+          if (plot) {
+            tooltip.clear(plot);
+          }
+        },
+        scope
+      );
 
       function shouldAbortRender() {
         if (!data) {
           return true;
         }
-
-        if (!setElementHeight()) { return true; }
 
         if (panelWidth === 0) {
           return true;
@@ -126,35 +114,22 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       }
 
       function drawHook(plot) {
-        // Update legend values
-        var yaxis = plot.getYAxes();
-        for (var i = 0; i < data.length; i++) {
-          var series = data[i];
-          var axis = yaxis[series.yaxis - 1];
-          var formater = kbn.valueFormats[panel.yaxes[series.yaxis - 1].format];
-
-          // decimal override
-          if (_.isNumber(panel.decimals)) {
-            series.updateLegendValues(formater, panel.decimals, null);
-          } else {
-            // auto decimals
-            // legend and tooltip gets one more decimal precision
-            // than graph legend ticks
-            var tickDecimals = (axis.tickDecimals || -1) + 1;
-            series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
-          }
-
-          if (!rootScope.$$phase) { scope.$digest(); }
-        }
-
         // add left axis labels
         if (panel.yaxes[0].label && panel.yaxes[0].show) {
-          $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>").text(panel.yaxes[0].label).appendTo(elem);
+          $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
+            .text(panel.yaxes[0].label)
+            .appendTo(elem);
         }
 
         // add right axis labels
         if (panel.yaxes[1].label && panel.yaxes[1].show) {
-          $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>").text(panel.yaxes[1].label).appendTo(elem);
+          $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
+            .text(panel.yaxes[1].label)
+            .appendTo(elem);
+        }
+
+        if (ctrl.dataWarning) {
+          $(`<div class="datapoints-warning flot-temp-elem">${ctrl.dataWarning.title}</div>`).appendTo(elem);
         }
 
         thresholdManager.draw(plot);
@@ -163,8 +138,12 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       function processOffsetHook(plot, gridMargin) {
         var left = panel.yaxes[0];
         var right = panel.yaxes[1];
-        if (left.show && left.label) { gridMargin.left = 20; }
-        if (right.show && right.label) { gridMargin.right = 20; }
+        if (left.show && left.label) {
+          gridMargin.left = 20;
+        }
+        if (right.show && right.label) {
+          gridMargin.right = 20;
+        }
 
         // apply y-axis min/max options
         var yaxis = plot.getYAxes();
@@ -206,8 +185,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
 
       // Function for rendering panel
       function render_panel() {
-        panelWidth =  elem.width();
-
+        panelWidth = elem.width();
         if (shouldAbortRender()) {
           return;
         }
@@ -218,67 +196,18 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         // un-check dashes if lines are unchecked
         panel.dashes = panel.lines ? panel.dashes : false;
 
-        var stack = panel.stack ? true : null;
-
         // Populate element
-        var options: any = {
-          hooks: {
-            draw: [drawHook],
-            processOffset: [processOffsetHook],
-          },
-          legend: { show: false },
-          series: {
-            stackpercent: panel.stack ? panel.percentage : false,
-            stack: panel.percentage ? null : stack,
-            lines:  {
-              show: panel.lines,
-              zero: false,
-              fill: translateFillOption(panel.fill),
-              lineWidth: panel.dashes ? 0 : panel.linewidth,
-              steps: panel.steppedLine
-            },
-            dashes: {
-              show: panel.dashes,
-              lineWidth: panel.linewidth,
-              dashLength: [panel.dashLength, panel.spaceLength]
-            },
-            bars: {
-              show: panel.bars,
-              fill: 1,
-              barWidth: 1,
-              zero: false,
-              lineWidth: 0
-            },
-            points: {
-              show: panel.points,
-              fill: 1,
-              fillColor: false,
-              radius: panel.points ? panel.pointradius : 2
-            },
-            shadowSize: 0
-          },
-          yaxes: [],
-          xaxis: {},
-          grid: {
-            minBorderMargin: 0,
-            markings: [],
-            backgroundColor: null,
-            borderWidth: 0,
-            hoverable: true,
-            clickable: true,
-            color: '#c8c8c8',
-            margin: { left: 0, right: 0 },
-            labelMarginX: 0,
-          },
-          selection: {
-            mode: "x",
-            color: '#666'
-          },
-          crosshair: {
-            mode: 'x'
-          }
-        };
+        let options: any = buildFlotOptions(panel);
+        prepareXAxis(options, panel);
+        configureYAxisOptions(data, options);
+        thresholdManager.addFlotOptions(options, panel);
+        eventManager.addFlotEvents(annotations, options);
 
+        sortedSeries = sortSeries(data, panel);
+        callPlot(options, true);
+      }
+
+      function buildFlotPairs(data) {
         for (let i = 0; i < data.length; i++) {
           let series = data[i];
           series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
@@ -289,7 +218,9 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
             series.stack = false;
           }
         }
+      }
 
+      function prepareXAxis(options, panel) {
         switch (panel.xaxis.mode) {
           case 'series': {
             options.series.bars.barWidth = 0.7;
@@ -334,90 +265,114 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
             break;
           }
         }
+      }
 
-        thresholdManager.addFlotOptions(options, panel);
-        eventManager.addFlotEvents(annotations, options);
-        configureAxisOptions(data, options);
-
-        sortedSeries = sortSeries(data, ctrl.panel);
-
-        function callPlot(incrementRenderCounter) {
-          try {
-            plot = $.plot(elem, sortedSeries, options);
-            if (ctrl.renderError) {
-              delete ctrl.error;
-              delete ctrl.inspector;
-            }
-          } catch (e) {
-            console.log('flotcharts error', e);
-            ctrl.error = e.message || "Render Error";
-            ctrl.renderError = true;
-            ctrl.inspector = {error: e};
+      function callPlot(options, incrementRenderCounter) {
+        try {
+          plot = $.plot(elem, sortedSeries, options);
+          if (ctrl.renderError) {
+            delete ctrl.error;
+            delete ctrl.inspector;
           }
-
-          if (incrementRenderCounter) {
-            ctrl.renderingCompleted();
-          }
+        } catch (e) {
+          console.log('flotcharts error', e);
+          ctrl.error = e.message || 'Render Error';
+          ctrl.renderError = true;
+          ctrl.inspector = { error: e };
         }
 
-        if (shouldDelayDraw(panel)) {
-          // temp fix for legends on the side, need to render twice to get dimensions right
-          callPlot(false);
-          setTimeout(function() { callPlot(true); }, 50);
-          legendSideLastValue = panel.legend.rightSide;
-        } else {
-          callPlot(true);
+        if (incrementRenderCounter) {
+          ctrl.renderingCompleted();
         }
+      }
+
+      function buildFlotOptions(panel) {
+        let gridColor = '#c8c8c8';
+        if (config.bootData.user.lightTheme === true) {
+          gridColor = '#a1a1a1';
+        }
+        const stack = panel.stack ? true : null;
+        let options = {
+          hooks: {
+            draw: [drawHook],
+            processOffset: [processOffsetHook],
+          },
+          legend: { show: false },
+          series: {
+            stackpercent: panel.stack ? panel.percentage : false,
+            stack: panel.percentage ? null : stack,
+            lines: {
+              show: panel.lines,
+              zero: false,
+              fill: translateFillOption(panel.fill),
+              lineWidth: panel.dashes ? 0 : panel.linewidth,
+              steps: panel.steppedLine,
+            },
+            dashes: {
+              show: panel.dashes,
+              lineWidth: panel.linewidth,
+              dashLength: [panel.dashLength, panel.spaceLength],
+            },
+            bars: {
+              show: panel.bars,
+              fill: 1,
+              barWidth: 1,
+              zero: false,
+              lineWidth: 0,
+            },
+            points: {
+              show: panel.points,
+              fill: 1,
+              fillColor: false,
+              radius: panel.points ? panel.pointradius : 2,
+            },
+            shadowSize: 0,
+          },
+          yaxes: [],
+          xaxis: {},
+          grid: {
+            minBorderMargin: 0,
+            markings: [],
+            backgroundColor: null,
+            borderWidth: 0,
+            hoverable: true,
+            clickable: true,
+            color: gridColor,
+            margin: { left: 0, right: 0 },
+            labelMarginX: 0,
+          },
+          selection: {
+            mode: 'x',
+            color: '#666',
+          },
+          crosshair: {
+            mode: 'x',
+          },
+        };
+        return options;
       }
 
       function sortSeries(series, panel) {
         var sortBy = panel.legend.sort;
         var sortOrder = panel.legend.sortDesc;
-        var haveSortBy = sortBy !== null || sortBy !== undefined;
-        var haveSortOrder = sortOrder !== null || sortOrder !== undefined;
+        var haveSortBy = sortBy !== null && sortBy !== undefined;
+        var haveSortOrder = sortOrder !== null && sortOrder !== undefined;
         var shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
         var sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
-        series.sort((x, y) => {
-          if (x.zindex > y.zindex) {
-            return 1;
-          }
-
-          if (x.zindex < y.zindex) {
-            return -1;
-          }
-
-          if (shouldSortBy) {
-            if (x.stats[sortBy] > y.stats[sortBy]) {
-              return 1 * sortDesc;
-            }
-            if (x.stats[sortBy] < y.stats[sortBy]) {
-              return -1 * sortDesc;
-            }
-          }
-
-          return 0;
-        });
-
-        return series;
+        if (shouldSortBy) {
+          return _.sortBy(series, s => s.stats[sortBy] * sortDesc);
+        } else {
+          return _.sortBy(series, s => s.zindex);
+        }
       }
 
       function translateFillOption(fill) {
         if (panel.percentage && panel.stack) {
-          return fill === 0 ? 0.001 : fill/10;
+          return fill === 0 ? 0.001 : fill / 10;
         } else {
-          return fill/10;
+          return fill / 10;
         }
-      }
-
-      function shouldDelayDraw(panel) {
-        if (panel.legend.rightSide) {
-          return true;
-        }
-        if (legendSideLastValue !== null && panel.legend.rightSide !== legendSideLastValue) {
-          return true;
-        }
-        return false;
       }
 
       function addTimeAxis(options) {
@@ -428,10 +383,10 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         options.xaxis = {
           timezone: dashboard.getTimezone(),
           show: panel.xaxis.show,
-          mode: "time",
+          mode: 'time',
           min: min,
           max: max,
-          label: "Datetime",
+          label: 'Datetime',
           ticks: ticks,
           timeformat: time_format(ticks, min, max),
         };
@@ -448,8 +403,8 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           mode: null,
           min: 0,
           max: ticks.length + 1,
-          label: "Datetime",
-          ticks: ticks
+          label: 'Datetime',
+          ticks: ticks,
         };
       }
 
@@ -491,8 +446,8 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           mode: null,
           min: min,
           max: max,
-          label: "Histogram",
-          ticks: ticks
+          label: 'Histogram',
+          ticks: ticks,
         };
 
         // Use 'short' format for histogram values
@@ -514,12 +469,12 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           mode: null,
           min: 0,
           max: ticks.length + 1,
-          label: "Datetime",
-          ticks: ticks
+          label: 'Datetime',
+          ticks: ticks,
         };
       }
 
-      function configureAxisOptions(data, options) {
+      function configureYAxisOptions(data, options) {
         var defaults = {
           position: 'left',
           show: panel.yaxes[0].show,
@@ -527,12 +482,12 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           logBase: panel.yaxes[0].logBase || 1,
           min: parseNumber(panel.yaxes[0].min),
           max: parseNumber(panel.yaxes[0].max),
-          tickDecimals: panel.yaxes[0].decimals
+          tickDecimals: panel.yaxes[0].decimals,
         };
 
         options.yaxes.push(defaults);
 
-        if (_.find(data, {yaxis: 2})) {
+        if (_.find(data, { yaxis: 2 })) {
           var secondY = _.clone(defaults);
           secondY.index = 2;
           secondY.show = panel.yaxes[1].show;
@@ -544,10 +499,10 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           options.yaxes.push(secondY);
 
           applyLogScale(options.yaxes[1], data);
-          configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.yaxes[1].format);
+          configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? 'percent' : panel.yaxes[1].format);
         }
         applyLogScale(options.yaxes[0], data);
-        configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.yaxes[0].format);
+        configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? 'percent' : panel.yaxes[0].format);
       }
 
       function parseNumber(value: any) {
@@ -573,7 +528,8 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         }
 
         var series, i;
-        var max = axis.max, min = axis.min;
+        var max = axis.max,
+          min = axis.min;
 
         for (i = 0; i < data.length; i++) {
           series = data[i];
@@ -587,16 +543,20 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           }
         }
 
-        axis.transform = function(v) { return (v < Number.MIN_VALUE) ? null : Math.log(v) / Math.log(axis.logBase); };
-        axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
+        axis.transform = function(v) {
+          return v < Number.MIN_VALUE ? null : Math.log(v) / Math.log(axis.logBase);
+        };
+        axis.inverseTransform = function(v) {
+          return Math.pow(axis.logBase, v);
+        };
 
         if (!max && !min) {
           max = axis.inverseTransform(+2);
           min = axis.inverseTransform(-2);
         } else if (!max) {
-          max = min*axis.inverseTransform(+4);
+          max = min * axis.inverseTransform(+4);
         } else if (!min) {
-          min = max*axis.inverseTransform(-4);
+          min = max * axis.inverseTransform(-4);
         }
 
         if (axis.min) {
@@ -642,13 +602,13 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           ticks.push(nextTick);
         }
 
-        const maxNumTicks = Math.ceil(ctrl.height/25);
+        const maxNumTicks = Math.ceil(ctrl.height / 25);
         const numTicks = ticks.length;
         if (numTicks > maxNumTicks) {
-          const factor = Math.ceil(numTicks/maxNumTicks) * logBase;
+          const factor = Math.ceil(numTicks / maxNumTicks) * logBase;
           ticks = [];
 
-          for (nextTick = min; nextTick <= (max * factor); nextTick *= factor) {
+          for (nextTick = min; nextTick <= max * factor; nextTick *= factor) {
             ticks.push(nextTick);
           }
         }
@@ -665,36 +625,36 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       function time_format(ticks, min, max) {
         if (min && max && ticks) {
           var range = max - min;
-          var secPerTick = (range/ticks) / 1000;
+          var secPerTick = range / ticks / 1000;
           var oneDay = 86400000;
           var oneYear = 31536000000;
 
           if (secPerTick <= 45) {
-            return "%H:%M:%S";
+            return '%H:%M:%S';
           }
           if (secPerTick <= 7200 || range <= oneDay) {
-            return "%H:%M";
+            return '%H:%M';
           }
           if (secPerTick <= 80000) {
-            return "%m/%d %H:%M";
+            return '%m/%d %H:%M';
           }
           if (secPerTick <= 2419200 || range <= oneYear) {
-            return "%m/%d";
+            return '%m/%d';
           }
-          return "%Y-%m";
+          return '%Y-%m';
         }
 
-        return "%H:%M";
+        return '%H:%M';
       }
 
-      elem.bind("plotselected", function (event, ranges) {
+      elem.bind('plotselected', function(event, ranges) {
         if (panel.xaxis.mode !== 'time') {
           // Skip if panel in histogram or series mode
           plot.clearSelection();
           return;
         }
 
-        if ((ranges.ctrlKey || ranges.metaKey) && contextSrv.isEditor) {
+        if ((ranges.ctrlKey || ranges.metaKey) && dashboard.meta.canEdit) {
           // Add annotation
           setTimeout(() => {
             eventManager.updateTime(ranges.xaxis);
@@ -702,25 +662,25 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         } else {
           scope.$apply(function() {
             timeSrv.setTime({
-              from  : moment.utc(ranges.xaxis.from),
-              to    : moment.utc(ranges.xaxis.to),
+              from: moment.utc(ranges.xaxis.from),
+              to: moment.utc(ranges.xaxis.to),
             });
           });
         }
       });
 
-      elem.bind("plotclick", function (event, pos, item) {
+      elem.bind('plotclick', function(event, pos, item) {
         if (panel.xaxis.mode !== 'time') {
           // Skip if panel in histogram or series mode
           return;
         }
 
-        if ((pos.ctrlKey || pos.metaKey) && contextSrv.isEditor) {
+        if ((pos.ctrlKey || pos.metaKey) && dashboard.meta.canEdit) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {
             setTimeout(() => {
-              eventManager.updateTime({from: pos.x, to: null});
+              eventManager.updateTime({ from: pos.x, to: null });
             }, 100);
           }
         }
@@ -731,7 +691,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         elem.off();
         elem.remove();
       });
-    }
+    },
   };
 }
 

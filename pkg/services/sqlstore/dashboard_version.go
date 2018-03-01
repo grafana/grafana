@@ -36,6 +36,10 @@ func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
 
 // GetDashboardVersions gets all dashboard versions for the given dashboard ID.
 func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
+	if query.Limit == 0 {
+		query.Limit = 1000
+	}
+
 	err := x.Table("dashboard_version").
 		Select(`dashboard_version.id,
 				dashboard_version.dashboard_id,
@@ -65,7 +69,6 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 
 func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		expiredCount := int64(0)
 		versions := []DashboardVersionExp{}
 		versionsToKeep := setting.DashboardVersionsToKeep
 
@@ -94,8 +97,7 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 			if err != nil {
 				return err
 			}
-			expiredCount, _ = expiredResponse.RowsAffected()
-			sqlog.Debug("Deleted old/expired dashboard versions", "expired", expiredCount)
+			cmd.DeletedRows, _ = expiredResponse.RowsAffected()
 		}
 
 		return nil

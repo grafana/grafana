@@ -10,8 +10,8 @@ awsconfig
 /public_gen
 /public/vendor/npm
 /tmp
-vendor/phantomjs/phantomjs
-vendor/phantomjs/phantomjs.exe
+tools/phantomjs/phantomjs
+tools/phantomjs/phantomjs.exe
 profile.out
 coverage.txt
 
@@ -51,9 +51,13 @@ debug.test
 /packaging/**/*.rpm
 /packaging/**/*.deb
 
+# Ignore OSX indexing
+.DS_Store
+
 /vendor/**/*.py
 /vendor/**/*.xml
 /vendor/**/*.yml
 /vendor/**/*_test.go
 /vendor/**/.editorconfig
 /vendor/**/appengine*
+*.orig

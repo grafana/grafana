@@ -46,6 +46,7 @@ func (service *CleanUpService) start(ctx context.Context) error {
 			service.cleanUpTmpFiles()
 			service.deleteExpiredSnapshots()
 			service.deleteExpiredDashboardVersions()
+			service.deleteOldLoginAttempts()
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -82,9 +83,34 @@ func (service *CleanUpService) cleanUpTmpFiles() {
 }
 
 func (service *CleanUpService) deleteExpiredSnapshots() {
-	bus.Dispatch(&m.DeleteExpiredSnapshotsCommand{})
+	cmd := m.DeleteExpiredSnapshotsCommand{}
+	if err := bus.Dispatch(&cmd); err != nil {
+		service.log.Error("Failed to delete expired snapshots", "error", err.Error())
+	} else {
+		service.log.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
+	}
 }
 
 func (service *CleanUpService) deleteExpiredDashboardVersions() {
-	bus.Dispatch(&m.DeleteExpiredVersionsCommand{})
+	cmd := m.DeleteExpiredVersionsCommand{}
+	if err := bus.Dispatch(&cmd); err != nil {
+		service.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
+	} else {
+		service.log.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
+	}
+}
+
+func (service *CleanUpService) deleteOldLoginAttempts() {
+	if setting.DisableBruteForceLoginProtection {
+		return
+	}
+
+	cmd := m.DeleteOldLoginAttemptsCommand{
+		OlderThan: time.Now().Add(time.Minute * -10),
+	}
+	if err := bus.Dispatch(&cmd); err != nil {
+		service.log.Error("Problem deleting expired login attempts", "error", err.Error())
+	} else {
+		service.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
+	}
 }

@@ -3,21 +3,21 @@ import $ from 'jquery';
 import moment from 'moment';
 import * as d3 from 'd3';
 import kbn from 'app/core/utils/kbn';
-import {appEvents, contextSrv} from 'app/core/core';
-import {tickStep, getScaledDecimals, getFlotTickSize} from 'app/core/utils/ticks';
-import {HeatmapTooltip} from './heatmap_tooltip';
-import {mergeZeroBuckets} from './heatmap_data_converter';
-import {getColorScale, getOpacityScale} from './color_scale';
+import { appEvents, contextSrv } from 'app/core/core';
+import { tickStep, getScaledDecimals, getFlotTickSize } from 'app/core/utils/ticks';
+import { HeatmapTooltip } from './heatmap_tooltip';
+import { mergeZeroBuckets } from './heatmap_data_converter';
+import { getColorScale, getOpacityScale } from './color_scale';
 
 let MIN_CARD_SIZE = 1,
-    CARD_PADDING = 1,
-    CARD_ROUND = 0,
-    DATA_RANGE_WIDING_FACTOR = 1.2,
-    DEFAULT_X_TICK_SIZE_PX = 100,
-    DEFAULT_Y_TICK_SIZE_PX = 50,
-    X_AXIS_TICK_PADDING = 10,
-    Y_AXIS_TICK_PADDING = 5,
-    MIN_SELECTION_WIDTH = 2;
+  CARD_PADDING = 1,
+  CARD_ROUND = 0,
+  DATA_RANGE_WIDING_FACTOR = 1.2,
+  DEFAULT_X_TICK_SIZE_PX = 100,
+  DEFAULT_Y_TICK_SIZE_PX = 50,
+  X_AXIS_TICK_PADDING = 10,
+  Y_AXIS_TICK_PADDING = 5,
+  MIN_SELECTION_WIDTH = 2;
 
 export default function link(scope, elem, attrs, ctrl) {
   let data, timeRange, panel, heatmap;
@@ -26,25 +26,33 @@ export default function link(scope, elem, attrs, ctrl) {
   let $heatmap = elem.find('.heatmap-panel');
   let tooltip = new HeatmapTooltip($heatmap, scope);
 
-  let width, height,
-      yScale, xScale,
-      chartWidth, chartHeight,
-      chartTop, chartBottom,
-      yAxisWidth, xAxisHeight,
-      cardPadding, cardRound,
-      cardWidth, cardHeight,
-      colorScale, opacityScale,
-      mouseUpHandler;
+  let width,
+    height,
+    yScale,
+    xScale,
+    chartWidth,
+    chartHeight,
+    chartTop,
+    chartBottom,
+    yAxisWidth,
+    xAxisHeight,
+    cardPadding,
+    cardRound,
+    cardWidth,
+    cardHeight,
+    colorScale,
+    opacityScale,
+    mouseUpHandler;
 
   let selection = {
     active: false,
     x1: -1,
-    x2: -1
+    x2: -1,
   };
 
-  let padding = {left: 0, right: 0, top: 0, bottom: 0},
-      margin = {left: 25, right: 15, top: 10, bottom: 20},
-      dataRangeWidingFactor = DATA_RANGE_WIDING_FACTOR;
+  let padding = { left: 0, right: 0, top: 0, bottom: 0 },
+    margin = { left: 25, right: 15, top: 10, bottom: 20 },
+    dataRangeWidingFactor = DATA_RANGE_WIDING_FACTOR;
 
   ctrl.events.on('render', () => {
     render();
@@ -58,32 +66,34 @@ export default function link(scope, elem, attrs, ctrl) {
         height = parseInt(height.replace('px', ''), 10);
       }
 
-      height -= 5; // padding
-      height -= panel.title ? 24 : 9; // subtract panel title bar
+      height -= panel.legend.show ? 28 : 11; // bottom padding and space for legend
 
       $heatmap.css('height', height + 'px');
 
       return true;
-    } catch (e) { // IE throws errors sometimes
+    } catch (e) {
+      // IE throws errors sometimes
       return false;
     }
   }
 
   function getYAxisWidth(elem) {
-    let axis_text = elem.selectAll(".axis-y text").nodes();
-    let max_text_width = _.max(_.map(axis_text, text => {
-      // Use SVG getBBox method
-      return text.getBBox().width;
-    }));
+    let axis_text = elem.selectAll('.axis-y text').nodes();
+    let max_text_width = _.max(
+      _.map(axis_text, text => {
+        // Use SVG getBBox method
+        return text.getBBox().width;
+      })
+    );
 
     return max_text_width;
   }
 
   function getXAxisHeight(elem) {
-    let axis_line = elem.select(".axis-x line");
+    let axis_line = elem.select('.axis-x line');
     if (!axis_line.empty()) {
-      let axis_line_position = parseFloat(elem.select(".axis-x line").attr("y2"));
-      let canvas_width = parseFloat(elem.attr("height"));
+      let axis_line_position = parseFloat(elem.select('.axis-x line').attr('y2'));
+      let canvas_width = parseFloat(elem.attr('height'));
       return canvas_width - axis_line_position;
     } else {
       // Default height
@@ -92,7 +102,8 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function addXAxis() {
-    scope.xScale = xScale = d3.scaleTime()
+    scope.xScale = xScale = d3
+      .scaleTime()
       .domain([timeRange.from, timeRange.to])
       .range([0, chartWidth]);
 
@@ -106,7 +117,8 @@ export default function link(scope, elem, attrs, ctrl) {
       timeFormat = d3.timeFormat(grafanaTimeFormatter);
     }
 
-    let xAxis = d3.axisBottom(xScale)
+    let xAxis = d3
+      .axisBottom(xScale)
       .ticks(ticks)
       .tickFormat(timeFormat)
       .tickPadding(X_AXIS_TICK_PADDING)
@@ -114,19 +126,23 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let posY = margin.top;
     let posX = yAxisWidth;
-    heatmap.append("g")
-      .attr("class", "axis axis-x")
-      .attr("transform", "translate(" + posX + "," + posY + ")")
+    heatmap
+      .append('g')
+      .attr('class', 'axis axis-x')
+      .attr('transform', 'translate(' + posX + ',' + posY + ')')
       .call(xAxis);
 
     // Remove horizontal line in the top of axis labels (called domain in d3)
-    heatmap.select(".axis-x").select(".domain").remove();
+    heatmap
+      .select('.axis-x')
+      .select('.domain')
+      .remove();
   }
 
   function addYAxis() {
     let ticks = Math.ceil(chartHeight / DEFAULT_Y_TICK_SIZE_PX);
     let tick_interval = tickStep(data.heatmapStats.min, data.heatmapStats.max, ticks);
-    let {y_min, y_max} = wideYAxisRange(data.heatmapStats.min, data.heatmapStats.max, tick_interval);
+    let { y_min, y_max } = wideYAxisRange(data.heatmapStats.min, data.heatmapStats.max, tick_interval);
 
     // Rewrite min and max if it have been set explicitly
     y_min = panel.yAxis.min !== null ? panel.yAxis.min : y_min;
@@ -155,31 +171,37 @@ export default function link(scope, elem, attrs, ctrl) {
     data.yAxis = {
       min: y_min,
       max: y_max,
-      ticks: ticks
+      ticks: ticks,
     };
 
-    scope.yScale = yScale = d3.scaleLinear()
+    scope.yScale = yScale = d3
+      .scaleLinear()
       .domain([y_min, y_max])
       .range([chartHeight, 0]);
 
-    let yAxis = d3.axisLeft(yScale)
+    let yAxis = d3
+      .axisLeft(yScale)
       .ticks(ticks)
       .tickFormat(tickValueFormatter(decimals, scaledDecimals))
       .tickSizeInner(0 - width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
 
-    heatmap.append("g")
-      .attr("class", "axis axis-y")
+    heatmap
+      .append('g')
+      .attr('class', 'axis axis-y')
       .call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
     let posY = margin.top;
     let posX = getYAxisWidth(heatmap) + Y_AXIS_TICK_PADDING;
-    heatmap.select(".axis-y").attr("transform", "translate(" + posX + "," + posY + ")");
+    heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
 
     // Remove vertical line in the right of axis labels (called domain in d3)
-    heatmap.select(".axis-y").select(".domain").remove();
+    heatmap
+      .select('.axis-y')
+      .select('.domain')
+      .remove();
   }
 
   // Wide Y values range and anjust to bucket size
@@ -201,12 +223,12 @@ export default function link(scope, elem, attrs, ctrl) {
       y_min = 0;
     }
 
-    return {y_min, y_max};
+    return { y_min, y_max };
   }
 
   function addLogYAxis() {
     let log_base = panel.yAxis.logBase;
-    let {y_min, y_max} = adjustLogRange(data.heatmapStats.minLog, data.heatmapStats.max, log_base);
+    let { y_min, y_max } = adjustLogRange(data.heatmapStats.minLog, data.heatmapStats.max, log_base);
 
     y_min = panel.yAxis.min && panel.yAxis.min !== '0' ? adjustLogMin(panel.yAxis.min, log_base) : y_min;
     y_max = panel.yAxis.max !== null ? adjustLogMax(panel.yAxis.max, log_base) : y_max;
@@ -217,7 +239,8 @@ export default function link(scope, elem, attrs, ctrl) {
       y_min = 1;
     }
 
-    scope.yScale = yScale = d3.scaleLog()
+    scope.yScale = yScale = d3
+      .scaleLog()
       .base(panel.yAxis.logBase)
       .domain([y_min, y_max])
       .range([chartHeight, 0]);
@@ -237,32 +260,40 @@ export default function link(scope, elem, attrs, ctrl) {
     data.yAxis = {
       min: y_min,
       max: y_max,
-      ticks: tick_values.length
+      ticks: tick_values.length,
     };
 
-    let yAxis = d3.axisLeft(yScale)
+    let yAxis = d3
+      .axisLeft(yScale)
       .tickValues(tick_values)
       .tickFormat(tickValueFormatter(decimals, scaledDecimals))
       .tickSizeInner(0 - width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
 
-    heatmap.append("g")
-      .attr("class", "axis axis-y")
+    heatmap
+      .append('g')
+      .attr('class', 'axis axis-y')
       .call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
     let posY = margin.top;
     let posX = getYAxisWidth(heatmap) + Y_AXIS_TICK_PADDING;
-    heatmap.select(".axis-y").attr("transform", "translate(" + posX + "," + posY + ")");
+    heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
 
     // Set first tick as pseudo 0
     if (y_min < 1) {
-      heatmap.select(".axis-y").select(".tick text").text("0");
+      heatmap
+        .select('.axis-y')
+        .select('.tick text')
+        .text('0');
     }
 
     // Remove vertical line in the right of axis labels (called domain in d3)
-    heatmap.select(".axis-y").select(".domain").remove();
+    heatmap
+      .select('.axis-y')
+      .select('.domain')
+      .remove();
   }
 
   // Adjust data range to log base
@@ -279,7 +310,7 @@ export default function link(scope, elem, attrs, ctrl) {
     // Adjust max Y value to log base
     y_max = adjustLogMax(data.heatmapStats.max, logBase);
 
-    return {y_min, y_max};
+    return { y_min, y_max };
   }
 
   function adjustLogMax(max, base) {
@@ -320,9 +351,10 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function fixYAxisTickSize() {
-    heatmap.select(".axis-y")
-      .selectAll(".tick line")
-      .attr("x2", chartWidth);
+    heatmap
+      .select('.axis-y')
+      .selectAll('.tick line')
+      .attr('x2', chartWidth);
   }
 
   function addAxes() {
@@ -344,11 +376,17 @@ export default function link(scope, elem, attrs, ctrl) {
     xAxisHeight = getXAxisHeight(heatmap);
 
     if (!panel.yAxis.show) {
-      heatmap.select(".axis-y").selectAll("line").style("opacity", 0);
+      heatmap
+        .select('.axis-y')
+        .selectAll('line')
+        .style('opacity', 0);
     }
 
     if (!panel.xAxis.show) {
-      heatmap.select(".axis-x").selectAll("line").style("opacity", 0);
+      heatmap
+        .select('.axis-x')
+        .selectAll('line')
+        .style('opacity', 0);
     }
   }
 
@@ -365,10 +403,11 @@ export default function link(scope, elem, attrs, ctrl) {
       heatmap.remove();
     }
 
-    heatmap = d3.select(heatmap_elem)
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height);
+    heatmap = d3
+      .select(heatmap_elem)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height);
   }
 
   function addHeatmap() {
@@ -387,52 +426,60 @@ export default function link(scope, elem, attrs, ctrl) {
     let maxValue = panel.color.max || maxValueAuto;
     let minValue = panel.color.min || 0;
 
-    let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
-    colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme,  maxValue, minValue);
+    let colorScheme = _.find(ctrl.colorSchemes, {
+      value: panel.color.colorScheme,
+    });
+    colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
     opacityScale = getOpacityScale(panel.color, maxValue);
     setCardSize();
 
-    let cards = heatmap.selectAll(".heatmap-card").data(cardsData);
-    cards.append("title");
-    cards = cards.enter().append("rect")
-    .attr("x", getCardX)
-    .attr("width", getCardWidth)
-    .attr("y", getCardY)
-    .attr("height", getCardHeight)
-    .attr("rx", cardRound)
-    .attr("ry", cardRound)
-    .attr("class", "bordered heatmap-card")
-    .style("fill", getCardColor)
-    .style("stroke", getCardColor)
-    .style("stroke-width", 0)
-    .style("opacity", getCardOpacity);
+    let cards = heatmap.selectAll('.heatmap-card').data(cardsData);
+    cards.append('title');
+    cards = cards
+      .enter()
+      .append('rect')
+      .attr('x', getCardX)
+      .attr('width', getCardWidth)
+      .attr('y', getCardY)
+      .attr('height', getCardHeight)
+      .attr('rx', cardRound)
+      .attr('ry', cardRound)
+      .attr('class', 'bordered heatmap-card')
+      .style('fill', getCardColor)
+      .style('stroke', getCardColor)
+      .style('stroke-width', 0)
+      .style('opacity', getCardOpacity);
 
-    let $cards = $heatmap.find(".heatmap-card");
-    $cards.on("mouseenter", (event) => {
-      tooltip.mouseOverBucket = true;
-      highlightCard(event);
-    })
-    .on("mouseleave", (event) => {
-      tooltip.mouseOverBucket = false;
-      resetCardHighLight(event);
-    });
+    let $cards = $heatmap.find('.heatmap-card');
+    $cards
+      .on('mouseenter', event => {
+        tooltip.mouseOverBucket = true;
+        highlightCard(event);
+      })
+      .on('mouseleave', event => {
+        tooltip.mouseOverBucket = false;
+        resetCardHighLight(event);
+      });
   }
 
   function highlightCard(event) {
-    let color = d3.select(event.target).style("fill");
+    let color = d3.select(event.target).style('fill');
     let highlightColor = d3.color(color).darker(2);
     let strokeColor = d3.color(color).brighter(4);
     let current_card = d3.select(event.target);
     tooltip.originalFillColor = color;
-    current_card.style("fill", highlightColor.toString())
-    .style("stroke", strokeColor.toString())
-    .style("stroke-width", 1);
+    current_card
+      .style('fill', highlightColor.toString())
+      .style('stroke', strokeColor.toString())
+      .style('stroke-width', 1);
   }
 
   function resetCardHighLight(event) {
-    d3.select(event.target).style("fill", tooltip.originalFillColor)
-    .style("stroke", tooltip.originalFillColor)
-    .style("stroke-width", 0);
+    d3
+      .select(event.target)
+      .style('fill', tooltip.originalFillColor)
+      .style('stroke', tooltip.originalFillColor)
+      .style('stroke-width', 0);
   }
 
   function setCardSize() {
@@ -538,13 +585,21 @@ export default function link(scope, elem, attrs, ctrl) {
   /////////////////////////////
 
   // Shared crosshair and tooltip
-  appEvents.on('graph-hover', event => {
-    drawSharedCrosshair(event.pos);
-  }, scope);
+  appEvents.on(
+    'graph-hover',
+    event => {
+      drawSharedCrosshair(event.pos);
+    },
+    scope
+  );
 
-  appEvents.on('graph-hover-clear', () => {
-    clearCrosshair();
-  }, scope);
+  appEvents.on(
+    'graph-hover-clear',
+    () => {
+      clearCrosshair();
+    },
+    scope
+  );
 
   function onMouseDown(event) {
     selection.active = true;
@@ -554,11 +609,11 @@ export default function link(scope, elem, attrs, ctrl) {
       onMouseUp();
     };
 
-    $(document).one("mouseup", mouseUpHandler);
+    $(document).one('mouseup', mouseUpHandler);
   }
 
   function onMouseUp() {
-    $(document).unbind("mouseup", mouseUpHandler);
+    $(document).unbind('mouseup', mouseUpHandler);
     mouseUpHandler = null;
     selection.active = false;
 
@@ -569,7 +624,7 @@ export default function link(scope, elem, attrs, ctrl) {
 
       ctrl.timeSrv.setTime({
         from: moment.utc(timeFrom),
-        to: moment.utc(timeTo)
+        to: moment.utc(timeTo),
       });
     }
 
@@ -582,7 +637,9 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function onMouseMove(event) {
-    if (!heatmap) { return; }
+    if (!heatmap) {
+      return;
+    }
 
     if (selection.active) {
       // Clear crosshair and tooltip
@@ -604,16 +661,18 @@ export default function link(scope, elem, attrs, ctrl) {
     let pos = {
       pageX: event.pageX,
       pageY: event.pageY,
-      x: x, x1: x,
-      y: y, y1: y,
-      panelRelY: null
+      x: x,
+      x1: x,
+      y: y,
+      y1: y,
+      panelRelY: null,
     };
 
     // Set minimum offset to prevent showing legend from another panel
     pos.panelRelY = Math.max(event.offsetY / height, 0.001);
 
     // broadcast to other graph panels that we are hovering
-    appEvents.emit('graph-hover', {pos: pos, panel: panel});
+    appEvents.emit('graph-hover', { pos: pos, panel: panel });
   }
 
   function limitSelection(x2) {
@@ -624,17 +683,18 @@ export default function link(scope, elem, attrs, ctrl) {
 
   function drawSelection(posX1, posX2) {
     if (heatmap) {
-      heatmap.selectAll(".heatmap-selection").remove();
+      heatmap.selectAll('.heatmap-selection').remove();
       let selectionX = Math.min(posX1, posX2);
       let selectionWidth = Math.abs(posX1 - posX2);
 
       if (selectionWidth > MIN_SELECTION_WIDTH) {
-        heatmap.append("rect")
-        .attr("class", "heatmap-selection")
-        .attr("x", selectionX)
-        .attr("width", selectionWidth)
-        .attr("y", chartTop)
-        .attr("height", chartHeight);
+        heatmap
+          .append('rect')
+          .attr('class', 'heatmap-selection')
+          .attr('x', selectionX)
+          .attr('width', selectionWidth)
+          .attr('y', chartTop)
+          .attr('height', chartHeight);
       }
     }
   }
@@ -644,27 +704,28 @@ export default function link(scope, elem, attrs, ctrl) {
     selection.x2 = -1;
 
     if (heatmap) {
-      heatmap.selectAll(".heatmap-selection").remove();
+      heatmap.selectAll('.heatmap-selection').remove();
     }
   }
 
   function drawCrosshair(position) {
     if (heatmap) {
-      heatmap.selectAll(".heatmap-crosshair").remove();
+      heatmap.selectAll('.heatmap-crosshair').remove();
 
       let posX = position;
       posX = Math.max(posX, yAxisWidth);
       posX = Math.min(posX, chartWidth + yAxisWidth);
 
-      heatmap.append("g")
-      .attr("class", "heatmap-crosshair")
-      .attr("transform", "translate(" + posX + ",0)")
-      .append("line")
-      .attr("x1", 1)
-      .attr("y1", chartTop)
-      .attr("x2", 1)
-      .attr("y2", chartBottom)
-      .attr("stroke-width", 1);
+      heatmap
+        .append('g')
+        .attr('class', 'heatmap-crosshair')
+        .attr('transform', 'translate(' + posX + ',0)')
+        .append('line')
+        .attr('x1', 1)
+        .attr('y1', chartTop)
+        .attr('x2', 1)
+        .attr('y2', chartBottom)
+        .attr('stroke-width', 1);
     }
   }
 
@@ -677,7 +738,7 @@ export default function link(scope, elem, attrs, ctrl) {
 
   function clearCrosshair() {
     if (heatmap) {
-      heatmap.selectAll(".heatmap-crosshair").remove();
+      heatmap.selectAll('.heatmap-crosshair').remove();
     }
   }
 
@@ -706,34 +767,34 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   // Register selection listeners
-  $heatmap.on("mousedown", onMouseDown);
-  $heatmap.on("mousemove", onMouseMove);
-  $heatmap.on("mouseleave", onMouseLeave);
+  $heatmap.on('mousedown', onMouseDown);
+  $heatmap.on('mousemove', onMouseMove);
+  $heatmap.on('mouseleave', onMouseLeave);
 }
 
 function grafanaTimeFormat(ticks, min, max) {
   if (min && max && ticks) {
     let range = max - min;
-    let secPerTick = (range/ticks) / 1000;
+    let secPerTick = range / ticks / 1000;
     let oneDay = 86400000;
     let oneYear = 31536000000;
 
     if (secPerTick <= 45) {
-      return "%H:%M:%S";
+      return '%H:%M:%S';
     }
     if (secPerTick <= 7200 || range <= oneDay) {
-      return "%H:%M";
+      return '%H:%M';
     }
     if (secPerTick <= 80000) {
-      return "%m/%d %H:%M";
+      return '%m/%d %H:%M';
     }
     if (secPerTick <= 2419200 || range <= oneYear) {
-      return "%m/%d";
+      return '%m/%d';
     }
-    return "%Y-%m";
+    return '%Y-%m';
   }
 
-  return "%H:%M";
+  return '%H:%M';
 }
 
 function logp(value, base) {
@@ -742,7 +803,7 @@ function logp(value, base) {
 
 function getPrecision(num) {
   let str = num.toString();
-  let dot_index = str.indexOf(".");
+  let dot_index = str.indexOf('.');
   if (dot_index === -1) {
     return 0;
   } else {

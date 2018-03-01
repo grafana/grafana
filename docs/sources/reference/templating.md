@@ -1,20 +1,20 @@
 +++
-title = "Templating"
+title = "Variables"
 keywords = ["grafana", "templating", "documentation", "guide"]
 type = "docs"
 [menu.docs]
-name = "Templating"
+name = "Variables"
 parent = "dashboard_features"
 weight = 1
 +++
 
-# Templating
+# Variables
 
-Templating allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
+Variables allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
 and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-<img class="no-shadow" src="/img/docs/v4/templated_dash.png">
+{{< docs-imagebox img="/img/docs/v50/variables_dashboard.png" >}}
 
 ## What is a variable?
 
@@ -43,7 +43,7 @@ is the set of values you can choose from.
 
 ## Adding a variable
 
-<img class="no-shadow" src="/img/docs/v4/templating_var_list.png">
+{{< docs-imagebox img="/img/docs/v50/variables_var_list.png" max-width="800px" >}}
 
 You add variables via Dashboard cogs menu > Templating. This opens up a list of variables and a `New` button to create a new variable.
 
@@ -133,7 +133,7 @@ Option | Description
 *Tags query* | Data source query that should return a list of tags
 *Tag values query* | Data source query that should return a list of values for a specified tag key. Use `$tag` in the query to refer the currently selected tag.
 
-![](/img/docs/v4/variable_dropdown_tags.png)
+{{< docs-imagebox img="/img/docs/v50/variable_dropdown_tags.png" max-width="300px" >}}
 
 ### Interval variables
 

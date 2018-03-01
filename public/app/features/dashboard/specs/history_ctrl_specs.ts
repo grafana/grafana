@@ -1,8 +1,8 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
 
 import _ from 'lodash';
-import {HistoryListCtrl} from 'app/features/dashboard/history/history';
-import {versions, compare, restore} from './history_mocks';
+import { HistoryListCtrl } from 'app/features/dashboard/history/history';
+import { versions, compare, restore } from './history_mocks';
 
 describe('HistoryListCtrl', function() {
   var RESTORE_ID = 4;
@@ -14,9 +14,11 @@ describe('HistoryListCtrl', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(angularMocks.inject($rootScope => {
-    ctx.scope = $rootScope.$new();
-  }));
+  beforeEach(
+    angularMocks.inject($rootScope => {
+      ctx.scope = $rootScope.$new();
+    })
+  );
 
   var historySrv;
   var $rootScope;
@@ -35,21 +37,27 @@ describe('HistoryListCtrl', function() {
   describe('when the history list component is loaded', function() {
     var deferred;
 
-    beforeEach(angularMocks.inject(($controller, $q) => {
-      deferred = $q.defer();
-      historySrv.getHistoryList.returns(deferred.promise);
-      ctx.ctrl = $controller(HistoryListCtrl, {
-        historySrv,
-        $rootScope,
-        $scope: ctx.scope,
-      }, {
-        dashboard: {
-          id: 2,
-          version: 3,
-          formatDate: sinon.stub().returns('date'),
-        }
-      });
-    }));
+    beforeEach(
+      angularMocks.inject(($controller, $q) => {
+        deferred = $q.defer();
+        historySrv.getHistoryList.returns(deferred.promise);
+        ctx.ctrl = $controller(
+          HistoryListCtrl,
+          {
+            historySrv,
+            $rootScope,
+            $scope: ctx.scope,
+          },
+          {
+            dashboard: {
+              id: 2,
+              version: 3,
+              formatDate: sinon.stub().returns('date'),
+            },
+          }
+        );
+      })
+    );
 
     it('should immediately attempt to fetch the history list', function() {
       expect(historySrv.getHistoryList.calledOnce).to.be(true);
@@ -61,7 +69,7 @@ describe('HistoryListCtrl', function() {
         ctx.ctrl.$scope.$apply();
       });
 
-      it('should reset the controller\'s state', function() {
+      it("should reset the controller's state", function() {
         expect(ctx.ctrl.mode).to.be('list');
         expect(ctx.ctrl.delta).to.eql({ basic: '', json: '' });
         expect(ctx.ctrl.canCompare).to.be(false);
@@ -91,7 +99,6 @@ describe('HistoryListCtrl', function() {
         var actual = _.filter(ctx.ctrl.revisions, rev => !rev.checked);
         expect(actual.length).to.be(4);
       });
-
     });
 
     describe('and fetching the history list fails', function() {
@@ -100,7 +107,7 @@ describe('HistoryListCtrl', function() {
         ctx.ctrl.$scope.$apply();
       });
 
-      it('should reset the controller\'s state', function() {
+      it("should reset the controller's state", function() {
         expect(ctx.ctrl.mode).to.be('list');
         expect(ctx.ctrl.delta).to.eql({ basic: '', json: '' });
         expect(_.find(ctx.ctrl.revisions, rev => rev.checked)).to.be(undefined);
@@ -117,7 +124,7 @@ describe('HistoryListCtrl', function() {
 
     describe('should update the history list when the dashboard is saved', function() {
       beforeEach(function() {
-        ctx.ctrl.dashboard = {version: 3 };
+        ctx.ctrl.dashboard = { version: 3 };
         ctx.ctrl.resetFromSource = sinon.spy();
       });
 
@@ -136,25 +143,31 @@ describe('HistoryListCtrl', function() {
   describe('when the user wants to compare two revisions', function() {
     var deferred;
 
-    beforeEach(angularMocks.inject(($controller, $q) => {
-      deferred = $q.defer();
-      historySrv.getHistoryList.returns($q.when(versionsResponse));
-      historySrv.calculateDiff.returns(deferred.promise);
-      ctx.ctrl = $controller(HistoryListCtrl, {
-        historySrv,
-        $rootScope,
-        $scope: ctx.scope,
-      }, {
-        dashboard: {
-          id: 2,
-          version: 3,
-          formatDate: sinon.stub().returns('date'),
-        }
-      });
+    beforeEach(
+      angularMocks.inject(($controller, $q) => {
+        deferred = $q.defer();
+        historySrv.getHistoryList.returns($q.when(versionsResponse));
+        historySrv.calculateDiff.returns(deferred.promise);
+        ctx.ctrl = $controller(
+          HistoryListCtrl,
+          {
+            historySrv,
+            $rootScope,
+            $scope: ctx.scope,
+          },
+          {
+            dashboard: {
+              id: 2,
+              version: 3,
+              formatDate: sinon.stub().returns('date'),
+            },
+          }
+        );
 
-      ctx.ctrl.$scope.onDashboardSaved = sinon.spy();
-      ctx.ctrl.$scope.$apply();
-    }));
+        ctx.ctrl.$scope.onDashboardSaved = sinon.spy();
+        ctx.ctrl.$scope.$apply();
+      })
+    );
 
     it('should have already fetched the history list', function() {
       expect(historySrv.getHistoryList.calledOnce).to.be(true);
@@ -166,12 +179,12 @@ describe('HistoryListCtrl', function() {
       expect(ctx.ctrl.canCompare).to.be(false);
 
       // single value
-      ctx.ctrl.revisions = [{checked: true}];
+      ctx.ctrl.revisions = [{ checked: true }];
       ctx.ctrl.revisionSelectionChanged();
       expect(ctx.ctrl.canCompare).to.be(false);
 
       // both values in range
-      ctx.ctrl.revisions = [{checked: true}, {checked: true}];
+      ctx.ctrl.revisions = [{ checked: true }, { checked: true }];
       ctx.ctrl.revisionSelectionChanged();
       expect(ctx.ctrl.canCompare).to.be(true);
     });
@@ -276,20 +289,22 @@ describe('HistoryListCtrl', function() {
   describe('when the user wants to restore a revision', function() {
     var deferred;
 
-    beforeEach(angularMocks.inject(($controller, $q) => {
-      deferred = $q.defer();
-      historySrv.getHistoryList.returns($q.when(versionsResponse));
-      historySrv.restoreDashboard.returns(deferred.promise);
-      ctx.ctrl = $controller(HistoryListCtrl, {
-        historySrv,
-        contextSrv: { user: { name: 'Carlos' }},
-        $rootScope,
-        $scope: ctx.scope,
-      });
-      ctx.ctrl.dashboard = { id: 1 };
-      ctx.ctrl.restore();
-      ctx.ctrl.$scope.$apply();
-    }));
+    beforeEach(
+      angularMocks.inject(($controller, $q) => {
+        deferred = $q.defer();
+        historySrv.getHistoryList.returns($q.when(versionsResponse));
+        historySrv.restoreDashboard.returns(deferred.promise);
+        ctx.ctrl = $controller(HistoryListCtrl, {
+          historySrv,
+          contextSrv: { user: { name: 'Carlos' } },
+          $rootScope,
+          $scope: ctx.scope,
+        });
+        ctx.ctrl.dashboard = { id: 1 };
+        ctx.ctrl.restore();
+        ctx.ctrl.$scope.$apply();
+      })
+    );
 
     it('should display a modal allowing the user to restore or cancel', function() {
       expect($rootScope.appEvent.calledOnce).to.be(true);
@@ -309,7 +324,6 @@ describe('HistoryListCtrl', function() {
       it('should indicate loading has finished', function() {
         expect(ctx.ctrl.loading).to.be(false);
       });
-
     });
   });
 });

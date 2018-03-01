@@ -10,17 +10,17 @@ weight = 8
 
 # Grafana CLI
 
-Grafana cli is a small executable that is bundled with grafana server and is suppose to be executed on the same machine as grafana runs.
+Grafana cli is a small executable that is bundled with Grafana-server and is supposed to be executed on the same machine Grafana-server is running on.
 
 ## Plugins
 
-The CLI helps you install, upgrade and manage your plugins on the same machine it CLI is running.
-You can find more information about how to install and manage your plugins at the
-[plugin page]({{< relref "plugins/installation.md" >}}).
+The CLI allows you to install, upgrade and manage your plugins on the machine it is running on.
+You can find more information about how to install and manage your plugins in the
+[plugins page]({{< relref "plugins/installation.md" >}}).
 
 ## Admin
 
-> This feature is only available in grafana 4.1 and above.
+> This feature is only available in Grafana 4.1 and above.
 
 To show all admin commands:
 `grafana-cli admin`
@@ -39,7 +39,7 @@ then there are two flags that can be used to set homepath and the config file pa
 
 `grafana-cli admin reset-admin-password --homepath "/usr/share/grafana" newpass`
 
-If you have not lost the admin password then it is better to set in the Grafana UI. If you need to set the password in a script then the [Grafana API](http://docs.grafana.org/http_api/user/#change-password) can be used. Here is an example with curl using basic auth:
+If you have not lost the admin password then it is better to set in the Grafana UI. If you need to set the password in a script then the [Grafana API](http://docs.grafana.org/http_api/user/#change-password) can be used. Here is an example using curl with basic auth:
 
 ```bash
 curl -X PUT -H "Content-Type: application/json" -d '{

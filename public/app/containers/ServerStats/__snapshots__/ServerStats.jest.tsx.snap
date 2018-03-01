@@ -1,0 +1,170 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ServerStats Should render table with stats 1`] = `
+<div>
+  <div
+    className="page-header-canvas"
+  >
+    <div
+      className="page-container"
+    >
+      <div
+        className="page-header"
+      >
+        <div
+          className="page-header__inner"
+        >
+          <span
+            className="page-header__logo"
+          >
+            
+            
+          </span>
+          <div
+            className="page-header__info-block"
+          >
+            <h1
+              className="page-header__title"
+            >
+              admin-Text
+            </h1>
+            
+          </div>
+        </div>
+        <nav>
+          <div
+            className="gf-form-select-wrapper width-20 page-header__select-nav"
+          >
+            <label
+              className="gf-form-select-icon "
+              htmlFor="page-header-select-nav"
+            />
+            <select
+              className="gf-select-nav gf-form-input"
+              id="page-header-select-nav"
+              onChange={[Function]}
+              value="/url/server-stats"
+            >
+              <option
+                value="/url/server-stats"
+              >
+                server-stats-Text
+              </option>
+            </select>
+          </div>
+          <ul
+            className="gf-tabs page-header__tabs"
+          >
+            <li
+              className="gf-tabs-item"
+            >
+              <a
+                className="gf-tabs-link active"
+                href="/url/server-stats"
+                target={undefined}
+              >
+                <i
+                  className=""
+                />
+                server-stats-Text
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div
+    className="page-container page-body"
+  >
+    <table
+      className="filter-table form-inline"
+    >
+      <thead>
+        <tr>
+          <th>
+            Name
+          </th>
+          <th>
+            Value
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            Total dashboards
+          </td>
+          <td>
+            10
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total users
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Active users (seen last 30 days)
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total orgs
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total playlists
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total snapshots
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total dashboard tags
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total starred dashboards
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total alerts
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
 func ValidateOrgAlert(c *middleware.Context) {
@@ -51,6 +52,7 @@ func GetAlerts(c *middleware.Context) Response {
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
 		Limit:       c.QueryInt64("limit"),
+		User:        c.SignedInUser,
 	}
 
 	states := c.QueryStrings("state")
@@ -62,43 +64,11 @@ func GetAlerts(c *middleware.Context) Response {
 		return ApiError(500, "List alerts failed", err)
 	}
 
-	dashboardIds := make([]int64, 0)
-	alertDTOs := make([]*dtos.AlertRule, 0)
 	for _, alert := range query.Result {
-		dashboardIds = append(dashboardIds, alert.DashboardId)
-		alertDTOs = append(alertDTOs, &dtos.AlertRule{
-			Id:             alert.Id,
-			DashboardId:    alert.DashboardId,
-			PanelId:        alert.PanelId,
-			Name:           alert.Name,
-			Message:        alert.Message,
-			State:          alert.State,
-			NewStateDate:   alert.NewStateDate,
-			ExecutionError: alert.ExecutionError,
-			EvalData:       alert.EvalData,
-		})
+		alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
 	}
 
-	dashboardsQuery := models.GetDashboardsQuery{
-		DashboardIds: dashboardIds,
-	}
-
-	if len(alertDTOs) > 0 {
-		if err := bus.Dispatch(&dashboardsQuery); err != nil {
-			return ApiError(500, "List alerts failed", err)
-		}
-	}
-
-	//TODO: should be possible to speed this up with lookup table
-	for _, alert := range alertDTOs {
-		for _, dash := range dashboardsQuery.Result {
-			if alert.DashboardId == dash.Id {
-				alert.DashbboardUri = "db/" + dash.Slug
-			}
-		}
-	}
-
-	return Json(200, alertDTOs)
+	return Json(200, query.Result)
 }
 
 // POST /api/alerts/test
@@ -153,24 +123,6 @@ func GetAlert(c *middleware.Context) Response {
 	}
 
 	return Json(200, &query.Result)
-}
-
-// DEL /api/alerts/:id
-func DelAlert(c *middleware.Context) Response {
-	alertId := c.ParamsInt64(":alertId")
-
-	if alertId == 0 {
-		return ApiError(401, "Failed to parse alertid", nil)
-	}
-
-	cmd := models.DeleteAlertCommand{AlertId: alertId}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to delete alert", err)
-	}
-
-	var resp = map[string]interface{}{"alertId": alertId}
-	return Json(200, resp)
 }
 
 func GetAlertNotifiers(c *middleware.Context) Response {
@@ -267,6 +219,22 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 //POST /api/alerts/:alertId/pause
 func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	alertId := c.ParamsInt64("alertId")
+
+	query := models.GetAlertByIdQuery{Id: alertId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Get Alert failed", err)
+	}
+
+	guardian := guardian.New(query.Result.DashboardId, c.OrgId, c.SignedInUser)
+	if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
+		if err != nil {
+			return ApiError(500, "Error while checking permissions for Alert", err)
+		}
+
+		return ApiError(403, "Access denied to this dashboard and alert", nil)
+	}
+
 	cmd := models.PauseAlertCommand{
 		OrgId:    c.OrgId,
 		AlertIds: []int64{alertId},
@@ -278,7 +246,7 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	}
 
 	var response models.AlertStateType = models.AlertStatePending
-	pausedState := "un paused"
+	pausedState := "un-paused"
 	if cmd.Paused {
 		response = models.AlertStatePaused
 		pausedState = "paused"
@@ -287,7 +255,7 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	result := map[string]interface{}{
 		"alertId": alertId,
 		"state":   response,
-		"message": "alert " + pausedState,
+		"message": "Alert " + pausedState,
 	}
 
 	return Json(200, result)

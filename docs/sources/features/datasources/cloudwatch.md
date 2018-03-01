@@ -13,7 +13,7 @@ weight = 10
 
 # Using AWS CloudWatch in Grafana
 
-Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will be ready to build dashboards for you CloudWatch metrics.
+Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will be ready to build dashboards for your CloudWatch metrics.
 
 ## Adding the data source to Grafana
 
@@ -78,11 +78,14 @@ CloudWatch Datasource Plugin provides the following queries you can specify in t
 edit view. They allow you to fill a variable's options list with things like `region`, `namespaces`, `metric names`
 and `dimension keys/values`.
 
+In place of `region` you can specify `default` to use the default region configured in the datasource for the query,
+e.g. `metrics(AWS/DynamoDB, default)` or `dimension_values(default, ..., ..., ...)`.
+
 Name | Description
 ------- | --------
 *regions()* | Returns a list of regions AWS provides their service.
 *namespaces()* | Returns a list of namespaces CloudWatch support.
-*metrics(namespace, [region])* | Returns a list of metrics in the namespace. (specify region for custom metrics)
+*metrics(namespace, [region])* | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)
 *dimension_keys(namespace)* | Returns a list of dimension keys in the namespace.
 *dimension_values(region, namespace, metric, dimension_key)* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric` and `dimension_key`.
 *ebs_volume_ids(region, instance_id)* | Returns a list of volume ids matching the specified `region`, `instance_id`.

@@ -17,7 +17,7 @@
     "links": [
       {"name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch"}
     ],
-    "version": "3.0.0"
+    "version": "5.0.0"
   },
 
   "annotations": true,

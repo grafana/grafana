@@ -1,4 +1,4 @@
-  graphite:
+  graphite09:
     build: blocks/graphite
     ports:
       - "8080:80"

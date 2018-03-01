@@ -1,10 +1,10 @@
 import angular from 'angular';
 
 export class OrgApiKeysCtrl {
-
   /** @ngInject **/
-  constructor ($scope, $http, backendSrv, navModelSrv) {
-    $scope.navModel = navModelSrv.getOrgNav(0);
+  constructor($scope, $http, backendSrv, navModelSrv) {
+    $scope.navModel = navModelSrv.getNav('cfg', 'apikeys', 0);
+
     $scope.roleTypes = ['Viewer', 'Editor', 'Admin'];
     $scope.token = { role: 'Viewer' };
 
@@ -19,19 +19,18 @@ export class OrgApiKeysCtrl {
     };
 
     $scope.removeToken = function(id) {
-      backendSrv.delete('/api/auth/keys/'+id).then($scope.getTokens);
+      backendSrv.delete('/api/auth/keys/' + id).then($scope.getTokens);
     };
 
     $scope.addToken = function() {
       backendSrv.post('/api/auth/keys', $scope.token).then(function(result) {
-
         var modalScope = $scope.$new(true);
         modalScope.key = result.key;
         modalScope.rootPath = window.location.origin + $scope.$root.appSubUrl;
 
         $scope.appEvent('show-modal', {
           src: 'public/app/features/org/partials/apikeyModal.html',
-          scope: modalScope
+          scope: modalScope,
         });
 
         $scope.getTokens();

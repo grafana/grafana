@@ -25,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
+
+	gocache "github.com/patrickmn/go-cache"
 )
 
 var gravatarSource string
@@ -92,7 +94,7 @@ func (this *Avatar) Update() (err error) {
 
 type CacheServer struct {
 	notFound *Avatar
-	cache    map[string]*Avatar
+	cache    *gocache.Cache
 }
 
 func (this *CacheServer) mustInt(r *http.Request, defaultValue int, keys ...string) (v int) {
@@ -110,7 +112,9 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 
 	var avatar *Avatar
 
-	if avatar, _ = this.cache[hash]; avatar == nil {
+	if obj, exist := this.cache.Get(hash); exist {
+		avatar = obj.(*Avatar)
+	} else {
 		avatar = New(hash)
 	}
 
@@ -124,7 +128,7 @@ func (this *CacheServer) Handler(ctx *macaron.Context) {
 	if avatar.notFound {
 		avatar = this.notFound
 	} else {
-		this.cache[hash] = avatar
+		this.cache.Add(hash, avatar, gocache.DefaultExpiration)
 	}
 
 	ctx.Resp.Header().Add("Content-Type", "image/jpeg")
@@ -146,18 +150,18 @@ func NewCacheServer() *CacheServer {
 
 	return &CacheServer{
 		notFound: newNotFound(),
-		cache:    make(map[string]*Avatar),
+		cache:    gocache.New(time.Hour, time.Hour*2),
 	}
 }
 
 func newNotFound() *Avatar {
 	avatar := &Avatar{notFound: true}
 
-	// load transparent png into buffer
-	path := filepath.Join(setting.StaticRootPath, "img", "transparent.png")
+	// load user_profile png into buffer
+	path := filepath.Join(setting.StaticRootPath, "img", "user_profile.png")
 
 	if data, err := ioutil.ReadFile(path); err != nil {
-		log.Error(3, "Failed to read transparent.png, %v", path)
+		log.Error(3, "Failed to read user_profile.png, %v", path)
 	} else {
 		avatar.data = bytes.NewBuffer(data)
 	}

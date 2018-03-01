@@ -31,7 +31,6 @@ export class LayoutSelectorCtrl {
     store.set('grafana.list.layout.mode', 'grid');
     this.$rootScope.appEvent('layout-mode-changed', 'grid');
   }
-
 }
 
 /** @ngInject **/
@@ -56,12 +55,16 @@ export function layoutMode($rootScope) {
       var className = 'card-list-layout-' + layout;
       elem.addClass(className);
 
-      $rootScope.onAppEvent('layout-mode-changed', (evt, newLayout) => {
-        elem.removeClass(className);
-        className = 'card-list-layout-' + newLayout;
-        elem.addClass(className);
-      }, scope);
-    }
+      $rootScope.onAppEvent(
+        'layout-mode-changed',
+        (evt, newLayout) => {
+          elem.removeClass(className);
+          className = 'card-list-layout-' + newLayout;
+          elem.addClass(className);
+        },
+        scope
+      );
+    },
   };
 }
 

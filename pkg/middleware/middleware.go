@@ -87,7 +87,7 @@ func initContextWithAnonymousUser(ctx *Context) bool {
 
 	ctx.IsSignedIn = false
 	ctx.AllowAnonymous = true
-	ctx.SignedInUser = &m.SignedInUser{}
+	ctx.SignedInUser = &m.SignedInUser{IsAnonymous: true}
 	ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
 	ctx.OrgId = orgQuery.Result.Id
 	ctx.OrgName = orgQuery.Result.Name
@@ -206,7 +206,9 @@ func (ctx *Context) Handle(status int, title string, err error) {
 
 	ctx.Data["Title"] = title
 	ctx.Data["AppSubUrl"] = setting.AppSubUrl
-	ctx.HTML(status, strconv.Itoa(status))
+	ctx.Data["Theme"] = "dark"
+
+	ctx.HTML(status, "error")
 }
 
 func (ctx *Context) JsonOK(message string) {
