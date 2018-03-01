@@ -169,6 +169,8 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
 | password | string | Postgre | password |
 | user | string | Postgre | user |
+| accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
+| secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
 
 ### Dashboards
 
@@ -190,8 +192,13 @@ providers:
     path: /var/lib/grafana/dashboards
 ```
 
+When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
+
+### Reuseable dashboard urls
+
+If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifer.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
-By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting. 
+By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
 > **Note.** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.

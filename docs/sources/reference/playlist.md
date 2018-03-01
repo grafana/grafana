@@ -16,7 +16,7 @@ Since Grafana automatically scales Dashboards to any resolution they're perfect 
 
 ## Creating a Playlist
 
-{{< docs-imagebox img="/img/docs/v3/playlist.png" max-width="25rem" class="docs-image--right">}}
+{{< docs-imagebox img="/img/docs/v50/playlist.png" max-width="25rem" class="docs-image--right">}}
 
 The Playlist feature can be accessed from Grafana's sidemenu, in the Dashboard submenu.
 
