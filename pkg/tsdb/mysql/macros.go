@@ -30,7 +30,11 @@ func (m *MySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 	var macroError error
 
 	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-		res, err := m.evaluateMacro(groups[1], strings.Split(groups[2], ","))
+		args := strings.Split(groups[2], ",")
+		for i, arg := range args {
+			args[i] = strings.Trim(arg, " ")
+		}
+		res, err := m.evaluateMacro(groups[1], args)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -82,14 +86,14 @@ func (m *MySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
 		}
-		interval, err := time.ParseDuration(strings.Trim(args[1], `'" `))
+		interval, err := time.ParseDuration(strings.Trim(args[1], `'"`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
 			m.Query.Model.Set("fill", true)
 			m.Query.Model.Set("fillInterval", interval.Seconds())
-			if strings.Trim(args[2], " ") == "NULL" {
+			if args[2] == "NULL" {
 				m.Query.Model.Set("fillNull", true)
 			} else {
 				floatVal, err := strconv.ParseFloat(args[2], 64)
