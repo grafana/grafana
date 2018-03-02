@@ -131,6 +131,20 @@ kbn.secondsToHms = function(seconds) {
   return 'less than a millisecond'; //'just now' //or other string you like;
 };
 
+kbn.secondsToHhmmss = function(seconds) {
+  var strings = []
+  
+  var numhours = Math.floor(seconds/3600);
+  var numminutes = Math.floor((seconds%3600)/60);
+  var numseconds = Math.floor((seconds%3600)%60);
+  
+  numhours > 9 ? strings.push(''+numhours) : strings.push('0'+numhours);
+  numminutes > 9 ? strings.push(''+numminutes) : strings.push('0'+numminutes);
+  numseconds > 9 ? strings.push(''+numseconds) : strings.push('0'+numseconds);
+  
+  return strings.join(':');
+};
+
 kbn.to_percent = function(nr, outof) {
   return Math.floor(nr / outof * 10000) / 100 + '%';
 };
@@ -773,7 +787,7 @@ kbn.valueFormats.dtdurations = function(size, decimals) {
 };
 
 kbn.valueFormats.dthms = function(size, decimals) {
-  return kbn.secondsToHms(size);
+  return kbn.secondsToHhmmss(size);
 };
 
 kbn.valueFormats.dateTimeAsIso = function(epoch) {
