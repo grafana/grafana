@@ -49,6 +49,14 @@ func TestMacroEngine(t *testing.T) {
 			So(sql, ShouldEqual, "GROUP BY (extract(epoch from time_column)/300)::bigint*300 AS time")
 		})
 
+		Convey("interpolate __timeGroup function with spaces between args", func() {
+
+			sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "GROUP BY (extract(epoch from time_column)/300)::bigint*300 AS time")
+		})
+
 		Convey("interpolate __timeTo function", func() {
 			sql, err := engine.Interpolate(query, timeRange, "select $__timeTo(time_column)")
 			So(err, ShouldBeNil)
