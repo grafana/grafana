@@ -180,6 +180,14 @@ export class TableRenderer {
       var scopedVars = this.renderRowVariables(rowIndex);
       scopedVars['__cell'] = { value: value };
 
+      let regex = column.style.parameterizePattern
+        ? kbn.stringToJsRegex(String(column.style.parameterizePattern))
+        : / /;
+      let splitVals = value.split(regex);
+      for (let i = 0; i < splitVals.length; i++) {
+        scopedVars[`__pattern_${i}`] = { value: splitVals[i] };
+      }
+
       var cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars);
       var cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
       var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
