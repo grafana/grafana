@@ -12,8 +12,6 @@ weight = -6
 
 # What's New in Grafana v5.0
 
-> Out in beta: [Download now!](https://grafana.com/grafana/download/beta)
-
 This is the most substantial update that Grafana has ever seen. This article will detail the major new features and enhancements.
 
 - [New Dashboard Layout Engine]({{< relref "#new-dashboard-layout-engine" >}}) enables a much easier drag, drop and resize experience and new types of layouts.
