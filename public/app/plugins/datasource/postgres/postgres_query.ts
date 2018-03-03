@@ -24,7 +24,7 @@ export default class PostgresQuery {
     target.orderByTime = target.orderByTime || 'ASC';
     target.groupBy = target.groupBy || [];
     target.where = target.where || [];
-    target.select = target.select || [[{ type: 'field', params: ['value'] }]];
+    target.select = target.select || [[{ type: 'column', params: ['value'] }]];
 
     this.updateProjection();
   }
@@ -88,8 +88,6 @@ export default class PostgresQuery {
     var categories = queryPart.getCategories();
 
     if (part.def.type === 'time') {
-      // remove fill
-      this.target.groupBy = _.filter(this.target.groupBy, (g: any) => g.type !== 'fill');
       // remove aggregations
       this.target.select = _.map(this.target.select, (s: any) => {
         return _.filter(s, (part: any) => {
@@ -113,7 +111,7 @@ export default class PostgresQuery {
 
   removeSelectPart(selectParts, part) {
     // if we remove the field remove the whole statement
-    if (part.def.type === 'field') {
+    if (part.def.type === 'column') {
       if (this.selectModels.length > 1) {
         var modelsIndex = _.indexOf(this.selectModels, selectParts);
         this.selectModels.splice(modelsIndex, 1);
@@ -189,7 +187,12 @@ export default class PostgresQuery {
     }
 
     var query = 'SELECT ';
-    query += this.quoteIdentifier(target.timeColumn) + ' AS time,';
+
+    if (this.hasGroupByTime()) {
+      query += '$__timeGroup(' + this.quoteIdentifier(target.timeColumn) + ',1m),';
+    } else {
+      query += this.quoteIdentifier(target.timeColumn) + ' AS time,';
+    }
 
     var i, y;
     for (i = 0; i < this.selectModels.length; i++) {
@@ -221,10 +224,13 @@ export default class PostgresQuery {
     for (i = 0; i < this.groupByParts.length; i++) {
       var part = this.groupByParts[i];
       if (i > 0) {
-        // for some reason fill has no seperator
-        groupBySection += part.def.type === 'fill' ? ' ' : ', ';
+        groupBySection += ', ';
       }
-      groupBySection += part.render('');
+      if (part.def.type === 'time') {
+        groupBySection += 'time';
+      } else {
+        groupBySection += part.render('');
+      }
     }
 
     if (groupBySection.length) {

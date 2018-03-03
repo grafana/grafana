@@ -92,7 +92,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     this.removeWhereFilterSegment = uiSegmentSrv.newSegment({
       fake: true,
-      value: '-- remove tag filter --',
+      value: '-- remove filter --',
     });
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
@@ -390,9 +390,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
       .metricFindQuery(this.queryBuilder.buildColumnQuery())
       .then(tags => {
         var options = [];
-        if (!this.queryModel.hasFill()) {
-          options.push(this.uiSegmentSrv.newSegment({ value: 'fill(null)' }));
-        }
         if (!this.target.limit) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'LIMIT' }));
         }
@@ -400,7 +397,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
           options.push(this.uiSegmentSrv.newSegment({ value: 'time($interval)' }));
         }
         for (let tag of tags) {
-          options.push(this.uiSegmentSrv.newSegment({ value: 'tag(' + tag.text + ')' }));
+          options.push(this.uiSegmentSrv.newSegment({ value: tag.text }));
         }
         return options;
       })

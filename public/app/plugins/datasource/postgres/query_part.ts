@@ -6,7 +6,7 @@ var categories = {
   Aggregations: [],
   Math: [],
   Aliasing: [],
-  Fields: [],
+  Columns: [],
 };
 
 function createPart(part): any {
@@ -29,7 +29,7 @@ function aliasRenderer(part, innerExpr) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
 }
 
-function fieldRenderer(part, innerExpr) {
+function columnRenderer(part, innerExpr) {
   return '"' + part.params[0] + '"';
 }
 
@@ -92,7 +92,7 @@ function addAliasStrategy(selectParts, partModel) {
   selectParts.push(partModel);
 }
 
-function addFieldStrategy(selectParts, partModel, query) {
+function addColumnStrategy(selectParts, partModel, query) {
   // copy all parts
   var parts = _.map(selectParts, function(part: any) {
     return createPart({ type: part.def.type, params: _.clone(part.params) });
@@ -102,12 +102,12 @@ function addFieldStrategy(selectParts, partModel, query) {
 }
 
 register({
-  type: 'field',
-  addStrategy: addFieldStrategy,
-  category: categories.Fields,
-  params: [{ type: 'field', dynamicLookup: true }],
+  type: 'column',
+  addStrategy: addColumnStrategy,
+  category: categories.Columns,
+  params: [{ type: 'column', dynamicLookup: true }],
   defaultParams: ['value'],
-  renderer: fieldRenderer,
+  renderer: columnRenderer,
 });
 
 // Aggregations
@@ -170,25 +170,16 @@ register({
   params: [
     {
       name: 'interval',
-      type: 'time',
+      type: 'interval',
       options: ['$__interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h'],
     },
-  ],
-  defaultParams: ['$__interval'],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'fill',
-  category: groupByTimeFunctions,
-  params: [
     {
       name: 'fill',
       type: 'string',
-      options: ['none', 'null', '0', 'previous', 'linear'],
+      options: ['none', 'null', '0'],
     },
   ],
-  defaultParams: ['null'],
+  defaultParams: ['$__interval','none'],
   renderer: functionRenderer,
 });
 
