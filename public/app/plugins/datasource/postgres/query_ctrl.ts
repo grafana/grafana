@@ -207,7 +207,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
           segments.unshift(
             this.uiSegmentSrv.newSegment({
               type: 'template',
-              value: '/^$' + variable.name + '$/',
+              value: '$' + variable.name,
               expandable: true,
             })
           );

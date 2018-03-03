@@ -239,6 +239,9 @@ export default class PostgresQuery {
 
     query += ' ORDER BY time';
 
+    if (interpolate) {
+      query = this.templateSrv.replace(query, this.scopedVars, this.interpolateQueryStr);
+    }
     return query;
   }
 
