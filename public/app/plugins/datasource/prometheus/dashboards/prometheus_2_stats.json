@@ -348,7 +348,7 @@
           "tableColumn": "",
           "targets": [
             {
-              "expr": "tsdb_wal_corruptions_total{job=\"prometheus\"}",
+              "expr": "prometheus_tsdb_wal_corruptions_total{job=\"prometheus\"}",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "",
@@ -1048,7 +1048,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max(prometheus_evaluator_duration_seconds{job=\"prometheus\", quantile!=\"0.01\", quantile!=\"0.05\"}) by (quantile)",
+              "expr": "max(prometheus_rule_group_duration_seconds{job=\"prometheus\"}) by (quantile)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -1060,7 +1060,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Rule Eval Duration",
+          "title": "Rule Group Eval Duration",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -1124,7 +1124,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(prometheus_evaluator_iterations_missed_total{job=\"prometheus\"}[5m])",
+              "expr": "rate(prometheus_rule_group_iterations_missed_total{job=\"prometheus\"}[5m])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "missed",
@@ -1132,15 +1132,7 @@
               "step": 10
             },
             {
-              "expr": "rate(prometheus_evaluator_iterations_skipped_total{job=\"prometheus\"}[5m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "skipped",
-              "refId": "C",
-              "step": 10
-            },
-            {
-              "expr": "rate(prometheus_evaluator_iterations_total{job=\"prometheus\"}[5m])",
+              "expr": "rate(prometheus_rule_group_iterations_total{job=\"prometheus\"}[5m])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "iterations",
@@ -1151,7 +1143,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Rule Eval Activity",
+          "title": "Rule Group Eval Activity",
           "tooltip": {
             "shared": true,
             "sort": 0,
