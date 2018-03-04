@@ -46,19 +46,6 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
   selectParts.splice(1, 0, partModel);
 }
 
-function addTransformationStrategy(selectParts, partModel) {
-  var i;
-  // look for index to add transformation
-  for (i = 0; i < selectParts.length; i++) {
-    var part = selectParts[i];
-    if (part.def.category === categories.Math || part.def.category === categories.Aliasing) {
-      break;
-    }
-  }
-
-  selectParts.splice(i, 0, partModel);
-}
-
 function addMathStrategy(selectParts, partModel) {
   var partCount = selectParts.length;
   if (partCount > 0) {
@@ -138,54 +125,8 @@ register({
   renderer: functionRenderer,
 });
 
-// transformations
-
-register({
-  type: 'non_negative_derivative',
-  addStrategy: addTransformationStrategy,
-  category: categories.Aggregations,
-  params: [
-    {
-      name: 'duration',
-      type: 'interval',
-      options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h'],
-    },
-  ],
-  defaultParams: ['10s'],
-  renderer: functionRenderer,
-});
-
 register({
   type: 'stddev',
-  addStrategy: addTransformationStrategy,
-  category: categories.Aggregations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'time',
-  category: groupByTimeFunctions,
-  params: [
-    {
-      name: 'interval',
-      type: 'interval',
-      options: ['$__interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h'],
-    },
-    {
-      name: 'fill',
-      type: 'string',
-      options: ['none', 'null', '0'],
-    },
-  ],
-  defaultParams: ['$__interval','none'],
-  renderer: functionRenderer,
-});
-
-// Selectors
-register({
-  type: 'max',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
@@ -195,6 +136,15 @@ register({
 
 register({
   type: 'min',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Aggregations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
+  type: 'max',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
@@ -219,6 +169,25 @@ register({
   defaultParams: ['alias'],
   renderMode: 'suffix',
   renderer: aliasRenderer,
+});
+
+register({
+  type: 'time',
+  category: groupByTimeFunctions,
+  params: [
+    {
+      name: 'interval',
+      type: 'interval',
+      options: ['$__interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h'],
+    },
+    {
+      name: 'fill',
+      type: 'string',
+      options: ['none', 'NULL', '0'],
+    },
+  ],
+  defaultParams: ['$__interval','none'],
+  renderer: functionRenderer,
 });
 
 export default {
