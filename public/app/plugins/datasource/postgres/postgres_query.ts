@@ -247,6 +247,7 @@ export default class PostgresQuery {
 
     query += ' ORDER BY 1';
 
+    this.target.rawSql = query;
     if (interpolate) {
       query = this.templateSrv.replace(query, this.scopedVars, this.interpolateQueryStr);
     }

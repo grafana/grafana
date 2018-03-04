@@ -117,11 +117,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   toggleEditorMode() {
-    try {
-//      this.target.query = this.queryModel.render(false);
-    } catch (err) {
-      console.log('query render error');
-    }
     this.target.rawQuery = !this.target.rawQuery;
   }
 
