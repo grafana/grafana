@@ -217,6 +217,10 @@ export default class PostgresQuery {
       query += selectText;
     }
 
+    if (this.target.metricColumn !== 'None') {
+      query += "," + this.quoteIdentifier(this.target.metricColumn) + " AS metric";
+    }
+
     query += ' FROM ' + target.schema + '.' + target.table + ' WHERE ';
     var conditions = _.map(target.where, (tag, index) => {
       return this.renderTagCondition(tag, index, interpolate);
