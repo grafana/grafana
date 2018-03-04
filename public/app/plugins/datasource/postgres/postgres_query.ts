@@ -61,17 +61,17 @@ export default class PostgresQuery {
   }
 
   addGroupBy(value) {
-    var stringParts = value.match(/^(\w+)\((.*)\)$/);
+    var stringParts = value.match(/^(\w+)(\((.*)\))?$/);
     var typePart = stringParts[1];
-    var arg = stringParts[2];
-    var partModel = queryPart.create({ type: typePart, params: [arg] });
+    var args = stringParts[3].split(",");
+    var partModel = queryPart.create({ type: typePart, params: args });
     var partCount = this.target.groupBy.length;
 
     if (partCount === 0) {
       this.target.groupBy.push(partModel.part);
     } else if (typePart === 'time') {
       this.target.groupBy.splice(0, 0, partModel.part);
-    } else if (typePart === 'tag') {
+    } else if (typePart === 'column') {
       if (this.target.groupBy[partCount - 1].type === 'fill') {
         this.target.groupBy.splice(partCount - 1, 0, partModel.part);
       } else {
@@ -188,8 +188,16 @@ export default class PostgresQuery {
 
     var query = 'SELECT ';
 
-    if (this.hasGroupByTime()) {
-      query += '$__timeGroup(' + this.quoteIdentifier(target.timeColumn) + ',1m),';
+    var timeGroup = this.hasGroupByTime();
+
+    if (timeGroup) {
+      var args;
+      if (timeGroup.params.length > 1 && timeGroup.params[1] !== "none") {
+        args = timeGroup.params.join(",");
+      } else {
+        args = timeGroup.params[0];
+      }
+      query += '$__timeGroup(' + this.quoteIdentifier(target.timeColumn) + ',' + args + '),';
     } else {
       query += this.quoteIdentifier(target.timeColumn) + ' AS time,';
     }
@@ -227,7 +235,7 @@ export default class PostgresQuery {
         groupBySection += ', ';
       }
       if (part.def.type === 'time') {
-        groupBySection += 'time';
+        groupBySection += '1';
       } else {
         groupBySection += part.render('');
       }
@@ -237,7 +245,7 @@ export default class PostgresQuery {
       query += ' GROUP BY ' + groupBySection;
     }
 
-    query += ' ORDER BY time';
+    query += ' ORDER BY 1';
 
     if (interpolate) {
       query = this.templateSrv.replace(query, this.scopedVars, this.interpolateQueryStr);

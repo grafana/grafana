@@ -394,10 +394,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
           options.push(this.uiSegmentSrv.newSegment({ value: 'LIMIT' }));
         }
         if (!this.queryModel.hasGroupByTime()) {
-          options.push(this.uiSegmentSrv.newSegment({ value: 'time($interval)' }));
+          options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time(1m,none)' }));
         }
         for (let tag of tags) {
-          options.push(this.uiSegmentSrv.newSegment({ value: tag.text }));
+          options.push(this.uiSegmentSrv.newSegment({ type: 'column', value: 'column(' + tag.text + ')' }));
         }
         return options;
       })
