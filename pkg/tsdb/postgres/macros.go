@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,19 +16,25 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type PostgresMacroEngine struct {
 	TimeRange *tsdb.TimeRange
+	Query     *tsdb.Query
 }
 
 func NewPostgresMacroEngine() tsdb.SqlMacroEngine {
 	return &PostgresMacroEngine{}
 }
 
-func (m *PostgresMacroEngine) Interpolate(timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *PostgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 	m.TimeRange = timeRange
+	m.Query = query
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
 	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-		res, err := m.evaluateMacro(groups[1], strings.Split(groups[2], ","))
+		args := strings.Split(groups[2], ",")
+		for i, arg := range args {
+			args[i] = strings.Trim(arg, " ")
+		}
+		res, err := m.evaluateMacro(groups[1], args)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -82,12 +89,25 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 	case "__timeTo":
 		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__timeGroup":
-		if len(args) != 2 {
-			return "", fmt.Errorf("macro %v needs time column and interval", name)
+		if len(args) < 2 {
+			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
 		}
-		interval, err := time.ParseDuration(strings.Trim(args[1], `' `))
+		interval, err := time.ParseDuration(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if len(args) == 3 {
+			m.Query.Model.Set("fill", true)
+			m.Query.Model.Set("fillInterval", interval.Seconds())
+			if args[2] == "NULL" {
+				m.Query.Model.Set("fillNull", true)
+			} else {
+				floatVal, err := strconv.ParseFloat(args[2], 64)
+				if err != nil {
+					return "", fmt.Errorf("error parsing fill value %v", args[2])
+				}
+				m.Query.Model.Set("fillValue", floatVal)
+			}
 		}
 		return fmt.Sprintf("(extract(epoch from %s)/%v)::bigint*%v AS time", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
