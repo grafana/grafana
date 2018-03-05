@@ -47,7 +47,7 @@ export class TableRenderer {
     if (!style.thresholds) {
       return null;
     }
-
+    value = Number(value);
     for (var i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
         return style.colors[i];
@@ -97,6 +97,60 @@ export class TableRenderer {
           date = date.utc();
         }
         return date.format(column.style.dateFormat);
+      };
+    }
+
+    if (column.style.type === 'string') {
+      return v => {
+        if (column.style.valueMappings && column.style.mappingType && column.style.mappingType === 1) {
+          for (let i = 0; i < column.style.valueMappings.length; i++) {
+            let mapping = column.style.valueMappings[i];
+            var value = Number(mapping.value);
+            if (v === null && mapping.value[0] === 'null') {
+              return mapping.text;
+            }
+            if (v !== null && !_.isArray(v)) {
+              if (Number(v) === value) {
+                if (!_.isString(v) && !_.isArray(v)) {
+                  this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
+                }
+                return this.defaultCellFormatter(mapping.text, column.style);
+              }
+            }
+          }
+          if (v !== null && v !== void 0 && !_.isString(v) && !_.isArray(v)) {
+            this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
+          }
+        }
+        if (column.style.rangeMappings && column.style.mappingType && column.style.mappingType === 2) {
+          for (let i = 0; i < column.style.rangeMappings.length; i++) {
+            let mapping = column.style.rangeMappings[i];
+            var from = mapping.from;
+            var to = mapping.to;
+            if (v === null && mapping.from[0] === 'null' && mapping.to[0] === 'null') {
+              return mapping.text;
+            }
+            if (
+              v !== null &&
+              !_.isString(v) &&
+              !_.isArray(v) &&
+              from !== '' &&
+              to !== '' &&
+              Number(from[0]) <= v &&
+              Number(to[0]) >= v
+            ) {
+              this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
+              return this.defaultCellFormatter(mapping.text, column.style);
+            }
+          }
+          if (v !== null && v !== void 0 && !_.isString(v) && !_.isArray(v)) {
+            this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
+          }
+        }
+        if (v === null) {
+          return '-';
+        }
+        return this.defaultCellFormatter(v, column.style);
       };
     }
 
