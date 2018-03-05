@@ -54,7 +54,8 @@ func generateConnectionString(datasource *models.DataSource) string {
 	}
 
 	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", url.PathEscape(datasource.User), url.PathEscape(password), url.PathEscape(datasource.Url), url.PathEscape(datasource.Database), url.QueryEscape(sslmode))
+	u := &url.URL{Scheme: "postgres", User: url.UserPassword(datasource.User, password), Host: datasource.Url, Path: datasource.Database, RawQuery: "sslmode=" + sslmode}
+	return u.String()
 }
 
 func (e *PostgresQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
