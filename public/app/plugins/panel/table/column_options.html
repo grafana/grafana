@@ -69,7 +69,60 @@
       </div>
     </div>
 
-    <div class="section gf-form-group" ng-if="style.type === 'number'">
+    <div class="section gf-form-group" ng-if="style.type === 'string'">
+      <h5 class="section-heading">Mapping</h5>
+      <div class="editor-row">
+        <div class="gf-form-group">
+          <div class="gf-form">
+            <span class="gf-form-label">
+              Type
+            </span>
+            <div class="gf-form-select-wrapper">
+              <select class="gf-form-input" ng-model="style.mappingType"
+                      ng-options="c.value as c.text for c in editor.mappingTypes" ng-change="editor.render()"></select>
+            </div>
+          </div>
+          <div class="gf-form-group" ng-if="style.mappingType==1">
+            <div class="gf-form" ng-repeat="mapping in style.valueMappings">
+              <input type="text" class="gf-form-input width-8" ng-model="mapping.value" placeholder="Value" ng-blur="editor.render()" array-join>
+              <label class="gf-form-label width-3">=></label>
+              <input type="text" class="gf-form-input width-9" ng-model="mapping.text" placeholder="Text" ng-blur="editor.render()" array-join>
+              <label class="gf-form-label">
+                <a class="pointer" tabindex="1" ng-click="editor.removeValueMapping(style, $index)">
+                  <i class="fa fa-trash"></i>
+                </a>
+              </label>
+            </div>
+            <div class="gf-form">
+              <label class="gf-form-label">
+                <a class="pointer" ng-click="editor.addValueMapping(style)"><i class="fa fa-plus"></i></a>
+              </label>
+            </div>
+          </div>
+          <div class="gf-form-group" ng-if="style.mappingType==2">
+            <div class="gf-form" ng-repeat="mapping in style.rangeMappings">
+              <input type="text" class="gf-form-input width-5" ng-model="mapping.from" placeholder="From" ng-blur="editor.render()" array-join>
+              <label class="gf-form-label width-2">-</label>
+              <input type="text" class="gf-form-input width-5" ng-model="mapping.to" placeholder="To" ng-blur="editor.render()" array-join>
+              <label class="gf-form-label width-3">=></label>
+              <input type="text" class="gf-form-input width-5" ng-model="mapping.text" placeholder="Text" ng-blur="editor.render()" array-join>
+              <label class="gf-form-label">
+                <a class="pointer" tabindex="1" ng-click="editor.removeRangeMapping(style, $index)">
+                  <i class="fa fa-trash"></i>
+                </a>
+              </label>
+            </div>
+            <div class="gf-form">
+              <label class="gf-form-label">
+                <a class="pointer" ng-click="editor.addRangeMapping(style)"><i class="fa fa-plus"></i></a>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section gf-form-group" ng-if="['number', 'string'].indexOf(style.type) !== -1">
       <h5 class="section-heading">Thresholds</h5>
       <div class="gf-form">
         <label class="gf-form-label width-8">Thresholds

@@ -13,6 +13,7 @@ export class ColumnOptionsCtrl {
   unitFormats: any;
   getColumnNames: any;
   activeStyleIndex: number;
+  mappingTypes: any;
 
   /** @ngInject */
   constructor($scope) {
@@ -41,6 +42,7 @@ export class ColumnOptionsCtrl {
       { text: 'MM/DD/YY h:mm:ss a', value: 'MM/DD/YY h:mm:ss a' },
       { text: 'MMMM D, YYYY LT', value: 'MMMM D, YYYY LT' },
     ];
+    this.mappingTypes = [{ text: 'Value to text', value: 1 }, { text: 'Range to text', value: 2 }];
 
     this.getColumnNames = () => {
       if (!this.panelCtrl.table) {
@@ -74,6 +76,7 @@ export class ColumnOptionsCtrl {
       pattern: '',
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
       thresholds: [],
+      mappingType: 1,
     };
 
     var styles = this.panel.styles;
@@ -109,6 +112,31 @@ export class ColumnOptionsCtrl {
       this.panel.styles[styleIndex].colors[colorIndex] = newColor;
       this.render();
     };
+  }
+  addValueMapping(style) {
+    if (!style.valueMappings) {
+      style.valueMappings = [];
+    }
+    style.valueMappings.push({ value: '', text: '' });
+    this.panelCtrl.render();
+  }
+
+  removeValueMapping(style, index) {
+    style.valueMappings.splice(index, 1);
+    this.panelCtrl.render();
+  }
+
+  removeRangeMapping(style, index) {
+    style.rangeMappings.splice(index, 1);
+    this.panelCtrl.render();
+  }
+
+  addRangeMapping(style) {
+    if (!style.rangeMappings) {
+      style.rangeMappings = [];
+    }
+    style.rangeMappings.push({ from: '', to: '', text: '' });
+    this.panelCtrl.render();
   }
 }
 

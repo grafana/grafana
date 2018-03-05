@@ -15,8 +15,10 @@ describe('when rendering table', () => {
       { text: 'Sanitized' },
       { text: 'Link' },
       { text: 'Array' },
+      { text: 'Mapping' },
+      { text: 'RangeMapping' },
     ];
-    table.rows = [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2']]];
+    table.rows = [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2]];
 
     var panel = {
       pageSize: 10,
@@ -48,6 +50,10 @@ describe('when rendering table', () => {
           type: 'string',
         },
         {
+          pattern: 'String',
+          type: 'string',
+        },
+        {
           pattern: 'United',
           type: 'number',
           unit: 'ms',
@@ -71,6 +77,38 @@ describe('when rendering table', () => {
           type: 'number',
           unit: 'ms',
           decimals: 3,
+        },
+        {
+          pattern: 'Mapping',
+          type: 'string',
+          mappingType: 1,
+          valueMappings: [
+            {
+              value: '1',
+              text: 'on',
+            },
+            {
+              value: '0',
+              text: 'off',
+            },
+          ],
+        },
+        {
+          pattern: 'RangeMapping',
+          type: 'string',
+          mappingType: 2,
+          rangeMappings: [
+            {
+              from: '1',
+              to: '3',
+              text: 'on',
+            },
+            {
+              from: '3',
+              to: '6',
+              text: 'off',
+            },
+          ],
         },
       ],
     };
@@ -191,6 +229,26 @@ describe('when rendering table', () => {
     it('Array column should not use number as formatter', () => {
       var html = renderer.renderCell(8, 0, ['value1', 'value2']);
       expect(html).toBe('<td>value1, value2</td>');
+    });
+
+    it('value should be mapped to text', () => {
+      var html = renderer.renderCell(9, 0, 1);
+      expect(html).toBe('<td>on</td>');
+    });
+
+    it('value should be mapped to text', () => {
+      var html = renderer.renderCell(9, 0, 0);
+      expect(html).toBe('<td>off</td>');
+    });
+
+    it('value should be mapped to text(range)', () => {
+      var html = renderer.renderCell(10, 0, 2);
+      expect(html).toBe('<td>on</td>');
+    });
+
+    it('value should be mapped to text(range)', () => {
+      var html = renderer.renderCell(10, 0, 5);
+      expect(html).toBe('<td>off</td>');
     });
   });
 });
