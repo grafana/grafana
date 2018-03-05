@@ -57,6 +57,39 @@ function histogramToHeatmap(seriesList) {
 }
 
 /**
+ * Sort series representing histogram by label value.
+ */
+function sortSeriesByLabel(s1, s2) {
+  let label1, label2;
+
+  try {
+    // fail if not integer. might happen with bad queries
+    label1 = parseHistogramLabel(s1.label);
+    label2 = parseHistogramLabel(s2.label);
+  } catch (err) {
+    console.log(err);
+    return 0;
+  }
+
+  if (label1 > label2) {
+    return 1;
+  }
+
+  if (label1 < label2) {
+    return -1;
+  }
+
+  return 0;
+}
+
+function parseHistogramLabel(label: string): number {
+  if (label === '+Inf') {
+    return +Infinity;
+  }
+  return parseInt(label);
+}
+
+/**
  * Convert buckets into linear array of "cards" - objects, represented heatmap elements.
  * @param  {Object} buckets
  * @return {Array}          Array of "card" objects
@@ -444,4 +477,5 @@ export {
   getValueBucketBound,
   isHeatmapDataEqual,
   calculateBucketSize,
+  sortSeriesByLabel,
 };

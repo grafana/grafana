@@ -5,7 +5,13 @@ import TimeSeries from 'app/core/time_series2';
 import { axesEditor } from './axes_editor';
 import { heatmapDisplayEditor } from './display_editor';
 import rendering from './rendering';
-import { convertToHeatMap, convertToCards, histogramToHeatmap, calculateBucketSize } from './heatmap_data_converter';
+import {
+  convertToHeatMap,
+  convertToCards,
+  histogramToHeatmap,
+  calculateBucketSize,
+  sortSeriesByLabel,
+} from './heatmap_data_converter';
 
 let X_BUCKET_NUMBER_DEFAULT = 30;
 let Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -205,9 +211,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
     // Convert histogram to heatmap. Each histogram bucket represented by the series which name is
     // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as X axis labels.
+    this.series.sort(sortSeriesByLabel);
     bucketsData = histogramToHeatmap(this.series);
-    tsBuckets = _.map(this.series, 'label');
 
+    tsBuckets = _.map(this.series, 'label');
     if (this.datasource && this.datasource.type === 'prometheus') {
       // Prometheus labels are upper inclusive bounds, so add empty bottom bucket label.
       tsBuckets = [''].concat(tsBuckets);
