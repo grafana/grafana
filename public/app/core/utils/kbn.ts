@@ -571,6 +571,17 @@ kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
 kbn.valueFormats.radian = kbn.formatBuilders.fixedUnit('rad');
 kbn.valueFormats.grad = kbn.formatBuilders.fixedUnit('grad');
 
+// Radiation
+kbn.valueFormats.radbq = kbn.formatBuilders.decimalSIPrefix('Bq');
+kbn.valueFormats.radci = kbn.formatBuilders.decimalSIPrefix('Ci');
+kbn.valueFormats.radgy = kbn.formatBuilders.decimalSIPrefix('Gy');
+kbn.valueFormats.radrad = kbn.formatBuilders.decimalSIPrefix('rad');
+kbn.valueFormats.radsv = kbn.formatBuilders.decimalSIPrefix('Sv');
+kbn.valueFormats.radrem = kbn.formatBuilders.decimalSIPrefix('rem');
+kbn.valueFormats.radexpckg = kbn.formatBuilders.decimalSIPrefix('C/kg');
+kbn.valueFormats.radr = kbn.formatBuilders.decimalSIPrefix('R');
+kbn.valueFormats.radsvh = kbn.formatBuilders.decimalSIPrefix('Sv/h');
+
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
 
@@ -1034,6 +1045,20 @@ kbn.getUnitFormats = function() {
         { text: 'Meters/sec²', value: 'accMS2' },
         { text: 'Feet/sec²', value: 'accFS2' },
         { text: 'G unit', value: 'accG' },
+      ],
+    },
+    {
+      text: 'radiation',
+      submenu: [
+        { text: 'Becquerel (Bq)', value: 'radbq' },
+        { text: 'curie (Ci)', value: 'radci' },
+        { text: 'Gray (Gy)', value: 'radgy' },
+        { text: 'rad', value: 'radrad' },
+        { text: 'Sievert (Sv)', value: 'radsv' },
+        { text: 'rem', value: 'radrem' },
+        { text: 'Exposure (C/kg)', value: 'radexpckg' },
+        { text: 'roentgen (R)', value: 'radr' },
+        { text: 'Sievert/hour (Sv/h)', value: 'radsvh' },
       ],
     },
   ];
