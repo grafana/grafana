@@ -5,12 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
 
 func Quota(target string) macaron.Handler {
-	return func(c *Context) {
+	return func(c *m.Context) {
 		limitReached, err := QuotaReached(c, target)
 		if err != nil {
 			c.JsonApiErr(500, "failed to get quota", err)
@@ -23,7 +24,7 @@ func Quota(target string) macaron.Handler {
 	}
 }
 
-func QuotaReached(c *Context, target string) (bool, error) {
+func QuotaReached(c *m.Context, target string) (bool, error) {
 	if !setting.Quota.Enabled {
 		return false, nil
 	}
@@ -46,7 +47,7 @@ func QuotaReached(c *Context, target string) (bool, error) {
 				return true, nil
 			}
 			if target == "session" {
-				usedSessions := getSessionCount()
+				usedSessions := session.GetSessionCount()
 				if int64(usedSessions) > scope.DefaultLimit {
 					c.Logger.Debug("Sessions limit reached", "active", usedSessions, "limit", scope.DefaultLimit)
 					return true, nil

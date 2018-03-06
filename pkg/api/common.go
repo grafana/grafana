@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
@@ -19,7 +19,7 @@ var (
 )
 
 type Response interface {
-	WriteTo(ctx *middleware.Context)
+	WriteTo(ctx *m.Context)
 }
 
 type NormalResponse struct {
@@ -32,7 +32,7 @@ type NormalResponse struct {
 
 func wrap(action interface{}) macaron.Handler {
 
-	return func(c *middleware.Context) {
+	return func(c *m.Context) {
 		var res Response
 		val, err := c.Invoke(action)
 		if err == nil && val != nil && len(val) > 0 {
@@ -45,7 +45,7 @@ func wrap(action interface{}) macaron.Handler {
 	}
 }
 
-func (r *NormalResponse) WriteTo(ctx *middleware.Context) {
+func (r *NormalResponse) WriteTo(ctx *m.Context) {
 	if r.err != nil {
 		ctx.Logger.Error(r.errMessage, "error", r.err)
 	}
