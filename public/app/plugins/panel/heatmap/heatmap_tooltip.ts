@@ -97,15 +97,17 @@ export class HeatmapTooltip {
     let time = this.dashboard.formatDate(xData.x, tooltipTimeFormat);
 
     // Decimals override. Code from panel/graph/graph.ts
-    let valueFormatter;
+    let countValueFormatter, bucketBoundFormatter;
     if (_.isNumber(this.panel.tooltipDecimals)) {
-      valueFormatter = this.valueFormatter(this.panel.tooltipDecimals, null);
+      countValueFormatter = this.countValueFormatter(this.panel.tooltipDecimals, null);
+      bucketBoundFormatter = this.bucketBoundFormatter(this.panel.tooltipDecimals, null);
     } else {
       // auto decimals
       // legend and tooltip gets one more decimal precision
       // than graph legend ticks
       let decimals = (this.panelCtrl.decimals || -1) + 1;
-      valueFormatter = this.valueFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
+      countValueFormatter = this.countValueFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
+      bucketBoundFormatter = this.bucketBoundFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
     }
 
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
@@ -114,15 +116,25 @@ export class HeatmapTooltip {
     if (yData) {
       if (yData.bounds) {
         if (data.tsBuckets) {
-          boundBottom = data.tsBuckets[yBucketIndex];
-          boundTop = yBucketIndex < data.tsBuckets.length - 1 ? data.tsBuckets[yBucketIndex + 1] : '';
+          const tickFormatter = valIndex => {
+            let valueFormatted = data.tsBuckets[valIndex];
+            if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
+              // Try to format numeric tick labels
+              valueFormatted = this.bucketBoundFormatter(0)(valueFormatted);
+            }
+            return valueFormatted;
+          };
+          const tsBucketsTickFormatter = tickFormatter.bind(this);
+
+          boundBottom = tsBucketsTickFormatter(yBucketIndex);
+          boundTop = yBucketIndex < data.tsBuckets.length - 1 ? tsBucketsTickFormatter(yBucketIndex + 1) : '';
         } else {
           // Display 0 if bucket is a special 'zero' bucket
           let bottom = yData.y ? yData.bounds.bottom : 0;
-          boundBottom = valueFormatter(bottom);
-          boundTop = valueFormatter(yData.bounds.top);
+          boundBottom = bucketBoundFormatter(bottom);
+          boundTop = bucketBoundFormatter(yData.bounds.top);
         }
-        valuesNumber = valueFormatter(yData.count);
+        valuesNumber = countValueFormatter(yData.count);
         tooltipHtml += `<div>
           bucket: <b>${boundBottom} - ${boundTop}</b> <br>
           count: <b>${valuesNumber}</b> <br>
@@ -268,7 +280,14 @@ export class HeatmapTooltip {
     return this.tooltip.style('left', left + 'px').style('top', top + 'px');
   }
 
-  valueFormatter(decimals, scaledDecimals = null) {
+  countValueFormatter(decimals, scaledDecimals = null) {
+    let format = 'none';
+    return function(value) {
+      return kbn.valueFormats[format](value, decimals, scaledDecimals);
+    };
+  }
+
+  bucketBoundFormatter(decimals, scaledDecimals = null) {
     let format = this.panel.yAxis.format;
     return function(value) {
       return kbn.valueFormats[format](value, decimals, scaledDecimals);
