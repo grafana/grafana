@@ -49,6 +49,7 @@ Macro example | Description
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *to_timestamp(1494410783)*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *to_timestamp(1494497183)*
 *$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint*300 AS time*
+*$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so all null values will be converted to the fill value (all null values would be set to zero using this example).
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
@@ -100,6 +101,20 @@ SELECT
 FROM test_data
 WHERE $__timeFilter(time_date_time)
 GROUP BY time
+ORDER BY time
+```
+
+Example using the fill parameter in the $__timeGroup macro to convert null values to be zero instead:
+
+```sql
+SELECT
+  $__timeGroup("createdAt",'5m',0),
+  sum(value) as value,
+  measurement
+FROM public.grafana_metric
+WHERE
+  $__timeFilter("createdAt")
+GROUP BY time, measurement
 ORDER BY time
 ```
 
