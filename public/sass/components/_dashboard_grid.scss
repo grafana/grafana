@@ -44,6 +44,11 @@
     border-right: 2px solid $gray-1;
     border-bottom: 2px solid $gray-1;
   }
+  // temp fix since we use old commit of grid component
+  // this can be removed when we revert to non fork grid component
+  .react-grid-item > .react-resizable-handle {
+    background-image: url('../img/resize-handle-white.svg');
+  }
 }
 
 .theme-light {
