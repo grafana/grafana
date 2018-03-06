@@ -9,6 +9,7 @@
 * **Dashboards**: Changing templated value from dropdown is causing unsaved changes [#11063](https://github.com/grafana/grafana/issues/11063)
 * **Prometheus**: Fixes bundled Prometheus 2.0 dashboard [#11016](https://github.com/grafana/grafana/issues/11016), thx [@roidelapluie](https://github.com/roidelapluie)
 * **Sidemenu**: Profile menu "invisible" when gravatar is disabled [#11097](https://github.com/grafana/grafana/issues/11097)
+* **Dashboard**: Fixes a bug with resizeable handles for panels [#11103](https://github.com/grafana/grafana/issues/11103)
 
 # 5.0.0-stable (2018-03-01)
 
