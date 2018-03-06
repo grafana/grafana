@@ -6,6 +6,7 @@
 # 5.0.1 (unreleased)
 
 * **Postgres**: PostgreSQL error when using ipv6 address as hostname in connection string [#11055](https://github.com/grafana/grafana/issues/11055), thanks [@svenklemm](https://github.com/svenklemm)
+* **Dashboards**: Changing templated value from dropdown is causing unsaved changes [#11063](https://github.com/grafana/grafana/issues/11063)
 
 # 5.0.0-stable (2018-03-01)
 
