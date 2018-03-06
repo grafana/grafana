@@ -180,6 +180,7 @@ type UserInfoJson struct {
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data UserInfoJson
+	var err error
 
 	if s.extractToken(&data, token) != true {
 		response, err := HttpGet(client, s.apiUrl)
@@ -193,20 +194,17 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 	}
 
-	name, err := s.extractName(data)
-	if err != nil {
-		return nil, err
+	name := s.extractName(&data)
+
+	email := s.extractEmail(&data)
+	if email == "" {
+		email, err = s.FetchPrivateEmail(client)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	email, err := s.extractEmail(data, client)
-	if err != nil {
-		return nil, err
-	}
-
-	login, err := s.extractLogin(data, email)
-	if err != nil {
-		return nil, err
-	}
+	login := s.extractLogin(&data, email)
 
 	userInfo := &BasicUserInfo{
 		Name:  name,
@@ -251,49 +249,55 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 		return false
 	}
 
+	email := s.extractEmail(data)
+	if email == "" {
+		s.log.Debug("No email found in id_token", "json", string(payload), "data", data)
+		return false
+	}
+
 	s.log.Debug("Received id_token", "json", string(payload), "data", data)
 	return true
 }
 
-func (s *SocialGenericOAuth) extractEmail(data UserInfoJson, client *http.Client) (string, error) {
+func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	if data.Email != "" {
-		return data.Email, nil
+		return data.Email
 	}
 
 	if data.Attributes["email:primary"] != nil {
-		return data.Attributes["email:primary"][0], nil
+		return data.Attributes["email:primary"][0]
 	}
 
 	if data.Upn != "" {
 		emailAddr, emailErr := mail.ParseAddress(data.Upn)
 		if emailErr == nil {
-			return emailAddr.Address, nil
+			return emailAddr.Address
 		}
 	}
 
-	return s.FetchPrivateEmail(client)
+	return ""
 }
 
-func (s *SocialGenericOAuth) extractLogin(data UserInfoJson, email string) (string, error) {
+func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson, email string) string {
 	if data.Login != "" {
-		return data.Login, nil
+		return data.Login
 	}
 
 	if data.Username != "" {
-		return data.Username, nil
+		return data.Username
 	}
 
-	return email, nil
+	return email
 }
 
-func (s *SocialGenericOAuth) extractName(data UserInfoJson) (string, error) {
+func (s *SocialGenericOAuth) extractName(data *UserInfoJson) string {
 	if data.Name != "" {
-		return data.Name, nil
+		return data.Name
 	}
 
 	if data.DisplayName != "" {
-		return data.DisplayName, nil
+		return data.DisplayName
 	}
 
-	return "", nil
+	return ""
 }
