@@ -1,3 +1,12 @@
+# 5.1.0 (unreleased)
+
+* **Postgres/MySQL**: Ability to insert 0s or nulls for missing intervals [#9487](https://github.com/grafana/grafana/issues/9487), thanks [@svenklemm](https://github.com/svenklemm)
+
+
+# 5.0.1 (unreleased)
+
+* **Postgres**: PostgreSQL error when using ipv6 address as hostname in connection string [#11055](https://github.com/grafana/grafana/issues/11055), thanks [@svenklemm](https://github.com/svenklemm)
+
 # 5.0.0-stable (2018-03-01)
 
 ### Fixes
