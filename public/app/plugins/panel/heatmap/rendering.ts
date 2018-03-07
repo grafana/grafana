@@ -4,7 +4,7 @@ import moment from 'moment';
 import * as d3 from 'd3';
 import kbn from 'app/core/utils/kbn';
 import { appEvents, contextSrv } from 'app/core/core';
-import { tickStep, getScaledDecimals, getFlotTickSize } from 'app/core/utils/ticks';
+import * as ticksUtils from 'app/core/utils/ticks';
 import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
@@ -108,7 +108,7 @@ export default function link(scope, elem, attrs, ctrl) {
       .range([0, chartWidth]);
 
     let ticks = chartWidth / DEFAULT_X_TICK_SIZE_PX;
-    let grafanaTimeFormatter = grafanaTimeFormat(ticks, timeRange.from, timeRange.to);
+    let grafanaTimeFormatter = ticksUtils.grafanaTimeFormat(ticks, timeRange.from, timeRange.to);
     let timeFormat;
     let dashboardTimeZone = ctrl.dashboard.getTimezone();
     if (dashboardTimeZone === 'utc') {
@@ -141,7 +141,7 @@ export default function link(scope, elem, attrs, ctrl) {
 
   function addYAxis() {
     let ticks = Math.ceil(chartHeight / DEFAULT_Y_TICK_SIZE_PX);
-    let tick_interval = tickStep(data.heatmapStats.min, data.heatmapStats.max, ticks);
+    let tick_interval = ticksUtils.tickStep(data.heatmapStats.min, data.heatmapStats.max, ticks);
     let { y_min, y_max } = wideYAxisRange(data.heatmapStats.min, data.heatmapStats.max, tick_interval);
 
     // Rewrite min and max if it have been set explicitly
@@ -149,14 +149,14 @@ export default function link(scope, elem, attrs, ctrl) {
     y_max = panel.yAxis.max !== null ? panel.yAxis.max : y_max;
 
     // Adjust ticks after Y range widening
-    tick_interval = tickStep(y_min, y_max, ticks);
+    tick_interval = ticksUtils.tickStep(y_min, y_max, ticks);
     ticks = Math.ceil((y_max - y_min) / tick_interval);
 
-    let decimalsAuto = getPrecision(tick_interval);
+    let decimalsAuto = ticksUtils.getPrecision(tick_interval);
     let decimals = panel.yAxis.decimals === null ? decimalsAuto : panel.yAxis.decimals;
     // Calculate scaledDecimals for log scales using tick size (as in jquery.flot.js)
-    let flot_tick_size = getFlotTickSize(y_min, y_max, ticks, decimalsAuto);
-    let scaledDecimals = getScaledDecimals(decimals, flot_tick_size);
+    let flot_tick_size = ticksUtils.getFlotTickSize(y_min, y_max, ticks, decimalsAuto);
+    let scaledDecimals = ticksUtils.getScaledDecimals(decimals, flot_tick_size);
     ctrl.decimals = decimals;
     ctrl.scaledDecimals = scaledDecimals;
 
@@ -248,12 +248,12 @@ export default function link(scope, elem, attrs, ctrl) {
     let domain = yScale.domain();
     let tick_values = logScaleTickValues(domain, log_base);
 
-    let decimalsAuto = getPrecision(y_min);
+    let decimalsAuto = ticksUtils.getPrecision(y_min);
     let decimals = panel.yAxis.decimals || decimalsAuto;
 
     // Calculate scaledDecimals for log scales using tick size (as in jquery.flot.js)
-    let flot_tick_size = getFlotTickSize(y_min, y_max, tick_values.length, decimalsAuto);
-    let scaledDecimals = getScaledDecimals(decimals, flot_tick_size);
+    let flot_tick_size = ticksUtils.getFlotTickSize(y_min, y_max, tick_values.length, decimalsAuto);
+    let scaledDecimals = ticksUtils.getScaledDecimals(decimals, flot_tick_size);
     ctrl.decimals = decimals;
     ctrl.scaledDecimals = scaledDecimals;
 
@@ -305,7 +305,7 @@ export default function link(scope, elem, attrs, ctrl) {
       .range([chartHeight, 0]);
 
     const tick_values = _.map(tsBuckets, (b, i) => i);
-    const decimalsAuto = _.max(_.map(tsBuckets, getStringPrecision));
+    const decimalsAuto = _.max(_.map(tsBuckets, ticksUtils.getStringPrecision));
     const decimals = panel.yAxis.decimals === null ? decimalsAuto : panel.yAxis.decimals;
     ctrl.decimals = decimals;
 
@@ -317,6 +317,9 @@ export default function link(scope, elem, attrs, ctrl) {
       }
       return valueFormatted;
     }
+
+    const tsBucketsFormatted = _.map(tsBuckets, (v, i) => tickFormatter(i));
+    data.tsBucketsFormatted = tsBucketsFormatted;
 
     let yAxis = d3
       .axisLeft(yScale)
@@ -361,11 +364,11 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function adjustLogMax(max, base) {
-    return Math.pow(base, Math.ceil(logp(max, base)));
+    return Math.pow(base, Math.ceil(ticksUtils.logp(max, base)));
   }
 
   function adjustLogMin(min, base) {
-    return Math.pow(base, Math.floor(logp(min, base)));
+    return Math.pow(base, Math.floor(ticksUtils.logp(min, base)));
   }
 
   function logScaleTickValues(domain, base) {
@@ -374,14 +377,14 @@ export default function link(scope, elem, attrs, ctrl) {
     let tickValues = [];
 
     if (domainMin < 1) {
-      let under_one_ticks = Math.floor(logp(domainMin, base));
+      let under_one_ticks = Math.floor(ticksUtils.logp(domainMin, base));
       for (let i = under_one_ticks; i < 0; i++) {
         let tick_value = Math.pow(base, i);
         tickValues.push(tick_value);
       }
     }
 
-    let ticks = Math.ceil(logp(domainMax, base));
+    let ticks = Math.ceil(ticksUtils.logp(domainMax, base));
     for (let i = 0; i <= ticks; i++) {
       let tick_value = Math.pow(base, i);
       tickValues.push(tick_value);
@@ -401,6 +404,8 @@ export default function link(scope, elem, attrs, ctrl) {
       }
     };
   }
+
+  ctrl.tickValueFormatter = tickValueFormatter;
 
   function fixYAxisTickSize() {
     heatmap
@@ -826,47 +831,4 @@ export default function link(scope, elem, attrs, ctrl) {
   $heatmap.on('mousedown', onMouseDown);
   $heatmap.on('mousemove', onMouseMove);
   $heatmap.on('mouseleave', onMouseLeave);
-}
-
-function grafanaTimeFormat(ticks, min, max) {
-  if (min && max && ticks) {
-    let range = max - min;
-    let secPerTick = range / ticks / 1000;
-    let oneDay = 86400000;
-    let oneYear = 31536000000;
-
-    if (secPerTick <= 45) {
-      return '%H:%M:%S';
-    }
-    if (secPerTick <= 7200 || range <= oneDay) {
-      return '%H:%M';
-    }
-    if (secPerTick <= 80000) {
-      return '%m/%d %H:%M';
-    }
-    if (secPerTick <= 2419200 || range <= oneYear) {
-      return '%m/%d';
-    }
-    return '%Y-%m';
-  }
-
-  return '%H:%M';
-}
-
-function logp(value, base) {
-  return Math.log(value) / Math.log(base);
-}
-
-function getPrecision(num: number): number {
-  let str = num.toString();
-  return getStringPrecision(str);
-}
-
-function getStringPrecision(num: string): number {
-  let dot_index = num.indexOf('.');
-  if (dot_index === -1) {
-    return 0;
-  } else {
-    return num.length - dot_index - 1;
-  }
 }

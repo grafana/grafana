@@ -89,6 +89,8 @@ let colorSchemes = [
   { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'darm' },
 ];
 
+const ds_support_histogram_sort = ['prometheus', 'elasticsearch'];
+
 export class HeatmapCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
@@ -207,15 +209,20 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   convertHistogramToHeatmapData() {
+    const panelDatasource = this.getPanelDataSourceType();
     let xBucketSize, yBucketSize, bucketsData, tsBuckets;
+
+    // Try to sort series by bucket bound, if datasource doesn't do it.
+    if (!_.includes(ds_support_histogram_sort, panelDatasource)) {
+      this.series.sort(sortSeriesByLabel);
+    }
 
     // Convert histogram to heatmap. Each histogram bucket represented by the series which name is
     // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as X axis labels.
-    this.series.sort(sortSeriesByLabel);
     bucketsData = histogramToHeatmap(this.series);
 
     tsBuckets = _.map(this.series, 'label');
-    if (this.datasource && this.datasource.type === 'prometheus') {
+    if (panelDatasource === 'prometheus') {
       // Prometheus labels are upper inclusive bounds, so add empty bottom bucket label.
       tsBuckets = [''].concat(tsBuckets);
     } else {
@@ -239,6 +246,14 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       cards: cards,
       cardStats: cardStats,
     };
+  }
+
+  getPanelDataSourceType() {
+    if (this.datasource.meta && this.datasource.meta.id) {
+      return this.datasource.meta.id;
+    } else {
+      return 'unknown';
+    }
   }
 
   onDataReceived(dataList) {

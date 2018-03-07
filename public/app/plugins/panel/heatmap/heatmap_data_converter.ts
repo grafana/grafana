@@ -67,7 +67,7 @@ function sortSeriesByLabel(s1, s2) {
     label1 = parseHistogramLabel(s1.label);
     label2 = parseHistogramLabel(s2.label);
   } catch (err) {
-    console.log(err);
+    console.log(err.message || err);
     return 0;
   }
 
@@ -83,10 +83,14 @@ function sortSeriesByLabel(s1, s2) {
 }
 
 function parseHistogramLabel(label: string): number {
-  if (label === '+Inf') {
+  if (label === '+Inf' || label === 'inf') {
     return +Infinity;
   }
-  return Number(label);
+  const value = Number(label);
+  if (isNaN(value)) {
+    throw new Error(`Error parsing histogram label: ${label} is not a number`);
+  }
+  return value;
 }
 
 /**

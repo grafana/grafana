@@ -100,14 +100,14 @@ export class HeatmapTooltip {
     let countValueFormatter, bucketBoundFormatter;
     if (_.isNumber(this.panel.tooltipDecimals)) {
       countValueFormatter = this.countValueFormatter(this.panel.tooltipDecimals, null);
-      bucketBoundFormatter = this.bucketBoundFormatter(this.panel.tooltipDecimals, null);
+      bucketBoundFormatter = this.panelCtrl.tickValueFormatter(this.panelCtrl.decimals, null);
     } else {
       // auto decimals
       // legend and tooltip gets one more decimal precision
       // than graph legend ticks
       let decimals = (this.panelCtrl.decimals || -1) + 1;
       countValueFormatter = this.countValueFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
-      bucketBoundFormatter = this.bucketBoundFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
+      bucketBoundFormatter = this.panelCtrl.tickValueFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
     }
 
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
@@ -116,19 +116,13 @@ export class HeatmapTooltip {
     if (yData) {
       if (yData.bounds) {
         if (data.tsBuckets) {
-          const decimals = this.panelCtrl.decimals || 0;
+          // Use Y-axis labels
           const tickFormatter = valIndex => {
-            let valueFormatted = data.tsBuckets[valIndex];
-            if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
-              // Try to format numeric tick labels
-              valueFormatted = this.bucketBoundFormatter(decimals)(_.toNumber(valueFormatted));
-            }
-            return valueFormatted;
+            return data.tsBucketsFormatted ? data.tsBucketsFormatted[valIndex] : data.tsBuckets[valIndex];
           };
-          const tsBucketsTickFormatter = tickFormatter.bind(this);
 
-          boundBottom = tsBucketsTickFormatter(yBucketIndex);
-          boundTop = yBucketIndex < data.tsBuckets.length - 1 ? tsBucketsTickFormatter(yBucketIndex + 1) : '';
+          boundBottom = tickFormatter(yBucketIndex);
+          boundTop = yBucketIndex < data.tsBuckets.length - 1 ? tickFormatter(yBucketIndex + 1) : '';
         } else {
           // Display 0 if bucket is a special 'zero' bucket
           let bottom = yData.y ? yData.bounds.bottom : 0;
@@ -282,21 +276,9 @@ export class HeatmapTooltip {
   }
 
   countValueFormatter(decimals, scaledDecimals = null) {
-    let format = 'none';
+    let format = 'short';
     return function(value) {
       return kbn.valueFormats[format](value, decimals, scaledDecimals);
-    };
-  }
-
-  bucketBoundFormatter(decimals, scaledDecimals = null) {
-    let format = this.panel.yAxis.format;
-    return function(value) {
-      try {
-        return format !== 'none' ? kbn.valueFormats[format](value, decimals, scaledDecimals) : value;
-      } catch (err) {
-        console.error(err.message || err);
-        return value;
-      }
     };
   }
 }
