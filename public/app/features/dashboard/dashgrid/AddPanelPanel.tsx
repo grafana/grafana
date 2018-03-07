@@ -1,6 +1,6 @@
 import React from 'react';
 import _ from 'lodash';
-
+import classNames from 'classnames';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { PanelContainer } from './PanelContainer';
@@ -163,18 +163,21 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   render() {
-    let addClass;
-    let copyClass;
+    let addClass = classNames({
+      'active active--panel': this.state.tab === 'Add',
+      '': this.state.tab === 'Copy',
+    });
+
+    let copyClass = classNames({
+      '': this.state.tab === 'Add',
+      'active active--panel': this.state.tab === 'Copy',
+    });
+
     let panelTab;
 
     if (this.state.tab === 'Add') {
-      addClass = 'active active--panel';
-      copyClass = '';
       panelTab = this.state.panelPlugins.map(this.renderPanelItem);
     } else if (this.state.tab === 'Copy') {
-      addClass = '';
-      copyClass = 'active active--panel';
-      console.log(this.state.copiedPanelPlugins);
       if (this.state.copiedPanelPlugins.length > 0) {
         panelTab = this.state.copiedPanelPlugins.map(this.renderPanelItem);
       } else {
