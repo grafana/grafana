@@ -75,7 +75,7 @@ func TestMiddlewareQuota(t *testing.T) {
 
 		middlewareScenario("with user logged in", func(sc *scenarioContext) {
 			// log us in, so we have a user_id and org_id in the context
-			sc.fakeReq("GET", "/").handler(func(c *m.Context) {
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
 				c.Session.Set(session.SESS_KEY_USERID, int64(12))
 			}).exec()
 

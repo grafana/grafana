@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func getFrontendSettingsMap(c *m.Context) (map[string]interface{}, error) {
+func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	orgDataSources := make([]*m.DataSource, 0)
 
 	if c.OrgId != 0 {
@@ -179,7 +179,7 @@ func getPanelSort(id string) int {
 	return sort
 }
 
-func GetFrontendSettings(c *m.Context) {
+func GetFrontendSettings(c *m.ReqContext) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)

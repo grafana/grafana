@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetDashboardPermissionList(c *m.Context) Response {
+func GetDashboardPermissionList(c *m.ReqContext) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
@@ -37,7 +37,7 @@ func GetDashboardPermissionList(c *m.Context) Response {
 	return Json(200, acl)
 }
 
-func UpdateDashboardPermissions(c *m.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func UpdateDashboardPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")

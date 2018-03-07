@@ -11,7 +11,7 @@ import (
 )
 
 // GET /api/user/signup/options
-func GetSignUpOptions(c *m.Context) Response {
+func GetSignUpOptions(c *m.ReqContext) Response {
 	return Json(200, util.DynMap{
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
 		"autoAssignOrg":      setting.AutoAssignOrg,
@@ -19,7 +19,7 @@ func GetSignUpOptions(c *m.Context) Response {
 }
 
 // POST /api/user/signup
-func SignUp(c *m.Context, form dtos.SignUpForm) Response {
+func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 	if !setting.AllowUserSignUp {
 		return ApiError(401, "User signup is disabled", nil)
 	}
@@ -51,7 +51,7 @@ func SignUp(c *m.Context, form dtos.SignUpForm) Response {
 	return Json(200, util.DynMap{"status": "SignUpCreated"})
 }
 
-func SignUpStep2(c *m.Context, form dtos.SignUpStep2Form) Response {
+func SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Response {
 	if !setting.AllowUserSignUp {
 		return ApiError(401, "User signup is disabled", nil)
 	}

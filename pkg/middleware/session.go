@@ -11,7 +11,7 @@ import (
 func Sessioner(options *ms.Options) macaron.Handler {
 	session.Init(options)
 
-	return func(ctx *m.Context) {
+	return func(ctx *m.ReqContext) {
 		ctx.Next()
 
 		if err := ctx.Session.Release(); err != nil {

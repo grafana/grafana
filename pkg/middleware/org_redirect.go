@@ -22,7 +22,7 @@ func OrgRedirect() macaron.Handler {
 			return
 		}
 
-		ctx, ok := c.Data["ctx"].(*m.Context)
+		ctx, ok := c.Data["ctx"].(*m.ReqContext)
 		if !ok || !ctx.IsSignedIn {
 			return
 		}

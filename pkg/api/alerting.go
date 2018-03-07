@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func ValidateOrgAlert(c *m.Context) {
+func ValidateOrgAlert(c *m.ReqContext) {
 	id := c.ParamsInt64(":alertId")
 	query := m.GetAlertByIdQuery{Id: id}
 
@@ -25,7 +25,7 @@ func ValidateOrgAlert(c *m.Context) {
 	}
 }
 
-func GetAlertStatesForDashboard(c *m.Context) Response {
+func GetAlertStatesForDashboard(c *m.ReqContext) Response {
 	dashboardId := c.QueryInt64("dashboardId")
 
 	if dashboardId == 0 {
@@ -45,7 +45,7 @@ func GetAlertStatesForDashboard(c *m.Context) Response {
 }
 
 // GET /api/alerts
-func GetAlerts(c *m.Context) Response {
+func GetAlerts(c *m.ReqContext) Response {
 	query := m.GetAlertsQuery{
 		OrgId:       c.OrgId,
 		DashboardId: c.QueryInt64("dashboardId"),
@@ -71,7 +71,7 @@ func GetAlerts(c *m.Context) Response {
 }
 
 // POST /api/alerts/test
-func AlertTest(c *m.Context, dto dtos.AlertTestCommand) Response {
+func AlertTest(c *m.ReqContext, dto dtos.AlertTestCommand) Response {
 	if _, idErr := dto.Dashboard.Get("id").Int64(); idErr != nil {
 		return ApiError(400, "The dashboard needs to be saved at least once before you can test an alert rule", nil)
 	}
@@ -113,7 +113,7 @@ func AlertTest(c *m.Context, dto dtos.AlertTestCommand) Response {
 }
 
 // GET /api/alerts/:id
-func GetAlert(c *m.Context) Response {
+func GetAlert(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":alertId")
 	query := m.GetAlertByIdQuery{Id: id}
 
@@ -124,11 +124,11 @@ func GetAlert(c *m.Context) Response {
 	return Json(200, &query.Result)
 }
 
-func GetAlertNotifiers(c *m.Context) Response {
+func GetAlertNotifiers(c *m.ReqContext) Response {
 	return Json(200, alerting.GetNotifiers())
 }
 
-func GetAlertNotifications(c *m.Context) Response {
+func GetAlertNotifications(c *m.ReqContext) Response {
 	query := &m.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(query); err != nil {
@@ -151,7 +151,7 @@ func GetAlertNotifications(c *m.Context) Response {
 	return Json(200, result)
 }
 
-func GetAlertNotificationById(c *m.Context) Response {
+func GetAlertNotificationById(c *m.ReqContext) Response {
 	query := &m.GetAlertNotificationsQuery{
 		OrgId: c.OrgId,
 		Id:    c.ParamsInt64("notificationId"),
@@ -164,7 +164,7 @@ func GetAlertNotificationById(c *m.Context) Response {
 	return Json(200, query.Result)
 }
 
-func CreateAlertNotification(c *m.Context, cmd m.CreateAlertNotificationCommand) Response {
+func CreateAlertNotification(c *m.ReqContext, cmd m.CreateAlertNotificationCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -174,7 +174,7 @@ func CreateAlertNotification(c *m.Context, cmd m.CreateAlertNotificationCommand)
 	return Json(200, cmd.Result)
 }
 
-func UpdateAlertNotification(c *m.Context, cmd m.UpdateAlertNotificationCommand) Response {
+func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -184,7 +184,7 @@ func UpdateAlertNotification(c *m.Context, cmd m.UpdateAlertNotificationCommand)
 	return Json(200, cmd.Result)
 }
 
-func DeleteAlertNotification(c *m.Context) Response {
+func DeleteAlertNotification(c *m.ReqContext) Response {
 	cmd := m.DeleteAlertNotificationCommand{
 		OrgId: c.OrgId,
 		Id:    c.ParamsInt64("notificationId"),
@@ -198,7 +198,7 @@ func DeleteAlertNotification(c *m.Context) Response {
 }
 
 //POST /api/alert-notifications/test
-func NotificationTest(c *m.Context, dto dtos.NotificationTestCommand) Response {
+func NotificationTest(c *m.ReqContext, dto dtos.NotificationTestCommand) Response {
 	cmd := &alerting.NotificationTestCommand{
 		Name:     dto.Name,
 		Type:     dto.Type,
@@ -216,7 +216,7 @@ func NotificationTest(c *m.Context, dto dtos.NotificationTestCommand) Response {
 }
 
 //POST /api/alerts/:alertId/pause
-func PauseAlert(c *m.Context, dto dtos.PauseAlertCommand) Response {
+func PauseAlert(c *m.ReqContext, dto dtos.PauseAlertCommand) Response {
 	alertId := c.ParamsInt64("alertId")
 
 	query := m.GetAlertByIdQuery{Id: alertId}
@@ -261,7 +261,7 @@ func PauseAlert(c *m.Context, dto dtos.PauseAlertCommand) Response {
 }
 
 //POST /api/admin/pause-all-alerts
-func PauseAllAlerts(c *m.Context, dto dtos.PauseAllAlertsCommand) Response {
+func PauseAllAlerts(c *m.ReqContext, dto dtos.PauseAllAlertsCommand) Response {
 	updateCmd := m.PauseAllAlertCommand{
 		Paused: dto.Paused,
 	}

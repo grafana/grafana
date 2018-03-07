@@ -5,7 +5,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func StarDashboard(c *m.Context) Response {
+func StarDashboard(c *m.ReqContext) Response {
 	if !c.IsSignedIn {
 		return ApiError(412, "You need to sign in to star dashboards", nil)
 	}
@@ -23,7 +23,7 @@ func StarDashboard(c *m.Context) Response {
 	return ApiSuccess("Dashboard starred!")
 }
 
-func UnstarDashboard(c *m.Context) Response {
+func UnstarDashboard(c *m.ReqContext) Response {
 
 	cmd := m.UnstarDashboardCommand{UserId: c.UserId, DashboardId: c.ParamsInt64(":id")}
 

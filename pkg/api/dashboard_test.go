@@ -861,7 +861,7 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
@@ -886,7 +886,7 @@ func postDiffScenario(desc string, url string, routePattern string, cmd dtos.Cal
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{
 				OrgId:  TestOrgID,

@@ -16,7 +16,7 @@ type AuthOptions struct {
 	ReqSignedIn     bool
 }
 
-func getRequestUserId(c *m.Context) int64 {
+func getRequestUserId(c *m.ReqContext) int64 {
 	userId := c.Session.Get(session.SESS_KEY_USERID)
 
 	if userId != nil {
@@ -26,7 +26,7 @@ func getRequestUserId(c *m.Context) int64 {
 	return 0
 }
 
-func getApiKey(c *m.Context) string {
+func getApiKey(c *m.ReqContext) string {
 	header := c.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	if len(parts) == 2 && parts[0] == "Bearer" {
@@ -37,7 +37,7 @@ func getApiKey(c *m.Context) string {
 	return ""
 }
 
-func accessForbidden(c *m.Context) {
+func accessForbidden(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(403, "Permission denied", nil)
 		return
@@ -46,7 +46,7 @@ func accessForbidden(c *m.Context) {
 	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func notAuthorized(c *m.Context) {
+func notAuthorized(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
@@ -58,7 +58,7 @@ func notAuthorized(c *m.Context) {
 }
 
 func RoleAuth(roles ...m.RoleType) macaron.Handler {
-	return func(c *m.Context) {
+	return func(c *m.ReqContext) {
 		ok := false
 		for _, role := range roles {
 			if role == c.OrgRole {
@@ -73,7 +73,7 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 }
 
 func Auth(options *AuthOptions) macaron.Handler {
-	return func(c *m.Context) {
+	return func(c *m.ReqContext) {
 		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
 			notAuthorized(c)
 			return

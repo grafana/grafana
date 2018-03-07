@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetPendingOrgInvites(c *m.Context) Response {
+func GetPendingOrgInvites(c *m.ReqContext) Response {
 	query := m.GetTempUsersQuery{OrgId: c.OrgId, Status: m.TmpUserInvitePending}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -26,7 +26,7 @@ func GetPendingOrgInvites(c *m.Context) Response {
 	return Json(200, query.Result)
 }
 
-func AddOrgInvite(c *m.Context, inviteDto dtos.AddInviteForm) Response {
+func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 	if !inviteDto.Role.IsValid() {
 		return ApiError(400, "Invalid role specified", nil)
 	}
@@ -88,7 +88,7 @@ func AddOrgInvite(c *m.Context, inviteDto dtos.AddInviteForm) Response {
 	return ApiSuccess(fmt.Sprintf("Created invite for %s", inviteDto.LoginOrEmail))
 }
 
-func inviteExistingUserToOrg(c *m.Context, user *m.User, inviteDto *dtos.AddInviteForm) Response {
+func inviteExistingUserToOrg(c *m.ReqContext, user *m.User, inviteDto *dtos.AddInviteForm) Response {
 	// user exists, add org role
 	createOrgUserCmd := m.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.Id, Role: inviteDto.Role}
 	if err := bus.Dispatch(&createOrgUserCmd); err != nil {
@@ -118,7 +118,7 @@ func inviteExistingUserToOrg(c *m.Context, user *m.User, inviteDto *dtos.AddInvi
 	}
 }
 
-func RevokeInvite(c *m.Context) Response {
+func RevokeInvite(c *m.ReqContext) Response {
 	if ok, rsp := updateTempUserStatus(c.Params(":code"), m.TmpUserRevoked); !ok {
 		return rsp
 	}
@@ -126,7 +126,7 @@ func RevokeInvite(c *m.Context) Response {
 	return ApiSuccess("Invite revoked")
 }
 
-func GetInviteInfoByCode(c *m.Context) Response {
+func GetInviteInfoByCode(c *m.ReqContext) Response {
 	query := m.GetTempUserByCodeQuery{Code: c.Params(":code")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -146,7 +146,7 @@ func GetInviteInfoByCode(c *m.Context) Response {
 	})
 }
 
-func CompleteInvite(c *m.Context, completeInvite dtos.CompleteInviteForm) Response {
+func CompleteInvite(c *m.ReqContext, completeInvite dtos.CompleteInviteForm) Response {
 	query := m.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
 	if err := bus.Dispatch(&query); err != nil {

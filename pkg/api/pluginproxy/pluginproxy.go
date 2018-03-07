@@ -37,7 +37,7 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appId string) (http.
 	return result, err
 }
 
-func NewApiPluginProxy(ctx *m.Context, proxyPath string, route *plugins.AppPluginRoute, appId string) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appId string) *httputil.ReverseProxy {
 	targetUrl, _ := url.Parse(route.Url)
 
 	director := func(req *http.Request) {

@@ -8,7 +8,7 @@ import (
 )
 
 // GET /api/teams/:teamId/members
-func GetTeamMembers(c *m.Context) Response {
+func GetTeamMembers(c *m.ReqContext) Response {
 	query := m.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -23,7 +23,7 @@ func GetTeamMembers(c *m.Context) Response {
 }
 
 // POST /api/teams/:teamId/members
-func AddTeamMember(c *m.Context, cmd m.AddTeamMemberCommand) Response {
+func AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand) Response {
 	cmd.TeamId = c.ParamsInt64(":teamId")
 	cmd.OrgId = c.OrgId
 
@@ -45,7 +45,7 @@ func AddTeamMember(c *m.Context, cmd m.AddTeamMemberCommand) Response {
 }
 
 // DELETE /api/teams/:teamId/members/:userId
-func RemoveTeamMember(c *m.Context) Response {
+func RemoveTeamMember(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.RemoveTeamMemberCommand{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId"), UserId: c.ParamsInt64(":userId")}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return ApiError(404, "Team not found", nil)

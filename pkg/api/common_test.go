@@ -23,7 +23,7 @@ func loggedInUserScenarioWithRole(desc string, method string, url string, routeP
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
@@ -71,7 +71,7 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 
 type scenarioContext struct {
 	m              *macaron.Macaron
-	context        *m.Context
+	context        *m.ReqContext
 	resp           *httptest.ResponseRecorder
 	handlerFunc    handlerFunc
 	defaultHandler macaron.Handler
@@ -84,7 +84,7 @@ func (sc *scenarioContext) exec() {
 }
 
 type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *m.Context) Response
+type handlerFunc func(c *m.ReqContext) Response
 
 func setupScenarioContext(url string) *scenarioContext {
 	sc := &scenarioContext{

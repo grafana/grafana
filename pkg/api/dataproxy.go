@@ -34,7 +34,7 @@ func (hs *HttpServer) getDatasourceById(id int64, orgId int64, nocache bool) (*m
 	return query.Result, nil
 }
 
-func (hs *HttpServer) ProxyDataSourceRequest(c *m.Context) {
+func (hs *HttpServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
 
 	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"

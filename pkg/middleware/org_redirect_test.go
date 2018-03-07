@@ -15,7 +15,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 
 	Convey("Can redirect to correct org", t, func() {
 		middlewareScenario("when setting a correct org for the user", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/").handler(func(c *m.Context) {
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
 				c.Session.Set(session.SESS_KEY_USERID, int64(12))
 			}).exec()
 
@@ -37,7 +37,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		})
 
 		middlewareScenario("when setting an invalid org for user", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/").handler(func(c *m.Context) {
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
 				c.Session.Set(session.SESS_KEY_USERID, int64(12))
 			}).exec()
 

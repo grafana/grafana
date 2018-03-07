@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-func Search(c *m.Context) {
+func Search(c *m.ReqContext) {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")

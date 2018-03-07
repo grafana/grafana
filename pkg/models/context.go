@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type Context struct {
+type ReqContext struct {
 	*macaron.Context
 	*SignedInUser
 
@@ -24,7 +24,7 @@ type Context struct {
 }
 
 // Handle handles and logs error by given status.
-func (ctx *Context) Handle(status int, title string, err error) {
+func (ctx *ReqContext) Handle(status int, title string, err error) {
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
 		if setting.Env != setting.PROD {
@@ -39,17 +39,17 @@ func (ctx *Context) Handle(status int, title string, err error) {
 	ctx.HTML(status, "error")
 }
 
-func (ctx *Context) JsonOK(message string) {
+func (ctx *ReqContext) JsonOK(message string) {
 	resp := make(map[string]interface{})
 	resp["message"] = message
 	ctx.JSON(200, resp)
 }
 
-func (ctx *Context) IsApiRequest() bool {
+func (ctx *ReqContext) IsApiRequest() bool {
 	return strings.HasPrefix(ctx.Req.URL.Path, "/api")
 }
 
-func (ctx *Context) JsonApiErr(status int, message string, err error) {
+func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 	resp := make(map[string]interface{})
 
 	if err != nil {
@@ -73,14 +73,14 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 	ctx.JSON(status, resp)
 }
 
-func (ctx *Context) HasUserRole(role RoleType) bool {
+func (ctx *ReqContext) HasUserRole(role RoleType) bool {
 	return ctx.OrgRole.Includes(role)
 }
 
-func (ctx *Context) HasHelpFlag(flag HelpFlags1) bool {
+func (ctx *ReqContext) HasHelpFlag(flag HelpFlags1) bool {
 	return ctx.HelpFlags1.HasFlag(flag)
 }
 
-func (ctx *Context) TimeRequest(timer prometheus.Summary) {
+func (ctx *ReqContext) TimeRequest(timer prometheus.Summary) {
 	ctx.Data["perfmon.timer"] = timer
 }

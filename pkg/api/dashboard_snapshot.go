@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetSharingOptions(c *m.Context) {
+func GetSharingOptions(c *m.ReqContext) {
 	c.JSON(200, util.DynMap{
 		"externalSnapshotURL":  setting.ExternalSnapshotUrl,
 		"externalSnapshotName": setting.ExternalSnapshotName,
@@ -20,7 +20,7 @@ func GetSharingOptions(c *m.Context) {
 	})
 }
 
-func CreateDashboardSnapshot(c *m.Context, cmd m.CreateDashboardSnapshotCommand) {
+func CreateDashboardSnapshot(c *m.ReqContext, cmd m.CreateDashboardSnapshotCommand) {
 	if cmd.Name == "" {
 		cmd.Name = "Unnamed snapshot"
 	}
@@ -57,7 +57,7 @@ func CreateDashboardSnapshot(c *m.Context, cmd m.CreateDashboardSnapshotCommand)
 }
 
 // GET /api/snapshots/:key
-func GetDashboardSnapshot(c *m.Context) {
+func GetDashboardSnapshot(c *m.ReqContext) {
 	key := c.Params(":key")
 	query := &m.GetDashboardSnapshotQuery{Key: key}
 
@@ -92,7 +92,7 @@ func GetDashboardSnapshot(c *m.Context) {
 }
 
 // GET /api/snapshots-delete/:key
-func DeleteDashboardSnapshot(c *m.Context) Response {
+func DeleteDashboardSnapshot(c *m.ReqContext) Response {
 	key := c.Params(":key")
 
 	query := &m.GetDashboardSnapshotQuery{DeleteKey: key}
@@ -128,7 +128,7 @@ func DeleteDashboardSnapshot(c *m.Context) Response {
 }
 
 // GET /api/dashboard/snapshots
-func SearchDashboardSnapshots(c *m.Context) Response {
+func SearchDashboardSnapshots(c *m.ReqContext) Response {
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 

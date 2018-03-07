@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func AdminCreateUser(c *m.Context, form dtos.AdminCreateUserForm) {
+func AdminCreateUser(c *m.ReqContext, form dtos.AdminCreateUserForm) {
 	cmd := m.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
@@ -46,7 +46,7 @@ func AdminCreateUser(c *m.Context, form dtos.AdminCreateUserForm) {
 	c.JSON(200, result)
 }
 
-func AdminUpdateUserPassword(c *m.Context, form dtos.AdminUpdateUserPasswordForm) {
+func AdminUpdateUserPassword(c *m.ReqContext, form dtos.AdminUpdateUserPasswordForm) {
 	userId := c.ParamsInt64(":id")
 
 	if len(form.Password) < 4 {
@@ -76,7 +76,7 @@ func AdminUpdateUserPassword(c *m.Context, form dtos.AdminUpdateUserPasswordForm
 	c.JsonOK("User password updated")
 }
 
-func AdminUpdateUserPermissions(c *m.Context, form dtos.AdminUpdateUserPermissionsForm) {
+func AdminUpdateUserPermissions(c *m.ReqContext, form dtos.AdminUpdateUserPermissionsForm) {
 	userId := c.ParamsInt64(":id")
 
 	cmd := m.UpdateUserPermissionsCommand{
@@ -92,7 +92,7 @@ func AdminUpdateUserPermissions(c *m.Context, form dtos.AdminUpdateUserPermissio
 	c.JsonOK("User permissions updated")
 }
 
-func AdminDeleteUser(c *m.Context) {
+func AdminDeleteUser(c *m.ReqContext) {
 	userId := c.ParamsInt64(":id")
 
 	cmd := m.DeleteUserCommand{UserId: userId}

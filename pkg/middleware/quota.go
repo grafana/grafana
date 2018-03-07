@@ -11,7 +11,7 @@ import (
 )
 
 func Quota(target string) macaron.Handler {
-	return func(c *m.Context) {
+	return func(c *m.ReqContext) {
 		limitReached, err := QuotaReached(c, target)
 		if err != nil {
 			c.JsonApiErr(500, "failed to get quota", err)
@@ -24,7 +24,7 @@ func Quota(target string) macaron.Handler {
 	}
 }
 
-func QuotaReached(c *m.Context, target string) (bool, error) {
+func QuotaReached(c *m.ReqContext, target string) (bool, error) {
 	if !setting.Quota.Enabled {
 		return false, nil
 	}

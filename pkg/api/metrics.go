@@ -13,7 +13,7 @@ import (
 )
 
 // POST /api/tsdb/query
-func QueryMetrics(c *m.Context, reqDto dtos.MetricRequest) Response {
+func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
 	if len(reqDto.Queries) == 0 {
@@ -60,7 +60,7 @@ func QueryMetrics(c *m.Context, reqDto dtos.MetricRequest) Response {
 }
 
 // GET /api/tsdb/testdata/scenarios
-func GetTestDataScenarios(c *m.Context) Response {
+func GetTestDataScenarios(c *m.ReqContext) Response {
 	result := make([]interface{}, 0)
 
 	for _, scenario := range testdata.ScenarioRegistry {
@@ -76,13 +76,13 @@ func GetTestDataScenarios(c *m.Context) Response {
 }
 
 // Genereates a index out of range error
-func GenerateError(c *m.Context) Response {
+func GenerateError(c *m.ReqContext) Response {
 	var array []string
 	return Json(200, array[20])
 }
 
 // GET /api/tsdb/testdata/gensql
-func GenerateSqlTestData(c *m.Context) Response {
+func GenerateSqlTestData(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.InsertSqlTestDataCommand{}); err != nil {
 		return ApiError(500, "Failed to insert test data", err)
 	}
@@ -91,7 +91,7 @@ func GenerateSqlTestData(c *m.Context) Response {
 }
 
 // GET /api/tsdb/testdata/random-walk
-func GetTestDataRandomWalk(c *m.Context) Response {
+func GetTestDataRandomWalk(c *m.ReqContext) Response {
 	from := c.Query("from")
 	to := c.Query("to")
 	intervalMs := c.QueryInt64("intervalMs")

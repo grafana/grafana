@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetAnnotations(c *m.Context) Response {
+func GetAnnotations(c *m.ReqContext) Response {
 
 	query := &annotations.ItemQuery{
 		From:        c.QueryInt64("from") / 1000,
@@ -51,7 +51,7 @@ func (e *CreateAnnotationError) Error() string {
 	return e.message
 }
 
-func PostAnnotation(c *m.Context, cmd dtos.PostAnnotationsCmd) Response {
+func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 	if canSave, err := canSaveByDashboardId(c, cmd.DashboardId); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -124,7 +124,7 @@ func formatGraphiteAnnotation(what string, data string) string {
 	return text
 }
 
-func PostGraphiteAnnotation(c *m.Context, cmd dtos.PostGraphiteAnnotationsCmd) Response {
+func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
 	if cmd.What == "" {
@@ -178,7 +178,7 @@ func PostGraphiteAnnotation(c *m.Context, cmd dtos.PostGraphiteAnnotationsCmd) R
 	})
 }
 
-func UpdateAnnotation(c *m.Context, cmd dtos.UpdateAnnotationsCmd) Response {
+func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	annotationId := c.ParamsInt64(":annotationId")
 
 	repo := annotations.GetRepository()
@@ -217,7 +217,7 @@ func UpdateAnnotation(c *m.Context, cmd dtos.UpdateAnnotationsCmd) Response {
 	return ApiSuccess("Annotation updated")
 }
 
-func DeleteAnnotations(c *m.Context, cmd dtos.DeleteAnnotationsCmd) Response {
+func DeleteAnnotations(c *m.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
 	err := repo.Delete(&annotations.DeleteParams{
@@ -233,7 +233,7 @@ func DeleteAnnotations(c *m.Context, cmd dtos.DeleteAnnotationsCmd) Response {
 	return ApiSuccess("Annotations deleted")
 }
 
-func DeleteAnnotationById(c *m.Context) Response {
+func DeleteAnnotationById(c *m.ReqContext) Response {
 	repo := annotations.GetRepository()
 	annotationId := c.ParamsInt64(":annotationId")
 
@@ -252,7 +252,7 @@ func DeleteAnnotationById(c *m.Context) Response {
 	return ApiSuccess("Annotation deleted")
 }
 
-func DeleteAnnotationRegion(c *m.Context) Response {
+func DeleteAnnotationRegion(c *m.ReqContext) Response {
 	repo := annotations.GetRepository()
 	regionId := c.ParamsInt64(":regionId")
 
@@ -271,7 +271,7 @@ func DeleteAnnotationRegion(c *m.Context) Response {
 	return ApiSuccess("Annotation region deleted")
 }
 
-func canSaveByDashboardId(c *m.Context, dashboardId int64) (bool, error) {
+func canSaveByDashboardId(c *m.ReqContext, dashboardId int64) (bool, error) {
 	if dashboardId == 0 && !c.SignedInUser.HasRole(m.ROLE_EDITOR) {
 		return false, nil
 	}
@@ -286,7 +286,7 @@ func canSaveByDashboardId(c *m.Context, dashboardId int64) (bool, error) {
 	return true, nil
 }
 
-func canSave(c *m.Context, repo annotations.Repository, annotationId int64) Response {
+func canSave(c *m.ReqContext, repo annotations.Repository, annotationId int64) Response {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationId, OrgId: c.OrgId})
 
 	if err != nil || len(items) == 0 {
@@ -302,7 +302,7 @@ func canSave(c *m.Context, repo annotations.Repository, annotationId int64) Resp
 	return nil
 }
 
-func canSaveByRegionId(c *m.Context, repo annotations.Repository, regionId int64) Response {
+func canSaveByRegionId(c *m.ReqContext, repo annotations.Repository, regionId int64) Response {
 	items, err := repo.Find(&annotations.ItemQuery{RegionId: regionId, OrgId: c.OrgId})
 
 	if err != nil || len(items) == 0 {

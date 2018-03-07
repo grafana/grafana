@@ -9,7 +9,7 @@ import (
 )
 
 func ValidateHostHeader(domain string) macaron.Handler {
-	return func(c *m.Context) {
+	return func(c *m.ReqContext) {
 		// ignore local render calls
 		if c.IsRenderCall {
 			return

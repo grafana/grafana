@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func RenderToPng(c *m.Context) {
+func RenderToPng(c *m.ReqContext) {
 	queryReader, err := util.NewUrlQueryReader(c.Req.URL)
 	if err != nil {
 		c.Handle(400, "Render parameters error", err)

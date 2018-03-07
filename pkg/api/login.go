@@ -17,7 +17,7 @@ const (
 	VIEW_INDEX = "index"
 )
 
-func LoginView(c *m.Context) {
+func LoginView(c *m.ReqContext) {
 	viewData, err := setIndexViewData(c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
@@ -53,7 +53,7 @@ func LoginView(c *m.Context) {
 	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func tryLoginUsingRememberCookie(c *m.Context) bool {
+func tryLoginUsingRememberCookie(c *m.ReqContext) bool {
 	// Check auto-login.
 	uname := c.GetCookie(setting.CookieUserName)
 	if len(uname) == 0 {
@@ -87,7 +87,7 @@ func tryLoginUsingRememberCookie(c *m.Context) bool {
 	return true
 }
 
-func LoginApiPing(c *m.Context) {
+func LoginApiPing(c *m.ReqContext) {
 	if !tryLoginUsingRememberCookie(c) {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
@@ -96,7 +96,7 @@ func LoginApiPing(c *m.Context) {
 	c.JsonOK("Logged in")
 }
 
-func LoginPost(c *m.Context, cmd dtos.LoginCommand) Response {
+func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 	if setting.DisableLoginForm {
 		return ApiError(401, "Login is disabled", nil)
 	}
@@ -133,7 +133,7 @@ func LoginPost(c *m.Context, cmd dtos.LoginCommand) Response {
 	return Json(200, result)
 }
 
-func loginUserWithUser(user *m.User, c *m.Context) {
+func loginUserWithUser(user *m.User, c *m.ReqContext) {
 	if user == nil {
 		log.Error(3, "User login with nil user")
 	}
@@ -150,7 +150,7 @@ func loginUserWithUser(user *m.User, c *m.Context) {
 	c.Session.Set(session.SESS_KEY_USERID, user.Id)
 }
 
-func Logout(c *m.Context) {
+func Logout(c *m.ReqContext) {
 	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
 	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
 	c.Session.Destory(c.Context)

@@ -80,7 +80,7 @@ func postAlertScenario(desc string, url string, routePattern string, role m.Role
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID

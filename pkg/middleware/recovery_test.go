@@ -39,7 +39,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 	})
 }
 
-func PanicHandler(c *m.Context) {
+func PanicHandler(c *m.ReqContext) {
 	panic("Handler has panicked")
 }
 
@@ -67,7 +67,7 @@ func recoveryScenario(desc string, url string, fn scenarioFunc) {
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 
-		sc.defaultHandler = func(c *m.Context) {
+		sc.defaultHandler = func(c *m.ReqContext) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)

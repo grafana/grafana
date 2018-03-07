@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func SendResetPasswordEmail(c *m.Context, form dtos.SendResetPasswordEmailForm) Response {
+func SendResetPasswordEmail(c *m.ReqContext, form dtos.SendResetPasswordEmailForm) Response {
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
@@ -23,7 +23,7 @@ func SendResetPasswordEmail(c *m.Context, form dtos.SendResetPasswordEmailForm) 
 	return ApiSuccess("Email sent")
 }
 
-func ResetPassword(c *m.Context, form dtos.ResetUserPasswordForm) Response {
+func ResetPassword(c *m.ReqContext, form dtos.ResetUserPasswordForm) Response {
 	query := m.ValidateResetPasswordCodeQuery{Code: form.Code}
 
 	if err := bus.Dispatch(&query); err != nil {

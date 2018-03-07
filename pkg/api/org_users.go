@@ -7,13 +7,13 @@ import (
 )
 
 // POST /api/org/users
-func AddOrgUserToCurrentOrg(c *m.Context, cmd m.AddOrgUserCommand) Response {
+func AddOrgUserToCurrentOrg(c *m.ReqContext, cmd m.AddOrgUserCommand) Response {
 	cmd.OrgId = c.OrgId
 	return addOrgUserHelper(cmd)
 }
 
 // POST /api/orgs/:orgId/users
-func AddOrgUser(c *m.Context, cmd m.AddOrgUserCommand) Response {
+func AddOrgUser(c *m.ReqContext, cmd m.AddOrgUserCommand) Response {
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	return addOrgUserHelper(cmd)
 }
@@ -44,12 +44,12 @@ func addOrgUserHelper(cmd m.AddOrgUserCommand) Response {
 }
 
 // GET /api/org/users
-func GetOrgUsersForCurrentOrg(c *m.Context) Response {
+func GetOrgUsersForCurrentOrg(c *m.ReqContext) Response {
 	return getOrgUsersHelper(c.OrgId, c.Params("query"), c.ParamsInt("limit"))
 }
 
 // GET /api/orgs/:orgId/users
-func GetOrgUsers(c *m.Context) Response {
+func GetOrgUsers(c *m.ReqContext) Response {
 	return getOrgUsersHelper(c.ParamsInt64(":orgId"), "", 0)
 }
 
@@ -72,14 +72,14 @@ func getOrgUsersHelper(orgId int64, query string, limit int) Response {
 }
 
 // PATCH /api/org/users/:userId
-func UpdateOrgUserForCurrentOrg(c *m.Context, cmd m.UpdateOrgUserCommand) Response {
+func UpdateOrgUserForCurrentOrg(c *m.ReqContext, cmd m.UpdateOrgUserCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.ParamsInt64(":userId")
 	return updateOrgUserHelper(cmd)
 }
 
 // PATCH /api/orgs/:orgId/users/:userId
-func UpdateOrgUser(c *m.Context, cmd m.UpdateOrgUserCommand) Response {
+func UpdateOrgUser(c *m.ReqContext, cmd m.UpdateOrgUserCommand) Response {
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.UserId = c.ParamsInt64(":userId")
 	return updateOrgUserHelper(cmd)
@@ -101,13 +101,13 @@ func updateOrgUserHelper(cmd m.UpdateOrgUserCommand) Response {
 }
 
 // DELETE /api/org/users/:userId
-func RemoveOrgUserForCurrentOrg(c *m.Context) Response {
+func RemoveOrgUserForCurrentOrg(c *m.ReqContext) Response {
 	userId := c.ParamsInt64(":userId")
 	return removeOrgUserHelper(c.OrgId, userId)
 }
 
 // DELETE /api/orgs/:orgId/users/:userId
-func RemoveOrgUser(c *m.Context) Response {
+func RemoveOrgUser(c *m.ReqContext) Response {
 	userId := c.ParamsInt64(":userId")
 	orgId := c.ParamsInt64(":orgId")
 	return removeOrgUserHelper(orgId, userId)

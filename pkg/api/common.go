@@ -19,7 +19,7 @@ var (
 )
 
 type Response interface {
-	WriteTo(ctx *m.Context)
+	WriteTo(ctx *m.ReqContext)
 }
 
 type NormalResponse struct {
@@ -32,7 +32,7 @@ type NormalResponse struct {
 
 func wrap(action interface{}) macaron.Handler {
 
-	return func(c *m.Context) {
+	return func(c *m.ReqContext) {
 		var res Response
 		val, err := c.Invoke(action)
 		if err == nil && val != nil && len(val) > 0 {
@@ -45,7 +45,7 @@ func wrap(action interface{}) macaron.Handler {
 	}
 }
 
-func (r *NormalResponse) WriteTo(ctx *m.Context) {
+func (r *NormalResponse) WriteTo(ctx *m.ReqContext) {
 	if r.err != nil {
 		ctx.Logger.Error(r.errMessage, "error", r.err)
 	}

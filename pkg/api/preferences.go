@@ -7,7 +7,7 @@ import (
 )
 
 // POST /api/preferences/set-home-dash
-func SetHomeDashboard(c *m.Context, cmd m.SavePreferencesCommand) Response {
+func SetHomeDashboard(c *m.ReqContext, cmd m.SavePreferencesCommand) Response {
 
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
@@ -20,7 +20,7 @@ func SetHomeDashboard(c *m.Context, cmd m.SavePreferencesCommand) Response {
 }
 
 // GET /api/user/preferences
-func GetUserPreferences(c *m.Context) Response {
+func GetUserPreferences(c *m.ReqContext) Response {
 	return getPreferencesFor(c.OrgId, c.UserId)
 }
 
@@ -41,7 +41,7 @@ func getPreferencesFor(orgId int64, userId int64) Response {
 }
 
 // PUT /api/user/preferences
-func UpdateUserPreferences(c *m.Context, dtoCmd dtos.UpdatePrefsCmd) Response {
+func UpdateUserPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
 	return updatePreferencesFor(c.OrgId, c.UserId, &dtoCmd)
 }
 
@@ -62,11 +62,11 @@ func updatePreferencesFor(orgId int64, userId int64, dtoCmd *dtos.UpdatePrefsCmd
 }
 
 // GET /api/org/preferences
-func GetOrgPreferences(c *m.Context) Response {
+func GetOrgPreferences(c *m.ReqContext) Response {
 	return getPreferencesFor(c.OrgId, 0)
 }
 
 // PUT /api/org/preferences
-func UpdateOrgPreferences(c *m.Context, dtoCmd dtos.UpdatePrefsCmd) Response {
+func UpdateOrgPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
 	return updatePreferencesFor(c.OrgId, 0, &dtoCmd)
 }

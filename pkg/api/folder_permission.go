@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetFolderPermissionList(c *m.Context) Response {
+func GetFolderPermissionList(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUid(c.Params(":uid"))
 
@@ -41,7 +41,7 @@ func GetFolderPermissionList(c *m.Context) Response {
 	return Json(200, acl)
 }
 
-func UpdateFolderPermissions(c *m.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func UpdateFolderPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUid(c.Params(":uid"))
 

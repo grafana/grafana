@@ -41,7 +41,7 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{Director: director}
 }
 
-func ProxyGnetRequest(c *m.Context) {
+func ProxyGnetRequest(c *m.ReqContext) {
 	proxyPath := c.Params("*")
 	proxy := ReverseProxyGnetReq(proxyPath)
 	proxy.Transport = grafanaComProxyTransport

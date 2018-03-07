@@ -131,7 +131,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("UserId in session", func(sc *scenarioContext) {
 
-			sc.fakeReq("GET", "/").handler(func(c *m.Context) {
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
 				c.Session.Set(session.SESS_KEY_USERID, int64(12))
 			}).exec()
 
@@ -277,7 +277,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			// create session
-			sc.fakeReq("GET", "/").handler(func(c *m.Context) {
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
 				c.Session.Set(session.SESS_KEY_USERID, int64(33))
 			}).exec()
 
@@ -301,7 +301,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.LdapEnabled = true
 
 			called := false
-			syncGrafanaUserWithLdapUser = func(ctx *m.Context, query *m.GetSignedInUserQuery) error {
+			syncGrafanaUserWithLdapUser = func(ctx *m.ReqContext, query *m.GetSignedInUserQuery) error {
 				called = true
 				return nil
 			}
@@ -342,7 +342,7 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 
-		sc.defaultHandler = func(c *m.Context) {
+		sc.defaultHandler = func(c *m.ReqContext) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
@@ -357,7 +357,7 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 
 type scenarioContext struct {
 	m              *macaron.Macaron
-	context        *m.Context
+	context        *m.ReqContext
 	resp           *httptest.ResponseRecorder
 	apiKey         string
 	authHeader     string
@@ -437,4 +437,4 @@ func (sc *scenarioContext) exec() {
 }
 
 type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *m.Context)
+type handlerFunc func(c *m.ReqContext)

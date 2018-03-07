@@ -32,7 +32,7 @@ func TestAuthProxyWithLdapEnabled(t *testing.T) {
 		Convey("When session variable lastLdapSync not set, call syncSignedInUser and set lastLdapSync", func() {
 			// arrange
 			sess := mockSession{}
-			ctx := m.Context{Session: &sess}
+			ctx := m.ReqContext{Session: &sess}
 			So(sess.Get(session.SESS_KEY_LASTLDAPSYNC), ShouldBeNil)
 
 			// act
@@ -46,7 +46,7 @@ func TestAuthProxyWithLdapEnabled(t *testing.T) {
 		Convey("When session variable not expired, don't sync and don't change session var", func() {
 			// arrange
 			sess := mockSession{}
-			ctx := m.Context{Session: &sess}
+			ctx := m.ReqContext{Session: &sess}
 			now := time.Now().Unix()
 			sess.Set(session.SESS_KEY_LASTLDAPSYNC, now)
 
@@ -61,7 +61,7 @@ func TestAuthProxyWithLdapEnabled(t *testing.T) {
 		Convey("When lastldapsync is expired, session variable should be updated", func() {
 			// arrange
 			sess := mockSession{}
-			ctx := m.Context{Session: &sess}
+			ctx := m.ReqContext{Session: &sess}
 			expiredTime := time.Now().Add(time.Duration(-120) * time.Minute).Unix()
 			sess.Set(session.SESS_KEY_LASTLDAPSYNC, expiredTime)
 

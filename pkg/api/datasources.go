@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetDataSources(c *m.Context) Response {
+func GetDataSources(c *m.ReqContext) Response {
 	query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -49,7 +49,7 @@ func GetDataSources(c *m.Context) Response {
 	return Json(200, &result)
 }
 
-func GetDataSourceById(c *m.Context) Response {
+func GetDataSourceById(c *m.ReqContext) Response {
 	query := m.GetDataSourceByIdQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
@@ -68,7 +68,7 @@ func GetDataSourceById(c *m.Context) Response {
 	return Json(200, &dtos)
 }
 
-func DeleteDataSourceById(c *m.Context) Response {
+func DeleteDataSourceById(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
@@ -94,7 +94,7 @@ func DeleteDataSourceById(c *m.Context) Response {
 	return ApiSuccess("Data source deleted")
 }
 
-func DeleteDataSourceByName(c *m.Context) Response {
+func DeleteDataSourceByName(c *m.ReqContext) Response {
 	name := c.Params(":name")
 
 	if name == "" {
@@ -119,7 +119,7 @@ func DeleteDataSourceByName(c *m.Context) Response {
 	return ApiSuccess("Data source deleted")
 }
 
-func AddDataSource(c *m.Context, cmd m.AddDataSourceCommand) Response {
+func AddDataSource(c *m.ReqContext, cmd m.AddDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -139,7 +139,7 @@ func AddDataSource(c *m.Context, cmd m.AddDataSourceCommand) Response {
 	})
 }
 
-func UpdateDataSource(c *m.Context, cmd m.UpdateDataSourceCommand) Response {
+func UpdateDataSource(c *m.ReqContext, cmd m.UpdateDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
 
@@ -204,7 +204,7 @@ func getRawDataSourceById(id int64, orgId int64) (*m.DataSource, error) {
 }
 
 // Get /api/datasources/name/:name
-func GetDataSourceByName(c *m.Context) Response {
+func GetDataSourceByName(c *m.ReqContext) Response {
 	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -220,7 +220,7 @@ func GetDataSourceByName(c *m.Context) Response {
 }
 
 // Get /api/datasources/id/:name
-func GetDataSourceIdByName(c *m.Context) Response {
+func GetDataSourceIdByName(c *m.ReqContext) Response {
 	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {

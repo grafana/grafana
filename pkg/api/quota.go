@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func GetOrgQuotas(c *m.Context) Response {
+func GetOrgQuotas(c *m.ReqContext) Response {
 	if !setting.Quota.Enabled {
 		return ApiError(404, "Quotas not enabled", nil)
 	}
@@ -19,7 +19,7 @@ func GetOrgQuotas(c *m.Context) Response {
 	return Json(200, query.Result)
 }
 
-func UpdateOrgQuota(c *m.Context, cmd m.UpdateOrgQuotaCmd) Response {
+func UpdateOrgQuota(c *m.ReqContext, cmd m.UpdateOrgQuotaCmd) Response {
 	if !setting.Quota.Enabled {
 		return ApiError(404, "Quotas not enabled", nil)
 	}
@@ -36,7 +36,7 @@ func UpdateOrgQuota(c *m.Context, cmd m.UpdateOrgQuotaCmd) Response {
 	return ApiSuccess("Organization quota updated")
 }
 
-func GetUserQuotas(c *m.Context) Response {
+func GetUserQuotas(c *m.ReqContext) Response {
 	if !setting.Quota.Enabled {
 		return ApiError(404, "Quotas not enabled", nil)
 	}
@@ -49,7 +49,7 @@ func GetUserQuotas(c *m.Context) Response {
 	return Json(200, query.Result)
 }
 
-func UpdateUserQuota(c *m.Context, cmd m.UpdateUserQuotaCmd) Response {
+func UpdateUserQuota(c *m.ReqContext, cmd m.UpdateUserQuotaCmd) Response {
 	if !setting.Quota.Enabled {
 		return ApiError(404, "Quotas not enabled", nil)
 	}

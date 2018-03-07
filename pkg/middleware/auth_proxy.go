@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func initContextWithAuthProxy(ctx *m.Context, orgId int64) bool {
+func initContextWithAuthProxy(ctx *m.ReqContext, orgId int64) bool {
 	if !setting.AuthProxyEnabled {
 		return false
 	}
@@ -95,7 +95,7 @@ func initContextWithAuthProxy(ctx *m.Context, orgId int64) bool {
 	return true
 }
 
-var syncGrafanaUserWithLdapUser = func(ctx *m.Context, query *m.GetSignedInUserQuery) error {
+var syncGrafanaUserWithLdapUser = func(ctx *m.ReqContext, query *m.GetSignedInUserQuery) error {
 	if setting.LdapEnabled {
 		expireEpoch := time.Now().Add(time.Duration(-setting.AuthProxyLdapSyncTtl) * time.Minute).Unix()
 
@@ -121,7 +121,7 @@ var syncGrafanaUserWithLdapUser = func(ctx *m.Context, query *m.GetSignedInUserQ
 	return nil
 }
 
-func checkAuthenticationProxy(ctx *m.Context, proxyHeaderValue string) error {
+func checkAuthenticationProxy(ctx *m.ReqContext, proxyHeaderValue string) error {
 	if len(strings.TrimSpace(setting.AuthProxyWhitelist)) > 0 {
 		proxies := strings.Split(setting.AuthProxyWhitelist, ",")
 		remoteAddrSplit := strings.Split(ctx.Req.RemoteAddr, ":")

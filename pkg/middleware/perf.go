@@ -9,6 +9,6 @@ import (
 )
 
 func MeasureRequestTime() macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *m.Context) {
+	return func(res http.ResponseWriter, req *http.Request, c *m.ReqContext) {
 	}
 }

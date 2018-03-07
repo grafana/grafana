@@ -17,7 +17,7 @@ import (
 
 func GetContextHandler() macaron.Handler {
 	return func(c *macaron.Context) {
-		ctx := &m.Context{
+		ctx := &m.ReqContext{
 			Context:        c,
 			SignedInUser:   &m.SignedInUser{},
 			Session:        session.GetSession(),
@@ -61,7 +61,7 @@ func GetContextHandler() macaron.Handler {
 	}
 }
 
-func initContextWithAnonymousUser(ctx *m.Context) bool {
+func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 	if !setting.AnonymousEnabled {
 		return false
 	}
@@ -81,7 +81,7 @@ func initContextWithAnonymousUser(ctx *m.Context) bool {
 	return true
 }
 
-func initContextWithUserSessionCookie(ctx *m.Context, orgId int64) bool {
+func initContextWithUserSessionCookie(ctx *m.ReqContext, orgId int64) bool {
 	// initialize session
 	if err := ctx.Session.Start(ctx.Context); err != nil {
 		ctx.Logger.Error("Failed to start session", "error", err)
@@ -104,7 +104,7 @@ func initContextWithUserSessionCookie(ctx *m.Context, orgId int64) bool {
 	return true
 }
 
-func initContextWithApiKey(ctx *m.Context) bool {
+func initContextWithApiKey(ctx *m.ReqContext) bool {
 	var keyString string
 	if keyString = getApiKey(ctx); keyString == "" {
 		return false
@@ -140,7 +140,7 @@ func initContextWithApiKey(ctx *m.Context) bool {
 	return true
 }
 
-func initContextWithBasicAuth(ctx *m.Context, orgId int64) bool {
+func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 
 	if !setting.BasicAuthEnabled {
 		return false
@@ -183,7 +183,7 @@ func initContextWithBasicAuth(ctx *m.Context, orgId int64) bool {
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {
-	return func(ctx *m.Context) {
+	return func(ctx *m.ReqContext) {
 		if ctx.IsApiRequest() && ctx.Req.Method == "GET" {
 			ctx.Resp.Header().Add("Cache-Control", "no-cache")
 			ctx.Resp.Header().Add("Pragma", "no-cache")

@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func AdminGetSettings(c *m.Context) {
+func AdminGetSettings(c *m.ReqContext) {
 	settings := make(map[string]interface{})
 
 	for _, section := range setting.Cfg.Sections() {
@@ -29,7 +29,7 @@ func AdminGetSettings(c *m.Context) {
 	c.JSON(200, settings)
 }
 
-func AdminGetStats(c *m.Context) {
+func AdminGetStats(c *m.ReqContext) {
 
 	statsQuery := m.GetAdminStatsQuery{}
 

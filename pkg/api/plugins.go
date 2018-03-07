@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func GetPluginList(c *m.Context) Response {
+func GetPluginList(c *m.ReqContext) Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
@@ -78,7 +78,7 @@ func GetPluginList(c *m.Context) Response {
 	return Json(200, result)
 }
 
-func GetPluginSettingById(c *m.Context) Response {
+func GetPluginSettingById(c *m.ReqContext) Response {
 	pluginId := c.Params(":pluginId")
 
 	if def, exists := plugins.Plugins[pluginId]; !exists {
@@ -115,7 +115,7 @@ func GetPluginSettingById(c *m.Context) Response {
 	}
 }
 
-func UpdatePluginSetting(c *m.Context, cmd m.UpdatePluginSettingCmd) Response {
+func UpdatePluginSetting(c *m.ReqContext, cmd m.UpdatePluginSettingCmd) Response {
 	pluginId := c.Params(":pluginId")
 
 	cmd.OrgId = c.OrgId
@@ -132,7 +132,7 @@ func UpdatePluginSetting(c *m.Context, cmd m.UpdatePluginSettingCmd) Response {
 	return ApiSuccess("Plugin settings updated")
 }
 
-func GetPluginDashboards(c *m.Context) Response {
+func GetPluginDashboards(c *m.ReqContext) Response {
 	pluginId := c.Params(":pluginId")
 
 	if list, err := plugins.GetPluginDashboards(c.OrgId, pluginId); err != nil {
@@ -146,7 +146,7 @@ func GetPluginDashboards(c *m.Context) Response {
 	}
 }
 
-func GetPluginMarkdown(c *m.Context) Response {
+func GetPluginMarkdown(c *m.ReqContext) Response {
 	pluginId := c.Params(":pluginId")
 	name := c.Params(":name")
 
@@ -163,7 +163,7 @@ func GetPluginMarkdown(c *m.Context) Response {
 	}
 }
 
-func ImportDashboard(c *m.Context, apiCmd dtos.ImportDashboardCommand) Response {
+func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Response {
 
 	cmd := plugins.ImportDashboardCommand{
 		OrgId:     c.OrgId,

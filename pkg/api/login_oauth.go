@@ -39,7 +39,7 @@ func GenStateString() string {
 	return base64.URLEncoding.EncodeToString(rnd)
 }
 
-func OAuthLogin(ctx *m.Context) {
+func OAuthLogin(ctx *m.ReqContext) {
 	if setting.OAuthService == nil {
 		ctx.Handle(404, "OAuth not enabled", nil)
 		return
@@ -209,7 +209,7 @@ func OAuthLogin(ctx *m.Context) {
 	ctx.Redirect(setting.AppSubUrl + "/")
 }
 
-func redirectWithError(ctx *m.Context, err error, v ...interface{}) {
+func redirectWithError(ctx *m.ReqContext, err error, v ...interface{}) {
 	ctx.Logger.Error(err.Error(), v...)
 	ctx.Session.Set("loginError", err.Error())
 	ctx.Redirect(setting.AppSubUrl + "/login")
