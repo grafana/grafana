@@ -158,8 +158,41 @@ describe('Graph Y axes aligner', function() {
       alignYLevel(yaxes, alignY);
       expect(yaxes).toMatchObject(expected);
     });
+  });
+
+  describe('on level not zero', () => {
+    it('Should shrink Y axis', () => {
+      alignY = 1;
+      yaxes = [{ min: 5, max: 10 }, { min: 2, max: 4 }];
+      expected = [{ min: 4, max: 10 }, { min: 2, max: 4 }];
+
+      alignYLevel(yaxes, alignY);
+      expect(yaxes).toMatchObject(expected);
+    });
 
     it('Should shrink Y axes', () => {
+      alignY = 2;
+      yaxes = [{ min: -3, max: 1 }, { min: 5, max: 10 }];
+      expected = [{ min: -3, max: 7 }, { min: -6, max: 10 }];
+
+      alignYLevel(yaxes, alignY);
+      expect(yaxes).toMatchObject(expected);
+    });
+
+    it('Should shrink Y axes', () => {
+      alignY = -1;
+      yaxes = [{ min: -5, max: 5 }, { min: -2, max: 3 }];
+      expected = [{ min: -5, max: 15 }, { min: -2, max: 3 }];
+
+      alignYLevel(yaxes, alignY);
+      expect(yaxes).toMatchObject(expected);
+    });
+
+    it('Should shrink Y axes', () => {
+      alignY = -2;
+      yaxes = [{ min: -2, max: 3 }, { min: 5, max: 10 }];
+      expected = [{ min: -2, max: 3 }, { min: -2, max: 10 }];
+
       alignYLevel(yaxes, alignY);
       expect(yaxes).toMatchObject(expected);
     });
