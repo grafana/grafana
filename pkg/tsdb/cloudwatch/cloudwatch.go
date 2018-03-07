@@ -293,10 +293,7 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		alias = "{{metric}}_{{stat}}"
 	}
 
-	highResolution, err := model.Get("highResolution").Bool()
-	if err != nil {
-		return nil, err
-	}
+	highResolution := model.Get("highResolution").MustBool(false)
 
 	return &CloudWatchQuery{
 		Region:             region,
