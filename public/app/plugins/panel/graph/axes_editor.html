@@ -33,7 +33,7 @@
 
 			<div class="gf-form" ng-show="$index === 1">
 				<label class="gf-form-label width-6">Y-Align</label>
-				<input type="text" class="gf-form-input width-5" placeholder="none" empty-to-null ng-model="yaxis.align" ng-change="ctrl.render()" ng-model-onblur>
+				<input type="text" class="gf-form-input width-5" placeholder="none" empty-to-null bs-tooltip="'Align values for two Y-axes'" ng-model="yaxis.align" ng-change="ctrl.render()" ng-model-onblur>
 			</div>
 
 		<div ng-if="yaxis.show">
