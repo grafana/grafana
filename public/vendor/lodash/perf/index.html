@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>lodash Performance Suite</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      #FirebugUI {
+        top: 2.5em;
+      }
+      #perf-toolbar {
+        background-color: #EEE;
+        color: #5E740B;
+        font-family: "Helvetica Neue Light", "HelveticaNeue-Light", "Helvetica Neue", Calibri, Helvetica, Arial, sans-serif;
+        font-size: small;
+        padding: 0.5em 1em 0.5em 1em;
+        overflow: hidden;
+      }
+      #perf-toolbar label {
+        display: inline-block;
+        margin-right: 0.5em;
+      }
+      #perf-toolbar span {
+        display: inline-block;
+        float: right;
+        line-height: 2.1em;
+        margin-left: 1em;
+        margin-top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="perf-toolbar"></div>
+    <script src="../lodash.js"></script>
+    <script src="../node_modules/platform/platform.js"></script>
+    <script src="../node_modules/benchmark/benchmark.js"></script>
+    <script src="../vendor/firebug-lite/src/firebug-lite-debug.js"></script>
+    <script src="./asset/perf-ui.js"></script>
+    <script>
+      document.write('<script src="' + ui.buildPath + '"><\/script>');
+    </script>
+    <script>
+      var lodash = _.noConflict();
+    </script>
+    <script>
+      document.write('<script src="' + ui.otherPath + '"><\/script>');
+    </script>
+    <script src="perf.js"></script>
+    <script>
+      (function() {
+        var measured,
+            perfNow,
+            begin = new Date;
+
+        function init() {
+          var fbUI = document.getElementById('FirebugUI'),
+              fbDoc = fbUI && (fbDoc = fbUI.contentWindow || fbUI.contentDocument).document || fbDoc,
+              fbCommandLine = fbDoc && fbDoc.getElementById('fbCommandLine');
+
+          if (!fbCommandLine) {
+            return setTimeout(init, 15);
+          }
+          fbUI.style.height = (
+            Math.max(document.documentElement.clientHeight, document.body.clientHeight) -
+            document.getElementById('perf-toolbar').clientHeight
+          ) + 'px';
+
+          fbDoc.body.style.height = fbDoc.documentElement.style.height = '100%';
+          setTimeout(run, 15);
+        }
+
+        window.onload = init;
+      }());
+    </script>
+  </body>
+</html>

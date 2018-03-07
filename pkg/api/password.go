@@ -12,7 +12,8 @@ func SendResetPasswordEmail(c *middleware.Context, form dtos.SendResetPasswordEm
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
-		return ApiError(404, "User does not exist", err)
+		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
+		return ApiError(200, "Email sent", err)
 	}
 
 	emailCmd := m.SendResetPasswordEmailCommand{User: userQuery.Result}

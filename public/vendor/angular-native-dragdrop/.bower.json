@@ -1,6 +1,6 @@
 {
   "name": "angular-native-dragdrop",
-  "version": "1.1.1",
+  "version": "1.2.2",
   "homepage": "http://angular-dragdrop.github.io/angular-dragdrop",
   "authors": [
     "ganarajpr"
@@ -24,13 +24,13 @@
     "test",
     "tests"
   ],
-  "_release": "1.1.1",
+  "_release": "1.2.2",
   "_resolution": {
     "type": "version",
-    "tag": "v1.1.1",
-    "commit": "4ff89cb0aa61070508e935729fb816fd46a58f60"
+    "tag": "1.2.2",
+    "commit": "e630636fdc39fef815c1c534340aa16caf76a04c"
   },
-  "_source": "git://github.com/angular-dragdrop/angular-dragdrop.git",
-  "_target": "~1.1.1",
+  "_source": "https://github.com/angular-dragdrop/angular-dragdrop.git",
+  "_target": "1.2.2",
   "_originalSource": "angular-native-dragdrop"
 }

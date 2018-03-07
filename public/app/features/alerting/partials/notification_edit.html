@@ -1,0 +1,54 @@
+<navbar model="ctrl.navModel"></navbar>
+
+<div class="page-container">
+  <div class="page-header">
+    <h1 ng-show="ctrl.model.id">Edit Channel</h1>
+    <h1 ng-show="!ctrl.model.id">New Channel</h1>
+  </div>
+
+  <form name="ctrl.theForm" ng-if="ctrl.notifiers">
+    <div class="gf-form-group">
+      <div class="gf-form">
+        <span class="gf-form-label width-12">Name</span>
+        <input type="text" required class="gf-form-input max-width-15" ng-model="ctrl.model.name" required></input>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-12">Type</span>
+        <div class="gf-form-select-wrapper width-15">
+          <select class="gf-form-input" ng-model="ctrl.model.type" ng-options="t.type as t.name for t in ctrl.notifiers" ng-change="ctrl.typeChanged(notification, $index)">
+          </select>
+        </div>
+      </div>
+      <gf-form-switch
+          class="gf-form"
+          label="Send on all alerts"
+          label-class="width-12"
+          checked="ctrl.model.isDefault"
+          tooltip="Use this notification for all alerts">
+      </gf-form-switch>
+      <gf-form-switch
+          class="gf-form"
+          label="Include image"
+          label-class="width-12"
+          checked="ctrl.model.settings.uploadImage"
+          tooltip="Captures an image and include it in the notification">
+      </gf-form-switch>
+    </div>
+
+    <div class="gf-form-group" ng-include src="ctrl.notifierTemplateId">
+    </div>
+
+    <div class="gf-form-group">
+      <div class="gf-form-inline">
+        <div class="gf-form width-6">
+          <button type="submit" ng-click="ctrl.save()" class="btn btn-success">Save</button>
+        </div>
+        <div class="gf-form width-20">
+          <div class="gf-form">
+            <button type="submit" ng-click="ctrl.testNotification()" class="btn btn-secondary">Send Test</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

@@ -6,9 +6,10 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AdminListOrgsCtrl', function($scope, backendSrv) {
+  module.controller('AdminListOrgsCtrl', function($scope, backendSrv, navModelSrv) {
 
     $scope.init = function() {
+      $scope.navModel = navModelSrv.getAdminNav();
       $scope.getOrgs();
     };
 
@@ -20,8 +21,9 @@ function (angular) {
 
     $scope.deleteOrg = function(org) {
       $scope.appEvent('confirm-modal', {
-        title: 'Do you want to delete organization ' + org.name + '?',
-        text: 'All dashboards for this organization will be removed!',
+        title: 'Delete',
+        text: 'Do you want to delete organization ' + org.name + '?',
+        text2: 'All dashboards for this organization will be removed!',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {

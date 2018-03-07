@@ -1,0 +1,11 @@
+
+.query-part {
+  background-color: $input-bg !important;
+
+  &.show-function-controls {
+    padding-top: 5px;
+    min-width: 100px;
+    text-align: center;
+  }
+}
+

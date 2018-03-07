@@ -1,0 +1,48 @@
+<div class="gf-form-group">
+
+    <h3 class="page-heading">NetCrunch Server settings</h3>
+
+    <div class="gf-form-inline">
+        <div class="gf-form">
+            <span class="gf-form-label width-12">
+                Host name / IP Address
+            </span>
+            <input class="gf-form-input width-18" type="text"
+                ng-model='ctrl.current.jsonData.simpleUrl'
+                placeholder="192.168.1.1"
+                ng-pattern="/^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3})$|^((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]))([:]?\d{1,5})?)$/"
+                ng-change="ctrl.serverAddressChange()"
+                required>
+            </input>
+        </div>
+        <gf-form-switch class="gf-form"
+            label="Use SSL"
+            checked="ctrl.current.jsonData.isSSL"
+            switch-class="width-6"
+            ng-click="ctrl.isSSLClick()">
+        </gf-form-switch>
+    </div>
+
+    <div class="gf-form-inline">
+        <div class="gf-form">
+            <span class="gf-form-label width-8">
+              Username
+            </span>
+            <input class="gf-form-input width-12" type="text"
+                ng-model='ctrl.current.jsonData.user'
+                placeholder="username"
+                required>
+            </input>
+        </div>
+        <div class="gf-form">
+            <span class="gf-form-label width-8">
+              Password
+            </span>
+            <input class="gf-form-input width-12" type="password"
+                ng-model='ctrl.current.jsonData.password'
+                placeholder="password"
+                required>
+            </input>
+        </div>
+    </div>
+</div>

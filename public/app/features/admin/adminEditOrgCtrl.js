@@ -6,9 +6,11 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AdminEditOrgCtrl', function($scope, $routeParams, backendSrv, $location) {
+  module.controller('AdminEditOrgCtrl', function($scope, $routeParams, backendSrv, $location, navModelSrv) {
 
     $scope.init = function() {
+      $scope.navModel = navModelSrv.getAdminNav();
+
       if ($routeParams.id) {
         $scope.getOrg($routeParams.id);
         $scope.getOrgUsers($routeParams.id);

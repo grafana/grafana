@@ -1,8 +1,5 @@
-<div class="container-fluid main">
-	<div class="row-fluid">
-		<div class="span12">
-			<div class="panel nospace" ng-if="panel" style="width: 100%">
-				<panel-loader type="panel.type" ng-cloak></panel-loader>
-			</div>
-		</div>
+<div class="panel panel--solo" ng-if="panel" style="width: 100%">
+	<plugin-component type="panel">
+	</plugin-component>
 </div>
+<div class="clearfix"></div>

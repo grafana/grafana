@@ -1,18 +1,18 @@
-define([
-  'angular',
+define(['angular',
   'lodash',
-  'require',
-  'config',
+  'jquery',
+  'moment',
+  'app/core/config',
 ],
-function (angular, _, require, config) {
+function (angular, _, $, moment, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv, linkSrv) {
+  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
 
     $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
-    $scope.editor = { index: 0 };
+    $scope.editor = { index: $scope.tabIndex || 0};
 
     $scope.init = function() {
       $scope.modeSharePanel = $scope.panel ? true : false;
@@ -23,11 +23,15 @@ function (angular, _, require, config) {
         $scope.modalTitle = 'Share Panel';
         $scope.tabs.push({title: 'Embed', src: 'shareEmbed.html'});
       } else {
-        $scope.modalTitle = 'Share Dashboard';
+        $scope.modalTitle = 'Share';
       }
 
-      if (!$scope.dashboardMeta.isSnapshot) {
-        $scope.tabs.push({title: 'Snapshot sharing', src: 'shareSnapshot.html'});
+      if (!$scope.dashboard.meta.isSnapshot) {
+        $scope.tabs.push({title: 'Snapshot', src: 'shareSnapshot.html'});
+      }
+
+      if (!$scope.dashboard.meta.isSnapshot && !$scope.modeSharePanel) {
+        $scope.tabs.push({title: 'Export', src: 'shareExport.html'});
       }
 
       $scope.buildUrl();
@@ -44,8 +48,9 @@ function (angular, _, require, config) {
       var params = angular.copy($location.search());
 
       var range = timeSrv.timeRange();
-      params.from = range.from.getTime();
-      params.to = range.to.getTime();
+      params.from = range.from.valueOf();
+      params.to = range.to.valueOf();
+      params.orgId = config.bootData.user.orgId;
 
       if ($scope.options.includeTemplateVars) {
         templateSrv.fillVariableValuesForUrl(params);
@@ -70,27 +75,23 @@ function (angular, _, require, config) {
 
       $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
-      var soloUrl = $scope.shareUrl;
-      soloUrl = soloUrl.replace('/dashboard/', '/dashboard-solo/');
+      var soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
+      delete params.fullscreen;
+      delete params.edit;
+      soloUrl = linkSrv.addParamsToUrl(soloUrl, params);
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
-      $scope.imageUrl = soloUrl.replace('/dashboard', '/render/dashboard');
+      $scope.imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
+      $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format("Z"));
     };
 
-  });
-
-  module.directive('clipboardButton',function() {
-    return function(scope, elem) {
-      require(['ZeroClipboard'], function(ZeroClipboard) {
-        ZeroClipboard.config({
-          swfPath: config.appSubUrl + '/public/vendor/ZeroClipboard.swf'
-        });
-        new ZeroClipboard(elem[0]);
-      });
+    $scope.getShareUrl = function() {
+      return $scope.shareUrl;
     };
+
   });
 
 });

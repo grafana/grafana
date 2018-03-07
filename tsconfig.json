@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "sourceMap": true,
+        "declaration": true,
+        "outDir": "public_gen",
+        "noImplicitAny": false,
+        "target": "es5",
+        "rootDir": "public/",
+        "module": "system",
+        "noEmitOnError": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "noImplicitReturns":false,
+        "noImplicitThis":false,
+        "noImplicitUseStrict":false,
+        "noUnusedLocals":false,
+        "moduleResolution": "classic"
+    },
+    "include": [
+        "public/app/**/*.ts",
+        "public/test/**/*.ts"
+    ],
+    "exclude": [
+        "public/vendor/**/*",
+        "public/**/*.d.ts"
+    ]
+
+}

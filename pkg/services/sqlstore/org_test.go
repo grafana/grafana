@@ -63,8 +63,8 @@ func TestAccountDataAccess(t *testing.T) {
 				err := SearchUsers(&query)
 
 				So(err, ShouldBeNil)
-				So(query.Result[0].Email, ShouldEqual, "ac1@test.com")
-				So(query.Result[1].Email, ShouldEqual, "ac2@test.com")
+				So(query.Result.Users[0].Email, ShouldEqual, "ac1@test.com")
+				So(query.Result.Users[1].Email, ShouldEqual, "ac2@test.com")
 			})
 
 			Convey("Given an added org user", func() {

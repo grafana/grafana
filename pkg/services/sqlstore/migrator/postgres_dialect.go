@@ -3,6 +3,7 @@ package migrator
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type Postgres struct {
@@ -34,6 +35,21 @@ func (b *Postgres) LikeStr() string {
 
 func (db *Postgres) AutoIncrStr() string {
 	return ""
+}
+
+func (db *Postgres) BooleanStr(value bool) string {
+	return strconv.FormatBool(value)
+}
+
+func (b *Postgres) Default(col *Column) string {
+	if col.Type == DB_Bool {
+		if col.Default == "0" {
+			return "FALSE"
+		} else {
+			return "TRUE"
+		}
+	}
+	return col.Default
 }
 
 func (db *Postgres) SqlType(c *Column) string {
@@ -96,4 +112,14 @@ func (db *Postgres) DropIndexSql(tableName string, index *Index) string {
 	quote := db.Quote
 	idxName := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
+}
+
+func (db *Postgres) UpdateTableSql(tableName string, columns []*Column) string {
+	var statements = []string{}
+
+	for _, col := range columns {
+		statements = append(statements, "ALTER "+db.QuoteStr()+col.Name+db.QuoteStr()+" TYPE "+db.SqlType(col))
+	}
+
+	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }

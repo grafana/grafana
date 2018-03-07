@@ -1,7 +1,11 @@
-page_title: Kayboard Shortcuts
-page_description: Kayboard Shortcuts for Grafana
-page_keywords: grafana, export, import, documentation
----
++++
+title = "Keyboard shortcuts"
+keywords = ["grafana", "dashboard", "documentation", "shortcuts"]
+type = "docs"
+[menu.docs]
+parent = "dashboard_features"
+weight = 8
++++
 
 # Keyboard Shortcuts
 
@@ -11,22 +15,20 @@ No mouse? No problem. Grafana has extensive keyboard shortcuts to allow you to n
 
 Press `Shift`+`?` to open the keyboard shortcut dialog from anywhere within the dashboard views.
 
-<img class="no-shadow" src="/img/v2/Grafana-Keyboard-Shortcuts.gif" style="width:80%;">
+<img class="no-shadow" src="/img/docs/v2/Grafana-Keyboard-Shortcuts.gif" style="width:80%;">
 
 
 |Shortcut|Action|
 |---|---|
 |`Esc`|Exit fullscreen edit/view mode, close search or any editor view|
-|`CTRL`+`F`|Open dashboard search view (also contains import/playlist controls)|
+|`F`|Open dashboard search view (also contains import/playlist controls)|
+|`R`|Refresh (Fetches new data and rerenders panels)|
 |`CTRL`+`S`|Save dashboard|
 |`CTRL`+`H`|Hide row controls|
 |`CTRL`+`Z`|Zoom out|
-|`CTRL`+`R`|Refresh (Fetches new data and rerenders panels)|
 |`CTRL`+`O`|Enable/Disable shared graph crosshair|
 
 
+**Note**: Grafana keyboard shortcuts are the same across operating system.
 
-**Note**: Grafana keyboard shortcuts are the same across operating system. For example, `CTRL`+`F` will open the dashboard picker on a Mac as well, **not** `⌘`+`F`
-
-
-Have a suggestion for a new keyboard shortcut? Let us know. 
+Have a suggestion for a new keyboard shortcut? Let us know.

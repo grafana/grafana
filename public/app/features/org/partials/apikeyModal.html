@@ -1,40 +1,33 @@
-<div class="modal-body gf-box gf-box-no-margin">
-	<div class="gf-box-header">
-		<div class="gf-box-title">
+<div class="modal-body">
+	<div class="modal-header">
+		<h2 class="modal-header-title">
 			<i class="fa fa-key"></i>
-			API Key Created
-		</div>
+			<span class="p-l-1">API Key Created</span>
+		</h2>
 
-		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<a class="modal-header-close" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
-		</button>
+		</a>
 	</div>
 
-	<div class="gf-box-body" style="min-height: 0px;">
+	<div class="modal-content">
 
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<strong>Key</strong>
-				</li>
-				<li class="tight-form-item last">
-					{{key}}
-				</li>
-			</ul>
-			<div class="clearfix"></div>
+		<div class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label">Key</span>
+				<span class="gf-form-label">{{key}}</span>
+			</div>
 		</div>
-		<br>
-		<br>
 
-		<div class="grafana-info-box" style="text-align: left">
+		<div class="grafana-info-box" style="border: 0;">
 			You will only be able to view this key here once! It is not stored in this form. So be sure to copy it now.
 			<br>
 			<br>
 			You can authenticate request using the Authorization HTTP header, example:
 			<br>
 			<br>
-			<pre class="small" style="overflow: hidden">
-curl -H "Authorization: Bearer your_key_above" http://your.grafana.com/api/dashboards/db/mydash
+			<pre class="small">
+curl -H "Authorization: Bearer {{key}}" {{rootPath}}/api/dashboards/home
 			</pre>
 		</div>
 

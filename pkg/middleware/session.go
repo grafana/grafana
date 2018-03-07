@@ -1,28 +1,39 @@
 package middleware
 
 import (
+	"math/rand"
 	"time"
 
-	"github.com/Unknwon/macaron"
-	"github.com/macaron-contrib/session"
-	_ "github.com/macaron-contrib/session/mysql"
-	_ "github.com/macaron-contrib/session/postgres"
-	_ "github.com/macaron-contrib/session/redis"
+	"github.com/go-macaron/session"
+	_ "github.com/go-macaron/session/memcache"
+	_ "github.com/go-macaron/session/mysql"
+	_ "github.com/go-macaron/session/postgres"
+	_ "github.com/go-macaron/session/redis"
+	"github.com/grafana/grafana/pkg/log"
+	"gopkg.in/macaron.v1"
 )
 
 const (
-	SESS_KEY_USERID = "uid"
-	SESS_KEY_APIKEY = "apikey_id" // used fror render requests with api keys
+	SESS_KEY_USERID       = "uid"
+	SESS_KEY_OAUTH_STATE  = "state"
+	SESS_KEY_APIKEY       = "apikey_id" // used for render requests with api keys
+	SESS_KEY_LASTLDAPSYNC = "last_ldap_sync"
 )
 
 var sessionManager *session.Manager
 var sessionOptions *session.Options
 var startSessionGC func()
+var getSessionCount func() int
+var sessionLogger = log.New("session")
 
 func init() {
 	startSessionGC = func() {
 		sessionManager.GC()
+		sessionLogger.Debug("Session GC")
 		time.AfterFunc(time.Duration(sessionOptions.Gclifetime)*time.Second, startSessionGC)
+	}
+	getSessionCount = func() int {
+		return sessionManager.Count()
 	}
 }
 
@@ -60,7 +71,9 @@ func Sessioner(options *session.Options) macaron.Handler {
 		panic(err)
 	}
 
-	go startSessionGC()
+	// start GC threads after some random seconds
+	rndSeconds := 10 + rand.Int63n(180)
+	time.AfterFunc(time.Duration(rndSeconds)*time.Second, startSessionGC)
 
 	return func(ctx *Context) {
 		ctx.Next()
@@ -80,6 +93,8 @@ type SessionStore interface {
 	Set(interface{}, interface{}) error
 	// Get gets value by given key in session.
 	Get(interface{}) interface{}
+	// Delete deletes a key from session.
+	Delete(interface{}) interface{}
 	// ID returns current session ID.
 	ID() string
 	// Release releases session resource and save data to provider.
@@ -88,6 +103,8 @@ type SessionStore interface {
 	Destory(*Context) error
 	// init
 	Start(*Context) error
+	// RegenerateId regenerates the session id
+	RegenerateId(*Context) error
 }
 
 type SessionWrapper struct {
@@ -101,6 +118,12 @@ func (s *SessionWrapper) Start(c *Context) error {
 	return err
 }
 
+func (s *SessionWrapper) RegenerateId(c *Context) error {
+	var err error
+	s.session, err = s.manager.RegenerateId(c.Context)
+	return err
+}
+
 func (s *SessionWrapper) Set(k interface{}, v interface{}) error {
 	if s.session != nil {
 		return s.session.Set(k, v)
@@ -111,6 +134,13 @@ func (s *SessionWrapper) Set(k interface{}, v interface{}) error {
 func (s *SessionWrapper) Get(k interface{}) interface{} {
 	if s.session != nil {
 		return s.session.Get(k)
+	}
+	return nil
+}
+
+func (s *SessionWrapper) Delete(k interface{}) interface{} {
+	if s.session != nil {
+		return s.session.Delete(k)
 	}
 	return nil
 }

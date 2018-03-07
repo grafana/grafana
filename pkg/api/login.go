@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/netcrunch"
 )
 
 const (
@@ -19,18 +19,29 @@ const (
 )
 
 func LoginView(c *middleware.Context) {
-	if err := setIndexViewData(c); err != nil {
+	viewData, err := setIndexViewData(c)
+	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
 	}
 
-	settings := c.Data["Settings"].(map[string]interface{})
-	settings["googleAuthEnabled"] = setting.OAuthService.Google
-	settings["githubAuthEnabled"] = setting.OAuthService.GitHub
-	settings["disableUserSignUp"] = !setting.AllowUserSignUp
+	enabledOAuths := make(map[string]interface{})
+	for key, oauth := range setting.OAuthService.OAuthInfos {
+		enabledOAuths[key] = map[string]string{"name": oauth.Name}
+	}
+
+	viewData.Settings["oauth"] = enabledOAuths
+	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
+	viewData.Settings["loginHint"] = setting.LoginHint
+	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
+
+	if loginError, ok := c.Session.Get("loginError").(string); ok {
+		c.Session.Delete("loginError")
+		viewData.Settings["loginError"] = loginError
+	}
 
 	if !tryLoginUsingRememberCookie(c) {
-		c.HTML(200, VIEW_INDEX)
+		c.HTML(200, VIEW_INDEX, viewData)
 		return
 	}
 
@@ -68,8 +79,7 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 	user := userQuery.Result
 
 	// validate remember me cookie
-	if val, _ := c.GetSuperSecureCookie(
-		util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName); val != user.Login {
+	if val, _ := c.GetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName); val != user.Login {
 		return false
 	}
 
@@ -80,7 +90,13 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 
 func LoginApiPing(c *middleware.Context) {
 	if !tryLoginUsingRememberCookie(c) {
-		c.JsonApiErr(401, "Unauthorized", nil)
+  	    	initialized, err := netcrunch.CheckInitializationSuccess()
+
+	    	if ((err == nil) && (!initialized)) {
+	      		c.JsonApiErr(401, "Default credentials for fresh installation: User: admin Password: admin", nil)
+	    	} else {
+	      		c.JsonApiErr(401, "Unauthorized", nil)
+	    	}
 		return
 	}
 
@@ -88,6 +104,10 @@ func LoginApiPing(c *middleware.Context) {
 }
 
 func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
+	if setting.DisableLoginForm {
+		return ApiError(401, "Login is disabled", nil)
+	}
+
 	authQuery := login.LoginUserQuery{
 		Username: cmd.User,
 		Password: cmd.Password,
@@ -125,9 +145,12 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 	}
 
 	days := 86400 * setting.LogInRememberDays
-	c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-	c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	if days > 0 {
+		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
+		c.SetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	}
 
+	c.Session.RegenerateId(c)
 	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }
 

@@ -1,0 +1,50 @@
+<div class="query-editor-rows gf-form-group">
+  <div ng-repeat="target in ctrl.panel.targets" ng-class="{'gf-form-disabled': target.hide}">
+    <rebuild-on-change property="ctrl.panel.datasource || target.datasource" show-null="true">
+      <plugin-component type="query-ctrl">
+      </plugin-component>
+    </rebuild-on-change>
+	</div>
+
+	<div class="gf-form-query">
+		<div class="gf-form gf-form-query-letter-cell">
+			<label class="gf-form-label">
+				<span class="gf-form-query-letter-cell-carret">
+					<i class="fa fa-caret-down"></i>
+				</span>
+				<span class="gf-form-query-letter-cell-letter">{{ctrl.panelCtrl.nextRefId}}</span>
+			</label>
+      <button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.current.meta.mixed">
+        Add Query
+      </button>
+
+      <div class="dropdown" ng-if="ctrl.current.meta.mixed">
+        <gf-form-dropdown model="ctrl.addQueryDropdown"
+                          get-options="ctrl.getOptions(false)"
+                          on-change="ctrl.addMixedQuery($option)">
+        </gf-form-dropdown>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- <query&#45;troubleshooter panel&#45;ctrl="ctrl.panelCtrl"></query&#45;troubleshooter> -->
+
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label">Panel Data Source</label>
+      <gf-form-dropdown model="ctrl.panelDsValue"
+                        lookup-text="true"
+                        get-options="ctrl.getOptions(true)"
+                        on-change="ctrl.datasourceChanged($option)">
+      </gf-form-dropdown>
+    </div>
+  </div>
+</div>
+
+<rebuild-on-change property="ctrl.panel.datasource" show-null="true">
+  <plugin-component type="query-options-ctrl">
+  </plugin-component>
+</rebuild-on-change>
+</div>

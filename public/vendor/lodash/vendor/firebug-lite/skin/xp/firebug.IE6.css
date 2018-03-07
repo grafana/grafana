@@ -1,0 +1,20 @@
+/************************************************************************************************/
+#fbToolbarSearch {
+    background-image: url(search.gif) !important;
+}
+/************************************************************************************************/
+.fbErrors {
+    background-image: url(errorIcon.gif) !important;
+}
+/************************************************************************************************/
+.logRow-info {
+    background-image: url(infoIcon.gif) !important;
+}
+
+.logRow-warning {
+    background-image: url(warningIcon.gif) !important;
+}
+
+.logRow-error {
+    background-image: url(errorIcon.gif) !important;
+}

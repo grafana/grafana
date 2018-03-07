@@ -25,21 +25,23 @@ func (s HitList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s HitList) Less(i, j int) bool { return s[i].Title < s[j].Title }
 
 type Query struct {
-	Title     string
-	Tags      []string
-	OrgId     int64
-	UserId    int64
-	Limit     int
-	IsStarred bool
+	Title        string
+	Tags         []string
+	OrgId        int64
+	UserId       int64
+	Limit        int
+	IsStarred    bool
+	DashboardIds []int
 
 	Result HitList
 }
 
 type FindPersistedDashboardsQuery struct {
-	Title     string
-	OrgId     int64
-	UserId    int64
-	IsStarred bool
+	Title        string
+	OrgId        int64
+	UserId       int64
+	IsStarred    bool
+	DashboardIds []int
 
 	Result HitList
 }

@@ -1,0 +1,52 @@
+{
+  "name": "adremsoft-netcrunch-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "NetCrunch App for Grafana",
+  "scripts": {
+    "test": "echo \"Info: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adremsoft/grafana-netcrunch-plugin.git"
+  },
+  "author": "AdRem Software, Inc., New York, NY",
+  "license": "Apache License, Version 2.0",
+  "bugs": {
+    "url": "https://github.com/adremsoft/grafana-netcrunch-plugin/issues"
+  },
+  "dependencies": {
+    "angular": "1.5.8",
+    "moment": "2.17.0"
+  },
+  "devDependencies": {
+    "@types/systemjs": "^0.19.31",
+    "@types/angular": "^1.5.20",
+    "@types/moment": "^2.13.0",
+
+    "babel": "~6.5.1",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.5.0",
+    "babel-preset-es2015": "^6.5.0",
+    "babel-preset-babili": "^0.0.9",
+
+    "grunt": "~0.4.5",
+    "grunt-babel": "~6.0.0",
+    "grunt-contrib-copy": "~0.8.2",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-contrib-uglify": "~0.11.0",
+    "grunt-systemjs-builder": "^0.2.7",
+    "grunt-execute": "~0.2.2",
+    "grunt-contrib-clean": "~0.6.0",
+    "gruntify-eslint": "~3.1.0",
+    "load-grunt-tasks": "~3.2.0",
+
+    "eslint": "^3.11.1",
+    "eslint-loader": "^1.6.1",
+    "babel-eslint": "^7.1.1",
+    "eslint-plugin-jsx-a11y": "^2.2.3",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-react": "^6.7.1",
+    "eslint-config-airbnb": "^13.0.0"
+  },
+  "homepage": "https://github.com/adremsoft/grafana-netcrunch-plugin"
+}

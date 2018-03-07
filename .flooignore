@@ -1,0 +1,12 @@
+#*
+*.o
+*.pyc
+*.pyo
+*~
+extern/
+node_modules/
+tmp/
+data/
+vendor/
+public_gen/
+dist/

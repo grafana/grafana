@@ -1,0 +1,107 @@
+<div class="gf-form-inline" ng-class="{'gf-form-disabled': agg.hide}">
+	<div class="gf-form">
+		<label class="gf-form-label query-keyword width-7">
+			Metric
+			&nbsp;
+			<a ng-click="toggleShowMetric()" bs-tooltip="'Click to toggle show / hide metric'">
+				<i class="fa fa-eye" ng-hide="agg.hide"></i>
+				<i class="fa fa-eye-slash" ng-show="agg.hide"></i>
+			</a>
+		</label>
+	</div>
+
+	<div class="gf-form">
+		<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="width-10"></metric-segment-model>
+		<metric-segment-model ng-if="aggDef.requiresField" property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="width-12"></metric-segment-model>
+		<metric-segment-model ng-if="aggDef.isPipelineAgg" property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
+	</div>
+
+	<div class="gf-form gf-form--grow">
+		<label class="gf-form-label gf-form-label--grow">
+			<a ng-click="toggleOptions()" ng-if="settingsLinkText">
+				<i class="fa fa-caret-down" ng-show="showOptions"></i>
+				<i class="fa fa-caret-right" ng-hide="showOptions"></i>
+					{{settingsLinkText}}
+			</a>
+		</label>
+	</div>
+
+	<div class="gf-form">
+		<label class="gf-form-label" ng-if="isFirst">
+			<a class="pointer" ng-click="addMetricAgg()"><i class="fa fa-plus"></i></a>
+		</label>
+		<label class="gf-form-label" ng-if="!isSingle">
+			<a class="pointer" ng-click="removeMetricAgg()"><i class="fa fa-minus"></i></a>
+		</label>
+	</div>
+</div>
+
+<div class="gf-form-group" ng-if="showOptions">
+	<div class="gf-form offset-width-7" ng-if="agg.type === 'derivative'">
+		<label class="gf-form-label width-10">Unit</label>
+		<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.unit" ng-blur="onChangeInternal()" spellcheck='false'>
+	</div>
+
+  <div ng-if="agg.type === 'moving_avg'">
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Model</label>
+      <metric-segment-model property="agg.settings.model" options="movingAvgModelTypes" on-change="onChangeClearInternal()" custom="false" css-class="width-12"></metric-segment-model>
+    </div>
+
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Window</label>
+      <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.window" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Predict</label>
+      <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.predict" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+
+
+    <div class="gf-form offset-width-7" ng-repeat="setting in modelSettings">
+      <label class="gf-form-label width-10">{{setting.text}}</label>
+      <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.settings[setting.value]" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+
+    <gf-form-switch ng-if="agg.settings.model == 'holt_winters'" class="gf-form offset-width-7" label="Pad" label-class="width-10" checked="agg.settings.settings.pad" on-change="onChangeInternal()"></gf-form-switch>
+    <gf-form-switch ng-if="agg.settings.model.match('ewma|holt_winters|holt') !== null" class="gf-form offset-width-7" label="Minimize" label-class="width-10" checked="agg.settings.minimize" on-change="onChangeInternal()"></gf-form-switch>
+  </div>
+
+  <div class="gf-form offset-width-7" ng-if="agg.type === 'percentiles'">
+    <label class="gf-form-label width-10">Percentiles</label>
+    <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.percents" array-join ng-blur="onChange()"></input>
+  </div>
+  <div class="gf-form offset-width-7" ng-if="agg.type === 'raw_document'">
+    <label class="gf-form-label width-10">Size</label>
+    <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.size" ng-blur="onChange()"></input>
+  </div>
+
+
+  <div class="gf-form offset-width-7" ng-if="agg.type === 'cardinality'">
+    <label class="gf-form-label width-10">Precision threshold</label>
+    <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.precision_threshold" ng-blur="onChange()"></input>
+  </div>
+
+  <div ng-if="agg.type === 'extended_stats'">
+    <gf-form-switch ng-repeat="stat in extendedStats" class="gf-form offset-width-7" label="{{stat.text}}" label-class="width-10" checked="agg.meta[stat.value]" on-change="onChangeInternal()"></gf-form-switch>
+
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Sigma</label>
+      <input type="number" class="gf-form-input max-width-12" placeholder="3" ng-model="agg.settings.sigma" ng-blur="onChange()"></input>
+    </div>
+  </div>
+
+  <div class="gf-form offset-width-7" ng-if="aggDef.supportsInlineScript">
+    <label class="gf-form-label width-10">Script</label>
+    <input type="text" class="gf-form-input max-width-12" empty-to-null ng-model="agg.inlineScript" ng-blur="onChangeInternal()" spellcheck='false' placeholder="_value * 1">
+  </div>
+
+  <div class="gf-form offset-width-7" ng-if="aggDef.supportsMissing">
+		<label class="gf-form-label width-10">
+			Missing
+			<tip>The missing parameter defines how documents that are missing a value should be treated. By default they will be ignored but it is also possible to treat them as if they had a value</tip>
+		</label>
+		<input type="number" class="gf-form-input max-width-12" empty-to-null ng-model="agg.settings.missing" ng-blur="onChangeInternal()" spellcheck='false'>
+	</div>
+</div>

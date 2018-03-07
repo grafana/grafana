@@ -1,0 +1,127 @@
+package request
+
+import (
+	"net"
+	"os"
+	"syscall"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+)
+
+// Retryer is an interface to control retry logic for a given service.
+// The default implementation used by most services is the service.DefaultRetryer
+// structure, which contains basic retry logic using exponential backoff.
+type Retryer interface {
+	RetryRules(*Request) time.Duration
+	ShouldRetry(*Request) bool
+	MaxRetries() int
+}
+
+// WithRetryer sets a config Retryer value to the given Config returning it
+// for chaining.
+func WithRetryer(cfg *aws.Config, retryer Retryer) *aws.Config {
+	cfg.Retryer = retryer
+	return cfg
+}
+
+// retryableCodes is a collection of service response codes which are retry-able
+// without any further action.
+var retryableCodes = map[string]struct{}{
+	"RequestError":            {},
+	"RequestTimeout":          {},
+	ErrCodeResponseTimeout:    {},
+	"RequestTimeoutException": {}, // Glacier's flavor of RequestTimeout
+}
+
+var throttleCodes = map[string]struct{}{
+	"ProvisionedThroughputExceededException": {},
+	"Throttling":                             {},
+	"ThrottlingException":                    {},
+	"RequestLimitExceeded":                   {},
+	"RequestThrottled":                       {},
+	"LimitExceededException":                 {}, // Deleting 10+ DynamoDb tables at once
+	"TooManyRequestsException":               {}, // Lambda functions
+	"PriorRequestNotComplete":                {}, // Route53
+}
+
+// credsExpiredCodes is a collection of error codes which signify the credentials
+// need to be refreshed. Expired tokens require refreshing of credentials, and
+// resigning before the request can be retried.
+var credsExpiredCodes = map[string]struct{}{
+	"ExpiredToken":          {},
+	"ExpiredTokenException": {},
+	"RequestExpired":        {}, // EC2 Only
+}
+
+func isCodeThrottle(code string) bool {
+	_, ok := throttleCodes[code]
+	return ok
+}
+
+func isCodeRetryable(code string) bool {
+	if _, ok := retryableCodes[code]; ok {
+		return true
+	}
+
+	return isCodeExpiredCreds(code)
+}
+
+func isCodeExpiredCreds(code string) bool {
+	_, ok := credsExpiredCodes[code]
+	return ok
+}
+
+func isSerializationErrorRetryable(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if aerr, ok := err.(awserr.Error); ok {
+		return isCodeRetryable(aerr.Code())
+	}
+
+	if opErr, ok := err.(*net.OpError); ok {
+		if sysErr, ok := opErr.Err.(*os.SyscallError); ok {
+			return sysErr.Err == syscall.ECONNRESET
+		}
+	}
+
+	return false
+}
+
+// IsErrorRetryable returns whether the error is retryable, based on its Code.
+// Returns false if the request has no Error set.
+func (r *Request) IsErrorRetryable() bool {
+	if r.Error != nil {
+		if err, ok := r.Error.(awserr.Error); ok && err.Code() != ErrCodeSerialization {
+			return isCodeRetryable(err.Code())
+		} else if ok {
+			return isSerializationErrorRetryable(err.OrigErr())
+		}
+	}
+	return false
+}
+
+// IsErrorThrottle returns whether the error is to be throttled based on its code.
+// Returns false if the request has no Error set
+func (r *Request) IsErrorThrottle() bool {
+	if r.Error != nil {
+		if err, ok := r.Error.(awserr.Error); ok {
+			return isCodeThrottle(err.Code())
+		}
+	}
+	return false
+}
+
+// IsErrorExpired returns whether the error code is a credential expiry error.
+// Returns false if the request has no Error set.
+func (r *Request) IsErrorExpired() bool {
+	if r.Error != nil {
+		if err, ok := r.Error.(awserr.Error); ok {
+			return isCodeExpiredCreds(err.Code())
+		}
+	}
+	return false
+}

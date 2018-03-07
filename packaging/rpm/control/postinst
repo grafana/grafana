@@ -6,6 +6,7 @@ set -e
 
 startGrafana() {
   if [ -x /bin/systemctl ] ; then
+    /bin/systemctl daemon-reload
 		/bin/systemctl start grafana-server.service
 	elif [ -x /etc/init.d/grafana-server ] ; then
 		/etc/init.d/grafana-server start
@@ -37,6 +38,12 @@ if [ $1 -eq 1 ] ; then
     -c "grafana user" grafana
 	fi
 
+  # copy user config files
+  if [ ! -f $CONF_FILE ]; then
+    cp /usr/share/grafana/conf/sample.ini $CONF_FILE
+    cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
+  fi
+
  	# Set user permissions on /var/log/grafana, /var/lib/grafana
 	mkdir -p /var/log/grafana /var/lib/grafana
 	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
@@ -61,13 +68,6 @@ if [ $1 -eq 1 ] ; then
     echo " sudo service grafana-server start"
   fi
 elif [ $1 -ge 2 ] ; then
-  if [ -x /opt/grafana/ ]; then
-    echo "### Upgrading Notice ### "
-    echo "-- New grafana install home is /usr/share/grafana"
-    echo "-- Please move sqlite3 database to /var/lib/grafana/"
-    echo "-- Notice: service name && binary changed to grafana-server"
-  fi
-
   if [ "$RESTART_ON_UPGRADE" == "true" ]; then
     stopGrafana
     startGrafana

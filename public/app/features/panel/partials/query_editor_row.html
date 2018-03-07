@@ -1,0 +1,59 @@
+
+<div class="gf-form-query">
+	<div class="gf-form gf-form-query-letter-cell">
+    <label class="gf-form-label">
+      <a class="pointer" tabindex="1" ng-click="ctrl.toggleCollapse()">
+        <span  ng-class="{muted: !ctrl.canCollapse}" class="gf-form-query-letter-cell-carret">
+          <i class="fa fa-caret-down" ng-hide="ctrl.collapsed"></i>
+          <i class="fa fa-caret-right" ng-show="ctrl.collapsed"></i>
+        </span>
+        <span class="gf-form-query-letter-cell-letter">{{ctrl.target.refId}}</span>
+        <em class="gf-form-query-letter-cell-ds" ng-show="ctrl.target.datasource">({{ctrl.target.datasource}})</em>
+      </a>
+		</label>
+  </div>
+
+	<div class="gf-form-query-content gf-form-query-content--collapsed" ng-if="ctrl.collapsed">
+		<div class="gf-form">
+			<label class="gf-form-label pointer gf-form-label--grow" ng-click="ctrl.toggleCollapse()">
+				{{ctrl.collapsedText}}
+			</label>
+		</div>
+	</div>
+
+	<div ng-transclude class="gf-form-query-content" ng-if="!ctrl.collapsed">
+	</div>
+
+	<div class="gf-form">
+		<label class="gf-form-label dropdown">
+			<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+				<i class="fa fa-bars"></i>
+			</a>
+			<ul class="dropdown-menu pull-right" role="menu">
+				<li role="menuitem" ng-if="ctrl.hasTextEditMode">
+					<a tabindex="1" ng-click="ctrl.toggleEditorMode()">Toggle Edit Mode</a>
+				</li>
+				<li role="menuitem">
+					<a tabindex="1" ng-click="ctrl.duplicateQuery()">Duplicate</a>
+				</li>
+				<li role="menuitem">
+					<a tabindex="1" ng-click="ctrl.moveQuery(-1)">Move up</a>
+				</li>
+				<li role="menuitem">
+					<a tabindex="1" ng-click="ctrl.moveQuery(1)">Move down</a>
+				</li>
+			</ul>
+		</label>
+    <label class="gf-form-label">
+			<a ng-click="ctrl.toggleHideQuery()" role="menuitem">
+				<i class="fa fa-eye"></i>
+			</a>
+		</label>
+		<label class="gf-form-label">
+			<a class="pointer" tabindex="1" ng-click="ctrl.removeQuery(ctrl.target)">
+				<i class="fa fa-trash"></i>
+			</a>
+		</label>
+	</div>
+</div>
+

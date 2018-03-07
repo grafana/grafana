@@ -1,0 +1,96 @@
+<query-editor-row class="nc-query-editor-row" query-ctrl="ctrl" can-collapse="false">
+
+    <div class="gf-form-inline">
+        <div class="gf-form">
+            <label class="gf-form-label query-keyword width-6">Node</label>
+            <nc-spinner spinner-show-trigger="ctrl.processingNode"
+                        spinner-delay="350"
+                        spinner-on-change="ctrl.nodeSpinnerChanged(state)">
+            </nc-spinner>
+            <metric-segment segment="ctrl.nodeSegment"
+                            get-options="ctrl.getNodes()"
+                            nc-focus="ctrl.nodeFocus"
+                            nc-focus-child="1"
+                            on-change="ctrl.nodeChanged()"
+                            ng-if="!ctrl.nodeSpinner">
+            </metric-segment>
+        </div>
+
+        <div class="gf-form" ng-if="ctrl.nodeReady">
+            <label class="gf-form-label query-keyword width-6">Counter</label>
+            <nc-spinner spinner-show-trigger="ctrl.processingCounter"
+                        spinner-delay="350"
+                        spinner-on-change="ctrl.counterSpinnerChanged(state)">
+            </nc-spinner>
+            <div class="gf-form"
+                 nc-focus="ctrl.counterFocus"
+                 nc-focus-child="1"
+                 ng-model="ctrl.counterName"
+                 dropdown-typeahead2="ctrl.counters"
+                 dropdown-typeahead-on-select="ctrl.counterChanged($subItem)"
+                 link-text={{ctrl.defaultCounterName}}
+                 ng-if="!ctrl.counterSpinner && !ctrl.hideCounters">
+            </div>
+        </div>
+
+        <div class="gf-form gf-form--grow">
+            <div class="gf-form-label gf-form-label--grow"></div>
+        </div>
+
+        <div class="gf-form"
+             ng-if="ctrl.counterDataComplete"
+             ng-click="ctrl.toggleShowOptions()">
+            <label class="gf-form-label">
+                <i class="fa fa-level-down" ng-if="!ctrl.showOptions"></i>
+                <i class="fa fa-level-up" ng-if="ctrl.showOptions"></i>
+            </label>
+        </div>
+    </div>
+
+    <div class="gf-form-inline" ng-if="ctrl.counterDataComplete && ctrl.showOptions">
+        <div class="gf-form">
+            <label class="gf-form-label query-keyword width-6">Alias</label>
+            <input type="text" class="gf-form-input width-20"
+                   ng-model="ctrl.alias"
+                   ng-blur="ctrl.targetChanged()"
+                   placeholder="Metric alias"
+                   spellcheck='false'>
+        </div>
+
+        <div class="gf-form" ng-if="!ctrl.rawData">
+            <label class="gf-form-label query-keyword width-6 gf-form-label--grow pointer">
+                Series
+            </label>
+
+            <gf-form-switch class="gf-form-inline"
+                            label="Min"
+                            label-class="width-4"
+                            switch-class="width-6"
+                            checked="ctrl.series.min"
+                            ng-click="ctrl.targetChanged()">
+            </gf-form-switch>
+
+            <gf-form-switch class="gf-form-inline"
+                            label="Avg"
+                            label-class="width-4"
+                            switch-class="width-6"
+                            checked="ctrl.series.avg"
+                            ng-click="ctrl.targetChanged()">
+            </gf-form-switch>
+
+            <gf-form-switch class="gf-form-inline"
+                            label="Max"
+                            label-class="width-4"
+                            switch-class="width-6"
+                            checked="ctrl.series.max"
+                            ng-click="ctrl.targetChanged()">
+            </gf-form-switch>
+
+        </div>
+
+        <div class="gf-form gf-form--grow">
+            <div class="gf-form-label gf-form-label--grow"></div>
+        </div>
+    </div>
+
+</query-editor-row>

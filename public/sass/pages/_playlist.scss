@@ -1,0 +1,127 @@
+.playlist-description {
+  width: 555px;
+  margin-bottom: 20px;
+}
+
+.playlist-search-container {
+  z-index: 1000;
+  position: relative;
+  width: 700px;
+  box-shadow: 0px 0px 55px 0px black;
+  background-color: $panel-bg;
+
+  .label-tag {
+    margin-left: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+}
+
+.playlist-search-switches {
+  position: absolute;
+  top: 8px;
+  right: 11px;
+}
+
+.playlist-search-containerwrapper {
+  margin-bottom: 15px;
+}
+
+
+.playlist-search-field-wrapper {
+  input {
+    width: 100%;
+    padding: 8px 8px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  button {
+    margin: 0 4px 0 0;
+  }
+  > span {
+    display: block;
+    overflow: hidden;
+  }
+}
+
+.playlist-search-results-container {
+  min-height: 100px;
+  overflow: auto;
+  display: block;
+  line-height: 28px;
+
+  .search-item:hover, .search-item.selected {
+    background-color: $grafanaListHighlight;
+  }
+
+  .selected {
+    .search-result-tag {
+      opacity: 0.70;
+      color: white;
+    }
+  }
+
+  .fa-star, .fa-star-o {
+    padding-left: 13px;
+  }
+
+  .fa-star {
+    color: $orange;
+  }
+
+  .search-result-link {
+    color: $grafanaListMainLinkColor;
+    .fa {
+      padding-right: 10px;
+    }
+  }
+
+  .search-item {
+    display: block;
+    padding: 3px 10px;
+    white-space: nowrap;
+    background-color: $grafanaListBackground;
+    margin-bottom: 4px;
+    .search-result-icon:before {
+      content: "\f009";
+    }
+
+    &.search-item-dash-home .search-result-icon:before {
+      content: "\f015";
+    }
+  }
+
+  .search-result-tags {
+    float: right;
+  }
+
+  .search-result-actions {
+    float: right;
+    padding-left: 20px;
+  }
+}
+
+.playlist-available-list {
+  td {
+    line-height: 2rem;
+    white-space: nowrap;
+  }
+
+  .add-dashboard {
+    text-align: center;
+  }
+
+  .fa-star {
+    color: $orange;
+  }
+}
+
+.playlist-column-header {
+  border-bottom: thin solid $gray-1;
+  padding-bottom: 3px;
+  margin-bottom: 15px;
+}
+
+.selected-playlistitem-settings {
+  text-align: right;
+}

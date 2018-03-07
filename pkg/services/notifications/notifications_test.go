@@ -3,21 +3,27 @@ package notifications
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+type testTriggeredAlert struct {
+	ActualValue float64
+	Name        string
+	State       string
+}
+
 func TestNotifications(t *testing.T) {
 
 	Convey("Given the notifications service", t, func() {
-		bus.ClearBusHandlers()
+		//bus.ClearBusHandlers()
 
 		setting.StaticRootPath = "../../../public/"
 		setting.Smtp.Enabled = true
 		setting.Smtp.TemplatesPattern = "emails/*.html"
 		setting.Smtp.FromAddress = "from@address.com"
+		setting.Smtp.FromName = "Grafana Admin"
 
 		err := Init()
 		So(err, ShouldBeNil)
@@ -35,5 +41,4 @@ func TestNotifications(t *testing.T) {
 			So(sentMsg.Body, ShouldNotContainSubstring, "Subject")
 		})
 	})
-
 }

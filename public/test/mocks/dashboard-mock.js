@@ -15,7 +15,7 @@ define([],
         rows: [],
         pulldowns: [ { type: 'templating' },  { type: 'annotations' } ],
         nav: [ { type: 'timepicker' } ],
-        time: {from: '1h', to: 'now'},
+        time: {from: 'now-6h', to: 'now'},
         templating: {
           list: []
         },

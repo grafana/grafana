@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "Getting Started",
+  "id": "gettingstarted",
+
+  "hideFromList": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-dashlist-panel.svg",
+      "large": "img/icn-dashlist-panel.svg"
+    }
+  }
+}

@@ -1,3 +1,5 @@
-define(function() {
-	return (/\?/);
-});
+define( function() {
+	"use strict";
+
+	return ( /\?/ );
+} );

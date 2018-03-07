@@ -72,36 +72,38 @@ charts or filled areas).
                 horizontal = s.bars.horizontal,
                 withbottom = ps > 2 && (horizontal ? datapoints.format[2].x : datapoints.format[2].y),
                 withsteps = withlines && s.lines.steps,
-                fromgap = true,
                 keyOffset = horizontal ? 1 : 0,
                 accumulateOffset = horizontal ? 0 : 1,
                 i = 0, j = 0, l, m;
 
             while (true) {
-                if (i >= points.length)
+                if (i >= points.length && j >= otherpoints.length)
                     break;
 
                 l = newpoints.length;
 
-                if (points[i] == null) {
+                if (i < points.length && points[i] == null) {
                     // copy gaps
                     for (m = 0; m < ps; ++m)
                         newpoints.push(points[i + m]);
                     i += ps;
                 }
+                else if (i >= points.length) {
+                    // take the remaining points from the previous series
+                    for (m = 0; m < ps; ++m)
+                        newpoints.push(otherpoints[j + m]);
+                    if (withbottom)
+                        newpoints[l + 2] = otherpoints[j + accumulateOffset];
+                    j += otherps;
+                }
                 else if (j >= otherpoints.length) {
-                    // for lines, we can't use the rest of the points
-                    if (!withlines) {
-                        for (m = 0; m < ps; ++m)
-                            newpoints.push(points[i + m]);
-                    }
+                    // take the remaining points from the current series
+                    for (m = 0; m < ps; ++m)
+                        newpoints.push(points[i + m]);
                     i += ps;
                 }
-                else if (otherpoints[j] == null) {
-                    // oops, got a gap
-                    for (m = 0; m < ps; ++m)
-                        newpoints.push(null);
-                    fromgap = true;
+                else if (j < otherpoints.length && otherpoints[j] == null) {
+                    // ignore point
                     j += otherps;
                 }
                 else {
@@ -123,9 +125,15 @@ charts or filled areas).
                         j += otherps;
                     }
                     else if (px > qx) {
+                        // take the point from the previous series so that next series will correctly stack
+                        if (i == 0) {
+                            for (m = 0; m < ps; ++m)
+                                newpoints.push(otherpoints[j + m]);
+                            bottom = qy;
+                        }
                         // we got past point below, might need to
                         // insert interpolated extra point
-                        if (withlines && i > 0 && points[i - ps] != null) {
+                        if (i > 0 && points[i - ps] != null) {
                             intery = py + (points[i - ps + accumulateOffset] - py) * (qx - px) / (points[i - ps + keyOffset] - px);
                             newpoints.push(qx);
                             newpoints.push(intery + qy);
@@ -137,18 +145,12 @@ charts or filled areas).
                         j += otherps;
                     }
                     else { // px < qx
-                        if (fromgap && withlines) {
-                            // if we come from a gap, we just skip this point
-                            i += ps;
-                            continue;
-                        }
-
                         for (m = 0; m < ps; ++m)
                             newpoints.push(points[i + m]);
 
                         // we might be able to interpolate a point below,
                         // this can give us a better y
-                        if (withlines && j > 0 && otherpoints[j - otherps] != null)
+                        if (j > 0 && otherpoints[j - otherps] != null)
                             bottom = qy + (otherpoints[j - otherps + accumulateOffset] - qy) * (px - qx) / (otherpoints[j - otherps + keyOffset] - qx);
 
                         newpoints[l + accumulateOffset] += bottom;
@@ -159,7 +161,7 @@ charts or filled areas).
                     fromgap = false;
 
                     if (l != newpoints.length && withbottom)
-                        newpoints[l + 2] += bottom;
+                        newpoints[l + 2] = bottom;
                 }
 
                 // maintain the line steps invariant

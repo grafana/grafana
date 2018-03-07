@@ -6,8 +6,9 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OrgApiKeysCtrl', function($scope, $http, backendSrv) {
+  module.controller('OrgApiKeysCtrl', function($scope, $http, backendSrv, navModelSrv) {
 
+    $scope.navModel = navModelSrv.getOrgNav(0);
     $scope.roleTypes = ['Viewer', 'Editor', 'Admin'];
     $scope.token = { role: 'Viewer' };
 
@@ -30,9 +31,10 @@ function (angular) {
 
         var modalScope = $scope.$new(true);
         modalScope.key = result.key;
+        modalScope.rootPath = window.location.origin + $scope.$root.appSubUrl;
 
         $scope.appEvent('show-modal', {
-          src: './app/features/org/partials/apikeyModal.html',
+          src: 'public/app/features/org/partials/apikeyModal.html',
           scope: modalScope
         });
 

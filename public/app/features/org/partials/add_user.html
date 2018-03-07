@@ -1,0 +1,55 @@
+<div class="modal-body" ng-controller="UserInviteCtrl" ng-init="init()">
+
+	<div class="modal-header">
+		<h2 class="modal-header-title">
+			Add Users
+		</h2>
+		<a class="modal-header-close" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</a>
+	</div>
+
+	<div class="modal-content">
+
+		<div class="modal-tagline p-b-2">
+			Add existing Grafana users to the organization
+			<span class="highlight-word">{{contextSrv.user.orgName}}</span>
+		</div>
+
+		<form name="inviteForm">
+			<div class="gf-form-group">
+				<div class="gf-form-inline" ng-repeat="invite in invites">
+					<div class="gf-form max-width-21">
+						<span class="gf-form-label">Email or Username</span>
+						<input type="text" ng-model="invite.loginOrEmail" required class="gf-form-input" placeholder="email@test.com">
+					</div>
+					<div class="gf-form max-width-10">
+						<span class="gf-form-label">Role</span>
+						<select ng-model="invite.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
+						</select>
+					</div>
+					<div class="gf-form gf-size-auto">
+						<a class="gf-form-label pointer" tabindex="1" ng-click="removeInvite(invite)">
+							<i class="fa fa-remove"></i>
+						</a>
+					</div>
+				</div>
+			</div>
+
+			<div class="gf-form-inline gf-form-group">
+				<div class="gf-form">
+					<a class="btn btn-inverse btn-small" ng-click="addInvite()">
+						<i class="fa fa-plus"></i>
+						Add another
+					</a>
+				</div>
+			</div>
+
+			<div class="gf-form-button-row">
+				<button type="submit" class="btn btn-success" ng-click="sendInvites();">Add Users</button>
+				<a class="btn-text" ng-click="dismiss()">Cancel</a>
+			</div>
+			<div class="clearfix"></div>
+		</form>
+	</div>
+</div>

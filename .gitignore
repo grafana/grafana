@@ -1,10 +1,10 @@
 node_modules
+npm-debug.log
 coverage/
 .aws-config.json
 awsconfig
 build-windows.cmd
 /dist
-/packaging/windows/install-script.iss
 /packaging/windows/dest
 /packaging/windows/release
 /packaging/windows/SetupTools/SetupTools.cfg
@@ -41,11 +41,14 @@ build-windows.cmd
 /packaging/windows/RunGrafCrunch/Win64
 
 /emails/dist
+/public_gen
+/public/vendor/npm
 /tmp
+vendor/phantomjs/phantomjs
+vendor/phantomjs/phantomjs.exe
 
 docs/AWS_S3_BUCKET
 docs/GIT_BRANCH
-docs/VERSION
 docs/GITCOMMIT
 docs/changed-files
 
@@ -57,11 +60,19 @@ public/css/*.min.css
 *.swp
 .idea/
 *.iml
+*.tmp
+.vscode/
 
 /data/*
+!/data/plugins
 /bin/*
 
 conf/custom.ini
 fig.yml
+docker-compose.yml
 profile.cov
-
+/grafana
+.notouch
+/pkg/cmd/grafana-cli/grafana-cli
+/pkg/cmd/grafana-server/grafana-server
+/examples/*/dist

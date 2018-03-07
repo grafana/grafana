@@ -1,0 +1,16 @@
+{
+  "type": "panel",
+  "name": "Alert List",
+  "id": "alertlist",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+},
+    "logos": {
+      "small": "img/icn-singlestat-panel.svg",
+      "large": "img/icn-singlestat-panel.svg"
+    }
+  }
+}

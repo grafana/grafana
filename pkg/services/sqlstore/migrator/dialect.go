@@ -17,16 +17,19 @@ type Dialect interface {
 	SqlType(col *Column) string
 	SupportEngine() bool
 	LikeStr() string
+	Default(col *Column) string
+	BooleanStr(bool) string
 
 	CreateIndexSql(tableName string, index *Index) string
 	CreateTableSql(table *Table) string
-	AddColumnSql(tableName string, Col *Column) string
+	AddColumnSql(tableName string, col *Column) string
 	CopyTableData(sourceTable string, targetTable string, sourceCols []string, targetCols []string) string
 	DropTable(tableName string) string
 	DropIndexSql(tableName string, index *Index) string
 
 	TableCheckSql(tableName string) (string, []interface{})
 	RenameTable(oldName string, newName string) string
+	UpdateTableSql(tableName string, columns []*Column) string
 }
 
 func NewDialect(name string) Dialect {
@@ -71,6 +74,10 @@ func (b *BaseDialect) EqStr() string {
 	return "="
 }
 
+func (b *BaseDialect) Default(col *Column) string {
+	return col.Default
+}
+
 func (b *BaseDialect) CreateTableSql(table *Table) string {
 	var sql string
 	sql = "CREATE TABLE IF NOT EXISTS "
@@ -96,7 +103,7 @@ func (b *BaseDialect) CreateTableSql(table *Table) string {
 
 	sql = sql[:len(sql)-2] + ")"
 	if b.dialect.SupportEngine() {
-		sql += " ENGINE=InnoDB DEFAULT CHARSET UTF8 "
+		sql += " ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci"
 	}
 
 	sql += ";"
@@ -153,4 +160,8 @@ func (db *BaseDialect) DropIndexSql(tableName string, index *Index) string {
 	var name string
 	name = index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
+}
+
+func (db *BaseDialect) UpdateTableSql(tableName string, columns []*Column) string {
+	return "-- NOT REQUIRED"
 }

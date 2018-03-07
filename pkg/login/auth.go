@@ -3,10 +3,12 @@ package login
 import (
 	"errors"
 
+	"crypto/subtle"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/netcrunch"
 )
 
 var (
@@ -27,13 +29,16 @@ func Init() {
 func AuthenticateUser(query *LoginUserQuery) error {
 	err := loginUsingGrafanaDB(query)
 	if err == nil || err != ErrInvalidCredentials {
-		return err
+    if (err == nil) {
+      netcrunch.SetInitializationSuccess()
+    }
+    return err
 	}
 
 	if setting.LdapEnabled {
-		for _, server := range ldapCfg.Servers {
+		for _, server := range LdapCfg.Servers {
 			auther := NewLdapAuthenticator(server)
-			err = auther.login(query)
+			err = auther.Login(query)
 			if err == nil || err != ErrInvalidCredentials {
 				return err
 			}
@@ -56,7 +61,7 @@ func loginUsingGrafanaDB(query *LoginUserQuery) error {
 	user := userQuery.Result
 
 	passwordHashed := util.EncodePassword(query.Password, user.Salt)
-	if passwordHashed != user.Password {
+	if subtle.ConstantTimeCompare([]byte(passwordHashed), []byte(user.Password)) != 1 {
 		return ErrInvalidCredentials
 	}
 

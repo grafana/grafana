@@ -16,44 +16,43 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
-	"runtime"
 	"time"
 
-	"github.com/Unknwon/macaron"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 )
 
-var isWindows bool
-
-func init() {
-	isWindows = runtime.GOOS == "windows"
-}
-
-// Logger returns a middleware handler that logs the request as it goes in and the response as it goes out.
 func Logger() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
+		c.Data["perfmon.start"] = start
 
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		content := fmt.Sprintf("Completed %s %v %s in %v", req.URL.Path, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
-		if !isWindows {
-			switch rw.Status() {
-			case 200:
-				content = fmt.Sprintf("\033[1;32m%s\033[0m", content)
+		timeTakenMs := time.Since(start) / time.Millisecond
+
+		if timer, ok := c.Data["perfmon.timer"]; ok {
+			timerTyped := timer.(metrics.Timer)
+			timerTyped.Update(timeTakenMs)
+		}
+
+		status := rw.Status()
+		if status == 200 || status == 304 {
+			if !setting.RouterLogging {
 				return
-			case 304:
-				//content = fmt.Sprintf("\033[1;33m%s\033[0m", content)
-				return
-			case 404:
-				content = fmt.Sprintf("\033[1;31m%s\033[0m", content)
-			case 500:
-				content = fmt.Sprintf("\033[1;36m%s\033[0m", content)
 			}
 		}
-		log.Info(content)
+
+		if ctx, ok := c.Data["ctx"]; ok {
+			ctxTyped := ctx.(*Context)
+			if status == 500 {
+				ctxTyped.Logger.Error("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+			} else {
+				ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+			}
+		}
 	}
 }

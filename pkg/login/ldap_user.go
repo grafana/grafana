@@ -1,6 +1,6 @@
 package login
 
-type ldapUserInfo struct {
+type LdapUserInfo struct {
 	DN        string
 	FirstName string
 	LastName  string
@@ -9,7 +9,7 @@ type ldapUserInfo struct {
 	MemberOf  []string
 }
 
-func (u *ldapUserInfo) isMemberOf(group string) bool {
+func (u *LdapUserInfo) isMemberOf(group string) bool {
 	if group == "*" {
 		return true
 	}

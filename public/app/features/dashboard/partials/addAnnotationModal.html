@@ -1,0 +1,65 @@
+<div class="modal-body" ng-controller="AddAnnotationModalCtrl">
+
+  <div class="modal-header">
+    <h2 class="modal-header-title">
+      Add Annotation
+    </h2>
+
+    <a class="modal-header-close" ng-click="ctrl.close()">
+      <i class="fa fa-remove"></i>
+    </a>
+  </div>
+
+
+  <div class="modal-content">
+    <div class="share-modal-body">
+      <div class="share-modal-header">
+
+        <div class="share-modal-big-icon">
+          <i class="fa fa-tag"></i>
+        </div>
+
+        <div class="share-modal-content">
+
+          <div class="gf-form-group share-modal-options">
+            <p class="share-modal-info-text">
+              Add annotation details.
+            </p>
+
+            <div class="gf-form">
+              <span class="gf-form-label width-8">Title</span>
+              <input type="text" ng-model="ctrl.annotation.title" class="gf-form-input max-width-20">
+            </div>
+            <div class="gf-form">
+              <span class="gf-form-label width-8" ng-if="!ctrl.annotation.timeTo">Time</span>
+              <span class="gf-form-label width-8" ng-if="ctrl.annotation.timeTo">Time Start</span>
+              <input type="text" ng-model="ctrl.annotation.time" class="gf-form-input max-width-20">
+            </div>
+            <div class="gf-form" ng-if="ctrl.annotation.timeTo">
+              <span class="gf-form-label width-8">Time Stop</span>
+              <input type="text" ng-model="ctrl.annotation.timeTo" class="gf-form-input max-width-20">
+            </div>
+          </div>
+
+          <div>
+            <h6>Description</h6>
+          </div>
+          <div class="gf-form-group share-modal-options">
+            <div class="gf-form">
+              <textarea rows="3" class="gf-form-input width-27" ng-model="ctrl.annotation.text"></textarea>
+            </div>
+          </div>
+
+          <div class="gf-form-button-row">
+            <button class="btn gf-form-btn width-10 btn-success" ng-click="ctrl.addAnnotation()">
+              <i class="fa fa-pencil"></i>
+              Add Annotation
+            </button>
+          </div>
+        </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

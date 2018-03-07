@@ -3,9 +3,12 @@ define([
   'moment',
   'lodash',
   'jquery',
-  'kbn',
+  'app/core/utils/kbn',
+  'app/core/utils/datemath',
+  './impression_store',
+  'app/core/config',
 ],
-function (angular, moment, _, $, kbn) {
+function (angular, moment, _, $, kbn, dateMath, impressionStore) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -18,24 +21,41 @@ function (angular, moment, _, $, kbn) {
                                                    $rootScope) {
     var self = this;
 
-    this._dashboardLoadFailed = function(title) {
-      return {meta: {canStar: false, canDelete: false, canSave: false}, dashboard: {title: title}};
+    this._dashboardLoadFailed = function(title, snapshot) {
+      snapshot = snapshot || false;
+      return {
+        meta: { canStar: false, isSnapshot: snapshot, canDelete: false, canSave: false, canEdit: false, dashboardNotFound: true },
+        dashboard: {title: title }
+      };
     };
 
     this.loadDashboard = function(type, slug) {
+      var promise;
+
       if (type === 'script') {
-        return this._loadScriptedDashboard(slug);
+        promise = this._loadScriptedDashboard(slug);
+      } else if (type === 'snapshot') {
+        promise = backendSrv.get('/api/snapshots/' + $routeParams.slug)
+          .catch(function() {
+            return self._dashboardLoadFailed("Snapshot not found", true);
+          });
+      } else {
+        promise = backendSrv.getDashboard($routeParams.type, $routeParams.slug)
+          .catch(function() {
+            return self._dashboardLoadFailed("Not found");
+          });
       }
 
-      if (type === 'snapshot') {
-        return backendSrv.get('/api/snapshots/' + $routeParams.slug).catch(function() {
-          return {meta:{isSnapshot: true, canSave: false, canEdit: false}, dashboard: {title: 'Snapshot not found'}};
-        });
-      }
+      promise.then(function(result) {
 
-      return backendSrv.getDashboard($routeParams.type, $routeParams.slug).catch(function() {
-        return self._dashboardLoadFailed("Not found");
+        if (result.meta.dashboardNotFound !== true) {
+          impressionStore.impressions.addDashboardImpression(result.dashboard.id);
+        }
+
+        return result;
       });
+
+      return promise;
     };
 
     this._loadScriptedDashboard = function(file) {
@@ -59,8 +79,8 @@ function (angular, moment, _, $, kbn) {
       };
 
       /*jshint -W054 */
-      var script_func = new Function('ARGS','kbn','_','moment','window','document','$','jQuery', 'services', result.data);
-      var script_result = script_func($routeParams, kbn, _ , moment, window, document, $, $, services);
+      var script_func = new Function('ARGS','kbn','dateMath','_','moment','window','document','$','jQuery', 'services', result.data);
+      var script_result = script_func($routeParams, kbn, dateMath, _ , moment, window, document, $, $, services);
 
       // Handle async dashboard scripts
       if (_.isFunction(script_result)) {

@@ -1,15 +1,13 @@
-<topnav icon="fa fa-fw fa-info" title="System info">
-</topnav>
+<navbar model="ctrl.navModel"></navbar>
 
 <div class="page-container">
-	<div class="page">
-		<h2>
-			System information
-		</h2>
+	<div class="page-header">
+		<h1>Server settings</h1>
+	</div>
 
 		<div class="grafana-info-box span8" style="margin: 20px 0 25px 0">
-			These system settings are defined in grafana.ini or grafana.custom.ini (or overriden in ENV variables).
-			To change these you currently need to restart grafana.
+			These system settings are defined in grafana.ini or custom.ini (or overriden in ENV variables).
+			To change these you currently need to restart GrafCrunch.
 		</div>
 
 		<table class="grafana-options-table">
@@ -22,7 +20,6 @@
 				<td>{{keyValue}}</td>
 			</tr>
 		</table>
-	</div>
 </div>
 
 

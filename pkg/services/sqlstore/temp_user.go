@@ -3,20 +3,20 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
 	bus.AddHandler("sql", CreateTempUser)
-	bus.AddHandler("sql", GetTempUsersForOrg)
+	bus.AddHandler("sql", GetTempUsersQuery)
 	bus.AddHandler("sql", UpdateTempUserStatus)
 	bus.AddHandler("sql", GetTempUserByCode)
+	bus.AddHandler("sql", UpdateTempUserWithEmailSent)
 }
 
 func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "UPDATE temp_user SET status=? WHERE code=?"
 		_, err := sess.Exec(rawSql, string(cmd.Status), cmd.Code)
 		return err
@@ -24,7 +24,7 @@ func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
 }
 
 func CreateTempUser(cmd *m.CreateTempUserCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		// create user
 		user := &m.TempUser{
@@ -36,6 +36,7 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 			Status:          cmd.Status,
 			RemoteAddr:      cmd.RemoteAddr,
 			InvitedByUserId: cmd.InvitedByUserId,
+			EmailSentOn:     time.Now(),
 			Created:         time.Now(),
 			Updated:         time.Now(),
 		}
@@ -49,8 +50,21 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 	})
 }
 
-func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
-	var rawSql = `SELECT
+func UpdateTempUserWithEmailSent(cmd *m.UpdateTempUserWithEmailSentCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		user := &m.TempUser{
+			EmailSent:   true,
+			EmailSentOn: time.Now(),
+		}
+
+		_, err := sess.Where("code = ?", cmd.Code).Cols("email_sent", "email_sent_on").Update(user)
+
+		return err
+	})
+}
+
+func GetTempUsersQuery(query *m.GetTempUsersQuery) error {
+	rawSql := `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
 	                tu.email          as email,
@@ -66,10 +80,23 @@ func GetTempUsersForOrg(query *m.GetTempUsersForOrgQuery) error {
 									u.email						as invited_by_email
 	                FROM ` + dialect.Quote("temp_user") + ` as tu
 									LEFT OUTER JOIN ` + dialect.Quote("user") + ` as u on u.id = tu.invited_by_user_id
-	                WHERE tu.org_id=? AND tu.status =? ORDER BY tu.created desc`
+									WHERE tu.status=?`
+	params := []interface{}{string(query.Status)}
+
+	if query.OrgId > 0 {
+		rawSql += ` AND tu.org_id=?`
+		params = append(params, query.OrgId)
+	}
+
+	if query.Email != "" {
+		rawSql += ` AND tu.email=?`
+		params = append(params, query.Email)
+	}
+
+	rawSql += " ORDER BY tu.created desc"
 
 	query.Result = make([]*m.TempUserDTO, 0)
-	sess := x.Sql(rawSql, query.OrgId, string(query.Status))
+	sess := x.Sql(rawSql, params...)
 	err := sess.Find(&query.Result)
 	return err
 }

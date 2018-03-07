@@ -1,0 +1,24 @@
+{
+  "type": "datasource",
+  "name": "Prometheus",
+  "id": "prometheus",
+
+  "includes": [
+    {"type": "dashboard", "name": "Prometheus Stats", "path": "dashboards/prometheus_stats.json"}
+  ],
+
+  "metrics": true,
+  "alerting": true,
+  "annotations": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/prometheus_logo.svg",
+      "large": "img/prometheus_logo.svg"
+    }
+  }
+}

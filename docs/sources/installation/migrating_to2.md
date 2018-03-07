@@ -1,8 +1,14 @@
----
-page_title: Migrating from v1.x to 2.x
-page_description: Migration guide for Grafana v1.x to v2.x
-page_keywords: grafana, installation, migration, documentation
----
++++
+title = "Migrating from older versions"
+description = "Upgrading & Migrating Grafana from older versions"
+keywords = ["grafana", "configuration", "documentation", "migration"]
+type = "docs"
++++
+
+# Migrating from older versions
+
+Normally new versions of Grafana are backward compatible. Any changes to database or dashboard schema will
+be automatically migrated when Grafana-server start up without any user action required.
 
 # Migrating from v1.x to v2.x
 
@@ -20,8 +26,7 @@ migrate to Grafana 2.0.
 ## Adding Data sources
 
 The `config.js` file has been deprecated. Data sources are now managed via
-the UI or [HTTP API](../reference/http_api.md). Manage your
-organizations data sources by clicking on the `Data Sources` menu on the
+the UI or HTTP API. Manage your organizations data sources by clicking on the `Data Sources` menu on the
 side menu (which can be toggled via the Grafana icon in the upper left
 of your browser).
 
@@ -53,7 +58,7 @@ sure your Elasticsearch data source is added. Specify the Elasticsearch
 index name where your existing Grafana v1.x dashboards are stored
 (the default is `grafana-dash`).
 
-![](/img/v2/datasource_edit_elastic.jpg)
+![](/img/docs/v2/datasource_edit_elastic.jpg)
 
 ### Importing dashboards from InfluxDB
 
@@ -66,7 +71,7 @@ your Grafana v1.x dashboards are stored, the default is `grafana`.
 Go to the `Dashboards` view and click on the dashboards search drop
 down. Click the `Import` button at the bottom of the search drop down.
 
-![](/img/v2/dashboard_import.jpg)
+![](/img/docs/v2/dashboard_import.jpg)
 
 ### Import view
 
@@ -74,7 +79,7 @@ In the Import view you find the section `Migrate dashboards`. Pick the
 data source you added (from Elasticsearch or InfluxDB), and click the
 `Import` button.
 
-![](/img/v2/migrate_dashboards.jpg)
+![](/img/docs/v2/migrate_dashboards.jpg)
 
 Your dashboards should be automatically imported into the Grafana 2.0
 back-end.

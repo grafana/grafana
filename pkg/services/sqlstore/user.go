@@ -1,10 +1,11 @@
 package sqlstore
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/go-xorm/xorm"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -19,6 +20,7 @@ func init() {
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
+	bus.AddHandler("sql", GetUserByEmail)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", GetSignedInUser)
@@ -27,9 +29,14 @@ func init() {
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", UpdateUserPermissions)
+	bus.AddHandler("sql", SetUserHelpFlag)
 }
 
-func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
+func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error) {
+	if cmd.SkipOrgSetup {
+		return -1, nil
+	}
+
 	var org m.Org
 
 	if setting.AutoAssignOrg {
@@ -45,7 +52,10 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 			org.Id = 1
 		}
 	} else {
-		org.Name = userEmail
+		org.Name = cmd.OrgName
+		if len(org.Name) == 0 {
+			org.Name = util.StringsFallback2(cmd.Email, cmd.Login)
+		}
 	}
 
 	org.Created = time.Now()
@@ -65,8 +75,8 @@ func getOrgIdForNewUser(userEmail string, sess *session) (int64, error) {
 }
 
 func CreateUser(cmd *m.CreateUserCommand) error {
-	return inTransaction2(func(sess *session) error {
-		orgId, err := getOrgIdForNewUser(cmd.Email, sess)
+	return inTransaction(func(sess *DBSession) error {
+		orgId, err := getOrgIdForNewUser(cmd, sess)
 		if err != nil {
 			return err
 		}
@@ -77,14 +87,15 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 
 		// create user
 		user := m.User{
-			Email:   cmd.Email,
-			Name:    cmd.Name,
-			Login:   cmd.Login,
-			Company: cmd.Company,
-			IsAdmin: cmd.IsAdmin,
-			OrgId:   orgId,
-			Created: time.Now(),
-			Updated: time.Now(),
+			Email:         cmd.Email,
+			Name:          cmd.Name,
+			Login:         cmd.Login,
+			Company:       cmd.Company,
+			IsAdmin:       cmd.IsAdmin,
+			OrgId:         orgId,
+			EmailVerified: cmd.EmailVerified,
+			Created:       time.Now(),
+			Updated:       time.Now(),
 		}
 
 		if len(cmd.Password) > 0 {
@@ -99,23 +110,6 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			return err
 		}
 
-		// create org user link
-		orgUser := m.OrgUser{
-			OrgId:   orgId,
-			UserId:  user.Id,
-			Role:    m.ROLE_ADMIN,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
-
-		if setting.AutoAssignOrg && !user.IsAdmin {
-			orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
-		}
-
-		if _, err = sess.Insert(&orgUser); err != nil {
-			return err
-		}
-
 		sess.publishAfterCommit(&events.UserCreated{
 			Timestamp: user.Created,
 			Id:        user.Id,
@@ -125,6 +119,30 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 		})
 
 		cmd.Result = user
+
+		// create org user link
+		if !cmd.SkipOrgSetup {
+			orgUser := m.OrgUser{
+				OrgId:   orgId,
+				UserId:  user.Id,
+				Role:    m.ROLE_ADMIN,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+
+			if setting.AutoAssignOrg && !user.IsAdmin {
+				if len(cmd.DefaultOrgRole) > 0 {
+					orgUser.Role = m.RoleType(cmd.DefaultOrgRole)
+				} else {
+					orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+				}
+			}
+
+			if _, err = sess.Insert(&orgUser); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 }
@@ -150,12 +168,42 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 	}
 
 	user := new(m.User)
-	if strings.Contains(query.LoginOrEmail, "@") {
-		user = &m.User{Email: query.LoginOrEmail}
-	} else {
-		user = &m.User{Login: query.LoginOrEmail}
+
+	// Try and find the user by login first.
+	// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
+	user = &m.User{Login: query.LoginOrEmail}
+	has, err := x.Get(user)
+
+	if err != nil {
+		return err
 	}
 
+	if has == false && strings.Contains(query.LoginOrEmail, "@") {
+		// If the user wasn't found, and it contains an "@" fallback to finding the
+		// user by email.
+		user = &m.User{Email: query.LoginOrEmail}
+		has, err = x.Get(user)
+	}
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrUserNotFound
+	}
+
+	query.Result = user
+
+	return nil
+}
+
+func GetUserByEmail(query *m.GetUserByEmailQuery) error {
+	if query.Email == "" {
+		return m.ErrUserNotFound
+	}
+
+	user := new(m.User)
+
+	user = &m.User{Email: query.Email}
 	has, err := x.Get(user)
 
 	if err != nil {
@@ -170,7 +218,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 }
 
 func UpdateUser(cmd *m.UpdateUserCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		user := m.User{
 			Name:    cmd.Name,
@@ -197,7 +245,7 @@ func UpdateUser(cmd *m.UpdateUserCommand) error {
 }
 
 func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		user := m.User{
 			Password: cmd.NewPassword,
@@ -213,7 +261,21 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 }
 
 func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	getOrgsForUserCmd := &m.GetUserOrgListQuery{UserId: cmd.UserId}
+	GetUserOrgList(getOrgsForUserCmd)
+
+	valid := false
+	for _, other := range getOrgsForUserCmd.Result {
+		if other.OrgId == cmd.OrgId {
+			valid = true
+		}
+	}
+
+	if !valid {
+		return fmt.Errorf("user does not belong to org")
+	}
+
+	return inTransaction(func(sess *DBSession) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
 
@@ -256,19 +318,24 @@ func GetUserOrgList(query *m.GetUserOrgListQuery) error {
 }
 
 func GetSignedInUser(query *m.GetSignedInUserQuery) error {
+	orgId := "u.org_id"
+	if query.OrgId > 0 {
+		orgId = strconv.FormatInt(query.OrgId, 10)
+	}
+
 	var rawSql = `SELECT
-	                u.id           as user_id,
-	                u.is_admin     as is_grafana_admin,
-	                u.email        as email,
-	                u.login        as login,
-									u.name         as name,
-									u.theme        as theme,
-	                org.name       as org_name,
-	                org_user.role  as org_role,
-	                org.id         as org_id
-	                FROM ` + dialect.Quote("user") + ` as u
-									LEFT OUTER JOIN org_user on org_user.org_id = u.org_id and org_user.user_id = u.id
-	                LEFT OUTER JOIN org on org.id = u.org_id `
+		u.id           as user_id,
+		u.is_admin     as is_grafana_admin,
+		u.email        as email,
+		u.login        as login,
+		u.name         as name,
+		u.help_flags1  as help_flags1,
+		org.name       as org_name,
+		org_user.role  as org_role,
+		org.id         as org_id
+		FROM ` + dialect.Quote("user") + ` as u
+		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
+		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
 	sess := x.Table("user")
 	if query.UserId > 0 {
@@ -297,20 +364,38 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 }
 
 func SearchUsers(query *m.SearchUsersQuery) error {
-	query.Result = make([]*m.UserSearchHitDTO, 0)
+	query.Result = m.SearchUserQueryResult{
+		Users: make([]*m.UserSearchHitDTO, 0),
+	}
+	queryWithWildcards := "%" + query.Query + "%"
+
 	sess := x.Table("user")
-	sess.Where("email LIKE ?", query.Query+"%")
-	sess.Limit(query.Limit, query.Limit*query.Page)
+	if query.Query != "" {
+		sess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+	offset := query.Limit * (query.Page - 1)
+	sess.Limit(query.Limit, offset)
 	sess.Cols("id", "email", "name", "login", "is_admin")
-	err := sess.Find(&query.Result)
+	if err := sess.Find(&query.Result.Users); err != nil {
+		return err
+	}
+
+	user := m.User{}
+
+	countSess := x.Table("user")
+	if query.Query != "" {
+		countSess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+	count, err := countSess.Count(&user)
+	query.Result.TotalCount = count
 	return err
 }
 
 func DeleteUser(cmd *m.DeleteUserCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		deletes := []string{
 			"DELETE FROM star WHERE user_id = ?",
-			"DELETE FROM user WHERE id = ?",
+			"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
 		}
 
 		for _, sql := range deletes {
@@ -325,7 +410,7 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 }
 
 func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
 
@@ -333,5 +418,22 @@ func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
 		sess.UseBool("is_admin")
 		_, err := sess.Id(user.Id).Update(&user)
 		return err
+	})
+}
+
+func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+
+		user := m.User{
+			Id:         cmd.UserId,
+			HelpFlags1: cmd.HelpFlags1,
+			Updated:    time.Now(),
+		}
+
+		if _, err := sess.Id(cmd.UserId).Cols("help_flags1").Update(&user); err != nil {
+			return err
+		}
+
+		return nil
 	})
 }

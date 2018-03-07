@@ -1,12 +1,11 @@
 define([
   './panellinks/module',
   './dashlinks/module',
-  './annotations/annotationsSrv',
-  './templating/templateSrv',
+  './annotations/all',
+  './templating/all',
   './dashboard/all',
+  './playlist/all',
+  './snapshot/all',
   './panel/all',
-  './profile/profileCtrl',
-  './profile/changePasswordCtrl',
-  './org/all',
-  './admin/all',
+  './styleguide/styleguide',
 ], function () {});
