@@ -18,6 +18,7 @@ func init() {
 	bus.AddHandler("sql", SetAlertState)
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
 	bus.AddHandler("sql", PauseAlert)
+	bus.AddHandler("sql", PauseDashboardAlerts)
 	bus.AddHandler("sql", PauseAllAlerts)
 }
 
@@ -289,6 +290,27 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 		}
 
 		res, err := sess.Exec(buffer.String(), params...)
+		if err != nil {
+			return err
+		}
+		cmd.ResultCount, _ = res.RowsAffected()
+		return nil
+	})
+}
+
+func PauseDashboardAlerts(cmd *m.PauseDashboardAlertsCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		var params []interface{}
+
+		sql := "UPDATE alert SET state = ? WHERE dashboard_id = ?"
+		if cmd.Paused {
+			params = append(params, string(m.AlertStatePaused))
+		} else {
+			params = append(params, string(m.AlertStatePending))
+		}
+		params = append(params, cmd.DashboardId)
+
+		res, err := sess.Exec(sql, params...)
 		if err != nil {
 			return err
 		}

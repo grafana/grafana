@@ -50,6 +50,16 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
+			Convey("can pause alerts on a dashboard", func() {
+				cmd := &m.PauseDashboardAlertsCommand{
+					DashboardId: testDash.Id,
+					Paused:      true,
+				}
+
+				err = PauseDashboardAlerts(cmd)
+				So(err, ShouldBeNil)
+			})
+
 			Convey("can pause alert", func() {
 				cmd := &m.PauseAllAlertCommand{
 					Paused: true,
