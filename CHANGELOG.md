@@ -16,6 +16,8 @@
 * **Sidemenu**: Profile menu "invisible" when gravatar is disabled [#11097](https://github.com/grafana/grafana/issues/11097)
 * **Dashboard**: Fixes a bug with resizeable handles for panels [#11103](https://github.com/grafana/grafana/issues/11103)
 * **Alerting**: Telegram inline image mode fails when caption too long [#10975](https://github.com/grafana/grafana/issues/10975)
+* **Alerting**: Fixes silent failing validation [#11145](https://github.com/grafana/grafana/pull/11145)
+* **OAuth**: Only use jwt token if it contains an email address [#11127](https://github.com/grafana/grafana/pull/11127)
 
 # 5.0.0-stable (2018-03-01)
 
