@@ -93,7 +93,9 @@
     <div class="gf-form">
       <label class="gf-form-label width-5">Format</label>
       <div class="gf-form-select-wrapper max-width-15">
-        <select class="gf-form-input" ng-model="ctrl.panel.dataFormat" ng-options="v as k for (k, v) in editor.dataFormats" ng-change="ctrl.render()"></select>
+        <select class="gf-form-input" ng-model="ctrl.panel.dataFormat" ng-options="v as k for (k, v) in editor.dataFormats" ng-change="ctrl.render()"
+          data-placement="right" bs-tooltip="'Time series: create heatmap from regular time series. <br>Time series buckets: use histogram data returned from data source. Each series represents bucket which upper/lower bound is a series label.'">
+        </select>
       </div>
     </div>
   </div>
