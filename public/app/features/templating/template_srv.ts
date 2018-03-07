@@ -115,6 +115,12 @@ export class TemplateSrv {
         }
         return this.distributeVariable(value, variable.name);
       }
+      case 'csv': {
+        if (_.isArray(value)) {
+          return value.join(',');
+        }
+        return value;
+      }
       default: {
         if (_.isArray(value)) {
           return '{' + value.join(',') + '}';
