@@ -193,7 +193,7 @@ export class PanelCtrl {
       });
 
       menu.push({
-        text: 'Add to Panel List',
+        text: 'Copy',
         click: 'ctrl.addToPanelList()',
         role: 'Editor',
       });
