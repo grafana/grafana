@@ -14,10 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -202,7 +202,7 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 	dash := cmd.GetDashboardModel()
 
 	if dash.Id == 0 && dash.Uid == "" {
-		limitReached, err := middleware.QuotaReached(c, "dashboard")
+		limitReached, err := quota.QuotaReached(c, "dashboard")
 		if err != nil {
 			return ApiError(500, "failed to get quota", err)
 		}
