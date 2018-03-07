@@ -116,11 +116,12 @@ export class HeatmapTooltip {
     if (yData) {
       if (yData.bounds) {
         if (data.tsBuckets) {
+          const decimals = this.panelCtrl.decimals || 0;
           const tickFormatter = valIndex => {
             let valueFormatted = data.tsBuckets[valIndex];
             if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
               // Try to format numeric tick labels
-              valueFormatted = this.bucketBoundFormatter(0)(valueFormatted);
+              valueFormatted = this.bucketBoundFormatter(decimals)(_.toNumber(valueFormatted));
             }
             return valueFormatted;
           };
@@ -290,7 +291,12 @@ export class HeatmapTooltip {
   bucketBoundFormatter(decimals, scaledDecimals = null) {
     let format = this.panel.yAxis.format;
     return function(value) {
-      return kbn.valueFormats[format](value, decimals, scaledDecimals);
+      try {
+        return format !== 'none' ? kbn.valueFormats[format](value, decimals, scaledDecimals) : value;
+      } catch (err) {
+        console.error(err.message || err);
+        return value;
+      }
     };
   }
 }

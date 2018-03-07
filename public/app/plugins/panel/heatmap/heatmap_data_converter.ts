@@ -86,7 +86,7 @@ function parseHistogramLabel(label: string): number {
   if (label === '+Inf') {
     return +Infinity;
   }
-  return parseInt(label);
+  return Number(label);
 }
 
 /**

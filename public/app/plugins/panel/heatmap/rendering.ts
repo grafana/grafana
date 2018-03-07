@@ -305,12 +305,15 @@ export default function link(scope, elem, attrs, ctrl) {
       .range([chartHeight, 0]);
 
     const tick_values = _.map(tsBuckets, (b, i) => i);
+    const decimalsAuto = _.max(_.map(tsBuckets, getStringPrecision));
+    const decimals = panel.yAxis.decimals === null ? decimalsAuto : panel.yAxis.decimals;
+    ctrl.decimals = decimals;
 
     function tickFormatter(valIndex) {
       let valueFormatted = tsBuckets[valIndex];
       if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
         // Try to format numeric tick labels
-        valueFormatted = tickValueFormatter(0)(valueFormatted);
+        valueFormatted = tickValueFormatter(decimals)(_.toNumber(valueFormatted));
       }
       return valueFormatted;
     }
@@ -390,7 +393,12 @@ export default function link(scope, elem, attrs, ctrl) {
   function tickValueFormatter(decimals, scaledDecimals = null) {
     let format = panel.yAxis.format;
     return function(value) {
-      return kbn.valueFormats[format](value, decimals, scaledDecimals);
+      try {
+        return format !== 'none' ? kbn.valueFormats[format](value, decimals, scaledDecimals) : value;
+      } catch (err) {
+        console.error(err.message || err);
+        return value;
+      }
     };
   }
 
@@ -849,12 +857,16 @@ function logp(value, base) {
   return Math.log(value) / Math.log(base);
 }
 
-function getPrecision(num) {
+function getPrecision(num: number): number {
   let str = num.toString();
-  let dot_index = str.indexOf('.');
+  return getStringPrecision(str);
+}
+
+function getStringPrecision(num: string): number {
+  let dot_index = num.indexOf('.');
   if (dot_index === -1) {
     return 0;
   } else {
-    return str.length - dot_index - 1;
+    return num.length - dot_index - 1;
   }
 }

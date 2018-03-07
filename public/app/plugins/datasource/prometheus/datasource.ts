@@ -470,5 +470,5 @@ function parseHistogramLabel(le: string): number {
   if (le === '+Inf') {
     return +Infinity;
   }
-  return parseInt(le);
+  return Number(le);
 }
