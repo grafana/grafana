@@ -32,6 +32,10 @@ var (
 	oauthLogger              = log.New("oauth")
 )
 
+const (
+	oAuthLogoutUrl = "GrafanaOauthLogout"
+)
+
 func GenStateString() string {
 	rnd := make([]byte, 32)
 	rand.Read(rnd)
@@ -196,6 +200,12 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	// login
 	loginUserWithUser(userQuery.Result, ctx)
+
+	if setting.OAuthService.OAuthInfos[name].LogoutUrl != "" {
+		ctx.Session.Set(oAuthLogoutUrl, fmt.Sprintf("%s?client_id=%s&logout_uri=%s", setting.OAuthService.OAuthInfos[name].LogoutUrl,
+			setting.OAuthService.OAuthInfos[name].ClientId,
+			url.PathEscape(setting.AppUrl+"login")))
+	}
 
 	metrics.M_Api_Login_OAuth.Inc()
 
