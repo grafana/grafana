@@ -33,6 +33,7 @@ let panelDefaults = {
     show: false,
   },
   dataFormat: 'timeseries',
+  yBucketBound: 'auto',
   xAxis: {
     show: true,
   },
@@ -222,11 +223,13 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     bucketsData = histogramToHeatmap(this.series);
 
     tsBuckets = _.map(this.series, 'label');
-    if (panelDatasource === 'prometheus') {
+    const yBucketBound = this.panel.yBucketBound;
+    if ((panelDatasource === 'prometheus' && yBucketBound !== 'lower') || yBucketBound === 'upper') {
       // Prometheus labels are upper inclusive bounds, so add empty bottom bucket label.
       tsBuckets = [''].concat(tsBuckets);
     } else {
-      // Elasticsearch uses labels as bottom bucket bounds, so add empty top bucket label.
+      // Elasticsearch uses labels as lower bucket bounds, so add empty top bucket label.
+      // Use this as a default mode as well.
       tsBuckets.push('');
     }
 

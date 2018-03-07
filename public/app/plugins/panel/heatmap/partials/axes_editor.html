@@ -31,6 +31,15 @@
       bs-tooltip="'Override automatic decimal precision for axis.'"
       ng-model="ctrl.panel.yAxis.decimals" ng-change="ctrl.render()" ng-model-onblur>
     </div>
+    <div class="gf-form" ng-if="ctrl.panel.dataFormat == 'tsbuckets'">
+      <label class="gf-form-label width-8">Bucket bound</label>
+      <div class="gf-form-select-wrapper max-width-12">
+        <select class="gf-form-input"
+          ng-model="ctrl.panel.yBucketBound" ng-options="v as k for (k, v) in editor.yBucketBoundModes" ng-change="ctrl.render()"
+          data-placement="right" bs-tooltip="'Use series label as an upper or lower bucket bound.'">
+        </select>
+      </div>
+    </div>
   </div>
 
   <div class="section gf-form-group" ng-if="ctrl.panel.dataFormat == 'timeseries'">
