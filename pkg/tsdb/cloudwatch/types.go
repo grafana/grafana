@@ -13,4 +13,5 @@ type CloudWatchQuery struct {
 	ExtendedStatistics []*string
 	Period             int
 	Alias              string
+	HighResolution     bool
 }
