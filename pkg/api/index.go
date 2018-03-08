@@ -6,13 +6,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
+func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
 		return nil, err
@@ -299,7 +298,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	return &data, nil
 }
 
-func Index(c *middleware.Context) {
+func Index(c *m.ReqContext) {
 	if data, err := setIndexViewData(c); err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
@@ -308,7 +307,7 @@ func Index(c *middleware.Context) {
 	}
 }
 
-func NotFoundHandler(c *middleware.Context) {
+func NotFoundHandler(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return

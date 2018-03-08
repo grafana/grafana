@@ -7,6 +7,7 @@ import (
 	"gopkg.in/macaron.v1"
 
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,8 +16,8 @@ type AuthOptions struct {
 	ReqSignedIn     bool
 }
 
-func getRequestUserId(c *Context) int64 {
-	userId := c.Session.Get(SESS_KEY_USERID)
+func getRequestUserId(c *m.ReqContext) int64 {
+	userId := c.Session.Get(session.SESS_KEY_USERID)
 
 	if userId != nil {
 		return userId.(int64)
@@ -25,7 +26,7 @@ func getRequestUserId(c *Context) int64 {
 	return 0
 }
 
-func getApiKey(c *Context) string {
+func getApiKey(c *m.ReqContext) string {
 	header := c.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	if len(parts) == 2 && parts[0] == "Bearer" {
@@ -36,7 +37,7 @@ func getApiKey(c *Context) string {
 	return ""
 }
 
-func accessForbidden(c *Context) {
+func accessForbidden(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(403, "Permission denied", nil)
 		return
@@ -45,7 +46,7 @@ func accessForbidden(c *Context) {
 	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func notAuthorized(c *Context) {
+func notAuthorized(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
@@ -57,7 +58,7 @@ func notAuthorized(c *Context) {
 }
 
 func RoleAuth(roles ...m.RoleType) macaron.Handler {
-	return func(c *Context) {
+	return func(c *m.ReqContext) {
 		ok := false
 		for _, role := range roles {
 			if role == c.OrgRole {
@@ -72,7 +73,7 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 }
 
 func Auth(options *AuthOptions) macaron.Handler {
-	return func(c *Context) {
+	return func(c *m.ReqContext) {
 		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
 			notAuthorized(c)
 			return

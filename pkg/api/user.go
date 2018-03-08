@@ -3,19 +3,18 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/user  (current authenticated user)
-func GetSignedInUser(c *middleware.Context) Response {
+func GetSignedInUser(c *m.ReqContext) Response {
 	return getUserUserProfile(c.UserId)
 }
 
 // GET /api/users/:id
-func GetUserById(c *middleware.Context) Response {
+func GetUserById(c *m.ReqContext) Response {
 	return getUserUserProfile(c.ParamsInt64(":id"))
 }
 
@@ -33,7 +32,7 @@ func getUserUserProfile(userId int64) Response {
 }
 
 // GET /api/users/lookup
-func GetUserByLoginOrEmail(c *middleware.Context) Response {
+func GetUserByLoginOrEmail(c *m.ReqContext) Response {
 	query := m.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrUserNotFound {
@@ -55,7 +54,7 @@ func GetUserByLoginOrEmail(c *middleware.Context) Response {
 }
 
 // POST /api/user
-func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
+func UpdateSignedInUser(c *m.ReqContext, cmd m.UpdateUserCommand) Response {
 	if setting.AuthProxyEnabled {
 		if setting.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
 			return ApiError(400, "Not allowed to change email when auth proxy is using email property", nil)
@@ -69,13 +68,13 @@ func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response
 }
 
 // POST /api/users/:id
-func UpdateUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
+func UpdateUser(c *m.ReqContext, cmd m.UpdateUserCommand) Response {
 	cmd.UserId = c.ParamsInt64(":id")
 	return handleUpdateUser(cmd)
 }
 
 //POST /api/users/:id/using/:orgId
-func UpdateUserActiveOrg(c *middleware.Context) Response {
+func UpdateUserActiveOrg(c *m.ReqContext) Response {
 	userId := c.ParamsInt64(":id")
 	orgId := c.ParamsInt64(":orgId")
 
@@ -108,12 +107,12 @@ func handleUpdateUser(cmd m.UpdateUserCommand) Response {
 }
 
 // GET /api/user/orgs
-func GetSignedInUserOrgList(c *middleware.Context) Response {
+func GetSignedInUserOrgList(c *m.ReqContext) Response {
 	return getUserOrgList(c.UserId)
 }
 
 // GET /api/user/:id/orgs
-func GetUserOrgList(c *middleware.Context) Response {
+func GetUserOrgList(c *m.ReqContext) Response {
 	return getUserOrgList(c.ParamsInt64(":id"))
 }
 
@@ -146,7 +145,7 @@ func validateUsingOrg(userId int64, orgId int64) bool {
 }
 
 // POST /api/user/using/:id
-func UserSetUsingOrg(c *middleware.Context) Response {
+func UserSetUsingOrg(c *m.ReqContext) Response {
 	orgId := c.ParamsInt64(":id")
 
 	if !validateUsingOrg(c.UserId, orgId) {
@@ -163,7 +162,7 @@ func UserSetUsingOrg(c *middleware.Context) Response {
 }
 
 // GET /profile/switch-org/:id
-func ChangeActiveOrgAndRedirectToHome(c *middleware.Context) {
+func ChangeActiveOrgAndRedirectToHome(c *m.ReqContext) {
 	orgId := c.ParamsInt64(":id")
 
 	if !validateUsingOrg(c.UserId, orgId) {
@@ -179,7 +178,7 @@ func ChangeActiveOrgAndRedirectToHome(c *middleware.Context) {
 	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {
+func ChangeUserPassword(c *m.ReqContext, cmd m.ChangeUserPasswordCommand) Response {
 	if setting.LdapEnabled || setting.AuthProxyEnabled {
 		return ApiError(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
 	}
@@ -211,7 +210,7 @@ func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) 
 }
 
 // GET /api/users
-func SearchUsers(c *middleware.Context) Response {
+func SearchUsers(c *m.ReqContext) Response {
 	query, err := searchUser(c)
 	if err != nil {
 		return ApiError(500, "Failed to fetch users", err)
@@ -221,7 +220,7 @@ func SearchUsers(c *middleware.Context) Response {
 }
 
 // GET /api/users/search
-func SearchUsersWithPaging(c *middleware.Context) Response {
+func SearchUsersWithPaging(c *m.ReqContext) Response {
 	query, err := searchUser(c)
 	if err != nil {
 		return ApiError(500, "Failed to fetch users", err)
@@ -230,7 +229,7 @@ func SearchUsersWithPaging(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-func searchUser(c *middleware.Context) (*m.SearchUsersQuery, error) {
+func searchUser(c *m.ReqContext) (*m.SearchUsersQuery, error) {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -258,7 +257,7 @@ func searchUser(c *middleware.Context) (*m.SearchUsersQuery, error) {
 	return query, nil
 }
 
-func SetHelpFlag(c *middleware.Context) Response {
+func SetHelpFlag(c *m.ReqContext) Response {
 	flag := c.ParamsInt64(":id")
 
 	bitmask := &c.HelpFlags1
@@ -276,7 +275,7 @@ func SetHelpFlag(c *middleware.Context) Response {
 	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }
 
-func ClearHelpFlags(c *middleware.Context) Response {
+func ClearHelpFlags(c *m.ReqContext) Response {
 	cmd := m.SetUserHelpFlagCommand{
 		UserId:     c.UserId,
 		HelpFlags1: m.HelpFlags1(0),

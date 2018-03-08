@@ -6,9 +6,26 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
+	"time"
 )
 
+func mockTimeNow() {
+	var timeSeed int64
+	timeNow = func() time.Time {
+		fakeNow := time.Unix(timeSeed, 0)
+		timeSeed += 1
+		return fakeNow
+	}
+}
+
+func resetTimeNow() {
+	timeNow = time.Now
+}
+
 func TestAlertingDataAccess(t *testing.T) {
+	mockTimeNow()
+	defer resetTimeNow()
+
 	Convey("Testing Alerting data access", t, func() {
 		InitTestDB(t)
 
@@ -50,13 +67,11 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("can pause alert", func() {
-				cmd := &m.PauseAllAlertCommand{
-					Paused: true,
-				}
+			alert, _ := getAlertById(1)
+			stateDateBeforePause := alert.NewStateDate
 
-				err = PauseAllAlerts(cmd)
-				So(err, ShouldBeNil)
+			Convey("can pause all alerts", func() {
+				pauseAllAlerts(true)
 
 				Convey("cannot updated paused alert", func() {
 					cmd := &m.SetAlertStateCommand{
@@ -66,6 +81,19 @@ func TestAlertingDataAccess(t *testing.T) {
 
 					err = SetAlertState(cmd)
 					So(err, ShouldNotBeNil)
+				})
+
+				Convey("pausing alerts should update their NewStateDate", func() {
+					alert, _ = getAlertById(1)
+					stateDateAfterPause := alert.NewStateDate
+					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
+				})
+
+				Convey("unpausing alerts should update their NewStateDate again", func() {
+					pauseAllAlerts(false)
+					alert, _ = getAlertById(1)
+					stateDateAfterUnpause := alert.NewStateDate
+					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterUnpause)
 				})
 			})
 		})
@@ -213,4 +241,91 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestPausingAlerts(t *testing.T) {
+	mockTimeNow()
+	defer resetTimeNow()
+
+	Convey("Given an alert", t, func() {
+		InitTestDB(t)
+
+		testDash := insertTestDashboard("dashboard with alerts", 1, 0, false, "alert")
+		alert, _ := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New())
+
+		stateDateBeforePause := alert.NewStateDate
+		stateDateAfterPause := stateDateBeforePause
+		Convey("when paused", func() {
+			pauseAlert(testDash.OrgId, 1, true)
+
+			Convey("the NewStateDate should be updated", func() {
+				alert, _ := getAlertById(1)
+
+				stateDateAfterPause = alert.NewStateDate
+				So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
+			})
+		})
+
+		Convey("when unpaused", func() {
+			pauseAlert(testDash.OrgId, 1, false)
+
+			Convey("the NewStateDate should be updated again", func() {
+				alert, _ := getAlertById(1)
+
+				stateDateAfterUnpause := alert.NewStateDate
+				So(stateDateAfterPause, ShouldHappenBefore, stateDateAfterUnpause)
+			})
+		})
+	})
+}
+func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
+	cmd := &m.PauseAlertCommand{
+		OrgId:    orgId,
+		AlertIds: []int64{alertId},
+		Paused:   pauseState,
+	}
+	err := PauseAlert(cmd)
+	So(err, ShouldBeNil)
+	return cmd.ResultCount, err
+}
+func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json) (*m.Alert, error) {
+	items := []*m.Alert{
+		{
+			PanelId:     1,
+			DashboardId: dashId,
+			OrgId:       orgId,
+			Name:        title,
+			Message:     message,
+			Settings:    settings,
+			Frequency:   1,
+		},
+	}
+
+	cmd := m.SaveAlertsCommand{
+		Alerts:      items,
+		DashboardId: dashId,
+		OrgId:       orgId,
+		UserId:      1,
+	}
+
+	err := SaveAlerts(&cmd)
+	return cmd.Alerts[0], err
+}
+
+func getAlertById(id int64) (*m.Alert, error) {
+	q := &m.GetAlertByIdQuery{
+		Id: id,
+	}
+	err := GetAlertById(q)
+	So(err, ShouldBeNil)
+	return q.Result, err
+}
+
+func pauseAllAlerts(pauseState bool) error {
+	cmd := &m.PauseAllAlertCommand{
+		Paused: pauseState,
+	}
+	err := PauseAllAlerts(cmd)
+	So(err, ShouldBeNil)
+	return err
 }

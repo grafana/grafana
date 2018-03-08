@@ -24,6 +24,7 @@ import (
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -106,7 +107,7 @@ func Recovery() macaron.Handler {
 				panicLogger := log.Root
 				// try to get request logger
 				if ctx, ok := c.Data["ctx"]; ok {
-					ctxTyped := ctx.(*Context)
+					ctxTyped := ctx.(*m.ReqContext)
 					panicLogger = ctxTyped.Logger
 				}
 
@@ -123,7 +124,7 @@ func Recovery() macaron.Handler {
 					c.Data["ErrorMsg"] = string(stack)
 				}
 
-				ctx, ok := c.Data["ctx"].(*Context)
+				ctx, ok := c.Data["ctx"].(*m.ReqContext)
 
 				if ok && ctx.IsApiRequest() {
 					resp := make(map[string]interface{})

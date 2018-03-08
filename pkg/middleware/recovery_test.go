@@ -4,8 +4,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/go-macaron/session"
+	ms "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
+	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/macaron.v1"
 )
@@ -37,7 +39,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 	})
 }
 
-func PanicHandler(c *Context) {
+func PanicHandler(c *m.ReqContext) {
 	panic("Handler has panicked")
 }
 
@@ -60,12 +62,12 @@ func recoveryScenario(desc string, url string, fn scenarioFunc) {
 
 		sc.m.Use(GetContextHandler())
 		// mock out gc goroutine
-		startSessionGC = func() {}
-		sc.m.Use(Sessioner(&session.Options{}))
+		session.StartSessionGC = func() {}
+		sc.m.Use(Sessioner(&ms.Options{}))
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 
-		sc.defaultHandler = func(c *Context) {
+		sc.defaultHandler = func(c *m.ReqContext) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)

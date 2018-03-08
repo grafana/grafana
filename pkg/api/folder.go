@@ -4,14 +4,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetFolders(c *middleware.Context) Response {
+func GetFolders(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folders, err := s.GetFolders(c.QueryInt("limit"))
 
@@ -32,7 +31,7 @@ func GetFolders(c *middleware.Context) Response {
 	return Json(200, result)
 }
 
-func GetFolderByUid(c *middleware.Context) Response {
+func GetFolderByUid(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUid(c.Params(":uid"))
 
@@ -44,7 +43,7 @@ func GetFolderByUid(c *middleware.Context) Response {
 	return Json(200, toFolderDto(g, folder))
 }
 
-func GetFolderById(c *middleware.Context) Response {
+func GetFolderById(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderById(c.ParamsInt64(":id"))
 	if err != nil {
@@ -55,7 +54,7 @@ func GetFolderById(c *middleware.Context) Response {
 	return Json(200, toFolderDto(g, folder))
 }
 
-func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
+func CreateFolder(c *m.ReqContext, cmd m.CreateFolderCommand) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	err := s.CreateFolder(&cmd)
 	if err != nil {
@@ -66,7 +65,7 @@ func CreateFolder(c *middleware.Context, cmd m.CreateFolderCommand) Response {
 	return Json(200, toFolderDto(g, cmd.Result))
 }
 
-func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
+func UpdateFolder(c *m.ReqContext, cmd m.UpdateFolderCommand) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	err := s.UpdateFolder(c.Params(":uid"), &cmd)
 	if err != nil {
@@ -77,7 +76,7 @@ func UpdateFolder(c *middleware.Context, cmd m.UpdateFolderCommand) Response {
 	return Json(200, toFolderDto(g, cmd.Result))
 }
 
-func DeleteFolder(c *middleware.Context) Response {
+func DeleteFolder(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	f, err := s.DeleteFolder(c.Params(":uid"))
 	if err != nil {
