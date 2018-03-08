@@ -21,7 +21,7 @@ jobs:
             - node_modules
       - run:
           name: frontend tests
-          command: 'sudo ./scripts/circle-test-frontend.sh'
+          command: './scripts/circle-test-frontend.sh'
 
   test-backend:
     docker:
