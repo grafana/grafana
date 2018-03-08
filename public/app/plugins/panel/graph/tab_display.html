@@ -90,6 +90,9 @@
 			<div class="gf-form-inline" ng-repeat="override in ctrl.panel.seriesOverrides" ng-controller="SeriesOverridesCtrl">
 				<div class="gf-form">
 					<label class="gf-form-label">alias or regex</label>
+          <md-tooltip>
+            You need to wrap the series override expression in / characters to let Grafana know you want regex matching.
+          </md-tooltip>
 				</div>
 				<div class="gf-form width-15">
 					<input type="text" ng-model="override.alias" bs-typeahead="getSeriesNames" ng-blur="ctrl.render()" data-min-length=0 data-items=100 class="gf-form-input width-15">
