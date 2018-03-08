@@ -455,7 +455,7 @@ kbn.valueFormats.decgbytes = kbn.formatBuilders.decimalSIPrefix('B', 3);
 // Data Rate
 kbn.valueFormats.pps = kbn.formatBuilders.decimalSIPrefix('pps');
 kbn.valueFormats.bps = kbn.formatBuilders.decimalSIPrefix('bps');
-kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('Bps');
+kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('B/s');
 kbn.valueFormats.KBs = kbn.formatBuilders.decimalSIPrefix('Bs', 1);
 kbn.valueFormats.Kbits = kbn.formatBuilders.decimalSIPrefix('bps', 1);
 kbn.valueFormats.MBs = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
@@ -464,13 +464,13 @@ kbn.valueFormats.GBs = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
 kbn.valueFormats.Gbits = kbn.formatBuilders.decimalSIPrefix('bps', 3);
 
 // Hash Rate
-kbn.valueFormats.Hs     = kbn.formatBuilders.decimalSIPrefix('H/s');
-kbn.valueFormats.KHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 1);
-kbn.valueFormats.MHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 2);
-kbn.valueFormats.GHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 3);
-kbn.valueFormats.THs    = kbn.formatBuilders.decimalSIPrefix('H/s', 4);
-kbn.valueFormats.PHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 5);
-kbn.valueFormats.EHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 6);
+kbn.valueFormats.Hs = kbn.formatBuilders.decimalSIPrefix('H/s');
+kbn.valueFormats.KHs = kbn.formatBuilders.decimalSIPrefix('H/s', 1);
+kbn.valueFormats.MHs = kbn.formatBuilders.decimalSIPrefix('H/s', 2);
+kbn.valueFormats.GHs = kbn.formatBuilders.decimalSIPrefix('H/s', 3);
+kbn.valueFormats.THs = kbn.formatBuilders.decimalSIPrefix('H/s', 4);
+kbn.valueFormats.PHs = kbn.formatBuilders.decimalSIPrefix('H/s', 5);
+kbn.valueFormats.EHs = kbn.formatBuilders.decimalSIPrefix('H/s', 6);
 
 // Throughput
 kbn.valueFormats.ops = kbn.formatBuilders.simpleCountUnit('ops');
@@ -901,13 +901,13 @@ kbn.getUnitFormats = function() {
     {
       text: 'hash rate',
       submenu: [
-        {text: 'hashes/sec', value: 'Hs'},
-        {text: 'kilohashes/sec',    value: 'KHs'},
-        {text: 'megahashes/sec',   value: 'MHs'},
-        {text: 'gigahashes/sec', value: 'GHs'},
-        {text: 'terahashes/sec',    value: 'THs'},
-        {text: 'petahashes/sec', value: 'PHs'},
-        {text: 'exahashes/sec',    value: 'EHs'},
+        { text: 'hashes/sec', value: 'Hs' },
+        { text: 'kilohashes/sec', value: 'KHs' },
+        { text: 'megahashes/sec', value: 'MHs' },
+        { text: 'gigahashes/sec', value: 'GHs' },
+        { text: 'terahashes/sec', value: 'THs' },
+        { text: 'petahashes/sec', value: 'PHs' },
+        { text: 'exahashes/sec', value: 'EHs' },
       ],
     },
     {
