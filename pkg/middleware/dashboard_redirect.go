@@ -20,7 +20,7 @@ func getDashboardUrlBySlug(orgId int64, slug string) (string, error) {
 }
 
 func RedirectFromLegacyDashboardUrl() macaron.Handler {
-	return func(c *Context) {
+	return func(c *m.ReqContext) {
 		slug := c.Params("slug")
 
 		if slug != "" {
@@ -34,7 +34,7 @@ func RedirectFromLegacyDashboardUrl() macaron.Handler {
 }
 
 func RedirectFromLegacyDashboardSoloUrl() macaron.Handler {
-	return func(c *Context) {
+	return func(c *m.ReqContext) {
 		slug := c.Params("slug")
 
 		if slug != "" {

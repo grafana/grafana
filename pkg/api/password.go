@@ -3,12 +3,11 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func SendResetPasswordEmail(c *middleware.Context, form dtos.SendResetPasswordEmailForm) Response {
+func SendResetPasswordEmail(c *m.ReqContext, form dtos.SendResetPasswordEmailForm) Response {
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
@@ -24,7 +23,7 @@ func SendResetPasswordEmail(c *middleware.Context, form dtos.SendResetPasswordEm
 	return ApiSuccess("Email sent")
 }
 
-func ResetPassword(c *middleware.Context, form dtos.ResetUserPasswordForm) Response {
+func ResetPassword(c *m.ReqContext, form dtos.ResetUserPasswordForm) Response {
 	query := m.ValidateResetPasswordCodeQuery{Code: form.Code}
 
 	if err := bus.Dispatch(&query); err != nil {

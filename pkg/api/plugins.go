@@ -5,13 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func GetPluginList(c *middleware.Context) Response {
+func GetPluginList(c *m.ReqContext) Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
@@ -79,7 +78,7 @@ func GetPluginList(c *middleware.Context) Response {
 	return Json(200, result)
 }
 
-func GetPluginSettingById(c *middleware.Context) Response {
+func GetPluginSettingById(c *m.ReqContext) Response {
 	pluginId := c.Params(":pluginId")
 
 	if def, exists := plugins.Plugins[pluginId]; !exists {
@@ -116,7 +115,7 @@ func GetPluginSettingById(c *middleware.Context) Response {
 	}
 }
 
-func UpdatePluginSetting(c *middleware.Context, cmd m.UpdatePluginSettingCmd) Response {
+func UpdatePluginSetting(c *m.ReqContext, cmd m.UpdatePluginSettingCmd) Response {
 	pluginId := c.Params(":pluginId")
 
 	cmd.OrgId = c.OrgId
@@ -133,7 +132,7 @@ func UpdatePluginSetting(c *middleware.Context, cmd m.UpdatePluginSettingCmd) Re
 	return ApiSuccess("Plugin settings updated")
 }
 
-func GetPluginDashboards(c *middleware.Context) Response {
+func GetPluginDashboards(c *m.ReqContext) Response {
 	pluginId := c.Params(":pluginId")
 
 	if list, err := plugins.GetPluginDashboards(c.OrgId, pluginId); err != nil {
@@ -147,7 +146,7 @@ func GetPluginDashboards(c *middleware.Context) Response {
 	}
 }
 
-func GetPluginMarkdown(c *middleware.Context) Response {
+func GetPluginMarkdown(c *m.ReqContext) Response {
 	pluginId := c.Params(":pluginId")
 	name := c.Params(":name")
 
@@ -164,7 +163,7 @@ func GetPluginMarkdown(c *middleware.Context) Response {
 	}
 }
 
-func ImportDashboard(c *middleware.Context, apiCmd dtos.ImportDashboardCommand) Response {
+func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Response {
 
 	cmd := plugins.ImportDashboardCommand{
 		OrgId:     c.OrgId,

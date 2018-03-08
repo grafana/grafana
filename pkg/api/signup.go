@@ -5,14 +5,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/user/signup/options
-func GetSignUpOptions(c *middleware.Context) Response {
+func GetSignUpOptions(c *m.ReqContext) Response {
 	return Json(200, util.DynMap{
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
 		"autoAssignOrg":      setting.AutoAssignOrg,
@@ -20,7 +19,7 @@ func GetSignUpOptions(c *middleware.Context) Response {
 }
 
 // POST /api/user/signup
-func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
+func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 	if !setting.AllowUserSignUp {
 		return ApiError(401, "User signup is disabled", nil)
 	}
@@ -52,7 +51,7 @@ func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 	return Json(200, util.DynMap{"status": "SignUpCreated"})
 }
 
-func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
+func SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Response {
 	if !setting.AllowUserSignUp {
 		return ApiError(401, "User signup is disabled", nil)
 	}

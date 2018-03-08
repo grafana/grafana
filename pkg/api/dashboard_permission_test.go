@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 
@@ -195,7 +194,7 @@ func updateDashboardPermissionScenario(desc string, url string, routePattern str
 
 		sc := setupScenarioContext(url)
 
-		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.OrgId = TestOrgID
 			sc.context.UserId = TestUserID
