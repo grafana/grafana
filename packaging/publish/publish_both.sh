@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-version=4.6.3
+version=5.0.1
 
 wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_${version}_amd64.deb
 
