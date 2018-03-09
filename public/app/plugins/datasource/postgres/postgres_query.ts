@@ -130,7 +130,7 @@ export default class PostgresQuery {
     this.updatePersistedParts();
   }
 
-  private renderTagCondition(tag, index, interpolate) {
+  private renderWhereConstraint(tag, index, interpolate) {
     var str = '';
     var operator = tag.operator;
     var value = tag.value;
@@ -138,27 +138,11 @@ export default class PostgresQuery {
       str = (tag.condition || 'AND') + ' ';
     }
 
-    if (!operator) {
-      if (/^\/.*\/$/.test(value)) {
-        operator = '=~';
-      } else {
-        operator = '=';
-      }
+    if (interpolate) {
+      value = this.templateSrv.replace(value, this.scopedVars);
     }
 
-    // quote value unless regex
-    if (operator !== '=~' && operator !== '!~') {
-      if (interpolate) {
-        value = this.templateSrv.replace(value, this.scopedVars);
-      }
-      if (operator !== '>' && operator !== '<') {
-        value = "'" + value.replace(/\\/g, '\\\\') + "'";
-      }
-    } else if (interpolate) {
-      value = this.templateSrv.replace(value, this.scopedVars, 'regex');
-    }
-
-    return str + '"' + tag.key + '" ' + operator + ' ' + value;
+    return str + this.quoteIdentifier(tag.key) + ' ' + operator + ' ' + this.quoteLiteral(value);
   }
 
   interpolateQueryStr(value, variable, defaultFormatFn) {
@@ -223,7 +207,7 @@ export default class PostgresQuery {
 
     query += ' FROM ' + this.quoteIdentifier(target.schema) + '.' + this.quoteIdentifier(target.table) + ' WHERE ';
     var conditions = _.map(target.where, (tag, index) => {
-      return this.renderTagCondition(tag, index, interpolate);
+      return this.renderWhereConstraint(tag, index, interpolate);
     });
 
     if (conditions.length > 0) {
@@ -260,7 +244,7 @@ export default class PostgresQuery {
 
   renderAdhocFilters(filters) {
     var conditions = _.map(filters, (tag, index) => {
-      return this.renderTagCondition(tag, index, false);
+      return this.renderWhereConstraint(tag, index, false);
     });
     return conditions.join(' ');
   }
