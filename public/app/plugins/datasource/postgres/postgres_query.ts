@@ -221,7 +221,7 @@ export default class PostgresQuery {
       query += "," + this.quoteIdentifier(this.target.metricColumn) + " AS metric";
     }
 
-    query += ' FROM ' + target.schema + '.' + target.table + ' WHERE ';
+    query += ' FROM ' + this.quoteIdentifier(target.schema) + '.' + this.quoteIdentifier(target.table) + ' WHERE ';
     var conditions = _.map(target.where, (tag, index) => {
       return this.renderTagCondition(tag, index, interpolate);
     });
