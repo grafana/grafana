@@ -4,24 +4,23 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/org
-func GetOrgCurrent(c *middleware.Context) Response {
+func GetOrgCurrent(c *m.ReqContext) Response {
 	return getOrgHelper(c.OrgId)
 }
 
 // GET /api/orgs/:orgId
-func GetOrgById(c *middleware.Context) Response {
+func GetOrgById(c *m.ReqContext) Response {
 	return getOrgHelper(c.ParamsInt64(":orgId"))
 }
 
 // Get /api/orgs/name/:name
-func GetOrgByName(c *middleware.Context) Response {
+func GetOrgByName(c *m.ReqContext) Response {
 	query := m.GetOrgByNameQuery{Name: c.Params(":name")}
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrOrgNotFound {
@@ -76,7 +75,7 @@ func getOrgHelper(orgId int64) Response {
 }
 
 // POST /api/orgs
-func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
+func CreateOrg(c *m.ReqContext, cmd m.CreateOrgCommand) Response {
 	if !c.IsSignedIn || (!setting.AllowUserOrgCreate && !c.IsGrafanaAdmin) {
 		return ApiError(403, "Access denied", nil)
 	}
@@ -98,12 +97,12 @@ func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
 }
 
 // PUT /api/org
-func UpdateOrgCurrent(c *middleware.Context, form dtos.UpdateOrgForm) Response {
+func UpdateOrgCurrent(c *m.ReqContext, form dtos.UpdateOrgForm) Response {
 	return updateOrgHelper(form, c.OrgId)
 }
 
 // PUT /api/orgs/:orgId
-func UpdateOrg(c *middleware.Context, form dtos.UpdateOrgForm) Response {
+func UpdateOrg(c *m.ReqContext, form dtos.UpdateOrgForm) Response {
 	return updateOrgHelper(form, c.ParamsInt64(":orgId"))
 }
 
@@ -120,12 +119,12 @@ func updateOrgHelper(form dtos.UpdateOrgForm, orgId int64) Response {
 }
 
 // PUT /api/org/address
-func UpdateOrgAddressCurrent(c *middleware.Context, form dtos.UpdateOrgAddressForm) Response {
+func UpdateOrgAddressCurrent(c *m.ReqContext, form dtos.UpdateOrgAddressForm) Response {
 	return updateOrgAddressHelper(form, c.OrgId)
 }
 
 // PUT /api/orgs/:orgId/address
-func UpdateOrgAddress(c *middleware.Context, form dtos.UpdateOrgAddressForm) Response {
+func UpdateOrgAddress(c *m.ReqContext, form dtos.UpdateOrgAddressForm) Response {
 	return updateOrgAddressHelper(form, c.ParamsInt64(":orgId"))
 }
 
@@ -150,7 +149,7 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgId int64) Respons
 }
 
 // GET /api/orgs/:orgId
-func DeleteOrgById(c *middleware.Context) Response {
+func DeleteOrgById(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
 		if err == m.ErrOrgNotFound {
 			return ApiError(404, "Failed to delete organization. ID not found", nil)
@@ -160,7 +159,7 @@ func DeleteOrgById(c *middleware.Context) Response {
 	return ApiSuccess("Organization deleted")
 }
 
-func SearchOrgs(c *middleware.Context) Response {
+func SearchOrgs(c *m.ReqContext) Response {
 	query := m.SearchOrgsQuery{
 		Query: c.Query("query"),
 		Name:  c.Query("name"),

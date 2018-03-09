@@ -18,7 +18,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,14 +41,14 @@ type jwtToken struct {
 
 type DataSourceProxy struct {
 	ds        *m.DataSource
-	ctx       *middleware.Context
+	ctx       *m.ReqContext
 	targetUrl *url.URL
 	proxyPath string
 	route     *plugins.AppPluginRoute
 	plugin    *plugins.DataSourcePlugin
 }
 
-func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *middleware.Context, proxyPath string) *DataSourceProxy {
+func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
 	targetUrl, _ := url.Parse(ds.Url)
 
 	return &DataSourceProxy{
@@ -255,7 +254,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"body", body)
 }
 
-func checkWhiteList(c *middleware.Context, host string) bool {
+func checkWhiteList(c *m.ReqContext, host string) bool {
 	if host != "" && len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[host]; !exists {
 			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)

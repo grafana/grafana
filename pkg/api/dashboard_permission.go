@@ -5,12 +5,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetDashboardPermissionList(c *middleware.Context) Response {
+func GetDashboardPermissionList(c *m.ReqContext) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")
@@ -38,7 +37,7 @@ func GetDashboardPermissionList(c *middleware.Context) Response {
 	return Json(200, acl)
 }
 
-func UpdateDashboardPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func UpdateDashboardPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	dashId := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashId, "")

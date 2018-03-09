@@ -15,7 +15,7 @@ weight = 2
 
 Description | Download
 ------------ | -------------
-Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [5.0.0 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.0-1.x86_64.rpm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [5.0.1 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.1-1.x86_64.rpm)
 
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
@@ -26,7 +26,7 @@ installation.
 You can install Grafana using Yum directly.
 
 ```bash
-$ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.0-1.x86_64.rpm
+$ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.1-1.x86_64.rpm
 ```
 
 Or install manually using `rpm`.
@@ -34,15 +34,15 @@ Or install manually using `rpm`.
 #### On CentOS / Fedora / Redhat:
 
 ```bash
-$ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.0-1.x86_64.rpm
+$ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.1-1.x86_64.rpm
 $ sudo yum install initscripts fontconfig
-$ sudo rpm -Uvh grafana-5.0.0-1.x86_64.rpm
+$ sudo rpm -Uvh grafana-5.0.1-1.x86_64.rpm
 ```
 
 #### On OpenSuse:
 
 ```bash
-$ sudo rpm -i --nodeps grafana-5.0.0-1.x86_64.rpm
+$ sudo rpm -i --nodeps grafana-5.0.1-1.x86_64.rpm
 ```
 
 ## Install via YUM Repository
