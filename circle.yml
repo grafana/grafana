@@ -61,7 +61,6 @@ jobs:
   deploy-master:
     docker:
       - image: circleci/python:2.7-stretch
-    working_directory: /go/src/github.com/grafana/grafana
     steps:
       - attach_workspace:
           at: .
@@ -84,7 +83,6 @@ jobs:
   deploy-release:
     docker:
       - image: circleci/python:2.7-stretch
-    working_directory: /go/src/github.com/grafana/grafana
     steps:
       - attach_workspace:
           at: dist
