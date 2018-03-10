@@ -273,17 +273,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
   }
 
-  getTagsOrValues(segment, index) {
+  getWhereSegments(segment, index) {
     if (segment.type === 'condition') {
       return this.$q.when([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
     }
     if (segment.type === 'operator') {
-      var nextValue = this.whereSegments[index + 1].value;
-      if (/^\/.*\/$/.test(nextValue)) {
-        return this.$q.when(this.uiSegmentSrv.newOperators(['=~', '!~']));
-      } else {
-        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
-      }
+      return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
     }
 
     var query, addTemplateVars;
@@ -306,15 +301,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
         return results;
       })
       .catch(this.handleQueryError.bind(this));
-  }
-
-  getTagValueOperator(tagValue, tagOperator): string {
-    if (tagOperator !== '=~' && tagOperator !== '!~' && /^\/.*\/$/.test(tagValue)) {
-      return '=~';
-    } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
-      return '=';
-    }
-    return null;
   }
 
   whereSegmentUpdated(segment, index) {
@@ -381,14 +367,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
       .metricFindQuery(this.queryBuilder.buildColumnQuery())
       .then(tags => {
         var options = [];
-        if (!this.target.limit) {
-          options.push(this.uiSegmentSrv.newSegment({ value: 'LIMIT' }));
-        }
         if (!this.queryModel.hasGroupByTime()) {
           options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time(1m,none)' }));
         }
         for (let tag of tags) {
-          options.push(this.uiSegmentSrv.newSegment({ type: 'column', value: 'column(' + tag.text + ')' }));
+          options.push(this.uiSegmentSrv.newSegment({ type: 'column', value: tag.text }));
         }
         return options;
       })
@@ -397,14 +380,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   groupByAction() {
     switch (this.groupBySegment.value) {
-      case 'LIMIT': {
-        this.target.limit = 10;
-        break;
-      }
-      case 'ORDER BY time DESC': {
-        this.target.orderByTime = 'DESC';
-        break;
-      }
       default: {
         this.queryModel.addGroupBy(this.groupBySegment.value);
       }
