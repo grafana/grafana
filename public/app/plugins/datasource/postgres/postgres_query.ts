@@ -56,10 +56,6 @@ export default class PostgresQuery {
     return _.find(this.target.groupBy, (g: any) => g.type === 'time');
   }
 
-  hasFill() {
-    return _.find(this.target.groupBy, (g: any) => g.type === 'fill');
-  }
-
   addGroupBy(value) {
     var stringParts = value.match(/^(\w+)(\((.*)\))?$/);
     var typePart = stringParts[1];
@@ -130,19 +126,19 @@ export default class PostgresQuery {
     this.updatePersistedParts();
   }
 
-  private renderWhereConstraint(tag, index, interpolate) {
+  private renderWhereConstraint(constraint, index, interpolate) {
     var str = '';
-    var operator = tag.operator;
-    var value = tag.value;
+    var operator = constraint.operator;
+    var value = constraint.value;
     if (index > 0) {
-      str = (tag.condition || 'AND') + ' ';
+      str = (constraint.condition || 'AND') + ' ';
     }
 
     if (interpolate) {
       value = this.templateSrv.replace(value, this.scopedVars);
     }
 
-    return str + this.quoteIdentifier(tag.key) + ' ' + operator + ' ' + this.quoteLiteral(value);
+    return str + this.quoteIdentifier(constraint.key) + ' ' + operator + ' ' + this.quoteLiteral(value);
   }
 
   interpolateQueryStr(value, variable, defaultFormatFn) {
@@ -207,7 +203,7 @@ export default class PostgresQuery {
 
     query += ' FROM ' + this.quoteIdentifier(target.schema) + '.' + this.quoteIdentifier(target.table) + ' WHERE ';
     var conditions = _.map(target.where, (tag, index) => {
-      return this.renderWhereConstraint(tag, index, interpolate);
+      return this.renderWhereConstraint(tag, index, false);
     });
 
     if (conditions.length > 0) {

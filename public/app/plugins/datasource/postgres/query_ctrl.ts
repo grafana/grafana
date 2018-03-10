@@ -353,7 +353,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
   rebuildTargetWhereConditions() {
     var where = [];
     var tagIndex = 0;
-    var tagOperator = '';
 
     _.each(this.whereSegments, (segment2, index) => {
       if (segment2.type === 'key') {
@@ -362,11 +361,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
         }
         where[tagIndex].key = segment2.value;
       } else if (segment2.type === 'value') {
-        tagOperator = this.getTagValueOperator(segment2.value, where[tagIndex].operator);
-        if (tagOperator) {
-          this.whereSegments[index - 1] = this.uiSegmentSrv.newOperator(tagOperator);
-          where[tagIndex].operator = tagOperator;
-        }
+        where[tagIndex].value = segment2.value;
+      } else if (segment2.type === 'template') {
         where[tagIndex].value = segment2.value;
       } else if (segment2.type === 'condition') {
         where.push({ condition: segment2.value });
