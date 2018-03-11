@@ -18,6 +18,7 @@ export class ElasticDatasource {
   interval: string;
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
+  token: any;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
@@ -34,6 +35,7 @@ export class ElasticDatasource {
       timeField: this.timeField,
       esVersion: this.esVersion,
     });
+    this.token = instanceSettings.jsonData.token;
   }
 
   private request(method, url, data?) {
@@ -49,6 +51,12 @@ export class ElasticDatasource {
     if (this.basicAuth) {
       options.headers = {
         "Authorization": this.basicAuth
+      };
+    }
+
+    if (this.token) {
+      options.headers = {
+        "Authorization": 'Bearer ' + this.token
       };
     }
 
