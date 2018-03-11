@@ -68,26 +68,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
 
     this.buildSelectMenu();
-    this.whereSegments = [];
-    for (let tag of this.target.where) {
-      if (!tag.operator) {
-        if (/^\/.*\/$/.test(tag.value)) {
-          tag.operator = '=~';
-        } else {
-          tag.operator = '=';
-        }
-      }
-
-      if (tag.condition) {
-        this.whereSegments.push(uiSegmentSrv.newCondition(tag.condition));
-      }
-
-      this.whereSegments.push(uiSegmentSrv.newKey(tag.key));
-      this.whereSegments.push(uiSegmentSrv.newOperator(tag.operator));
-      this.whereSegments.push(uiSegmentSrv.newKeyValue(tag.value));
-    }
-
-    this.fixWhereSegments();
+    this.buildWhereSegments();
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
 
     this.removeWhereFilterSegment = uiSegmentSrv.newSegment({
@@ -264,7 +245,18 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
   }
 
-  fixWhereSegments() {
+  buildWhereSegments() {
+    this.whereSegments = [];
+    for (let constraint of this.target.where) {
+
+      if (constraint.condition) {
+        this.whereSegments.push(this.uiSegmentSrv.newCondition(constraint.condition));
+      }
+      this.whereSegments.push(this.uiSegmentSrv.newKey(constraint.key));
+      this.whereSegments.push(this.uiSegmentSrv.newOperator(constraint.operator));
+      this.whereSegments.push(this.uiSegmentSrv.newKeyValue(constraint.value));
+    }
+
     var count = this.whereSegments.length;
     var lastSegment = this.whereSegments[Math.max(count - 1, 0)];
 
