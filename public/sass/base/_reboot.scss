@@ -5,7 +5,6 @@
 // Global resets to common HTML elements and more for easier usage by Bootstrap.
 // Adds additional rules on top of Normalize.css, including several overrides.
 
-
 // Reset the box-sizing
 //
 // Change from `box-sizing: content-box` to `border-box` so that when you add
@@ -29,7 +28,6 @@ html {
   box-sizing: inherit;
 }
 
-
 // Make viewport responsive
 //
 // @viewport is needed because IE 10+ doesn't honor <meta name="viewport"> in
@@ -46,9 +44,10 @@ html {
 // Wrap `@viewport` with `@at-root` for when folks do a nested import (e.g.,
 // `.class-name { @import "bootstrap"; }`).
 @at-root {
-  @-ms-viewport { width: device-width; }
+  @-ms-viewport {
+    width: device-width;
+  }
 }
-
 
 //
 // Reset HTML, body, and more
@@ -65,7 +64,7 @@ html {
   // See https://github.com/twbs/bootstrap/issues/18543
   -ms-overflow-style: scrollbar;
   // Changes the default tap highlight to be completely transparent in iOS.
-  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   height: 100%;
 }
 
@@ -79,6 +78,8 @@ body {
   // By default, `<body>` has no `background-color` so we set one as a best practice.
   background-color: $body-bg;
   height: 100%;
+  width: 100%;
+  position: absolute;
 }
 
 // Suppress the focus outline on elements that cannot be accessed via keyboard.
@@ -90,7 +91,6 @@ body {
   outline: none !important;
 }
 
-
 //
 // Typography
 //
@@ -99,9 +99,14 @@ body {
 //
 // By default, `<h1>`-`<h6>` all receive top and bottom margins. We nuke the top
 // margin for easier control within type scales as it avoids margin collapsing.
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin-top: 0;
-  margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
 }
 
 // Reset margins on paragraphs
@@ -114,9 +119,7 @@ p {
 }
 
 // Abbreviations and acronyms
-abbr[title],
-// Add data-* attribute to help out our tooltip plugin, per https://github.com/twbs/bootstrap/issues/5257
-abbr[data-original-title] {
+abbr[title] {
   cursor: help;
   border-bottom: 1px dotted $abbr-border-color;
 }
@@ -146,14 +149,13 @@ dt {
 }
 
 dd {
-  margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
   margin-left: 0; // Undo browser default
 }
 
 blockquote {
   margin: 0 0 1rem;
 }
-
 
 //
 // Links
@@ -173,7 +175,6 @@ a {
   }
 }
 
-
 //
 // Code
 //
@@ -185,7 +186,6 @@ pre {
   margin-bottom: 1rem;
 }
 
-
 //
 // Figures
 //
@@ -195,7 +195,6 @@ figure {
   // We reset that to create a better flow in-page.
   margin: 0 0 1rem;
 }
-
 
 //
 // Images
@@ -209,7 +208,6 @@ img {
   // For the rationale behind this, see the comments on the `.img-fluid` class.
 }
 
-
 // iOS "clickable elements" fix for role="button"
 //
 // Fixes "clickability" issue (and more generally, the firing of events such as focus as well)
@@ -219,7 +217,6 @@ img {
 [role="button"] {
   cursor: pointer;
 }
-
 
 // Avoid 300ms click delay on touch devices that support the `touch-action` CSS property.
 //
@@ -243,7 +240,6 @@ textarea {
   touch-action: manipulation;
 }
 
-
 //
 // Tables
 //
@@ -265,7 +261,6 @@ th {
   // Centered by default, but left-align-ed to match the `td`s below.
   text-align: left;
 }
-
 
 //
 // Forms
@@ -319,10 +314,10 @@ legend {
   display: block;
   width: 100%;
   padding: 0;
-  margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
   font-size: 1.5rem;
   line-height: inherit;
-//  border: 0;
+  //  border: 0;
 }
 
 input[type="search"] {
@@ -336,9 +331,9 @@ input[type="search"] {
 // todo: needed?
 output {
   display: inline-block;
-//  font-size: $font-size-base;
-//  line-height: $line-height;
-//  color: $input-color;
+  //  font-size: $font-size-base;
+  //  line-height: $line-height;
+  //  color: $input-color;
 }
 
 // Always hide an element with the `hidden` HTML attribute (from PureCSS).

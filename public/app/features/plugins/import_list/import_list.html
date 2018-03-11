@@ -6,18 +6,10 @@
 					<i class="icon-gf icon-gf-dashboard"></i>
 				</td>
 				<td>
-					<a href="dashboard/{{dash.importedUri}}" ng-show="dash.imported">
+					<a href="{{dash.importedUrl}}" ng-show="dash.imported">
 						{{dash.title}}
 					</a>
-					<span ng-show="!dash.imported">
-						{{dash.title}}
-					</span>
-				</td>
-				<td>
-          <span>
-            Revision: {{dash.revision}}
-            <span ng-if="dash.imported" class="small">(Imported: {{dash.importedRevision}})</span>
-          <span>
+					<span ng-show="!dash.imported">{{dash.title}}</span>
 				</td>
 				<td style="text-align: right">
 					<button class="btn btn-secondary btn-small" ng-click="ctrl.import(dash, false)" ng-show="!dash.imported">

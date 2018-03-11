@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -24,6 +25,7 @@ import (
 
 type CloudWatchExecutor struct {
 	*models.DataSource
+	ec2Svc ec2iface.EC2API
 }
 
 type DatasourceInfo struct {
@@ -150,8 +152,6 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simpl
 		MetricName: aws.String(query.MetricName),
 		Dimensions: query.Dimensions,
 		Period:     aws.Int64(int64(query.Period)),
-		StartTime:  aws.Time(startTime),
-		EndTime:    aws.Time(endTime),
 	}
 	if len(query.Statistics) > 0 {
 		params.Statistics = query.Statistics
@@ -160,15 +160,36 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simpl
 		params.ExtendedStatistics = query.ExtendedStatistics
 	}
 
-	if setting.Env == setting.DEV {
-		plog.Debug("CloudWatch query", "raw query", params)
+	// 1 minutes resolutin metrics is stored for 15 days, 15 * 24 * 60 = 21600
+	if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
+		return nil, errors.New("too long query period")
 	}
+	var resp *cloudwatch.GetMetricStatisticsOutput
+	for startTime.Before(endTime) {
+		params.StartTime = aws.Time(startTime)
+		if query.HighResolution {
+			startTime = startTime.Add(time.Duration(1440*query.Period) * time.Second)
+		} else {
+			startTime = endTime
+		}
+		params.EndTime = aws.Time(startTime)
 
-	resp, err := client.GetMetricStatisticsWithContext(ctx, params, request.WithResponseReadTimeout(10*time.Second))
-	if err != nil {
-		return nil, err
+		if setting.Env == setting.DEV {
+			plog.Debug("CloudWatch query", "raw query", params)
+		}
+
+		partResp, err := client.GetMetricStatisticsWithContext(ctx, params, request.WithResponseReadTimeout(10*time.Second))
+		if err != nil {
+			return nil, err
+		}
+		if resp != nil {
+			resp.Datapoints = append(resp.Datapoints, partResp.Datapoints...)
+		} else {
+			resp = partResp
+
+		}
+		metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc()
 	}
-	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc()
 
 	queryRes, err := parseResponse(resp, query)
 	if err != nil {
@@ -267,7 +288,12 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		period = int(d.Seconds())
 	}
 
-	alias := model.Get("alias").MustString("{{metric}}_{{stat}}")
+	alias := model.Get("alias").MustString()
+	if alias == "" {
+		alias = "{{metric}}_{{stat}}"
+	}
+
+	highResolution := model.Get("highResolution").MustBool(false)
 
 	return &CloudWatchQuery{
 		Region:             region,
@@ -278,6 +304,7 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		ExtendedStatistics: aws.StringSlice(extendedStatistics),
 		Period:             period,
 		Alias:              alias,
+		HighResolution:     highResolution,
 	}, nil
 }
 
@@ -287,6 +314,7 @@ func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]stri
 	data["namespace"] = query.Namespace
 	data["metric"] = query.MetricName
 	data["stat"] = stat
+	data["period"] = strconv.Itoa(query.Period)
 	for k, v := range dimensions {
 		data[k] = v
 	}
@@ -311,7 +339,8 @@ func parseResponse(resp *cloudwatch.GetMetricStatisticsOutput, query *CloudWatch
 	var value float64
 	for _, s := range append(query.Statistics, query.ExtendedStatistics...) {
 		series := tsdb.TimeSeries{
-			Tags: map[string]string{},
+			Tags:   map[string]string{},
+			Points: make([]tsdb.TimePoint, 0),
 		}
 		for _, d := range query.Dimensions {
 			series.Tags[*d.Name] = *d.Value

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -20,19 +21,22 @@ const (
 type GCSUploader struct {
 	keyFile string
 	bucket  string
+	path    string
 	log     log.Logger
 }
 
-func NewGCSUploader(keyFile, bucket string) *GCSUploader {
+func NewGCSUploader(keyFile, bucket, path string) *GCSUploader {
 	return &GCSUploader{
 		keyFile: keyFile,
 		bucket:  bucket,
+		path:    path,
 		log:     log.New("gcsuploader"),
 	}
 }
 
 func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
-	key := util.GetRandomString(20) + ".png"
+	fileName := util.GetRandomString(20) + ".png"
+	key := path.Join(u.path, fileName)
 
 	u.log.Debug("Opening key file ", u.keyFile)
 	data, err := ioutil.ReadFile(u.keyFile)

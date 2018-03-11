@@ -1,4 +1,3 @@
-
 @mixin clearfix() {
   &::after {
     content: "";
@@ -73,7 +72,6 @@
   border: 0;
 }
 
-
 // FONTS
 // --------------------------------------------------
 
@@ -110,7 +108,6 @@
   @include font-shorthand($size, $weight, $lineHeight);
 }
 
-
 // FORMS
 // --------------------------------------------------
 
@@ -121,7 +118,6 @@
   min-height: $input-line-height; // Make inputs at least the height of their button counterpart (base line-height + padding + border)
   @include box-sizing(border-box); // Makes inputs behave like true block-level elements
 }
-
 
 // CSS3 PROPERTIES
 // --------------------------------------------------
@@ -146,13 +142,13 @@
 }
 @mixin border-bottom-right-radius($radius) {
   -webkit-border-bottom-right-radius: $radius;
-      -moz-border-radius-bottomright: $radius;
-          border-bottom-right-radius: $radius;
+  -moz-border-radius-bottomright: $radius;
+  border-bottom-right-radius: $radius;
 }
 @mixin border-bottom-left-radius($radius) {
   -webkit-border-bottom-left-radius: $radius;
-      -moz-border-radius-bottomleft: $radius;
-          border-bottom-left-radius: $radius;
+  -moz-border-radius-bottomleft: $radius;
+  border-bottom-left-radius: $radius;
 }
 
 // Single Side Border Radius
@@ -241,21 +237,21 @@
 // CSS3 Content Columns
 @mixin content-columns($columnCount, $columnGap: $gridGutterWidth) {
   -webkit-column-count: $columnCount;
-     -moz-column-count: $columnCount;
-          column-count: $columnCount;
+  -moz-column-count: $columnCount;
+  column-count: $columnCount;
   -webkit-column-gap: $columnGap;
-     -moz-column-gap: $columnGap;
-          column-gap: $columnGap;
+  -moz-column-gap: $columnGap;
+  column-gap: $columnGap;
 }
 
 // Optional hyphenation
 @mixin hyphens($mode: auto) {
   word-wrap: break-word;
   -webkit-hyphens: $mode;
-     -moz-hyphens: $mode;
-      -ms-hyphens: $mode;
-       -o-hyphens: $mode;
-          hyphens: $mode;
+  -moz-hyphens: $mode;
+  -ms-hyphens: $mode;
+  -o-hyphens: $mode;
+  hyphens: $mode;
 }
 
 // Opacity
@@ -269,16 +265,26 @@
 // Add an alphatransparency value to any background or border color (via Elyse Holladay)
 #translucent {
   @mixin background($color: $white, $alpha: 1) {
-    background-color: hsla(hue($color), saturation($color), lightness($color), $alpha);
+    background-color: hsla(
+      hue($color),
+      saturation($color),
+      lightness($color),
+      $alpha
+    );
   }
   @mixin border($color: $white, $alpha: 1) {
-    border-color: hsla(hue($color), saturation($color), lightness($color), $alpha);
+    border-color: hsla(
+      hue($color),
+      saturation($color),
+      lightness($color),
+      $alpha
+    );
     @include background-clip(padding-box);
   }
 }
 
 // Gradient Bar Colors for buttons and alerts
-@mixin gradientBar($primaryColor, $secondaryColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0,0,0,.25)) {
+@mixin gradientBar($primaryColor, $secondaryColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0,0,0,0.25)) {
   color: $text-color;
   text-shadow: $textShadow;
   @include gradient-vertical($primaryColor, $secondaryColor);
@@ -288,37 +294,66 @@
 // Gradients
 @mixin gradient-horizontal($startColor: #555, $endColor: #333) {
   background-color: $endColor;
-  background-image: linear-gradient(to right, $startColor, $endColor); // Standard, IE10
+  background-image: linear-gradient(
+    to right,
+    $startColor,
+    $endColor
+  ); // Standard, IE10
   background-repeat: repeat-x;
 }
 
 @mixin gradient-vertical($startColor: #555, $endColor: #333) {
   background-color: mix($startColor, $endColor, 60%);
-  background-image: linear-gradient(to bottom, $startColor, $endColor); // Standard, IE10
+  background-image: linear-gradient(
+    to bottom,
+    $startColor,
+    $endColor
+  ); // Standard, IE10
   background-repeat: repeat-x;
 }
 
 @mixin gradient-directional($startColor: #555, $endColor: #333, $deg: 45deg) {
   background-color: $endColor;
   background-repeat: repeat-x;
-  background-image: linear-gradient($deg, $startColor, $endColor); // Standard, IE10
+  background-image: linear-gradient(
+    $deg,
+    $startColor,
+    $endColor
+  ); // Standard, IE10
 }
 
 @mixin gradient-horizontal-three-colors($startColor: #00b3ee, $midColor: #7a43b6, $colorStop: 50%, $endColor: #c3325f) {
   background-color: mix($midColor, $endColor, 80%);
-  background-image: linear-gradient(to right, $startColor, $midColor $colorStop, $endColor);
+  background-image: linear-gradient(
+    to right,
+    $startColor,
+    $midColor $colorStop,
+    $endColor
+  );
   background-repeat: no-repeat;
 }
 
 @mixin gradient-vertical-three-colors($startColor: #00b3ee, $midColor: #7a43b6, $colorStop: 50%, $endColor: #c3325f) {
   background-color: mix($midColor, $endColor, 80%);
-  background-image: linear-gradient($startColor, $midColor $colorStop, $endColor);
+  background-image: linear-gradient(
+    $startColor,
+    $midColor $colorStop,
+    $endColor
+  );
   background-repeat: no-repeat;
 }
 
 @mixin gradient-radial($innerColor: #555, $outerColor: #333) {
   background-color: $outerColor;
-  background-image: -webkit-gradient(radial, center center, 0, center center, 460, from($innerColor), to($outerColor));
+  background-image: -webkit-gradient(
+    radial,
+    center center,
+    0,
+    center center,
+    460,
+    from($innerColor),
+    to($outerColor)
+  );
   background-image: -webkit-radial-gradient(circle, $innerColor, $outerColor);
   background-image: -moz-radial-gradient(circle, $innerColor, $outerColor);
   background-image: -o-radial-gradient(circle, $innerColor, $outerColor);
@@ -327,16 +362,29 @@
 
 @mixin striped($color: #555, $angle: 45deg) {
   background-color: $color;
-  background-image: linear-gradient($angle, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(
+    $angle,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
 }
 
-@mixin left-brand-border() {
-  border-left: 2px solid transparent;
+@mixin left-brand-border($color: transparent) {
+  border-left: 2px solid $color;
 }
 
 @mixin left-brand-border-gradient() {
   border: none;
-  border-image: linear-gradient(rgba(255,213,0,1) 0%, rgba(255,68,0,1) 99%, rgba(255,68,0,1) 100%);
+  border-image: linear-gradient(
+    rgba(255, 213, 0, 1) 0%,
+    rgba(255, 68, 0, 1) 99%,
+    rgba(255, 68, 0, 1) 100%
+  );
   border-image-slice: 1;
   border-style: solid;
   border-top: 0;
@@ -355,4 +403,16 @@
   border-bottom-width: 1px;
 }
 
+@mixin list-item() {
+  display: block;
+  margin: 3px;
+  padding: 7px;
+  background: $list-item-bg;
+  box-shadow: $list-item-shadow;
+  color: $list-item-link-color;
 
+  &:hover {
+    background: $list-item-hover-bg;
+    color: $list-item-link-color;
+  }
+}

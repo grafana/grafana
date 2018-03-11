@@ -36,9 +36,9 @@ export function exportDataModal() {
     controllerAs: 'ctrl',
     scope: {
       panel: '<',
-      data: '<' // The difference to '=' is that the bound properties are not watched
+      data: '<', // The difference to '=' is that the bound properties are not watched
     },
-    bindToController: true
+    bindToController: true,
   };
 }
 

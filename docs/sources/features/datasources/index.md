@@ -28,8 +28,9 @@ The following datasources are officially supported:
 * [InfluxDB]({{< relref "influxdb.md" >}})
 * [OpenTSDB]({{< relref "opentsdb.md" >}})
 * [Prometheus]({{< relref "prometheus.md" >}})
+* [MySQL]({{< relref "mysql.md" >}})
+* [Postgres]({{< relref "postgres.md" >}})
 
 ## Data source plugins
 
 Since grafana 3.0 you can install data sources as plugins. Checkout [Grafana.net](https://grafana.com/plugins) for more data sources.
-

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 export class OpenTsConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/opentsdb/partials/config.html';
   current: any;
@@ -11,15 +9,7 @@ export class OpenTsConfigCtrl {
     this.current.jsonData.tsdbResolution = this.current.jsonData.tsdbResolution || 1;
   }
 
-  tsdbVersions = [
-    {name: '<=2.1', value: 1},
-    {name: '==2.2', value: 2},
-    {name: '==2.3', value: 3},
-  ];
+  tsdbVersions = [{ name: '<=2.1', value: 1 }, { name: '==2.2', value: 2 }, { name: '==2.3', value: 3 }];
 
-  tsdbResolutions = [
-    {name: 'second', value: 1},
-    {name: 'millisecond', value: 2},
-  ];
-
+  tsdbResolutions = [{ name: 'second', value: 1 }, { name: 'millisecond', value: 2 }];
 }

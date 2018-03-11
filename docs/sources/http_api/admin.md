@@ -61,7 +61,7 @@ Content-Type: application/json
     "client_id":"some_id",
     "client_secret":"************",
     "enabled":"false",
-    "scopes":"user:email",
+    "scopes":"user:email,read:org",
     "team_ids":"",
     "token_url":"https://github.com/login/oauth/access_token"
   },
@@ -101,11 +101,6 @@ Content-Type: application/json
   "emails":{
     "templates_pattern":"emails/*.html",
     "welcome_email_on_sign_up":"false"
-  },
-  "event_publisher":{
-    "enabled":"false",
-    "exchange":"grafana_events",
-      "rabbitmq_url":"amqp://localhost/"
   },
   "log":{
     "buffer_len":"10000",

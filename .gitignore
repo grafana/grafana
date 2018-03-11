@@ -10,8 +10,8 @@ awsconfig
 /public_gen
 /public/vendor/npm
 /tmp
-vendor/phantomjs/phantomjs
-vendor/phantomjs/phantomjs.exe
+tools/phantomjs/phantomjs
+tools/phantomjs/phantomjs.exe
 profile.out
 coverage.txt
 
@@ -38,15 +38,21 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 docker-compose.yml
+docker-compose.yaml
+/conf/provisioning/**/custom.yaml
 profile.cov
 /grafana
 .notouch
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
+debug.test
 /examples/*/dist
 /packaging/**/*.rpm
 /packaging/**/*.deb
+
+# Ignore OSX indexing
+.DS_Store
 
 /vendor/**/*.py
 /vendor/**/*.xml
@@ -54,3 +60,4 @@ profile.cov
 /vendor/**/*_test.go
 /vendor/**/.editorconfig
 /vendor/**/appengine*
+*.orig

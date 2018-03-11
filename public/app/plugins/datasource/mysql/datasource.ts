@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import ResponseParser from './response_parser';
 
@@ -15,9 +13,13 @@ export class MysqlDatasource {
     this.responseParser = new ResponseParser(this.$q);
   }
 
-  interpolateVariable(value) {
+  interpolateVariable(value, variable) {
     if (typeof value === 'string') {
-      return '\'' + value + '\'';
+      if (variable.multi || variable.includeAll) {
+        return "'" + value + "'";
+      } else {
+        return value;
+      }
     }
 
     if (typeof value === 'number') {
@@ -29,9 +31,9 @@ export class MysqlDatasource {
         return value;
       }
 
-      return '\'' + val + '\'';
+      return "'" + val + "'";
     });
-    return  quotedValues.join(',');
+    return quotedValues.join(',');
   }
 
   query(options) {
@@ -49,23 +51,27 @@ export class MysqlDatasource {
     });
 
     if (queries.length === 0) {
-      return this.$q.when({data: []});
+      return this.$q.when({ data: [] });
     }
 
-    return this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries: queries,
-      }
-    }).then(this.responseParser.processQueryResult);
+    return this.backendSrv
+      .datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries: queries,
+        },
+      })
+      .then(this.responseParser.processQueryResult);
   }
 
   annotationQuery(options) {
     if (!options.annotation.rawQuery) {
-      return this.$q.reject({message: 'Query missing in annotation definition'});
+      return this.$q.reject({
+        message: 'Query missing in annotation definition',
+      });
     }
 
     const query = {
@@ -75,15 +81,17 @@ export class MysqlDatasource {
       format: 'table',
     };
 
-    return this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries: [query],
-      }
-    }).then(data => this.responseParser.transformAnnotationResponse(options, data));
+    return this.backendSrv
+      .datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries: [query],
+        },
+      })
+      .then(data => this.responseParser.transformAnnotationResponse(options, data));
   }
 
   metricFindQuery(query, optionalOptions) {
@@ -99,42 +107,56 @@ export class MysqlDatasource {
       format: 'table',
     };
 
-    return this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        queries: [interpolatedQuery],
-      }
-    })
-    .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
+    var data = {
+      queries: [interpolatedQuery],
+    };
+
+    if (optionalOptions && optionalOptions.range && optionalOptions.range.from) {
+      data['from'] = optionalOptions.range.from.valueOf().toString();
+    }
+    if (optionalOptions && optionalOptions.range && optionalOptions.range.to) {
+      data['to'] = optionalOptions.range.to.valueOf().toString();
+    }
+
+    return this.backendSrv
+      .datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: data,
+      })
+      .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
   }
 
   testDatasource() {
-    return this.backendSrv.datasourceRequest({
-      url: '/api/tsdb/query',
-      method: 'POST',
-      data: {
-        from: '5m',
-        to: 'now',
-        queries: [{
-          refId: 'A',
-          intervalMs: 1,
-          maxDataPoints: 1,
-          datasourceId: this.id,
-          rawSql: "SELECT 1",
-          format: 'table',
-        }],
-      }
-    }).then(res => {
-      return { status: "success", message: "Database Connection OK"};
-    }).catch(err => {
-      console.log(err);
-      if (err.data && err.data.message) {
-        return { status: "error", message: err.data.message };
-      } else {
-        return { status: "error", message: err.status };
-      }
-    });
+    return this.backendSrv
+      .datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          from: '5m',
+          to: 'now',
+          queries: [
+            {
+              refId: 'A',
+              intervalMs: 1,
+              maxDataPoints: 1,
+              datasourceId: this.id,
+              rawSql: 'SELECT 1',
+              format: 'table',
+            },
+          ],
+        },
+      })
+      .then(res => {
+        return { status: 'success', message: 'Database Connection OK' };
+      })
+      .catch(err => {
+        console.log(err);
+        if (err.data && err.data.message) {
+          return { status: 'error', message: err.data.message };
+        } else {
+          return { status: 'error', message: err.status };
+        }
+      });
   }
 }
-

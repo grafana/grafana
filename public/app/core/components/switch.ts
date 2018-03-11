@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 
 var template = `
@@ -33,7 +31,6 @@ export class SwitchCtrl {
       return this.onChange();
     });
   }
-
 }
 
 export function switchDirective() {
@@ -43,12 +40,12 @@ export function switchDirective() {
     controllerAs: 'ctrl',
     bindToController: true,
     scope: {
-      checked: "=",
-      label: "@",
-      labelClass: "@",
-      tooltip: "@",
-      switchClass: "@",
-      onChange: "&",
+      checked: '=',
+      label: '@',
+      labelClass: '@',
+      tooltip: '@',
+      switchClass: '@',
+      onChange: '&',
     },
     template: template,
   };

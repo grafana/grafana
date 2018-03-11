@@ -95,7 +95,7 @@ func (hs *HttpServer) Start(ctx context.Context) error {
 
 func (hs *HttpServer) Shutdown(ctx context.Context) error {
 	err := hs.httpSrv.Shutdown(ctx)
-	hs.log.Info("stopped http server")
+	hs.log.Info("Stopped HTTP server")
 	return err
 }
 
@@ -146,11 +146,12 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 	m := macaron.New()
 
 	m.Use(middleware.Logger())
-	m.Use(middleware.Recovery())
 
 	if setting.EnableGzip {
 		m.Use(middleware.Gziper())
 	}
+
+	m.Use(middleware.Recovery())
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
@@ -160,6 +161,10 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 
 	hs.mapStatic(m, setting.StaticRootPath, "", "public")
 	hs.mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
+
+	if setting.ImageUploadProvider == "local" {
+		hs.mapStatic(m, setting.ImagesDir, "", "/public/img/attachments")
+	}
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
@@ -193,7 +198,8 @@ func (hs *HttpServer) metricsEndpoint(ctx *macaron.Context) {
 }
 
 func (hs *HttpServer) healthHandler(ctx *macaron.Context) {
-	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/api/health" {
+	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
+	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
 		return
 	}
 

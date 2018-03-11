@@ -1,9 +1,7 @@
-import {Emitter} from '../utils/emitter';
+import { Emitter } from '../utils/emitter';
 
-describe("Emitter", () => {
-
+describe('Emitter', () => {
   describe('given 2 subscribers', () => {
-
     it('should notfiy subscribers', () => {
       var events = new Emitter();
       var sub1Called = false;
@@ -45,20 +43,22 @@ describe("Emitter", () => {
 
       events.on('test', () => {
         sub1Called++;
-        throw {message: "hello"};
+        throw { message: 'hello' };
       });
 
       events.on('test', () => {
         sub2Called++;
       });
 
-      try { events.emit('test', null); } catch (_) { }
-      try { events.emit('test', null); } catch (_) {}
+      try {
+        events.emit('test', null);
+      } catch (_) {}
+      try {
+        events.emit('test', null);
+      } catch (_) {}
 
       expect(sub1Called).toBe(2);
       expect(sub2Called).toBe(0);
     });
   });
 });
-
-

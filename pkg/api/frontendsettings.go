@@ -5,14 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, error) {
+func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	orgDataSources := make([]*m.DataSource, 0)
 
 	if c.OrgId != 0 {
@@ -143,7 +142,6 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"alertingEnabled":         setting.AlertingEnabled,
 		"googleAnalyticsId":       setting.GoogleAnalyticsId,
 		"disableLoginForm":        setting.DisableLoginForm,
-		"disableSignoutMenu":      setting.DisableSignoutMenu,
 		"externalUserMngInfo":     setting.ExternalUserMngInfo,
 		"externalUserMngLinkUrl":  setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName": setting.ExternalUserMngLinkName,
@@ -181,7 +179,7 @@ func getPanelSort(id string) int {
 	return sort
 }
 
-func GetFrontendSettings(c *middleware.Context) {
+func GetFrontendSettings(c *m.ReqContext) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)

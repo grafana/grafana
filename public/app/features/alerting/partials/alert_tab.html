@@ -12,7 +12,7 @@
 			<li ng-class="{active: ctrl.subTabIndex === 2}">
 				<a ng-click="ctrl.changeTabIndex(2)">State history</a>
 			</li>
-      			<li>
+      <li>
 				<a ng-click="ctrl.delete()">Delete</a>
 			</li>
 		</ul>
@@ -143,36 +143,33 @@
 				<i>No state changes recorded</i>
 			</div>
 
-			<section class="card-section card-list-layout-list">
-				<ol class="card-list" >
-					<li class="card-item-wrapper" ng-repeat="ah in ctrl.alertHistory">
-						<div class="alert-list card-item card-item--alert">
-							<div class="alert-list-body">
-								<div class="alert-list-icon alert-list-item-state {{ah.stateModel.stateClass}}">
-									<i class="{{ah.stateModel.iconClass}}"></i>
-								</div>
-								<div class="alert-list-main alert-list-text">
-									<span class="alert-list-state {{ah.stateModel.stateClass}}">{{ah.stateModel.text}}</span>
-									<span class="alert-list-info">{{ah.info}}</span>
-								</div>
-							</div>
-							<div class="alert-list-footer alert-list-text">
-								<span>{{ah.time}}</span>
-								<span><!--Img Link--></span>
-							</div>
-						</div>
-					</li>
-				</ol>
-			</section>
-		</div>
-	</div>
+      <ol class="alert-rule-list" >
+        <li class="alert-rule-item" ng-repeat="al in ctrl.alertHistory">
+          <div class="alert-rule-item__icon {{al.stateModel.stateClass}}">
+            <i class="{{al.stateModel.iconClass}}"></i>
+          </div>
+          <div class="alert-rule-item__body">
+            <div class="alert-rule-item__header">
+              <div class="alert-rule-item__text">
+                <span class="{{al.stateModel.stateClass}}">{{al.stateModel.text}}</span>
+              </div>
+            </div>
+            <span class="alert-list-info">{{al.info}}</span>
+          </div>
+          <div class="alert-rule-item__time">
+            <span>{{al.time}}</span>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
 </div>
 
 <div class="gf-form-group" ng-if="!ctrl.alert">
-	<div class="gf-form-button-row">
-		<button class="btn btn-inverse" ng-click="ctrl.enable()">
-			<i class="icon-gf icon-gf-alert"></i>
-			Create Alert
-		</button>
-	</div>
+  <div class="gf-form-button-row">
+    <button class="btn btn-inverse" ng-click="ctrl.enable()">
+      <i class="icon-gf icon-gf-alert"></i>
+      Create Alert
+    </button>
+  </div>
 </div>

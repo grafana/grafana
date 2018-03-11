@@ -5,9 +5,10 @@
 package log
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -124,6 +125,30 @@ func (w *FileLogWriter) createLogFile() (*os.File, error) {
 	return os.OpenFile(w.Filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 }
 
+func (w *FileLogWriter) lineCounter() (int, error) {
+	r, err := os.OpenFile(w.Filename, os.O_RDONLY, 0644)
+	if err != nil {
+		return 0, fmt.Errorf("lineCounter Open File : %s", err)
+	}
+	buf := make([]byte, 32*1024)
+	count := 0
+
+	for {
+		c, err := r.Read(buf)
+		count += bytes.Count(buf[:c], []byte{'\n'})
+		switch {
+		case err == io.EOF:
+			if err := r.Close(); err != nil {
+				return count, err
+			}
+			return count, nil
+
+		case err != nil:
+			return count, err
+		}
+	}
+}
+
 func (w *FileLogWriter) initFd() error {
 	fd := w.mw.fd
 	finfo, err := fd.Stat()
@@ -133,11 +158,11 @@ func (w *FileLogWriter) initFd() error {
 	w.maxsize_cursize = int(finfo.Size())
 	w.daily_opendate = time.Now().Day()
 	if finfo.Size() > 0 {
-		content, err := ioutil.ReadFile(w.Filename)
+		count, err := w.lineCounter()
 		if err != nil {
 			return err
 		}
-		w.maxlines_curlines = len(strings.Split(string(content), "\n"))
+		w.maxlines_curlines = count
 	} else {
 		w.maxlines_curlines = 0
 	}

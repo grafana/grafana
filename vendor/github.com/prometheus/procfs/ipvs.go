@@ -31,16 +31,16 @@ type IPVSStats struct {
 type IPVSBackendStatus struct {
 	// The local (virtual) IP address.
 	LocalAddress net.IP
+	// The remote (real) IP address.
+	RemoteAddress net.IP
 	// The local (virtual) port.
 	LocalPort uint16
+	// The remote (real) port.
+	RemotePort uint16
 	// The local firewall mark
 	LocalMark string
 	// The transport protocol (TCP, UDP).
 	Proto string
-	// The remote (real) IP address.
-	RemoteAddress net.IP
-	// The remote (real) port.
-	RemotePort uint16
 	// The current number of active connections for this virtual/real address pair.
 	ActiveConn uint64
 	// The current number of inactive connections for this virtual/real address pair.
@@ -151,7 +151,7 @@ func parseIPVSBackendStatus(file io.Reader) ([]IPVSBackendStatus, error) {
 	)
 
 	for scanner.Scan() {
-		fields := strings.Fields(string(scanner.Text()))
+		fields := strings.Fields(scanner.Text())
 		if len(fields) == 0 {
 			continue
 		}

@@ -36,6 +36,16 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			So(context.ConditionEvals, ShouldEqual, "true = true")
 		})
 
+		Convey("Show return triggered with single passing condition2", func() {
+			context := NewEvalContext(context.TODO(), &Rule{
+				Conditions: []Condition{&conditionStub{firing: true, operator: "and"}},
+			})
+
+			handler.Eval(context)
+			So(context.Firing, ShouldEqual, true)
+			So(context.ConditionEvals, ShouldEqual, "true = true")
+		})
+
 		Convey("Show return false with not passing asdf", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
@@ -129,6 +139,33 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
 			So(context.ConditionEvals, ShouldEqual, "[[true OR false] OR true] = true")
+		})
+
+		Convey("Should return false if no condition is firing using OR operator", func() {
+			context := NewEvalContext(context.TODO(), &Rule{
+				Conditions: []Condition{
+					&conditionStub{firing: false, operator: "or"},
+					&conditionStub{firing: false, operator: "or"},
+					&conditionStub{firing: false, operator: "or"},
+				},
+			})
+
+			handler.Eval(context)
+			So(context.Firing, ShouldEqual, false)
+			So(context.ConditionEvals, ShouldEqual, "[[false OR false] OR false] = false")
+		})
+
+		Convey("Should retuasdfrn no data if one condition has nodata", func() {
+			context := NewEvalContext(context.TODO(), &Rule{
+				Conditions: []Condition{
+					&conditionStub{operator: "or", noData: false},
+					&conditionStub{operator: "or", noData: false},
+					&conditionStub{operator: "or", noData: false},
+				},
+			})
+
+			handler.Eval(context)
+			So(context.NoDataFound, ShouldBeFalse)
 		})
 
 		Convey("Should return no data if one condition has nodata", func() {

@@ -455,13 +455,22 @@ kbn.valueFormats.decgbytes = kbn.formatBuilders.decimalSIPrefix('B', 3);
 // Data Rate
 kbn.valueFormats.pps = kbn.formatBuilders.decimalSIPrefix('pps');
 kbn.valueFormats.bps = kbn.formatBuilders.decimalSIPrefix('bps');
-kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('Bps');
+kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('B/s');
 kbn.valueFormats.KBs = kbn.formatBuilders.decimalSIPrefix('Bs', 1);
 kbn.valueFormats.Kbits = kbn.formatBuilders.decimalSIPrefix('bps', 1);
 kbn.valueFormats.MBs = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
 kbn.valueFormats.Mbits = kbn.formatBuilders.decimalSIPrefix('bps', 2);
 kbn.valueFormats.GBs = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
 kbn.valueFormats.Gbits = kbn.formatBuilders.decimalSIPrefix('bps', 3);
+
+// Hash Rate
+kbn.valueFormats.Hs = kbn.formatBuilders.decimalSIPrefix('H/s');
+kbn.valueFormats.KHs = kbn.formatBuilders.decimalSIPrefix('H/s', 1);
+kbn.valueFormats.MHs = kbn.formatBuilders.decimalSIPrefix('H/s', 2);
+kbn.valueFormats.GHs = kbn.formatBuilders.decimalSIPrefix('H/s', 3);
+kbn.valueFormats.THs = kbn.formatBuilders.decimalSIPrefix('H/s', 4);
+kbn.valueFormats.PHs = kbn.formatBuilders.decimalSIPrefix('H/s', 5);
+kbn.valueFormats.EHs = kbn.formatBuilders.decimalSIPrefix('H/s', 6);
 
 // Throughput
 kbn.valueFormats.ops = kbn.formatBuilders.simpleCountUnit('ops');
@@ -475,6 +484,8 @@ kbn.valueFormats.wpm = kbn.formatBuilders.simpleCountUnit('wpm');
 // Energy
 kbn.valueFormats.watt = kbn.formatBuilders.decimalSIPrefix('W');
 kbn.valueFormats.kwatt = kbn.formatBuilders.decimalSIPrefix('W', 1);
+kbn.valueFormats.mwatt = kbn.formatBuilders.decimalSIPrefix('W', -1);
+kbn.valueFormats.kwattm = kbn.formatBuilders.decimalSIPrefix('W/Min', 1);
 kbn.valueFormats.voltamp = kbn.formatBuilders.decimalSIPrefix('VA');
 kbn.valueFormats.kvoltamp = kbn.formatBuilders.decimalSIPrefix('VA', 1);
 kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
@@ -485,9 +496,13 @@ kbn.valueFormats.joule = kbn.formatBuilders.decimalSIPrefix('J');
 kbn.valueFormats.ev = kbn.formatBuilders.decimalSIPrefix('eV');
 kbn.valueFormats.amp = kbn.formatBuilders.decimalSIPrefix('A');
 kbn.valueFormats.kamp = kbn.formatBuilders.decimalSIPrefix('A', 1);
+kbn.valueFormats.mamp = kbn.formatBuilders.decimalSIPrefix('A', -1);
 kbn.valueFormats.volt = kbn.formatBuilders.decimalSIPrefix('V');
 kbn.valueFormats.kvolt = kbn.formatBuilders.decimalSIPrefix('V', 1);
+kbn.valueFormats.mvolt = kbn.formatBuilders.decimalSIPrefix('V', -1);
 kbn.valueFormats.dBm = kbn.formatBuilders.decimalSIPrefix('dBm');
+kbn.valueFormats.ohm = kbn.formatBuilders.decimalSIPrefix('Ω');
+kbn.valueFormats.lumens = kbn.formatBuilders.decimalSIPrefix('Lm');
 
 // Temperature
 kbn.valueFormats.celsius = kbn.formatBuilders.fixedUnit('°C');
@@ -514,6 +529,12 @@ kbn.valueFormats.lengthm = kbn.formatBuilders.decimalSIPrefix('m');
 kbn.valueFormats.lengthmm = kbn.formatBuilders.decimalSIPrefix('m', -1);
 kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('m', 1);
 kbn.valueFormats.lengthmi = kbn.formatBuilders.fixedUnit('mi');
+kbn.valueFormats.lengthft = kbn.formatBuilders.fixedUnit('ft');
+
+// Area
+kbn.valueFormats.areaM2 = kbn.formatBuilders.fixedUnit('m²');
+kbn.valueFormats.areaF2 = kbn.formatBuilders.fixedUnit('ft²');
+kbn.valueFormats.areaMI2 = kbn.formatBuilders.fixedUnit('mi²');
 
 // Mass
 kbn.valueFormats.massmg = kbn.formatBuilders.decimalSIPrefix('g', -1);
@@ -527,11 +548,16 @@ kbn.valueFormats.velocitykmh = kbn.formatBuilders.fixedUnit('km/h');
 kbn.valueFormats.velocitymph = kbn.formatBuilders.fixedUnit('mph');
 kbn.valueFormats.velocityknot = kbn.formatBuilders.fixedUnit('kn');
 
+// Acceleration
+kbn.valueFormats.accMS2 = kbn.formatBuilders.fixedUnit('m/sec²');
+kbn.valueFormats.accFS2 = kbn.formatBuilders.fixedUnit('f/sec²');
+kbn.valueFormats.accG = kbn.formatBuilders.fixedUnit('g');
+
 // Volume
 kbn.valueFormats.litre = kbn.formatBuilders.decimalSIPrefix('L');
 kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
-kbn.valueFormats.m3 = kbn.formatBuilders.decimalSIPrefix('m3');
-kbn.valueFormats.dm3 = kbn.formatBuilders.decimalSIPrefix('dm3');
+kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m3');
+kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm3');
 kbn.valueFormats.gallons = kbn.formatBuilders.fixedUnit('gal');
 
 // Flow
@@ -539,6 +565,22 @@ kbn.valueFormats.flowgpm = kbn.formatBuilders.fixedUnit('gpm');
 kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
 kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
+
+// Angle
+kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
+kbn.valueFormats.radian = kbn.formatBuilders.fixedUnit('rad');
+kbn.valueFormats.grad = kbn.formatBuilders.fixedUnit('grad');
+
+// Radiation
+kbn.valueFormats.radbq = kbn.formatBuilders.decimalSIPrefix('Bq');
+kbn.valueFormats.radci = kbn.formatBuilders.decimalSIPrefix('Ci');
+kbn.valueFormats.radgy = kbn.formatBuilders.decimalSIPrefix('Gy');
+kbn.valueFormats.radrad = kbn.formatBuilders.decimalSIPrefix('rad');
+kbn.valueFormats.radsv = kbn.formatBuilders.decimalSIPrefix('Sv');
+kbn.valueFormats.radrem = kbn.formatBuilders.decimalSIPrefix('rem');
+kbn.valueFormats.radexpckg = kbn.formatBuilders.decimalSIPrefix('C/kg');
+kbn.valueFormats.radr = kbn.formatBuilders.decimalSIPrefix('R');
+kbn.valueFormats.radsvh = kbn.formatBuilders.decimalSIPrefix('Sv/h');
 
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -857,6 +899,18 @@ kbn.getUnitFormats = function() {
       ],
     },
     {
+      text: 'hash rate',
+      submenu: [
+        { text: 'hashes/sec', value: 'Hs' },
+        { text: 'kilohashes/sec', value: 'KHs' },
+        { text: 'megahashes/sec', value: 'MHs' },
+        { text: 'gigahashes/sec', value: 'GHs' },
+        { text: 'terahashes/sec', value: 'THs' },
+        { text: 'petahashes/sec', value: 'PHs' },
+        { text: 'exahashes/sec', value: 'EHs' },
+      ],
+    },
+    {
       text: 'throughput',
       submenu: [
         { text: 'ops/sec (ops)', value: 'ops' },
@@ -873,8 +927,17 @@ kbn.getUnitFormats = function() {
       submenu: [
         { text: 'millimetre (mm)', value: 'lengthmm' },
         { text: 'meter (m)', value: 'lengthm' },
+        { text: 'feet (ft)', value: 'lengthft' },
         { text: 'kilometer (km)', value: 'lengthkm' },
         { text: 'mile (mi)', value: 'lengthmi' },
+      ],
+    },
+    {
+      text: 'area',
+      submenu: [
+        { text: 'Square Meters (m²)', value: 'areaM2' },
+        { text: 'Square Feet (ft²)', value: 'areaF2' },
+        { text: 'Square Miles (mi²)', value: 'areaMI2' },
       ],
     },
     {
@@ -908,21 +971,27 @@ kbn.getUnitFormats = function() {
     {
       text: 'energy',
       submenu: [
-        { text: 'watt (W)', value: 'watt' },
-        { text: 'kilowatt (kW)', value: 'kwatt' },
-        { text: 'volt-ampere (VA)', value: 'voltamp' },
-        { text: 'kilovolt-ampere (kVA)', value: 'kvoltamp' },
-        { text: 'volt-ampere reactive (var)', value: 'voltampreact' },
-        { text: 'kilovolt-ampere reactive (kvar)', value: 'kvoltampreact' },
-        { text: 'watt-hour (Wh)', value: 'watth' },
-        { text: 'kilowatt-hour (kWh)', value: 'kwatth' },
-        { text: 'joule (J)', value: 'joule' },
-        { text: 'electron volt (eV)', value: 'ev' },
+        { text: 'Watt (W)', value: 'watt' },
+        { text: 'Kilowatt (kW)', value: 'kwatt' },
+        { text: 'Milliwatt (mW)', value: 'mwatt' },
+        { text: 'Volt-ampere (VA)', value: 'voltamp' },
+        { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
+        { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
+        { text: 'Kilovolt-ampere reactive (kvar)', value: 'kvoltampreact' },
+        { text: 'Watt-hour (Wh)', value: 'watth' },
+        { text: 'Kilowatt-hour (kWh)', value: 'kwatth' },
+        { text: 'Kilowatt-min (kWm)', value: 'kwattm' },
+        { text: 'Joule (J)', value: 'joule' },
+        { text: 'Electron volt (eV)', value: 'ev' },
         { text: 'Ampere (A)', value: 'amp' },
         { text: 'Kiloampere (kA)', value: 'kamp' },
+        { text: 'Milliampere (mA)', value: 'mamp' },
         { text: 'Volt (V)', value: 'volt' },
         { text: 'Kilovolt (kV)', value: 'kvolt' },
+        { text: 'Millivolt (mV)', value: 'mvolt' },
         { text: 'Decibel-milliwatt (dBm)', value: 'dBm' },
+        { text: 'Ohm (Ω)', value: 'ohm' },
+        { text: 'Lumens (Lm)', value: 'lumens' },
       ],
     },
     {
@@ -960,6 +1029,36 @@ kbn.getUnitFormats = function() {
         { text: 'Cubic meters/sec (cms)', value: 'flowcms' },
         { text: 'Cubic feet/sec (cfs)', value: 'flowcfs' },
         { text: 'Cubic feet/min (cfm)', value: 'flowcfm' },
+      ],
+    },
+    {
+      text: 'angle',
+      submenu: [
+        { text: 'Degrees (°)', value: 'degree' },
+        { text: 'Radians', value: 'radian' },
+        { text: 'Gradian', value: 'grad' },
+      ],
+    },
+    {
+      text: 'acceleration',
+      submenu: [
+        { text: 'Meters/sec²', value: 'accMS2' },
+        { text: 'Feet/sec²', value: 'accFS2' },
+        { text: 'G unit', value: 'accG' },
+      ],
+    },
+    {
+      text: 'radiation',
+      submenu: [
+        { text: 'Becquerel (Bq)', value: 'radbq' },
+        { text: 'curie (Ci)', value: 'radci' },
+        { text: 'Gray (Gy)', value: 'radgy' },
+        { text: 'rad', value: 'radrad' },
+        { text: 'Sievert (Sv)', value: 'radsv' },
+        { text: 'rem', value: 'radrem' },
+        { text: 'Exposure (C/kg)', value: 'radexpckg' },
+        { text: 'roentgen (R)', value: 'radr' },
+        { text: 'Sievert/hour (Sv/h)', value: 'radsvh' },
       ],
     },
   ];

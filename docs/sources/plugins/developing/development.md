@@ -16,7 +16,7 @@ You can extend Grafana by writing your own plugins and then share then with othe
 
 1. [Setup grafana](http://docs.grafana.org/project/building_from_source/)
 2. Clone an example plugin into ```/var/lib/grafana/plugins```  or `data/plugins` (relative to grafana git repo if you're running development version from source dir)
-3. You one of our example plugins as starting point
+3. Use one of our example plugins as starting point
 
 Example plugins
 

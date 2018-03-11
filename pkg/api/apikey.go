@@ -4,11 +4,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetApiKeys(c *middleware.Context) Response {
+func GetApiKeys(c *m.ReqContext) Response {
 	query := m.GetApiKeysQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -27,7 +26,7 @@ func GetApiKeys(c *middleware.Context) Response {
 	return Json(200, result)
 }
 
-func DeleteApiKey(c *middleware.Context) Response {
+func DeleteApiKey(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := &m.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
@@ -40,7 +39,7 @@ func DeleteApiKey(c *middleware.Context) Response {
 	return ApiSuccess("API key deleted")
 }
 
-func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) Response {
+func AddApiKey(c *m.ReqContext, cmd m.AddApiKeyCommand) Response {
 	if !cmd.Role.IsValid() {
 		return ApiError(400, "Invalid role specified", nil)
 	}

@@ -34,6 +34,7 @@ Name | Description
 *Basic Auth* | Enable basic authentication to the Prometheus data source.
 *User* | Name of your Prometheus user
 *Password* | Database user's password
+*Scrape interval* | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s. 
 
 ## Query editor
 
@@ -95,3 +96,7 @@ Prometheus supports two ways to query annotations.
 - A Prometheus query for pending and firing alerts (for details see [Inspecting alerts during runtime](https://prometheus.io/docs/alerting/rules/#inspecting-alerts-during-runtime))
 
 The step option is useful to limit the number of events returned from your query.
+
+## Getting Grafana metrics into Prometheus
+
+Since 4.6.0 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!

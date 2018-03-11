@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable, containsVariable, assignModelProperties, variableTypes} from './variable';
+import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
 
 function getNoneOption() {
   return { text: 'None', value: '', isNone: true };
@@ -40,12 +40,12 @@ export class QueryVariable implements Variable {
     current: {},
     tags: [],
     useTags: false,
-    tagsQuery: "",
-    tagValuesQuery: "",
+    tagsQuery: '',
+    tagValuesQuery: '',
   };
 
   /** @ngInject **/
-  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv)  {
+  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
     // copy model properties to this instance
     assignModelProperties(this, model, this.defaults);
   }
@@ -78,10 +78,11 @@ export class QueryVariable implements Variable {
   }
 
   updateOptions() {
-    return this.datasourceSrv.get(this.datasource)
-    .then(this.updateOptionsFromMetricFindQuery.bind(this))
-    .then(this.updateTags.bind(this))
-    .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
+    return this.datasourceSrv
+      .get(this.datasource)
+      .then(this.updateOptionsFromMetricFindQuery.bind(this))
+      .then(this.updateTags.bind(this))
+      .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
   }
 
   updateTags(datasource) {
@@ -103,7 +104,7 @@ export class QueryVariable implements Variable {
   getValuesForTag(tagKey) {
     return this.datasourceSrv.get(this.datasource).then(datasource => {
       var query = this.tagValuesQuery.replace('$tag', tagKey);
-      return this.metricFindQuery(datasource, query).then(function (results) {
+      return this.metricFindQuery(datasource, query).then(function(results) {
         return _.map(results, function(value) {
           return value.text;
         });
@@ -125,7 +126,7 @@ export class QueryVariable implements Variable {
   }
 
   metricFindQuery(datasource, query) {
-    var options = {range: undefined, variable: this};
+    var options = { range: undefined, variable: this };
 
     if (this.refresh === 2) {
       options.range = this.timeSrv.timeRange();
@@ -135,7 +136,7 @@ export class QueryVariable implements Variable {
   }
 
   addAllOption() {
-    this.options.unshift({text: 'All', value: "$__all"});
+    this.options.unshift({ text: 'All', value: '$__all' });
   }
 
   metricNamesToVariableValues(metricNames) {
@@ -147,13 +148,9 @@ export class QueryVariable implements Variable {
     }
     for (i = 0; i < metricNames.length; i++) {
       var item = metricNames[i];
-      var text = item.text === undefined || item.text === null
-        ? item.value
-        : item.text;
+      var text = item.text === undefined || item.text === null ? item.value : item.text;
 
-      var value = item.value === undefined || item.value === null
-        ? item.text
-        : item.value;
+      var value = item.value === undefined || item.value === null ? item.text : item.value;
 
       if (_.isNumber(value)) {
         value = value.toString();
@@ -165,14 +162,16 @@ export class QueryVariable implements Variable {
 
       if (regex) {
         matches = regex.exec(value);
-        if (!matches) { continue; }
+        if (!matches) {
+          continue;
+        }
         if (matches.length > 1) {
           value = matches[1];
           text = matches[1];
         }
       }
 
-      options.push({text: text, value: value});
+      options.push({ text: text, value: value });
     }
 
     options = _.uniqBy(options, 'value');
@@ -185,12 +184,12 @@ export class QueryVariable implements Variable {
     }
 
     var sortType = Math.ceil(sortOrder / 2);
-    var reverseSort = (sortOrder % 2 === 0);
+    var reverseSort = sortOrder % 2 === 0;
 
     if (sortType === 1) {
       options = _.sortBy(options, 'text');
     } else if (sortType === 2) {
-      options = _.sortBy(options, (opt) => {
+      options = _.sortBy(options, opt => {
         var matches = opt.text.match(/.*?(\d+).*/);
         if (!matches || matches.length < 2) {
           return -1;

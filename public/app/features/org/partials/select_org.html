@@ -1,53 +1,26 @@
-<div class="container">
+<page-header model="navModel"></page-header>
 
-	<div class="signup-page-background">
-	</div>
+<div class="page-container page-body">
 
-	<div class="login-box">
-
-		<div class="login-box-logo">
-			<img src="img/logo_transparent_200x75.png">
-		</div>
-
-    <div class="invite-box">
-			<h3>
-				<i class="fa fa-users"></i>&nbsp;
-				Change active organization
-			</h3>
+	<div class="signup">
+		<div class="login-form">
 
 			<div class="modal-tagline">
-				You have been added to another Organization <br>
-				due to an open invitation!
-				<br><br>
+				You have been added to another Organization due to an open invitation!
 
 				Please select which organization you want to <br>
 				use right now (you can change this later at any time).
 			</div>
 
 			<div style="display: inline-block; width: 400px; margin: 30px 0">
-				<table class="grafana-options-table">
-					<tr ng-repeat="org in orgs">
-						<td class="nobg max-width-btns">
-							<a ng-click="setUsingOrg(org)" class="btn btn-inverse">
-								{{org.name}} ({{org.role}})
-							</a>
-						</td>
-					</tr>
-				</table>
-			</div>
-
-		</div>
-
-
-		<div class="row" style="margin-top: 50px">
-			<div class="version-footer text-center small">
-				Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
-				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
+				<div ng-repeat="org in orgs">
+					<a ng-click="setUsingOrg(org)" class="btn btn-success">
+						{{org.name}} ({{org.role}})
+					</a>
+				</div>
 			</div>
 		</div>
-
 	</div>
-
 </div>
 
 

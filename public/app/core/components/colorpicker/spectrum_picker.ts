@@ -15,10 +15,10 @@ export function spectrumPicker() {
     template: '<color-picker color="ngModel.$viewValue" onChange="onColorChange"></color-picker>',
     link: function(scope, element, attrs, ngModel) {
       scope.ngModel = ngModel;
-      scope.onColorChange = (color) => {
+      scope.onColorChange = color => {
         ngModel.$setViewValue(color);
       };
-    }
+    },
   };
 }
 coreModule.directive('spectrumPicker', spectrumPicker);
