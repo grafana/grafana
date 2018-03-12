@@ -32,6 +32,30 @@ describe('PrometheusMetricFindQuery', function() {
   describe('When performing metricFindQuery', function() {
     var results;
     var response;
+    it('label_names(metric) should generate label name query', function() {
+      response = {
+        status: 'success',
+        data: {
+          resultType: 'vector',
+          result: [
+            {
+              metric: { __name__: 'metric', job: 'testjob' },
+              value: [1443454528.0, '3846'],
+            },
+          ],
+        },
+      };
+      ctx.$httpBackend.expect('GET', /proxied\/api\/v1\/query\?query=metric&time=.*/).respond(response);
+      var pm = new PrometheusMetricFindQuery(ctx.ds, 'label_names(metric)', ctx.timeSrv);
+      pm.process().then(function(data) {
+        results = data;
+      });
+      ctx.$httpBackend.flush();
+      ctx.$rootScope.$apply();
+      expect(results.length).to.be(2);
+      expect(results[0].text).to.be('__name__');
+      expect(results[1].text).to.be('job');
+    });
     it('label_values(resource) should generate label search query', function() {
       response = {
         status: 'success',

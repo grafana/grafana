@@ -12,9 +12,15 @@ export default class PrometheusMetricFindQuery {
   }
 
   process() {
+    var label_names_regex = /^label_names\((.+)\)\s*$/;
     var label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)\s*$/;
     var metric_names_regex = /^metrics\((.+)\)\s*$/;
     var query_result_regex = /^query_result\((.+)\)\s*$/;
+
+    var label_names_query = this.query.match(label_names_regex);
+    if (label_names_query) {
+      return this.labelNamesQuery(label_names_query[1]);
+    }
 
     var label_values_query = this.query.match(label_values_regex);
     if (label_values_query) {
@@ -37,6 +43,24 @@ export default class PrometheusMetricFindQuery {
 
     // if query contains full metric name, return metric name and label list
     return this.metricNameAndLabelsQuery(this.query);
+  }
+
+  labelNamesQuery(query) {
+    var end = this.datasource.getPrometheusTime(this.range.to, true);
+    return this.datasource.performInstantQuery({ expr: query }, end).then(function(result) {
+      return _.chain(result.data.data.result)
+        .map(metricData => {
+          return _.keys(metricData.metric);
+        })
+        .flatten()
+        .map(text => {
+          return {
+            text: text,
+            expandable: true,
+          };
+        })
+        .value();
+    });
   }
 
   labelValuesQuery(label, metric) {
