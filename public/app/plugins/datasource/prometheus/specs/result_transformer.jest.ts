@@ -75,4 +75,44 @@ describe('Prometheus Result Transformer', () => {
       ]);
     });
   });
+
+  describe('When resultFormat is heatmap', () => {
+    var response = {
+      status: 'success',
+      data: {
+        resultType: 'matrix',
+        result: [
+          {
+            metric: { __name__: 'test', job: 'testjob', le: '1' },
+            values: [[1445000010, '10'], [1445000020, '10'], [1445000030, '0']],
+          },
+          {
+            metric: { __name__: 'test', job: 'testjob', le: '2' },
+            values: [[1445000010, '20'], [1445000020, '10'], [1445000030, '30']],
+          },
+          {
+            metric: { __name__: 'test', job: 'testjob', le: '3' },
+            values: [[1445000010, '30'], [1445000020, '10'], [1445000030, '40']],
+          },
+        ],
+      },
+    };
+
+    it('should convert cumulative histogram to regular', () => {
+      let result = [];
+      let options = {
+        format: 'heatmap',
+        start: 1445000010,
+        end: 1445000030,
+        legendFormat: '{{le}}',
+      };
+
+      ctx.resultTransformer.transform(result, { data: response }, options);
+      expect(result).toEqual([
+        { target: '1', datapoints: [[10, 1445000010000], [10, 1445000020000], [0, 1445000030000]] },
+        { target: '2', datapoints: [[10, 1445000010000], [0, 1445000020000], [30, 1445000030000]] },
+        { target: '3', datapoints: [[10, 1445000010000], [0, 1445000020000], [10, 1445000030000]] },
+      ]);
+    });
+  });
 });
