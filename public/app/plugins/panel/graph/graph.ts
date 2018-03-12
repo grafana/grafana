@@ -158,7 +158,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
       function processRangeHook(plot) {
         var yaxis = plot.getYAxes();
-        if (yaxis.length > 1 && panel.yaxes[1].align !== null) {
+        if (yaxis.length > 1 && 'align' in panel.yaxes[1] && panel.yaxes[1].align !== null) {
           alignYLevel(yaxis, parseFloat(panel.yaxes[1].align));
         }
       }

@@ -1633,7 +1633,7 @@ Licensed under the MIT license.
                         measureTickLabels(axis);
                     });
 
-                    if (snaped) {
+                    if (snaped && hooks.processRange.length > 0) {
                         executeHooks(hooks.processRange, []);
                         snaped = false;
                     } else {
