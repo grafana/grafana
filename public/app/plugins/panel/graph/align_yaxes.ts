@@ -6,112 +6,118 @@ import _ from 'lodash';
  * @param align Y level
  */
 export function alignYLevel(yaxis, alignLevel) {
-  moveLevelToZero(yaxis, alignLevel);
+  var [yLeft, yRight] = yaxis;
+  moveLevelToZero(yLeft, yRight, alignLevel);
 
-  expandStuckValues(yaxis);
+  expandStuckValues(yLeft, yRight);
 
   // one of graphs on zero
-  var zero = yaxis[0].min === 0 || yaxis[1].min === 0 || yaxis[0].max === 0 || yaxis[1].max === 0;
+  var zero = yLeft.min === 0 || yRight.min === 0 || yLeft.max === 0 || yRight.max === 0;
 
-  var oneSide = checkOneSide(yaxis);
+  var oneSide = checkOneSide(yLeft, yRight);
 
   if (zero && oneSide) {
-    yaxis[0].min = yaxis[0].max > 0 ? 0 : yaxis[0].min;
-    yaxis[0].max = yaxis[0].max > 0 ? yaxis[0].max : 0;
-    yaxis[1].min = yaxis[1].max > 0 ? 0 : yaxis[1].min;
-    yaxis[1].max = yaxis[1].max > 0 ? yaxis[1].max : 0;
+    yLeft.min = yLeft.max > 0 ? 0 : yLeft.min;
+    yLeft.max = yLeft.max > 0 ? yLeft.max : 0;
+    yRight.min = yRight.max > 0 ? 0 : yRight.min;
+    yRight.max = yRight.max > 0 ? yRight.max : 0;
   } else {
-    // on the opposite sides with respect to zero
-    if ((yaxis[0].min >= 0 && yaxis[1].max <= 0) || (yaxis[0].max <= 0 && yaxis[1].min >= 0)) {
-      if (yaxis[0].min >= 0) {
-        yaxis[0].min = -yaxis[0].max;
-        yaxis[1].max = -yaxis[1].min;
+    if (checkOppositeSides(yLeft, yRight)) {
+      if (yLeft.min >= 0) {
+        yLeft.min = -yLeft.max;
+        yRight.max = -yRight.min;
       } else {
-        yaxis[0].max = -yaxis[0].min;
-        yaxis[1].min = -yaxis[1].max;
+        yLeft.max = -yLeft.min;
+        yRight.min = -yRight.max;
       }
     } else {
-      var rate = getRate(yaxis);
+      var rate = getRate(yLeft, yRight);
 
       if (oneSide) {
-        if (yaxis[0].min > 0) {
-          yaxis[0].min = yaxis[0].max / rate;
-          yaxis[1].min = yaxis[1].max / rate;
+        // all graphs above the Y level
+        if (yLeft.min > 0) {
+          yLeft.min = yLeft.max / rate;
+          yRight.min = yRight.max / rate;
         } else {
-          yaxis[0].max = yaxis[0].min / rate;
-          yaxis[1].max = yaxis[1].min / rate;
+          yLeft.max = yLeft.min / rate;
+          yRight.max = yRight.min / rate;
         }
       } else {
-        if (checkTwoCross(yaxis)) {
-          yaxis[0].min = yaxis[1].min ? yaxis[1].min * rate : yaxis[0].min;
-          yaxis[1].min = yaxis[0].min ? yaxis[0].min / rate : yaxis[1].min;
-          yaxis[0].max = yaxis[1].max ? yaxis[1].max * rate : yaxis[0].max;
-          yaxis[1].max = yaxis[0].max ? yaxis[0].max / rate : yaxis[1].max;
+        if (checkTwoCross(yLeft, yRight)) {
+          yLeft.min = yRight.min ? yRight.min * rate : yLeft.min;
+          yRight.min = yLeft.min ? yLeft.min / rate : yRight.min;
+          yLeft.max = yRight.max ? yRight.max * rate : yLeft.max;
+          yRight.max = yLeft.max ? yLeft.max / rate : yRight.max;
         } else {
-          yaxis[0].min = yaxis[0].min > 0 ? yaxis[1].min * rate : yaxis[0].min;
-          yaxis[1].min = yaxis[1].min > 0 ? yaxis[0].min / rate : yaxis[1].min;
-          yaxis[0].max = yaxis[0].max < 0 ? yaxis[1].max * rate : yaxis[0].max;
-          yaxis[1].max = yaxis[1].max < 0 ? yaxis[0].max / rate : yaxis[1].max;
+          yLeft.min = yLeft.min > 0 ? yRight.min * rate : yLeft.min;
+          yRight.min = yRight.min > 0 ? yLeft.min / rate : yRight.min;
+          yLeft.max = yLeft.max < 0 ? yRight.max * rate : yLeft.max;
+          yRight.max = yRight.max < 0 ? yLeft.max / rate : yRight.max;
         }
       }
     }
   }
 
-  restoreLevelFromZero(yaxis, alignLevel);
+  restoreLevelFromZero(yLeft, yRight, alignLevel);
 }
 
-function expandStuckValues(yaxis) {
+function expandStuckValues(yLeft, yRight) {
   // wide Y min and max using increased wideFactor
   var wideFactor = 0.25;
-  if (yaxis[0].max === yaxis[0].min) {
-    yaxis[0].min -= wideFactor;
-    yaxis[0].max += wideFactor;
+  if (yLeft.max === yLeft.min) {
+    yLeft.min -= wideFactor;
+    yLeft.max += wideFactor;
   }
-  if (yaxis[1].max === yaxis[1].min) {
-    yaxis[1].min -= wideFactor;
-    yaxis[1].max += wideFactor;
+  if (yRight.max === yRight.min) {
+    yRight.min -= wideFactor;
+    yRight.max += wideFactor;
   }
 }
 
-function moveLevelToZero(yaxis, alignLevel) {
+function moveLevelToZero(yLeft, yRight, alignLevel) {
   if (alignLevel !== 0) {
-    yaxis[0].min -= alignLevel;
-    yaxis[0].max -= alignLevel;
-    yaxis[1].min -= alignLevel;
-    yaxis[1].max -= alignLevel;
+    yLeft.min -= alignLevel;
+    yLeft.max -= alignLevel;
+    yRight.min -= alignLevel;
+    yRight.max -= alignLevel;
   }
 }
 
-function restoreLevelFromZero(yaxis, alignLevel) {
+function restoreLevelFromZero(yLeft, yRight, alignLevel) {
   if (alignLevel !== 0) {
-    yaxis[0].min += alignLevel;
-    yaxis[0].max += alignLevel;
-    yaxis[1].min += alignLevel;
-    yaxis[1].max += alignLevel;
+    yLeft.min += alignLevel;
+    yLeft.max += alignLevel;
+    yRight.min += alignLevel;
+    yRight.max += alignLevel;
   }
 }
 
-function checkOneSide(yaxis) {
+function checkOneSide(yLeft, yRight) {
   // on the one hand with respect to zero
-  return (yaxis[0].min >= 0 && yaxis[1].min >= 0) || (yaxis[0].max <= 0 && yaxis[1].max <= 0);
+  return (yLeft.min >= 0 && yRight.min >= 0) || (yLeft.max <= 0 && yRight.max <= 0);
 }
 
-function checkTwoCross(yaxis) {
+function checkTwoCross(yLeft, yRight) {
   // both across zero
-  return yaxis[0].min <= 0 && yaxis[0].max >= 0 && yaxis[1].min <= 0 && yaxis[1].max >= 0;
+  return yLeft.min <= 0 && yLeft.max >= 0 && yRight.min <= 0 && yRight.max >= 0;
 }
 
-function getRate(yaxis) {
+function checkOppositeSides(yLeft, yRight) {
+  // on the opposite sides with respect to zero
+  return (yLeft.min >= 0 && yRight.max <= 0) || (yLeft.max <= 0 && yRight.min >= 0);
+}
+
+function getRate(yLeft, yRight) {
   var rateLeft, rateRight, rate;
-  if (checkTwoCross(yaxis)) {
-    rateLeft = yaxis[1].min ? yaxis[0].min / yaxis[1].min : 0;
-    rateRight = yaxis[1].max ? yaxis[0].max / yaxis[1].max : 0;
+  if (checkTwoCross(yLeft, yRight)) {
+    rateLeft = yRight.min ? yLeft.min / yRight.min : 0;
+    rateRight = yRight.max ? yLeft.max / yRight.max : 0;
   } else {
-    if (checkOneSide(yaxis)) {
-      var absLeftMin = Math.abs(yaxis[0].min);
-      var absLeftMax = Math.abs(yaxis[0].max);
-      var absRightMin = Math.abs(yaxis[1].min);
-      var absRightMax = Math.abs(yaxis[1].max);
+    if (checkOneSide(yLeft, yRight)) {
+      var absLeftMin = Math.abs(yLeft.min);
+      var absLeftMax = Math.abs(yLeft.max);
+      var absRightMin = Math.abs(yRight.min);
+      var absRightMax = Math.abs(yRight.max);
       var upLeft = _.max([absLeftMin, absLeftMax]);
       var downLeft = _.min([absLeftMin, absLeftMax]);
       var upRight = _.max([absRightMin, absRightMax]);
@@ -120,12 +126,12 @@ function getRate(yaxis) {
       rateLeft = downLeft ? upLeft / downLeft : upLeft;
       rateRight = downRight ? upRight / downRight : upRight;
     } else {
-      if (yaxis[0].min > 0 || yaxis[1].min > 0) {
-        rateLeft = yaxis[0].max / yaxis[1].max;
+      if (yLeft.min > 0 || yRight.min > 0) {
+        rateLeft = yLeft.max / yRight.max;
         rateRight = 0;
       } else {
         rateLeft = 0;
-        rateRight = yaxis[0].min / yaxis[1].min;
+        rateRight = yLeft.min / yRight.min;
       }
     }
   }
