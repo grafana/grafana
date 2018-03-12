@@ -35,7 +35,7 @@ export class PrometheusDatasource {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
-    this.httpMethod = instanceSettings.jsonData.httpMethod;
+    this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.resultTransformer = new ResultTransformer(templateSrv);
   }
 
