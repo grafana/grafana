@@ -11,8 +11,13 @@
   overflow: auto;
 }
 
-.table-panel-container {
+.table-panel-container-abs {
   padding-top: 2.2em;
+  position: relative;
+}
+
+.table-panel-container-rel {
+  padding-top: 0em;
   position: relative;
 }
 
@@ -119,6 +124,12 @@
   top: 0;
   right: 0;
   left: 0;
+}
+
+.table-panel-header-rel {
+  background: $list-item-bg;
+  border-top: 2px solid $body-bg;
+  border-bottom: 2px solid $body-bg;
 }
 
 .table-panel-table-header-inner {
