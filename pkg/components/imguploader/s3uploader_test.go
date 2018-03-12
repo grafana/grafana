@@ -1,6 +1,7 @@
 package imguploader
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -15,7 +16,7 @@ func TestUploadToS3(t *testing.T) {
 
 		s3Uploader, _ := NewImageUploader()
 
-		path, err := s3Uploader.Upload("../../../public/img/logo_transparent_400x.png")
+		path, err := s3Uploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
 
 		So(err, ShouldBeNil)
 		So(path, ShouldNotEqual, "")

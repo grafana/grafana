@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
 )
 
@@ -113,15 +112,9 @@ func updateEndpointForAccelerate(r *request.Request) {
 // Attempts to retrieve the bucket name from the request input parameters.
 // If no bucket is found, or the field is empty "", false will be returned.
 func bucketNameFromReqParams(params interface{}) (string, bool) {
-	b, _ := awsutil.ValuesAtPath(params, "Bucket")
-	if len(b) == 0 {
-		return "", false
-	}
-
-	if bucket, ok := b[0].(*string); ok {
-		if bucketStr := aws.StringValue(bucket); bucketStr != "" {
-			return bucketStr, true
-		}
+	if iface, ok := params.(bucketGetter); ok {
+		b := iface.getBucket()
+		return b, len(b) > 0
 	}
 
 	return "", false

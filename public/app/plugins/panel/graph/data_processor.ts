@@ -1,15 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import moment from 'moment';
 import TimeSeries from 'app/core/time_series2';
-import {colors} from 'app/core/core';
+import colors from 'app/core/utils/colors';
 
 export class DataProcessor {
-
-  constructor(private panel) {
-  }
+  constructor(private panel) {}
 
   getSeriesList(options) {
     if (!options.dataList || options.dataList.length === 0) {
@@ -29,9 +23,19 @@ export class DataProcessor {
 
     switch (this.panel.xaxis.mode) {
       case 'series':
-      case 'histogram':
       case 'time': {
         return options.dataList.map((item, index) => {
+          return this.timeSeriesHandler(item, index, options);
+        });
+      }
+      case 'histogram': {
+        let histogramDataList = [
+          {
+            target: 'count',
+            datapoints: _.concat([], _.flatten(_.map(options.dataList, 'datapoints'))),
+          },
+        ];
+        return histogramDataList.map((item, index) => {
           return this.timeSeriesHandler(item, index, options);
         });
       }
@@ -43,8 +47,10 @@ export class DataProcessor {
 
   getAutoDetectXAxisMode(firstItem) {
     switch (firstItem.type) {
-      case 'docs': return 'field';
-      case 'table': return 'field';
+      case 'docs':
+        return 'field';
+      case 'table':
+        return 'field';
       default: {
         if (this.panel.xaxis.mode === 'series') {
           return 'series';
@@ -97,7 +103,12 @@ export class DataProcessor {
     var colorIndex = index % colors.length;
     var color = this.panel.aliasColors[alias] || colors[colorIndex];
 
-    var series = new TimeSeries({datapoints: datapoints, alias: alias, color: color, unit: seriesData.unit});
+    var series = new TimeSeries({
+      datapoints: datapoints,
+      alias: alias,
+      color: color,
+      unit: seriesData.unit,
+    });
 
     if (datapoints && datapoints.length > 0) {
       var last = datapoints[datapoints.length - 1][1];
@@ -113,7 +124,9 @@ export class DataProcessor {
   customHandler(dataItem) {
     let nameField = this.panel.xaxis.name;
     if (!nameField) {
-      throw {message: 'No field name specified to use for x-axis, check your axes settings'};
+      throw {
+        message: 'No field name specified to use for x-axis, check your axes settings',
+      };
     }
     return [];
   }
@@ -127,7 +140,7 @@ export class DataProcessor {
         }
 
         var validOptions = this.getXAxisValueOptions({});
-        var found = _.find(validOptions, {value: this.panel.xaxis.values[0]});
+        var found = _.find(validOptions, { value: this.panel.xaxis.values[0] });
         if (!found) {
           this.panel.xaxis.values = ['total'];
         }
@@ -144,44 +157,46 @@ export class DataProcessor {
     let fields = [];
     var firstItem = dataList[0];
     let fieldParts = [];
+
     function getPropertiesRecursive(obj) {
-        _.forEach(obj, (value, key) => {
-          if (_.isObject(value)) {
-            fieldParts.push(key);
-            getPropertiesRecursive(value);
-          } else {
-            if (!onlyNumbers || _.isNumber(value)) {
-              let field = fieldParts.concat(key).join('.');
-              fields.push(field);
-            }
+      _.forEach(obj, (value, key) => {
+        if (_.isObject(value)) {
+          fieldParts.push(key);
+          getPropertiesRecursive(value);
+        } else {
+          if (!onlyNumbers || _.isNumber(value)) {
+            let field = fieldParts.concat(key).join('.');
+            fields.push(field);
           }
-        });
-        fieldParts.pop();
+        }
+      });
+      fieldParts.pop();
     }
-    if (firstItem.type === 'docs'){
+
+    if (firstItem.type === 'docs') {
       if (firstItem.datapoints.length === 0) {
         return [];
       }
       getPropertiesRecursive(firstItem.datapoints[0]);
-      return fields;
     }
+
+    return fields;
   }
 
   getXAxisValueOptions(options) {
     switch (this.panel.xaxis.mode) {
-      case 'time': {
-        return [];
-      }
       case 'series': {
         return [
-          {text: 'Avg', value: 'avg'},
-          {text: 'Min', value: 'min'},
-          {text: 'Max', value: 'max'},
-          {text: 'Total', value: 'total'},
-          {text: 'Count', value: 'count'},
+          { text: 'Avg', value: 'avg' },
+          { text: 'Min', value: 'min' },
+          { text: 'Max', value: 'max' },
+          { text: 'Total', value: 'total' },
+          { text: 'Count', value: 'count' },
         ];
       }
     }
+
+    return [];
   }
 
   pluckDeep(obj: any, property: string) {
@@ -196,7 +211,4 @@ export class DataProcessor {
     }
     return value;
   }
-
 }
-
-

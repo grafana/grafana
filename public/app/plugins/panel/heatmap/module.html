@@ -7,5 +7,8 @@
 
 		<div class="heatmap-panel" ng-dblclick="ctrl.zoomOut()"></div>
 	</div>
+	<div class="heatmap-legend-wrapper" ng-if="ctrl.panel.legend.show">
+		<heatmap-legend></heatmap-legend>
+	</div>
 </div>
 <div class="clearfix"></div>

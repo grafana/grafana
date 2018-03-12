@@ -1,9 +1,5 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import angular from 'angular';
-import _ from 'lodash';
-import {MysqlDatasource} from './datasource';
-import {MysqlQueryCtrl} from './query_ctrl';
+import { MysqlDatasource } from './datasource';
+import { MysqlQueryCtrl } from './query_ctrl';
 
 class MysqlConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -11,7 +7,6 @@ class MysqlConfigCtrl {
 
 const defaultQuery = `SELECT
     UNIX_TIMESTAMP(<time_column>) as time_sec,
-    <title_column> as title,
     <text_column> as text,
     <tags_column> as tags
   FROM <table name>
@@ -38,4 +33,3 @@ export {
   MysqlConfigCtrl as ConfigCtrl,
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
-

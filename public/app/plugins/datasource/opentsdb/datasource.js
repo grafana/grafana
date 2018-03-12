@@ -53,6 +53,10 @@ function (angular, _, dateMath) {
         }
       });
 
+      options.targets = _.filter(options.targets, function(query) {
+        return query.hide !== true;
+      });
+
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
         var metricToTargetMapping = mapMetricsToTargets(response.data, options, this.tsdbVersion);
         var result = _.map(response.data, function(metricData, index) {
@@ -87,9 +91,8 @@ function (angular, _, dateMath) {
           if(annotationObject) {
             _.each(annotationObject, function(annotation) {
               var event = {
-                title: annotation.description,
+                text: annotation.description,
                 time: Math.floor(annotation.startTime) * 1000,
-                text: annotation.notes,
                 annotation: options.annotation
               };
 
@@ -292,7 +295,7 @@ function (angular, _, dateMath) {
 
     this.testDatasource = function() {
       return this._performSuggestQuery('cpu', 'metrics').then(function () {
-        return { status: "success", message: "Data source is working", title: "Success" };
+        return { status: "success", message: "Data source is working" };
       });
     };
 
@@ -438,7 +441,7 @@ function (angular, _, dateMath) {
     }
 
     function mapMetricsToTargets(metrics, options, tsdbVersion) {
-      var interpolatedTagValue;
+      var interpolatedTagValue, arrTagV;
       return _.map(metrics, function(metricData) {
         if (tsdbVersion === 3) {
           return metricData.query.index;
@@ -450,7 +453,8 @@ function (angular, _, dateMath) {
               return target.metric === metricData.metric &&
               _.every(target.tags, function(tagV, tagK) {
                 interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
-                return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+                arrTagV = interpolatedTagValue.split('|');
+                return _.includes(arrTagV, metricData.tags[tagK]) || interpolatedTagValue === "*";
               });
             }
           });
@@ -468,7 +472,5 @@ function (angular, _, dateMath) {
     }
   }
 
-  return {
-    OpenTsDatasource: OpenTsDatasource
-  };
+  return OpenTsDatasource;
 });

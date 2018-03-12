@@ -23,16 +23,17 @@ module.exports = function (grunt) {
     }
   }
 
+  config.coverage = grunt.option('coverage');
   config.phjs = grunt.option('phjsToRelease');
-
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
+
   console.log('Version', config.pkg.version);
 
   // load plugins
   require('load-grunt-tasks')(grunt);
 
   // load task definitions
-  grunt.loadTasks('tasks');
+  grunt.loadTasks('./scripts/grunt');
 
   // Utility function to load plugin settings into config
   function loadConfig(config,path) {
@@ -47,7 +48,7 @@ module.exports = function (grunt) {
   }
 
   // Merge that object with what with whatever we have here
-  loadConfig(config,'./tasks/options/');
+  loadConfig(config,'./scripts/grunt/options/');
   // pass the config to grunt
   grunt.initConfig(config);
 };

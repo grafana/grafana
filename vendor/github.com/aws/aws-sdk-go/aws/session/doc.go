@@ -23,7 +23,7 @@ additional config if the AWS_SDK_LOAD_CONFIG environment variable is set.
 Alternatively you can explicitly create a Session with shared config enabled.
 To do this you can use NewSessionWithOptions to configure how the Session will
 be created. Using the NewSessionWithOptions with SharedConfigState set to
-SharedConfigEnabled will create the session as if the AWS_SDK_LOAD_CONFIG
+SharedConfigEnable will create the session as if the AWS_SDK_LOAD_CONFIG
 environment variable was set.
 
 Creating Sessions
@@ -84,7 +84,7 @@ override the shared config state (AWS_SDK_LOAD_CONFIG).
 
 	// Force enable Shared Config support
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: SharedConfigEnable,
+		SharedConfigState: session.SharedConfigEnable,
 	}))
 
 Adding Handlers
@@ -124,9 +124,8 @@ file (~/.aws/config) and shared credentials file (~/.aws/credentials). Both
 files have the same format.
 
 If both config files are present the configuration from both files will be
-read. The Session will be created from  configuration values from the shared
-credentials file (~/.aws/credentials) over those in the shared credentials
-file (~/.aws/config).
+read. The Session will be created from configuration values from the shared
+credentials file (~/.aws/credentials) over those in the shared config file (~/.aws/config).
 
 Credentials are the values the SDK should use for authenticating requests with
 AWS Services. They arfrom a configuration file will need to include both

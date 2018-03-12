@@ -13,11 +13,11 @@ weight = 20
 
 The purpose of this data sources is to make it easier to create fake data for any panel.
 Using `Grafana TestData` you can build your own time series and have any panel render it.
-This make is much easier to verify functionally since the data can be shared very
+This make is much easier to verify functionally since the data can be shared very easily.
 
 ## Enable
 
-`Grafana TestData` is not enabled by default. To enable it you have to go to `/plugins/testdata/edit` and click the enable button to enable.
+`Grafana TestData` is not enabled by default. To enable it, first navigate to the Plugins section, found in your Grafana main menu. Click the Apps tabs in the Plugins section and select the Grafana TestData App. (Or navigate to http://your_grafana_instance/plugins/testdata/edit to go directly there). Finally click the enable button to enable.
 
 ## Create mock data.
 

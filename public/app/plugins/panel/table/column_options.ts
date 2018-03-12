@@ -1,11 +1,4 @@
-///<reference path="../../../headers/common.d.ts" />
-
-
 import _ from 'lodash';
-import $ from 'jquery';
-import moment from 'moment';
-import angular from 'angular';
-
 import kbn from 'app/core/utils/kbn';
 
 export class ColumnOptionsCtrl {
@@ -22,29 +15,31 @@ export class ColumnOptionsCtrl {
   activeStyleIndex: number;
 
   /** @ngInject */
-  constructor($scope, private $q, private uiSegmentSrv) {
+  constructor($scope) {
     $scope.editor = this;
+
     this.activeStyleIndex = 0;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.unitFormats = kbn.getUnitFormats();
     this.colorModes = [
-      {text: 'Disabled', value: null},
-      {text: 'Cell', value: 'cell'},
-      {text: 'Value', value: 'value'},
-      {text: 'Row', value: 'row'},
+      { text: 'Disabled', value: null },
+      { text: 'Cell', value: 'cell' },
+      { text: 'Value', value: 'value' },
+      { text: 'Row', value: 'row' },
     ];
     this.columnTypes = [
-      {text: 'Number', value: 'number'},
-      {text: 'String', value: 'string'},
-      {text: 'Date', value: 'date'},
-      {text: 'Hidden', value: 'hidden'}
+      { text: 'Number', value: 'number' },
+      { text: 'String', value: 'string' },
+      { text: 'Date', value: 'date' },
+      { text: 'Hidden', value: 'hidden' },
     ];
     this.fontSizes = ['80%', '90%', '100%', '110%', '120%', '130%', '150%', '160%', '180%', '200%', '220%', '250%'];
     this.dateFormats = [
-      {text: 'YYYY-MM-DD HH:mm:ss', value: 'YYYY-MM-DD HH:mm:ss'},
-      {text: 'MM/DD/YY h:mm:ss a', value: 'MM/DD/YY h:mm:ss a'},
-      {text: 'MMMM D, YYYY LT',  value: 'MMMM D, YYYY LT'},
+      { text: 'YYYY-MM-DD HH:mm:ss', value: 'YYYY-MM-DD HH:mm:ss' },
+      { text: 'YYYY-MM-DD HH:mm:ss.SSS', value: 'YYYY-MM-DD HH:mm:ss.SSS' },
+      { text: 'MM/DD/YY h:mm:ss a', value: 'MM/DD/YY h:mm:ss a' },
+      { text: 'MMMM D, YYYY LT', value: 'MMMM D, YYYY LT' },
     ];
 
     this.getColumnNames = () => {
@@ -55,6 +50,8 @@ export class ColumnOptionsCtrl {
         return col.text;
       });
     };
+
+    this.onColorChange = this.onColorChange.bind(this);
   }
 
   render() {
@@ -72,7 +69,7 @@ export class ColumnOptionsCtrl {
       type: 'number',
       alias: '',
       decimals: 2,
-      colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+      colors: ['rgba(245, 54, 54, 0.9)', 'rgba(237, 129, 40, 0.89)', 'rgba(50, 172, 45, 0.97)'],
       colorMode: null,
       pattern: '',
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
@@ -85,9 +82,9 @@ export class ColumnOptionsCtrl {
 
     // check if last is a catch all rule, then add it before that one
     if (stylesCount > 0) {
-      var last = styles[stylesCount-1];
+      var last = styles[stylesCount - 1];
       if (last.pattern === '/.*/') {
-        indexToInsert = stylesCount-1;
+        indexToInsert = stylesCount - 1;
       }
     }
 
@@ -105,6 +102,13 @@ export class ColumnOptionsCtrl {
     ref[0] = ref[2];
     ref[2] = copy;
     this.panelCtrl.render();
+  }
+
+  onColorChange(styleIndex, colorIndex) {
+    return newColor => {
+      this.panel.styles[styleIndex].colors[colorIndex] = newColor;
+      this.render();
+    };
   }
 }
 

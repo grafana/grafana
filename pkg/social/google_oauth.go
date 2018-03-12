@@ -11,7 +11,7 @@ import (
 )
 
 type SocialGoogle struct {
-	*oauth2.Config
+	*SocialBase
 	allowedDomains []string
 	hostedDomain   string
 	apiUrl         string
@@ -30,18 +30,18 @@ func (s *SocialGoogle) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialGoogle) UserInfo(client *http.Client) (*BasicUserInfo, error) {
+func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Name  string `json:"name"`
 		Email string `json:"email"`
 	}
 
-	body, err := HttpGet(client, s.apiUrl)
+	response, err := HttpGet(client, s.apiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	err = json.Unmarshal(body, &data)
+	err = json.Unmarshal(response.Body, &data)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}

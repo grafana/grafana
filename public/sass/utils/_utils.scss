@@ -21,7 +21,7 @@
   font-weight: bold;
   line-height: $line-height-base;
   color: $black;
-  text-shadow: 0 1px 0 rgba(255,255,255,1);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 1);
 
   &:hover,
   &:focus {
@@ -46,7 +46,6 @@ button.close {
 //
 // Utility classes
 // --------------------------------------------------
-
 
 // Quick floats
 .pull-right {
@@ -74,4 +73,8 @@ button.close {
 // For Affix plugin
 .affix {
   position: fixed;
+}
+
+.d-inline-block {
+  display: inline-block;
 }

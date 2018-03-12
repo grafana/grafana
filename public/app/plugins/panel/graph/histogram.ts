@@ -1,18 +1,21 @@
 import _ from 'lodash';
+import TimeSeries from 'app/core/time_series2';
 
 /**
  * Convert series into array of series values.
  * @param data Array of series
  */
-export function getSeriesValues(data: any): number[] {
+export function getSeriesValues(dataList: TimeSeries[]): number[] {
+  const VALUE_INDEX = 0;
   let values = [];
 
   // Count histogam stats
-  for (let i = 0; i < data.length; i++) {
-    let series = data[i];
-    for (let j = 0; j < series.data.length; j++) {
-      if (series.data[j][1] !== null) {
-        values.push(series.data[j][1]);
+  for (let i = 0; i < dataList.length; i++) {
+    let series = dataList[i];
+    let datapoints = series.datapoints;
+    for (let j = 0; j < datapoints.length; j++) {
+      if (datapoints[j][VALUE_INDEX] !== null) {
+        values.push(datapoints[j][VALUE_INDEX]);
       }
     }
   }

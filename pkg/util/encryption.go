@@ -27,12 +27,13 @@ func Decrypt(payload []byte, secret string) ([]byte, error) {
 	}
 	iv := payload[saltLength : saltLength+aes.BlockSize]
 	payload = payload[saltLength+aes.BlockSize:]
+	payloadDst := make([]byte, len(payload))
 
 	stream := cipher.NewCFBDecrypter(block, iv)
 
 	// XORKeyStream can work in-place if the two arguments are the same.
-	stream.XORKeyStream(payload, payload)
-	return payload, nil
+	stream.XORKeyStream(payloadDst, payload)
+	return payloadDst, nil
 }
 
 func Encrypt(payload []byte, secret string) ([]byte, error) {

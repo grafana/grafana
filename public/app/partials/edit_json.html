@@ -11,11 +11,14 @@
 
 	<div class="tabbed-view-body">
 		<div class="gf-form">
-			<textarea class="gf-form-input" ng-model="json" rows="20" spellcheck="false"></textarea>
+			<code-editor content="json" data-mode="json" data-max-lines=20 ></code-editor>
 		</div>
 
 		<div class="gf-form-button-row">
 			<button type="button" class="btn btn-success" ng-show="canUpdate" ng-click="update(); dismiss();">Update</button>
+			<button class="btn btn-secondary" ng-if="canCopy" clipboard-button="getContentForClipboard()">
+				<i class="fa fa-clipboard"></i>&nbsp;Copy to Clipboard
+			</button>
 		</div>
 	</div>
 </div>

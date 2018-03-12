@@ -1,27 +1,27 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import 'jquery.flot';
-import 'jquery.flot.selection';
-import 'jquery.flot.time';
-import 'jquery.flot.stack';
-import 'jquery.flot.stackpercent';
-import 'jquery.flot.fillbelow';
-import 'jquery.flot.crosshair';
-import 'jquery.flot.dashes';
+import 'vendor/flot/jquery.flot';
+import 'vendor/flot/jquery.flot.selection';
+import 'vendor/flot/jquery.flot.time';
+import 'vendor/flot/jquery.flot.stack';
+import 'vendor/flot/jquery.flot.stackpercent';
+import 'vendor/flot/jquery.flot.fillbelow';
+import 'vendor/flot/jquery.flot.crosshair';
+import 'vendor/flot/jquery.flot.dashes';
 import './jquery.flot.events';
 
 import $ from 'jquery';
 import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
-import {tickStep} from 'app/core/utils/ticks';
-import {appEvents, coreModule} from 'app/core/core';
+import { tickStep } from 'app/core/utils/ticks';
+import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
-import {ThresholdManager} from './threshold_manager';
-import {EventManager} from 'app/features/annotations/all';
-import {convertValuesToHistogram, getSeriesValues} from './histogram';
+import { ThresholdManager } from './threshold_manager';
+import { EventManager } from 'app/features/annotations/all';
+import { convertValuesToHistogram, getSeriesValues } from './histogram';
+import config from 'app/core/config';
 
-coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
+/** @ngInject **/
+function graphDirective(timeSrv, popoverSrv, contextSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -33,10 +33,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       var data;
       var plot;
       var sortedSeries;
-      var legendSideLastValue = null;
-      var rootScope = scope.$root;
       var panelWidth = 0;
-      var eventManager = new EventManager(ctrl, elem, popoverSrv);
+      var eventManager = new EventManager(ctrl);
       var thresholdManager = new ThresholdManager(ctrl);
       var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
@@ -52,110 +50,86 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
       });
 
-      ctrl.events.on('render', function(renderData) {
+      /**
+       * Split graph rendering into two parts.
+       * First, calculate series stats in buildFlotPairs() function. Then legend rendering started
+       * (see ctrl.events.on('render') in legend.ts).
+       * When legend is rendered it emits 'legend-rendering-complete' and graph rendered.
+       */
+      ctrl.events.on('render', renderData => {
         data = renderData || data;
         if (!data) {
           return;
         }
         annotations = ctrl.annotations || [];
+        buildFlotPairs(data);
+        updateLegendValues(data, panel);
+
+        ctrl.events.emit('render-legend');
+      });
+
+      ctrl.events.on('legend-rendering-complete', () => {
         render_panel();
       });
 
       // global events
-      appEvents.on('graph-hover', function(evt) {
-        // ignore other graph hover events if shared tooltip is disabled
-        if (!dashboard.sharedTooltipModeEnabled()) {
-          return;
-        }
+      appEvents.on(
+        'graph-hover',
+        evt => {
+          // ignore other graph hover events if shared tooltip is disabled
+          if (!dashboard.sharedTooltipModeEnabled()) {
+            return;
+          }
 
-        // ignore if we are the emitter
-        if (!plot || evt.panel.id === panel.id || ctrl.otherPanelInFullscreenMode()) {
-          return;
-        }
+          // ignore if we are the emitter
+          if (!plot || evt.panel.id === panel.id || ctrl.otherPanelInFullscreenMode()) {
+            return;
+          }
 
-        tooltip.show(evt.pos);
-      }, scope);
+          tooltip.show(evt.pos);
+        },
+        scope
+      );
 
-      appEvents.on('graph-hover-clear', function(event, info) {
-        if (plot) {
-          tooltip.clear(plot);
-        }
-      }, scope);
-
-      function getLegendHeight(panelHeight) {
-        if (!panel.legend.show || panel.legend.rightSide) {
-          return 0;
-        }
-
-        if (panel.legend.alignAsTable) {
-          var legendSeries = _.filter(data, function(series) {
-            return series.hideFromLegend(panel.legend) === false;
-          });
-          var total = 23 + (21 * legendSeries.length);
-          return Math.min(total, Math.floor(panelHeight/2));
-        } else {
-          return 26;
-        }
-      }
-
-      function setElementHeight() {
-        try {
-          var height = ctrl.height - getLegendHeight(ctrl.height);
-          elem.css('height', height + 'px');
-
-          return true;
-        } catch (e) { // IE throws errors sometimes
-          console.log(e);
-          return false;
-        }
-      }
+      appEvents.on(
+        'graph-hover-clear',
+        (event, info) => {
+          if (plot) {
+            tooltip.clear(plot);
+          }
+        },
+        scope
+      );
 
       function shouldAbortRender() {
         if (!data) {
           return true;
         }
 
-        if (!setElementHeight()) { return true; }
-
         if (panelWidth === 0) {
           return true;
         }
+
+        return false;
       }
 
       function drawHook(plot) {
-        // Update legend values
-        var yaxis = plot.getYAxes();
-        for (var i = 0; i < data.length; i++) {
-          var series = data[i];
-          var axis = yaxis[series.yaxis - 1];
-          var formater = kbn.valueFormats[panel.yaxes[series.yaxis - 1].format];
-
-          // decimal override
-          if (_.isNumber(panel.decimals)) {
-            series.updateLegendValues(formater, panel.decimals, null);
-          } else {
-            // auto decimals
-            // legend and tooltip gets one more decimal precision
-            // than graph legend ticks
-            var tickDecimals = (axis.tickDecimals || -1) + 1;
-            series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
-          }
-
-          if (!rootScope.$$phase) { scope.$digest(); }
-        }
-
         // add left axis labels
         if (panel.yaxes[0].label && panel.yaxes[0].show) {
-          var yaxisLabel = $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
-          .text(panel.yaxes[0].label)
-          .appendTo(elem);
+          $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
+            .text(panel.yaxes[0].label)
+            .appendTo(elem);
         }
 
         // add right axis labels
         if (panel.yaxes[1].label && panel.yaxes[1].show) {
-          var rightLabel = $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
-          .text(panel.yaxes[1].label)
-          .appendTo(elem);
+          $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
+            .text(panel.yaxes[1].label)
+            .appendTo(elem);
+        }
+
+        if (ctrl.dataWarning) {
+          $(`<div class="datapoints-warning flot-temp-elem">${ctrl.dataWarning.title}</div>`).appendTo(elem);
         }
 
         thresholdManager.draw(plot);
@@ -164,8 +138,12 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       function processOffsetHook(plot, gridMargin) {
         var left = panel.yaxes[0];
         var right = panel.yaxes[1];
-        if (left.show && left.label) { gridMargin.left = 20; }
-        if (right.show && right.label) { gridMargin.right = 20; }
+        if (left.show && left.label) {
+          gridMargin.left = 20;
+        }
+        if (right.show && right.label) {
+          gridMargin.right = 20;
+        }
 
         // apply y-axis min/max options
         var yaxis = plot.getYAxes();
@@ -207,8 +185,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
 
       // Function for rendering panel
       function render_panel() {
-        panelWidth =  elem.width();
-
+        panelWidth = elem.width();
         if (shouldAbortRender()) {
           return;
         }
@@ -219,66 +196,18 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         // un-check dashes if lines are unchecked
         panel.dashes = panel.lines ? panel.dashes : false;
 
-        var stack = panel.stack ? true : null;
-
         // Populate element
-        var options: any = {
-          hooks: {
-            draw: [drawHook],
-            processOffset: [processOffsetHook],
-          },
-          legend: { show: false },
-          series: {
-            stackpercent: panel.stack ? panel.percentage : false,
-            stack: panel.percentage ? null : stack,
-            lines:  {
-              show: panel.lines,
-              zero: false,
-              fill: translateFillOption(panel.fill),
-              lineWidth: panel.dashes ? 0 : panel.linewidth,
-              steps: panel.steppedLine
-            },
-            dashes: {
-              show: panel.dashes,
-              lineWidth: panel.linewidth,
-              dashLength: [panel.dashLength, panel.spaceLength]
-            },
-            bars: {
-              show: panel.bars,
-              fill: 1,
-              barWidth: 1,
-              zero: false,
-              lineWidth: 0
-            },
-            points: {
-              show: panel.points,
-              fill: 1,
-              fillColor: false,
-              radius: panel.points ? panel.pointradius : 2
-            },
-            shadowSize: 0
-          },
-          yaxes: [],
-          xaxis: {},
-          grid: {
-            minBorderMargin: 0,
-            markings: [],
-            backgroundColor: null,
-            borderWidth: 0,
-            hoverable: true,
-            clickable: true,
-            color: '#c8c8c8',
-            margin: { left: 0, right: 0 },
-          },
-          selection: {
-            mode: "x",
-            color: '#666'
-          },
-          crosshair: {
-            mode: 'x'
-          }
-        };
+        let options: any = buildFlotOptions(panel);
+        prepareXAxis(options, panel);
+        configureYAxisOptions(data, options);
+        thresholdManager.addFlotOptions(options, panel);
+        eventManager.addFlotEvents(annotations, options);
 
+        sortedSeries = sortSeries(data, panel);
+        callPlot(options, true);
+      }
+
+      function buildFlotPairs(data) {
         for (let i = 0; i < data.length; i++) {
           let series = data[i];
           series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
@@ -289,7 +218,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
             series.stack = false;
           }
         }
+      }
 
+      function prepareXAxis(options, panel) {
         switch (panel.xaxis.mode) {
           case 'series': {
             options.series.bars.barWidth = 0.7;
@@ -313,11 +244,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
               let ticks = panel.xaxis.buckets || panelWidth / 50;
               bucketSize = tickStep(histMin, histMax, ticks);
               let histogram = convertValuesToHistogram(values, bucketSize);
-
               data[0].data = histogram;
-              data[0].alias = data[0].label = data[0].id = "count";
-              data = [data[0]];
-
               options.series.bars.barWidth = bucketSize * 0.8;
             } else {
               bucketSize = 0;
@@ -338,52 +265,113 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
             break;
           }
         }
+      }
 
-        thresholdManager.addFlotOptions(options, panel);
-        eventManager.addFlotEvents(annotations, options);
-        configureAxisOptions(data, options);
-
-        sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
-
-        function callPlot(incrementRenderCounter) {
-          try {
-            plot = $.plot(elem, sortedSeries, options);
-            if (ctrl.renderError) {
-              delete ctrl.error;
-              delete ctrl.inspector;
-            }
-          } catch (e) {
-            console.log('flotcharts error', e);
-            ctrl.error = e.message || "Render Error";
-            ctrl.renderError = true;
-            ctrl.inspector = {error: e};
+      function callPlot(options, incrementRenderCounter) {
+        try {
+          plot = $.plot(elem, sortedSeries, options);
+          if (ctrl.renderError) {
+            delete ctrl.error;
+            delete ctrl.inspector;
           }
-
-          if (incrementRenderCounter) {
-            ctrl.renderingCompleted();
-          }
+        } catch (e) {
+          console.log('flotcharts error', e);
+          ctrl.error = e.message || 'Render Error';
+          ctrl.renderError = true;
+          ctrl.inspector = { error: e };
         }
 
-        if (shouldDelayDraw(panel)) {
-          // temp fix for legends on the side, need to render twice to get dimensions right
-          callPlot(false);
-          setTimeout(function() { callPlot(true); }, 50);
-          legendSideLastValue = panel.legend.rightSide;
+        if (incrementRenderCounter) {
+          ctrl.renderingCompleted();
+        }
+      }
+
+      function buildFlotOptions(panel) {
+        let gridColor = '#c8c8c8';
+        if (config.bootData.user.lightTheme === true) {
+          gridColor = '#a1a1a1';
+        }
+        const stack = panel.stack ? true : null;
+        let options = {
+          hooks: {
+            draw: [drawHook],
+            processOffset: [processOffsetHook],
+          },
+          legend: { show: false },
+          series: {
+            stackpercent: panel.stack ? panel.percentage : false,
+            stack: panel.percentage ? null : stack,
+            lines: {
+              show: panel.lines,
+              zero: false,
+              fill: translateFillOption(panel.fill),
+              lineWidth: panel.dashes ? 0 : panel.linewidth,
+              steps: panel.steppedLine,
+            },
+            dashes: {
+              show: panel.dashes,
+              lineWidth: panel.linewidth,
+              dashLength: [panel.dashLength, panel.spaceLength],
+            },
+            bars: {
+              show: panel.bars,
+              fill: 1,
+              barWidth: 1,
+              zero: false,
+              lineWidth: 0,
+            },
+            points: {
+              show: panel.points,
+              fill: 1,
+              fillColor: false,
+              radius: panel.points ? panel.pointradius : 2,
+            },
+            shadowSize: 0,
+          },
+          yaxes: [],
+          xaxis: {},
+          grid: {
+            minBorderMargin: 0,
+            markings: [],
+            backgroundColor: null,
+            borderWidth: 0,
+            hoverable: true,
+            clickable: true,
+            color: gridColor,
+            margin: { left: 0, right: 0 },
+            labelMarginX: 0,
+          },
+          selection: {
+            mode: 'x',
+            color: '#666',
+          },
+          crosshair: {
+            mode: 'x',
+          },
+        };
+        return options;
+      }
+
+      function sortSeries(series, panel) {
+        var sortBy = panel.legend.sort;
+        var sortOrder = panel.legend.sortDesc;
+        var haveSortBy = sortBy !== null && sortBy !== undefined;
+        var haveSortOrder = sortOrder !== null && sortOrder !== undefined;
+        var shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
+        var sortDesc = panel.legend.sortDesc === true ? -1 : 1;
+
+        if (shouldSortBy) {
+          return _.sortBy(series, s => s.stats[sortBy] * sortDesc);
         } else {
-          callPlot(true);
+          return _.sortBy(series, s => s.zindex);
         }
       }
 
       function translateFillOption(fill) {
-        return fill === 0 ? 0.001 : fill/10;
-      }
-
-      function shouldDelayDraw(panel) {
-        if (panel.legend.rightSide) {
-          return true;
-        }
-        if (legendSideLastValue !== null && panel.legend.rightSide !== legendSideLastValue) {
-          return true;
+        if (panel.percentage && panel.stack) {
+          return fill === 0 ? 0.001 : fill / 10;
+        } else {
+          return fill / 10;
         }
       }
 
@@ -395,10 +383,10 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         options.xaxis = {
           timezone: dashboard.getTimezone(),
           show: panel.xaxis.show,
-          mode: "time",
+          mode: 'time',
           min: min,
           max: max,
-          label: "Datetime",
+          label: 'Datetime',
           ticks: ticks,
           timeformat: time_format(ticks, min, max),
         };
@@ -415,8 +403,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           mode: null,
           min: 0,
           max: ticks.length + 1,
-          label: "Datetime",
-          ticks: ticks
+          label: 'Datetime',
+          ticks: ticks,
         };
       }
 
@@ -458,8 +446,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           mode: null,
           min: min,
           max: max,
-          label: "Histogram",
-          ticks: ticks
+          label: 'Histogram',
+          ticks: ticks,
         };
 
         // Use 'short' format for histogram values
@@ -481,38 +469,48 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           mode: null,
           min: 0,
           max: ticks.length + 1,
-          label: "Datetime",
-          ticks: ticks
+          label: 'Datetime',
+          ticks: ticks,
         };
       }
 
-      function configureAxisOptions(data, options) {
+      function configureYAxisOptions(data, options) {
         var defaults = {
           position: 'left',
           show: panel.yaxes[0].show,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
-          min: panel.yaxes[0].min ? _.toNumber(panel.yaxes[0].min) : null,
-          max: panel.yaxes[0].max ? _.toNumber(panel.yaxes[0].max) : null,
+          min: parseNumber(panel.yaxes[0].min),
+          max: parseNumber(panel.yaxes[0].max),
+          tickDecimals: panel.yaxes[0].decimals,
         };
 
         options.yaxes.push(defaults);
 
-        if (_.find(data, {yaxis: 2})) {
+        if (_.find(data, { yaxis: 2 })) {
           var secondY = _.clone(defaults);
           secondY.index = 2;
           secondY.show = panel.yaxes[1].show;
           secondY.logBase = panel.yaxes[1].logBase || 1;
           secondY.position = 'right';
-          secondY.min = panel.yaxes[1].min ? _.toNumber(panel.yaxes[1].min) : null;
-          secondY.max = panel.yaxes[1].max ? _.toNumber(panel.yaxes[1].max) : null;
+          secondY.min = parseNumber(panel.yaxes[1].min);
+          secondY.max = parseNumber(panel.yaxes[1].max);
+          secondY.tickDecimals = panel.yaxes[1].decimals;
           options.yaxes.push(secondY);
 
           applyLogScale(options.yaxes[1], data);
-          configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.yaxes[1].format);
+          configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? 'percent' : panel.yaxes[1].format);
         }
         applyLogScale(options.yaxes[0], data);
-        configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.yaxes[0].format);
+        configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? 'percent' : panel.yaxes[0].format);
+      }
+
+      function parseNumber(value: any) {
+        if (value === null || typeof value === 'undefined') {
+          return null;
+        }
+
+        return _.toNumber(value);
       }
 
       function applyLogScale(axis, data) {
@@ -530,7 +528,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
 
         var series, i;
-        var max = axis.max, min = axis.min;
+        var max = axis.max,
+          min = axis.min;
 
         for (i = 0; i < data.length; i++) {
           series = data[i];
@@ -544,16 +543,20 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           }
         }
 
-        axis.transform = function(v) { return (v < Number.MIN_VALUE) ? null : Math.log(v) / Math.log(axis.logBase); };
-        axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
+        axis.transform = function(v) {
+          return v < Number.MIN_VALUE ? null : Math.log(v) / Math.log(axis.logBase);
+        };
+        axis.inverseTransform = function(v) {
+          return Math.pow(axis.logBase, v);
+        };
 
         if (!max && !min) {
           max = axis.inverseTransform(+2);
           min = axis.inverseTransform(-2);
         } else if (!max) {
-          max = min*axis.inverseTransform(+4);
+          max = min * axis.inverseTransform(+4);
         } else if (!min) {
-          min = max*axis.inverseTransform(-4);
+          min = max * axis.inverseTransform(-4);
         }
 
         if (axis.min) {
@@ -584,7 +587,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           if (axis.ticks[axis.ticks.length - 1] > axis.max) {
             axis.max = axis.ticks[axis.ticks.length - 1];
           }
-          axis.tickDecimals = decimalPlaces(min);
         } else {
           axis.ticks = [1, 2];
           delete axis.min;
@@ -600,24 +602,18 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           ticks.push(nextTick);
         }
 
-        const maxNumTicks = Math.ceil(ctrl.height/25);
+        const maxNumTicks = Math.ceil(ctrl.height / 25);
         const numTicks = ticks.length;
         if (numTicks > maxNumTicks) {
-          const factor = Math.ceil(numTicks/maxNumTicks) * logBase;
+          const factor = Math.ceil(numTicks / maxNumTicks) * logBase;
           ticks = [];
 
-          for (nextTick = min; nextTick <= (max * factor); nextTick *= factor) {
+          for (nextTick = min; nextTick <= max * factor; nextTick *= factor) {
             ticks.push(nextTick);
           }
         }
 
         return ticks;
-      }
-
-      function decimalPlaces(num) {
-        if (!num) { return 0; }
-
-        return (num.toString().split('.')[1] || []).length;
       }
 
       function configureAxisMode(axis, format) {
@@ -629,51 +625,63 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       function time_format(ticks, min, max) {
         if (min && max && ticks) {
           var range = max - min;
-          var secPerTick = (range/ticks) / 1000;
+          var secPerTick = range / ticks / 1000;
           var oneDay = 86400000;
           var oneYear = 31536000000;
 
           if (secPerTick <= 45) {
-            return "%H:%M:%S";
+            return '%H:%M:%S';
           }
           if (secPerTick <= 7200 || range <= oneDay) {
-            return "%H:%M";
+            return '%H:%M';
           }
           if (secPerTick <= 80000) {
-            return "%m/%d %H:%M";
+            return '%m/%d %H:%M';
           }
           if (secPerTick <= 2419200 || range <= oneYear) {
-            return "%m/%d";
+            return '%m/%d';
           }
-          return "%Y-%m";
+          return '%Y-%m';
         }
 
-        return "%H:%M";
+        return '%H:%M';
       }
 
-      elem.bind("plotselected", function (event, ranges) {
-        if (ranges.ctrlKey || ranges.metaKey)  {
-          // scope.$apply(() => {
-          //   eventManager.updateTime(ranges.xaxis);
-          // });
+      elem.bind('plotselected', function(event, ranges) {
+        if (panel.xaxis.mode !== 'time') {
+          // Skip if panel in histogram or series mode
+          plot.clearSelection();
+          return;
+        }
+
+        if ((ranges.ctrlKey || ranges.metaKey) && dashboard.meta.canEdit) {
+          // Add annotation
+          setTimeout(() => {
+            eventManager.updateTime(ranges.xaxis);
+          }, 100);
         } else {
           scope.$apply(function() {
             timeSrv.setTime({
-              from  : moment.utc(ranges.xaxis.from),
-              to    : moment.utc(ranges.xaxis.to),
+              from: moment.utc(ranges.xaxis.from),
+              to: moment.utc(ranges.xaxis.to),
             });
           });
         }
       });
 
-      elem.bind("plotclick", function (event, pos, item) {
-        if (pos.ctrlKey || pos.metaKey || eventManager.event)  {
+      elem.bind('plotclick', function(event, pos, item) {
+        if (panel.xaxis.mode !== 'time') {
+          // Skip if panel in histogram or series mode
+          return;
+        }
+
+        if ((pos.ctrlKey || pos.metaKey) && dashboard.meta.canEdit) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {
-            // scope.$apply(() => {
-            //   eventManager.updateTime({from: pos.x, to: null});
-            // });
+            setTimeout(() => {
+              eventManager.updateTime({ from: pos.x, to: null });
+            }, 100);
           }
         }
       });
@@ -683,6 +691,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         elem.off();
         elem.remove();
       });
-    }
+    },
   };
-});
+}
+
+coreModule.directive('grafanaGraph', graphDirective);

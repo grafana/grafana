@@ -1,0 +1,22 @@
+{
+  "type": "datasource",
+  "name": "PostgreSQL",
+  "id": "postgres",
+
+  "info": {
+    "description": "PostgreSQL Data Source for Grafana",
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/postgresql_logo.svg",
+      "large": "img/postgresql_logo.svg"
+    },
+    "version": "5.0.0"
+  },
+
+  "alerting": true,
+  "annotations": true,
+  "metrics": true
+}

@@ -1,0 +1,77 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false">
+	<div class="gf-form-inline">
+		<div class="gf-form gf-form--grow">
+			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
+			</code-editor>
+		</div>
+	</div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword">Format as</label>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
+			</div>
+		</div>
+		<div class="gf-form">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
+        Show Help
+        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+      </label>
+		</div>
+		<div class="gf-form" ng-show="ctrl.lastQueryMeta">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
+        Generated SQL
+        <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
+      </label>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.showLastQuerySQL">
+		<pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
+	</div>
+
+	<div class="gf-form"  ng-show="ctrl.showHelp">
+		<pre class="gf-form-pre alert alert-info">Time series:
+- return column named <i>time</i> (UTC in seconds or timestamp)
+- return column(s) with numeric datatype as values
+- (Optional: return column named <i>metric</i> to represent the series name. If no column named metric is found the column name of the value column is used as series name)
+
+Table:
+- return any set of columns
+
+Macros:
+- $__time(column) -&gt; column as "time"
+- $__timeEpoch -&gt; extract(epoch from column) as "time"
+- $__timeFilter(column) -&gt;  extract(epoch from column) BETWEEN 1492750877 AND 1492750877
+- $__unixEpochFilter(column) -&gt;  column &gt; 1492750877 AND column &lt; 1492750877
+- $__timeGroup(column,'5m') -&gt; (extract(epoch from column)/300)::bigint*300 AS time
+
+Example of group by and order by with $__timeGroup:
+SELECT
+  $__timeGroup(date_time_col, '1h'),
+  sum(value) as value
+FROM yourtable
+GROUP BY time
+ORDER BY time
+
+Or build your own conditionals using these macros which just return the values:
+- $__timeFrom() -&gt;  to_timestamp(1492750877)
+- $__timeTo() -&gt;  to_timestamp(1492750877)
+- $__unixEpochFrom() -&gt;  1492750877
+- $__unixEpochTo() -&gt;  1492750877
+		</pre>
+	</div>
+
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.lastQueryError">
+		<pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+	</div>
+
+</query-editor-row>

@@ -4,7 +4,8 @@ package aws
 // into a json string. This type can be used just like any other map.
 //
 //	Example:
-//	values := JSONValue{
+//
+//	values := aws.JSONValue{
 //		"Foo": "Bar",
 //	}
 //	values["Baz"] = "Qux"
