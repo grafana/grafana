@@ -176,6 +176,7 @@ export class PrometheusDatasource {
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(target.expr, scopedVars, this.interpolateQueryExpr);
+    query.expr = this.replaceNestedQuery(query.expr, options);
     query.requestId = options.panelId + target.refId;
     return query;
   }
@@ -309,6 +310,15 @@ export class PrometheusDatasource {
       } else {
         return { status: 'error', message: response.error };
       }
+    });
+  }
+
+  replaceNestedQuery(query, options) {
+    return query.replace(/\#([A-Z])/g, (match, g1) => {
+      let replaceTarget = options.targets.find(t => {
+        return t.refId === g1;
+      });
+      return replaceTarget ? replaceTarget.expr : match;
     });
   }
 

@@ -156,5 +156,33 @@ func TestPrometheus(t *testing.T) {
 			})
 		})
 
+		Convey("parsing query model with nested query", func() {
+			json := `{
+					"expr": "sum(rate(#B[1m]))",
+					"format": "time_series",
+					"intervalFactor": 1,
+					"refId": "A"
+				}`
+			json2 := `{
+					"expr": "http_requests_total",
+					"format": "time_series",
+					"intervalFactor": 1,
+					"refId": "B"
+				}`
+			jsonModel, _ := simplejson.NewJson([]byte(json))
+			jsonModel2, _ := simplejson.NewJson([]byte(json2))
+			queryContext := &tsdb.TsdbQuery{}
+			queryModels := []*tsdb.Query{
+				{Model: jsonModel},
+				{Model: jsonModel2},
+			}
+
+			queryContext.TimeRange = tsdb.NewTimeRange("24h", "now")
+			model, err := parseQuery(dsInfo, queryModels, queryContext)
+
+			So(err, ShouldBeNil)
+			So(model[0].Expr, ShouldEqual, "sum(rate(http_requests_total[1m]))")
+		})
+
 	})
 }

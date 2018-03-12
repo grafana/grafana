@@ -167,6 +167,30 @@ func parseQuery(dsInfo *models.DataSource, queries []*tsdb.Query, queryContext *
 			return nil, err
 		}
 
+		re, err := regexp.Compile("\\#[A-Z]")
+		if err != nil {
+			return nil, err
+		}
+		cb := func(s string) string {
+			s = s[1:]
+			for _, query := range queries {
+				refId, err := query.Model.Get("refId").String()
+				if err != nil {
+					plog.Warn("Failed to get refId", "error", err)
+					s = ""
+				}
+				if s == refId {
+					s, err = query.Model.Get("expr").String()
+					if err != nil {
+						plog.Warn("Failed to replace nested query", "error", err)
+						s = ""
+					}
+				}
+			}
+			return s
+		}
+		expr = re.ReplaceAllStringFunc(expr, cb)
+
 		dsInterval, err := tsdb.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
 		if err != nil {
 			return nil, err
