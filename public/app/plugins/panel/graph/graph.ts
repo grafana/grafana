@@ -417,14 +417,6 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
             }
           }
 
-          if (options.series.bars.show || sortedSeries[i].bars.show) {
-            highlightWidth =
-              ('barWidth' in sortedSeries[i].bars ? sortedSeries[i].bars.barWidth : options.series.bars.barWidth) + 1;
-            if (highlightWidth > 1) {
-              sortedSeries[i].bars.barWidth = highlightWidth;
-            }
-          }
-
           if (options.series.points.show || sortedSeries[i].points.show) {
             highlightWidth =
               ('radius' in sortedSeries[i].points ? sortedSeries[i].points.radius : options.series.points.radius) + 1;
