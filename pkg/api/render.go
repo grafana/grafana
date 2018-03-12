@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/renderer"
-	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func RenderToPng(c *middleware.Context) {
+func RenderToPng(c *m.ReqContext) {
 	queryReader, err := util.NewUrlQueryReader(c.Req.URL)
 	if err != nil {
 		c.Handle(400, "Render parameters error", err)

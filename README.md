@@ -33,7 +33,7 @@ the latest master builds [here](https://grafana.com/grafana/download)
 ### Building the backend
 ```bash
 go get github.com/grafana/grafana
-cd ~/go/src/github.com/grafana/grafana
+cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup
 go run build.go build
 ```

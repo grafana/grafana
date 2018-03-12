@@ -12,7 +12,7 @@ describe('PrometheusMetricFindQuery', function() {
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
-    jsonData: {},
+    jsonData: { httpMethod: 'GET' },
   };
 
   beforeEach(angularMocks.module('grafana.core'));

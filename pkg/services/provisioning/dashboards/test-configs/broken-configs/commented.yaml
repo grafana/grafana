@@ -3,4 +3,4 @@
 #   folder: ''
 #   type: file
 #   options:
-#     folder: /var/lib/grafana/dashboards
+#     path: /var/lib/grafana/dashboards

@@ -3,13 +3,12 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // POST /api/teams
-func CreateTeam(c *middleware.Context, cmd m.CreateTeamCommand) Response {
+func CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrTeamNameTaken {
@@ -25,7 +24,7 @@ func CreateTeam(c *middleware.Context, cmd m.CreateTeamCommand) Response {
 }
 
 // PUT /api/teams/:teamId
-func UpdateTeam(c *middleware.Context, cmd m.UpdateTeamCommand) Response {
+func UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -39,7 +38,7 @@ func UpdateTeam(c *middleware.Context, cmd m.UpdateTeamCommand) Response {
 }
 
 // DELETE /api/teams/:teamId
-func DeleteTeamById(c *middleware.Context) Response {
+func DeleteTeamById(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.DeleteTeamCommand{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return ApiError(404, "Failed to delete Team. ID not found", nil)
@@ -50,7 +49,7 @@ func DeleteTeamById(c *middleware.Context) Response {
 }
 
 // GET /api/teams/search
-func SearchTeams(c *middleware.Context) Response {
+func SearchTeams(c *m.ReqContext) Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -83,7 +82,7 @@ func SearchTeams(c *middleware.Context) Response {
 }
 
 // GET /api/teams/:teamId
-func GetTeamById(c *middleware.Context) Response {
+func GetTeamById(c *m.ReqContext) Response {
 	query := m.GetTeamByIdQuery{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {

@@ -107,7 +107,6 @@ describe('templateSrv', function() {
       ]);
     });
 
-
     it('should replace $test with globbed value', function() {
       var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
       expect(target).toBe('this.{value1,value2}.filters');
@@ -259,6 +258,11 @@ describe('templateSrv', function() {
         name: 'build',
       });
       expect(result).toBe('test');
+    });
+
+    it('multi value and csv format should render csv string', function() {
+      var result = _templateSrv.formatValue(['test', 'test2'], 'csv');
+      expect(result).toBe('test,test2');
     });
 
     it('slash should be properly escaped in regex format', function() {

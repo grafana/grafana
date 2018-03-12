@@ -20,7 +20,7 @@ to add and configure a `notification` channel (can be email, PagerDuty or other 
 
 ## Notification Channel Setup
 
-{{< imgbox max-width="40%" img="/img/docs/v43/alert_notifications_menu.png" caption="Alerting Notification Channels" >}}
+{{< imgbox max-width="30%" img="/img/docs/v50/alerts_notifications_menu.png" caption="Alerting Notification Channels" >}}
 
 On the Notification Channels page hit the `New Channel` button to go the page where you
 can configure and setup a new Notification Channel.

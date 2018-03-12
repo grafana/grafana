@@ -6,15 +6,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/testdata"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // POST /api/tsdb/query
-func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
+func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
 	if len(reqDto.Queries) == 0 {
@@ -26,7 +25,7 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 		return ApiError(400, "Query missing datasourceId", nil)
 	}
 
-	dsQuery := models.GetDataSourceByIdQuery{Id: dsId, OrgId: c.OrgId}
+	dsQuery := m.GetDataSourceByIdQuery{Id: dsId, OrgId: c.OrgId}
 	if err := bus.Dispatch(&dsQuery); err != nil {
 		return ApiError(500, "failed to fetch data source", err)
 	}
@@ -61,7 +60,7 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 }
 
 // GET /api/tsdb/testdata/scenarios
-func GetTestDataScenarios(c *middleware.Context) Response {
+func GetTestDataScenarios(c *m.ReqContext) Response {
 	result := make([]interface{}, 0)
 
 	for _, scenario := range testdata.ScenarioRegistry {
@@ -77,14 +76,14 @@ func GetTestDataScenarios(c *middleware.Context) Response {
 }
 
 // Genereates a index out of range error
-func GenerateError(c *middleware.Context) Response {
+func GenerateError(c *m.ReqContext) Response {
 	var array []string
 	return Json(200, array[20])
 }
 
 // GET /api/tsdb/testdata/gensql
-func GenerateSqlTestData(c *middleware.Context) Response {
-	if err := bus.Dispatch(&models.InsertSqlTestDataCommand{}); err != nil {
+func GenerateSqlTestData(c *m.ReqContext) Response {
+	if err := bus.Dispatch(&m.InsertSqlTestDataCommand{}); err != nil {
 		return ApiError(500, "Failed to insert test data", err)
 	}
 
@@ -92,7 +91,7 @@ func GenerateSqlTestData(c *middleware.Context) Response {
 }
 
 // GET /api/tsdb/testdata/random-walk
-func GetTestDataRandomWalk(c *middleware.Context) Response {
+func GetTestDataRandomWalk(c *m.ReqContext) Response {
 	from := c.Query("from")
 	to := c.Query("to")
 	intervalMs := c.QueryInt64("intervalMs")
@@ -100,7 +99,7 @@ func GetTestDataRandomWalk(c *middleware.Context) Response {
 	timeRange := tsdb.NewTimeRange(from, to)
 	request := &tsdb.TsdbQuery{TimeRange: timeRange}
 
-	dsInfo := &models.DataSource{Type: "grafana-testdata-datasource"}
+	dsInfo := &m.DataSource{Type: "grafana-testdata-datasource"}
 	request.Queries = append(request.Queries, &tsdb.Query{
 		RefId:      "A",
 		IntervalMs: intervalMs,

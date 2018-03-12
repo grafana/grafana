@@ -455,7 +455,7 @@ kbn.valueFormats.decgbytes = kbn.formatBuilders.decimalSIPrefix('B', 3);
 // Data Rate
 kbn.valueFormats.pps = kbn.formatBuilders.decimalSIPrefix('pps');
 kbn.valueFormats.bps = kbn.formatBuilders.decimalSIPrefix('bps');
-kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('Bps');
+kbn.valueFormats.Bps = kbn.formatBuilders.decimalSIPrefix('B/s');
 kbn.valueFormats.KBs = kbn.formatBuilders.decimalSIPrefix('Bs', 1);
 kbn.valueFormats.Kbits = kbn.formatBuilders.decimalSIPrefix('bps', 1);
 kbn.valueFormats.MBs = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
@@ -464,13 +464,13 @@ kbn.valueFormats.GBs = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
 kbn.valueFormats.Gbits = kbn.formatBuilders.decimalSIPrefix('bps', 3);
 
 // Hash Rate
-kbn.valueFormats.Hs     = kbn.formatBuilders.decimalSIPrefix('H/s');
-kbn.valueFormats.KHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 1);
-kbn.valueFormats.MHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 2);
-kbn.valueFormats.GHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 3);
-kbn.valueFormats.THs    = kbn.formatBuilders.decimalSIPrefix('H/s', 4);
-kbn.valueFormats.PHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 5);
-kbn.valueFormats.EHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 6);
+kbn.valueFormats.Hs = kbn.formatBuilders.decimalSIPrefix('H/s');
+kbn.valueFormats.KHs = kbn.formatBuilders.decimalSIPrefix('H/s', 1);
+kbn.valueFormats.MHs = kbn.formatBuilders.decimalSIPrefix('H/s', 2);
+kbn.valueFormats.GHs = kbn.formatBuilders.decimalSIPrefix('H/s', 3);
+kbn.valueFormats.THs = kbn.formatBuilders.decimalSIPrefix('H/s', 4);
+kbn.valueFormats.PHs = kbn.formatBuilders.decimalSIPrefix('H/s', 5);
+kbn.valueFormats.EHs = kbn.formatBuilders.decimalSIPrefix('H/s', 6);
 
 // Throughput
 kbn.valueFormats.ops = kbn.formatBuilders.simpleCountUnit('ops');
@@ -570,6 +570,17 @@ kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
 kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
 kbn.valueFormats.radian = kbn.formatBuilders.fixedUnit('rad');
 kbn.valueFormats.grad = kbn.formatBuilders.fixedUnit('grad');
+
+// Radiation
+kbn.valueFormats.radbq = kbn.formatBuilders.decimalSIPrefix('Bq');
+kbn.valueFormats.radci = kbn.formatBuilders.decimalSIPrefix('Ci');
+kbn.valueFormats.radgy = kbn.formatBuilders.decimalSIPrefix('Gy');
+kbn.valueFormats.radrad = kbn.formatBuilders.decimalSIPrefix('rad');
+kbn.valueFormats.radsv = kbn.formatBuilders.decimalSIPrefix('Sv');
+kbn.valueFormats.radrem = kbn.formatBuilders.decimalSIPrefix('rem');
+kbn.valueFormats.radexpckg = kbn.formatBuilders.decimalSIPrefix('C/kg');
+kbn.valueFormats.radr = kbn.formatBuilders.decimalSIPrefix('R');
+kbn.valueFormats.radsvh = kbn.formatBuilders.decimalSIPrefix('Sv/h');
 
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -772,6 +783,10 @@ kbn.valueFormats.dtdurations = function(size, decimals) {
   return kbn.toDuration(size, decimals, 'second');
 };
 
+kbn.valueFormats.timeticks = function(size, decimals, scaledDecimals) {
+  return kbn.valueFormats.s(size / 100, decimals, scaledDecimals);
+};
+
 kbn.valueFormats.dateTimeAsIso = function(epoch) {
   var time = moment(epoch);
 
@@ -843,6 +858,7 @@ kbn.getUnitFormats = function() {
         { text: 'days (d)', value: 'd' },
         { text: 'duration (ms)', value: 'dtdurationms' },
         { text: 'duration (s)', value: 'dtdurations' },
+        { text: 'Timeticks (s/100)', value: 'timeticks' },
       ],
     },
     {
@@ -890,13 +906,13 @@ kbn.getUnitFormats = function() {
     {
       text: 'hash rate',
       submenu: [
-        {text: 'hashes/sec', value: 'Hs'},
-        {text: 'kilohashes/sec',    value: 'KHs'},
-        {text: 'megahashes/sec',   value: 'MHs'},
-        {text: 'gigahashes/sec', value: 'GHs'},
-        {text: 'terahashes/sec',    value: 'THs'},
-        {text: 'petahashes/sec', value: 'PHs'},
-        {text: 'exahashes/sec',    value: 'EHs'},
+        { text: 'hashes/sec', value: 'Hs' },
+        { text: 'kilohashes/sec', value: 'KHs' },
+        { text: 'megahashes/sec', value: 'MHs' },
+        { text: 'gigahashes/sec', value: 'GHs' },
+        { text: 'terahashes/sec', value: 'THs' },
+        { text: 'petahashes/sec', value: 'PHs' },
+        { text: 'exahashes/sec', value: 'EHs' },
       ],
     },
     {
@@ -1034,6 +1050,20 @@ kbn.getUnitFormats = function() {
         { text: 'Meters/sec²', value: 'accMS2' },
         { text: 'Feet/sec²', value: 'accFS2' },
         { text: 'G unit', value: 'accG' },
+      ],
+    },
+    {
+      text: 'radiation',
+      submenu: [
+        { text: 'Becquerel (Bq)', value: 'radbq' },
+        { text: 'curie (Ci)', value: 'radci' },
+        { text: 'Gray (Gy)', value: 'radgy' },
+        { text: 'rad', value: 'radrad' },
+        { text: 'Sievert (Sv)', value: 'radsv' },
+        { text: 'rem', value: 'radrem' },
+        { text: 'Exposure (C/kg)', value: 'radexpckg' },
+        { text: 'roentgen (R)', value: 'radr' },
+        { text: 'Sievert/hour (Sv/h)', value: 'radsvh' },
       ],
     },
   ];

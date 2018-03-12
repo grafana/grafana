@@ -10,10 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func initContextWithAuthProxy(ctx *Context, orgId int64) bool {
+func initContextWithAuthProxy(ctx *m.ReqContext, orgId int64) bool {
 	if !setting.AuthProxyEnabled {
 		return false
 	}
@@ -58,7 +59,7 @@ func initContextWithAuthProxy(ctx *Context, orgId int64) bool {
 	}
 
 	// initialize session
-	if err := ctx.Session.Start(ctx); err != nil {
+	if err := ctx.Session.Start(ctx.Context); err != nil {
 		log.Error(3, "Failed to start session", err)
 		return false
 	}
@@ -66,12 +67,12 @@ func initContextWithAuthProxy(ctx *Context, orgId int64) bool {
 	// Make sure that we cannot share a session between different users!
 	if getRequestUserId(ctx) > 0 && getRequestUserId(ctx) != query.Result.UserId {
 		// remove session
-		if err := ctx.Session.Destory(ctx); err != nil {
+		if err := ctx.Session.Destory(ctx.Context); err != nil {
 			log.Error(3, "Failed to destroy session, err")
 		}
 
 		// initialize a new session
-		if err := ctx.Session.Start(ctx); err != nil {
+		if err := ctx.Session.Start(ctx.Context); err != nil {
 			log.Error(3, "Failed to start session", err)
 		}
 	}
@@ -89,17 +90,17 @@ func initContextWithAuthProxy(ctx *Context, orgId int64) bool {
 
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
-	ctx.Session.Set(SESS_KEY_USERID, ctx.UserId)
+	ctx.Session.Set(session.SESS_KEY_USERID, ctx.UserId)
 
 	return true
 }
 
-var syncGrafanaUserWithLdapUser = func(ctx *Context, query *m.GetSignedInUserQuery) error {
+var syncGrafanaUserWithLdapUser = func(ctx *m.ReqContext, query *m.GetSignedInUserQuery) error {
 	if setting.LdapEnabled {
 		expireEpoch := time.Now().Add(time.Duration(-setting.AuthProxyLdapSyncTtl) * time.Minute).Unix()
 
 		var lastLdapSync int64
-		if lastLdapSyncInSession := ctx.Session.Get(SESS_KEY_LASTLDAPSYNC); lastLdapSyncInSession != nil {
+		if lastLdapSyncInSession := ctx.Session.Get(session.SESS_KEY_LASTLDAPSYNC); lastLdapSyncInSession != nil {
 			lastLdapSync = lastLdapSyncInSession.(int64)
 		}
 
@@ -113,14 +114,14 @@ var syncGrafanaUserWithLdapUser = func(ctx *Context, query *m.GetSignedInUserQue
 				}
 			}
 
-			ctx.Session.Set(SESS_KEY_LASTLDAPSYNC, time.Now().Unix())
+			ctx.Session.Set(session.SESS_KEY_LASTLDAPSYNC, time.Now().Unix())
 		}
 	}
 
 	return nil
 }
 
-func checkAuthenticationProxy(ctx *Context, proxyHeaderValue string) error {
+func checkAuthenticationProxy(ctx *m.ReqContext, proxyHeaderValue string) error {
 	if len(strings.TrimSpace(setting.AuthProxyWhitelist)) > 0 {
 		proxies := strings.Split(setting.AuthProxyWhitelist, ",")
 		remoteAddrSplit := strings.Split(ctx.Req.RemoteAddr, ":")
