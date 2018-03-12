@@ -1,5 +1,6 @@
 import _ from 'lodash';
 
+import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
@@ -20,6 +21,7 @@ export class PrometheusDatasource {
   withCredentials: any;
   metricsNameCache: any;
   interval: string;
+  httpMethod: string;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
@@ -32,14 +34,33 @@ export class PrometheusDatasource {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
+    this.httpMethod = instanceSettings.jsonData.httpMethod;
   }
 
-  _request(method, url, requestId?) {
+  _request(method, url, data?, requestId?) {
     var options: any = {
       url: this.url + url,
       method: method,
       requestId: requestId,
     };
+    if (method === 'GET') {
+      if (!_.isEmpty(data)) {
+        options.url =
+          options.url +
+          '?' +
+          _.map(data, (v, k) => {
+            return encodeURIComponent(k) + '=' + encodeURIComponent(v);
+          }).join('&');
+      }
+    } else {
+      options.headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      options.transformRequest = data => {
+        return $.param(data);
+      };
+      options.data = data;
+    }
 
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
@@ -173,21 +194,23 @@ export class PrometheusDatasource {
       throw { message: 'Invalid time range' };
     }
 
-    var url =
-      '/api/v1/query_range?query=' +
-      encodeURIComponent(query.expr) +
-      '&start=' +
-      start +
-      '&end=' +
-      end +
-      '&step=' +
-      query.step;
-    return this._request('GET', url, query.requestId);
+    var url = '/api/v1/query_range';
+    var data = {
+      query: query.expr,
+      start: start,
+      end: end,
+      step: query.step,
+    };
+    return this._request(this.httpMethod, url, data, query.requestId);
   }
 
   performInstantQuery(query, time) {
-    var url = '/api/v1/query?query=' + encodeURIComponent(query.expr) + '&time=' + time;
-    return this._request('GET', url, query.requestId);
+    var url = '/api/v1/query';
+    var data = {
+      query: query.expr,
+      time: time,
+    };
+    return this._request(this.httpMethod, url, data, query.requestId);
   }
 
   performSuggestQuery(query, cache = false) {
@@ -279,8 +302,13 @@ export class PrometheusDatasource {
   }
 
   testDatasource() {
-    return this.metricFindQuery('metrics(.*)').then(function() {
-      return { status: 'success', message: 'Data source is working' };
+    let now = new Date().getTime();
+    return this.performInstantQuery({ expr: '1+1' }, now / 1000).then(response => {
+      if (response.data.status === 'success') {
+        return { status: 'success', message: 'Data source is working' };
+      } else {
+        return { status: 'error', message: response.error };
+      }
     });
   }
 
