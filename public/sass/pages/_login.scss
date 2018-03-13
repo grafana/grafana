@@ -274,7 +274,7 @@ select:-webkit-autofill:focus {
     width: 35%;
     padding: 4rem 2rem;
     border-right: 1px solid $login-border;
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .login-inner-box {
@@ -310,6 +310,7 @@ select:-webkit-autofill:focus {
 
   .login-button-group {
     flex-direction: row;
+    justify-content: center;
   }
 
   .login-button-forgot-password {

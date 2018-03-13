@@ -2,7 +2,6 @@
   <div class="login-content">
     <div class="login-branding">
       <img class="logo-icon" src="public/img/logo_transparent_200x75.png"/>
-      <i class="icon-gf icon-gf-grafana_wordmark"></i>
     </div>
     <div class="login-inner-box">
       <form name="loginForm" class="login-form-group gf-form-group" ng-hide="disableLoginForm">
@@ -18,11 +17,6 @@
           <button type="submit" class="btn btn-large p-x-2" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
             Log In
           </button>
-            <div class="small login-button-forgot-password">
-              <a href="user/password/send-reset-email">
-                Forgot your password?
-              </a>
-          </div>
         </div>
       </form>
       <div class="text-center login-divider" ng-show="oauthEnabled">
