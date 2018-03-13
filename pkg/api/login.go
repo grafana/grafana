@@ -90,17 +90,17 @@ func tryLoginUsingRememberCookie(c *m.ReqContext) bool {
 
 func LoginApiPing(c *m.ReqContext) {
 	if !tryLoginUsingRememberCookie(c) {
-		initialized, err := netcrunch.CheckInitializationSuccess()
-
-		if (err == nil) && (!initialized) {
-			c.JsonApiErr(401, "Default credentials for fresh installation: User: admin Password: admin", nil)
-		} else {
-			c.JsonApiErr(401, "Unauthorized", nil)
-		}
+		c.JsonApiErr(401, "Unauthorized", nil)
 		return
 	}
 
 	c.JsonOK("Logged in")
+}
+
+func initialLoginHint() bool {
+	initialized, err := netcrunch.CheckInitializationSuccess()
+
+	return (err == nil) && (!initialized)
 }
 
 func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
@@ -115,6 +115,11 @@ func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 	}
 
 	if err := bus.Dispatch(&authQuery); err != nil {
+
+		if (err == login.ErrInvalidCredentials) && initialLoginHint() {
+			return ApiError(401, "Default credentials for fresh installation: User: admin Password: admin", err)
+		}
+
 		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
 			return ApiError(401, "Invalid username or password", err)
 		}
