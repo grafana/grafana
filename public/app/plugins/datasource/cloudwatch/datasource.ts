@@ -212,6 +212,7 @@ export default class CloudWatchDatasource {
     var region;
     var namespace;
     var metricName;
+    var filterJson;
 
     var regionQuery = query.match(/^regions\(\)/);
     if (regionQuery) {
@@ -237,14 +238,20 @@ export default class CloudWatchDatasource {
       return this.getDimensionKeys(namespace, region);
     }
 
-    var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
+    var dimensionValuesQuery = query.match(
+      /^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?(.+))?\)/
+    );
     if (dimensionValuesQuery) {
       region = dimensionValuesQuery[1];
       namespace = dimensionValuesQuery[2];
       metricName = dimensionValuesQuery[3];
       var dimensionKey = dimensionValuesQuery[4];
+      filterJson = {};
+      if (dimensionValuesQuery[6]) {
+        filterJson = JSON.parse(this.templateSrv.replace(dimensionValuesQuery[6]));
+      }
 
-      return this.getDimensionValues(region, namespace, metricName, dimensionKey, {});
+      return this.getDimensionValues(region, namespace, metricName, dimensionKey, filterJson);
     }
 
     var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
@@ -258,7 +265,7 @@ export default class CloudWatchDatasource {
     if (ec2InstanceAttributeQuery) {
       region = ec2InstanceAttributeQuery[1];
       var targetAttributeName = ec2InstanceAttributeQuery[2];
-      var filterJson = JSON.parse(this.templateSrv.replace(ec2InstanceAttributeQuery[3]));
+      filterJson = JSON.parse(this.templateSrv.replace(ec2InstanceAttributeQuery[3]));
       return this.getEc2InstanceAttribute(region, targetAttributeName, filterJson);
     }
 

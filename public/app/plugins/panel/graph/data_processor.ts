@@ -29,12 +29,17 @@ export class DataProcessor {
         });
       }
       case 'histogram': {
-        let histogramDataList = [
-          {
-            target: 'count',
-            datapoints: _.concat([], _.flatten(_.map(options.dataList, 'datapoints'))),
-          },
-        ];
+        let histogramDataList;
+        if (this.panel.stack) {
+          histogramDataList = options.dataList;
+        } else {
+          histogramDataList = [
+            {
+              target: 'count',
+              datapoints: _.concat([], _.flatten(_.map(options.dataList, 'datapoints'))),
+            },
+          ];
+        }
         return histogramDataList.map((item, index) => {
           return this.timeSeriesHandler(item, index, options);
         });
