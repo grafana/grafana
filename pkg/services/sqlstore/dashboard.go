@@ -330,7 +330,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			}
 		}
 
-		if err := DeleteAlertDefinition(dashboard.Id, sess); err != nil {
+		if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {
 			return nil
 		}
 
