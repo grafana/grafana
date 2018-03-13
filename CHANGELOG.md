@@ -14,6 +14,10 @@
 * **Units**: Second to HH:mm:ss formatter [#11107](https://github.com/grafana/grafana/issues/11107), thx [@gladdiologist](https://github.com/gladdiologist) 
 * **Singlestat**: Add color to prefix and postfix in singlestat panel [#11143](https://github.com/grafana/grafana/pull/11143), thx [@ApsOps](https://github.com/ApsOps)
 
+# 5.0.2 (unrelease)
+
+* **Teams**: Remove quota restrictions from teams [#11220](https://github.com/grafana/grafana/issues/11220)
+
 # 5.0.1 (2018-03-08)
 
 * **Postgres**: PostgreSQL error when using ipv6 address as hostname in connection string [#11055](https://github.com/grafana/grafana/issues/11055), thanks [@svenklemm](https://github.com/svenklemm)
