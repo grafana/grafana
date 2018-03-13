@@ -137,7 +137,11 @@ export default class PostgresQuery {
       value = this.templateSrv.replace(value, this.scopedVars);
     }
 
-    return str + constraint.key + ' ' + operator + ' ' + value;
+    if (operator === "IN") {
+      return str + constraint.key + ' ' + operator + ' (' + value + ')';
+    } else {
+      return str + constraint.key + ' ' + operator + ' ' + value;
+    }
   }
 
   interpolateQueryStr(value, variable, defaultFormatFn) {
