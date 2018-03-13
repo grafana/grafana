@@ -21,7 +21,6 @@ export default class PostgresQuery {
     target.timeColumn = target.timeColumn || 'time';
     target.metricColumn = target.metricColumn || 'None';
 
-    target.orderByTime = target.orderByTime || 'ASC';
     target.groupBy = target.groupBy || [];
     target.where = target.where || [];
     target.select = target.select || [[{ type: 'column', params: ['value'] }]];
