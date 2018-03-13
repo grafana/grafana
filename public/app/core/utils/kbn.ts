@@ -496,6 +496,7 @@ kbn.valueFormats.watt = kbn.formatBuilders.decimalSIPrefix('W');
 kbn.valueFormats.kwatt = kbn.formatBuilders.decimalSIPrefix('W', 1);
 kbn.valueFormats.mwatt = kbn.formatBuilders.decimalSIPrefix('W', -1);
 kbn.valueFormats.kwattm = kbn.formatBuilders.decimalSIPrefix('W/Min', 1);
+kbn.valueFormats.Wm2 = kbn.formatBuilders.fixedUnit('W/m2');
 kbn.valueFormats.voltamp = kbn.formatBuilders.decimalSIPrefix('VA');
 kbn.valueFormats.kvoltamp = kbn.formatBuilders.decimalSIPrefix('VA', 1);
 kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
@@ -576,6 +577,7 @@ kbn.valueFormats.flowgpm = kbn.formatBuilders.fixedUnit('gpm');
 kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
 kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
+kbn.valueFormats.litreh = kbn.formatBuilders.fixedUnit('l/h');
 
 // Angle
 kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
@@ -1007,6 +1009,7 @@ kbn.getUnitFormats = function() {
         { text: 'Watt (W)', value: 'watt' },
         { text: 'Kilowatt (kW)', value: 'kwatt' },
         { text: 'Milliwatt (mW)', value: 'mwatt' },
+        { text: 'Watt per square metre (W/m2)', value: 'Wm2' },
         { text: 'Volt-ampere (VA)', value: 'voltamp' },
         { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
         { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
@@ -1062,6 +1065,7 @@ kbn.getUnitFormats = function() {
         { text: 'Cubic meters/sec (cms)', value: 'flowcms' },
         { text: 'Cubic feet/sec (cfs)', value: 'flowcfs' },
         { text: 'Cubic feet/min (cfm)', value: 'flowcfm' },
+        { text: 'Litre/hour', value: 'litreh' },
       ],
     },
     {
