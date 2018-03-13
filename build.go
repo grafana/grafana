@@ -431,6 +431,7 @@ func rmr(paths ...string) {
 }
 
 func clean() {
+	rmr("bin")
 	rmr("dist")
 	rmr("tmp")
 	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))

@@ -1,6 +1,7 @@
 @ECHO OFF
 
 echo CLEANING A PREVIOUS BUILD
+call go run build.go clean
 call grunt clean
 call rmdir /S /Q "packaging\windows\GrafCrunchGuard\Win64\Release"
 call rmdir /S /Q "packaging\windows\RunGrafCrunch\Win64\Release\"
