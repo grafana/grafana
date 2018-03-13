@@ -25,7 +25,7 @@ class Settings {
   constructor(options) {
     var defaults = {
       datasources: {},
-      window_title_prefix: 'Grafana - ',
+      window_title_prefix: 'GrafCrunch - ',
       panels: {},
       new_panel_title: 'Panel Title',
       playlist_timespan: '1m',
