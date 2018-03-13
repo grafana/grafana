@@ -23,3 +23,9 @@
     network_mode: host
     ports:
       - "9093:9093"
+
+  prometheus-random-data:
+    build: blocks/prometheus_random_data
+    network_mode: host
+    ports:
+      - "8080:8080"

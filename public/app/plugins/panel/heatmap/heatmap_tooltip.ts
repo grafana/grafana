@@ -97,15 +97,17 @@ export class HeatmapTooltip {
     let time = this.dashboard.formatDate(xData.x, tooltipTimeFormat);
 
     // Decimals override. Code from panel/graph/graph.ts
-    let valueFormatter;
+    let countValueFormatter, bucketBoundFormatter;
     if (_.isNumber(this.panel.tooltipDecimals)) {
-      valueFormatter = this.valueFormatter(this.panel.tooltipDecimals, null);
+      countValueFormatter = this.countValueFormatter(this.panel.tooltipDecimals, null);
+      bucketBoundFormatter = this.panelCtrl.tickValueFormatter(this.panelCtrl.decimals, null);
     } else {
       // auto decimals
       // legend and tooltip gets one more decimal precision
       // than graph legend ticks
       let decimals = (this.panelCtrl.decimals || -1) + 1;
-      valueFormatter = this.valueFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
+      countValueFormatter = this.countValueFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
+      bucketBoundFormatter = this.panelCtrl.tickValueFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
     }
 
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
@@ -113,11 +115,21 @@ export class HeatmapTooltip {
 
     if (yData) {
       if (yData.bounds) {
-        // Display 0 if bucket is a special 'zero' bucket
-        let bottom = yData.y ? yData.bounds.bottom : 0;
-        boundBottom = valueFormatter(bottom);
-        boundTop = valueFormatter(yData.bounds.top);
-        valuesNumber = yData.count;
+        if (data.tsBuckets) {
+          // Use Y-axis labels
+          const tickFormatter = valIndex => {
+            return data.tsBucketsFormatted ? data.tsBucketsFormatted[valIndex] : data.tsBuckets[valIndex];
+          };
+
+          boundBottom = tickFormatter(yBucketIndex);
+          boundTop = yBucketIndex < data.tsBuckets.length - 1 ? tickFormatter(yBucketIndex + 1) : '';
+        } else {
+          // Display 0 if bucket is a special 'zero' bucket
+          let bottom = yData.y ? yData.bounds.bottom : 0;
+          boundBottom = bucketBoundFormatter(bottom);
+          boundTop = bucketBoundFormatter(yData.bounds.top);
+        }
+        valuesNumber = countValueFormatter(yData.count);
         tooltipHtml += `<div>
           bucket: <b>${boundBottom} - ${boundTop}</b> <br>
           count: <b>${valuesNumber}</b> <br>
@@ -163,6 +175,9 @@ export class HeatmapTooltip {
 
   getYBucketIndex(offsetY, data) {
     let y = this.scope.yScale.invert(offsetY - this.scope.chartTop);
+    if (data.tsBuckets) {
+      return Math.floor(y);
+    }
     let yBucketIndex = getValueBucketBound(y, data.yBucketSize, this.panel.yAxis.logBase);
     return yBucketIndex;
   }
@@ -177,7 +192,16 @@ export class HeatmapTooltip {
   addHistogram(data) {
     let xBucket = this.scope.ctrl.data.buckets[data.x];
     let yBucketSize = this.scope.ctrl.data.yBucketSize;
-    let { min, max, ticks } = this.scope.ctrl.data.yAxis;
+    let min, max, ticks;
+    if (this.scope.ctrl.data.tsBuckets) {
+      min = 0;
+      max = this.scope.ctrl.data.tsBuckets.length - 1;
+      ticks = this.scope.ctrl.data.tsBuckets.length;
+    } else {
+      min = this.scope.ctrl.data.yAxis.min;
+      max = this.scope.ctrl.data.yAxis.max;
+      ticks = this.scope.ctrl.data.yAxis.ticks;
+    }
     let histogramData = _.map(xBucket.buckets, bucket => {
       let count = bucket.count !== undefined ? bucket.count : bucket.values.length;
       return [bucket.bounds.bottom, count];
@@ -251,8 +275,8 @@ export class HeatmapTooltip {
     return this.tooltip.style('left', left + 'px').style('top', top + 'px');
   }
 
-  valueFormatter(decimals, scaledDecimals = null) {
-    let format = this.panel.yAxis.format;
+  countValueFormatter(decimals, scaledDecimals = null) {
+    let format = 'short';
     return function(value) {
       return kbn.valueFormats[format](value, decimals, scaledDecimals);
     };
