@@ -131,6 +131,17 @@ kbn.secondsToHms = function(seconds) {
   return 'less than a millisecond'; //'just now' //or other string you like;
 };
 
+kbn.secondsToHhmmss = function(seconds) {
+  var strings = [];
+  var numhours = Math.floor(seconds/3600);
+  var numminutes = Math.floor((seconds%3600)/60);
+  var numseconds = Math.floor((seconds%3600)%60);
+  numhours > 9 ? strings.push(''+numhours) : strings.push('0'+numhours);
+  numminutes > 9 ? strings.push(''+numminutes) : strings.push('0'+numminutes);
+  numseconds > 9 ? strings.push(''+numseconds) : strings.push('0'+numseconds);
+  return strings.join(':');
+};
+
 kbn.to_percent = function(nr, outof) {
   return Math.floor(nr / outof * 10000) / 100 + '%';
 };
@@ -795,6 +806,10 @@ kbn.valueFormats.dtdurations = function(size, decimals) {
   return kbn.toDuration(size, decimals, 'second');
 };
 
+kbn.valueFormats.dthms = function(size, decimals) {
+  return kbn.secondsToHhmmss(size);
+};
+
 kbn.valueFormats.timeticks = function(size, decimals, scaledDecimals) {
   return kbn.valueFormats.s(size / 100, decimals, scaledDecimals);
 };
@@ -869,6 +884,7 @@ kbn.getUnitFormats = function() {
         { text: 'days (d)', value: 'd' },
         { text: 'duration (ms)', value: 'dtdurationms' },
         { text: 'duration (s)', value: 'dtdurations' },
+        { text: 'duration (hh:mm:ss)', value: 'dthms' },
         { text: 'Timeticks (s/100)', value: 'timeticks' },
       ],
     },

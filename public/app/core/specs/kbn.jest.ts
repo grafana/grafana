@@ -355,3 +355,18 @@ describe('volume', function() {
     expect(str).toBe('1000.0 m3');
   });
 });
+
+describe('hh:mm:ss', function() {
+  it('00:04:06', function() {
+    var str = kbn.valueFormats['dthms'](246, 1);
+    expect(str).toBe('00:04:06');
+  });
+  it('24:00:00', function() {
+    var str = kbn.valueFormats['dthms'](86400, 1);
+    expect(str).toBe('24:00:00');
+  });
+  it('6824413:53:20', function() {
+    var str = kbn.valueFormats['dthms'](24567890000, 1);
+    expect(str).toBe('6824413:53:20');
+  });
+});
