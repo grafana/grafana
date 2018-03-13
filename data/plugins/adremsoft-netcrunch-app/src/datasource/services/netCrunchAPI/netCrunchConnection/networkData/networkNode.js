@@ -39,7 +39,8 @@ class NetCrunchNetworkNode {
 
     this[PRIVATE_PROPERTIES.values] = nodeRec.getValues();
     this[PRIVATE_PROPERTIES.local] = Object.assign({}, deviceType);
-    this[PRIVATE_PROPERTIES.local].iconUrl = NetCrunchNetworkNode.getIconUrl(this.iconId, netCrunchServerConnection);
+    this[PRIVATE_PROPERTIES.local].iconUrl =
+      NetCrunchNetworkNode.getIconUrl(deviceType.iconId, netCrunchServerConnection);
   }
 
   get id() {

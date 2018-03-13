@@ -4,7 +4,12 @@
   "id": "adremsoft-netcrunch-datasource",
 
   "metrics": true,
+  "alerting": false,
   "annotations": false,
+
+  "queryOptions": {
+    "maxDataPoints": true
+  },
 
   "info": {
     "description": "NetCrunch Datasource",

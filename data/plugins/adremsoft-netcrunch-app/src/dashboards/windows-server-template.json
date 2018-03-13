@@ -1322,6 +1322,7 @@
             "hideEmpty": true
           },
           "nullPointMode": "null",
+          "maxDataPoints": 200,
           "steppedLine": false,
           "tooltip": {
             "value_type": "individual",
@@ -1436,6 +1437,7 @@
             "hideEmpty": true
           },
           "nullPointMode": "null",
+          "maxDataPoints": 200,
           "steppedLine": false,
           "tooltip": {
             "value_type": "individual",
@@ -1606,6 +1608,7 @@
             "hideEmpty": true
           },
           "nullPointMode": "null",
+          "maxDataPoints": 150,
           "steppedLine": false,
           "tooltip": {
             "value_type": "individual",
@@ -1750,6 +1753,7 @@
             "hideEmpty": true
           },
           "nullPointMode": "null",
+          "maxDataPoints": 150,
           "steppedLine": false,
           "tooltip": {
             "value_type": "individual",
@@ -1899,6 +1903,7 @@
             "hideEmpty": true
           },
           "nullPointMode": "null",
+          "maxDataPoints": 150,
           "steppedLine": false,
           "tooltip": {
             "value_type": "individual",

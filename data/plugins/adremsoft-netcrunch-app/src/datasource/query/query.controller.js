@@ -167,10 +167,6 @@ class NetCrunchQueryController extends QueryCtrl {
     this.target.alias = value;
   }
 
-  get rawData() {
-    return this.panel.scopedVars.rawData;
-  }
-
   get series() {
     return this.target.series;
   }

@@ -1,41 +1,41 @@
 # NetCrunch App for Grafana
 
 ## Create NetCrunch datasource
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/movies/create-datasource.gif)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/movies/create-datasource.gif)
 
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/datasource-list.jpg)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/datasource-list.jpg)
 
 ## Templates
 
 ### Select template
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/movies/select-template.gif)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/movies/select-template.gif)
 
 ### Windows workstation
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/windows-workstation-template.jpg)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/windows-workstation-template.jpg)
 
 ### Windows server
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/windows-server-template.jpg)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/windows-server-template.jpg)
 
 ### Linux
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/linux-template.jpg)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/linux-template.jpg)
 
 ### ESX
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/esx-template.jpg)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/esx-template.jpg)
 
 ## Create dashboard
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/movies/create-dashboard.gif)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/movies/create-dashboard.gif)
 
 ## Create template dashboard
 
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/create-template-1.png)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/create-template-1.png)
 
 ### Add datasource variable
 
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/create-template-2.png)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/create-template-2.png)
 
 ### Add node variable
 
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/create-template-3.png)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/create-template-3.png)
 
 #### Query
 
@@ -67,7 +67,7 @@ query should be:
 
 `nodes.networkAtlas("Custom Views").folder("My custom folder").folder("My sub folder").view("My view \(old\)")`
 
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/template-query-maps-view.jpg)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/template-query-maps-view.jpg)
 
 ##### `<monitoringPack>`
 
@@ -84,7 +84,7 @@ The query to filter out the nodes to which monitoring pack shown in the image be
 
 `nodes.monitoringPacks.folder("Hardware").folder("Network Devices").name("Cisco \(SNMP\)")`
 
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/template-query-monitoring-pack-view.jpg)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/template-query-monitoring-pack-view.jpg)
 
 ##### `<nodeType>`
 
@@ -112,13 +112,17 @@ The query to filter out all linux nodes from a specific IP network is as follows
 
 ### View of variables
 
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/create-template-4.png)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/create-template-4.png)
 
 ### Define a metric of template
 
-![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/images/create-template-5.png)
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/grafCrunch/doc/v2.0/images/create-template-5.png)
 
 ## Changelog
+
+### v2.0.0
+- Support for template queries which allow filtering network nodes for specific *Network Atlas View* or *Monitoring Pack*. It allows to define dashboard template for counters which belong to specific *monitoring pack* or network nodes grouped in specific *atlas view*.
+- Refactoring the settings of *Max data points* for datasource, base on the new Grafana mechanism.
 
 ### v1.0.0
 - NetCrunch datasource
