@@ -14,19 +14,25 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type MsSqlMacroEngine struct {
 	TimeRange *tsdb.TimeRange
+	Query     *tsdb.Query
 }
 
 func NewMssqlMacroEngine() tsdb.SqlMacroEngine {
 	return &MsSqlMacroEngine{}
 }
 
-func (m *MsSqlMacroEngine) Interpolate(timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *MsSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 	m.TimeRange = timeRange
+	m.Query = query
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
 	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-		res, err := m.evaluateMacro(groups[1], strings.Split(groups[2], ","))
+		args := strings.Split(groups[2], ",")
+		for i, arg := range args {
+			args[i] = strings.Trim(arg, " ")
+		}
+		res, err := m.evaluateMacro(groups[1], args)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"

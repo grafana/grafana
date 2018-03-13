@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import kbn from 'app/core/utils/kbn';
 import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
 

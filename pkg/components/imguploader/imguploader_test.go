@@ -143,5 +143,23 @@ func TestImageUploaderFactory(t *testing.T) {
 				So(original.container_name, ShouldEqual, "container_name")
 			})
 		})
+
+		Convey("Local uploader", func() {
+			var err error
+
+			setting.NewConfigContext(&setting.CommandLineArgs{
+				HomePath: "../../../",
+			})
+
+			setting.ImageUploadProvider = "local"
+
+			uploader, err := NewImageUploader()
+
+			So(err, ShouldBeNil)
+			original, ok := uploader.(*LocalUploader)
+
+			So(ok, ShouldBeTrue)
+			So(original, ShouldNotBeNil)
+		})
 	})
 }

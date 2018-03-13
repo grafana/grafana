@@ -162,6 +162,10 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 	hs.mapStatic(m, setting.StaticRootPath, "", "public")
 	hs.mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
 
+	if setting.ImageUploadProvider == "local" {
+		hs.mapStatic(m, setting.ImagesDir, "", "/public/img/attachments")
+	}
+
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,

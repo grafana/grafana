@@ -9,29 +9,21 @@
     </div>
     <input type="text"
       class="gf-form-input max-width-10"
-      ng-show="ctrl.createNewFolder"
+      ng-if="ctrl.createNewFolder"
       give-focus="ctrl.createNewFolder"
       ng-model="ctrl.newFolderName"
       ng-model-options="{ debounce: 400 }"
-      ng-class="{'validation-error': !ctrl.isNewFolderNameValid()}"
       ng-change="ctrl.newFolderNameChanged()" />
   </div>
-  <div class="gf-form" ng-show="ctrl.createNewFolder">
-    <label class="gf-form-label text-success"
-      ng-show="ctrl.newFolderNameTouched && !ctrl.hasValidationError">
-      <i class="fa fa-check"></i>
-    </label>
-  </div>
-  <div class="gf-form" ng-show="ctrl.createNewFolder">
-    <button class="gf-form-label"
+  <div class="gf-form" ng-if="ctrl.createNewFolder">
+    <button class="btn btn-inverse"
       ng-click="ctrl.createFolder($event)"
       ng-disabled="!ctrl.newFolderNameTouched || ctrl.hasValidationError">
       <i class="fa fa-fw fa-save"></i>&nbsp;Create
     </button>
   </div>
-  <div class="gf-form" ng-show="ctrl.createNewFolder">
-    <button class="gf-form-label"
-      ng-click="ctrl.cancelCreateFolder($event)">
+  <div class="gf-form" ng-if="ctrl.createNewFolder">
+    <button class="btn btn-inverse" ng-click="ctrl.cancelCreateFolder($event)">
       Cancel
   </button>
   </div>

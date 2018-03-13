@@ -2,6 +2,7 @@ package mssql
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -9,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"golang.org/x/net/context" // use the "x/net/context" for backwards compatibility.
 )
 
 type MssqlBulk struct {

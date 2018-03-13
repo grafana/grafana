@@ -299,7 +299,7 @@ blockquote {
     line-height: $line-height-base;
     color: $gray-2;
     &:before {
-      content: "\2014 \00A0";
+      content: '\2014 \00A0';
     }
   }
 
@@ -316,10 +316,10 @@ blockquote {
     }
     small {
       &:before {
-        content: "";
+        content: '';
       }
       &:after {
-        content: "\00A0 \2014";
+        content: '\00A0 \2014';
       }
     }
   }
@@ -330,7 +330,7 @@ q:before,
 q:after,
 blockquote:before,
 blockquote:after {
-  content: "";
+  content: '';
 }
 
 // Addresses
@@ -408,4 +408,10 @@ a.external-link {
 
 .no-wrap {
   white-space: nowrap;
+}
+
+.highlight-search-match {
+  background: transparent;
+  color: $yellow;
+  padding: 0;
 }

@@ -1,5 +1,5 @@
-@import "~react-grid-layout/css/styles.css";
-@import "~react-resizable/css/styles.css";
+@import '~react-grid-layout-grafana/css/styles.css';
+@import '~react-resizable/css/styles.css';
 
 .panel-in-fullscreen {
   .react-grid-layout {
@@ -40,8 +40,21 @@
 }
 
 .theme-dark {
+  .react-grid-item > .react-resizable-handle::after {
+    border-right: 2px solid $gray-1;
+    border-bottom: 2px solid $gray-1;
+  }
+  // temp fix since we use old commit of grid component
+  // this can be removed when we revert to non fork grid component
   .react-grid-item > .react-resizable-handle {
-    background-image: url("../img/resize-handle-white.svg");
+    background-image: url('../img/resize-handle-white.svg');
+  }
+}
+
+.theme-light {
+  .react-grid-item > .react-resizable-handle::after {
+    border-right: 2px solid $gray-3;
+    border-bottom: 2px solid $gray-3;
   }
 }
 

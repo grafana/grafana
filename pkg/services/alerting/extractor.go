@@ -143,10 +143,15 @@ func (e *DashAlertExtractor) GetAlertFromPanels(jsonWithPanels *simplejson.Json)
 
 		// validate
 		_, err = NewRuleFromDBAlert(alert)
-		if err == nil && alert.ValidToSave() {
+		if err != nil {
+			return nil, err
+		}
+
+		if alert.ValidToSave() {
 			alerts = append(alerts, alert)
 		} else {
-			return nil, err
+			e.log.Debug("Invalid Alert Data. Dashboard, Org or Panel ID is not correct", "alertName", alert.Name, "panelId", alert.PanelId)
+			return nil, m.ErrDashboardContainsInvalidAlertData
 		}
 	}
 

@@ -20,7 +20,7 @@ func init() {
 		OptionsTemplate: `
       <h3 class="page-heading">Email addresses</h3>
       <div class="gf-form">
-         <textarea rows="7" class="gf-form-input width-25" required ng-model="ctrl.model.settings.addresses"></textarea>
+         <textarea rows="7" class="gf-form-input width-27" required ng-model="ctrl.model.settings.addresses"></textarea>
       </div>
       <div class="gf-form">
       <span>You can enter multiple email addresses using a ";" separator</span>

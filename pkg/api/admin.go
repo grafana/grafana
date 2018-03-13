@@ -4,12 +4,11 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func AdminGetSettings(c *middleware.Context) {
+func AdminGetSettings(c *m.ReqContext) {
 	settings := make(map[string]interface{})
 
 	for _, section := range setting.Cfg.Sections() {
@@ -30,7 +29,7 @@ func AdminGetSettings(c *middleware.Context) {
 	c.JSON(200, settings)
 }
 
-func AdminGetStats(c *middleware.Context) {
+func AdminGetStats(c *m.ReqContext) {
 
 	statsQuery := m.GetAdminStatsQuery{}
 

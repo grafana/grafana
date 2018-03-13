@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import { QueryPartDef, QueryPart } from 'app/core/components/query_part/query_part';
 
@@ -138,10 +136,6 @@ function getAlertAnnotationInfo(ah) {
 
   if (ah.data.error) {
     return 'Error: ' + ah.data.error;
-  }
-
-  if (ah.data.noData || ah.data.no_data) {
-    return 'No Data';
   }
 
   return '';

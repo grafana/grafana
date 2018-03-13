@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class ConstantVariable implements Variable {

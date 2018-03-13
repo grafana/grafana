@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import { appEvents, coreModule } from 'app/core/core';
 
@@ -60,15 +58,29 @@ export class AlertNotificationEditCtrl {
     }
 
     if (this.model.id) {
-      this.backendSrv.put(`/api/alert-notifications/${this.model.id}`, this.model).then(res => {
-        this.model = res;
-        appEvents.emit('alert-success', ['Notification updated', '']);
-      });
+      this.backendSrv
+        .put(`/api/alert-notifications/${this.model.id}`, this.model)
+        .then(res => {
+          this.model = res;
+          appEvents.emit('alert-success', ['Notification updated', '']);
+        })
+        .catch(err => {
+          if (err.data && err.data.error) {
+            appEvents.emit('alert-error', [err.data.error]);
+          }
+        });
     } else {
-      this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
-        appEvents.emit('alert-success', ['Notification created', '']);
-        this.$location.path('alerting/notifications');
-      });
+      this.backendSrv
+        .post(`/api/alert-notifications`, this.model)
+        .then(res => {
+          appEvents.emit('alert-success', ['Notification created', '']);
+          this.$location.path('alerting/notifications');
+        })
+        .catch(err => {
+          if (err.data && err.data.error) {
+            appEvents.emit('alert-error', [err.data.error]);
+          }
+        });
     }
   }
 

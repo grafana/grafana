@@ -255,7 +255,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         for (let variable of this.templateSrv.variables) {
           segments.unshift(
             this.uiSegmentSrv.newSegment({
-              type: 'template',
+              type: 'value',
               value: '/^$' + variable.name + '$/',
               expandable: true,
             })

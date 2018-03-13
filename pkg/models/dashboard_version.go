@@ -75,4 +75,5 @@ type GetDashboardVersionsQuery struct {
 //
 
 type DeleteExpiredVersionsCommand struct {
+	DeletedRows int64
 }

@@ -1,6 +1,7 @@
 package mssql
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -8,8 +9,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-
-	"golang.org/x/net/context"
 )
 
 //go:generate stringer -type token
@@ -659,6 +658,14 @@ func scanIntoOut(fromServer, scanInto interface{}) error {
 	case int64:
 		switch si := scanInto.(type) {
 		case *int64:
+			*si = fs
+		default:
+			return fmt.Errorf("unsupported scan into type %[1]T for server type %[2]T", scanInto, fromServer)
+		}
+		return nil
+	case string:
+		switch si := scanInto.(type) {
+		case *string:
 			*si = fs
 		default:
 			return fmt.Errorf("unsupported scan into type %[1]T for server type %[2]T", scanInto, fromServer)

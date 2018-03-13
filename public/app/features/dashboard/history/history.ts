@@ -4,6 +4,7 @@ import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 
+import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../dashboard_model';
 import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './history_srv';
 
@@ -185,7 +186,7 @@ export class HistoryListCtrl {
     return this.historySrv
       .restoreDashboard(this.dashboard, version)
       .then(response => {
-        this.$location.path('dashboard/db/' + response.slug);
+        this.$location.url(locationUtil.stripBaseFromUrl(response.url)).replace();
         this.$route.reload();
         this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);
       })

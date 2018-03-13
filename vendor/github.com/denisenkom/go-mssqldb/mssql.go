@@ -1,6 +1,7 @@
 package mssql
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"encoding/binary"
@@ -12,8 +13,6 @@ import (
 	"reflect"
 	"strings"
 	"time"
-
-	"golang.org/x/net/context" // use the "x/net/context" for backwards compatibility.
 )
 
 var driverInstance = &MssqlDriver{processQueryText: true}
@@ -22,6 +21,9 @@ var driverInstanceNoProcess = &MssqlDriver{processQueryText: false}
 func init() {
 	sql.Register("mssql", driverInstance)
 	sql.Register("sqlserver", driverInstanceNoProcess)
+	createDialer = func(p *connectParams) dialer {
+		return tcpDialer{&net.Dialer{Timeout: p.dial_timeout, KeepAlive: p.keepAlive}}
+	}
 }
 
 // Abstract the dialer for testing and for non-TCP based connections.
@@ -522,7 +524,7 @@ type MssqlRows struct {
 
 func (rc *MssqlRows) Close() error {
 	rc.cancel()
-	for _ = range rc.tokchan {
+	for range rc.tokchan {
 	}
 	rc.tokchan = nil
 	return nil

@@ -157,11 +157,11 @@ func NewCacheServer() *CacheServer {
 func newNotFound() *Avatar {
 	avatar := &Avatar{notFound: true}
 
-	// load transparent png into buffer
-	path := filepath.Join(setting.StaticRootPath, "img", "transparent.png")
+	// load user_profile png into buffer
+	path := filepath.Join(setting.StaticRootPath, "img", "user_profile.png")
 
 	if data, err := ioutil.ReadFile(path); err != nil {
-		log.Error(3, "Failed to read transparent.png, %v", path)
+		log.Error(3, "Failed to read user_profile.png, %v", path)
 	} else {
 		avatar.data = bytes.NewBuffer(data)
 	}

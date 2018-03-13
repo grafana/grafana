@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import coreModule from '../../core_module';
 import appEvents from 'app/core/app_events';
 
@@ -21,7 +19,6 @@ export class HelpCtrl {
       ],
       Dashboard: [
         { keys: ['mod+s'], description: 'Save dashboard' },
-        { keys: ['mod+h'], description: 'Hide row controls' },
         { keys: ['d', 'r'], description: 'Refresh all panels' },
         { keys: ['d', 's'], description: 'Dashboard settings' },
         { keys: ['d', 'v'], description: 'Toggle in-active / view mode' },
@@ -35,10 +32,6 @@ export class HelpCtrl {
         { keys: ['v'], description: 'Toggle panel fullscreen view' },
         { keys: ['p', 's'], description: 'Open Panel Share Modal' },
         { keys: ['p', 'r'], description: 'Remove Panel' },
-      ],
-      'Focused Row': [
-        { keys: ['r', 'c'], description: 'Collapse Row' },
-        { keys: ['r', 'r'], description: 'Remove Row' },
       ],
       'Time Range': [
         { keys: ['t', 'z'], description: 'Zoom out time range' },

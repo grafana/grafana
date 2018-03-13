@@ -8,7 +8,6 @@ import (
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -61,7 +60,7 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
-			ctx := &middleware.Context{
+			ctx := &m.ReqContext{
 				Context: &macaron.Context{
 					Req: macaron.Request{Request: req},
 				},
@@ -104,7 +103,7 @@ func TestDSRouteRule(t *testing.T) {
 		Convey("When proxying graphite", func() {
 			plugin := &plugins.DataSourcePlugin{}
 			ds := &m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}
-			ctx := &middleware.Context{}
+			ctx := &m.ReqContext{}
 
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "/render")
 
@@ -130,7 +129,7 @@ func TestDSRouteRule(t *testing.T) {
 				Password: "password",
 			}
 
-			ctx := &middleware.Context{}
+			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
 
 			requestUrl, _ := url.Parse("http://grafana.com/sub")
@@ -160,7 +159,7 @@ func TestDSRouteRule(t *testing.T) {
 				JsonData: json,
 			}
 
-			ctx := &middleware.Context{}
+			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
 
 			requestUrl, _ := url.Parse("http://grafana.com/sub")
@@ -186,7 +185,7 @@ func TestDSRouteRule(t *testing.T) {
 				JsonData: json,
 			}
 
-			ctx := &middleware.Context{}
+			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
 
 			requestUrl, _ := url.Parse("http://grafana.com/sub")

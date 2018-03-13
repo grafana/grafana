@@ -379,6 +379,7 @@ func sendUsageStats() {
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
+	metrics["stats.stars.count"] = statsQuery.Result.Stars
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {

@@ -8,7 +8,6 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
 var PrometheusHighlightRules = function() {
   var keywords = (
-    "by|without|keep_common|offset|bool|and|or|unless|ignoring|on|group_left|group_right|" +
     "count|count_values|min|max|avg|sum|stddev|stdvar|bottomk|topk|quantile"
   );
 
@@ -42,43 +41,64 @@ var PrometheusHighlightRules = function() {
       token : "constant.language", // time
       regex : "\\d+[smhdwy]"
     }, {
+      token : "keyword.operator.binary",
+      regex : "\\+|\\-|\\*|\\/|%|\\^|==|!=|<=|>=|<|>|and|or|unless"
+    }, {
+      token : "keyword.other",
+      regex : "keep_common|offset|bool"
+    }, {
+      token : "keyword.control",
+      regex : "by|without|on|ignoring|group_left|group_right",
+      next  : "start-label-list-matcher"
+    }, {
       token : keywordMapper,
       regex : "[a-zA-Z_:][a-zA-Z0-9_:]*"
-    }, {
-      token : "keyword.operator",
-      regex : "\\+|\\-|\\*|\\/|%|\\^|==|!=|<=|>=|<|>"
     }, {
       token : "paren.lparen",
       regex : "[[(]"
     }, {
-      token : "paren.lparen",
+      token : "paren.lparen.label-matcher",
       regex : "{",
       next  : "start-label-matcher"
     }, {
       token : "paren.rparen",
       regex : "[\\])]"
     }, {
-      token : "paren.rparen",
+      token : "paren.rparen.label-matcher",
       regex : "}"
     }, {
       token : "text",
       regex : "\\s+"
     } ],
     "start-label-matcher" : [ {
-      token : "entity.name.tag",
+      token : "entity.name.tag.label-matcher",
       regex : '[a-zA-Z_][a-zA-Z0-9_]*'
     }, {
-      token : "keyword.operator",
+      token : "keyword.operator.label-matcher",
       regex : '=~|=|!~|!='
     }, {
-      token : "string.quoted",
+      token : "string.quoted.label-matcher",
       regex : '"[^"]*"|\'[^\']*\''
     }, {
-      token : "punctuation.operator",
+      token : "punctuation.operator.label-matcher",
       regex : ","
     }, {
-      token : "paren.rparen",
+      token : "paren.rparen.label-matcher",
       regex : "}",
+      next  : "start"
+    } ],
+    "start-label-list-matcher" : [ {
+      token : "paren.lparen.label-list-matcher",
+      regex : "[(]"
+    }, {
+      token : "entity.name.tag.label-list-matcher",
+      regex : '[a-zA-Z_][a-zA-Z0-9_]*'
+    }, {
+      token : "punctuation.operator.label-list-matcher",
+      regex : ","
+    }, {
+      token : "paren.rparen.label-list-matcher",
+      regex : "[)]",
       next  : "start"
     } ]
   };
@@ -395,7 +415,9 @@ var PrometheusCompletions = function() {};
 (function() {
   this.getCompletions = function(state, session, pos, prefix, callback) {
     var token = session.getTokenAt(pos.row, pos.column);
-    if (token.type === 'entity.name.tag' || token.type === 'string.quoted') {
+    if (token.type === 'entity.name.tag.label-matcher'
+      || token.type === 'string.quoted.label-matcher'
+      || token.type === 'entity.name.tag.label-list-matcher') {
       return callback(null, []);
     }
 

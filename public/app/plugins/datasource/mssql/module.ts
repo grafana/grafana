@@ -1,7 +1,5 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import {MssqlDatasource} from './datasource';
-import {MssqlQueryCtrl} from './query_ctrl';
+import { MssqlDatasource } from './datasource';
+import { MssqlQueryCtrl } from './query_ctrl';
 
 class MssqlConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -34,4 +32,3 @@ export {
   MssqlConfigCtrl as ConfigCtrl,
   MssqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
-

@@ -60,7 +60,7 @@ func (e *MssqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSourc
 	return e.sqlEngine.Query(ctx, dsInfo, tsdbQuery, e.transformToTimeSeries, e.transformToTable)
 }
 
-func (e MssqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e MssqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
 	columnNames, err := rows.Columns()
 	columnCount := len(columnNames)
 
@@ -135,7 +135,7 @@ func (e MssqlQueryEndpoint) getTypedRowData(types []*sql.ColumnType, rows *core.
 	return values, nil
 }
 
-func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	seriesByQueryOrder := list.New()
 

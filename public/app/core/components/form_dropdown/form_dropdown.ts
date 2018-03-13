@@ -1,9 +1,11 @@
 import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from '../../core_module';
 
 function typeaheadMatcher(item) {
   var str = this.query;
+  if (str === '') {
+    return true;
+  }
   if (str[0] === '/') {
     str = str.substring(1);
   }
@@ -30,6 +32,9 @@ export class FormDropdownCtrl {
   getOptions: any;
   optionCache: any;
   lookupText: boolean;
+  placeholder: any;
+  startOpen: any;
+  debounce: number;
 
   /** @ngInject **/
   constructor(private $scope, $element, private $sce, private templateSrv, private $q) {
@@ -47,6 +52,10 @@ export class FormDropdownCtrl {
       this.cssClasses = 'gf-form-input gf-form-input--dropdown ' + this.cssClass;
     }
 
+    if (this.placeholder) {
+      this.inputElement.attr('placeholder', this.placeholder);
+    }
+
     this.inputElement.attr('data-provide', 'typeahead');
     this.inputElement.typeahead({
       source: this.typeaheadSource.bind(this),
@@ -61,9 +70,12 @@ export class FormDropdownCtrl {
     var typeahead = this.inputElement.data('typeahead');
     typeahead.lookup = function() {
       this.query = this.$element.val() || '';
-      var items = this.source(this.query, $.proxy(this.process, this));
-      return items ? this.process(items) : items;
+      this.source(this.query, this.process.bind(this));
     };
+
+    if (this.debounce) {
+      typeahead.lookup = _.debounce(typeahead.lookup, 500, { leading: true });
+    }
 
     this.linkElement.keydown(evt => {
       // trigger typeahead on down arrow or enter key
@@ -81,6 +93,10 @@ export class FormDropdownCtrl {
     });
 
     this.inputElement.blur(this.inputBlur.bind(this));
+
+    if (this.startOpen) {
+      setTimeout(this.open.bind(this), 0);
+    }
   }
 
   getOptionsInternal(query) {
@@ -121,9 +137,9 @@ export class FormDropdownCtrl {
       });
 
       // add custom values
-      if (this.allowCustom) {
+      if (this.allowCustom && this.text !== '') {
         if (_.indexOf(optionTexts, this.text) === -1) {
-          options.unshift(this.text);
+          optionTexts.unshift(this.text);
         }
       }
 
@@ -228,10 +244,10 @@ const template = `
   style="display:none">
 </input>
 <a ng-class="ctrl.cssClasses"
-	 tabindex="1"
-	 ng-click="ctrl.open()"
-	 give-focus="ctrl.focus"
-	 ng-bind-html="ctrl.display">
+   tabindex="1"
+   ng-click="ctrl.open()"
+   give-focus="ctrl.focus"
+   ng-bind-html="ctrl.display || '&nbsp;'">
 </a>
 `;
 
@@ -250,6 +266,9 @@ export function formDropdownDirective() {
       allowCustom: '@',
       labelMode: '@',
       lookupText: '@',
+      placeholder: '@',
+      startOpen: '@',
+      debounce: '@',
     },
   };
 }

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import { PostgresDatasource } from './datasource';
 import { PostgresQueryCtrl } from './query_ctrl';
 

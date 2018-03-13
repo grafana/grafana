@@ -14,7 +14,7 @@ func TestFrontendPlugin(t *testing.T) {
 
 		fp := &FrontendPluginBase{
 			PluginBase: PluginBase{
-				PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata\\datasource",
+				PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata\\datasources\\datasource",
 				BaseUrl:   "fpbase",
 			},
 		}
@@ -29,6 +29,6 @@ func TestFrontendPlugin(t *testing.T) {
 		}
 		fp.setPathsBasedOnApp(app)
 
-		So(fp.Module, ShouldEqual, "app/plugins/app/testdata/datasource/module")
+		So(fp.Module, ShouldEqual, "app/plugins/app/testdata/datasources/datasource/module")
 	})
 }

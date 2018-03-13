@@ -33,7 +33,7 @@ the latest master builds [here](https://grafana.com/grafana/download)
 ### Building the backend
 ```bash
 go get github.com/grafana/grafana
-cd ~/go/src/github.com/grafana/grafana
+cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup
 go run build.go build
 ```
@@ -45,23 +45,17 @@ For this you need nodejs (v.6+).
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-npm run build
-```
-
-To rebuild frontend assets (typescript, sass etc) as you change them start the watcher via.
-
-```bash
 npm run watch
 ```
 
-Run tests
+Run tests 
 ```bash
-npm run test
+npm run jest
 ```
 
-Run tests in watch mode
+Run karma tests
 ```bash
-npm run watch-test
+npm run karma
 ```
 
 ### Recompile backend on source change
@@ -86,8 +80,11 @@ In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = 
 
 ### Running tests
 
-- You can run backend Golang tests using "go test ./pkg/...".
-- Execute all frontend tests with "npm run test"
+#### Frontend
+Execute all frontend tests
+```bash
+npm run test
+```
 
 Writing & watching frontend tests (we have two test runners)
 
@@ -97,6 +94,18 @@ Writing & watching frontend tests (we have two test runners)
 - karma + mocha is used for testing angularjs components. We do want to migrate these test to jest over time (if possible).
   - Start watcher: `npm run karma`
   - Karma+Mocha runs all files that end with the name "_specs.ts".
+
+#### Backend
+```bash
+# Run Golang tests using sqlite3 as database (default)
+go test ./pkg/... 
+
+# Run Golang tests using mysql as database - convenient to use /docker/blocks/mysql_tests
+GRAFANA_TEST_DB=mysql go test ./pkg/... 
+
+# Run Golang tests using postgres as database - convenient to use /docker/blocks/postgres_tests
+GRAFANA_TEST_DB=postgres go test ./pkg/... 
+```
 
 ## Contribute
 

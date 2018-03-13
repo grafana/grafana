@@ -6,8 +6,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
 )
 
 func TestAuthProxyWithLdapEnabled(t *testing.T) {
@@ -29,45 +31,45 @@ func TestAuthProxyWithLdapEnabled(t *testing.T) {
 
 		Convey("When session variable lastLdapSync not set, call syncSignedInUser and set lastLdapSync", func() {
 			// arrange
-			session := mockSession{}
-			ctx := Context{Session: &session}
-			So(session.Get(SESS_KEY_LASTLDAPSYNC), ShouldBeNil)
+			sess := mockSession{}
+			ctx := m.ReqContext{Session: &sess}
+			So(sess.Get(session.SESS_KEY_LASTLDAPSYNC), ShouldBeNil)
 
 			// act
 			syncGrafanaUserWithLdapUser(&ctx, &query)
 
 			// assert
 			So(mockLdapAuther.syncSignedInUserCalled, ShouldBeTrue)
-			So(session.Get(SESS_KEY_LASTLDAPSYNC), ShouldBeGreaterThan, 0)
+			So(sess.Get(session.SESS_KEY_LASTLDAPSYNC), ShouldBeGreaterThan, 0)
 		})
 
 		Convey("When session variable not expired, don't sync and don't change session var", func() {
 			// arrange
-			session := mockSession{}
-			ctx := Context{Session: &session}
+			sess := mockSession{}
+			ctx := m.ReqContext{Session: &sess}
 			now := time.Now().Unix()
-			session.Set(SESS_KEY_LASTLDAPSYNC, now)
+			sess.Set(session.SESS_KEY_LASTLDAPSYNC, now)
 
 			// act
 			syncGrafanaUserWithLdapUser(&ctx, &query)
 
 			// assert
-			So(session.Get(SESS_KEY_LASTLDAPSYNC), ShouldEqual, now)
+			So(sess.Get(session.SESS_KEY_LASTLDAPSYNC), ShouldEqual, now)
 			So(mockLdapAuther.syncSignedInUserCalled, ShouldBeFalse)
 		})
 
 		Convey("When lastldapsync is expired, session variable should be updated", func() {
 			// arrange
-			session := mockSession{}
-			ctx := Context{Session: &session}
+			sess := mockSession{}
+			ctx := m.ReqContext{Session: &sess}
 			expiredTime := time.Now().Add(time.Duration(-120) * time.Minute).Unix()
-			session.Set(SESS_KEY_LASTLDAPSYNC, expiredTime)
+			sess.Set(session.SESS_KEY_LASTLDAPSYNC, expiredTime)
 
 			// act
 			syncGrafanaUserWithLdapUser(&ctx, &query)
 
 			// assert
-			So(session.Get(SESS_KEY_LASTLDAPSYNC), ShouldBeGreaterThan, expiredTime)
+			So(sess.Get(session.SESS_KEY_LASTLDAPSYNC), ShouldBeGreaterThan, expiredTime)
 			So(mockLdapAuther.syncSignedInUserCalled, ShouldBeTrue)
 		})
 	})
@@ -77,7 +79,7 @@ type mockSession struct {
 	value interface{}
 }
 
-func (s *mockSession) Start(c *Context) error {
+func (s *mockSession) Start(c *macaron.Context) error {
 	return nil
 }
 
@@ -102,11 +104,11 @@ func (s *mockSession) Release() error {
 	return nil
 }
 
-func (s *mockSession) Destory(c *Context) error {
+func (s *mockSession) Destory(c *macaron.Context) error {
 	return nil
 }
 
-func (s *mockSession) RegenerateId(c *Context) error {
+func (s *mockSession) RegenerateId(c *macaron.Context) error {
 	return nil
 }
 

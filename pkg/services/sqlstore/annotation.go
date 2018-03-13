@@ -138,6 +138,17 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	sql.WriteString(`WHERE annotation.org_id = ?`)
 	params = append(params, query.OrgId)
 
+	if query.AnnotationId != 0 {
+		fmt.Print("annotation query")
+		sql.WriteString(` AND annotation.id = ?`)
+		params = append(params, query.AnnotationId)
+	}
+
+	if query.RegionId != 0 {
+		sql.WriteString(` AND annotation.region_id = ?`)
+		params = append(params, query.RegionId)
+	}
+
 	if query.AlertId != 0 {
 		sql.WriteString(` AND annotation.alert_id = ?`)
 		params = append(params, query.AlertId)
@@ -197,6 +208,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	sql.WriteString(fmt.Sprintf(" ORDER BY epoch DESC LIMIT %v", query.Limit))
 
 	items := make([]*annotations.ItemDTO, 0)
+
 	if err := x.Sql(sql.String(), params...).Find(&items); err != nil {
 		return nil, err
 	}

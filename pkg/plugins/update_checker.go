@@ -63,7 +63,7 @@ func checkForUpdates() {
 	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
 
 	if err != nil {
-		log.Trace("Failed to get plugins repo from grafana.net, %v", err.Error())
+		log.Trace("Failed to get plugins repo from grafana.com, %v", err.Error())
 		return
 	}
 
@@ -101,7 +101,7 @@ func checkForUpdates() {
 
 	resp2, err := httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/master/latest.json")
 	if err != nil {
-		log.Trace("Failed to get latest.json repo from github: %v", err.Error())
+		log.Trace("Failed to get latest.json repo from github.com: %v", err.Error())
 		return
 	}
 
@@ -115,7 +115,7 @@ func checkForUpdates() {
 	var githubLatest GithubLatest
 	err = json.Unmarshal(body, &githubLatest)
 	if err != nil {
-		log.Trace("Failed to unmarshal github latest, reading response from github: %v", err.Error())
+		log.Trace("Failed to unmarshal github.com latest, reading response from github.com: %v", err.Error())
 		return
 	}
 

@@ -24,6 +24,10 @@ describe('GraphiteQueryCtrl', function() {
       ctx.scope = $rootScope.$new();
       ctx.target = { target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)' };
       ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
+      ctx.datasource.getFuncDefs = sinon.stub().returns(ctx.$q.when(gfunc.getFuncDefs('1.0')));
+      ctx.datasource.getFuncDef = gfunc.getFuncDef;
+      ctx.datasource.waitForFuncDefsLoaded = sinon.stub().returns(ctx.$q.when(null));
+      ctx.datasource.createFuncInstance = gfunc.createFuncInstance;
       ctx.panelCtrl = { panel: {} };
       ctx.panelCtrl = {
         panel: {
@@ -180,7 +184,21 @@ describe('GraphiteQueryCtrl', function() {
       ctx.ctrl.target.target = 'scaleToSeconds(#A, 60)';
       ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
+    });
 
+    it('should add function params', function() {
+      expect(ctx.ctrl.queryModel.segments.length).to.be(1);
+      expect(ctx.ctrl.queryModel.segments[0].value).to.be('#A');
+
+      expect(ctx.ctrl.queryModel.functions[0].params.length).to.be(1);
+      expect(ctx.ctrl.queryModel.functions[0].params[0]).to.be(60);
+    });
+
+    it('target should remain the same', function() {
+      expect(ctx.ctrl.target.target).to.be('scaleToSeconds(#A, 60)');
+    });
+
+    it('targetFull should include nested queries', function() {
       ctx.ctrl.panelCtrl.panel.targets = [
         {
           target: 'nested.query.count',
@@ -189,13 +207,9 @@ describe('GraphiteQueryCtrl', function() {
       ];
 
       ctx.ctrl.updateModelTarget();
-    });
 
-    it('target should remain the same', function() {
       expect(ctx.ctrl.target.target).to.be('scaleToSeconds(#A, 60)');
-    });
 
-    it('targetFull should include nexted queries', function() {
       expect(ctx.ctrl.target.targetFull).to.be('scaleToSeconds(nested.query.count, 60)');
     });
   });
@@ -271,12 +285,12 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should update tags with default value', function() {
-      const expected = [{ key: 'tag1', operator: '=', value: 'select tag value' }];
+      const expected = [{ key: 'tag1', operator: '=', value: '' }];
       expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
 
     it('should update target', function() {
-      const expected = "seriesByTag('tag1=select tag value')";
+      const expected = "seriesByTag('tag1=')";
       expect(ctx.ctrl.target.target).to.eql(expected);
     });
   });

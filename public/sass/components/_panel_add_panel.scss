@@ -7,10 +7,18 @@
   display: flex;
   align-items: center;
 
-  i {
+  .gicon {
     font-size: 30px;
     margin-right: $spacer;
   }
+}
+
+.add-panel__close {
+  margin-left: auto;
+  background-color: transparent;
+  border: 0;
+  font-size: 16px;
+  margin-right: -10px;
 }
 
 .add-panel__title {

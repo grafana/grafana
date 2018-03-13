@@ -5,8 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
+	"reflect"
 	"strconv"
-
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -56,7 +57,7 @@ func (e *MysqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSourc
 	return e.sqlEngine.Query(ctx, dsInfo, tsdbQuery, e.transformToTimeSeries, e.transformToTable)
 }
 
-func (e MysqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e MysqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
 	columnNames, err := rows.Columns()
 	columnCount := len(columnNames)
 
@@ -73,22 +74,34 @@ func (e MysqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows,
 		table.Columns[i].Text = name
 	}
 
-	columnTypes, err := rows.ColumnTypes()
-	if err != nil {
-		return err
-	}
-
 	rowLimit := 1000000
 	rowCount := 0
+	timeIndex := -1
+
+	// check if there is a column named time
+	for i, col := range columnNames {
+		switch col {
+		case "time_sec":
+			timeIndex = i
+		}
+	}
 
 	for ; rows.Next(); rowCount++ {
 		if rowCount > rowLimit {
 			return fmt.Errorf("MySQL query row limit exceeded, limit %d", rowLimit)
 		}
 
-		values, err := e.getTypedRowData(columnTypes, rows)
+		values, err := e.getTypedRowData(rows)
 		if err != nil {
 			return err
+		}
+
+		// for annotations, convert to epoch
+		if timeIndex != -1 {
+			switch value := values[timeIndex].(type) {
+			case time.Time:
+				values[timeIndex] = float64(value.UnixNano() / 1e9)
+			}
 		}
 
 		table.Rows = append(table.Rows, values)
@@ -99,60 +112,20 @@ func (e MysqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows,
 	return nil
 }
 
-func (e MysqlQueryEndpoint) getTypedRowData(types []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (e MysqlQueryEndpoint) getTypedRowData(rows *core.Rows) (tsdb.RowValues, error) {
+	types, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
+
 	values := make([]interface{}, len(types))
 
-	for i, stype := range types {
-		e.log.Debug("type", "type", stype)
-		switch stype.DatabaseTypeName() {
-		case mysql.FieldTypeNameTiny:
-			values[i] = new(int8)
-		case mysql.FieldTypeNameInt24:
-			values[i] = new(int32)
-		case mysql.FieldTypeNameShort:
-			values[i] = new(int16)
-		case mysql.FieldTypeNameVarString:
-			values[i] = new(string)
-		case mysql.FieldTypeNameVarChar:
-			values[i] = new(string)
-		case mysql.FieldTypeNameLong:
-			values[i] = new(int)
-		case mysql.FieldTypeNameLongLong:
-			values[i] = new(int64)
-		case mysql.FieldTypeNameDouble:
-			values[i] = new(float64)
-		case mysql.FieldTypeNameDecimal:
-			values[i] = new(float32)
-		case mysql.FieldTypeNameNewDecimal:
-			values[i] = new(float64)
-		case mysql.FieldTypeNameFloat:
-			values[i] = new(float64)
-		case mysql.FieldTypeNameTimestamp:
-			values[i] = new(time.Time)
-		case mysql.FieldTypeNameDateTime:
-			values[i] = new(time.Time)
-		case mysql.FieldTypeNameTime:
-			values[i] = new(string)
-		case mysql.FieldTypeNameYear:
-			values[i] = new(int16)
-		case mysql.FieldTypeNameNULL:
-			values[i] = nil
-		case mysql.FieldTypeNameBit:
+	for i := range values {
+		scanType := types[i].ScanType()
+		values[i] = reflect.New(scanType).Interface()
+
+		if types[i].DatabaseTypeName() == "BIT" {
 			values[i] = new([]byte)
-		case mysql.FieldTypeNameBLOB:
-			values[i] = new(string)
-		case mysql.FieldTypeNameTinyBLOB:
-			values[i] = new(string)
-		case mysql.FieldTypeNameMediumBLOB:
-			values[i] = new(string)
-		case mysql.FieldTypeNameLongBLOB:
-			values[i] = new(string)
-		case mysql.FieldTypeNameString:
-			values[i] = new(string)
-		case mysql.FieldTypeNameDate:
-			values[i] = new(string)
-		default:
-			return nil, fmt.Errorf("Database type %s not supported", stype.DatabaseTypeName())
 		}
 	}
 
@@ -160,14 +133,54 @@ func (e MysqlQueryEndpoint) getTypedRowData(types []*sql.ColumnType, rows *core.
 		return nil, err
 	}
 
+	for i := 0; i < len(types); i++ {
+		typeName := reflect.ValueOf(values[i]).Type().String()
+
+		switch typeName {
+		case "*sql.RawBytes":
+			values[i] = string(*values[i].(*sql.RawBytes))
+		case "*mysql.NullTime":
+			sqlTime := (*values[i].(*mysql.NullTime))
+			if sqlTime.Valid {
+				values[i] = sqlTime.Time
+			} else {
+				values[i] = nil
+			}
+		case "*sql.NullInt64":
+			nullInt64 := (*values[i].(*sql.NullInt64))
+			if nullInt64.Valid {
+				values[i] = nullInt64.Int64
+			} else {
+				values[i] = nil
+			}
+		case "*sql.NullFloat64":
+			nullFloat64 := (*values[i].(*sql.NullFloat64))
+			if nullFloat64.Valid {
+				values[i] = nullFloat64.Float64
+			} else {
+				values[i] = nil
+			}
+		}
+
+		if types[i].DatabaseTypeName() == "DECIMAL" {
+			f, err := strconv.ParseFloat(values[i].(string), 64)
+
+			if err == nil {
+				values[i] = f
+			} else {
+				values[i] = nil
+			}
+		}
+	}
+
 	return values, nil
 }
 
-func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	seriesByQueryOrder := list.New()
-	columnNames, err := rows.Columns()
 
+	columnNames, err := rows.Columns()
 	if err != nil {
 		return err
 	}
@@ -175,6 +188,18 @@ func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 	rowData := NewStringStringScan(columnNames)
 	rowLimit := 1000000
 	rowCount := 0
+
+	fillMissing := query.Model.Get("fill").MustBool(false)
+	var fillInterval float64
+	fillValue := null.Float{}
+	if fillMissing {
+		fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
+		if query.Model.Get("fillNull").MustBool(false) == false {
+			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
+			fillValue.Valid = true
+		}
+
+	}
 
 	for ; rows.Next(); rowCount++ {
 		if rowCount > rowLimit {
@@ -195,19 +220,50 @@ func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 			return fmt.Errorf("Found row with no time value")
 		}
 
-		if series, exist := pointsBySeries[rowData.metric]; exist {
-			series.Points = append(series.Points, tsdb.TimePoint{rowData.value, rowData.time})
-		} else {
-			series := &tsdb.TimeSeries{Name: rowData.metric}
-			series.Points = append(series.Points, tsdb.TimePoint{rowData.value, rowData.time})
+		series, exist := pointsBySeries[rowData.metric]
+		if exist == false {
+			series = &tsdb.TimeSeries{Name: rowData.metric}
 			pointsBySeries[rowData.metric] = series
 			seriesByQueryOrder.PushBack(rowData.metric)
 		}
+
+		if fillMissing {
+			var intervalStart float64
+			if exist == false {
+				intervalStart = float64(tsdbQuery.TimeRange.MustGetFrom().UnixNano() / 1e6)
+			} else {
+				intervalStart = series.Points[len(series.Points)-1][1].Float64 + fillInterval
+			}
+
+			// align interval start
+			intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval
+
+			for i := intervalStart; i < rowData.time.Float64; i += fillInterval {
+				series.Points = append(series.Points, tsdb.TimePoint{fillValue, null.FloatFrom(i)})
+				rowCount++
+			}
+		}
+
+		series.Points = append(series.Points, tsdb.TimePoint{rowData.value, rowData.time})
 	}
 
 	for elem := seriesByQueryOrder.Front(); elem != nil; elem = elem.Next() {
 		key := elem.Value.(string)
 		result.Series = append(result.Series, pointsBySeries[key])
+
+		if fillMissing {
+			series := pointsBySeries[key]
+			// fill in values from last fetched value till interval end
+			intervalStart := series.Points[len(series.Points)-1][1].Float64
+			intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
+
+			// align interval start
+			intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval
+			for i := intervalStart + fillInterval; i < intervalEnd; i += fillInterval {
+				series.Points = append(series.Points, tsdb.TimePoint{fillValue, null.FloatFrom(i)})
+				rowCount++
+			}
+		}
 	}
 
 	result.Meta.Set("rowCount", rowCount)

@@ -156,3 +156,61 @@ export function getFlotTickDecimals(data, axis) {
   const scaledDecimals = tickDecimals - Math.floor(Math.log(size) / Math.LN10);
   return { tickDecimals, scaledDecimals };
 }
+
+/**
+ * Format timestamp similar to Grafana graph panel.
+ * @param ticks Number of ticks
+ * @param min Time from (in milliseconds)
+ * @param max Time to (in milliseconds)
+ */
+export function grafanaTimeFormat(ticks, min, max) {
+  if (min && max && ticks) {
+    let range = max - min;
+    let secPerTick = range / ticks / 1000;
+    let oneDay = 86400000;
+    let oneYear = 31536000000;
+
+    if (secPerTick <= 45) {
+      return '%H:%M:%S';
+    }
+    if (secPerTick <= 7200 || range <= oneDay) {
+      return '%H:%M';
+    }
+    if (secPerTick <= 80000) {
+      return '%m/%d %H:%M';
+    }
+    if (secPerTick <= 2419200 || range <= oneYear) {
+      return '%m/%d';
+    }
+    return '%Y-%m';
+  }
+
+  return '%H:%M';
+}
+
+/**
+ * Logarithm of value for arbitrary base.
+ */
+export function logp(value, base) {
+  return Math.log(value) / Math.log(base);
+}
+
+/**
+ * Get decimal precision of number (3.14 => 2)
+ */
+export function getPrecision(num: number): number {
+  let str = num.toString();
+  return getStringPrecision(str);
+}
+
+/**
+ * Get decimal precision of number stored as a string ("3.14" => 2)
+ */
+export function getStringPrecision(num: string): number {
+  let dot_index = num.indexOf('.');
+  if (dot_index === -1) {
+    return 0;
+  } else {
+    return num.length - dot_index - 1;
+  }
+}

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 export default class ResponseParser {
@@ -140,7 +138,7 @@ export default class ResponseParser {
       list.push({
         annotation: options.annotation,
         time: Math.floor(row[timeColumnIndex]) * 1000,
-        text: row[textColumnIndex],
+        text: row[textColumnIndex] ? row[textColumnIndex].toString() : '',
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });
     }

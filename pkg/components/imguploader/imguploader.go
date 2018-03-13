@@ -88,6 +88,8 @@ func NewImageUploader() (ImageUploader, error) {
 		container_name := azureBlobSec.Key("container_name").MustString("")
 
 		return NewAzureBlobUploader(account_name, account_key, container_name), nil
+	case "local":
+		return NewLocalImageUploader()
 	}
 
 	if setting.ImageUploadProvider != "" {

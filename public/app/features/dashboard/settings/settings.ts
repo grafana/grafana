@@ -2,6 +2,7 @@ import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import { DashboardModel } from '../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
+import config from 'app/core/config';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -10,8 +11,10 @@ export class SettingsCtrl {
   json: string;
   alertCount: number;
   canSaveAs: boolean;
+  canSave: boolean;
   canDelete: boolean;
   sections: any[];
+  hasUnsavedFolderChange: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $location, private $rootScope, private backendSrv, private dashboardSrv) {
@@ -22,15 +25,21 @@ export class SettingsCtrl {
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
       this.$rootScope.$broadcast('refresh');
+      setTimeout(() => {
+        this.$rootScope.appEvent('dash-scroll', { restore: true });
+      });
     });
 
     this.canSaveAs = contextSrv.isEditor;
+    this.canSave = this.dashboard.meta.canSave;
     this.canDelete = this.dashboard.meta.canSave;
 
     this.buildSectionList();
     this.onRouteUpdated();
 
-    $rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
+    this.$rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
+    this.$rootScope.appEvent('dash-scroll', { animate: false, pos: 0 });
+    this.$rootScope.onAppEvent('dashboard-saved', this.onPostSave.bind(this), $scope);
   }
 
   buildSectionList() {
@@ -67,6 +76,14 @@ export class SettingsCtrl {
       });
     }
 
+    if (this.dashboard.id && this.dashboard.meta.canAdmin) {
+      this.sections.push({
+        title: 'Permissions',
+        id: 'permissions',
+        icon: 'fa fa-fw fa-lock',
+      });
+    }
+
     if (this.dashboard.meta.canMakeEditable) {
       this.sections.push({
         title: 'General',
@@ -86,7 +103,7 @@ export class SettingsCtrl {
 
     for (let section of this.sections) {
       const sectionParams = _.defaults({ editview: section.id }, params);
-      section.url = url + '?' + $.param(sectionParams);
+      section.url = config.appSubUrl + url + '?' + $.param(sectionParams);
     }
   }
 
@@ -114,6 +131,14 @@ export class SettingsCtrl {
 
   openSaveAsModal() {
     this.dashboardSrv.showSaveAsModal();
+  }
+
+  saveDashboard() {
+    this.dashboardSrv.saveDashboard();
+  }
+
+  onPostSave() {
+    this.hasUnsavedFolderChange = false;
   }
 
   hideSettings() {
@@ -167,7 +192,7 @@ export class SettingsCtrl {
   }
 
   deleteDashboardConfirmed() {
-    this.backendSrv.deleteDashboard(this.dashboard.meta.slug).then(() => {
+    this.backendSrv.deleteDashboard(this.dashboard.uid).then(() => {
       appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
       this.$location.url('/');
     });
@@ -176,6 +201,15 @@ export class SettingsCtrl {
   onFolderChange(folder) {
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
+    this.hasUnsavedFolderChange = true;
+  }
+
+  getFolder() {
+    return {
+      id: this.dashboard.meta.folderId,
+      title: this.dashboard.meta.folderTitle,
+      url: this.dashboard.meta.folderUrl,
+    };
   }
 }
 

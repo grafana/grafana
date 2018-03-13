@@ -150,6 +150,7 @@ export class DashboardViewState {
 
     this.dashboard.setViewMode(ctrl.panel, false, false);
     this.$scope.appEvent('panel-fullscreen-exit', { panelId: ctrl.panel.id });
+    this.$scope.appEvent('dash-scroll', { restore: true });
 
     if (!render) {
       return false;
@@ -177,6 +178,7 @@ export class DashboardViewState {
 
     this.dashboard.setViewMode(ctrl.panel, true, ctrl.editMode);
     this.$scope.appEvent('panel-fullscreen-enter', { panelId: ctrl.panel.id });
+    this.$scope.appEvent('dash-scroll', { animate: false, pos: 0 });
   }
 
   registerPanel(panelScope) {

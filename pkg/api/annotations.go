@@ -6,12 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetAnnotations(c *middleware.Context) Response {
+func GetAnnotations(c *m.ReqContext) Response {
 
 	query := &annotations.ItemQuery{
 		From:        c.QueryInt64("from") / 1000,
@@ -50,7 +51,11 @@ func (e *CreateAnnotationError) Error() string {
 	return e.message
 }
 
-func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response {
+func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
+	if canSave, err := canSaveByDashboardId(c, cmd.DashboardId); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
 	repo := annotations.GetRepository()
 
 	if cmd.Text == "" {
@@ -119,7 +124,7 @@ func formatGraphiteAnnotation(what string, data string) string {
 	return text
 }
 
-func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotationsCmd) Response {
+func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
 	if cmd.What == "" {
@@ -173,10 +178,14 @@ func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotati
 	})
 }
 
-func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Response {
+func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	annotationId := c.ParamsInt64(":annotationId")
 
 	repo := annotations.GetRepository()
+
+	if resp := canSave(c, repo, annotationId); resp != nil {
+		return resp
+	}
 
 	item := annotations.Item{
 		OrgId:  c.OrgId,
@@ -208,7 +217,7 @@ func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Resp
 	return ApiSuccess("Annotation updated")
 }
 
-func DeleteAnnotations(c *middleware.Context, cmd dtos.DeleteAnnotationsCmd) Response {
+func DeleteAnnotations(c *m.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
 	err := repo.Delete(&annotations.DeleteParams{
@@ -224,9 +233,13 @@ func DeleteAnnotations(c *middleware.Context, cmd dtos.DeleteAnnotationsCmd) Res
 	return ApiSuccess("Annotations deleted")
 }
 
-func DeleteAnnotationById(c *middleware.Context) Response {
+func DeleteAnnotationById(c *m.ReqContext) Response {
 	repo := annotations.GetRepository()
 	annotationId := c.ParamsInt64(":annotationId")
+
+	if resp := canSave(c, repo, annotationId); resp != nil {
+		return resp
+	}
 
 	err := repo.Delete(&annotations.DeleteParams{
 		Id: annotationId,
@@ -239,9 +252,13 @@ func DeleteAnnotationById(c *middleware.Context) Response {
 	return ApiSuccess("Annotation deleted")
 }
 
-func DeleteAnnotationRegion(c *middleware.Context) Response {
+func DeleteAnnotationRegion(c *m.ReqContext) Response {
 	repo := annotations.GetRepository()
 	regionId := c.ParamsInt64(":regionId")
+
+	if resp := canSave(c, repo, regionId); resp != nil {
+		return resp
+	}
 
 	err := repo.Delete(&annotations.DeleteParams{
 		RegionId: regionId,
@@ -252,4 +269,51 @@ func DeleteAnnotationRegion(c *middleware.Context) Response {
 	}
 
 	return ApiSuccess("Annotation region deleted")
+}
+
+func canSaveByDashboardId(c *m.ReqContext, dashboardId int64) (bool, error) {
+	if dashboardId == 0 && !c.SignedInUser.HasRole(m.ROLE_EDITOR) {
+		return false, nil
+	}
+
+	if dashboardId > 0 {
+		guardian := guardian.New(dashboardId, c.OrgId, c.SignedInUser)
+		if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
+			return false, err
+		}
+	}
+
+	return true, nil
+}
+
+func canSave(c *m.ReqContext, repo annotations.Repository, annotationId int64) Response {
+	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationId, OrgId: c.OrgId})
+
+	if err != nil || len(items) == 0 {
+		return ApiError(500, "Could not find annotation to update", err)
+	}
+
+	dashboardId := items[0].DashboardId
+
+	if canSave, err := canSaveByDashboardId(c, dashboardId); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
+	return nil
+}
+
+func canSaveByRegionId(c *m.ReqContext, repo annotations.Repository, regionId int64) Response {
+	items, err := repo.Find(&annotations.ItemQuery{RegionId: regionId, OrgId: c.OrgId})
+
+	if err != nil || len(items) == 0 {
+		return ApiError(500, "Could not find annotation to update", err)
+	}
+
+	dashboardId := items[0].DashboardId
+
+	if canSave, err := canSaveByDashboardId(c, dashboardId); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
+	return nil
 }

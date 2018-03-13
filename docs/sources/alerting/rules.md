@@ -59,7 +59,7 @@ avg() OF query(A, 5m, now) IS BELOW 14
 ```
 
 - `avg()` Controls how the values for **each** series should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
-- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `5m, now` means 5 minutes from now to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes from now to 2 minutes from now. This is useful if you want to ignore the last 2 minutes of data.
+- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `5m, now` means 5 minutes ago to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes ago to 2 minutes ago. This is useful if you want to ignore the last 2 minutes of data.
 - `IS BELOW 14`  Defines the type of threshold and the threshold value.  You can click on `IS BELOW` to change the type of threshold.
 
 The query used in an alert rule cannot contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.

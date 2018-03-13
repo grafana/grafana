@@ -6,13 +6,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
+func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
 		return nil, err
@@ -74,7 +73,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	if setting.DisableGravatar {
-		data.User.GravatarUrl = setting.AppSubUrl + "/public/img/transparent.png"
+		data.User.GravatarUrl = setting.AppSubUrl + "/public/img/user_profile.png"
 	}
 
 	if len(data.User.Name) == 0 {
@@ -102,8 +101,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	dashboardChildNavs := []*dtos.NavLink{
-		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "gicon gicon-home", HideFromTabs: true},
-		{Divider: true, HideFromTabs: true},
+		{Text: "Home", Id: "home", Url: setting.AppSubUrl + "/", Icon: "gicon gicon-home", HideFromTabs: true},
+		{Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
 		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "gicon gicon-manage"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "gicon gicon-playlists"},
 		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "gicon gicon-snapshots"},
@@ -261,7 +260,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 		if c.IsGrafanaAdmin {
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
-				Divider: true, HideFromTabs: true,
+				Divider: true, HideFromTabs: true, Id: "admin-divider", Text: "Text",
 			})
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
 				Text:         "Server Admin",
@@ -299,7 +298,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	return &data, nil
 }
 
-func Index(c *middleware.Context) {
+func Index(c *m.ReqContext) {
 	if data, err := setIndexViewData(c); err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
@@ -308,7 +307,7 @@ func Index(c *middleware.Context) {
 	}
 }
 
-func NotFoundHandler(c *middleware.Context) {
+func NotFoundHandler(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return

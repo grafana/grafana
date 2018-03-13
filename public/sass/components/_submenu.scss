@@ -68,7 +68,7 @@
   overflow-x: hidden;
   background-color: $dropdownBackground;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.4);
-  z-index: 1000;
+  z-index: $zindex-typeahead;
   font-size: $font-size-base;
   border-radius: 3px 3px 0 0;
   border: 1px solid $tight-form-func-bg;

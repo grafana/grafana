@@ -117,7 +117,7 @@ func SetAuthURLParam(key, value string) AuthCodeOption {
 // that asks for permissions for the required scopes explicitly.
 //
 // State is a token to protect the user from CSRF attacks. You must
-// always provide a non-zero string and validate that it matches the
+// always provide a non-empty string and validate that it matches the
 // the state query parameter on your redirect callback.
 // See http://tools.ietf.org/html/rfc6749#section-10.12 for more info.
 //
@@ -129,9 +129,16 @@ func (c *Config) AuthCodeURL(state string, opts ...AuthCodeOption) string {
 	v := url.Values{
 		"response_type": {"code"},
 		"client_id":     {c.ClientID},
-		"redirect_uri":  internal.CondVal(c.RedirectURL),
-		"scope":         internal.CondVal(strings.Join(c.Scopes, " ")),
-		"state":         internal.CondVal(state),
+	}
+	if c.RedirectURL != "" {
+		v.Set("redirect_uri", c.RedirectURL)
+	}
+	if len(c.Scopes) > 0 {
+		v.Set("scope", strings.Join(c.Scopes, " "))
+	}
+	if state != "" {
+		// TODO(light): Docs say never to omit state; don't allow empty.
+		v.Set("state", state)
 	}
 	for _, opt := range opts {
 		opt.setValue(v)
@@ -157,12 +164,15 @@ func (c *Config) AuthCodeURL(state string, opts ...AuthCodeOption) string {
 // The HTTP client to use is derived from the context.
 // If nil, http.DefaultClient is used.
 func (c *Config) PasswordCredentialsToken(ctx context.Context, username, password string) (*Token, error) {
-	return retrieveToken(ctx, c, url.Values{
+	v := url.Values{
 		"grant_type": {"password"},
 		"username":   {username},
 		"password":   {password},
-		"scope":      internal.CondVal(strings.Join(c.Scopes, " ")),
-	})
+	}
+	if len(c.Scopes) > 0 {
+		v.Set("scope", strings.Join(c.Scopes, " "))
+	}
+	return retrieveToken(ctx, c, v)
 }
 
 // Exchange converts an authorization code into a token.
@@ -176,11 +186,14 @@ func (c *Config) PasswordCredentialsToken(ctx context.Context, username, passwor
 // The code will be in the *http.Request.FormValue("code"). Before
 // calling Exchange, be sure to validate FormValue("state").
 func (c *Config) Exchange(ctx context.Context, code string) (*Token, error) {
-	return retrieveToken(ctx, c, url.Values{
-		"grant_type":   {"authorization_code"},
-		"code":         {code},
-		"redirect_uri": internal.CondVal(c.RedirectURL),
-	})
+	v := url.Values{
+		"grant_type": {"authorization_code"},
+		"code":       {code},
+	}
+	if c.RedirectURL != "" {
+		v.Set("redirect_uri", c.RedirectURL)
+	}
+	return retrieveToken(ctx, c, v)
 }
 
 // Client returns an HTTP client using the provided token.
@@ -291,20 +304,20 @@ var HTTPClient internal.ContextKey
 // NewClient creates an *http.Client from a Context and TokenSource.
 // The returned client is not valid beyond the lifetime of the context.
 //
+// Note that if a custom *http.Client is provided via the Context it
+// is used only for token acquisition and is not used to configure the
+// *http.Client returned from NewClient.
+//
 // As a special case, if src is nil, a non-OAuth2 client is returned
 // using the provided context. This exists to support related OAuth2
 // packages.
 func NewClient(ctx context.Context, src TokenSource) *http.Client {
 	if src == nil {
-		c, err := internal.ContextClient(ctx)
-		if err != nil {
-			return &http.Client{Transport: internal.ErrorTransport{Err: err}}
-		}
-		return c
+		return internal.ContextClient(ctx)
 	}
 	return &http.Client{
 		Transport: &Transport{
-			Base:   internal.ContextTransport(ctx),
+			Base:   internal.ContextClient(ctx).Transport,
 			Source: ReuseTokenSource(nil, src),
 		},
 	}

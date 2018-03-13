@@ -22,6 +22,7 @@ function (_, $, coreModule) {
         segment: "=",
         getOptions: "&",
         onChange: "&",
+        debounce: "@",
       },
       link: function($scope, elem) {
         var $input = $(inputTemplate);
@@ -30,6 +31,7 @@ function (_, $, coreModule) {
         var options = null;
         var cancelBlur = null;
         var linkMode = true;
+        var debounceLookup = $scope.debounce;
 
         $input.appendTo(elem);
         $button.appendTo(elem);
@@ -134,6 +136,10 @@ function (_, $, coreModule) {
           var items = this.source(this.query, $.proxy(this.process, this));
           return items ? this.process(items) : items;
         };
+
+        if (debounceLookup) {
+          typeahead.lookup = _.debounce(typeahead.lookup, 500, {leading: true});
+        }
 
         $button.keydown(function(evt) {
           // trigger typeahead on down arrow or enter key
