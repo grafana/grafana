@@ -104,6 +104,11 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'FolderDashboardsCtrl',
       controllerAs: 'ctrl',
     })
+    .when('/dashboards/f/:uid', {
+      templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
+      controller: 'FolderDashboardsCtrl',
+      controllerAs: 'ctrl',
+    })
     .when('/org', {
       templateUrl: 'public/app/features/org/partials/orgDetails.html',
       controller: 'OrgDetailsCtrl',
