@@ -131,6 +131,14 @@ export class Tracker {
       return true;
     });
 
+    if (dash.panels[0].panels) {
+      for (var i = 0; i < dash.panels[0].panels.length; i++) {
+        dash.panels.push(dash.panels[0].panels[i]);
+      }
+      dash.panels[0].panels = [];
+      delete dash.panels[0].collapsed;
+    }
+
     dash.panels = _.filter(dash.panels, panel => {
       if (panel.repeatPanelId) {
         return false;
