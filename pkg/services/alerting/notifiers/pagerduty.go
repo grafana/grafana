@@ -111,6 +111,8 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	links := make([]interface{}, 1)
 	linkJSON := simplejson.New()
 	linkJSON.Set("href", ruleUrl)
+	bodyJSON.Set("client_url", ruleUrl)
+	bodyJSON.Set("client", "Grafana")
 	links[0] = linkJSON
 	bodyJSON.Set("links", links)
 
