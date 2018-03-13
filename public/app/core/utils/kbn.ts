@@ -526,6 +526,7 @@ kbn.valueFormats.pressurebar = kbn.formatBuilders.decimalSIPrefix('bar');
 kbn.valueFormats.pressurembar = kbn.formatBuilders.decimalSIPrefix('bar', -1);
 kbn.valueFormats.pressurekbar = kbn.formatBuilders.decimalSIPrefix('bar', 1);
 kbn.valueFormats.pressurehpa = kbn.formatBuilders.fixedUnit('hPa');
+kbn.valueFormats.pressurekpa = kbn.formatBuilders.fixedUnit('kPa');
 kbn.valueFormats.pressurehg = kbn.formatBuilders.fixedUnit('"Hg');
 kbn.valueFormats.pressurepsi = kbn.formatBuilders.scaledUnits(1000, [' psi', ' ksi', ' Mpsi']);
 
@@ -1045,6 +1046,7 @@ kbn.getUnitFormats = function() {
         { text: 'Bars', value: 'pressurebar' },
         { text: 'Kilobars', value: 'pressurekbar' },
         { text: 'Hectopascals', value: 'pressurehpa' },
+        { text: 'Kilopascals', value: 'pressurekpa' },
         { text: 'Inches of mercury', value: 'pressurehg' },
         { text: 'PSI', value: 'pressurepsi' },
       ],
