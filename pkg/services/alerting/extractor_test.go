@@ -150,6 +150,22 @@ func TestAlertRuleExtraction(t *testing.T) {
 			})
 		})
 
+		Convey("Panel with id set to zero should return error", func() {
+			panelWithIdZero, err := ioutil.ReadFile("./test-data/panel-with-id-0.json")
+			So(err, ShouldBeNil)
+
+			dashJson, err := simplejson.NewJson([]byte(panelWithIdZero))
+			So(err, ShouldBeNil)
+			dash := m.NewDashboardFromJson(dashJson)
+			extractor := NewDashAlertExtractor(dash, 1)
+
+			_, err = extractor.GetAlerts()
+
+			Convey("panel with id 0 should return error", func() {
+				So(err, ShouldNotBeNil)
+			})
+		})
+
 		Convey("Parse alerts from dashboard without rows", func() {
 			json, err := ioutil.ReadFile("./test-data/v5-dashboard.json")
 			So(err, ShouldBeNil)

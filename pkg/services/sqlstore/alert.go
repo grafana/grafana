@@ -10,6 +10,9 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
+// timeNow makes it possible to test usage of time
+var timeNow = time.Now
+
 func init() {
 	bus.AddHandler("sql", SaveAlerts)
 	bus.AddHandler("sql", HandleAlertsQuery)
@@ -147,7 +150,7 @@ func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 			return err
 		}
 
-		if err := upsertAlerts(existingAlerts, cmd, sess); err != nil {
+		if err := updateAlerts(existingAlerts, cmd, sess); err != nil {
 			return err
 		}
 
@@ -159,7 +162,7 @@ func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 	})
 }
 
-func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBSession) error {
+func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBSession) error {
 	for _, alert := range cmd.Alerts {
 		update := false
 		var alertToUpdate *m.Alert
@@ -175,7 +178,7 @@ func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 
 		if update {
 			if alertToUpdate.ContainsUpdates(alert) {
-				alert.Updated = time.Now()
+				alert.Updated = timeNow()
 				alert.State = alertToUpdate.State
 				sess.MustCols("message")
 				_, err := sess.Id(alert.Id).Update(alert)
@@ -186,10 +189,10 @@ func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 				sqlog.Debug("Alert updated", "name", alert.Name, "id", alert.Id)
 			}
 		} else {
-			alert.Updated = time.Now()
-			alert.Created = time.Now()
+			alert.Updated = timeNow()
+			alert.Created = timeNow()
 			alert.State = m.AlertStatePending
-			alert.NewStateDate = time.Now()
+			alert.NewStateDate = timeNow()
 
 			_, err := sess.Insert(alert)
 			if err != nil {
@@ -253,7 +256,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 
 		alert.State = cmd.State
 		alert.StateChanges += 1
-		alert.NewStateDate = time.Now()
+		alert.NewStateDate = timeNow()
 		alert.EvalData = cmd.EvalData
 
 		if cmd.Error == "" {
@@ -276,11 +279,13 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 		var buffer bytes.Buffer
 		params := make([]interface{}, 0)
 
-		buffer.WriteString(`UPDATE alert SET state = ?`)
+		buffer.WriteString(`UPDATE alert SET state = ?, new_state_date = ?`)
 		if cmd.Paused {
 			params = append(params, string(m.AlertStatePaused))
+			params = append(params, timeNow())
 		} else {
 			params = append(params, string(m.AlertStatePending))
+			params = append(params, timeNow())
 		}
 
 		buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
@@ -306,7 +311,7 @@ func PauseAllAlerts(cmd *m.PauseAllAlertCommand) error {
 			newState = string(m.AlertStatePending)
 		}
 
-		res, err := sess.Exec(`UPDATE alert SET state = ?`, newState)
+		res, err := sess.Exec(`UPDATE alert SET state = ?, new_state_date = ?`, newState, timeNow())
 		if err != nil {
 			return err
 		}

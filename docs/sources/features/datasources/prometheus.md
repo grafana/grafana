@@ -93,7 +93,7 @@ queries via the Dashboard menu / Annotations view.
 Prometheus supports two ways to query annotations.
 
 - A regular metric query
-- A Prometheus query for pending and firing alerts (for details see [Inspecting alerts during runtime](https://prometheus.io/docs/alerting/rules/#inspecting-alerts-during-runtime))
+- A Prometheus query for pending and firing alerts (for details see [Inspecting alerts during runtime](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/#inspecting-alerts-during-runtime))
 
 The step option is useful to limit the number of events returned from your query.
 

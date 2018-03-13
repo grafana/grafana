@@ -144,7 +144,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Elastic, Influxdb & Prometheus | Lowest interval/step value that should be used for this data source |
-| esVersion | string | Elastic | Elasticsearch version |
+| esVersion | string | Elastic | Elasticsearch version as an number (2/5/56) |
 | timeField | string | Elastic | Which field that should be used as timestamp |
 | interval | string | Elastic | Index date time format |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |

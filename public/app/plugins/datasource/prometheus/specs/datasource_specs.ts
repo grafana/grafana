@@ -1,5 +1,6 @@
 import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
+import $ from 'jquery';
 import helpers from 'test/specs/helpers';
 import { PrometheusDatasource } from '../datasource';
 
@@ -10,7 +11,7 @@ describe('PrometheusDatasource', function() {
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
-    jsonData: {},
+    jsonData: { httpMethod: 'GET' },
   };
 
   beforeEach(angularMocks.module('grafana.core'));
@@ -649,6 +650,73 @@ describe('PrometheusDatasource', function() {
       expect(query.scopedVars.__interval.value).to.be('5s');
       expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
       expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
+    });
+  });
+});
+
+describe('PrometheusDatasource for POST', function() {
+  var ctx = new helpers.ServiceTestContext();
+  var instanceSettings = {
+    url: 'proxied',
+    directUrl: 'direct',
+    user: 'test',
+    password: 'mupp',
+    jsonData: { httpMethod: 'POST' },
+  };
+
+  beforeEach(angularMocks.module('grafana.core'));
+  beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(ctx.providePhase(['timeSrv']));
+
+  beforeEach(
+    angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+      ctx.$q = $q;
+      ctx.$httpBackend = $httpBackend;
+      ctx.$rootScope = $rootScope;
+      ctx.ds = $injector.instantiate(PrometheusDatasource, { instanceSettings: instanceSettings });
+      $httpBackend.when('GET', /\.html$/).respond('');
+    })
+  );
+
+  describe('When querying prometheus with one target using query editor target spec', function() {
+    var results;
+    var urlExpected = 'proxied/api/v1/query_range';
+    var dataExpected = $.param({
+      query: 'test{job="testjob"}',
+      start: 1443438675,
+      end: 1443460275,
+      step: 60,
+    });
+    var query = {
+      range: { from: moment(1443438674760), to: moment(1443460274760) },
+      targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
+      interval: '60s',
+    };
+    var response = {
+      status: 'success',
+      data: {
+        resultType: 'matrix',
+        result: [
+          {
+            metric: { __name__: 'test', job: 'testjob' },
+            values: [[1443454528, '3846']],
+          },
+        ],
+      },
+    };
+    beforeEach(function() {
+      ctx.$httpBackend.expectPOST(urlExpected, dataExpected).respond(response);
+      ctx.ds.query(query).then(function(data) {
+        results = data;
+      });
+      ctx.$httpBackend.flush();
+    });
+    it('should generate the correct query', function() {
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+    it('should return series list', function() {
+      expect(results.data.length).to.be(1);
+      expect(results.data[0].target).to.be('test{job="testjob"}');
     });
   });
 });

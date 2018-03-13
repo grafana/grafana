@@ -31,6 +31,7 @@ dashboards, creating users and updating data sources.
 * [Annotations API]({{< relref "http_api/annotations.md" >}})
 * [Alerting API]({{< relref "http_api/alerting.md" >}})
 * [User API]({{< relref "http_api/user.md" >}})
+* [Team API]({{< relref "http_api/team.md" >}})
 * [Admin API]({{< relref "http_api/admin.md" >}})
 * [Preferences API]({{< relref "http_api/preferences.md" >}})
 * [Other API]({{< relref "http_api/other.md" >}})

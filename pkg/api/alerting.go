@@ -5,15 +5,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func ValidateOrgAlert(c *middleware.Context) {
+func ValidateOrgAlert(c *m.ReqContext) {
 	id := c.ParamsInt64(":alertId")
-	query := models.GetAlertByIdQuery{Id: id}
+	query := m.GetAlertByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(404, "Alert not found", nil)
@@ -26,14 +25,14 @@ func ValidateOrgAlert(c *middleware.Context) {
 	}
 }
 
-func GetAlertStatesForDashboard(c *middleware.Context) Response {
+func GetAlertStatesForDashboard(c *m.ReqContext) Response {
 	dashboardId := c.QueryInt64("dashboardId")
 
 	if dashboardId == 0 {
 		return ApiError(400, "Missing query parameter dashboardId", nil)
 	}
 
-	query := models.GetAlertStatesForDashboardQuery{
+	query := m.GetAlertStatesForDashboardQuery{
 		OrgId:       c.OrgId,
 		DashboardId: c.QueryInt64("dashboardId"),
 	}
@@ -46,8 +45,8 @@ func GetAlertStatesForDashboard(c *middleware.Context) Response {
 }
 
 // GET /api/alerts
-func GetAlerts(c *middleware.Context) Response {
-	query := models.GetAlertsQuery{
+func GetAlerts(c *m.ReqContext) Response {
+	query := m.GetAlertsQuery{
 		OrgId:       c.OrgId,
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
@@ -65,14 +64,14 @@ func GetAlerts(c *middleware.Context) Response {
 	}
 
 	for _, alert := range query.Result {
-		alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
+		alert.Url = m.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
 	}
 
 	return Json(200, query.Result)
 }
 
 // POST /api/alerts/test
-func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
+func AlertTest(c *m.ReqContext, dto dtos.AlertTestCommand) Response {
 	if _, idErr := dto.Dashboard.Get("id").Int64(); idErr != nil {
 		return ApiError(400, "The dashboard needs to be saved at least once before you can test an alert rule", nil)
 	}
@@ -114,9 +113,9 @@ func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
 }
 
 // GET /api/alerts/:id
-func GetAlert(c *middleware.Context) Response {
+func GetAlert(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":alertId")
-	query := models.GetAlertByIdQuery{Id: id}
+	query := m.GetAlertByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "List alerts failed", err)
@@ -125,12 +124,12 @@ func GetAlert(c *middleware.Context) Response {
 	return Json(200, &query.Result)
 }
 
-func GetAlertNotifiers(c *middleware.Context) Response {
+func GetAlertNotifiers(c *m.ReqContext) Response {
 	return Json(200, alerting.GetNotifiers())
 }
 
-func GetAlertNotifications(c *middleware.Context) Response {
-	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
+func GetAlertNotifications(c *m.ReqContext) Response {
+	query := &m.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(query); err != nil {
 		return ApiError(500, "Failed to get alert notifications", err)
@@ -152,8 +151,8 @@ func GetAlertNotifications(c *middleware.Context) Response {
 	return Json(200, result)
 }
 
-func GetAlertNotificationById(c *middleware.Context) Response {
-	query := &models.GetAlertNotificationsQuery{
+func GetAlertNotificationById(c *m.ReqContext) Response {
+	query := &m.GetAlertNotificationsQuery{
 		OrgId: c.OrgId,
 		Id:    c.ParamsInt64("notificationId"),
 	}
@@ -165,7 +164,7 @@ func GetAlertNotificationById(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-func CreateAlertNotification(c *middleware.Context, cmd models.CreateAlertNotificationCommand) Response {
+func CreateAlertNotification(c *m.ReqContext, cmd m.CreateAlertNotificationCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -175,7 +174,7 @@ func CreateAlertNotification(c *middleware.Context, cmd models.CreateAlertNotifi
 	return Json(200, cmd.Result)
 }
 
-func UpdateAlertNotification(c *middleware.Context, cmd models.UpdateAlertNotificationCommand) Response {
+func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -185,8 +184,8 @@ func UpdateAlertNotification(c *middleware.Context, cmd models.UpdateAlertNotifi
 	return Json(200, cmd.Result)
 }
 
-func DeleteAlertNotification(c *middleware.Context) Response {
-	cmd := models.DeleteAlertNotificationCommand{
+func DeleteAlertNotification(c *m.ReqContext) Response {
+	cmd := m.DeleteAlertNotificationCommand{
 		OrgId: c.OrgId,
 		Id:    c.ParamsInt64("notificationId"),
 	}
@@ -199,7 +198,7 @@ func DeleteAlertNotification(c *middleware.Context) Response {
 }
 
 //POST /api/alert-notifications/test
-func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) Response {
+func NotificationTest(c *m.ReqContext, dto dtos.NotificationTestCommand) Response {
 	cmd := &alerting.NotificationTestCommand{
 		Name:     dto.Name,
 		Type:     dto.Type,
@@ -207,7 +206,7 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 	}
 
 	if err := bus.Dispatch(cmd); err != nil {
-		if err == models.ErrSmtpNotEnabled {
+		if err == m.ErrSmtpNotEnabled {
 			return ApiError(412, err.Error(), err)
 		}
 		return ApiError(500, "Failed to send alert notifications", err)
@@ -217,10 +216,10 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 }
 
 //POST /api/alerts/:alertId/pause
-func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
+func PauseAlert(c *m.ReqContext, dto dtos.PauseAlertCommand) Response {
 	alertId := c.ParamsInt64("alertId")
 
-	query := models.GetAlertByIdQuery{Id: alertId}
+	query := m.GetAlertByIdQuery{Id: alertId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Get Alert failed", err)
@@ -235,7 +234,7 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 		return ApiError(403, "Access denied to this dashboard and alert", nil)
 	}
 
-	cmd := models.PauseAlertCommand{
+	cmd := m.PauseAlertCommand{
 		OrgId:    c.OrgId,
 		AlertIds: []int64{alertId},
 		Paused:   dto.Paused,
@@ -245,10 +244,10 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 		return ApiError(500, "", err)
 	}
 
-	var response models.AlertStateType = models.AlertStatePending
+	var response m.AlertStateType = m.AlertStatePending
 	pausedState := "un-paused"
 	if cmd.Paused {
-		response = models.AlertStatePaused
+		response = m.AlertStatePaused
 		pausedState = "paused"
 	}
 
@@ -262,8 +261,8 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 }
 
 //POST /api/admin/pause-all-alerts
-func PauseAllAlerts(c *middleware.Context, dto dtos.PauseAllAlertsCommand) Response {
-	updateCmd := models.PauseAllAlertCommand{
+func PauseAllAlerts(c *m.ReqContext, dto dtos.PauseAllAlertsCommand) Response {
+	updateCmd := m.PauseAllAlertCommand{
 		Paused: dto.Paused,
 	}
 
@@ -271,10 +270,10 @@ func PauseAllAlerts(c *middleware.Context, dto dtos.PauseAllAlertsCommand) Respo
 		return ApiError(500, "Failed to pause alerts", err)
 	}
 
-	var response models.AlertStateType = models.AlertStatePending
+	var response m.AlertStateType = m.AlertStatePending
 	pausedState := "un paused"
 	if updateCmd.Paused {
-		response = models.AlertStatePaused
+		response = m.AlertStatePaused
 		pausedState = "paused"
 	}
 

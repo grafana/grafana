@@ -66,6 +66,11 @@ describe('unsavedChangesSrv', function() {
     expect(tracker.hasChanges()).to.be(false);
   });
 
+  it('Should ignore .iteration changes', () => {
+    dash.iteration = new Date().getTime() + 1;
+    expect(tracker.hasChanges()).to.be(false);
+  });
+
   it.skip('Should ignore row collapse change', function() {
     dash.rows[0].collapse = true;
     expect(tracker.hasChanges()).to.be(false);

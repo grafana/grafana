@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -35,7 +34,7 @@ func (hs *HttpServer) getDatasourceById(id int64, orgId int64, nocache bool) (*m
 	return query.Result, nil
 }
 
-func (hs *HttpServer) ProxyDataSourceRequest(c *middleware.Context) {
+func (hs *HttpServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
 
 	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"

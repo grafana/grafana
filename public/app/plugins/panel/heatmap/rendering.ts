@@ -649,13 +649,13 @@ export default function link(scope, elem, attrs, ctrl) {
       selection.x2 = limitSelection(event.offsetX);
       drawSelection(selection.x1, selection.x2);
     } else {
-      emitGraphHoverEvet(event);
+      emitGraphHoverEvent(event);
       drawCrosshair(event.offsetX);
       tooltip.show(event, data);
     }
   }
 
-  function emitGraphHoverEvet(event) {
+  function emitGraphHoverEvent(event) {
     let x = xScale.invert(event.offsetX - yAxisWidth).valueOf();
     let y = yScale.invert(event.offsetY);
     let pos = {

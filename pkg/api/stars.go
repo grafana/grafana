@@ -2,11 +2,10 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func StarDashboard(c *middleware.Context) Response {
+func StarDashboard(c *m.ReqContext) Response {
 	if !c.IsSignedIn {
 		return ApiError(412, "You need to sign in to star dashboards", nil)
 	}
@@ -24,7 +23,7 @@ func StarDashboard(c *middleware.Context) Response {
 	return ApiSuccess("Dashboard starred!")
 }
 
-func UnstarDashboard(c *middleware.Context) Response {
+func UnstarDashboard(c *m.ReqContext) Response {
 
 	cmd := m.UnstarDashboardCommand{UserId: c.UserId, DashboardId: c.ParamsInt64(":id")}
 

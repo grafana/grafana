@@ -8,22 +8,22 @@ import (
 	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
-	macaron "gopkg.in/macaron.v1"
+	m "github.com/grafana/grafana/pkg/models"
+	"gopkg.in/macaron.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(desc, "GET", url, url, models.ROLE_EDITOR, fn)
+	loggedInUserScenarioWithRole(desc, "GET", url, url, m.ROLE_EDITOR, fn)
 }
 
-func loggedInUserScenarioWithRole(desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
+func loggedInUserScenarioWithRole(desc string, method string, url string, routePattern string, role m.RoleType, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
@@ -71,7 +71,7 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 
 type scenarioContext struct {
 	m              *macaron.Macaron
-	context        *middleware.Context
+	context        *m.ReqContext
 	resp           *httptest.ResponseRecorder
 	handlerFunc    handlerFunc
 	defaultHandler macaron.Handler
@@ -84,7 +84,7 @@ func (sc *scenarioContext) exec() {
 }
 
 type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *middleware.Context) Response
+type handlerFunc func(c *m.ReqContext) Response
 
 func setupScenarioContext(url string) *scenarioContext {
 	sc := &scenarioContext{
