@@ -74,6 +74,21 @@ func (e *DashAlertExtractor) GetAlertFromPanels(jsonWithPanels *simplejson.Json)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
+
+		collapsedJson, collapsed := panel.CheckGet("collapsed")
+		// check if the panel is collapsed
+		if collapsed && collapsedJson.MustBool() {
+
+			// extract alerts from sub panels for collapsed panels
+			als, err := e.GetAlertFromPanels(panel)
+			if err != nil {
+				return nil, err
+			}
+
+			alerts = append(alerts, als...)
+			continue
+		}
+
 		jsonAlert, hasAlert := panel.CheckGet("alert")
 
 		if !hasAlert {
