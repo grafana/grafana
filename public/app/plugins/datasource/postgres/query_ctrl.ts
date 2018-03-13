@@ -266,14 +266,28 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   getWhereSegments(segment, index) {
+    var query, addTemplateVars;
+
     if (segment.type === 'condition') {
       return this.$q.when([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
     }
     if (segment.type === 'operator') {
-      return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
+      var columnName = this.whereSegments[index - 1].value;
+      query = this.queryBuilder.buildDatatypeQuery(columnName);
+      return this.datasource.metricFindQuery(query)
+      .then(results => {
+        var datatype = results[0].text;
+        switch (datatype) {
+          case "text":
+          case "character varying":
+            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '~', '~*','!~','!~*','IN']));
+          default:
+            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=']));
+        }
+      })
+      .catch(this.handleQueryError.bind(this));
     }
 
-    var query, addTemplateVars;
     if (segment.type === 'key' || segment.type === 'plus-button') {
       query = this.queryBuilder.buildColumnQuery();
 

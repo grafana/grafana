@@ -47,4 +47,12 @@ export class PostgresQueryBuilder {
     return query;
   }
 
+  buildDatatypeQuery(column: string) {
+    var query = "SELECT data_type FROM information_schema.columns WHERE ";
+    query += " table_schema = " + this.queryModel.quoteLiteral(this.target.schema);
+    query += " AND table_name = " + this.queryModel.quoteLiteral(this.target.table);
+    query += " AND column_name = " + this.queryModel.quoteLiteral(column);
+    return query;
+  }
+
 }
