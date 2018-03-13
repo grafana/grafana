@@ -242,10 +242,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
               let histMax = _.max(_.map(data, s => s.stats.max));
               let ticks = panel.xaxis.buckets || panelWidth / 50;
               bucketSize = tickStep(histMin, histMax, ticks);
-
-              data = convertToHistogramData(data, bucketSize, ctrl.hiddenSeries, panel.stack, histMin, histMax);
-
               options.series.bars.barWidth = bucketSize * 0.8;
+              data = convertToHistogramData(data, bucketSize, ctrl.hiddenSeries, histMin, histMax);
             } else {
               bucketSize = 0;
             }

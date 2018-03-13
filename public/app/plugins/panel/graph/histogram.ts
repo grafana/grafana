@@ -59,13 +59,11 @@ export function convertValuesToHistogram(values: number[], bucketSize: number, m
  * Convert series into array of histogram data.
  * @param data Array of series
  * @param bucketSize
- * @param stack
  */
 export function convertToHistogramData(
   data: any,
   bucketSize: number,
   hiddenSeries: any,
-  stack = false,
   min: number,
   max: number
 ): any[] {
