@@ -1,9 +1,13 @@
 import { describe, it, sinon, expect } from 'test/lib/common';
+import helpers from 'test/specs/helpers';
 
 import { PromCompleter } from '../completer';
 import { PrometheusDatasource } from '../datasource';
 
 describe('Prometheus editor completer', function() {
+  var ctx = new helpers.ServiceTestContext();
+  beforeEach(ctx.providePhase(['templateSrv']));
+
   function getSessionStub(data) {
     return {
       getTokenAt: sinon.stub().returns(data.currentToken),
@@ -39,7 +43,18 @@ describe('Prometheus editor completer', function() {
       .returns(Promise.resolve(['node_cpu'])),
   };
 
-  let completer = new PromCompleter(datasourceStub);
+  let templateSrv = {
+    variables: [
+      {
+        name: 'var_name',
+        options: [
+          { text: 'foo', value: 'foo', selected: false },
+          { text: 'bar', value: 'bar', selected: true }
+        ]
+      }
+    ]
+  };
+  let completer = new PromCompleter(datasourceStub, templateSrv);
 
   describe('When inside brackets', () => {
     it('Should return range vectors', () => {
