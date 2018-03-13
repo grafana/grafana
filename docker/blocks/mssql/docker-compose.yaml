@@ -1,0 +1,16 @@
+  mssqltest:
+    build:
+      context: blocks/mssql
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: Password!
+      MSSQL_PID: Express
+    ports:
+      - "1433:1433"
+
+  fake-mssql-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: mssql
+      FD_PORT: 1433
