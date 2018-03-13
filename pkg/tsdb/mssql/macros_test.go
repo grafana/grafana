@@ -48,6 +48,20 @@ func TestMacroEngine(t *testing.T) {
 			So(sql, ShouldEqual, "WHERE time_column >= DATEADD(s, 18446744066914186738+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND time_column <= DATEADD(s, 18446744066914187038+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')")
 		})
 
+		Convey("interpolate __timeGroup function", func() {
+			sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "GROUP BY cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column))/300 as int)*300 as int)")
+		})
+
+		Convey("interpolate __timeGroup function with spaces around arguments", func() {
+			sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "GROUP BY cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column))/300 as int)*300 as int)")
+		})
+
 		Convey("interpolate __timeFrom function", func() {
 			sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom(time_column)")
 			So(err, ShouldBeNil)

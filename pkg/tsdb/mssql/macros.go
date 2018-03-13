@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -90,6 +91,16 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		return fmt.Sprintf("DATEADD(second, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
 	case "__timeTo":
 		return fmt.Sprintf("DATEADD(second, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__timeGroup":
+		if len(args) < 2 {
+			return "", fmt.Errorf("macro %v needs time column and interval", name)
+		}
+		interval, err := time.ParseDuration(strings.Trim(args[1], `'"`))
+		if err != nil {
+			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+
+		return fmt.Sprintf("cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s))/%.0f as int)*%.0f as int)", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
