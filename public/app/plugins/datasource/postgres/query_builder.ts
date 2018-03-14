@@ -55,4 +55,12 @@ export class PostgresQueryBuilder {
     return query;
   }
 
+  buildAggregateQuery() {
+    var query = "SELECT DISTINCT proname FROM pg_aggregate ";
+    query += "INNER JOIN pg_proc ON pg_aggregate.aggfnoid = pg_proc.oid ";
+    query += "INNER JOIN pg_type ON pg_type.oid=pg_proc.prorettype ";
+    query += "WHERE pronargs=1 AND typname IN ('int8','float8') AND aggkind='n' ORDER BY 1";
+    return query;
+  }
+
 }
