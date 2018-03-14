@@ -15,7 +15,7 @@ weight = 1
 
 Description | Download
 ------------ | -------------
-Stable for Debian-based Linux | [grafana_5.0.1_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.1_amd64.deb)
+Stable for Debian-based Linux | [grafana_5.0.2_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.2_amd64.deb)
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
@@ -24,9 +24,9 @@ installation.
 
 
 ```bash
-wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.1_amd64.deb
+wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.2_amd64.deb
 sudo apt-get install -y adduser libfontconfig
-sudo dpkg -i grafana_5.0.1_amd64.deb
+sudo dpkg -i grafana_5.0.2_amd64.deb
 ```
 
 ## APT Repository
