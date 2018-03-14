@@ -5,24 +5,12 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-type UpdateDashboardAlertsCommand struct {
-	UserId    int64
-	OrgId     int64
-	Dashboard *m.Dashboard
-}
-
-type ValidateDashboardAlertsCommand struct {
-	UserId    int64
-	OrgId     int64
-	Dashboard *m.Dashboard
-}
-
 func init() {
 	bus.AddHandler("alerting", updateDashboardAlerts)
 	bus.AddHandler("alerting", validateDashboardAlerts)
 }
 
-func validateDashboardAlerts(cmd *ValidateDashboardAlertsCommand) error {
+func validateDashboardAlerts(cmd *m.ValidateDashboardAlertsCommand) error {
 	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
 
 	if _, err := extractor.GetAlerts(); err != nil {
@@ -32,7 +20,7 @@ func validateDashboardAlerts(cmd *ValidateDashboardAlertsCommand) error {
 	return nil
 }
 
-func updateDashboardAlerts(cmd *UpdateDashboardAlertsCommand) error {
+func updateDashboardAlerts(cmd *m.UpdateDashboardAlertsCommand) error {
 	saveAlerts := m.SaveAlertsCommand{
 		OrgId:       cmd.OrgId,
 		UserId:      cmd.UserId,

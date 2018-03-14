@@ -1,22 +1,25 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import * as fileExport from 'app/core/utils/file_export';
 import appEvents from 'app/core/app_events';
 
 export class ExportDataModalCtrl {
   private data: any[];
+  private panel: string;
   asRows: Boolean = true;
-  dateTimeFormat: String = 'YYYY-MM-DDTHH:mm:ssZ';
-  /** @ngInject */
-  constructor(private $scope) { }
+  dateTimeFormat = 'YYYY-MM-DDTHH:mm:ssZ';
+  excel: false;
 
   export() {
-    if (this.asRows) {
-      fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat);
+    if (this.panel === 'table') {
+      fileExport.exportTableDataToCsv(this.data, this.excel);
     } else {
-      fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat);
+      if (this.asRows) {
+        fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat, this.excel);
+      } else {
+        fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat, this.excel);
+      }
     }
+
     this.dismiss();
   }
 
@@ -32,9 +35,10 @@ export function exportDataModal() {
     controller: ExportDataModalCtrl,
     controllerAs: 'ctrl',
     scope: {
-      data: '<' // The difference to '=' is that the bound properties are not watched
+      panel: '<',
+      data: '<', // The difference to '=' is that the bound properties are not watched
     },
-    bindToController: true
+    bindToController: true,
   };
 }
 

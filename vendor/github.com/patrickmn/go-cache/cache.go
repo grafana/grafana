@@ -135,6 +135,36 @@ func (c *cache) Get(k string) (interface{}, bool) {
 	return item.Object, true
 }
 
+// GetWithExpiration returns an item and its expiration time from the cache.
+// It returns the item or nil, the expiration time if one is set (if the item
+// never expires a zero value for time.Time is returned), and a bool indicating
+// whether the key was found.
+func (c *cache) GetWithExpiration(k string) (interface{}, time.Time, bool) {
+	c.mu.RLock()
+	// "Inlining" of get and Expired
+	item, found := c.items[k]
+	if !found {
+		c.mu.RUnlock()
+		return nil, time.Time{}, false
+	}
+
+	if item.Expiration > 0 {
+		if time.Now().UnixNano() > item.Expiration {
+			c.mu.RUnlock()
+			return nil, time.Time{}, false
+		}
+
+		// Return the item and the expiration time
+		c.mu.RUnlock()
+		return item.Object, time.Unix(0, item.Expiration), true
+	}
+
+	// If expiration <= 0 (i.e. no expiration time set) then return the item
+	// and a zeroed time.Time
+	c.mu.RUnlock()
+	return item.Object, time.Time{}, true
+}
+
 func (c *cache) get(k string) (interface{}, bool) {
 	item, found := c.items[k]
 	if !found {
@@ -1044,7 +1074,6 @@ type janitor struct {
 }
 
 func (j *janitor) Run(c *cache) {
-	j.stop = make(chan bool)
 	ticker := time.NewTicker(j.Interval)
 	for {
 		select {
@@ -1064,6 +1093,7 @@ func stopJanitor(c *Cache) {
 func runJanitor(c *cache, ci time.Duration) {
 	j := &janitor{
 		Interval: ci,
+		stop:     make(chan bool),
 	}
 	c.janitor = j
 	go j.Run(c)

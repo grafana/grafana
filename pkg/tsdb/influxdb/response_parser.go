@@ -50,6 +50,7 @@ func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResul
 			result = append(result, &tsdb.TimeSeries{
 				Name:   rp.formatSerieName(row, column, query),
 				Points: points,
+				Tags:   row.Tags,
 			})
 		}
 	}

@@ -23,7 +23,7 @@ func transformDescription(m Matcher, newDesc string) Matcher {
 }
 
 type transformDescriptionMatcher struct {
-	desc string
+	desc           string
 	wrappedMatcher Matcher
 }
 

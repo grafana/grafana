@@ -5,5 +5,9 @@
 
   "builtIn": true,
   "mixed": true,
-  "metrics": true
+  "metrics": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
 }

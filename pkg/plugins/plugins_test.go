@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -14,7 +15,7 @@ func TestPluginScans(t *testing.T) {
 	Convey("When scaning for plugins", t, func() {
 		setting.StaticRootPath, _ = filepath.Abs("../../public/")
 		setting.Cfg = ini.Empty()
-		err := Init()
+		err := initPlugins(context.Background())
 
 		So(err, ShouldBeNil)
 		So(len(DataSources), ShouldBeGreaterThan, 1)
@@ -29,7 +30,7 @@ func TestPluginScans(t *testing.T) {
 		setting.Cfg = ini.Empty()
 		sec, _ := setting.Cfg.NewSection("plugin.nginx-app")
 		sec.NewKey("path", "../../tests/test-app")
-		err := Init()
+		err := initPlugins(context.Background())
 
 		So(err, ShouldBeNil)
 		So(len(Apps), ShouldBeGreaterThan, 0)

@@ -34,7 +34,7 @@
 #define DefaultNetCrunchServerProtocolSSL "https"
 #define DefaultNetCrunchServerUser "GrafCrunch"
 
-#define NetCrunchServerKey "SOFTWARE\AdRem\NetCrunch\9.0\NCServer\Options\ServerConfiguration"
+#define NetCrunchServerKey "SOFTWARE\AdRem\NetCrunch\10\NCServer\Options\ServerConfiguration"
 #define WebAppServerKey "SOFTWARE\AdRem\WebAppSrv\1.0"
 
 #define SignKey ""
@@ -108,7 +108,7 @@ Source: "dest\conf\*"; DestDir: "{app}\conf\"; Flags: ignoreversion recursesubdi
 Source: "dest\data\plugins\*"; DestDir: "{#GrafCrunchProgramData}\plugins"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\public\*"; DestDir: "{app}\public\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\scripts\*"; DestDir: "{app}\scripts\"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "dest\vendor\*"; DestDir: "{app}\vendor\"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dest\tools\*"; DestDir: "{app}\tools\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#GrafCrunchClientURL}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -492,7 +492,7 @@ begin
 
   if (Address <> '') then begin
     CheckResult := CheckServerPort(Port);
-    if (not (CheckResult in [1, 4])) then begin
+    if (not ((CheckResult = 1) or (CheckResult = 4))) then begin
       if (UserName <> '') then begin
         if (Password = '') then 
           ErrorMessage := 'Password must be specified';

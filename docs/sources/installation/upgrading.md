@@ -29,7 +29,7 @@ installed grafana to custom location using a binary tar/zip it is usally in `<gr
 
 #### mysql
 
-```
+```bash
 backup:
 > mysqldump -u root -p[root_password] [grafana] > grafana_backup.sql
 
@@ -39,7 +39,7 @@ restore:
 
 #### postgres
 
-```
+```bash
 backup:
 > pg_dump grafana > grafana_backup
 
@@ -54,7 +54,7 @@ and execute the same `dpkg -i` command but with the new package. It will upgrade
 
 If you used our APT repository:
 
-```
+```bash
 sudo apt-get update
 sudo apt-get install grafana
 ```
@@ -73,14 +73,14 @@ and execute the same `yum install` or `rpm -i` command but with the new package.
 
 If you used our YUM repository:
 
-```
+```bash
 sudo yum update grafana
 ```
 
 ### Docker
 
 This just an example, details depend on how you configured your grafana container.
-```
+```bash
 docker pull grafana
 docker stop my-grafana-container
 docker rm my-grafana-container
@@ -94,10 +94,18 @@ to the same location (and overwrite the existing files). This might overwrite yo
 recommend you place your config changes in a file named  `<grafana_install_dir>/conf/custom.ini`
 as this will make upgrades easier without risking losing your config changes.
 
-## Upgrading form 1.x
+## Upgrading from 1.x
 
 [Migrating from 1.x to 2.x]({{< relref "installation/migrating_to2.md" >}})
 
-## Upgrading form 2.x
+## Upgrading from 2.x
 
-We are not aware of any issues upgrading directly from 2.x to 4.x but to on the safe side go via 3.x.
+We are not aware of any issues upgrading directly from 2.x to 4.x but to be on the safe side go via 3.x => 4.x.
+
+## Upgrading to v5.0
+
+The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new
+positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some
+external panel plugins might need to be updated to work properly.
+
+For more details on the new panel positioning system, [click here]({{< relref "reference/dashboard.md#panel-size-position" >}})

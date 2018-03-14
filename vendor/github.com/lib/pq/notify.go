@@ -6,7 +6,6 @@ package pq
 import (
 	"errors"
 	"fmt"
-	"io"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -61,16 +60,20 @@ type ListenerConn struct {
 	replyChan chan message
 }
 
-// Creates a new ListenerConn.  Use NewListener instead.
+// NewListenerConn creates a new ListenerConn. Use NewListener instead.
 func NewListenerConn(name string, notificationChan chan<- *Notification) (*ListenerConn, error) {
-	cn, err := Open(name)
+	return newDialListenerConn(defaultDialer{}, name, notificationChan)
+}
+
+func newDialListenerConn(d Dialer, name string, c chan<- *Notification) (*ListenerConn, error) {
+	cn, err := DialOpen(d, name)
 	if err != nil {
 		return nil, err
 	}
 
 	l := &ListenerConn{
 		cn:               cn.(*conn),
-		notificationChan: notificationChan,
+		notificationChan: c,
 		connState:        connStateIdle,
 		replyChan:        make(chan message, 2),
 	}
@@ -87,12 +90,16 @@ func NewListenerConn(name string, notificationChan chan<- *Notification) (*Liste
 // Returns an error if an unrecoverable error has occurred and the ListenerConn
 // should be abandoned.
 func (l *ListenerConn) acquireSenderLock() error {
-	l.connectionLock.Lock()
-	defer l.connectionLock.Unlock()
-	if l.err != nil {
-		return l.err
-	}
+	// we must acquire senderLock first to avoid deadlocks; see ExecSimpleQuery
 	l.senderLock.Lock()
+
+	l.connectionLock.Lock()
+	err := l.err
+	l.connectionLock.Unlock()
+	if err != nil {
+		l.senderLock.Unlock()
+		return err
+	}
 	return nil
 }
 
@@ -125,7 +132,7 @@ func (l *ListenerConn) setState(newState int32) bool {
 // away or should be discarded because we couldn't agree on the state with the
 // server backend.
 func (l *ListenerConn) listenerConnLoop() (err error) {
-	defer l.cn.errRecover(&err)
+	defer errRecoverNoErrBadConn(&err)
 
 	r := &readBuf{}
 	for {
@@ -139,6 +146,9 @@ func (l *ListenerConn) listenerConnLoop() (err error) {
 			// recvNotification copies all the data so we don't need to worry
 			// about the scratch buffer being overwritten.
 			l.notificationChan <- recvNotification(r)
+
+		case 'T', 'D':
+			// only used by tests; ignore
 
 		case 'E':
 			// We might receive an ErrorResponse even when not in a query; it
@@ -204,17 +214,17 @@ func (l *ListenerConn) listenerConnMain() {
 	// this ListenerConn is done
 }
 
-// Send a LISTEN query to the server.  See ExecSimpleQuery.
+// Listen sends a LISTEN query to the server. See ExecSimpleQuery.
 func (l *ListenerConn) Listen(channel string) (bool, error) {
 	return l.ExecSimpleQuery("LISTEN " + QuoteIdentifier(channel))
 }
 
-// Send an UNLISTEN query to the server.  See ExecSimpleQuery.
+// Unlisten sends an UNLISTEN query to the server. See ExecSimpleQuery.
 func (l *ListenerConn) Unlisten(channel string) (bool, error) {
 	return l.ExecSimpleQuery("UNLISTEN " + QuoteIdentifier(channel))
 }
 
-// Send `UNLISTEN *` to the server.  See ExecSimpleQuery.
+// UnlistenAll sends an `UNLISTEN *` query to the server. See ExecSimpleQuery.
 func (l *ListenerConn) UnlistenAll() (bool, error) {
 	return l.ExecSimpleQuery("UNLISTEN *")
 }
@@ -238,7 +248,7 @@ func (l *ListenerConn) Ping() error {
 // The caller must be holding senderLock (see acquireSenderLock and
 // releaseSenderLock).
 func (l *ListenerConn) sendSimpleQuery(q string) (err error) {
-	defer l.cn.errRecover(&err)
+	defer errRecoverNoErrBadConn(&err)
 
 	// must set connection state before sending the query
 	if !l.setState(connStateExpectResponse) {
@@ -247,16 +257,18 @@ func (l *ListenerConn) sendSimpleQuery(q string) (err error) {
 
 	// Can't use l.cn.writeBuf here because it uses the scratch buffer which
 	// might get overwritten by listenerConnLoop.
-	data := writeBuf([]byte("Q\x00\x00\x00\x00"))
-	b := &data
+	b := &writeBuf{
+		buf: []byte("Q\x00\x00\x00\x00"),
+		pos: 1,
+	}
 	b.string(q)
 	l.cn.send(b)
 
 	return nil
 }
 
-// Execute a "simple query" (i.e. one with no bindable parameters) on the
-// connection.  The possible return values are:
+// ExecSimpleQuery executes a "simple query" (i.e. one with no bindable
+// parameters) on the connection. The possible return values are:
 //   1) "executed" is true; the query was executed to completion on the
 //      database server.  If the query failed, err will be set to the error
 //      returned by the database, otherwise err will be nil.
@@ -277,13 +289,13 @@ func (l *ListenerConn) ExecSimpleQuery(q string) (executed bool, err error) {
 		// We can't know what state the protocol is in, so we need to abandon
 		// this connection.
 		l.connectionLock.Lock()
-		defer l.connectionLock.Unlock()
 		// Set the error pointer if it hasn't been set already; see
 		// listenerConnMain.
 		if l.err == nil {
 			l.err = err
 		}
-		l.cn.Close()
+		l.connectionLock.Unlock()
+		l.cn.c.Close()
 		return false, err
 	}
 
@@ -292,8 +304,11 @@ func (l *ListenerConn) ExecSimpleQuery(q string) (executed bool, err error) {
 		m, ok := <-l.replyChan
 		if !ok {
 			// We lost the connection to server, don't bother waiting for a
-			// a response.
-			return false, io.EOF
+			// a response.  err should have been set already.
+			l.connectionLock.Lock()
+			err := l.err
+			l.connectionLock.Unlock()
+			return false, err
 		}
 		switch m.typ {
 		case 'Z':
@@ -318,17 +333,21 @@ func (l *ListenerConn) ExecSimpleQuery(q string) (executed bool, err error) {
 	}
 }
 
+// Close closes the connection.
 func (l *ListenerConn) Close() error {
 	l.connectionLock.Lock()
-	defer l.connectionLock.Unlock()
 	if l.err != nil {
+		l.connectionLock.Unlock()
 		return errListenerConnClosed
 	}
 	l.err = errListenerConnClosed
-	return l.cn.Close()
+	l.connectionLock.Unlock()
+	// We can't send anything on the connection without holding senderLock.
+	// Simply close the net.Conn to wake up everyone operating on it.
+	return l.cn.c.Close()
 }
 
-// Err() returns the reason the connection was closed.  It is not safe to call
+// Err returns the reason the connection was closed. It is not safe to call
 // this function until l.Notify has been closed.
 func (l *ListenerConn) Err() error {
 	return l.err
@@ -336,32 +355,43 @@ func (l *ListenerConn) Err() error {
 
 var errListenerClosed = errors.New("pq: Listener has been closed")
 
+// ErrChannelAlreadyOpen is returned from Listen when a channel is already
+// open.
 var ErrChannelAlreadyOpen = errors.New("pq: channel is already open")
+
+// ErrChannelNotOpen is returned from Unlisten when a channel is not open.
 var ErrChannelNotOpen = errors.New("pq: channel is not open")
 
+// ListenerEventType is an enumeration of listener event types.
 type ListenerEventType int
 
 const (
-	// Emitted only when the database connection has been initially
-	// initialized.  err will always be nil.
+	// ListenerEventConnected is emitted only when the database connection
+	// has been initially initialized. The err argument of the callback
+	// will always be nil.
 	ListenerEventConnected ListenerEventType = iota
 
-	// Emitted after a database connection has been lost, either because of an
-	// error or because Close has been called.  err will be set to the reason
-	// the database connection was lost.
+	// ListenerEventDisconnected is emitted after a database connection has
+	// been lost, either because of an error or because Close has been
+	// called. The err argument will be set to the reason the database
+	// connection was lost.
 	ListenerEventDisconnected
 
-	// Emitted after a database connection has been re-established after
-	// connection loss.  err will always be nil.  After this event has been
-	// emitted, a nil pq.Notification is sent on the Listener.Notify channel.
+	// ListenerEventReconnected is emitted after a database connection has
+	// been re-established after connection loss. The err argument of the
+	// callback will always be nil. After this event has been emitted, a
+	// nil pq.Notification is sent on the Listener.Notify channel.
 	ListenerEventReconnected
 
-	// Emitted after a connection to the database was attempted, but failed.
-	// err will be set to an error describing why the connection attempt did
-	// not succeed.
+	// ListenerEventConnectionAttemptFailed is emitted after a connection
+	// to the database was attempted, but failed. The err argument will be
+	// set to an error describing why the connection attempt did not
+	// succeed.
 	ListenerEventConnectionAttemptFailed
 )
 
+// EventCallbackType is the event callback type. See also ListenerEventType
+// constants' documentation.
 type EventCallbackType func(event ListenerEventType, err error)
 
 // Listener provides an interface for listening to notifications from a
@@ -377,6 +407,7 @@ type Listener struct {
 	name                 string
 	minReconnectInterval time.Duration
 	maxReconnectInterval time.Duration
+	dialer               Dialer
 	eventCallback        EventCallbackType
 
 	lock                 sync.Mutex
@@ -407,10 +438,21 @@ func NewListener(name string,
 	minReconnectInterval time.Duration,
 	maxReconnectInterval time.Duration,
 	eventCallback EventCallbackType) *Listener {
+	return NewDialListener(defaultDialer{}, name, minReconnectInterval, maxReconnectInterval, eventCallback)
+}
+
+// NewDialListener is like NewListener but it takes a Dialer.
+func NewDialListener(d Dialer,
+	name string,
+	minReconnectInterval time.Duration,
+	maxReconnectInterval time.Duration,
+	eventCallback EventCallbackType) *Listener {
+
 	l := &Listener{
 		name:                 name,
 		minReconnectInterval: minReconnectInterval,
 		maxReconnectInterval: maxReconnectInterval,
+		dialer:               d,
 		eventCallback:        eventCallback,
 
 		channels: make(map[string]struct{}),
@@ -424,9 +466,9 @@ func NewListener(name string,
 	return l
 }
 
-// Returns the notification channel for this listener.  This is the same
-// channel as Notify, and will not be recreated during the life time of the
-// Listener.
+// NotificationChannel returns the notification channel for this listener.
+// This is the same channel as Notify, and will not be recreated during the
+// life time of the Listener.
 func (l *Listener) NotificationChannel() <-chan *Notification {
 	return l.Notify
 }
@@ -609,7 +651,7 @@ func (l *Listener) resync(cn *ListenerConn, notificationChan <-chan *Notificatio
 			// close and then return the error message from the connection, as
 			// per ListenerConn's interface.
 			if err != nil {
-				for _ = range notificationChan {
+				for range notificationChan {
 				}
 				doneChan <- cn.Err()
 				return
@@ -646,7 +688,7 @@ func (l *Listener) closed() bool {
 
 func (l *Listener) connect() error {
 	notificationChan := make(chan *Notification, 32)
-	cn, err := NewListenerConn(l.name, notificationChan)
+	cn, err := newDialListenerConn(l.dialer, l.name, notificationChan)
 	if err != nil {
 		return err
 	}

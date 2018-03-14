@@ -1,20 +1,22 @@
 package imguploader
 
 import (
+	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/log"
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type ImageUploader interface {
-	Upload(path string) (string, error)
+	Upload(ctx context.Context, path string) (string, error)
 }
 
 type NopImageUploader struct {
 }
 
-func (NopImageUploader) Upload(path string) (string, error) {
+func (NopImageUploader) Upload(ctx context.Context, path string) (string, error) {
 	return "", nil
 }
 
@@ -27,15 +29,27 @@ func NewImageUploader() (ImageUploader, error) {
 			return nil, err
 		}
 
+		bucket := s3sec.Key("bucket").MustString("")
+		region := s3sec.Key("region").MustString("")
+		path := s3sec.Key("path").MustString("")
 		bucketUrl := s3sec.Key("bucket_url").MustString("")
 		accessKey := s3sec.Key("access_key").MustString("")
 		secretKey := s3sec.Key("secret_key").MustString("")
-		info, err := getRegionAndBucketFromUrl(bucketUrl)
-		if err != nil {
-			return nil, err
+
+		if path != "" && path[len(path)-1:] != "/" {
+			path += "/"
 		}
 
-		return NewS3Uploader(info.region, info.bucket, "public-read", accessKey, secretKey), nil
+		if bucket == "" || region == "" {
+			info, err := getRegionAndBucketFromUrl(bucketUrl)
+			if err != nil {
+				return nil, err
+			}
+			bucket = info.bucket
+			region = info.region
+		}
+
+		return NewS3Uploader(region, bucket, path, "public-read", accessKey, secretKey), nil
 	case "webdav":
 		webdavSec, err := setting.Cfg.GetSection("external_image_storage.webdav")
 		if err != nil {
@@ -52,6 +66,34 @@ func NewImageUploader() (ImageUploader, error) {
 		password := webdavSec.Key("password").String()
 
 		return NewWebdavImageUploader(url, username, password, public_url)
+	case "gcs":
+		gcssec, err := setting.Cfg.GetSection("external_image_storage.gcs")
+		if err != nil {
+			return nil, err
+		}
+
+		keyFile := gcssec.Key("key_file").MustString("")
+		bucketName := gcssec.Key("bucket").MustString("")
+		path := gcssec.Key("path").MustString("")
+
+		return NewGCSUploader(keyFile, bucketName, path), nil
+	case "azure_blob":
+		azureBlobSec, err := setting.Cfg.GetSection("external_image_storage.azure_blob")
+		if err != nil {
+			return nil, err
+		}
+
+		account_name := azureBlobSec.Key("account_name").MustString("")
+		account_key := azureBlobSec.Key("account_key").MustString("")
+		container_name := azureBlobSec.Key("container_name").MustString("")
+
+		return NewAzureBlobUploader(account_name, account_key, container_name), nil
+	case "local":
+		return NewLocalImageUploader()
+	}
+
+	if setting.ImageUploadProvider != "" {
+		log.Error2("The external image storage configuration is invalid", "unsupported provider", setting.ImageUploadProvider)
 	}
 
 	return NopImageUploader{}, nil

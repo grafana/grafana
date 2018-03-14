@@ -1,22 +1,29 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import moment from 'moment';
-import {coreModule} from 'app/core/core';
-import {MetricsPanelCtrl} from 'app/plugins/sdk';
-import {AnnotationEvent} from './event';
+import { coreModule } from 'app/core/core';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { AnnotationEvent } from './event';
 
 export class EventEditorCtrl {
   panelCtrl: MetricsPanelCtrl;
   event: AnnotationEvent;
-  timeRange: {from: number, to: number};
+  timeRange: { from: number; to: number };
   form: any;
   close: any;
+  timeFormated: string;
 
   /** @ngInject **/
   constructor(private annotationsSrv) {
     this.event.panelId = this.panelCtrl.panel.id;
     this.event.dashboardId = this.panelCtrl.dashboard.id;
+
+    // Annotations query returns time as Unix timestamp in milliseconds
+    this.event.time = tryEpochToMoment(this.event.time);
+    if (this.event.isRegion) {
+      this.event.timeEnd = tryEpochToMoment(this.event.timeEnd);
+    }
+
+    this.timeFormated = this.panelCtrl.dashboard.formatDate(this.event.time);
   }
 
   save() {
@@ -29,7 +36,7 @@ export class EventEditorCtrl {
     saveModel.timeEnd = 0;
 
     if (saveModel.isRegion) {
-      saveModel.timeEnd = saveModel.timeEnd.valueOf();
+      saveModel.timeEnd = this.event.timeEnd.valueOf();
 
       if (saveModel.timeEnd < saveModel.time) {
         console.log('invalid time');
@@ -37,14 +44,51 @@ export class EventEditorCtrl {
       }
     }
 
-    this.annotationsSrv.saveAnnotationEvent(saveModel).then(() => {
-      this.panelCtrl.refresh();
-      this.close();
-    });
+    if (saveModel.id) {
+      this.annotationsSrv
+        .updateAnnotationEvent(saveModel)
+        .then(() => {
+          this.panelCtrl.refresh();
+          this.close();
+        })
+        .catch(() => {
+          this.panelCtrl.refresh();
+          this.close();
+        });
+    } else {
+      this.annotationsSrv
+        .saveAnnotationEvent(saveModel)
+        .then(() => {
+          this.panelCtrl.refresh();
+          this.close();
+        })
+        .catch(() => {
+          this.panelCtrl.refresh();
+          this.close();
+        });
+    }
   }
 
-  timeChanged() {
-    this.panelCtrl.render();
+  delete() {
+    return this.annotationsSrv
+      .deleteAnnotationEvent(this.event)
+      .then(() => {
+        this.panelCtrl.refresh();
+        this.close();
+      })
+      .catch(() => {
+        this.panelCtrl.refresh();
+        this.close();
+      });
+  }
+}
+
+function tryEpochToMoment(timestamp) {
+  if (timestamp && _.isNumber(timestamp)) {
+    let epoch = Number(timestamp);
+    return moment(epoch);
+  } else {
+    return timestamp;
   }
 }
 
@@ -56,10 +100,10 @@ export function eventEditor() {
     controllerAs: 'ctrl',
     templateUrl: 'public/app/features/annotations/partials/event_editor.html',
     scope: {
-      "panelCtrl": "=",
-      "event": "=",
-      "close": "&",
-    }
+      panelCtrl: '=',
+      event: '=',
+      close: '&',
+    },
   };
 }
 

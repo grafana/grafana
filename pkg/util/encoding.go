@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"hash"
 	"strings"
 )
@@ -30,7 +29,7 @@ func GetRandomString(n int, alphabets ...byte) string {
 
 func EncodePassword(password string, salt string) string {
 	newPasswd := PBKDF2([]byte(password), []byte(salt), 10000, 50, sha256.New)
-	return fmt.Sprintf("%x", newPasswd)
+	return hex.EncodeToString(newPasswd)
 }
 
 // Encode string to md5 hex value.

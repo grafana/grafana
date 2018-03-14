@@ -1,9 +1,5 @@
-
 export class ThresholdMapper {
-
   static alertToGraphThresholds(panel) {
-    var alert = panel.alert;
-
     if (panel.type !== 'graph') {
       return false;
     }
@@ -15,43 +11,43 @@ export class ThresholdMapper {
       }
 
       var evaluator = condition.evaluator;
-      var thresholds = panel.thresholds = [];
+      var thresholds = (panel.thresholds = []);
 
       switch (evaluator.type) {
-        case "gt": {
+        case 'gt': {
           let value = evaluator.params[0];
-          thresholds.push({value: value, op: 'gt'});
+          thresholds.push({ value: value, op: 'gt' });
           break;
         }
-        case "lt": {
+        case 'lt': {
           let value = evaluator.params[0];
-          thresholds.push({value: value, op: 'lt'});
+          thresholds.push({ value: value, op: 'lt' });
           break;
         }
-        case "outside_range": {
+        case 'outside_range': {
           let value1 = evaluator.params[0];
           let value2 = evaluator.params[1];
 
           if (value1 > value2) {
-            thresholds.push({value: value1, op: 'gt'});
-            thresholds.push({value: value2, op: 'lt'});
+            thresholds.push({ value: value1, op: 'gt' });
+            thresholds.push({ value: value2, op: 'lt' });
           } else {
-            thresholds.push({value: value1, op: 'lt'});
-            thresholds.push({value: value2, op: 'gt'});
+            thresholds.push({ value: value1, op: 'lt' });
+            thresholds.push({ value: value2, op: 'gt' });
           }
 
           break;
         }
-        case "within_range": {
+        case 'within_range': {
           let value1 = evaluator.params[0];
           let value2 = evaluator.params[1];
 
           if (value1 > value2) {
-            thresholds.push({value: value1, op: 'lt'});
-            thresholds.push({value: value2, op: 'gt'});
+            thresholds.push({ value: value1, op: 'lt' });
+            thresholds.push({ value: value2, op: 'gt' });
           } else {
-            thresholds.push({value: value1, op: 'gt'});
-            thresholds.push({value: value2, op: 'lt'});
+            thresholds.push({ value: value1, op: 'gt' });
+            thresholds.push({ value: value2, op: 'lt' });
           }
           break;
         }
@@ -68,5 +64,4 @@ export class ThresholdMapper {
     var updated = true;
     return updated;
   }
-
 }

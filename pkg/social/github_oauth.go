@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -11,7 +12,7 @@ import (
 )
 
 type SocialGithub struct {
-	*oauth2.Config
+	*SocialBase
 	allowedDomains       []string
 	allowedOrganizations []string
 	apiUrl               string
@@ -57,12 +58,12 @@ func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 	return false
 }
 
-func (s *SocialGithub) IsOrganizationMember(client *http.Client) bool {
+func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUrl string) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
 
-	organizations, err := s.FetchOrganizations(client)
+	organizations, err := s.FetchOrganizations(client, organizationsUrl)
 	if err != nil {
 		return false
 	}
@@ -85,14 +86,14 @@ func (s *SocialGithub) FetchPrivateEmail(client *http.Client) (string, error) {
 		Verified bool   `json:"verified"`
 	}
 
-	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
+	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
 
 	var records []Record
 
-	err = json.Unmarshal(body, &records)
+	err = json.Unmarshal(response.Body, &records)
 	if err != nil {
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
@@ -112,39 +113,73 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) 
 		Id int `json:"id"`
 	}
 
-	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
-	if err != nil {
-		return nil, fmt.Errorf("Error getting team memberships: %s", err)
-	}
+	url := fmt.Sprintf(s.apiUrl + "/teams?per_page=100")
+	hasMore := true
+	ids := make([]int, 0)
 
-	var records []Record
+	for hasMore {
 
-	err = json.Unmarshal(body, &records)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting team memberships: %s", err)
-	}
+		response, err := HttpGet(client, url)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting team memberships: %s", err)
+		}
 
-	var ids = make([]int, len(records))
-	for i, record := range records {
-		ids[i] = record.Id
+		var records []Record
+
+		err = json.Unmarshal(response.Body, &records)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting team memberships: %s", err)
+		}
+
+		newRecords := len(records)
+		existingRecords := len(ids)
+		tempIds := make([]int, (newRecords + existingRecords))
+		copy(tempIds, ids)
+		ids = tempIds
+
+		for i, record := range records {
+			ids[i] = record.Id
+		}
+
+		url, hasMore = s.HasMoreRecords(response.Headers)
 	}
 
 	return ids, nil
 }
 
-func (s *SocialGithub) FetchOrganizations(client *http.Client) ([]string, error) {
+func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
+
+	value, exists := headers["Link"]
+	if !exists {
+		return "", false
+	}
+
+	pattern := regexp.MustCompile(`<([^>]+)>; rel="next"`)
+	matches := pattern.FindStringSubmatch(value[0])
+
+	if matches == nil {
+		return "", false
+	}
+
+	url := matches[1]
+
+	return url, true
+
+}
+
+func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl string) ([]string, error) {
 	type Record struct {
 		Login string `json:"login"`
 	}
 
-	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
+	response, err := HttpGet(client, organizationsUrl)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
 
 	var records []Record
 
-	err = json.Unmarshal(body, &records)
+	err = json.Unmarshal(response.Body, &records)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
@@ -157,19 +192,20 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client) ([]string, error)
 	return logins, nil
 }
 
-func (s *SocialGithub) UserInfo(client *http.Client) (*BasicUserInfo, error) {
+func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+
 	var data struct {
 		Id    int    `json:"id"`
 		Login string `json:"login"`
 		Email string `json:"email"`
 	}
 
-	body, err := HttpGet(client, s.apiUrl)
+	response, err := HttpGet(client, s.apiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	err = json.Unmarshal(body, &data)
+	err = json.Unmarshal(response.Body, &data)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
@@ -180,11 +216,13 @@ func (s *SocialGithub) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		Email: data.Email,
 	}
 
+	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
+
 	if !s.IsTeamMember(client) {
 		return nil, ErrMissingTeamMembership
 	}
 
-	if !s.IsOrganizationMember(client) {
+	if !s.IsOrganizationMember(client, organizationsUrl) {
 		return nil, ErrMissingOrganizationMembership
 	}
 

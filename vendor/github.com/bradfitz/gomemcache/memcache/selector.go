@@ -41,6 +41,21 @@ type ServerList struct {
 	addrs []net.Addr
 }
 
+// staticAddr caches the Network() and String() values from any net.Addr.
+type staticAddr struct {
+	ntw, str string
+}
+
+func newStaticAddr(a net.Addr) net.Addr {
+	return &staticAddr{
+		ntw: a.Network(),
+		str: a.String(),
+	}
+}
+
+func (s *staticAddr) Network() string { return s.ntw }
+func (s *staticAddr) String() string  { return s.str }
+
 // SetServers changes a ServerList's set of servers at runtime and is
 // safe for concurrent use by multiple goroutines.
 //
@@ -58,13 +73,13 @@ func (ss *ServerList) SetServers(servers ...string) error {
 			if err != nil {
 				return err
 			}
-			naddr[i] = addr
+			naddr[i] = newStaticAddr(addr)
 		} else {
 			tcpaddr, err := net.ResolveTCPAddr("tcp", server)
 			if err != nil {
 				return err
 			}
-			naddr[i] = tcpaddr
+			naddr[i] = newStaticAddr(tcpaddr)
 		}
 	}
 

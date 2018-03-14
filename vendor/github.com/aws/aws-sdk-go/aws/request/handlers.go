@@ -158,6 +158,37 @@ func (l *HandlerList) RemoveByName(name string) {
 	}
 }
 
+// SwapNamed will swap out any existing handlers with the same name as the
+// passed in NamedHandler returning true if handlers were swapped. False is
+// returned otherwise.
+func (l *HandlerList) SwapNamed(n NamedHandler) (swapped bool) {
+	for i := 0; i < len(l.list); i++ {
+		if l.list[i].Name == n.Name {
+			l.list[i].Fn = n.Fn
+			swapped = true
+		}
+	}
+
+	return swapped
+}
+
+// SetBackNamed will replace the named handler if it exists in the handler list.
+// If the handler does not exist the handler will be added to the end of the list.
+func (l *HandlerList) SetBackNamed(n NamedHandler) {
+	if !l.SwapNamed(n) {
+		l.PushBackNamed(n)
+	}
+}
+
+// SetFrontNamed will replace the named handler if it exists in the handler list.
+// If the handler does not exist the handler will be added to the beginning of
+// the list.
+func (l *HandlerList) SetFrontNamed(n NamedHandler) {
+	if !l.SwapNamed(n) {
+		l.PushFrontNamed(n)
+	}
+}
+
 // Run executes all handlers in the list with a given request object.
 func (l *HandlerList) Run(r *Request) {
 	for i, h := range l.list {

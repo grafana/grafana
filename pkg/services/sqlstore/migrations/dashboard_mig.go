@@ -1,6 +1,8 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addDashboardMigration(mg *Migrator) {
 	var dashboardV1 = Table{
@@ -136,4 +138,79 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Update dashboard_tag table charset", NewTableCharsetMigration("dashboard_tag", []*Column{
 		{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
 	}))
+
+	// add column to store folder_id for dashboard folder structure
+	mg.AddMigration("Add column folder_id in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "folder_id", Type: DB_BigInt, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Add column isFolder in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "is_folder", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	// add column to flag if dashboard has an ACL
+	mg.AddMigration("Add column has_acl in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "has_acl", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Add column uid in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
+
+	mg.AddMigration("Update uid column values in dashboard", new(RawSqlMigration).
+		Sqlite("UPDATE dashboard SET uid=printf('%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE dashboard SET uid=lpad('' || id,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE dashboard SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
+
+	mg.AddMigration("Add unique index dashboard_org_id_uid", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
+	}))
+
+	mg.AddMigration("Remove unique index org_id_slug", NewDropIndexMigration(dashboardV2, &Index{
+		Cols: []string{"org_id", "slug"}, Type: UniqueIndex,
+	}))
+
+	mg.AddMigration("Update dashboard title length", NewTableCharsetMigration("dashboard", []*Column{
+		{Name: "title", Type: DB_NVarchar, Length: 189, Nullable: false},
+	}))
+
+	mg.AddMigration("Add unique index for dashboard_org_id_title_folder_id", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"org_id", "folder_id", "title"}, Type: UniqueIndex,
+	}))
+
+	dashboardExtrasTable := Table{
+		Name: "dashboard_provisioning",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "dashboard_id", Type: DB_BigInt, Nullable: true},
+			{Name: "name", Type: DB_NVarchar, Length: 150, Nullable: false},
+			{Name: "external_id", Type: DB_Text, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{},
+	}
+
+	mg.AddMigration("create dashboard_provisioning", NewAddTableMigration(dashboardExtrasTable))
+
+	dashboardExtrasTableV2 := Table{
+		Name: "dashboard_provisioning",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "dashboard_id", Type: DB_BigInt, Nullable: true},
+			{Name: "name", Type: DB_NVarchar, Length: 150, Nullable: false},
+			{Name: "external_id", Type: DB_Text, Nullable: false},
+			{Name: "updated", Type: DB_Int, Default: "0", Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"dashboard_id"}},
+			{Cols: []string{"dashboard_id", "name"}, Type: IndexType},
+		},
+	}
+
+	addTableReplaceMigrations(mg, dashboardExtrasTable, dashboardExtrasTableV2, 2, map[string]string{
+		"id":           "id",
+		"dashboard_id": "dashboard_id",
+		"name":         "name",
+		"external_id":  "external_id",
+	})
 }
