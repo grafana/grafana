@@ -17,7 +17,7 @@ import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { EventManager } from 'app/features/annotations/all';
-import { convertValuesToHistogram, getSeriesValues } from './histogram';
+import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
 
