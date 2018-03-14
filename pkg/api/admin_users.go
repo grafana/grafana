@@ -4,12 +4,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
+func AdminCreateUser(c *m.ReqContext, form dtos.AdminCreateUserForm) {
 	cmd := m.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
@@ -47,7 +46,7 @@ func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
 	c.JSON(200, result)
 }
 
-func AdminUpdateUserPassword(c *middleware.Context, form dtos.AdminUpdateUserPasswordForm) {
+func AdminUpdateUserPassword(c *m.ReqContext, form dtos.AdminUpdateUserPasswordForm) {
 	userId := c.ParamsInt64(":id")
 
 	if len(form.Password) < 4 {
@@ -77,7 +76,7 @@ func AdminUpdateUserPassword(c *middleware.Context, form dtos.AdminUpdateUserPas
 	c.JsonOK("User password updated")
 }
 
-func AdminUpdateUserPermissions(c *middleware.Context, form dtos.AdminUpdateUserPermissionsForm) {
+func AdminUpdateUserPermissions(c *m.ReqContext, form dtos.AdminUpdateUserPermissionsForm) {
 	userId := c.ParamsInt64(":id")
 
 	cmd := m.UpdateUserPermissionsCommand{
@@ -93,7 +92,7 @@ func AdminUpdateUserPermissions(c *middleware.Context, form dtos.AdminUpdateUser
 	c.JsonOK("User permissions updated")
 }
 
-func AdminDeleteUser(c *middleware.Context) {
+func AdminDeleteUser(c *m.ReqContext) {
 	userId := c.ParamsInt64(":id")
 
 	cmd := m.DeleteUserCommand{UserId: userId}

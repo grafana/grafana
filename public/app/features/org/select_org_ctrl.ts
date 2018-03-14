@@ -6,6 +6,14 @@ export class SelectOrgCtrl {
   constructor($scope, backendSrv, contextSrv) {
     contextSrv.sidemenu = false;
 
+    $scope.navModel = {
+      main: {
+        icon: 'gicon gicon-branding',
+        subTitle: 'Preferences',
+        text: 'Select active organization',
+      },
+    };
+
     $scope.init = function() {
       $scope.getUserOrgs();
     };

@@ -70,7 +70,7 @@ func (query *Query) renderTags() []string {
 		} else if tag.Operator == "<" || tag.Operator == ">" {
 			textValue = tag.Value
 		} else {
-			textValue = fmt.Sprintf("'%s'", tag.Value)
+			textValue = fmt.Sprintf("'%s'", strings.Replace(tag.Value, `\`, `\\`, -1))
 		}
 
 		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, textValue))

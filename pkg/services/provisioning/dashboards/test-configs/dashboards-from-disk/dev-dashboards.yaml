@@ -5,6 +5,7 @@ providers:
   orgId: 2
   folder: 'developers'
   editable: true
+  disableDeletion: true
   type: file
   options:
     path: /var/lib/grafana/dashboards

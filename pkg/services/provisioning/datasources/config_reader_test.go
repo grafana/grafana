@@ -138,7 +138,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 				t.Fatalf("readConfig return an error %v", err)
 			}
 
-			So(len(cfg), ShouldEqual, 2)
+			So(len(cfg), ShouldEqual, 3)
 
 			dsCfg := cfg[0]
 
@@ -146,6 +146,17 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			validateDatasource(dsCfg)
 			validateDeleteDatasources(dsCfg)
+
+			dsCount := 0
+			delDsCount := 0
+
+			for _, c := range cfg {
+				dsCount += len(c.Datasources)
+				delDsCount += len(c.DeleteDatasources)
+			}
+
+			So(dsCount, ShouldEqual, 2)
+			So(delDsCount, ShouldEqual, 1)
 		})
 
 		Convey("can read all properties from version 0", func() {

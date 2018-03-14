@@ -8,7 +8,7 @@ type LoginAttempt struct {
 	Id        int64
 	Username  string
 	IpAddress string
-	Created   time.Time
+	Created   int64
 }
 
 // ---------------------

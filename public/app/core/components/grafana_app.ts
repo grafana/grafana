@@ -87,6 +87,11 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         elem.toggleClass('playlist-active', newValue === true);
       });
 
+      // check if we are in server side render
+      if (document.cookie.indexOf('renderKey') !== -1) {
+        body.addClass('body--phantomjs');
+      }
+
       // tooltip removal fix
       // manage page classes
       var pageClass;

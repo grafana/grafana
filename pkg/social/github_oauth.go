@@ -195,10 +195,9 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl 
 func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 
 	var data struct {
-		Id               int    `json:"id"`
-		Login            string `json:"login"`
-		Email            string `json:"email"`
-		OrganizationsUrl string `json:"organizations_url"`
+		Id    int    `json:"id"`
+		Login string `json:"login"`
+		Email string `json:"email"`
 	}
 
 	response, err := HttpGet(client, s.apiUrl)
@@ -210,18 +209,20 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
-	data.OrganizationsUrl = s.apiUrl + "/user/orgs"
+
 	userInfo := &BasicUserInfo{
 		Name:  data.Login,
 		Login: data.Login,
 		Email: data.Email,
 	}
 
+	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
+
 	if !s.IsTeamMember(client) {
 		return nil, ErrMissingTeamMembership
 	}
 
-	if !s.IsOrganizationMember(client, data.OrganizationsUrl) {
+	if !s.IsOrganizationMember(client, organizationsUrl) {
 		return nil, ErrMissingOrganizationMembership
 	}
 

@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"testing"
 
-	"github.com/go-xorm/xorm"
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/grafana/grafana/pkg/models"
@@ -11,10 +10,8 @@ import (
 )
 
 func TestDashboardFolderDataAccess(t *testing.T) {
-	var x *xorm.Engine
-
 	Convey("Testing DB", t, func() {
-		x = InitTestDB(t)
+		InitTestDB(t)
 
 		Convey("Given one dashboard folder with two dashboards and one dashboard in the root folder", func() {
 			folder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
@@ -41,7 +38,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 			Convey("and acl is set for dashboard folder", func() {
 				var otherUser int64 = 999
-				updateTestDashboardWithAcl(folder.Id, otherUser, m.PERMISSION_EDIT)
+				testHelperUpdateDashboardAcl(folder.Id, m.DashboardAcl{DashboardId: folder.Id, OrgId: 1, UserId: otherUser, Permission: m.PERMISSION_EDIT})
 
 				Convey("should not return folder", func() {
 					query := &search.FindPersistedDashboardsQuery{
@@ -55,7 +52,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("when the user is given permission", func() {
-					updateTestDashboardWithAcl(folder.Id, currentUser.Id, m.PERMISSION_EDIT)
+					testHelperUpdateDashboardAcl(folder.Id, m.DashboardAcl{DashboardId: folder.Id, OrgId: 1, UserId: currentUser.Id, Permission: m.PERMISSION_EDIT})
 
 					Convey("should be able to access folder", func() {
 						query := &search.FindPersistedDashboardsQuery{
@@ -93,9 +90,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 			Convey("and acl is set for dashboard child and folder has all permissions removed", func() {
 				var otherUser int64 = 999
-				aclId := updateTestDashboardWithAcl(folder.Id, otherUser, m.PERMISSION_EDIT)
-				removeAcl(aclId)
-				updateTestDashboardWithAcl(childDash.Id, otherUser, m.PERMISSION_EDIT)
+				testHelperUpdateDashboardAcl(folder.Id)
+				testHelperUpdateDashboardAcl(childDash.Id, m.DashboardAcl{DashboardId: folder.Id, OrgId: 1, UserId: otherUser, Permission: m.PERMISSION_EDIT})
 
 				Convey("should not return folder or child", func() {
 					query := &search.FindPersistedDashboardsQuery{SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: m.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
@@ -106,7 +102,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("when the user is given permission to child", func() {
-					updateTestDashboardWithAcl(childDash.Id, currentUser.Id, m.PERMISSION_EDIT)
+					testHelperUpdateDashboardAcl(childDash.Id, m.DashboardAcl{DashboardId: childDash.Id, OrgId: 1, UserId: currentUser.Id, Permission: m.PERMISSION_EDIT})
 
 					Convey("should be able to search for child dashboard but not folder", func() {
 						query := &search.FindPersistedDashboardsQuery{SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: m.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
@@ -165,11 +161,10 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 			Convey("and acl is set for one dashboard folder", func() {
 				var otherUser int64 = 999
-				updateTestDashboardWithAcl(folder1.Id, otherUser, m.PERMISSION_EDIT)
+				testHelperUpdateDashboardAcl(folder1.Id, m.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: otherUser, Permission: m.PERMISSION_EDIT})
 
 				Convey("and a dashboard is moved from folder without acl to the folder with an acl", func() {
-					movedDash := moveDashboard(1, childDash2.Data, folder1.Id)
-					So(movedDash.HasAcl, ShouldBeTrue)
+					moveDashboard(1, childDash2.Data, folder1.Id)
 
 					Convey("should not return folder with acl or its children", func() {
 						query := &search.FindPersistedDashboardsQuery{
@@ -184,9 +179,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					})
 				})
 				Convey("and a dashboard is moved from folder with acl to the folder without an acl", func() {
-
-					movedDash := moveDashboard(1, childDash1.Data, folder2.Id)
-					So(movedDash.HasAcl, ShouldBeFalse)
+					moveDashboard(1, childDash1.Data, folder2.Id)
 
 					Convey("should return folder without acl and its children", func() {
 						query := &search.FindPersistedDashboardsQuery{
@@ -205,9 +198,8 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("and a dashboard with an acl is moved to the folder without an acl", func() {
-					updateTestDashboardWithAcl(childDash1.Id, otherUser, m.PERMISSION_EDIT)
-					movedDash := moveDashboard(1, childDash1.Data, folder2.Id)
-					So(movedDash.HasAcl, ShouldBeTrue)
+					testHelperUpdateDashboardAcl(childDash1.Id, m.DashboardAcl{DashboardId: childDash1.Id, OrgId: 1, UserId: otherUser, Permission: m.PERMISSION_EDIT})
+					moveDashboard(1, childDash1.Data, folder2.Id)
 
 					Convey("should return folder without acl but not the dashboard with acl", func() {
 						query := &search.FindPersistedDashboardsQuery{
@@ -308,7 +300,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("Should have write access to one dashboard folder if default role changed to view for one folder", func() {
-					updateTestDashboardWithAcl(folder1.Id, editorUser.Id, m.PERMISSION_VIEW)
+					testHelperUpdateDashboardAcl(folder1.Id, m.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: editorUser.Id, Permission: m.PERMISSION_VIEW})
 
 					err := SearchDashboards(&query)
 					So(err, ShouldBeNil)
@@ -352,7 +344,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to get one dashboard folder if default role changed to edit for one folder", func() {
-					updateTestDashboardWithAcl(folder1.Id, viewerUser.Id, m.PERMISSION_EDIT)
+					testHelperUpdateDashboardAcl(folder1.Id, m.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: m.PERMISSION_EDIT})
 
 					err := SearchDashboards(&query)
 					So(err, ShouldBeNil)

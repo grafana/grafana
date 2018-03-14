@@ -88,7 +88,6 @@ var (
 	ExternalSnapshotUrl   string
 	ExternalSnapshotName  string
 	ExternalEnabled       bool
-	SnapShotTTLDays       int
 	SnapShotRemoveExpired bool
 
 	// Dashboard history
@@ -523,7 +522,6 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
-	SnapShotTTLDays = snapshots.Key("snapshot_TTL_days").MustInt(90)
 
 	// read dashboard settings
 	dashboards := Cfg.Section("dashboards")

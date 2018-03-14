@@ -170,6 +170,12 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'value'`)
 		})
 
+		Convey("can escape backslashes when rendering string tags", func() {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: `C:\test\`, Key: "key"}}}
+
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'C:\\test\\'`)
+		})
+
 		Convey("can render regular measurement", func() {
 			query := &Query{Measurement: `apa`, Policy: "policy"}
 

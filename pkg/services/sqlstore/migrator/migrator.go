@@ -35,6 +35,10 @@ func NewMigrator(engine *xorm.Engine) *Migrator {
 	return mg
 }
 
+func (mg *Migrator) MigrationsCount() int {
+	return len(mg.migrations)
+}
+
 func (mg *Migrator) AddMigration(id string, m Migration) {
 	m.SetId(id)
 	mg.migrations = append(mg.migrations, m)

@@ -75,7 +75,7 @@ export class AlertTabCtrl {
 
   getAlertHistory() {
     this.backendSrv
-      .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50`)
+      .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
       .then(res => {
         this.alertHistory = _.map(res, ah => {
           ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');

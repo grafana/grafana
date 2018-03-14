@@ -3,6 +3,7 @@ import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { PanelContainer } from './dashgrid/PanelContainer';
 import { DashboardModel } from './dashboard_model';
+import { PanelModel } from './panel_model';
 
 export class DashboardCtrl implements PanelContainer {
   dashboard: DashboardModel;
@@ -130,9 +131,47 @@ export class DashboardCtrl implements PanelContainer {
     return this;
   }
 
+  onRemovingPanel(evt, options) {
+    options = options || {};
+    if (!options.panelId) {
+      return;
+    }
+
+    var panelInfo = this.dashboard.getPanelInfoById(options.panelId);
+    this.removePanel(panelInfo.panel, true);
+  }
+
+  removePanel(panel: PanelModel, ask: boolean) {
+    // confirm deletion
+    if (ask !== false) {
+      var text2, confirmText;
+
+      if (panel.alert) {
+        text2 = 'Panel includes an alert rule, removing panel will also remove alert rule';
+        confirmText = 'YES';
+      }
+
+      this.$scope.appEvent('confirm-modal', {
+        title: 'Remove Panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'fa-trash',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => {
+          this.removePanel(panel, false);
+        },
+      });
+      return;
+    }
+
+    this.dashboard.removePanel(panel);
+  }
+
   init(dashboard) {
     this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
     this.$scope.onAppEvent('template-variable-value-updated', this.templateVariableUpdated.bind(this));
+    this.$scope.onAppEvent('panel-remove', this.onRemovingPanel.bind(this));
     this.setupDashboard(dashboard);
   }
 }

@@ -500,11 +500,12 @@ export class DashboardModel {
     if (!rowPanel.panels || rowPanel.panels.length === 0) {
       return 0;
     }
+    const rowYPos = rowPanel.gridPos.y;
     const positions = _.map(rowPanel.panels, 'gridPos');
     const maxPos = _.maxBy(positions, pos => {
       return pos.y + pos.h;
     });
-    return maxPos.h + 1;
+    return maxPos.y + maxPos.h - rowYPos;
   }
 
   removePanel(panel: PanelModel) {
@@ -521,6 +522,34 @@ export class DashboardModel {
     }
 
     this.removePanel(row);
+  }
+
+  expandRows() {
+    for (let i = 0; i < this.panels.length; i++) {
+      var panel = this.panels[i];
+
+      if (panel.type !== 'row') {
+        continue;
+      }
+
+      if (panel.collapsed) {
+        this.toggleRow(panel);
+      }
+    }
+  }
+
+  collapseRows() {
+    for (let i = 0; i < this.panels.length; i++) {
+      var panel = this.panels[i];
+
+      if (panel.type !== 'row') {
+        continue;
+      }
+
+      if (!panel.collapsed) {
+        this.toggleRow(panel);
+      }
+    }
   }
 
   setPanelFocus(id) {

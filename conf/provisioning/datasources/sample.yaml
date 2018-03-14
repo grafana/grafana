@@ -1,8 +1,5 @@
-# This file is only an example.
-# Grafana will never read sample.yaml files
-
 # # config file version
-# apiVersion: 1
+apiVersion: 1
 
 # # list of datasources that should be deleted from the database
 #deleteDatasources:

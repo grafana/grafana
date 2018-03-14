@@ -199,10 +199,13 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 3)
 
-					err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 1, OrgId: ac1.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
+					dash1 := insertTestDashboard("1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
+					dash2 := insertTestDashboard("2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
+
+					err = testHelperUpdateDashboardAcl(dash1.Id, m.DashboardAcl{DashboardId: dash1.Id, OrgId: ac1.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
 					So(err, ShouldBeNil)
 
-					err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 2, OrgId: ac3.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
+					err = testHelperUpdateDashboardAcl(dash2.Id, m.DashboardAcl{DashboardId: dash2.Id, OrgId: ac3.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
 					So(err, ShouldBeNil)
 
 					Convey("When org user is deleted", func() {
@@ -233,4 +236,12 @@ func TestAccountDataAccess(t *testing.T) {
 			})
 		})
 	})
+}
+
+func testHelperUpdateDashboardAcl(dashboardId int64, items ...m.DashboardAcl) error {
+	cmd := m.UpdateDashboardAclCommand{DashboardId: dashboardId}
+	for _, item := range items {
+		cmd.Items = append(cmd.Items, &item)
+	}
+	return UpdateDashboardAcl(&cmd)
 }

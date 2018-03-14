@@ -17,8 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
 )
@@ -38,7 +39,7 @@ func GenStateString() string {
 	return base64.URLEncoding.EncodeToString(rnd)
 }
 
-func OAuthLogin(ctx *middleware.Context) {
+func OAuthLogin(ctx *m.ReqContext) {
 	if setting.OAuthService == nil {
 		ctx.Handle(404, "OAuth not enabled", nil)
 		return
@@ -62,7 +63,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	code := ctx.Query("code")
 	if code == "" {
 		state := GenStateString()
-		ctx.Session.Set(middleware.SESS_KEY_OAUTH_STATE, state)
+		ctx.Session.Set(session.SESS_KEY_OAUTH_STATE, state)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -71,7 +72,7 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	savedState, ok := ctx.Session.Get(middleware.SESS_KEY_OAUTH_STATE).(string)
+	savedState, ok := ctx.Session.Get(session.SESS_KEY_OAUTH_STATE).(string)
 	if !ok {
 		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
 		return
@@ -167,7 +168,7 @@ func OAuthLogin(ctx *middleware.Context) {
 			redirectWithError(ctx, ErrSignUpNotAllowed)
 			return
 		}
-		limitReached, err := middleware.QuotaReached(ctx, "user")
+		limitReached, err := quota.QuotaReached(ctx, "user")
 		if err != nil {
 			ctx.Handle(500, "Failed to get user quota", err)
 			return
@@ -208,7 +209,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	ctx.Redirect(setting.AppSubUrl + "/")
 }
 
-func redirectWithError(ctx *middleware.Context, err error, v ...interface{}) {
+func redirectWithError(ctx *m.ReqContext, err error, v ...interface{}) {
 	ctx.Logger.Error(err.Error(), v...)
 	ctx.Session.Set("loginError", err.Error())
 	ctx.Redirect(setting.AppSubUrl + "/login")

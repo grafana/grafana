@@ -66,6 +66,7 @@ func (hs *HttpServer) registerRoutes() {
 	r.Get("/plugins/:id/page/:page", reqSignedIn, Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, Index)
+	r.Get("/d/:uid", reqSignedIn, Index)
 	r.Get("/dashboard/db/:slug", reqSignedIn, redirectFromLegacyDashboardUrl, Index)
 	r.Get("/dashboard/script/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/snapshot/*", Index)
@@ -106,7 +107,7 @@ func (hs *HttpServer) registerRoutes() {
 	r.Post("/api/snapshots/", bind(m.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
 	r.Get("/api/snapshot/shared-options/", GetSharingOptions)
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
-	r.Get("/api/snapshots-delete/:key", reqEditorRole, DeleteDashboardSnapshot)
+	r.Get("/api/snapshots-delete/:key", reqEditorRole, wrap(DeleteDashboardSnapshot))
 
 	// api renew session based on remember cookie
 	r.Get("/api/login/ping", quota("session"), LoginApiPing)
@@ -150,11 +151,11 @@ func (hs *HttpServer) registerRoutes() {
 		apiRoute.Group("/teams", func(teamsRoute RouteRegister) {
 			teamsRoute.Get("/:teamId", wrap(GetTeamById))
 			teamsRoute.Get("/search", wrap(SearchTeams))
-			teamsRoute.Post("/", quota("teams"), bind(m.CreateTeamCommand{}), wrap(CreateTeam))
+			teamsRoute.Post("/", bind(m.CreateTeamCommand{}), wrap(CreateTeam))
 			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), wrap(UpdateTeam))
 			teamsRoute.Delete("/:teamId", wrap(DeleteTeamById))
 			teamsRoute.Get("/:teamId/members", wrap(GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", quota("teams"), bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
+			teamsRoute.Post("/:teamId/members", bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
 			teamsRoute.Delete("/:teamId/members/:userId", wrap(RemoveTeamMember))
 		}, reqOrgAdmin)
 
@@ -246,6 +247,24 @@ func (hs *HttpServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 
+		// Folders
+		apiRoute.Group("/folders", func(folderRoute RouteRegister) {
+			folderRoute.Get("/", wrap(GetFolders))
+			folderRoute.Get("/id/:id", wrap(GetFolderById))
+			folderRoute.Post("/", bind(m.CreateFolderCommand{}), wrap(CreateFolder))
+
+			folderRoute.Group("/:uid", func(folderUidRoute RouteRegister) {
+				folderUidRoute.Get("/", wrap(GetFolderByUid))
+				folderUidRoute.Put("/", bind(m.UpdateFolderCommand{}), wrap(UpdateFolder))
+				folderUidRoute.Delete("/", wrap(DeleteFolder))
+
+				folderUidRoute.Group("/permissions", func(folderPermissionRoute RouteRegister) {
+					folderPermissionRoute.Get("/", wrap(GetFolderPermissionList))
+					folderPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateFolderPermissions))
+				})
+			})
+		})
+
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", wrap(GetDashboard))
@@ -266,10 +285,9 @@ func (hs *HttpServer) registerRoutes() {
 				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
 				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
 
-				dashIdRoute.Group("/acl", func(aclRoute RouteRegister) {
-					aclRoute.Get("/", wrap(GetDashboardAclList))
-					aclRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardAcl))
-					aclRoute.Delete("/:aclId", wrap(DeleteDashboardAcl))
+				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute RouteRegister) {
+					dashboardPermissionRoute.Get("/", wrap(GetDashboardPermissionList))
+					dashboardPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardPermissions))
 				})
 			})
 		})

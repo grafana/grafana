@@ -244,16 +244,14 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           }
           case 'histogram': {
             let bucketSize: number;
-            let values = getSeriesValues(data);
 
-            if (data.length && values.length) {
+            if (data.length) {
               let histMin = _.min(_.map(data, s => s.stats.min));
               let histMax = _.max(_.map(data, s => s.stats.max));
               let ticks = panel.xaxis.buckets || panelWidth / 50;
               bucketSize = tickStep(histMin, histMax, ticks);
-              let histogram = convertValuesToHistogram(values, bucketSize);
-              data[0].data = histogram;
               options.series.bars.barWidth = bucketSize * 0.8;
+              data = convertToHistogramData(data, bucketSize, ctrl.hiddenSeries, histMin, histMax);
             } else {
               bucketSize = 0;
             }
@@ -422,7 +420,13 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         let defaultTicks = panelWidth / 50;
 
         if (data.length && bucketSize) {
-          ticks = _.map(data[0].data, point => point[0]);
+          let tick_values = [];
+          for (let d of data) {
+            for (let point of d.data) {
+              tick_values[point[0]] = true;
+            }
+          }
+          ticks = Object.keys(tick_values).map(v => Number(v));
           min = _.min(ticks);
           max = _.max(ticks);
 

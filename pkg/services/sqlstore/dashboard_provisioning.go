@@ -26,8 +26,8 @@ func SaveProvisionedDashboard(cmd *models.SaveProvisionedDashboardCommand) error
 		}
 
 		cmd.Result = cmd.DashboardCmd.Result
-		if cmd.DashboardProvisioning.Updated.IsZero() {
-			cmd.DashboardProvisioning.Updated = cmd.Result.Updated
+		if cmd.DashboardProvisioning.Updated == 0 {
+			cmd.DashboardProvisioning.Updated = cmd.Result.Updated.Unix()
 		}
 
 		return saveProvionedData(sess, cmd.DashboardProvisioning, cmd.Result)

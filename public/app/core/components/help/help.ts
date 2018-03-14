@@ -33,10 +33,6 @@ export class HelpCtrl {
         { keys: ['p', 's'], description: 'Open Panel Share Modal' },
         { keys: ['p', 'r'], description: 'Remove Panel' },
       ],
-      'Focused Row': [
-        { keys: ['r', 'c'], description: 'Collapse Row' },
-        { keys: ['r', 'r'], description: 'Remove Row' },
-      ],
       'Time Range': [
         { keys: ['t', 'z'], description: 'Zoom out time range' },
         {

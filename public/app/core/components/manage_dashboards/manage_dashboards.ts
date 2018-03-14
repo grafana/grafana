@@ -78,8 +78,8 @@ export class ManageDashboardsCtrl {
           return;
         }
 
-        return this.backendSrv.getDashboardByUid(this.folderUid).then(dash => {
-          this.canSave = dash.meta.canSave;
+        return this.backendSrv.getFolderByUid(this.folderUid).then(folder => {
+          this.canSave = folder.canSave;
         });
       });
   }
@@ -173,48 +173,13 @@ export class ManageDashboardsCtrl {
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
-        const foldersAndDashboards = data.folders.concat(data.dashboards);
-        this.deleteFoldersAndDashboards(foldersAndDashboards);
+        this.deleteFoldersAndDashboards(data.folders, data.dashboards);
       },
     });
   }
 
-  private deleteFoldersAndDashboards(uids) {
-    this.backendSrv.deleteDashboards(uids).then(result => {
-      const folders = _.filter(result, dash => dash.meta.isFolder);
-      const folderCount = folders.length;
-      const dashboards = _.filter(result, dash => !dash.meta.isFolder);
-      const dashCount = dashboards.length;
-
-      if (result.length > 0) {
-        let header;
-        let msg;
-
-        if (folderCount > 0 && dashCount > 0) {
-          header = `Folder${folderCount === 1 ? '' : 's'} And Dashboard${dashCount === 1 ? '' : 's'} Deleted`;
-          msg = `${folderCount} folder${folderCount === 1 ? '' : 's'} `;
-          msg += `and ${dashCount} dashboard${dashCount === 1 ? '' : 's'} has been deleted`;
-        } else if (folderCount > 0) {
-          header = `Folder${folderCount === 1 ? '' : 's'} Deleted`;
-
-          if (folderCount === 1) {
-            msg = `${folders[0].dashboard.title} has been deleted`;
-          } else {
-            msg = `${folderCount} folder${folderCount === 1 ? '' : 's'} has been deleted`;
-          }
-        } else if (dashCount > 0) {
-          header = `Dashboard${dashCount === 1 ? '' : 's'} Deleted`;
-
-          if (dashCount === 1) {
-            msg = `${dashboards[0].dashboard.title} has been deleted`;
-          } else {
-            msg = `${dashCount} dashboard${dashCount === 1 ? '' : 's'} has been deleted`;
-          }
-        }
-
-        appEvents.emit('alert-success', [header, msg]);
-      }
-
+  private deleteFoldersAndDashboards(folderUids, dashboardUids) {
+    this.backendSrv.deleteFoldersAndDashboards(folderUids, dashboardUids).then(() => {
       this.refreshList();
     });
   }
