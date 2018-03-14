@@ -457,7 +457,7 @@ func (c *Client) GetMulti(keys []string) (map[string]*Item, error) {
 	}
 
 	var err error
-	for range keyMap {
+	for _ = range keyMap {
 		if ge := <-ch; ge != nil {
 			err = ge
 		}
