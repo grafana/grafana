@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import queryPart from './query_part';
-import kbn from 'app/core/utils/kbn';
 
 export default class PostgresQuery {
   target: any;
@@ -26,14 +25,16 @@ export default class PostgresQuery {
     target.select = target.select || [[{ type: 'column', params: ['value'] }]];
 
     this.updateProjection();
+    // give interpolateQueryStr access to this
+    this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
   }
 
   quoteIdentifier(value) {
-    return '"' + value + '"';
+    return '"' + value.replace('"','""') + '"';
   }
 
   quoteLiteral(value) {
-    return "'" + value + "'";
+    return "'" + value.replace("'","''") + "'";
   }
 
   updateProjection() {
@@ -147,10 +148,10 @@ export default class PostgresQuery {
     }
 
     if (typeof value === 'string') {
-      return kbn.regexEscape(value);
+      return this.quoteLiteral(value);
     }
 
-    var escapedValues = _.map(value, kbn.regexEscape);
+    var escapedValues = _.map(value, this.quoteLiteral);
     return '(' + escapedValues.join(',') + ')';
   }
 
