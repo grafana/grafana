@@ -66,6 +66,7 @@ func (hs *HttpServer) registerRoutes() {
 	r.Get("/plugins/:id/page/:page", reqSignedIn, Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, Index)
+	r.Get("/d/:uid", reqSignedIn, Index)
 	r.Get("/dashboard/db/:slug", reqSignedIn, redirectFromLegacyDashboardUrl, Index)
 	r.Get("/dashboard/script/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/snapshot/*", Index)
@@ -150,11 +151,11 @@ func (hs *HttpServer) registerRoutes() {
 		apiRoute.Group("/teams", func(teamsRoute RouteRegister) {
 			teamsRoute.Get("/:teamId", wrap(GetTeamById))
 			teamsRoute.Get("/search", wrap(SearchTeams))
-			teamsRoute.Post("/", quota("teams"), bind(m.CreateTeamCommand{}), wrap(CreateTeam))
+			teamsRoute.Post("/", bind(m.CreateTeamCommand{}), wrap(CreateTeam))
 			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), wrap(UpdateTeam))
 			teamsRoute.Delete("/:teamId", wrap(DeleteTeamById))
 			teamsRoute.Get("/:teamId/members", wrap(GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", quota("teams"), bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
+			teamsRoute.Post("/:teamId/members", bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
 			teamsRoute.Delete("/:teamId/members/:userId", wrap(RemoveTeamMember))
 		}, reqOrgAdmin)
 

@@ -72,7 +72,9 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		localDomain = setting.HttpAddr
 	}
 
-	url := fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, localDomain, setting.HttpPort, params.Path)
+	// &render=1 signals to the legacy redirect layer to
+	// avoid redirect these requests.
+	url := fmt.Sprintf("%s://%s:%s/%s&render=1", setting.Protocol, localDomain, setting.HttpPort, params.Path)
 
 	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))

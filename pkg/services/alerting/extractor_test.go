@@ -22,6 +22,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		defaultDs := &m.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true}
 		graphite2Ds := &m.DataSource{Id: 15, OrgId: 1, Name: "graphite2"}
 		influxDBDs := &m.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB"}
+		prom := &m.DataSource{Id: 17, OrgId: 1, Name: "Prometheus"}
 
 		bus.AddHandler("test", func(query *m.GetDataSourcesQuery) error {
 			query.Result = []*m.DataSource{defaultDs, graphite2Ds}
@@ -38,6 +39,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 			if query.Name == influxDBDs.Name {
 				query.Result = influxDBDs
 			}
+			if query.Name == prom.Name {
+				query.Result = prom
+			}
+
 			return nil
 		})
 
@@ -212,6 +217,27 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 					So(cond.Get("query").Get("model").Get("interval").MustString(), ShouldEqual, ">10s")
 				}
+			})
+		})
+
+		Convey("Should be able to extract collapsed panels", func() {
+			json, err := ioutil.ReadFile("./test-data/collapsed-panels.json")
+			So(err, ShouldBeNil)
+
+			dashJson, err := simplejson.NewJson(json)
+			So(err, ShouldBeNil)
+
+			dash := m.NewDashboardFromJson(dashJson)
+			extractor := NewDashAlertExtractor(dash, 1)
+
+			alerts, err := extractor.GetAlerts()
+
+			Convey("Get rules without error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("should be able to extract collapsed alerts", func() {
+				So(len(alerts), ShouldEqual, 4)
 			})
 		})
 	})
