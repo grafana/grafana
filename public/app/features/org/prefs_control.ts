@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 
@@ -10,19 +8,14 @@ export class PrefsControlCtrl {
   mode: string;
 
   timezones: any = [
-    {value: '', text: 'Default'},
-    {value: 'browser', text: 'Local browser time'},
-    {value: 'utc', text: 'UTC'},
+    { value: '', text: 'Default' },
+    { value: 'browser', text: 'Local browser time' },
+    { value: 'utc', text: 'UTC' },
   ];
-  themes: any = [
-    {value: '', text: 'Default'},
-    {value: 'dark', text: 'Dark'},
-    {value: 'light', text: 'Light'},
-  ];
+  themes: any = [{ value: '', text: 'Default' }, { value: 'dark', text: 'Dark' }, { value: 'light', text: 'Light' }];
 
   /** @ngInject **/
-  constructor(private backendSrv, private $location) {
-  }
+  constructor(private backendSrv, private $location) {}
 
   $onInit() {
     return this.backendSrv.get(`/api/${this.mode}/preferences`).then(prefs => {
@@ -32,19 +25,20 @@ export class PrefsControlCtrl {
   }
 
   updatePrefs() {
-    if (!this.prefsForm.$valid) { return; }
+    if (!this.prefsForm.$valid) {
+      return;
+    }
 
     var cmd = {
       theme: this.prefs.theme,
       timezone: this.prefs.timezone,
-      homeDashboardId: this.prefs.homeDashboardId
+      homeDashboardId: this.prefs.homeDashboardId,
     };
 
     this.backendSrv.put(`/api/${this.mode}/preferences`, cmd).then(() => {
       window.location.href = config.appSubUrl + this.$location.path();
     });
   }
-
 }
 
 var template = `
@@ -77,7 +71,7 @@ var template = `
   </div>
 
   <div class="gf-form-button-row">
-    <button type="submit" class="btn btn-success" ng-click="ctrl.updatePrefs()">Update</button>
+    <button type="submit" class="btn btn-success" ng-click="ctrl.updatePrefs()">Save</button>
   </div>
 </form>
 `;
@@ -90,11 +84,9 @@ export function prefsControlDirective() {
     controllerAs: 'ctrl',
     template: template,
     scope: {
-      mode: "@"
-    }
+      mode: '@',
+    },
   };
 }
 
 coreModule.directive('prefsControl', prefsControlDirective);
-
-

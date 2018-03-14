@@ -69,3 +69,11 @@ type GetDashboardVersionsQuery struct {
 
 	Result []*DashboardVersionDTO
 }
+
+//
+// Commands
+//
+
+type DeleteExpiredVersionsCommand struct {
+	DeletedRows int64
+}

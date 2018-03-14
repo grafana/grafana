@@ -1,8 +1,8 @@
 import React from 'react';
 import $ from 'jquery';
 import tinycolor from 'tinycolor2';
-import { GfColorPalette } from './ColorPalette';
-import { GfSpectrumPicker } from './SpectrumPicker';
+import { ColorPalette } from './ColorPalette';
+import { SpectrumPicker } from './SpectrumPicker';
 
 const DEFAULT_COLOR = '#000000';
 
@@ -19,7 +19,7 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
     this.state = {
       tab: 'palette',
       color: this.props.color || DEFAULT_COLOR,
-      colorString: this.props.color || DEFAULT_COLOR
+      colorString: this.props.color || DEFAULT_COLOR,
     };
   }
 
@@ -32,7 +32,7 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
     if (newColor.isValid()) {
       this.setState({
         color: newColor.toString(),
-        colorString: newColor.toString()
+        colorString: newColor.toString(),
       });
       this.props.onColorSelect(color);
     }
@@ -50,16 +50,17 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
   onColorStringChange(e) {
     let colorString = e.target.value;
     this.setState({
-      colorString: colorString
+      colorString: colorString,
     });
 
     let newColor = tinycolor(colorString);
     if (newColor.isValid()) {
       // Update only color state
+      let newColorString = newColor.toString();
       this.setState({
-        color: newColor.toString(),
+        color: newColorString,
       });
-      this.props.onColorSelect(newColor);
+      this.props.onColorSelect(newColorString);
     }
   }
 
@@ -70,11 +71,11 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
 
   componentDidMount() {
     this.pickerNavElem.find('li:first').addClass('active');
-    this.pickerNavElem.on('show', (e) => {
+    this.pickerNavElem.on('show', e => {
       // use href attr (#name => name)
       let tab = e.target.hash.slice(1);
       this.setState({
-        tab: tab
+        tab: tab,
       });
     });
   }
@@ -82,12 +83,12 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
   render() {
     const paletteTab = (
       <div id="palette">
-        <GfColorPalette color={this.state.color} onColorSelect={this.sampleColorSelected.bind(this)} />
+        <ColorPalette color={this.state.color} onColorSelect={this.sampleColorSelected.bind(this)} />
       </div>
     );
     const spectrumTab = (
       <div id="spectrum">
-        <GfSpectrumPicker color={this.state.color} onColorSelect={this.spectrumColorSelected.bind(this)} options={{}} />
+        <SpectrumPicker color={this.state.color} onColorSelect={this.spectrumColorSelected.bind(this)} options={{}} />
       </div>
     );
     const currentTab = this.state.tab === 'palette' ? paletteTab : spectrumTab;
@@ -96,19 +97,24 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
       <div className="gf-color-picker">
         <ul className="nav nav-tabs" id="colorpickernav" ref={this.setPickerNavElem.bind(this)}>
           <li className="gf-tabs-item-colorpicker">
-            <a href="#palette" data-toggle="tab">Colors</a>
+            <a href="#palette" data-toggle="tab">
+              Colors
+            </a>
           </li>
           <li className="gf-tabs-item-colorpicker">
-            <a href="#spectrum" data-toggle="tab">Custom</a>
+            <a href="#spectrum" data-toggle="tab">
+              Custom
+            </a>
           </li>
         </ul>
-        <div className="gf-color-picker__body">
-          {currentTab}
-        </div>
+        <div className="gf-color-picker__body">{currentTab}</div>
         <div>
-          <input className="gf-form-input gf-form-input--small" value={this.state.colorString}
-            onChange={this.onColorStringChange.bind(this)} onBlur={this.onColorStringBlur.bind(this)}>
-          </input>
+          <input
+            className="gf-form-input gf-form-input--small"
+            value={this.state.colorString}
+            onChange={this.onColorStringChange.bind(this)}
+            onBlur={this.onColorStringBlur.bind(this)}
+          />
         </div>
       </div>
     );

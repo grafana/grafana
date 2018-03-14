@@ -29,7 +29,7 @@
         <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.prefix" ng-change="ctrl.render()" ng-model-onblur>
         <label class="gf-form-label width-6">Font size</label>
         <div class="gf-form-select-wrapper">
-          <select class="gf-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
+          <select class="gf-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="ctrl.canChangeFontSize()"></select>
         </div>
       </div>
     </div>
@@ -39,17 +39,17 @@
       <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
       <label class="gf-form-label width-6">Font size</label>
       <div class="gf-form-select-wrapper">
-        <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
+        <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="ctrl.canChangeFontSize()"></select>
       </div>
     </div>
-		<div class="gf-form">
-			<label class="gf-form-label width-6">Unit</label>
-			<div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
-		</div>
-		<div class="gf-form">
-			<label class="gf-form-label width-6">Decimals</label>
-			<input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
-		</div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Unit</label>
+      <div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Decimals</label>
+      <input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
+    </div>
   </div>
 
   <div class="section gf-form-group">

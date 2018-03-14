@@ -1,7 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import {Variable, assignModelProperties, variableTypes} from './variable';
+import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class AdhocVariable implements Variable {
   filters: any[];
@@ -58,9 +56,11 @@ export class AdhocVariable implements Variable {
 
   getValueForUrl() {
     return this.filters.map(filter => {
-      return [filter.key, filter.operator, filter.value].map(value => {
-        return this.escapeDelimiter(value);
-      }).join('|');
+      return [filter.key, filter.operator, filter.value]
+        .map(value => {
+          return this.escapeDelimiter(value);
+        })
+        .join('|');
     });
   }
 

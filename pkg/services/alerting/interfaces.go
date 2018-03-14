@@ -15,7 +15,7 @@ type Notifier interface {
 	Notify(evalContext *EvalContext) error
 	GetType() string
 	NeedsImage() bool
-	PassesFilter(rule *Rule) bool
+	ShouldNotify(evalContext *EvalContext) bool
 
 	GetNotifierId() int64
 	GetIsDefault() bool

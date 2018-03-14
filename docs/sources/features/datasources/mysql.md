@@ -45,7 +45,14 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 
 Macro example | Description
 ------------ | -------------
+*$__time(dateColumn)* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > FROM_UNIXTIME(1494410783) AND dateColumn < FROM_UNIXTIME(1494497183)*
+*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *FROM_UNIXTIME(1494410783)*
+*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *FROM_UNIXTIME(1494497183)*
+*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed) as time_sec,*
+*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
+*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
+*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -99,6 +106,19 @@ GROUP BY metric1, UNIX_TIMESTAMP(time_date_time) DIV 300
 ORDER BY time_sec asc
 ```
 
+Example with $__timeGroup macro:
+
+```sql
+SELECT
+  $__timeGroup(time_date_time,'5m') as time_sec,
+  min(value_double) as value,
+  metric_name as metric
+FROM test_data
+WHERE $__timeFilter(time_date_time)
+GROUP BY 1, metric_name
+ORDER BY 1
+```
+
 Currently, there is no support for a dynamic group by time based on time range & panel width.
 This is something we plan to add.
 
@@ -127,6 +147,12 @@ A query can returns multiple columns and Grafana will automatically create a lis
 SELECT my_host.hostname, my_other_host.hostname2 FROM my_host JOIN my_other_host ON my_host.city = my_other_host.city
 ```
 
+To use time range dependent macros like `$__timeFilter(column)` in your query the refresh mode of the template variable needs to be set to *On Time Range Change*.
+
+```sql
+SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
+```
+
 Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). The options in the dropdown will have a text and value that allows you to have a friendly name as text and an id as the value. An example query with `hostname` as the text and `id` as the value:
 
 ```sql
@@ -142,7 +168,11 @@ SELECT hostname FROM my_host  WHERE region IN($region)
 
 ### Using Variables in Queries
 
-Template variables are quoted automatically so if it is a string value do not wrap them in quotes in where clauses. If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
+From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.
+
+From Grafana 4.7.0, template variable values are only quoted when the template variable is a `multi-value`.
+
+If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
 
 There are two syntaxes:
 
@@ -170,7 +200,28 @@ WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp ASC
 ```
 
+## Annotations
+
+[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+
+An example query:
+
+```sql
+SELECT
+  UNIX_TIMESTAMP(atimestamp) as time_sec,
+  value as text,
+  CONCAT(tag1, ',', tag2) as tags
+FROM my_table
+WHERE $__timeFilter(atimestamp)
+ORDER BY atimestamp ASC
+```
+
+Name | Description
+------------ | -------------
+time_sec | The name of the date/time field.
+text | Event description field.
+tags | Optional field name to use for event tags as a comma separated string.
+
 ## Alerting
 
-Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule
-conditions.
+Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule conditions.

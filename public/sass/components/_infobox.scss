@@ -1,13 +1,3 @@
-// .grafana-info-box::before {
-//   content: "\f05a";
-//   font-family:'FontAwesome';
-//   position: absolute;
-//   top: -13px;
-//   left: -8px;
-//   font-size: 20px;
-//   color: $text-color;
-// }
-
 .grafana-info-box {
   position: relative;
   background: $info-box-background;
@@ -17,6 +7,10 @@
   margin-bottom: $spacer;
   margin-right: $gf-form-margin;
   flex-grow: 1;
+  color: $info-box-color;
+  h5 {
+    color: $info-box-color;
+  }
 
   h5 {
     margin-bottom: $spacer;

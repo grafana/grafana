@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -11,14 +12,14 @@ import (
 	"net/http"
 	"net/url"
 
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
 )
@@ -29,25 +30,25 @@ var (
 	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
 	ErrUsersQuotaReached     = errors.New("Users quota reached")
 	ErrNoEmail               = errors.New("Login provider didn't return an email address")
-	oauthLogger              = log.New("oauth.login")
+	oauthLogger              = log.New("oauth")
 )
 
 func GenStateString() string {
 	rnd := make([]byte, 32)
 	rand.Read(rnd)
-	return base64.StdEncoding.EncodeToString(rnd)
+	return base64.URLEncoding.EncodeToString(rnd)
 }
 
-func OAuthLogin(ctx *middleware.Context) {
+func OAuthLogin(ctx *m.ReqContext) {
 	if setting.OAuthService == nil {
-		ctx.Handle(404, "login.OAuthLogin(oauth service not enabled)", nil)
+		ctx.Handle(404, "OAuth not enabled", nil)
 		return
 	}
 
 	name := ctx.Params(":name")
 	connect, ok := social.SocialMap[name]
 	if !ok {
-		ctx.Handle(404, "login.OAuthLogin(social login not enabled)", errors.New(name))
+		ctx.Handle(404, fmt.Sprintf("No OAuth with name %s configured", name), nil)
 		return
 	}
 
@@ -62,7 +63,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	code := ctx.Query("code")
 	if code == "" {
 		state := GenStateString()
-		ctx.Session.Set(middleware.SESS_KEY_OAUTH_STATE, state)
+		ctx.Session.Set(session.SESS_KEY_OAUTH_STATE, state)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -71,7 +72,7 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	savedState, ok := ctx.Session.Get(middleware.SESS_KEY_OAUTH_STATE).(string)
+	savedState, ok := ctx.Session.Get(session.SESS_KEY_OAUTH_STATE).(string)
 	if !ok {
 		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
 		return
@@ -96,7 +97,9 @@ func OAuthLogin(ctx *middleware.Context) {
 	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" || setting.OAuthService.OAuthInfos[name].TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
 		if err != nil {
-			log.Fatal(1, "Failed to setup TlsClientCert", "oauth provider", name, "error", err)
+			ctx.Logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
+			ctx.Handle(500, "login.OAuthLogin(Failed to setup TlsClientCert)", nil)
+			return
 		}
 
 		tr.TLSClientConfig.Certificates = append(tr.TLSClientConfig.Certificates, cert)
@@ -105,7 +108,9 @@ func OAuthLogin(ctx *middleware.Context) {
 	if setting.OAuthService.OAuthInfos[name].TlsClientCa != "" {
 		caCert, err := ioutil.ReadFile(setting.OAuthService.OAuthInfos[name].TlsClientCa)
 		if err != nil {
-			log.Fatal(1, "Failed to setup TlsClientCa", "oauth provider", name, "error", err)
+			ctx.Logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
+			ctx.Handle(500, "login.OAuthLogin(Failed to setup TlsClientCa)", nil)
+			return
 		}
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
@@ -124,13 +129,13 @@ func OAuthLogin(ctx *middleware.Context) {
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
 
-	ctx.Logger.Debug("OAuthLogin Got token")
+	oauthLogger.Debug("OAuthLogin Got token", "token", token)
 
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
 
 	// get user info
-	userInfo, err := connect.UserInfo(client)
+	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
 		if sErr, ok := err.(*social.Error); ok {
 			redirectWithError(ctx, sErr)
@@ -140,7 +145,7 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	ctx.Logger.Debug("OAuthLogin got user info", "userInfo", userInfo)
+	oauthLogger.Debug("OAuthLogin got user info", "userInfo", userInfo)
 
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
@@ -163,7 +168,7 @@ func OAuthLogin(ctx *middleware.Context) {
 			redirectWithError(ctx, ErrSignUpNotAllowed)
 			return
 		}
-		limitReached, err := middleware.QuotaReached(ctx, "user")
+		limitReached, err := quota.QuotaReached(ctx, "user")
 		if err != nil {
 			ctx.Handle(500, "Failed to get user quota", err)
 			return
@@ -204,9 +209,8 @@ func OAuthLogin(ctx *middleware.Context) {
 	ctx.Redirect(setting.AppSubUrl + "/")
 }
 
-func redirectWithError(ctx *middleware.Context, err error, v ...interface{}) {
-	ctx.Logger.Info(err.Error(), v...)
-	// TODO: we can use the flash storage here once it's implemented
+func redirectWithError(ctx *m.ReqContext, err error, v ...interface{}) {
+	ctx.Logger.Error(err.Error(), v...)
 	ctx.Session.Set("loginError", err.Error())
 	ctx.Redirect(setting.AppSubUrl + "/login")
 }

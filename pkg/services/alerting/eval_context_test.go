@@ -28,21 +28,5 @@ func TestAlertingEvalContext(t *testing.T) {
 				So(ctx.ShouldUpdateAlertState(), ShouldBeFalse)
 			})
 		})
-
-		Convey("Should send notifications", func() {
-			Convey("pending -> ok", func() {
-				ctx.PrevAlertState = models.AlertStatePending
-				ctx.Rule.State = models.AlertStateOK
-
-				So(ctx.ShouldSendNotification(), ShouldBeFalse)
-			})
-
-			Convey("ok -> alerting", func() {
-				ctx.PrevAlertState = models.AlertStateOK
-				ctx.Rule.State = models.AlertStateAlerting
-
-				So(ctx.ShouldSendNotification(), ShouldBeTrue)
-			})
-		})
 	})
 }

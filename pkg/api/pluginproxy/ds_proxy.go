@@ -18,7 +18,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,14 +41,14 @@ type jwtToken struct {
 
 type DataSourceProxy struct {
 	ds        *m.DataSource
-	ctx       *middleware.Context
+	ctx       *m.ReqContext
 	targetUrl *url.URL
 	proxyPath string
 	route     *plugins.AppPluginRoute
 	plugin    *plugins.DataSourcePlugin
 }
 
-func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *middleware.Context, proxyPath string) *DataSourceProxy {
+func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
 	targetUrl, _ := url.Parse(ds.Url)
 
 	return &DataSourceProxy{
@@ -135,9 +134,24 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", dsAuth)
 		}
 
-		// clear cookie headers
+		// clear cookie header, except for whitelisted cookies
+		var keptCookies []*http.Cookie
+		if proxy.ds.JsonData != nil {
+			if keepCookies := proxy.ds.JsonData.Get("keepCookies"); keepCookies != nil {
+				keepCookieNames := keepCookies.MustStringArray()
+				for _, c := range req.Cookies() {
+					for _, v := range keepCookieNames {
+						if c.Name == v {
+							keptCookies = append(keptCookies, c)
+						}
+					}
+				}
+			}
+		}
 		req.Header.Del("Cookie")
-		req.Header.Del("Set-Cookie")
+		for _, c := range keptCookies {
+			req.AddCookie(c)
+		}
 
 		// clear X-Forwarded Host/Port/Proto headers
 		req.Header.Del("X-Forwarded-Host")
@@ -177,8 +191,14 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	if proxy.ds.Type == m.DS_PROMETHEUS {
-		if proxy.ctx.Req.Request.Method != http.MethodGet || !strings.HasPrefix(proxy.proxyPath, "api/") {
-			return errors.New("GET is only allowed on proxied Prometheus datasource")
+		if proxy.ctx.Req.Request.Method == "DELETE" {
+			return errors.New("Deletes not allowed on proxied Prometheus datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "PUT" {
+			return errors.New("Puts not allowed on proxied Prometheus datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range") {
+			return errors.New("Posts not allowed on proxied Prometheus datasource except on /query and /query_range")
 		}
 	}
 
@@ -242,7 +262,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"body", body)
 }
 
-func checkWhiteList(c *middleware.Context, host string) bool {
+func checkWhiteList(c *m.ReqContext, host string) bool {
 	if host != "" && len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[host]; !exists {
 			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)

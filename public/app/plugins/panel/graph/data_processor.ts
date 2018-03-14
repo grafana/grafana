@@ -1,13 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
-import {colors} from 'app/core/core';
+import colors from 'app/core/utils/colors';
 
 export class DataProcessor {
-
-  constructor(private panel) {
-  }
+  constructor(private panel) {}
 
   getSeriesList(options) {
     if (!options.dataList || options.dataList.length === 0) {
@@ -27,9 +23,24 @@ export class DataProcessor {
 
     switch (this.panel.xaxis.mode) {
       case 'series':
-      case 'histogram':
       case 'time': {
         return options.dataList.map((item, index) => {
+          return this.timeSeriesHandler(item, index, options);
+        });
+      }
+      case 'histogram': {
+        let histogramDataList;
+        if (this.panel.stack) {
+          histogramDataList = options.dataList;
+        } else {
+          histogramDataList = [
+            {
+              target: 'count',
+              datapoints: _.concat([], _.flatten(_.map(options.dataList, 'datapoints'))),
+            },
+          ];
+        }
+        return histogramDataList.map((item, index) => {
           return this.timeSeriesHandler(item, index, options);
         });
       }
@@ -41,8 +52,10 @@ export class DataProcessor {
 
   getAutoDetectXAxisMode(firstItem) {
     switch (firstItem.type) {
-      case 'docs': return 'field';
-      case 'table': return 'field';
+      case 'docs':
+        return 'field';
+      case 'table':
+        return 'field';
       default: {
         if (this.panel.xaxis.mode === 'series') {
           return 'series';
@@ -95,7 +108,12 @@ export class DataProcessor {
     var colorIndex = index % colors.length;
     var color = this.panel.aliasColors[alias] || colors[colorIndex];
 
-    var series = new TimeSeries({datapoints: datapoints, alias: alias, color: color, unit: seriesData.unit});
+    var series = new TimeSeries({
+      datapoints: datapoints,
+      alias: alias,
+      color: color,
+      unit: seriesData.unit,
+    });
 
     if (datapoints && datapoints.length > 0) {
       var last = datapoints[datapoints.length - 1][1];
@@ -111,7 +129,9 @@ export class DataProcessor {
   customHandler(dataItem) {
     let nameField = this.panel.xaxis.name;
     if (!nameField) {
-      throw {message: 'No field name specified to use for x-axis, check your axes settings'};
+      throw {
+        message: 'No field name specified to use for x-axis, check your axes settings',
+      };
     }
     return [];
   }
@@ -125,7 +145,7 @@ export class DataProcessor {
         }
 
         var validOptions = this.getXAxisValueOptions({});
-        var found = _.find(validOptions, {value: this.panel.xaxis.values[0]});
+        var found = _.find(validOptions, { value: this.panel.xaxis.values[0] });
         if (!found) {
           this.panel.xaxis.values = ['total'];
         }
@@ -172,11 +192,11 @@ export class DataProcessor {
     switch (this.panel.xaxis.mode) {
       case 'series': {
         return [
-          {text: 'Avg', value: 'avg'},
-          {text: 'Min', value: 'min'},
-          {text: 'Max', value: 'max'},
-          {text: 'Total', value: 'total'},
-          {text: 'Count', value: 'count'},
+          { text: 'Avg', value: 'avg' },
+          { text: 'Min', value: 'min' },
+          { text: 'Max', value: 'max' },
+          { text: 'Total', value: 'total' },
+          { text: 'Count', value: 'count' },
         ];
       }
     }
@@ -196,7 +216,4 @@ export class DataProcessor {
     }
     return value;
   }
-
 }
-
-

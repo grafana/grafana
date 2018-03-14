@@ -1,12 +1,10 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import $ from 'jquery';
-import {MetricsPanelCtrl} from 'app/plugins/sdk';
-import {transformDataToTable} from './transformers';
-import {tablePanelEditor} from './editor';
-import {columnOptionsTab} from './column_options';
-import {TableRenderer} from './renderer';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { transformDataToTable } from './transformers';
+import { tablePanelEditor } from './editor';
+import { columnOptionsTab } from './column_options';
+import { TableRenderer } from './renderer';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -33,16 +31,16 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         type: 'number',
         alias: '',
         decimals: 2,
-        colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+        colors: ['rgba(245, 54, 54, 0.9)', 'rgba(237, 129, 40, 0.89)', 'rgba(50, 172, 45, 0.97)'],
         colorMode: null,
         pattern: '/.*/',
         thresholds: [],
-      }
+      },
     ],
     columns: [],
     scroll: true,
     fontSize: '100%',
-    sort: {col: 0, desc: true},
+    sort: { col: 0, desc: true },
   };
 
   /** @ngInject */
@@ -73,7 +71,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   onInitPanelActions(actions) {
-    actions.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
+    actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
   }
 
   issueQueries(datasource) {
@@ -81,10 +79,15 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     if (this.panel.transform === 'annotations') {
       this.setTimeQueryStart();
-      return this.annotationsSrv.getAnnotations({dashboard: this.dashboard, panel: this.panel, range: this.range})
-      .then(annotations => {
-        return {data: annotations};
-      });
+      return this.annotationsSrv
+        .getAnnotations({
+          dashboard: this.dashboard,
+          panel: this.panel,
+          range: this.range,
+        })
+        .then(annotations => {
+          return { data: annotations };
+        });
     }
 
     return super.issueQueries(datasource);
@@ -121,7 +124,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
 
-    this.renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize, this.templateSrv);
+    this.renderer = new TableRenderer(
+      this.panel,
+      this.table,
+      this.dashboard.isTimezoneUtc(),
+      this.$sanitize,
+      this.templateSrv
+    );
 
     return super.render(this.table);
   }
@@ -152,7 +161,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.publishAppEvent('show-modal', {
       templateHtml: '<export-data-modal panel="panel" data="tableData"></export-data-modal>',
       scope,
-      modalClass: 'modal--narrow'
+      modalClass: 'modal--narrow',
     });
   }
 
@@ -168,7 +177,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         panelHeight -= 26;
       }
 
-      return (panelHeight - 31) + 'px';
+      return panelHeight - 31 + 'px';
     }
 
     function appendTableRows(tbodyElem) {
@@ -179,7 +188,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     function switchPage(e) {
       var el = $(e.currentTarget);
-      ctrl.pageIndex = (parseInt(el.text(), 10)-1);
+      ctrl.pageIndex = parseInt(el.text(), 10) - 1;
       renderPanel();
     }
 
@@ -199,7 +208,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
       for (var i = startPage; i < endPage; i++) {
         var activeClass = i === ctrl.pageIndex ? 'active' : '';
-        var pageLinkElem = $('<li><a class="table-panel-page-link pointer ' + activeClass + '">' + (i+1) + '</a></li>');
+        var pageLinkElem = $(
+          '<li><a class="table-panel-page-link pointer ' + activeClass + '">' + (i + 1) + '</a></li>'
+        );
         paginationList.append(pageLinkElem);
       }
 
@@ -212,18 +223,18 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       var tbodyElem = elem.find('tbody');
       var footerElem = elem.find('.table-panel-footer');
 
-      elem.css({'font-size': panel.fontSize});
+      elem.css({ 'font-size': panel.fontSize });
       panelElem.addClass('table-panel-wrapper');
 
       appendTableRows(tbodyElem);
       appendPaginationControls(footerElem);
 
-      rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
+      rootElem.css({ 'max-height': panel.scroll ? getTableHeight() : '' });
     }
 
     // hook up link tooltips
     elem.tooltip({
-      selector: '[data-link-tooltip]'
+      selector: '[data-link-tooltip]',
     });
 
     function addFilterClicked(e) {
@@ -257,7 +268,4 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 }
 
-export {
-  TablePanelCtrl,
-  TablePanelCtrl as PanelCtrl
-};
+export { TablePanelCtrl, TablePanelCtrl as PanelCtrl };

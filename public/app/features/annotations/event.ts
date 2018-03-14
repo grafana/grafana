@@ -1,4 +1,3 @@
-
 export class AnnotationEvent {
   dashboardId: number;
   panelId: number;

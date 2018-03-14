@@ -51,7 +51,7 @@ func Logger() Handler {
 		rw := ctx.Resp.(ResponseWriter)
 		ctx.Next()
 
-		content := fmt.Sprintf("%s: Completed %s %v %s in %v", time.Now().Format(LogTimeFormat), ctx.Req.RequestURI, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
+		content := fmt.Sprintf("%s: Completed %s %s %v %s in %v", time.Now().Format(LogTimeFormat), ctx.Req.Method, ctx.Req.RequestURI, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
 		if ColorLog {
 			switch rw.Status() {
 			case 200, 201, 202:

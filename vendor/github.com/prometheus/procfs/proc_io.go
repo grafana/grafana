@@ -47,9 +47,6 @@ func (p Proc) NewIO() (ProcIO, error) {
 
 	_, err = fmt.Sscanf(string(data), ioFormat, &pio.RChar, &pio.WChar, &pio.SyscR,
 		&pio.SyscW, &pio.ReadBytes, &pio.WriteBytes, &pio.CancelledWriteBytes)
-	if err != nil {
-		return pio, err
-	}
 
-	return pio, nil
+	return pio, err
 }

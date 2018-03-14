@@ -1,7 +1,6 @@
 import _ from 'lodash';
 
 class GrafanaDatasource {
-
   /** @ngInject */
   constructor(private backendSrv, private $q) {}
 
@@ -27,14 +26,13 @@ class GrafanaDatasource {
           });
         }
 
-        return {data: data};
+        return { data: data };
       });
   }
 
   metricFindQuery(options) {
-    return this.$q.when({data: []});
+    return this.$q.when({ data: [] });
   }
-
 
   annotationQuery(options) {
     const params: any = {
@@ -64,4 +62,4 @@ class GrafanaDatasource {
   }
 }
 
-export {GrafanaDatasource};
+export { GrafanaDatasource };

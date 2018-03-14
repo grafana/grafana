@@ -11,7 +11,7 @@ import (
 
 // WaitUntilAlarmExists uses the CloudWatch API operation
 // DescribeAlarms to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CloudWatch) WaitUntilAlarmExists(input *DescribeAlarmsInput) error {
 	return c.WaitUntilAlarmExistsWithContext(aws.BackgroundContext(), input)
