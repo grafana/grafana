@@ -4,7 +4,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', [
     'clean:build',
-    'phantomjs',
+    'chromium',
     'webpack:dev',
   ]);
 

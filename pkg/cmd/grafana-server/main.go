@@ -34,6 +34,7 @@ var version = "5.0.0"
 var commit = "NA"
 var buildstamp string
 var build_date string
+var chromiumRevision string
 
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
@@ -77,6 +78,7 @@ func main() {
 	setting.BuildVersion = version
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
+	setting.RendererChromiumRevision = chromiumRevision
 
 	metrics.M_Grafana_Version.WithLabelValues(version).Set(1)
 	shutdownCompleted := make(chan int)

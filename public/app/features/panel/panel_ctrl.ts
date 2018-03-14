@@ -67,6 +67,7 @@ export class PanelCtrl {
 
   renderingCompleted() {
     profiler.renderingCompleted(this.panel.id, this.timing);
+    this.events.emit('rendering-complete');
   }
 
   refresh() {

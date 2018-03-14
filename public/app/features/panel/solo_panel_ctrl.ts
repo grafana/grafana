@@ -39,10 +39,15 @@ export class SoloPanelCtrl {
       // fake row ctrl scope
       $scope.ctrl = {
         dashboard: $scope.dashboard,
+        renderingIsComplete: false,
       };
 
       $scope.panel = panelInfo.panel;
       $scope.panel.soloMode = true;
+      $scope.panel.events.on('rendering-complete', () => {
+        // TODO: check for panel errors
+        $scope.ctrl.renderingIsComplete = true;
+      });
       $scope.$index = 0;
 
       if (!$scope.panel) {

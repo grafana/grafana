@@ -1,7 +1,9 @@
 var path = require('path');
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
   "use strict";
+
+  const chromium_revision = grunt.file.readJSON('./package.json').grafana.chromium_revision;
 
   // build, then zip and upload to s3
   grunt.registerTask('release', [
@@ -10,7 +12,7 @@ module.exports = function(grunt) {
     'compress:release'
   ]);
 
-  grunt.registerTask('build-post-process', function() {
+  grunt.registerTask('build-post-process', function () {
     grunt.config('copy.public_to_temp', {
       expand: true,
       cwd: '<%= srcDir %>',
@@ -21,13 +23,13 @@ module.exports = function(grunt) {
       cwd: 'bin',
       expand: true,
       src: ['*'],
-      options: { mode: true},
+      options: { mode: true },
       dest: '<%= tempDir %>/bin/'
     });
     grunt.config('copy.backend_files', {
       expand: true,
-      src: ['conf/**', 'tools/phantomjs/*', 'scripts/*'],
-      options: { mode: true},
+      src: ['conf/**', `tools/chromium/${chromium_revision}/*`, 'scripts/*'],
+      options: { mode: true },
       dest: '<%= tempDir %>'
     });
 

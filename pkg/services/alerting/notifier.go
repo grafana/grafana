@@ -3,12 +3,14 @@ package alerting
 import (
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/components/renderer"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/imguploader"
-	"github.com/grafana/grafana/pkg/components/renderer"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 
@@ -79,25 +81,26 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 
-	renderOpts := &renderer.RenderOpts{
-		Width:          "800",
-		Height:         "400",
-		Timeout:        "30",
-		OrgId:          context.Rule.OrgId,
-		IsAlertContext: true,
+	ref, err := context.GetDashboardUID()
+	if err != nil {
+		return err
 	}
 
-	if ref, err := context.GetDashboardUID(); err != nil {
-		return err
-	} else {
-		renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
+	renderOpts := renderer.Opts{
+		Width:   800,
+		Height:  400,
+		Timeout: 30 * time.Second,
+		OrgID:   context.Rule.OrgId,
+		OrgRole: m.ROLE_ADMIN,
+		Path:    fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId),
 	}
 
-	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {
+	imagePath, err := renderer.Render(renderOpts)
+	if err != nil {
 		return err
-	} else {
-		context.ImageOnDiskPath = imagePath
 	}
+
+	context.ImageOnDiskPath = imagePath
 
 	context.ImagePublicUrl, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
 	if err != nil {

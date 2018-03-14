@@ -33,6 +33,7 @@ var (
 	pkgArch   string
 	version   string = "v1"
 	// deb & rpm does not support semver so have to handle their version a little differently
+	chromiumRevision      string = ""
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
 	race                  bool
@@ -165,6 +166,9 @@ func readVersionFromPackageJson() {
 	version = jsonObj["version"].(string)
 	linuxPackageVersion = version
 	linuxPackageIteration = ""
+
+	grafanaNode := jsonObj["grafana"].(map[string]interface{})
+	chromiumRevision = grafanaNode["chromium_revision"].(string)
 
 	// handle pre version stuff (deb / rpm does not support semver)
 	parts := strings.Split(version, "-")
@@ -420,6 +424,7 @@ func ldflags() string {
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
+	b.WriteString(fmt.Sprintf(" -X main.chromiumRevision=%s", chromiumRevision))
 	return b.String()
 }
 

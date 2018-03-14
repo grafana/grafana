@@ -12,6 +12,7 @@ awsconfig
 /tmp
 tools/phantomjs/phantomjs
 tools/phantomjs/phantomjs.exe
+tools/chromium
 profile.out
 coverage.txt
 
