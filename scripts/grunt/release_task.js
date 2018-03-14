@@ -30,10 +30,25 @@ module.exports = function(grunt) {
       options: { mode: true},
       dest: '<%= tempDir %>'
     });
+    grunt.config('copy.netcrunch_plugin', {
+        expand: true,
+        src: ['data/plugins/adremsoft-netcrunch-app/**/*'],
+        options: { mode: true},
+        dest: '<%= tempDir %>'
+    });
+    grunt.config('copy.windows_installer', {
+        cwd: '<%= tempDir %>',
+        expand: true,
+        src: ['**/*'],
+        options: { mode: true},
+        dest: '<%= windowsDestDir %>'
+    });
 
     grunt.task.run('copy:public_to_temp');
     grunt.task.run('copy:backend_bin');
     grunt.task.run('copy:backend_files');
+    grunt.task.run('copy:netcrunch_plugin');
+    grunt.task.run('copy:windows_installer');
     grunt.task.run('clean:packaging');
 
     grunt.file.write(path.join(grunt.config('tempDir'), 'VERSION'), grunt.config('pkg.version'));
