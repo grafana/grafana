@@ -29,17 +29,14 @@ export class SpectrumPicker extends React.Component<IProps, any> {
   }
 
   componentDidMount() {
-    let spectrumOptions = _.assignIn(
-      {
-        flat: true,
-        showAlpha: true,
-        showButtons: false,
-        color: this.props.color,
-        appendTo: this.elem,
-        move: this.onSpectrumMove,
-      },
-      this.props.options
-    );
+    let spectrumOptions = _.assignIn({
+      flat: true,
+      showAlpha: true,
+      showButtons: false,
+      color: this.props.color,
+      appendTo: this.elem,
+      move: this.onSpectrumMove,
+    }, this.props.options);
 
     this.elem.spectrum(spectrumOptions);
     this.elem.spectrum('show');
@@ -67,6 +64,9 @@ export class SpectrumPicker extends React.Component<IProps, any> {
   }
 
   render() {
-    return <div className="spectrum-container" ref={this.setComponentElem} />;
+    return (
+      <div className="spectrum-container" ref={this.setComponentElem}></div>
+    );
   }
 }
+

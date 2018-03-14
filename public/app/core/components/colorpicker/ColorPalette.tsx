@@ -29,8 +29,7 @@ export class ColorPalette extends React.Component<IProps, any> {
           key={paletteColor}
           className={'pointer fa ' + cssClass}
           style={{ color: paletteColor }}
-          onClick={this.onColorSelect(paletteColor)}
-        >
+          onClick={this.onColorSelect(paletteColor)}>
           &nbsp;
         </i>
       );
@@ -42,3 +41,4 @@ export class ColorPalette extends React.Component<IProps, any> {
     );
   }
 }
+

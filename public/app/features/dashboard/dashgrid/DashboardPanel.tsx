@@ -1,9 +1,9 @@
 import React from 'react';
-import { PanelModel } from '../panel_model';
-import { PanelContainer } from './PanelContainer';
-import { AttachedPanel } from './PanelLoader';
-import { DashboardRow } from './DashboardRow';
-import { AddPanelPanel } from './AddPanelPanel';
+import {PanelModel} from '../panel_model';
+import {PanelContainer} from './PanelContainer';
+import {AttachedPanel} from './PanelLoader';
+import {DashboardRow} from './DashboardRow';
+import {AddPanelPanel} from './AddPanelPanel';
 
 export interface DashboardPanelProps {
   panel: PanelModel;
@@ -46,6 +46,9 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
       return <AddPanelPanel panel={this.props.panel} getPanelContainer={this.props.getPanelContainer} />;
     }
 
-    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
+    return (
+      <div ref={element => this.element = element} className="panel-height-helper" />
+    );
   }
 }
+
