@@ -9,9 +9,6 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
 ![](http://docs.grafana.org/assets/img/features/dashboard_ex1.png)
 
-## Grafana v5 Alpha Preview
-Grafana master is now v5.0 alpha. This is going to be the biggest and most foundational release Grafana has ever had, coming with a ton of UX improvements, a new dashboard grid engine, dashboard folders, user teams and permissions. Checkout out this [video preview](https://www.youtube.com/watch?v=BC_YRNpqj5k) of Grafana v5.
-
 ## Installation
 Head to [docs.grafana.org](http://docs.grafana.org/installation/) and [download](https://grafana.com/get)
 the latest release.
@@ -27,7 +24,7 @@ the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.9
+- Go 1.10
 - NodeJS LTS
 
 ### Building the backend
