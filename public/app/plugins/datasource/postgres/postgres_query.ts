@@ -24,9 +24,10 @@ export default class PostgresQuery {
     target.where = target.where || [];
     target.select = target.select || [[{ type: 'column', params: ['value'] }]];
 
-    this.updateProjection();
     // give interpolateQueryStr access to this
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
+
+    this.updateProjection();
   }
 
   quoteIdentifier(value) {

@@ -77,9 +77,19 @@ export class PostgresQueryCtrl extends QueryCtrl {
     });
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+
   }
 
   buildSelectMenu() {
+
+    if (!queryPart.hasAggregates()) {
+      this.datasource.metricFindQuery(this.queryBuilder.buildAggregateQuery())
+        .then(results => {
+          queryPart.clearAggregates();
+          _.map(results, segment => { queryPart.registerAggregate(segment.text); });
+        })
+        .catch(this.handleQueryError.bind(this));
+    }
     var categories = queryPart.getCategories();
     this.selectMenu = _.reduce(
       categories,
@@ -279,6 +289,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         var datatype = results[0].text;
         switch (datatype) {
           case "text":
+          case "character":
           case "character varying":
             return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '~', '~*','!~','!~*','IN']));
           default:

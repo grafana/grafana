@@ -23,6 +23,17 @@ function register(options: any) {
   options.category.push(index[options.type]);
 }
 
+function registerAggregate(name: string) {
+  register({
+    type: name,
+    addStrategy: replaceAggregationAddStrategy,
+    category: categories.Aggregations,
+    params: [],
+    defaultParams: [],
+    renderer: functionRenderer,
+  });
+}
+
 var groupByTimeFunctions = [];
 
 function aliasRenderer(part, innerExpr) {
@@ -192,6 +203,12 @@ register({
 
 export default {
   create: createPart,
+  registerAggregate: registerAggregate,
+  clearAggregates: function() { categories.Aggregations = []; },
+  hasAggregates: function() {
+    // FIXME
+    return categories.Aggregations.length > 6;
+  },
   getCategories: function() {
     return categories;
   },
