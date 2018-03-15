@@ -15,9 +15,13 @@
 * **Units**: Second to HH:mm:ss formatter [#11107](https://github.com/grafana/grafana/issues/11107), thx [@gladdiologist](https://github.com/gladdiologist) 
 * **Singlestat**: Add color to prefix and postfix in singlestat panel [#11143](https://github.com/grafana/grafana/pull/11143), thx [@ApsOps](https://github.com/ApsOps)
 
-# 5.0.2 (unrelease)
-
+# 5.0.2 (2018-03-14)
+* **Mysql**: Mysql panic occurring occasionally upon Grafana dashboard access [#11155](https://github.com/grafana/grafana/issues/11155)
+* **Dashboards**: Should be possible to browse dashboard using only uid [#11231](https://github.com/grafana/grafana/issues/11231)
+* **Alerting**: Fixes bug where alerts from hidden panels where deleted [#11222](https://github.com/grafana/grafana/issues/11222)
+* **Import**: Fixes bug where dashboards with alerts couldn't be imported [#11227](https://github.com/grafana/grafana/issues/11227)
 * **Teams**: Remove quota restrictions from teams [#11220](https://github.com/grafana/grafana/issues/11220)
+* **Render**: Fixes bug with legacy url redirection for panel rendering [#11180](https://github.com/grafana/grafana/issues/11180)
 
 # 5.0.1 (2018-03-08)
 

@@ -105,6 +105,18 @@ type SessionWrapper struct {
 }
 
 func (s *SessionWrapper) Start(c *macaron.Context) error {
+	// See https://github.com/grafana/grafana/issues/11155 for details on why
+	// a recover and retry is needed
+	defer func() error {
+		if err := recover(); err != nil {
+			var retryErr error
+			s.session, retryErr = s.manager.Start(c)
+			return retryErr
+		}
+
+		return nil
+	}()
+
 	var err error
 	s.session, err = s.manager.Start(c)
 	return err
