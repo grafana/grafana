@@ -20,7 +20,7 @@ import (
 var serverIP string = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	Convey("MSSQL", t, func() {
+	SkipConvey("MSSQL", t, func() {
 		x := InitMSSQLTestDB(t)
 
 		endpoint := &MssqlQueryEndpoint{
@@ -93,7 +93,7 @@ func TestMSSQL(t *testing.T) {
 			_, err = sess.Exec(sql)
 			So(err, ShouldBeNil)
 
-			Convey("Query with Table format should map MSSQL column types to Go types", func() {
+			Convey("When doing a table query should map MSSQL column types to Go types", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
@@ -141,37 +141,6 @@ func TestMSSQL(t *testing.T) {
 				So(column[21].(time.Time), ShouldEqual, time.Date(1, 1, 1, dt.Hour(), dt.Minute(), dt.Second(), dt.Nanosecond(), time.UTC))
 				So(column[22].(time.Time), ShouldEqual, dt2.In(time.FixedZone("UTC", int(-7*time.Hour))))
 			})
-
-			// Convey("stored procedure", func() {
-			// 	sql := `
-			// 	create procedure dbo.test_sp as
-			// 	begin
-			// 		select 1
-			// 	end
-			// `
-			// 	sess.Exec(sql)
-
-			// 	sql = `
-			// 	ALTER PROCEDURE dbo.test_sp
-			// 		@from int,
-			// 		@to 	int
-			// 	AS
-			// 	BEGIN
-			// 		select
-			// 			GETDATE() AS Time,
-			// 			1 as value,
-			// 			'metric' as metric
-			// 	END
-			// `
-			// 	_, err := sess.Exec(sql)
-			// 	So(err, ShouldBeNil)
-
-			// 	sql = `
-			// 	EXEC dbo.test_sp 1, 2
-			// `
-			// 	_, err = sess.Exec(sql)
-			// 	So(err, ShouldBeNil)
-			// })
 		})
 
 		Convey("Given a table with metrics", func() {
