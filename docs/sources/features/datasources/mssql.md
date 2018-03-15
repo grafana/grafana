@@ -1,24 +1,24 @@
 +++
-title = "Using MSSQL in Grafana"
-description = "Guide for using MSSQL in Grafana"
-keywords = ["grafana", "MSSQL", "guide"]
+title = "Using Microsoft SQL Server in Grafana"
+description = "Guide for using Microsoft SQL Server in Grafana"
+keywords = ["grafana", "MSSQL", "Microsoft", "SQL", "guide"]
 type = "docs"
 [menu.docs]
-name = "MSSQL"
+name = "Microsoft SQL Server"
 parent = "datasources"
 weight = 7
 +++
 
-# Using MSSQL in Grafana
+# Using Microsoft SQL Server in Grafana
 
-Grafana ships with a built-in MSSQL data source plugin that allows you to query and visualize data from any MS SQL server 2005 or newer.
+Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer.
 
 ## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+2. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
-4. Select *MSSQL* from the *Type* dropdown.
+4. Select *Microsoft SQL Server* from the *Type* dropdown.
 
 ### Database User Permissions (Important!)
 
@@ -42,15 +42,16 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 
 Macro example | Description
 ------------ | -------------
-*$__time(dateColumn)* | Will rename the column to `time`. For example, *dateColumn AS time*.
-*$__utcTime(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to UTC depending on the server's local timeoffset and rename it to `time`. For example, *DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time*
-*$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to unix timestamp and rename the it to `time`. For example, *DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time*
-*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn >= DATEADD(s, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND dateColumn <= DATEADD(s, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
-*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *DATEADD(second, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
-*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *DATEADD(second, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
-*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
-*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
-*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
+*$__time(dateColumn)* | Will be replaced by an expression to rename the column to `time`. For example, *`dateColumn as time`*
+*$__utcTime(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to UTC depending on the server's local timeoffset and rename it to `time`. For example, *`DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time`*
+*$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to unix timestamp and rename it to `time`. For example, *`DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time`*
+*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *`dateColumn >= DATEADD(s, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND dateColumn <= DATEADD(s, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')`*
+*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *`DATEADD(second, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')`*
+*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *`DATEADD(second, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')`*
+*$__timeGroup(dateColumn,'5m', NULL)* | Will be replaced by an expression usable in GROUP BY clause. For example, *`cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumns))/300 as int)*300 as int)`*
+*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *`dateColumn > 1494410783 AND dateColumn < 1494497183`*
+*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *`1494410783`*
+*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *`1494497183`*
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -68,11 +69,11 @@ Query editor with example query:
 The query:
 
 ```sql
-SELECT  COLUMN_NAME AS [Name], 
+SELECT  COLUMN_NAME AS [Name],
         DATA_TYPE AS [Type],
         CHARACTER_OCTET_LENGTH AS [Length],
-        NUMERIC_PRECISION as [Precisopn],	
-        NUMERIC_PRECISION_RADIX AS [Radix],	
+        NUMERIC_PRECISION as [Precisopn],
+        NUMERIC_PRECISION_RADIX AS [Radix],
         NUMERIC_SCALE AS [Scale]
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'mssql_types';
@@ -209,7 +210,7 @@ An example query:
 SELECT
   DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column) ) as [time],
  metric1 as [text],
-  convert(varvhar, metric1) + ',' + convert(varchar, metric2) as [tags] 
+  convert(varvhar, metric1) + ',' + convert(varchar, metric2) as [tags]
 FROM
   test_data
 WHERE
