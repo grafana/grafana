@@ -1,6 +1,7 @@
 package mssql
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -16,10 +17,10 @@ import (
 // To run this test, remove the Skip from SkipConvey
 // and set up a MSSQL db named grafana_tests and a user/password grafana/Password!
 // and set the variable below to the IP address of the database
-var serverIP string = "172.18.0.1"
+var serverIP string = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	SkipConvey("MSSQL", t, func() {
+	Convey("MSSQL", t, func() {
 		x := InitMSSQLTestDB(t)
 
 		endpoint := &MssqlQueryEndpoint{
@@ -66,20 +67,65 @@ func TestMSSQL(t *testing.T) {
 				c_time time,
 				c_datetimeoffset datetimeoffset
 			)
+
+			IF OBJECT_ID('dbo.[metric]', 'U') IS NOT NULL
+				DROP TABLE dbo.[metric]
+
+			CREATE TABLE [metric] (
+				time datetime,
+				measurement nvarchar(100),
+				value int
+			)
 		`
 
 		_, err := sess.Exec(sql)
 		So(err, ShouldBeNil)
 
-		sql = `
+		// type metric struct {
+		// 	Time        time.Time
+		// 	Measurement string
+		// 	Value       int64
+		// }
+
+		// series := []*metric{}
+
+		// from := time.Now().Truncate(60 * time.Minute).Add((-30 * time.Minute))
+		// for _, t := range genTimeRangeByInterval(from, 10*time.Minute, 10*time.Second) {
+		// 	series = append(series, &metric{
+		// 		Time:        t,
+		// 		Measurement: "test",
+		// 		Value:       0,
+		// 	})
+		// }
+
+		// for _, t := range genTimeRangeByInterval(from.Add(20*time.Minute), 10*time.Minute, 10*time.Second) {
+		// 	series = append(series, &metric{
+		// 		Time:        t,
+		// 		Measurement: "test",
+		// 		Value:       0,
+		// 	})
+		// }
+
+		// rowsAffected, err := sess.InsertMulti(series)
+		// So(err, ShouldBeNil)
+		// So(rowsAffected, ShouldBeGreaterThan, 0)
+
+		dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+		dtFormat := "2006-01-02 15:04:05.999999999"
+		d := dt.Format(dtFormat)
+		dt2 := time.Date(2018, 3, 14, 21, 20, 6, 8896406e2, time.UTC)
+		dt2Format := "2006-01-02 15:04:05.999999999 -07:00"
+		d2 := dt2.Format(dt2Format)
+
+		sql = fmt.Sprintf(`
 			INSERT INTO [mssql_types]
 			SELECT
         1, 5, 20020, 980300, 1420070400, '$20000.15', '£2.15', 12345.12,
         1.11, 2.22, 3.33,
 				'char10', 'varchar10', 'text',
 				N'☺nchar12☺', N'☺nvarchar12☺', N'☺text☺',
-				GETUTCDATE(), GETUTCDATE(), GETUTCDATE(), CAST(GETUTCDATE() AS DATE), CAST(GETUTCDATE() AS TIME), SWITCHOFFSET(SYSDATETIMEOFFSET(), '-07:00')
-    `
+			  CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00')
+    `, d, d2, d, d, d, d2)
 
 		_, err = sess.Exec(sql)
 		So(err, ShouldBeNil)
@@ -125,12 +171,43 @@ func TestMSSQL(t *testing.T) {
 			So(column[15].(string), ShouldEqual, "☺nvarchar12☺")
 			So(column[16].(string), ShouldEqual, "☺text☺")
 
-			So(column[17].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now().UTC())
-			So(column[18].(time.Time), ShouldHappenWithin, time.Duration(10*time.Millisecond), time.Now().UTC())
-			So(column[19].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now().UTC().Truncate(time.Minute))
-			So(column[20].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now().UTC().Truncate(24*time.Hour)) // ShouldEqual dose not work here !!?
-			So(column[21].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Date(1, time.January, 1, time.Now().UTC().Hour(), time.Now().UTC().Minute(), time.Now().UTC().Second(), 0, time.UTC))
-			So(column[22].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now().UTC())
+			So(column[17].(time.Time), ShouldEqual, dt)
+			So(column[18].(time.Time), ShouldEqual, dt2)
+			So(column[19].(time.Time), ShouldEqual, dt.Truncate(time.Minute))
+			So(column[20].(time.Time), ShouldEqual, dt.Truncate(24*time.Hour))
+			So(column[21].(time.Time), ShouldEqual, time.Date(1, 1, 1, dt.Hour(), dt.Minute(), dt.Second(), dt.Nanosecond(), time.UTC))
+			So(column[22].(time.Time), ShouldEqual, dt2.In(time.FixedZone("UTC", int(-7*time.Hour))))
+		})
+
+		Convey("stored procedure", func() {
+			sql := `
+				create procedure dbo.test_sp as
+				begin
+					select 1
+				end
+			`
+			sess.Exec(sql)
+
+			sql = `
+				ALTER PROCEDURE dbo.test_sp
+					@from int,
+					@to 	int
+				AS
+				BEGIN
+					select
+						GETDATE() AS Time,
+						1 as value,
+						'metric' as metric
+				END
+			`
+			_, err := sess.Exec(sql)
+			So(err, ShouldBeNil)
+
+			sql = `
+				EXEC dbo.test_sp 1, 2
+			`
+			_, err = sess.Exec(sql)
+			So(err, ShouldBeNil)
 		})
 	})
 }
@@ -147,4 +224,17 @@ func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
 	sqlutil.CleanDB(x)
 
 	return x
+}
+
+func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {
+	durationSec := int64(duration.Seconds())
+	intervalSec := int64(interval.Seconds())
+	timeRange := []time.Time{}
+
+	for i := int64(0); i <= durationSec; i += intervalSec {
+		timeRange = append(timeRange, from)
+		from = from.Add(time.Duration(int64(time.Second) * intervalSec))
+	}
+
+	return timeRange
 }
