@@ -5,7 +5,6 @@ export class PromCompleter {
   labelQueryCache: any;
   labelNameCache: any;
   labelValueCache: any;
-  templateVariableCompletions: any;
 
   identifierRegexps = [/\[/, /[a-zA-Z0-9_:]/];
 
@@ -13,33 +12,33 @@ export class PromCompleter {
     this.labelQueryCache = {};
     this.labelNameCache = {};
     this.labelValueCache = {};
-    this.templateVariableCompletions = _.flatten(
-      this.templateSrv.variables.map(variable => {
-        return [
-          {
-            caption: '$' + variable.name,
-            value: '$' + variable.name,
-            meta: 'variable.other',
-            score: Number.MAX_VALUE,
-          },
-          {
-            caption: '[[' + variable.name + ']',
-            value: '[[' + variable.name + ']',
-            meta: 'variable.other',
-            score: Number.MAX_VALUE,
-          },
-        ];
-      })
-    );
   }
 
   getCompletions(editor, session, pos, prefix, callback) {
+    let token = session.getTokenAt(pos.row, pos.column);
     let wrappedCallback = (err, completions) => {
-      completions = completions.concat(this.templateVariableCompletions);
+      let templateVariableCompletions = _.flatten(
+        this.templateSrv.variables.map(variable => {
+          let suffix = token.type.indexOf('string') === 0 ? ']]' : ']';
+          return [
+            {
+              caption: '$' + variable.name,
+              value: '$' + variable.name,
+              meta: 'variable.other',
+              score: Number.MAX_VALUE,
+            },
+            {
+              caption: '[[' + variable.name + suffix,
+              value: '[[' + variable.name + suffix,
+              meta: 'variable.other',
+              score: Number.MAX_VALUE,
+            },
+          ];
+        })
+      );
+      completions = completions.concat(templateVariableCompletions);
       return callback(err, completions);
     };
-
-    let token = session.getTokenAt(pos.row, pos.column);
 
     switch (token.type) {
       case 'entity.name.tag.label-matcher':
