@@ -103,7 +103,7 @@ func (this *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext,
 }
 
 func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Creating Altermanager alert", "ruleId", evalContext.Rule.Id, "notification", this.Name)
+	this.log.Info("Sending Alertmanager alert", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err != nil {
