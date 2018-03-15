@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/tsdb"
+	"strconv"
 )
 
 //const rsString = `(?:"([^"]*)")`;
@@ -99,7 +100,19 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
-
+		if len(args) == 3 {
+			m.Query.Model.Set("fill", true)
+			m.Query.Model.Set("fillInterval", interval.Seconds())
+			if args[2] == "NULL" {
+				m.Query.Model.Set("fillNull", true)
+			} else {
+				floatVal, err := strconv.ParseFloat(args[2], 64)
+				if err != nil {
+					return "", fmt.Errorf("error parsing fill value %v", args[2])
+				}
+				m.Query.Model.Set("fillValue", floatVal)
+			}
+		}
 		return fmt.Sprintf("cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s))/%.0f as int)*%.0f as int)", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {

@@ -3,15 +3,19 @@ package mssql
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
+	"time"
 )
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
 		engine := &MsSqlMacroEngine{}
 		timeRange := &tsdb.TimeRange{From: "5m", To: "now"}
-		query := &tsdb.Query{}
+		query := &tsdb.Query{
+			Model: simplejson.New(),
+		}
 
 		Convey("interpolate __time function", func() {
 			sql, err := engine.Interpolate(query, nil, "select $__time(time_column)")
@@ -97,5 +101,30 @@ func TestMacroEngine(t *testing.T) {
 			So(sql, ShouldEqual, "select 18446744066914187038")
 		})
 
+		Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
+			_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', NULL)")
+
+			fill := query.Model.Get("fill").MustBool()
+			fillNull := query.Model.Get("fillNull").MustBool()
+			fillInterval := query.Model.Get("fillInterval").MustInt()
+
+			So(err, ShouldBeNil)
+			So(fill, ShouldBeTrue)
+			So(fillNull, ShouldBeTrue)
+			So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+		})
+
+		Convey("interpolate __timeGroup function with fill (value = float)", func() {
+			_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', 1.5)")
+
+			fill := query.Model.Get("fill").MustBool()
+			fillValue := query.Model.Get("fillValue").MustFloat64()
+			fillInterval := query.Model.Get("fillInterval").MustInt()
+
+			So(err, ShouldBeNil)
+			So(fill, ShouldBeTrue)
+			So(fillValue, ShouldEqual, 1.5)
+			So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+		})
 	})
 }
