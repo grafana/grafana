@@ -43,7 +43,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
   }
 
   getCompleter(query) {
-    return new PromCompleter(this.datasource);
+    return new PromCompleter(this.datasource, this.templateSrv);
   }
 
   getDefaultFormat() {
