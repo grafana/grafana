@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -225,8 +226,8 @@ var (
 
 func InitTestDB(t *testing.T) *xorm.Engine {
 	selectedDb := dbSqlite
-	//selectedDb := dbMySql
-	//selectedDb := dbPostgres
+	// selectedDb := dbMySql
+	// selectedDb := dbPostgres
 
 	var x *xorm.Engine
 	var err error
@@ -244,6 +245,9 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 	default:
 		x, err = xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
 	}
+
+	x.DatabaseTZ = time.UTC
+	x.TZLocation = time.UTC
 
 	// x.ShowSQL()
 
