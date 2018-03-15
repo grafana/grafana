@@ -259,6 +259,80 @@ func TestMSSQL(t *testing.T) {
 				So(actualValueLast, ShouldEqual, 20)
 				So(actualTimeLast, ShouldEqual, fromStart.Add(25*time.Minute))
 			})
+
+			Convey("When doing a metric query using timeGroup with NULL fill enabled", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, measurement as metric, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m'), measurement ORDER BY 1",
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+					TimeRange: &tsdb.TimeRange{
+						From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+						To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				queryResult := resp.Results["A"]
+				So(err, ShouldBeNil)
+				So(queryResult.Error, ShouldBeNil)
+
+				points := queryResult.Series[0].Points
+
+				So(len(points), ShouldEqual, 7)
+				actualValueFirst := points[0][0].Float64
+				actualTimeFirst := time.Unix(int64(points[0][1].Float64)/1000, 0)
+				So(actualValueFirst, ShouldEqual, 15)
+				So(actualTimeFirst, ShouldEqual, fromStart)
+
+				actualNullPoint := points[3][0]
+				actualNullTime := time.Unix(int64(points[3][1].Float64)/1000, 0)
+				So(actualNullPoint.Valid, ShouldBeFalse)
+				So(actualNullTime, ShouldEqual, fromStart.Add(15*time.Minute))
+
+				actualValueLast := points[5][0].Float64
+				actualTimeLast := time.Unix(int64(points[5][1].Float64)/1000, 0)
+				So(actualValueLast, ShouldEqual, 20)
+				So(actualTimeLast, ShouldEqual, fromStart.Add(25*time.Minute))
+
+				actualLastNullPoint := points[6][0]
+				actualLastNullTime := time.Unix(int64(points[6][1].Float64)/1000, 0)
+				So(actualLastNullPoint.Valid, ShouldBeFalse)
+				So(actualLastNullTime, ShouldEqual, fromStart.Add(30*time.Minute))
+
+			})
+
+			Convey("When doing a metric query using timeGroup with float fill enabled", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, measurement as metric, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m'), measurement ORDER BY 1",
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+					TimeRange: &tsdb.TimeRange{
+						From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+						To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				queryResult := resp.Results["A"]
+				So(err, ShouldBeNil)
+				So(queryResult.Error, ShouldBeNil)
+
+				points := queryResult.Series[0].Points
+
+				So(points[6][0].Float64, ShouldEqual, 1.5)
+			})
 		})
 	})
 }
