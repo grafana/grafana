@@ -16,7 +16,6 @@ export default class InfluxDatasource {
   basicAuth: any;
   withCredentials: any;
   interval: any;
-  allowDatabaseQuery: boolean;
   supportAnnotations: boolean;
   supportMetrics: boolean;
   responseParser: any;
@@ -35,7 +34,6 @@ export default class InfluxDatasource {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
-    this.allowDatabaseQuery = (instanceSettings.jsonData || {}).allowDatabaseQuery === true;
     this.supportAnnotations = true;
     this.supportMetrics = true;
     this.responseParser = new ResponseParser();
@@ -240,9 +238,6 @@ export default class InfluxDatasource {
 
     if (options && options.database) {
       params.db = options.database;
-      if (params.db !== this.database && !this.allowDatabaseQuery) {
-        return this.$q.reject({ message: 'This datasource does not allow changing database' });
-      }
     } else if (this.database) {
       params.db = this.database;
     }

@@ -23,16 +23,24 @@
 	</div>
 </div>
 
-<gf-form-switch class="gf-form"
-  label="Allow Database Queries"
-  label-class="gf-form-label width-14"
-  checked="ctrl.current.jsonData.allowDatabaseQuery"
-  tooltip="Support changing the database from a query"></gf-form-switch>
+
+<div class="gf-form-group">
+	<div class="grafana-info-box">
+		<h5>Database Access</h5>
+		<p>
+			Setting the database for this datasource does not deny access to other databases.  The InfluxDB query syntax allows
+			switching the database in the query.  For example:
+			<code>SHOW MEASUREMENTS ON _internal</code> or <code>SELECT * FROM "_internal".."database" LIMIT 10</code>
+			<br/><br/>
+			To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
+		</p>
+	</div>
+</div>
 
 <div class="gf-form-group">
 	<div class="gf-form-inline">
 		<div class="gf-form">
-			<span class="gf-form-label width-14">Min time interval</span>
+			<span class="gf-form-label">Min time interval</span>
 			<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="10s"></input>
 			<info-popover mode="right-absolute">
 				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
