@@ -13,24 +13,14 @@ export class PromCompleter {
     this.labelQueryCache = {};
     this.labelNameCache = {};
     this.labelValueCache = {};
-    this.templateVariableCompletions = _.flatten(
-      this.templateSrv.variables.map(variable => {
-        return [
-          {
-            caption: '$' + variable.name,
-            value: '$' + variable.name,
-            meta: 'variable.other',
-            score: Number.MAX_VALUE,
-          },
-          {
-            caption: '[[' + variable.name + ']',
-            value: '[[' + variable.name + ']',
-            meta: 'variable.other',
-            score: Number.MAX_VALUE,
-          },
-        ];
-      })
-    );
+    this.templateVariableCompletions = this.templateSrv.variables.map(variable => {
+      return {
+        caption: '$' + variable.name,
+        value: '$' + variable.name,
+        meta: 'variable.other',
+        score: Number.MAX_VALUE,
+      };
+    });
   }
 
   getCompletions(editor, session, pos, prefix, callback) {
