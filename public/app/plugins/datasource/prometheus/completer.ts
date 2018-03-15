@@ -17,7 +17,7 @@ export class PromCompleter {
       return {
         caption: '$' + variable.name,
         value: '$' + variable.name,
-        meta: 'variable.other',
+        meta: 'variable',
         score: Number.MAX_VALUE,
       };
     });
