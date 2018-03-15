@@ -228,10 +228,10 @@ export default class InfluxDatasource {
   }
 
   _influxRequest(method: string, url: string, data: any, options?: any) {
-    var currentUrl = this.urls.shift();
+    const currentUrl = this.urls.shift();
     this.urls.push(currentUrl);
 
-    var params: any = {};
+    let params: any = {};
 
     if (this.username) {
       params.u = this.username;
@@ -252,7 +252,7 @@ export default class InfluxDatasource {
       data = null;
     }
 
-    var req: any = {
+    let req: any = {
       method: method,
       url: currentUrl + url,
       params: params,
@@ -270,7 +270,7 @@ export default class InfluxDatasource {
       req.headers.Authorization = this.basicAuth;
     }
 
-    return this.backendSrv.datasourceRequest(options).then(
+    return this.backendSrv.datasourceRequest(req).then(
       result => {
         return result.data;
       },
