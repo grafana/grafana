@@ -78,6 +78,10 @@ func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) erro
 		alerts = append(alerts, alertJSON)
 	}
 
+	if len(alerts) == 0 {
+		return nil
+	}
+
 	bodyJSON := simplejson.NewFromAny(alerts)
 	body, _ := bodyJSON.MarshalJSON()
 
