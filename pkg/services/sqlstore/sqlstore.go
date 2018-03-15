@@ -34,6 +34,7 @@ type DatabaseConfig struct {
 	ServerCertName                             string
 	MaxOpenConn                                int
 	MaxIdleConn                                int
+	ConnMaxLifetime                            int
 }
 
 var (
@@ -158,18 +159,20 @@ func getEngine() (*xorm.Engine, error) {
 	engine, err := xorm.NewEngine(DbCfg.Type, cnnstr)
 	if err != nil {
 		return nil, err
-	} else {
-		engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
-		engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
-		debugSql := setting.Cfg.Section("database").Key("log_queries").MustBool(false)
-		if !debugSql {
-			engine.SetLogger(&xorm.DiscardLogger{})
-		} else {
-			engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
-			engine.ShowSQL(true)
-			engine.ShowExecTime(true)
-		}
 	}
+
+	engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
+	engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
+	engine.SetConnMaxLifetime(time.Second * time.Duration(DbCfg.ConnMaxLifetime))
+	debugSql := setting.Cfg.Section("database").Key("log_queries").MustBool(false)
+	if !debugSql {
+		engine.SetLogger(&xorm.DiscardLogger{})
+	} else {
+		engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+		engine.ShowSQL(true)
+		engine.ShowExecTime(true)
+	}
+
 	return engine, nil
 }
 
@@ -203,6 +206,7 @@ func LoadConfig() {
 	}
 	DbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
 	DbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(0)
+	DbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
 
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true
