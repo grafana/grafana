@@ -196,7 +196,7 @@ func (rs *Rows) ScanMap(dest interface{}) error {
 	newDest := make([]interface{}, len(cols))
 	vvv := vv.Elem()
 
-	for i, _ := range cols {
+	for i := range cols {
 		newDest[i] = ReflectNew(vvv.Type().Elem()).Interface()
 		//v := reflect.New(vvv.Type().Elem())
 		//newDest[i] = v.Interface()
@@ -245,6 +245,18 @@ type Row struct {
 	rows *Rows
 	// One of these two will be non-nil:
 	err error // deferred error for easy chaining
+}
+
+// ErrorRow return an error row
+func ErrorRow(err error) *Row {
+	return &Row{
+		err: err,
+	}
+}
+
+// NewRow from rows
+func NewRow(rows *Rows, err error) *Row {
+	return &Row{rows, err}
 }
 
 func (row *Row) Columns() ([]string, error) {
