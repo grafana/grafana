@@ -61,6 +61,10 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+
+  .search-item--indent {
+    margin-left: 14px;
+  }
 }
 
 .search-dropdown__col_2 {
@@ -202,7 +206,7 @@
   padding: 5px;
   flex: 0 0 auto;
   font-size: 19px;
-  padding: 5px 2px 5px 10px;
+  padding: 5px 2px 5px 16px;
 }
 
 .search-item__tags {
