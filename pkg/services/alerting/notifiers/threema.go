@@ -114,10 +114,6 @@ func NewThreemaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}, nil
 }
 
-func (this *ThreemaNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	notifier.log.Info("Sending alert notification from", "threema_id", notifier.GatewayID)
 	notifier.log.Info("Sending alert notification to", "threema_id", notifier.RecipientID)
