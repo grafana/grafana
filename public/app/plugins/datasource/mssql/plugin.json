@@ -1,9 +1,10 @@
 {
   "type": "datasource",
-  "name": "MSSQL",
+  "name": "Microsoft SQL Server",
   "id": "mssql",
 
   "info": {
+    "description": "Microsoft SQL Server Data Source for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
