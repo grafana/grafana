@@ -5,9 +5,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"time"
+
+	"math"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/go-xorm/core"
@@ -15,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"math"
 )
 
 type MssqlQueryEndpoint struct {
@@ -131,6 +133,24 @@ func (e MssqlQueryEndpoint) getTypedRowData(types []*sql.ColumnType, rows *core.
 
 	if err := rows.Scan(valuePtrs...); err != nil {
 		return nil, err
+	}
+
+	// convert types not handled by denisenkom/go-mssqldb
+	// unhandled types are returned as []byte
+	for i := 0; i < len(types); i++ {
+		if value, ok := values[i].([]byte); ok == true {
+			switch types[i].DatabaseTypeName() {
+			case "MONEY", "SMALLMONEY", "DECIMAL":
+				if v, err := strconv.ParseFloat(string(value), 64); err == nil {
+					values[i] = v
+				} else {
+					e.log.Debug("Rows", "Error converting numeric to float", value)
+				}
+			default:
+				e.log.Debug("Rows", "Unknown database type", types[i].DatabaseTypeName(), "value", value)
+				values[i] = string(value)
+			}
+		}
 	}
 
 	return values, nil

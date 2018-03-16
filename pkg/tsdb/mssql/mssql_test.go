@@ -34,6 +34,8 @@ func TestMSSQL(t *testing.T) {
 		sess := x.NewSession()
 		defer sess.Close()
 
+		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
+
 		Convey("Given a table with different native data types", func() {
 			sql := `
 				IF OBJECT_ID('dbo.[mssql_types]', 'U') IS NOT NULL
@@ -41,14 +43,15 @@ func TestMSSQL(t *testing.T) {
 
 				CREATE TABLE [mssql_types] (
 					c_bit bit,
+
 					c_tinyint tinyint,
 					c_smallint smallint,
 					c_int int,
 					c_bigint bigint,
+
 					c_money money,
 					c_smallmoney smallmoney,
 					c_numeric numeric(10,5),
-
 					c_real real,
 					c_decimal decimal(10,2),
 					c_float float,
@@ -113,17 +116,17 @@ func TestMSSQL(t *testing.T) {
 				column := queryResult.Tables[0].Rows[0]
 
 				So(column[0].(bool), ShouldEqual, true)
+
 				So(column[1].(int64), ShouldEqual, 5)
 				So(column[2].(int64), ShouldEqual, 20020)
 				So(column[3].(int64), ShouldEqual, 980300)
 				So(column[4].(int64), ShouldEqual, 1420070400)
-				// So(column[5].(float64), ShouldEqual, 20000.15)
-				// So(column[6].(float64), ShouldEqual, 2.15)
-				//So(column[7].(float64), ShouldEqual, 12345.12)
 
-				So(column[8].(float64), ShouldEqual, 1.1100000143051147) // MSSQL dose not have precision for "real" datatype
-				// fix me: MSSQL driver puts the decimal inside an array of chars. and the test fails despite the values are correct.
-				//So(column[9].([]uint8), ShouldEqual, []uint8{'2', '.', '2', '2'})
+				So(column[5].(float64), ShouldEqual, 20000.15)
+				So(column[6].(float64), ShouldEqual, 2.15)
+				So(column[7].(float64), ShouldEqual, 12345.12)
+				So(column[8].(float64), ShouldEqual, 1.1100000143051147)
+				So(column[9].(float64), ShouldEqual, 2.22)
 				So(column[10].(float64), ShouldEqual, 3.33)
 
 				So(column[11].(string), ShouldEqual, "char10    ")
