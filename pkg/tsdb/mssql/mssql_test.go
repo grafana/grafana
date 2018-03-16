@@ -2,6 +2,7 @@ package mssql
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"testing"
 	"time"
@@ -15,8 +16,10 @@ import (
 )
 
 // To run this test, remove the Skip from SkipConvey
-// and set up a MSSQL db named grafana_tests and a user/password grafana/Password!
-// and set the variable below to the IP address of the database
+// and set up a MSSQL db named grafanatest and a user/password grafana/Password!
+// Use the docker/blocks/mssql_tests/docker-compose.yaml to spin up a
+// preconfigured MSSQL server suitable for running these tests.
+// If needed, change the variable below to the IP address of the database.
 var serverIP string = "localhost"
 
 func TestMSSQL(t *testing.T) {
@@ -90,7 +93,7 @@ func TestMSSQL(t *testing.T) {
         1.11, 2.22, 3.33,
 				'char10', 'varchar10', 'text',
 				N'☺nchar12☺', N'☺nvarchar12☺', N'☺text☺',
-			  CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00')
+				CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00')
     `, d, d2, d, d, d, d2)
 
 			_, err = sess.Exec(sql)
@@ -146,14 +149,13 @@ func TestMSSQL(t *testing.T) {
 			})
 		})
 
-		Convey("Given a table with metrics", func() {
+		Convey("Given a table with metrics that lacks data for some series ", func() {
 			sql := `
 				IF OBJECT_ID('dbo.[metric]', 'U') IS NOT NULL
 					DROP TABLE dbo.[metric]
 
 				CREATE TABLE [metric] (
 					time datetime,
-					measurement nvarchar(100),
 					value int
 				)
 			`
@@ -162,39 +164,34 @@ func TestMSSQL(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			type metric struct {
-				Time        time.Time
-				Measurement string
-				Value       int64
+				Time  time.Time
+				Value int64
 			}
 
 			series := []*metric{}
-
-			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
 			firstRange := genTimeRangeByInterval(fromStart, 10*time.Minute, 10*time.Second)
 			secondRange := genTimeRangeByInterval(fromStart.Add(20*time.Minute), 10*time.Minute, 10*time.Second)
 
 			for _, t := range firstRange {
 				series = append(series, &metric{
-					Time:        t,
-					Measurement: "test",
-					Value:       15,
+					Time:  t,
+					Value: 15,
 				})
 			}
 
 			for _, t := range secondRange {
 				series = append(series, &metric{
-					Time:        t,
-					Measurement: "test",
-					Value:       20,
+					Time:  t,
+					Value: 20,
 				})
 			}
 
 			dtFormat := "2006-01-02 15:04:05.999999999"
 			for _, s := range series {
 				sql = fmt.Sprintf(`
-					INSERT INTO metric (time, measurement, value)
-					VALUES(CAST('%s' AS DATETIME), '%s', %d)
-				`, s.Time.Format(dtFormat), s.Measurement, s.Value)
+					INSERT INTO metric (time, value)
+					VALUES(CAST('%s' AS DATETIME), %d)
+				`, s.Time.Format(dtFormat), s.Value)
 
 				_, err = sess.Exec(sql)
 				So(err, ShouldBeNil)
@@ -205,7 +202,7 @@ func TestMSSQL(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m') AS time, measurement as metric, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m'), measurement ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -237,7 +234,7 @@ func TestMSSQL(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, measurement as metric, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m'), measurement ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -284,7 +281,7 @@ func TestMSSQL(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, measurement as metric, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m'), measurement ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, avg(value) as value FROM metric GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -304,6 +301,202 @@ func TestMSSQL(t *testing.T) {
 				points := queryResult.Series[0].Points
 
 				So(points[6][0].Float64, ShouldEqual, 1.5)
+			})
+		})
+
+		Convey("Given a table with metrics having multiple values and measurements", func() {
+			sql := `
+				IF OBJECT_ID('dbo.[metric_values]', 'U') IS NOT NULL
+					DROP TABLE dbo.[metric_values]
+
+				CREATE TABLE [metric_values] (
+					time datetime,
+					measurement nvarchar(100),
+					valueOne int,
+					valueTwo int,
+				)
+			`
+
+			_, err := sess.Exec(sql)
+			So(err, ShouldBeNil)
+
+			type metricValues struct {
+				Time        time.Time
+				Measurement string
+				ValueOne    int64
+				ValueTwo    int64
+			}
+
+			rand.Seed(time.Now().Unix())
+			rnd := func(min, max int64) int64 {
+				return rand.Int63n(max-min) + min
+			}
+
+			series := []*metricValues{}
+			for _, t := range genTimeRangeByInterval(fromStart.Add(-30*time.Minute), 90*time.Minute, 5*time.Minute) {
+				series = append(series, &metricValues{
+					Time:        t,
+					Measurement: "Metric A",
+					ValueOne:    rnd(0, 100),
+					ValueTwo:    rnd(0, 100),
+				})
+				series = append(series, &metricValues{
+					Time:        t,
+					Measurement: "Metric B",
+					ValueOne:    rnd(0, 100),
+					ValueTwo:    rnd(0, 100),
+				})
+			}
+
+			dtFormat := "2006-01-02 15:04:05"
+			for _, s := range series {
+				sql = fmt.Sprintf(`
+					INSERT metric_values (time, measurement, valueOne, valueTwo)
+					VALUES(CAST('%s' AS DATETIME), '%s', %d, %d)
+				`, s.Time.Format(dtFormat), s.Measurement, s.ValueOne, s.ValueTwo)
+
+				_, err = sess.Exec(sql)
+				So(err, ShouldBeNil)
+			}
+
+			Convey("When doing a metric query grouping by time and select metric column should return correct series", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": "SELECT $__timeEpoch(time), measurement as metric, valueOne, valueTwo FROM metric_values ORDER BY 1",
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				queryResult := resp.Results["A"]
+				So(err, ShouldBeNil)
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 4)
+				So(queryResult.Series[0].Name, ShouldEqual, "Metric A - valueOne")
+				So(queryResult.Series[1].Name, ShouldEqual, "Metric A - valueTwo")
+				So(queryResult.Series[2].Name, ShouldEqual, "Metric B - valueOne")
+				So(queryResult.Series[3].Name, ShouldEqual, "Metric B - valueTwo")
+			})
+
+			Convey("When doing a metric query grouping by time should return correct series", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				queryResult := resp.Results["A"]
+				So(err, ShouldBeNil)
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 2)
+				So(queryResult.Series[0].Name, ShouldEqual, "valueOne")
+				So(queryResult.Series[1].Name, ShouldEqual, "valueTwo")
+			})
+		})
+
+		Convey("Given a table with event data", func() {
+			sql := `
+				IF OBJECT_ID('dbo.[event]', 'U') IS NOT NULL
+					DROP TABLE dbo.[event]
+
+				CREATE TABLE [event] (
+					time_sec bigint,
+					description nvarchar(100),
+					tags nvarchar(100),
+				)
+			`
+
+			_, err := sess.Exec(sql)
+			So(err, ShouldBeNil)
+
+			type event struct {
+				TimeSec     int64
+				Description string
+				Tags        string
+			}
+
+			events := []*event{}
+			for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), 60*time.Minute, 25*time.Minute) {
+				events = append(events, &event{
+					TimeSec:     t.Unix(),
+					Description: "Someone deployed something",
+					Tags:        "deploy",
+				})
+				events = append(events, &event{
+					TimeSec:     t.Add(5 * time.Minute).Unix(),
+					Description: "New support ticket registered",
+					Tags:        "ticket",
+				})
+			}
+
+			for _, e := range events {
+				sql = fmt.Sprintf(`
+					INSERT [event] (time_sec, description, tags)
+					VALUES(%d, '%s', '%s')
+				`, e.TimeSec, e.Description, e.Tags)
+
+				_, err = sess.Exec(sql)
+				So(err, ShouldBeNil)
+			}
+
+			Convey("When doing an annotation query of deploy events should return expected result", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": "SELECT time_sec as time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC",
+								"format": "table",
+							}),
+							RefId: "Deploys",
+						},
+					},
+					TimeRange: &tsdb.TimeRange{
+						From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+						To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				queryResult := resp.Results["Deploys"]
+				So(err, ShouldBeNil)
+				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
+			})
+
+			Convey("When doing an annotation query of ticket events should return expected result", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": "SELECT time_sec as time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC",
+								"format": "table",
+							}),
+							RefId: "Tickets",
+						},
+					},
+					TimeRange: &tsdb.TimeRange{
+						From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+						To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				queryResult := resp.Results["Tickets"]
+				So(err, ShouldBeNil)
+				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
 			})
 		})
 	})
