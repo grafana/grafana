@@ -131,7 +131,8 @@ var (
 	PluginAppsSkipVerifyTLS bool
 
 	// Session settings.
-	SessionOptions session.Options
+	SessionOptions         session.Options
+	SessionConnMaxLifetime int64
 
 	// Global setting objects.
 	Cfg          *ini.File
@@ -634,6 +635,8 @@ func readSessionConfig() {
 	if SessionOptions.CookiePath == "" {
 		SessionOptions.CookiePath = "/"
 	}
+
+	SessionConnMaxLifetime = Cfg.Section("session").Key("conn_max_lifetime").MustInt64(14400)
 }
 
 func initLogging() {

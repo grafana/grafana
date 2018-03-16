@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"testing"
+	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -241,6 +242,8 @@ func TestAccountDataAccess(t *testing.T) {
 func testHelperUpdateDashboardAcl(dashboardId int64, items ...m.DashboardAcl) error {
 	cmd := m.UpdateDashboardAclCommand{DashboardId: dashboardId}
 	for _, item := range items {
+		item.Created = time.Now()
+		item.Updated = time.Now()
 		cmd.Items = append(cmd.Items, &item)
 	}
 	return UpdateDashboardAcl(&cmd)
