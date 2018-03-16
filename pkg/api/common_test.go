@@ -99,7 +99,7 @@ func setupScenarioContext(url string) *scenarioContext {
 	}))
 
 	sc.m.Use(middleware.GetContextHandler())
-	sc.m.Use(middleware.Sessioner(&session.Options{}))
+	sc.m.Use(middleware.Sessioner(&session.Options{}, 0))
 
 	return sc
 }

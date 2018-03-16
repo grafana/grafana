@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-macaron/session"
 	_ "github.com/go-macaron/session/memcache"
-	_ "github.com/go-macaron/session/mysql"
 	_ "github.com/go-macaron/session/postgres"
 	_ "github.com/go-macaron/session/redis"
 	"github.com/grafana/grafana/pkg/log"
@@ -25,6 +24,7 @@ var sessionOptions *session.Options
 var startSessionGC func()
 var getSessionCount func() int
 var sessionLogger = log.New("session")
+var sessionConnMaxLifetime int64
 
 func init() {
 	startSessionGC = func() {
@@ -63,9 +63,10 @@ func prepareOptions(opt *session.Options) *session.Options {
 	return opt
 }
 
-func Sessioner(options *session.Options) macaron.Handler {
+func Sessioner(options *session.Options, connMaxLifetime int64) macaron.Handler {
 	var err error
 	sessionOptions = prepareOptions(options)
+	sessionConnMaxLifetime = connMaxLifetime
 	sessionManager, err = session.NewManager(options.Provider, *options)
 	if err != nil {
 		panic(err)
