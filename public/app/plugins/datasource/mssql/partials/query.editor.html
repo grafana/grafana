@@ -38,7 +38,7 @@
 
 	<div class="gf-form"  ng-show="ctrl.showHelp">
 		<pre class="gf-form-pre alert alert-info">Time series:
-- return column named time (in UTC), as a unix time stamp or any sql native date datatype. you can use the macros below. 
+- return column named time (in UTC), as a unix time stamp or any sql native date datatype. You can use the macros below.
 - optional: return column named metric to represent the series names.
 - any other columns returned will be the time point values.
 - if multiple value columns are present and a metric column is provided. the series name will be the combination of "MetricName - ValueColumnName".
@@ -50,14 +50,15 @@ Macros:
 - $__time(column) -&gt; column AS time
 - $__utcTime(column) -&gt; DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), column) AS time
 - $__timeEpoch(column) -&gt; DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), column) ) AS time
-- $__timeFilter(column) -&gt;  column &gt; DATEADD(s, 1492750877+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND column &lt; DATEADD(s, 1492750877+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')
-- $__unixEpochFilter(column) -&gt;  column &gt; 1492750877 AND column &lt; 1492750877
+- $__timeFilter(column) -&gt; column &gt; DATEADD(s, 1492750877+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND column &lt; DATEADD(s, 1492750877+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')
+- $__unixEpochFilter(column) -&gt; column &gt; 1492750877 AND column &lt; 1492750877
+- $__timeGroup(column, '5m'[, fillvalue]) -&gt; cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second, GETDATE(), GETUTCDATE()), column))/300 as int)*300 as int). Providing a <i>fillValue</i> of <i>NULL</i> or floating value will automatically fill empty series in timerange with that value.
 
 Or build your own conditionals using these macros which just return the values:
-- $__timeFrom() -&gt;  DATEADD(second, 1492750877+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')
-- $__timeTo() -&gt;  DATEADD(second, 1492750877+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')
-- $__unixEpochFrom() -&gt;  1492750877
-- $__unixEpochTo() -&gt;  1492750877
+- $__timeFrom() -&gt; DATEADD(second, 1492750877+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')
+- $__timeTo() -&gt; DATEADD(second, 1492750877+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')
+- $__unixEpochFrom() -&gt; 1492750877
+- $__unixEpochTo() -&gt; 1492750877
 		</pre>
 	</div>
 
