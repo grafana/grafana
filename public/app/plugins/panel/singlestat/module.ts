@@ -7,7 +7,7 @@ import 'app/features/panellinks/link_srv';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -19,20 +19,21 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   unitFormats: any[];
   invalidGaugeRange: boolean;
   invalidSparklineRange: boolean;
+  isFullHeight: boolean;
   panel: any;
   events: any;
   valueNameOptions: any[] = [
-    { value: 'min', text: 'Min' },
-    { value: 'max', text: 'Max' },
-    { value: 'avg', text: 'Average' },
-    { value: 'current', text: 'Current' },
-    { value: 'total', text: 'Total' },
-    { value: 'name', text: 'Name' },
-    { value: 'first', text: 'First' },
-    { value: 'delta', text: 'Delta' },
-    { value: 'diff', text: 'Difference' },
-    { value: 'range', text: 'Range' },
-    { value: 'last_time', text: 'Time of last point' },
+    {value: 'min', text: 'Min'},
+    {value: 'max', text: 'Max'},
+    {value: 'avg', text: 'Average'},
+    {value: 'current', text: 'Current'},
+    {value: 'total', text: 'Total'},
+    {value: 'name', text: 'Name'},
+    {value: 'first', text: 'First'},
+    {value: 'delta', text: 'Delta'},
+    {value: 'diff', text: 'Difference'},
+    {value: 'range', text: 'Range'},
+    {value: 'last_time', text: 'Time of last point'},
   ];
   tableColumnOptions: any;
 
@@ -48,9 +49,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     prefix: '',
     postfix: '',
     nullText: null,
-    valueMaps: [{ value: 'null', op: '=', text: 'N/A' }],
-    mappingTypes: [{ name: 'value to text', value: 1 }, { name: 'range to text', value: 2 }],
-    rangeMaps: [{ from: 'null', to: 'null', text: 'N/A' }],
+    valueMaps: [{value: 'null', op: '=', text: 'N/A'}],
+    mappingTypes: [{name: 'value to text', value: 1}, {name: 'range to text', value: 2}],
+    rangeMaps: [{from: 'null', to: 'null', text: 'N/A'}],
     mappingType: 1,
     nullPointMode: 'connected',
     valueName: 'avg',
@@ -242,7 +243,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   getDecimalsForValue(value) {
     if (_.isNumber(this.panel.decimals)) {
-      return { decimals: this.panel.decimals, scaledDecimals: null };
+      return {decimals: this.panel.decimals, scaledDecimals: null};
     }
 
     let delta = value / 2;
@@ -324,7 +325,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       // Add $__name letiable for using in prefix or postfix
       data.scopedlets = _.extend({}, this.panel.scopedlets);
-      data.scopedlets['__name'] = { value: this.series[0].label };
+      data.scopedlets['__name'] = {value: this.series[0].label};
     }
     this.setValueMapping(data);
   }
@@ -384,7 +385,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   addValueMap() {
-    this.panel.valueMaps.push({ value: '', op: '=', text: '' });
+    this.panel.valueMaps.push({value: '', op: '=', text: ''});
   }
 
   removeRangeMap(rangeMap) {
@@ -394,7 +395,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   addRangeMap() {
-    this.panel.rangeMaps.push({ from: '', to: '', text: '' });
+    this.panel.rangeMaps.push({from: '', to: '', text: ''});
   }
 
   link(scope, elem, attrs, ctrl) {
@@ -465,7 +466,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ctrl.invalidGaugeRange = true;
         return;
       }
-
+      //circle-gauge-graph
       let plotCanvas = $('<div></div>');
       let plotCss = {
         top: '10px',
@@ -505,21 +506,21 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             gauge: {
               min: panel.gauge.minValue,
               max: panel.gauge.maxValue,
-              background: { color: bgColor },
-              border: { color: null },
-              shadow: { show: false },
+              background: {color: bgColor},
+              border: {color: null},
+              shadow: {show: false},
               width: gaugeWidth,
             },
-            frame: { show: false },
-            label: { show: false },
-            layout: { margin: 0, thresholdWidth: 0 },
-            cell: { border: { width: 0 } },
+            frame: {show: false},
+            label: {show: false},
+            layout: {margin: 0, thresholdWidth: 0},
+            cell: {border: {width: 0}},
             threshold: {
               values: thresholds,
               label: {
                 show: panel.gauge.thresholdLabels,
                 margin: thresholdMarkersWidth + 1,
-                font: { size: thresholdLabelFontSize },
+                font: {size: thresholdLabelFontSize},
               },
               show: panel.gauge.thresholdMarkers,
               width: thresholdMarkersWidth,
@@ -558,7 +559,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
 
       ctrl.invalidSparklineRange = false;
-      if (panel.sparkline.minValue > panel.sparkline.maxValue) {
+      if (panel.sparkline.minValue > panel.sparkline.maxValue && !ctrl.panel.sparkline.full) {
         ctrl.invalidSparklineRange = true;
         return;
       }
@@ -566,25 +567,29 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       let height = ctrl.height;
       let plotCanvas = $('<div></div>');
       let plotCss: any = {};
-      plotCss.position = 'absolute';
-
+      plotCss.position = `absolute`;
+      plotCss.left = `-5px`;
+      plotCss.bottom = `0px`;
+      plotCss.width = `${width - 10}px`;
       if (panel.sparkline.full) {
         plotCss.bottom = '5px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
         let dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
-        plotCss.height = height - dynamicHeightMargin + 'px';
+        plotCss.height = `${height - dynamicHeightMargin}px`;
+        ctrl.panel.sparkline.isFullHeight = false;
+        ctrl.panel.sparkline.minValue = 0;
+        ctrl.panel.sparkline.maxValue = 0;
+      } else if (panel.sparkline.maxValue && panel.sparkline.maxValue >= data.value && panel.sparkline.minValue <= data.value) {
+        const customHeight = Math.floor(height * (data.value - panel.sparkline.minValue) / (panel.sparkline.maxValue - panel.sparkline.minValue));
+        panel.sparkline.minValue = panel.sparkline.minValue || 0;
+        plotCss.height = `${customHeight}px`;
       } else {
-        plotCss.bottom = '0px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
-        plotCss.height = Math.floor(height * 0.25) + 'px';
+        plotCss.height = `${Math.floor(height * 0.25)}px`;
       }
 
       plotCanvas.css(plotCss);
 
       let options = {
-        legend: { show: false },
+        legend: {show: false},
         series: {
           lines: {
             show: true,
@@ -593,14 +598,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             fillColor: panel.sparkline.fillColor,
           },
         },
-        yaxes: { show: false },
+        yaxes: {show: false},
         xaxis: {
           show: false,
           mode: 'time',
           min: ctrl.range.from.valueOf(),
           max: ctrl.range.to.valueOf(),
         },
-        grid: { hoverable: false, show: false },
+        grid: {hoverable: false, show: false},
       };
 
       elem.append(plotCanvas);
@@ -730,4 +735,4 @@ function getColorForValue(data, value) {
   return _.first(data.colorMap);
 }
 
-export { SingleStatCtrl, SingleStatCtrl as PanelCtrl, getColorForValue };
+export {SingleStatCtrl, SingleStatCtrl as PanelCtrl, getColorForValue};
