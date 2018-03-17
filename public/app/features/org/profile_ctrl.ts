@@ -1,5 +1,5 @@
 import config from 'app/core/config';
-import {coreModule} from 'app/core/core';
+import { coreModule } from 'app/core/core';
 
 export class ProfileCtrl {
   user: any;
@@ -14,7 +14,7 @@ export class ProfileCtrl {
   constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
     this.getUserOrgs();
-    this.navModel = navModelSrv.getProfileNav();
+    this.navModel = navModelSrv.getNav('profile', 'profile-settings', 0);
   }
 
   getUser() {
@@ -38,7 +38,9 @@ export class ProfileCtrl {
   }
 
   update() {
-    if (!this.userForm.$valid) { return; }
+    if (!this.userForm.$valid) {
+      return;
+    }
 
     this.backendSrv.put('/api/user/', this.user).then(() => {
       this.contextSrv.user.name = this.user.name || this.user.login;
@@ -47,7 +49,6 @@ export class ProfileCtrl {
       }
     });
   }
-
 }
 
 coreModule.controller('ProfileCtrl', ProfileCtrl);

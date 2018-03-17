@@ -94,7 +94,7 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
-		InstallPlugin(v.Id, version, c)
+		InstallPlugin(v.Id, "", c)
 		logger.Infof("Installed dependency: %v ✔\n", v.Id)
 	}
 

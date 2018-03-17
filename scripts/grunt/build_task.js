@@ -7,7 +7,7 @@ module.exports = function(grunt) {
     'clean:release',
     'clean:build',
     'phantomjs',
-    'webpack:prod',
+    'exec:webpack',
   ]);
 
 };

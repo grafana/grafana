@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 
@@ -9,9 +7,7 @@ export class SubmenuCtrl {
   dashboard: any;
 
   /** @ngInject */
-  constructor(private $rootScope,
-              private variableSrv,
-              private $location) {
+  constructor(private $rootScope, private variableSrv, private $location) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.variableSrv.variables;
   }
@@ -25,7 +21,7 @@ export class SubmenuCtrl {
   }
 
   openEditView(editview) {
-    var search = _.extend(this.$location.search(), {editview: editview});
+    var search = _.extend(this.$location.search(), { editview: editview });
     this.$location.search(search);
   }
 }
@@ -38,8 +34,8 @@ export function submenuDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      dashboard: "=",
-    }
+      dashboard: '=',
+    },
   };
 }
 

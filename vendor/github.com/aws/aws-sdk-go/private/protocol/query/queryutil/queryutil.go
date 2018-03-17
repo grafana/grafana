@@ -121,6 +121,10 @@ func (q *queryParser) parseList(v url.Values, value reflect.Value, prefix string
 		return nil
 	}
 
+	if _, ok := value.Interface().([]byte); ok {
+		return q.parseScalar(v, value, prefix, tag)
+	}
+
 	// check for unflattened list member
 	if !q.isEC2 && tag.Get("flattened") == "" {
 		if listName := tag.Get("locationNameList"); listName == "" {

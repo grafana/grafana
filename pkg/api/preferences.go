@@ -3,12 +3,11 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 // POST /api/preferences/set-home-dash
-func SetHomeDashboard(c *middleware.Context, cmd m.SavePreferencesCommand) Response {
+func SetHomeDashboard(c *m.ReqContext, cmd m.SavePreferencesCommand) Response {
 
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
@@ -21,7 +20,7 @@ func SetHomeDashboard(c *middleware.Context, cmd m.SavePreferencesCommand) Respo
 }
 
 // GET /api/user/preferences
-func GetUserPreferences(c *middleware.Context) Response {
+func GetUserPreferences(c *m.ReqContext) Response {
 	return getPreferencesFor(c.OrgId, c.UserId)
 }
 
@@ -42,7 +41,7 @@ func getPreferencesFor(orgId int64, userId int64) Response {
 }
 
 // PUT /api/user/preferences
-func UpdateUserPreferences(c *middleware.Context, dtoCmd dtos.UpdatePrefsCmd) Response {
+func UpdateUserPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
 	return updatePreferencesFor(c.OrgId, c.UserId, &dtoCmd)
 }
 
@@ -63,11 +62,11 @@ func updatePreferencesFor(orgId int64, userId int64, dtoCmd *dtos.UpdatePrefsCmd
 }
 
 // GET /api/org/preferences
-func GetOrgPreferences(c *middleware.Context) Response {
+func GetOrgPreferences(c *m.ReqContext) Response {
 	return getPreferencesFor(c.OrgId, 0)
 }
 
 // PUT /api/org/preferences
-func UpdateOrgPreferences(c *middleware.Context, dtoCmd dtos.UpdatePrefsCmd) Response {
+func UpdateOrgPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
 	return updatePreferencesFor(c.OrgId, 0, &dtoCmd)
 }

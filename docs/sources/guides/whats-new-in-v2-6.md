@@ -3,11 +3,6 @@ title = "What's New in Grafana v2.6"
 description = "Feature & improvement highlights for Grafana v2.6"
 keywords = ["grafana", "new", "documentation", "2.6"]
 type = "docs"
-[menu.docs]
-name = "Version 2.6"
-identifier = "v2.6"
-parent = "whatsnew"
-weight = 7
 +++
 
 # What's new in Grafana v2.6

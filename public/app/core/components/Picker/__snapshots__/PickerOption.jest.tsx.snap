@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PickerOption renders correctly 1`] = `
+<button
+  className="user-picker-option__button btn btn-link class-for-user-picker"
+  onMouseDown={[Function]}
+  onMouseEnter={[Function]}
+  onMouseMove={[Function]}
+  title="Model title"
+>
+  <img
+    alt="User picker label"
+    className="user-picker-option__avatar"
+    src="url/to/avatar"
+  />
+</button>
+`;

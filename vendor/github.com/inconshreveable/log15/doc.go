@@ -23,7 +23,7 @@ To get started, you'll want to import the library:
 Now you're ready to start logging:
 
     func main() {
-        log.Info("Program starting", "args", os.Args())
+        log.Info("Program starting", "args", os.Args)
     }
 
 

@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 )
 
 type GraphiteExecutor struct {
@@ -158,7 +158,7 @@ func formatTimeRange(input string) string {
 	if input == "now" {
 		return input
 	}
-	return strings.Replace(strings.Replace(input, "m", "min", -1), "M", "mon", -1)
+	return strings.Replace(strings.Replace(strings.Replace(input, "now", "", -1), "m", "min", -1), "M", "mon", -1)
 }
 
 func fixIntervalFormat(target string) string {

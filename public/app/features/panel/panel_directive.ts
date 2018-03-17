@@ -1,14 +1,12 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
-import $ from 'jquery';
 import Drop from 'tether-drop';
+import PerfectScrollbar from 'perfect-scrollbar';
 
 var module = angular.module('grafana.directives');
 
 var panelTemplate = `
   <div class="panel-container">
-    <div class="panel-header">
+    <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.fullscreen}">
       <span class="panel-info-corner">
         <i class="fa"></i>
         <span class="panel-info-corner-inner"></span>
@@ -18,21 +16,20 @@ var panelTemplate = `
         <i class="fa fa-spinner fa-spin"></i>
       </span>
 
-      <div class="panel-title-container drag-handle" panel-menu></div>
+      <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
     </div>
 
     <div class="panel-content">
-      <ng-transclude></ng-transclude>
+      <ng-transclude class="panel-height-helper"></ng-transclude>
     </div>
-    <panel-resizer></panel-resizer>
   </div>
 
   <div class="panel-full-edit" ng-if="ctrl.editMode">
     <div class="tabbed-view tabbed-view--panel-edit">
       <div class="tabbed-view-header">
-        <h2 class="tabbed-view-title">
+        <h3 class="tabbed-view-panel-title">
           {{ctrl.pluginName}}
-        </h2>
+        </h3>
 
         <ul class="gf-tabs">
           <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
@@ -56,17 +53,19 @@ var panelTemplate = `
   </div>
 `;
 
-module.directive('grafanaPanel', function($rootScope, $document) {
+module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
   return {
     restrict: 'E',
     template: panelTemplate,
     transclude: true,
-    scope: { ctrl: "=" },
+    scope: { ctrl: '=' },
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
+      var panelContent = elem.find('.panel-content');
       var cornerInfoElem = elem.find('.panel-info-corner');
       var ctrl = scope.ctrl;
       var infoDrop;
+      var panelScrollbar;
 
       // the reason for handling these classes this way is for performance
       // limit the watchers on panels etc
@@ -74,7 +73,6 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       var lastHasAlertRule = false;
       var lastAlertState;
       var hasAlertRule;
-      var lastHeight = 0;
 
       function mouseEnter() {
         panelContainer.toggleClass('panel-hover-highlight', true);
@@ -86,11 +84,11 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         ctrl.dashboard.setPanelFocus(0);
       }
 
-      // set initial height
-      if (!ctrl.containerHeight) {
-        ctrl.calculatePanelHeight();
-        panelContainer.css({minHeight: ctrl.containerHeight});
-        lastHeight = ctrl.containerHeight;
+      function panelHeightUpdated() {
+        panelContent.css({ height: ctrl.height + 'px' });
+        if (panelScrollbar) {
+          panelScrollbar.update();
+        }
       }
 
       // set initial transparency
@@ -99,12 +97,28 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         panelContainer.addClass('panel-transparent', true);
       }
 
-      ctrl.events.on('render', () => {
-        if (lastHeight !== ctrl.containerHeight) {
-          panelContainer.css({minHeight: ctrl.containerHeight});
-          lastHeight = ctrl.containerHeight;
+      // update scrollbar after mounting
+      ctrl.events.on('component-did-mount', () => {
+        if (ctrl.__proto__.constructor.scrollable) {
+          panelScrollbar = new PerfectScrollbar(panelContent[0], {
+            wheelPropagation: true,
+          });
         }
+      });
 
+      ctrl.events.on('panel-size-changed', () => {
+        ctrl.calculatePanelHeight();
+        panelHeightUpdated();
+        $timeout(() => {
+          ctrl.render();
+        });
+      });
+
+      // set initial height
+      ctrl.calculatePanelHeight();
+      panelHeightUpdated();
+
+      ctrl.events.on('render', () => {
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;
@@ -133,14 +147,6 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         }
       });
 
-      var lastFullscreen;
-      $rootScope.onAppEvent('panel-change-view', function(evt, payload) {
-        if (lastFullscreen !== ctrl.fullscreen) {
-          elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);
-          lastFullscreen = ctrl.fullscreen;
-        }
-      }, scope);
-
       function updatePanelCornerInfo() {
         var cornerMode = ctrl.getInfoMode();
         cornerInfoElem[0].className = 'panel-info-corner panel-info-corner--' + cornerMode;
@@ -153,7 +159,7 @@ module.directive('grafanaPanel', function($rootScope, $document) {
           infoDrop = new Drop({
             target: cornerInfoElem[0],
             content: function() {
-              return ctrl.getInfoContent({mode: 'tooltip'});
+              return ctrl.getInfoContent({ mode: 'tooltip' });
             },
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
@@ -165,10 +171,10 @@ module.directive('grafanaPanel', function($rootScope, $document) {
                 {
                   to: 'window',
                   attachment: 'together',
-                  pin: true
-                }
+                  pin: true,
+                },
               ],
-            }
+            },
           });
         }
       }
@@ -191,92 +197,12 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         if (infoDrop) {
           infoDrop.destroy();
         }
-      });
-    }
-  };
-});
 
-module.directive('panelResizer', function($rootScope) {
-  return {
-    restrict: 'E',
-    template: '<span class="resize-panel-handle icon-gf icon-gf-grabber"></span>',
-    link: function(scope, elem) {
-      var resizing = false;
-      var lastPanel;
-      var ctrl = scope.ctrl;
-      var handleOffset;
-      var originalHeight;
-      var originalWidth;
-      var maxWidth;
-
-      function dragStartHandler(e) {
-        e.preventDefault();
-        resizing = true;
-
-        handleOffset = $(e.target).offset();
-        originalHeight = parseInt(ctrl.row.height);
-        originalWidth = ctrl.panel.span;
-        maxWidth = $(document).width();
-
-        lastPanel = ctrl.row.panels[ctrl.row.panels.length - 1];
-
-        $('body').on('mousemove', moveHandler);
-        $('body').on('mouseup', dragEndHandler);
-      }
-
-      function moveHandler(e) {
-        ctrl.row.height = Math.round(originalHeight + (e.pageY - handleOffset.top));
-        ctrl.panel.span = originalWidth + (((e.pageX - handleOffset.left) / maxWidth) * 12);
-        ctrl.panel.span = Math.min(Math.max(ctrl.panel.span, 1), 12);
-
-        ctrl.row.updateRowSpan();
-        var rowSpan = ctrl.row.span;
-
-        // auto adjust other panels
-        if (Math.floor(rowSpan) < 14) {
-          // last panel should not push row down
-          if (lastPanel === ctrl.panel && rowSpan > 12) {
-            lastPanel.span -= rowSpan - 12;
-          } else if (lastPanel !== ctrl.panel) {
-            // reduce width of last panel so total in row is 12
-            lastPanel.span = lastPanel.span - (rowSpan - 12);
-            lastPanel.span = Math.min(Math.max(lastPanel.span, 1), 12);
-          }
+        if (panelScrollbar) {
+          panelScrollbar.update();
         }
-
-        ctrl.row.panelSpanChanged(true);
-
-        scope.$apply(function() {
-          ctrl.render();
-        });
-      }
-
-      function dragEndHandler() {
-        ctrl.panel.span = Math.round(ctrl.panel.span);
-        if (lastPanel) {
-          lastPanel.span = Math.round(lastPanel.span);
-        }
-
-        // first digest to propagate panel width change
-        // then render
-        $rootScope.$apply(function() {
-          ctrl.row.panelSpanChanged();
-          setTimeout(function() {
-            $rootScope.$broadcast('render');
-          });
-        });
-
-        $('body').off('mousemove', moveHandler);
-        $('body').off('mouseup', dragEndHandler);
-      }
-
-      elem.on('mousedown', dragStartHandler);
-
-      var unbind = scope.$on("$destroy", function() {
-        elem.off('mousedown', dragStartHandler);
-        unbind();
       });
-    }
+    },
   };
 });
 
@@ -284,15 +210,12 @@ module.directive('panelHelpCorner', function($rootScope) {
   return {
     restrict: 'E',
     template: `
-      <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
-        <span data-placement="top" bs-tooltip="ctrl.error">
-          <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
-        </span>
-      </span>
+    <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
+    <span data-placement="top" bs-tooltip="ctrl.error">
+    <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
+    </span>
+    </span>
     `,
-    link: function(scope, elem) {
-    }
+    link: function(scope, elem) {},
   };
 });
-
-

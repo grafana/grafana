@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/provisioning"
 
 	"golang.org/x/sync/errgroup"
 
@@ -15,19 +19,19 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
-	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
 )
 
-func NewGrafanaServer() models.GrafanaServer {
+func NewGrafanaServer() *GrafanaServerImpl {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
@@ -48,27 +52,32 @@ type GrafanaServerImpl struct {
 	httpServer *api.HttpServer
 }
 
-func (g *GrafanaServerImpl) Start() {
-	go listenToSystemSignals(g)
-
+func (g *GrafanaServerImpl) Start() error {
 	g.initLogging()
 	g.writePIDFile()
 
 	initSql()
+
 	metrics.Init(setting.Cfg)
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
-	eventpublisher.Init()
-	plugins.Init()
 
-	closer, err := tracing.Init(setting.Cfg)
+	pluginManager, err := plugins.NewPluginManager(g.context)
 	if err != nil {
-		g.log.Error("Tracing settings is not valid", "error", err)
-		g.Shutdown(1, "Startup failed")
-		return
+		return fmt.Errorf("Failed to start plugins. error: %v", err)
 	}
-	defer closer.Close()
+	g.childRoutines.Go(func() error { return pluginManager.Run(g.context) })
+
+	if err := provisioning.Init(g.context, setting.HomePath, setting.Cfg); err != nil {
+		return fmt.Errorf("Failed to provision Grafana from config. error: %v", err)
+	}
+
+	tracingCloser, err := tracing.Init(setting.Cfg)
+	if err != nil {
+		return fmt.Errorf("Tracing settings is not valid. error: %v", err)
+	}
+	defer tracingCloser.Close()
 
 	// init alerting
 	if setting.AlertingEnabled && setting.ExecuteAlerts {
@@ -81,12 +90,17 @@ func (g *GrafanaServerImpl) Start() {
 	g.childRoutines.Go(func() error { return cleanUpService.Run(g.context) })
 
 	if err = notifications.Init(); err != nil {
-		g.log.Error("Notification service failed to initialize", "error", err)
-		g.Shutdown(1, "Startup failed")
-		return
+		return fmt.Errorf("Notification service failed to initialize. error: %v", err)
 	}
 
-	g.startHttpServer()
+	sendSystemdNotification("READY=1")
+
+	return g.startHttpServer()
+}
+
+func initSql() {
+	sqlstore.NewEngine()
+	sqlstore.EnsureAdminUser()
 }
 
 func (g *GrafanaServerImpl) initLogging() {
@@ -105,16 +119,16 @@ func (g *GrafanaServerImpl) initLogging() {
 	setting.LogConfigurationInfo()
 }
 
-func (g *GrafanaServerImpl) startHttpServer() {
+func (g *GrafanaServerImpl) startHttpServer() error {
 	g.httpServer = api.NewHttpServer()
 
 	err := g.httpServer.Start(g.context)
 
 	if err != nil {
-		g.log.Error("Fail to start server", "error", err)
-		g.Shutdown(1, "Startup failed")
-		return
+		return fmt.Errorf("Fail to start server. error: %v", err)
 	}
+
+	return nil
 }
 
 func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
@@ -127,10 +141,9 @@ func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
 
 	g.shutdownFn()
 	err = g.childRoutines.Wait()
-
-	g.log.Info("Shutdown completed", "reason", err)
-	log.Close()
-	os.Exit(code)
+	if err != nil && err != context.Canceled {
+		g.log.Error("Server shutdown completed with an error", "error", err)
+	}
 }
 
 func (g *GrafanaServerImpl) writePIDFile() {
@@ -153,4 +166,29 @@ func (g *GrafanaServerImpl) writePIDFile() {
 	}
 
 	g.log.Info("Writing PID file", "path", *pidFile, "pid", pid)
+}
+
+func sendSystemdNotification(state string) error {
+	notifySocket := os.Getenv("NOTIFY_SOCKET")
+
+	if notifySocket == "" {
+		return fmt.Errorf("NOTIFY_SOCKET environment variable empty or unset.")
+	}
+
+	socketAddr := &net.UnixAddr{
+		Name: notifySocket,
+		Net:  "unixgram",
+	}
+
+	conn, err := net.DialUnix(socketAddr.Net, nil, socketAddr)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Write([]byte(state))
+
+	conn.Close()
+
+	return err
 }

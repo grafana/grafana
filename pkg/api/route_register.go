@@ -81,8 +81,6 @@ func (rr *routeRegister) Register(router Router) *macaron.Router {
 }
 
 func (rr *routeRegister) route(pattern, method string, handlers ...macaron.Handler) {
-	//inject tracing
-
 	h := make([]macaron.Handler, 0)
 	for _, fn := range rr.namedMiddleware {
 		h = append(h, fn(pattern))

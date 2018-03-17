@@ -1,18 +1,21 @@
-
 // Button backgrounds
 // ------------------
-@mixin buttonBackground($startColor, $endColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0,0,0,.25)) {
+@mixin buttonBackground($startColor, $endColor, $text-color: #fff, $textShadow: 0px 1px 0 rgba(0,0,0,0.1)) {
   // gradientBar will set the background to a pleasing blend of these, to support IE<=9
   @include gradientBar($startColor, $endColor, $text-color, $textShadow);
 
   // in these cases the gradient won't cover the background, so we override
-  &:hover, &:focus, &:active, &.active, &.disabled, &[disabled] {
+  &:hover,
+  &:focus,
+  &:active,
+  &.active,
+  &.disabled,
+  &[disabled] {
     color: $text-color;
     background-image: none;
     background-color: $startColor;
   }
 }
-
 
 // Button sizes
 @mixin button-size($padding-y, $padding-x, $font-size, $border-radius) {
@@ -32,14 +35,14 @@
   @include hover {
     color: #fff;
     background-color: $color;
-        border-color: $color;
+    border-color: $color;
   }
 
   &:focus,
   &.focus {
     color: #fff;
     background-color: $color;
-        border-color: $color;
+    border-color: $color;
   }
 
   &:active,
@@ -47,14 +50,14 @@
   .open > &.dropdown-toggle {
     color: #fff;
     background-color: $color;
-        border-color: $color;
+    border-color: $color;
 
     &:hover,
     &:focus,
     &.focus {
       color: #fff;
       background-color: darken($color, 17%);
-          border-color: darken($color, 25%);
+      border-color: darken($color, 25%);
     }
   }
 

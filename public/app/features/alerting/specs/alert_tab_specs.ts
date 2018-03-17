@@ -1,10 +1,10 @@
-import {describe, it, expect} from 'test/lib/common';
+import { describe, it, expect } from 'test/lib/common';
 
-import {AlertTabCtrl} from '../alert_tab_ctrl';
+import { AlertTabCtrl } from '../alert_tab_ctrl';
 
 describe('AlertTabCtrl', () => {
   var $scope = {
-    ctrl: {}
+    ctrl: {},
   };
 
   describe('with null parameters', () => {
@@ -15,5 +15,3 @@ describe('AlertTabCtrl', () => {
     });
   });
 });
-
-

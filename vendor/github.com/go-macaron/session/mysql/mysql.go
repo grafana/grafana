@@ -185,7 +185,7 @@ func (p *MysqlProvider) Count() (total int) {
 
 // GC calls GC to clean expired sessions.
 func (p *MysqlProvider) GC() {
-	if _, err := p.c.Exec("DELETE FROM session WHERE UNIX_TIMESTAMP(NOW()) - expiry > ?", p.expire); err != nil {
+	if _, err := p.c.Exec("DELETE FROM session WHERE  expiry + ? <= UNIX_TIMESTAMP(NOW())", p.expire); err != nil {
 		log.Printf("session/mysql: error garbage collecting: %v", err)
 	}
 }

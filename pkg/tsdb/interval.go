@@ -2,14 +2,18 @@ package tsdb
 
 import (
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 var (
-	defaultRes  int64         = 1500
-	minInterval time.Duration = 1 * time.Millisecond
-	year        time.Duration = time.Hour * 24 * 365
-	day         time.Duration = time.Hour * 24 * 365
+	defaultRes         int64         = 1500
+	defaultMinInterval time.Duration = 1 * time.Millisecond
+	year               time.Duration = time.Hour * 24 * 365
+	day                time.Duration = time.Hour * 24
 )
 
 type Interval struct {
@@ -17,14 +21,68 @@ type Interval struct {
 	Value time.Duration
 }
 
-func CalculateInterval(timerange *TimeRange) Interval {
-	interval := time.Duration((timerange.MustGetTo().UnixNano() - timerange.MustGetFrom().UnixNano()) / defaultRes)
+type intervalCalculator struct {
+	minInterval time.Duration
+}
 
-	if interval < minInterval {
-		return Interval{Text: formatDuration(minInterval), Value: interval}
+type IntervalCalculator interface {
+	Calculate(timeRange *TimeRange, minInterval time.Duration) Interval
+}
+
+type IntervalOptions struct {
+	MinInterval time.Duration
+}
+
+func NewIntervalCalculator(opt *IntervalOptions) *intervalCalculator {
+	if opt == nil {
+		opt = &IntervalOptions{}
 	}
 
-	return Interval{Text: formatDuration(roundInterval(interval)), Value: interval}
+	calc := &intervalCalculator{}
+
+	if opt.MinInterval == 0 {
+		calc.minInterval = defaultMinInterval
+	} else {
+		calc.minInterval = opt.MinInterval
+	}
+
+	return calc
+}
+
+func (ic *intervalCalculator) Calculate(timerange *TimeRange, minInterval time.Duration) Interval {
+	to := timerange.MustGetTo().UnixNano()
+	from := timerange.MustGetFrom().UnixNano()
+	interval := time.Duration((to - from) / defaultRes)
+
+	if interval < minInterval {
+		return Interval{Text: formatDuration(minInterval), Value: minInterval}
+	}
+
+	rounded := roundInterval(interval)
+	return Interval{Text: formatDuration(rounded), Value: rounded}
+}
+
+func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
+	interval := queryModel.Get("interval").MustString("")
+
+	if interval == "" && dsInfo.JsonData != nil {
+		dsInterval := dsInfo.JsonData.Get("timeInterval").MustString("")
+		if dsInterval != "" {
+			interval = dsInterval
+		}
+	}
+
+	if interval == "" {
+		return defaultInterval, nil
+	}
+
+	interval = strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
+	parsedInterval, err := time.ParseDuration(interval)
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	return parsedInterval, nil
 }
 
 func formatDuration(inter time.Duration) string {

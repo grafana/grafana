@@ -11,11 +11,25 @@
   font-size: 11px;
   line-height: 1.4;
   @include opacity(0);
-  &.in     { @include opacity(100); }
-  &.top    { margin-top:  -3px; padding: 5px 0; }
-  &.right  { margin-left:  3px; padding: 0 5px; }
-  &.bottom { margin-top:   3px; padding: 5px 0; }
-  &.left   { margin-left: -3px; padding: 0 5px; }
+  &.in {
+    @include opacity(100);
+  }
+  &.top {
+    margin-top: -3px;
+    padding: 5px 0;
+  }
+  &.right {
+    margin-left: 3px;
+    padding: 0 5px;
+  }
+  &.bottom {
+    margin-top: 3px;
+    padding: 5px 0;
+  }
+  &.left {
+    margin-left: -3px;
+    padding: 0 5px;
+  }
 }
 
 // Wrapper for the tooltip content
@@ -70,13 +84,13 @@
 }
 
 .grafana-tooltip {
-  position : absolute;
+  position: absolute;
   top: -1000;
   left: 0;
   color: $tooltipColor;
   padding: 10px;
   font-size: 11pt;
-  font-weight : 200;
+  font-weight: 200;
   background-color: $tooltipBackground;
   border-radius: 5px;
   z-index: 9999;
@@ -92,4 +106,3 @@
 .grafana-tip {
   padding-left: 5px;
 }
-
