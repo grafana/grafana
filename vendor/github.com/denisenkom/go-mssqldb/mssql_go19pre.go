@@ -7,6 +7,6 @@ import (
 	"fmt"
 )
 
-func (s *MssqlStmt) makeParamExtra(val driver.Value) (Param, error) {
+func (s *Stmt) makeParamExtra(val driver.Value) (Param, error) {
 	return Param{}, fmt.Errorf("mssql: unknown type for %T", val)
 }

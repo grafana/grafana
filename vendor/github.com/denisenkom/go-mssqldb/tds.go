@@ -50,13 +50,17 @@ func parseInstances(msg []byte) map[string]map[string]string {
 	return results
 }
 
-func getInstances(address string) (map[string]map[string]string, error) {
-	conn, err := net.DialTimeout("udp", address+":1434", 5*time.Second)
+func getInstances(ctx context.Context, address string) (map[string]map[string]string, error) {
+	maxTime := 5 * time.Second
+	dialer := &net.Dialer{
+		Timeout: maxTime,
+	}
+	conn, err := dialer.DialContext(ctx, "udp", address+":1434")
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
-	conn.SetDeadline(time.Now().Add(5 * time.Second))
+	conn.SetDeadline(time.Now().Add(maxTime))
 	_, err = conn.Write([]byte{3})
 	if err != nil {
 		return nil, err
@@ -159,7 +163,7 @@ func (p KeySlice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 func writePrelogin(w *tdsBuffer, fields map[uint8][]byte) error {
 	var err error
 
-	w.BeginPacket(packPrelogin)
+	w.BeginPacket(packPrelogin, false)
 	offset := uint16(5*len(fields) + 1)
 	keys := make(KeySlice, 0, len(fields))
 	for k := range fields {
@@ -349,7 +353,7 @@ func manglePassword(password string) []byte {
 
 // http://msdn.microsoft.com/en-us/library/dd304019.aspx
 func sendLogin(w *tdsBuffer, login login) error {
-	w.BeginPacket(packLogin7)
+	w.BeginPacket(packLogin7, false)
 	hostname := str2ucs2(login.HostName)
 	username := str2ucs2(login.UserName)
 	password := manglePassword(login.Password)
@@ -630,8 +634,8 @@ func writeAllHeaders(w io.Writer, headers []headerStruct) (err error) {
 	return nil
 }
 
-func sendSqlBatch72(buf *tdsBuffer, sqltext string, headers []headerStruct) (err error) {
-	buf.BeginPacket(packSQLBatch)
+func sendSqlBatch72(buf *tdsBuffer, sqltext string, headers []headerStruct, resetSession bool) (err error) {
+	buf.BeginPacket(packSQLBatch, resetSession)
 
 	if err = writeAllHeaders(buf, headers); err != nil {
 		return
@@ -647,7 +651,7 @@ func sendSqlBatch72(buf *tdsBuffer, sqltext string, headers []headerStruct) (err
 // 2.2.1.7 Attention: https://msdn.microsoft.com/en-us/library/dd341449.aspx
 // 4.19.2 Out-of-Band Attention Signal: https://msdn.microsoft.com/en-us/library/dd305167.aspx
 func sendAttention(buf *tdsBuffer) error {
-	buf.BeginPacket(packAttention)
+	buf.BeginPacket(packAttention, false)
 	return buf.FinishPacket()
 }
 
@@ -935,13 +939,13 @@ func parseConnectParams(dsn string) (connectParams, error) {
 	strlog, ok := params["log"]
 	if ok {
 		var err error
-		p.logFlags, err = strconv.ParseUint(strlog, 10, 0)
+		p.logFlags, err = strconv.ParseUint(strlog, 10, 64)
 		if err != nil {
 			return p, fmt.Errorf("Invalid log parameter '%s': %s", strlog, err.Error())
 		}
 	}
 	server := params["server"]
-	parts := strings.SplitN(server, "\\", 2)
+	parts := strings.SplitN(server, `\`, 2)
 	p.host = parts[0]
 	if p.host == "." || strings.ToUpper(p.host) == "(LOCAL)" || p.host == "" {
 		p.host = "localhost"
@@ -957,7 +961,7 @@ func parseConnectParams(dsn string) (connectParams, error) {
 	strport, ok := params["port"]
 	if ok {
 		var err error
-		p.port, err = strconv.ParseUint(strport, 0, 16)
+		p.port, err = strconv.ParseUint(strport, 10, 16)
 		if err != nil {
 			f := "Invalid tcp port '%v': %v"
 			return p, fmt.Errorf(f, strport, err.Error())
@@ -993,7 +997,7 @@ func parseConnectParams(dsn string) (connectParams, error) {
 	p.conn_timeout = 30 * time.Second
 	strconntimeout, ok := params["connection timeout"]
 	if ok {
-		timeout, err := strconv.ParseUint(strconntimeout, 0, 16)
+		timeout, err := strconv.ParseUint(strconntimeout, 10, 64)
 		if err != nil {
 			f := "Invalid connection timeout '%v': %v"
 			return p, fmt.Errorf(f, strconntimeout, err.Error())
@@ -1002,7 +1006,7 @@ func parseConnectParams(dsn string) (connectParams, error) {
 	}
 	strdialtimeout, ok := params["dial timeout"]
 	if ok {
-		timeout, err := strconv.ParseUint(strdialtimeout, 0, 16)
+		timeout, err := strconv.ParseUint(strdialtimeout, 10, 64)
 		if err != nil {
 			f := "Invalid dial timeout '%v': %v"
 			return p, fmt.Errorf(f, strdialtimeout, err.Error())
@@ -1015,7 +1019,7 @@ func parseConnectParams(dsn string) (connectParams, error) {
 	p.keepAlive = 30 * time.Second
 
 	if keepAlive, ok := params["keepalive"]; ok {
-		timeout, err := strconv.ParseUint(keepAlive, 0, 16)
+		timeout, err := strconv.ParseUint(keepAlive, 10, 64)
 		if err != nil {
 			f := "Invalid keepAlive value '%s': %s"
 			return p, fmt.Errorf(f, keepAlive, err.Error())
@@ -1109,7 +1113,7 @@ type auth interface {
 // SQL Server AlwaysOn Availability Group Listeners are bound by DNS to a
 // list of IP addresses.  So if there is more than one, try them all and
 // use the first one that allows a connection.
-func dialConnection(p connectParams) (conn net.Conn, err error) {
+func dialConnection(ctx context.Context, p connectParams) (conn net.Conn, err error) {
 	var ips []net.IP
 	ips, err = net.LookupIP(p.host)
 	if err != nil {
@@ -1122,7 +1126,7 @@ func dialConnection(p connectParams) (conn net.Conn, err error) {
 	if len(ips) == 1 {
 		d := createDialer(&p)
 		addr := net.JoinHostPort(ips[0].String(), strconv.Itoa(int(p.port)))
-		conn, err = d.Dial(addr)
+		conn, err = d.Dial(ctx, addr)
 
 	} else {
 		//Try Dials in parallel to avoid waiting for timeouts.
@@ -1133,7 +1137,7 @@ func dialConnection(p connectParams) (conn net.Conn, err error) {
 			go func(ip net.IP) {
 				d := createDialer(&p)
 				addr := net.JoinHostPort(ip.String(), portStr)
-				conn, err := d.Dial(addr)
+				conn, err := d.Dial(ctx, addr)
 				if err == nil {
 					connChan <- conn
 				} else {
@@ -1171,12 +1175,17 @@ func dialConnection(p connectParams) (conn net.Conn, err error) {
 	return conn, err
 }
 
-func connect(log optionalLogger, p connectParams) (res *tdsSession, err error) {
-	res = nil
+func connect(ctx context.Context, log optionalLogger, p connectParams) (res *tdsSession, err error) {
+	dialCtx := ctx
+	if p.dial_timeout > 0 {
+		var cancel func()
+		dialCtx, cancel = context.WithTimeout(ctx, p.dial_timeout)
+		defer cancel()
+	}
 	// if instance is specified use instance resolution service
 	if p.instance != "" {
 		p.instance = strings.ToUpper(p.instance)
-		instances, err := getInstances(p.host)
+		instances, err := getInstances(dialCtx, p.host)
 		if err != nil {
 			f := "Unable to get instances from Sql Server Browser on host %v: %v"
 			return nil, fmt.Errorf(f, p.host, err.Error())
@@ -1194,7 +1203,7 @@ func connect(log optionalLogger, p connectParams) (res *tdsSession, err error) {
 	}
 
 initiate_connection:
-	conn, err := dialConnection(p)
+	conn, err := dialConnection(dialCtx, p)
 	if err != nil {
 		return nil, err
 	}
@@ -1334,7 +1343,7 @@ continue_login:
 		}
 	}
 	if sspi_msg != nil {
-		outbuf.BeginPacket(packSSPIMessage)
+		outbuf.BeginPacket(packSSPIMessage, false)
 		_, err = outbuf.Write(sspi_msg)
 		if err != nil {
 			return nil, err

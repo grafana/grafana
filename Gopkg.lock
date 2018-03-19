@@ -105,8 +105,11 @@
 
 [[projects]]
   name = "github.com/denisenkom/go-mssqldb"
-  packages = ["."]
-  revision = "ee492709d4324cdcb051d2ac266b77ddc380f5c5"
+  packages = [
+    ".",
+    "internal/cp"
+  ]
+  revision = "270bc3860bb94dd3a3ffd047377d746c5e276726"
 
 [[projects]]
   name = "github.com/fatih/color"
@@ -639,6 +642,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d2f67abb94028a388f051164896bfb69b1ff3a7255d285dc4d78d298f4793383"
+  inputs-digest = "5e65aeace832f1b4be17e7ff5d5714513c40f31b94b885f64f98f2332968d7c6"
   solver-name = "gps-cdcl"
   solver-version = 1

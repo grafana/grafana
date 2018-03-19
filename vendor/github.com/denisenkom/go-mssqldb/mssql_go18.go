@@ -10,22 +10,22 @@ import (
 	"strings"
 )
 
-var _ driver.Pinger = &MssqlConn{}
+var _ driver.Pinger = &Conn{}
 
 // Ping is used to check if the remote server is available and satisfies the Pinger interface.
-func (c *MssqlConn) Ping(ctx context.Context) error {
+func (c *Conn) Ping(ctx context.Context) error {
 	if !c.connectionGood {
 		return driver.ErrBadConn
 	}
-	stmt := &MssqlStmt{c, `select 1;`, 0, nil}
+	stmt := &Stmt{c, `select 1;`, 0, nil}
 	_, err := stmt.ExecContext(ctx, nil)
 	return err
 }
 
-var _ driver.ConnBeginTx = &MssqlConn{}
+var _ driver.ConnBeginTx = &Conn{}
 
 // BeginTx satisfies ConnBeginTx.
-func (c *MssqlConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
+func (c *Conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
 	if !c.connectionGood {
 		return nil, driver.ErrBadConn
 	}
@@ -57,18 +57,18 @@ func (c *MssqlConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.
 	return c.begin(ctx, tdsIsolation)
 }
 
-func (c *MssqlConn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
+func (c *Conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
 	if !c.connectionGood {
 		return nil, driver.ErrBadConn
 	}
 	if len(query) > 10 && strings.EqualFold(query[:10], "INSERTBULK") {
-		return c.prepareCopyIn(query)
+		return c.prepareCopyIn(ctx, query)
 	}
 
 	return c.prepareContext(ctx, query)
 }
 
-func (s *MssqlStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
+func (s *Stmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
 	if !s.c.connectionGood {
 		return nil, driver.ErrBadConn
 	}
@@ -79,7 +79,7 @@ func (s *MssqlStmt) QueryContext(ctx context.Context, args []driver.NamedValue) 
 	return s.queryContext(ctx, list)
 }
 
-func (s *MssqlStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
+func (s *Stmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
 	if !s.c.connectionGood {
 		return nil, driver.ErrBadConn
 	}

@@ -12,8 +12,14 @@ import (
 	"time"
 )
 
-type MssqlBulk struct {
-	cn          *MssqlConn
+type Bulk struct {
+	// ctx is used only for AddRow and Done methods.
+	// This could be removed if AddRow and Done accepted
+	// a ctx field as well, which is available with the
+	// database/sql call.
+	ctx context.Context
+
+	cn          *Conn
 	metadata    []columnStruct
 	bulkColumns []columnStruct
 	columnsName []string
@@ -21,10 +27,10 @@ type MssqlBulk struct {
 	numRows     int
 
 	headerSent bool
-	Options    MssqlBulkOptions
+	Options    BulkOptions
 	Debug      bool
 }
-type MssqlBulkOptions struct {
+type BulkOptions struct {
 	CheckConstraints  bool
 	FireTriggers      bool
 	KeepNulls         bool
@@ -36,15 +42,21 @@ type MssqlBulkOptions struct {
 
 type DataValue interface{}
 
-func (cn *MssqlConn) CreateBulk(table string, columns []string) (_ *MssqlBulk) {
-	b := MssqlBulk{cn: cn, tablename: table, headerSent: false, columnsName: columns}
+func (cn *Conn) CreateBulk(table string, columns []string) (_ *Bulk) {
+	b := Bulk{ctx: context.Background(), cn: cn, tablename: table, headerSent: false, columnsName: columns}
 	b.Debug = false
 	return &b
 }
 
-func (b *MssqlBulk) sendBulkCommand() (err error) {
+func (cn *Conn) CreateBulkContext(ctx context.Context, table string, columns []string) (_ *Bulk) {
+	b := Bulk{ctx: ctx, cn: cn, tablename: table, headerSent: false, columnsName: columns}
+	b.Debug = false
+	return &b
+}
+
+func (b *Bulk) sendBulkCommand(ctx context.Context) (err error) {
 	//get table columns info
-	err = b.getMetadata()
+	err = b.getMetadata(ctx)
 	if err != nil {
 		return err
 	}
@@ -114,13 +126,13 @@ func (b *MssqlBulk) sendBulkCommand() (err error) {
 
 	query := fmt.Sprintf("INSERT BULK %s (%s) %s", b.tablename, col_defs.String(), with_part)
 
-	stmt, err := b.cn.Prepare(query)
+	stmt, err := b.cn.PrepareContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("Prepare failed: %s", err.Error())
 	}
 	b.dlogf(query)
 
-	_, err = stmt.Exec(nil)
+	_, err = stmt.(*Stmt).ExecContext(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -128,9 +140,9 @@ func (b *MssqlBulk) sendBulkCommand() (err error) {
 	b.headerSent = true
 
 	var buf = b.cn.sess.buf
-	buf.BeginPacket(packBulkLoadBCP)
+	buf.BeginPacket(packBulkLoadBCP, false)
 
-	// send the columns metadata
+	// Send the columns metadata.
 	columnMetadata := b.createColMetadata()
 	_, err = buf.Write(columnMetadata)
 
@@ -139,9 +151,9 @@ func (b *MssqlBulk) sendBulkCommand() (err error) {
 
 // AddRow immediately writes the row to the destination table.
 // The arguments are the row values in the order they were specified.
-func (b *MssqlBulk) AddRow(row []interface{}) (err error) {
+func (b *Bulk) AddRow(row []interface{}) (err error) {
 	if !b.headerSent {
-		err = b.sendBulkCommand()
+		err = b.sendBulkCommand(b.ctx)
 		if err != nil {
 			return
 		}
@@ -166,7 +178,7 @@ func (b *MssqlBulk) AddRow(row []interface{}) (err error) {
 	return
 }
 
-func (b *MssqlBulk) makeRowData(row []interface{}) ([]byte, error) {
+func (b *Bulk) makeRowData(row []interface{}) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	buf.WriteByte(byte(tokenRow))
 
@@ -196,7 +208,7 @@ func (b *MssqlBulk) makeRowData(row []interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (b *MssqlBulk) Done() (rowcount int64, err error) {
+func (b *Bulk) Done() (rowcount int64, err error) {
 	if b.headerSent == false {
 		//no rows had been sent
 		return 0, nil
@@ -216,7 +228,7 @@ func (b *MssqlBulk) Done() (rowcount int64, err error) {
 	buf.FinishPacket()
 
 	tokchan := make(chan tokenStruct, 5)
-	go processResponse(context.Background(), b.cn.sess, tokchan, nil)
+	go processResponse(b.ctx, b.cn.sess, tokchan, nil)
 
 	var rowCount int64
 	for token := range tokchan {
@@ -235,7 +247,7 @@ func (b *MssqlBulk) Done() (rowcount int64, err error) {
 	return rowCount, nil
 }
 
-func (b *MssqlBulk) createColMetadata() []byte {
+func (b *Bulk) createColMetadata() []byte {
 	buf := new(bytes.Buffer)
 	buf.WriteByte(byte(tokenColMetadata))                              // token
 	binary.Write(buf, binary.LittleEndian, uint16(len(b.bulkColumns))) // column count
@@ -267,64 +279,40 @@ func (b *MssqlBulk) createColMetadata() []byte {
 	return buf.Bytes()
 }
 
-func (b *MssqlBulk) getMetadata() (err error) {
-	stmt, err := b.cn.Prepare("SET FMTONLY ON")
+func (b *Bulk) getMetadata(ctx context.Context) (err error) {
+	stmt, err := b.cn.prepareContext(ctx, "SET FMTONLY ON")
 	if err != nil {
 		return
 	}
 
-	_, err = stmt.Exec(nil)
+	_, err = stmt.ExecContext(ctx, nil)
 	if err != nil {
 		return
 	}
 
-	//get columns info
-	stmt, err = b.cn.Prepare(fmt.Sprintf("select * from %s SET FMTONLY OFF", b.tablename))
+	// Get columns info.
+	stmt, err = b.cn.prepareContext(ctx, fmt.Sprintf("select * from %s SET FMTONLY OFF", b.tablename))
 	if err != nil {
 		return
 	}
-	stmt2 := stmt.(*MssqlStmt)
-	cols, err := stmt2.QueryMeta()
+	rows, err := stmt.QueryContext(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("get columns info failed: %v", err.Error())
+		return fmt.Errorf("get columns info failed: %v", err)
 	}
-	b.metadata = cols
+	b.metadata = rows.(*Rows).cols
 
 	if b.Debug {
 		for _, col := range b.metadata {
 			b.dlogf("col: %s typeId: %#x size: %d scale: %d prec: %d flags: %d lcid: %#x\n",
 				col.ColName, col.ti.TypeId, col.ti.Size, col.ti.Scale, col.ti.Prec,
-				col.Flags, col.ti.Collation.lcidAndFlags)
+				col.Flags, col.ti.Collation.LcidAndFlags)
 		}
 	}
 
-	return nil
+	return rows.Close()
 }
 
-// QueryMeta is almost the same as MssqlStmt.Query, but returns all the columns info.
-func (s *MssqlStmt) QueryMeta() (cols []columnStruct, err error) {
-	if err = s.sendQuery(nil); err != nil {
-		return
-	}
-	tokchan := make(chan tokenStruct, 5)
-	go processResponse(context.Background(), s.c.sess, tokchan, s.c.outs)
-	s.c.clearOuts()
-loop:
-	for tok := range tokchan {
-		switch token := tok.(type) {
-		case doneStruct:
-			break loop
-		case []columnStruct:
-			cols = token
-			break loop
-		case error:
-			return nil, s.c.checkBadConn(token)
-		}
-	}
-	return cols, nil
-}
-
-func (b *MssqlBulk) makeParam(val DataValue, col columnStruct) (res Param, err error) {
+func (b *Bulk) makeParam(val DataValue, col columnStruct) (res Param, err error) {
 	res.ti.Size = col.ti.Size
 	res.ti.TypeId = col.ti.TypeId
 
@@ -592,6 +580,15 @@ func (b *MssqlBulk) makeParam(val DataValue, col columnStruct) (res Param, err e
 			err = fmt.Errorf("mssql: invalid type for Binary column: %s", val)
 			return
 		}
+	case typeGuid:
+		switch val := val.(type) {
+		case []byte:
+			res.ti.Size = len(val)
+			res.buffer = val
+		default:
+			err = fmt.Errorf("mssql: invalid type for Guid column: %s", val)
+			return
+		}
 
 	default:
 		err = fmt.Errorf("mssql: type %x not implemented", col.ti.TypeId)
@@ -600,7 +597,7 @@ func (b *MssqlBulk) makeParam(val DataValue, col columnStruct) (res Param, err e
 
 }
 
-func (b *MssqlBulk) dlogf(format string, v ...interface{}) {
+func (b *Bulk) dlogf(format string, v ...interface{}) {
 	if b.Debug {
 		b.cn.sess.log.Printf(format, v...)
 	}

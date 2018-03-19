@@ -1,4 +1,4 @@
-package mssql
+package cp
 
 var cp950 *charsetMap = &charsetMap{
 	sb: [256]rune{

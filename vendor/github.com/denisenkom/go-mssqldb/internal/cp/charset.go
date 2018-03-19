@@ -1,14 +1,14 @@
-package mssql
+package cp
 
 type charsetMap struct {
 	sb [256]rune    // single byte runes, -1 for a double byte character lead byte
 	db map[int]rune // double byte runes
 }
 
-func collation2charset(col collation) *charsetMap {
+func collation2charset(col Collation) *charsetMap {
 	// http://msdn.microsoft.com/en-us/library/ms144250.aspx
 	// http://msdn.microsoft.com/en-us/library/ms144250(v=sql.105).aspx
-	switch col.sortId {
+	switch col.SortId {
 	case 30, 31, 32, 33, 34:
 		return cp437
 	case 40, 41, 42, 44, 49, 55, 56, 57, 58, 59, 60, 61:
@@ -86,7 +86,7 @@ func collation2charset(col collation) *charsetMap {
 	return cp1252
 }
 
-func charset2utf8(col collation, s []byte) string {
+func CharsetToUTF8(col Collation, s []byte) string {
 	cm := collation2charset(col)
 	if cm == nil {
 		return string(s)
