@@ -69,6 +69,18 @@
         "showIn": 0,
         "tags": [],
         "type": "tags"
+      },
+      {
+        "datasource": "${DS_MSSQL_TEST}",
+        "enable": false,
+        "hide": false,
+        "iconColor": "#7eb26d",
+        "limit": 100,
+        "name": "Metric Values",
+        "rawQuery": "SELECT \n  time, \n  measurement as text, \n  '' as tags\nFROM\n  metric_values \nORDER BY 1",
+        "showIn": 0,
+        "tags": [],
+        "type": "tags"
       }
     ]
   },
@@ -76,7 +88,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1521449511574,
+  "iteration": 1521458057789,
   "links": [],
   "panels": [
     {
@@ -2012,5 +2024,5 @@
   "timezone": "",
   "title": "Microsoft SQL Server Data Source Test",
   "uid": "GlAqcPgmz",
-  "version": 31
+  "version": 33
 }
