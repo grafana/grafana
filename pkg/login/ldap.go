@@ -117,25 +117,6 @@ func (a *ldapAuther) Login(ctx *m.ReqContext, query *m.LoginUserQuery) error {
 		}
 	}
 
-	// validate that the user has access
-	// if there are no ldap group mappings access is true
-	// otherwise a single group must match
-	access := len(a.server.LdapGroups) == 0
-	for _, ldapGroup := range a.server.LdapGroups {
-		if ldapUser.isMemberOf(ldapGroup.GroupDN) {
-			access = true
-			break
-		}
-	}
-
-	if !access {
-		a.log.Info(
-			"Ldap Auth: user does not belong in any of the specified ldap groups",
-			"username", ldapUser.Username,
-			"groups", ldapUser.MemberOf)
-		return ErrInvalidCredentials
-	}
-
 	grafanaUser, err := a.GetGrafanaUserFor(ctx, ldapUser)
 	if err != nil {
 		return err
@@ -195,6 +176,17 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		if ldapUser.isMemberOf(group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
 		}
+	}
+
+	// validate that the user has access
+	// if there are no ldap group mappings access is true
+	// otherwise a single group must match
+	if len(a.server.LdapGroups) > 0 && len(extUser.OrgRoles) < 1 {
+		a.log.Info(
+			"Ldap Auth: user does not belong in any of the specified ldap groups",
+			"username", ldapUser.Username,
+			"groups", ldapUser.MemberOf)
+		return nil, ErrInvalidCredentials
 	}
 
 	// add/update user in grafana

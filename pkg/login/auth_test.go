@@ -16,7 +16,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLdap(true, nil, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(nil, sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrTooManyLoginAttempts)
@@ -33,7 +33,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(nil, sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, nil)
@@ -51,7 +51,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(nil, sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, customErr)
@@ -68,7 +68,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLdap(false, nil, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(nil, sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)
@@ -85,7 +85,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(nil, sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)
@@ -102,7 +102,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLdap(true, nil, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(nil, sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldBeNil)
@@ -120,7 +120,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLdap(true, customErr, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(nil, sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, customErr)
@@ -137,7 +137,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(nil, sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)
@@ -168,7 +168,7 @@ func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
 }
 
 func mockLoginUsingLdap(enabled bool, err error, sc *authScenarioContext) {
-	loginUsingLdap = func(query *m.LoginUserQuery) (bool, error) {
+	loginUsingLdap = func(c *m.ReqContext, query *m.LoginUserQuery) (bool, error) {
 		sc.ldapLoginWasCalled = true
 		return enabled, err
 	}

@@ -116,18 +116,15 @@ type mockLdapAuthenticator struct {
 	syncSignedInUserCalled bool
 }
 
-func (a *mockLdapAuthenticator) Login(query *m.LoginUserQuery) error {
+func (a *mockLdapAuthenticator) Login(ctx *m.ReqContext, query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (a *mockLdapAuthenticator) SyncSignedInUser(signedInUser *m.SignedInUser) error {
+func (a *mockLdapAuthenticator) SyncSignedInUser(ctx *m.ReqContext, signedInUser *m.SignedInUser) error {
 	a.syncSignedInUserCalled = true
 	return nil
 }
 
-func (a *mockLdapAuthenticator) GetGrafanaUserFor(ldapUser *login.LdapUserInfo) (*m.User, error) {
+func (a *mockLdapAuthenticator) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *login.LdapUserInfo) (*m.User, error) {
 	return nil, nil
-}
-func (a *mockLdapAuthenticator) SyncOrgRoles(user *m.User, ldapUser *login.LdapUserInfo) error {
-	return nil
 }
