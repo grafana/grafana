@@ -866,9 +866,9 @@ kbn.getUnitFormats = function() {
         { text: 'Hryvnias (₴)', value: 'currencyUAH' },
         { text: 'Real (R$)', value: 'currencyBRL' },
         { text: 'Danish Krone (kr)', value: 'currencyDKK' },
-        { text: 'Icelandic Krone (kr)', value: 'currencyISK' },
+        { text: 'Icelandic Króna (kr)', value: 'currencyISK' },
         { text: 'Norwegian Krone (kr)', value: 'currencyNOK' },
-        { text: 'Swedish Krone (kr)', value: 'currencySEK' },
+        { text: 'Swedish Krona (kr)', value: 'currencySEK' },
       ],
     },
     {

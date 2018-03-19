@@ -6,18 +6,21 @@ But it will give you an idea of our current vision and plan.
 ### Short term (1-2 months)
 
 - v5.1
-  - Crossplatform builds & build speed improvements
+  - Build speed improvements & integration test execution
+  - Kubernetes friendly docker container
   - Enterprise LDAP
   - Provisioning workflow
-  - First login registration view
-  - IFQL Initial support
+  - MSSQL datasource
   
 ### Mid term (2-4 months)
 
 - v5.2
   - Azure monitor backend rewrite
   - Elasticsearch alerting
+  - First login registration view
   - Backend plugins? (alert notifiers, auth)
+  - Crossplatform builds
+  - IFQL Initial support
   
 ### Long term (4 - 8 months)
 
