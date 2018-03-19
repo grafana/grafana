@@ -76,7 +76,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1521203799316,
+  "iteration": 1521449511574,
   "links": [],
   "panels": [
     {
@@ -165,14 +165,14 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize') AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '$summarize') ORDER BY 1",
+          "rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Metrics - timeGroup macro $summarize without fill",
+      "title": "Metrics - timeGroup macro 5m without fill",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -244,14 +244,14 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize', NULL) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '$summarize') ORDER BY 1",
+          "rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Metrics - timeGroup macro $summarize with fill(NULL) and null as zero",
+      "title": "Metrics - timeGroup macro 5m with fill(NULL) and null as zero",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -323,14 +323,14 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize', 10.0) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '$summarize') ORDER BY 1",
+          "rawSql": "SELECT $__timeGroup(time, '5m', 10.0) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Metrics - timeGroup macro $summarize with fill(10.0)",
+      "title": "Metrics - timeGroup macro 5m with fill(10.0)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -613,6 +613,170 @@
         "x": 0,
         "y": 22
       },
+      "id": 27,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement as metric, \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nGROUP BY \n  $__timeGroup(time, '$summarize'), \n  measurement \nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple series with metric column using timeGroup macro ($summarize)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "${DS_MSSQL_TEST}",
+      "fill": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "id": 5,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nGROUP BY \n  $__timeGroup(time, '$summarize')\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple series without metric column using timeGroup macro ($summarize)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "${DS_MSSQL_TEST}",
+      "fill": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 30
+      },
       "id": 4,
       "legend": {
         "alignAsTable": true,
@@ -694,9 +858,9 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 30
       },
-      "id": 5,
+      "id": 28,
       "legend": {
         "alignAsTable": true,
         "avg": true,
@@ -775,7 +939,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 38
       },
       "id": 19,
       "legend": {
@@ -858,7 +1022,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 38
       },
       "id": 18,
       "legend": {
@@ -939,7 +1103,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 46
       },
       "id": 17,
       "legend": {
@@ -1022,7 +1186,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 46
       },
       "id": 20,
       "legend": {
@@ -1103,7 +1267,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 46
+        "y": 54
       },
       "id": 14,
       "legend": {
@@ -1187,7 +1351,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 46
+        "y": 54
       },
       "id": 15,
       "legend": {
@@ -1270,7 +1434,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 54
+        "y": 62
       },
       "id": 25,
       "legend": {
@@ -1354,7 +1518,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 54
+        "y": 62
       },
       "id": 22,
       "legend": {
@@ -1437,7 +1601,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 62
+        "y": 70
       },
       "id": 21,
       "legend": {
@@ -1521,7 +1685,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 62
+        "y": 70
       },
       "id": 26,
       "legend": {
@@ -1604,7 +1768,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 70
+        "y": 78
       },
       "id": 23,
       "legend": {
@@ -1688,7 +1852,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 70
+        "y": 78
       },
       "id": 24,
       "legend": {
@@ -1772,8 +1936,8 @@
         "auto_count": 30,
         "auto_min": "10s",
         "current": {
-          "text": "5m",
-          "value": "5m"
+          "text": "10m",
+          "value": "10m"
         },
         "hide": 0,
         "label": "Interval",
@@ -1800,12 +1964,12 @@
             "value": "1m"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "5m",
             "value": "5m"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "10m",
             "value": "10m"
           }
@@ -1848,5 +2012,5 @@
   "timezone": "",
   "title": "Microsoft SQL Server Data Source Test",
   "uid": "GlAqcPgmz",
-  "version": 29
+  "version": 31
 }
