@@ -83,7 +83,7 @@ func (s Slice) Group(fn func(e Elem) string) []Slice {
 		m[key] = append(m[key], vi)
 	}
 	keys := []string{}
-	for k, _ := range m {
+	for k := range m {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)

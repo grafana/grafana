@@ -1050,7 +1050,7 @@ func (b *builder) writeRegion() {
 	m49Index := [9]int16{}
 	fromM49 := []uint16{}
 	m49 := []int{}
-	for k, _ := range fromM49map {
+	for k := range fromM49map {
 		m49 = append(m49, int(k))
 	}
 	sort.Ints(m49)

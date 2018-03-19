@@ -110,7 +110,7 @@ func (cldr *CLDR) Supplemental() *SupplementalData {
 func (cldr *CLDR) Locales() []string {
 	loc := []string{"root"}
 	hasRoot := false
-	for l, _ := range cldr.locale {
+	for l := range cldr.locale {
 		if l == "root" {
 			hasRoot = true
 			continue

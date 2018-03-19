@@ -321,7 +321,9 @@ func (noCachedConnError) Error() string             { return "http2: no cached c
 // or its equivalent renamed type in net/http2's h2_bundle.go. Both types
 // may coexist in the same running program.
 func isNoCachedConnError(err error) bool {
-	_, ok := err.(interface{ IsHTTP2NoCachedConnError() })
+	_, ok := err.(interface {
+		IsHTTP2NoCachedConnError()
+	})
 	return ok
 }
 

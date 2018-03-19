@@ -1,7 +1,7 @@
-import React from "react";
-import classNames from "classnames";
-import { observer } from "mobx-react";
-import { store } from "app/stores/store";
+import React from 'react';
+import classNames from 'classnames';
+import { observer } from 'mobx-react';
+import { store } from 'app/stores/store';
 
 export interface SearchResultProps {
   search: any;
@@ -13,7 +13,7 @@ export class SearchResult extends React.Component<SearchResultProps, any> {
     super(props);
 
     this.state = {
-      search: store.search
+      search: store.search,
     };
 
     store.search.query();
@@ -56,29 +56,20 @@ export class SearchResultSection extends React.Component<SectionProps, any> {
   render() {
     let collapseClassNames = classNames({
       fa: true,
-      "fa-plus": !this.props.section.expanded,
-      "fa-minus": this.props.section.expanded,
-      "search-section__header__toggle": true
+      'fa-plus': !this.props.section.expanded,
+      'fa-minus': this.props.section.expanded,
+      'search-section__header__toggle': true,
     });
 
     return (
       <div className="search-section" key={this.props.section.id}>
         <div className="search-section__header">
-          <i
-            className={classNames(
-              "search-section__header__icon",
-              this.props.section.icon
-            )}
-          />
-          <span className="search-section__header__text">
-            {this.props.section.title}
-          </span>
+          <i className={classNames('search-section__header__icon', this.props.section.icon)} />
+          <span className="search-section__header__text">{this.props.section.title}</span>
           <i className={collapseClassNames} onClick={this.toggleSection} />
         </div>
         {this.props.section.expanded && (
-          <div className="search-section__items">
-            {this.props.section.items.map(this.renderItem)}
-          </div>
+          <div className="search-section__items">{this.props.section.items.map(this.renderItem)}</div>
         )}
       </div>
     );

@@ -270,7 +270,7 @@ func (ctx *Context) SetParams(name, val string) {
 
 // ReplaceAllParams replace all current params with given params
 func (ctx *Context) ReplaceAllParams(params Params) {
-	ctx.params = params;
+	ctx.params = params
 }
 
 // ParamsEscape returns escapred params result.

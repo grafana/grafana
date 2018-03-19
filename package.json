@@ -119,7 +119,7 @@
       "git add"
     ],
     "*.go": [
-      "gofmt -w -s",
+      "gofmt -w -s pkg",
       "git add"
     ]
   },
