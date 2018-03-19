@@ -1,28 +1,24 @@
-define([
-  'angular',
-  'lodash',
-  './query_def',
-],
-function (angular, _, queryDef) {
-  'use strict';
+import angular from 'angular';
+import _ from 'lodash';
+import * as queryDef from './query_def';
 
-  var module = angular.module('grafana.directives');
+export function elasticBucketAgg() {
+  return {
+    templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
+    controller: 'ElasticBucketAggCtrl',
+    restrict: 'E',
+    scope: {
+      target: '=',
+      index: '=',
+      onChange: '&',
+      getFields: '&',
+    },
+  };
+}
 
-  module.directive('elasticBucketAgg', function() {
-    return {
-      templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
-      controller: 'ElasticBucketAggCtrl',
-      restrict: 'E',
-      scope: {
-        target: "=",
-        index: "=",
-        onChange: "&",
-        getFields: "&",
-      }
-    };
-  });
-
-  module.controller('ElasticBucketAggCtrl', function($scope, uiSegmentSrv, $q, $rootScope) {
+export class ElasticBucketAggCtrl {
+  /** @nginject */
+  constructor($scope, uiSegmentSrv, $q, $rootScope) {
     var bucketAggs = $scope.target.bucketAggs;
 
     $scope.orderByOptions = [];
@@ -39,9 +35,13 @@ function (angular, _, queryDef) {
       return queryDef.sizeOptions;
     };
 
-    $rootScope.onAppEvent('elastic-query-updated', function() {
-      $scope.validateModel();
-    }, $scope);
+    $rootScope.onAppEvent(
+      'elastic-query-updated',
+      function() {
+        $scope.validateModel();
+      },
+      $scope
+    );
 
     $scope.init = function() {
       $scope.agg = bucketAggs[$scope.index];
@@ -56,10 +56,10 @@ function (angular, _, queryDef) {
       $scope.agg.settings = {};
       $scope.showOptions = false;
 
-      switch($scope.agg.type) {
+      switch ($scope.agg.type) {
         case 'date_histogram':
         case 'histogram':
-        case 'terms':  {
+        case 'terms': {
           delete $scope.agg.query;
           $scope.agg.field = 'select field';
           break;
@@ -84,15 +84,15 @@ function (angular, _, queryDef) {
       $scope.isFirst = $scope.index === 0;
       $scope.bucketAggCount = bucketAggs.length;
 
-      var settingsLinkText = "";
+      var settingsLinkText = '';
       var settings = $scope.agg.settings || {};
 
-      switch($scope.agg.type) {
+      switch ($scope.agg.type) {
         case 'terms': {
-          settings.order = settings.order || "desc";
-          settings.size = settings.size || "10";
+          settings.order = settings.order || 'desc';
+          settings.size = settings.size || '10';
           settings.min_doc_count = settings.min_doc_count || 1;
-          settings.orderBy = settings.orderBy || "_term";
+          settings.orderBy = settings.orderBy || '_term';
 
           if (settings.size !== '0') {
             settingsLinkText = queryDef.describeOrder(settings.order) + ' ' + settings.size + ', ';
@@ -111,13 +111,17 @@ function (angular, _, queryDef) {
           break;
         }
         case 'filters': {
-          settings.filters = settings.filters || [{query: '*'}];
-          settingsLinkText = _.reduce(settings.filters, function(memo, value, index) {
-            memo += 'Q' + (index + 1) + '  = ' + value.query + ' ';
-            return memo;
-          }, '');
+          settings.filters = settings.filters || [{ query: '*' }];
+          settingsLinkText = _.reduce(
+            settings.filters,
+            function(memo, value, index) {
+              memo += 'Q' + (index + 1) + '  = ' + value.query + ' ';
+              return memo;
+            },
+            ''
+          );
           if (settingsLinkText.length > 50) {
-            settingsLinkText = settingsLinkText.substr(0, 50) + "...";
+            settingsLinkText = settingsLinkText.substr(0, 50) + '...';
           }
           settingsLinkText = 'Filter Queries (' + settings.filters.length + ')';
           break;
@@ -165,7 +169,7 @@ function (angular, _, queryDef) {
     };
 
     $scope.addFiltersQuery = function() {
-      $scope.agg.settings.filters.push({query: '*'});
+      $scope.agg.settings.filters.push({ query: '*' });
     };
 
     $scope.removeFiltersQuery = function(filter) {
@@ -182,7 +186,7 @@ function (angular, _, queryDef) {
 
     $scope.getFieldsInternal = function() {
       if ($scope.agg.type === 'date_histogram') {
-        return $scope.getFields({$fieldType: 'date'});
+        return $scope.getFields({ $fieldType: 'date' });
       } else {
         return $scope.getFields();
       }
@@ -198,14 +202,18 @@ function (angular, _, queryDef) {
       var addIndex = bucketAggs.length - 1;
 
       if (lastBucket && lastBucket.type === 'date_histogram') {
-        addIndex - 1;
+        addIndex -= 1;
       }
 
-      var id = _.reduce($scope.target.bucketAggs.concat($scope.target.metrics), function(max, val) {
-        return parseInt(val.id) > max ? parseInt(val.id) : max;
-      }, 0);
+      var id = _.reduce(
+        $scope.target.bucketAggs.concat($scope.target.metrics),
+        function(max, val) {
+          return parseInt(val.id) > max ? parseInt(val.id) : max;
+        },
+        0
+      );
 
-      bucketAggs.splice(addIndex, 0, {type: "terms", field: "select field", id: (id+1).toString(), fake: true});
+      bucketAggs.splice(addIndex, 0, { type: 'terms', field: 'select field', id: (id + 1).toString(), fake: true });
       $scope.onChange();
     };
 
@@ -215,7 +223,9 @@ function (angular, _, queryDef) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-
-});
+var module = angular.module('grafana.directives');
+module.directive('elasticBucketAgg', elasticBucketAgg);
+module.controller('ElasticBucketAggCtrl', ElasticBucketAggCtrl);
