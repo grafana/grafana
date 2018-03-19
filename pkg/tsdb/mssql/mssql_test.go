@@ -404,6 +404,164 @@ func TestMSSQL(t *testing.T) {
 				So(queryResult.Series[0].Name, ShouldEqual, "valueOne")
 				So(queryResult.Series[1].Name, ShouldEqual, "valueTwo")
 			})
+
+			Convey("Given a stored procedure that takes @from and @to in epoch time", func() {
+				sql := `
+					IF object_id('sp_test_epoch') IS NOT NULL
+						DROP PROCEDURE sp_test_epoch
+				`
+
+				_, err := sess.Exec(sql)
+				So(err, ShouldBeNil)
+
+				sql = `
+					CREATE PROCEDURE sp_test_epoch(
+						@from int,
+						@to 	int
+					)	AS
+					BEGIN
+						SELECT
+							cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
+							measurement + ' - value one' as metric,
+							avg(valueOne) as value
+						FROM
+							metric_values
+						WHERE
+							time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
+						GROUP BY
+							cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
+							measurement
+						UNION ALL
+						SELECT
+							cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
+							measurement + ' - value two' as metric,
+							avg(valueTwo) as value
+						FROM
+							metric_values
+						WHERE
+							time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
+						GROUP BY
+							cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
+							measurement
+						ORDER BY 1
+					END
+				`
+
+				_, err = sess.Exec(sql)
+				So(err, ShouldBeNil)
+
+				Convey("When doing a metric query using stored procedure should return correct result", func() {
+					query := &tsdb.TsdbQuery{
+						Queries: []*tsdb.Query{
+							{
+								Model: simplejson.NewFromAny(map[string]interface{}{
+									"rawSql": `DECLARE
+										@from int = $__unixEpochFrom(),
+										@to int = $__unixEpochTo()
+
+										EXEC dbo.sp_test_epoch @from, @to`,
+									"format": "time_series",
+								}),
+								RefId: "A",
+							},
+						},
+						TimeRange: &tsdb.TimeRange{
+							From: "1521117000000",
+							To:   "1521122100000",
+						},
+					}
+
+					resp, err := endpoint.Query(nil, nil, query)
+					queryResult := resp.Results["A"]
+					So(err, ShouldBeNil)
+					So(queryResult.Error, ShouldBeNil)
+
+					So(len(queryResult.Series), ShouldEqual, 4)
+					So(queryResult.Series[0].Name, ShouldEqual, "Metric A - value one")
+					So(queryResult.Series[1].Name, ShouldEqual, "Metric B - value one")
+					So(queryResult.Series[2].Name, ShouldEqual, "Metric A - value two")
+					So(queryResult.Series[3].Name, ShouldEqual, "Metric B - value two")
+				})
+			})
+
+			Convey("Given a stored procedure that takes @from and @to in datetime", func() {
+				sql := `
+					IF object_id('sp_test_datetime') IS NOT NULL
+						DROP PROCEDURE sp_test_datetime
+				`
+
+				_, err := sess.Exec(sql)
+				So(err, ShouldBeNil)
+
+				sql = `
+					CREATE PROCEDURE sp_test_datetime(
+						@from datetime,
+						@to 	datetime
+					)	AS
+					BEGIN
+						SELECT
+							cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
+							measurement + ' - value one' as metric,
+							avg(valueOne) as value
+						FROM
+							metric_values
+						WHERE
+							time >= @from AND time <= @to
+						GROUP BY
+							cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
+							measurement
+						UNION ALL
+						SELECT
+							cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
+							measurement + ' - value two' as metric,
+							avg(valueTwo) as value
+						FROM
+							metric_values
+						WHERE
+							time >= @from AND time <= @to
+						GROUP BY
+							cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
+							measurement
+						ORDER BY 1
+					END
+				`
+
+				_, err = sess.Exec(sql)
+				So(err, ShouldBeNil)
+
+				Convey("When doing a metric query using stored procedure should return correct result", func() {
+					query := &tsdb.TsdbQuery{
+						Queries: []*tsdb.Query{
+							{
+								Model: simplejson.NewFromAny(map[string]interface{}{
+									"rawSql": `DECLARE
+										@from int = $__unixEpochFrom(),
+										@to int = $__unixEpochTo()
+
+										EXEC dbo.sp_test_epoch @from, @to`,
+									"format": "time_series",
+								}),
+								RefId: "A",
+							},
+						},
+						TimeRange: &tsdb.TimeRange{
+							From: "1521117000000",
+							To:   "1521122100000",
+						},
+					}
+
+					resp, err := endpoint.Query(nil, nil, query)
+					queryResult := resp.Results["A"]
+					So(err, ShouldBeNil)
+					So(queryResult.Error, ShouldBeNil)
+
+					So(len(queryResult.Series), ShouldEqual, 4)
+					So(queryResult.Series[0].Name, ShouldEqual, "Metric A - value one")
+					So(queryResult.Series[1].Name, ShouldEqual, "Metric B - value one")
+					So(queryResult.Series[2].Name, ShouldEqual, "Metric A - value two")
+					So(queryResult.Series[3].Name, ShouldEqual, "Metric B - value two")
+				})
+			})
 		})
 
 		Convey("Given a table with event data", func() {

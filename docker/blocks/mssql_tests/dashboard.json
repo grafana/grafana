@@ -88,7 +88,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1521475806814,
+  "iteration": 1521481503341,
   "links": [],
   "panels": [
     {
@@ -184,7 +184,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Metrics - timeGroup macro 5m without fill",
+      "title": "timeGroup macro 5m without fill",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -204,7 +204,7 @@
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -263,7 +263,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Metrics - timeGroup macro 5m with fill(NULL) and null as zero",
+      "title": "timeGroup macro 5m with fill(NULL) and null as zero",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -283,7 +283,7 @@
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -342,7 +342,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Metrics - timeGroup macro 5m with fill(10.0)",
+      "title": "timeGroup macro 5m with fill(10.0)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -362,7 +362,7 @@
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -655,7 +655,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement + ' - value one' as metric, \n  avg(valueOne) as valueOne\nFROM\n  metric_values \nGROUP BY \n  $__timeGroup(time, '$summarize'), \n  measurement \nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement + ' - value one' as metric, \n  avg(valueOne) as valueOne\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time)\nGROUP BY \n  $__timeGroup(time, '$summarize'), \n  measurement \nORDER BY 1",
           "refId": "A"
         },
         {
@@ -1294,6 +1294,172 @@
     },
     {
       "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "${DS_MSSQL_TEST}",
+      "fill": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 54
+      },
+      "id": 29,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "DECLARE \n  @from int = $__unixEpochFrom(),\n  @to int = $__unixEpochTo()\n  \nEXEC dbo.sp_test_epoch @from, @to",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Stored procedure support using epoch",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "${DS_MSSQL_TEST}",
+      "fill": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 54
+      },
+      "id": 30,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "DECLARE \n  @from datetime = $__timeFrom(),\n  @to datetime = $__timeTo()\n  \nEXEC dbo.sp_test_datetime @from, @to",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Stored procedure support using datetime",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
       "bars": true,
       "dashLength": 10,
       "dashes": false,
@@ -1303,7 +1469,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 54
+        "y": 62
       },
       "id": 14,
       "legend": {
@@ -1393,7 +1559,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 54
+        "y": 62
       },
       "id": 15,
       "legend": {
@@ -1476,7 +1642,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 62
+        "y": 70
       },
       "id": 25,
       "legend": {
@@ -1566,7 +1732,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 62
+        "y": 70
       },
       "id": 22,
       "legend": {
@@ -1649,7 +1815,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 70
+        "y": 78
       },
       "id": 21,
       "legend": {
@@ -1739,7 +1905,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 70
+        "y": 78
       },
       "id": 26,
       "legend": {
@@ -1822,7 +1988,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 78
+        "y": 86
       },
       "id": 23,
       "legend": {
@@ -1912,7 +2078,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 78
+        "y": 86
       },
       "id": 24,
       "legend": {
@@ -2072,5 +2238,5 @@
   "timezone": "",
   "title": "Microsoft SQL Server Data Source Test",
   "uid": "GlAqcPgmz",
-  "version": 35
+  "version": 37
 }
