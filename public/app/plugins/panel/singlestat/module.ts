@@ -7,7 +7,7 @@ import 'app/features/panellinks/linkSrv';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import {MetricsPanelCtrl} from 'app/plugins/sdk';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
 
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -23,17 +23,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   panel: any;
   events: any;
   valueNameOptions: any[] = [
-    {value: 'min', text: 'Min'},
-    {value: 'max', text: 'Max'},
-    {value: 'avg', text: 'Average'},
-    {value: 'current', text: 'Current'},
-    {value: 'total', text: 'Total'},
-    {value: 'name', text: 'Name'},
-    {value: 'first', text: 'First'},
-    {value: 'delta', text: 'Delta'},
-    {value: 'diff', text: 'Difference'},
-    {value: 'range', text: 'Range'},
-    {value: 'last_time', text: 'Time of last point'},
+    { value: 'min', text: 'Min' },
+    { value: 'max', text: 'Max' },
+    { value: 'avg', text: 'Average' },
+    { value: 'current', text: 'Current' },
+    { value: 'total', text: 'Total' },
+    { value: 'name', text: 'Name' },
+    { value: 'first', text: 'First' },
+    { value: 'delta', text: 'Delta' },
+    { value: 'diff', text: 'Difference' },
+    { value: 'range', text: 'Range' },
+    { value: 'last_time', text: 'Time of last point' },
   ];
   tableColumnOptions: any;
 
@@ -49,9 +49,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     prefix: '',
     postfix: '',
     nullText: null,
-    valueMaps: [{value: 'null', op: '=', text: 'N/A'}],
-    mappingTypes: [{name: 'value to text', value: 1}, {name: 'range to text', value: 2}],
-    rangeMaps: [{from: 'null', to: 'null', text: 'N/A'}],
+    valueMaps: [{ value: 'null', op: '=', text: 'N/A' }],
+    mappingTypes: [{ name: 'value to text', value: 1 }, { name: 'range to text', value: 2 }],
+    rangeMaps: [{ from: 'null', to: 'null', text: 'N/A' }],
     mappingType: 1,
     nullPointMode: 'connected',
     valueName: 'avg',
@@ -243,7 +243,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   getDecimalsForValue(value) {
     if (_.isNumber(this.panel.decimals)) {
-      return {decimals: this.panel.decimals, scaledDecimals: null};
+      return { decimals: this.panel.decimals, scaledDecimals: null };
     }
 
     let delta = value / 2;
@@ -395,7 +395,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   addRangeMap() {
-    this.panel.rangeMaps.push({from: '', to: '', text: ''});
+    this.panel.rangeMaps.push({ from: '', to: '', text: '' });
   }
 
   link(scope, elem, attrs, ctrl) {
@@ -422,7 +422,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getSpan(className, fontSize, value) {
-      value = templateSrv.replace(value, data.scopedlets);
+      value = templateSrv.replace(value, data.scopedVars);
       return '<span class="' + className + '" style="font-size:' + fontSize + '">' + value + '</span>';
     }
 
@@ -489,7 +489,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         value: panel.gauge.maxValue,
         color: data.colorMap[data.colorMap.length - 1],
       });
-
       let bgColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
 
       let fontScale = parseInt(panel.valueFontSize) / 100;
@@ -527,7 +526,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             },
             value: {
               color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
-              formatter: function () {
+              formatter: function() {
                 return getValueText();
               },
               font: {
@@ -541,7 +540,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       };
 
       elem.append(plotCanvas);
-
       let plotSeries = {
         data: [[0, data.valueRounded]],
       };
@@ -670,17 +668,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function hookupDrilldownLinkTooltip() {
       // drilldown link tooltip
       let drilldownTooltip = $('<div id="tooltip" class="">hello</div>"');
-
-      elem.mouseleave(function () {
+      elem.mouseleave(function() {
         if (panel.links.length === 0) {
           return;
         }
-        $timeout(function () {
+        $timeout(function() {
           drilldownTooltip.detach();
         });
       });
-
-      elem.click(function (evt) {
+      
+      elem.click(function(evt) {
         if (!linkInfo) {
           return;
         }
@@ -705,7 +702,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         drilldownTooltip.detach();
       });
 
-      elem.mousemove(function (e) {
+      elem.mousemove(function(e) {
         if (!linkInfo) {
           return;
         }
@@ -735,5 +732,4 @@ function getColorForValue(data, value) {
   }
   return _.first(data.colorMap);
 }
-
-export {SingleStatCtrl, SingleStatCtrl as PanelCtrl, getColorForValue};
+export { SingleStatCtrl, SingleStatCtrl as PanelCtrl, getColorForValue };

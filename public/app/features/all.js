@@ -8,5 +8,8 @@ define([
   './playlist/all',
   './snapshot/all',
   './panel/all',
+  './org/all',
+  './admin/admin',
+  './alerting/all',
   './styleguide/styleguide',
 ], function () {});

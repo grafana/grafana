@@ -1,10 +1,9 @@
-<navbar model="ctrl.navModel"></navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container">
-  <div class="page-header">
-    <h1 ng-show="ctrl.model.id">Edit Channel</h1>
-    <h1 ng-show="!ctrl.model.id">New Channel</h1>
-  </div>
+<div class="page-container page-body">
+
+  <h3 class="page-sub-heading" ng-hide="ctrl.isNew">Edit Notification Channel</h3>
+  <h3 class="page-sub-heading" ng-show="ctrl.isNew">New Notification Channel</h3>
 
   <form name="ctrl.theForm" ng-if="ctrl.notifiers">
     <div class="gf-form-group">
@@ -38,15 +37,10 @@
     <div class="gf-form-group" ng-include src="ctrl.notifierTemplateId">
     </div>
 
-    <div class="gf-form-group">
-      <div class="gf-form-inline">
-        <div class="gf-form width-8">
-          <button type="submit" ng-click="ctrl.save()" class="btn btn-success width-7">Save</button>
-        </div>
-        <div class="gf-form width-8">
-          <button type="submit" ng-click="ctrl.testNotification()" class="btn btn-secondary width-7">Send Test</button>
-        </div>
-      </div>
+    <div class="gf-form-group gf-form-button-row">
+			<button type="submit" ng-click="ctrl.save()" class="btn btn-success width-7">Save</button>
+			<button type="submit" ng-click="ctrl.testNotification()" class="btn btn-secondary width-7">Send Test</button>
+			<a href="alerting/notifications" class="btn btn-inverse">Back</a>
     </div>
   </form>
 </div>

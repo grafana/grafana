@@ -30,7 +30,7 @@ type Tracer interface {
 	//     sp := tracer.StartSpan(
 	//         "GetFeed",
 	//         opentracing.ChildOf(parentSpan.Context()),
-	//         opentracing.Tag{"user_agent", loggedReq.UserAgent},
+	//         opentracing.Tag("user_agent", loggedReq.UserAgent),
 	//         opentracing.StartTime(loggedReq.Timestamp),
 	//     )
 	//

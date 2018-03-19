@@ -21,32 +21,32 @@ import (
 // Patch represents one patch operation.
 type Patch struct {
 	diffs   []Diff
-	start1  int
-	start2  int
-	length1 int
-	length2 int
+	Start1  int
+	Start2  int
+	Length1 int
+	Length2 int
 }
 
 // String emulates GNU diff's format.
 // Header: @@ -382,8 +481,9 @@
-// Indicies are printed as 1-based, not 0-based.
+// Indices are printed as 1-based, not 0-based.
 func (p *Patch) String() string {
 	var coords1, coords2 string
 
-	if p.length1 == 0 {
-		coords1 = strconv.Itoa(p.start1) + ",0"
-	} else if p.length1 == 1 {
-		coords1 = strconv.Itoa(p.start1 + 1)
+	if p.Length1 == 0 {
+		coords1 = strconv.Itoa(p.Start1) + ",0"
+	} else if p.Length1 == 1 {
+		coords1 = strconv.Itoa(p.Start1 + 1)
 	} else {
-		coords1 = strconv.Itoa(p.start1+1) + "," + strconv.Itoa(p.length1)
+		coords1 = strconv.Itoa(p.Start1+1) + "," + strconv.Itoa(p.Length1)
 	}
 
-	if p.length2 == 0 {
-		coords2 = strconv.Itoa(p.start2) + ",0"
-	} else if p.length2 == 1 {
-		coords2 = strconv.Itoa(p.start2 + 1)
+	if p.Length2 == 0 {
+		coords2 = strconv.Itoa(p.Start2) + ",0"
+	} else if p.Length2 == 1 {
+		coords2 = strconv.Itoa(p.Start2 + 1)
 	} else {
-		coords2 = strconv.Itoa(p.start2+1) + "," + strconv.Itoa(p.length2)
+		coords2 = strconv.Itoa(p.Start2+1) + "," + strconv.Itoa(p.Length2)
 	}
 
 	var text bytes.Buffer
@@ -76,37 +76,37 @@ func (dmp *DiffMatchPatch) PatchAddContext(patch Patch, text string) Patch {
 		return patch
 	}
 
-	pattern := text[patch.start2 : patch.start2+patch.length1]
+	pattern := text[patch.Start2 : patch.Start2+patch.Length1]
 	padding := 0
 
 	// Look for the first and last matches of pattern in text.  If two different matches are found, increase the pattern length.
 	for strings.Index(text, pattern) != strings.LastIndex(text, pattern) &&
 		len(pattern) < dmp.MatchMaxBits-2*dmp.PatchMargin {
 		padding += dmp.PatchMargin
-		maxStart := max(0, patch.start2-padding)
-		minEnd := min(len(text), patch.start2+patch.length1+padding)
+		maxStart := max(0, patch.Start2-padding)
+		minEnd := min(len(text), patch.Start2+patch.Length1+padding)
 		pattern = text[maxStart:minEnd]
 	}
 	// Add one chunk for good luck.
 	padding += dmp.PatchMargin
 
 	// Add the prefix.
-	prefix := text[max(0, patch.start2-padding):patch.start2]
+	prefix := text[max(0, patch.Start2-padding):patch.Start2]
 	if len(prefix) != 0 {
 		patch.diffs = append([]Diff{Diff{DiffEqual, prefix}}, patch.diffs...)
 	}
 	// Add the suffix.
-	suffix := text[patch.start2+patch.length1 : min(len(text), patch.start2+patch.length1+padding)]
+	suffix := text[patch.Start2+patch.Length1 : min(len(text), patch.Start2+patch.Length1+padding)]
 	if len(suffix) != 0 {
 		patch.diffs = append(patch.diffs, Diff{DiffEqual, suffix})
 	}
 
 	// Roll back the start points.
-	patch.start1 -= len(prefix)
-	patch.start2 -= len(prefix)
+	patch.Start1 -= len(prefix)
+	patch.Start2 -= len(prefix)
 	// Extend the lengths.
-	patch.length1 += len(prefix) + len(suffix)
-	patch.length2 += len(prefix) + len(suffix)
+	patch.Length1 += len(prefix) + len(suffix)
+	patch.Length2 += len(prefix) + len(suffix)
 
 	return patch
 }
@@ -155,18 +155,18 @@ func (dmp *DiffMatchPatch) patchMake2(text1 string, diffs []Diff) []Patch {
 	for i, aDiff := range diffs {
 		if len(patch.diffs) == 0 && aDiff.Type != DiffEqual {
 			// A new patch starts here.
-			patch.start1 = charCount1
-			patch.start2 = charCount2
+			patch.Start1 = charCount1
+			patch.Start2 = charCount2
 		}
 
 		switch aDiff.Type {
 		case DiffInsert:
 			patch.diffs = append(patch.diffs, aDiff)
-			patch.length2 += len(aDiff.Text)
+			patch.Length2 += len(aDiff.Text)
 			postpatchText = postpatchText[:charCount2] +
 				aDiff.Text + postpatchText[charCount2:]
 		case DiffDelete:
-			patch.length1 += len(aDiff.Text)
+			patch.Length1 += len(aDiff.Text)
 			patch.diffs = append(patch.diffs, aDiff)
 			postpatchText = postpatchText[:charCount2] + postpatchText[charCount2+len(aDiff.Text):]
 		case DiffEqual:
@@ -174,8 +174,8 @@ func (dmp *DiffMatchPatch) patchMake2(text1 string, diffs []Diff) []Patch {
 				len(patch.diffs) != 0 && i != len(diffs)-1 {
 				// Small equality inside a patch.
 				patch.diffs = append(patch.diffs, aDiff)
-				patch.length1 += len(aDiff.Text)
-				patch.length2 += len(aDiff.Text)
+				patch.Length1 += len(aDiff.Text)
+				patch.Length2 += len(aDiff.Text)
 			}
 			if len(aDiff.Text) >= 2*dmp.PatchMargin {
 				// Time for a new patch.
@@ -219,10 +219,10 @@ func (dmp *DiffMatchPatch) PatchDeepCopy(patches []Patch) []Patch {
 				aDiff.Text,
 			})
 		}
-		patchCopy.start1 = aPatch.start1
-		patchCopy.start2 = aPatch.start2
-		patchCopy.length1 = aPatch.length1
-		patchCopy.length2 = aPatch.length2
+		patchCopy.Start1 = aPatch.Start1
+		patchCopy.Start2 = aPatch.Start2
+		patchCopy.Length1 = aPatch.Length1
+		patchCopy.Length2 = aPatch.Length2
 		patchesCopy = append(patchesCopy, patchCopy)
 	}
 	return patchesCopy
@@ -246,7 +246,7 @@ func (dmp *DiffMatchPatch) PatchApply(patches []Patch, text string) (string, []b
 	delta := 0
 	results := make([]bool, len(patches))
 	for _, aPatch := range patches {
-		expectedLoc := aPatch.start2 + delta
+		expectedLoc := aPatch.Start2 + delta
 		text1 := dmp.DiffText1(aPatch.diffs)
 		var startLoc int
 		endLoc := -1
@@ -268,7 +268,7 @@ func (dmp *DiffMatchPatch) PatchApply(patches []Patch, text string) (string, []b
 			// No match found.  :(
 			results[x] = false
 			// Subtract the delta for this failed patch from subsequent patches.
-			delta -= aPatch.length2 - aPatch.length1
+			delta -= aPatch.Length2 - aPatch.Length1
 		} else {
 			// Found a match.  :)
 			results[x] = true
@@ -329,26 +329,26 @@ func (dmp *DiffMatchPatch) PatchAddPadding(patches []Patch) string {
 
 	// Bump all the patches forward.
 	for i := range patches {
-		patches[i].start1 += paddingLength
-		patches[i].start2 += paddingLength
+		patches[i].Start1 += paddingLength
+		patches[i].Start2 += paddingLength
 	}
 
 	// Add some padding on start of first diff.
 	if len(patches[0].diffs) == 0 || patches[0].diffs[0].Type != DiffEqual {
 		// Add nullPadding equality.
 		patches[0].diffs = append([]Diff{Diff{DiffEqual, nullPadding}}, patches[0].diffs...)
-		patches[0].start1 -= paddingLength // Should be 0.
-		patches[0].start2 -= paddingLength // Should be 0.
-		patches[0].length1 += paddingLength
-		patches[0].length2 += paddingLength
+		patches[0].Start1 -= paddingLength // Should be 0.
+		patches[0].Start2 -= paddingLength // Should be 0.
+		patches[0].Length1 += paddingLength
+		patches[0].Length2 += paddingLength
 	} else if paddingLength > len(patches[0].diffs[0].Text) {
 		// Grow first equality.
 		extraLength := paddingLength - len(patches[0].diffs[0].Text)
 		patches[0].diffs[0].Text = nullPadding[len(patches[0].diffs[0].Text):] + patches[0].diffs[0].Text
-		patches[0].start1 -= extraLength
-		patches[0].start2 -= extraLength
-		patches[0].length1 += extraLength
-		patches[0].length2 += extraLength
+		patches[0].Start1 -= extraLength
+		patches[0].Start2 -= extraLength
+		patches[0].Length1 += extraLength
+		patches[0].Length2 += extraLength
 	}
 
 	// Add some padding on end of last diff.
@@ -356,15 +356,15 @@ func (dmp *DiffMatchPatch) PatchAddPadding(patches []Patch) string {
 	if len(patches[last].diffs) == 0 || patches[last].diffs[len(patches[last].diffs)-1].Type != DiffEqual {
 		// Add nullPadding equality.
 		patches[last].diffs = append(patches[last].diffs, Diff{DiffEqual, nullPadding})
-		patches[last].length1 += paddingLength
-		patches[last].length2 += paddingLength
+		patches[last].Length1 += paddingLength
+		patches[last].Length2 += paddingLength
 	} else if paddingLength > len(patches[last].diffs[len(patches[last].diffs)-1].Text) {
 		// Grow last equality.
 		lastDiff := patches[last].diffs[len(patches[last].diffs)-1]
 		extraLength := paddingLength - len(lastDiff.Text)
 		patches[last].diffs[len(patches[last].diffs)-1].Text += nullPadding[:extraLength]
-		patches[last].length1 += extraLength
-		patches[last].length2 += extraLength
+		patches[last].Length1 += extraLength
+		patches[last].Length2 += extraLength
 	}
 
 	return nullPadding
@@ -375,7 +375,7 @@ func (dmp *DiffMatchPatch) PatchAddPadding(patches []Patch) string {
 func (dmp *DiffMatchPatch) PatchSplitMax(patches []Patch) []Patch {
 	patchSize := dmp.MatchMaxBits
 	for x := 0; x < len(patches); x++ {
-		if patches[x].length1 <= patchSize {
+		if patches[x].Length1 <= patchSize {
 			continue
 		}
 		bigpatch := patches[x]
@@ -383,46 +383,46 @@ func (dmp *DiffMatchPatch) PatchSplitMax(patches []Patch) []Patch {
 		patches = append(patches[:x], patches[x+1:]...)
 		x--
 
-		start1 := bigpatch.start1
-		start2 := bigpatch.start2
+		Start1 := bigpatch.Start1
+		Start2 := bigpatch.Start2
 		precontext := ""
 		for len(bigpatch.diffs) != 0 {
 			// Create one of several smaller patches.
 			patch := Patch{}
 			empty := true
-			patch.start1 = start1 - len(precontext)
-			patch.start2 = start2 - len(precontext)
+			patch.Start1 = Start1 - len(precontext)
+			patch.Start2 = Start2 - len(precontext)
 			if len(precontext) != 0 {
-				patch.length1 = len(precontext)
-				patch.length2 = len(precontext)
+				patch.Length1 = len(precontext)
+				patch.Length2 = len(precontext)
 				patch.diffs = append(patch.diffs, Diff{DiffEqual, precontext})
 			}
-			for len(bigpatch.diffs) != 0 && patch.length1 < patchSize-dmp.PatchMargin {
+			for len(bigpatch.diffs) != 0 && patch.Length1 < patchSize-dmp.PatchMargin {
 				diffType := bigpatch.diffs[0].Type
 				diffText := bigpatch.diffs[0].Text
 				if diffType == DiffInsert {
 					// Insertions are harmless.
-					patch.length2 += len(diffText)
-					start2 += len(diffText)
+					patch.Length2 += len(diffText)
+					Start2 += len(diffText)
 					patch.diffs = append(patch.diffs, bigpatch.diffs[0])
 					bigpatch.diffs = bigpatch.diffs[1:]
 					empty = false
 				} else if diffType == DiffDelete && len(patch.diffs) == 1 && patch.diffs[0].Type == DiffEqual && len(diffText) > 2*patchSize {
 					// This is a large deletion.  Let it pass in one chunk.
-					patch.length1 += len(diffText)
-					start1 += len(diffText)
+					patch.Length1 += len(diffText)
+					Start1 += len(diffText)
 					empty = false
 					patch.diffs = append(patch.diffs, Diff{diffType, diffText})
 					bigpatch.diffs = bigpatch.diffs[1:]
 				} else {
 					// Deletion or equality.  Only take as much as we can stomach.
-					diffText = diffText[:min(len(diffText), patchSize-patch.length1-dmp.PatchMargin)]
+					diffText = diffText[:min(len(diffText), patchSize-patch.Length1-dmp.PatchMargin)]
 
-					patch.length1 += len(diffText)
-					start1 += len(diffText)
+					patch.Length1 += len(diffText)
+					Start1 += len(diffText)
 					if diffType == DiffEqual {
-						patch.length2 += len(diffText)
-						start2 += len(diffText)
+						patch.Length2 += len(diffText)
+						Start2 += len(diffText)
 					} else {
 						empty = false
 					}
@@ -448,8 +448,8 @@ func (dmp *DiffMatchPatch) PatchSplitMax(patches []Patch) []Patch {
 			}
 
 			if len(postcontext) != 0 {
-				patch.length1 += len(postcontext)
-				patch.length2 += len(postcontext)
+				patch.Length1 += len(postcontext)
+				patch.Length2 += len(postcontext)
 				if len(patch.diffs) != 0 && patch.diffs[len(patch.diffs)-1].Type == DiffEqual {
 					patch.diffs[len(patch.diffs)-1].Text += postcontext
 				} else {
@@ -496,27 +496,27 @@ func (dmp *DiffMatchPatch) PatchFromText(textline string) ([]Patch, error) {
 		patch = Patch{}
 		m := patchHeader.FindStringSubmatch(text[textPointer])
 
-		patch.start1, _ = strconv.Atoi(m[1])
+		patch.Start1, _ = strconv.Atoi(m[1])
 		if len(m[2]) == 0 {
-			patch.start1--
-			patch.length1 = 1
+			patch.Start1--
+			patch.Length1 = 1
 		} else if m[2] == "0" {
-			patch.length1 = 0
+			patch.Length1 = 0
 		} else {
-			patch.start1--
-			patch.length1, _ = strconv.Atoi(m[2])
+			patch.Start1--
+			patch.Length1, _ = strconv.Atoi(m[2])
 		}
 
-		patch.start2, _ = strconv.Atoi(m[3])
+		patch.Start2, _ = strconv.Atoi(m[3])
 
 		if len(m[4]) == 0 {
-			patch.start2--
-			patch.length2 = 1
+			patch.Start2--
+			patch.Length2 = 1
 		} else if m[4] == "0" {
-			patch.length2 = 0
+			patch.Length2 = 0
 		} else {
-			patch.start2--
-			patch.length2, _ = strconv.Atoi(m[4])
+			patch.Start2--
+			patch.Length2, _ = strconv.Atoi(m[4])
 		}
 		textPointer++
 

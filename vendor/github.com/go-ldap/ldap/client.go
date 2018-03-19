@@ -1,12 +1,16 @@
 package ldap
 
-import "crypto/tls"
+import (
+	"crypto/tls"
+	"time"
+)
 
 // Client knows how to interact with an LDAP server
 type Client interface {
 	Start()
 	StartTLS(config *tls.Config) error
 	Close()
+	SetTimeout(time.Duration)
 
 	Bind(username, password string) error
 	SimpleBind(simpleBindRequest *SimpleBindRequest) (*SimpleBindResult, error)

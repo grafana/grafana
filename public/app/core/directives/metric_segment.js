@@ -22,6 +22,7 @@ function (_, $, coreModule) {
         segment: "=",
         getOptions: "&",
         onChange: "&",
+        debounce: "@",
       },
       link: function($scope, elem) {
         var $input = $(inputTemplate);
@@ -30,6 +31,7 @@ function (_, $, coreModule) {
         var options = null;
         var cancelBlur = null;
         var linkMode = true;
+        var debounceLookup = $scope.debounce;
 
         $input.appendTo(elem);
         $button.appendTo(elem);
@@ -39,6 +41,8 @@ function (_, $, coreModule) {
             return;
           }
 
+          value = _.unescape(value);
+
           $scope.$apply(function() {
             var selected = _.find($scope.altSegments, {value: value});
             if (selected) {
@@ -46,6 +50,10 @@ function (_, $, coreModule) {
               segment.html = selected.html || selected.value;
               segment.fake = false;
               segment.expandable = selected.expandable;
+
+              if (selected.type) {
+                segment.type = selected.type;
+              }
             }
             else if (segment.custom !== 'false') {
               segment.value = value;
@@ -128,6 +136,10 @@ function (_, $, coreModule) {
           var items = this.source(this.query, $.proxy(this.process, this));
           return items ? this.process(items) : items;
         };
+
+        if (debounceLookup) {
+          typeahead.lookup = _.debounce(typeahead.lookup, 500, {leading: true});
+        }
 
         $button.keydown(function(evt) {
           // trigger typeahead on down arrow or enter key

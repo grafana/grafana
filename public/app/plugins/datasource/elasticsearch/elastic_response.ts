@@ -1,11 +1,8 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import  _ from 'lodash';
-import * as queryDef from "./query_def";
+import _ from 'lodash';
+import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
 
 export class ElasticResponse {
-
   constructor(private targets, private response) {
     this.targets = targets;
     this.response = response;
@@ -22,7 +19,7 @@ export class ElasticResponse {
 
       switch (metric.type) {
         case 'count': {
-          newSeries = { datapoints: [], metric: 'count', props: props};
+          newSeries = { datapoints: [], metric: 'count', props: props };
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
             value = bucket.doc_count;
@@ -40,7 +37,12 @@ export class ElasticResponse {
           var percentiles = firstBucket[metric.id].values;
 
           for (var percentileName in percentiles) {
-            newSeries = {datapoints: [], metric: 'p' + percentileName, props: props, field: metric.field};
+            newSeries = {
+              datapoints: [],
+              metric: 'p' + percentileName,
+              props: props,
+              field: metric.field,
+            };
 
             for (i = 0; i < esAgg.buckets.length; i++) {
               bucket = esAgg.buckets[i];
@@ -58,7 +60,12 @@ export class ElasticResponse {
               continue;
             }
 
-            newSeries = {datapoints: [], metric: statName, props: props, field: metric.field};
+            newSeries = {
+              datapoints: [],
+              metric: statName,
+              props: props,
+              field: metric.field,
+            };
 
             for (i = 0; i < esAgg.buckets.length; i++) {
               bucket = esAgg.buckets[i];
@@ -77,7 +84,12 @@ export class ElasticResponse {
           break;
         }
         default: {
-          newSeries = { datapoints: [], metric: metric.type, field: metric.field, props: props};
+          newSeries = {
+            datapoints: [],
+            metric: metric.type,
+            field: metric.field,
+            props: props,
+          };
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
 
@@ -89,7 +101,6 @@ export class ElasticResponse {
                 newSeries.datapoints.push([value.value, bucket.key]);
               }
             }
-
           }
           seriesList.push(newSeries);
           break;
@@ -102,14 +113,14 @@ export class ElasticResponse {
     // add columns
     if (table.columns.length === 0) {
       for (let propKey of _.keys(props)) {
-        table.addColumn({text: propKey, filterable: true});
+        table.addColumn({ text: propKey, filterable: true });
       }
-      table.addColumn({text: aggDef.field, filterable: true});
+      table.addColumn({ text: aggDef.field, filterable: true });
     }
 
     // helper func to add values to value array
     let addMetricValue = (values, metricName, value) => {
-      table.addColumn({text: metricName});
+      table.addColumn({ text: metricName });
       values.push(value);
     };
 
@@ -125,7 +136,7 @@ export class ElasticResponse {
 
       for (let metric of target.metrics) {
         switch (metric.type) {
-          case "count": {
+          case 'count': {
             addMetricValue(values, this.getMetricName(metric.type), bucket.doc_count);
             break;
           }
@@ -144,9 +155,9 @@ export class ElasticResponse {
             }
             break;
           }
-          default:  {
+          default: {
             let metricName = this.getMetricName(metric.type);
-            let otherMetrics = _.filter(target.metrics, {type: metric.type});
+            let otherMetrics = _.filter(target.metrics, { type: metric.type });
 
             // if more of the same metric type include field field name in property
             if (otherMetrics.length > 1) {
@@ -167,10 +178,10 @@ export class ElasticResponse {
   // neeed to recurise down the nested buckets to build series
   processBuckets(aggs, target, seriesList, table, props, depth) {
     var bucket, aggDef, esAgg, aggId;
-    var maxDepth = target.bucketAggs.length-1;
+    var maxDepth = target.bucketAggs.length - 1;
 
     for (aggId in aggs) {
-      aggDef = _.find(target.bucketAggs, {id: aggId});
+      aggDef = _.find(target.bucketAggs, { id: aggId });
       esAgg = aggs[aggId];
 
       if (!aggDef) {
@@ -178,7 +189,7 @@ export class ElasticResponse {
       }
 
       if (depth === maxDepth) {
-        if (aggDef.type === 'date_histogram')  {
+        if (aggDef.type === 'date_histogram') {
           this.processMetrics(esAgg, target, seriesList, props);
         } else {
           this.processAggregationDocs(esAgg, aggDef, target, table, props);
@@ -190,21 +201,21 @@ export class ElasticResponse {
           if (bucket.key !== void 0) {
             props[aggDef.field] = bucket.key;
           } else {
-            props["filter"] = nameIndex;
+            props['filter'] = nameIndex;
           }
           if (bucket.key_as_string) {
             props[aggDef.field] = bucket.key_as_string;
           }
-          this.processBuckets(bucket, target, seriesList, table, props, depth+1);
+          this.processBuckets(bucket, target, seriesList, table, props, depth + 1);
         }
       }
     }
   }
 
   private getMetricName(metric) {
-    var metricDef = _.find(queryDef.metricAggTypes, {value: metric});
-    if (!metricDef)  {
-      metricDef = _.find(queryDef.extendedStats, {value: metric});
+    var metricDef = _.find(queryDef.metricAggTypes, { value: metric });
+    if (!metricDef) {
+      metricDef = _.find(queryDef.extendedStats, { value: metric });
     }
 
     return metricDef ? metricDef.text : metric;
@@ -219,10 +230,18 @@ export class ElasticResponse {
       return target.alias.replace(regex, function(match, g1, g2) {
         var group = g1 || g2;
 
-        if (group.indexOf('term ') === 0) { return series.props[group.substring(5)]; }
-        if (series.props[group] !== void 0) { return series.props[group]; }
-        if (group === 'metric') { return metricName; }
-        if (group === 'field') { return series.field; }
+        if (group.indexOf('term ') === 0) {
+          return series.props[group.substring(5)];
+        }
+        if (series.props[group] !== void 0) {
+          return series.props[group];
+        }
+        if (group === 'metric') {
+          return metricName;
+        }
+        if (group === 'field') {
+          return series.field;
+        }
 
         return match;
       });
@@ -240,7 +259,7 @@ export class ElasticResponse {
     }
 
     var propKeys = _.keys(series.props);
-    if (propKeys.length === 0) {
+    if (propKeys.length === 0) {
       return metricName;
     }
 
@@ -266,7 +285,13 @@ export class ElasticResponse {
   }
 
   processHits(hits, seriesList) {
-    var series = {target: 'docs', type: 'docs', datapoints: [], total: hits.total, filterable: true};
+    var series = {
+      target: 'docs',
+      type: 'docs',
+      datapoints: [],
+      total: hits.total,
+      filterable: true,
+    };
     var propName, hit, doc, i;
 
     for (i = 0; i < hits.hits.length; i++) {
@@ -274,7 +299,7 @@ export class ElasticResponse {
       doc = {
         _id: hit._id,
         _type: hit._type,
-        _index: hit._index
+        _index: hit._index,
       };
 
       if (hit._source) {
@@ -293,7 +318,7 @@ export class ElasticResponse {
   }
 
   trimDatapoints(aggregations, target) {
-    var histogram = _.find(target.bucketAggs, { type: 'date_histogram'});
+    var histogram = _.find(target.bucketAggs, { type: 'date_histogram' });
 
     var shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
     if (shouldDropFirstAndLast) {
@@ -313,7 +338,7 @@ export class ElasticResponse {
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || 'Unkown elatic error response';
+      result.message = err.reason || 'Unkown elastic error response';
     }
 
     if (response.$$config) {

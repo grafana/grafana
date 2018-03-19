@@ -1,7 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import {Variable, assignModelProperties, variableTypes} from './variable';
+import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class CustomVariable implements Variable {
   query: string;
@@ -51,7 +49,7 @@ export class CustomVariable implements Variable {
   }
 
   addAllOption() {
-    this.options.unshift({text: 'All', value: "$__all"});
+    this.options.unshift({ text: 'All', value: '$__all' });
   }
 
   dependsOn(variable) {
@@ -73,6 +71,6 @@ export class CustomVariable implements Variable {
 variableTypes['custom'] = {
   name: 'Custom',
   ctor: CustomVariable,
-  description: 'Define variable values manually' ,
+  description: 'Define variable values manually',
   supportsMulti: true,
 };
