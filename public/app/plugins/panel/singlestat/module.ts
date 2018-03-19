@@ -2,7 +2,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
-import 'app/features/panellinks/linkSrv';
+import 'app/features/panellinks/link_srv';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -323,9 +323,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
 
-      // Add $__name letiable for using in prefix or postfix
-      data.scopedlets = _.extend({}, this.panel.scopedlets);
-      data.scopedlets['__name'] = {value: this.series[0].label};
+      // Add $__name variable for using in prefix or postfix
+      data.scopedVars = _.extend({}, this.panel.scopedVars);
+      data.scopedVars['__name'] = { value: this.series[0].label };
     }
     this.setValueMapping(data);
   }
@@ -385,7 +385,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   addValueMap() {
-    this.panel.valueMaps.push({value: '', op: '=', text: ''});
+    this.panel.valueMaps.push({ value: '', op: '=', text: '' });
   }
 
   removeRangeMap(rangeMap) {
@@ -448,9 +448,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getValueText() {
-      let result = panel.prefix ? templateSrv.replace(panel.prefix, data.scopedlets) : '';
+      let result = panel.prefix ? templateSrv.replace(panel.prefix, data.scopedVars) : '';
       result += data.valueFormatted;
-      result += panel.postfix ? templateSrv.replace(panel.postfix, data.scopedlets) : '';
+      result += panel.postfix ? templateSrv.replace(panel.postfix, data.scopedVars) : '';
 
       return result;
     }
@@ -505,21 +505,21 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             gauge: {
               min: panel.gauge.minValue,
               max: panel.gauge.maxValue,
-              background: {color: bgColor},
-              border: {color: null},
-              shadow: {show: false},
+              background: { color: bgColor },
+              border: { color: null },
+              shadow: { show: false },
               width: gaugeWidth,
             },
-            frame: {show: false},
-            label: {show: false},
-            layout: {margin: 0, thresholdWidth: 0},
-            cell: {border: {width: 0}},
+            frame: { show: false },
+            label: { show: false },
+            layout: { margin: 0, thresholdWidth: 0 },
+            cell: { border: { width: 0 } },
             threshold: {
               values: thresholds,
               label: {
                 show: panel.gauge.thresholdLabels,
                 margin: thresholdMarkersWidth + 1,
-                font: {size: thresholdLabelFontSize},
+                font: { size: thresholdLabelFontSize },
               },
               show: panel.gauge.thresholdMarkers,
               width: thresholdMarkersWidth,
@@ -576,9 +576,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ctrl.panel.sparkline.isFullHeight = false;
         ctrl.panel.sparkline.minValue = 0;
         ctrl.panel.sparkline.maxValue = 0;
-      } else if (panel.sparkline.maxValue && panel.sparkline.maxValue >= data.value && panel.sparkline.minValue <= data.value) {
-        const customHeight =
-          Math.floor(height * (data.value - panel.sparkline.minValue) / (panel.sparkline.maxValue - panel.sparkline.minValue));
+      } else if (
+        panel.sparkline.maxValue &&
+        panel.sparkline.maxValue >= data.value &&
+        panel.sparkline.minValue <= data.value
+      ) {
+        const customHeight = Math.floor(
+          height * (data.value - panel.sparkline.minValue) / (panel.sparkline.maxValue - panel.sparkline.minValue)
+        );
         panel.sparkline.minValue = panel.sparkline.minValue || 0;
         plotCss.height = `${customHeight}px`;
       } else {
@@ -588,7 +593,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       plotCanvas.css(plotCss);
 
       let options = {
-        legend: {show: false},
+        legend: { show: false },
         series: {
           lines: {
             show: true,
@@ -597,14 +602,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             fillColor: panel.sparkline.fillColor,
           },
         },
-        yaxes: {show: false},
+        yaxes: { show: false },
         xaxis: {
           show: false,
           mode: 'time',
           min: ctrl.range.from.valueOf(),
           max: ctrl.range.to.valueOf(),
         },
-        grid: {hoverable: false, show: false},
+        grid: { hoverable: false, show: false },
       };
 
       elem.append(plotCanvas);
@@ -624,7 +629,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       data = ctrl.data;
 
       // get thresholds
-      data.thresholds = panel.thresholds.split(',').map(function (strVale) {
+      data.thresholds = panel.thresholds.split(',').map(function(strVale) {
         return Number(strVale.trim());
       });
       data.colorMap = panel.colors;
@@ -659,7 +664,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       elem.toggleClass('pointer', panel.links.length > 0);
 
       if (panel.links.length > 0) {
-        linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0], data.scopedlets);
+        linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0], data.scopedVars);
       } else {
         linkInfo = null;
       }
@@ -676,7 +681,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           drilldownTooltip.detach();
         });
       });
-      
       elem.click(function(evt) {
         if (!linkInfo) {
           return;
@@ -694,7 +698,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         if (linkInfo.href.indexOf('http') === 0) {
           window.location.href = linkInfo.href;
         } else {
-          $timeout(function () {
+          $timeout(function() {
             $location.url(linkInfo.href);
           });
         }
@@ -714,7 +718,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     hookupDrilldownLinkTooltip();
 
-    this.events.on('render', function () {
+    this.events.on('render', function() {
       render();
       ctrl.renderingCompleted();
     });
