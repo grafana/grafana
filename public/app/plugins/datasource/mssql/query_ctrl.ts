@@ -13,13 +13,15 @@ export interface QueryMeta {
 }
 
 const defaultQuery = `SELECT
-  $__utcTime(<time_column>),
+  $__timeEpoch(<time_column>),
   <value column> as value,
   <series name column> as metric
-FROM <table name>
-WHERE $__timeFilter(time_column)
-ORDER BY <time_column> ASC
-`;
+FROM
+  <table name>
+WHERE
+  $__timeFilter(time_column)
+ORDER BY
+  <time_column> ASC`;
 
 export class MssqlQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
