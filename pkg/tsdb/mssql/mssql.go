@@ -214,7 +214,6 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 	for rows.Next() {
 		var timestamp float64
 		var value null.Float
-		var metricColVal string
 		var metric string
 
 		if rowCount > rowLimit {
@@ -239,7 +238,7 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 
 		if metricIndex >= 0 {
 			if columnValue, ok := values[metricIndex].(string); ok == true {
-				metricColVal = columnValue
+				metric = columnValue
 			} else {
 				return fmt.Errorf("Column metric must be of type CHAR, VARCHAR, NCHAR or NVARCHAR. metric column name: %s type: %s but datatype is %T", columnNames[metricIndex], columnTypes[metricIndex].DatabaseTypeName(), values[metricIndex])
 			}
@@ -260,16 +259,8 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 			default:
 				return fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", col, columnValue, columnValue)
 			}
-
-			// construct the metric name
-			// if there is more than 3 columns (more than one value) and there is
-			// a metric column, join them to make the metric name
 			if metricIndex == -1 {
 				metric = col
-			} else if len(columnNames) > 3 {
-				metric = metricColVal + " - " + col
-			} else {
-				metric = metricColVal
 			}
 
 			series, exist := pointsBySeries[metric]

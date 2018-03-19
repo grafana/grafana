@@ -364,7 +364,7 @@ func TestMSSQL(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeEpoch(time), measurement as metric, valueOne, valueTwo FROM metric_values ORDER BY 1",
+								"rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -377,11 +377,9 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 4)
-				So(queryResult.Series[0].Name, ShouldEqual, "Metric A - valueOne")
-				So(queryResult.Series[1].Name, ShouldEqual, "Metric A - valueTwo")
-				So(queryResult.Series[2].Name, ShouldEqual, "Metric B - valueOne")
-				So(queryResult.Series[3].Name, ShouldEqual, "Metric B - valueTwo")
+				So(len(queryResult.Series), ShouldEqual, 2)
+				So(queryResult.Series[0].Name, ShouldEqual, "Metric A - value one")
+				So(queryResult.Series[1].Name, ShouldEqual, "Metric B - value one")
 			})
 
 			Convey("When doing a metric query grouping by time should return correct series", func() {
