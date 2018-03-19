@@ -11,6 +11,8 @@ weight = 7
 
 # Using Microsoft SQL Server in Grafana
 
+> Only available in Grafana v5.1+.
+
 Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer.
 
 ## Adding the data source
@@ -19,6 +21,17 @@ Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin th
 2. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
 4. Select *Microsoft SQL Server* from the *Type* dropdown.
+
+### Data source options
+
+Name | Description
+------------ | -------------
+*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Default* | Default data source means that it will be pre-selected for new panels.
+*Host* | The IP address/hostname and optional port of your MSSQL instance. If port is omitted, default 1443 will be used.
+*Database* | Name of your MSSQL database.
+*User* | Database user's login/username
+*Password* | Database user's password
 
 ### Database User Permissions (Important!)
 
@@ -36,101 +49,213 @@ Example:
 
 Make sure the user does not get any unwanted privileges from the public role.
 
+## Query Editor
+{{< docs-imagebox img="/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
+
+You find the MSSQL query editor in the metrics tab in Graph, Singlestat or Table panel's edit mode. You enter edit mode by clicking the
+panel title, then edit. The editor allows you to define a SQL query to select data to be visualized.
+
+1. Select *Format as* `Time series` (for use in Graph or Singlestat panel's among others) or `Table` (for use in Table panel among others).
+2. This is the actual editor where you write your SQL queries.
+3. Show help section for MSSQL below the query editor.
+4. Show actual executed SQL query. Will be available first after a successful query has been executed.
+5. Add an additional query where an additional query editor will be displayed.
+
+<div class="clearfix"></div>
+
 ## Macros
 
 To simplify syntax and to allow for dynamic parts, like date range filters, the query can contain macros.
 
 Macro example | Description
 ------------ | -------------
-*$__time(dateColumn)* | Will be replaced by an expression to rename the column to `time`. For example, *`dateColumn as time`*
-*$__utcTime(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to UTC depending on the server's local timeoffset and rename it to `time`. For example, *`DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time`*
-*$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to unix timestamp and rename it to `time`. For example, *`DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time`*
-*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *`dateColumn >= DATEADD(s, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND dateColumn <= DATEADD(s, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')`*
-*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *`DATEADD(second, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')`*
-*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *`DATEADD(second, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')`*
-*$__timeGroup(dateColumn,'5m', NULL)* | Will be replaced by an expression usable in GROUP BY clause. For example, *`cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumns))/300 as int)*300 as int)`*
-*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *`dateColumn > 1494410783 AND dateColumn < 1494497183`*
-*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *`1494410783`*
-*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *`1494497183`*
+*$__time(dateColumn)* | Will be replaced by an expression to rename the column to *time*. For example, *dateColumn as time*
+*$__utcTime(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to UTC depending on the server's local timeoffset and rename it to *time*. <br/>For example, *DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time*
+*$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to unix timestamp and rename it to *time*. <br/>For example, *DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time*
+*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. <br/>For example, *dateColumn >= DATEADD(s, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND dateColumn <= DATEADD(s, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
+*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *DATEADD(second, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
+*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *DATEADD(second, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
+*$__timeGroup(dateColumn,'5m'[, fillvalue])* | Will be replaced by an expression usable in GROUP BY clause. Providing a *fillValue* of *NULL* or *floating value* will automatically fill empty series in timerange with that value. <br/>For example, *cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second, GETDATE(), GETUTCDATE()), column))/300 as int)*300 as int)*.
+*$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so all null values will be converted to the fill value (all null values would be set to zero using this example).
+*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
+*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
+*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
 The query editor has a link named `Generated SQL` that shows up after a query has been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
 
 ## Table queries
-
 If the `Format as` query option is set to `Table` then you can basically do any type of SQL query. The table panel will automatically show the results of whatever columns & rows your query returns.
+
+**Example database table:**
+
+```sql
+CREATE TABLE [event] (
+  time_sec bigint,
+  description nvarchar(100),
+  tags nvarchar(100),
+)
+```
+
+```sql
+CREATE TABLE [mssql_types] (
+  c_bit bit, c_tinyint tinyint, c_smallint smallint, c_int int, c_bigint bigint, c_money money, c_smallmoney smallmoney, c_numeric numeric(10,5),
+  c_real real, c_decimal decimal(10,2), c_float float,
+  c_char char(10), c_varchar varchar(10), c_text text,
+  c_nchar nchar(12), c_nvarchar nvarchar(12), c_ntext ntext,
+  c_datetime datetime,  c_datetime2 datetime2, c_smalldatetime smalldatetime, c_date date, c_time time, c_datetimeoffset datetimeoffset
+)
+
+INSERT INTO [mssql_types]
+SELECT
+  1, 5, 20020, 980300, 1420070400, '$20000.15', '£2.15', 12345.12,
+  1.11, 2.22, 3.33,
+  'char10', 'varchar10', 'text',
+  N'☺nchar12☺', N'☺nvarchar12☺', N'☺text☺',
+  GETDATE(), CAST(GETDATE() AS DATETIME2), CAST(GETDATE() AS SMALLDATETIME), CAST(GETDATE() AS DATE), CAST(GETDATE() AS TIME), SWITCHOFFSET(CAST(GETDATE() AS DATETIMEOFFSET), '-07:00'))
+```
 
 Query editor with example query:
 
-![](/img/docs/v47/mssql_table_query.png)
+{{< docs-imagebox img="/img/docs/v51/mssql_table_query.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 
 The query:
 
 ```sql
-SELECT  COLUMN_NAME AS [Name],
-        DATA_TYPE AS [Type],
-        CHARACTER_OCTET_LENGTH AS [Length],
-        NUMERIC_PRECISION as [Precisopn],
-        NUMERIC_PRECISION_RADIX AS [Radix],
-        NUMERIC_SCALE AS [Scale]
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'mssql_types';
+SELECT * FROM [mssql_types]
 ```
 
-You can control the name of the Table panel columns by using regular `AS ` SQL column selection syntax.
+You can control the name of the Table panel columns by using regular `AS ` SQL column selection syntax. Example:
+
+```sql
+SELECT
+  c_bit as [column1], c_tinyint as [column2]
+FROM
+  [mssql_types]
+```
 
 The resulting table panel:
 
-![](/img/docs/v47/mssql_table.png)
+{{< docs-imagebox img="/img/docs/v51/mssql_table_result.png" max-width="1489px" class="docs-image--no-shadow" >}}
 
-### Time series queries
+## Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must must have a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you ommit the `metric` column, tha name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric. If you select multiple value columns along with a `metric` column, the names ("MetircName - ColumnName") will be combined to make the metric name.
+If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must must have a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you ommit the `metric` column, tha name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric.
 
-Example with `metric` column
+**Example database table:**
+
+```sql
+CREATE TABLE [event] (
+  time_sec bigint,
+  description nvarchar(100),
+  tags nvarchar(100),
+)
+```
+
+
+```sql
+CREATE TABLE metric_values (
+  time datetime,
+  measurement nvarchar(100),
+  valueOne int,
+  valueTwo int,
+)
+
+INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 12:30:00', 'Metric A', 62, 6)
+INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 12:30:00', 'Metric B', 49, 11)
+...
+INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 13:55:00', 'Metric A', 14, 25)
+INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 13:55:00', 'Metric B', 48, 10)
+
+```
+
+{{< docs-imagebox img="/img/docs/v51/mssql_time_series_one.png" class="docs-image--no-shadow docs-image--right" >}}
+
+**Example with one `value` and one `metric` column.**
 
 ```sql
 SELECT
-  [time_date_time] as [time],
-  [value_double] as [value],
-  [metric1] as [metric]
-FROM [test_data]
-WHERE   $__timeFilter([time_date_time])
-ORDER BY [time_date_time]
+  time,
+  valueOne,
+  measurement as metric
+FROM
+  metric_values
+WHERE
+  $__timeFilter(time)
+ORDER BY 1
 ```
 
-Example with multiple `value` culumns
+When above query are used in a graph panel the result will be two series named `Metric A` and `Metric B` with value of `valueOne` and `valueTwo` plotted over `time`.
+
+<div class="clearfix"></div>
+
+{{< docs-imagebox img="/img/docs/v51/mssql_time_series_two.png" class="docs-image--no-shadow docs-image--right" >}}
+
+**Example with multiple `value` culumns:**
 
 ```sql
 SELECT
-  [time_date_time] as [time],
-  [value_double1] as [metric_name1],
-  [value_int2] as [metric_name2]
-FROM [test_data]
-WHERE   $__timeFilter([time_date_time])
-ORDER BY [time_date_time]
+  time,
+  valueOne,
+  valueTwo
+FROM
+  metric_values
+WHERE
+  $__timeFilter(time)
+ORDER BY 1
 ```
 
-Example with multiple `value` culumns combined with a `metric` column
+When above query are used in a graph panel the result will be two series named `valueOne` and `valueTwo` with value of `valueOne` and `valueTwo` plotted over `time`.
+
+<div class="clearfix"></div>
+
+{{< docs-imagebox img="/img/docs/v51/mssql_time_series_three.png" class="docs-image--no-shadow docs-image--right" >}}
+
+**Example using the $__timeGroup macro:**
 
 ```sql
 SELECT
-  [time_date_time] as [time],
-  [value_double1] as [value1],
-  [value_int2] as [value2],
-  [metric_col] as [metric]
-FROM [test_data]
-WHERE   $__timeFilter([time_date_time])
-ORDER BY [time_date_time]
+  $__timeGroup(time, '3m') as time,
+  measurement as metric,
+  avg(valueOne)
+FROM
+  metric_values
+WHERE
+  $__timeFilter(time)
+GROUP BY
+  $__timeGroup(time, '3m'),
+  measurement
+ORDER BY 1
 ```
-The result of the above query would look something like the below
 
-![](/img/docs/v47/mssql_metric_value.png)
+When above query are used in a graph panel the result will be two series named `Metric A` and `Metric B` with an average of `valueOne` plotted over `time`.
+Any two series lacking a value in a 3 minute window will render a line between those two lines. You'll notice that the graph to the right never goes down to zero.
 
-Currently, there is no support for a dynamic group by time based on time range & panel width.
-This is something we plan to add.
+<div class="clearfix"></div>
+
+{{< docs-imagebox img="/img/docs/v51/mssql_time_series_four.png" class="docs-image--no-shadow docs-image--right" >}}
+
+**Example using the $__timeGroup macro with fill parameter set to zero:**
+
+```sql
+SELECT
+  $__timeGroup(time, '3m', 0) as time,
+  measurement as metric,
+  sum(valueTwo)
+FROM
+  metric_values
+WHERE
+  $__timeFilter(time)
+GROUP BY
+  $__timeGroup(time, '3m'),
+  measurement
+ORDER BY 1
+```
+
+When above query are used in a graph panel the result will be two series named `Metric A` and `Metric B` with a sum of `valueTwo` plotted over `time`.
+Any series lacking a value in a 3 minute window will have a value of zero which you'll see rendered in the graph to the right.
 
 ## Templating
 
@@ -169,10 +294,9 @@ SELECT hostname FROM host WHERE region IN ($region)
 ```
 
 ### Using Variables in Queries
-
-From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.
-
-From Grafana 4.7.0, template variable values are only quoted when the template variable is a `multi-value`.
+> From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.
+>
+> From Grafana 5.0.0, template variable values are only quoted when the template variable is a `multi-value`.
 
 If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
 
@@ -204,24 +328,196 @@ ORDER BY atimestamp
 
 [Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
-An example query:
-
-```sql
-SELECT
-  DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column) ) as [time],
- metric1 as [text],
-  convert(varvhar, metric1) + ',' + convert(varchar, metric2) as [tags]
-FROM
-  test_data
-WHERE
-  $__timeFilter(time_column)
-```
+**Columns:**
 
 Name | Description
 ------------ | -------------
-time | The name of the date/time field. could be in a native sql time datatype
+time | The name of the date/time field. Could be in a native sql time datatype or epoch seconds.
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
+
+**Example database tables:**
+
+```sql
+CREATE TABLE [events] (
+  time_sec bigint,
+  description nvarchar(100),
+  tags nvarchar(100),
+)
+```
+
+We also use the database table defined in [Time series queries](#time-series-queries).
+
+**Example query using time column of type epoch seconds:**
+
+```sql
+SELECT
+  time_sec as time,
+  description as [text],
+  tags
+FROM
+  [events]
+WHERE
+  $__unixEpochFilter(time_sec)
+ORDER BY 1
+```
+
+**Example query using time column of type datetime:**
+
+```sql
+SELECT
+  time,
+  measurement as text,
+  convert(varchar, valueOne) + ',' + convert(varchar, valueTwo) as tags
+FROM
+  metric_values
+WHERE
+  $__timeFilter(time_column)
+ORDER BY 1
+```
+
+## Stored procedure support
+Stored procedures have been verified to work. However, please note that we haven't done anything special to support this why there may exist edge cases where it won't work as you would expect.
+Stored procedures should be supported in table, time series and annotation queries as long as you use the same naming of columns and return data in the same format as describe above under respective section.
+
+Please note that any macro function will not work inside a stored procedure.
+
+### Examples
+{{< docs-imagebox img="/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
+For the following examples the database table defined in [Time series queries](#time-series-queries). Let's say that we want to visualize 4 series in a graph panel, i.e. all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this we actually need to use two queries:
+
+**First query:**
+```sql
+SELECT
+  $__timeGroup(time, '5m') as time,
+  measurement + ' - value one' as metric,
+  avg(valueOne) as valueOne
+FROM
+  metric_values
+WHERE
+  $__timeFilter(time)
+GROUP BY
+  $__timeGroup(time, '5m'),
+  measurement
+ORDER BY 1
+```
+
+**Second query:**
+```sql
+SELECT
+  $__timeGroup(time, '5m') as time,
+  measurement + ' - value two' as metric,
+  avg(valueTwo) as valueTwo
+FROM
+  metric_values
+GROUP BY
+  $__timeGroup(time, '5m'),
+  measurement
+ORDER BY 1
+```
+
+#### Stored procedure using time in epoch format
+We can define a stored procedure that will return all data we need to render 4 series in a graph panel like above.
+In this case the stored procedure accepts two parameters `@from` and `@to` of `int` data types which should be a timerange (from-to) in epoch format
+which will be used to filter the data to return from the stored procedure.
+
+We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions and that's why there's a lot of lengthy expressions needed -
+these could be extracted to MSSQL functions, if wanted.
+
+```sql
+CREATE PROCEDURE sp_test_epoch(
+  @from int,
+  @to 	int
+)	AS
+BEGIN
+  SELECT
+    cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
+    measurement + ' - value one' as metric,
+    avg(valueOne) as value
+  FROM
+    metric_values
+  WHERE
+    time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
+  GROUP BY
+    cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
+    measurement
+  UNION ALL
+  SELECT
+    cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
+    measurement + ' - value two' as metric,
+    avg(valueTwo) as value
+  FROM
+    metric_values
+  WHERE
+    time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
+  GROUP BY
+    cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
+    measurement
+  ORDER BY 1
+END
+```
+
+Then we can use the following query for our graph panel.
+
+```sql
+DECLARE
+  @from int = $__unixEpochFrom(),
+  @to int = $__unixEpochTo()
+
+EXEC dbo.sp_test_epoch @from, @to
+```
+
+#### Stored procedure using time in datetime format
+We can define a stored procedure that will return all data we need to render 4 series in a graph panel like above.
+In this case the stored procedure accepts two parameters `@from` and `@to` of `datetime` data types which should be a timerange (from-to)
+which will be used to filter the data to return from the stored procedure.
+
+We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions and that's why there's a lot of lengthy expressions needed -
+these could be extracted to MSSQL functions, if wanted.
+
+```sql
+CREATE PROCEDURE sp_test_datetime(
+  @from datetime,
+  @to 	datetime
+)	AS
+BEGIN
+  SELECT
+    cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
+    measurement + ' - value one' as metric,
+    avg(valueOne) as value
+  FROM
+    metric_values
+  WHERE
+    time >= @from AND time <= @to
+  GROUP BY
+    cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
+    measurement
+  UNION ALL
+  SELECT
+    cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
+    measurement + ' - value two' as metric,
+    avg(valueTwo) as value
+  FROM
+    metric_values
+  WHERE
+    time >= @from AND time <= @to
+  GROUP BY
+    cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
+    measurement
+  ORDER BY 1
+END
+
+```
+
+Then we can use the following query for our graph panel.
+
+```sql
+DECLARE
+  @from datetime = $__timeFrom(),
+  @to datetime = $__timeTo()
+
+EXEC dbo.sp_test_datetime @from, @to
+```
 
 ## Alerting
 
