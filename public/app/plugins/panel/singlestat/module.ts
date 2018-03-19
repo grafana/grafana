@@ -2,7 +2,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
-import 'app/features/panellinks/link_srv';
+import 'app/features/panellinks/linkSrv';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -579,7 +579,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ctrl.panel.sparkline.minValue = 0;
         ctrl.panel.sparkline.maxValue = 0;
       } else if (panel.sparkline.maxValue && panel.sparkline.maxValue >= data.value && panel.sparkline.minValue <= data.value) {
-        const customHeight = Math.floor(height * (data.value - panel.sparkline.minValue) / (panel.sparkline.maxValue - panel.sparkline.minValue));
+        const customHeight =
+          Math.floor(height * (data.value - panel.sparkline.minValue) / (panel.sparkline.maxValue - panel.sparkline.minValue));
         panel.sparkline.minValue = panel.sparkline.minValue || 0;
         plotCss.height = `${customHeight}px`;
       } else {
