@@ -53,6 +53,17 @@ func UpsertUser(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
 		}
 	}
 
+	if userQuery.UserAuth == nil && extUser.AuthModule != "" && extUser.AuthId != "" {
+		cmd2 := m.SetAuthInfoCommand{
+			UserId:     cmd.User.Id,
+			AuthModule: extUser.AuthModule,
+			AuthId:     extUser.AuthId,
+		}
+		if err := bus.Dispatch(&cmd2); err != nil {
+			return err
+		}
+	}
+
 	err = syncOrgRoles(cmd.User, extUser)
 	if err != nil {
 		return err
@@ -68,15 +79,6 @@ func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {
 		Name:  extUser.Name,
 	}
 	if err := bus.Dispatch(&cmd); err != nil {
-		return nil, err
-	}
-
-	cmd2 := m.SetAuthInfoCommand{
-		UserId:     cmd.Result.Id,
-		AuthModule: extUser.AuthModule,
-		AuthId:     extUser.AuthId,
-	}
-	if err := bus.Dispatch(&cmd2); err != nil {
 		return nil, err
 	}
 

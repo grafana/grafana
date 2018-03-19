@@ -8,7 +8,7 @@ func addUserAuthMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "user_id", Type: DB_BigInt, Nullable: false},
-			{Name: "auth_module", Type: DB_NVarchar, Length: 30, Nullable: false},
+			{Name: "auth_module", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "auth_id", Type: DB_NVarchar, Length: 100, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 		},

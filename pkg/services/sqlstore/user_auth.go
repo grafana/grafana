@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -107,6 +109,7 @@ func SetAuthInfo(cmd *m.SetAuthInfoCommand) error {
 			UserId:     cmd.UserId,
 			AuthModule: cmd.AuthModule,
 			AuthId:     cmd.AuthId,
+			Created:    time.Now(),
 		}
 
 		_, err := sess.Insert(&authUser)

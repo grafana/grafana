@@ -1,10 +1,15 @@
 package models
 
+import (
+	"time"
+)
+
 type UserAuth struct {
 	Id         int64
 	UserId     int64
 	AuthModule string
 	AuthId     string
+	Created    time.Time
 }
 
 type ExternalUserInfo struct {
