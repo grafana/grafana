@@ -3,10 +3,11 @@ package mssql
 import (
 	"testing"
 
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
-	"time"
 )
 
 func TestMacroEngine(t *testing.T) {
@@ -66,6 +67,32 @@ func TestMacroEngine(t *testing.T) {
 			So(sql, ShouldEqual, "GROUP BY cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column))/300 as int)*300 as int)")
 		})
 
+		Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
+			_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', NULL)")
+
+			fill := query.Model.Get("fill").MustBool()
+			fillNull := query.Model.Get("fillNull").MustBool()
+			fillInterval := query.Model.Get("fillInterval").MustInt()
+
+			So(err, ShouldBeNil)
+			So(fill, ShouldBeTrue)
+			So(fillNull, ShouldBeTrue)
+			So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+		})
+
+		Convey("interpolate __timeGroup function with fill (value = float)", func() {
+			_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', 1.5)")
+
+			fill := query.Model.Get("fill").MustBool()
+			fillValue := query.Model.Get("fillValue").MustFloat64()
+			fillInterval := query.Model.Get("fillInterval").MustInt()
+
+			So(err, ShouldBeNil)
+			So(fill, ShouldBeTrue)
+			So(fillValue, ShouldEqual, 1.5)
+			So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+		})
+
 		Convey("interpolate __timeFrom function", func() {
 			sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom(time_column)")
 			So(err, ShouldBeNil)
@@ -99,32 +126,6 @@ func TestMacroEngine(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			So(sql, ShouldEqual, "select 18446744066914187038")
-		})
-
-		Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
-			_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', NULL)")
-
-			fill := query.Model.Get("fill").MustBool()
-			fillNull := query.Model.Get("fillNull").MustBool()
-			fillInterval := query.Model.Get("fillInterval").MustInt()
-
-			So(err, ShouldBeNil)
-			So(fill, ShouldBeTrue)
-			So(fillNull, ShouldBeTrue)
-			So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
-		})
-
-		Convey("interpolate __timeGroup function with fill (value = float)", func() {
-			_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', 1.5)")
-
-			fill := query.Model.Get("fill").MustBool()
-			fillValue := query.Model.Get("fillValue").MustFloat64()
-			fillInterval := query.Model.Get("fillInterval").MustInt()
-
-			So(err, ShouldBeNil)
-			So(fill, ShouldBeTrue)
-			So(fillValue, ShouldEqual, 1.5)
-			So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
 		})
 	})
 }

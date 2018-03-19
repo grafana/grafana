@@ -61,7 +61,7 @@ func NewMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	return endpoint, nil
 }
 
-// Query is the main function for the MssqlExecutor
+// Query is the main function for the MssqlQueryEndpoint
 func (e *MssqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	return e.sqlEngine.Query(ctx, dsInfo, tsdbQuery, e.transformToTimeSeries, e.transformToTable)
 }
@@ -209,7 +209,6 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
 			fillValue.Valid = true
 		}
-
 	}
 
 	for rows.Next() {
@@ -297,8 +296,9 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 				}
 			}
 
-			e.appendTimePoint(pointsBySeries, seriesByQueryOrder, metric, timestamp, value)
-			rowCount++
+			series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
+
+			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
 		}
 	}
 
@@ -323,17 +323,4 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 
 	result.Meta.Set("rowCount", rowCount)
 	return nil
-}
-
-// TODO: look at this, specific to the MS SQL datasource. REMOVE?
-func (e MssqlQueryEndpoint) appendTimePoint(pointsBySeries map[string]*tsdb.TimeSeries, seriesByQueryOrder *list.List, metric string, timestamp float64, value null.Float) {
-	if series, exist := pointsBySeries[metric]; exist {
-		series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
-	} else {
-		series := &tsdb.TimeSeries{Name: metric}
-		series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
-		pointsBySeries[metric] = series
-		seriesByQueryOrder.PushBack(metric)
-	}
-	e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
 }

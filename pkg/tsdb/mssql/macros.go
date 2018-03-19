@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-//const rsString = `(?:"([^"]*)")`;
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
