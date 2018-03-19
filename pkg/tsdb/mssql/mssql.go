@@ -38,20 +38,7 @@ func NewMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		MacroEngine: NewMssqlMacroEngine(),
 	}
 
-	hostParts := strings.Split(datasource.Url, ":")
-	if len(hostParts) < 2 {
-		hostParts = append(hostParts, "1433")
-	}
-
-	server, port := hostParts[0], hostParts[1]
-	endpoint.log.Debug("cnnstr", "hostParts len", len(hostParts))
-	cnnstr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
-		server,
-		port,
-		datasource.Database,
-		datasource.User,
-		datasource.Password,
-	)
+	cnnstr := generateConnectionString(datasource)
 	endpoint.log.Debug("getEngine", "connection", cnnstr)
 
 	if err := endpoint.sqlEngine.InitEngine("mssql", datasource, cnnstr); err != nil {
@@ -59,6 +46,30 @@ func NewMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	}
 
 	return endpoint, nil
+}
+
+func generateConnectionString(datasource *models.DataSource) string {
+	password := ""
+	for key, value := range datasource.SecureJsonData.Decrypt() {
+		if key == "password" {
+			password = value
+			break
+		}
+	}
+
+	hostParts := strings.Split(datasource.Url, ":")
+	if len(hostParts) < 2 {
+		hostParts = append(hostParts, "1433")
+	}
+
+	server, port := hostParts[0], hostParts[1]
+	return fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
+		server,
+		port,
+		datasource.Database,
+		datasource.User,
+		password,
+	)
 }
 
 // Query is the main function for the MssqlQueryEndpoint
