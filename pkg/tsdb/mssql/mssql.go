@@ -38,10 +38,13 @@ func NewMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		MacroEngine: NewMssqlMacroEngine(),
 	}
 
-	serport := datasource.Url
-	// fix me: need to have a default port if user did not provide. i.e. 1433
-	words := strings.Split(serport, ":")
-	server, port := words[0], words[1]
+	hostParts := strings.Split(datasource.Url, ":")
+	if len(hostParts) < 2 {
+		hostParts = append(hostParts, "1433")
+	}
+
+	server, port := hostParts[0], hostParts[1]
+	endpoint.log.Debug("cnnstr", "hostParts len", len(hostParts))
 	cnnstr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
 		server,
 		port,
