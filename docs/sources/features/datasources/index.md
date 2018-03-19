@@ -30,7 +30,6 @@ The following datasources are officially supported:
 * [Prometheus]({{< relref "prometheus.md" >}})
 * [MySQL]({{< relref "mysql.md" >}})
 * [Postgres]({{< relref "postgres.md" >}})
-* [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
 
 ## Data source plugins
 
