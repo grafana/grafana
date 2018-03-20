@@ -31,9 +31,14 @@
 				</div>
 			</div>
 
-			<div class="gf-form" ng-show="$index === 1">
-				<label class="gf-form-label width-6">Y-Align</label>
-				<input type="text" class="gf-form-input width-5" placeholder="none" empty-to-null bs-tooltip="'Align values for two Y-axes'" ng-model="yaxis.align" ng-change="ctrl.render()" ng-model-onblur>
+			<div class="gf-form-inline" ng-show="$index === 1">
+				<div class="gf-form">
+					<gf-form-switch class="gf-form" label="Align" tooltip="Align two Y-axes by {{yaxis.alignment ? yaxis.align || 0 : 'value'}}" label-class="width-6" switch-class="width-5" checked="yaxis.alignment" on-change="ctrl.render()"></gf-form-switch>
+				</div>
+				<div class="gf-form" ng-show="yaxis.alignment">
+					<label class="gf-form-label width-6">Value</label>
+					<input type="number" class="gf-form-input width-5" placeholder="0" ng-model="yaxis.align" ng-change="ctrl.render()" ng-model-onblur ng-init="yaxis.align = yaxis.align || 0">
+				</div>
 			</div>
 
 		<div ng-if="yaxis.show">
