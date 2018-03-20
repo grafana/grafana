@@ -90,7 +90,7 @@ export class DashboardViewState {
       }
     }
 
-    if (this.state.fullscreen && this.state.panelId) {
+    if ((this.state.fullscreen || this.dashboard.meta.soloMode) && this.state.panelId) {
       // Trying to render panel in fullscreen when it's in the collapsed row causes an issue.
       // So in this case expand collapsed row first.
       this.toggleCollapsedPanelRow(this.state.panelId);
