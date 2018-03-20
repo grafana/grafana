@@ -46,8 +46,6 @@ class GraphCtrl extends MetricsPanelCtrl {
         min: null,
         max: null,
         format: 'short',
-        alignment: false,
-        align: 0,
       },
     ],
     xaxis: {
@@ -56,6 +54,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       name: null,
       values: [],
       buckets: null,
+    },
+    yaxis: {
+      alignment: false,
+      align: 0,
     },
     // show/hide lines
     lines: true,

@@ -31,16 +31,6 @@
 				</div>
 			</div>
 
-			<div class="gf-form-inline" ng-show="$index === 1">
-				<div class="gf-form">
-					<gf-form-switch class="gf-form" label="Align" tooltip="Align two Y-axes by {{yaxis.alignment ? yaxis.align || 0 : 'value'}}" label-class="width-6" switch-class="width-5" checked="yaxis.alignment" on-change="ctrl.render()"></gf-form-switch>
-				</div>
-				<div class="gf-form" ng-show="yaxis.alignment">
-					<label class="gf-form-label width-6">Value</label>
-					<input type="number" class="gf-form-input width-5" placeholder="0" ng-model="yaxis.align" ng-change="ctrl.render()" ng-model-onblur ng-init="yaxis.align = yaxis.align || 0">
-				</div>
-			</div>
-
 		<div ng-if="yaxis.show">
 			<div class="gf-form">
 				<label class="gf-form-label width-6">Decimals</label>
@@ -75,6 +65,16 @@
 		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'histogram'">
 			<label class="gf-form-label width-6">Buckets</label>
 			<input type="number" class="gf-form-input max-width-8" ng-model="ctrl.panel.xaxis.buckets" placeholder="auto" ng-change="ctrl.render()" ng-model-onblur bs-tooltip="'Number of buckets'" data-placement="right">
+		</div>
+
+		<div>
+			<br/>
+			<h5 class="section-heading">Y-Axes</h5>
+			<gf-form-switch class="gf-form" label="Align" tooltip="Align two Y-axes by {{ctrl.panel.yaxis.alignment ? ctrl.panel.yaxis.align || 0 : 'value'}}" label-class="width-6" switch-class="width-5" checked="ctrl.panel.yaxis.alignment" on-change="ctrl.render()"></gf-form-switch>
+			<div class="gf-form" ng-show="ctrl.panel.yaxis.alignment">
+				<label class="gf-form-label width-6">Value</label>
+				<input type="number" class="gf-form-input width-5" placeholder="0" ng-model="ctrl.panel.yaxis.align" ng-change="ctrl.render()" ng-model-onblur ng-init="ctrl.panel.yaxis.align = ctrl.panel.yaxis.align || 0">
+			</div>
 		</div>
 
 	</div>
