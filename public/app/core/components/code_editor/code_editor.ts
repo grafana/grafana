@@ -36,6 +36,8 @@ import 'brace/mode/text';
 import 'brace/snippets/text';
 import 'brace/mode/sql';
 import 'brace/snippets/sql';
+import 'brace/mode/sqlserver';
+import 'brace/snippets/sqlserver';
 import 'brace/mode/markdown';
 import 'brace/snippets/markdown';
 import 'brace/mode/json';

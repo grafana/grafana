@@ -197,3 +197,7 @@ ignored = [
 [[constraint]]
   branch = "master"
   name = "github.com/teris-io/shortid"
+
+[[constraint]]
+  name = "github.com/denisenkom/go-mssqldb"
+  revision = "270bc3860bb94dd3a3ffd047377d746c5e276726"
