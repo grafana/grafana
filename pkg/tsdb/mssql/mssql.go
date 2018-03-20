@@ -124,7 +124,7 @@ func (e MssqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows,
 		if timeIndex != -1 {
 			switch value := values[timeIndex].(type) {
 			case time.Time:
-				values[timeIndex] = float64(value.Unix())
+				values[timeIndex] = (float64(value.Unix()) * 1000) + float64(value.Nanosecond()/1e6) // in case someone is trying to map times beyond 2262 :D
 			}
 		}
 
