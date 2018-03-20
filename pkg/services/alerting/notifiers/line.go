@@ -51,10 +51,6 @@ type LineNotifier struct {
 	log   log.Logger
 }
 
-func (this *LineNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 func (this *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing line notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 

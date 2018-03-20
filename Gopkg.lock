@@ -104,6 +104,14 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/denisenkom/go-mssqldb"
+  packages = [
+    ".",
+    "internal/cp"
+  ]
+  revision = "270bc3860bb94dd3a3ffd047377d746c5e276726"
+
+[[projects]]
   name = "github.com/fatih/color"
   packages = ["."]
   revision = "570b54cabe6b8eb0bc2dfce68d964677d63b5260"
@@ -145,7 +153,6 @@
   packages = [
     ".",
     "memcache",
-    "mysql",
     "postgres",
     "redis"
   ]
@@ -464,7 +471,10 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["pbkdf2"]
+  packages = [
+    "md4",
+    "pbkdf2"
+  ]
   revision = "3d37316aaa6bd9929127ac9a527abf408178ea7b"
 
 [[projects]]
@@ -633,6 +643,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "112ccff73f668c8c4dbe3d41c37ebee65fd7d839f5a4fa0665c593cae0095dad"
+  inputs-digest = "8a9e651fb8ea49dfd3c6ddc99bd3242b39e453ea9edd11321da79bd2c865e9d1"
   solver-name = "gps-cdcl"
   solver-version = 1

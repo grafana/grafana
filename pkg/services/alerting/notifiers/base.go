@@ -27,13 +27,19 @@ func NewNotifierBase(id int64, isDefault bool, name, notifierType string, model 
 }
 
 func defaultShouldNotify(context *alerting.EvalContext) bool {
+	// Only notify on state change.
 	if context.PrevAlertState == context.Rule.State {
 		return false
 	}
+	// Do not notify when we become OK for the first time.
 	if (context.PrevAlertState == m.AlertStatePending) && (context.Rule.State == m.AlertStateOK) {
 		return false
 	}
 	return true
+}
+
+func (n *NotifierBase) ShouldNotify(context *alerting.EvalContext) bool {
+	return defaultShouldNotify(context)
 }
 
 func (n *NotifierBase) GetType() string {

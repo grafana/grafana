@@ -30,7 +30,10 @@ describe('when updating view state', function() {
   beforeEach(
     angularMocks.inject(function(dashboardViewStateSrv, $location, $rootScope) {
       $rootScope.onAppEvent = function() {};
-      $rootScope.dashboard = { meta: {} };
+      $rootScope.dashboard = {
+        meta: {},
+        panels: [],
+      };
       viewState = dashboardViewStateSrv.create($rootScope);
       location = $location;
     })

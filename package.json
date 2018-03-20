@@ -118,7 +118,7 @@
       "prettier --write",
       "git add"
     ],
-    "*.go": [
+    "*pkg/**/*.go": [
       "gofmt -w -s",
       "git add"
     ]

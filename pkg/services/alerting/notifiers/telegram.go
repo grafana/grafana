@@ -208,16 +208,13 @@ func generateImageCaption(evalContext *alerting.EvalContext, ruleUrl string, met
 
 	return message
 }
+
 func appendIfPossible(message string, extra string, sizeLimit int) string {
 	if len(extra)+len(message) <= sizeLimit {
 		return message + extra
 	}
 	log.Debug("Line too long for image caption.", "value", extra)
 	return message
-}
-
-func (this *TelegramNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
 }
 
 func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {

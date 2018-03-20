@@ -1,31 +1,25 @@
-define([
-  'angular',
-  'lodash',
-  './query_def'
-],
-function (angular, _, queryDef) {
-  'use strict';
+import angular from 'angular';
+import _ from 'lodash';
+import * as queryDef from './query_def';
 
-  var module = angular.module('grafana.directives');
+export function elasticMetricAgg() {
+  return {
+    templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/metric_agg.html',
+    controller: 'ElasticMetricAggCtrl',
+    restrict: 'E',
+    scope: {
+      target: '=',
+      index: '=',
+      onChange: '&',
+      getFields: '&',
+      esVersion: '=',
+    },
+  };
+}
 
-  module.directive('elasticMetricAgg', function() {
-    return {
-      templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/metric_agg.html',
-      controller: 'ElasticMetricAggCtrl',
-      restrict: 'E',
-      scope: {
-        target: "=",
-        index: "=",
-        onChange: "&",
-        getFields: "&",
-        esVersion: '='
-      }
-    };
-  });
-
-  module.controller('ElasticMetricAggCtrl', function($scope, uiSegmentSrv, $q, $rootScope) {
+export class ElasticMetricAggCtrl {
+  constructor($scope, uiSegmentSrv, $q, $rootScope) {
     var metricAggs = $scope.target.metrics;
-
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
     $scope.extendedStats = queryDef.extendedStats;
     $scope.pipelineAggOptions = [];
@@ -41,17 +35,21 @@ function (angular, _, queryDef) {
       $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
     };
 
-    $rootScope.onAppEvent('elastic-query-updated', function() {
-      $scope.index = _.indexOf(metricAggs, $scope.agg);
-      $scope.updatePipelineAggOptions();
-      $scope.validateModel();
-    }, $scope);
+    $rootScope.onAppEvent(
+      'elastic-query-updated',
+      function() {
+        $scope.index = _.indexOf(metricAggs, $scope.agg);
+        $scope.updatePipelineAggOptions();
+        $scope.validateModel();
+      },
+      $scope
+    );
 
     $scope.validateModel = function() {
       $scope.isFirst = $scope.index === 0;
       $scope.isSingle = metricAggs.length === 1;
       $scope.settingsLinkText = '';
-      $scope.aggDef = _.find($scope.metricAggTypes, {value: $scope.agg.type});
+      $scope.aggDef = _.find($scope.metricAggTypes, { value: $scope.agg.type });
 
       if (queryDef.isPipelineAgg($scope.agg.type)) {
         $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
@@ -67,30 +65,34 @@ function (angular, _, queryDef) {
       } else if (!$scope.agg.field) {
         $scope.agg.field = 'select field';
       }
-      switch($scope.agg.type) {
+      switch ($scope.agg.type) {
         case 'cardinality': {
           var precision_threshold = $scope.agg.settings.precision_threshold || '';
           $scope.settingsLinkText = 'Precision threshold: ' + precision_threshold;
           break;
         }
         case 'percentiles': {
-          $scope.agg.settings.percents = $scope.agg.settings.percents || [25,50,75,95,99];
+          $scope.agg.settings.percents = $scope.agg.settings.percents || [25, 50, 75, 95, 99];
           $scope.settingsLinkText = 'Values: ' + $scope.agg.settings.percents.join(',');
           break;
         }
         case 'extended_stats': {
-          if (_.keys($scope.agg.meta).length === 0)  {
+          if (_.keys($scope.agg.meta).length === 0) {
             $scope.agg.meta.std_deviation_bounds_lower = true;
             $scope.agg.meta.std_deviation_bounds_upper = true;
           }
 
-          var stats = _.reduce($scope.agg.meta, function(memo, val, key) {
-            if (val) {
-              var def = _.find($scope.extendedStats, {value: key});
-              memo.push(def.text);
-            }
-            return memo;
-          }, []);
+          var stats = _.reduce(
+            $scope.agg.meta,
+            function(memo, val, key) {
+              if (val) {
+                var def = _.find($scope.extendedStats, { value: key });
+                memo.push(def.text);
+              }
+              return memo;
+            },
+            []
+          );
 
           $scope.settingsLinkText = 'Stats: ' + stats.join(', ');
           break;
@@ -103,8 +105,8 @@ function (angular, _, queryDef) {
         }
         case 'raw_document': {
           $scope.agg.settings.size = $scope.agg.settings.size || 500;
-          $scope.settingsLinkText = 'Size: ' + $scope.agg.settings.size ;
-          $scope.target.metrics.splice(0,$scope.target.metrics.length, $scope.agg);
+          $scope.settingsLinkText = 'Size: ' + $scope.agg.settings.size;
+          $scope.target.metrics.splice(0, $scope.target.metrics.length, $scope.agg);
 
           $scope.target.bucketAggs = [];
           break;
@@ -115,7 +117,7 @@ function (angular, _, queryDef) {
         // but having it like this simplifes the query_builder
         var inlineScript = $scope.agg.inlineScript;
         if (inlineScript) {
-          $scope.agg.settings.script = {inline: inlineScript};
+          $scope.agg.settings.script = { inline: inlineScript };
         } else {
           delete $scope.agg.settings.script;
         }
@@ -135,15 +137,15 @@ function (angular, _, queryDef) {
       $scope.onChange();
     };
 
-    $scope.updateMovingAvgModelSettings = function () {
+    $scope.updateMovingAvgModelSettings = function() {
       var modelSettingsKeys = [];
       var modelSettings = queryDef.getMovingAvgSettings($scope.agg.settings.model, false);
-      for (var i=0; i < modelSettings.length; i++) {
+      for (var i = 0; i < modelSettings.length; i++) {
         modelSettingsKeys.push(modelSettings[i].value);
       }
 
       for (var key in $scope.agg.settings.settings) {
-        if (($scope.agg.settings.settings[key] === null) || (modelSettingsKeys.indexOf(key) === -1)) {
+        if ($scope.agg.settings.settings[key] === null || modelSettingsKeys.indexOf(key) === -1) {
           delete $scope.agg.settings.settings[key];
         }
       }
@@ -166,17 +168,21 @@ function (angular, _, queryDef) {
       if ($scope.agg.type === 'cardinality') {
         return $scope.getFields();
       }
-      return $scope.getFields({$fieldType: 'number'});
+      return $scope.getFields({ $fieldType: 'number' });
     };
 
     $scope.addMetricAgg = function() {
       var addIndex = metricAggs.length;
 
-      var id = _.reduce($scope.target.bucketAggs.concat($scope.target.metrics), function(max, val) {
-        return parseInt(val.id) > max ? parseInt(val.id) : max;
-      }, 0);
+      var id = _.reduce(
+        $scope.target.bucketAggs.concat($scope.target.metrics),
+        function(max, val) {
+          return parseInt(val.id) > max ? parseInt(val.id) : max;
+        },
+        0
+      );
 
-      metricAggs.splice(addIndex, 0, {type: "count", field: "select field", id: (id+1).toString()});
+      metricAggs.splice(addIndex, 0, { type: 'count', field: 'select field', id: (id + 1).toString() });
       $scope.onChange();
     };
 
@@ -194,7 +200,9 @@ function (angular, _, queryDef) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-
-});
+var module = angular.module('grafana.directives');
+module.directive('elasticMetricAgg', elasticMetricAgg);
+module.controller('ElasticMetricAggCtrl', ElasticMetricAggCtrl);

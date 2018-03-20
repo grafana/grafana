@@ -196,7 +196,7 @@ func (rs *Rows) ScanMap(dest interface{}) error {
 	newDest := make([]interface{}, len(cols))
 	vvv := vv.Elem()
 
-	for i := range cols {
+	for i, _ := range cols {
 		newDest[i] = ReflectNew(vvv.Type().Elem()).Interface()
 		//v := reflect.New(vvv.Type().Elem())
 		//newDest[i] = v.Interface()

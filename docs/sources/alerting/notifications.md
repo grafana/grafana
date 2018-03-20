@@ -58,6 +58,8 @@ Recipient | allows you to override the Slack recipient.
 Mention | make it possible to include a mention in the Slack notification sent by Grafana. Ex @here or @channel
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
 
+If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
+
 ### PagerDuty
 
 To set up PagerDuty, all you have to do is to provide an API key.
