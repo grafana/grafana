@@ -47,12 +47,9 @@ describe('Prometheus editor completer', function() {
     variables: [
       {
         name: 'var_name',
-        options: [
-          { text: 'foo', value: 'foo', selected: false },
-          { text: 'bar', value: 'bar', selected: true }
-        ]
-      }
-    ]
+        options: [{ text: 'foo', value: 'foo', selected: false }, { text: 'bar', value: 'bar', selected: true }],
+      },
+    ],
   };
   let completer = new PromCompleter(datasourceStub, templateSrv);
 

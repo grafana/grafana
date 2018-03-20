@@ -63,7 +63,7 @@ func recoveryScenario(desc string, url string, fn scenarioFunc) {
 		sc.m.Use(GetContextHandler())
 		// mock out gc goroutine
 		session.StartSessionGC = func() {}
-		sc.m.Use(Sessioner(&ms.Options{}))
+		sc.m.Use(Sessioner(&ms.Options{}, 0))
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 
