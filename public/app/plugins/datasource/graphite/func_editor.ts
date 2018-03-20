@@ -4,16 +4,17 @@ import $ from 'jquery';
 import rst2html from 'rst2html';
 
 export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
-  var funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
-  var paramTemplate = '<input type="text" style="display:none"' + ' class="input-small tight-form-func-param"></input>';
+  const funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
+  const paramTemplate =
+    '<input type="text" style="display:none"' + ' class="input-small tight-form-func-param"></input>';
 
-  var funcControlsTemplate =
-    '<div class="tight-form-func-controls">' +
-    '<span class="pointer fa fa-arrow-left"></span>' +
-    '<span class="pointer fa fa-question-circle"></span>' +
-    '<span class="pointer fa fa-remove" ></span>' +
-    '<span class="pointer fa fa-arrow-right"></span>' +
-    '</div>';
+  const funcControlsTemplate = `
+    <div class="tight-form-func-controls">
+      <span class="pointer fa fa-arrow-left"></span>
+      <span class="pointer fa fa-question-circle"></span>
+      <span class="pointer fa fa-remove" ></span>
+      <span class="pointer fa fa-arrow-right"></span>
+    </div>`;
 
   return {
     restrict: 'A',
@@ -281,13 +282,11 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
                 element: e.target,
                 position: 'bottom left',
                 classNames: 'drop-popover drop-function-def',
-                template:
-                  '<div style="overflow:auto;max-height:30rem;">' +
-                  '<h4>' +
-                  funcDef.name +
-                  '</h4>' +
-                  rst2html(funcDef.description) +
-                  '</div>',
+                template: `
+                  <div style="overflow:auto;max-height:30rem;">
+                    <h4> ${funcDef.name} </h4>
+                    ${rst2html(funcDef.description)}
+                  </div>`,
                 openOn: 'click',
               });
             } else {
