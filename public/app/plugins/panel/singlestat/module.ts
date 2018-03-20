@@ -406,15 +406,23 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function applyColoringThresholds(value, valueString) {
       if (!panel.colorValue) {
-        return valueString;
+        return formatNumber(valueString);
       }
 
       var color = getColorForValue(data, value);
       if (color) {
-        return '<span style="color:' + color + '">' + valueString + '</span>';
+        return '<span style="color:' + color + '">' + formatNumber(valueString) + '</span>';
       }
 
-      return valueString;
+      return formatNumber(valueString);
+    }
+    
+    function formatNumber(valueToFormat){
+      var numberValue = parseFloat(valueToFormat);
+      if(Number.isNaN(numberValue)){
+        return valueToFormat;
+      }
+      return new Intl.NumberFormat().format(numberValue);
     }
 
     function getSpan(className, fontSize, value) {
