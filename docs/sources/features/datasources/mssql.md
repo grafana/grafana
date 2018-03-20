@@ -86,6 +86,7 @@ We plan to add many more macros. If you have suggestions for what macros you wou
 The query editor has a link named `Generated SQL` that shows up after a query has been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
 
 ## Table queries
+
 If the `Format as` query option is set to `Table` then you can basically do any type of SQL query. The table panel will automatically show the results of whatever columns & rows your query returns.
 
 **Example database table:**
@@ -142,7 +143,7 @@ The resulting table panel:
 
 ## Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must must have a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you ommit the `metric` column, tha name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric.
+If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must must have a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you omit the `metric` column, tha name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric.
 
 **Example database table:**
 
@@ -377,16 +378,19 @@ ORDER BY 1
 ```
 
 ## Stored procedure support
+
 Stored procedures have been verified to work. However, please note that we haven't done anything special to support this why there may exist edge cases where it won't work as you would expect.
 Stored procedures should be supported in table, time series and annotation queries as long as you use the same naming of columns and return data in the same format as describe above under respective section.
 
 Please note that any macro function will not work inside a stored procedure.
 
 ### Examples
+
 {{< docs-imagebox img="/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
 For the following examples the database table defined in [Time series queries](#time-series-queries). Let's say that we want to visualize 4 series in a graph panel, i.e. all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this we actually need to use two queries:
 
 **First query:**
+
 ```sql
 SELECT
   $__timeGroup(time, '5m') as time,
@@ -417,6 +421,7 @@ ORDER BY 1
 ```
 
 #### Stored procedure using time in epoch format
+
 We can define a stored procedure that will return all data we need to render 4 series in a graph panel like above.
 In this case the stored procedure accepts two parameters `@from` and `@to` of `int` data types which should be a timerange (from-to) in epoch format
 which will be used to filter the data to return from the stored procedure.
@@ -468,6 +473,7 @@ EXEC dbo.sp_test_epoch @from, @to
 ```
 
 #### Stored procedure using time in datetime format
+
 We can define a stored procedure that will return all data we need to render 4 series in a graph panel like above.
 In this case the stored procedure accepts two parameters `@from` and `@to` of `datetime` data types which should be a timerange (from-to)
 which will be used to filter the data to return from the stored procedure.
@@ -521,5 +527,5 @@ EXEC dbo.sp_test_datetime @from, @to
 
 ## Alerting
 
-Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule
+Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule
 conditions.
