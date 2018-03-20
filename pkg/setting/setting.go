@@ -636,7 +636,7 @@ func readSessionConfig() {
 		SessionOptions.CookiePath = "/"
 	}
 
-	SessionConnMaxLifetime = Cfg.Section("session").Key("conn_max_lifetime").MustInt64(0)
+	SessionConnMaxLifetime = Cfg.Section("session").Key("conn_max_lifetime").MustInt64(14400)
 }
 
 func initLogging() {
