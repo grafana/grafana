@@ -200,11 +200,10 @@ describe('Graph Y axes aligner', function() {
 
   describe('on level not number value', () => {
     it('Should ignore without errors', () => {
-      alignY = 'q';
       yaxes = [{ min: 5, max: 10 }, { min: 2, max: 4 }];
       expected = [{ min: 5, max: 10 }, { min: 2, max: 4 }];
 
-      alignYLevel(yaxes, alignY);
+      alignYLevel(yaxes, 'q');
       expect(yaxes).toMatchObject(expected);
     });
   });
