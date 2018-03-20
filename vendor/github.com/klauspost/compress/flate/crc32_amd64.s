@@ -1,9 +1,10 @@
-//+build !noasm !appengine
+//+build !noasm
+//+build !appengine
 
 // Copyright 2015, Klaus Post, see LICENSE for details.
 
-// func crc32sse(a []byte) hash
-TEXT ·crc32sse(SB), 7, $0
+// func crc32sse(a []byte) uint32
+TEXT ·crc32sse(SB), 4, $0
 	MOVQ a+0(FP), R10
 	XORQ BX, BX
 
@@ -14,8 +15,8 @@ TEXT ·crc32sse(SB), 7, $0
 	MOVL BX, ret+24(FP)
 	RET
 
-// func crc32sseAll(a []byte, dst []hash)
-TEXT ·crc32sseAll(SB), 7, $0
+// func crc32sseAll(a []byte, dst []uint32)
+TEXT ·crc32sseAll(SB), 4, $0
 	MOVQ  a+0(FP), R8      // R8: src
 	MOVQ  a_len+8(FP), R10 // input length
 	MOVQ  dst+24(FP), R9   // R9: dst
@@ -95,62 +96,62 @@ one_crc:
 	JMP  rem_loop
 
 // func matchLenSSE4(a, b []byte, max int) int
-TEXT ·matchLenSSE4(SB), 7, $0
-	MOVQ a+0(FP), R8     // R8: &a
-	MOVQ b+24(FP), R9    // R9: &b
-	MOVQ max+48(FP), R10 // R10: max
-	XORQ R11, R11        // match length
+TEXT ·matchLenSSE4(SB), 4, $0
+	MOVQ a_base+0(FP), SI
+	MOVQ b_base+24(FP), DI
+	MOVQ DI, DX
+	MOVQ max+48(FP), CX
 
-	MOVQ R10, R12
-	SHRQ $4, R10            // max/16
-	ANDQ $15, R12           // max & 15
-	CMPQ R10, $0
-	JEQ  matchlen_verysmall
+cmp8:
+	// As long as we are 8 or more bytes before the end of max, we can load and
+	// compare 8 bytes at a time. If those 8 bytes are equal, repeat.
+	CMPQ CX, $8
+	JLT  cmp1
+	MOVQ (SI), AX
+	MOVQ (DI), BX
+	CMPQ AX, BX
+	JNE  bsf
+	ADDQ $8, SI
+	ADDQ $8, DI
+	SUBQ $8, CX
+	JMP  cmp8
 
-loopback_matchlen:
-	MOVOU (R8), X0 // a[x]
-	MOVOU (R9), X1 // b[x]
+bsf:
+	// If those 8 bytes were not equal, XOR the two 8 byte values, and return
+	// the index of the first byte that differs. The BSF instruction finds the
+	// least significant 1 bit, the amd64 architecture is little-endian, and
+	// the shift by 3 converts a bit index to a byte index.
+	XORQ AX, BX
+	BSFQ BX, BX
+	SHRQ $3, BX
+	ADDQ BX, DI
 
-	// PCMPESTRI $0x18, X1, X0
-	BYTE $0x66; BYTE $0x0f; BYTE $0x3a
-	BYTE $0x61; BYTE $0xc1; BYTE $0x18
-
-	JC match_ended
-
-	ADDQ $16, R8
-	ADDQ $16, R9
-	ADDQ $16, R11
-
-	SUBQ $1, R10
-	JNZ  loopback_matchlen
-
-matchlen_verysmall:
-	CMPQ R12, $0
-	JEQ  done_matchlen
-
-loopback_matchlen_single:
-	// Naiive, but small use
-	MOVB (R8), R13
-	MOVB (R9), R14
-	CMPB R13, R14
-	JNE  done_matchlen
-	ADDQ $1, R8
-	ADDQ $1, R9
-	ADDQ $1, R11
-	SUBQ $1, R12
-	JNZ  loopback_matchlen_single
-	MOVQ R11, ret+56(FP)
+	// Subtract off &b[0] to convert from &b[ret] to ret, and return.
+	SUBQ DX, DI
+	MOVQ DI, ret+56(FP)
 	RET
 
-match_ended:
-	ADDQ CX, R11
+cmp1:
+	// In the slices' tail, compare 1 byte at a time.
+	CMPQ CX, $0
+	JEQ  matchLenEnd
+	MOVB (SI), AX
+	MOVB (DI), BX
+	CMPB AX, BX
+	JNE  matchLenEnd
+	ADDQ $1, SI
+	ADDQ $1, DI
+	SUBQ $1, CX
+	JMP  cmp1
 
-done_matchlen:
-	MOVQ R11, ret+56(FP)
+matchLenEnd:
+	// Subtract off &b[0] to convert from &b[ret] to ret, and return.
+	SUBQ DX, DI
+	MOVQ DI, ret+56(FP)
 	RET
 
 // func histogram(b []byte, h []int32)
-TEXT ·histogram(SB), 7, $0
+TEXT ·histogram(SB), 4, $0
 	MOVQ b+0(FP), SI     // SI: &b
 	MOVQ b_len+8(FP), R9 // R9: len(b)
 	MOVQ h+24(FP), DI    // DI: Histogram

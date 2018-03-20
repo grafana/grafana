@@ -2,6 +2,7 @@ package ber
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -9,9 +10,7 @@ import (
 )
 
 type Packet struct {
-	ClassType   Class
-	TagType     Type
-	Tag         Tag
+	Identifier
 	Value       interface{}
 	ByteValue   []byte
 	Data        *bytes.Buffer
@@ -19,7 +18,13 @@ type Packet struct {
 	Description string
 }
 
-type Tag uint8
+type Identifier struct {
+	ClassType Class
+	TagType   Type
+	Tag       Tag
+}
+
+type Tag uint64
 
 const (
 	TagEOC              Tag = 0x00
@@ -52,6 +57,23 @@ const (
 	TagCharacterString  Tag = 0x1d
 	TagBMPString        Tag = 0x1e
 	TagBitmask          Tag = 0x1f // xxx11111b
+
+	// HighTag indicates the start of a high-tag byte sequence
+	HighTag Tag = 0x1f // xxx11111b
+	// HighTagContinueBitmask indicates the high-tag byte sequence should continue
+	HighTagContinueBitmask Tag = 0x80 // 10000000b
+	// HighTagValueBitmask obtains the tag value from a high-tag byte sequence byte
+	HighTagValueBitmask Tag = 0x7f // 01111111b
+)
+
+const (
+	// LengthLongFormBitmask is the mask to apply to the length byte to see if a long-form byte sequence is used
+	LengthLongFormBitmask = 0x80
+	// LengthValueBitmask is the mask to apply to the length byte to get the number of bytes in the long-form byte sequence
+	LengthValueBitmask = 0x7f
+
+	// LengthIndefinite is returned from readLength to indicate an indefinite length
+	LengthIndefinite = -1
 )
 
 var tagMap = map[Tag]string{
@@ -172,87 +194,12 @@ func printPacket(out io.Writer, p *Packet, indent int, printBytes bool) {
 	}
 }
 
-func resizeBuffer(in []byte, new_size int) (out []byte) {
-	out = make([]byte, new_size)
-
-	copy(out, in)
-
-	return
-}
-
+// ReadPacket reads a single Packet from the reader
 func ReadPacket(reader io.Reader) (*Packet, error) {
-	var header [2]byte
-	buf := header[:]
-	_, err := io.ReadFull(reader, buf)
-
+	p, _, err := readPacket(reader)
 	if err != nil {
 		return nil, err
 	}
-
-	idx := 2
-	var datalen int
-	l := buf[1]
-
-	if l&0x80 == 0 {
-		// The length is encoded in the bottom 7 bits.
-		datalen = int(l & 0x7f)
-		if Debug {
-			fmt.Printf("Read: datalen = %d len(buf) = %d\n  ", l, len(buf))
-
-			for _, b := range buf {
-				fmt.Printf("%02X ", b)
-			}
-
-			fmt.Printf("\n")
-		}
-	} else {
-		// Bottom 7 bits give the number of length bytes to follow.
-		numBytes := int(l & 0x7f)
-		if numBytes == 0 {
-			return nil, fmt.Errorf("invalid length found")
-		}
-		idx += numBytes
-		buf = resizeBuffer(buf, 2+numBytes)
-		_, err := io.ReadFull(reader, buf[2:])
-
-		if err != nil {
-			return nil, err
-		}
-		datalen = 0
-		for i := 0; i < numBytes; i++ {
-			b := buf[2+i]
-			datalen <<= 8
-			datalen |= int(b)
-		}
-
-		if Debug {
-			fmt.Printf("Read: datalen = %d numbytes=%d len(buf) = %d\n  ", datalen, numBytes, len(buf))
-
-			for _, b := range buf {
-				fmt.Printf("%02X ", b)
-			}
-
-			fmt.Printf("\n")
-		}
-	}
-
-	buf = resizeBuffer(buf, idx+datalen)
-	_, err = io.ReadFull(reader, buf[idx:])
-
-	if err != nil {
-		return nil, err
-	}
-
-	if Debug {
-		fmt.Printf("Read: len( buf ) = %d  idx=%d datalen=%d idx+datalen=%d\n  ", len(buf), idx, datalen, idx+datalen)
-
-		for _, b := range buf {
-			fmt.Printf("%02X ", b)
-		}
-	}
-
-	p, _ := decodePacket(buf)
-
 	return p, nil
 }
 
@@ -306,92 +253,129 @@ func int64Length(i int64) (numBytes int) {
 	return
 }
 
+// DecodePacket decodes the given bytes into a single Packet
+// If a decode error is encountered, nil is returned.
 func DecodePacket(data []byte) *Packet {
-	p, _ := decodePacket(data)
+	p, _, _ := readPacket(bytes.NewBuffer(data))
 
 	return p
 }
 
-func decodePacket(data []byte) (*Packet, []byte) {
-	if Debug {
-		fmt.Printf("decodePacket: enter %d\n", len(data))
+// DecodePacketErr decodes the given bytes into a single Packet
+// If a decode error is encountered, nil is returned
+func DecodePacketErr(data []byte) (*Packet, error) {
+	p, _, err := readPacket(bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
+// readPacket reads a single Packet from the reader, returning the number of bytes read
+func readPacket(reader io.Reader) (*Packet, int, error) {
+	identifier, length, read, err := readHeader(reader)
+	if err != nil {
+		return nil, read, err
 	}
 
-	p := new(Packet)
-
-	p.ClassType = Class(data[0]) & ClassBitmask
-	p.TagType = Type(data[0]) & TypeBitmask
-	p.Tag = Tag(data[0]) & TagBitmask
-
-	var datalen int
-	l := data[1]
-	datapos := 2
-	if l&0x80 == 0 {
-		// The length is encoded in the bottom 7 bits.
-		datalen = int(l & 0x7f)
-	} else {
-		// Bottom 7 bits give the number of length bytes to follow.
-		numBytes := int(l & 0x7f)
-		if numBytes == 0 {
-			return nil, nil
-		}
-		datapos += numBytes
-		datalen = 0
-		for i := 0; i < numBytes; i++ {
-			b := data[2+i]
-			datalen <<= 8
-			datalen |= int(b)
-		}
+	p := &Packet{
+		Identifier: identifier,
 	}
 
 	p.Data = new(bytes.Buffer)
-
 	p.Children = make([]*Packet, 0, 2)
-
 	p.Value = nil
 
-	value_data := data[datapos : datapos+datalen]
-
 	if p.TagType == TypeConstructed {
-		for len(value_data) != 0 {
-			var child *Packet
+		// TODO: if universal, ensure tag type is allowed to be constructed
 
-			child, value_data = decodePacket(value_data)
+		// Track how much content we've read
+		contentRead := 0
+		for {
+			if length != LengthIndefinite {
+				// End if we've read what we've been told to
+				if contentRead == length {
+					break
+				}
+				// Detect if a packet boundary didn't fall on the expected length
+				if contentRead > length {
+					return nil, read, fmt.Errorf("expected to read %d bytes, read %d", length, contentRead)
+				}
+			}
+
+			// Read the next packet
+			child, r, err := readPacket(reader)
+			if err != nil {
+				return nil, read, err
+			}
+			contentRead += r
+			read += r
+
+			// Test is this is the EOC marker for our packet
+			if isEOCPacket(child) {
+				if length == LengthIndefinite {
+					break
+				}
+				return nil, read, errors.New("eoc child not allowed with definite length")
+			}
+
+			// Append and continue
 			p.AppendChild(child)
 		}
-	} else if p.ClassType == ClassUniversal {
-		p.Data.Write(data[datapos : datapos+datalen])
-		p.ByteValue = value_data
+		return p, read, nil
+	}
+
+	if length == LengthIndefinite {
+		return nil, read, errors.New("indefinite length used with primitive type")
+	}
+
+	// Read definite-length content
+	content := make([]byte, length, length)
+	if length > 0 {
+		_, err := io.ReadFull(reader, content)
+		if err != nil {
+			if err == io.EOF {
+				return nil, read, io.ErrUnexpectedEOF
+			}
+			return nil, read, err
+		}
+		read += length
+	}
+
+	if p.ClassType == ClassUniversal {
+		p.Data.Write(content)
+		p.ByteValue = content
 
 		switch p.Tag {
 		case TagEOC:
 		case TagBoolean:
-			val, _ := parseInt64(value_data)
+			val, _ := parseInt64(content)
 
 			p.Value = val != 0
 		case TagInteger:
-			p.Value, _ = parseInt64(value_data)
+			p.Value, _ = parseInt64(content)
 		case TagBitString:
 		case TagOctetString:
 			// the actual string encoding is not known here
-			// (e.g. for LDAP value_data is already an UTF8-encoded
+			// (e.g. for LDAP content is already an UTF8-encoded
 			// string). Return the data without further processing
-			p.Value = DecodeString(value_data)
+			p.Value = DecodeString(content)
 		case TagNULL:
 		case TagObjectIdentifier:
 		case TagObjectDescriptor:
 		case TagExternal:
 		case TagRealFloat:
 		case TagEnumerated:
-			p.Value, _ = parseInt64(value_data)
+			p.Value, _ = parseInt64(content)
 		case TagEmbeddedPDV:
 		case TagUTF8String:
+			p.Value = DecodeString(content)
 		case TagRelativeOID:
 		case TagSequence:
 		case TagSet:
 		case TagNumericString:
 		case TagPrintableString:
-			p.Value = DecodeString(value_data)
+			p.Value = DecodeString(content)
 		case TagT61String:
 		case TagVideotexString:
 		case TagIA5String:
@@ -405,25 +389,17 @@ func decodePacket(data []byte) (*Packet, []byte) {
 		case TagBMPString:
 		}
 	} else {
-		p.Data.Write(data[datapos : datapos+datalen])
+		p.Data.Write(content)
 	}
 
-	return p, data[datapos+datalen:]
+	return p, read, nil
 }
 
 func (p *Packet) Bytes() []byte {
 	var out bytes.Buffer
 
-	out.Write([]byte{byte(p.ClassType) | byte(p.TagType) | byte(p.Tag)})
-	packet_length := encodeInteger(int64(p.Data.Len()))
-
-	if p.Data.Len() > 127 || len(packet_length) > 1 {
-		out.Write([]byte{byte(len(packet_length) | 128)})
-		out.Write(packet_length)
-	} else {
-		out.Write(packet_length)
-	}
-
+	out.Write(encodeIdentifier(p.Identifier))
+	out.Write(encodeLength(p.Data.Len()))
 	out.Write(p.Data.Bytes())
 
 	return out.Bytes()

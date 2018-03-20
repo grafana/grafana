@@ -18,8 +18,8 @@
 // ---------------------
 
 @include media-breakpoint-down(xs) {
-  input[type="text"],
-  input[type="number"],
+  input[type='text'],
+  input[type='number'],
   textarea {
     font-size: 16px;
   }
@@ -51,9 +51,15 @@
     display: flex;
   }
   .navbar-page-btn {
-    max-width: none;
+    max-width: 450px;
   }
   .gf-timepicker-nav-btn {
     max-width: none;
+  }
+}
+
+@include media-breakpoint-up(xl) {
+  .navbar-page-btn {
+    max-width: 600px;
   }
 }

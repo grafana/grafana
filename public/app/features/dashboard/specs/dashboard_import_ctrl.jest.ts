@@ -19,10 +19,10 @@ describe('DashboardImportCtrl', function() {
     };
 
     validationSrv = {
-      validateNewDashboardOrFolderName: jest.fn().mockReturnValue(Promise.resolve()),
+      validateNewDashboardName: jest.fn().mockReturnValue(Promise.resolve()),
     };
 
-    ctx.ctrl = new DashboardImportCtrl(backendSrv, validationSrv, navModelSrv, {}, {}, {});
+    ctx.ctrl = new DashboardImportCtrl(backendSrv, validationSrv, navModelSrv, {}, {});
   });
 
   describe('when uploading json', function() {

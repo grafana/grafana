@@ -140,7 +140,7 @@
   }
 
   &::after {
-    content: "";
+    content: '';
     position: absolute;
     top: 0;
     right: -14px; // half of square's length
@@ -157,8 +157,7 @@
     background: linear-gradient(135deg, $btn-inverse-bg, $btn-inverse-bg-hl);
 
     // stylish arrow design using box shadow
-    box-shadow: 2px -2px 0 2px rgb(35, 31, 31),
-      3px -3px 0 2px rgba(255, 255, 255, 0.1);
+    box-shadow: 2px -2px 0 2px rgb(35, 31, 31), 3px -3px 0 2px rgba(255, 255, 255, 0.1);
 
     // 5px - for rounded arrows and
     // 50px - to prevent hover glitches on the border created using shadows*/

@@ -1,6 +1,10 @@
 .page-kiosk-mode {
-  dashnav {
+  .sidemenu,
+  .navbar {
     display: none;
+  }
+  .scroll-canvas--dashboard {
+    height: 100%;
   }
 }
 
@@ -29,6 +33,10 @@
     i {
       opacity: 0;
     }
+  }
+
+  .sidemenu {
+    display: none;
   }
 
   .gf-timepicker-nav-btn {

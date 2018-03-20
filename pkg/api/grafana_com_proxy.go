@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/middleware"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -41,7 +41,7 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{Director: director}
 }
 
-func ProxyGnetRequest(c *middleware.Context) {
+func ProxyGnetRequest(c *m.ReqContext) {
 	proxyPath := c.Params("*")
 	proxy := ReverseProxyGnetReq(proxyPath)
 	proxy.Transport = grafanaComProxyTransport

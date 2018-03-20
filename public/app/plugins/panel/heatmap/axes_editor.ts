@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import kbn from 'app/core/utils/kbn';
 
 export class AxesEditorCtrl {
@@ -8,6 +6,7 @@ export class AxesEditorCtrl {
   unitFormats: any;
   logScales: any;
   dataFormats: any;
+  yBucketBoundModes: any;
 
   /** @ngInject */
   constructor($scope, uiSegmentSrv) {
@@ -27,6 +26,12 @@ export class AxesEditorCtrl {
     this.dataFormats = {
       'Time series': 'timeseries',
       'Time series buckets': 'tsbuckets',
+    };
+
+    this.yBucketBoundModes = {
+      Auto: 'auto',
+      Upper: 'upper',
+      Lower: 'lower',
     };
   }
 

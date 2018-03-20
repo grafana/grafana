@@ -18,10 +18,6 @@ function (_, $, coreModule) {
           elem.toggleClass('panel-in-fullscreen', false);
         });
 
-        $scope.$watch('ctrl.playlistSrv.isPlaying', function(newValue) {
-          elem.toggleClass('playlist-active', newValue === true);
-        });
-
         $scope.$watch('ctrl.dashboardViewState.state.editview', function(newValue) {
           if (newValue) {
             elem.toggleClass('dashboard-page--settings-opening', _.isString(newValue));

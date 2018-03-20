@@ -87,10 +87,10 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		IsAlertContext: true,
 	}
 
-	if slug, err := context.GetDashboardSlug(); err != nil {
+	if ref, err := context.GetDashboardUID(); err != nil {
 		return err
 	} else {
-		renderOpts.Path = fmt.Sprintf("dashboard-solo/db/%s?&panelId=%d", slug, context.Rule.PanelId)
+		renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
 	}
 
 	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {

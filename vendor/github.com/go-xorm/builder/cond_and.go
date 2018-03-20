@@ -25,7 +25,9 @@ func And(conds ...Cond) Cond {
 func (and condAnd) WriteTo(w Writer) error {
 	for i, cond := range and {
 		_, isOr := cond.(condOr)
-		if isOr {
+		_, isExpr := cond.(expr)
+		wrap := isOr || isExpr
+		if wrap {
 			fmt.Fprint(w, "(")
 		}
 
@@ -34,7 +36,7 @@ func (and condAnd) WriteTo(w Writer) error {
 			return err
 		}
 
-		if isOr {
+		if wrap {
 			fmt.Fprint(w, ")")
 		}
 

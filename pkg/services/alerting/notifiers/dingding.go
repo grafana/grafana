@@ -38,10 +38,6 @@ func NewDingDingNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	}, nil
 }
 
-func (this *DingDingNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 type DingDingNotifier struct {
 	NotifierBase
 	Url string

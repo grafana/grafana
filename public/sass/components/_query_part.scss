@@ -6,4 +6,12 @@
     min-width: 100px;
     text-align: center;
   }
+
+  .query-part__last {
+    display: none;
+  }
+
+  &:hover .query-part__last {
+    display: inline;
+  }
 }

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import './graph';
 import './legend';
 import './series_overrides_ctrl';

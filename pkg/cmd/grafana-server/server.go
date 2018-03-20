@@ -62,17 +62,22 @@ func (g *GrafanaServerImpl) Start() error {
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
-	plugins.Init()
+
+	pluginManager, err := plugins.NewPluginManager(g.context)
+	if err != nil {
+		return fmt.Errorf("Failed to start plugins. error: %v", err)
+	}
+	g.childRoutines.Go(func() error { return pluginManager.Run(g.context) })
 
 	if err := provisioning.Init(g.context, setting.HomePath, setting.Cfg); err != nil {
 		return fmt.Errorf("Failed to provision Grafana from config. error: %v", err)
 	}
 
-	closer, err := tracing.Init(setting.Cfg)
+	tracingCloser, err := tracing.Init(setting.Cfg)
 	if err != nil {
 		return fmt.Errorf("Tracing settings is not valid. error: %v", err)
 	}
-	defer closer.Close()
+	defer tracingCloser.Close()
 
 	// init alerting
 	if setting.AlertingEnabled && setting.ExecuteAlerts {

@@ -24,5 +24,6 @@ module.exports = {
   "setupFiles": [
     "./public/test/jest-shim.ts",
     "./public/test/jest-setup.ts"
-  ]
+  ],
+  "snapshotSerializers": ["enzyme-to-json/serializer"],
 };

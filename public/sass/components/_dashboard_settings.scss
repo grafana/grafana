@@ -23,10 +23,11 @@
   min-width: 0;
   height: 100%;
   padding: 30px;
+  max-width: 1100px;
 }
 
 .dashboard-settings__aside {
-  padding: 30px 0 0 30px;
+  padding: 27px 0 0 30px;
   background: $panel-bg;
   display: flex;
   flex-direction: column;

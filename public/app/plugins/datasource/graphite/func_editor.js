@@ -2,17 +2,18 @@ define([
   'angular',
   'lodash',
   'jquery',
+  'rst2html',
 ],
-function (angular, _, $) {
+function (angular, _, $, rst2html) {
   'use strict';
 
   angular
     .module('grafana.directives')
-    .directive('graphiteFuncEditor', function($compile, templateSrv) {
+    .directive('graphiteFuncEditor', function($compile, templateSrv, popoverSrv) {
 
       var funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
       var paramTemplate = '<input type="text" style="display:none"' +
-                          ' class="input-mini tight-form-func-param"></input>';
+                          ' class="input-small tight-form-func-param"></input>';
 
       var funcControlsTemplate =
          '<div class="tight-form-func-controls">' +
@@ -29,19 +30,20 @@ function (angular, _, $) {
           var $funcControls = $(funcControlsTemplate);
           var ctrl = $scope.ctrl;
           var func = $scope.func;
-          var funcDef = func.def;
           var scheduledRelink = false;
           var paramCountAtLink = 0;
+          var cancelBlur = null;
 
           function clickFuncParam(paramIndex) {
             /*jshint validthis:true */
 
             var $link = $(this);
+            var $comma = $link.prev('.comma');
             var $input = $link.next();
 
             $input.val(func.params[paramIndex]);
-            $input.css('width', ($link.width() + 16) + 'px');
 
+            $comma.removeClass('query-part__last');
             $link.hide();
             $input.show();
             $input.focus();
@@ -68,31 +70,64 @@ function (angular, _, $) {
             }
           }
 
-          function inputBlur(paramIndex) {
+          function paramDef(index) {
+            if (index < func.def.params.length) {
+              return func.def.params[index];
+            }
+            if (_.last(func.def.params).multiple) {
+              return _.assign({}, _.last(func.def.params), {optional: true});
+            }
+            return {};
+          }
+
+          function switchToLink(inputElem, paramIndex) {
             /*jshint validthis:true */
-            var $input = $(this);
+            var $input = $(inputElem);
+
+            clearTimeout(cancelBlur);
+            cancelBlur = null;
+
             var $link = $input.prev();
+            var $comma = $link.prev('.comma');
             var newValue = $input.val();
 
-            if (newValue !== '' || func.def.params[paramIndex].optional) {
-              $link.html(templateSrv.highlightVariablesAsHtml(newValue));
-
-              func.updateParam($input.val(), paramIndex);
-              scheduledRelinkIfNeeded();
-
-              $scope.$apply(function() {
-                ctrl.targetChanged();
-              });
-
-              $input.hide();
-              $link.show();
+            // remove optional empty params
+            if (newValue !== '' || paramDef(paramIndex).optional) {
+              func.updateParam(newValue, paramIndex);
+              $link.html(newValue ? templateSrv.highlightVariablesAsHtml(newValue) : '&nbsp;');
             }
+
+            scheduledRelinkIfNeeded();
+
+            $scope.$apply(function() {
+              ctrl.targetChanged();
+            });
+
+            if ($link.hasClass('query-part__last') && newValue === '') {
+              $comma.addClass('query-part__last');
+            } else {
+              $link.removeClass('query-part__last');
+            }
+
+            $input.hide();
+            $link.show();
+          }
+
+          // this = input element
+          function inputBlur(paramIndex) {
+            /*jshint validthis:true */
+            var inputElem = this;
+            // happens long before the click event on the typeahead options
+            // need to have long delay because the blur
+            cancelBlur = setTimeout(function() {
+              switchToLink(inputElem, paramIndex);
+            }, 200);
           }
 
           function inputKeyPress(paramIndex, e) {
             /*jshint validthis:true */
             if(e.which === 13) {
-              inputBlur.call(this, paramIndex);
+              $(this).blur();
             }
           }
 
@@ -104,8 +139,8 @@ function (angular, _, $) {
           function addTypeahead($input, paramIndex) {
             $input.attr('data-provide', 'typeahead');
 
-            var options = funcDef.params[paramIndex].options;
-            if (funcDef.params[paramIndex].type === 'int') {
+            var options = paramDef(paramIndex).options;
+            if (paramDef(paramIndex).type === 'int') {
               options = _.map(options, function(val) { return val.toString(); });
             }
 
@@ -114,9 +149,8 @@ function (angular, _, $) {
               minLength: 0,
               items: 20,
               updater: function (value) {
-                setTimeout(function() {
-                  inputBlur.call($input[0], paramIndex);
-                }, 0);
+                $input.val(value);
+                switchToLink($input[0], paramIndex);
                 return value;
               }
             });
@@ -148,18 +182,34 @@ function (angular, _, $) {
             $funcControls.appendTo(elem);
             $funcLink.appendTo(elem);
 
-            _.each(funcDef.params, function(param, index) {
-              if (param.optional && func.params.length <= index) {
-                return;
-              }
+            var defParams = _.clone(func.def.params);
+            var lastParam = _.last(func.def.params);
 
-              if (index > 0) {
-                $('<span>, </span>').appendTo(elem);
+            while (func.params.length >= defParams.length && lastParam && lastParam.multiple) {
+              defParams.push(_.assign({}, lastParam, {optional: true}));
+            }
+
+            _.each(defParams, function(param, index) {
+              if (param.optional && func.params.length < index) {
+                return false;
               }
 
               var paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
-              var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + paramValue + '</a>');
+
+              var last = (index >= func.params.length - 1) && param.optional && !paramValue;
+              if (last && param.multiple) {
+                paramValue = '+';
+              }
+
+              if (index > 0) {
+                $('<span class="comma' + (last ? ' query-part__last' : '') + '">, </span>').appendTo(elem);
+              }
+
+              var $paramLink = $(
+                '<a ng-click="" class="graphite-func-param-link' + (last ? ' query-part__last' : '') + '">'
+                + (paramValue || '&nbsp;') + '</a>');
               var $input = $(paramTemplate);
+              $input.attr('placeholder', param.name);
 
               paramCountAtLink++;
 
@@ -171,10 +221,9 @@ function (angular, _, $) {
               $input.keypress(_.partial(inputKeyPress, index));
               $paramLink.click(_.partial(clickFuncParam, index));
 
-              if (funcDef.params[index].options) {
+              if (param.options) {
                 addTypeahead($input, index);
               }
-
             });
 
             $('<span>)</span>').appendTo(elem);
@@ -182,7 +231,7 @@ function (angular, _, $) {
             $compile(elem.contents())($scope);
           }
 
-          function ifJustAddedFocusFistParam() {
+          function ifJustAddedFocusFirstParam() {
             if ($scope.func.added) {
               $scope.func.added = false;
               setTimeout(function() {
@@ -223,7 +272,20 @@ function (angular, _, $) {
               }
 
               if ($target.hasClass('fa-question-circle')) {
-                window.open("http://graphite.readthedocs.org/en/latest/functions.html#graphite.render.functions." + funcDef.name,'_blank');
+                var funcDef = ctrl.datasource.getFuncDef(func.def.name);
+                if (funcDef && funcDef.description) {
+                  popoverSrv.show({
+                    element: e.target,
+                    position: 'bottom left',
+                    classNames: 'drop-popover drop-function-def',
+                    template: '<div style="overflow:auto;max-height:30rem;">'
+                      + '<h4>' + funcDef.name + '</h4>' + rst2html(funcDef.description) + '</div>',
+                    openOn: 'click',
+                  });
+                } else {
+                  window.open(
+                    "http://graphite.readthedocs.org/en/latest/functions.html#graphite.render.functions." + func.def.name,'_blank');
+                }
                 return;
               }
             });
@@ -233,7 +295,7 @@ function (angular, _, $) {
             elem.children().remove();
 
             addElementsAndCompile();
-            ifJustAddedFocusFistParam();
+            ifJustAddedFocusFirstParam();
             registerFuncControlsToggle();
             registerFuncControlsActions();
           }

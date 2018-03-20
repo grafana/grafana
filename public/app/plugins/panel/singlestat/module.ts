@@ -198,6 +198,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.setValueMapping(data);
   }
 
+  canChangeFontSize() {
+    return this.panel.gauge.show;
+  }
+
   setColoring(options) {
     if (options.background) {
       this.panel.colorValue = false;
@@ -422,14 +426,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       var body = '<div class="singlestat-panel-value-container">';
 
       if (panel.prefix) {
-        body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, panel.prefix);
+        var prefix = applyColoringThresholds(data.value, panel.prefix);
+        body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, prefix);
       }
 
       var value = applyColoringThresholds(data.value, data.valueFormatted);
       body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
       if (panel.postfix) {
-        body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix);
+        var postfix = applyColoringThresholds(data.value, panel.postfix);
+        body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, postfix);
       }
 
       body += '</div>';

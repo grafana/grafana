@@ -241,31 +241,10 @@ export class PanelCtrl {
     });
   }
 
-  removePanel(ask: boolean) {
-    // confirm deletion
-    if (ask !== false) {
-      var text2, confirmText;
-
-      if (this.panel.alert) {
-        text2 = 'Panel includes an alert rule, removing panel will also remove alert rule';
-        confirmText = 'YES';
-      }
-
-      appEvents.emit('confirm-modal', {
-        title: 'Remove Panel',
-        text: 'Are you sure you want to remove this panel?',
-        text2: text2,
-        icon: 'fa-trash',
-        confirmText: confirmText,
-        yesText: 'Remove',
-        onConfirm: () => {
-          this.removePanel(false);
-        },
-      });
-      return;
-    }
-
-    this.dashboard.removePanel(this.panel);
+  removePanel() {
+    this.publishAppEvent('panel-remove', {
+      panelId: this.panel.id,
+    });
   }
 
   editPanelJson() {

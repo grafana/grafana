@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
+import appEvents from 'app/core/app_events';
 
 export class VariableEditorCtrl {
   /** @ngInject **/
@@ -56,16 +57,13 @@ export class VariableEditorCtrl {
       }
 
       if (!$scope.current.name.match(/^\w+$/)) {
-        $scope.appEvent('alert-warning', [
-          'Validation',
-          'Only word and digit characters are allowed in variable names',
-        ]);
+        appEvents.emit('alert-warning', ['Validation', 'Only word and digit characters are allowed in variable names']);
         return false;
       }
 
       var sameName = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
-        $scope.appEvent('alert-warning', ['Validation', 'Variable with the same name already exists']);
+        appEvents.emit('alert-warning', ['Validation', 'Variable with the same name already exists']);
         return false;
       }
 
@@ -73,7 +71,7 @@ export class VariableEditorCtrl {
         $scope.current.type === 'query' &&
         $scope.current.query.match(new RegExp('\\$' + $scope.current.name + '(/| |$)'))
       ) {
-        $scope.appEvent('alert-warning', [
+        appEvents.emit('alert-warning', [
           'Validation',
           'Query cannot contain a reference to itself. Variable: $' + $scope.current.name,
         ]);
@@ -96,11 +94,11 @@ export class VariableEditorCtrl {
     };
 
     $scope.runQuery = function() {
-      return variableSrv.updateOptions($scope.current).then(null, function(err) {
+      return variableSrv.updateOptions($scope.current).catch(err => {
         if (err.data && err.data.message) {
           err.message = err.data.message;
         }
-        $scope.appEvent('alert-error', ['Templating', 'Template variables could not be initialized: ' + err.message]);
+        appEvents.emit('alert-error', ['Templating', 'Template variables could not be initialized: ' + err.message]);
       });
     };
 

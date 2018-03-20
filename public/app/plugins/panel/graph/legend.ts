@@ -151,7 +151,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
 
         if (panel.legend.sort) {
           seriesList = _.sortBy(seriesList, function(series) {
-            return series.stats[panel.legend.sort];
+            let sort = series.stats[panel.legend.sort];
+            if (sort === null) {
+              sort = -Infinity;
+            }
+            return sort;
           });
           if (panel.legend.sortDesc) {
             seriesList = seriesList.reverse();
@@ -246,6 +250,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           // Number of pixels the content height can surpass the container height without enabling the scroll bar.
           scrollYMarginOffset: 2,
           suppressScrollX: true,
+          wheelPropagation: true,
         };
 
         if (!legendScrollbar) {

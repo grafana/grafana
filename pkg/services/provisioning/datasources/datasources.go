@@ -2,16 +2,12 @@ package datasources
 
 import (
 	"errors"
-	"io/ioutil"
-	"path/filepath"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 
 	"github.com/grafana/grafana/pkg/log"
 
 	"github.com/grafana/grafana/pkg/models"
-	yaml "gopkg.in/yaml.v2"
 )
 
 var (
@@ -25,13 +21,13 @@ func Provision(configDirectory string) error {
 
 type DatasourceProvisioner struct {
 	log         log.Logger
-	cfgProvider configReader
+	cfgProvider *configReader
 }
 
 func newDatasourceProvisioner(log log.Logger) DatasourceProvisioner {
 	return DatasourceProvisioner{
 		log:         log,
-		cfgProvider: configReader{},
+		cfgProvider: &configReader{log: log},
 	}
 }
 
@@ -93,62 +89,4 @@ func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*DeleteDatasourc
 	}
 
 	return nil
-}
-
-type configReader struct{}
-
-func (configReader) readConfig(path string) ([]*DatasourcesAsConfig, error) {
-	files, err := ioutil.ReadDir(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var datasources []*DatasourcesAsConfig
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
-			filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
-			yamlFile, err := ioutil.ReadFile(filename)
-
-			if err != nil {
-				return nil, err
-			}
-			var datasource *DatasourcesAsConfig
-			err = yaml.Unmarshal(yamlFile, &datasource)
-			if err != nil {
-				return nil, err
-			}
-
-			if datasource != nil {
-				datasources = append(datasources, datasource)
-			}
-		}
-	}
-
-	defaultCount := 0
-	for i := range datasources {
-		if datasources[i].Datasources == nil {
-			continue
-		}
-
-		for _, ds := range datasources[i].Datasources {
-			if ds.OrgId == 0 {
-				ds.OrgId = 1
-			}
-
-			if ds.IsDefault {
-				defaultCount++
-				if defaultCount > 1 {
-					return nil, ErrInvalidConfigToManyDefault
-				}
-			}
-		}
-
-		for _, ds := range datasources[i].DeleteDatasources {
-			if ds.OrgId == 0 {
-				ds.OrgId = 1
-			}
-		}
-	}
-
-	return datasources, nil
 }

@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 
 var module = angular.module('grafana.directives');

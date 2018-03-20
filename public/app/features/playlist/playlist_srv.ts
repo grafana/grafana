@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from '../../core/core_module';
 import kbn from 'app/core/utils/kbn';
 import appEvents from 'app/core/app_events';

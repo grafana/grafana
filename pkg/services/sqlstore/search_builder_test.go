@@ -16,7 +16,8 @@ func TestSearchBuilder(t *testing.T) {
 			OrgId:  1,
 			UserId: 1,
 		}
-		sb := NewSearchBuilder(signedInUser, 1000)
+
+		sb := NewSearchBuilder(signedInUser, 1000, m.PERMISSION_VIEW)
 
 		Convey("When building a normal search", func() {
 			sql, params := sb.IsStarred().WithTitle("test").ToSql()

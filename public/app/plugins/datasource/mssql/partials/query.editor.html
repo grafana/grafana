@@ -1,0 +1,71 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false">
+	<div class="gf-form-inline">
+		<div class="gf-form gf-form--grow">
+			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sqlserver">
+			</code-editor>
+		</div>
+	</div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword">Format as</label>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
+			</div>
+		</div>
+		<div class="gf-form">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
+        Show Help
+        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+      </label>
+		</div>
+		<div class="gf-form" ng-show="ctrl.lastQueryMeta">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
+        Generated SQL
+        <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
+      </label>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.showLastQuerySQL">
+		<pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
+	</div>
+
+	<div class="gf-form"  ng-show="ctrl.showHelp">
+		<pre class="gf-form-pre alert alert-info">Time series:
+- return column named time (in UTC), as a unix time stamp or any sql native date data type. You can use the macros below.
+- optional: return column named metric to represent the series names.
+- any other columns returned will be the time point values.
+- if multiple value columns are present and a metric column is provided. the series name will be the combination of "MetricName - ValueColumnName".
+
+Table:
+- return any set of columns
+
+Macros:
+- $__time(column) -&gt; column AS time
+- $__utcTime(column) -&gt; DATEADD(second, DATEDIFF(second, GETDATE(), GETUTCDATE()), column) AS time
+- $__timeEpoch(column) -&gt; DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second, GETDATE(), GETUTCDATE()), column) ) AS time
+- $__timeFilter(column) -&gt; column &gt; DATEADD(s, 1492750877+DATEDIFF(second, GETUTCDATE(), GETDATE()), '1970-01-01') AND column &lt; DATEADD(s, 1492750877+DATEDIFF(second, GETUTCDATE(), GETDATE()), '1970-01-01')
+- $__unixEpochFilter(column) -&gt; column &gt; 1492750877 AND column &lt; 1492750877
+- $__timeGroup(column, '5m'[, fillvalue]) -&gt; cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second, GETDATE(), GETUTCDATE()), column))/300 as int)*300 as int). Providing a <i>fillValue</i> of <i>NULL</i> or floating value will automatically fill empty series in timerange with that value.
+
+Or build your own conditionals using these macros which just return the values:
+- $__timeFrom() -&gt; DATEADD(second, 1492750877+DATEDIFF(second, GETUTCDATE(), GETDATE()), '1970-01-01')
+- $__timeTo() -&gt; DATEADD(second, 1492750877+DATEDIFF(second, GETUTCDATE(), GETDATE()), '1970-01-01')
+- $__unixEpochFrom() -&gt; 1492750877
+- $__unixEpochTo() -&gt; 1492750877
+		</pre>
+	</div>
+
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.lastQueryError">
+		<pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+	</div>
+
+</query-editor-row>

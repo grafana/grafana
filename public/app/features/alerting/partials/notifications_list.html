@@ -1,45 +1,60 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body">
-  <div class="page-action-bar">
-    <div class="page-action-bar__spacer">
+
+  <div ng-if="ctrl.notifications.length">
+    <div class="page-action-bar">
+      <div class="page-action-bar__spacer">
+      </div>
+
+      <a href="alerting/notification/new" class="btn btn-success">
+        <i class="fa fa-plus"></i>
+        New Channel
+      </a>
     </div>
 
-    <a href="alerting/notification/new" class="btn btn-success">
-      <i class="fa fa-plus"></i>
-      New Channel
-    </a>
+    <table class="filter-table filter-table--hover">
+      <thead>
+        <th style="min-width: 200px">
+          <strong>Name</strong>
+        </th>
+        <th style="min-width: 100px">Type</th>
+        <th style="width: 1%"></th>
+      </thead>
+      <tbody>
+        <tr ng-repeat="notification in ctrl.notifications">
+          <td class="link-td">
+            <a href="alerting/notification/{{notification.id}}/edit">
+              {{notification.name}}
+            </a>
+          </td>
+          <td class="link-td">
+            <a href="alerting/notification/{{notification.id}}/edit">
+              {{notification.type}}
+            </a>
+          </td>
+          <td class="text-right">
+            <span class="btn btn-secondary btn-small" ng-show="notification.isDefault == true">
+              default
+            </span>
+            <a ng-click="ctrl.deleteNotification(notification.id)" class="btn btn-danger btn-small">
+              <i class="fa fa-remove"></i>
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
-
-  <table class="filter-table filter-table--hover">
-    <thead>
-      <th style="min-width: 200px">
-        <strong>Name</strong>
-      </th>
-      <th style="min-width: 100px">Type</th>
-      <th style="width: 1%"></th>
-    </thead>
-    <tbody>
-      <tr ng-repeat="notification in ctrl.notifications">
-        <td class="link-td">
-          <a href="alerting/notification/{{notification.id}}/edit">
-            {{notification.name}}
-          </a>
-        </td>
-        <td class="link-td">
-          <a href="alerting/notification/{{notification.id}}/edit">
-            {{notification.type}}
-          </a>
-        </td>
-        <td class="text-right">
-          <span class="btn btn-secondary btn-small" ng-show="notification.isDefault == true">
-            default
-          </span>
-          <a ng-click="ctrl.deleteNotification(notification.id)" class="btn btn-danger btn-small">
-            <i class="fa fa-remove"></i>
-          </a>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div ng-if="ctrl.notifications.length === 0">
+    <empty-list-cta model="{
+      title: 'There are no notification channels defined yet',
+      buttonIcon: 'gicon gicon-add-alert-notification-channel',
+      buttonLink: 'alerting/notification/new',
+      buttonTitle: 'Add channel',
+      proTip: 'You can include images in your alert notifications.',
+      proTipLink: 'http://docs.grafana.org/alerting/notifications/',
+      proTipLinkTitle: 'Learn more',
+      proTipTarget: '_blank'
+    }" />
+  </div>
 </div>

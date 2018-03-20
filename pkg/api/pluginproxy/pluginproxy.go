@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
@@ -38,7 +37,7 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appId string) (http.
 	return result, err
 }
 
-func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins.AppPluginRoute, appId string) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appId string) *httputil.ReverseProxy {
 	targetUrl, _ := url.Parse(route.Url)
 
 	director := func(req *http.Request) {

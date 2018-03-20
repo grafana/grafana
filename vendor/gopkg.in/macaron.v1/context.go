@@ -268,6 +268,11 @@ func (ctx *Context) SetParams(name, val string) {
 	ctx.params[name] = val
 }
 
+// ReplaceAllParams replace all current params with given params
+func (ctx *Context) ReplaceAllParams(params Params) {
+	ctx.params = params;
+}
+
 // ParamsEscape returns escapred params result.
 // e.g. ctx.ParamsEscape(":uname")
 func (ctx *Context) ParamsEscape(name string) string {

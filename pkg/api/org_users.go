@@ -3,18 +3,17 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 // POST /api/org/users
-func AddOrgUserToCurrentOrg(c *middleware.Context, cmd m.AddOrgUserCommand) Response {
+func AddOrgUserToCurrentOrg(c *m.ReqContext, cmd m.AddOrgUserCommand) Response {
 	cmd.OrgId = c.OrgId
 	return addOrgUserHelper(cmd)
 }
 
 // POST /api/orgs/:orgId/users
-func AddOrgUser(c *middleware.Context, cmd m.AddOrgUserCommand) Response {
+func AddOrgUser(c *m.ReqContext, cmd m.AddOrgUserCommand) Response {
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	return addOrgUserHelper(cmd)
 }
@@ -45,38 +44,42 @@ func addOrgUserHelper(cmd m.AddOrgUserCommand) Response {
 }
 
 // GET /api/org/users
-func GetOrgUsersForCurrentOrg(c *middleware.Context) Response {
-	return getOrgUsersHelper(c.OrgId)
+func GetOrgUsersForCurrentOrg(c *m.ReqContext) Response {
+	return getOrgUsersHelper(c.OrgId, c.Params("query"), c.ParamsInt("limit"))
 }
 
 // GET /api/orgs/:orgId/users
-func GetOrgUsers(c *middleware.Context) Response {
-	return getOrgUsersHelper(c.ParamsInt64(":orgId"))
+func GetOrgUsers(c *m.ReqContext) Response {
+	return getOrgUsersHelper(c.ParamsInt64(":orgId"), "", 0)
 }
 
-func getOrgUsersHelper(orgId int64) Response {
-	query := m.GetOrgUsersQuery{OrgId: orgId}
+func getOrgUsersHelper(orgId int64, query string, limit int) Response {
+	q := m.GetOrgUsersQuery{
+		OrgId: orgId,
+		Query: query,
+		Limit: limit,
+	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.Dispatch(&q); err != nil {
 		return ApiError(500, "Failed to get account user", err)
 	}
 
-	for _, user := range query.Result {
+	for _, user := range q.Result {
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
 	}
 
-	return Json(200, query.Result)
+	return Json(200, q.Result)
 }
 
 // PATCH /api/org/users/:userId
-func UpdateOrgUserForCurrentOrg(c *middleware.Context, cmd m.UpdateOrgUserCommand) Response {
+func UpdateOrgUserForCurrentOrg(c *m.ReqContext, cmd m.UpdateOrgUserCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.ParamsInt64(":userId")
 	return updateOrgUserHelper(cmd)
 }
 
 // PATCH /api/orgs/:orgId/users/:userId
-func UpdateOrgUser(c *middleware.Context, cmd m.UpdateOrgUserCommand) Response {
+func UpdateOrgUser(c *m.ReqContext, cmd m.UpdateOrgUserCommand) Response {
 	cmd.OrgId = c.ParamsInt64(":orgId")
 	cmd.UserId = c.ParamsInt64(":userId")
 	return updateOrgUserHelper(cmd)
@@ -98,13 +101,13 @@ func updateOrgUserHelper(cmd m.UpdateOrgUserCommand) Response {
 }
 
 // DELETE /api/org/users/:userId
-func RemoveOrgUserForCurrentOrg(c *middleware.Context) Response {
+func RemoveOrgUserForCurrentOrg(c *m.ReqContext) Response {
 	userId := c.ParamsInt64(":userId")
 	return removeOrgUserHelper(c.OrgId, userId)
 }
 
 // DELETE /api/orgs/:orgId/users/:userId
-func RemoveOrgUser(c *middleware.Context) Response {
+func RemoveOrgUser(c *m.ReqContext) Response {
 	userId := c.ParamsInt64(":userId")
 	orgId := c.ParamsInt64(":orgId")
 	return removeOrgUserHelper(orgId, userId)

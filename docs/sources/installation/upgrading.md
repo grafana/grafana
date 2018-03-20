@@ -101,3 +101,11 @@ as this will make upgrades easier without risking losing your config changes.
 ## Upgrading from 2.x
 
 We are not aware of any issues upgrading directly from 2.x to 4.x but to be on the safe side go via 3.x => 4.x.
+
+## Upgrading to v5.0
+
+The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new
+positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some
+external panel plugins might need to be updated to work properly.
+
+For more details on the new panel positioning system, [click here]({{< relref "reference/dashboard.md#panel-size-position" >}})

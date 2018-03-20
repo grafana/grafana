@@ -2,6 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 
 export class ShareSnapshotCtrl {
+  /** @ngInject **/
   constructor($scope, $rootScope, $location, backendSrv, $timeout, timeSrv) {
     $scope.snapshot = {
       name: $scope.dashboard.title,

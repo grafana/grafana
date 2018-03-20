@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -12,7 +13,7 @@ import (
 func TestMiddlewareQuota(t *testing.T) {
 
 	Convey("Given the grafana quota middleware", t, func() {
-		getSessionCount = func() int {
+		session.GetSessionCount = func() int {
 			return 4
 		}
 
@@ -74,8 +75,8 @@ func TestMiddlewareQuota(t *testing.T) {
 
 		middlewareScenario("with user logged in", func(sc *scenarioContext) {
 			// log us in, so we have a user_id and org_id in the context
-			sc.fakeReq("GET", "/").handler(func(c *Context) {
-				c.Session.Set(SESS_KEY_USERID, int64(12))
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
+				c.Session.Set(session.SESS_KEY_USERID, int64(12))
 			}).exec()
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
