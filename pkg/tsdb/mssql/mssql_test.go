@@ -41,40 +41,40 @@ func TestMSSQL(t *testing.T) {
 
 		Convey("Given a table with different native data types", func() {
 			sql := `
-				IF OBJECT_ID('dbo.[mssql_types]', 'U') IS NOT NULL
-					DROP TABLE dbo.[mssql_types]
+					IF OBJECT_ID('dbo.[mssql_types]', 'U') IS NOT NULL
+						DROP TABLE dbo.[mssql_types]
 
-				CREATE TABLE [mssql_types] (
-					c_bit bit,
+					CREATE TABLE [mssql_types] (
+						c_bit bit,
 
-					c_tinyint tinyint,
-					c_smallint smallint,
-					c_int int,
-					c_bigint bigint,
+						c_tinyint tinyint,
+						c_smallint smallint,
+						c_int int,
+						c_bigint bigint,
 
-					c_money money,
-					c_smallmoney smallmoney,
-					c_numeric numeric(10,5),
-					c_real real,
-					c_decimal decimal(10,2),
-					c_float float,
+						c_money money,
+						c_smallmoney smallmoney,
+						c_numeric numeric(10,5),
+						c_real real,
+						c_decimal decimal(10,2),
+						c_float float,
 
-					c_char char(10),
-					c_varchar varchar(10),
-					c_text text,
+						c_char char(10),
+						c_varchar varchar(10),
+						c_text text,
 
-					c_nchar nchar(12),
-					c_nvarchar nvarchar(12),
-					c_ntext ntext,
+						c_nchar nchar(12),
+						c_nvarchar nvarchar(12),
+						c_ntext ntext,
 
-					c_datetime datetime,
-					c_datetime2 datetime2,
-					c_smalldatetime smalldatetime,
-					c_date date,
-					c_time time,
-					c_datetimeoffset datetimeoffset
-				)
-			`
+						c_datetime datetime,
+						c_datetime2 datetime2,
+						c_smalldatetime smalldatetime,
+						c_date date,
+						c_time time,
+						c_datetimeoffset datetimeoffset
+					)
+				`
 
 			_, err := sess.Exec(sql)
 			So(err, ShouldBeNil)
@@ -87,14 +87,14 @@ func TestMSSQL(t *testing.T) {
 			d2 := dt2.Format(dt2Format)
 
 			sql = fmt.Sprintf(`
-			INSERT INTO [mssql_types]
-			SELECT
-        1, 5, 20020, 980300, 1420070400, '$20000.15', '£2.15', 12345.12,
-        1.11, 2.22, 3.33,
-				'char10', 'varchar10', 'text',
-				N'☺nchar12☺', N'☺nvarchar12☺', N'☺text☺',
-				CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00')
-    `, d, d2, d, d, d, d2)
+				INSERT INTO [mssql_types]
+				SELECT
+		    1, 5, 20020, 980300, 1420070400, '$20000.15', '£2.15', 12345.12,
+		    1.11, 2.22, 3.33,
+					'char10', 'varchar10', 'text',
+					N'☺nchar12☺', N'☺nvarchar12☺', N'☺text☺',
+					CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00')
+		`, d, d2, d, d, d, d2)
 
 			_, err = sess.Exec(sql)
 			So(err, ShouldBeNil)
@@ -151,14 +151,14 @@ func TestMSSQL(t *testing.T) {
 
 		Convey("Given a table with metrics that lacks data for some series ", func() {
 			sql := `
-				IF OBJECT_ID('dbo.[metric]', 'U') IS NOT NULL
-					DROP TABLE dbo.[metric]
+					IF OBJECT_ID('dbo.[metric]', 'U') IS NOT NULL
+						DROP TABLE dbo.[metric]
 
-				CREATE TABLE [metric] (
-					time datetime,
-					value int
-				)
-			`
+					CREATE TABLE [metric] (
+						time datetime,
+						value int
+					)
+				`
 
 			_, err := sess.Exec(sql)
 			So(err, ShouldBeNil)
@@ -189,9 +189,9 @@ func TestMSSQL(t *testing.T) {
 			dtFormat := "2006-01-02 15:04:05.999999999"
 			for _, s := range series {
 				sql = fmt.Sprintf(`
-					INSERT INTO metric (time, value)
-					VALUES(CAST('%s' AS DATETIME), %d)
-				`, s.Time.Format(dtFormat), s.Value)
+						INSERT INTO metric (time, value)
+						VALUES(CAST('%s' AS DATETIME), %d)
+					`, s.Time.Format(dtFormat), s.Value)
 
 				_, err = sess.Exec(sql)
 				So(err, ShouldBeNil)
@@ -306,16 +306,16 @@ func TestMSSQL(t *testing.T) {
 
 		Convey("Given a table with metrics having multiple values and measurements", func() {
 			sql := `
-				IF OBJECT_ID('dbo.[metric_values]', 'U') IS NOT NULL
-					DROP TABLE dbo.[metric_values]
+					IF OBJECT_ID('dbo.[metric_values]', 'U') IS NOT NULL
+						DROP TABLE dbo.[metric_values]
 
-				CREATE TABLE [metric_values] (
-					time datetime,
-					measurement nvarchar(100),
-					valueOne int,
-					valueTwo int,
-				)
-			`
+					CREATE TABLE [metric_values] (
+						time datetime,
+						measurement nvarchar(100),
+						valueOne int,
+						valueTwo int,
+					)
+				`
 
 			_, err := sess.Exec(sql)
 			So(err, ShouldBeNil)
@@ -351,9 +351,9 @@ func TestMSSQL(t *testing.T) {
 			dtFormat := "2006-01-02 15:04:05"
 			for _, s := range series {
 				sql = fmt.Sprintf(`
-					INSERT metric_values (time, measurement, valueOne, valueTwo)
-					VALUES(CAST('%s' AS DATETIME), '%s', %d, %d)
-				`, s.Time.Format(dtFormat), s.Measurement, s.ValueOne, s.ValueTwo)
+						INSERT metric_values (time, measurement, valueOne, valueTwo)
+						VALUES(CAST('%s' AS DATETIME), '%s', %d, %d)
+					`, s.Time.Format(dtFormat), s.Measurement, s.ValueOne, s.ValueTwo)
 
 				_, err = sess.Exec(sql)
 				So(err, ShouldBeNil)
@@ -407,45 +407,45 @@ func TestMSSQL(t *testing.T) {
 
 			Convey("Given a stored procedure that takes @from and @to in epoch time", func() {
 				sql := `
-					IF object_id('sp_test_epoch') IS NOT NULL
-						DROP PROCEDURE sp_test_epoch
-				`
+						IF object_id('sp_test_epoch') IS NOT NULL
+							DROP PROCEDURE sp_test_epoch
+					`
 
 				_, err := sess.Exec(sql)
 				So(err, ShouldBeNil)
 
 				sql = `
-					CREATE PROCEDURE sp_test_epoch(
-						@from int,
-						@to 	int
-					)	AS
-					BEGIN
-						SELECT
-							cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
-							measurement + ' - value one' as metric,
-							avg(valueOne) as value
-						FROM
-							metric_values
-						WHERE
-							time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
-						GROUP BY
-							cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
-							measurement
-						UNION ALL
-						SELECT
-							cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
-							measurement + ' - value two' as metric,
-							avg(valueTwo) as value
-						FROM
-							metric_values
-						WHERE
-							time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
-						GROUP BY
-							cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
-							measurement
-						ORDER BY 1
-					END
-				`
+						CREATE PROCEDURE sp_test_epoch(
+							@from int,
+							@to 	int
+						)	AS
+						BEGIN
+							SELECT
+								cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
+								measurement + ' - value one' as metric,
+								avg(valueOne) as value
+							FROM
+								metric_values
+							WHERE
+								time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
+							GROUP BY
+								cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
+								measurement
+							UNION ALL
+							SELECT
+								cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
+								measurement + ' - value two' as metric,
+								avg(valueTwo) as value
+							FROM
+								metric_values
+							WHERE
+								time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
+							GROUP BY
+								cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
+								measurement
+							ORDER BY 1
+						END
+					`
 
 				_, err = sess.Exec(sql)
 				So(err, ShouldBeNil)
@@ -456,10 +456,10 @@ func TestMSSQL(t *testing.T) {
 							{
 								Model: simplejson.NewFromAny(map[string]interface{}{
 									"rawSql": `DECLARE
-										@from int = $__unixEpochFrom(),
-										@to int = $__unixEpochTo()
+											@from int = $__unixEpochFrom(),
+											@to int = $__unixEpochTo()
 
-										EXEC dbo.sp_test_epoch @from, @to`,
+											EXEC dbo.sp_test_epoch @from, @to`,
 									"format": "time_series",
 								}),
 								RefId: "A",
@@ -486,45 +486,45 @@ func TestMSSQL(t *testing.T) {
 
 			Convey("Given a stored procedure that takes @from and @to in datetime", func() {
 				sql := `
-					IF object_id('sp_test_datetime') IS NOT NULL
-						DROP PROCEDURE sp_test_datetime
-				`
+						IF object_id('sp_test_datetime') IS NOT NULL
+							DROP PROCEDURE sp_test_datetime
+					`
 
 				_, err := sess.Exec(sql)
 				So(err, ShouldBeNil)
 
 				sql = `
-					CREATE PROCEDURE sp_test_datetime(
-						@from datetime,
-						@to 	datetime
-					)	AS
-					BEGIN
-						SELECT
-							cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
-							measurement + ' - value one' as metric,
-							avg(valueOne) as value
-						FROM
-							metric_values
-						WHERE
-							time >= @from AND time <= @to
-						GROUP BY
-							cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
-							measurement
-						UNION ALL
-						SELECT
-							cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
-							measurement + ' - value two' as metric,
-							avg(valueTwo) as value
-						FROM
-							metric_values
-						WHERE
-							time >= @from AND time <= @to
-						GROUP BY
-							cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
-							measurement
-						ORDER BY 1
-					END
-				`
+						CREATE PROCEDURE sp_test_datetime(
+							@from datetime,
+							@to 	datetime
+						)	AS
+						BEGIN
+							SELECT
+								cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
+								measurement + ' - value one' as metric,
+								avg(valueOne) as value
+							FROM
+								metric_values
+							WHERE
+								time >= @from AND time <= @to
+							GROUP BY
+								cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
+								measurement
+							UNION ALL
+							SELECT
+								cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
+								measurement + ' - value two' as metric,
+								avg(valueTwo) as value
+							FROM
+								metric_values
+							WHERE
+								time >= @from AND time <= @to
+							GROUP BY
+								cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
+								measurement
+							ORDER BY 1
+						END
+					`
 
 				_, err = sess.Exec(sql)
 				So(err, ShouldBeNil)
@@ -535,10 +535,10 @@ func TestMSSQL(t *testing.T) {
 							{
 								Model: simplejson.NewFromAny(map[string]interface{}{
 									"rawSql": `DECLARE
-										@from int = $__unixEpochFrom(),
-										@to int = $__unixEpochTo()
+											@from int = $__unixEpochFrom(),
+											@to int = $__unixEpochTo()
 
-										EXEC dbo.sp_test_epoch @from, @to`,
+											EXEC dbo.sp_test_epoch @from, @to`,
 									"format": "time_series",
 								}),
 								RefId: "A",
@@ -653,6 +653,33 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["Tickets"]
 				So(err, ShouldBeNil)
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
+			})
+
+			Convey("When doing an annotation query with a time column in datetime format", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": "SELECT DATEADD(s, time_sec, {d '1970-01-01'}) AS time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC",
+								"format": "table",
+							}),
+							RefId: "Tickets",
+						},
+					},
+					TimeRange: &tsdb.TimeRange{
+						From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+						To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				queryResult := resp.Results["Tickets"]
+				So(err, ShouldBeNil)
+				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
+				columns := queryResult.Tables[0].Rows[0]
+
+				//Should be in milliseconds
+				So(columns[0].(float64), ShouldBeGreaterThan, 1000000000000)
 			})
 		})
 	})
