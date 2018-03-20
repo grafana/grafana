@@ -5,10 +5,10 @@ import rst2html from 'rst2html';
 import Drop from 'tether-drop';
 
 export function graphiteAddFunc($compile) {
-  var inputTemplate =
+  const inputTemplate =
     '<input type="text"' + ' class="gf-form-input"' + ' spellcheck="false" style="display:none"></input>';
 
-  var buttonTemplate =
+  const buttonTemplate =
     '<a class="gf-form-label query-part dropdown-toggle"' +
     ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown">' +
     '<i class="fa fa-plus"></i></a>';
