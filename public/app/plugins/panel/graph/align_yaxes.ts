@@ -6,6 +6,10 @@ import _ from 'lodash';
  * @param align Y level
  */
 export function alignYLevel(yaxis, alignLevel) {
+  if (isNaN(alignLevel) || !checkCorrectAxis(yaxis)) {
+    return;
+  }
+
   var [yLeft, yRight] = yaxis;
   moveLevelToZero(yLeft, yRight, alignLevel);
 
@@ -90,6 +94,14 @@ function restoreLevelFromZero(yLeft, yRight, alignLevel) {
     yRight.min += alignLevel;
     yRight.max += alignLevel;
   }
+}
+
+function checkCorrectAxis(axis) {
+  return axis.length === 2 && checkCorrectAxes(axis[0]) && checkCorrectAxes(axis[1]);
+}
+
+function checkCorrectAxes(axes) {
+  return 'min' in axes && 'max' in axes;
 }
 
 function checkOneSide(yLeft, yRight) {
