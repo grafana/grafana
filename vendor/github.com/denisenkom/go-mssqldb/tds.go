@@ -166,7 +166,7 @@ func writePrelogin(w *tdsBuffer, fields map[uint8][]byte) error {
 	w.BeginPacket(packPrelogin, false)
 	offset := uint16(5*len(fields) + 1)
 	keys := make(KeySlice, 0, len(fields))
-	for k := range fields {
+	for k, _ := range fields {
 		keys = append(keys, k)
 	}
 	sort.Sort(keys)
@@ -1147,7 +1147,7 @@ func dialConnection(ctx context.Context, p connectParams) (conn net.Conn, err er
 		}
 		// Wait for either the *first* successful connection, or all the errors
 	wait_loop:
-		for i := range ips {
+		for i, _ := range ips {
 			select {
 			case conn = <-connChan:
 				// Got a connection to use, close any others
