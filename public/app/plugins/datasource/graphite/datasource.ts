@@ -50,6 +50,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       data: params.join('&'),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Dashboard-Id': options.dashboardId, // enables distributed tracing in ds_proxy
+        'X-Panel-Id': options.panelId, // enables distributed tracing in ds_proxy
       },
     };
 
