@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -69,6 +70,8 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 
 func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		const MAX_VERSIONS_TO_DELETE = 100
+
 		versionsToKeep := setting.DashboardVersionsToKeep
 		if versionsToKeep < 1 {
 			versionsToKeep = 1
@@ -83,12 +86,25 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 				SELECT dashboard_id, count(version) as count, min(version) as min
 				FROM dashboard_version
 				GROUP BY dashboard_id
-			) AS vtd
-			WHERE dashboard_version.dashboard_id=vtd.dashboard_id
+				) AS vtd
+				WHERE dashboard_version.dashboard_id=vtd.dashboard_id
 				AND version < vtd.min + vtd.count - %v`
 
 		versionIdsToDeleteSubquery := fmt.Sprintf(versionIdsToDeleteSybqueryTemplate, versionsToKeep)
-		deleteExpiredSql := fmt.Sprintf(`DELETE FROM dashboard_version WHERE id IN (%s)`, versionIdsToDeleteSubquery)
+		versions := []string{}
+		err := sess.SQL(versionIdsToDeleteSubquery).Find(&versions)
+		if err != nil {
+			return err
+		}
+
+		// Don't delete more than MAX_VERSIONS_TO_DELETE version per time
+		limit := MAX_VERSIONS_TO_DELETE
+		if len(versions) < MAX_VERSIONS_TO_DELETE {
+			limit = len(versions)
+		}
+		versions = versions[:limit]
+
+		deleteExpiredSql := fmt.Sprintf(`DELETE FROM dashboard_version WHERE id IN (%s)`, strings.Join(versions, `,`))
 		expiredResponse, err := sess.Exec(deleteExpiredSql)
 		if err != nil {
 			return err
@@ -97,35 +113,4 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 
 		return nil
 	})
-}
-
-// Short version of DashboardVersion for getting expired versions
-type DashboardVersionExp struct {
-	Id          int64 `json:"id"`
-	DashboardId int64 `json:"dashboardId"`
-	Version     int   `json:"version"`
-}
-
-func getVersionIDsToDelete(versions []DashboardVersionExp, versionsToKeep int) []interface{} {
-	versionIds := make([]interface{}, 0)
-
-	if len(versions) == 0 {
-		return versionIds
-	}
-
-	currentDashboard := versions[0].DashboardId
-	count := 0
-	for _, v := range versions {
-		if v.DashboardId == currentDashboard {
-			count++
-		} else {
-			count = 1
-			currentDashboard = v.DashboardId
-		}
-		if count > versionsToKeep {
-			versionIds = append(versionIds, v.Id)
-		}
-	}
-
-	return versionIds
 }
