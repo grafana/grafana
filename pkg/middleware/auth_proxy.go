@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -25,7 +25,7 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	}
 
 	// if auth proxy ip(s) defined, check if request comes from one of those
-	if err := checkAuthenticationProxy(ctx, proxyHeaderValue); err != nil {
+	if err := checkAuthenticationProxy(ctx.Req.RemoteAddr, proxyHeaderValue); err != nil {
 		ctx.Handle(407, "Proxy authentication required", err)
 		return true
 	}
@@ -123,29 +123,25 @@ var syncGrafanaUserWithLdapUser = func(ctx *m.ReqContext, query *m.GetSignedInUs
 	return nil
 }
 
-func checkAuthenticationProxy(ctx *m.ReqContext, proxyHeaderValue string) error {
+func checkAuthenticationProxy(remoteAddr string, proxyHeaderValue string) error {
 	if len(strings.TrimSpace(setting.AuthProxyWhitelist)) == 0 {
 		return nil
 	}
+
 	proxies := strings.Split(setting.AuthProxyWhitelist, ",")
-	remoteAddrSplit := strings.Split(ctx.Req.RemoteAddr, ":")
-	sourceIP := remoteAddrSplit[0]
-
-	found := false
-	for _, proxyIP := range proxies {
-		if sourceIP == strings.TrimSpace(proxyIP) {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		msg := fmt.Sprintf("Request for user (%s) is not from the authentication proxy", proxyHeaderValue)
-		err := errors.New(msg)
+	sourceIP, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	// Compare allowed IP addresses to actual address
+	for _, proxyIP := range proxies {
+		if sourceIP == strings.TrimSpace(proxyIP) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Request for user (%s) from %s is not from the authentication proxy", proxyHeaderValue, sourceIP)
 }
 
 func getSignedInUserQueryForProxyAuth(headerVal string) *m.GetSignedInUserQuery {
