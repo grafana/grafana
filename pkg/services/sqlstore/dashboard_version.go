@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -81,18 +80,17 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 		// min_version_to_keep = min_version + (versions_count - versions_to_keep)
 		// where version stats is processed for each dashboard. This guarantees that we keep at least versions_to_keep
 		// versions, but in some cases (when versions are sparse) this number may be more.
-		versionIdsToDeleteSubqueryTemplate := `SELECT id
+		versionIdsToDeleteSubquery := `SELECT id
 			FROM dashboard_version, (
 				SELECT dashboard_id, count(version) as count, min(version) as min
 				FROM dashboard_version
 				GROUP BY dashboard_id
 				) AS vtd
 				WHERE dashboard_version.dashboard_id=vtd.dashboard_id
-				AND version < vtd.min + vtd.count - %v`
+				AND version < vtd.min + vtd.count - ?`
 
-		versionIdsToDeleteSubquery := fmt.Sprintf(versionIdsToDeleteSubqueryTemplate, versionsToKeep)
 		var versionIdsToDelete []interface{}
-		err := sess.SQL(versionIdsToDeleteSubquery).Find(&versionIdsToDelete)
+		err := sess.SQL(versionIdsToDeleteSubquery, versionsToKeep).Find(&versionIdsToDelete)
 		if err != nil {
 			return err
 		}
