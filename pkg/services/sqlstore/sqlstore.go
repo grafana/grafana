@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -35,6 +36,7 @@ type DatabaseConfig struct {
 	ServerCertName                             string
 	MaxOpenConn                                int
 	MaxIdleConn                                int
+	ConnMaxLifetime                            int
 }
 
 var (
@@ -159,18 +161,20 @@ func getEngine() (*xorm.Engine, error) {
 	engine, err := xorm.NewEngine(DbCfg.Type, cnnstr)
 	if err != nil {
 		return nil, err
-	} else {
-		engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
-		engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
-		debugSql := setting.Cfg.Section("database").Key("log_queries").MustBool(false)
-		if !debugSql {
-			engine.SetLogger(&xorm.DiscardLogger{})
-		} else {
-			engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
-			engine.ShowSQL(true)
-			engine.ShowExecTime(true)
-		}
 	}
+
+	engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
+	engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
+	engine.SetConnMaxLifetime(time.Second * time.Duration(DbCfg.ConnMaxLifetime))
+	debugSql := setting.Cfg.Section("database").Key("log_queries").MustBool(false)
+	if !debugSql {
+		engine.SetLogger(&xorm.DiscardLogger{})
+	} else {
+		engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+		engine.ShowSQL(true)
+		engine.ShowExecTime(true)
+	}
+
 	return engine, nil
 }
 
@@ -204,6 +208,7 @@ func LoadConfig() {
 	}
 	DbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
 	DbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(0)
+	DbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
 
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true
@@ -227,8 +232,8 @@ var (
 
 func InitTestDB(t *testing.T) *xorm.Engine {
 	selectedDb := dbSqlite
-	//selectedDb := dbMySql
-	//selectedDb := dbPostgres
+	// selectedDb := dbMySql
+	// selectedDb := dbPostgres
 
 	var x *xorm.Engine
 	var err error
@@ -246,6 +251,9 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 	default:
 		x, err = xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
 	}
+
+	x.DatabaseTZ = time.UTC
+	x.TZLocation = time.UTC
 
 	// x.ShowSQL()
 

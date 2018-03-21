@@ -255,7 +255,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		}
 
 		alert.State = cmd.State
-		alert.StateChanges += 1
+		alert.StateChanges++
 		alert.NewStateDate = timeNow()
 		alert.EvalData = cmd.EvalData
 
