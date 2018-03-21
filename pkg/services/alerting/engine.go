@@ -193,6 +193,7 @@ func (e *Engine) processJob(attemptID int, attemptChan chan int, cancelChan chan
 			}
 		}
 
+		evalContext.Rule.State = evalContext.GetNewState()
 		e.resultHandler.Handle(evalContext)
 		span.Finish()
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
