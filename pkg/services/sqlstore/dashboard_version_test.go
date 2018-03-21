@@ -136,7 +136,7 @@ func TestDeleteExpiredVersions(t *testing.T) {
 			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
 			So(err, ShouldBeNil)
 
-			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
 			GetDashboardVersions(&query)
 
 			So(len(query.Result), ShouldEqual, versionsToWrite)
