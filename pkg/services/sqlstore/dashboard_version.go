@@ -81,7 +81,7 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 		// min_version_to_keep = min_version + (versions_count - versions_to_keep)
 		// where version stats is processed for each dashboard. This guarantees that we keep at least versions_to_keep
 		// versions, but in some cases (when versions are sparse) this number may be more.
-		versionIdsToDeleteSybqueryTemplate := `SELECT id
+		versionIdsToDeleteSubqueryTemplate := `SELECT id
 			FROM dashboard_version, (
 				SELECT dashboard_id, count(version) as count, min(version) as min
 				FROM dashboard_version
@@ -90,26 +90,28 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 				WHERE dashboard_version.dashboard_id=vtd.dashboard_id
 				AND version < vtd.min + vtd.count - %v`
 
-		versionIdsToDeleteSubquery := fmt.Sprintf(versionIdsToDeleteSybqueryTemplate, versionsToKeep)
-		versions := []string{}
-		err := sess.SQL(versionIdsToDeleteSubquery).Find(&versions)
+		versionIdsToDeleteSubquery := fmt.Sprintf(versionIdsToDeleteSubqueryTemplate, versionsToKeep)
+		var versionIdsToDelete []interface{}
+		err := sess.SQL(versionIdsToDeleteSubquery).Find(&versionIdsToDelete)
 		if err != nil {
 			return err
 		}
 
 		// Don't delete more than MAX_VERSIONS_TO_DELETE version per time
 		limit := MAX_VERSIONS_TO_DELETE
-		if len(versions) < MAX_VERSIONS_TO_DELETE {
-			limit = len(versions)
+		if len(versionIdsToDelete) < MAX_VERSIONS_TO_DELETE {
+			limit = len(versionIdsToDelete)
 		}
-		versions = versions[:limit]
+		versionIdsToDelete = versionIdsToDelete[:limit]
 
-		deleteExpiredSql := fmt.Sprintf(`DELETE FROM dashboard_version WHERE id IN (%s)`, strings.Join(versions, `,`))
-		expiredResponse, err := sess.Exec(deleteExpiredSql)
-		if err != nil {
-			return err
+		if len(versionIdsToDelete) > 0 {
+			deleteExpiredSql := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
+			expiredResponse, err := sess.Exec(deleteExpiredSql, versionIdsToDelete...)
+			if err != nil {
+				return err
+			}
+			cmd.DeletedRows, _ = expiredResponse.RowsAffected()
 		}
-		cmd.DeletedRows, _ = expiredResponse.RowsAffected()
 
 		return nil
 	})
