@@ -33,7 +33,8 @@
                ng-model-onblur>
         <label class="gf-form-label width-6">Font size</label>
         <div class="gf-form-select-wrapper">
-          <select class="gf-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="ctrl.canChangeFontSize()"></select>
+          <select class="gf-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes"
+                  ng-change="ctrl.render()" ng-disabled="ctrl.canChangeFontSize()"></select>
         </div>
       </div>
     </div>
@@ -44,16 +45,21 @@
              ng-model-onblur>
       <label class="gf-form-label width-6">Font size</label>
       <div class="gf-form-select-wrapper">
-        <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="ctrl.canChangeFontSize()"></select>
+        <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize"
+                ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"
+                ng-disabled="ctrl.canChangeFontSize()"></select>
       </div>
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-6">Unit</label>
-      <div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
+      <div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format"
+           dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-6">Decimals</label>
-      <input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
+      <input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right"
+             bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals"
+             ng-change="ctrl.refresh()" ng-model-onblur>
     </div>
   </div>
 
@@ -99,16 +105,32 @@
       <div class="gf-form">
         <label class="gf-form-label width-9">Min</label>
         <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
-               ng-disabled="ctrl.panel.sparkline.full" ng-model="ctrl.panel.sparkline.minValue" ng-change="ctrl.refresh()">
-        <label class="gf-form-label alert-state-critical" ng-show="ctrl.invalidSparklineRange">
+               ng-disabled="ctrl.panel.sparkline.full" ng-model="ctrl.panel.sparkline.minValue"
+               ng-change="ctrl.refresh()">
+        <label class="gf-form-label alert-state-critical"
+               ng-show="ctrl.isIncorrectSparklineRange && ctrl.panel.sparkline.maxValue">
           &nbsp; <i class="fa fa-warning"></i>
           Min value is bigger than max.
+        </label>
+        <label class="gf-form-label alert-state-critical" ng-show="ctrl.isIncorrectSparklineMinValue">
+          &nbsp; <i class="fa fa-warning"></i>
+          Min value is bigger than total value.
         </label>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-9">Max</label>
         <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
-               ng-model="ctrl.panel.sparkline.maxValue" ng-disabled="ctrl.panel.sparkline.full" ng-change="ctrl.refresh()">
+               ng-model="ctrl.panel.sparkline.maxValue" ng-disabled="ctrl.panel.sparkline.full"
+               ng-change="ctrl.refresh()">
+        <label class="gf-form-label alert-state-critical"
+               ng-show="ctrl.panel.sparkline.minValue && !ctrl.panel.sparkline.maxValue">
+          &nbsp; <i class="fa fa-warning"></i>
+          Please, add max value.
+        </label>
+        <label class="gf-form-label alert-state-critical" ng-show="ctrl.isIncorrectSparklineMaxValue">
+          &nbsp; <i class="fa fa-warning"></i>
+          Max value is less than total value
+        </label>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-9">Line Color</label>

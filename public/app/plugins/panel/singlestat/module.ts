@@ -18,7 +18,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   fontSizes: any[];
   unitFormats: any[];
   invalidGaugeRange: boolean;
-  invalidSparklineRange: boolean;
+  isIncorrectSparklineRange: boolean;
+  isIncorrectSparklineMaxValue: boolean;
+  isIncorrectSparklineMinValue: boolean;
   isFullHeight: boolean;
   panel: any;
   events: any;
@@ -556,11 +558,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         return;
       }
 
-      ctrl.invalidSparklineRange = false;
-      if (panel.sparkline.minValue > panel.sparkline.maxValue && !ctrl.panel.sparkline.full) {
-        ctrl.invalidSparklineRange = true;
-        return;
-      }
+      ctrl.isIncorrectSparklineRange =
+        panel.sparkline.minValue > panel.sparkline.maxValue && !ctrl.panel.sparkline.full;
+      ctrl.isIncorrectSparklineMinValue = ctrl.panel.sparkline.minValue > ctrl.data.value && !ctrl.panel.sparkline.full;
+      ctrl.isIncorrectSparklineMaxValue =
+        ctrl.panel.sparkline.maxValue && ctrl.panel.sparkline.maxValue < ctrl.data.value && !ctrl.panel.sparkline.full;
 
       let height = ctrl.height;
       let plotCanvas = $('<div></div>');
