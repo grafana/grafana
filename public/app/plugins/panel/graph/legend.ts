@@ -227,6 +227,8 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function renderLegendElement(tableHeaderElem) {
+        let legendWidth = elem.width();
+
         var seriesElements = renderSeriesLegendElements();
 
         if (panel.legend.alignAsTable) {
@@ -238,7 +240,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           elem.append(seriesElements);
         }
 
-        if (!panel.legend.rightSide) {
+        if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== 10)) {
           addScrollbar();
         } else {
           destroyScrollbar();

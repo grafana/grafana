@@ -6,11 +6,11 @@
   &--legend-right {
     @include media-breakpoint-up(sm) {
       flex-direction: row;
-    }
 
-    .graph-legend {
-      flex: 0 1 10px;
-      max-height: 100%;
+      .graph-legend {
+        flex: 0 1 10px;
+        max-height: 100%;
+      }
     }
 
     .graph-legend-series {
