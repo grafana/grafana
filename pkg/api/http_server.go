@@ -74,11 +74,14 @@ func (hs *HTTPServer) Start(ctx context.Context) error {
 			return nil
 		}
 	case setting.SOCKET:
-		ln, err := net.Listen("unix", setting.SocketPath)
+		ln, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
 		if err != nil {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
 		}
+
+		// Make socket writable by group
+		os.Chmod(setting.SocketPath, 0660)
 
 		err = hs.httpSrv.Serve(ln)
 		if err != nil {
