@@ -78,48 +78,48 @@ func GetPluginList(c *m.ReqContext) Response {
 	return Json(200, result)
 }
 
-func GetPluginSettingById(c *m.ReqContext) Response {
-	pluginId := c.Params(":pluginId")
+func GetPluginSettingByID(c *m.ReqContext) Response {
+	pluginID := c.Params(":pluginId")
 
-	if def, exists := plugins.Plugins[pluginId]; !exists {
+	def, exists := plugins.Plugins[pluginID]
+	if !exists {
 		return ApiError(404, "Plugin not found, no installed plugin with that id", nil)
-	} else {
-
-		dto := &dtos.PluginSetting{
-			Type:          def.Type,
-			Id:            def.Id,
-			Name:          def.Name,
-			Info:          &def.Info,
-			Dependencies:  &def.Dependencies,
-			Includes:      def.Includes,
-			BaseUrl:       def.BaseUrl,
-			Module:        def.Module,
-			DefaultNavUrl: def.DefaultNavUrl,
-			LatestVersion: def.GrafanaNetVersion,
-			HasUpdate:     def.GrafanaNetHasUpdate,
-			State:         def.State,
-		}
-
-		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
-			if err != m.ErrPluginSettingNotFound {
-				return ApiError(500, "Failed to get login settings", nil)
-			}
-		} else {
-			dto.Enabled = query.Result.Enabled
-			dto.Pinned = query.Result.Pinned
-			dto.JsonData = query.Result.JsonData
-		}
-
-		return Json(200, dto)
 	}
+
+	dto := &dtos.PluginSetting{
+		Type:          def.Type,
+		Id:            def.Id,
+		Name:          def.Name,
+		Info:          &def.Info,
+		Dependencies:  &def.Dependencies,
+		Includes:      def.Includes,
+		BaseUrl:       def.BaseUrl,
+		Module:        def.Module,
+		DefaultNavUrl: def.DefaultNavUrl,
+		LatestVersion: def.GrafanaNetVersion,
+		HasUpdate:     def.GrafanaNetHasUpdate,
+		State:         def.State,
+	}
+
+	query := m.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
+	if err := bus.Dispatch(&query); err != nil {
+		if err != m.ErrPluginSettingNotFound {
+			return ApiError(500, "Failed to get login settings", nil)
+		}
+	} else {
+		dto.Enabled = query.Result.Enabled
+		dto.Pinned = query.Result.Pinned
+		dto.JsonData = query.Result.JsonData
+	}
+
+	return Json(200, dto)
 }
 
 func UpdatePluginSetting(c *m.ReqContext, cmd m.UpdatePluginSettingCmd) Response {
-	pluginId := c.Params(":pluginId")
+	pluginID := c.Params(":pluginId")
 
 	cmd.OrgId = c.OrgId
-	cmd.PluginId = pluginId
+	cmd.PluginId = pluginID
 
 	if _, ok := plugins.Apps[cmd.PluginId]; !ok {
 		return ApiError(404, "Plugin not installed.", nil)
@@ -133,34 +133,36 @@ func UpdatePluginSetting(c *m.ReqContext, cmd m.UpdatePluginSettingCmd) Response
 }
 
 func GetPluginDashboards(c *m.ReqContext) Response {
-	pluginId := c.Params(":pluginId")
+	pluginID := c.Params(":pluginId")
 
-	if list, err := plugins.GetPluginDashboards(c.OrgId, pluginId); err != nil {
+	list, err := plugins.GetPluginDashboards(c.OrgId, pluginID)
+	if err != nil {
 		if notfound, ok := err.(plugins.PluginNotFoundError); ok {
 			return ApiError(404, notfound.Error(), nil)
 		}
 
 		return ApiError(500, "Failed to get plugin dashboards", err)
-	} else {
-		return Json(200, list)
 	}
+
+	return Json(200, list)
 }
 
 func GetPluginMarkdown(c *m.ReqContext) Response {
-	pluginId := c.Params(":pluginId")
+	pluginID := c.Params(":pluginId")
 	name := c.Params(":name")
 
-	if content, err := plugins.GetPluginMarkdown(pluginId, name); err != nil {
+	content, err := plugins.GetPluginMarkdown(pluginID, name)
+	if err != nil {
 		if notfound, ok := err.(plugins.PluginNotFoundError); ok {
 			return ApiError(404, notfound.Error(), nil)
 		}
 
 		return ApiError(500, "Could not get markdown file", err)
-	} else {
-		resp := Respond(200, content)
-		resp.Header("Content-Type", "text/plain; charset=utf-8")
-		return resp
 	}
+
+	resp := Respond(200, content)
+	resp.Header("Content-Type", "text/plain; charset=utf-8")
+	return resp
 }
 
 func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Response {

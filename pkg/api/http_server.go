@@ -39,7 +39,7 @@ type HttpServer struct {
 	httpSrv *http.Server
 }
 
-func NewHttpServer() *HttpServer {
+func NewHTTPServer() *HttpServer {
 	return &HttpServer{
 		log:   log.New("http.server"),
 		cache: gocache.New(5*time.Minute, 10*time.Minute),

@@ -120,7 +120,7 @@ func (g *GrafanaServerImpl) initLogging() {
 }
 
 func (g *GrafanaServerImpl) startHttpServer() error {
-	g.httpServer = api.NewHttpServer()
+	g.httpServer = api.NewHTTPServer()
 
 	err := g.httpServer.Start(g.context)
 

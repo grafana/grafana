@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	VIEW_INDEX = "index"
+	ViewIndex = "index"
 )
 
 func LoginView(c *m.ReqContext) {
@@ -40,7 +40,7 @@ func LoginView(c *m.ReqContext) {
 	}
 
 	if !tryLoginUsingRememberCookie(c) {
-		c.HTML(200, VIEW_INDEX, viewData)
+		c.HTML(200, ViewIndex, viewData)
 		return
 	}
 
@@ -87,7 +87,7 @@ func tryLoginUsingRememberCookie(c *m.ReqContext) bool {
 	return true
 }
 
-func LoginApiPing(c *m.ReqContext) {
+func LoginAPIPing(c *m.ReqContext) {
 	if !tryLoginUsingRememberCookie(c) {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
