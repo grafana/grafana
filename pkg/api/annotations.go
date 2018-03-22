@@ -18,13 +18,13 @@ func GetAnnotations(c *m.ReqContext) Response {
 		From:        c.QueryInt64("from") / 1000,
 		To:          c.QueryInt64("to") / 1000,
 		OrgId:       c.OrgId,
+		UserId:      c.QueryInt64("userId"),
 		AlertId:     c.QueryInt64("alertId"),
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
 		Limit:       c.QueryInt64("limit"),
 		Tags:        c.QueryStrings("tags"),
 		Type:        c.Query("type"),
-		Sort:        c.Query("sort"),
 	}
 
 	repo := annotations.GetRepository()

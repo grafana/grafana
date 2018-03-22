@@ -36,6 +36,8 @@ Query Parameters:
 - `alertId`: number. Optional. Find annotations for a specified alert.
 - `dashboardId`: number. Optional. Find annotations that are scoped to a specific dashboard
 - `panelId`: number. Optional. Find annotations that are scoped to a specific panel
+- `userId`: number. Optional. Find annotations created by a specific user
+- `type`: string. Optional. `alert`|`annotation` Return alerts or user created annotations
 - `tags`: string. Optional. Use this to filter global annotations. Global annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. To do an "AND" filtering with multiple tags, specify the tags parameter multiple times e.g. `tags=tag1&tags=tag2`.
 
 **Example Response**:

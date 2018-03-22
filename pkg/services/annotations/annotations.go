@@ -13,6 +13,7 @@ type ItemQuery struct {
 	OrgId        int64    `json:"orgId"`
 	From         int64    `json:"from"`
 	To           int64    `json:"to"`
+	UserId       int64    `json:"userId"`
 	AlertId      int64    `json:"alertId"`
 	DashboardId  int64    `json:"dashboardId"`
 	PanelId      int64    `json:"panelId"`
@@ -20,7 +21,6 @@ type ItemQuery struct {
 	RegionId     int64    `json:"regionId"`
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
-	Sort         string   `json:"sort"`
 
 	Limit int64 `json:"limit"`
 }
@@ -65,6 +65,7 @@ type Item struct {
 	NewState    string           `json:"newState"`
 	Epoch       int64            `json:"epoch"`
 	Created     int64            `json:"created"`
+	Updated     int64            `json:"updated"`
 	Tags        []string         `json:"tags"`
 	Data        *simplejson.Json `json:"data"`
 
@@ -83,6 +84,7 @@ type ItemDTO struct {
 	NewState    string           `json:"newState"`
 	PrevState   string           `json:"prevState"`
 	Created     int64            `json:"created"`
+	Updated     int64            `json:"updated"`
 	Time        int64            `json:"time"`
 	Text        string           `json:"text"`
 	RegionId    int64            `json:"regionId"`

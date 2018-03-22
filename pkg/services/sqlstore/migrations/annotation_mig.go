@@ -92,12 +92,18 @@ func addAnnotationMig(mg *Migrator) {
 		Mysql(updateTextFieldSql))
 
 	//
-	// Add a 'created' column
+	// Add a 'created' & 'updated' column
 	//
 	mg.AddMigration("Add created time to annotation table", NewAddColumnMigration(table, &Column{
 		Name: "created", Type: DB_BigInt, Nullable: true, Default: "0",
 	}))
+	mg.AddMigration("Add updated time to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "updated", Type: DB_BigInt, Nullable: true, Default: "0",
+	}))
 	mg.AddMigration("Add index for created in annotation table", NewAddIndexMigration(table, &Index{
 		Cols: []string{"org_id", "created"}, Type: IndexType,
+	}))
+	mg.AddMigration("Add index for updated in annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "updated"}, Type: IndexType,
 	}))
 }

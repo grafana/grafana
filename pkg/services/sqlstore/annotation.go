@@ -15,10 +15,14 @@ type SqlAnnotationRepo struct {
 }
 
 func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
+	if item.DashboardId == 0 {
+		return errors.New("Annotation is missing dashboard_id")
+	}
 	return inTransaction(func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
 		item.Created = time.Now().UnixNano() / int64(time.Millisecond)
+		item.Updated = item.Created
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
@@ -66,6 +70,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			err     error
 		)
 		existing := new(annotations.Item)
+		item.Updated = time.Now().UnixNano() / int64(time.Millisecond)
 
 		if item.Id == 0 && item.RegionId != 0 {
 			// Update region end time
@@ -130,6 +135,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 			annotation.tags,
 			annotation.data,
 			annotation.created,
+			annotation.updated,
 			usr.email,
 			usr.login,
 			alert.name as alert_name
@@ -167,6 +173,11 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		params = append(params, query.PanelId)
 	}
 
+	if query.UserId != 0 {
+		sql.WriteString(` AND annotation.user_id = ?`)
+		params = append(params, query.UserId)
+	}
+
 	if query.From > 0 && query.To > 0 {
 		sql.WriteString(` AND annotation.epoch BETWEEN ? AND ?`)
 		params = append(params, query.From, query.To)
@@ -174,6 +185,9 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 	if query.Type == "alert" {
 		sql.WriteString(` AND annotation.alert_id > 0`)
+	}
+	if query.Type == "annotation" {
+		sql.WriteString(` AND annotation.alert_id = 0`)
 	}
 
 	if len(query.Tags) > 0 {
@@ -208,17 +222,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		query.Limit = 10
 	}
 
-	var sort string = "epoch DESC"
-	switch query.Sort {
-	case "time.asc":
-		sort = "epoch ASC"
-	case "created":
-		sort = "annotation.created DESC"
-	case "created.asc":
-		sort = "annotation.created ASC"
-	}
-
-	sql.WriteString(fmt.Sprintf(" ORDER BY %s LIMIT %v", sort, query.Limit))
+	sql.WriteString(fmt.Sprintf(" ORDER BY epoch DESC LIMIT %v", query.Limit))
 
 	items := make([]*annotations.ItemDTO, 0)
 
