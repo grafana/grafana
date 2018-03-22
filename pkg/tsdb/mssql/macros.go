@@ -73,25 +73,20 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 		return fmt.Sprintf("%s AS time", args[0]), nil
-	case "__utcTime":
-		if len(args) == 0 {
-			return "", fmt.Errorf("missing time column argument for macro %v", name)
-		}
-		return fmt.Sprintf("DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s) AS time", args[0]), nil
 	case "__timeEpoch":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s) ) AS time", args[0]), nil
+		return fmt.Sprintf("DATEDIFF(second, '1970-01-01', %s) AS time", args[0]), nil
 	case "__timeFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= DATEADD(s, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND %s <= DATEADD(s, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("%s >= DATEADD(s, %d, '1970-01-01') AND %s <= DATEADD(s, %d, '1970-01-01')", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("DATEADD(second, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("DATEADD(second, %d, '1970-01-01')", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
 	case "__timeTo":
-		return fmt.Sprintf("DATEADD(second, %d+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("DATEADD(second, %d, '1970-01-01')", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
