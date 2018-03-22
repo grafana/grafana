@@ -315,6 +315,7 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 	}
 
 	query.Result = m.UserProfileDTO{
+		Id:             user.Id,
 		Name:           user.Name,
 		Email:          user.Email,
 		Login:          user.Login,
