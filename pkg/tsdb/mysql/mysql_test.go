@@ -21,7 +21,7 @@ import (
 // Thers's also a dashboard.json in same directory that you can import to Grafana
 // once you've created a datasource for the test server/database.
 func TestMySQL(t *testing.T) {
-	Convey("MySQL", t, func() {
+	SkipConvey("MySQL", t, func() {
 		x := InitMySQLTestDB(t)
 
 		endpoint := &MysqlQueryEndpoint{
