@@ -53,7 +53,7 @@
         "iconColor": "#6ed0e0",
         "limit": 100,
         "name": "Deploys",
-        "rawQuery": "SELECT\n   time_sec as time,\n   description as [text],\n   tags\n  FROM [event]\n  WHERE $__unixEpochFilter(time_sec) AND tags='deploy'\n  ORDER BY 1 ASC\n  ",
+        "rawQuery": "SELECT\n   $__time(time_sec),\n   description as [text],\n   tags\n  FROM [event]\n  WHERE $__unixEpochFilter(time_sec) AND tags='deploy'\n  ORDER BY 1 ASC\n  ",
         "showIn": 0,
         "tags": [],
         "type": "tags"
@@ -65,7 +65,7 @@
         "iconColor": "rgba(255, 96, 96, 1)",
         "limit": 100,
         "name": "Tickets",
-        "rawQuery": "SELECT\n   time_sec as time,\n   description as [text],\n   tags\n  FROM [event]\n  WHERE $__unixEpochFilter(time_sec) AND tags='ticket'\n  ORDER BY 1 ASC\n  ",
+        "rawQuery": "SELECT\n   $__time(time_sec),\n   description as [text],\n   tags\n  FROM [event]\n  WHERE $__unixEpochFilter(time_sec) AND tags='ticket'\n  ORDER BY 1 ASC\n  ",
         "showIn": 0,
         "tags": [],
         "type": "tags"
@@ -76,8 +76,20 @@
         "hide": false,
         "iconColor": "#7eb26d",
         "limit": 100,
-        "name": "Metric Values",
-        "rawQuery": "SELECT \n  time, \n  measurement as text, \n  '' as tags\nFROM\n  metric_values \nORDER BY 1",
+        "name": "Metric Values timeEpoch macro",
+        "rawQuery": "SELECT \n  $__timeEpoch(time), \n  measurement as text, \n  '' as tags\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time)\nORDER BY 1",
+        "showIn": 0,
+        "tags": [],
+        "type": "tags"
+      },
+      {
+        "datasource": "${DS_MSSQL_TEST}",
+        "enable": false,
+        "hide": false,
+        "iconColor": "#1f78c1",
+        "limit": 100,
+        "name": "Metric Values native time",
+        "rawQuery": "SELECT \n  time, \n  measurement as text, \n  '' as tags\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time)\nORDER BY 1",
         "showIn": 0,
         "tags": [],
         "type": "tags"
@@ -88,7 +100,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1521481503341,
+  "iteration": 1521715844826,
   "links": [],
   "panels": [
     {
@@ -139,6 +151,222 @@
       "type": "table"
     },
     {
+      "columns": [],
+      "datasource": "${DS_MSSQL_TEST}",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 4
+      },
+      "id": 32,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "SELECT cast(null as bigint) as time",
+          "refId": "A",
+          "target": ""
+        }
+      ],
+      "title": "cast(null as bigint) as time",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "columns": [],
+      "datasource": "${DS_MSSQL_TEST}",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 6,
+        "y": 4
+      },
+      "id": 33,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "SELECT cast(null as datetime) as time",
+          "refId": "A",
+          "target": ""
+        }
+      ],
+      "title": "cast(null as datetime) as time",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "columns": [],
+      "datasource": "${DS_MSSQL_TEST}",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 4
+      },
+      "id": 34,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "SELECT GETDATE() as time",
+          "refId": "A",
+          "target": ""
+        }
+      ],
+      "title": "GETDATE() as time",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "columns": [],
+      "datasource": "${DS_MSSQL_TEST}",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 4
+      },
+      "id": 35,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "SELECT GETUTCDATE() as time",
+          "refId": "A",
+          "target": ""
+        }
+      ],
+      "title": "GETUTCDATE() as time",
+      "transform": "table",
+      "type": "table"
+    },
+    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
@@ -149,7 +377,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 4
+        "y": 7
       },
       "id": 7,
       "legend": {
@@ -228,7 +456,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 4
+        "y": 7
       },
       "id": 9,
       "legend": {
@@ -307,7 +535,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 4
+        "y": 7
       },
       "id": 10,
       "legend": {
@@ -386,7 +614,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 13
+        "y": 16
       },
       "id": 16,
       "legend": {
@@ -465,7 +693,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 13
+        "y": 16
       },
       "id": 12,
       "legend": {
@@ -544,7 +772,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 13
+        "y": 16
       },
       "id": 13,
       "legend": {
@@ -623,7 +851,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 25
       },
       "id": 27,
       "legend": {
@@ -655,13 +883,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement + ' - value one' as metric, \n  avg(valueOne) as valueOne\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time)\nGROUP BY \n  $__timeGroup(time, '$summarize'), \n  measurement \nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement + ' - value one' as metric, \n  avg(valueOne) as valueOne\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  ($metric = 'ALL' OR measurement = $metric)\nGROUP BY \n  $__timeGroup(time, '$summarize'), \n  measurement \nORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement + ' - value two' as metric, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nGROUP BY \n  $__timeGroup(time, '$summarize'), \n  measurement \nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement + ' - value two' as metric, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values\nWHERE\n  $__timeFilter(time) AND\n  ($metric = 'ALL' OR measurement = $metric)\nGROUP BY \n  $__timeGroup(time, '$summarize'), \n  measurement \nORDER BY 1",
           "refId": "B"
         }
       ],
@@ -712,7 +940,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 25
       },
       "id": 5,
       "legend": {
@@ -734,7 +962,19 @@
       "pointradius": 3,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [],
+      "seriesOverrides": [
+        {
+          "alias": "MovingAverageValueOne",
+          "dashes": true,
+          "lines": false
+        },
+        {
+          "alias": "MovingAverageValueTwo",
+          "dashes": true,
+          "lines": false,
+          "yaxis": 1
+        }
+      ],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -742,8 +982,14 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nGROUP BY \n  $__timeGroup(time, '$summarize')\nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  ($metric = 'ALL' OR measurement = $metric)\nGROUP BY \n  $__timeGroup(time, '$summarize')\nORDER BY 1",
           "refId": "A"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT \n  time,\n  avg(valueOne) OVER (ORDER BY time ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) as MovingAverageValueOne,\n  avg(valueTwo) OVER (ORDER BY time ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) as MovingAverageValueTwo\nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  ($metric = 'ALL' OR measurement = $metric)\nORDER BY 1",
+          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -793,7 +1039,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 33
       },
       "id": 4,
       "legend": {
@@ -825,13 +1071,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -882,7 +1128,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 33
       },
       "id": 28,
       "legend": {
@@ -963,7 +1209,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 41
       },
       "id": 19,
       "legend": {
@@ -995,13 +1241,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1052,7 +1298,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 41
       },
       "id": 18,
       "legend": {
@@ -1082,7 +1328,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1133,7 +1379,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 46
+        "y": 49
       },
       "id": 17,
       "legend": {
@@ -1165,13 +1411,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1222,7 +1468,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 46
+        "y": 49
       },
       "id": 20,
       "legend": {
@@ -1252,7 +1498,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1303,7 +1549,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 54
+        "y": 57
       },
       "id": 29,
       "legend": {
@@ -1335,7 +1581,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "DECLARE \n  @from int = $__unixEpochFrom(),\n  @to int = $__unixEpochTo()\n  \nEXEC dbo.sp_test_epoch @from, @to",
+          "rawSql": "DECLARE\n  @from int = $__unixEpochFrom(), \n  @to int = $__unixEpochTo(), \n  @interval nvarchar(50) = '$summarize', \n  @metric nvarchar(200) = $metric\n  \nEXEC dbo.sp_test_epoch @from, @to, @interval, @metric",
           "refId": "A"
         }
       ],
@@ -1386,7 +1632,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 54
+        "y": 57
       },
       "id": 30,
       "legend": {
@@ -1418,7 +1664,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "DECLARE \n  @from datetime = $__timeFrom(),\n  @to datetime = $__timeTo()\n  \nEXEC dbo.sp_test_datetime @from, @to",
+          "rawSql": "DECLARE\n  @from datetime = $__timeFrom(), \n  @to datetime = $__timeTo(), \n  @interval nvarchar(50) = '$summarize', \n  @metric nvarchar(200) = $metric\n  \nEXEC dbo.sp_test_datetime @from, @to, @interval, @metric",
           "refId": "A"
         }
       ],
@@ -1469,7 +1715,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 62
+        "y": 65
       },
       "id": 14,
       "legend": {
@@ -1499,13 +1745,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1559,7 +1805,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 62
+        "y": 65
       },
       "id": 15,
       "legend": {
@@ -1589,7 +1835,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1642,7 +1888,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 70
+        "y": 73
       },
       "id": 25,
       "legend": {
@@ -1672,13 +1918,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1732,7 +1978,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 70
+        "y": 73
       },
       "id": 22,
       "legend": {
@@ -1762,7 +2008,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1815,7 +2061,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 78
+        "y": 81
       },
       "id": 21,
       "legend": {
@@ -1845,13 +2091,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1905,7 +2151,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 78
+        "y": 81
       },
       "id": 26,
       "legend": {
@@ -1935,7 +2181,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1988,7 +2234,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 86
+        "y": 89
       },
       "id": 23,
       "legend": {
@@ -2018,13 +2264,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -2078,7 +2324,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 86
+        "y": 89
       },
       "id": 24,
       "legend": {
@@ -2108,7 +2354,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -2157,6 +2403,26 @@
   "tags": [],
   "templating": {
     "list": [
+      {
+        "allValue": "'ALL'",
+        "current": {},
+        "datasource": "${DS_MSSQL_TEST}",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Metric",
+        "multi": false,
+        "name": "metric",
+        "options": [],
+        "query": "SELECT DISTINCT measurement FROM metric_values",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
       {
         "auto": false,
         "auto_count": 30,
@@ -2208,7 +2474,7 @@
   },
   "time": {
     "from": "2018-03-15T12:30:00.000Z",
-    "to": "2018-03-15T13:55:00.000Z"
+    "to": "2018-03-15T13:55:01.000Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -2238,5 +2504,5 @@
   "timezone": "",
   "title": "Microsoft SQL Server Data Source Test",
   "uid": "GlAqcPgmz",
-  "version": 37
+  "version": 57
 }

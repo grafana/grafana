@@ -19,6 +19,8 @@ import (
 // and set up a MSSQL db named grafanatest and a user/password grafana/Password!
 // Use the docker/blocks/mssql_tests/docker-compose.yaml to spin up a
 // preconfigured MSSQL server suitable for running these tests.
+// Thers's also a dashboard.json in same directory that you can import to Grafana
+// once you've created a datasource for the test server/database.
 // If needed, change the variable below to the IP address of the database.
 var serverIP string = "localhost"
 
@@ -37,7 +39,7 @@ func TestMSSQL(t *testing.T) {
 		sess := x.NewSession()
 		defer sess.Close()
 
-		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
+		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
 		Convey("Given a table with different native data types", func() {
 			sql := `
@@ -186,14 +188,8 @@ func TestMSSQL(t *testing.T) {
 				})
 			}
 
-			dtFormat := "2006-01-02 15:04:05.999999999"
 			for _, s := range series {
-				sql = fmt.Sprintf(`
-						INSERT INTO metric (time, value)
-						VALUES(CAST('%s' AS DATETIME), %d)
-					`, s.Time.Format(dtFormat), s.Value)
-
-				_, err = sess.Exec(sql)
+				_, err = sess.Insert(s)
 				So(err, ShouldBeNil)
 			}
 
@@ -315,42 +311,34 @@ func TestMSSQL(t *testing.T) {
 		})
 
 		Convey("Given a table with metrics having multiple values and measurements", func() {
-			sql := `
-					IF OBJECT_ID('dbo.[metric_values]', 'U') IS NOT NULL
-						DROP TABLE dbo.[metric_values]
-
-					CREATE TABLE [metric_values] (
-						time datetime,
-						measurement nvarchar(100),
-						valueOne int,
-						valueTwo int,
-					)
-				`
-
-			_, err := sess.Exec(sql)
-			So(err, ShouldBeNil)
-
-			type metricValues struct {
+			type metric_values struct {
 				Time        time.Time
 				Measurement string
-				ValueOne    int64
-				ValueTwo    int64
+				ValueOne    int64 `xorm:"integer 'valueOne'"`
+				ValueTwo    int64 `xorm:"integer 'valueTwo'"`
 			}
+
+			if exist, err := sess.IsTableExist(metric_values{}); err != nil || exist {
+				So(err, ShouldBeNil)
+				sess.DropTable(metric_values{})
+			}
+			err := sess.CreateTable(metric_values{})
+			So(err, ShouldBeNil)
 
 			rand.Seed(time.Now().Unix())
 			rnd := func(min, max int64) int64 {
 				return rand.Int63n(max-min) + min
 			}
 
-			series := []*metricValues{}
+			series := []*metric_values{}
 			for _, t := range genTimeRangeByInterval(fromStart.Add(-30*time.Minute), 90*time.Minute, 5*time.Minute) {
-				series = append(series, &metricValues{
+				series = append(series, &metric_values{
 					Time:        t,
 					Measurement: "Metric A",
 					ValueOne:    rnd(0, 100),
 					ValueTwo:    rnd(0, 100),
 				})
-				series = append(series, &metricValues{
+				series = append(series, &metric_values{
 					Time:        t,
 					Measurement: "Metric B",
 					ValueOne:    rnd(0, 100),
@@ -358,14 +346,8 @@ func TestMSSQL(t *testing.T) {
 				})
 			}
 
-			dtFormat := "2006-01-02 15:04:05"
 			for _, s := range series {
-				sql = fmt.Sprintf(`
-						INSERT metric_values (time, measurement, valueOne, valueTwo)
-						VALUES(CAST('%s' AS DATETIME), '%s', %d, %d)
-					`, s.Time.Format(dtFormat), s.Measurement, s.ValueOne, s.ValueTwo)
-
-				_, err = sess.Exec(sql)
+				_, err = sess.Insert(s)
 				So(err, ShouldBeNil)
 			}
 
@@ -383,8 +365,8 @@ func TestMSSQL(t *testing.T) {
 				}
 
 				resp, err := endpoint.Query(nil, nil, query)
-				queryResult := resp.Results["A"]
 				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
 				So(len(queryResult.Series), ShouldEqual, 2)
@@ -406,8 +388,8 @@ func TestMSSQL(t *testing.T) {
 				}
 
 				resp, err := endpoint.Query(nil, nil, query)
-				queryResult := resp.Results["A"]
 				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
 				So(len(queryResult.Series), ShouldEqual, 2)
@@ -426,32 +408,42 @@ func TestMSSQL(t *testing.T) {
 
 				sql = `
 						CREATE PROCEDURE sp_test_epoch(
-							@from int,
-							@to 	int
+							@from 		int,
+							@to 			int,
+							@interval nvarchar(50) = '5m',
+							@metric 	nvarchar(200) = 'ALL'
 						)	AS
 						BEGIN
+							DECLARE @dInterval int
+							SELECT @dInterval = 300
+
+							IF @interval = '10m'
+								SELECT @dInterval = 600
+
 							SELECT
-								cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
+								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
 								measurement + ' - value one' as metric,
 								avg(valueOne) as value
 							FROM
 								metric_values
 							WHERE
-								time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
+								time BETWEEN DATEADD(s, @from, '1970-01-01') AND DATEADD(s, @to, '1970-01-01') AND
+								(@metric = 'ALL' OR measurement = @metric)
 							GROUP BY
-								cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
+								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
 								measurement
 							UNION ALL
 							SELECT
-								cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int) as time,
+								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
 								measurement + ' - value two' as metric,
 								avg(valueTwo) as value
 							FROM
 								metric_values
 							WHERE
-								time >= DATEADD(s, @from, '1970-01-01') AND time <= DATEADD(s, @to, '1970-01-01')
+								time BETWEEN DATEADD(s, @from, '1970-01-01') AND DATEADD(s, @to, '1970-01-01') AND
+								(@metric = 'ALL' OR measurement = @metric)
 							GROUP BY
-								cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time))/600 as int)*600 as int),
+								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
 								measurement
 							ORDER BY 1
 						END
@@ -484,6 +476,7 @@ func TestMSSQL(t *testing.T) {
 					resp, err := endpoint.Query(nil, nil, query)
 					queryResult := resp.Results["A"]
 					So(err, ShouldBeNil)
+					fmt.Println("query", "sql", queryResult.Meta)
 					So(queryResult.Error, ShouldBeNil)
 
 					So(len(queryResult.Series), ShouldEqual, 4)
@@ -505,32 +498,42 @@ func TestMSSQL(t *testing.T) {
 
 				sql = `
 						CREATE PROCEDURE sp_test_datetime(
-							@from datetime,
-							@to 	datetime
+							@from 		datetime,
+							@to 			datetime,
+							@interval nvarchar(50) = '5m',
+							@metric 	nvarchar(200) = 'ALL'
 						)	AS
 						BEGIN
+							DECLARE @dInterval int
+							SELECT @dInterval = 300
+
+							IF @interval = '10m'
+								SELECT @dInterval = 600
+
 							SELECT
-								cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
+								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
 								measurement + ' - value one' as metric,
 								avg(valueOne) as value
 							FROM
 								metric_values
 							WHERE
-								time >= @from AND time <= @to
+								time BETWEEN @from AND @to AND
+								(@metric = 'ALL' OR measurement = @metric)
 							GROUP BY
-								cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
+								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
 								measurement
 							UNION ALL
 							SELECT
-								cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int) as time,
+								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
 								measurement + ' - value two' as metric,
 								avg(valueTwo) as value
 							FROM
 								metric_values
 							WHERE
-								time >= @from AND time <= @to
+								time BETWEEN @from AND @to AND
+								(@metric = 'ALL' OR measurement = @metric)
 							GROUP BY
-								cast(cast(DATEDIFF(second, {d '1970-01-01'}, time)/600 as int)*600 as int),
+								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
 								measurement
 							ORDER BY 1
 						END
@@ -580,7 +583,7 @@ func TestMSSQL(t *testing.T) {
 					DROP TABLE dbo.[event]
 
 				CREATE TABLE [event] (
-					time_sec bigint,
+					time_sec int,
 					description nvarchar(100),
 					tags nvarchar(100),
 				)
@@ -666,30 +669,180 @@ func TestMSSQL(t *testing.T) {
 			})
 
 			Convey("When doing an annotation query with a time column in datetime format", func() {
+				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+				dtFormat := "2006-01-02 15:04:05.999999999"
+
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT DATEADD(s, time_sec, {d '1970-01-01'}) AS time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC",
+								"rawSql": fmt.Sprintf(`SELECT
+									CAST('%s' AS DATETIME) as time,
+									'message' as text,
+									'tag1,tag2' as tags
+								`, dt.Format(dtFormat)),
 								"format": "table",
 							}),
-							RefId: "Tickets",
+							RefId: "A",
 						},
-					},
-					TimeRange: &tsdb.TimeRange{
-						From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
-						To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 					},
 				}
 
 				resp, err := endpoint.Query(nil, nil, query)
-				queryResult := resp.Results["Tickets"]
 				So(err, ShouldBeNil)
-				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
 				columns := queryResult.Tables[0].Rows[0]
 
 				//Should be in milliseconds
-				So(columns[0].(float64), ShouldBeGreaterThan, 1000000000000)
+				So(columns[0].(float64), ShouldEqual, float64(dt.Unix()*1000))
+			})
+
+			Convey("When doing an annotation query with a time column in epoch second format should return ms", func() {
+				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": fmt.Sprintf(`SELECT
+									 %d as time,
+									'message' as text,
+									'tag1,tag2' as tags
+								`, dt.Unix()),
+								"format": "table",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
+				columns := queryResult.Tables[0].Rows[0]
+
+				//Should be in milliseconds
+				So(columns[0].(int64), ShouldEqual, int64(dt.Unix()*1000))
+			})
+
+			Convey("When doing an annotation query with a time column in epoch second format (int) should return ms", func() {
+				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": fmt.Sprintf(`SELECT
+									 cast(%d as int) as time,
+									'message' as text,
+									'tag1,tag2' as tags
+								`, dt.Unix()),
+								"format": "table",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
+				columns := queryResult.Tables[0].Rows[0]
+
+				//Should be in milliseconds
+				So(columns[0].(int64), ShouldEqual, int64(dt.Unix()*1000))
+			})
+
+			Convey("When doing an annotation query with a time column in epoch millisecond format should return ms", func() {
+				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": fmt.Sprintf(`SELECT
+									 %d as time,
+									'message' as text,
+									'tag1,tag2' as tags
+								`, dt.Unix()*1000),
+								"format": "table",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
+				columns := queryResult.Tables[0].Rows[0]
+
+				//Should be in milliseconds
+				So(columns[0].(float64), ShouldEqual, float64(dt.Unix()*1000))
+			})
+
+			Convey("When doing an annotation query with a time column holding a bigint null value should return nil", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT
+									 cast(null as bigint) as time,
+									'message' as text,
+									'tag1,tag2' as tags
+								`,
+								"format": "table",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
+				columns := queryResult.Tables[0].Rows[0]
+
+				//Should be in milliseconds
+				So(columns[0], ShouldBeNil)
+			})
+
+			Convey("When doing an annotation query with a time column holding a datetime null value should return nil", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT
+									 cast(null as datetime) as time,
+									'message' as text,
+									'tag1,tag2' as tags
+								`,
+								"format": "table",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
+				columns := queryResult.Tables[0].Rows[0]
+
+				//Should be in milliseconds
+				So(columns[0], ShouldBeNil)
 			})
 		})
 	})
@@ -697,14 +850,14 @@ func TestMSSQL(t *testing.T) {
 
 func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
 	x, err := xorm.NewEngine(sqlutil.TestDB_Mssql.DriverName, strings.Replace(sqlutil.TestDB_Mssql.ConnStr, "localhost", serverIP, 1))
+	x.DatabaseTZ = time.UTC
+	x.TZLocation = time.UTC
 
 	// x.ShowSQL()
 
 	if err != nil {
 		t.Fatalf("Failed to init mssql db %v", err)
 	}
-
-	sqlutil.CleanDB(x)
 
 	return x
 }
