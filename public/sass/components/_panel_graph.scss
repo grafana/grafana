@@ -11,19 +11,19 @@
         flex: 0 1 10px;
         max-height: 100%;
       }
-    }
 
-    .graph-legend-series {
-      display: block;
-      padding-left: 0px;
-    }
+      .graph-legend-series {
+        display: block;
+        padding-left: 0px;
+      }
 
-    .graph-legend-table {
-      width: auto;
-    }
+      .graph-legend-table {
+        width: auto;
+      }
 
-    .graph-legend-table .graph-legend-series {
-      display: table-row;
+      .graph-legend-table .graph-legend-series {
+        display: table-row;
+      }
     }
   }
 }

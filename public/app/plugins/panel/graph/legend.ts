@@ -111,6 +111,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function render() {
+        let legendWidth = elem.width();
         if (!ctrl.panel.legend.show) {
           elem.empty();
           firstRender = true;
@@ -163,7 +164,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
 
         // render first time for getting proper legend height
-        if (!panel.legend.rightSide) {
+        if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== 10)) {
           renderLegendElement(tableHeaderElem);
           elem.empty();
         }
@@ -265,6 +266,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       function destroyScrollbar() {
         if (legendScrollbar) {
           legendScrollbar.destroy();
+          legendScrollbar = undefined;
         }
       }
     },
