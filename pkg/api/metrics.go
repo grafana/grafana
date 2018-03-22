@@ -20,12 +20,12 @@ func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 		return ApiError(400, "No queries found in query", nil)
 	}
 
-	dsId, err := reqDto.Queries[0].Get("datasourceId").Int64()
+	dsID, err := reqDto.Queries[0].Get("datasourceId").Int64()
 	if err != nil {
 		return ApiError(400, "Query missing datasourceId", nil)
 	}
 
-	dsQuery := m.GetDataSourceByIdQuery{Id: dsId, OrgId: c.OrgId}
+	dsQuery := m.GetDataSourceByIdQuery{Id: dsID, OrgId: c.OrgId}
 	if err := bus.Dispatch(&dsQuery); err != nil {
 		return ApiError(500, "failed to fetch data source", err)
 	}
@@ -82,7 +82,7 @@ func GenerateError(c *m.ReqContext) Response {
 }
 
 // GET /api/tsdb/testdata/gensql
-func GenerateSqlTestData(c *m.ReqContext) Response {
+func GenerateSQLTestData(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.InsertSqlTestDataCommand{}); err != nil {
 		return ApiError(500, "Failed to insert test data", err)
 	}

@@ -46,6 +46,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
 					err := SearchDashboards(query)
+
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
 					So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)

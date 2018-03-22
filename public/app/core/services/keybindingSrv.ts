@@ -178,6 +178,14 @@ export class KeybindingSrv {
       }
     });
 
+    // duplicate panel
+    this.bind('p d', () => {
+      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+        let panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
+        dashboard.duplicatePanel(dashboard.panels[panelIndex]);
+      }
+    });
+
     // share panel
     this.bind('p s', () => {
       if (dashboard.meta.focusPanelId) {

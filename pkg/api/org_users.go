@@ -53,9 +53,9 @@ func GetOrgUsers(c *m.ReqContext) Response {
 	return getOrgUsersHelper(c.ParamsInt64(":orgId"), "", 0)
 }
 
-func getOrgUsersHelper(orgId int64, query string, limit int) Response {
+func getOrgUsersHelper(orgID int64, query string, limit int) Response {
 	q := m.GetOrgUsersQuery{
-		OrgId: orgId,
+		OrgId: orgID,
 		Query: query,
 		Limit: limit,
 	}
@@ -102,19 +102,19 @@ func updateOrgUserHelper(cmd m.UpdateOrgUserCommand) Response {
 
 // DELETE /api/org/users/:userId
 func RemoveOrgUserForCurrentOrg(c *m.ReqContext) Response {
-	userId := c.ParamsInt64(":userId")
-	return removeOrgUserHelper(c.OrgId, userId)
+	userID := c.ParamsInt64(":userId")
+	return removeOrgUserHelper(c.OrgId, userID)
 }
 
 // DELETE /api/orgs/:orgId/users/:userId
 func RemoveOrgUser(c *m.ReqContext) Response {
-	userId := c.ParamsInt64(":userId")
-	orgId := c.ParamsInt64(":orgId")
-	return removeOrgUserHelper(orgId, userId)
+	userID := c.ParamsInt64(":userId")
+	orgID := c.ParamsInt64(":orgId")
+	return removeOrgUserHelper(orgID, userID)
 }
 
-func removeOrgUserHelper(orgId int64, userId int64) Response {
-	cmd := m.RemoveOrgUserCommand{OrgId: orgId, UserId: userId}
+func removeOrgUserHelper(orgID int64, userID int64) Response {
+	cmd := m.RemoveOrgUserCommand{OrgId: orgID, UserId: userID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrLastOrgAdmin {

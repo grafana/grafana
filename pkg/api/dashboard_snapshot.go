@@ -106,9 +106,9 @@ func DeleteDashboardSnapshot(c *m.ReqContext) Response {
 		return ApiError(404, "Failed to get dashboard snapshot", nil)
 	}
 	dashboard := query.Result.Dashboard
-	dashboardId := dashboard.Get("id").MustInt64()
+	dashboardID := dashboard.Get("id").MustInt64()
 
-	guardian := guardian.New(dashboardId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
 	canEdit, err := guardian.CanEdit()
 	if err != nil {
 		return ApiError(500, "Error while checking permissions for snapshot", err)

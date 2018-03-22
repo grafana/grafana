@@ -15,13 +15,12 @@ import (
 
 // LRUCacher implments cache object facilities
 type LRUCacher struct {
-	idList   *list.List
-	sqlList  *list.List
-	idIndex  map[string]map[string]*list.Element
-	sqlIndex map[string]map[string]*list.Element
-	store    core.CacheStore
-	mutex    sync.Mutex
-	// maxSize    int
+	idList         *list.List
+	sqlList        *list.List
+	idIndex        map[string]map[string]*list.Element
+	sqlIndex       map[string]map[string]*list.Element
+	store          core.CacheStore
+	mutex          sync.Mutex
 	MaxElementSize int
 	Expired        time.Duration
 	GcInterval     time.Duration
@@ -54,8 +53,6 @@ func (m *LRUCacher) RunGC() {
 
 // GC check ids lit and sql list to remove all element expired
 func (m *LRUCacher) GC() {
-	//fmt.Println("begin gc ...")
-	//defer fmt.Println("end gc ...")
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	var removedNum int
@@ -64,12 +61,10 @@ func (m *LRUCacher) GC() {
 			time.Now().Sub(e.Value.(*idNode).lastVisit) > m.Expired {
 			removedNum++
 			next := e.Next()
-			//fmt.Println("removing ...", e.Value)
 			node := e.Value.(*idNode)
 			m.delBean(node.tbName, node.id)
 			e = next
 		} else {
-			//fmt.Printf("removing %d cache nodes ..., left %d\n", removedNum, m.idList.Len())
 			break
 		}
 	}
@@ -80,12 +75,10 @@ func (m *LRUCacher) GC() {
 			time.Now().Sub(e.Value.(*sqlNode).lastVisit) > m.Expired {
 			removedNum++
 			next := e.Next()
-			//fmt.Println("removing ...", e.Value)
 			node := e.Value.(*sqlNode)
 			m.delIds(node.tbName, node.sql)
 			e = next
 		} else {
-			//fmt.Printf("removing %d cache nodes ..., left %d\n", removedNum, m.sqlList.Len())
 			break
 		}
 	}
@@ -116,7 +109,6 @@ func (m *LRUCacher) GetIds(tableName, sql string) interface{} {
 	}
 
 	m.delIds(tableName, sql)
-
 	return nil
 }
 
@@ -134,7 +126,6 @@ func (m *LRUCacher) GetBean(tableName string, id string) interface{} {
 			// if expired, remove the node and return nil
 			if time.Now().Sub(lastTime) > m.Expired {
 				m.delBean(tableName, id)
-				//m.clearIds(tableName)
 				return nil
 			}
 			m.idList.MoveToBack(el)
@@ -148,7 +139,6 @@ func (m *LRUCacher) GetBean(tableName string, id string) interface{} {
 
 	// store bean is not exist, then remove memory's index
 	m.delBean(tableName, id)
-	//m.clearIds(tableName)
 	return nil
 }
 
@@ -166,8 +156,8 @@ func (m *LRUCacher) clearIds(tableName string) {
 // ClearIds clears all sql-ids mapping on table tableName from cache
 func (m *LRUCacher) ClearIds(tableName string) {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	m.clearIds(tableName)
+	m.mutex.Unlock()
 }
 
 func (m *LRUCacher) clearBeans(tableName string) {
@@ -184,14 +174,13 @@ func (m *LRUCacher) clearBeans(tableName string) {
 // ClearBeans clears all beans in some table
 func (m *LRUCacher) ClearBeans(tableName string) {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	m.clearBeans(tableName)
+	m.mutex.Unlock()
 }
 
 // PutIds pus ids into table
 func (m *LRUCacher) PutIds(tableName, sql string, ids interface{}) {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	if _, ok := m.sqlIndex[tableName]; !ok {
 		m.sqlIndex[tableName] = make(map[string]*list.Element)
 	}
@@ -207,12 +196,12 @@ func (m *LRUCacher) PutIds(tableName, sql string, ids interface{}) {
 		node := e.Value.(*sqlNode)
 		m.delIds(node.tbName, node.sql)
 	}
+	m.mutex.Unlock()
 }
 
 // PutBean puts beans into table
 func (m *LRUCacher) PutBean(tableName string, id string, obj interface{}) {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	var el *list.Element
 	var ok bool
 
@@ -229,6 +218,7 @@ func (m *LRUCacher) PutBean(tableName string, id string, obj interface{}) {
 		node := e.Value.(*idNode)
 		m.delBean(node.tbName, node.id)
 	}
+	m.mutex.Unlock()
 }
 
 func (m *LRUCacher) delIds(tableName, sql string) {
@@ -244,8 +234,8 @@ func (m *LRUCacher) delIds(tableName, sql string) {
 // DelIds deletes ids
 func (m *LRUCacher) DelIds(tableName, sql string) {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	m.delIds(tableName, sql)
+	m.mutex.Unlock()
 }
 
 func (m *LRUCacher) delBean(tableName string, id string) {
@@ -261,8 +251,8 @@ func (m *LRUCacher) delBean(tableName string, id string) {
 // DelBean deletes beans in some table
 func (m *LRUCacher) DelBean(tableName string, id string) {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	m.delBean(tableName, id)
+	m.mutex.Unlock()
 }
 
 type idNode struct {

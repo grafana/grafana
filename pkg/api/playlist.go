@@ -127,9 +127,9 @@ func GetPlaylistItems(c *m.ReqContext) Response {
 }
 
 func GetPlaylistDashboards(c *m.ReqContext) Response {
-	playlistId := c.ParamsInt64(":id")
+	playlistID := c.ParamsInt64(":id")
 
-	playlists, err := LoadPlaylistDashboards(c.OrgId, c.SignedInUser, playlistId)
+	playlists, err := LoadPlaylistDashboards(c.OrgId, c.SignedInUser, playlistID)
 	if err != nil {
 		return ApiError(500, "Could not load dashboards", err)
 	}

@@ -1,6 +1,6 @@
 +++
 title = "Variables"
-keywords = ["grafana", "templating", "documentation", "guide"]
+keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
 type = "docs"
 [menu.docs]
 name = "Variables"
@@ -79,6 +79,73 @@ Option | Description
 *Query* | The data source specific query expression.
 *Regex* | Regex to filter or capture specific parts of the names return by your data source query. Optional.
 *Sort* | Define sort order for options in dropdown. **Disabled** means that the order of options returned by your data source query will be used.
+
+#### Using regex to filter/modify values in the Variable dropdown
+
+Using the Regex Query Option, you filter the list of options returned by the Variable query or modify the options returned.
+
+Examples of filtering on the following list of options:
+
+```text
+backend_01
+backend_02
+backend_03
+backend_04
+```
+
+##### Filter so that only the options that end with `01` or `02` are returned:
+
+Regex:
+
+```regex
+/.*[01|02]/
+```
+
+Result:
+
+```text
+backend_01
+backend_02
+```
+
+##### Filter and modify the options using a regex capture group to return part of the text:
+
+Regex:
+
+```regex
+/.*(01|02)/
+```
+
+Result:
+
+```text
+01
+02
+```
+
+#### Filter and modify - Prometheus Example
+
+List of options:
+
+```text
+up{instance="demo.robustperception.io:9090",job="prometheus"} 1 1521630638000
+up{instance="demo.robustperception.io:9093",job="alertmanager"} 1 1521630638000
+up{instance="demo.robustperception.io:9100",job="node"} 1 1521630638000
+```
+
+Regex:
+
+```regex
+/.*instance="([^"]*).*/
+```
+
+Result:
+
+```text
+demo.robustperception.io:9090
+demo.robustperception.io:9093
+demo.robustperception.io:9100
+```
 
 ### Query expressions
 
