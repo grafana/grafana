@@ -31,7 +31,7 @@ func GetFolders(c *m.ReqContext) Response {
 	return Json(200, result)
 }
 
-func GetFolderByUid(c *m.ReqContext) Response {
+func GetFolderByUID(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUid(c.Params(":uid"))
 
@@ -43,7 +43,7 @@ func GetFolderByUid(c *m.ReqContext) Response {
 	return Json(200, toFolderDto(g, folder))
 }
 
-func GetFolderById(c *m.ReqContext) Response {
+func GetFolderByID(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderById(c.ParamsInt64(":id"))
 	if err != nil {

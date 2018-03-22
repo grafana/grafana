@@ -14,12 +14,12 @@ func GetSignedInUser(c *m.ReqContext) Response {
 }
 
 // GET /api/users/:id
-func GetUserById(c *m.ReqContext) Response {
+func GetUserByID(c *m.ReqContext) Response {
 	return getUserUserProfile(c.ParamsInt64(":id"))
 }
 
-func getUserUserProfile(userId int64) Response {
-	query := m.GetUserProfileQuery{UserId: userId}
+func getUserUserProfile(userID int64) Response {
+	query := m.GetUserProfileQuery{UserId: userID}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrUserNotFound {
@@ -75,14 +75,14 @@ func UpdateUser(c *m.ReqContext, cmd m.UpdateUserCommand) Response {
 
 //POST /api/users/:id/using/:orgId
 func UpdateUserActiveOrg(c *m.ReqContext) Response {
-	userId := c.ParamsInt64(":id")
-	orgId := c.ParamsInt64(":orgId")
+	userID := c.ParamsInt64(":id")
+	orgID := c.ParamsInt64(":orgId")
 
-	if !validateUsingOrg(userId, orgId) {
+	if !validateUsingOrg(userID, orgID) {
 		return ApiError(401, "Not a valid organization", nil)
 	}
 
-	cmd := m.SetUsingOrgCommand{UserId: userId, OrgId: orgId}
+	cmd := m.SetUsingOrgCommand{UserId: userID, OrgId: orgID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to change active organization", err)
@@ -116,8 +116,8 @@ func GetUserOrgList(c *m.ReqContext) Response {
 	return getUserOrgList(c.ParamsInt64(":id"))
 }
 
-func getUserOrgList(userId int64) Response {
-	query := m.GetUserOrgListQuery{UserId: userId}
+func getUserOrgList(userID int64) Response {
+	query := m.GetUserOrgListQuery{UserId: userID}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get user organizations", err)
@@ -126,8 +126,8 @@ func getUserOrgList(userId int64) Response {
 	return Json(200, query.Result)
 }
 
-func validateUsingOrg(userId int64, orgId int64) bool {
-	query := m.GetUserOrgListQuery{UserId: userId}
+func validateUsingOrg(userID int64, orgID int64) bool {
+	query := m.GetUserOrgListQuery{UserId: userID}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return false
@@ -136,7 +136,7 @@ func validateUsingOrg(userId int64, orgId int64) bool {
 	// validate that the org id in the list
 	valid := false
 	for _, other := range query.Result {
-		if other.OrgId == orgId {
+		if other.OrgId == orgID {
 			valid = true
 		}
 	}
@@ -146,13 +146,13 @@ func validateUsingOrg(userId int64, orgId int64) bool {
 
 // POST /api/user/using/:id
 func UserSetUsingOrg(c *m.ReqContext) Response {
-	orgId := c.ParamsInt64(":id")
+	orgID := c.ParamsInt64(":id")
 
-	if !validateUsingOrg(c.UserId, orgId) {
+	if !validateUsingOrg(c.UserId, orgID) {
 		return ApiError(401, "Not a valid organization", nil)
 	}
 
-	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgId}
+	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to change active organization", err)
@@ -163,13 +163,13 @@ func UserSetUsingOrg(c *m.ReqContext) Response {
 
 // GET /profile/switch-org/:id
 func ChangeActiveOrgAndRedirectToHome(c *m.ReqContext) {
-	orgId := c.ParamsInt64(":id")
+	orgID := c.ParamsInt64(":id")
 
-	if !validateUsingOrg(c.UserId, orgId) {
+	if !validateUsingOrg(c.UserId, orgID) {
 		NotFoundHandler(c)
 	}
 
-	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgId}
+	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		NotFoundHandler(c)

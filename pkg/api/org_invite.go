@@ -96,26 +96,25 @@ func inviteExistingUserToOrg(c *m.ReqContext, user *m.User, inviteDto *dtos.AddI
 			return ApiError(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
 		return ApiError(500, "Error while trying to create org user", err)
-	} else {
+	}
 
-		if inviteDto.SendEmail && util.IsEmail(user.Email) {
-			emailCmd := m.SendEmailCommand{
-				To:       []string{user.Email},
-				Template: "invited_to_org.html",
-				Data: map[string]interface{}{
-					"Name":      user.NameOrFallback(),
-					"OrgName":   c.OrgName,
-					"InvitedBy": util.StringsFallback3(c.Name, c.Email, c.Login),
-				},
-			}
-
-			if err := bus.Dispatch(&emailCmd); err != nil {
-				return ApiError(500, "Failed to send email invited_to_org", err)
-			}
+	if inviteDto.SendEmail && util.IsEmail(user.Email) {
+		emailCmd := m.SendEmailCommand{
+			To:       []string{user.Email},
+			Template: "invited_to_org.html",
+			Data: map[string]interface{}{
+				"Name":      user.NameOrFallback(),
+				"OrgName":   c.OrgName,
+				"InvitedBy": util.StringsFallback3(c.Name, c.Email, c.Login),
+			},
 		}
 
-		return ApiSuccess(fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName))
+		if err := bus.Dispatch(&emailCmd); err != nil {
+			return ApiError(500, "Failed to send email invited_to_org", err)
+		}
 	}
+
+	return ApiSuccess(fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName))
 }
 
 func RevokeInvite(c *m.ReqContext) Response {

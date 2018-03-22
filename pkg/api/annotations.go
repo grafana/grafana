@@ -52,7 +52,7 @@ func (e *CreateAnnotationError) Error() string {
 }
 
 func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
-	if canSave, err := canSaveByDashboardId(c, cmd.DashboardId); err != nil || !canSave {
+	if canSave, err := canSaveByDashboardID(c, cmd.DashboardId); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -179,18 +179,18 @@ func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd
 }
 
 func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
-	annotationId := c.ParamsInt64(":annotationId")
+	annotationID := c.ParamsInt64(":annotationId")
 
 	repo := annotations.GetRepository()
 
-	if resp := canSave(c, repo, annotationId); resp != nil {
+	if resp := canSave(c, repo, annotationID); resp != nil {
 		return resp
 	}
 
 	item := annotations.Item{
 		OrgId:  c.OrgId,
 		UserId: c.UserId,
-		Id:     annotationId,
+		Id:     annotationID,
 		Epoch:  cmd.Time / 1000,
 		Text:   cmd.Text,
 		Tags:   cmd.Tags,
@@ -254,14 +254,14 @@ func DeleteAnnotationById(c *m.ReqContext) Response {
 
 func DeleteAnnotationRegion(c *m.ReqContext) Response {
 	repo := annotations.GetRepository()
-	regionId := c.ParamsInt64(":regionId")
+	regionID := c.ParamsInt64(":regionId")
 
-	if resp := canSave(c, repo, regionId); resp != nil {
+	if resp := canSave(c, repo, regionID); resp != nil {
 		return resp
 	}
 
 	err := repo.Delete(&annotations.DeleteParams{
-		RegionId: regionId,
+		RegionId: regionID,
 	})
 
 	if err != nil {
@@ -271,13 +271,13 @@ func DeleteAnnotationRegion(c *m.ReqContext) Response {
 	return ApiSuccess("Annotation region deleted")
 }
 
-func canSaveByDashboardId(c *m.ReqContext, dashboardId int64) (bool, error) {
-	if dashboardId == 0 && !c.SignedInUser.HasRole(m.ROLE_EDITOR) {
+func canSaveByDashboardID(c *m.ReqContext, dashboardID int64) (bool, error) {
+	if dashboardID == 0 && !c.SignedInUser.HasRole(m.ROLE_EDITOR) {
 		return false, nil
 	}
 
-	if dashboardId > 0 {
-		guardian := guardian.New(dashboardId, c.OrgId, c.SignedInUser)
+	if dashboardID > 0 {
+		guardian := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
 		if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
 			return false, err
 		}
@@ -293,25 +293,25 @@ func canSave(c *m.ReqContext, repo annotations.Repository, annotationId int64) R
 		return ApiError(500, "Could not find annotation to update", err)
 	}
 
-	dashboardId := items[0].DashboardId
+	dashboardID := items[0].DashboardId
 
-	if canSave, err := canSaveByDashboardId(c, dashboardId); err != nil || !canSave {
+	if canSave, err := canSaveByDashboardID(c, dashboardID); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	return nil
 }
 
-func canSaveByRegionId(c *m.ReqContext, repo annotations.Repository, regionId int64) Response {
-	items, err := repo.Find(&annotations.ItemQuery{RegionId: regionId, OrgId: c.OrgId})
+func canSaveByRegionID(c *m.ReqContext, repo annotations.Repository, regionID int64) Response {
+	items, err := repo.Find(&annotations.ItemQuery{RegionId: regionID, OrgId: c.OrgId})
 
 	if err != nil || len(items) == 0 {
 		return ApiError(500, "Could not find annotation to update", err)
 	}
 
-	dashboardId := items[0].DashboardId
+	dashboardID := items[0].DashboardId
 
-	if canSave, err := canSaveByDashboardId(c, dashboardId); err != nil || !canSave {
+	if canSave, err := canSaveByDashboardID(c, dashboardID); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
