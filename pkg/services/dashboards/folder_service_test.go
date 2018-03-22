@@ -36,13 +36,13 @@ func TestFolderService(t *testing.T) {
 			})
 
 			Convey("When get folder by id should return access denied error", func() {
-				_, err := service.GetFolderById(1)
+				_, err := service.GetFolderByID(1)
 				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, models.ErrFolderAccessDenied)
 			})
 
 			Convey("When get folder by uid should return access denied error", func() {
-				_, err := service.GetFolderByUid("uid")
+				_, err := service.GetFolderByUID("uid")
 				So(err, ShouldNotBeNil)
 				So(err, ShouldEqual, models.ErrFolderAccessDenied)
 			})
@@ -147,14 +147,14 @@ func TestFolderService(t *testing.T) {
 			})
 
 			Convey("When get folder by id should return folder", func() {
-				f, _ := service.GetFolderById(1)
+				f, _ := service.GetFolderByID(1)
 				So(f.Id, ShouldEqual, dashFolder.Id)
 				So(f.Uid, ShouldEqual, dashFolder.Uid)
 				So(f.Title, ShouldEqual, dashFolder.Title)
 			})
 
 			Convey("When get folder by uid should return folder", func() {
-				f, _ := service.GetFolderByUid("uid")
+				f, _ := service.GetFolderByUID("uid")
 				So(f.Id, ShouldEqual, dashFolder.Id)
 				So(f.Uid, ShouldEqual, dashFolder.Uid)
 				So(f.Title, ShouldEqual, dashFolder.Title)

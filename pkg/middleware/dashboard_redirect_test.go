@@ -14,7 +14,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 	Convey("Given the dashboard redirect middleware", t, func() {
 		bus.ClearBusHandlers()
 		redirectFromLegacyDashboardUrl := RedirectFromLegacyDashboardURL()
-		redirectFromLegacyDashboardSoloUrl := RedirectFromLegacyDashboardSoloUrl()
+		redirectFromLegacyDashboardSoloUrl := RedirectFromLegacyDashboardSoloURL()
 
 		fakeDash := m.NewDashboard("Child dash")
 		fakeDash.Id = 1
