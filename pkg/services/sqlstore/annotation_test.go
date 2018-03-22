@@ -83,7 +83,7 @@ func TestAnnotations(t *testing.T) {
 				Convey("Has created and updated values", func() {
 					So(items[0].Created, ShouldBeGreaterThan, 0)
 					So(items[0].Updated, ShouldBeGreaterThan, 0)
-					So(items[0].Updated, ShouldBeEqual, items[1].Created)
+					So(items[0].Updated, ShouldEqual, items[1].Created)
 				})
 			})
 
