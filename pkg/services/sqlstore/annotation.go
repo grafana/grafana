@@ -113,7 +113,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		existing.Tags = item.Tags
 
-		if _, err := sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "tags").Update(existing); err != nil {
+		if _, err := sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "updated", "tags").Update(existing); err != nil {
 			return err
 		}
 
