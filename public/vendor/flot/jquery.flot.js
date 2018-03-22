@@ -632,6 +632,7 @@ Licensed under the MIT license.
             processRawData: [],
             processDatapoints: [],
             processOffset: [],
+            processRange: [],
             drawBackground: [],
             drawSeries: [],
             draw: [],
@@ -1613,20 +1614,32 @@ Licensed under the MIT license.
                 setRange(axis);
             });
 
+            executeHooks(hooks.processRange, []);
+
             if (showGrid) {
 
                 var allocatedAxes = $.grep(axes, function (axis) {
                     return axis.show || axis.reserveSpace;
                 });
 
-                $.each(allocatedAxes, function (_, axis) {
-                    // make the ticks
-                    setupTickGeneration(axis);
-                    setTicks(axis);
-                    snapRangeToTicks(axis, axis.ticks);
-                    // find labelWidth/Height for axis
-                    measureTickLabels(axis);
-                });
+                var snaped = false;
+                for (var i = 0; i < 2; i++) {
+                    $.each(allocatedAxes, function (_, axis) {
+                        // make the ticks
+                        setupTickGeneration(axis);
+                        setTicks(axis);
+                        snaped = snapRangeToTicks(axis, axis.ticks) || snaped;
+                        // find labelWidth/Height for axis
+                        measureTickLabels(axis);
+                    });
+
+                    if (snaped && hooks.processRange.length > 0) {
+                        executeHooks(hooks.processRange, []);
+                        snaped = false;
+                    } else {
+                        break;
+                    }
+                }
 
                 // with all dimensions calculated, we can compute the
                 // axis bounding boxes, start from the outside
@@ -1642,6 +1655,7 @@ Licensed under the MIT license.
                     allocateAxisBoxSecondPhase(axis);
                 });
             }
+
 
             plotWidth = surface.width - plotOffset.left - plotOffset.right;
             plotHeight = surface.height - plotOffset.bottom - plotOffset.top;
@@ -1876,13 +1890,19 @@ Licensed under the MIT license.
         }
 
         function snapRangeToTicks(axis, ticks) {
+            var changed = false;
             if (axis.options.autoscaleMargin && ticks.length > 0) {
                 // snap to ticks
-                if (axis.options.min == null)
+                if (axis.options.min == null) {
                     axis.min = Math.min(axis.min, ticks[0].v);
-                if (axis.options.max == null && ticks.length > 1)
+                    changed = true;
+                }
+                if (axis.options.max == null && ticks.length > 1) {
                     axis.max = Math.max(axis.max, ticks[ticks.length - 1].v);
+                    changed = true;
+                }
             }
+            return changed;
         }
 
         function draw() {
