@@ -24,8 +24,8 @@ func GetUserPreferences(c *m.ReqContext) Response {
 	return getPreferencesFor(c.OrgId, c.UserId)
 }
 
-func getPreferencesFor(orgId int64, userId int64) Response {
-	prefsQuery := m.GetPreferencesQuery{UserId: userId, OrgId: orgId}
+func getPreferencesFor(orgID int64, userID int64) Response {
+	prefsQuery := m.GetPreferencesQuery{UserId: userID, OrgId: orgID}
 
 	if err := bus.Dispatch(&prefsQuery); err != nil {
 		return ApiError(500, "Failed to get preferences", err)
@@ -45,10 +45,10 @@ func UpdateUserPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response
 	return updatePreferencesFor(c.OrgId, c.UserId, &dtoCmd)
 }
 
-func updatePreferencesFor(orgId int64, userId int64, dtoCmd *dtos.UpdatePrefsCmd) Response {
+func updatePreferencesFor(orgID int64, userID int64, dtoCmd *dtos.UpdatePrefsCmd) Response {
 	saveCmd := m.SavePreferencesCommand{
-		UserId:          userId,
-		OrgId:           orgId,
+		UserId:          userID,
+		OrgId:           orgID,
 		Theme:           dtoCmd.Theme,
 		Timezone:        dtoCmd.Timezone,
 		HomeDashboardId: dtoCmd.HomeDashboardId,

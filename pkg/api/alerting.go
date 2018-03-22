@@ -26,9 +26,9 @@ func ValidateOrgAlert(c *m.ReqContext) {
 }
 
 func GetAlertStatesForDashboard(c *m.ReqContext) Response {
-	dashboardId := c.QueryInt64("dashboardId")
+	dashboardID := c.QueryInt64("dashboardId")
 
-	if dashboardId == 0 {
+	if dashboardID == 0 {
 		return ApiError(400, "Missing query parameter dashboardId", nil)
 	}
 
@@ -151,7 +151,7 @@ func GetAlertNotifications(c *m.ReqContext) Response {
 	return Json(200, result)
 }
 
-func GetAlertNotificationById(c *m.ReqContext) Response {
+func GetAlertNotificationByID(c *m.ReqContext) Response {
 	query := &m.GetAlertNotificationsQuery{
 		OrgId: c.OrgId,
 		Id:    c.ParamsInt64("notificationId"),
