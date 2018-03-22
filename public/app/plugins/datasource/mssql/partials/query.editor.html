@@ -53,6 +53,14 @@ Macros:
 - $__unixEpochFilter(column) -&gt; column &gt;= 1492750877 AND column &lt;= 1492750877
 - $__timeGroup(column, '5m'[, fillvalue]) -&gt; CAST(ROUND(DATEDIFF(second, '1970-01-01', column)/300.0, 0) as bigint)*300. Providing a <i>fillValue</i> of <i>NULL</i> or floating value will automatically fill empty series in timerange with that value.
 
+Example of group by and order by with $__timeGroup:
+SELECT
+  $__timeGroup(date_time_col, '1h') AS time,
+  sum(value) as value
+FROM yourtable
+GROUP BY $__timeGroup(date_time_col, '1h')
+ORDER BY 1
+
 Or build your own conditionals using these macros which just return the values:
 - $__timeFrom() -&gt; DATEADD(second, 1492750877, '1970-01-01')
 - $__timeTo() -&gt; DATEADD(second, 1492750877, '1970-01-01')
