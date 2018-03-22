@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -17,6 +18,7 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
+		item.Created = time.Now().UnixNano() / int64(time.Millisecond)
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
@@ -127,6 +129,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 			annotation.text,
 			annotation.tags,
 			annotation.data,
+			annotation.created,
 			usr.email,
 			usr.login,
 			alert.name as alert_name
@@ -205,7 +208,17 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		query.Limit = 10
 	}
 
-	sql.WriteString(fmt.Sprintf(" ORDER BY epoch DESC LIMIT %v", query.Limit))
+	var sort string = "epoch DESC"
+	switch query.Sort {
+	case "time.asc":
+		sort = "epoch ASC"
+	case "created":
+		sort = "annotation.created DESC"
+	case "created.asc":
+		sort = "annotation.created ASC"
+	}
+
+	sql.WriteString(fmt.Sprintf(" ORDER BY %s LIMIT %v", sort, query.Limit))
 
 	items := make([]*annotations.ItemDTO, 0)
 

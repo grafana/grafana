@@ -90,4 +90,14 @@ func addAnnotationMig(mg *Migrator) {
 		Sqlite(updateTextFieldSql).
 		Postgres(updateTextFieldSql).
 		Mysql(updateTextFieldSql))
+
+	//
+	// Add a 'created' column
+	//
+	mg.AddMigration("Add created time to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "created", Type: DB_BigInt, Nullable: true, Default: "0",
+	}))
+	mg.AddMigration("Add index for created in annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "created"}, Type: IndexType,
+	}))
 }
