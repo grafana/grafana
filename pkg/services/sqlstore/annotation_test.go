@@ -81,9 +81,9 @@ func TestAnnotations(t *testing.T) {
 				})
 
 				Convey("Has created and updated values", func() {
-					So(items[0].created, ShouldBeGreaterThan, 0)
-					So(items[0].updated, ShouldBeGreaterThan, 0)
-					So(items[0].created, ShouldBeEqual, items[1].created)
+					So(items[0].Created, ShouldBeGreaterThan, 0)
+					So(items[0].Updated, ShouldBeGreaterThan, 0)
+					So(items[0].Updated, ShouldBeEqual, items[1].Created)
 				})
 			})
 
@@ -239,7 +239,7 @@ func TestAnnotations(t *testing.T) {
 				})
 
 				Convey("Updated time has increased", func() {
-					So(items[0].updated, ShouldBeGreaterThan, items[0].created)
+					So(items[0].Updated, ShouldBeGreaterThan, items[0].Created)
 				})
 			})
 
