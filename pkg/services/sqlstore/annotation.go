@@ -23,6 +23,10 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 		item.Tags = models.JoinTagPairs(tags)
 		item.Created = time.Now().UnixNano() / int64(time.Millisecond)
 		item.Updated = item.Created
+		if item.Epoch == 0 {
+			item.Epoch = item.Created
+		}
+
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
@@ -70,7 +74,6 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			err     error
 		)
 		existing := new(annotations.Item)
-		item.Updated = time.Now().UnixNano() / int64(time.Millisecond)
 
 		if item.Id == 0 && item.RegionId != 0 {
 			// Update region end time
@@ -86,6 +89,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			return errors.New("Annotation not found")
 		}
 
+		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
 		existing.Epoch = item.Epoch
 		existing.Text = item.Text
 		if item.RegionId != 0 {
@@ -185,8 +189,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 	if query.Type == "alert" {
 		sql.WriteString(` AND annotation.alert_id > 0`)
-	}
-	if query.Type == "annotation" {
+	} else if query.Type == "annotation" {
 		sql.WriteString(` AND annotation.alert_id = 0`)
 	}
 

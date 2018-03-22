@@ -106,4 +106,13 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add index for updated in annotation table", NewAddIndexMigration(table, &Index{
 		Cols: []string{"org_id", "updated"}, Type: IndexType,
 	}))
+
+	//
+	// Convert epoch saved as seconds to miliseconds
+	//
+	updateEpochSql := "UPDATE annotation SET epoch = (epoch*1000)"
+	mg.AddMigration("Convert existing annotations from seconds to miliseconds", new(RawSqlMigration).
+		Sqlite(updateEpochSql).
+		Postgres(updateEpochSql).
+		Mysql(updateEpochSql))
 }
