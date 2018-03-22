@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net"
+	"net/mail"
 	"strings"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var AUTH_PROXY_SESSION_VAR = "authProxyHeaderValue"
 
 func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	if !setting.AuthProxyEnabled {
@@ -30,51 +33,75 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 		return true
 	}
 
-	query := getSignedInUserQueryForProxyAuth(proxyHeaderValue)
-	query.OrgId = orgID
-	if err := bus.Dispatch(query); err != nil {
-		if err != m.ErrUserNotFound {
-			ctx.Handle(500, "Failed to find user specified in auth proxy header", err)
-			return true
-		}
-
-		if !setting.AuthProxyAutoSignUp {
-			return false
-		}
-
-		cmd := getCreateUserCommandForProxyAuth(proxyHeaderValue)
-		if setting.LdapEnabled {
-			cmd.SkipOrgSetup = true
-		}
-
-		if err := bus.Dispatch(cmd); err != nil {
-			ctx.Handle(500, "Failed to create user specified in auth proxy header", err)
-			return true
-		}
-		query = &m.GetSignedInUserQuery{UserId: cmd.Result.Id, OrgId: orgID}
-		if err := bus.Dispatch(query); err != nil {
-			ctx.Handle(500, "Failed find user after creation", err)
-			return true
-		}
-	}
-
 	// initialize session
 	if err := ctx.Session.Start(ctx.Context); err != nil {
 		log.Error(3, "Failed to start session", err)
 		return false
 	}
 
-	// Make sure that we cannot share a session between different users!
-	if getRequestUserId(ctx) > 0 && getRequestUserId(ctx) != query.Result.UserId {
-		// remove session
-		if err := ctx.Session.Destory(ctx.Context); err != nil {
-			log.Error(3, "Failed to destroy session, err")
+	query := &m.GetSignedInUserQuery{OrgId: orgID}
+
+	// if this session has already been authenticated by authProxy just load the user
+	sessProxyValue := ctx.Session.Get(AUTH_PROXY_SESSION_VAR)
+	if sessProxyValue != nil && sessProxyValue.(string) == proxyHeaderValue && getRequestUserId(ctx) > 0 {
+		query.UserId = getRequestUserId(ctx)
+		if err := bus.Dispatch(query); err != nil {
+			ctx.Handle(500, "Failed to find user", err)
+			return true
+		}
+	} else {
+		extUser := m.ExternalUserInfo{
+			AuthModule: "authproxy",
+			AuthId:     proxyHeaderValue,
 		}
 
-		// initialize a new session
-		if err := ctx.Session.Start(ctx.Context); err != nil {
-			log.Error(3, "Failed to start session", err)
+		if setting.AuthProxyHeaderProperty == "username" {
+			extUser.Login = proxyHeaderValue
+
+			// only set Email if it can be parsed as an email address
+			emailAddr, emailErr := mail.ParseAddress(proxyHeaderValue)
+			if emailErr == nil {
+				extUser.Email = emailAddr.Address
+			}
+		} else if setting.AuthProxyHeaderProperty == "email" {
+			extUser.Email = proxyHeaderValue
+			extUser.Login = proxyHeaderValue
+		} else {
+			ctx.Handle(500, "Auth proxy header property invalid", nil)
 		}
+
+		// add/update user in grafana
+		userQuery := &m.UpsertUserCommand{
+			ExternalUser:  &extUser,
+			SignupAllowed: setting.AuthProxyAutoSignUp,
+		}
+		err := login.UpsertUser(ctx, userQuery)
+		if err != nil {
+			ctx.Handle(500, "Failed to login as user specified in auth proxy header", err)
+			return true
+		}
+
+		query.UserId = userQuery.User.Id
+
+		if err := bus.Dispatch(query); err != nil {
+			ctx.Handle(500, "Failed to find user", err)
+			return true
+		}
+
+		// Make sure that we cannot share a session between different users!
+		if getRequestUserId(ctx) > 0 && getRequestUserId(ctx) != query.Result.UserId {
+			// remove session
+			if err := ctx.Session.Destory(ctx.Context); err != nil {
+				log.Error(3, "Failed to destroy session, err")
+			}
+
+			// initialize a new session
+			if err := ctx.Session.Start(ctx.Context); err != nil {
+				log.Error(3, "Failed to start session", err)
+			}
+		}
+
+		ctx.Session.Set(AUTH_PROXY_SESSION_VAR, proxyHeaderValue)
 	}
 
 	// When ldap is enabled, sync userinfo and org roles
@@ -142,30 +169,4 @@ func checkAuthenticationProxy(remoteAddr string, proxyHeaderValue string) error 
 	}
 
 	return fmt.Errorf("Request for user (%s) from %s is not from the authentication proxy", proxyHeaderValue, sourceIP)
-}
-
-func getSignedInUserQueryForProxyAuth(headerVal string) *m.GetSignedInUserQuery {
-	query := m.GetSignedInUserQuery{}
-	if setting.AuthProxyHeaderProperty == "username" {
-		query.Login = headerVal
-	} else if setting.AuthProxyHeaderProperty == "email" {
-		query.Email = headerVal
-	} else {
-		panic("Auth proxy header property invalid")
-	}
-	return &query
-}
-
-func getCreateUserCommandForProxyAuth(headerVal string) *m.CreateUserCommand {
-	cmd := m.CreateUserCommand{}
-	if setting.AuthProxyHeaderProperty == "username" {
-		cmd.Login = headerVal
-		cmd.Email = headerVal
-	} else if setting.AuthProxyHeaderProperty == "email" {
-		cmd.Email = headerVal
-		cmd.Login = headerVal
-	} else {
-		panic("Auth proxy header property invalid")
-	}
-	return &cmd
 }

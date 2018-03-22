@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
-func UpsertUser(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
+var UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
 	userQuery := m.GetUserByAuthInfoQuery{
@@ -87,14 +87,26 @@ func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {
 
 func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
 	// sync user info
-	if user.Login != extUser.Login || user.Email != extUser.Email || user.Name != extUser.Name {
-		log.Debug("Syncing user info", "id", user.Id, "login", extUser.Login, "email", extUser.Email)
-		updateCmd := m.UpdateUserCommand{
-			UserId: user.Id,
-			Login:  extUser.Login,
-			Email:  extUser.Email,
-			Name:   extUser.Name,
-		}
+	updateCmd := m.UpdateUserCommand{
+		UserId: user.Id,
+	}
+	needsUpdate := false
+
+	if extUser.Login != "" && extUser.Login != user.Login {
+		updateCmd.Login = extUser.Login
+		needsUpdate = true
+	}
+	if extUser.Email != "" && extUser.Email != user.Email {
+		updateCmd.Email = extUser.Email
+		needsUpdate = true
+	}
+	if extUser.Name != "" && extUser.Name != user.Name {
+		updateCmd.Name = extUser.Name
+		needsUpdate = true
+	}
+
+	if needsUpdate {
+		log.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
 		err := bus.Dispatch(&updateCmd)
 		if err != nil {
 			return err
