@@ -67,10 +67,10 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 	return nil
 }
 
+const MAX_VERSIONS_TO_DELETE = 100
+
 func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		const MAX_VERSIONS_TO_DELETE = 100
-
 		versionsToKeep := setting.DashboardVersionsToKeep
 		if versionsToKeep < 1 {
 			versionsToKeep = 1
@@ -80,27 +80,25 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 		// min_version_to_keep = min_version + (versions_count - versions_to_keep)
 		// where version stats is processed for each dashboard. This guarantees that we keep at least versions_to_keep
 		// versions, but in some cases (when versions are sparse) this number may be more.
-		versionIdsToDeleteSubquery := `SELECT id
+		versionIdsToDeleteQuery := `SELECT id
 			FROM dashboard_version, (
 				SELECT dashboard_id, count(version) as count, min(version) as min
 				FROM dashboard_version
 				GROUP BY dashboard_id
-				) AS vtd
-				WHERE dashboard_version.dashboard_id=vtd.dashboard_id
-				AND version < vtd.min + vtd.count - ?`
+			) AS vtd
+			WHERE dashboard_version.dashboard_id=vtd.dashboard_id
+			AND version < vtd.min + vtd.count - ?`
 
 		var versionIdsToDelete []interface{}
-		err := sess.SQL(versionIdsToDeleteSubquery, versionsToKeep).Find(&versionIdsToDelete)
+		err := sess.SQL(versionIdsToDeleteQuery, versionsToKeep).Find(&versionIdsToDelete)
 		if err != nil {
 			return err
 		}
 
 		// Don't delete more than MAX_VERSIONS_TO_DELETE version per time
-		limit := MAX_VERSIONS_TO_DELETE
-		if len(versionIdsToDelete) < MAX_VERSIONS_TO_DELETE {
-			limit = len(versionIdsToDelete)
+		if len(versionIdsToDelete) > MAX_VERSIONS_TO_DELETE {
+			versionIdsToDelete = versionIdsToDelete[:MAX_VERSIONS_TO_DELETE]
 		}
-		versionIdsToDelete = versionIdsToDelete[:limit]
 
 		if len(versionIdsToDelete) > 0 {
 			deleteExpiredSql := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
