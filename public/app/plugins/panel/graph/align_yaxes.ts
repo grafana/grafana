@@ -2,16 +2,16 @@ import _ from 'lodash';
 
 /**
  * To align two Y axes by Y level
- * @param yaxis data [{min: min_y1, min: max_y1}, {min: min_y2, max: max_y2}]
- * @param align Y level
+ * @param yAxes data [{min: min_y1, min: max_y1}, {min: min_y2, max: max_y2}]
+ * @param level Y level
  */
-export function alignYLevel(yaxis, alignLevel) {
-  if (isNaN(alignLevel) || !checkCorrectAxis(yaxis)) {
+export function alignYLevel(yAxes, level) {
+  if (isNaN(level) || !checkCorrectAxis(yAxes)) {
     return;
   }
 
-  var [yLeft, yRight] = yaxis;
-  moveLevelToZero(yLeft, yRight, alignLevel);
+  var [yLeft, yRight] = yAxes;
+  moveLevelToZero(yLeft, yRight, level);
 
   expandStuckValues(yLeft, yRight);
 
@@ -62,7 +62,7 @@ export function alignYLevel(yaxis, alignLevel) {
     }
   }
 
-  restoreLevelFromZero(yLeft, yRight, alignLevel);
+  restoreLevelFromZero(yLeft, yRight, level);
 }
 
 function expandStuckValues(yLeft, yRight) {
@@ -78,21 +78,21 @@ function expandStuckValues(yLeft, yRight) {
   }
 }
 
-function moveLevelToZero(yLeft, yRight, alignLevel) {
-  if (alignLevel !== 0) {
-    yLeft.min -= alignLevel;
-    yLeft.max -= alignLevel;
-    yRight.min -= alignLevel;
-    yRight.max -= alignLevel;
+function moveLevelToZero(yLeft, yRight, level) {
+  if (level !== 0) {
+    yLeft.min -= level;
+    yLeft.max -= level;
+    yRight.min -= level;
+    yRight.max -= level;
   }
 }
 
-function restoreLevelFromZero(yLeft, yRight, alignLevel) {
-  if (alignLevel !== 0) {
-    yLeft.min += alignLevel;
-    yLeft.max += alignLevel;
-    yRight.min += alignLevel;
-    yRight.max += alignLevel;
+function restoreLevelFromZero(yLeft, yRight, level) {
+  if (level !== 0) {
+    yLeft.min += level;
+    yLeft.max += level;
+    yRight.min += level;
+    yRight.max += level;
   }
 }
 

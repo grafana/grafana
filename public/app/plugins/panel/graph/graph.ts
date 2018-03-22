@@ -157,10 +157,12 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       }
 
       function processRangeHook(plot) {
-        var yaxis = plot.getYAxes();
-        if (yaxis.length > 1 && panel.yaxis.alignment) {
-          var align = panel.yaxis.align || 0;
-          alignYLevel(yaxis, parseFloat(align));
+        var yAxes = plot.getYAxes();
+        const align = panel.yaxis.align || false;
+
+        if (yAxes.length > 1 && align === true) {
+          const level = panel.yaxis.alignLevel || 0;
+          alignYLevel(yAxes, parseFloat(level));
         }
       }
 
