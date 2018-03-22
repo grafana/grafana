@@ -113,7 +113,7 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 				m.Query.Model.Set("fillValue", floatVal)
 			}
 		}
-		return fmt.Sprintf("cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s))/%.0f as int)*%.0f as int)", args[0], interval.Seconds(), interval.Seconds()), nil
+		return fmt.Sprintf("CAST(ROUND(DATEDIFF(second, '1970-01-01', %s)/%.1f, 0) as bigint)*%.0f", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

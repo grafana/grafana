@@ -211,22 +211,32 @@ func TestMSSQL(t *testing.T) {
 				}
 
 				resp, err := endpoint.Query(nil, nil, query)
-				queryResult := resp.Results["A"]
 				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
 				points := queryResult.Series[0].Points
+				So(len(points), ShouldEqual, 6)
 
-				So(len(points), ShouldEqual, 4)
-				actualValueFirst := points[0][0].Float64
-				actualTimeFirst := time.Unix(int64(points[0][1].Float64)/1000, 0)
-				So(actualValueFirst, ShouldEqual, 15)
-				So(actualTimeFirst, ShouldEqual, fromStart)
+				dt := fromStart
 
-				actualValueLast := points[3][0].Float64
-				actualTimeLast := time.Unix(int64(points[3][1].Float64)/1000, 0)
-				So(actualValueLast, ShouldEqual, 20)
-				So(actualTimeLast, ShouldEqual, fromStart.Add(25*time.Minute))
+				for i := 0; i < 3; i++ {
+					aValue := points[i][0].Float64
+					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
+					So(aValue, ShouldEqual, 15)
+					So(aTime, ShouldEqual, dt)
+					dt = dt.Add(5 * time.Minute)
+				}
+
+				// adjust for 5 minute gap
+				dt = dt.Add(5 * time.Minute)
+				for i := 3; i < 6; i++ {
+					aValue := points[i][0].Float64
+					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
+					So(aValue, ShouldEqual, 20)
+					So(aTime, ShouldEqual, dt)
+					dt = dt.Add(5 * time.Minute)
+				}
 			})
 
 			Convey("When doing a metric query using timeGroup with NULL fill enabled", func() {
@@ -247,33 +257,34 @@ func TestMSSQL(t *testing.T) {
 				}
 
 				resp, err := endpoint.Query(nil, nil, query)
-				queryResult := resp.Results["A"]
 				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
 				points := queryResult.Series[0].Points
-
 				So(len(points), ShouldEqual, 7)
-				actualValueFirst := points[0][0].Float64
-				actualTimeFirst := time.Unix(int64(points[0][1].Float64)/1000, 0)
-				So(actualValueFirst, ShouldEqual, 15)
-				So(actualTimeFirst, ShouldEqual, fromStart)
 
-				actualNullPoint := points[3][0]
-				actualNullTime := time.Unix(int64(points[3][1].Float64)/1000, 0)
-				So(actualNullPoint.Valid, ShouldBeFalse)
-				So(actualNullTime, ShouldEqual, fromStart.Add(15*time.Minute))
+				dt := fromStart
 
-				actualValueLast := points[5][0].Float64
-				actualTimeLast := time.Unix(int64(points[5][1].Float64)/1000, 0)
-				So(actualValueLast, ShouldEqual, 20)
-				So(actualTimeLast, ShouldEqual, fromStart.Add(25*time.Minute))
+				for i := 0; i < 3; i++ {
+					aValue := points[i][0].Float64
+					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
+					So(aValue, ShouldEqual, 15)
+					So(aTime, ShouldEqual, dt)
+					dt = dt.Add(5 * time.Minute)
+				}
 
-				actualLastNullPoint := points[6][0]
-				actualLastNullTime := time.Unix(int64(points[6][1].Float64)/1000, 0)
-				So(actualLastNullPoint.Valid, ShouldBeFalse)
-				So(actualLastNullTime, ShouldEqual, fromStart.Add(30*time.Minute))
+				So(points[3][0].Valid, ShouldBeFalse)
 
+				// adjust for 5 minute gap
+				dt = dt.Add(5 * time.Minute)
+				for i := 4; i < 7; i++ {
+					aValue := points[i][0].Float64
+					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
+					So(aValue, ShouldEqual, 20)
+					So(aTime, ShouldEqual, dt)
+					dt = dt.Add(5 * time.Minute)
+				}
 			})
 
 			Convey("When doing a metric query using timeGroup with float fill enabled", func() {
@@ -294,13 +305,12 @@ func TestMSSQL(t *testing.T) {
 				}
 
 				resp, err := endpoint.Query(nil, nil, query)
-				queryResult := resp.Results["A"]
 				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
 				points := queryResult.Series[0].Points
-
-				So(points[6][0].Float64, ShouldEqual, 1.5)
+				So(points[3][0].Float64, ShouldEqual, 1.5)
 			})
 		})
 

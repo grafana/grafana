@@ -57,14 +57,14 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "GROUP BY cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column))/300 as int)*300 as int)")
+			So(sql, ShouldEqual, "GROUP BY CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) as bigint)*300")
 		})
 
 		Convey("interpolate __timeGroup function with spaces around arguments", func() {
 			sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "GROUP BY cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column))/300 as int)*300 as int)")
+			So(sql, ShouldEqual, "GROUP BY CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) as bigint)*300")
 		})
 
 		Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
