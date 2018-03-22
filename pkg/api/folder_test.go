@@ -133,8 +133,8 @@ func TestFoldersApiEndpoint(t *testing.T) {
 	})
 }
 
-func callGetFolderByUid(sc *scenarioContext) {
-	sc.handlerFunc = GetFolderByUid
+func callGetFolderByUID(sc *scenarioContext) {
+	sc.handlerFunc = GetFolderByUID
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 

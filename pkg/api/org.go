@@ -15,7 +15,7 @@ func GetOrgCurrent(c *m.ReqContext) Response {
 }
 
 // GET /api/orgs/:orgId
-func GetOrgById(c *m.ReqContext) Response {
+func GetOrgByID(c *m.ReqContext) Response {
 	return getOrgHelper(c.ParamsInt64(":orgId"))
 }
 
@@ -106,8 +106,8 @@ func UpdateOrg(c *m.ReqContext, form dtos.UpdateOrgForm) Response {
 	return updateOrgHelper(form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgHelper(form dtos.UpdateOrgForm, orgId int64) Response {
-	cmd := m.UpdateOrgCommand{Name: form.Name, OrgId: orgId}
+func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) Response {
+	cmd := m.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrOrgNameTaken {
 			return ApiError(400, "Organization name taken", err)
@@ -128,9 +128,9 @@ func UpdateOrgAddress(c *m.ReqContext, form dtos.UpdateOrgAddressForm) Response 
 	return updateOrgAddressHelper(form, c.ParamsInt64(":orgId"))
 }
 
-func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgId int64) Response {
+func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) Response {
 	cmd := m.UpdateOrgAddressCommand{
-		OrgId: orgId,
+		OrgId: orgID,
 		Address: m.Address{
 			Address1: form.Address1,
 			Address2: form.Address2,
@@ -149,7 +149,7 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgId int64) Respons
 }
 
 // GET /api/orgs/:orgId
-func DeleteOrgById(c *m.ReqContext) Response {
+func DeleteOrgByID(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
 		if err == m.ErrOrgNotFound {
 			return ApiError(404, "Failed to delete organization. ID not found", nil)

@@ -38,7 +38,7 @@ func UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
 }
 
 // DELETE /api/teams/:teamId
-func DeleteTeamById(c *m.ReqContext) Response {
+func DeleteTeamByID(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.DeleteTeamCommand{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return ApiError(404, "Failed to delete Team. ID not found", nil)
@@ -82,7 +82,7 @@ func SearchTeams(c *m.ReqContext) Response {
 }
 
 // GET /api/teams/:teamId
-func GetTeamById(c *m.ReqContext) Response {
+func GetTeamByID(c *m.ReqContext) Response {
 	query := m.GetTeamByIdQuery{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {

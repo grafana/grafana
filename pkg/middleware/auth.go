@@ -17,10 +17,10 @@ type AuthOptions struct {
 }
 
 func getRequestUserId(c *m.ReqContext) int64 {
-	userId := c.Session.Get(session.SESS_KEY_USERID)
+	userID := c.Session.Get(session.SESS_KEY_USERID)
 
-	if userId != nil {
-		return userId.(int64)
+	if userID != nil {
+		return userID.(int64)
 	}
 
 	return 0

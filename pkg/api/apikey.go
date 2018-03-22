@@ -7,7 +7,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetApiKeys(c *m.ReqContext) Response {
+func GetAPIKeys(c *m.ReqContext) Response {
 	query := m.GetApiKeysQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -26,7 +26,7 @@ func GetApiKeys(c *m.ReqContext) Response {
 	return Json(200, result)
 }
 
-func DeleteApiKey(c *m.ReqContext) Response {
+func DeleteAPIKey(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := &m.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
@@ -39,7 +39,7 @@ func DeleteApiKey(c *m.ReqContext) Response {
 	return ApiSuccess("API key deleted")
 }
 
-func AddApiKey(c *m.ReqContext, cmd m.AddApiKeyCommand) Response {
+func AddAPIKey(c *m.ReqContext, cmd m.AddApiKeyCommand) Response {
 	if !cmd.Role.IsValid() {
 		return ApiError(400, "Invalid role specified", nil)
 	}

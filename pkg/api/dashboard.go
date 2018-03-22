@@ -22,12 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func isDashboardStarredByUser(c *m.ReqContext, dashId int64) (bool, error) {
+func isDashboardStarredByUser(c *m.ReqContext, dashID int64) (bool, error) {
 	if !c.IsSignedIn {
 		return false, nil
 	}
 
-	query := m.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashId}
+	query := m.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
 	if err := bus.Dispatch(&query); err != nil {
 		return false, err
 	}
@@ -114,24 +114,22 @@ func GetDashboard(c *m.ReqContext) Response {
 	return Json(200, dto)
 }
 
-func getUserLogin(userId int64) string {
-	query := m.GetUserByIdQuery{Id: userId}
+func getUserLogin(userID int64) string {
+	query := m.GetUserByIdQuery{Id: userID}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		return "Anonymous"
-	} else {
-		user := query.Result
-		return user.Login
 	}
+	return query.Result.Login
 }
 
-func getDashboardHelper(orgId int64, slug string, id int64, uid string) (*m.Dashboard, Response) {
+func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*m.Dashboard, Response) {
 	var query m.GetDashboardQuery
 
 	if len(uid) > 0 {
-		query = m.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgId}
+		query = m.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgID}
 	} else {
-		query = m.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgId}
+		query = m.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgID}
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -173,7 +171,7 @@ func DeleteDashboard(c *m.ReqContext) Response {
 	})
 }
 
-func DeleteDashboardByUid(c *m.ReqContext) Response {
+func DeleteDashboardByUID(c *m.ReqContext) Response {
 	dash, rsp := getDashboardHelper(c.OrgId, "", 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
@@ -291,9 +289,8 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 			url := m.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return Json(200, &dashRedirect)
-		} else {
-			log.Warn("Failed to get slug from database, %s", err.Error())
 		}
+		log.Warn("Failed to get slug from database, %s", err.Error())
 	}
 
 	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
@@ -339,22 +336,22 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 
 // GetDashboardVersions returns all dashboard versions as JSON
 func GetDashboardVersions(c *m.ReqContext) Response {
-	dashId := c.ParamsInt64(":dashboardId")
+	dashID := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	query := m.GetDashboardVersionsQuery{
 		OrgId:       c.OrgId,
-		DashboardId: dashId,
+		DashboardId: dashID,
 		Limit:       c.QueryInt("limit"),
 		Start:       c.QueryInt("start"),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(404, fmt.Sprintf("No versions found for dashboardId %d", dashId), err)
+		return ApiError(404, fmt.Sprintf("No versions found for dashboardId %d", dashID), err)
 	}
 
 	for _, version := range query.Result {
@@ -378,21 +375,21 @@ func GetDashboardVersions(c *m.ReqContext) Response {
 
 // GetDashboardVersion returns the dashboard version with the given ID.
 func GetDashboardVersion(c *m.ReqContext) Response {
-	dashId := c.ParamsInt64(":dashboardId")
+	dashID := c.ParamsInt64(":dashboardId")
 
-	guardian := guardian.New(dashId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
 
 	query := m.GetDashboardVersionQuery{
 		OrgId:       c.OrgId,
-		DashboardId: dashId,
+		DashboardId: dashID,
 		Version:     c.ParamsInt(":id"),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashId), err)
+		return ApiError(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashID), err)
 	}
 
 	creator := "Anonymous"
