@@ -11,11 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-func populateDashboardsById(dashboardByIds []int64, dashboardIdOrder map[int64]int) (dtos.PlaylistDashboardsSlice, error) {
+func populateDashboardsByID(dashboardByIDs []int64, dashboardIDOrder map[int64]int) (dtos.PlaylistDashboardsSlice, error) {
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
-	if len(dashboardByIds) > 0 {
-		dashboardQuery := m.GetDashboardsQuery{DashboardIds: dashboardByIds}
+	if len(dashboardByIDs) > 0 {
+		dashboardQuery := m.GetDashboardsQuery{DashboardIds: dashboardByIDs}
 		if err := bus.Dispatch(&dashboardQuery); err != nil {
 			return result, err
 		}
@@ -26,7 +26,7 @@ func populateDashboardsById(dashboardByIds []int64, dashboardIdOrder map[int64]i
 				Slug:  item.Slug,
 				Title: item.Title,
 				Uri:   "db/" + item.Slug,
-				Order: dashboardIdOrder[item.Id],
+				Order: dashboardIDOrder[item.Id],
 			})
 		}
 	}
@@ -85,7 +85,7 @@ func LoadPlaylistDashboards(orgID int64, signedInUser *m.SignedInUser, playlistI
 
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
-	var k, _ = populateDashboardsById(dashboardByIDs, dashboardIDOrder)
+	var k, _ = populateDashboardsByID(dashboardByIDs, dashboardIDOrder)
 	result = append(result, k...)
 	result = append(result, populateDashboardsByTag(orgID, signedInUser, dashboardByTag, dashboardTagOrder)...)
 

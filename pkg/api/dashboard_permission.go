@@ -25,7 +25,7 @@ func GetDashboardPermissionList(c *m.ReqContext) Response {
 
 	acl, err := g.GetAcl()
 	if err != nil {
-		return ApiError(500, "Failed to get dashboard permissions", err)
+		return Error(500, "Failed to get dashboard permissions", err)
 	}
 
 	for _, perm := range acl {
@@ -34,7 +34,7 @@ func GetDashboardPermissionList(c *m.ReqContext) Response {
 		}
 	}
 
-	return Json(200, acl)
+	return JSON(200, acl)
 }
 
 func UpdateDashboardPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
@@ -70,21 +70,21 @@ func UpdateDashboardPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclC
 		if err != nil {
 			if err == guardian.ErrGuardianPermissionExists ||
 				err == guardian.ErrGuardianOverride {
-				return ApiError(400, err.Error(), err)
+				return Error(400, err.Error(), err)
 			}
 
-			return ApiError(500, "Error while checking dashboard permissions", err)
+			return Error(500, "Error while checking dashboard permissions", err)
 		}
 
-		return ApiError(403, "Cannot remove own admin permission for a folder", nil)
+		return Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrDashboardAclInfoMissing || err == m.ErrDashboardPermissionDashboardEmpty {
-			return ApiError(409, err.Error(), err)
+			return Error(409, err.Error(), err)
 		}
-		return ApiError(500, "Failed to create permission", err)
+		return Error(500, "Failed to create permission", err)
 	}
 
-	return ApiSuccess("Dashboard permissions updated")
+	return Success("Dashboard permissions updated")
 }

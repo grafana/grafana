@@ -98,7 +98,7 @@ func LoginAPIPing(c *m.ReqContext) {
 
 func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 	if setting.DisableLoginForm {
-		return ApiError(401, "Login is disabled", nil)
+		return Error(401, "Login is disabled", nil)
 	}
 
 	authQuery := login.LoginUserQuery{
@@ -109,10 +109,10 @@ func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 
 	if err := bus.Dispatch(&authQuery); err != nil {
 		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
-			return ApiError(401, "Invalid username or password", err)
+			return Error(401, "Invalid username or password", err)
 		}
 
-		return ApiError(500, "Error while trying to authenticate user", err)
+		return Error(500, "Error while trying to authenticate user", err)
 	}
 
 	user := authQuery.User
@@ -130,7 +130,7 @@ func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 
 	metrics.M_Api_Login_Post.Inc()
 
-	return Json(200, result)
+	return JSON(200, result)
 }
 
 func loginUserWithUser(user *m.User, c *m.ReqContext) {

@@ -1,12 +1,12 @@
 {
   "__inputs": [
     {
-      "name": "DS_MSSQL_TEST",
-      "label": "MSSQL Test",
+      "name": "DS_POSTGRES_TEST",
+      "label": "Postgres TEST",
       "description": "",
       "type": "datasource",
-      "pluginId": "mssql",
-      "pluginName": "Microsoft SQL Server"
+      "pluginId": "postgres",
+      "pluginName": "PostgreSQL"
     }
   ],
   "__requires": [
@@ -24,9 +24,9 @@
     },
     {
       "type": "datasource",
-      "id": "mssql",
-      "name": "Microsoft SQL Server",
-      "version": "1.0.0"
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "version": "5.0.0"
     },
     {
       "type": "panel",
@@ -47,31 +47,31 @@
         "type": "dashboard"
       },
       {
-        "datasource": "${DS_MSSQL_TEST}",
+        "datasource": "${DS_POSTGRES_TEST}",
         "enable": false,
         "hide": false,
         "iconColor": "#6ed0e0",
         "limit": 100,
         "name": "Deploys",
-        "rawQuery": "SELECT\n   $__time(time_sec),\n   description as [text],\n   tags\n  FROM [event]\n  WHERE $__unixEpochFilter(time_sec) AND tags='deploy'\n  ORDER BY 1 ASC\n  ",
+        "rawQuery": "SELECT \"time_sec\" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC",
         "showIn": 0,
         "tags": [],
         "type": "tags"
       },
       {
-        "datasource": "${DS_MSSQL_TEST}",
+        "datasource": "${DS_POSTGRES_TEST}",
         "enable": false,
         "hide": false,
         "iconColor": "rgba(255, 96, 96, 1)",
         "limit": 100,
         "name": "Tickets",
-        "rawQuery": "SELECT\n   $__time(time_sec),\n   description as [text],\n   tags\n  FROM [event]\n  WHERE $__unixEpochFilter(time_sec) AND tags='ticket'\n  ORDER BY 1 ASC\n  ",
+        "rawQuery": "SELECT \"time_sec\" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC",
         "showIn": 0,
         "tags": [],
         "type": "tags"
       },
       {
-        "datasource": "${DS_MSSQL_TEST}",
+        "datasource": "${DS_POSTGRES_TEST}",
         "enable": false,
         "hide": false,
         "iconColor": "#7eb26d",
@@ -83,7 +83,7 @@
         "type": "tags"
       },
       {
-        "datasource": "${DS_MSSQL_TEST}",
+        "datasource": "${DS_POSTGRES_TEST}",
         "enable": false,
         "hide": false,
         "iconColor": "#1f78c1",
@@ -100,12 +100,12 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1521715844826,
+  "iteration": 1521725946837,
   "links": [],
   "panels": [
     {
       "columns": [],
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fontSize": "100%",
       "gridPos": {
         "h": 4,
@@ -119,8 +119,8 @@
       "scroll": true,
       "showHeader": true,
       "sort": {
-        "col": 0,
-        "desc": true
+        "col": 1,
+        "desc": false
       },
       "styles": [
         {
@@ -142,7 +142,7 @@
         {
           "alias": "",
           "format": "table",
-          "rawSql": "SELECT * from mssql_types",
+          "rawSql": "SELECT * FROM postgres_types",
           "refId": "A"
         }
       ],
@@ -152,7 +152,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -206,7 +206,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -249,7 +249,7 @@
         {
           "alias": "",
           "format": "table",
-          "rawSql": "SELECT cast(null as datetime) as time",
+          "rawSql": "SELECT cast(null as timestamp) as time",
           "refId": "A",
           "target": ""
         }
@@ -260,7 +260,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -303,18 +303,18 @@
         {
           "alias": "",
           "format": "table",
-          "rawSql": "SELECT GETDATE() as time",
+          "rawSql": "SELECT localtimestamp as time",
           "refId": "A",
           "target": ""
         }
       ],
-      "title": "GETDATE() as time",
+      "title": "localtimestamp as time",
       "transform": "table",
       "type": "table"
     },
     {
       "columns": [],
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -357,12 +357,12 @@
         {
           "alias": "",
           "format": "table",
-          "rawSql": "SELECT GETUTCDATE() as time",
+          "rawSql": "SELECT NOW() as time",
           "refId": "A",
           "target": ""
         }
       ],
-      "title": "GETUTCDATE() as time",
+      "title": "NOW() as time",
       "transform": "table",
       "type": "table"
     },
@@ -371,7 +371,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -405,7 +405,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
+          "rawSql": "SELECT $__timeGroup(time, '5m'), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -450,7 +450,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -484,7 +484,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
+          "rawSql": "SELECT $__timeGroup(time, '5m', NULL), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -529,7 +529,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -563,7 +563,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '5m', 10.0) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
+          "rawSql": "SELECT $__timeGroup(time, '5m', 10.0), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -608,7 +608,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -642,7 +642,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize') AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '$summarize') ORDER BY 1",
+          "rawSql": "SELECT $__timeGroup(time, '$summarize'), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -687,7 +687,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -721,7 +721,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize', NULL) AS time, sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '$summarize') ORDER BY 1",
+          "rawSql": "SELECT $__timeGroup(time, '$summarize', NULL), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -766,7 +766,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -800,7 +800,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize', 100.0) AS time, sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '$summarize') ORDER BY 1",
+          "rawSql": "SELECT $__timeGroup(time, '$summarize', 100.0), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -845,7 +845,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -883,13 +883,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement + ' - value one' as metric, \n  avg(valueOne) as valueOne\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  ($metric = 'ALL' OR measurement = $metric)\nGROUP BY \n  $__timeGroup(time, '$summarize'), \n  measurement \nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize'), \n  measurement || ' - value one' as metric, \n  avg(\"valueOne\") as \"valueOne\"\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement in($metric)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement + ' - value two' as metric, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values\nWHERE\n  $__timeFilter(time) AND\n  ($metric = 'ALL' OR measurement = $metric)\nGROUP BY \n  $__timeGroup(time, '$summarize'), \n  measurement \nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize'), \n  measurement || ' - value two' as metric, \n  avg(\"valueTwo\") as \"valueTwo\"\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement in($metric)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "B"
         }
       ],
@@ -934,7 +934,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -962,19 +962,7 @@
       "pointradius": 3,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "alias": "MovingAverageValueOne",
-          "dashes": true,
-          "lines": false
-        },
-        {
-          "alias": "MovingAverageValueTwo",
-          "dashes": true,
-          "lines": false,
-          "yaxis": 1
-        }
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
@@ -982,14 +970,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  ($metric = 'ALL' OR measurement = $metric)\nGROUP BY \n  $__timeGroup(time, '$summarize')\nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize'), \n  avg(\"valueOne\") as \"valueOne\", \n  avg(\"valueTwo\") as \"valueTwo\" \nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement in($metric)\nGROUP BY 1\nORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT \n  time,\n  avg(valueOne) OVER (ORDER BY time ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) as MovingAverageValueOne,\n  avg(valueTwo) OVER (ORDER BY time ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) as MovingAverageValueTwo\nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  ($metric = 'ALL' OR measurement = $metric)\nORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1033,7 +1015,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1071,13 +1053,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1122,7 +1104,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1158,7 +1140,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1203,7 +1185,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1241,13 +1223,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1292,7 +1274,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1328,7 +1310,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1373,7 +1355,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1411,13 +1393,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values WHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1462,7 +1444,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1498,7 +1480,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1540,182 +1522,16 @@
     },
     {
       "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
-      "fill": 2,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 57
-      },
-      "id": 29,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "hideEmpty": false,
-        "hideZero": false,
-        "max": true,
-        "min": true,
-        "rightSide": true,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "null",
-      "percentage": false,
-      "pointradius": 3,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "DECLARE\n  @from int = $__unixEpochFrom(), \n  @to int = $__unixEpochTo(), \n  @interval nvarchar(50) = '$summarize', \n  @metric nvarchar(200) = $metric\n  \nEXEC dbo.sp_test_epoch @from, @to, @interval, @metric",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Stored procedure support using epoch",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ]
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
-      "fill": 2,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 57
-      },
-      "id": 30,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "hideEmpty": false,
-        "hideZero": false,
-        "max": true,
-        "min": true,
-        "rightSide": true,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "null",
-      "percentage": false,
-      "pointradius": 3,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "DECLARE\n  @from datetime = $__timeFrom(), \n  @to datetime = $__timeTo(), \n  @interval nvarchar(50) = '$summarize', \n  @metric nvarchar(200) = $metric\n  \nEXEC dbo.sp_test_datetime @from, @to, @interval, @metric",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Stored procedure support using datetime",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ]
-    },
-    {
-      "aliasColors": {},
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 1,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 65
+        "y": 57
       },
       "id": 14,
       "legend": {
@@ -1745,13 +1561,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1799,13 +1615,13 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 1,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 65
+        "y": 57
       },
       "id": 15,
       "legend": {
@@ -1835,7 +1651,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1882,13 +1698,13 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 1,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 73
+        "y": 65
       },
       "id": 25,
       "legend": {
@@ -1918,13 +1734,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -1972,13 +1788,13 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 1,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 73
+        "y": 65
       },
       "id": 22,
       "legend": {
@@ -2008,7 +1824,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), \"valueOne\", \"valueTwo\" FROM metric_values\nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -2055,13 +1871,13 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 1,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 81
+        "y": 73
       },
       "id": 21,
       "legend": {
@@ -2091,13 +1907,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -2145,13 +1961,13 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 1,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 81
+        "y": 73
       },
       "id": 26,
       "legend": {
@@ -2181,7 +1997,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -2228,13 +2044,13 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 1,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 89
+        "y": 81
       },
       "id": 23,
       "legend": {
@@ -2264,13 +2080,13 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value one' as metric, valueOne FROM metric_values\nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement + ' - value two' as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "B"
         }
       ],
@@ -2318,13 +2134,13 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL_TEST}",
+      "datasource": "${DS_POSTGRES_TEST}",
       "fill": 1,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 89
+        "y": 81
       },
       "id": 24,
       "legend": {
@@ -2354,7 +2170,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND ($metric = 'ALL' OR measurement = $metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -2404,19 +2220,19 @@
   "templating": {
     "list": [
       {
-        "allValue": "'ALL'",
+        "allValue": null,
         "current": {},
-        "datasource": "${DS_MSSQL_TEST}",
+        "datasource": "${DS_POSTGRES_TEST}",
         "hide": 0,
         "includeAll": true,
         "label": "Metric",
-        "multi": false,
+        "multi": true,
         "name": "metric",
         "options": [],
         "query": "SELECT DISTINCT measurement FROM metric_values",
         "refresh": 1,
         "regex": "",
-        "sort": 0,
+        "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
         "tagsQuery": "",
@@ -2502,7 +2318,7 @@
     ]
   },
   "timezone": "",
-  "title": "Microsoft SQL Server Data Source Test",
-  "uid": "GlAqcPgmz",
-  "version": 57
+  "title": "Postgres Data Source Test",
+  "uid": "vHQdlVziz",
+  "version": 14
 }

@@ -638,7 +638,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 			Convey("Should result in 412 Precondition failed", func() {
 				So(sc.resp.Code, ShouldEqual, 412)
-				result := sc.ToJson()
+				result := sc.ToJSON()
 				So(result.Get("status").MustString(), ShouldEqual, "multiple-slugs-exists")
 				So(result.Get("message").MustString(), ShouldEqual, m.ErrDashboardsWithSameSlugExists.Error())
 			})
@@ -686,7 +686,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 
 				Convey("It should return correct response data", func() {
-					result := sc.ToJson()
+					result := sc.ToJSON()
 					So(result.Get("status").MustString(), ShouldEqual, "success")
 					So(result.Get("id").MustInt64(), ShouldEqual, 2)
 					So(result.Get("uid").MustString(), ShouldEqual, "uid")
@@ -903,7 +903,7 @@ func postDiffScenario(desc string, url string, routePattern string, cmd dtos.Cal
 	})
 }
 
-func (sc *scenarioContext) ToJson() *simplejson.Json {
+func (sc *scenarioContext) ToJSON() *simplejson.Json {
 	var result *simplejson.Json
 	err := json.NewDecoder(sc.resp.Body).Decode(&result)
 	So(err, ShouldBeNil)

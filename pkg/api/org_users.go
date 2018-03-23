@@ -20,13 +20,13 @@ func AddOrgUser(c *m.ReqContext, cmd m.AddOrgUserCommand) Response {
 
 func addOrgUserHelper(cmd m.AddOrgUserCommand) Response {
 	if !cmd.Role.IsValid() {
-		return ApiError(400, "Invalid role specified", nil)
+		return Error(400, "Invalid role specified", nil)
 	}
 
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
 	err := bus.Dispatch(&userQuery)
 	if err != nil {
-		return ApiError(404, "User not found", nil)
+		return Error(404, "User not found", nil)
 	}
 
 	userToAdd := userQuery.Result
@@ -35,12 +35,12 @@ func addOrgUserHelper(cmd m.AddOrgUserCommand) Response {
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrOrgUserAlreadyAdded {
-			return ApiError(409, "User is already member of this organization", nil)
+			return Error(409, "User is already member of this organization", nil)
 		}
-		return ApiError(500, "Could not add user to organization", err)
+		return Error(500, "Could not add user to organization", err)
 	}
 
-	return ApiSuccess("User added to organization")
+	return Success("User added to organization")
 }
 
 // GET /api/org/users
@@ -61,14 +61,14 @@ func getOrgUsersHelper(orgID int64, query string, limit int) Response {
 	}
 
 	if err := bus.Dispatch(&q); err != nil {
-		return ApiError(500, "Failed to get account user", err)
+		return Error(500, "Failed to get account user", err)
 	}
 
 	for _, user := range q.Result {
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
 	}
 
-	return Json(200, q.Result)
+	return JSON(200, q.Result)
 }
 
 // PATCH /api/org/users/:userId
@@ -87,17 +87,17 @@ func UpdateOrgUser(c *m.ReqContext, cmd m.UpdateOrgUserCommand) Response {
 
 func updateOrgUserHelper(cmd m.UpdateOrgUserCommand) Response {
 	if !cmd.Role.IsValid() {
-		return ApiError(400, "Invalid role specified", nil)
+		return Error(400, "Invalid role specified", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrLastOrgAdmin {
-			return ApiError(400, "Cannot change role so that there is no organization admin left", nil)
+			return Error(400, "Cannot change role so that there is no organization admin left", nil)
 		}
-		return ApiError(500, "Failed update org user", err)
+		return Error(500, "Failed update org user", err)
 	}
 
-	return ApiSuccess("Organization user updated")
+	return Success("Organization user updated")
 }
 
 // DELETE /api/org/users/:userId
@@ -118,10 +118,10 @@ func removeOrgUserHelper(orgID int64, userID int64) Response {
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrLastOrgAdmin {
-			return ApiError(400, "Cannot remove last organization admin", nil)
+			return Error(400, "Cannot remove last organization admin", nil)
 		}
-		return ApiError(500, "Failed to remove user from organization", err)
+		return Error(500, "Failed to remove user from organization", err)
 	}
 
-	return ApiSuccess("User removed from organization")
+	return Success("User removed from organization")
 }
