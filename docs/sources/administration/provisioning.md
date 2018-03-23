@@ -79,9 +79,11 @@ Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://gith
 It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `delete_datasources`. Grafana will delete datasources listed in `delete_datasources` before inserting/updating those in the `datasource` list.
 
 ### Running multiple Grafana instances.
+
 If you are running multiple instances of Grafana you might run into problems if they have different versions of the `datasource.yaml` configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way, old configs cannot overwrite newer configs if they restart at the same time.
 
 ### Example datasource config file
+
 ```yaml
 # config file version
 apiVersion: 1
@@ -139,7 +141,7 @@ datasources:
 
 | Datasource | Misc |
 | ---- | ---- |
-| Elasticserach | Elasticsearch uses the `database` property to configure the index for a datasource |
+| Elasticsearch | Elasticsearch uses the `database` property to configure the index for a datasource |
 
 #### Json data
 
@@ -148,7 +150,7 @@ Since not all datasources have the same configuration settings we only have the 
 | Name | Type | Datasource | Description |
 | ---- | ---- | ---- | ---- |
 | tlsAuth | boolean | *All* |  Enable TLS authentication using client cert configured in secure json data |
-| tlsAuthWithCACert | boolean | *All* | Enable TLS authtication using CA cert |
+| tlsAuthWithCACert | boolean | *All* | Enable TLS authentication using CA cert |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Elastic, Influxdb & Prometheus | Lowest interval/step value that should be used for this data source |
@@ -162,7 +164,6 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion | string | OpenTsdb | Version |
 | tsdbResolution | string | OpenTsdb | Resolution |
 | sslmode | string | Postgre | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
-
 
 #### Secure Json data
 
