@@ -105,7 +105,7 @@ For **Mode** there are three options:
 - **Show** - Uncheck to hide the legend (default checked/true)
 - **Table** - Check to display legend in table (default unchecked/false)
 - **To the right** - Check to display legend to the right (default unchecked/false)
-- **Width** - Available when *To the right* is checked. Value to contral the minimum width for the legend (default 0)
+- **Width** - Available when *To the right* is checked. Value to control the minimum width for the legend (default 0)
 
 ### Values
 
@@ -150,7 +150,7 @@ Display styles control visual properties of the graph.
 - **Fill** - Amount of color fill for a series (default 1). 0 is none.
 - **Line Width** - The width of the line for a series (default 1).
 - **Staircase** - Draws adjacent points as staircase
-- **Points Radius** - Asjust the size of points when *Points* are selected as *Draw Mode*.
+- **Points Radius** - Adjust the size of points when *Points* are selected as *Draw Mode*.
 
 #### Hover tooltip
 
