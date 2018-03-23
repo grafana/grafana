@@ -29,7 +29,7 @@ type UpsertUserCommand struct {
 	ExternalUser  *ExternalUserInfo
 	SignupAllowed bool
 
-	User *User
+	Result *User
 }
 
 type SetAuthInfoCommand struct {

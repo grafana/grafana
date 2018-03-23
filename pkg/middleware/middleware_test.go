@@ -184,7 +184,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			login.UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
-				cmd.User = &m.User{Id: 12}
+				cmd.Result = &m.User{Id: 12}
 				return nil
 			}
 
@@ -215,7 +215,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			login.UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
-				cmd.User = &m.User{Id: 33}
+				cmd.Result = &m.User{Id: 33}
 				return nil
 			}
 
@@ -277,7 +277,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			login.UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
-				cmd.User = &m.User{Id: 33}
+				cmd.Result = &m.User{Id: 33}
 				return nil
 			}
 

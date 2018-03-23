@@ -39,15 +39,15 @@ var UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
 			return ErrUsersQuotaReached
 		}
 
-		cmd.User, err = createUser(extUser)
+		cmd.Result, err = createUser(extUser)
 		if err != nil {
 			return err
 		}
 	} else {
-		cmd.User = userQuery.User
+		cmd.Result = userQuery.User
 
 		// sync user info
-		err = updateUser(cmd.User, extUser)
+		err = updateUser(cmd.Result, extUser)
 		if err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ var UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
 
 	if userQuery.UserAuth == nil && extUser.AuthModule != "" && extUser.AuthId != "" {
 		cmd2 := m.SetAuthInfoCommand{
-			UserId:     cmd.User.Id,
+			UserId:     cmd.Result.Id,
 			AuthModule: extUser.AuthModule,
 			AuthId:     extUser.AuthId,
 		}
@@ -64,7 +64,7 @@ var UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
 		}
 	}
 
-	err = syncOrgRoles(cmd.User, extUser)
+	err = syncOrgRoles(cmd.Result, extUser)
 	if err != nil {
 		return err
 	}

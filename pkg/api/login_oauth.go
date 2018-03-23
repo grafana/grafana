@@ -164,18 +164,18 @@ func OAuthLogin(ctx *m.ReqContext) {
 	}
 
 	// add/update user in grafana
-	userQuery := &m.UpsertUserCommand{
+	cmd := &m.UpsertUserCommand{
 		ExternalUser:  &extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
-	err = login.UpsertUser(ctx, userQuery)
+	err = login.UpsertUser(ctx, cmd)
 	if err != nil {
 		redirectWithError(ctx, err)
 		return
 	}
 
 	// login
-	loginUserWithUser(userQuery.User, ctx)
+	loginUserWithUser(cmd.Result, ctx)
 
 	metrics.M_Api_Login_OAuth.Inc()
 

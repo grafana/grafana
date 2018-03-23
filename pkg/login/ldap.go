@@ -199,7 +199,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		return nil, err
 	}
 
-	return userQuery.User, nil
+	return userQuery.Result, nil
 }
 
 func (a *ldapAuther) serverBind() error {
