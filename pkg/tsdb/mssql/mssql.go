@@ -119,15 +119,10 @@ func (e MssqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows,
 			return err
 		}
 
-		// convert column named time to unix timestamp to make
-		// native datetime mssql types work in annotation queries
-		if timeIndex != -1 {
-			switch value := values[timeIndex].(type) {
-			case time.Time:
-				values[timeIndex] = float64(value.Unix())
-			}
-		}
-
+		// converts column named time to unix timestamp in milliseconds
+		// to make native mssql datetime types and epoch dates work in
+		// annotation and table queries.
+		tsdb.ConvertSqlTimeColumnToEpochMs(values, timeIndex)
 		table.Rows = append(table.Rows, values)
 	}
 

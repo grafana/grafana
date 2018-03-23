@@ -68,7 +68,7 @@ func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]str
 
 func (m *MySqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
-	case "__time":
+	case "__timeEpoch", "__time":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
