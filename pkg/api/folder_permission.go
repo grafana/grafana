@@ -12,7 +12,7 @@ import (
 
 func GetFolderPermissionList(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folder, err := s.GetFolderByUid(c.Params(":uid"))
+	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
 	if err != nil {
 		return toFolderError(err)
@@ -26,7 +26,7 @@ func GetFolderPermissionList(c *m.ReqContext) Response {
 
 	acl, err := g.GetAcl()
 	if err != nil {
-		return ApiError(500, "Failed to get folder permissions", err)
+		return Error(500, "Failed to get folder permissions", err)
 	}
 
 	for _, perm := range acl {
@@ -38,12 +38,12 @@ func GetFolderPermissionList(c *m.ReqContext) Response {
 		}
 	}
 
-	return Json(200, acl)
+	return JSON(200, acl)
 }
 
 func UpdateFolderPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folder, err := s.GetFolderByUid(c.Params(":uid"))
+	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
 	if err != nil {
 		return toFolderError(err)
@@ -79,13 +79,13 @@ func UpdateFolderPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclComm
 		if err != nil {
 			if err == guardian.ErrGuardianPermissionExists ||
 				err == guardian.ErrGuardianOverride {
-				return ApiError(400, err.Error(), err)
+				return Error(400, err.Error(), err)
 			}
 
-			return ApiError(500, "Error while checking folder permissions", err)
+			return Error(500, "Error while checking folder permissions", err)
 		}
 
-		return ApiError(403, "Cannot remove own admin permission for a folder", nil)
+		return Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -97,11 +97,11 @@ func UpdateFolderPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclComm
 		}
 
 		if err == m.ErrFolderAclInfoMissing || err == m.ErrFolderPermissionFolderEmpty {
-			return ApiError(409, err.Error(), err)
+			return Error(409, err.Error(), err)
 		}
 
-		return ApiError(500, "Failed to create permission", err)
+		return Error(500, "Failed to create permission", err)
 	}
 
-	return ApiSuccess("Folder permissions updated")
+	return Success("Folder permissions updated")
 }

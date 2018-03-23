@@ -14,7 +14,7 @@ func GetDataSources(c *m.ReqContext) Response {
 	query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to query datasources", err)
+		return Error(500, "Failed to query datasources", err)
 	}
 
 	result := make(dtos.DataSourceList, 0)
@@ -46,7 +46,7 @@ func GetDataSources(c *m.ReqContext) Response {
 
 	sort.Sort(result)
 
-	return Json(200, &result)
+	return JSON(200, &result)
 }
 
 func GetDataSourceByID(c *m.ReqContext) Response {
@@ -57,66 +57,66 @@ func GetDataSourceByID(c *m.ReqContext) Response {
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrDataSourceNotFound {
-			return ApiError(404, "Data source not found", nil)
+			return Error(404, "Data source not found", nil)
 		}
-		return ApiError(500, "Failed to query datasources", err)
+		return Error(500, "Failed to query datasources", err)
 	}
 
 	ds := query.Result
 	dtos := convertModelToDtos(ds)
 
-	return Json(200, &dtos)
+	return JSON(200, &dtos)
 }
 
 func DeleteDataSourceByID(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
-		return ApiError(400, "Missing valid datasource id", nil)
+		return Error(400, "Missing valid datasource id", nil)
 	}
 
 	ds, err := getRawDataSourceByID(id, c.OrgId)
 	if err != nil {
-		return ApiError(400, "Failed to delete datasource", nil)
+		return Error(400, "Failed to delete datasource", nil)
 	}
 
 	if ds.ReadOnly {
-		return ApiError(403, "Cannot delete read-only data source", nil)
+		return Error(403, "Cannot delete read-only data source", nil)
 	}
 
 	cmd := &m.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
 
 	err = bus.Dispatch(cmd)
 	if err != nil {
-		return ApiError(500, "Failed to delete datasource", err)
+		return Error(500, "Failed to delete datasource", err)
 	}
 
-	return ApiSuccess("Data source deleted")
+	return Success("Data source deleted")
 }
 
 func DeleteDataSourceByName(c *m.ReqContext) Response {
 	name := c.Params(":name")
 
 	if name == "" {
-		return ApiError(400, "Missing valid datasource name", nil)
+		return Error(400, "Missing valid datasource name", nil)
 	}
 
 	getCmd := &m.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
 	if err := bus.Dispatch(getCmd); err != nil {
-		return ApiError(500, "Failed to delete datasource", err)
+		return Error(500, "Failed to delete datasource", err)
 	}
 
 	if getCmd.Result.ReadOnly {
-		return ApiError(403, "Cannot delete read-only data source", nil)
+		return Error(403, "Cannot delete read-only data source", nil)
 	}
 
 	cmd := &m.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		return ApiError(500, "Failed to delete datasource", err)
+		return Error(500, "Failed to delete datasource", err)
 	}
 
-	return ApiSuccess("Data source deleted")
+	return Success("Data source deleted")
 }
 
 func AddDataSource(c *m.ReqContext, cmd m.AddDataSourceCommand) Response {
@@ -124,14 +124,14 @@ func AddDataSource(c *m.ReqContext, cmd m.AddDataSourceCommand) Response {
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrDataSourceNameExists {
-			return ApiError(409, err.Error(), err)
+			return Error(409, err.Error(), err)
 		}
 
-		return ApiError(500, "Failed to add datasource", err)
+		return Error(500, "Failed to add datasource", err)
 	}
 
 	ds := convertModelToDtos(cmd.Result)
-	return Json(200, util.DynMap{
+	return JSON(200, util.DynMap{
 		"message":    "Datasource added",
 		"id":         cmd.Result.Id,
 		"name":       cmd.Result.Name,
@@ -145,18 +145,18 @@ func UpdateDataSource(c *m.ReqContext, cmd m.UpdateDataSourceCommand) Response {
 
 	err := fillWithSecureJSONData(&cmd)
 	if err != nil {
-		return ApiError(500, "Failed to update datasource", err)
+		return Error(500, "Failed to update datasource", err)
 	}
 
 	err = bus.Dispatch(&cmd)
 	if err != nil {
 		if err == m.ErrDataSourceUpdatingOldVersion {
-			return ApiError(500, "Failed to update datasource. Reload new version and try again", err)
+			return Error(500, "Failed to update datasource. Reload new version and try again", err)
 		}
-		return ApiError(500, "Failed to update datasource", err)
+		return Error(500, "Failed to update datasource", err)
 	}
 	ds := convertModelToDtos(cmd.Result)
-	return Json(200, util.DynMap{
+	return JSON(200, util.DynMap{
 		"message":    "Datasource updated",
 		"id":         cmd.Id,
 		"name":       cmd.Name,
@@ -208,14 +208,14 @@ func GetDataSourceByName(c *m.ReqContext) Response {
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrDataSourceNotFound {
-			return ApiError(404, "Data source not found", nil)
+			return Error(404, "Data source not found", nil)
 		}
-		return ApiError(500, "Failed to query datasources", err)
+		return Error(500, "Failed to query datasources", err)
 	}
 
 	dtos := convertModelToDtos(query.Result)
 	dtos.ReadOnly = true
-	return Json(200, &dtos)
+	return JSON(200, &dtos)
 }
 
 // Get /api/datasources/id/:name
@@ -224,9 +224,9 @@ func GetDataSourceIDByName(c *m.ReqContext) Response {
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrDataSourceNotFound {
-			return ApiError(404, "Data source not found", nil)
+			return Error(404, "Data source not found", nil)
 		}
-		return ApiError(500, "Failed to query datasources", err)
+		return Error(500, "Failed to query datasources", err)
 	}
 
 	ds := query.Result
@@ -234,7 +234,7 @@ func GetDataSourceIDByName(c *m.ReqContext) Response {
 		Id: ds.Id,
 	}
 
-	return Json(200, &dtos)
+	return JSON(200, &dtos)
 }
 
 func convertModelToDtos(ds *m.DataSource) dtos.DataSource {

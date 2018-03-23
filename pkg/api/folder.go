@@ -28,30 +28,30 @@ func GetFolders(c *m.ReqContext) Response {
 		})
 	}
 
-	return Json(200, result)
+	return JSON(200, result)
 }
 
 func GetFolderByUID(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folder, err := s.GetFolderByUid(c.Params(":uid"))
+	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
 	if err != nil {
 		return toFolderError(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return Json(200, toFolderDto(g, folder))
+	return JSON(200, toFolderDto(g, folder))
 }
 
 func GetFolderByID(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folder, err := s.GetFolderById(c.ParamsInt64(":id"))
+	folder, err := s.GetFolderByID(c.ParamsInt64(":id"))
 	if err != nil {
 		return toFolderError(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return Json(200, toFolderDto(g, folder))
+	return JSON(200, toFolderDto(g, folder))
 }
 
 func CreateFolder(c *m.ReqContext, cmd m.CreateFolderCommand) Response {
@@ -62,7 +62,7 @@ func CreateFolder(c *m.ReqContext, cmd m.CreateFolderCommand) Response {
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return Json(200, toFolderDto(g, cmd.Result))
+	return JSON(200, toFolderDto(g, cmd.Result))
 }
 
 func UpdateFolder(c *m.ReqContext, cmd m.UpdateFolderCommand) Response {
@@ -73,7 +73,7 @@ func UpdateFolder(c *m.ReqContext, cmd m.UpdateFolderCommand) Response {
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return Json(200, toFolderDto(g, cmd.Result))
+	return JSON(200, toFolderDto(g, cmd.Result))
 }
 
 func DeleteFolder(c *m.ReqContext) Response {
@@ -83,7 +83,7 @@ func DeleteFolder(c *m.ReqContext) Response {
 		return toFolderError(err)
 	}
 
-	return Json(200, util.DynMap{
+	return JSON(200, util.DynMap{
 		"title":   f.Title,
 		"message": fmt.Sprintf("Folder %s deleted", f.Title),
 	})
@@ -127,20 +127,20 @@ func toFolderError(err error) Response {
 		err == m.ErrDashboardTypeMismatch ||
 		err == m.ErrDashboardInvalidUid ||
 		err == m.ErrDashboardUidToLong {
-		return ApiError(400, err.Error(), nil)
+		return Error(400, err.Error(), nil)
 	}
 
 	if err == m.ErrFolderAccessDenied {
-		return ApiError(403, "Access denied", err)
+		return Error(403, "Access denied", err)
 	}
 
 	if err == m.ErrFolderNotFound {
-		return Json(404, util.DynMap{"status": "not-found", "message": m.ErrFolderNotFound.Error()})
+		return JSON(404, util.DynMap{"status": "not-found", "message": m.ErrFolderNotFound.Error()})
 	}
 
 	if err == m.ErrFolderVersionMismatch {
-		return Json(412, util.DynMap{"status": "version-mismatch", "message": m.ErrFolderVersionMismatch.Error()})
+		return JSON(412, util.DynMap{"status": "version-mismatch", "message": m.ErrFolderVersionMismatch.Error()})
 	}
 
-	return ApiError(500, "Folder API error", err)
+	return Error(500, "Folder API error", err)
 }
