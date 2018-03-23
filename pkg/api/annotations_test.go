@@ -18,7 +18,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 			Text:        "annotation text",
 			Tags:        []string{"tag1", "tag2"},
 			IsRegion:    false,
-			DashboardId: 1,
+			DashboardId: 5,
 		}
 
 		updateCmd := dtos.UpdateAnnotationsCmd{
