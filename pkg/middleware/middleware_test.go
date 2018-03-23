@@ -9,7 +9,6 @@ import (
 
 	ms "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
@@ -183,10 +182,10 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			login.UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
 				cmd.Result = &m.User{Id: 12}
 				return nil
-			}
+			})
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
@@ -214,10 +213,10 @@ func TestMiddlewareContext(t *testing.T) {
 				}
 			})
 
-			login.UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
 				cmd.Result = &m.User{Id: 33}
 				return nil
-			}
+			})
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
@@ -276,10 +275,10 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			login.UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
 				cmd.Result = &m.User{Id: 33}
 				return nil
-			}
+			})
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
@@ -298,6 +297,11 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = ""
+
+			bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
+				query.Result = &m.User{Id: 32}
+				return nil
+			})
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
@@ -333,6 +337,11 @@ func TestMiddlewareContext(t *testing.T) {
 				called = true
 				return nil
 			}
+
+			bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
+				query.Result = &m.User{Id: 32}
+				return nil
+			})
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}

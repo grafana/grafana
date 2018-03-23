@@ -23,7 +23,7 @@ func Init() {
 	loadLdapConfig()
 }
 
-func AuthenticateUser(ctx *m.ReqContext, query *m.LoginUserQuery) error {
+func AuthenticateUser(query *m.LoginUserQuery) error {
 	if err := validateLoginAttempts(query.Username); err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func AuthenticateUser(ctx *m.ReqContext, query *m.LoginUserQuery) error {
 		return err
 	}
 
-	ldapEnabled, ldapErr := loginUsingLdap(ctx, query)
+	ldapEnabled, ldapErr := loginUsingLdap(query)
 	if ldapEnabled {
 		if ldapErr == nil || ldapErr != ErrInvalidCredentials {
 			return ldapErr

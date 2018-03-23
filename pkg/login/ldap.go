@@ -10,6 +10,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-ldap/ldap"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,7 +24,7 @@ type ILdapConn interface {
 }
 
 type ILdapAuther interface {
-	Login(ctx *m.ReqContext, query *m.LoginUserQuery) error
+	Login(query *m.LoginUserQuery) error
 	SyncSignedInUser(ctx *m.ReqContext, signedInUser *m.SignedInUser) error
 	GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error)
 }
@@ -87,17 +88,15 @@ func (a *ldapAuther) Dial() error {
 	return err
 }
 
-func (a *ldapAuther) Login(ctx *m.ReqContext, query *m.LoginUserQuery) error {
+func (a *ldapAuther) Login(query *m.LoginUserQuery) error {
 	// connect to ldap server
-	err := a.Dial()
-	if err != nil {
+	if err := a.Dial(); err != nil {
 		return err
 	}
 	defer a.conn.Close()
 
 	// perform initial authentication
-	err = a.initialBind(query.Username, query.Password)
-	if err != nil {
+	if err := a.initialBind(query.Username, query.Password); err != nil {
 		return err
 	}
 
@@ -117,7 +116,7 @@ func (a *ldapAuther) Login(ctx *m.ReqContext, query *m.LoginUserQuery) error {
 		}
 	}
 
-	grafanaUser, err := a.GetGrafanaUserFor(ctx, ldapUser)
+	grafanaUser, err := a.GetGrafanaUserFor(query.ReqContext, ldapUser)
 	if err != nil {
 		return err
 	}
@@ -158,7 +157,7 @@ func (a *ldapAuther) SyncSignedInUser(ctx *m.ReqContext, signedInUser *m.SignedI
 }
 
 func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error) {
-	extUser := m.ExternalUserInfo{
+	extUser := &m.ExternalUserInfo{
 		AuthModule: "ldap",
 		AuthId:     ldapUser.DN,
 		Name:       fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName),
@@ -190,11 +189,12 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 	}
 
 	// add/update user in grafana
-	userQuery := m.UpsertUserCommand{
-		ExternalUser:  &extUser,
+	userQuery := &m.UpsertUserCommand{
+		ReqContext:    ctx,
+		ExternalUser:  extUser,
 		SignupAllowed: setting.LdapAllowSignup,
 	}
-	err := UpsertUser(ctx, &userQuery)
+	err := bus.Dispatch(userQuery)
 	if err != nil {
 		return nil, err
 	}

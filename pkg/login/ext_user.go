@@ -9,7 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
-var UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
+func init() {
+	bus.AddHandler("auth", UpsertUser)
+}
+
+func UpsertUser(cmd *m.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
 	userQuery := m.GetUserByAuthInfoQuery{
@@ -30,7 +34,7 @@ var UpsertUser = func(ctx *m.ReqContext, cmd *m.UpsertUserCommand) error {
 			return ErrInvalidCredentials
 		}
 
-		limitReached, err := quota.QuotaReached(ctx, "user")
+		limitReached, err := quota.QuotaReached(cmd.ReqContext, "user")
 		if err != nil {
 			log.Warn("Error getting user quota", "err", err)
 			return ErrGettingUserQuota

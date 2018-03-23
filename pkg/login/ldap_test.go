@@ -192,6 +192,8 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 
 		sc := &scenarioContext{}
 
+		bus.AddHandler("test", UpsertUser)
+
 		bus.AddHandler("test", func(cmd *m.GetUserByAuthInfoQuery) error {
 			sc.getUserByAuthInfoQuery = cmd
 			sc.getUserByAuthInfoQuery.User = &m.User{Login: cmd.Login}

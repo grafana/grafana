@@ -50,7 +50,7 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 			return true
 		}
 	} else {
-		extUser := m.ExternalUserInfo{
+		extUser := &m.ExternalUserInfo{
 			AuthModule: "authproxy",
 			AuthId:     proxyHeaderValue,
 		}
@@ -73,10 +73,11 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 
 		// add/update user in grafana
 		cmd := &m.UpsertUserCommand{
-			ExternalUser:  &extUser,
+			ReqContext:    ctx,
+			ExternalUser:  extUser,
 			SignupAllowed: setting.AuthProxyAutoSignUp,
 		}
-		err := login.UpsertUser(ctx, cmd)
+		err := bus.Dispatch(cmd)
 		if err != nil {
 			ctx.Handle(500, "Failed to login as user specified in auth proxy header", err)
 			return true

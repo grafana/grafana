@@ -19,7 +19,7 @@ func TestLdapLogin(t *testing.T) {
 
 			ldapLoginScenario("When login with invalid credentials", func(sc *ldapLoginScenarioContext) {
 				sc.withLoginResult(false)
-				enabled, err := loginUsingLdap(nil, sc.loginUserQuery)
+				enabled, err := loginUsingLdap(sc.loginUserQuery)
 
 				Convey("it should return true", func() {
 					So(enabled, ShouldBeTrue)
@@ -36,7 +36,7 @@ func TestLdapLogin(t *testing.T) {
 
 			ldapLoginScenario("When login with valid credentials", func(sc *ldapLoginScenarioContext) {
 				sc.withLoginResult(true)
-				enabled, err := loginUsingLdap(nil, sc.loginUserQuery)
+				enabled, err := loginUsingLdap(sc.loginUserQuery)
 
 				Convey("it should return true", func() {
 					So(enabled, ShouldBeTrue)
@@ -58,7 +58,7 @@ func TestLdapLogin(t *testing.T) {
 
 			ldapLoginScenario("When login", func(sc *ldapLoginScenarioContext) {
 				sc.withLoginResult(true)
-				enabled, err := loginUsingLdap(nil, sc.loginUserQuery)
+				enabled, err := loginUsingLdap(sc.loginUserQuery)
 
 				Convey("it should return true", func() {
 					So(enabled, ShouldBeTrue)
@@ -79,7 +79,7 @@ func TestLdapLogin(t *testing.T) {
 
 			ldapLoginScenario("When login", func(sc *ldapLoginScenarioContext) {
 				sc.withLoginResult(false)
-				enabled, err := loginUsingLdap(nil, &m.LoginUserQuery{
+				enabled, err := loginUsingLdap(&m.LoginUserQuery{
 					Username: "user",
 					Password: "pwd",
 				})
@@ -117,7 +117,7 @@ type mockLdapAuther struct {
 	loginCalled bool
 }
 
-func (a *mockLdapAuther) Login(ctx *m.ReqContext, query *m.LoginUserQuery) error {
+func (a *mockLdapAuther) Login(query *m.LoginUserQuery) error {
 	a.loginCalled = true
 
 	if !a.validLogin {

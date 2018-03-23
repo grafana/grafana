@@ -26,6 +26,7 @@ type ExternalUserInfo struct {
 // COMMANDS
 
 type UpsertUserCommand struct {
+	ReqContext    *ReqContext
 	ExternalUser  *ExternalUserInfo
 	SignupAllowed bool
 
@@ -46,10 +47,11 @@ type DeleteAuthInfoCommand struct {
 // QUERIES
 
 type LoginUserQuery struct {
-	Username  string
-	Password  string
-	User      *User
-	IpAddress string
+	ReqContext *ReqContext
+	Username   string
+	Password   string
+	User       *User
+	IpAddress  string
 }
 
 type GetUserByAuthInfoQuery struct {

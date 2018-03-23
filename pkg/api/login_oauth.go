@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -150,7 +151,7 @@ func OAuthLogin(ctx *m.ReqContext) {
 		return
 	}
 
-	extUser := m.ExternalUserInfo{
+	extUser := &m.ExternalUserInfo{
 		AuthModule: "oauth_" + name,
 		AuthId:     userInfo.Id,
 		Name:       userInfo.Name,
@@ -165,10 +166,11 @@ func OAuthLogin(ctx *m.ReqContext) {
 
 	// add/update user in grafana
 	cmd := &m.UpsertUserCommand{
-		ExternalUser:  &extUser,
+		ReqContext:    ctx,
+		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
-	err = login.UpsertUser(ctx, cmd)
+	err = bus.Dispatch(cmd)
 	if err != nil {
 		redirectWithError(ctx, err)
 		return
