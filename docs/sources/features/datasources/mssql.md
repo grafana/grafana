@@ -70,12 +70,11 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 Macro example | Description
 ------------ | -------------
 *$__time(dateColumn)* | Will be replaced by an expression to rename the column to *time*. For example, *dateColumn as time*
-*$__utcTime(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to UTC depending on the server's local timeoffset and rename it to *time*. <br/>For example, *DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time*
-*$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to unix timestamp and rename it to *time*. <br/>For example, *DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time*
-*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. <br/>For example, *dateColumn >= DATEADD(s, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND dateColumn <= DATEADD(s, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
-*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *DATEADD(second, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
-*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *DATEADD(second, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
-*$__timeGroup(dateColumn,'5m'[, fillvalue])* | Will be replaced by an expression usable in GROUP BY clause. Providing a *fillValue* of *NULL* or *floating value* will automatically fill empty series in timerange with that value. <br/>For example, *cast(cast(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second, GETDATE(), GETUTCDATE()), column))/300 as int)*300 as int)*.
+*$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to unix timestamp and rename it to *time*. <br/>For example, *DATEDIFF(second, '1970-01-01', dateColumn) AS time*
+*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. <br/>For example, *dateColumn >= DATEADD(s, 1494410783, '1970-01-01') AND dateColumn <= DATEADD(s, 1494410783, '1970-01-01')*
+*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *DATEADD(second, 1494410783, '1970-01-01')*
+*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *DATEADD(second, 1494410783, '1970-01-01')*
+*$__timeGroup(dateColumn,'5m'[, fillvalue])* | Will be replaced by an expression usable in GROUP BY clause. Providing a *fillValue* of *NULL* or *floating value* will automatically fill empty series in timerange with that value. <br/>For example, *CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) as bigint)\*300*.
 *$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so all null values will be converted to the fill value (all null values would be set to zero using this example).
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
@@ -333,7 +332,7 @@ ORDER BY atimestamp
 
 Name | Description
 ------------ | -------------
-time | The name of the date/time field. Could be in a native sql time datatype or epoch seconds.
+time | The name of the date/time field. Could be a column with a native sql date/time data type or epoch value.
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 
@@ -349,7 +348,7 @@ CREATE TABLE [events] (
 
 We also use the database table defined in [Time series queries](#time-series-queries).
 
-**Example query using time column of type epoch seconds:**
+**Example query using time column with epoch values:**
 
 ```sql
 SELECT
@@ -363,7 +362,7 @@ WHERE
 ORDER BY 1
 ```
 
-**Example query using time column of type datetime:**
+**Example query using time column of native sql date/time data type:**
 
 ```sql
 SELECT

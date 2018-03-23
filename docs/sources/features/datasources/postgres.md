@@ -20,6 +20,18 @@ Grafana ships with a built-in PostgreSQL data source plugin that allows you to q
 3. Click the `+ Add data source` button in the top header.
 4. Select *PostgreSQL* from the *Type* dropdown.
 
+### Data source options
+
+Name | Description
+------------ | -------------
+*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Default* | Default data source means that it will be pre-selected for new panels.
+*Host* | The IP address/hostname and optional port of your PostgreSQL instance.
+*Database* | Name of your PostgreSQL database.
+*User* | Database user's login/username
+*Password* | Database user's password
+*SSL Mode* | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+
 ### Database User Permissions (Important!)
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
@@ -44,7 +56,7 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 Macro example | Description
 ------------ | -------------
 *$__time(dateColumn)* | Will be replaced by an expression to rename the column to `time`. For example, *dateColumn as time*
-*$__timeSec(dateColumn)* | Will be replaced by an expression to rename the column to `time` and converting the value to unix timestamp. For example, *extract(epoch from dateColumn) as time*
+*$__timeEpoch(dateColumn)* | Will be replaced by an expression to rename the column to `time` and converting the value to unix timestamp. For example, *extract(epoch from dateColumn) as time*
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *extract(epoch from dateColumn) BETWEEN 1494410783 AND 1494497183*
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *to_timestamp(1494410783)*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *to_timestamp(1494497183)*
@@ -85,48 +97,48 @@ The resulting table panel:
 
 ![](/img/docs/v46/postgres_table.png)
 
-### Time series queries
+## Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch in seconds.
+If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch.
 Any column except `time` and `metric` is treated as a value column.
 You may return a column named `metric` that is used as metric name for the value column.
 
-Example with `metric` column
+**Example with `metric` column:**
 
 ```sql
 SELECT
-  $__timeGroup(time_date_time,'5m'),
-  min(value_double),
+  $__timeGroup("time_date_time",'5m'),
+  min("value_double"),
   'min' as metric
 FROM test_data
-WHERE $__timeFilter(time_date_time)
+WHERE $__timeFilter("time_date_time")
 GROUP BY time
 ORDER BY time
 ```
 
-Example using the fill parameter in the $__timeGroup macro to convert null values to be zero instead:
+**Example using the fill parameter in the $__timeGroup macro to convert null values to be zero instead:**
 
 ```sql
 SELECT
   $__timeGroup("createdAt",'5m',0),
   sum(value) as value,
   measurement
-FROM public.grafana_metric
+FROM test_data
 WHERE
   $__timeFilter("createdAt")
 GROUP BY time, measurement
 ORDER BY time
 ```
 
-Example with multiple columns:
+**Example with multiple columns:**
 
 ```sql
 SELECT
-  $__timeGroup(time_date_time,'5m'),
-  min(value_double) as min_value,
-  max(value_double) as max_value
+  $__timeGroup("time_date_time",'5m'),
+  min("value_double") as "min_value",
+  max("value_double") as "max_value"
 FROM test_data
-WHERE $__timeFilter(time_date_time)
+WHERE $__timeFilter("time_date_time")
 GROUP BY time
 ORDER BY time
 ```
@@ -209,22 +221,35 @@ ORDER BY atimestamp ASC
 
 [Annotations]({{< relref "reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
-An example query:
+**Example query using time column with epoch values:**
 
 ```sql
 SELECT
-  extract(epoch from time_date_time) AS time,
- metric1 as text,
+  epoch_time as time,
+  metric1 as text,
   concat_ws(', ', metric1::text, metric2::text) as tags
 FROM
   public.test_data
 WHERE
-  $__timeFilter(time_date_time)
+  $__unixEpochFilter(epoch_time)
+```
+
+**Example query using time column of native sql date/time data type:**
+
+```sql
+SELECT
+  native_date_time as time,
+  metric1 as text,
+  concat_ws(', ', metric1::text, metric2::text) as tags
+FROM
+  public.test_data
+WHERE
+  $__timeFilter(native_date_time)
 ```
 
 Name | Description
 ------------ | -------------
-time | The name of the date/time field.
+time | The name of the date/time field. Could be a column with a native sql date/time data type or epoch value.
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 
