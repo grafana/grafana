@@ -128,7 +128,7 @@ export default class ResponseParser {
       const row = table.rows[i];
       list.push({
         annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]) * 1000,
+        time: Math.floor(row[timeColumnIndex]),
         text: row[textColumnIndex],
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });

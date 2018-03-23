@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type HttpServer struct {
+type HTTPServer struct {
 	log           log.Logger
 	macaron       *macaron.Macaron
 	context       context.Context
@@ -39,14 +39,14 @@ type HttpServer struct {
 	httpSrv *http.Server
 }
 
-func NewHTTPServer() *HttpServer {
-	return &HttpServer{
+func NewHTTPServer() *HTTPServer {
+	return &HTTPServer{
 		log:   log.New("http.server"),
 		cache: gocache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
-func (hs *HttpServer) Start(ctx context.Context) error {
+func (hs *HTTPServer) Start(ctx context.Context) error {
 	var err error
 
 	hs.context = ctx
@@ -93,13 +93,13 @@ func (hs *HttpServer) Start(ctx context.Context) error {
 	return err
 }
 
-func (hs *HttpServer) Shutdown(ctx context.Context) error {
+func (hs *HTTPServer) Shutdown(ctx context.Context) error {
 	err := hs.httpSrv.Shutdown(ctx)
 	hs.log.Info("Stopped HTTP server")
 	return err
 }
 
-func (hs *HttpServer) listenAndServeTLS(certfile, keyfile string) error {
+func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
 	if certfile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
@@ -141,7 +141,7 @@ func (hs *HttpServer) listenAndServeTLS(certfile, keyfile string) error {
 	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 }
 
-func (hs *HttpServer) newMacaron() *macaron.Macaron {
+func (hs *HTTPServer) newMacaron() *macaron.Macaron {
 	macaron.Env = setting.Env
 	m := macaron.New()
 
@@ -188,7 +188,7 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 	return m
 }
 
-func (hs *HttpServer) metricsEndpoint(ctx *macaron.Context) {
+func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/metrics" {
 		return
 	}
@@ -197,7 +197,7 @@ func (hs *HttpServer) metricsEndpoint(ctx *macaron.Context) {
 		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 
-func (hs *HttpServer) healthHandler(ctx *macaron.Context) {
+func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
 	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
 		return
@@ -221,7 +221,7 @@ func (hs *HttpServer) healthHandler(ctx *macaron.Context) {
 	ctx.Resp.Write(dataBytes)
 }
 
-func (hs *HttpServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
+func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 	headers := func(c *macaron.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}

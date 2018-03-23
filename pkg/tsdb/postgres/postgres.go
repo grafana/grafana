@@ -63,7 +63,6 @@ func (e *PostgresQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSo
 }
 
 func (e PostgresQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
-
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return err
@@ -100,14 +99,10 @@ func (e PostgresQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Ro
 			return err
 		}
 
-		// convert column named time to unix timestamp to make
-		// native datetime postgres types work in annotation queries
-		if timeIndex != -1 {
-			switch value := values[timeIndex].(type) {
-			case time.Time:
-				values[timeIndex] = float64(value.UnixNano() / 1e9)
-			}
-		}
+		// converts column named time to unix timestamp in milliseconds to make
+		// native postgres datetime types and epoch dates work in
+		// annotation and table queries.
+		tsdb.ConvertSqlTimeColumnToEpochMs(values, timeIndex)
 
 		table.Rows = append(table.Rows, values)
 	}
@@ -118,7 +113,6 @@ func (e PostgresQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Ro
 }
 
 func (e PostgresQueryEndpoint) getTypedRowData(rows *core.Rows) (tsdb.RowValues, error) {
-
 	types, err := rows.ColumnTypes()
 	if err != nil {
 		return nil, err
@@ -209,7 +203,6 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
 			fillValue.Valid = true
 		}
-
 	}
 
 	for rows.Next() {

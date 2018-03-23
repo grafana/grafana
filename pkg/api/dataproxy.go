@@ -13,7 +13,7 @@ import (
 
 const HeaderNameNoBackendCache = "X-Grafana-NoCache"
 
-func (hs *HttpServer) getDatasourceByID(id int64, orgID int64, nocache bool) (*m.DataSource, error) {
+func (hs *HTTPServer) getDatasourceByID(id int64, orgID int64, nocache bool) (*m.DataSource, error) {
 	cacheKey := fmt.Sprintf("ds-%d", id)
 
 	if !nocache {
@@ -34,7 +34,7 @@ func (hs *HttpServer) getDatasourceByID(id int64, orgID int64, nocache bool) (*m
 	return query.Result, nil
 }
 
-func (hs *HttpServer) ProxyDataSourceRequest(c *m.ReqContext) {
+func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
 
 	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"

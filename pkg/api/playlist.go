@@ -55,10 +55,10 @@ func SearchPlaylists(c *m.ReqContext) Response {
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		return ApiError(500, "Search failed", err)
+		return Error(500, "Search failed", err)
 	}
 
-	return Json(200, searchQuery.Result)
+	return JSON(200, searchQuery.Result)
 }
 
 func GetPlaylist(c *m.ReqContext) Response {
@@ -66,7 +66,7 @@ func GetPlaylist(c *m.ReqContext) Response {
 	cmd := m.GetPlaylistByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Playlist not found", err)
+		return Error(500, "Playlist not found", err)
 	}
 
 	playlistDTOs, _ := LoadPlaylistItemDTOs(id)
@@ -79,7 +79,7 @@ func GetPlaylist(c *m.ReqContext) Response {
 		Items:    playlistDTOs,
 	}
 
-	return Json(200, dto)
+	return JSON(200, dto)
 }
 
 func LoadPlaylistItemDTOs(id int64) ([]m.PlaylistItemDTO, error) {
@@ -120,10 +120,10 @@ func GetPlaylistItems(c *m.ReqContext) Response {
 	playlistDTOs, err := LoadPlaylistItemDTOs(id)
 
 	if err != nil {
-		return ApiError(500, "Could not load playlist items", err)
+		return Error(500, "Could not load playlist items", err)
 	}
 
-	return Json(200, playlistDTOs)
+	return JSON(200, playlistDTOs)
 }
 
 func GetPlaylistDashboards(c *m.ReqContext) Response {
@@ -131,10 +131,10 @@ func GetPlaylistDashboards(c *m.ReqContext) Response {
 
 	playlists, err := LoadPlaylistDashboards(c.OrgId, c.SignedInUser, playlistID)
 	if err != nil {
-		return ApiError(500, "Could not load dashboards", err)
+		return Error(500, "Could not load dashboards", err)
 	}
 
-	return Json(200, playlists)
+	return JSON(200, playlists)
 }
 
 func DeletePlaylist(c *m.ReqContext) Response {
@@ -142,34 +142,34 @@ func DeletePlaylist(c *m.ReqContext) Response {
 
 	cmd := m.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to delete playlist", err)
+		return Error(500, "Failed to delete playlist", err)
 	}
 
-	return Json(200, "")
+	return JSON(200, "")
 }
 
 func CreatePlaylist(c *m.ReqContext, cmd m.CreatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to create playlist", err)
+		return Error(500, "Failed to create playlist", err)
 	}
 
-	return Json(200, cmd.Result)
+	return JSON(200, cmd.Result)
 }
 
 func UpdatePlaylist(c *m.ReqContext, cmd m.UpdatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to save playlist", err)
+		return Error(500, "Failed to save playlist", err)
 	}
 
 	playlistDTOs, err := LoadPlaylistItemDTOs(cmd.Id)
 	if err != nil {
-		return ApiError(500, "Failed to save playlist", err)
+		return Error(500, "Failed to save playlist", err)
 	}
 
 	cmd.Result.Items = playlistDTOs
-	return Json(200, cmd.Result)
+	return JSON(200, cmd.Result)
 }

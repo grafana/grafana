@@ -1,26 +1,21 @@
-import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
-import helpers from 'test/specs/helpers';
 import { MssqlDatasource } from '../datasource';
+import { TemplateSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
+import q from 'q';
 
 describe('MSSQLDatasource', function() {
-  var ctx = new helpers.ServiceTestContext();
-  var instanceSettings = { name: 'mssql' };
+  const ctx: any = {
+    backendSrv: {},
+    templateSrv: new TemplateSrvStub(),
+  };
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['backendSrv']));
+  beforeEach(function() {
+    ctx.$q = q;
+    ctx.instanceSettings = { name: 'mssql' };
 
-  beforeEach(
-    angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-      ctx.$q = $q;
-      ctx.$httpBackend = $httpBackend;
-      ctx.$rootScope = $rootScope;
-      ctx.ds = $injector.instantiate(MssqlDatasource, { instanceSettings: instanceSettings });
-      $httpBackend.when('GET', /\.html$/).respond('');
-    })
-  );
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, ctx.templateSrv);
+  });
 
   describe('When performing annotationQuery', function() {
     let results;
@@ -46,9 +41,9 @@ describe('MSSQLDatasource', function() {
             {
               columns: [{ text: 'time' }, { text: 'text' }, { text: 'tags' }],
               rows: [
-                [1432288355, 'some text', 'TagA,TagB'],
-                [1432288390, 'some text2', ' TagB , TagC'],
-                [1432288400, 'some text3'],
+                [1521545610656, 'some text', 'TagA,TagB'],
+                [1521546251185, 'some text2', ' TagB , TagC'],
+                [1521546501378, 'some text3'],
               ],
             },
           ],
@@ -56,27 +51,27 @@ describe('MSSQLDatasource', function() {
       },
     };
 
-    beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = options => {
         return ctx.$q.when({ data: response, status: 200 });
       };
-      ctx.ds.annotationQuery(options).then(function(data) {
+
+      return ctx.ds.annotationQuery(options).then(data => {
         results = data;
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should return annotation list', function() {
-      expect(results.length).to.be(3);
+      expect(results.length).toBe(3);
 
-      expect(results[0].text).to.be('some text');
-      expect(results[0].tags[0]).to.be('TagA');
-      expect(results[0].tags[1]).to.be('TagB');
+      expect(results[0].text).toBe('some text');
+      expect(results[0].tags[0]).toBe('TagA');
+      expect(results[0].tags[1]).toBe('TagB');
 
-      expect(results[1].tags[0]).to.be('TagB');
-      expect(results[1].tags[1]).to.be('TagC');
+      expect(results[1].tags[0]).toBe('TagB');
+      expect(results[1].tags[1]).toBe('TagC');
 
-      expect(results[2].tags.length).to.be(0);
+      expect(results[2].tags.length).toBe(0);
     });
   });
 
@@ -104,16 +99,16 @@ describe('MSSQLDatasource', function() {
       ctx.backendSrv.datasourceRequest = function(options) {
         return ctx.$q.when({ data: response, status: 200 });
       };
-      ctx.ds.metricFindQuery(query).then(function(data) {
+
+      return ctx.ds.metricFindQuery(query).then(function(data) {
         results = data;
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should return list of all column values', function() {
-      expect(results.length).to.be(6);
-      expect(results[0].text).to.be('aTitle');
-      expect(results[5].text).to.be('some text3');
+      expect(results.length).toBe(6);
+      expect(results[0].text).toBe('aTitle');
+      expect(results[5].text).toBe('some text3');
     });
   });
 
@@ -141,18 +136,18 @@ describe('MSSQLDatasource', function() {
       ctx.backendSrv.datasourceRequest = function(options) {
         return ctx.$q.when({ data: response, status: 200 });
       };
-      ctx.ds.metricFindQuery(query).then(function(data) {
+
+      return ctx.ds.metricFindQuery(query).then(function(data) {
         results = data;
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should return list of as text, value', function() {
-      expect(results.length).to.be(3);
-      expect(results[0].text).to.be('aTitle');
-      expect(results[0].value).to.be('value1');
-      expect(results[2].text).to.be('aTitle3');
-      expect(results[2].value).to.be('value3');
+      expect(results.length).toBe(3);
+      expect(results[0].text).toBe('aTitle');
+      expect(results[0].value).toBe('value1');
+      expect(results[2].text).toBe('aTitle3');
+      expect(results[2].value).toBe('value3');
     });
   });
 
@@ -180,16 +175,16 @@ describe('MSSQLDatasource', function() {
       ctx.backendSrv.datasourceRequest = function(options) {
         return ctx.$q.when({ data: response, status: 200 });
       };
-      ctx.ds.metricFindQuery(query).then(function(data) {
+
+      return ctx.ds.metricFindQuery(query).then(function(data) {
         results = data;
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should return list of unique keys', function() {
-      expect(results.length).to.be(1);
-      expect(results[0].text).to.be('aTitle');
-      expect(results[0].value).to.be('same');
+      expect(results.length).toBe(1);
+      expect(results[0].text).toBe('aTitle');
+      expect(results[0].value).toBe('same');
     });
   });
 
@@ -200,33 +195,33 @@ describe('MSSQLDatasource', function() {
 
     describe('and value is a string', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql('abc');
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual('abc');
       });
     });
 
     describe('and value is a number', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable(1000, ctx.variable)).to.eql(1000);
+        expect(ctx.ds.interpolateVariable(1000, ctx.variable)).toEqual(1000);
       });
     });
 
     describe('and value is an array of strings', () => {
       it('should return comma separated quoted values', () => {
-        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).to.eql("'a','b','c'");
+        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).toEqual("'a','b','c'");
       });
     });
 
     describe('and variable allows multi-value and value is a string', () => {
       it('should return a quoted value', () => {
         ctx.variable.multi = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql("'abc'");
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
     });
 
     describe('and variable allows all and value is a string', () => {
       it('should return a quoted value', () => {
         ctx.variable.includeAll = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql("'abc'");
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
     });
   });

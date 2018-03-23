@@ -3,6 +3,7 @@ package tsdb
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
@@ -132,4 +133,31 @@ func (e *DefaultSqlEngine) Query(
 	}
 
 	return result, nil
+}
+
+// ConvertTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
+// to make native datetime types and epoch dates work in annotation and table queries.
+func ConvertSqlTimeColumnToEpochMs(values RowValues, timeIndex int) {
+	if timeIndex >= 0 {
+		switch value := values[timeIndex].(type) {
+		case time.Time:
+			values[timeIndex] = EpochPrecisionToMs(float64(value.Unix()))
+		case *time.Time:
+			if value != nil {
+				values[timeIndex] = EpochPrecisionToMs(float64((*value).Unix()))
+			}
+		case int64:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *int64:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case float64:
+			values[timeIndex] = EpochPrecisionToMs(value)
+		case *float64:
+			if value != nil {
+				values[timeIndex] = EpochPrecisionToMs(*value)
+			}
+		}
+	}
 }

@@ -113,7 +113,7 @@ export default class ResponseParser {
     let tagsColumnIndex = -1;
 
     for (let i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === 'time_sec') {
+      if (table.columns[i].text === 'time_sec' || table.columns[i].text === 'time') {
         timeColumnIndex = i;
       } else if (table.columns[i].text === 'title') {
         return this.$q.reject({
@@ -137,7 +137,7 @@ export default class ResponseParser {
       const row = table.rows[i];
       list.push({
         annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]) * 1000,
+        time: Math.floor(row[timeColumnIndex]),
         text: row[textColumnIndex] ? row[textColumnIndex].toString() : '',
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });

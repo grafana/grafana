@@ -67,30 +67,39 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 	return nil
 }
 
+const MAX_VERSIONS_TO_DELETE = 100
+
 func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		versions := []DashboardVersionExp{}
 		versionsToKeep := setting.DashboardVersionsToKeep
-
 		if versionsToKeep < 1 {
 			versionsToKeep = 1
 		}
 
-		err := sess.Table("dashboard_version").
-			Select("dashboard_version.id, dashboard_version.version, dashboard_version.dashboard_id").
-			Where(`dashboard_id IN (
-			SELECT dashboard_id FROM dashboard_version
-			GROUP BY dashboard_id HAVING COUNT(dashboard_version.id) > ?
-		)`, versionsToKeep).
-			Desc("dashboard_version.dashboard_id", "dashboard_version.version").
-			Find(&versions)
+		// Idea of this query is finding version IDs to delete based on formula:
+		// min_version_to_keep = min_version + (versions_count - versions_to_keep)
+		// where version stats is processed for each dashboard. This guarantees that we keep at least versions_to_keep
+		// versions, but in some cases (when versions are sparse) this number may be more.
+		versionIdsToDeleteQuery := `SELECT id
+			FROM dashboard_version, (
+				SELECT dashboard_id, count(version) as count, min(version) as min
+				FROM dashboard_version
+				GROUP BY dashboard_id
+			) AS vtd
+			WHERE dashboard_version.dashboard_id=vtd.dashboard_id
+			AND version < vtd.min + vtd.count - ?`
 
+		var versionIdsToDelete []interface{}
+		err := sess.SQL(versionIdsToDeleteQuery, versionsToKeep).Find(&versionIdsToDelete)
 		if err != nil {
 			return err
 		}
 
-		// Keep last versionsToKeep versions and delete other
-		versionIdsToDelete := getVersionIDsToDelete(versions, versionsToKeep)
+		// Don't delete more than MAX_VERSIONS_TO_DELETE version per time
+		if len(versionIdsToDelete) > MAX_VERSIONS_TO_DELETE {
+			versionIdsToDelete = versionIdsToDelete[:MAX_VERSIONS_TO_DELETE]
+		}
+
 		if len(versionIdsToDelete) > 0 {
 			deleteExpiredSql := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
 			expiredResponse, err := sess.Exec(deleteExpiredSql, versionIdsToDelete...)
@@ -102,35 +111,4 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 
 		return nil
 	})
-}
-
-// Short version of DashboardVersion for getting expired versions
-type DashboardVersionExp struct {
-	Id          int64 `json:"id"`
-	DashboardId int64 `json:"dashboardId"`
-	Version     int   `json:"version"`
-}
-
-func getVersionIDsToDelete(versions []DashboardVersionExp, versionsToKeep int) []interface{} {
-	versionIds := make([]interface{}, 0)
-
-	if len(versions) == 0 {
-		return versionIds
-	}
-
-	currentDashboard := versions[0].DashboardId
-	count := 0
-	for _, v := range versions {
-		if v.DashboardId == currentDashboard {
-			count++
-		} else {
-			count = 1
-			currentDashboard = v.DashboardId
-		}
-		if count > versionsToKeep {
-			versionIds = append(versionIds, v.Id)
-		}
-	}
-
-	return versionIds
 }

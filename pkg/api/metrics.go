@@ -17,17 +17,17 @@ func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
 	if len(reqDto.Queries) == 0 {
-		return ApiError(400, "No queries found in query", nil)
+		return Error(400, "No queries found in query", nil)
 	}
 
 	dsID, err := reqDto.Queries[0].Get("datasourceId").Int64()
 	if err != nil {
-		return ApiError(400, "Query missing datasourceId", nil)
+		return Error(400, "Query missing datasourceId", nil)
 	}
 
 	dsQuery := m.GetDataSourceByIdQuery{Id: dsID, OrgId: c.OrgId}
 	if err := bus.Dispatch(&dsQuery); err != nil {
-		return ApiError(500, "failed to fetch data source", err)
+		return Error(500, "failed to fetch data source", err)
 	}
 
 	request := &tsdb.TsdbQuery{TimeRange: timeRange}
@@ -44,7 +44,7 @@ func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 
 	resp, err := tsdb.HandleRequest(context.Background(), dsQuery.Result, request)
 	if err != nil {
-		return ApiError(500, "Metric request error", err)
+		return Error(500, "Metric request error", err)
 	}
 
 	statusCode := 200
@@ -56,7 +56,7 @@ func QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) Response {
 		}
 	}
 
-	return Json(statusCode, &resp)
+	return JSON(statusCode, &resp)
 }
 
 // GET /api/tsdb/testdata/scenarios
@@ -72,22 +72,22 @@ func GetTestDataScenarios(c *m.ReqContext) Response {
 		})
 	}
 
-	return Json(200, &result)
+	return JSON(200, &result)
 }
 
 // Genereates a index out of range error
 func GenerateError(c *m.ReqContext) Response {
 	var array []string
-	return Json(200, array[20])
+	return JSON(200, array[20])
 }
 
 // GET /api/tsdb/testdata/gensql
 func GenerateSQLTestData(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.InsertSqlTestDataCommand{}); err != nil {
-		return ApiError(500, "Failed to insert test data", err)
+		return Error(500, "Failed to insert test data", err)
 	}
 
-	return Json(200, &util.DynMap{"message": "OK"})
+	return JSON(200, &util.DynMap{"message": "OK"})
 }
 
 // GET /api/tsdb/testdata/random-walk
@@ -111,8 +111,8 @@ func GetTestDataRandomWalk(c *m.ReqContext) Response {
 
 	resp, err := tsdb.HandleRequest(context.Background(), dsInfo, request)
 	if err != nil {
-		return ApiError(500, "Metric request error", err)
+		return Error(500, "Metric request error", err)
 	}
 
-	return Json(200, &resp)
+	return JSON(200, &resp)
 }
