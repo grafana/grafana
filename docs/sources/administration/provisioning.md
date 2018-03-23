@@ -13,11 +13,11 @@ weight = 8
 
 In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users, orgs and alerts as well.
 
-## Config file
+## Config File
 
 Checkout the [configuration](/installation/configuration) page for more information on what you can configure in `grafana.ini`
 
-### Config file locations
+### Config File Locations
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
@@ -28,7 +28,7 @@ Checkout the [configuration](/installation/configuration) page for more informat
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
 > init.d script using `--config` file parameter.
 
-### Using environment variables
+### Using Environment Variables
 
 All options in the configuration file (listed below) can be overridden
 using environment variables using the syntax:
@@ -61,7 +61,7 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 <hr />
 
-## Configuration management tools
+## Configuration Management Tools
 
 Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily relay on the expertise of the community.
 
@@ -78,11 +78,11 @@ Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://gith
 
 It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `delete_datasources`. Grafana will delete datasources listed in `delete_datasources` before inserting/updating those in the `datasource` list.
 
-### Running multiple Grafana instances.
+### Running Multiple Grafana Instances
 
 If you are running multiple instances of Grafana you might run into problems if they have different versions of the `datasource.yaml` configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way, old configs cannot overwrite newer configs if they restart at the same time.
 
-### Example datasource config file
+### Example Datasource Config File
 
 ```yaml
 # config file version
@@ -137,13 +137,13 @@ datasources:
   editable: false
 ```
 
-#### Extra info per datasource
+#### Custom Settings per Datasource
 
 | Datasource | Misc |
 | ---- | ---- |
 | Elasticsearch | Elasticsearch uses the `database` property to configure the index for a datasource |
 
-#### Json data
+#### Json Data
 
 Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `json_data` field. Here are the most common settings that the core datasources use.
 
@@ -165,7 +165,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbResolution | string | OpenTsdb | Resolution |
 | sslmode | string | Postgre | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
 
-#### Secure Json data
+#### Secure Json Data
 
 `{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
@@ -203,7 +203,7 @@ providers:
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
 
-### Reuseable dashboard urls
+### Reuseable Dashboard Urls
 
 If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifer.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
