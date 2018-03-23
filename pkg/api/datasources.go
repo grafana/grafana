@@ -5,13 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetDataSources(c *middleware.Context) Response {
+func GetDataSources(c *m.ReqContext) Response {
 	query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -50,7 +49,7 @@ func GetDataSources(c *middleware.Context) Response {
 	return Json(200, &result)
 }
 
-func GetDataSourceById(c *middleware.Context) Response {
+func GetDataSourceByID(c *m.ReqContext) Response {
 	query := m.GetDataSourceByIdQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
@@ -69,14 +68,14 @@ func GetDataSourceById(c *middleware.Context) Response {
 	return Json(200, &dtos)
 }
 
-func DeleteDataSourceById(c *middleware.Context) Response {
+func DeleteDataSourceByID(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
 		return ApiError(400, "Missing valid datasource id", nil)
 	}
 
-	ds, err := getRawDataSourceById(id, c.OrgId)
+	ds, err := getRawDataSourceByID(id, c.OrgId)
 	if err != nil {
 		return ApiError(400, "Failed to delete datasource", nil)
 	}
@@ -95,7 +94,7 @@ func DeleteDataSourceById(c *middleware.Context) Response {
 	return ApiSuccess("Data source deleted")
 }
 
-func DeleteDataSourceByName(c *middleware.Context) Response {
+func DeleteDataSourceByName(c *m.ReqContext) Response {
 	name := c.Params(":name")
 
 	if name == "" {
@@ -120,7 +119,7 @@ func DeleteDataSourceByName(c *middleware.Context) Response {
 	return ApiSuccess("Data source deleted")
 }
 
-func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) Response {
+func AddDataSource(c *m.ReqContext, cmd m.AddDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -140,11 +139,11 @@ func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) Response {
 	})
 }
 
-func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Response {
+func UpdateDataSource(c *m.ReqContext, cmd m.UpdateDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
 
-	err := fillWithSecureJsonData(&cmd)
+	err := fillWithSecureJSONData(&cmd)
 	if err != nil {
 		return ApiError(500, "Failed to update datasource", err)
 	}
@@ -153,9 +152,8 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Resp
 	if err != nil {
 		if err == m.ErrDataSourceUpdatingOldVersion {
 			return ApiError(500, "Failed to update datasource. Reload new version and try again", err)
-		} else {
-			return ApiError(500, "Failed to update datasource", err)
 		}
+		return ApiError(500, "Failed to update datasource", err)
 	}
 	ds := convertModelToDtos(cmd.Result)
 	return Json(200, util.DynMap{
@@ -166,12 +164,12 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Resp
 	})
 }
 
-func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
+func fillWithSecureJSONData(cmd *m.UpdateDataSourceCommand) error {
 	if len(cmd.SecureJsonData) == 0 {
 		return nil
 	}
 
-	ds, err := getRawDataSourceById(cmd.Id, cmd.OrgId)
+	ds, err := getRawDataSourceByID(cmd.Id, cmd.OrgId)
 	if err != nil {
 		return err
 	}
@@ -180,8 +178,8 @@ func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
 		return m.ErrDatasourceIsReadOnly
 	}
 
-	secureJsonData := ds.SecureJsonData.Decrypt()
-	for k, v := range secureJsonData {
+	secureJSONData := ds.SecureJsonData.Decrypt()
+	for k, v := range secureJSONData {
 
 		if _, ok := cmd.SecureJsonData[k]; !ok {
 			cmd.SecureJsonData[k] = v
@@ -191,10 +189,10 @@ func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
 	return nil
 }
 
-func getRawDataSourceById(id int64, orgId int64) (*m.DataSource, error) {
+func getRawDataSourceByID(id int64, orgID int64) (*m.DataSource, error) {
 	query := m.GetDataSourceByIdQuery{
 		Id:    id,
-		OrgId: orgId,
+		OrgId: orgID,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -205,7 +203,7 @@ func getRawDataSourceById(id int64, orgId int64) (*m.DataSource, error) {
 }
 
 // Get /api/datasources/name/:name
-func GetDataSourceByName(c *middleware.Context) Response {
+func GetDataSourceByName(c *m.ReqContext) Response {
 	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -221,7 +219,7 @@ func GetDataSourceByName(c *middleware.Context) Response {
 }
 
 // Get /api/datasources/id/:name
-func GetDataSourceIdByName(c *middleware.Context) Response {
+func GetDataSourceIDByName(c *m.ReqContext) Response {
 	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {

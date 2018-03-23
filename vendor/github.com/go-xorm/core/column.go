@@ -13,12 +13,13 @@ const (
 	ONLYFROMDB
 )
 
-// database column
+// Column defines database column
 type Column struct {
 	Name            string
 	TableName       string
 	FieldName       string
 	SQLType         SQLType
+	IsJSON          bool
 	Length          int
 	Length2         int
 	Nullable        bool
@@ -37,6 +38,7 @@ type Column struct {
 	SetOptions      map[string]int
 	DisableTimeZone bool
 	TimeZone        *time.Location // column specified time zone
+	Comment         string
 }
 
 func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
@@ -60,6 +62,7 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		IsVersion:       false,
 		DefaultIsEmpty:  false,
 		EnumOptions:     make(map[string]int),
+		Comment:         "",
 	}
 }
 

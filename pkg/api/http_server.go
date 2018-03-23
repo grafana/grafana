@@ -39,7 +39,7 @@ type HttpServer struct {
 	httpSrv *http.Server
 }
 
-func NewHttpServer() *HttpServer {
+func NewHTTPServer() *HttpServer {
 	return &HttpServer{
 		log:   log.New("http.server"),
 		cache: gocache.New(5*time.Minute, 10*time.Minute),
@@ -175,7 +175,7 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(middleware.GetContextHandler())
-	m.Use(middleware.Sessioner(&setting.SessionOptions))
+	m.Use(middleware.Sessioner(&setting.SessionOptions, setting.SessionConnMaxLifetime))
 	m.Use(middleware.OrgRedirect())
 
 	// needs to be after context handler

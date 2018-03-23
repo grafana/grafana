@@ -133,18 +133,24 @@ datasources:
   editable: false
 ```
 
+#### Extra info per datasource
+
+| Datasource | Misc |
+| ---- | ---- |
+| Elasticserach | Elasticsearch uses the `database` property to configure the index for a datasource |
+
 #### Json data
 
 Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `json_data` field. Here are the most common settings that the core datasources use.
 
-| Name | Type | Datasource |Description |
-| ----| ---- | ---- | --- |
+| Name | Type | Datasource | Description |
+| ---- | ---- | ---- | ---- |
 | tlsAuth | boolean | *All* |  Enable TLS authentication using client cert configured in secure json data |
 | tlsAuthWithCACert | boolean | *All* | Enable TLS authtication using CA cert |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Elastic, Influxdb & Prometheus | Lowest interval/step value that should be used for this data source |
-| esVersion | string | Elastic | Elasticsearch version |
+| esVersion | string | Elastic | Elasticsearch version as an number (2/5/56) |
 | timeField | string | Elastic | Which field that should be used as timestamp |
 | interval | string | Elastic | Index date time format |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |

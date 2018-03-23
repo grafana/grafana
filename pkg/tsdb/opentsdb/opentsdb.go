@@ -22,23 +22,10 @@ import (
 )
 
 type OpenTsdbExecutor struct {
-	//*models.DataSource
-	//httpClient *http.Client
 }
 
 func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	/*
-		httpClient, err := datasource.GetHttpClient()
-
-		if err != nil {
-			return nil, err
-		}
-	*/
-
-	return &OpenTsdbExecutor{
-	//DataSource: datasource,
-	//httpClient: httpClient,
-	}, nil
+	return &OpenTsdbExecutor{}, nil
 }
 
 var (

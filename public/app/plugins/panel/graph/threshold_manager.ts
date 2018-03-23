@@ -222,16 +222,30 @@ export class ThresholdManager {
 
       // fill
       if (threshold.fill) {
-        options.grid.markings.push({
-          yaxis: { from: threshold.value, to: limit },
-          color: fillColor,
-        });
+        if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
+          options.grid.markings.push({
+            y2axis: { from: threshold.value, to: limit },
+            color: fillColor,
+          });
+        } else {
+          options.grid.markings.push({
+            yaxis: { from: threshold.value, to: limit },
+            color: fillColor,
+          });
+        }
       }
       if (threshold.line) {
-        options.grid.markings.push({
-          yaxis: { from: threshold.value, to: threshold.value },
-          color: lineColor,
-        });
+        if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
+          options.grid.markings.push({
+            y2axis: { from: threshold.value, to: threshold.value },
+            color: lineColor,
+          });
+        } else {
+          options.grid.markings.push({
+            yaxis: { from: threshold.value, to: threshold.value },
+            color: lineColor,
+          });
+        }
       }
     }
   }

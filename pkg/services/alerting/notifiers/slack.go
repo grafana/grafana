@@ -98,10 +98,6 @@ type SlackNotifier struct {
 	log       log.Logger
 }
 
-func (this *SlackNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing slack notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 

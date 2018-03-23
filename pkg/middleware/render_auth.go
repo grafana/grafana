@@ -10,7 +10,7 @@ import (
 var renderKeysLock sync.Mutex
 var renderKeys map[string]*m.SignedInUser = make(map[string]*m.SignedInUser)
 
-func initContextWithRenderAuth(ctx *Context) bool {
+func initContextWithRenderAuth(ctx *m.ReqContext) bool {
 	key := ctx.GetCookie("renderKey")
 	if key == "" {
 		return false

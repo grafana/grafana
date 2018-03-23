@@ -1,7 +1,9 @@
 package notifiers
 
 import (
+	"os"
 	"strconv"
+	"time"
 
 	"fmt"
 
@@ -38,7 +40,7 @@ func init() {
 }
 
 var (
-	pagerdutyEventApiUrl string = "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
+	pagerdutyEventApiUrl string = "https://events.pagerduty.com/v2/enqueue"
 )
 
 func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
@@ -63,10 +65,6 @@ type PagerdutyNotifier struct {
 	log         log.Logger
 }
 
-func (this *PagerdutyNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	if evalContext.Rule.State == m.AlertStateOK && !this.AutoResolve {
@@ -85,28 +83,41 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	this.log.Info("Notifying Pagerduty", "event_type", eventType)
 
+	payloadJSON := simplejson.New()
+	payloadJSON.Set("summary", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
+	if hostname, err := os.Hostname(); err == nil {
+		payloadJSON.Set("source", hostname)
+	}
+	payloadJSON.Set("severity", "critical")
+	payloadJSON.Set("timestamp", time.Now())
+	payloadJSON.Set("component", "Grafana")
+	payloadJSON.Set("custom_details", customData)
+
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("service_key", this.Key)
-	bodyJSON.Set("description", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
-	bodyJSON.Set("client", "Grafana")
-	bodyJSON.Set("details", customData)
-	bodyJSON.Set("event_type", eventType)
-	bodyJSON.Set("incident_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("routing_key", this.Key)
+	bodyJSON.Set("event_action", eventType)
+	bodyJSON.Set("dedup_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("payload", payloadJSON)
 
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err != nil {
 		this.log.Error("Failed get rule link", "error", err)
 		return err
 	}
+	links := make([]interface{}, 1)
+	linkJSON := simplejson.New()
+	linkJSON.Set("href", ruleUrl)
 	bodyJSON.Set("client_url", ruleUrl)
+	bodyJSON.Set("client", "Grafana")
+	links[0] = linkJSON
+	bodyJSON.Set("links", links)
 
 	if evalContext.ImagePublicUrl != "" {
 		contexts := make([]interface{}, 1)
 		imageJSON := simplejson.New()
-		imageJSON.Set("type", "image")
 		imageJSON.Set("src", evalContext.ImagePublicUrl)
 		contexts[0] = imageJSON
-		bodyJSON.Set("contexts", contexts)
+		bodyJSON.Set("images", contexts)
 	}
 
 	body, _ := bodyJSON.MarshalJSON()
@@ -115,6 +126,9 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 		Url:        pagerdutyEventApiUrl,
 		Body:       string(body),
 		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type": "application/json",
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {

@@ -6,43 +6,43 @@ package xorm
 
 // Incr provides a query string like "count = count + 1"
 func (session *Session) Incr(column string, arg ...interface{}) *Session {
-	session.Statement.Incr(column, arg...)
+	session.statement.Incr(column, arg...)
 	return session
 }
 
 // Decr provides a query string like "count = count - 1"
 func (session *Session) Decr(column string, arg ...interface{}) *Session {
-	session.Statement.Decr(column, arg...)
+	session.statement.Decr(column, arg...)
 	return session
 }
 
 // SetExpr provides a query string like "column = {expression}"
 func (session *Session) SetExpr(column string, expression string) *Session {
-	session.Statement.SetExpr(column, expression)
+	session.statement.SetExpr(column, expression)
 	return session
 }
 
 // Select provides some columns to special
 func (session *Session) Select(str string) *Session {
-	session.Statement.Select(str)
+	session.statement.Select(str)
 	return session
 }
 
 // Cols provides some columns to special
 func (session *Session) Cols(columns ...string) *Session {
-	session.Statement.Cols(columns...)
+	session.statement.Cols(columns...)
 	return session
 }
 
 // AllCols ask all columns
 func (session *Session) AllCols() *Session {
-	session.Statement.AllCols()
+	session.statement.AllCols()
 	return session
 }
 
 // MustCols specify some columns must use even if they are empty
 func (session *Session) MustCols(columns ...string) *Session {
-	session.Statement.MustCols(columns...)
+	session.statement.MustCols(columns...)
 	return session
 }
 
@@ -52,7 +52,7 @@ func (session *Session) MustCols(columns ...string) *Session {
 // If no parameters, it will use all the bool field of struct, or
 // it will use parameters's columns
 func (session *Session) UseBool(columns ...string) *Session {
-	session.Statement.UseBool(columns...)
+	session.statement.UseBool(columns...)
 	return session
 }
 
@@ -60,25 +60,25 @@ func (session *Session) UseBool(columns ...string) *Session {
 // distinct will not be cached because cache system need id,
 // but distinct will not provide id
 func (session *Session) Distinct(columns ...string) *Session {
-	session.Statement.Distinct(columns...)
+	session.statement.Distinct(columns...)
 	return session
 }
 
 // Omit Only not use the parameters as select or update columns
 func (session *Session) Omit(columns ...string) *Session {
-	session.Statement.Omit(columns...)
+	session.statement.Omit(columns...)
 	return session
 }
 
 // Nullable Set null when column is zero-value and nullable for update
 func (session *Session) Nullable(columns ...string) *Session {
-	session.Statement.Nullable(columns...)
+	session.statement.Nullable(columns...)
 	return session
 }
 
 // NoAutoTime means do not automatically give created field and updated field
 // the current time on the current session temporarily
 func (session *Session) NoAutoTime() *Session {
-	session.Statement.UseAutoTime = false
+	session.statement.UseAutoTime = false
 	return session
 }

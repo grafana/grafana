@@ -13,11 +13,16 @@ interface YBucket {
   values: number[];
 }
 
-function elasticHistogramToHeatmap(seriesList) {
+/**
+ * Convert histogram represented by the list of series to heatmap object.
+ * @param seriesList List of time series
+ */
+function histogramToHeatmap(seriesList) {
   let heatmap = {};
 
-  for (let series of seriesList) {
-    let bound = Number(series.alias);
+  for (let i = 0; i < seriesList.length; i++) {
+    let series = seriesList[i];
+    let bound = i;
     if (isNaN(bound)) {
       return heatmap;
     }
@@ -49,6 +54,43 @@ function elasticHistogramToHeatmap(seriesList) {
   }
 
   return heatmap;
+}
+
+/**
+ * Sort series representing histogram by label value.
+ */
+function sortSeriesByLabel(s1, s2) {
+  let label1, label2;
+
+  try {
+    // fail if not integer. might happen with bad queries
+    label1 = parseHistogramLabel(s1.label);
+    label2 = parseHistogramLabel(s2.label);
+  } catch (err) {
+    console.log(err.message || err);
+    return 0;
+  }
+
+  if (label1 > label2) {
+    return 1;
+  }
+
+  if (label1 < label2) {
+    return -1;
+  }
+
+  return 0;
+}
+
+function parseHistogramLabel(label: string): number {
+  if (label === '+Inf' || label === 'inf') {
+    return +Infinity;
+  }
+  const value = Number(label);
+  if (isNaN(value)) {
+    throw new Error(`Error parsing histogram label: ${label} is not a number`);
+  }
+  return value;
 }
 
 /**
@@ -433,10 +475,11 @@ function emptyXOR(foo: any, bar: any): boolean {
 
 export {
   convertToHeatMap,
-  elasticHistogramToHeatmap,
+  histogramToHeatmap,
   convertToCards,
   mergeZeroBuckets,
   getValueBucketBound,
   isHeatmapDataEqual,
   calculateBucketSize,
+  sortSeriesByLabel,
 };

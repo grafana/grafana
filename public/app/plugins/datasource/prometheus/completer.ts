@@ -5,32 +5,46 @@ export class PromCompleter {
   labelQueryCache: any;
   labelNameCache: any;
   labelValueCache: any;
+  templateVariableCompletions: any;
 
   identifierRegexps = [/\[/, /[a-zA-Z0-9_:]/];
 
-  constructor(private datasource: PrometheusDatasource) {
+  constructor(private datasource: PrometheusDatasource, private templateSrv) {
     this.labelQueryCache = {};
     this.labelNameCache = {};
     this.labelValueCache = {};
+    this.templateVariableCompletions = this.templateSrv.variables.map(variable => {
+      return {
+        caption: '$' + variable.name,
+        value: '$' + variable.name,
+        meta: 'variable',
+        score: Number.MAX_VALUE,
+      };
+    });
   }
 
   getCompletions(editor, session, pos, prefix, callback) {
+    let wrappedCallback = (err, completions) => {
+      completions = completions.concat(this.templateVariableCompletions);
+      return callback(err, completions);
+    };
+
     let token = session.getTokenAt(pos.row, pos.column);
 
     switch (token.type) {
       case 'entity.name.tag.label-matcher':
         this.getCompletionsForLabelMatcherName(session, pos).then(completions => {
-          callback(null, completions);
+          wrappedCallback(null, completions);
         });
         return;
       case 'string.quoted.label-matcher':
         this.getCompletionsForLabelMatcherValue(session, pos).then(completions => {
-          callback(null, completions);
+          wrappedCallback(null, completions);
         });
         return;
       case 'entity.name.tag.label-list-matcher':
         this.getCompletionsForBinaryOperator(session, pos).then(completions => {
-          callback(null, completions);
+          wrappedCallback(null, completions);
         });
         return;
     }
@@ -59,14 +73,14 @@ export class PromCompleter {
         meta: 'range vector',
       });
 
-      callback(null, vectors);
+      wrappedCallback(null, vectors);
       return;
     }
 
     var query = prefix;
 
     return this.datasource.performSuggestQuery(query, true).then(metricNames => {
-      callback(
+      wrappedCallback(
         null,
         metricNames.map(name => {
           let value = name;

@@ -10,12 +10,6 @@ function exit_if_fail {
     fi
 }
 
-cd /home/ubuntu/.go_workspace/src/github.com/grafana/grafana
-
-rm -rf node_modules
-npm install -g yarn --quiet
-yarn install --pure-lockfile --no-progress
-
 exit_if_fail npm run test:coverage
 exit_if_fail npm run build
 
