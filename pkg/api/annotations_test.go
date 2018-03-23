@@ -14,11 +14,10 @@ import (
 func TestAnnotationsApiEndpoint(t *testing.T) {
 	Convey("Given an annotation without a dashboard id", t, func() {
 		cmd := dtos.PostAnnotationsCmd{
-			Time:        1000,
-			Text:        "annotation text",
-			Tags:        []string{"tag1", "tag2"},
-			IsRegion:    false,
-			DashboardId: 5,
+			Time:     1000,
+			Text:     "annotation text",
+			Tags:     []string{"tag1", "tag2"},
+			IsRegion: false,
 		}
 
 		updateCmd := dtos.UpdateAnnotationsCmd{
