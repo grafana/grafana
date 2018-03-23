@@ -63,6 +63,11 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 		return ApiError(500, "Failed to save annotation", err)
 	}
 
+	if cmd.DashboardId == 0 {
+		err := &CreateAnnotationError{"Missing DashboardID"}
+		return ApiError(500, "Failed to save annotation", err)
+	}
+
 	item := annotations.Item{
 		OrgId:       c.OrgId,
 		UserId:      c.UserId,

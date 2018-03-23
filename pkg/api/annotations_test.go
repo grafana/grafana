@@ -14,10 +14,11 @@ import (
 func TestAnnotationsApiEndpoint(t *testing.T) {
 	Convey("Given an annotation without a dashboard id", t, func() {
 		cmd := dtos.PostAnnotationsCmd{
-			Time:     1000,
-			Text:     "annotation text",
-			Tags:     []string{"tag1", "tag2"},
-			IsRegion: false,
+			DashboardId: 1,
+			Time:        1000,
+			Text:        "annotation text",
+			Tags:        []string{"tag1", "tag2"},
+			IsRegion:    false,
 		}
 
 		updateCmd := dtos.UpdateAnnotationsCmd{
@@ -77,6 +78,26 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					sc.handlerFunc = DeleteAnnotationRegion
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
+				})
+			})
+
+			Convey("Should note be able to save an annotation", func() {
+				cmd := dtos.PostAnnotationsCmd{
+					Time: 1000,
+					Text: "annotation text",
+				}
+				postAnnotationScenario("When calling POST without dashboardId", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+					So(sc.resp.Code, ShouldEqual, 500)
+				})
+
+				cmd := dtos.PostAnnotationsCmd{
+					Time:        1000,
+					DashboardId: 3,
+				}
+				postAnnotationScenario("When calling POST without text", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
+					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+					So(sc.resp.Code, ShouldEqual, 500)
 				})
 			})
 		})
