@@ -82,7 +82,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 			})
 
 			Convey("Should note be able to save an annotation", func() {
-				cmd := dtos.PostAnnotationsCmd{
+				cmd = dtos.PostAnnotationsCmd{
 					Time: 1000,
 					Text: "annotation text",
 				}
@@ -91,7 +91,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 500)
 				})
 
-				cmd := dtos.PostAnnotationsCmd{
+				cmd = dtos.PostAnnotationsCmd{
 					Time:        1000,
 					DashboardId: 3,
 				}
