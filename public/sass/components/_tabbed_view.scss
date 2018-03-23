@@ -1,34 +1,34 @@
 .tabbed-view {
-  background-color: $page-bg;
-  background-image: $page-gradient;
-  margin: (-$panel-margin*2) (-$panel-margin);
-  margin-bottom: $spacer*2;
   padding: $spacer*3;
+  margin-bottom: $dashboard-padding;
 
   &.tabbed-view--panel-edit {
     padding: 0;
 
     .tabbed-view-header {
-/*       padding: 0; */
-      background-color: $body-bg;
-      padding: 1.5em 1rem 0 1rem;
-    }
-    .gf-tabs-link.active {
-      background-color: $panel-bg;
+      padding: 0px 25px;
+      background: none;
     }
   }
 }
 
 .tabbed-view-header {
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
   @include clearfix();
-  @include brand-bottom-border();
 }
 
 .tabbed-view-title {
   float: left;
-  font-style: italic;
   padding-top: 0.5rem;
   margin: 0 $spacer*3 0 $spacer*1;
+}
+
+.tabbed-view-panel-title {
+  float: left;
+  padding-top: 9px;
+  margin: 0 2rem 0 0;
 }
 
 .tabbed-view-close-btn {
@@ -37,7 +37,7 @@
   margin: 0;
   background-color: transparent;
   border: none;
-  padding: ($tabs-padding-top + $tabs-top-margin) $spacer $tabs-padding-bottom;
+  padding: $tabs-padding;
   color: $text-color;
   i {
     font-size: 120%;
@@ -48,8 +48,12 @@
 }
 
 .tabbed-view-body {
-  padding: $spacer*2;
-  min-height: 250px;
+  padding: $spacer*2 $spacer;
+
+  &--small {
+    min-height: 0px;
+    padding-bottom: 0px;
+  }
 }
 
 .section-heading {

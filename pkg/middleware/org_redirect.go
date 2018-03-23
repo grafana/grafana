@@ -1,11 +1,14 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"gopkg.in/macaron.v1"
 )
@@ -19,7 +22,7 @@ func OrgRedirect() macaron.Handler {
 			return
 		}
 
-		ctx, ok := c.Data["ctx"].(*Context)
+		ctx, ok := c.Data["ctx"].(*m.ReqContext)
 		if !ok || !ctx.IsSignedIn {
 			return
 		}
@@ -28,7 +31,7 @@ func OrgRedirect() macaron.Handler {
 			return
 		}
 
-		cmd := models.SetUsingOrgCommand{UserId: ctx.UserId, OrgId: orgId}
+		cmd := m.SetUsingOrgCommand{UserId: ctx.UserId, OrgId: orgId}
 		if err := bus.Dispatch(&cmd); err != nil {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)
@@ -39,6 +42,7 @@ func OrgRedirect() macaron.Handler {
 			return
 		}
 
-		c.Redirect(c.Req.URL.String(), 302)
+		newURL := setting.ToAbsUrl(fmt.Sprintf("%s?%s", strings.TrimPrefix(c.Req.URL.Path, "/"), c.Req.URL.Query().Encode()))
+		c.Redirect(newURL, 302)
 	}
 }

@@ -11,11 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-func populateDashboardsById(dashboardByIds []int64, dashboardIdOrder map[int64]int) (dtos.PlaylistDashboardsSlice, error) {
+func populateDashboardsByID(dashboardByIDs []int64, dashboardIDOrder map[int64]int) (dtos.PlaylistDashboardsSlice, error) {
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
-	if len(dashboardByIds) > 0 {
-		dashboardQuery := m.GetDashboardsQuery{DashboardIds: dashboardByIds}
+	if len(dashboardByIDs) > 0 {
+		dashboardQuery := m.GetDashboardsQuery{DashboardIds: dashboardByIDs}
 		if err := bus.Dispatch(&dashboardQuery); err != nil {
 			return result, err
 		}
@@ -26,7 +26,7 @@ func populateDashboardsById(dashboardByIds []int64, dashboardIdOrder map[int64]i
 				Slug:  item.Slug,
 				Title: item.Title,
 				Uri:   "db/" + item.Slug,
-				Order: dashboardIdOrder[item.Id],
+				Order: dashboardIDOrder[item.Id],
 			})
 		}
 	}
@@ -34,29 +34,27 @@ func populateDashboardsById(dashboardByIds []int64, dashboardIdOrder map[int64]i
 	return result, nil
 }
 
-func populateDashboardsByTag(orgId, userId int64, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
+func populateDashboardsByTag(orgID int64, signedInUser *m.SignedInUser, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
-	if len(dashboardByTag) > 0 {
-		for _, tag := range dashboardByTag {
-			searchQuery := search.Query{
-				Title:     "",
-				Tags:      []string{tag},
-				UserId:    userId,
-				Limit:     100,
-				IsStarred: false,
-				OrgId:     orgId,
-			}
+	for _, tag := range dashboardByTag {
+		searchQuery := search.Query{
+			Title:        "",
+			Tags:         []string{tag},
+			SignedInUser: signedInUser,
+			Limit:        100,
+			IsStarred:    false,
+			OrgId:        orgID,
+		}
 
-			if err := bus.Dispatch(&searchQuery); err == nil {
-				for _, item := range searchQuery.Result {
-					result = append(result, dtos.PlaylistDashboard{
-						Id:    item.Id,
-						Title: item.Title,
-						Uri:   item.Uri,
-						Order: dashboardTagOrder[tag],
-					})
-				}
+		if err := bus.Dispatch(&searchQuery); err == nil {
+			for _, item := range searchQuery.Result {
+				result = append(result, dtos.PlaylistDashboard{
+					Id:    item.Id,
+					Title: item.Title,
+					Uri:   item.Uri,
+					Order: dashboardTagOrder[tag],
+				})
 			}
 		}
 	}
@@ -64,19 +62,19 @@ func populateDashboardsByTag(orgId, userId int64, dashboardByTag []string, dashb
 	return result
 }
 
-func LoadPlaylistDashboards(orgId, userId, playlistId int64) (dtos.PlaylistDashboardsSlice, error) {
-	playlistItems, _ := LoadPlaylistItems(playlistId)
+func LoadPlaylistDashboards(orgID int64, signedInUser *m.SignedInUser, playlistID int64) (dtos.PlaylistDashboardsSlice, error) {
+	playlistItems, _ := LoadPlaylistItems(playlistID)
 
-	dashboardByIds := make([]int64, 0)
+	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)
-	dashboardIdOrder := make(map[int64]int)
+	dashboardIDOrder := make(map[int64]int)
 	dashboardTagOrder := make(map[string]int)
 
 	for _, i := range playlistItems {
 		if i.Type == "dashboard_by_id" {
-			dashboardId, _ := strconv.ParseInt(i.Value, 10, 64)
-			dashboardByIds = append(dashboardByIds, dashboardId)
-			dashboardIdOrder[dashboardId] = i.Order
+			dashboardID, _ := strconv.ParseInt(i.Value, 10, 64)
+			dashboardByIDs = append(dashboardByIDs, dashboardID)
+			dashboardIDOrder[dashboardID] = i.Order
 		}
 
 		if i.Type == "dashboard_by_tag" {
@@ -87,10 +85,10 @@ func LoadPlaylistDashboards(orgId, userId, playlistId int64) (dtos.PlaylistDashb
 
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
-	var k, _ = populateDashboardsById(dashboardByIds, dashboardIdOrder)
+	var k, _ = populateDashboardsByID(dashboardByIDs, dashboardIDOrder)
 	result = append(result, k...)
-	result = append(result, populateDashboardsByTag(orgId, userId, dashboardByTag, dashboardTagOrder)...)
+	result = append(result, populateDashboardsByTag(orgID, signedInUser, dashboardByTag, dashboardTagOrder)...)
 
-	sort.Sort(sort.Reverse(result))
+	sort.Sort(result)
 	return result, nil
 }

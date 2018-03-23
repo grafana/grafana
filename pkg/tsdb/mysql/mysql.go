@@ -1,208 +1,333 @@
 package mysql
 
 import (
+	"container/list"
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
+	"reflect"
 	"strconv"
-	"sync"
+	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type MysqlExecutor struct {
-	datasource *models.DataSource
-	engine     *xorm.Engine
-	log        log.Logger
-}
-
-type engineCacheType struct {
-	cache    map[int64]*xorm.Engine
-	versions map[int64]int
-	sync.Mutex
-}
-
-var engineCache = engineCacheType{
-	cache:    make(map[int64]*xorm.Engine),
-	versions: make(map[int64]int),
+type MysqlQueryEndpoint struct {
+	sqlEngine tsdb.SqlEngine
+	log       log.Logger
 }
 
 func init() {
-	tsdb.RegisterExecutor("mysql", NewMysqlExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("mysql", NewMysqlQueryEndpoint)
 }
 
-func NewMysqlExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
-	executor := &MysqlExecutor{
-		datasource: datasource,
-		log:        log.New("tsdb.mysql"),
+func NewMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	endpoint := &MysqlQueryEndpoint{
+		log: log.New("tsdb.mysql"),
 	}
 
-	err := executor.initEngine()
+	endpoint.sqlEngine = &tsdb.DefaultSqlEngine{
+		MacroEngine: NewMysqlMacroEngine(),
+	}
+
+	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
+		datasource.User,
+		datasource.Password,
+		"tcp",
+		datasource.Url,
+		datasource.Database,
+	)
+	endpoint.log.Debug("getEngine", "connection", cnnstr)
+
+	if err := endpoint.sqlEngine.InitEngine("mysql", datasource, cnnstr); err != nil {
+		return nil, err
+	}
+
+	return endpoint, nil
+}
+
+// Query is the main function for the MysqlExecutor
+func (e *MysqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	return e.sqlEngine.Query(ctx, dsInfo, tsdbQuery, e.transformToTimeSeries, e.transformToTable)
+}
+
+func (e MysqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
+	columnNames, err := rows.Columns()
+	columnCount := len(columnNames)
+
+	if err != nil {
+		return err
+	}
+
+	table := &tsdb.Table{
+		Columns: make([]tsdb.TableColumn, columnCount),
+		Rows:    make([]tsdb.RowValues, 0),
+	}
+
+	for i, name := range columnNames {
+		table.Columns[i].Text = name
+	}
+
+	rowLimit := 1000000
+	rowCount := 0
+	timeIndex := -1
+
+	// check if there is a column named time
+	for i, col := range columnNames {
+		switch col {
+		case "time", "time_sec":
+			timeIndex = i
+		}
+	}
+
+	for ; rows.Next(); rowCount++ {
+		if rowCount > rowLimit {
+			return fmt.Errorf("MySQL query row limit exceeded, limit %d", rowLimit)
+		}
+
+		values, err := e.getTypedRowData(rows)
+		if err != nil {
+			return err
+		}
+
+		// converts column named time to unix timestamp in milliseconds to make
+		// native mysql datetime types and epoch dates work in
+		// annotation and table queries.
+		tsdb.ConvertSqlTimeColumnToEpochMs(values, timeIndex)
+
+		table.Rows = append(table.Rows, values)
+	}
+
+	result.Tables = append(result.Tables, table)
+	result.Meta.Set("rowCount", rowCount)
+	return nil
+}
+
+func (e MysqlQueryEndpoint) getTypedRowData(rows *core.Rows) (tsdb.RowValues, error) {
+	types, err := rows.ColumnTypes()
 	if err != nil {
 		return nil, err
 	}
 
-	return executor, nil
-}
+	values := make([]interface{}, len(types))
 
-func (e *MysqlExecutor) initEngine() error {
-	engineCache.Lock()
-	defer engineCache.Unlock()
+	for i := range values {
+		scanType := types[i].ScanType()
+		values[i] = reflect.New(scanType).Interface()
 
-	if engine, present := engineCache.cache[e.datasource.Id]; present {
-		if version, _ := engineCache.versions[e.datasource.Id]; version == e.datasource.Version {
-			e.engine = engine
-			return nil
+		if types[i].DatabaseTypeName() == "BIT" {
+			values[i] = new([]byte)
 		}
 	}
 
-	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4&parseTime=true&loc=UTC", e.datasource.User, e.datasource.Password, "tcp", e.datasource.Url, e.datasource.Database)
-	e.log.Debug("getEngine", "connection", cnnstr)
-
-	engine, err := xorm.NewEngine("mysql", cnnstr)
-	engine.SetMaxOpenConns(10)
-	engine.SetMaxIdleConns(10)
-	if err != nil {
-		return err
+	if err := rows.Scan(values...); err != nil {
+		return nil, err
 	}
 
-	engineCache.cache[e.datasource.Id] = engine
-	e.engine = engine
-	return nil
-}
+	for i := 0; i < len(types); i++ {
+		typeName := reflect.ValueOf(values[i]).Type().String()
 
-func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{
-		QueryResults: make(map[string]*tsdb.QueryResult),
-	}
-
-	session := e.engine.NewSession()
-	defer session.Close()
-	db := session.DB()
-
-	for _, query := range queries {
-		rawSql := query.Model.Get("rawSql").MustString()
-		if rawSql == "" {
-			continue
+		switch typeName {
+		case "*sql.RawBytes":
+			values[i] = string(*values[i].(*sql.RawBytes))
+		case "*mysql.NullTime":
+			sqlTime := (*values[i].(*mysql.NullTime))
+			if sqlTime.Valid {
+				values[i] = sqlTime.Time
+			} else {
+				values[i] = nil
+			}
+		case "*sql.NullInt64":
+			nullInt64 := (*values[i].(*sql.NullInt64))
+			if nullInt64.Valid {
+				values[i] = nullInt64.Int64
+			} else {
+				values[i] = nil
+			}
+		case "*sql.NullFloat64":
+			nullFloat64 := (*values[i].(*sql.NullFloat64))
+			if nullFloat64.Valid {
+				values[i] = nullFloat64.Float64
+			} else {
+				values[i] = nil
+			}
 		}
 
-		rows, err := db.Query(rawSql)
-		if err != nil {
-			result.QueryResults[query.RefId] = &tsdb.QueryResult{Error: err}
-			continue
+		if types[i].DatabaseTypeName() == "DECIMAL" {
+			f, err := strconv.ParseFloat(values[i].(string), 64)
+
+			if err == nil {
+				values[i] = f
+			} else {
+				values[i] = nil
+			}
 		}
-
-		defer rows.Close()
-
-		result.QueryResults[query.RefId] = e.TransformToTimeSeries(query, rows)
 	}
 
-	return result
+	return values, nil
 }
 
-func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows) *tsdb.QueryResult {
-	result := &tsdb.QueryResult{RefId: query.RefId}
+func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
+	seriesByQueryOrder := list.New()
+
 	columnNames, err := rows.Columns()
-
 	if err != nil {
-		result.Error = err
-		return result
-	}
-
-	rowData := NewStringStringScan(columnNames)
-	for rows.Next() {
-		err := rowData.Update(rows.Rows)
-		if err != nil {
-			e.log.Error("Mysql response parsing", "error", err)
-			result.Error = err
-			return result
-		}
-
-		if rowData.metric == "" {
-			rowData.metric = "Unknown"
-		}
-
-		e.log.Info("Rows", "metric", rowData.metric, "time", rowData.time, "value", rowData.value)
-
-		if !rowData.time.Valid {
-			result.Error = fmt.Errorf("Found row with no time value")
-			return result
-		}
-
-		if series, exist := pointsBySeries[rowData.metric]; exist {
-			series.Points = append(series.Points, tsdb.TimePoint{rowData.value, rowData.time})
-		} else {
-			series := &tsdb.TimeSeries{Name: rowData.metric}
-			series.Points = append(series.Points, tsdb.TimePoint{rowData.value, rowData.time})
-			pointsBySeries[rowData.metric] = series
-		}
-	}
-
-	for _, value := range pointsBySeries {
-		result.Series = append(result.Series, value)
-	}
-
-	return result
-}
-
-type stringStringScan struct {
-	rowPtrs     []interface{}
-	rowValues   []string
-	columnNames []string
-	columnCount int
-
-	time   null.Float
-	value  null.Float
-	metric string
-}
-
-func NewStringStringScan(columnNames []string) *stringStringScan {
-	s := &stringStringScan{
-		columnCount: len(columnNames),
-		columnNames: columnNames,
-		rowPtrs:     make([]interface{}, len(columnNames)),
-		rowValues:   make([]string, len(columnNames)),
-	}
-
-	for i := 0; i < s.columnCount; i++ {
-		s.rowPtrs[i] = new(sql.RawBytes)
-	}
-
-	return s
-}
-
-func (s *stringStringScan) Update(rows *sql.Rows) error {
-	if err := rows.Scan(s.rowPtrs...); err != nil {
 		return err
 	}
 
-	for i := 0; i < s.columnCount; i++ {
-		if rb, ok := s.rowPtrs[i].(*sql.RawBytes); ok {
-			s.rowValues[i] = string(*rb)
+	columnTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return err
+	}
 
-			switch s.columnNames[i] {
-			case "time_sec":
-				if sec, err := strconv.ParseInt(s.rowValues[i], 10, 64); err == nil {
-					s.time = null.FloatFrom(float64(sec * 1000))
+	rowLimit := 1000000
+	rowCount := 0
+	timeIndex := -1
+	metricIndex := -1
+
+	// check columns of resultset: a column named time is mandatory
+	// the first text column is treated as metric name unless a column named metric is present
+	for i, col := range columnNames {
+		switch col {
+		case "time", "time_sec":
+			timeIndex = i
+		case "metric":
+			metricIndex = i
+		default:
+			if metricIndex == -1 {
+				switch columnTypes[i].DatabaseTypeName() {
+				case "CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT":
+					metricIndex = i
 				}
-			case "value":
-				if value, err := strconv.ParseFloat(s.rowValues[i], 64); err == nil {
-					s.value = null.FloatFrom(value)
-				}
-			case "metric":
-				s.metric = s.rowValues[i]
+			}
+		}
+	}
+
+	if timeIndex == -1 {
+		return fmt.Errorf("Found no column named time or time_sec")
+	}
+
+	fillMissing := query.Model.Get("fill").MustBool(false)
+	var fillInterval float64
+	fillValue := null.Float{}
+	if fillMissing {
+		fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
+		if query.Model.Get("fillNull").MustBool(false) == false {
+			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
+			fillValue.Valid = true
+		}
+	}
+
+	for rows.Next() {
+		var timestamp float64
+		var value null.Float
+		var metric string
+
+		if rowCount > rowLimit {
+			return fmt.Errorf("PostgreSQL query row limit exceeded, limit %d", rowLimit)
+		}
+
+		values, err := e.getTypedRowData(rows)
+		if err != nil {
+			return err
+		}
+
+		switch columnValue := values[timeIndex].(type) {
+		case int64:
+			timestamp = float64(columnValue * 1000)
+		case float64:
+			timestamp = columnValue * 1000
+		case time.Time:
+			timestamp = float64(columnValue.UnixNano() / 1e6)
+		default:
+			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp, got: %T %v", columnValue, columnValue)
+		}
+
+		if metricIndex >= 0 {
+			if columnValue, ok := values[metricIndex].(string); ok == true {
+				metric = columnValue
+			} else {
+				return fmt.Errorf("Column metric must be of type char,varchar or text, got: %T %v", values[metricIndex], values[metricIndex])
+			}
+		}
+
+		for i, col := range columnNames {
+			if i == timeIndex || i == metricIndex {
+				continue
 			}
 
-			*rb = nil // reset pointer to discard current value to avoid a bug
-		} else {
-			return fmt.Errorf("Cannot convert index %d column %s to type *sql.RawBytes", i, s.columnNames[i])
+			switch columnValue := values[i].(type) {
+			case int64:
+				value = null.FloatFrom(float64(columnValue))
+			case float64:
+				value = null.FloatFrom(columnValue)
+			case nil:
+				value.Valid = false
+			default:
+				return fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", col, columnValue, columnValue)
+			}
+			if metricIndex == -1 {
+				metric = col
+			}
+
+			series, exist := pointsBySeries[metric]
+			if exist == false {
+				series = &tsdb.TimeSeries{Name: metric}
+				pointsBySeries[metric] = series
+				seriesByQueryOrder.PushBack(metric)
+			}
+
+			if fillMissing {
+				var intervalStart float64
+				if exist == false {
+					intervalStart = float64(tsdbQuery.TimeRange.MustGetFrom().UnixNano() / 1e6)
+				} else {
+					intervalStart = series.Points[len(series.Points)-1][1].Float64 + fillInterval
+				}
+
+				// align interval start
+				intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval
+
+				for i := intervalStart; i < timestamp; i += fillInterval {
+					series.Points = append(series.Points, tsdb.TimePoint{fillValue, null.FloatFrom(i)})
+					rowCount++
+				}
+			}
+
+			series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
+
+			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
+			rowCount++
+
 		}
 	}
+
+	for elem := seriesByQueryOrder.Front(); elem != nil; elem = elem.Next() {
+		key := elem.Value.(string)
+		result.Series = append(result.Series, pointsBySeries[key])
+
+		if fillMissing {
+			series := pointsBySeries[key]
+			// fill in values from last fetched value till interval end
+			intervalStart := series.Points[len(series.Points)-1][1].Float64
+			intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
+
+			// align interval start
+			intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval
+			for i := intervalStart + fillInterval; i < intervalEnd; i += fillInterval {
+				series.Points = append(series.Points, tsdb.TimePoint{fillValue, null.FloatFrom(i)})
+				rowCount++
+			}
+		}
+	}
+
+	result.Meta.Set("rowCount", rowCount)
 	return nil
 }

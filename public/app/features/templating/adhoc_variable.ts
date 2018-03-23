@@ -1,9 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
-import {Variable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
+import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class AdhocVariable implements Variable {
   filters: any[];
@@ -60,18 +56,20 @@ export class AdhocVariable implements Variable {
 
   getValueForUrl() {
     return this.filters.map(filter => {
-      return [filter.key, filter.operator, filter.value].map(value => {
-        return this.escapeDelimiter(value);
-      }).join('|');
+      return [filter.key, filter.operator, filter.value]
+        .map(value => {
+          return this.escapeDelimiter(value);
+        })
+        .join('|');
     });
   }
 
   escapeDelimiter(value) {
-    return value.replace('|', '__gfp__');
+    return value.replace(/\|/g, '__gfp__');
   }
 
   unescapeDelimiter(value) {
-    return value.replace('__gfp__', '|');
+    return value.replace(/__gfp__/g, '|');
   }
 
   setFilters(filters: any[]) {

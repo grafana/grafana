@@ -75,7 +75,7 @@ func packageWalker(path string, f os.FileInfo, err error) error {
 
 	shaBytes, err := ioutil.ReadFile(path + ".sha256")
 	if err != nil {
-		log.Fatalf("Failed to read sha256 file", err)
+		log.Fatalf("Failed to read sha256 file %v", err)
 	}
 
 	os := ""

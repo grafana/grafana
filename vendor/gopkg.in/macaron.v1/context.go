@@ -15,7 +15,7 @@
 package macaron
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"html/template"
 	"io"
@@ -32,8 +32,8 @@ import (
 	"time"
 
 	"github.com/Unknwon/com"
-
 	"github.com/go-macaron/inject"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 // Locale reprents a localization interface.
@@ -72,6 +72,14 @@ func (r *Request) Body() *RequestBody {
 	return &RequestBody{r.Request.Body}
 }
 
+// ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
+type ContextInvoker func(ctx *Context)
+
+func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+	invoke(params[0].(*Context))
+	return nil, nil
+}
+
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
@@ -84,7 +92,7 @@ type Context struct {
 	Req    Request
 	Resp   ResponseWriter
 	params Params
-	Render // Not nil only if you use macaran.Render middleware.
+	Render
 	Locale
 	Data map[string]interface{}
 }
@@ -145,9 +153,6 @@ func (ctx *Context) RemoteAddr() string {
 }
 
 func (ctx *Context) renderHTML(status int, setName, tplName string, data ...interface{}) {
-	if ctx.Render == nil {
-		panic("renderer middleware hasn't been registered")
-	}
 	if len(data) <= 0 {
 		ctx.Render.HTMLSet(status, setName, tplName, ctx.Data)
 	} else if len(data) == 1 {
@@ -159,7 +164,7 @@ func (ctx *Context) renderHTML(status int, setName, tplName string, data ...inte
 
 // HTML calls Render.HTML but allows less arguments.
 func (ctx *Context) HTML(status int, name string, data ...interface{}) {
-	ctx.renderHTML(status, _DEFAULT_TPL_SET_NAME, name, data...)
+	ctx.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data...)
 }
 
 // HTML calls Render.HTMLSet but allows less arguments.
@@ -221,6 +226,12 @@ func (ctx *Context) QueryEscape(name string) string {
 	return template.HTMLEscapeString(ctx.Query(name))
 }
 
+// QueryBool returns query result in bool type.
+func (ctx *Context) QueryBool(name string) bool {
+	v, _ := strconv.ParseBool(ctx.Query(name))
+	return v
+}
+
 // QueryInt returns query result in int type.
 func (ctx *Context) QueryInt(name string) int {
 	return com.StrTo(ctx.Query(name)).MustInt()
@@ -255,6 +266,11 @@ func (ctx *Context) SetParams(name, val string) {
 		name = ":" + name
 	}
 	ctx.params[name] = val
+}
+
+// ReplaceAllParams replace all current params with given params
+func (ctx *Context) ReplaceAllParams(params Params) {
+	ctx.params = params;
 }
 
 // ParamsEscape returns escapred params result.
@@ -353,6 +369,13 @@ func (ctx *Context) SetCookie(name string, value string, others ...interface{}) 
 		}
 	}
 
+	if len(others) > 5 {
+		if v, ok := others[5].(time.Time); ok {
+			cookie.Expires = v
+			cookie.RawExpires = v.Format(time.UnixDate)
+		}
+	}
+
 	ctx.Resp.Header().Add("Set-Cookie", cookie.String())
 }
 
@@ -401,30 +424,29 @@ func (ctx *Context) GetSecureCookie(key string) (string, bool) {
 
 // SetSuperSecureCookie sets given cookie value to response header with secret string.
 func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...interface{}) {
-	m := md5.Sum([]byte(secret))
-	secret = hex.EncodeToString(m[:])
-	text, err := com.AESEncrypt([]byte(secret), []byte(value))
+	key := pbkdf2.Key([]byte(secret), []byte(secret), 1000, 16, sha256.New)
+	text, err := com.AESGCMEncrypt(key, []byte(value))
 	if err != nil {
 		panic("error encrypting cookie: " + err.Error())
 	}
+
 	ctx.SetCookie(name, hex.EncodeToString(text), others...)
 }
 
 // GetSuperSecureCookie returns given cookie value from request header with secret string.
-func (ctx *Context) GetSuperSecureCookie(secret, key string) (string, bool) {
-	val := ctx.GetCookie(key)
+func (ctx *Context) GetSuperSecureCookie(secret, name string) (string, bool) {
+	val := ctx.GetCookie(name)
 	if val == "" {
 		return "", false
 	}
 
-	data, err := hex.DecodeString(val)
+	text, err := hex.DecodeString(val)
 	if err != nil {
 		return "", false
 	}
 
-	m := md5.Sum([]byte(secret))
-	secret = hex.EncodeToString(m[:])
-	text, err := com.AESDecrypt([]byte(secret), data)
+	key := pbkdf2.Key([]byte(secret), []byte(secret), 1000, 16, sha256.New)
+	text, err = com.AESGCMDecrypt(key, text)
 	return string(text), err == nil
 }
 

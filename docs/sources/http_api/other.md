@@ -18,43 +18,47 @@ parent = "http_api"
 
 **Example Request**:
 
-    GET /api/frontend/settings HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/frontend/settings HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {
-      "allowOrgCreate":true,
-      "appSubUrl":"",
-      "buildInfo":{
-        "buildstamp":xxxxxx,
-        "commit":"vyyyy",
-        "version":"zzzzz"
-      },
-      "datasources":{
-        "datasourcename":{
-        "index":"grafana-dash",
-        "meta":{
-          "annotations":true,
-          "module":"plugins/datasource/grafana/datasource",
-          "name":"Grafana",
-          "partials":{
-            "annotations":"app/plugins/datasource/grafana/partials/annotations.editor.html",
-            "config":"app/plugins/datasource/grafana/partials/config.html"
-            },
-          "pluginType":"datasource",
-          "serviceName":"Grafana",
-          "type":"grafanasearch"
-          }
-        }
-      },
-      "defaultDatasource": "Grafana"
+{
+  "allowOrgCreate":true,
+  "appSubUrl":"",
+  "buildInfo":{
+    "buildstamp":xxxxxx,
+    "commit":"vyyyy",
+    "version":"zzzzz"
+  },
+  "datasources":{
+    "datasourcename":{
+      "index":"grafana-dash",
+      "meta":{
+        "annotations":true,
+        "module":"plugins/datasource/grafana/datasource",
+        "name":"Grafana",
+        "partials":{
+          "annotations":"app/plugins/datasource/grafana/partials/annotations.editor.html",
+          "config":"app/plugins/datasource/grafana/partials/config.html"
+        },
+        "pluginType":"datasource",
+        "serviceName":"Grafana",
+        "type":"grafanasearch"
+      }
     }
+  },
+  "defaultDatasource": "Grafana"
+}
+```
 
 # Login API
 
@@ -64,14 +68,18 @@ parent = "http_api"
 
 **Example Request**:
 
-    GET /api/login/ping HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/login/ping HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {"message": "Logged in"}
+{"message": "Logged in"}
+```

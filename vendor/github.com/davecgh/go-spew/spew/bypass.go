@@ -1,4 +1,4 @@
-// Copyright (c) 2015 Dave Collins <dave@davec.name>
+// Copyright (c) 2015-2016 Dave Collins <dave@davec.name>
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,9 +13,10 @@
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // NOTE: Due to the following build constraints, this file will only be compiled
-// when the code is not running on Google App Engine and "-tags disableunsafe"
-// is not added to the go build command line.
-// +build !appengine,!disableunsafe
+// when the code is not running on Google App Engine, compiled by GopherJS, and
+// "-tags safe" is not added to the go build command line.  The "disableunsafe"
+// tag is deprecated and thus should not be used.
+// +build !js,!appengine,!safe,!disableunsafe
 
 package spew
 
@@ -91,6 +92,21 @@ func init() {
 		flagKindShift = 0
 		flagRO = 1 << 5
 		flagIndir = 1 << 6
+
+		// Commit adf9b30e5594 modified the flags to separate the
+		// flagRO flag into two bits which specifies whether or not the
+		// field is embedded.  This causes flagIndir to move over a bit
+		// and means that flagRO is the combination of either of the
+		// original flagRO bit and the new bit.
+		//
+		// This code detects the change by extracting what used to be
+		// the indirect bit to ensure it's set.  When it's not, the flag
+		// order has been changed to the newer format, so the flags are
+		// updated accordingly.
+		if upfv&flagIndir == 0 {
+			flagRO = 3 << 5
+			flagIndir = 1 << 7
+		}
 	}
 }
 

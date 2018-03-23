@@ -1,73 +1,49 @@
-<div class="container">
+<page-header model="navModel"></page-header>
 
-	<div class="signup-page-background">
-	</div>
+<div class="page-container page-body">
+  <div class="signup">
+    <h3 class="p-b-1">You're almost there.</h3>
+    <div class="p-b-1">
+      We just need a couple of more bits of<br> information to finish creating your account.
+    </div>
+    <form name="signUpForm" class="login-form gf-form-group">
+      <div class="gf-form" ng-if="verifyEmailEnabled">
+        <span class="gf-form-label width-9">
+          Email code<tip>Email verification code (sent to your email)</tip>
+        </span>
+        <input type="text" class="gf-form-input max-width-14" ng-model="formModel.code" required></input>
+      </div>
 
-	<div class="login-box">
+      <div class="gf-form" ng-if="!autoAssignOrg">
+        <span class="gf-form-label width-9">Org. name</span>
+        <input type="text" name="orgName" class="gf-form-input max-width-14" ng-model="formModel.orgName" placeholder="Name your organization">
+      </div>
 
-		<div class="login-box-logo">
-			<img class="logo-icon" src="public/img/grafana_icon.svg"></img><br>
-			<i class="icon-gf icon-gf-grafana_wordmark"></i>
-		</div>
+      <div class="gf-form">
+        <span class="gf-form-label width-9">Your name</span>
+        <input type="text" name="name" class="gf-form-input max-width-14" ng-model="formModel.name" placeholder="(optional)">
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-9">Email</span>
+        <input type="text" class="gf-form-input max-width-14" required ng-model="formModel.username" placeholder="Email" autocomplete="off">
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-9">Password</span>
+        <input type="password" class="gf-form-input max-width-14" required ng-model="formModel.password" id="inputPassword" placeholder="password" autocomplete="off">
+      </div>
 
-    <div class="invite-box">
-			<h3>
-				You're almost there.
-			</h3>
+      <div class="signup__password-strength">
+        <password-strength password="formModel.password"></password-strength>
+      </div>
 
-			<div class="modal-tagline">
-				We just need a couple of more bits of<br> information to finish creating your account.
-			</div>
-
-			<div style="display: inline-block; margin-top: 25px; width: 300px">
-					<div class="editor-option">
-						<label class="small">Your email:</label>
-						<span class="large">{{formModel.email}}</span>
-					</div>
-			</div>
-			<br>
-			<br>
-
-			<form name="signUpForm" class="login-form gf-form-group">
-
-				<div class="gf-form" ng-if="verifyEmailEnabled">
-					<span class="gf-form-label width-9">
-						Email code<tip>Email verification code (sent to your email)</tip>
-					</span>
-					<input type="text" class="gf-form-input max-width-14" ng-model="formModel.code" required></input>
-				</div>
-
-				<div class="gf-form" ng-if="!autoAssignOrg">
-					<span class="gf-form-label width-9">Org. name</span>
-					<input type="text" name="orgName" class="gf-form-input max-width-14" ng-model='formModel.orgName' placeholder="Name your organization">
-				</div>
-
-				<div class="gf-form">
-					<span class="gf-form-label width-9">Your name</span>
-					<input type="text" name="name" class="gf-form-input max-width-14" ng-model='formModel.name' placeholder="(optional)">
-				</div>
-				<div class="gf-form">
-					<span class="gf-form-label width-9">Username</span>
-					<input type="text" class="gf-form-input max-width-14" required ng-model='formModel.username' placeholder="Username" autocomplete="off">
-				</div>
-				<div class="gf-form">
-					<span class="gf-form-label width-9">Password</span>
-					<input type="password" class="gf-form-input max-width-14" required ng-model="formModel.password" id="inputPassword" placeholder="password" autocomplete="off">
-				</div>
-
-				<div style="margin-left: 7.5rem; width: 254px;">
-					<password-strength password="formModel.password"></password-strength>
-				</div>
-
-				<div class="gf-form-button-row">
-					<button type="submit" class="btn" ng-click="ctrl.submit();" ng-class="{'btn-inverse': !signUpForm.$valid, 'btn-primary': signUpForm.$valid}">
-						Continue
-					</button>
-				</div>
-			</form>
-		</div>
-
-	</div>
+      <div class="gf-form-button-row p-t-3">
+        <button type="submit" class="btn btn-success" ng-click="ctrl.submit();" ng-disabled="!signUpForm.$valid">
+          Sign Up
+        </button>
+        <a href="login" class="btn btn-inverse">
+            Back
+        </a>
+      </div>
+    </form>
+  </div>
 </div>
-
-

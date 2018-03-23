@@ -5,7 +5,7 @@
  * This script generates a dashboard object that Grafana can load. It also takes a number of user
  * supplied URL parameters (in the ARGS variable)
  *
- * Global accessable variables
+ * Global accessible variables
  * window, document, $, jQuery, ARGS, moment
  *
  * Return a dashboard object, or a function
@@ -24,7 +24,7 @@ return function(callback) {
   // Setup some variables
   var dashboard;
 
-  // Intialize a skeleton with nothing but a rows array and service object
+  // Initialize a skeleton with nothing but a rows array and service object
   dashboard = {
     rows : [],
     services : {}
@@ -34,7 +34,7 @@ return function(callback) {
   dashboard.title = 'Scripted dash';
 
   // Set default time
-  // time can be overriden in the url using from/to parameters, but this is
+  // time can be overridden in the url using from/to parameters, but this is
   // handled automatically in grafana core during dashboard initialization
   dashboard.time = {
       from: "now-6h",

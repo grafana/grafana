@@ -1,4 +1,3 @@
-
 .edit-tab-with-sidemenu {
   display: flex;
   flex-direction: row;
@@ -10,7 +9,7 @@
 }
 
 .edit-sidemenu-aside {
-  min-width: 15rem;
+  margin-right: $spacer*2;
 }
 
 .edit-sidemenu {
@@ -25,9 +24,9 @@
     display: block;
     color: $text-color;
     margin: 0 0 1.5rem 1rem;
+    white-space: nowrap;
   }
 }
-
 
 @include media-breakpoint-down(sm) {
   .edit-tab-with-sidemenu {

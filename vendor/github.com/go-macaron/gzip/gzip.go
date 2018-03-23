@@ -86,7 +86,10 @@ func Gziper(options ...Options) macaron.Handler {
 		gzw := gzipResponseWriter{gz, ctx.Resp}
 		ctx.Resp = gzw
 		ctx.MapTo(gzw, (*http.ResponseWriter)(nil))
-		if ctx.Render != nil {
+
+		// Check if render middleware has been registered,
+		// if yes, we need to modify ResponseWriter for it as well.
+		if _, ok := ctx.Render.(*macaron.DummyRender); !ok {
 			ctx.Render.SetResponseWriter(gzw)
 		}
 

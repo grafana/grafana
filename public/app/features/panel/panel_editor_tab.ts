@@ -1,7 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
-import config from 'app/core/config';
 
 var directiveModule = angular.module('grafana.directives');
 
@@ -9,19 +6,24 @@ var directiveModule = angular.module('grafana.directives');
 function panelEditorTab(dynamicDirectiveSrv) {
   return dynamicDirectiveSrv.create({
     scope: {
-      ctrl: "=",
-      editorTab: "=",
-      index: "=",
+      ctrl: '=',
+      editorTab: '=',
+      index: '=',
     },
     directive: scope => {
       var pluginId = scope.ctrl.pluginId;
       var tabIndex = scope.index;
+      // create a wrapper for directiveFn
+      // required for metrics tab directive
+      // that is the same for many panels but
+      // given different names in this function
+      var fn = () => scope.editorTab.directiveFn();
 
       return Promise.resolve({
         name: `panel-editor-tab-${pluginId}${tabIndex}`,
-        fn: scope.editorTab.directiveFn,
+        fn: fn,
       });
-    }
+    },
   });
 }
 

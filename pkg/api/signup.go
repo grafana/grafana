@@ -5,29 +5,28 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/user/signup/options
-func GetSignUpOptions(c *middleware.Context) Response {
-	return Json(200, util.DynMap{
+func GetSignUpOptions(c *m.ReqContext) Response {
+	return JSON(200, util.DynMap{
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
 		"autoAssignOrg":      setting.AutoAssignOrg,
 	})
 }
 
 // POST /api/user/signup
-func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
+func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 	if !setting.AllowUserSignUp {
-		return ApiError(401, "User signup is disabled", nil)
+		return Error(401, "User signup is disabled", nil)
 	}
 
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
-		return ApiError(422, "User with same email address already exists", nil)
+		return Error(422, "User with same email address already exists", nil)
 	}
 
 	cmd := m.CreateTempUserCommand{}
@@ -39,7 +38,7 @@ func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to create signup", err)
+		return Error(500, "Failed to create signup", err)
 	}
 
 	bus.Publish(&events.SignUpStarted{
@@ -47,14 +46,14 @@ func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 		Code:  cmd.Code,
 	})
 
-	metrics.M_Api_User_SignUpStarted.Inc(1)
+	metrics.M_Api_User_SignUpStarted.Inc()
 
-	return Json(200, util.DynMap{"status": "SignUpCreated"})
+	return JSON(200, util.DynMap{"status": "SignUpCreated"})
 }
 
-func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
+func SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Response {
 	if !setting.AllowUserSignUp {
-		return ApiError(401, "User signup is disabled", nil)
+		return Error(401, "User signup is disabled", nil)
 	}
 
 	createUserCmd := m.CreateUserCommand{
@@ -76,12 +75,12 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	// check if user exists
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
-		return ApiError(401, "User with same email address already exists", nil)
+		return Error(401, "User with same email address already exists", nil)
 	}
 
 	// dispatch create command
 	if err := bus.Dispatch(&createUserCmd); err != nil {
-		return ApiError(500, "Failed to create user", err)
+		return Error(500, "Failed to create user", err)
 	}
 
 	// publish signup event
@@ -99,7 +98,7 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	// check for pending invites
 	invitesQuery := m.GetTempUsersQuery{Email: form.Email, Status: m.TmpUserInvitePending}
 	if err := bus.Dispatch(&invitesQuery); err != nil {
-		return ApiError(500, "Failed to query database for invites", err)
+		return Error(500, "Failed to query database for invites", err)
 	}
 
 	apiResponse := util.DynMap{"message": "User sign up completed successfully", "code": "redirect-to-landing-page"}
@@ -111,9 +110,9 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	}
 
 	loginUserWithUser(user, c)
-	metrics.M_Api_User_SignUpCompleted.Inc(1)
+	metrics.M_Api_User_SignUpCompleted.Inc()
 
-	return Json(200, apiResponse)
+	return JSON(200, apiResponse)
 }
 
 func verifyUserSignUpEmail(email string, code string) (bool, Response) {
@@ -121,14 +120,14 @@ func verifyUserSignUpEmail(email string, code string) (bool, Response) {
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrTempUserNotFound {
-			return false, ApiError(404, "Invalid email verification code", nil)
+			return false, Error(404, "Invalid email verification code", nil)
 		}
-		return false, ApiError(500, "Failed to read temp user", err)
+		return false, Error(500, "Failed to read temp user", err)
 	}
 
 	tempUser := query.Result
 	if tempUser.Email != email {
-		return false, ApiError(404, "Email verification code does not match email", nil)
+		return false, Error(404, "Email verification code does not match email", nil)
 	}
 
 	return true, nil

@@ -7,8 +7,9 @@ template_dir=templates
 grafana_config_file=conf.tmp
 grafana_config=config
 
-fig_file=docker-compose.yml
-fig_config=fig
+compose_header_file=compose_header.yml
+fig_file=docker-compose.yaml
+fig_config=docker-compose.yaml
 
 if [ "$#" == 0 ]; then
     blocks=`ls $blocks_dir`
@@ -23,12 +24,15 @@ if [ "$#" == 0 ]; then
     exit 0
 fi
 
-for file in $gogs_config_file $fig_file; do
+for file in $grafana_config_file $fig_file; do
     if [ -e $file ]; then
         echo "Deleting $file"
         rm $file
     fi
 done
+
+echo "Adding Compose header to $fig_file"
+cat $compose_header_file >> $fig_file
 
 for dir in $@; do
     current_dir=$blocks_dir/$dir
@@ -45,7 +49,7 @@ for dir in $@; do
 
     if [ -e $current_dir/$fig_config ]; then
         echo "Adding $current_dir/$fig_config to $fig_file"
-        cat $current_dir/fig >> $fig_file
+        cat $current_dir/$fig_config >> $fig_file
         echo "" >> $fig_file
     fi
 done

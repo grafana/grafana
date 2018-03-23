@@ -101,13 +101,17 @@ func createDialer() (*gomail.Dialer, error) {
 
 	d := gomail.NewDialer(host, iPort, setting.Smtp.User, setting.Smtp.Password)
 	d.TLSConfig = tlsconfig
-	d.LocalName = setting.InstanceName
+	if setting.Smtp.EhloIdentity != "" {
+		d.LocalName = setting.Smtp.EhloIdentity
+	} else {
+		d.LocalName = setting.InstanceName
+	}
 	return d, nil
 }
 
 func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 	if !setting.Smtp.Enabled {
-		return nil, errors.New("Grafana mailing/smtp options not configured, contact your Grafana admin")
+		return nil, m.ErrSmtpNotEnabled
 	}
 
 	var buffer bytes.Buffer

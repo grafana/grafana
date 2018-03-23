@@ -10,10 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func initContextWithAuthProxy(ctx *Context) bool {
+func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	if !setting.AuthProxyEnabled {
 		return false
 	}
@@ -30,34 +31,35 @@ func initContextWithAuthProxy(ctx *Context) bool {
 	}
 
 	query := getSignedInUserQueryForProxyAuth(proxyHeaderValue)
+	query.OrgId = orgID
 	if err := bus.Dispatch(query); err != nil {
 		if err != m.ErrUserNotFound {
 			ctx.Handle(500, "Failed to find user specified in auth proxy header", err)
 			return true
 		}
 
-		if setting.AuthProxyAutoSignUp {
-			cmd := getCreateUserCommandForProxyAuth(proxyHeaderValue)
-			if setting.LdapEnabled {
-				cmd.SkipOrgSetup = true
-			}
-
-			if err := bus.Dispatch(cmd); err != nil {
-				ctx.Handle(500, "Failed to create user specified in auth proxy header", err)
-				return true
-			}
-			query = &m.GetSignedInUserQuery{UserId: cmd.Result.Id}
-			if err := bus.Dispatch(query); err != nil {
-				ctx.Handle(500, "Failed find user after creation", err)
-				return true
-			}
-		} else {
+		if !setting.AuthProxyAutoSignUp {
 			return false
+		}
+
+		cmd := getCreateUserCommandForProxyAuth(proxyHeaderValue)
+		if setting.LdapEnabled {
+			cmd.SkipOrgSetup = true
+		}
+
+		if err := bus.Dispatch(cmd); err != nil {
+			ctx.Handle(500, "Failed to create user specified in auth proxy header", err)
+			return true
+		}
+		query = &m.GetSignedInUserQuery{UserId: cmd.Result.Id, OrgId: orgID}
+		if err := bus.Dispatch(query); err != nil {
+			ctx.Handle(500, "Failed find user after creation", err)
+			return true
 		}
 	}
 
 	// initialize session
-	if err := ctx.Session.Start(ctx); err != nil {
+	if err := ctx.Session.Start(ctx.Context); err != nil {
 		log.Error(3, "Failed to start session", err)
 		return false
 	}
@@ -65,12 +67,12 @@ func initContextWithAuthProxy(ctx *Context) bool {
 	// Make sure that we cannot share a session between different users!
 	if getRequestUserId(ctx) > 0 && getRequestUserId(ctx) != query.Result.UserId {
 		// remove session
-		if err := ctx.Session.Destory(ctx); err != nil {
-			log.Error(3, "Failed to destory session, err")
+		if err := ctx.Session.Destory(ctx.Context); err != nil {
+			log.Error(3, "Failed to destroy session, err")
 		}
 
 		// initialize a new session
-		if err := ctx.Session.Start(ctx); err != nil {
+		if err := ctx.Session.Start(ctx.Context); err != nil {
 			log.Error(3, "Failed to start session", err)
 		}
 	}
@@ -88,56 +90,59 @@ func initContextWithAuthProxy(ctx *Context) bool {
 
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
-	ctx.Session.Set(SESS_KEY_USERID, ctx.UserId)
+	ctx.Session.Set(session.SESS_KEY_USERID, ctx.UserId)
 
 	return true
 }
 
-var syncGrafanaUserWithLdapUser = func(ctx *Context, query *m.GetSignedInUserQuery) error {
-	if setting.LdapEnabled {
-		expireEpoch := time.Now().Add(time.Duration(-setting.AuthProxyLdapSyncTtl) * time.Minute).Unix()
+var syncGrafanaUserWithLdapUser = func(ctx *m.ReqContext, query *m.GetSignedInUserQuery) error {
+	if !setting.LdapEnabled {
+		return nil
+	}
 
-		var lastLdapSync int64
-		if lastLdapSyncInSession := ctx.Session.Get(SESS_KEY_LASTLDAPSYNC); lastLdapSyncInSession != nil {
-			lastLdapSync = lastLdapSyncInSession.(int64)
-		}
+	expireEpoch := time.Now().Add(time.Duration(-setting.AuthProxyLdapSyncTtl) * time.Minute).Unix()
 
-		if lastLdapSync < expireEpoch {
-			ldapCfg := login.LdapCfg
+	var lastLdapSync int64
+	if lastLdapSyncInSession := ctx.Session.Get(session.SESS_KEY_LASTLDAPSYNC); lastLdapSyncInSession != nil {
+		lastLdapSync = lastLdapSyncInSession.(int64)
+	}
 
-			for _, server := range ldapCfg.Servers {
-				auther := login.NewLdapAuthenticator(server)
-				if err := auther.SyncSignedInUser(query.Result); err != nil {
-					return err
-				}
+	if lastLdapSync < expireEpoch {
+		ldapCfg := login.LdapCfg
+
+		for _, server := range ldapCfg.Servers {
+			author := login.NewLdapAuthenticator(server)
+			if err := author.SyncSignedInUser(query.Result); err != nil {
+				return err
 			}
-
-			ctx.Session.Set(SESS_KEY_LASTLDAPSYNC, time.Now().Unix())
 		}
+
+		ctx.Session.Set(session.SESS_KEY_LASTLDAPSYNC, time.Now().Unix())
 	}
 
 	return nil
 }
 
-func checkAuthenticationProxy(ctx *Context, proxyHeaderValue string) error {
-	if len(strings.TrimSpace(setting.AuthProxyWhitelist)) > 0 {
-		proxies := strings.Split(setting.AuthProxyWhitelist, ",")
-		remoteAddrSplit := strings.Split(ctx.Req.RemoteAddr, ":")
-		sourceIP := remoteAddrSplit[0]
+func checkAuthenticationProxy(ctx *m.ReqContext, proxyHeaderValue string) error {
+	if len(strings.TrimSpace(setting.AuthProxyWhitelist)) == 0 {
+		return nil
+	}
+	proxies := strings.Split(setting.AuthProxyWhitelist, ",")
+	remoteAddrSplit := strings.Split(ctx.Req.RemoteAddr, ":")
+	sourceIP := remoteAddrSplit[0]
 
-		found := false
-		for _, proxyIP := range proxies {
-			if sourceIP == strings.TrimSpace(proxyIP) {
-				found = true
-				break
-			}
+	found := false
+	for _, proxyIP := range proxies {
+		if sourceIP == strings.TrimSpace(proxyIP) {
+			found = true
+			break
 		}
+	}
 
-		if !found {
-			msg := fmt.Sprintf("Request for user (%s) is not from the authentication proxy", proxyHeaderValue)
-			err := errors.New(msg)
-			return err
-		}
+	if !found {
+		msg := fmt.Sprintf("Request for user (%s) is not from the authentication proxy", proxyHeaderValue)
+		err := errors.New(msg)
+		return err
 	}
 
 	return nil

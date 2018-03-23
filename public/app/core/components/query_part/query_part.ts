@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 export class QueryPartDef {
@@ -30,7 +28,7 @@ export class QueryPart {
     this.part = part;
     this.def = def;
     if (!this.def) {
-      throw {message: 'Could not find query part ' + part.type};
+      throw { message: 'Could not find query part ' + part.type };
     }
 
     part.params = part.params || _.clone(this.def.defaultParams);
@@ -42,7 +40,7 @@ export class QueryPart {
     return this.def.renderer(this, innerExpr);
   }
 
-  hasMultipleParamsInString (strValue, index) {
+  hasMultipleParamsInString(strValue, index) {
     if (strValue.indexOf(',') === -1) {
       return false;
     }
@@ -50,7 +48,7 @@ export class QueryPart {
     return this.def.params[index + 1] && this.def.params[index + 1].optional;
   }
 
-  updateParam (strValue, index) {
+  updateParam(strValue, index) {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
     if (this.hasMultipleParamsInString(strValue, index)) {
@@ -107,7 +105,6 @@ export function functionRenderer(part, innerExpr) {
   return str + parameters.join(', ') + ')';
 }
 
-
 export function suffixRenderer(part, innerExpr) {
   return innerExpr + ' ' + part.params[0];
 }
@@ -119,5 +116,3 @@ export function identityRenderer(part, innerExpr) {
 export function quotedIdentityRenderer(part, innerExpr) {
   return '"' + part.params[0] + '"';
 }
-
-

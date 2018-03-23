@@ -21,9 +21,6 @@ fi
 yarn install --pure-lockfile --no-progress
 
 source /etc/profile.d/rvm.sh
-rvm use 2.1.9 --default
-
-gem install fpm -v 1.4
 
 echo "current dir: $(pwd)"
 

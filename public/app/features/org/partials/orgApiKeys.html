@@ -1,21 +1,20 @@
-<navbar icon="icon-gf icon-gf-users" title="Organization" title-url="org">
-</navbar>
+<page-header model="navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>API Keys</h1>
-	</div>
+<div class="page-container page-body">
 
 	<h3 class="page-heading">Add new</h3>
+
 	<form name="addTokenForm" class="gf-form-group">
 		<div class="gf-form-inline">
 			<div class="gf-form max-width-21">
-				<span class="gf-form-label">Add a key</span>
+				<span class="gf-form-label">Key name</span>
 				<input type="text" class="gf-form-input" ng-model='token.name' placeholder="Name"></input>
 			</div>
 			<div class="gf-form">
 				<span class="gf-form-label">Role</span>
-				<select class="gf-form-input gf-size-auto" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+        <span class="gf-form-select-wrapper">
+            <select class="gf-form-input gf-size-auto" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+        </span>
 			</div>
 			<div class="gf-form">
 				<button class="btn gf-form-btn btn-success" ng-click="addToken()">Add</button>

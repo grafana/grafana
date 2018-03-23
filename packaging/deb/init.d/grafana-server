@@ -33,17 +33,12 @@ DATA_DIR=/var/lib/grafana
 PLUGINS_DIR=/var/lib/grafana/plugins
 LOG_DIR=/var/log/grafana
 CONF_FILE=$CONF_DIR/grafana.ini
+PROVISIONING_CFG_DIR=$CONF_DIR/provisioning
 MAX_OPEN_FILES=10000
 PID_FILE=/var/run/$NAME.pid
 DAEMON=/usr/sbin/$NAME
 
-
 umask 0027
-
-if [ `id -u` -ne 0 ]; then
-	echo "You need root privileges to run this script"
-	exit 4
-fi
 
 if [ ! -x $DAEMON ]; then
   echo "Program not installed or not executable"
@@ -61,11 +56,18 @@ if [ -f "$DEFAULT" ]; then
 	. "$DEFAULT"
 fi
 
-DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
+DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
+
+function checkUser() {
+  if [ `id -u` -ne 0 ]; then
+  	echo "You need root privileges to run this script"
+  	exit 4
+  fi
+}
 
 case "$1" in
   start)
-
+  checkUser
 	log_daemon_msg "Starting $DESC"
 
 	pid=`pidofproc -p $PID_FILE grafana`
@@ -90,7 +92,7 @@ case "$1" in
 	then
 	  sleep 1
 
-    # check if pid file has been written two
+    # check if pid file has been written to
 	  if ! [[ -s $PID_FILE ]]; then
 	    log_end_msg 1
 	    exit 1
@@ -112,6 +114,7 @@ case "$1" in
   log_end_msg $return
 	;;
   stop)
+  checkUser
 	log_daemon_msg "Stopping $DESC"
 
 	if [ -f "$PID_FILE" ]; then

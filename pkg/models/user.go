@@ -33,8 +33,9 @@ type User struct {
 	IsAdmin bool
 	OrgId   int64
 
-	Created time.Time
-	Updated time.Time
+	Created    time.Time
+	Updated    time.Time
+	LastSeenAt time.Time
 }
 
 func (u *User) NameOrFallback() string {
@@ -117,6 +118,7 @@ type GetSignedInUserQuery struct {
 	UserId int64
 	Login  string
 	Email  string
+	OrgId  int64
 	Result *SignedInUser
 }
 
@@ -126,6 +128,7 @@ type GetUserProfileQuery struct {
 }
 
 type SearchUsersQuery struct {
+	OrgId int64
 	Query string
 	Page  int
 	Limit int
@@ -157,11 +160,41 @@ type SignedInUser struct {
 	Name           string
 	Email          string
 	ApiKeyId       int64
+	OrgCount       int
 	IsGrafanaAdmin bool
+	IsAnonymous    bool
 	HelpFlags1     HelpFlags1
+	LastSeenAt     time.Time
+}
+
+func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
+	return u.UserId > 0 && time.Since(u.LastSeenAt) > time.Minute*5
+}
+
+func (u *SignedInUser) NameOrFallback() string {
+	if u.Name != "" {
+		return u.Name
+	} else if u.Login != "" {
+		return u.Login
+	} else {
+		return u.Email
+	}
+}
+
+type UpdateUserLastSeenAtCommand struct {
+	UserId int64
+}
+
+func (user *SignedInUser) HasRole(role RoleType) bool {
+	if user.IsGrafanaAdmin {
+		return true
+	}
+
+	return user.OrgRole.Includes(role)
 }
 
 type UserProfileDTO struct {
+	Id             int64  `json:"id"`
 	Email          string `json:"email"`
 	Name           string `json:"name"`
 	Login          string `json:"login"`
@@ -171,11 +204,14 @@ type UserProfileDTO struct {
 }
 
 type UserSearchHitDTO struct {
-	Id      int64  `json:"id"`
-	Name    string `json:"name"`
-	Login   string `json:"login"`
-	Email   string `json:"email"`
-	IsAdmin bool   `json:"isAdmin"`
+	Id            int64     `json:"id"`
+	Name          string    `json:"name"`
+	Login         string    `json:"login"`
+	Email         string    `json:"email"`
+	AvatarUrl     string    `json:"avatarUrl"`
+	IsAdmin       bool      `json:"isAdmin"`
+	LastSeenAt    time.Time `json:"lastSeenAt"`
+	LastSeenAtAge string    `json:"lastSeenAtAge"`
 }
 
 type UserIdDTO struct {

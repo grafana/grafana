@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type DefaultEvalHandler struct {
@@ -39,6 +38,11 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 			break
 		}
 
+		if i == 0 {
+			firing = cr.Firing
+			noDataFound = cr.NoDataFound
+		}
+
 		// calculating Firing based on operator
 		if cr.Operator == "or" {
 			firing = firing || cr.Firing
@@ -61,40 +65,7 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	context.Firing = firing
 	context.NoDataFound = noDataFound
 	context.EndTime = time.Now()
-	context.Rule.State = e.getNewState(context)
 
-	elapsedTime := context.EndTime.Sub(context.StartTime) / time.Millisecond
-	metrics.M_Alerting_Execution_Time.Update(elapsedTime)
-}
-
-// This should be move into evalContext once its been refactored.
-func (handler *DefaultEvalHandler) getNewState(evalContext *EvalContext) models.AlertStateType {
-	if evalContext.Error != nil {
-		handler.log.Error("Alert Rule Result Error",
-			"ruleId", evalContext.Rule.Id,
-			"name", evalContext.Rule.Name,
-			"error", evalContext.Error,
-			"changing state to", evalContext.Rule.ExecutionErrorState.ToAlertState())
-
-		if evalContext.Rule.ExecutionErrorState == models.ExecutionErrorKeepState {
-			return evalContext.PrevAlertState
-		} else {
-			return evalContext.Rule.ExecutionErrorState.ToAlertState()
-		}
-	} else if evalContext.Firing {
-		return models.AlertStateAlerting
-	} else if evalContext.NoDataFound {
-		handler.log.Info("Alert Rule returned no data",
-			"ruleId", evalContext.Rule.Id,
-			"name", evalContext.Rule.Name,
-			"changing state to", evalContext.Rule.NoDataState.ToAlertState())
-
-		if evalContext.Rule.NoDataState == models.NoDataKeepState {
-			return evalContext.PrevAlertState
-		} else {
-			return evalContext.Rule.NoDataState.ToAlertState()
-		}
-	}
-
-	return models.AlertStateOK
+	elapsedTime := context.EndTime.Sub(context.StartTime).Nanoseconds() / int64(time.Millisecond)
+	metrics.M_Alerting_Execution_Time.Observe(float64(elapsedTime))
 }

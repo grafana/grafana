@@ -2,6 +2,7 @@ package social
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -10,7 +11,7 @@ import (
 )
 
 type SocialGoogle struct {
-	*oauth2.Config
+	*SocialBase
 	allowedDomains []string
 	hostedDomain   string
 	apiUrl         string
@@ -29,21 +30,22 @@ func (s *SocialGoogle) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialGoogle) UserInfo(client *http.Client) (*BasicUserInfo, error) {
+func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Name  string `json:"name"`
 		Email string `json:"email"`
 	}
-	var err error
 
-	r, err := client.Get(s.apiUrl)
+	response, err := HttpGet(client, s.apiUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
-	defer r.Body.Close()
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
-		return nil, err
+
+	err = json.Unmarshal(response.Body, &data)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
+
 	return &BasicUserInfo{
 		Name:  data.Name,
 		Email: data.Email,

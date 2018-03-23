@@ -1,5 +1,4 @@
-
-@mixin drop-theme($themeName, $theme-bg, $theme-color) {
+@mixin drop-theme($themeName, $theme-bg, $theme-color, $border-color: $theme-bg) {
   .drop-element.drop-#{$themeName} {
     max-width: 100%;
     max-height: 100%;
@@ -11,9 +10,9 @@
       background: $theme-bg;
       color: $theme-color;
       padding: 0.65rem;
-      font-size: $font-size-sm;
       word-wrap: break-word;
       max-width: 20rem;
+      border: 1px solid $border-color;
 
       &:before {
         content: "";
@@ -43,7 +42,7 @@
         top: 100%;
         left: 50%;
         margin-left: - $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
@@ -54,7 +53,7 @@
         bottom: 100%;
         left: 50%;
         margin-left: - $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
@@ -65,7 +64,7 @@
         left: 100%;
         top: 50%;
         margin-top: - $popover-arrow-size;
-        border-left-color: $theme-bg;
+        border-left-color: $border-color;
       }
     }
 
@@ -76,7 +75,7 @@
         right: 100%;
         top: 50%;
         margin-top: - $popover-arrow-size;
-        border-right-color: $theme-bg;
+        border-right-color: $border-color;
       }
     }
 
@@ -89,125 +88,137 @@
       left: $popover-arrow-size * 2;
     }
 
-    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle .drop-content {
+    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle
+      .drop-content {
       margin-top: $popover-arrow-size;
 
       &:before {
         bottom: 100%;
         left: $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
-    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle .drop-content {
+    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle
+      .drop-content {
       margin-top: $popover-arrow-size;
 
       &:before {
         bottom: 100%;
         right: $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle
+      .drop-content {
       margin-bottom: $popover-arrow-size;
 
       &:before {
         top: 100%;
         left: $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle
+      .drop-content {
       margin-bottom: $popover-arrow-size;
 
       &:before {
         top: 100%;
         right: $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
     // Top and bottom corners
-    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom .drop-content {
+    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom
+      .drop-content {
       margin-top: $popover-arrow-size;
 
       &:before {
         bottom: 100%;
         left: $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
-    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom .drop-content {
+    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom
+      .drop-content {
       margin-top: $popover-arrow-size;
 
       &:before {
         bottom: 100%;
         right: $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top
+      .drop-content {
       margin-bottom: $popover-arrow-size;
 
       &:before {
         top: 100%;
         left: $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top
+      .drop-content {
       margin-bottom: $popover-arrow-size;
 
       &:before {
         top: 100%;
         right: $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
     // Side corners
-    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left .drop-content {
+    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left
+      .drop-content {
       margin-right: $popover-arrow-size;
 
       &:before {
         top: $popover-arrow-size;
         left: 100%;
-        border-left-color: $theme-bg;
+        border-left-color: $border-color;
       }
     }
 
-    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right .drop-content {
+    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right
+      .drop-content {
       margin-left: $popover-arrow-size;
 
       &:before {
         top: $popover-arrow-size;
         right: 100%;
-        border-right-color: $theme-bg;
+        border-right-color: $border-color;
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left
+      .drop-content {
       margin-right: $popover-arrow-size;
 
       &:before {
         bottom: $popover-arrow-size;
         left: 100%;
-        border-left-color: $theme-bg;
+        border-left-color: $border-color;
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right
+      .drop-content {
       margin-left: $popover-arrow-size;
 
       &:before {
         bottom: $popover-arrow-size;
         right: 100%;
-        border-right-color: $theme-bg;
+        border-right-color: $border-color;
       }
     }
   }
@@ -236,44 +247,55 @@
       }
     }
     // Centers and middles
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-center .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-center
+      .#{$themePrefix}-content {
       transform-origin: 50% calc(100% + #{$attachmentOffset});
     }
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-center .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-center
+      .#{$themePrefix}-content {
       transform-origin: 50% (-$attachmentOffset);
     }
-    &.#{$themePrefix}-element-attached-right.#{$themePrefix}-element-attached-middle .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-right.#{$themePrefix}-element-attached-middle
+      .#{$themePrefix}-content {
       transform-origin: calc(100% + #{$attachmentOffset}) 50%;
     }
-    &.#{$themePrefix}-element-attached-left.#{$themePrefix}-element-attached-middle .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-left.#{$themePrefix}-element-attached-middle
+      .#{$themePrefix}-content {
       transform-origin: -($attachmentOffset 50%);
     }
     // Top and bottom corners
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-bottom .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-bottom
+      .#{$themePrefix}-content {
       transform-origin: 0 (-$attachmentOffset);
     }
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-bottom .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-bottom
+      .#{$themePrefix}-content {
       transform-origin: 100% (-$attachmentOffset);
     }
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-top .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-top
+      .#{$themePrefix}-content {
       transform-origin: 0 calc(100% + #{$attachmentOffset});
     }
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-top .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-top
+      .#{$themePrefix}-content {
       transform-origin: 100% calc(100% + #{$attachmentOffset});
     }
     // Side corners
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left
+      .#{$themePrefix}-content {
       transform-origin: calc(100% + #{$attachmentOffset}) 0;
     }
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right
+      .#{$themePrefix}-content {
       transform-origin: (-$attachmentOffset) 0;
     }
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left
+      .#{$themePrefix}-content {
       transform-origin: calc(100% + #{$attachmentOffset}) 100%;
     }
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right
+      .#{$themePrefix}-content {
       transform-origin: (-$attachmentOffset) 100%;
     }
   }
 }
-
