@@ -15,7 +15,7 @@ func init() {
 }
 
 func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
-	user := new(m.User)
+	user := &m.User{}
 	has := false
 	var err error
 

@@ -117,8 +117,8 @@ func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
 }
 
 func syncOrgRoles(user *m.User, extUser *m.ExternalUserInfo) error {
+	// don't sync org roles if none are specified
 	if len(extUser.OrgRoles) == 0 {
-		// log.Warn("No group mappings defined")
 		return nil
 	}
 

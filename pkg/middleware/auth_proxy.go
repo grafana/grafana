@@ -68,6 +68,7 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 			extUser.Login = proxyHeaderValue
 		} else {
 			ctx.Handle(500, "Auth proxy header property invalid", nil)
+			return true
 		}
 
 		// add/update user in grafana
