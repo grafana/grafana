@@ -15,9 +15,6 @@ type SqlAnnotationRepo struct {
 }
 
 func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
-	if item.DashboardId == 0 {
-		return errors.New("Annotation is missing dashboard_id")
-	}
 	return inTransaction(func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
