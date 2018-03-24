@@ -118,14 +118,3 @@ func (r *Response) getErrMsg() (string) {
 	}
 	return msg.String()
 }
-
-type PercentilesResult struct {
-	Buckets struct {
-		map[string]struct {
-			Values map[string]string `json:"values"`
-		}
-		KeyAsString string `json:"key_as_string"`
-		Key         int64  `json:"key"`
-		DocCount    int    `json:"doc_count"`
-	} `json:"buckets"`
-}

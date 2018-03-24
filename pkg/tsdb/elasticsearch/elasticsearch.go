@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,13 +51,9 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 		dsInfo,
 		tsdbQuery.TimeRange,
 		tsdbQuery.Queries,
-		glog,
 	}
 
-	glog.Warn(spew.Sdump(dsInfo))
-	glog.Warn(spew.Sdump(tsdbQuery))
-
-	payload, err := queryParser.Parse()
+	payload, targets, err := queryParser.Parse()
 	if err != nil {
 		return nil, err
 	}
@@ -96,14 +91,14 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 		return nil, err
 	}
 
-	glog.Warn(spew.Sdump(responses))
 	for _, res := range responses.Responses {
 		if res.Err != nil {
 			return nil, errors.New(res.getErrMsg())
 		}
-
 	}
-
+	responseParser := ElasticsearchResponseParser{responses.Responses, targets}
+	queryRes := responseParser.getTimeSeries()
+	result.Results["A"] = queryRes
 	return result, nil
 }
 

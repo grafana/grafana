@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"src/github.com/davecgh/go-spew/spew"
@@ -18,38 +17,39 @@ type ElasticSearchQueryParser struct {
 	DsInfo    *models.DataSource
 	TimeRange *tsdb.TimeRange
 	Queries   []*tsdb.Query
-	glog      log.Logger
 }
 
-func (qp *ElasticSearchQueryParser) Parse() (string, error) {
+func (qp *ElasticSearchQueryParser) Parse() (string, []*QueryBuilder, error) {
 	payload := bytes.Buffer{}
 	queryHeader := qp.getQueryHeader()
-
+	targets := make([]*QueryBuilder, 0)
 	for _, q := range qp.Queries {
 		timeField, err := q.Model.Get("timeField").String()
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		rawQuery := q.Model.Get("query").MustString("")
 		bucketAggs := q.Model.Get("bucketAggs").MustArray()
 		metrics := q.Model.Get("metrics").MustArray()
 		alias := q.Model.Get("alias").MustString("")
 		builder := QueryBuilder{timeField, rawQuery, bucketAggs, metrics, alias}
+		targets = append(targets, &builder)
 
 		query, err := builder.Build()
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		queryBytes, err := json.Marshal(query)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 
 		payload.WriteString(queryHeader.String() + "\n")
 		payload.WriteString(string(queryBytes) + "\n")
 	}
+	p, err := qp.payloadReplace(payload.String(), qp.DsInfo.JsonData)
 
-	return qp.payloadReplace(payload.String(), qp.DsInfo.JsonData)
+	return p, targets, err
 
 }
 
