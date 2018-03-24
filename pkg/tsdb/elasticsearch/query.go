@@ -3,10 +3,11 @@ package elasticsearch
 import (
 	"errors"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"strconv"
 )
 
 var rangeFilterSetting = RangeFilterSetting{Gte: "$timeFrom",
-	Lte:    "$timeTo",
+	Lte: "$timeTo",
 	Format: "epoch_millis"}
 
 type QueryBuilder struct {
@@ -173,18 +174,21 @@ func (b *QueryBuilder) getFilters(model *simplejson.Json) FiltersAgg {
 }
 
 func (b *QueryBuilder) getTerms(model *simplejson.Json) TermsAgg {
-	agg := &TermsAgg{}
+	agg := &TermsAgg{Aggs: make(Aggs)}
 	settings := simplejson.NewFromAny(model.Get("settings").Interface())
 	agg.Terms.Field = model.Get("field").MustString()
 	if settings == nil {
 		return *agg
 	}
-	agg.Terms.Size = settings.Get("size").MustInt(0)
-	if agg.Terms.Size == 0 {
-		agg.Terms.Size = 500
+	sizeStr := settings.Get("size").MustString("")
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		size = 500
 	}
+	agg.Terms.Size = size
 	orderBy := settings.Get("orderBy").MustString("")
 	if orderBy != "" {
+		agg.Terms.Order = make(map[string]interface{})
 		agg.Terms.Order[orderBy] = settings.Get("order").MustString("")
 		//	 if orderBy is a int, means this fields is metric result value
 		//	 TODO set subAggs
