@@ -15,6 +15,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       var seriesList;
       var i;
       var legendScrollbar;
+      const legendRightDefaultWidth = 10;
 
       scope.$on('$destroy', function() {
         if (legendScrollbar) {
@@ -111,6 +112,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function render() {
+        let legendWidth = elem.width();
         if (!ctrl.panel.legend.show) {
           elem.empty();
           firstRender = true;
@@ -163,7 +165,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
 
         // render first time for getting proper legend height
-        if (!panel.legend.rightSide) {
+        if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== legendRightDefaultWidth)) {
           renderLegendElement(tableHeaderElem);
           elem.empty();
         }
@@ -227,6 +229,8 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function renderLegendElement(tableHeaderElem) {
+        let legendWidth = elem.width();
+
         var seriesElements = renderSeriesLegendElements();
 
         if (panel.legend.alignAsTable) {
@@ -238,7 +242,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           elem.append(seriesElements);
         }
 
-        if (!panel.legend.rightSide) {
+        if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== legendRightDefaultWidth)) {
           addScrollbar();
         } else {
           destroyScrollbar();
@@ -263,6 +267,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       function destroyScrollbar() {
         if (legendScrollbar) {
           legendScrollbar.destroy();
+          legendScrollbar = undefined;
         }
       }
     },

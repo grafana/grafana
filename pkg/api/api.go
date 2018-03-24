@@ -9,14 +9,14 @@ import (
 )
 
 // Register adds http routes
-func (hs *HttpServer) registerRoutes() {
+func (hs *HTTPServer) registerRoutes() {
 	macaronR := hs.macaron
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
 	reqOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
-	redirectFromLegacyDashboardUrl := middleware.RedirectFromLegacyDashboardURL()
-	redirectFromLegacyDashboardSoloUrl := middleware.RedirectFromLegacyDashboardSoloUrl()
+	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
+	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota
 	bind := binding.Bind
 
@@ -67,11 +67,11 @@ func (hs *HttpServer) registerRoutes() {
 
 	r.Get("/d/:uid/:slug", reqSignedIn, Index)
 	r.Get("/d/:uid", reqSignedIn, Index)
-	r.Get("/dashboard/db/:slug", reqSignedIn, redirectFromLegacyDashboardUrl, Index)
+	r.Get("/dashboard/db/:slug", reqSignedIn, redirectFromLegacyDashboardURL, Index)
 	r.Get("/dashboard/script/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/snapshot/*", Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, Index)
-	r.Get("/dashboard-solo/db/:slug", reqSignedIn, redirectFromLegacyDashboardSoloUrl, Index)
+	r.Get("/dashboard-solo/db/:slug", reqSignedIn, redirectFromLegacyDashboardSoloURL, Index)
 	r.Get("/dashboard-solo/script/*", reqSignedIn, Index)
 	r.Get("/import/dashboard", reqSignedIn, Index)
 	r.Get("/dashboards/", reqSignedIn, Index)
@@ -341,7 +341,7 @@ func (hs *HttpServer) registerRoutes() {
 
 		apiRoute.Group("/annotations", func(annotationsRoute RouteRegister) {
 			annotationsRoute.Post("/", bind(dtos.PostAnnotationsCmd{}), wrap(PostAnnotation))
-			annotationsRoute.Delete("/:annotationId", wrap(DeleteAnnotationById))
+			annotationsRoute.Delete("/:annotationId", wrap(DeleteAnnotationByID))
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), wrap(UpdateAnnotation))
 			annotationsRoute.Delete("/region/:regionId", wrap(DeleteAnnotationRegion))
 			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), wrap(PostGraphiteAnnotation))

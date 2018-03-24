@@ -28,12 +28,9 @@ func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint,
 	return &GraphiteExecutor{}, nil
 }
 
-var (
-	glog log.Logger
-)
+var glog = log.New("tsdb.graphite")
 
 func init() {
-	glog = log.New("tsdb.graphite")
 	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
 }
 
@@ -52,6 +49,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	for _, query := range tsdbQuery.Queries {
+		glog.Info("graphite", "query", query.Model)
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
 			target = fixIntervalFormat(fullTarget)
 		} else {
@@ -79,6 +77,9 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	span.SetTag("target", target)
 	span.SetTag("from", from)
 	span.SetTag("until", until)
+	span.SetTag("datasource_id", dsInfo.Id)
+	span.SetTag("org_id", dsInfo.OrgId)
+
 	defer span.Finish()
 
 	opentracing.GlobalTracer().Inject(

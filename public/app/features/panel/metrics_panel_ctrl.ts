@@ -225,6 +225,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     var metricsQuery = {
       timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
+      dashboardId: this.dashboard.id,
       range: this.range,
       rangeRaw: this.range.raw,
       interval: this.interval,

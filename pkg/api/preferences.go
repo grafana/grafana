@@ -13,10 +13,10 @@ func SetHomeDashboard(c *m.ReqContext, cmd m.SavePreferencesCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to set home dashboard", err)
+		return Error(500, "Failed to set home dashboard", err)
 	}
 
-	return ApiSuccess("Home dashboard set")
+	return Success("Home dashboard set")
 }
 
 // GET /api/user/preferences
@@ -28,16 +28,16 @@ func getPreferencesFor(orgID int64, userID int64) Response {
 	prefsQuery := m.GetPreferencesQuery{UserId: userID, OrgId: orgID}
 
 	if err := bus.Dispatch(&prefsQuery); err != nil {
-		return ApiError(500, "Failed to get preferences", err)
+		return Error(500, "Failed to get preferences", err)
 	}
 
 	dto := dtos.Prefs{
 		Theme:           prefsQuery.Result.Theme,
-		HomeDashboardId: prefsQuery.Result.HomeDashboardId,
+		HomeDashboardID: prefsQuery.Result.HomeDashboardId,
 		Timezone:        prefsQuery.Result.Timezone,
 	}
 
-	return Json(200, &dto)
+	return JSON(200, &dto)
 }
 
 // PUT /api/user/preferences
@@ -51,14 +51,14 @@ func updatePreferencesFor(orgID int64, userID int64, dtoCmd *dtos.UpdatePrefsCmd
 		OrgId:           orgID,
 		Theme:           dtoCmd.Theme,
 		Timezone:        dtoCmd.Timezone,
-		HomeDashboardId: dtoCmd.HomeDashboardId,
+		HomeDashboardId: dtoCmd.HomeDashboardID,
 	}
 
 	if err := bus.Dispatch(&saveCmd); err != nil {
-		return ApiError(500, "Failed to save preferences", err)
+		return Error(500, "Failed to save preferences", err)
 	}
 
-	return ApiSuccess("Preferences updated")
+	return Success("Preferences updated")
 }
 
 // GET /api/org/preferences
