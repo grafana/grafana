@@ -205,7 +205,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   addSelectPart(selectParts, cat, subitem) {
-    this.queryModel.addSelectPart(selectParts, subitem.value);
+    if ("submenu" in cat) {
+      this.queryModel.addSelectPart(selectParts, subitem.value);
+    } else {
+      this.queryModel.addSelectPart(selectParts, cat.value);
+    }
     this.panelCtrl.refresh();
   }
 
