@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/leibowitz/moment"
 	"src/github.com/davecgh/go-spew/spew"
 	"strconv"
 	"strings"
@@ -63,7 +64,7 @@ func (qp *ElasticSearchQueryParser) getQueryHeader() *QueryHeader {
 	}
 	header.SearchType = searchType
 	header.IgnoreUnavailable = true
-	header.Index = qp.getIndexList()
+	header.Index = getIndexList(qp.DsInfo.Database, qp.DsInfo.JsonData.Get("interval").MustString(""), qp.TimeRange)
 
 	if esVersion >= 56 {
 		header.MaxConcurrentShardRequests = qp.DsInfo.JsonData.Get("maxConcurrentShardRequests").MustInt()
@@ -87,11 +88,42 @@ func (qp *ElasticSearchQueryParser) payloadReplace(payload string, model *simple
 	return payload, nil
 }
 
-func (qp *ElasticSearchQueryParser) getIndexList() string {
-	_, err := qp.DsInfo.JsonData.Get("interval").String()
-	if err != nil {
-		return qp.DsInfo.Database
+func getIndexList(pattern string, interval string, timeRange *tsdb.TimeRange) string {
+	if interval == "" {
+		return pattern
 	}
-	// todo: support interval
-	return qp.DsInfo.Database
+
+	var indexes []string
+	indexParts := strings.Split(strings.TrimLeft(pattern, "["), "]")
+	indexBase := indexParts[0]
+	if len(indexParts) <= 1 {
+		return pattern
+	}
+
+	indexDateFormat := indexParts[1]
+
+	start := moment.NewMoment(timeRange.MustGetFrom())
+	end := moment.NewMoment(timeRange.MustGetTo())
+
+	indexes = append(indexes, fmt.Sprintf("%s%s", indexBase, start.Format(indexDateFormat)))
+	for start.IsBefore(*end) {
+		switch interval {
+		case "Hourly":
+			start = start.AddHours(1)
+
+		case "Daily":
+			start = start.AddDay()
+
+		case "Weekly":
+			start = start.AddWeeks(1)
+
+		case "Monthly":
+			start = start.AddMonths(1)
+
+		case "Yearly":
+			start = start.AddYears(1)
+		}
+		indexes = append(indexes, fmt.Sprintf("%s%s", indexBase, start.Format(indexDateFormat)))
+	}
+	return strings.Join(indexes, ",")
 }
