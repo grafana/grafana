@@ -2,12 +2,6 @@ import _ from 'lodash';
 import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/core/components/query_part/query_part';
 
 var index = [];
-var categories = {
-  Aggregations: [],
-  Math: [],
-  Aliasing: [],
-  Columns: [],
-};
 
 function createPart(part): any {
   var def = index[part.type];
@@ -20,10 +14,7 @@ function createPart(part): any {
 
 function register(options: any) {
   index[options.type] = new QueryPartDef(options);
-  options.category.push(index[options.type]);
 }
-
-var groupByTimeFunctions = [];
 
 function aliasRenderer(part, innerExpr) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
@@ -41,7 +32,7 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
   // look for existing aggregation
   for (var i = 0; i < selectParts.length; i++) {
     var part = selectParts[i];
-    if (part.def.category === categories.Aggregations) {
+    if (part.def.type === "aggregate") {
       selectParts[i] = partModel;
       return;
     }
@@ -95,7 +86,6 @@ function addColumnStrategy(selectParts, partModel, query) {
 register({
   type: 'column',
   addStrategy: addColumnStrategy,
-  category: categories.Columns,
   params: [{ type: 'column', dynamicLookup: true }],
   defaultParams: ['value'],
   renderer: columnRenderer,
@@ -104,7 +94,6 @@ register({
 register({
   type: 'aggregate',
   addStrategy: replaceAggregationAddStrategy,
-  category: categories.Aggregations,
   params: [{name: 'name', type: 'string', dynamicLookup: true}],
   defaultParams: ['avg'],
   renderer: aggregateRenderer,
@@ -113,7 +102,6 @@ register({
 register({
   type: 'math',
   addStrategy: addMathStrategy,
-  category: categories.Math,
   params: [{ name: 'expr', type: 'string' }],
   defaultParams: [' / 100'],
   renderer: suffixRenderer,
@@ -122,7 +110,6 @@ register({
 register({
   type: 'alias',
   addStrategy: addAliasStrategy,
-  category: categories.Aliasing,
   params: [{ name: 'name', type: 'string', quote: 'double' }],
   defaultParams: ['alias'],
   renderMode: 'suffix',
@@ -131,7 +118,6 @@ register({
 
 register({
   type: 'time',
-  category: groupByTimeFunctions,
   params: [
     {
       name: 'interval',
@@ -150,7 +136,4 @@ register({
 
 export default {
   create: createPart,
-  getCategories: function() {
-    return categories;
-  },
 };

@@ -82,14 +82,11 @@ export default class PostgresQuery {
   }
 
   removeGroupByPart(part, index) {
-    var categories = queryPart.getCategories();
-
     if (part.def.type === 'time') {
       // remove aggregations
       this.target.select = _.map(this.target.select, (s: any) => {
         return _.filter(s, (part: any) => {
-          var partModel = queryPart.create(part);
-          if (partModel.def.category === categories.Aggregations) {
+          if (part.type === "aggregate") {
             return false;
           }
           return true;
