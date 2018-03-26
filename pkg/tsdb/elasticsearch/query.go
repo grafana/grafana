@@ -193,15 +193,17 @@ func (q *Query) getHistogramAgg(model *simplejson.Json) *HistogramAgg {
 
 func (q *Query) getFilters(model *simplejson.Json) *FiltersAgg {
 	agg := &FiltersAgg{}
+	agg.Filters = map[string]interface{}{}
 	settings := simplejson.NewFromAny(model.Get("settings").Interface())
-	for filter := range settings.Get("filters").MustArray() {
+
+	for _, filter := range settings.Get("filters").MustArray() {
 		filterJson := simplejson.NewFromAny(filter)
 		query := filterJson.Get("query").MustString("")
 		label := filterJson.Get("label").MustString("")
 		if label == "" {
 			label = query
 		}
-		agg.Filter[label] = newQueryStringFilter(true, query)
+		agg.Filters[label] = newQueryStringFilter(true, query)
 	}
 	return agg
 }

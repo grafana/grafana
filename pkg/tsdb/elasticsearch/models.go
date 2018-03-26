@@ -41,7 +41,7 @@ type DateHistogramAgg struct {
 }
 
 type FiltersAgg struct {
-	Filter map[string]interface{} `json:"filter"`
+	Filters map[string]interface{} `json:"filters"`
 }
 
 type TermsAggSetting struct {

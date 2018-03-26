@@ -327,5 +327,102 @@ func TestElasticSearchQueryBuilder(t *testing.T) {
 
 			testElasticSearchResponse(testElasticsearchModelRequestJSON, expectedElasticsearchQueryJSON)
 		})
+		Convey("Test Filters Aggregates", func() {
+			testElasticsearchModelRequestJSON := `
+			{
+			  "bucketAggs": [
+				{
+				  "id": "3",
+				  "settings": {
+					"filters": [{
+						"label": "hello",
+						"query": "host:\"67.65.185.232\""
+					}]
+				  },
+				  "type": "filters"
+				},
+				{
+				  "field": "time",
+				  "id": "2",
+				  "settings": {
+					"interval": "auto",
+					"min_doc_count": 0,
+					"trimEdges": 0
+				  },
+				  "type": "date_histogram"
+				}
+			  ],
+			  "metrics": [
+				{
+                  "pipelineAgg": "select metric",
+				  "field": "bytesSent",
+				  "id": "1",
+				  "meta": {},
+				  "settings": {},
+				  "type": "count"
+				}
+			  ],
+			  "query": "*",
+			  "refId": "A",
+			  "timeField": "time"
+			}`
+
+			expectedElasticsearchQueryJSON := `{
+			  "size": 0,
+			  "query": {
+				"bool": {
+				  "filter": [
+					{
+					  "range": {
+						"time": {
+						  "gte":  "<FROM_TIMESTAMP>",
+						  "lte":  "<TO_TIMESTAMP>",
+						  "format": "epoch_millis"
+						}
+					  }
+					},
+					{
+					  "query_string": {
+						"analyze_wildcard": true,
+						"query": "*"
+					  }
+					}
+				  ]
+				}
+			  },
+			  "aggs": {
+				"3": {
+				  "filters": {
+					"filters": {
+					  "hello": {
+						"query_string": {
+						  "query": "host:\"67.65.185.232\"",
+						  "analyze_wildcard": true
+						}
+					  }
+					}
+				  },
+				  "aggs": {
+					"2": {
+					  "date_histogram": {
+						"interval": "200ms",
+						"field": "time",
+						"min_doc_count": 0,
+						"extended_bounds": {
+						  "min":  "<FROM_TIMESTAMP>",
+						  "max":  "<TO_TIMESTAMP>"
+						},
+						"format": "epoch_millis"
+					  },
+					  "aggs": {}
+					}
+				  }
+				}
+			  }
+			}
+			`
+
+			testElasticSearchResponse(testElasticsearchModelRequestJSON, expectedElasticsearchQueryJSON)
+		})
 	})
 }
