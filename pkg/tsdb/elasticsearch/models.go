@@ -1,25 +1,25 @@
 package elasticsearch
 
 import (
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"bytes"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type QueryHeader struct {
 	SearchType                 string      `json:"search_type"`
 	IgnoreUnavailable          bool        `json:"ignore_unavailable"`
 	Index                      interface{} `json:"index"`
-	MaxConcurrentShardRequests int         `json:"max_concurrent_shard_requests"`
+	MaxConcurrentShardRequests int         `json:"max_concurrent_shard_requests,omitempty"`
 }
 
-func (q *QueryHeader) String() (string) {
+func (q *QueryHeader) String() string {
 	r, _ := json.Marshal(q)
 	return string(r)
 }
 
-type Query struct {
+type Request struct {
 	Query map[string]interface{} `json:"query"`
 	Aggs  Aggs                   `json:"aggs"`
 	Size  int                    `json:"size"`
@@ -45,11 +45,10 @@ type FiltersAgg struct {
 }
 
 type TermsAggSetting struct {
-	Field       string                 `json:"field"`
-	Size        int                    `json:"size"`
-	Order       map[string]interface{} `json:"order"`
-	MinDocCount int                    `json:"min_doc_count"`
-	Missing     string                 `json:"missing"`
+	Field   string                 `json:"field"`
+	Size    int                    `json:"size"`
+	Order   map[string]interface{} `json:"order"`
+	Missing string                 `json:"missing,omitempty"`
 }
 
 type TermsAgg struct {
@@ -104,7 +103,7 @@ type Response struct {
 	Aggregations map[string]interface{} `json:"aggregations"`
 }
 
-func (r *Response) getErrMsg() (string) {
+func (r *Response) getErrMsg() string {
 	var msg bytes.Buffer
 	errJson := simplejson.NewFromAny(r.Err)
 	errType, err := errJson.Get("type").String()

@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -18,7 +19,8 @@ import (
 )
 
 type ElasticsearchExecutor struct {
-	Transport *http.Transport
+	QueryParser *ElasticSearchQueryParser
+	Transport   *http.Transport
 }
 
 var (
@@ -47,16 +49,20 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 	result := &tsdb.Response{}
 	result.Results = make(map[string]*tsdb.QueryResult)
 
-	queryParser := ElasticSearchQueryParser{
-		dsInfo,
-		tsdbQuery.TimeRange,
-		tsdbQuery.Queries,
-	}
-
-	payload, targets, err := queryParser.Parse()
+	queries, err := e.getQuery(dsInfo, tsdbQuery)
 	if err != nil {
 		return nil, err
 	}
+
+	buff := bytes.Buffer{}
+	for _, q := range queries {
+		s, err := q.Build(tsdbQuery, dsInfo)
+		if err != nil {
+			return nil, err
+		}
+		buff.WriteString(s)
+	}
+	payload := buff.String()
 
 	if setting.Env == setting.DEV {
 		glog.Debug("Elasticsearch playload", "raw playload", payload)
@@ -96,10 +102,28 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 			return nil, errors.New(res.getErrMsg())
 		}
 	}
-	responseParser := ElasticsearchResponseParser{responses.Responses, targets}
+	responseParser := ElasticsearchResponseParser{responses.Responses, queries}
 	queryRes := responseParser.getTimeSeries()
 	result.Results["A"] = queryRes
 	return result, nil
+}
+
+func (e *ElasticsearchExecutor) getQuery(dsInfo *models.DataSource, context *tsdb.TsdbQuery) ([]*Query, error) {
+	queries := make([]*Query, 0)
+	if len(context.Queries) == 0 {
+		return nil, fmt.Errorf("query request contains no queries")
+	}
+	for _, v := range context.Queries {
+
+		query, err := e.QueryParser.Parse(v.Model, dsInfo)
+		if err != nil {
+			return nil, err
+		}
+		queries = append(queries, query)
+
+	}
+	return queries, nil
+
 }
 
 func (e *ElasticsearchExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
