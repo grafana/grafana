@@ -81,30 +81,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   buildSelectMenu() {
-
-    if (!queryPart.hasAggregates()) {
-      this.datasource.metricFindQuery(this.queryBuilder.buildAggregateQuery())
-        .then(results => {
-          queryPart.clearAggregates();
-          _.map(results, segment => { queryPart.registerAggregate(segment.text); });
-        })
-        .catch(this.handleQueryError.bind(this));
-    }
-    var categories = queryPart.getCategories();
-    this.selectMenu = _.reduce(
-      categories,
-      function(memo, cat, key) {
-        var menu = {
-          text: key,
-          submenu: cat.map(item => {
-            return { text: item.type, value: item.type };
-          }),
-        };
-        memo.push(menu);
-        return memo;
-      },
-      []
-    );
+    this.selectMenu = [
+      {text: "aggregate", value: "aggregate"},
+      {text: "math", value: "math"},
+      {text: "alias", value: "alias"},
+      {text: "column", value: "column"},
+    ];
   }
 
   toggleEditorMode() {
@@ -216,10 +198,19 @@ export class PostgresQueryCtrl extends QueryCtrl {
   handleSelectPartEvent(selectParts, part, evt) {
     switch (evt.name) {
       case 'get-param-options': {
-        return this.datasource
-          .metricFindQuery(this.queryBuilder.buildColumnQuery("value"))
-          .then(this.transformToSegments(true))
-          .catch(this.handleQueryError.bind(this));
+        switch (part.def.type) {
+          case "aggregate":
+            return this.datasource
+              .metricFindQuery(this.queryBuilder.buildAggregateQuery())
+              .then(this.transformToSegments(false))
+              .catch(this.handleQueryError.bind(this));
+          case "column":
+            return this.datasource
+              .metricFindQuery(this.queryBuilder.buildColumnQuery("value"))
+              .then(this.transformToSegments(true))
+              .catch(this.handleQueryError.bind(this));
+        }
+
       }
       case 'part-param-changed': {
         this.panelCtrl.refresh();

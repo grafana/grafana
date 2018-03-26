@@ -23,21 +23,14 @@ function register(options: any) {
   options.category.push(index[options.type]);
 }
 
-function registerAggregate(name: string) {
-  register({
-    type: name,
-    addStrategy: replaceAggregationAddStrategy,
-    category: categories.Aggregations,
-    params: [],
-    defaultParams: [],
-    renderer: functionRenderer,
-  });
-}
-
 var groupByTimeFunctions = [];
 
 function aliasRenderer(part, innerExpr) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
+}
+
+function aggregateRenderer(part, innerExpr) {
+  return part.params[0] + '(' + innerExpr + ')';
 }
 
 function columnRenderer(part, innerExpr) {
@@ -108,59 +101,13 @@ register({
   renderer: columnRenderer,
 });
 
-// Aggregations
 register({
-  type: 'avg',
+  type: 'aggregate',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'count',
-  addStrategy: replaceAggregationAddStrategy,
-  category: categories.Aggregations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'sum',
-  addStrategy: replaceAggregationAddStrategy,
-  category: categories.Aggregations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'stddev',
-  addStrategy: replaceAggregationAddStrategy,
-  category: categories.Aggregations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'min',
-  addStrategy: replaceAggregationAddStrategy,
-  category: categories.Aggregations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'max',
-  addStrategy: replaceAggregationAddStrategy,
-  category: categories.Aggregations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
+  params: [{name: 'name', type: 'string', dynamicLookup: true}],
+  defaultParams: ['avg'],
+  renderer: aggregateRenderer,
 });
 
 register({
@@ -203,12 +150,6 @@ register({
 
 export default {
   create: createPart,
-  registerAggregate: registerAggregate,
-  clearAggregates: function() { categories.Aggregations = []; },
-  hasAggregates: function() {
-    // FIXME
-    return categories.Aggregations.length > 6;
-  },
   getCategories: function() {
     return categories;
   },
