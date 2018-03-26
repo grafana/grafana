@@ -25,8 +25,8 @@ import (
 )
 
 var (
-	logger log.Logger   = log.New("data-proxy-log")
-	client *http.Client = &http.Client{
+	logger = log.New("data-proxy-log")
+	client = &http.Client{
 		Timeout:   time.Second * 30,
 		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
@@ -49,14 +49,14 @@ type DataSourceProxy struct {
 }
 
 func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
-	targetUrl, _ := url.Parse(ds.Url)
+	targetURL, _ := url.Parse(ds.Url)
 
 	return &DataSourceProxy{
 		ds:        ds,
 		plugin:    plugin,
 		ctx:       ctx,
 		proxyPath: proxyPath,
-		targetUrl: targetUrl,
+		targetUrl: targetURL,
 	}
 }
 
@@ -279,16 +279,16 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 		SecureJsonData: proxy.ds.SecureJsonData.Decrypt(),
 	}
 
-	routeUrl, err := url.Parse(proxy.route.Url)
+	routeURL, err := url.Parse(proxy.route.Url)
 	if err != nil {
 		logger.Error("Error parsing plugin route url")
 		return
 	}
 
-	req.URL.Scheme = routeUrl.Scheme
-	req.URL.Host = routeUrl.Host
-	req.Host = routeUrl.Host
-	req.URL.Path = util.JoinUrlFragments(routeUrl.Path, proxy.proxyPath)
+	req.URL.Scheme = routeURL.Scheme
+	req.URL.Host = routeURL.Host
+	req.Host = routeURL.Host
+	req.URL.Path = util.JoinUrlFragments(routeURL.Path, proxy.proxyPath)
 
 	if err := addHeaders(&req.Header, proxy.route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
@@ -320,11 +320,11 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 
 	params := make(url.Values)
 	for key, value := range proxy.route.TokenAuth.Params {
-		if interpolatedParam, err := interpolateString(value, data); err != nil {
+		interpolatedParam, err := interpolateString(value, data)
+		if err != nil {
 			return "", err
-		} else {
-			params.Add(key, interpolatedParam)
 		}
+		params.Add(key, interpolatedParam)
 	}
 
 	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
@@ -354,13 +354,13 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 func interpolateString(text string, data templateData) (string, error) {
 	t, err := template.New("content").Parse(text)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Could not parse template %s.", text))
+		return "", fmt.Errorf("could not parse template %s", text)
 	}
 
 	var contentBuf bytes.Buffer
 	err = t.Execute(&contentBuf, data)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Failed to execute template %s.", text))
+		return "", fmt.Errorf("failed to execute template %s", text)
 	}
 
 	return contentBuf.String(), nil

@@ -108,6 +108,7 @@ func (p *MysqlProvider) Init(expire int64, connStr string) (err error) {
 	p.expire = expire
 
 	p.c, err = sql.Open("mysql", connStr)
+	p.c.SetConnMaxLifetime(time.Second * time.Duration(sessionConnMaxLifetime))
 	if err != nil {
 		return err
 	}
@@ -141,12 +142,29 @@ func (p *MysqlProvider) Read(sid string) (session.RawStore, error) {
 
 // Exist returns true if session with given ID exists.
 func (p *MysqlProvider) Exist(sid string) bool {
+	exists, err := p.queryExists(sid)
+
+	if err != nil {
+		exists, err = p.queryExists(sid)
+	}
+
+	if err != nil {
+		log.Printf("session/mysql: error checking if session exists: %v", err)
+		return false
+	}
+
+	return exists
+}
+
+func (p *MysqlProvider) queryExists(sid string) (bool, error) {
 	var data []byte
 	err := p.c.QueryRow("SELECT data FROM session WHERE `key`=?", sid).Scan(&data)
+
 	if err != nil && err != sql.ErrNoRows {
-		panic("session/mysql: error checking existence: " + err.Error())
+		return false, err
 	}
-	return err != sql.ErrNoRows
+
+	return err != sql.ErrNoRows, nil
 }
 
 // Destory deletes a session by session ID.
@@ -185,7 +203,12 @@ func (p *MysqlProvider) Count() (total int) {
 
 // GC calls GC to clean expired sessions.
 func (p *MysqlProvider) GC() {
-	if _, err := p.c.Exec("DELETE FROM session WHERE  expiry + ? <= UNIX_TIMESTAMP(NOW())", p.expire); err != nil {
+	var err error
+	if _, err = p.c.Exec("DELETE FROM session WHERE  expiry + ? <= UNIX_TIMESTAMP(NOW())", p.expire); err != nil {
+		_, err = p.c.Exec("DELETE FROM session WHERE  expiry + ? <= UNIX_TIMESTAMP(NOW())", p.expire)
+	}
+
+	if err != nil {
 		log.Printf("session/mysql: error garbage collecting: %v", err)
 	}
 }

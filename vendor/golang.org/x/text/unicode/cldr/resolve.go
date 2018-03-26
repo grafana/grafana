@@ -289,7 +289,7 @@ var distinguishing = map[string][]string{
 	"mzone":      nil,
 	"from":       nil,
 	"to":         nil,
-	"type": {
+	"type": []string{
 		"abbreviationFallback",
 		"default",
 		"mapping",
@@ -527,7 +527,7 @@ func (cldr *CLDR) inheritSlice(enc, v, parent reflect.Value) (res reflect.Value,
 		}
 	}
 	keys := make([]string, 0, len(index))
-	for k := range index {
+	for k, _ := range index {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)

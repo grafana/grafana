@@ -54,6 +54,7 @@ var (
 		"UNIQUE":   UniqueTagHandler,
 		"CACHE":    CacheTagHandler,
 		"NOCACHE":  NoCacheTagHandler,
+		"COMMENT":  CommentTagHandler,
 	}
 )
 
@@ -188,6 +189,14 @@ func UniqueTagHandler(ctx *tagContext) error {
 		ctx.indexNames[ctx.params[0]] = core.UniqueType
 	} else {
 		ctx.isUnique = true
+	}
+	return nil
+}
+
+// CommentTagHandler add comment to column
+func CommentTagHandler(ctx *tagContext) error {
+	if len(ctx.params) > 0 {
+		ctx.col.Comment = strings.Trim(ctx.params[0], "' ")
 	}
 	return nil
 }

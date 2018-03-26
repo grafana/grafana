@@ -582,7 +582,7 @@ type Rows struct {
 
 func (rc *Rows) Close() error {
 	rc.cancel()
-	for range rc.tokchan {
+	for _ = range rc.tokchan {
 	}
 	rc.tokchan = nil
 	return nil

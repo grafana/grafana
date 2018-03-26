@@ -78,8 +78,11 @@ class MetricsPanelCtrl extends PanelCtrl {
         data = data.data;
       }
 
-      this.events.emit('data-snapshot-load', data);
-      return;
+      // Defer panel rendering till the next digest cycle.
+      // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.
+      return this.$timeout(() => {
+        this.events.emit('data-snapshot-load', data);
+      });
     }
 
     // // ignore if we have data stream

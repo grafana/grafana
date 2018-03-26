@@ -104,12 +104,12 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			})
 		})
 		Convey("Given saved user quota for org", func() {
-			userQoutaCmd := m.UpdateUserQuotaCmd{
+			userQuotaCmd := m.UpdateUserQuotaCmd{
 				UserId: userId,
 				Target: "org_user",
 				Limit:  10,
 			}
-			err := UpdateUserQuota(&userQoutaCmd)
+			err := UpdateUserQuota(&userQuotaCmd)
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to get saved quota by user id and target", func() {

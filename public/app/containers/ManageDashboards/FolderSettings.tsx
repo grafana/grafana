@@ -143,7 +143,7 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
                   className="btn btn-success"
                   disabled={!folder.folder.canSave || !folder.folder.hasChanged}
                 >
-                  <i className="fa fa-trash" /> Save
+                  <i className="fa fa-save" /> Save
                 </button>
                 <button className="btn btn-danger" onClick={this.delete.bind(this)} disabled={!folder.folder.canSave}>
                   <i className="fa fa-trash" /> Delete

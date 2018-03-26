@@ -1,6 +1,7 @@
 package api
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -20,6 +21,14 @@ func AdminGetSettings(c *m.ReqContext) {
 			value := key.Value()
 			if strings.Contains(keyName, "secret") || strings.Contains(keyName, "password") || (strings.Contains(keyName, "provider_config")) {
 				value = "************"
+			}
+			if strings.Contains(keyName, "url") {
+				var rgx = regexp.MustCompile(`.*:\/\/([^:]*):([^@]*)@.*?$`)
+				var subs = rgx.FindAllSubmatch([]byte(value), -1)
+				if subs != nil && len(subs[0]) == 3 {
+					value = strings.Replace(value, string(subs[0][1]), "******", 1)
+					value = strings.Replace(value, string(subs[0][2]), "******", 1)
+				}
 			}
 
 			jsonSec[keyName] = value
