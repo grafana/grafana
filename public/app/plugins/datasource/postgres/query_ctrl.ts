@@ -2,7 +2,6 @@ import angular from 'angular';
 import _ from 'lodash';
 import { PostgresQueryBuilder } from './query_builder';
 import { QueryCtrl } from 'app/plugins/sdk';
-import queryPart from './query_part';
 import PostgresQuery from './postgres_query';
 
 export interface QueryMeta {
