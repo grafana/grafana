@@ -178,6 +178,7 @@ li.sidemenu-org-switcher {
   padding: 0.4rem 1rem 0.4rem 0.65rem;
   min-height: $navbarHeight;
   position: relative;
+  height: $navbarHeight - 1px;
 
   &:hover {
     background: $navbarButtonBackgroundHighlight;
