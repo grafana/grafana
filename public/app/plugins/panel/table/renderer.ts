@@ -47,7 +47,6 @@ export class TableRenderer {
     if (!style.thresholds) {
       return null;
     }
-    value = Number(value);
     for (var i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
         return style.colors[i];
@@ -102,54 +101,54 @@ export class TableRenderer {
 
     if (column.style.type === 'string') {
       return v => {
-        if (column.style.valueMappings && column.style.mappingType && column.style.mappingType === 1) {
-          for (let i = 0; i < column.style.valueMappings.length; i++) {
-            let mapping = column.style.valueMappings[i];
-            var value = Number(mapping.value);
-            if (v === null && mapping.value[0] === 'null') {
-              return mapping.text;
-            }
-            if (v !== null && !_.isArray(v)) {
-              if (Number(v) === value) {
-                if (!_.isString(v) && !_.isArray(v)) {
-                  this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
-                }
-                return this.defaultCellFormatter(mapping.text, column.style);
+        if (_.isArray(v)) {
+          v = v.join(', ');
+        }
+
+        const mappingType = column.style.mappingType || 0;
+
+        if (mappingType === 1 && column.style.valueMaps) {
+          for (let i = 0; i < column.style.valueMaps.length; i++) {
+            const map = column.style.valueMaps[i];
+
+            if (v === null) {
+              if (map.value === 'null') {
+                return map.text;
               }
+              continue;
             }
-          }
-          if (v !== null && v !== void 0 && !_.isString(v) && !_.isArray(v)) {
-            this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
+
+            // Allow both numeric and string values to be mapped
+            if ((!_.isString(v) && Number(map.value) === Number(v)) || map.value === v) {
+              this.setColorState(v, column.style);
+              return this.defaultCellFormatter(map.text, column.style);
+            }
           }
         }
-        if (column.style.rangeMappings && column.style.mappingType && column.style.mappingType === 2) {
-          for (let i = 0; i < column.style.rangeMappings.length; i++) {
-            let mapping = column.style.rangeMappings[i];
-            var from = mapping.from;
-            var to = mapping.to;
-            if (v === null && mapping.from[0] === 'null' && mapping.to[0] === 'null') {
-              return mapping.text;
+
+        if (mappingType === 2 && column.style.rangeMaps) {
+          for (let i = 0; i < column.style.rangeMaps.length; i++) {
+            const map = column.style.rangeMaps[i];
+
+            if (v === null) {
+              if (map.from === 'null' && map.to === 'null') {
+                return map.text;
+              }
+              continue;
             }
-            if (
-              v !== null &&
-              !_.isString(v) &&
-              !_.isArray(v) &&
-              from !== '' &&
-              to !== '' &&
-              Number(from[0]) <= v &&
-              Number(to[0]) >= v
-            ) {
-              this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
-              return this.defaultCellFormatter(mapping.text, column.style);
+
+            if (Number(map.from) <= Number(v) && Number(map.to) >= Number(v)) {
+              this.setColorState(v, column.style);
+              return this.defaultCellFormatter(map.text, column.style);
             }
-          }
-          if (v !== null && v !== void 0 && !_.isString(v) && !_.isArray(v)) {
-            this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
           }
         }
-        if (v === null) {
+
+        if (v === null || v === void 0) {
           return '-';
         }
+
+        this.setColorState(v, column.style);
         return this.defaultCellFormatter(v, column.style);
       };
     }
@@ -166,10 +165,7 @@ export class TableRenderer {
           return this.defaultCellFormatter(v, column.style);
         }
 
-        if (column.style.colorMode) {
-          this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
-        }
-
+        this.setColorState(v, column.style);
         return valueFormatter(v, column.style.decimals, null);
       };
     }
@@ -177,6 +173,23 @@ export class TableRenderer {
     return value => {
       return this.defaultCellFormatter(value, column.style);
     };
+  }
+
+  setColorState(value, style) {
+    if (!style.colorMode) {
+      return;
+    }
+
+    if (value === null || value === void 0 || _.isArray(value)) {
+      return;
+    }
+
+    var numericValue = Number(value);
+    if (numericValue === NaN) {
+      return;
+    }
+
+    this.colorState[style.colorMode] = this.getColorForValue(numericValue, style);
   }
 
   renderRowVariables(rowIndex) {

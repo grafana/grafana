@@ -70,7 +70,7 @@
     </div>
 
     <div class="section gf-form-group" ng-if="style.type === 'string'">
-      <h5 class="section-heading">Mapping</h5>
+      <h5 class="section-heading">Value Mappings</h5>
       <div class="editor-row">
         <div class="gf-form-group">
           <div class="gf-form">
@@ -83,38 +83,37 @@
             </div>
           </div>
           <div class="gf-form-group" ng-if="style.mappingType==1">
-            <div class="gf-form" ng-repeat="mapping in style.valueMappings">
-              <input type="text" class="gf-form-input width-8" ng-model="mapping.value" placeholder="Value" ng-blur="editor.render()" array-join>
-              <label class="gf-form-label width-3">=></label>
-              <input type="text" class="gf-form-input width-9" ng-model="mapping.text" placeholder="Text" ng-blur="editor.render()" array-join>
+            <div class="gf-form" ng-repeat="map in style.valueMaps">
+              <span class="gf-form-label">
+                <i class="fa fa-remove pointer" ng-click="editor.removeValueMap(style, $index)"></i>
+              </span>
+              <input type="text" class="gf-form-input max-width-6" ng-model="map.value" placeholder="Value" ng-blur="editor.render()">
               <label class="gf-form-label">
-                <a class="pointer" tabindex="1" ng-click="editor.removeValueMapping(style, $index)">
-                  <i class="fa fa-trash"></i>
-                </a>
+                <i class="fa fa-arrow-right"></i>
               </label>
+              <input type="text" class="gf-form-input max-width-8" ng-model="map.text" placeholder="Text" ng-blur="editor.render()">
             </div>
             <div class="gf-form">
               <label class="gf-form-label">
-                <a class="pointer" ng-click="editor.addValueMapping(style)"><i class="fa fa-plus"></i></a>
+                <a class="pointer" ng-click="editor.addValueMap(style)"><i class="fa fa-plus"></i></a>
               </label>
             </div>
           </div>
           <div class="gf-form-group" ng-if="style.mappingType==2">
-            <div class="gf-form" ng-repeat="mapping in style.rangeMappings">
-              <input type="text" class="gf-form-input width-5" ng-model="mapping.from" placeholder="From" ng-blur="editor.render()" array-join>
-              <label class="gf-form-label width-2">-</label>
-              <input type="text" class="gf-form-input width-5" ng-model="mapping.to" placeholder="To" ng-blur="editor.render()" array-join>
-              <label class="gf-form-label width-3">=></label>
-              <input type="text" class="gf-form-input width-5" ng-model="mapping.text" placeholder="Text" ng-blur="editor.render()" array-join>
-              <label class="gf-form-label">
-                <a class="pointer" tabindex="1" ng-click="editor.removeRangeMapping(style, $index)">
-                  <i class="fa fa-trash"></i>
-                </a>
-              </label>
+            <div class="gf-form" ng-repeat="rangeMap in style.rangeMaps">
+              <span class="gf-form-label">
+                <i class="fa fa-remove pointer" ng-click="editor.removeRangeMap(style, $index)"></i>
+              </span>
+              <span class="gf-form-label">From</span>
+              <input type="text" ng-model="rangeMap.from" class="gf-form-input max-width-6" ng-blur="editor.render()">
+              <span class="gf-form-label">To</span>
+              <input type="text" ng-model="rangeMap.to" class="gf-form-input max-width-6" ng-blur="editor.render()">
+              <span class="gf-form-label">Text</span>
+              <input type="text" ng-model="rangeMap.text" class="gf-form-input max-width-8" ng-blur="editor.render()">
             </div>
             <div class="gf-form">
               <label class="gf-form-label">
-                <a class="pointer" ng-click="editor.addRangeMapping(style)"><i class="fa fa-plus"></i></a>
+                <a class="pointer" ng-click="editor.addRangeMap(style)"><i class="fa fa-plus"></i></a>
               </label>
             </div>
           </div>

@@ -113,29 +113,30 @@ export class ColumnOptionsCtrl {
       this.render();
     };
   }
-  addValueMapping(style) {
-    if (!style.valueMappings) {
-      style.valueMappings = [];
+
+  addValueMap(style) {
+    if (!style.valueMaps) {
+      style.valueMaps = [];
     }
-    style.valueMappings.push({ value: '', text: '' });
+    style.valueMaps.push({ value: '', text: '' });
     this.panelCtrl.render();
   }
 
-  removeValueMapping(style, index) {
-    style.valueMappings.splice(index, 1);
+  removeValueMap(style, index) {
+    style.valueMaps.splice(index, 1);
     this.panelCtrl.render();
   }
 
-  removeRangeMapping(style, index) {
-    style.rangeMappings.splice(index, 1);
-    this.panelCtrl.render();
-  }
-
-  addRangeMapping(style) {
-    if (!style.rangeMappings) {
-      style.rangeMappings = [];
+  addRangeMap(style) {
+    if (!style.rangeMaps) {
+      style.rangeMaps = [];
     }
-    style.rangeMappings.push({ from: '', to: '', text: '' });
+    style.rangeMaps.push({ from: '', to: '', text: '' });
+    this.panelCtrl.render();
+  }
+
+  removeRangeMap(style, index) {
+    style.rangeMaps.splice(index, 1);
     this.panelCtrl.render();
   }
 }
