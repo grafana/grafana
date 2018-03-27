@@ -40,27 +40,26 @@ func (rp *ElasticsearchResponseParser) processBuckets(aggs map[string]interface{
 		}
 
 		if depth == maxDepth {
-			if aggDef.Get("type").MustString() == "date_histogram" {
+			if aggDef.Type == "date_histogram" {
 				err = rp.processMetrics(esAgg, target, series, props)
 				if err != nil {
 					return err
 				}
 			} else {
-				return fmt.Errorf("not support type:%s", aggDef.Get("type").MustString())
+				return fmt.Errorf("not support type:%s", aggDef.Type)
 			}
 		} else {
 			for i, b := range esAgg.Get("buckets").MustArray() {
-				field := aggDef.Get("field").MustString()
 				bucket := simplejson.NewFromAny(b)
 				newProps := props
 				if key, err := bucket.Get("key").String(); err == nil {
-					newProps[field] = key
+					newProps[aggDef.Field] = key
 				} else {
 					props["filter"] = strconv.Itoa(i)
 				}
 
 				if key, err := bucket.Get("key_as_string").String(); err == nil {
-					props[field] = key
+					props[aggDef.Field] = key
 				}
 				rp.processBuckets(bucket.MustMap(), target, series, newProps, depth+1)
 			}
@@ -72,17 +71,12 @@ func (rp *ElasticsearchResponseParser) processBuckets(aggs map[string]interface{
 }
 
 func (rp *ElasticsearchResponseParser) processMetrics(esAgg *simplejson.Json, target *Query, series *[]*tsdb.TimeSeries, props map[string]string) error {
-	for _, v := range target.Metrics {
-		metric := simplejson.NewFromAny(v)
-		if metric.Get("hide").MustBool(false) {
+	for _, metric := range target.Metrics {
+		if metric.Hide {
 			continue
 		}
 
-		metricId := metric.Get("id").MustString()
-		metricField := metric.Get("field").MustString()
-		metricType := metric.Get("type").MustString()
-
-		switch metricType {
+		switch metric.Type {
 		case "count":
 			newSeries := tsdb.TimeSeries{}
 			for _, v := range esAgg.Get("buckets").MustArray() {
@@ -102,16 +96,16 @@ func (rp *ElasticsearchResponseParser) processMetrics(esAgg *simplejson.Json, ta
 			}
 
 			firstBucket := simplejson.NewFromAny(buckets[0])
-			percentiles := firstBucket.GetPath(metricId, "values").MustMap()
+			percentiles := firstBucket.GetPath(metric.ID, "values").MustMap()
 
 			for percentileName := range percentiles {
 				newSeries := tsdb.TimeSeries{}
 				newSeries.Tags = props
 				newSeries.Tags["metric"] = "p" + percentileName
-				newSeries.Tags["field"] = metricField
+				newSeries.Tags["field"] = metric.Field
 				for _, v := range buckets {
 					bucket := simplejson.NewFromAny(v)
-					value := castToNullFloat(bucket.GetPath(metricId, "values", percentileName))
+					value := castToNullFloat(bucket.GetPath(metric.ID, "values", percentileName))
 					key := castToNullFloat(bucket.Get("key"))
 					newSeries.Points = append(newSeries.Points, tsdb.TimePoint{value, key})
 				}
@@ -120,20 +114,20 @@ func (rp *ElasticsearchResponseParser) processMetrics(esAgg *simplejson.Json, ta
 		default:
 			newSeries := tsdb.TimeSeries{}
 			newSeries.Tags = props
-			newSeries.Tags["metric"] = metricType
-			newSeries.Tags["field"] = metricField
+			newSeries.Tags["metric"] = metric.Type
+			newSeries.Tags["field"] = metric.Field
 			for _, v := range esAgg.Get("buckets").MustArray() {
 				bucket := simplejson.NewFromAny(v)
 				key := castToNullFloat(bucket.Get("key"))
-				valueObj, err := bucket.Get(metricId).Map()
+				valueObj, err := bucket.Get(metric.ID).Map()
 				if err != nil {
 					break
 				}
 				var value null.Float
 				if _, ok := valueObj["normalized_value"]; ok {
-					value = castToNullFloat(bucket.GetPath(metricId, "normalized_value"))
+					value = castToNullFloat(bucket.GetPath(metric.ID, "normalized_value"))
 				} else {
-					value = castToNullFloat(bucket.GetPath(metricId, "value"))
+					value = castToNullFloat(bucket.GetPath(metric.ID, "value"))
 				}
 				newSeries.Points = append(newSeries.Points, tsdb.TimePoint{value, key})
 			}
@@ -196,10 +190,9 @@ func (rp *ElasticsearchResponseParser) getSeriesName(series *tsdb.TimeSeries, ta
 	// todo, if field and pipelineAgg
 	if field != "" && isPipelineAgg(metricType) {
 		found := false
-		for _, targetMetricI := range target.Metrics {
-			targetMetric := simplejson.NewFromAny(targetMetricI)
-			if targetMetric.Get("id").MustString() == field {
-				metricName += " " + describeMetric(targetMetric.Get("type").MustString(), field)
+		for _, metric := range target.Metrics {
+			if metric.ID == field {
+				metricName += " " + describeMetric(metric.Type, field)
 				found = true
 			}
 		}
@@ -255,11 +248,10 @@ func castToNullFloat(j *simplejson.Json) null.Float {
 	return null.NewFloat(0, false)
 }
 
-func findAgg(target *Query, aggId string) (*simplejson.Json, error) {
+func findAgg(target *Query, aggId string) (*BucketAgg, error) {
 	for _, v := range target.BucketAggs {
-		aggDef := simplejson.NewFromAny(v)
-		if aggId == aggDef.Get("id").MustString() {
-			return aggDef, nil
+		if aggId == v.ID {
+			return v, nil
 		}
 	}
 	return nil, errors.New("can't found aggDef, aggID:" + aggId)

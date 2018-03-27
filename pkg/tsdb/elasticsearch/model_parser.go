@@ -20,9 +20,15 @@ func (qp *ElasticSearchQueryParser) Parse(model *simplejson.Json, dsInfo *models
 	if err != nil {
 		return nil, err
 	}
-	rawQuery := model.Get("query").MustString("")
-	bucketAggs := model.Get("bucketAggs").MustArray()
-	metrics := model.Get("metrics").MustArray()
+	rawQuery := model.Get("query").MustString()
+	bucketAggs, err := qp.parseBucketAggs(model)
+	if err != nil {
+		return nil, err
+	}
+	metrics, err := qp.parseMetrics(model)
+	if err != nil {
+		return nil, err
+	}
 	alias := model.Get("alias").MustString("")
 	parsedInterval, err := tsdb.GetIntervalFrom(dsInfo, model, time.Millisecond)
 	if err != nil {
@@ -37,6 +43,57 @@ func (qp *ElasticSearchQueryParser) Parse(model *simplejson.Json, dsInfo *models
 		parsedInterval}, nil
 }
 
+func (qp *ElasticSearchQueryParser) parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
+	var err error
+	var result []*BucketAgg
+	for _, t := range model.Get("bucketAggs").MustArray() {
+		aggJson := simplejson.NewFromAny(t)
+		agg := &BucketAgg{}
+
+		agg.Type, err = aggJson.Get("type").String()
+		if err != nil {
+			return nil, err
+		}
+
+		agg.ID, err = aggJson.Get("id").String()
+		if err != nil {
+			return nil, err
+		}
+
+		agg.Field = aggJson.Get("field").MustString()
+		agg.Settings = simplejson.NewFromAny(aggJson.Get("settings").MustMap())
+
+		result = append(result, agg)
+	}
+	return result, nil
+}
+
+func (qp *ElasticSearchQueryParser) parseMetrics(model *simplejson.Json) ([]*Metric, error) {
+	var err error
+	var result []*Metric
+	for _, t := range model.Get("metrics").MustArray() {
+		metricJson := simplejson.NewFromAny(t)
+		metric := &Metric{}
+
+		metric.Field = metricJson.Get("field").MustString()
+		metric.Hide = metricJson.Get("hide").MustBool(false)
+		metric.ID, err = metricJson.Get("id").String()
+		if err != nil {
+			return nil, err
+		}
+
+		metric.PipelineAggregate = metricJson.Get("pipelineAgg").MustString()
+		metric.Settings = simplejson.NewFromAny(metricJson.Get("settings").MustMap())
+
+		metric.Type, err = metricJson.Get("type").String()
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, metric)
+	}
+	return result, nil
+}
 func getRequestHeader(timeRange *tsdb.TimeRange, dsInfo *models.DataSource) *QueryHeader {
 	var header QueryHeader
 	esVersion := dsInfo.JsonData.Get("esVersion").MustInt()
@@ -47,7 +104,7 @@ func getRequestHeader(timeRange *tsdb.TimeRange, dsInfo *models.DataSource) *Que
 	}
 	header.SearchType = searchType
 	header.IgnoreUnavailable = true
-	header.Index = getIndexList(dsInfo.Database, dsInfo.JsonData.Get("interval").MustString(""), timeRange)
+	header.Index = getIndexList(dsInfo.Database, dsInfo.JsonData.Get("interval").MustString(), timeRange)
 
 	if esVersion >= 56 {
 		header.MaxConcurrentShardRequests = dsInfo.JsonData.Get("maxConcurrentShardRequests").MustInt()

@@ -18,11 +18,11 @@ var rangeFilterSetting = RangeFilterSetting{Gte: "$timeFrom",
 	Format: "epoch_millis"}
 
 type Query struct {
-	TimeField  string        `json:"timeField"`
-	RawQuery   string        `json:"query"`
-	BucketAggs []interface{} `json:"bucketAggs"`
-	Metrics    []interface{} `json:"metrics"`
-	Alias      string        `json:"Alias"`
+	TimeField  string       `json:"timeField"`
+	RawQuery   string       `json:"query"`
+	BucketAggs []*BucketAgg `json:"bucketAggs"`
+	Metrics    []*Metric    `json:"metrics"`
+	Alias      string       `json:"Alias"`
 	Interval   time.Duration
 }
 
@@ -73,27 +73,17 @@ func (q *Query) renderReqQuery(req *Request) {
 func (q *Query) parseAggs(req *Request) error {
 	aggs := make(Aggs)
 	nestedAggs := aggs
-	for _, aggRaw := range q.BucketAggs {
+	for _, agg := range q.BucketAggs {
 		esAggs := make(Aggs)
-		aggJson := simplejson.NewFromAny(aggRaw)
-		aggType, err := aggJson.Get("type").String()
-		if err != nil {
-			return err
-		}
-		id, err := aggJson.Get("id").String()
-		if err != nil {
-			return err
-		}
-
-		switch aggType {
+		switch agg.Type {
 		case "date_histogram":
-			esAggs["date_histogram"] = q.getDateHistogramAgg(aggJson)
+			esAggs["date_histogram"] = q.getDateHistogramAgg(agg)
 		case "histogram":
-			esAggs["histogram"] = q.getHistogramAgg(aggJson)
+			esAggs["histogram"] = q.getHistogramAgg(agg)
 		case "filters":
-			esAggs["filters"] = q.getFilters(aggJson)
+			esAggs["filters"] = q.getFilters(agg)
 		case "terms":
-			terms := q.getTerms(aggJson)
+			terms := q.getTerms(agg)
 			esAggs["terms"] = terms.Terms
 			esAggs["aggs"] = terms.Aggs
 		case "geohash_grid":
@@ -105,59 +95,47 @@ func (q *Query) parseAggs(req *Request) error {
 		}
 
 		if aggs, ok := (nestedAggs["aggs"]).(Aggs); ok {
-			aggs[id] = esAggs
+			aggs[agg.ID] = esAggs
 		}
 		nestedAggs = esAggs
 
 	}
 	nestedAggs["aggs"] = make(Aggs)
 
-	for _, metricRaw := range q.Metrics {
-		metric := make(Metric)
-		metricJson := simplejson.NewFromAny(metricRaw)
+	for _, metric := range q.Metrics {
+		subAgg := make(Aggs)
 
-		id, err := metricJson.Get("id").String()
-		if err != nil {
-			return err
-		}
-		metricType, err := metricJson.Get("type").String()
-		if err != nil {
-			return err
-		}
-		if metricType == "count" {
+		if metric.Type == "count" {
 			continue
 		}
+		settings := metric.Settings.MustMap(make(map[string]interface{}))
 
-		settings := metricJson.Get("settings").MustMap(map[string]interface{}{})
-
-		if isPipelineAgg(metricType) {
-			pipelineAgg := metricJson.Get("pipelineAgg").MustString("")
-			if _, err := strconv.Atoi(pipelineAgg); err == nil {
-				settings["buckets_path"] = pipelineAgg
+		if isPipelineAgg(metric.Type) {
+			if _, err := strconv.Atoi(metric.PipelineAggregate); err == nil {
+				settings["buckets_path"] = metric.PipelineAggregate
 			} else {
 				continue
 			}
 
 		} else {
-			settings["field"] = metricJson.Get("field").MustString()
+			settings["field"] = metric.Field
 		}
 
-		metric[metricType] = settings
-		nestedAggs["aggs"].(Aggs)[id] = metric
+		subAgg[metric.Type] = settings
+		nestedAggs["aggs"].(Aggs)[metric.ID] = subAgg
 	}
 	req.Aggs = aggs["aggs"].(Aggs)
 	return nil
 }
 
-func (q *Query) getDateHistogramAgg(model *simplejson.Json) *DateHistogramAgg {
+func (q *Query) getDateHistogramAgg(target *BucketAgg) *DateHistogramAgg {
 	agg := &DateHistogramAgg{}
-	settings := simplejson.NewFromAny(model.Get("settings").Interface())
-	interval, err := settings.Get("interval").String()
+	interval, err := target.Settings.Get("interval").String()
 	if err == nil {
 		agg.Interval = interval
 	}
 	agg.Field = q.TimeField
-	agg.MinDocCount = settings.Get("min_doc_count").MustInt(0)
+	agg.MinDocCount = target.Settings.Get("min_doc_count").MustInt(0)
 	agg.ExtendedBounds = ExtendedBounds{"$timeFrom", "$timeTo"}
 	agg.Format = "epoch_millis"
 
@@ -165,66 +143,63 @@ func (q *Query) getDateHistogramAgg(model *simplejson.Json) *DateHistogramAgg {
 		agg.Interval = "$__interval"
 	}
 
-	missing, err := settings.Get("missing").String()
+	missing, err := target.Settings.Get("missing").String()
 	if err == nil {
 		agg.Missing = missing
 	}
 	return agg
 }
 
-func (q *Query) getHistogramAgg(model *simplejson.Json) *HistogramAgg {
+func (q *Query) getHistogramAgg(target *BucketAgg) *HistogramAgg {
 	agg := &HistogramAgg{}
-	settings := simplejson.NewFromAny(model.Get("settings").Interface())
-	interval, err := settings.Get("interval").String()
+	interval, err := target.Settings.Get("interval").String()
 	if err == nil {
 		agg.Interval = interval
 	}
-	field, err := model.Get("field").String()
-	if err == nil {
-		agg.Field = field
+
+	if target.Field != "" {
+		agg.Field = target.Field
 	}
-	agg.MinDocCount = settings.Get("min_doc_count").MustInt(0)
-	missing, err := settings.Get("missing").String()
+	agg.MinDocCount = target.Settings.Get("min_doc_count").MustInt(0)
+	missing, err := target.Settings.Get("missing").String()
 	if err == nil {
 		agg.Missing = missing
 	}
 	return agg
 }
 
-func (q *Query) getFilters(model *simplejson.Json) *FiltersAgg {
+func (q *Query) getFilters(target *BucketAgg) *FiltersAgg {
 	agg := &FiltersAgg{}
 	agg.Filters = map[string]interface{}{}
-	settings := simplejson.NewFromAny(model.Get("settings").Interface())
-
-	for _, filter := range settings.Get("filters").MustArray() {
+	for _, filter := range target.Settings.Get("filters").MustArray() {
 		filterJson := simplejson.NewFromAny(filter)
 		query := filterJson.Get("query").MustString("")
 		label := filterJson.Get("label").MustString("")
 		if label == "" {
 			label = query
 		}
+
 		agg.Filters[label] = newQueryStringFilter(true, query)
 	}
 	return agg
 }
 
-func (q *Query) getTerms(model *simplejson.Json) *TermsAgg {
-	agg := &TermsAgg{Aggs: make(Aggs)}
-	settings := simplejson.NewFromAny(model.Get("settings").Interface())
-	agg.Terms.Field = model.Get("field").MustString()
-	if settings == nil {
+func (q *Query) getTerms(target *BucketAgg) *TermsAggWrap {
+	agg := &TermsAggWrap{Aggs: make(Aggs)}
+	agg.Terms.Field = target.Field
+	if len(target.Settings.MustMap()) == 0 {
 		return agg
 	}
-	sizeStr := settings.Get("size").MustString("")
+	sizeStr := target.Settings.Get("size").MustString("")
 	size, err := strconv.Atoi(sizeStr)
 	if err != nil {
 		size = 500
 	}
 	agg.Terms.Size = size
-	orderBy, err := settings.Get("orderBy").String()
+	orderBy, err := target.Settings.Get("orderBy").String()
 	if err == nil {
 		agg.Terms.Order = make(map[string]interface{})
-		agg.Terms.Order[orderBy] = settings.Get("order").MustString("")
+		agg.Terms.Order[orderBy] = target.Settings.Get("order").MustString("")
 		if _, err := strconv.Atoi(orderBy); err != nil {
 			for _, metricI := range q.Metrics {
 				metric := simplejson.NewFromAny(metricI)
@@ -242,7 +217,7 @@ func (q *Query) getTerms(model *simplejson.Json) *TermsAgg {
 		}
 	}
 
-	missing, err := settings.Get("missing").String()
+	missing, err := target.Settings.Get("missing").String()
 	if err == nil {
 		agg.Terms.Missing = missing
 	}

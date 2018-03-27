@@ -40,5 +40,4 @@ func isPipelineAgg(metricType string) bool {
 func describeMetric(metricType, field string) string {
 	text := metricAggType[metricType]
 	return text + " " + field
-
 }

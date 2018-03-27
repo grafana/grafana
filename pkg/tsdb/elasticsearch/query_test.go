@@ -13,13 +13,8 @@ import (
 	"testing"
 )
 
-func testElasticSearchResponse(requestJSON string, expectedElasticSearchRequestJSON string) {
+func testElasticSearchResponse(query Query, expectedElasticSearchRequestJSON string) {
 	var queryExpectedJSONInterface, queryJSONInterface interface{}
-	parser := ElasticSearchQueryParser{}
-	model := &Query{}
-
-	err := json.Unmarshal([]byte(requestJSON), model)
-	So(err, ShouldBeNil)
 	jsonDate, _ := simplejson.NewJson([]byte(`{"esVersion":2}`))
 	dsInfo := &models.DataSource{
 		Database: "grafana-test",
@@ -28,10 +23,8 @@ func testElasticSearchResponse(requestJSON string, expectedElasticSearchRequestJ
 
 	testTimeRange := tsdb.NewTimeRange("5m", "now")
 
-	req, _ := simplejson.NewJson([]byte(requestJSON))
-	query, err := parser.Parse(req, dsInfo)
 	s, err := query.Build(&tsdb.TsdbQuery{TimeRange: testTimeRange}, dsInfo)
-
+	So(err, ShouldBeNil)
 	queryJSON := strings.Split(s, "\n")[1]
 	err = json.Unmarshal([]byte(queryJSON), &queryJSONInterface)
 	So(err, ShouldBeNil)
@@ -62,53 +55,6 @@ func testElasticSearchResponse(requestJSON string, expectedElasticSearchRequestJ
 func TestElasticSearchQueryBuilder(t *testing.T) {
 	Convey("Elasticsearch QueryBuilder query testing", t, func() {
 		Convey("Build test average metric with moving average", func() {
-			var testElasticsearchModelRequestJSON = `
-			{
-				"bucketAggs": [
-					{
-						"field": "timestamp",
-						"id": "2",
-						"settings": {
-							"interval": "auto",
-							"min_doc_count": 0,
-							"trimEdges": 0
-						},
-						"type": "date_histogram"
-					}
-				],
-				"dsType": "elasticsearch",
-				"metrics": [
-					{
-						"field": "value",
-						"id": "1",
-						"inlineScript": "_value * 2",
-						"meta": {},
-						"settings": {
-							"script": {
-								"inline": "_value * 2"
-							}
-						},
-						"type": "avg"
-					},
-					{
-						"field": "1",
-						"id": "3",
-						"meta": {},
-						"pipelineAgg": "1",
-						"settings": {
-							"minimize": false,
-							"model": "simple",
-							"window": 5
-						},
-						"type": "moving_avg"
-					}
-				],
-				"query": "(test:query) AND (name:sample)",
-				"refId": "A",
-				"timeField": "timestamp"
-			}
-			`
-
 			var expectedElasticsearchQueryJSON = `
 			{
 				"size": 0,
@@ -167,32 +113,9 @@ func TestElasticSearchQueryBuilder(t *testing.T) {
 				}
 			}`
 
-			testElasticSearchResponse(testElasticsearchModelRequestJSON, expectedElasticsearchQueryJSON)
+			testElasticSearchResponse(avgWithMovingAvg, expectedElasticsearchQueryJSON)
 		})
 		Convey("Test Wildcards and Quotes", func() {
-			testElasticsearchModelRequestJSON := `
-			{
-				"alias": "New",
-				"bucketAggs": [
-					{
-						"field": "timestamp",
-						"id": "2",
-						"type": "date_histogram"
-					}
-				],
-				"dsType": "elasticsearch",
-				"metrics": [
-					{
-						"type": "sum",
-						"field": "value",
-						"id": "1"
-					}
-				],
-				"query": "scope:$location.leagueconnect.api AND name:*CreateRegistration AND name:\"*.201-responses.rate\"",
-				"refId": "A",
-				"timeField": "timestamp"
-			}`
-
 			expectedElasticsearchQueryJSON := `
 			{
 				"size": 0,
@@ -239,65 +162,9 @@ func TestElasticSearchQueryBuilder(t *testing.T) {
 				}
 			}`
 
-			testElasticSearchResponse(testElasticsearchModelRequestJSON, expectedElasticsearchQueryJSON)
+			testElasticSearchResponse(wildcardsAndQuotes, expectedElasticsearchQueryJSON)
 		})
 		Convey("Test Term Aggregates", func() {
-			testElasticsearchModelRequestJSON := `
-			{
-				"bucketAggs": [{
-					"field": "name_raw",
-					"id": "4",
-					"settings": {
-						"order": "desc",
-						"orderBy": "_term",
-						"size": "10"
-					},
-					"type": "terms"
-				}, {
-					"field": "timestamp",
-					"id": "2",
-					"settings": {
-						"interval": "1m",
-						"min_doc_count": 0,
-						"trimEdges": 0
-					},
-					"type": "date_histogram"
-				}],
-				"dsType": "elasticsearch",
-				"filters": [{
-					"boolOp": "AND",
-					"not": false,
-					"type": "rfc190Scope",
-					"value": "*.hmp.metricsd"
-				}, {
-					"boolOp": "AND",
-					"not": false,
-					"type": "name_raw",
-					"value": "builtin.general.*_instance_count"
-				}],
-				"metricObject": {},
-				"metrics": [{
-					"field": "value",
-					"id": "1",
-					"meta": {},
-					"options": {},
-					"settings": {},
-					"type": "sum"
-				}],
-				"mode": 0,
-				"numToGraph": 10,
-				"prependHostName": false,
-				"query": "(scope:*.hmp.metricsd) AND (name_raw:builtin.general.*_instance_count)",
-				"refId": "A",
-				"regexAlias": false,
-				"selectedApplication": "",
-				"selectedHost": "",
-				"selectedLocation": "",
-				"timeField": "timestamp",
-				"useFullHostName": "",
-				"useQuery": false
-			}`
-
 			expectedElasticsearchQueryJSON := `
 			{
 				"size": 0,
@@ -322,51 +189,12 @@ func TestElasticSearchQueryBuilder(t *testing.T) {
 					  ]
 					}
 				},
-				"aggs": {"4":{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"value"}}},"date_histogram":{"extended_bounds":{"max":"<TO_TIMESTAMP>","min":"<FROM_TIMESTAMP>"},"field":"timestamp","format":"epoch_millis","interval":"1m","min_doc_count":0}}},"terms":{"field":"name_raw","order":{"_term":"desc"},"size":10}}}
+				"aggs": {"4":{"aggs":{"2":{"aggs":{"1":{"sum":{"field":"value"}}},"date_histogram":{"extended_bounds":{"max":"<TO_TIMESTAMP>","min":"<FROM_TIMESTAMP>"},"field":"timestamp","format":"epoch_millis","interval":"200ms","min_doc_count":0}}},"terms":{"field":"name_raw","order":{"_term":"desc"},"size":10}}}
 			}`
 
-			testElasticSearchResponse(testElasticsearchModelRequestJSON, expectedElasticsearchQueryJSON)
+			testElasticSearchResponse(termAggs, expectedElasticsearchQueryJSON)
 		})
 		Convey("Test Filters Aggregates", func() {
-			testElasticsearchModelRequestJSON := `
-			{
-			  "bucketAggs": [
-				{
-				  "id": "3",
-				  "settings": {
-					"filters": [{
-						"label": "hello",
-						"query": "host:\"67.65.185.232\""
-					}]
-				  },
-				  "type": "filters"
-				},
-				{
-				  "field": "time",
-				  "id": "2",
-				  "settings": {
-					"interval": "auto",
-					"min_doc_count": 0,
-					"trimEdges": 0
-				  },
-				  "type": "date_histogram"
-				}
-			  ],
-			  "metrics": [
-				{
-                  "pipelineAgg": "select metric",
-				  "field": "bytesSent",
-				  "id": "1",
-				  "meta": {},
-				  "settings": {},
-				  "type": "count"
-				}
-			  ],
-			  "query": "*",
-			  "refId": "A",
-			  "timeField": "time"
-			}`
-
 			expectedElasticsearchQueryJSON := `{
 			  "size": 0,
 			  "query": {
@@ -422,7 +250,7 @@ func TestElasticSearchQueryBuilder(t *testing.T) {
 			}
 			`
 
-			testElasticSearchResponse(testElasticsearchModelRequestJSON, expectedElasticsearchQueryJSON)
+			testElasticSearchResponse(filtersAggs, expectedElasticsearchQueryJSON)
 		})
 	})
 }

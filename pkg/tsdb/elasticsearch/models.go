@@ -7,6 +7,22 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
+type BucketAgg struct {
+	Field    string           `json:"field"`
+	ID       string           `json:"id"`
+	Settings *simplejson.Json `json:"settings"`
+	Type     string           `jsons:"type"`
+}
+
+type Metric struct {
+	Field             string           `json:"field"`
+	Hide              bool             `json:"hide"`
+	ID                string           `json:"id"`
+	PipelineAggregate string           `json:"pipelineAgg"`
+	Settings          *simplejson.Json `json:"settings"`
+	Type              string           `json:"type"`
+}
+
 type QueryHeader struct {
 	SearchType                 string      `json:"search_type"`
 	IgnoreUnavailable          bool        `json:"ignore_unavailable"`
@@ -44,16 +60,16 @@ type FiltersAgg struct {
 	Filters map[string]interface{} `json:"filters"`
 }
 
-type TermsAggSetting struct {
+type TermsAgg struct {
 	Field   string                 `json:"field"`
 	Size    int                    `json:"size"`
 	Order   map[string]interface{} `json:"order"`
 	Missing string                 `json:"missing,omitempty"`
 }
 
-type TermsAgg struct {
-	Terms TermsAggSetting `json:"terms"`
-	Aggs  Aggs            `json:"aggs"`
+type TermsAggWrap struct {
+	Terms TermsAgg `json:"terms"`
+	Aggs  Aggs     `json:"aggs"`
 }
 
 type ExtendedBounds struct {
@@ -90,8 +106,6 @@ func newQueryStringFilter(analyzeWildcard bool, query string) *QueryStringFilter
 type BoolQuery struct {
 	Filter []interface{} `json:"filter"`
 }
-
-type Metric map[string]interface{}
 
 type Responses struct {
 	Responses []Response `json:"responses"`
