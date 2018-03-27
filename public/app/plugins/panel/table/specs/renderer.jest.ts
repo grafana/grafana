@@ -15,7 +15,9 @@ describe('when rendering table', () => {
       { text: 'Sanitized' },
       { text: 'Link' },
       { text: 'Array' },
+      { text: 'Colored Text' },
     ];
+    table.rows = [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 'ok']];
     table.rows = [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2']]];
 
     var panel = {
@@ -71,6 +73,27 @@ describe('when rendering table', () => {
           type: 'number',
           unit: 'ms',
           decimals: 3,
+        },
+        {
+          pattern: 'Colored Text',
+          type: 'string',
+          colorMode: 'value',
+          thresholds: [50, 80],
+          textMappings: [
+            {
+              text: 'ok',
+              value: 30,
+            },
+            {
+              text: 'warning',
+              value: 60,
+            },
+            {
+              text: 'error',
+              value: 100,
+            },
+          ],
+          colors: ['green', 'orange', 'red'],
         },
       ],
     };
@@ -191,6 +214,21 @@ describe('when rendering table', () => {
     it('Array column should not use number as formatter', () => {
       var html = renderer.renderCell(8, 0, ['value1', 'value2']);
       expect(html).toBe('<td>value1, value2</td>');
+    });
+
+    it('colored text cell should have style', () => {
+      var html = renderer.renderCell(9, 0, 'ok');
+      expect(html).toBe('<td style="color:green">ok</td>');
+    });
+
+    it('colored text cell should have style', () => {
+      var html = renderer.renderCell(9, 0, 'warning');
+      expect(html).toBe('<td style="color:orange">warning</td>');
+    });
+
+    it('colored text cell should have style', () => {
+      var html = renderer.renderCell(9, 0, 'error');
+      expect(html).toBe('<td style="color:red">error</td>');
     });
   });
 });
