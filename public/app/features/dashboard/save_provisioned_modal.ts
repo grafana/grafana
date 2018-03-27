@@ -15,9 +15,10 @@ const template = `
 
   <form name="ctrl.saveForm" class="modal-content" novalidate>
     <h6 class="text-center">
-      This dashboard cannot be saved from Grafana's UI since it have been
-      <a href="http://docs.grafana.org/administration/provisioning/#dashboards">provisioned</a> from
-      another source. Please ask your Administrator for more info.
+      This dashboard cannot be saved from Grafana's UI since it has been provisioned from another source.
+      <i><a href="http://docs.grafana.org/administration/provisioning/#dashboards">
+        More info about provisioning.
+      </a></i>
     </h6>
     <div class="p-t-2">
       <div class="gf-form">
