@@ -209,14 +209,14 @@ func GetDashboardFolderUrl(isFolder bool, uid string, slug string) string {
 	return GetDashboardUrl(uid, slug)
 }
 
-// Return the html url for a dashboard
+// GetDashboardUrl return the html url for a dashboard
 func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
 }
 
-// Return the full url for a dashboard
+// GetFullDashboardUrl return the full url for a dashboard
 func GetFullDashboardUrl(uid string, slug string) string {
-	return fmt.Sprintf("%s%s", setting.AppUrl, GetDashboardUrl(uid, slug))
+	return fmt.Sprintf("%sd/%s/%s", setting.AppUrl, uid, slug)
 }
 
 // GetFolderUrl return the html url for a folder
