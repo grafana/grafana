@@ -75,7 +75,7 @@ You can reference queries by the row “letter” that they’re on (similar to 
 ## Point consolidation
 
 All Graphite metrics are consolidated so that Graphite doesn't return more data points than there are pixels in the graph. By default,
-this consolidation is done using `avg` function. You can how Graphite consolidates metrics by adding the Graphite consolidateBy function.
+this consolidation is done using `avg` function. You can control how Graphite consolidates metrics by adding the Graphite consolidateBy function.
 
 > *Notice* This means that legend summary values (max, min, total) cannot be all correct at the same time. They are calculated
 > client side by Grafana. And depending on your consolidation function only one or two can be correct at the same time.
