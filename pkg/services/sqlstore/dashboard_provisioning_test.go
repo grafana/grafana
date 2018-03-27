@@ -60,6 +60,13 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(query.Result.DashboardId, ShouldEqual, cmd.Result.Id)
 				So(query.Result.Updated, ShouldEqual, now.Unix())
 			})
+
+			Convey("Can query for one provisioned dashboard2", func() {
+				query := &models.GetProvisionedDashboardByDashboardId{DashboardId: 3000}
+
+				err := GetProvisionedDataByDashboardId(query)
+				So(err, ShouldEqual, models.ErrDashboardProvisioningDoesNotExist)
+			})
 		})
 	})
 }

@@ -720,6 +720,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{SaveError: m.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: 403},
 				{SaveError: m.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
 				{SaveError: m.ErrDashboardUidToLong, ExpectedStatusCode: 400},
+				{SaveError: m.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
 				{SaveError: m.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
 			}
 

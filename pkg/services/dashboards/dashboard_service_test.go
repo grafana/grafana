@@ -14,7 +14,9 @@ import (
 
 func TestDashboardService(t *testing.T) {
 	Convey("Dashboard service tests", t, func() {
-		service := dashboardServiceImpl{}
+		bus.ClearBusHandlers()
+
+		service := &dashboardServiceImpl{}
 
 		origNewDashboardGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
@@ -54,6 +56,10 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardByDashboardId) error {
+					return models.ErrDashboardProvisioningDoesNotExist
+				})
+
 				testCases := []struct {
 					Uid   string
 					Error error
@@ -77,7 +83,32 @@ func TestDashboardService(t *testing.T) {
 				}
 			})
 
+			Convey("Should return validation error if dashboard is provisioned", func() {
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardByDashboardId) error {
+					cmd.Result = &models.DashboardProvisioning{}
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					return nil
+				})
+
+				dto.Dashboard = models.NewDashboard("Dash")
+				dto.Dashboard.SetId(3)
+				dto.User = &models.SignedInUser{UserId: 1}
+				_, err := service.buildSaveDashboardCommand(dto, false)
+				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
+			})
+
 			Convey("Should return validation error if alert data is invalid", func() {
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardByDashboardId) error {
+					return models.ErrDashboardProvisioningDoesNotExist
+				})
+
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
 					return errors.New("error")
 				})

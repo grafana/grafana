@@ -21,12 +21,17 @@ type DashboardExtras struct {
 func GetProvisionedDataByDashboardId(cmd *models.GetProvisionedDashboardByDashboardId) error {
 	result := &models.DashboardProvisioning{}
 
-	_, err := x.Where("dashboard_id = ?", cmd.DashboardId).Get(result)
+	exist, err := x.Where("dashboard_id = ?", cmd.DashboardId).Get(result)
 	if err != nil {
 		return err
 	}
 
+	if !exist {
+		return models.ErrDashboardProvisioningDoesNotExist
+	}
+
 	cmd.Result = result
+
 	return nil
 }
 

@@ -235,7 +235,8 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 		err == m.ErrDashboardWithSameUIDExists ||
 		err == m.ErrFolderNotFound ||
 		err == m.ErrDashboardFolderCannotHaveParent ||
-		err == m.ErrDashboardFolderNameExists {
+		err == m.ErrDashboardFolderNameExists ||
+		err == m.ErrDashboardCannotSaveProvisionedDashboard {
 		return Error(400, err.Error(), nil)
 	}
 
