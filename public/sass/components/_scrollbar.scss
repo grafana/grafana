@@ -9,6 +9,11 @@
   -ms-touch-action: auto;
 }
 
+// ._scrollbar {
+//   overflow-x: hidden !important;
+//   overflow-y: auto;
+// }
+
 /*
  * Scrollbar rail styles
  */
@@ -104,13 +109,19 @@
 // Srollbars
 //
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+// ::-webkit-scrollbar {
+//   width: 8px;
+//   height: 8px;
+// }
 
-::-webkit-scrollbar:hover {
-  height: 8px;
+// ::-webkit-scrollbar:hover {
+//   height: 8px;
+// }
+
+::-webkit-scrollbar {
+  // Hide system scrollbar (Mac OS X)
+  width: 0;
+  height: 0;
 }
 
 ::-webkit-scrollbar-button:start:decrement,
@@ -171,4 +182,107 @@
   border: 1px solid $scrollbarBorder;
   border-top: 1px solid $scrollbarBorder;
   border-left: 1px solid $scrollbarBorder;
+}
+
+// Baron styles
+
+.baron {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.baron__clipper {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.baron__scroller {
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+  /* remove line to customize scrollbar in iOs */
+}
+
+.baron__scroller::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.baron__track {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.baron._scrollbar .baron__track {
+  display: block;
+}
+
+.baron__free {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+}
+
+.baron__bar {
+  display: none;
+  position: absolute;
+  right: 0;
+  z-index: 1;
+  // width: 10px;
+  background: #999;
+
+  // height: 15px;
+  width: 15px;
+  transition: background-color 0.2s linear, opacity 0.2s linear;
+  opacity: 0;
+}
+
+.baron._scrollbar .baron__bar {
+  display: block;
+
+  @include gradient-vertical($scrollbarBackground, $scrollbarBackground2);
+  border-radius: 6px;
+  width: 6px;
+  /* there must be 'right' for ps__thumb-y */
+  right: 0px;
+  /* please don't change 'position' */
+  position: absolute;
+
+  // background-color: transparent;
+  // opacity: 0.6;
+
+  &:hover,
+  &:focus {
+    // background-color: transparent;
+    opacity: 0.9;
+  }
+}
+
+.baron._scrolling > .baron__track .baron__bar {
+  opacity: 0.6;
+}
+
+.baron__control {
+  display: none;
+}
+
+.baron.panel-content--scrollable {
+  // Width needs to be set to prevent content width issues
+  width: 100%;
+
+  .baron__scroller {
+    padding-top: 1px;
+  }
 }

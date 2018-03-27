@@ -61,6 +61,8 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+
+  // overflow-y: scroll;
 }
 
 .search-dropdown__col_2 {
@@ -97,6 +99,11 @@
     font-size: 20px;
     margin-right: 5px;
   }
+}
+
+.search-results-scroller {
+  position: relative;
+  height: 100%;
 }
 
 .search-results-container {

@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
-import PerfectScrollbar from 'perfect-scrollbar';
+import baron from 'baron';
 
 var module = angular.module('grafana.directives');
 
@@ -250,23 +250,53 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function addScrollbar() {
-        const scrollbarOptions = {
-          // Number of pixels the content height can surpass the container height without enabling the scroll bar.
-          scrollYMarginOffset: 2,
-          suppressScrollX: true,
-          wheelPropagation: true,
+        const scrollRootClass = 'baron baron__root';
+        const scrollerClass = 'baron__scroller';
+        const scrollBarHTML = `
+          <div class="baron__track">
+            <div class="baron__bar"></div>
+          </div>
+        `;
+
+        let scrollRoot = elem.parent();
+        // let scroller = elem.find(':first-child').first();
+        let scroller = elem;
+
+        // clear existing scroll bar track to prevent duplication
+        elem
+          .parent()
+          .find('.baron__track')
+          .remove();
+
+        scrollRoot.addClass(scrollRootClass);
+        $(scrollBarHTML).appendTo(scrollRoot);
+        scroller.addClass(scrollerClass);
+
+        // Fix .graph-legend-content max-height
+        // Couldn't find how to do it via CSS
+        const legendHeight = scrollRoot.height();
+        elem.css('max-height', legendHeight);
+
+        let scrollbarParams = {
+          root: scrollRoot[0],
+          scroller: scroller[0],
+          bar: '.baron__bar',
+          track: '.baron__track',
+          barOnCls: '_scrollbar',
+          scrollingCls: '_scrolling',
         };
 
         if (!legendScrollbar) {
-          legendScrollbar = new PerfectScrollbar(elem[0], scrollbarOptions);
+          legendScrollbar = baron(scrollbarParams);
         } else {
-          legendScrollbar.update();
+          destroyScrollbar();
+          legendScrollbar = baron(scrollbarParams);
         }
       }
 
       function destroyScrollbar() {
         if (legendScrollbar) {
-          legendScrollbar.destroy();
+          legendScrollbar.dispose();
           legendScrollbar = undefined;
         }
       }

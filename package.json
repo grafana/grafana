@@ -136,6 +136,7 @@
     "angular-route": "^1.6.6",
     "angular-sanitize": "^1.6.6",
     "babel-polyfill": "^6.26.0",
+    "baron": "^3.0.3",
     "brace": "^0.10.0",
     "classnames": "^2.2.5",
     "clipboard": "^1.7.1",

@@ -53,12 +53,17 @@
   max-height: 30%;
   margin: 0;
   text-align: center;
-  padding-top: 6px;
+  // padding-top: 6px;
   position: relative;
 
   .popover-content {
     padding: 0;
   }
+}
+
+.graph-legend-content {
+  position: relative;
+  padding-top: 6px;
 }
 
 .graph-legend-icon {

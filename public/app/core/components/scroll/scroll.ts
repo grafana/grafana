@@ -1,15 +1,41 @@
-import PerfectScrollbar from 'perfect-scrollbar';
+import $ from 'jquery';
+import baron from 'baron';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
+
+const scrollBarHTML = `
+<div class="baron__track">
+  <div class="baron__bar"></div>
+</div>
+`;
+
+const scrollRootClass = 'baron baron__root';
+const scrollerClass = 'baron__scroller';
 
 export function geminiScrollbar() {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
-      let scrollbar = new PerfectScrollbar(elem[0], {
-        wheelPropagation: true,
-        wheelSpeed: 3,
+      let scrollRoot = elem.parent();
+      let scroller = elem;
+
+      if (attrs.grafanaScrollbar && attrs.grafanaScrollbar === 'scrollonroot') {
+        scrollRoot = scroller;
+      }
+
+      scrollRoot.addClass(scrollRootClass);
+      $(scrollBarHTML).appendTo(scrollRoot);
+      elem.addClass(scrollerClass);
+
+      let scrollbar = baron({
+        root: scrollRoot[0],
+        scroller: scroller[0],
+        bar: '.baron__bar',
+        barOnCls: '_scrollbar',
+        scrollingCls: '_scrolling',
+        track: '.baron__track',
       });
+
       let lastPos = 0;
 
       appEvents.on(
@@ -37,7 +63,8 @@ export function geminiScrollbar() {
       });
 
       scope.$on('$destroy', () => {
-        scrollbar.destroy();
+        // scrollbar.destroy();
+        scrollbar.dispose();
       });
     },
   };
