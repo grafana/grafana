@@ -3,7 +3,7 @@ import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
 
 describe('when rendering table', () => {
-  describe('given 2 columns', () => {
+  describe('given 13 columns', () => {
     var table = new TableModel();
     table.columns = [
       { text: 'Time' },
@@ -15,8 +15,14 @@ describe('when rendering table', () => {
       { text: 'Sanitized' },
       { text: 'Link' },
       { text: 'Array' },
+      { text: 'Mapping' },
+      { text: 'RangeMapping' },
+      { text: 'MappingColored' },
+      { text: 'RangeMappingColored' },
     ];
-    table.rows = [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2']]];
+    table.rows = [
+      [1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2],
+    ];
 
     var panel = {
       pageSize: 10,
@@ -48,6 +54,10 @@ describe('when rendering table', () => {
           type: 'string',
         },
         {
+          pattern: 'String',
+          type: 'string',
+        },
+        {
           pattern: 'United',
           type: 'number',
           unit: 'ms',
@@ -71,6 +81,84 @@ describe('when rendering table', () => {
           type: 'number',
           unit: 'ms',
           decimals: 3,
+        },
+        {
+          pattern: 'Mapping',
+          type: 'string',
+          mappingType: 1,
+          valueMaps: [
+            {
+              value: '1',
+              text: 'on',
+            },
+            {
+              value: '0',
+              text: 'off',
+            },
+            {
+              value: 'HELLO WORLD',
+              text: 'HELLO GRAFANA',
+            },
+            {
+              value: 'value1, value2',
+              text: 'value3, value4',
+            },
+          ],
+        },
+        {
+          pattern: 'RangeMapping',
+          type: 'string',
+          mappingType: 2,
+          rangeMaps: [
+            {
+              from: '1',
+              to: '3',
+              text: 'on',
+            },
+            {
+              from: '3',
+              to: '6',
+              text: 'off',
+            },
+          ],
+        },
+        {
+          pattern: 'MappingColored',
+          type: 'string',
+          mappingType: 1,
+          valueMaps: [
+            {
+              value: '1',
+              text: 'on',
+            },
+            {
+              value: '0',
+              text: 'off',
+            },
+          ],
+          colorMode: 'value',
+          thresholds: [1, 2],
+          colors: ['green', 'orange', 'red'],
+        },
+        {
+          pattern: 'RangeMappingColored',
+          type: 'string',
+          mappingType: 2,
+          rangeMaps: [
+            {
+              from: '1',
+              to: '3',
+              text: 'on',
+            },
+            {
+              from: '3',
+              to: '6',
+              text: 'off',
+            },
+          ],
+          colorMode: 'value',
+          thresholds: [2, 5],
+          colors: ['green', 'orange', 'red'],
         },
       ],
     };
@@ -191,6 +279,86 @@ describe('when rendering table', () => {
     it('Array column should not use number as formatter', () => {
       var html = renderer.renderCell(8, 0, ['value1', 'value2']);
       expect(html).toBe('<td>value1, value2</td>');
+    });
+
+    it('numeric value should be mapped to text', () => {
+      var html = renderer.renderCell(9, 0, 1);
+      expect(html).toBe('<td>on</td>');
+    });
+
+    it('string numeric value should be mapped to text', () => {
+      var html = renderer.renderCell(9, 0, '0');
+      expect(html).toBe('<td>off</td>');
+    });
+
+    it('string value should be mapped to text', () => {
+      var html = renderer.renderCell(9, 0, 'HELLO WORLD');
+      expect(html).toBe('<td>HELLO GRAFANA</td>');
+    });
+
+    it('array column value should be mapped to text', () => {
+      var html = renderer.renderCell(9, 0, ['value1', 'value2']);
+      expect(html).toBe('<td>value3, value4</td>');
+    });
+
+    it('value should be mapped to text (range)', () => {
+      var html = renderer.renderCell(10, 0, 2);
+      expect(html).toBe('<td>on</td>');
+    });
+
+    it('value should be mapped to text (range)', () => {
+      var html = renderer.renderCell(10, 0, 5);
+      expect(html).toBe('<td>off</td>');
+    });
+
+    it('array column value should not be mapped to text', () => {
+      var html = renderer.renderCell(10, 0, ['value1', 'value2']);
+      expect(html).toBe('<td>value1, value2</td>');
+    });
+
+    it('value should be mapped to text and colored cell should have style', () => {
+      var html = renderer.renderCell(11, 0, 1);
+      expect(html).toBe('<td style="color:orange">on</td>');
+    });
+
+    it('value should be mapped to text and colored cell should have style', () => {
+      var html = renderer.renderCell(11, 0, '1');
+      expect(html).toBe('<td style="color:orange">on</td>');
+    });
+
+    it('value should be mapped to text and colored cell should have style', () => {
+      var html = renderer.renderCell(11, 0, 0);
+      expect(html).toBe('<td style="color:green">off</td>');
+    });
+
+    it('value should be mapped to text and colored cell should have style', () => {
+      var html = renderer.renderCell(11, 0, '0');
+      expect(html).toBe('<td style="color:green">off</td>');
+    });
+
+    it('value should be mapped to text and colored cell should have style', () => {
+      var html = renderer.renderCell(11, 0, '2.1');
+      expect(html).toBe('<td style="color:red">2.1</td>');
+    });
+
+    it('value should be mapped to text (range) and colored cell should have style', () => {
+      var html = renderer.renderCell(12, 0, 0);
+      expect(html).toBe('<td style="color:green">0</td>');
+    });
+
+    it('value should be mapped to text (range) and colored cell should have style', () => {
+      var html = renderer.renderCell(12, 0, 1);
+      expect(html).toBe('<td style="color:green">on</td>');
+    });
+
+    it('value should be mapped to text (range) and colored cell should have style', () => {
+      var html = renderer.renderCell(12, 0, 4);
+      expect(html).toBe('<td style="color:orange">off</td>');
+    });
+
+    it('value should be mapped to text (range) and colored cell should have style', () => {
+      var html = renderer.renderCell(12, 0, '7.1');
+      expect(html).toBe('<td style="color:red">7.1</td>');
     });
   });
 });
