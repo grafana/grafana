@@ -1,4 +1,4 @@
-package gomail
+package mail
 
 import (
 	"bytes"
@@ -18,6 +18,7 @@ type Message struct {
 	encoding    Encoding
 	hEncoder    mimeEncoder
 	buf         bytes.Buffer
+	boundary    string
 }
 
 type header map[string][]string
@@ -96,6 +97,11 @@ const (
 	// will still be encoded using quoted-printable encoding.
 	Unencoded Encoding = "8bit"
 )
+
+// SetBoundary sets a custom multipart boundary.
+func (m *Message) SetBoundary(boundary string) {
+	m.boundary = boundary
+}
 
 // SetHeader sets a value to the given header field.
 func (m *Message) SetHeader(field string, value ...string) {
@@ -183,9 +189,15 @@ func (m *Message) GetHeader(field string) []string {
 }
 
 // SetBody sets the body of the message. It replaces any content previously set
-// by SetBody, AddAlternative or AddAlternativeWriter.
+// by SetBody, SetBodyWriter, AddAlternative or AddAlternativeWriter.
 func (m *Message) SetBody(contentType, body string, settings ...PartSetting) {
-	m.parts = []*part{m.newPart(contentType, newCopier(body), settings)}
+	m.SetBodyWriter(contentType, newCopier(body), settings...)
+}
+
+// SetBodyWriter sets the body of the message. It can be useful with the
+// text/template or html/template packages.
+func (m *Message) SetBodyWriter(contentType string, f func(io.Writer) error, settings ...PartSetting) {
+	m.parts = []*part{m.newPart(contentType, f, settings)}
 }
 
 // AddAlternative adds an alternative part to the message.
@@ -226,8 +238,8 @@ func (m *Message) newPart(contentType string, f func(io.Writer) error, settings 
 }
 
 // A PartSetting can be used as an argument in Message.SetBody,
-// Message.AddAlternative or Message.AddAlternativeWriter to configure the part
-// added to a message.
+// Message.SetBodyWriter, Message.AddAlternative or Message.AddAlternativeWriter
+// to configure the part added to a message.
 type PartSetting func(*part)
 
 // SetPartEncoding sets the encoding of the part added to the message. By
