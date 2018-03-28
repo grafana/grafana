@@ -131,8 +131,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         elem.empty();
 
         // Set min-width if side style and there is a value, otherwise remove the CSS propery
-        var width = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + 'px' : '';
+        // Set width so it works with IE11
+        var width: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + 'px' : '';
+        var ieWidth: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth - 1 + 'px' : '';
         elem.css('min-width', width);
+        elem.css('width', ieWidth);
 
         elem.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
