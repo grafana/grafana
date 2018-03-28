@@ -69,5 +69,5 @@ type GetAuthInfoQuery struct {
 	AuthModule string
 	AuthId     string
 
-	UserAuth *UserAuth
+	Result *UserAuth
 }

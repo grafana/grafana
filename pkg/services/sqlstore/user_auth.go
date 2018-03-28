@@ -28,22 +28,22 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 
 		err = GetAuthInfo(authQuery)
 		// if user id was specified and doesn't match the user_auth entry, remove it
-		if err == nil && query.UserId != 0 && query.UserId != authQuery.UserAuth.UserId {
+		if err == nil && query.UserId != 0 && query.UserId != authQuery.Result.UserId {
 			DeleteAuthInfo(&m.DeleteAuthInfoCommand{
-				UserAuth: authQuery.UserAuth,
+				UserAuth: authQuery.Result,
 			})
 		} else if err == nil {
-			has, err = x.Id(authQuery.UserAuth.UserId).Get(user)
+			has, err = x.Id(authQuery.Result.UserId).Get(user)
 			if err != nil {
 				return err
 			}
 
 			if has {
-				query.UserAuth = authQuery.UserAuth
+				query.UserAuth = authQuery.Result
 			} else {
 				// if the user has been deleted then remove the entry
 				DeleteAuthInfo(&m.DeleteAuthInfoCommand{
-					UserAuth: authQuery.UserAuth,
+					UserAuth: authQuery.Result,
 				})
 			}
 		} else if err != m.ErrUserNotFound {
@@ -99,7 +99,7 @@ func GetAuthInfo(query *m.GetAuthInfoQuery) error {
 		return m.ErrUserNotFound
 	}
 
-	query.UserAuth = userAuth
+	query.Result = userAuth
 	return nil
 }
 
