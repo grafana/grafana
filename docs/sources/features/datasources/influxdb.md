@@ -174,3 +174,21 @@ SELECT title, description from events WHERE $timeFilter order asc
 For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
 part. If you only select one column you will not need to enter anything in the column mapping fields. The
 Tags field can be a comma separated string.
+
+## Configure datasource with provisioning
+
+Its now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources).
+Here are some examples of how you can configure the Cloudwatch datasource using configuration.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    database: site
+    user: grafana
+    password: grafana
+    url: http://localhost:8086
+```

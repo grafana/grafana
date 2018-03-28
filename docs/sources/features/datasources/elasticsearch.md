@@ -137,3 +137,22 @@ Query | You can leave the search query blank or specify a lucene query
 Time | The name of the time field, needs to be date field.
 Text | Event description field.
 Tags | Optional field name to use for event tags (can be an array or a CSV string).
+
+## Configure datasource with provisioning
+
+Its now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources).
+Here are some examples of how you can configure the Cloudwatch datasource using configuration.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Elastic
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:9200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+```

@@ -88,3 +88,21 @@ Query | Description
 *tag_values(cpu, hostanme, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
 
 For details on OpenTSDB metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
+
+## Configure datasource with provisioning
+
+Its now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources).
+Here are some examples of how you can configure the Cloudwatch datasource using configuration.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: OpenTsdb
+    type: opentsdb
+    access: proxy
+    url: http://localhost:4242
+    jsonData:
+      tsdbResolution: 1
+      tsdbVersion: 1
+```

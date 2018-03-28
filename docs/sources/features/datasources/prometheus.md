@@ -100,3 +100,18 @@ The step option is useful to limit the number of events returned from your query
 ## Getting Grafana metrics into Prometheus
 
 Since 4.6.0 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
+
+## Configure datasource with provisioning
+
+Its now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources
+Here are some examples of how you can configure the Cloudwatch datasource using configuration.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+```

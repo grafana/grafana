@@ -225,3 +225,20 @@ tags | Optional field name to use for event tags as a comma separated string.
 ## Alerting
 
 Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule conditions.
+
+## Configure datasource with provisioning
+
+Its now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources).
+Here are some examples of how you can configure the Cloudwatch datasource using configuration.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: MySQL
+    type: mysql
+    url: localhost:3306
+    database: grafana
+    user: grafana
+    password: password
+```
