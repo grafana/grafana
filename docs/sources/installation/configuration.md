@@ -606,7 +606,7 @@ allowed_organizations =
     scopes = openid email name
     auth_url = https://login.microsoftonline.com/<directory id>/oauth2/authorize
     token_url = https://login.microsoftonline.com/<directory id>/oauth2/token
-    api_url =
+    api_url = https://login.microsoftonline.com/<directory id>/openid/userinfo
     team_ids =
     allowed_organizations =
     ```
