@@ -43,6 +43,7 @@ export class AlertNotificationEditCtrl {
         return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {
           this.navModel.breadcrumbs.push({ text: result.name });
           this.navModel.node = { text: result.name };
+          result.settings = _.defaults(result.settings, this.defaults.settings);
           return result;
         });
       })
@@ -89,7 +90,7 @@ export class AlertNotificationEditCtrl {
   }
 
   typeChanged() {
-    this.model.settings = {};
+    this.model.settings = _.defaults({}, this.defaults.settings);
     this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
   }
 
