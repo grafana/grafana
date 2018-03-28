@@ -14,10 +14,10 @@ import (
 
 func TestRecoveryMiddleware(t *testing.T) {
 	Convey("Given an api route that panics", t, func() {
-		apiUrl := "/api/whatever"
-		recoveryScenario("recovery middleware should return json", apiUrl, func(sc *scenarioContext) {
+		apiURL := "/api/whatever"
+		recoveryScenario("recovery middleware should return json", apiURL, func(sc *scenarioContext) {
 			sc.handlerFunc = PanicHandler
-			sc.fakeReq("GET", apiUrl).exec()
+			sc.fakeReq("GET", apiURL).exec()
 			sc.req.Header.Add("content-type", "application/json")
 
 			So(sc.resp.Code, ShouldEqual, 500)
@@ -27,10 +27,10 @@ func TestRecoveryMiddleware(t *testing.T) {
 	})
 
 	Convey("Given a non-api route that panics", t, func() {
-		apiUrl := "/whatever"
-		recoveryScenario("recovery middleware should return html", apiUrl, func(sc *scenarioContext) {
+		apiURL := "/whatever"
+		recoveryScenario("recovery middleware should return html", apiURL, func(sc *scenarioContext) {
 			sc.handlerFunc = PanicHandler
-			sc.fakeReq("GET", apiUrl).exec()
+			sc.fakeReq("GET", apiURL).exec()
 
 			So(sc.resp.Code, ShouldEqual, 500)
 			So(sc.resp.Header().Get("content-type"), ShouldEqual, "text/html; charset=UTF-8")
@@ -63,7 +63,7 @@ func recoveryScenario(desc string, url string, fn scenarioFunc) {
 		sc.m.Use(GetContextHandler())
 		// mock out gc goroutine
 		session.StartSessionGC = func() {}
-		sc.m.Use(Sessioner(&ms.Options{}))
+		sc.m.Use(Sessioner(&ms.Options{}, 0))
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 

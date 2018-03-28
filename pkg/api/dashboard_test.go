@@ -105,7 +105,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -165,7 +165,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -271,7 +271,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -329,7 +329,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -398,7 +398,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -468,7 +468,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -527,7 +527,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -594,7 +594,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -638,7 +638,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 			Convey("Should result in 412 Precondition failed", func() {
 				So(sc.resp.Code, ShouldEqual, 412)
-				result := sc.ToJson()
+				result := sc.ToJSON()
 				So(result.Get("status").MustString(), ShouldEqual, "multiple-slugs-exists")
 				So(result.Get("message").MustString(), ShouldEqual, m.ErrDashboardsWithSameSlugExists.Error())
 			})
@@ -686,7 +686,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 
 				Convey("It should return correct response data", func() {
-					result := sc.ToJson()
+					result := sc.ToJSON()
 					So(result.Get("status").MustString(), ShouldEqual, "success")
 					So(result.Get("id").MustInt64(), ShouldEqual, 2)
 					So(result.Get("uid").MustString(), ShouldEqual, "uid")
@@ -837,12 +837,12 @@ func CallDeleteDashboard(sc *scenarioContext) {
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
 
-func CallDeleteDashboardByUid(sc *scenarioContext) {
+func CallDeleteDashboardByUID(sc *scenarioContext) {
 	bus.AddHandler("test", func(cmd *m.DeleteDashboardCommand) error {
 		return nil
 	})
 
-	sc.handlerFunc = DeleteDashboardByUid
+	sc.handlerFunc = DeleteDashboardByUID
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
 
@@ -903,7 +903,7 @@ func postDiffScenario(desc string, url string, routePattern string, cmd dtos.Cal
 	})
 }
 
-func (sc *scenarioContext) ToJson() *simplejson.Json {
+func (sc *scenarioContext) ToJSON() *simplejson.Json {
 	var result *simplejson.Json
 	err := json.NewDecoder(sc.resp.Body).Decode(&result)
 	So(err, ShouldBeNil)

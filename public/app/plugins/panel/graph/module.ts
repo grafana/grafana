@@ -55,6 +55,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       values: [],
       buckets: null,
     },
+    yaxis: {
+      align: false,
+      alignLevel: null,
+    },
     // show/hide lines
     lines: true,
     // fill factor

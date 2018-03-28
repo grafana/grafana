@@ -133,12 +133,12 @@ kbn.secondsToHms = function(seconds) {
 
 kbn.secondsToHhmmss = function(seconds) {
   var strings = [];
-  var numhours = Math.floor(seconds/3600);
-  var numminutes = Math.floor((seconds%3600)/60);
-  var numseconds = Math.floor((seconds%3600)%60);
-  numhours > 9 ? strings.push(''+numhours) : strings.push('0'+numhours);
-  numminutes > 9 ? strings.push(''+numminutes) : strings.push('0'+numminutes);
-  numseconds > 9 ? strings.push(''+numseconds) : strings.push('0'+numseconds);
+  var numhours = Math.floor(seconds / 3600);
+  var numminutes = Math.floor((seconds % 3600) / 60);
+  var numseconds = Math.floor((seconds % 3600) % 60);
+  numhours > 9 ? strings.push('' + numhours) : strings.push('0' + numhours);
+  numminutes > 9 ? strings.push('' + numminutes) : strings.push('0' + numminutes);
+  numseconds > 9 ? strings.push('' + numseconds) : strings.push('0' + numseconds);
   return strings.join(':');
 };
 
@@ -447,6 +447,7 @@ kbn.valueFormats.currencyDKK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyISK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyNOK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencySEK = kbn.formatBuilders.currency('kr');
+kbn.valueFormats.currencyCZK = kbn.formatBuilders.currency('czk');
 
 // Data (Binary)
 kbn.valueFormats.bits = kbn.formatBuilders.binarySIPrefix('b');
@@ -869,6 +870,7 @@ kbn.getUnitFormats = function() {
         { text: 'Icelandic Króna (kr)', value: 'currencyISK' },
         { text: 'Norwegian Krone (kr)', value: 'currencyNOK' },
         { text: 'Swedish Krona (kr)', value: 'currencySEK' },
+        { text: 'Czech koruna (czk)', value: 'currencyCZK' },
       ],
     },
     {

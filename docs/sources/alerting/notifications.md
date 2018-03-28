@@ -41,6 +41,8 @@ Grafana ships with the following set of notification types:
 To enable email notifications you have to setup [SMTP settings](/installation/configuration/#smtp)
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
+Be aware that if you use the `local` image storage email servers and clients might not be
+able to access the image.
 
 ### Slack
 

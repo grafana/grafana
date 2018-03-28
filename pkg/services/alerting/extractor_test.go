@@ -240,5 +240,26 @@ func TestAlertRuleExtraction(t *testing.T) {
 				So(len(alerts), ShouldEqual, 4)
 			})
 		})
+
+		Convey("Parse and validate dashboard without id and containing an alert", func() {
+			json, err := ioutil.ReadFile("./test-data/dash-without-id.json")
+			So(err, ShouldBeNil)
+
+			dashJSON, err := simplejson.NewJson(json)
+			So(err, ShouldBeNil)
+			dash := m.NewDashboardFromJson(dashJSON)
+			extractor := NewDashAlertExtractor(dash, 1)
+
+			err = extractor.ValidateAlerts()
+
+			Convey("Should validate without error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Should fail on save", func() {
+				_, err := extractor.GetAlerts()
+				So(err, ShouldEqual, m.ErrDashboardContainsInvalidAlertData)
+			})
+		})
 	})
 }

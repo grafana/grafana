@@ -32,13 +32,13 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		locale = parts[0]
 	}
 
-	appUrl := setting.AppUrl
-	appSubUrl := setting.AppSubUrl
+	appURL := setting.AppUrl
+	appSubURL := setting.AppSubUrl
 
 	// special case when doing localhost call from phantomjs
 	if c.IsRenderCall {
-		appUrl = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
-		appSubUrl = ""
+		appURL = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
+		appSubURL = ""
 		settings["appSubUrl"] = ""
 	}
 
@@ -62,8 +62,8 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		},
 		Settings:                settings,
 		Theme:                   prefs.Theme,
-		AppUrl:                  appUrl,
-		AppSubUrl:               appSubUrl,
+		AppUrl:                  appURL,
+		AppSubUrl:               appSubURL,
 		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
@@ -80,8 +80,8 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		data.User.Name = data.User.Login
 	}
 
-	themeUrlParam := c.Query("theme")
-	if themeUrlParam == "light" {
+	themeURLParam := c.Query("theme")
+	if themeURLParam == "light" {
 		data.User.LightTheme = true
 		data.Theme = "light"
 	}
@@ -299,12 +299,12 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 }
 
 func Index(c *m.ReqContext) {
-	if data, err := setIndexViewData(c); err != nil {
+	data, err := setIndexViewData(c)
+	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
-	} else {
-		c.HTML(200, "index", data)
 	}
+	c.HTML(200, "index", data)
 }
 
 func NotFoundHandler(c *m.ReqContext) {
@@ -313,10 +313,11 @@ func NotFoundHandler(c *m.ReqContext) {
 		return
 	}
 
-	if data, err := setIndexViewData(c); err != nil {
+	data, err := setIndexViewData(c)
+	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
-	} else {
-		c.HTML(404, "index", data)
 	}
+
+	c.HTML(404, "index", data)
 }
