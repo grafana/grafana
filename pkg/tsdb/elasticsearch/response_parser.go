@@ -30,6 +30,7 @@ func (rp *ElasticsearchResponseParser) getTimeSeries() *tsdb.QueryResult {
 }
 
 func (rp *ElasticsearchResponseParser) processBuckets(aggs map[string]interface{}, target *Query, series *[]*tsdb.TimeSeries, props map[string]string, depth int) error {
+
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
 	for aggId, v := range aggs {
@@ -113,7 +114,11 @@ func (rp *ElasticsearchResponseParser) processMetrics(esAgg *simplejson.Json, ta
 			}
 		default:
 			newSeries := tsdb.TimeSeries{}
-			newSeries.Tags = props
+			newSeries.Tags = map[string]string{}
+			for k, v := range props {
+				newSeries.Tags[k] = v
+			}
+
 			newSeries.Tags["metric"] = metric.Type
 			newSeries.Tags["field"] = metric.Field
 			for _, v := range esAgg.Get("buckets").MustArray() {
@@ -121,7 +126,7 @@ func (rp *ElasticsearchResponseParser) processMetrics(esAgg *simplejson.Json, ta
 				key := castToNullFloat(bucket.Get("key"))
 				valueObj, err := bucket.Get(metric.ID).Map()
 				if err != nil {
-					break
+					continue
 				}
 				var value null.Float
 				if _, ok := valueObj["normalized_value"]; ok {
