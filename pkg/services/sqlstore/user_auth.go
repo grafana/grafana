@@ -29,9 +29,12 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 		err = GetAuthInfo(authQuery)
 		// if user id was specified and doesn't match the user_auth entry, remove it
 		if err == nil && query.UserId != 0 && query.UserId != authQuery.Result.UserId {
-			DeleteAuthInfo(&m.DeleteAuthInfoCommand{
+			err = DeleteAuthInfo(&m.DeleteAuthInfoCommand{
 				UserAuth: authQuery.Result,
 			})
+			if err != nil {
+				sqlog.Error("Error removing user_auth entry", "error", err)
+			}
 		} else if err == nil {
 			has, err = x.Id(authQuery.Result.UserId).Get(user)
 			if err != nil {
@@ -42,9 +45,12 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 				query.UserAuth = authQuery.Result
 			} else {
 				// if the user has been deleted then remove the entry
-				DeleteAuthInfo(&m.DeleteAuthInfoCommand{
+				err = DeleteAuthInfo(&m.DeleteAuthInfoCommand{
 					UserAuth: authQuery.Result,
 				})
+				if err != nil {
+					sqlog.Error("Error removing user_auth entry", "error", err)
+				}
 			}
 		} else if err != m.ErrUserNotFound {
 			return err
@@ -113,21 +119,13 @@ func SetAuthInfo(cmd *m.SetAuthInfoCommand) error {
 		}
 
 		_, err := sess.Insert(&authUser)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	})
 }
 
 func DeleteAuthInfo(cmd *m.DeleteAuthInfoCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		_, err := sess.Delete(cmd.UserAuth)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	})
 }
