@@ -1,8 +1,6 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 
-//var appEvents = appEvents;
-
 export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
   let self = this;
   let ctrl = scope.ctrl;
@@ -15,10 +13,11 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
   };
 
   this.findHoverIndexFromDataPoints = function(posX, series, last) {
-    var ps = series.datapoints.pointsize;
-    var initial = last * ps;
-    var len = series.datapoints.points.length;
-    for (var j = initial; j < len; j += ps) {
+    let ps = series.datapoints.pointsize;
+    let initial = last * ps;
+    let len = series.datapoints.points.length;
+    let j;
+    for (j = initial; j < len; j += ps) {
       // Special case of a non stepped line, highlight the very last point just before a null point
       if (
         (!series.lines.steps && series.datapoints.points[initial] != null && series.datapoints.points[j] == null) ||
@@ -32,9 +31,9 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
   };
 
   this.findHoverIndexFromData = function(posX, series) {
-    var lower = 0;
-    var upper = series.data.length - 1;
-    var middle;
+    let lower = 0;
+    let upper = series.data.length - 1;
+    let middle;
     while (true) {
       if (lower > upper) {
         return Math.max(upper, 0);
@@ -58,14 +57,14 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
   };
 
   this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
-    var value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
+    let value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
     // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
-    var results: any = [[], [], []];
+    let results: any = [[], [], []];
 
     //now we know the current X (j) position for X and Y values
-    var last_value = 0; //needed for stacked values
+    let last_value = 0; //needed for stacked values
 
-    var minDistance, minTime;
+    let minDistance, minTime;
 
     for (i = 0; i < seriesList.length; i++) {
       series = seriesList[i];
@@ -145,7 +144,7 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
 
   elem.mouseleave(function() {
     if (panel.tooltip.shared) {
-      var plot = elem.data().plot;
+      let plot = elem.data().plot;
       if (plot) {
         $tooltip.detach();
         plot.unhighlight();
@@ -173,25 +172,25 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
   };
 
   this.show = function(pos, item) {
-    var plot = elem.data().plot;
-    var plotData = plot.getData();
-    var xAxes = plot.getXAxes();
-    var xMode = xAxes[0].options.mode;
-    var seriesList = getSeriesFn();
-    var allSeriesMode = panel.tooltip.shared;
-    var group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
+    let plot = elem.data().plot;
+    let plotData = plot.getData();
+    let xAxes = plot.getXAxes();
+    let xMode = xAxes[0].options.mode;
+    let seriesList = getSeriesFn();
+    let allSeriesMode = panel.tooltip.shared;
+    let group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
 
     // if panelRelY is defined another panel wants us to show a tooltip
     // get pageX from position on x axis and pageY from relative position in original panel
     if (pos.panelRelY) {
-      var pointOffset = plot.pointOffset({ x: pos.x });
+      let pointOffset = plot.pointOffset({ x: pos.x });
       if (Number.isNaN(pointOffset.left) || pointOffset.left < 0 || pointOffset.left > elem.width()) {
         self.clear(plot);
         return;
       }
       pos.pageX = elem.offset().left + pointOffset.left;
       pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
-      var isVisible =
+      let isVisible =
         pos.pageY >= $(window).scrollTop() && pos.pageY <= $(window).innerHeight() + $(window).scrollTop();
       if (!isVisible) {
         self.clear(plot);
@@ -219,7 +218,7 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
     if (allSeriesMode) {
       plot.unhighlight();
 
-      var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
+      let seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
 
       seriesHtml = '';
 
@@ -244,7 +243,7 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
           continue;
         }
 
-        var highlightClass = '';
+        let highlightClass = '';
         if (item && hoverInfo.index === item.seriesIndex) {
           highlightClass = 'graph-tooltip-list-item--highlight';
         }
