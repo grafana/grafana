@@ -18,13 +18,12 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 	user := &m.User{}
 	has := false
 	var err error
+	authQuery := &m.GetAuthInfoQuery{}
 
 	// Try to find the user by auth module and id first
 	if query.AuthModule != "" && query.AuthId != "" {
-		authQuery := &m.GetAuthInfoQuery{
-			AuthModule: query.AuthModule,
-			AuthId:     query.AuthId,
-		}
+		authQuery.AuthModule = query.AuthModule
+		authQuery.AuthId = query.AuthId
 
 		err = GetAuthInfo(authQuery)
 		// if user id was specified and doesn't match the user_auth entry, remove it
@@ -35,15 +34,15 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 			if err != nil {
 				sqlog.Error("Error removing user_auth entry", "error", err)
 			}
+
+			authQuery.Result = nil
 		} else if err == nil {
 			has, err = x.Id(authQuery.Result.UserId).Get(user)
 			if err != nil {
 				return err
 			}
 
-			if has {
-				query.UserAuth = authQuery.Result
-			} else {
+			if !has {
 				// if the user has been deleted then remove the entry
 				err = DeleteAuthInfo(&m.DeleteAuthInfoCommand{
 					UserAuth: authQuery.Result,
@@ -51,6 +50,8 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 				if err != nil {
 					sqlog.Error("Error removing user_auth entry", "error", err)
 				}
+
+				authQuery.Result = nil
 			}
 		} else if err != m.ErrUserNotFound {
 			return err
@@ -88,7 +89,19 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 		return m.ErrUserNotFound
 	}
 
-	query.User = user
+	// create authInfo record to link accounts
+	if authQuery.Result == nil && query.AuthModule != "" && query.AuthId != "" {
+		cmd2 := &m.SetAuthInfoCommand{
+			UserId:     user.Id,
+			AuthModule: query.AuthModule,
+			AuthId:     query.AuthId,
+		}
+		if err := SetAuthInfo(cmd2); err != nil {
+			return err
+		}
+	}
+
+	query.Result = user
 	return nil
 }
 
@@ -111,14 +124,14 @@ func GetAuthInfo(query *m.GetAuthInfoQuery) error {
 
 func SetAuthInfo(cmd *m.SetAuthInfoCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		authUser := m.UserAuth{
+		authUser := &m.UserAuth{
 			UserId:     cmd.UserId,
 			AuthModule: cmd.AuthModule,
 			AuthId:     cmd.AuthId,
 			Created:    time.Now(),
 		}
 
-		_, err := sess.Insert(&authUser)
+		_, err := sess.Insert(authUser)
 		return err
 	})
 }

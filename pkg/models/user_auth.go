@@ -61,8 +61,7 @@ type GetUserByAuthInfoQuery struct {
 	Email      string
 	Login      string
 
-	User     *User
-	UserAuth *UserAuth
+	Result *User
 }
 
 type GetAuthInfoQuery struct {
