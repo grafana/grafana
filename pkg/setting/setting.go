@@ -88,7 +88,6 @@ var (
 	ExternalSnapshotUrl   string
 	ExternalSnapshotName  string
 	ExternalEnabled       bool
-	SnapShotTTLDays       int
 	SnapShotRemoveExpired bool
 
 	// Dashboard history
@@ -132,7 +131,8 @@ var (
 	PluginAppsSkipVerifyTLS bool
 
 	// Session settings.
-	SessionOptions session.Options
+	SessionOptions         session.Options
+	SessionConnMaxLifetime int64
 
 	// Global setting objects.
 	Cfg          *ini.File
@@ -523,7 +523,6 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
-	SnapShotTTLDays = snapshots.Key("snapshot_TTL_days").MustInt(90)
 
 	// read dashboard settings
 	dashboards := Cfg.Section("dashboards")
@@ -636,6 +635,8 @@ func readSessionConfig() {
 	if SessionOptions.CookiePath == "" {
 		SessionOptions.CookiePath = "/"
 	}
+
+	SessionConnMaxLifetime = Cfg.Section("session").Key("conn_max_lifetime").MustInt64(14400)
 }
 
 func initLogging() {

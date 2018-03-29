@@ -69,7 +69,59 @@
       </div>
     </div>
 
-    <div class="section gf-form-group" ng-if="style.type === 'number'">
+    <div class="section gf-form-group" ng-if="style.type === 'string'">
+      <h5 class="section-heading">Value Mappings</h5>
+      <div class="editor-row">
+        <div class="gf-form-group">
+          <div class="gf-form">
+            <span class="gf-form-label">
+              Type
+            </span>
+            <div class="gf-form-select-wrapper">
+              <select class="gf-form-input" ng-model="style.mappingType"
+                      ng-options="c.value as c.text for c in editor.mappingTypes" ng-change="editor.render()"></select>
+            </div>
+          </div>
+          <div class="gf-form-group" ng-if="style.mappingType==1">
+            <div class="gf-form" ng-repeat="map in style.valueMaps">
+              <span class="gf-form-label">
+                <i class="fa fa-remove pointer" ng-click="editor.removeValueMap(style, $index)"></i>
+              </span>
+              <input type="text" class="gf-form-input max-width-6" ng-model="map.value" placeholder="Value" ng-blur="editor.render()">
+              <label class="gf-form-label">
+                <i class="fa fa-arrow-right"></i>
+              </label>
+              <input type="text" class="gf-form-input max-width-8" ng-model="map.text" placeholder="Text" ng-blur="editor.render()">
+            </div>
+            <div class="gf-form">
+              <label class="gf-form-label">
+                <a class="pointer" ng-click="editor.addValueMap(style)"><i class="fa fa-plus"></i></a>
+              </label>
+            </div>
+          </div>
+          <div class="gf-form-group" ng-if="style.mappingType==2">
+            <div class="gf-form" ng-repeat="rangeMap in style.rangeMaps">
+              <span class="gf-form-label">
+                <i class="fa fa-remove pointer" ng-click="editor.removeRangeMap(style, $index)"></i>
+              </span>
+              <span class="gf-form-label">From</span>
+              <input type="text" ng-model="rangeMap.from" class="gf-form-input max-width-6" ng-blur="editor.render()">
+              <span class="gf-form-label">To</span>
+              <input type="text" ng-model="rangeMap.to" class="gf-form-input max-width-6" ng-blur="editor.render()">
+              <span class="gf-form-label">Text</span>
+              <input type="text" ng-model="rangeMap.text" class="gf-form-input max-width-8" ng-blur="editor.render()">
+            </div>
+            <div class="gf-form">
+              <label class="gf-form-label">
+                <a class="pointer" ng-click="editor.addRangeMap(style)"><i class="fa fa-plus"></i></a>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section gf-form-group" ng-if="['number', 'string'].indexOf(style.type) !== -1">
       <h5 class="section-heading">Thresholds</h5>
       <div class="gf-form">
         <label class="gf-form-label width-8">Thresholds

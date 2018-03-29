@@ -20,7 +20,7 @@ to add and configure a `notification` channel (can be email, PagerDuty or other 
 
 ## Notification Channel Setup
 
-{{< imgbox max-width="40%" img="/img/docs/v43/alert_notifications_menu.png" caption="Alerting Notification Channels" >}}
+{{< imgbox max-width="30%" img="/img/docs/v50/alerts_notifications_menu.png" caption="Alerting Notification Channels" >}}
 
 On the Notification Channels page hit the `New Channel` button to go the page where you
 can configure and setup a new Notification Channel.
@@ -41,6 +41,8 @@ Grafana ships with the following set of notification types:
 To enable email notifications you have to setup [SMTP settings](/installation/configuration/#smtp)
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
+Be aware that if you use the `local` image storage email servers and clients might not be
+able to access the image.
 
 ### Slack
 
@@ -57,6 +59,8 @@ Setting | Description
 Recipient | allows you to override the Slack recipient.
 Mention | make it possible to include a mention in the Slack notification sent by Grafana. Ex @here or @channel
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
+
+If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
 
 ### PagerDuty
 

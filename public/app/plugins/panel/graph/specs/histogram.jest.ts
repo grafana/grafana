@@ -13,15 +13,15 @@ describe('Graph Histogam Converter', function() {
       bucketSize = 10;
       let expected = [[0, 2], [10, 3], [20, 2]];
 
-      let histogram = convertValuesToHistogram(values, bucketSize);
+      let histogram = convertValuesToHistogram(values, bucketSize, 1, 29);
       expect(histogram).toMatchObject(expected);
     });
 
     it('Should not add empty buckets', () => {
       bucketSize = 5;
-      let expected = [[0, 2], [10, 2], [15, 1], [20, 1], [25, 1]];
+      let expected = [[0, 2], [5, 0], [10, 2], [15, 1], [20, 1], [25, 1]];
 
-      let histogram = convertValuesToHistogram(values, bucketSize);
+      let histogram = convertValuesToHistogram(values, bucketSize, 1, 29);
       expect(histogram).toMatchObject(expected);
     });
   });

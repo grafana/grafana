@@ -8,7 +8,6 @@ import (
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -61,7 +60,7 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
-			ctx := &middleware.Context{
+			ctx := &m.ReqContext{
 				Context: &macaron.Context{
 					Req: macaron.Request{Request: req},
 				},
@@ -104,12 +103,12 @@ func TestDSRouteRule(t *testing.T) {
 		Convey("When proxying graphite", func() {
 			plugin := &plugins.DataSourcePlugin{}
 			ds := &m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}
-			ctx := &middleware.Context{}
+			ctx := &m.ReqContext{}
 
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "/render")
 
-			requestUrl, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestUrl}
+			requestURL, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestURL}
 
 			proxy.getDirector()(&req)
 
@@ -130,11 +129,11 @@ func TestDSRouteRule(t *testing.T) {
 				Password: "password",
 			}
 
-			ctx := &middleware.Context{}
+			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
 
-			requestUrl, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestUrl}
+			requestURL, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestURL}
 
 			proxy.getDirector()(&req)
 
@@ -160,11 +159,11 @@ func TestDSRouteRule(t *testing.T) {
 				JsonData: json,
 			}
 
-			ctx := &middleware.Context{}
+			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
 
-			requestUrl, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestUrl, Header: make(http.Header)}
+			requestURL, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestURL, Header: make(http.Header)}
 			cookies := "grafana_user=admin; grafana_remember=99; grafana_sess=11; JSESSION_ID=test"
 			req.Header.Set("Cookie", cookies)
 
@@ -186,11 +185,11 @@ func TestDSRouteRule(t *testing.T) {
 				JsonData: json,
 			}
 
-			ctx := &middleware.Context{}
+			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
 
-			requestUrl, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestUrl, Header: make(http.Header)}
+			requestURL, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestURL, Header: make(http.Header)}
 			cookies := "grafana_user=admin; grafana_remember=99; grafana_sess=11; JSESSION_ID=test"
 			req.Header.Set("Cookie", cookies)
 

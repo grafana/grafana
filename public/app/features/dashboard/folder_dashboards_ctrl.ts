@@ -14,7 +14,7 @@ export class FolderDashboardsCtrl {
       const loader = new FolderPageLoader(this.backendSrv);
 
       loader.load(this, this.uid, 'manage-folder-dashboards').then(folder => {
-        const url = locationUtil.stripBaseFromUrl(folder.meta.url);
+        const url = locationUtil.stripBaseFromUrl(folder.url);
 
         if (url !== $location.path()) {
           $location.path(url).replace();

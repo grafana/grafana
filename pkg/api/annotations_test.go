@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 
@@ -42,7 +41,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				})
 
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationById
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
@@ -69,7 +68,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				})
 
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationById
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
@@ -133,7 +132,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				})
 
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationById
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
@@ -160,7 +159,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				})
 
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteAnnotationById
+					sc.handlerFunc = DeleteAnnotationByID
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
@@ -200,7 +199,7 @@ func postAnnotationScenario(desc string, url string, routePattern string, role m
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
@@ -223,7 +222,7 @@ func putAnnotationScenario(desc string, url string, routePattern string, role m.
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID

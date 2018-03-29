@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-xorm/builder"
 	"github.com/go-xorm/core"
 )
 
@@ -40,12 +41,29 @@ type Engine struct {
 	showExecTime bool
 
 	logger     core.ILogger
-	TZLocation *time.Location
+	TZLocation *time.Location // The timezone of the application
 	DatabaseTZ *time.Location // The timezone of the database
 
 	disableGlobalCache bool
 
 	tagHandlers map[string]tagHandler
+
+	engineGroup *EngineGroup
+}
+
+// BufferSize sets buffer size for iterate
+func (engine *Engine) BufferSize(size int) *Session {
+	session := engine.NewSession()
+	session.isAutoClose = true
+	return session.BufferSize(size)
+}
+
+// CondDeleted returns the conditions whether a record is soft deleted.
+func (engine *Engine) CondDeleted(colName string) builder.Cond {
+	if engine.dialect.DBType() == core.MSSQL {
+		return builder.IsNull{colName}
+	}
+	return builder.IsNull{colName}.Or(builder.Eq{colName: zeroTime1})
 }
 
 // ShowSQL show SQL statement or not on logger if log level is great than INFO
@@ -76,6 +94,11 @@ func (engine *Engine) Logger() core.ILogger {
 func (engine *Engine) SetLogger(logger core.ILogger) {
 	engine.logger = logger
 	engine.dialect.SetLogger(logger)
+}
+
+// SetLogLevel sets the logger level
+func (engine *Engine) SetLogLevel(level core.LogLevel) {
+	engine.logger.SetLevel(level)
 }
 
 // SetDisableGlobalCache disable global cache or not
@@ -143,7 +166,6 @@ func (engine *Engine) Quote(value string) string {
 
 // QuoteTo quotes string and writes into the buffer
 func (engine *Engine) QuoteTo(buf *bytes.Buffer, value string) {
-
 	if buf == nil {
 		return
 	}
@@ -169,7 +191,7 @@ func (engine *Engine) quote(sql string) string {
 	return engine.dialect.QuoteStr() + sql + engine.dialect.QuoteStr()
 }
 
-// SqlType will be depracated, please use SQLType instead
+// SqlType will be deprecated, please use SQLType instead
 //
 // Deprecated: use SQLType instead
 func (engine *Engine) SqlType(c *core.Column) string {
@@ -201,26 +223,36 @@ func (engine *Engine) SetDefaultCacher(cacher core.Cacher) {
 	engine.Cacher = cacher
 }
 
+// GetDefaultCacher returns the default cacher
+func (engine *Engine) GetDefaultCacher() core.Cacher {
+	return engine.Cacher
+}
+
 // NoCache If you has set default cacher, and you want temporilly stop use cache,
 // you can use NoCache()
 func (engine *Engine) NoCache() *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.NoCache()
 }
 
 // NoCascade If you do not want to auto cascade load object
 func (engine *Engine) NoCascade() *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.NoCascade()
 }
 
 // MapCacher Set a table use a special cacher
-func (engine *Engine) MapCacher(bean interface{}, cacher core.Cacher) {
+func (engine *Engine) MapCacher(bean interface{}, cacher core.Cacher) error {
 	v := rValue(bean)
-	tb := engine.autoMapType(v)
+	tb, err := engine.autoMapType(v)
+	if err != nil {
+		return err
+	}
+
 	tb.Cacher = cacher
+	return nil
 }
 
 // NewDB provides an interface to operate database directly
@@ -240,7 +272,7 @@ func (engine *Engine) Dialect() core.Dialect {
 
 // NewSession New a session
 func (engine *Engine) NewSession() *Session {
-	session := &Session{Engine: engine}
+	session := &Session{engine: engine}
 	session.Init()
 	return session
 }
@@ -254,7 +286,6 @@ func (engine *Engine) Close() error {
 func (engine *Engine) Ping() error {
 	session := engine.NewSession()
 	defer session.Close()
-	engine.logger.Infof("PING DATABASE %v", engine.DriverName())
 	return session.Ping()
 }
 
@@ -262,41 +293,11 @@ func (engine *Engine) Ping() error {
 func (engine *Engine) logSQL(sqlStr string, sqlArgs ...interface{}) {
 	if engine.showSQL && !engine.showExecTime {
 		if len(sqlArgs) > 0 {
-			engine.logger.Infof("[SQL] %v %v", sqlStr, sqlArgs)
+			engine.logger.Infof("[SQL] %v %#v", sqlStr, sqlArgs)
 		} else {
 			engine.logger.Infof("[SQL] %v", sqlStr)
 		}
 	}
-}
-
-func (engine *Engine) logSQLQueryTime(sqlStr string, args []interface{}, executionBlock func() (*core.Stmt, *core.Rows, error)) (*core.Stmt, *core.Rows, error) {
-	if engine.showSQL && engine.showExecTime {
-		b4ExecTime := time.Now()
-		stmt, res, err := executionBlock()
-		execDuration := time.Since(b4ExecTime)
-		if len(args) > 0 {
-			engine.logger.Infof("[SQL] %s %v - took: %v", sqlStr, args, execDuration)
-		} else {
-			engine.logger.Infof("[SQL] %s - took: %v", sqlStr, execDuration)
-		}
-		return stmt, res, err
-	}
-	return executionBlock()
-}
-
-func (engine *Engine) logSQLExecutionTime(sqlStr string, args []interface{}, executionBlock func() (sql.Result, error)) (sql.Result, error) {
-	if engine.showSQL && engine.showExecTime {
-		b4ExecTime := time.Now()
-		res, err := executionBlock()
-		execDuration := time.Since(b4ExecTime)
-		if len(args) > 0 {
-			engine.logger.Infof("[sql] %s [args] %v - took: %v", sqlStr, args, execDuration)
-		} else {
-			engine.logger.Infof("[sql] %s - took: %v", sqlStr, execDuration)
-		}
-		return res, err
-	}
-	return executionBlock()
 }
 
 // Sql provides raw sql input parameter. When you have a complex SQL statement
@@ -315,7 +316,7 @@ func (engine *Engine) Sql(querystring string, args ...interface{}) *Session {
 // This    code will execute "select * from user" and set the records to users
 func (engine *Engine) SQL(query interface{}, args ...interface{}) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.SQL(query, args...)
 }
 
@@ -324,14 +325,14 @@ func (engine *Engine) SQL(query interface{}, args ...interface{}) *Session {
 // invoked. Call NoAutoTime if you dont' want to fill automatically.
 func (engine *Engine) NoAutoTime() *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.NoAutoTime()
 }
 
 // NoAutoCondition disable auto generate Where condition from bean or not
 func (engine *Engine) NoAutoCondition(no ...bool) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.NoAutoCondition(no...)
 }
 
@@ -565,56 +566,56 @@ func (engine *Engine) tbName(v reflect.Value) string {
 // Cascade use cascade or not
 func (engine *Engine) Cascade(trueOrFalse ...bool) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Cascade(trueOrFalse...)
 }
 
 // Where method provide a condition query
 func (engine *Engine) Where(query interface{}, args ...interface{}) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Where(query, args...)
 }
 
-// Id will be depracated, please use ID instead
+// Id will be deprecated, please use ID instead
 func (engine *Engine) Id(id interface{}) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Id(id)
 }
 
 // ID method provoide a condition as (id) = ?
 func (engine *Engine) ID(id interface{}) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.ID(id)
 }
 
 // Before apply before Processor, affected bean is passed to closure arg
 func (engine *Engine) Before(closures func(interface{})) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Before(closures)
 }
 
 // After apply after insert Processor, affected bean is passed to closure arg
 func (engine *Engine) After(closures func(interface{})) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.After(closures)
 }
 
 // Charset set charset when create table, only support mysql now
 func (engine *Engine) Charset(charset string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Charset(charset)
 }
 
 // StoreEngine set store engine when create table, only support mysql now
 func (engine *Engine) StoreEngine(storeEngine string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.StoreEngine(storeEngine)
 }
 
@@ -623,35 +624,35 @@ func (engine *Engine) StoreEngine(storeEngine string) *Session {
 // but distinct will not provide id
 func (engine *Engine) Distinct(columns ...string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Distinct(columns...)
 }
 
 // Select customerize your select columns or contents
 func (engine *Engine) Select(str string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Select(str)
 }
 
 // Cols only use the parameters as select or update columns
 func (engine *Engine) Cols(columns ...string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Cols(columns...)
 }
 
 // AllCols indicates that all columns should be use
 func (engine *Engine) AllCols() *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.AllCols()
 }
 
 // MustCols specify some columns must use even if they are empty
 func (engine *Engine) MustCols(columns ...string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.MustCols(columns...)
 }
 
@@ -662,77 +663,84 @@ func (engine *Engine) MustCols(columns ...string) *Session {
 // it will use parameters's columns
 func (engine *Engine) UseBool(columns ...string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.UseBool(columns...)
 }
 
 // Omit only not use the parameters as select or update columns
 func (engine *Engine) Omit(columns ...string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Omit(columns...)
 }
 
 // Nullable set null when column is zero-value and nullable for update
 func (engine *Engine) Nullable(columns ...string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Nullable(columns...)
 }
 
 // In will generate "column IN (?, ?)"
 func (engine *Engine) In(column string, args ...interface{}) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.In(column, args...)
+}
+
+// NotIn will generate "column NOT IN (?, ?)"
+func (engine *Engine) NotIn(column string, args ...interface{}) *Session {
+	session := engine.NewSession()
+	session.isAutoClose = true
+	return session.NotIn(column, args...)
 }
 
 // Incr provides a update string like "column = column + ?"
 func (engine *Engine) Incr(column string, arg ...interface{}) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Incr(column, arg...)
 }
 
 // Decr provides a update string like "column = column - ?"
 func (engine *Engine) Decr(column string, arg ...interface{}) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Decr(column, arg...)
 }
 
 // SetExpr provides a update string like "column = {expression}"
 func (engine *Engine) SetExpr(column string, expression string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.SetExpr(column, expression)
 }
 
 // Table temporarily change the Get, Find, Update's table
 func (engine *Engine) Table(tableNameOrBean interface{}) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Table(tableNameOrBean)
 }
 
 // Alias set the table alias
 func (engine *Engine) Alias(alias string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Alias(alias)
 }
 
 // Limit will generate "LIMIT start, limit"
 func (engine *Engine) Limit(limit int, start ...int) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Limit(limit, start...)
 }
 
 // Desc will generate "ORDER BY column1 DESC, column2 DESC"
 func (engine *Engine) Desc(colNames ...string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Desc(colNames...)
 }
 
@@ -744,39 +752,53 @@ func (engine *Engine) Desc(colNames ...string) *Session {
 //
 func (engine *Engine) Asc(colNames ...string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Asc(colNames...)
 }
 
 // OrderBy will generate "ORDER BY order"
 func (engine *Engine) OrderBy(order string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.OrderBy(order)
+}
+
+// Prepare enables prepare statement
+func (engine *Engine) Prepare() *Session {
+	session := engine.NewSession()
+	session.isAutoClose = true
+	return session.Prepare()
 }
 
 // Join the join_operator should be one of INNER, LEFT OUTER, CROSS etc - this will be prepended to JOIN
 func (engine *Engine) Join(joinOperator string, tablename interface{}, condition string, args ...interface{}) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Join(joinOperator, tablename, condition, args...)
 }
 
 // GroupBy generate group by statement
 func (engine *Engine) GroupBy(keys string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.GroupBy(keys)
 }
 
 // Having generate having statement
 func (engine *Engine) Having(conditions string) *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Having(conditions)
 }
 
-func (engine *Engine) autoMapType(v reflect.Value) *core.Table {
+// UnMapType removes the datbase mapper of a type
+func (engine *Engine) UnMapType(t reflect.Type) {
+	engine.mutex.Lock()
+	defer engine.mutex.Unlock()
+	delete(engine.Tables, t)
+}
+
+func (engine *Engine) autoMapType(v reflect.Value) (*core.Table, error) {
 	t := v.Type()
 	engine.mutex.Lock()
 	defer engine.mutex.Unlock()
@@ -785,24 +807,23 @@ func (engine *Engine) autoMapType(v reflect.Value) *core.Table {
 		var err error
 		table, err = engine.mapType(v)
 		if err != nil {
-			engine.logger.Error(err)
-		} else {
-			engine.Tables[t] = table
-			if engine.Cacher != nil {
-				if v.CanAddr() {
-					engine.GobRegister(v.Addr().Interface())
-				} else {
-					engine.GobRegister(v.Interface())
-				}
+			return nil, err
+		}
+
+		engine.Tables[t] = table
+		if engine.Cacher != nil {
+			if v.CanAddr() {
+				engine.GobRegister(v.Addr().Interface())
+			} else {
+				engine.GobRegister(v.Interface())
 			}
 		}
 	}
-	return table
+	return table, nil
 }
 
 // GobRegister register one struct to gob for cache use
 func (engine *Engine) GobRegister(v interface{}) *Engine {
-	//fmt.Printf("Type: %[1]T => Data: %[1]#v\n", v)
 	gob.Register(v)
 	return engine
 }
@@ -813,10 +834,19 @@ type Table struct {
 	Name string
 }
 
+// IsValid if table is valid
+func (t *Table) IsValid() bool {
+	return t.Table != nil && len(t.Name) > 0
+}
+
 // TableInfo get table info according to bean's content
 func (engine *Engine) TableInfo(bean interface{}) *Table {
 	v := rValue(bean)
-	return &Table{engine.autoMapType(v), engine.tbName(v)}
+	tb, err := engine.autoMapType(v)
+	if err != nil {
+		engine.logger.Error(err)
+	}
+	return &Table{tb, engine.tbName(v)}
 }
 
 func addIndex(indexName string, table *core.Table, col *core.Column, indexType int) {
@@ -911,6 +941,7 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 
 					k := strings.ToUpper(key)
 					ctx.tagName = k
+					ctx.params = []string{}
 
 					pStart := strings.Index(k, "(")
 					if pStart == 0 {
@@ -918,18 +949,18 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 					}
 					if pStart > -1 {
 						if !strings.HasSuffix(k, ")") {
-							return nil, errors.New("cannot match ) charactor")
+							return nil, fmt.Errorf("field %s tag %s cannot match ) charactor", col.FieldName, key)
 						}
 
 						ctx.tagName = k[:pStart]
-						ctx.params = strings.Split(k[pStart+1:len(k)-1], ",")
+						ctx.params = strings.Split(key[pStart+1:len(k)-1], ",")
 					}
 
 					if j > 0 {
 						ctx.preTag = strings.ToUpper(tags[j-1])
 					}
 					if j < len(tags)-1 {
-						ctx.nextTag = strings.ToUpper(tags[j+1])
+						ctx.nextTag = tags[j+1]
 					} else {
 						ctx.nextTag = ""
 					}
@@ -993,6 +1024,10 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 			col = core.NewColumn(engine.ColumnMapper.Obj2Table(t.Field(i).Name),
 				t.Field(i).Name, sqlType, sqlType.DefaultLength,
 				sqlType.DefaultLength2, true)
+
+			if fieldType.Kind() == reflect.Int64 && (strings.ToUpper(col.FieldName) == "ID" || strings.HasSuffix(strings.ToUpper(col.FieldName), ".ID")) {
+				idFieldColName = col.Name
+			}
 		}
 		if col.IsAutoIncrement {
 			col.Nullable = false
@@ -1000,9 +1035,6 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 
 		table.AddColumn(col)
 
-		if fieldType.Kind() == reflect.Int64 && (strings.ToUpper(col.FieldName) == "ID" || strings.HasSuffix(strings.ToUpper(col.FieldName), ".ID")) {
-			idFieldColName = col.Name
-		}
 	} // end for
 
 	if idFieldColName != "" && len(table.PrimaryKeys) == 0 {
@@ -1066,21 +1098,54 @@ func (engine *Engine) IdOfV(rv reflect.Value) core.PK {
 
 // IDOfV get id from one value of struct
 func (engine *Engine) IDOfV(rv reflect.Value) core.PK {
+	pk, err := engine.idOfV(rv)
+	if err != nil {
+		engine.logger.Error(err)
+		return nil
+	}
+	return pk
+}
+
+func (engine *Engine) idOfV(rv reflect.Value) (core.PK, error) {
 	v := reflect.Indirect(rv)
-	table := engine.autoMapType(v)
+	table, err := engine.autoMapType(v)
+	if err != nil {
+		return nil, err
+	}
+
 	pk := make([]interface{}, len(table.PrimaryKeys))
 	for i, col := range table.PKColumns() {
+		var err error
 		pkField := v.FieldByName(col.FieldName)
 		switch pkField.Kind() {
 		case reflect.String:
-			pk[i] = pkField.String()
+			pk[i], err = engine.idTypeAssertion(col, pkField.String())
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			pk[i] = pkField.Int()
+			pk[i], err = engine.idTypeAssertion(col, strconv.FormatInt(pkField.Int(), 10))
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			pk[i] = pkField.Uint()
+			// id of uint will be converted to int64
+			pk[i], err = engine.idTypeAssertion(col, strconv.FormatUint(pkField.Uint(), 10))
+		}
+
+		if err != nil {
+			return nil, err
 		}
 	}
-	return core.PK(pk)
+	return core.PK(pk), nil
+}
+
+func (engine *Engine) idTypeAssertion(col *core.Column, sid string) (interface{}, error) {
+	if col.SQLType.IsNumeric() {
+		n, err := strconv.ParseInt(sid, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
+	} else if col.SQLType.IsText() {
+		return sid, nil
+	} else {
+		return nil, errors.New("not supported")
+	}
 }
 
 // CreateIndexes create indexes
@@ -1101,13 +1166,6 @@ func (engine *Engine) getCacher2(table *core.Table) core.Cacher {
 	return table.Cacher
 }
 
-func (engine *Engine) getCacher(v reflect.Value) core.Cacher {
-	if table := engine.autoMapType(v); table != nil {
-		return table.Cacher
-	}
-	return engine.Cacher
-}
-
 // ClearCacheBean if enabled cache, clear the cache bean
 func (engine *Engine) ClearCacheBean(bean interface{}, id string) error {
 	v := rValue(bean)
@@ -1116,7 +1174,10 @@ func (engine *Engine) ClearCacheBean(bean interface{}, id string) error {
 		return errors.New("error params")
 	}
 	tableName := engine.tbName(v)
-	table := engine.autoMapType(v)
+	table, err := engine.autoMapType(v)
+	if err != nil {
+		return err
+	}
 	cacher := table.Cacher
 	if cacher == nil {
 		cacher = engine.Cacher
@@ -1137,7 +1198,11 @@ func (engine *Engine) ClearCache(beans ...interface{}) error {
 			return errors.New("error params")
 		}
 		tableName := engine.tbName(v)
-		table := engine.autoMapType(v)
+		table, err := engine.autoMapType(v)
+		if err != nil {
+			return err
+		}
+
 		cacher := table.Cacher
 		if cacher == nil {
 			cacher = engine.Cacher
@@ -1154,19 +1219,23 @@ func (engine *Engine) ClearCache(beans ...interface{}) error {
 // table, column, index, unique. but will not delete or change anything.
 // If you change some field, you should change the database manually.
 func (engine *Engine) Sync(beans ...interface{}) error {
+	session := engine.NewSession()
+	defer session.Close()
+
 	for _, bean := range beans {
 		v := rValue(bean)
 		tableName := engine.tbName(v)
-		table := engine.autoMapType(v)
+		table, err := engine.autoMapType(v)
+		if err != nil {
+			return err
+		}
 
-		s := engine.NewSession()
-		defer s.Close()
-		isExist, err := s.Table(bean).isTableExist(tableName)
+		isExist, err := session.Table(bean).isTableExist(tableName)
 		if err != nil {
 			return err
 		}
 		if !isExist {
-			err = engine.CreateTables(bean)
+			err = session.createTable(bean)
 			if err != nil {
 				return err
 			}
@@ -1177,11 +1246,11 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 		  }*/
 		var isEmpty bool
 		if isEmpty {
-			err = engine.DropTables(bean)
+			err = session.dropTable(bean)
 			if err != nil {
 				return err
 			}
-			err = engine.CreateTables(bean)
+			err = session.createTable(bean)
 			if err != nil {
 				return err
 			}
@@ -1192,9 +1261,9 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 					return err
 				}
 				if !isExist {
-					session := engine.NewSession()
-					session.Statement.setRefValue(v)
-					defer session.Close()
+					if err := session.statement.setRefValue(v); err != nil {
+						return err
+					}
 					err = session.addColumn(col.Name)
 					if err != nil {
 						return err
@@ -1203,19 +1272,19 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 			}
 
 			for name, index := range table.Indexes {
-				session := engine.NewSession()
-				session.Statement.setRefValue(v)
-				defer session.Close()
+				if err := session.statement.setRefValue(v); err != nil {
+					return err
+				}
 				if index.Type == core.UniqueType {
-					//isExist, err := session.isIndexExist(table.Name, name, true)
 					isExist, err := session.isIndexExist2(tableName, index.Cols, true)
 					if err != nil {
 						return err
 					}
 					if !isExist {
-						session := engine.NewSession()
-						session.Statement.setRefValue(v)
-						defer session.Close()
+						if err := session.statement.setRefValue(v); err != nil {
+							return err
+						}
+
 						err = session.addUnique(tableName, name)
 						if err != nil {
 							return err
@@ -1227,9 +1296,10 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 						return err
 					}
 					if !isExist {
-						session := engine.NewSession()
-						session.Statement.setRefValue(v)
-						defer session.Close()
+						if err := session.statement.setRefValue(v); err != nil {
+							return err
+						}
+
 						err = session.addIndex(tableName, name)
 						if err != nil {
 							return err
@@ -1251,35 +1321,6 @@ func (engine *Engine) Sync2(beans ...interface{}) error {
 	return s.Sync2(beans...)
 }
 
-func (engine *Engine) unMap(beans ...interface{}) (e error) {
-	engine.mutex.Lock()
-	defer engine.mutex.Unlock()
-	for _, bean := range beans {
-		t := rType(bean)
-		if _, ok := engine.Tables[t]; ok {
-			delete(engine.Tables, t)
-		}
-	}
-	return
-}
-
-// Drop all mapped table
-func (engine *Engine) dropAll() error {
-	session := engine.NewSession()
-	defer session.Close()
-
-	err := session.Begin()
-	if err != nil {
-		return err
-	}
-	err = session.dropAll()
-	if err != nil {
-		session.Rollback()
-		return err
-	}
-	return session.Commit()
-}
-
 // CreateTables create tabls according bean
 func (engine *Engine) CreateTables(beans ...interface{}) error {
 	session := engine.NewSession()
@@ -1291,7 +1332,7 @@ func (engine *Engine) CreateTables(beans ...interface{}) error {
 	}
 
 	for _, bean := range beans {
-		err = session.CreateTable(bean)
+		err = session.createTable(bean)
 		if err != nil {
 			session.Rollback()
 			return err
@@ -1311,7 +1352,7 @@ func (engine *Engine) DropTables(beans ...interface{}) error {
 	}
 
 	for _, bean := range beans {
-		err = session.DropTable(bean)
+		err = session.dropTable(bean)
 		if err != nil {
 			session.Rollback()
 			return err
@@ -1320,10 +1361,11 @@ func (engine *Engine) DropTables(beans ...interface{}) error {
 	return session.Commit()
 }
 
-func (engine *Engine) createAll() error {
+// DropIndexes drop indexes of a table
+func (engine *Engine) DropIndexes(bean interface{}) error {
 	session := engine.NewSession()
 	defer session.Close()
-	return session.createAll()
+	return session.DropIndexes(bean)
 }
 
 // Exec raw sql
@@ -1334,10 +1376,24 @@ func (engine *Engine) Exec(sql string, args ...interface{}) (sql.Result, error) 
 }
 
 // Query a raw sql and return records as []map[string][]byte
-func (engine *Engine) Query(sql string, paramStr ...interface{}) (resultsSlice []map[string][]byte, err error) {
+func (engine *Engine) Query(sqlorArgs ...interface{}) (resultsSlice []map[string][]byte, err error) {
 	session := engine.NewSession()
 	defer session.Close()
-	return session.Query(sql, paramStr...)
+	return session.Query(sqlorArgs...)
+}
+
+// QueryString runs a raw sql and return records as []map[string]string
+func (engine *Engine) QueryString(sqlorArgs ...interface{}) ([]map[string]string, error) {
+	session := engine.NewSession()
+	defer session.Close()
+	return session.QueryString(sqlorArgs...)
+}
+
+// QueryInterface runs a raw sql and return records as []map[string]interface{}
+func (engine *Engine) QueryInterface(sqlorArgs ...interface{}) ([]map[string]interface{}, error) {
+	session := engine.NewSession()
+	defer session.Close()
+	return session.QueryInterface(sqlorArgs...)
 }
 
 // Insert one or more records
@@ -1381,6 +1437,13 @@ func (engine *Engine) Get(bean interface{}) (bool, error) {
 	return session.Get(bean)
 }
 
+// Exist returns true if the record exist otherwise return false
+func (engine *Engine) Exist(bean ...interface{}) (bool, error) {
+	session := engine.NewSession()
+	defer session.Close()
+	return session.Exist(bean...)
+}
+
 // Find retrieve records from table, condiBeans's non-empty fields
 // are conditions. beans could be []Struct, []*Struct, map[int64]Struct
 // map[int64]*Struct
@@ -1406,10 +1469,10 @@ func (engine *Engine) Rows(bean interface{}) (*Rows, error) {
 }
 
 // Count counts the records. bean's non-empty fields are conditions.
-func (engine *Engine) Count(bean interface{}) (int64, error) {
+func (engine *Engine) Count(bean ...interface{}) (int64, error) {
 	session := engine.NewSession()
 	defer session.Close()
-	return session.Count(bean)
+	return session.Count(bean...)
 }
 
 // Sum sum the records by some column. bean's non-empty fields are conditions.
@@ -1417,6 +1480,13 @@ func (engine *Engine) Sum(bean interface{}, colName string) (float64, error) {
 	session := engine.NewSession()
 	defer session.Close()
 	return session.Sum(bean, colName)
+}
+
+// SumInt sum the records by some column. bean's non-empty fields are conditions.
+func (engine *Engine) SumInt(bean interface{}, colName string) (int64, error) {
+	session := engine.NewSession()
+	defer session.Close()
+	return session.SumInt(bean, colName)
 }
 
 // Sums sum the records by some columns. bean's non-empty fields are conditions.
@@ -1474,7 +1544,6 @@ func (engine *Engine) Import(r io.Reader) ([]sql.Result, error) {
 			results = append(results, result)
 			if err != nil {
 				return nil, err
-				//lastError = err
 			}
 		}
 	}
@@ -1482,49 +1551,32 @@ func (engine *Engine) Import(r io.Reader) ([]sql.Result, error) {
 	return results, lastError
 }
 
-// TZTime change one time to xorm time location
-func (engine *Engine) TZTime(t time.Time) time.Time {
-	if !t.IsZero() { // if time is not initialized it's not suitable for Time.In()
-		return t.In(engine.TZLocation)
+// nowTime return current time
+func (engine *Engine) nowTime(col *core.Column) (interface{}, time.Time) {
+	t := time.Now()
+	var tz = engine.DatabaseTZ
+	if !col.DisableTimeZone && col.TimeZone != nil {
+		tz = col.TimeZone
 	}
-	return t
-}
-
-// NowTime return current time
-func (engine *Engine) NowTime(sqlTypeName string) interface{} {
-	t := time.Now()
-	return engine.FormatTime(sqlTypeName, t)
-}
-
-// NowTime2 return current time
-func (engine *Engine) NowTime2(sqlTypeName string) (interface{}, time.Time) {
-	t := time.Now()
-	return engine.FormatTime(sqlTypeName, t), t
-}
-
-// FormatTime format time
-func (engine *Engine) FormatTime(sqlTypeName string, t time.Time) (v interface{}) {
-	return engine.formatTime(engine.TZLocation, sqlTypeName, t)
+	return engine.formatTime(col.SQLType.Name, t.In(tz)), t.In(engine.TZLocation)
 }
 
 func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v interface{}) {
-	if col.DisableTimeZone {
-		return engine.formatTime(nil, col.SQLType.Name, t)
-	} else if col.TimeZone != nil {
-		return engine.formatTime(col.TimeZone, col.SQLType.Name, t)
+	if t.IsZero() {
+		if col.Nullable {
+			return nil
+		}
+		return ""
 	}
-	return engine.formatTime(engine.TZLocation, col.SQLType.Name, t)
+
+	if col.TimeZone != nil {
+		return engine.formatTime(col.SQLType.Name, t.In(col.TimeZone))
+	}
+	return engine.formatTime(col.SQLType.Name, t.In(engine.DatabaseTZ))
 }
 
-func (engine *Engine) formatTime(tz *time.Location, sqlTypeName string, t time.Time) (v interface{}) {
-	if engine.dialect.DBType() == core.ORACLE {
-		return t
-	}
-	if tz != nil {
-		t = t.In(tz)
-	} else {
-		t = engine.TZTime(t)
-	}
+// formatTime format time as column type
+func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v interface{}) {
 	switch sqlTypeName {
 	case core.Time:
 		s := t.Format("2006-01-02 15:04:05") //time.RFC3339
@@ -1532,18 +1584,10 @@ func (engine *Engine) formatTime(tz *time.Location, sqlTypeName string, t time.T
 	case core.Date:
 		v = t.Format("2006-01-02")
 	case core.DateTime, core.TimeStamp:
-		if engine.dialect.DBType() == "ql" {
-			v = t
-		} else if engine.dialect.DBType() == "sqlite3" {
-			v = t.UTC().Format("2006-01-02 15:04:05")
-		} else {
-			v = t.Format("2006-01-02 15:04:05")
-		}
+		v = t.Format("2006-01-02 15:04:05")
 	case core.TimeStampz:
 		if engine.dialect.DBType() == core.MSSQL {
 			v = t.Format("2006-01-02T15:04:05.9999999Z07:00")
-		} else if engine.DriverName() == "mssql" {
-			v = t
 		} else {
 			v = t.Format(time.RFC3339Nano)
 		}
@@ -1555,9 +1599,39 @@ func (engine *Engine) formatTime(tz *time.Location, sqlTypeName string, t time.T
 	return
 }
 
+// GetColumnMapper returns the column name mapper
+func (engine *Engine) GetColumnMapper() core.IMapper {
+	return engine.ColumnMapper
+}
+
+// GetTableMapper returns the table name mapper
+func (engine *Engine) GetTableMapper() core.IMapper {
+	return engine.TableMapper
+}
+
+// GetTZLocation returns time zone of the application
+func (engine *Engine) GetTZLocation() *time.Location {
+	return engine.TZLocation
+}
+
+// SetTZLocation sets time zone of the application
+func (engine *Engine) SetTZLocation(tz *time.Location) {
+	engine.TZLocation = tz
+}
+
+// GetTZDatabase returns time zone of the database
+func (engine *Engine) GetTZDatabase() *time.Location {
+	return engine.DatabaseTZ
+}
+
+// SetTZDatabase sets time zone of the database
+func (engine *Engine) SetTZDatabase(tz *time.Location) {
+	engine.DatabaseTZ = tz
+}
+
 // Unscoped always disable struct tag "deleted"
 func (engine *Engine) Unscoped() *Session {
 	session := engine.NewSession()
-	session.IsAutoClose = true
+	session.isAutoClose = true
 	return session.Unscoped()
 }

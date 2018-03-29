@@ -1,20 +1,20 @@
 +++
-title = "Templating"
-keywords = ["grafana", "templating", "documentation", "guide"]
+title = "Variables"
+keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
 type = "docs"
 [menu.docs]
-name = "Templating"
+name = "Variables"
 parent = "dashboard_features"
 weight = 1
 +++
 
-# Templating
+# Variables
 
-Templating allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
+Variables allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
 and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-<img class="no-shadow" src="/img/docs/v4/templated_dash.png">
+{{< docs-imagebox img="/img/docs/v50/variables_dashboard.png" >}}
 
 ## What is a variable?
 
@@ -43,7 +43,7 @@ is the set of values you can choose from.
 
 ## Adding a variable
 
-<img class="no-shadow" src="/img/docs/v4/templating_var_list.png">
+{{< docs-imagebox img="/img/docs/v50/variables_var_list.png" max-width="800px" >}}
 
 You add variables via Dashboard cogs menu > Templating. This opens up a list of variables and a `New` button to create a new variable.
 
@@ -80,6 +80,73 @@ Option | Description
 *Regex* | Regex to filter or capture specific parts of the names return by your data source query. Optional.
 *Sort* | Define sort order for options in dropdown. **Disabled** means that the order of options returned by your data source query will be used.
 
+#### Using regex to filter/modify values in the Variable dropdown
+
+Using the Regex Query Option, you filter the list of options returned by the Variable query or modify the options returned.
+
+Examples of filtering on the following list of options:
+
+```text
+backend_01
+backend_02
+backend_03
+backend_04
+```
+
+##### Filter so that only the options that end with `01` or `02` are returned:
+
+Regex:
+
+```regex
+/.*[01|02]/
+```
+
+Result:
+
+```text
+backend_01
+backend_02
+```
+
+##### Filter and modify the options using a regex capture group to return part of the text:
+
+Regex:
+
+```regex
+/.*(01|02)/
+```
+
+Result:
+
+```text
+01
+02
+```
+
+#### Filter and modify - Prometheus Example
+
+List of options:
+
+```text
+up{instance="demo.robustperception.io:9090",job="prometheus"} 1 1521630638000
+up{instance="demo.robustperception.io:9093",job="alertmanager"} 1 1521630638000
+up{instance="demo.robustperception.io:9100",job="node"} 1 1521630638000
+```
+
+Regex:
+
+```regex
+/.*instance="([^"]*).*/
+```
+
+Result:
+
+```text
+demo.robustperception.io:9090
+demo.robustperception.io:9093
+demo.robustperception.io:9100
+```
+
 ### Query expressions
 
 The query expressions are different for each data source.
@@ -107,6 +174,8 @@ Interpolating a variable with multiple values selected is tricky as it is not st
 is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to
 inform the templating interpolation engine what format to use for multiple values.
 
+Note that the *Custom all value* option on the variable will have to be left blank for Grafana to format all values into a single string.
+
 **Graphite**, for example, uses glob expressions. A variable with multiple values would, in this case, be interpolated as `{host1,host2,host3}` if
 the current variable value was *host1*, *host2* and *host3*.
 
@@ -133,7 +202,7 @@ Option | Description
 *Tags query* | Data source query that should return a list of tags
 *Tag values query* | Data source query that should return a list of values for a specified tag key. Use `$tag` in the query to refer the currently selected tag.
 
-![](/img/docs/v4/variable_dropdown_tags.png)
+{{< docs-imagebox img="/img/docs/v50/variable_dropdown_tags.png" max-width="300px" >}}
 
 ### Interval variables
 

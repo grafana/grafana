@@ -49,7 +49,7 @@ type GrafanaServerImpl struct {
 	childRoutines *errgroup.Group
 	log           log.Logger
 
-	httpServer *api.HttpServer
+	httpServer *api.HTTPServer
 }
 
 func (g *GrafanaServerImpl) Start() error {
@@ -120,7 +120,7 @@ func (g *GrafanaServerImpl) initLogging() {
 }
 
 func (g *GrafanaServerImpl) startHttpServer() error {
-	g.httpServer = api.NewHttpServer()
+	g.httpServer = api.NewHTTPServer()
 
 	err := g.httpServer.Start(g.context)
 

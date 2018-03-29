@@ -7,26 +7,25 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
 const HeaderNameNoBackendCache = "X-Grafana-NoCache"
 
-func (hs *HttpServer) getDatasourceById(id int64, orgId int64, nocache bool) (*m.DataSource, error) {
+func (hs *HTTPServer) getDatasourceByID(id int64, orgID int64, nocache bool) (*m.DataSource, error) {
 	cacheKey := fmt.Sprintf("ds-%d", id)
 
 	if !nocache {
 		if cached, found := hs.cache.Get(cacheKey); found {
 			ds := cached.(*m.DataSource)
-			if ds.OrgId == orgId {
+			if ds.OrgId == orgID {
 				return ds, nil
 			}
 		}
 	}
 
-	query := m.GetDataSourceByIdQuery{Id: id, OrgId: orgId}
+	query := m.GetDataSourceByIdQuery{Id: id, OrgId: orgID}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
@@ -35,12 +34,12 @@ func (hs *HttpServer) getDatasourceById(id int64, orgId int64, nocache bool) (*m
 	return query.Result, nil
 }
 
-func (hs *HttpServer) ProxyDataSourceRequest(c *middleware.Context) {
+func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
 
 	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"
 
-	ds, err := hs.getDatasourceById(c.ParamsInt64(":id"), c.OrgId, nocache)
+	ds, err := hs.getDatasourceByID(c.ParamsInt64(":id"), c.OrgId, nocache)
 
 	if err != nil {
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)

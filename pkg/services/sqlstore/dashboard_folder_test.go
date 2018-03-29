@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"testing"
 
-	"github.com/go-xorm/xorm"
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/grafana/grafana/pkg/models"
@@ -11,10 +10,8 @@ import (
 )
 
 func TestDashboardFolderDataAccess(t *testing.T) {
-	var x *xorm.Engine
-
 	Convey("Testing DB", t, func() {
-		x = InitTestDB(t)
+		InitTestDB(t)
 
 		Convey("Given one dashboard folder with two dashboards and one dashboard in the root folder", func() {
 			folder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
@@ -49,6 +46,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
 					err := SearchDashboards(query)
+
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
 					So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)

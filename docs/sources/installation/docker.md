@@ -83,7 +83,7 @@ $ docker run \
   -d \
   -p 3000:3000 \
   --name grafana \
-  grafana/grafana:4.5.2
+  grafana/grafana:5.0.2
 ```
 
 ## Configuring AWS Credentials for CloudWatch Support

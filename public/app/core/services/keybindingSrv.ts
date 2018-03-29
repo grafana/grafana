@@ -5,9 +5,11 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
 import Mousetrap from 'mousetrap';
+import 'mousetrap-global-bind';
 
 export class KeybindingSrv {
   helpModal: boolean;
+  modalOpen = false;
 
   /** @ngInject */
   constructor(private $rootScope, private $location) {
@@ -19,6 +21,7 @@ export class KeybindingSrv {
     });
 
     this.setupGlobal();
+    appEvents.on('show-modal', () => (this.modalOpen = true));
   }
 
   setupGlobal() {
@@ -30,6 +33,7 @@ export class KeybindingSrv {
     this.bind('s o', this.openSearch);
     this.bind('s t', this.openSearchTags);
     this.bind('f', this.openSearch);
+    this.bindGlobal('esc', this.exit);
   }
 
   openSearchStarred() {
@@ -60,8 +64,43 @@ export class KeybindingSrv {
     appEvents.emit('show-modal', { templateHtml: '<help-modal></help-modal>' });
   }
 
+  exit() {
+    var popups = $('.popover.in');
+    if (popups.length > 0) {
+      return;
+    }
+
+    appEvents.emit('hide-modal');
+
+    if (!this.modalOpen) {
+      this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+    } else {
+      this.modalOpen = false;
+    }
+
+    // close settings view
+    var search = this.$location.search();
+    if (search.editview) {
+      delete search.editview;
+      this.$location.search(search);
+    }
+  }
+
   bind(keyArg, fn) {
     Mousetrap.bind(
+      keyArg,
+      evt => {
+        evt.preventDefault();
+        evt.stopPropagation();
+        evt.returnValue = false;
+        return this.$rootScope.$apply(fn.bind(this));
+      },
+      'keydown'
+    );
+  }
+
+  bindGlobal(keyArg, fn) {
+    Mousetrap.bindGlobal(
       keyArg,
       evt => {
         evt.preventDefault();
@@ -132,9 +171,18 @@ export class KeybindingSrv {
     // delete panel
     this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        panelInfo.row.removePanel(panelInfo.panel);
+        this.$rootScope.appEvent('panel-remove', {
+          panelId: dashboard.meta.focusPanelId,
+        });
         dashboard.meta.focusPanelId = 0;
+      }
+    });
+
+    // duplicate panel
+    this.bind('p d', () => {
+      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+        let panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
+        dashboard.duplicatePanel(dashboard.panels[panelIndex]);
       }
     });
 
@@ -153,36 +201,14 @@ export class KeybindingSrv {
       }
     });
 
-    // delete row
-    this.bind('r r', () => {
-      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        dashboard.removeRow(panelInfo.row);
-        dashboard.meta.focusPanelId = 0;
-      }
-    });
-
-    // collapse row
-    this.bind('r c', () => {
-      if (dashboard.meta.focusPanelId) {
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        panelInfo.row.toggleCollapse();
-        dashboard.meta.focusPanelId = 0;
-      }
-    });
-
     // collapse all rows
     this.bind('d shift+c', () => {
-      for (let row of dashboard.rows) {
-        row.collapse = true;
-      }
+      dashboard.collapseRows();
     });
 
     // expand all rows
     this.bind('d shift+e', () => {
-      for (let row of dashboard.rows) {
-        row.collapse = false;
-      }
+      dashboard.expandRows();
     });
 
     this.bind('d n', e => {
@@ -203,23 +229,6 @@ export class KeybindingSrv {
 
     this.bind('d v', () => {
       appEvents.emit('toggle-view-mode');
-    });
-
-    this.bind('esc', () => {
-      var popups = $('.popover.in');
-      if (popups.length > 0) {
-        return;
-      }
-
-      scope.appEvent('hide-modal');
-      scope.appEvent('panel-change-view', { fullscreen: false, edit: false });
-
-      // close settings view
-      var search = this.$location.search();
-      if (search.editview) {
-        delete search.editview;
-        this.$location.search(search);
-      }
     });
   }
 }

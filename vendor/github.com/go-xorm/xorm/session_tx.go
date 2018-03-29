@@ -6,14 +6,14 @@ package xorm
 
 // Begin a transaction
 func (session *Session) Begin() error {
-	if session.IsAutoCommit {
+	if session.isAutoCommit {
 		tx, err := session.DB().Begin()
 		if err != nil {
 			return err
 		}
-		session.IsAutoCommit = false
-		session.IsCommitedOrRollbacked = false
-		session.Tx = tx
+		session.isAutoCommit = false
+		session.isCommitedOrRollbacked = false
+		session.tx = tx
 		session.saveLastSQL("BEGIN TRANSACTION")
 	}
 	return nil
@@ -21,25 +21,23 @@ func (session *Session) Begin() error {
 
 // Rollback When using transaction, you can rollback if any error
 func (session *Session) Rollback() error {
-	if !session.IsAutoCommit && !session.IsCommitedOrRollbacked {
-		session.saveLastSQL(session.Engine.dialect.RollBackStr())
-		session.IsCommitedOrRollbacked = true
-		return session.Tx.Rollback()
+	if !session.isAutoCommit && !session.isCommitedOrRollbacked {
+		session.saveLastSQL(session.engine.dialect.RollBackStr())
+		session.isCommitedOrRollbacked = true
+		return session.tx.Rollback()
 	}
 	return nil
 }
 
 // Commit When using transaction, Commit will commit all operations.
 func (session *Session) Commit() error {
-	if !session.IsAutoCommit && !session.IsCommitedOrRollbacked {
+	if !session.isAutoCommit && !session.isCommitedOrRollbacked {
 		session.saveLastSQL("COMMIT")
-		session.IsCommitedOrRollbacked = true
+		session.isCommitedOrRollbacked = true
 		var err error
-		if err = session.Tx.Commit(); err == nil {
+		if err = session.tx.Commit(); err == nil {
 			// handle processors after tx committed
-
 			closureCallFunc := func(closuresPtr *[]func(interface{}), bean interface{}) {
-
 				if closuresPtr != nil {
 					for _, closure := range *closuresPtr {
 						closure(bean)

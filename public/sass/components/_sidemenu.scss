@@ -71,7 +71,7 @@
         // important to overlap it otherwise it can be hidden
         // again by the mouse getting outside the hover space
         left: $side-menu-width - 2px;
-        @include animation("dropdown-anim 150ms ease-in-out 100ms forwards");
+        @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
         z-index: $zindex-sidemenu;
       }
     }
@@ -193,9 +193,13 @@ li.sidemenu-org-switcher {
 
 @include media-breakpoint-down(xs) {
   .sidemenu-open--xs {
+    li {
+      font-size: $font-size-lg;
+    }
+
     .sidemenu {
       width: 100%;
-      background: $side-menu-bg;
+      background: $side-menu-bg-mobile;
       position: initial;
       height: auto;
       box-shadow: $side-menu-shadow;
@@ -213,6 +217,9 @@ li.sidemenu-org-switcher {
     .sidemenu__top,
     .sidemenu__bottom {
       display: block;
+    }
+    .sidemenu-item {
+      border-right: 2px solid transparent;
     }
   }
 

@@ -51,6 +51,9 @@ var PrometheusHighlightRules = function() {
       regex : "by|without|on|ignoring|group_left|group_right",
       next  : "start-label-list-matcher"
     }, {
+      token : "variable",
+      regex : "\\$[A-Za-z0-9_]+"
+    }, {
       token : keywordMapper,
       regex : "[a-zA-Z_:][a-zA-Z0-9_:]*"
     }, {

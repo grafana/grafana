@@ -29,16 +29,22 @@ export function getSeriesValues(dataList: TimeSeries[]): number[] {
  * @param values
  * @param bucketSize
  */
-export function convertValuesToHistogram(values: number[], bucketSize: number): any[] {
+export function convertValuesToHistogram(values: number[], bucketSize: number, min: number, max: number): any[] {
   let histogram = {};
+
+  let minBound = getBucketBound(min, bucketSize);
+  let maxBound = getBucketBound(max, bucketSize);
+  let bound = minBound;
+  let n = 0;
+  while (bound <= maxBound) {
+    histogram[bound] = 0;
+    bound = minBound + bucketSize * n;
+    n++;
+  }
 
   for (let i = 0; i < values.length; i++) {
     let bound = getBucketBound(values[i], bucketSize);
-    if (histogram[bound]) {
-      histogram[bound] = histogram[bound] + 1;
-    } else {
-      histogram[bound] = 1;
-    }
+    histogram[bound] = histogram[bound] + 1;
   }
 
   let histogam_series = _.map(histogram, (count, bound) => {
@@ -47,6 +53,31 @@ export function convertValuesToHistogram(values: number[], bucketSize: number): 
 
   // Sort by Y axis values
   return _.sortBy(histogam_series, point => point[0]);
+}
+
+/**
+ * Convert series into array of histogram data.
+ * @param data Array of series
+ * @param bucketSize
+ */
+export function convertToHistogramData(
+  data: any,
+  bucketSize: number,
+  hiddenSeries: any,
+  min: number,
+  max: number
+): any[] {
+  return data.map(series => {
+    let values = getSeriesValues([series]);
+    series.histogram = true;
+    if (!hiddenSeries[series.alias]) {
+      let histogram = convertValuesToHistogram(values, bucketSize, min, max);
+      series.data = histogram;
+    } else {
+      series.data = [];
+    }
+    return series;
+  });
 }
 
 function getBucketBound(value: number, bucketSize: number): number {

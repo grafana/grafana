@@ -50,6 +50,10 @@ type UserStars struct {
 }
 
 func GetGravatarUrl(text string) string {
+	if setting.DisableGravatar {
+		return "/public/img/user_profile.png"
+	}
+
 	if text == "" {
 		return ""
 	}

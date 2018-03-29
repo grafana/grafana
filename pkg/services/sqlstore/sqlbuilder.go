@@ -12,6 +12,22 @@ type SqlBuilder struct {
 	params []interface{}
 }
 
+func (sb *SqlBuilder) Write(sql string, params ...interface{}) {
+	sb.sql.WriteString(sql)
+
+	if len(params) > 0 {
+		sb.params = append(sb.params, params...)
+	}
+}
+
+func (sb *SqlBuilder) GetSqlString() string {
+	return sb.sql.String()
+}
+
+func (sb *SqlBuilder) AddParams(params ...interface{}) {
+	sb.params = append(sb.params, params...)
+}
+
 func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permission m.PermissionType) {
 
 	if user.OrgRole == m.ROLE_ADMIN {

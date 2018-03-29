@@ -11,11 +11,13 @@ weight = 8
 
 # Provisioning Grafana
 
-## Config file
+In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users, orgs and alerts as well.
+
+## Config File
 
 Checkout the [configuration](/installation/configuration) page for more information on what you can configure in `grafana.ini`
 
-### Config file locations
+### Config File Locations
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
@@ -26,7 +28,7 @@ Checkout the [configuration](/installation/configuration) page for more informat
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
 > init.d script using `--config` file parameter.
 
-### Using environment variables
+### Using Environment Variables
 
 All options in the configuration file (listed below) can be overridden
 using environment variables using the syntax:
@@ -59,7 +61,7 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 <hr />
 
-## Configuration management tools
+## Configuration Management Tools
 
 Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily relay on the expertise of the community.
 
@@ -76,18 +78,23 @@ Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://gith
 
 It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `delete_datasources`. Grafana will delete datasources listed in `delete_datasources` before inserting/updating those in the `datasource` list.
 
-### Running multiple Grafana instances.
+### Running Multiple Grafana Instances
+
 If you are running multiple instances of Grafana you might run into problems if they have different versions of the `datasource.yaml` configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way, old configs cannot overwrite newer configs if they restart at the same time.
 
-### Example datasource config file
+### Example Datasource Config File
+
 ```yaml
+# config file version
+apiVersion: 1
+
 # list of datasources that should be deleted from the database
-delete_datasources:
+deleteDatasources:
   - name: Graphite
-    org_id: 1
+    orgId: 1
 
 # list of datasources to insert/update depending
-# whats available in the datbase
+# whats available in the database
 datasources:
   # <string, required> name of the datasource. Required
 - name: Graphite
@@ -95,8 +102,8 @@ datasources:
   type: graphite
   # <string, required> access mode. direct or proxy. Required
   access: proxy
-  # <int> org id. will default to org_id 1 if not specified
-  org_id: 1
+  # <int> org id. will default to orgId 1 if not specified
+  orgId: 1
   # <string> url
   url: http://localhost:8080
   # <string> database password, if used
@@ -106,22 +113,22 @@ datasources:
   # <string> database name, if used
   database:
   # <bool> enable/disable basic auth
-  basic_auth:
+  basicAuth:
   # <string> basic auth username
-  basic_auth_user:
+  basicAuthUser:
   # <string> basic auth password
-  basic_auth_password:
+  basicAuthPassword:
   # <bool> enable/disable with credentials headers
-  with_credentials:
+  withCredentials:
   # <bool> mark as default datasource. Max one per org
-  is_default:
+  isDefault:
   # <map> fields that will be converted to json and stored in json_data
-  json_data:
+  jsonData:
      graphiteVersion: "1.1"
      tlsAuth: true
      tlsAuthWithCACert: true
   # <string> json object of data that will be encrypted.
-  secure_json_data:
+  secureJsonData:
     tlsCACert: "..."
     tlsClientCert: "..."
     tlsClientKey: "..."
@@ -130,18 +137,24 @@ datasources:
   editable: false
 ```
 
-#### Json data
+#### Custom Settings per Datasource
+
+| Datasource | Misc |
+| ---- | ---- |
+| Elasticsearch | Elasticsearch uses the `database` property to configure the index for a datasource |
+
+#### Json Data
 
 Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `json_data` field. Here are the most common settings that the core datasources use.
 
-| Name | Type | Datasource |Description |
-| ----| ---- | ---- | --- |
+| Name | Type | Datasource | Description |
+| ---- | ---- | ---- | ---- |
 | tlsAuth | boolean | *All* |  Enable TLS authentication using client cert configured in secure json data |
-| tlsAuthWithCACert | boolean | *All* | Enable TLS authtication using CA cert |
+| tlsAuthWithCACert | boolean | *All* | Enable TLS authentication using CA cert |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Elastic, Influxdb & Prometheus | Lowest interval/step value that should be used for this data source |
-| esVersion | string | Elastic | Elasticsearch version |
+| esVersion | string | Elastic | Elasticsearch version as an number (2/5/56) |
 | timeField | string | Elastic | Which field that should be used as timestamp |
 | interval | string | Elastic | Index date time format |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
@@ -152,8 +165,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbResolution | string | OpenTsdb | Resolution |
 | sslmode | string | Postgre | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
 
-
-#### Secure Json data
+#### Secure Json Data
 
 `{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
@@ -166,6 +178,8 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
 | password | string | Postgre | password |
 | user | string | Postgre | user |
+| accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
+| secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
 
 ### Dashboards
 
@@ -174,15 +188,26 @@ It's possible to manage dashboards in Grafana by adding one or more yaml config 
 The dashboard provider config file looks somewhat like this:
 
 ```yaml
+apiVersion: 1
+
+providers:
 - name: 'default'
-  org_id: 1
+  orgId: 1
   folder: ''
   type: file
+  disableDeletion: false
+  editable: false
   options:
-    folder: /var/lib/grafana/dashboards
+    path: /var/lib/grafana/dashboards
 ```
 
+When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
+
+### Reuseable Dashboard Urls
+
+If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifer.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
+By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
 > **Note.** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.

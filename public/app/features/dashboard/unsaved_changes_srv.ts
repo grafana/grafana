@@ -97,6 +97,9 @@ export class Tracker {
     dash.refresh = 0;
     dash.schemaVersion = 0;
 
+    // ignore iteration property
+    delete dash.iteration;
+
     // filter row and panels properties that should be ignored
     dash.rows = _.filter(dash.rows, function(row) {
       if (row.repeatRowId) {
