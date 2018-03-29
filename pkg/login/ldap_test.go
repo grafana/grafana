@@ -196,7 +196,7 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 
 		bus.AddHandler("test", func(cmd *m.GetUserByAuthInfoQuery) error {
 			sc.getUserByAuthInfoQuery = cmd
-			sc.getUserByAuthInfoQuery.User = &m.User{Login: cmd.Login}
+			sc.getUserByAuthInfoQuery.Result = &m.User{Login: cmd.Login}
 			return nil
 		})
 
@@ -250,7 +250,7 @@ func (sc *scenarioContext) userQueryReturns(user *m.User) {
 		if user == nil {
 			return m.ErrUserNotFound
 		} else {
-			query.User = user
+			query.Result = user
 			return nil
 		}
 	})
