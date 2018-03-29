@@ -74,13 +74,13 @@ export class KeybindingSrv {
 
     appEvents.emit('hide-modal');
 
-    if (this.timepickerOpen === true) {
-      this.$rootScope.appEvent('closeTimepicker');
-      this.timepickerOpen = false;
-    }
-
     if (!this.modalOpen) {
-      this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      if (this.timepickerOpen) {
+        this.$rootScope.appEvent('closeTimepicker');
+        this.timepickerOpen = false;
+      } else {
+        this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      }
     } else {
       this.modalOpen = false;
     }
