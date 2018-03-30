@@ -161,7 +161,7 @@ Usage of the fields is explained below:
 
 ### templating
 
-`templating` field contains an array of template variables with their saved values along with some other metadata, for example:
+The `templating` field contains an array of template variables with their saved values along with some other metadata, for example:
 
 ```json
  "templating": {
