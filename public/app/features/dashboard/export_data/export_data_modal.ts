@@ -5,6 +5,7 @@ import appEvents from 'app/core/app_events';
 export class ExportDataModalCtrl {
   private data: any[];
   private panel: string;
+  private utc: boolean;
   asRows: Boolean = true;
   dateTimeFormat = 'YYYY-MM-DDTHH:mm:ssZ';
   excel: false;
@@ -14,9 +15,9 @@ export class ExportDataModalCtrl {
       fileExport.exportTableDataToCsv(this.data, this.excel);
     } else {
       if (this.asRows) {
-        fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat, this.excel);
+        fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat, this.excel, this.utc);
       } else {
-        fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat, this.excel);
+        fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat, this.excel, this.utc);
       }
     }
 
@@ -37,6 +38,7 @@ export function exportDataModal() {
     scope: {
       panel: '<',
       data: '<', // The difference to '=' is that the bound properties are not watched
+      utc: '<',
     },
     bindToController: true,
   };

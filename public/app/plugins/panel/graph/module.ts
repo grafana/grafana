@@ -319,8 +319,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   exportCsv() {
     var scope = this.$scope.$new(true);
     scope.seriesList = this.seriesList;
+    scope.isUtc = this.dashboard.isTimezoneUtc();
     this.publishAppEvent('show-modal', {
-      templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
+      templateHtml: '<export-data-modal data="seriesList" utc="isUtc"></export-data-modal>',
       scope,
       modalClass: 'modal--narrow',
     });
