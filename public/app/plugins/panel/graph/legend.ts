@@ -238,8 +238,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           tbodyElem.append(tableHeaderElem);
           tbodyElem.append(seriesElements);
           elem.append(tbodyElem);
+          tbodyElem.wrap('<div class="graph-legend-content"></div>');
         } else {
-          elem.append(seriesElements);
+          elem.append('<div class="graph-legend-content"></div>');
+          elem.find('.graph-legend-content').append(seriesElements);
         }
 
         if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== legendRightDefaultWidth)) {
@@ -258,24 +260,15 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           </div>
         `;
 
-        let scrollRoot = elem.parent();
-        // let scroller = elem.find(':first-child').first();
-        let scroller = elem;
+        let scrollRoot = elem;
+        let scroller = elem.find('.graph-legend-content');
 
         // clear existing scroll bar track to prevent duplication
-        elem
-          .parent()
-          .find('.baron__track')
-          .remove();
+        scrollRoot.find('.baron__track').remove();
 
         scrollRoot.addClass(scrollRootClass);
         $(scrollBarHTML).appendTo(scrollRoot);
         scroller.addClass(scrollerClass);
-
-        // Fix .graph-legend-content max-height
-        // Couldn't find how to do it via CSS
-        const legendHeight = scrollRoot.height();
-        elem.css('max-height', legendHeight);
 
         let scrollbarParams = {
           root: scrollRoot[0],

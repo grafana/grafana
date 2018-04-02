@@ -53,8 +53,10 @@
   max-height: 30%;
   margin: 0;
   text-align: center;
-  // padding-top: 6px;
+  padding-top: 6px;
   position: relative;
+
+  height: 100%;
 
   .popover-content {
     padding: 0;
@@ -63,7 +65,6 @@
 
 .graph-legend-content {
   position: relative;
-  padding-top: 6px;
 }
 
 .graph-legend-icon {
@@ -129,9 +130,9 @@
 .graph-legend-table {
   tbody {
     display: block;
+    position: relative;
     overflow-y: auto;
     overflow-x: hidden;
-    height: 100%;
     padding-bottom: 1px;
     padding-right: 5px;
     padding-left: 5px;
