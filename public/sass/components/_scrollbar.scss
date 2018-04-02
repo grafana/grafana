@@ -189,6 +189,10 @@
 .baron {
   display: inline-block;
   overflow: hidden;
+
+  // Width needs to be set to prevent content width issues
+  // Set to 99% instead of 100% for fixing Firefox issue (white stripe on the right of scrollbar)
+  width: 99%;
 }
 
 .baron__clipper {
@@ -280,7 +284,8 @@
 
 .baron.panel-content--scrollable {
   // Width needs to be set to prevent content width issues
-  width: 100%;
+  // Set to 99% instead of 100% for fixing Firefox issue (white stripe on the right of scrollbar)
+  width: 99%;
 
   .baron__scroller {
     padding-top: 1px;
