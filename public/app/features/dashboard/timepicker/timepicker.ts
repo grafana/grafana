@@ -96,12 +96,11 @@ export class TimePickerCtrl {
   }
 
   openDropdown() {
+    this.$rootScope.appEvent('escTimepicker');
     if (this.isOpen) {
       this.isOpen = false;
       return;
     }
-
-    this.$rootScope.appEvent('openTimepicker');
 
     this.onRefresh();
     this.editTimeRaw = this.timeRaw;
@@ -118,6 +117,7 @@ export class TimePickerCtrl {
   }
 
   applyCustom() {
+    this.$rootScope.appEvent('escTimepicker');
     if (this.refresh.value !== this.dashboard.refresh) {
       this.timeSrv.setAutoRefresh(this.refresh.value);
     }
@@ -139,6 +139,7 @@ export class TimePickerCtrl {
   }
 
   setRelativeFilter(timespan) {
+    this.$rootScope.appEvent('escTimepicker');
     var range = { from: timespan.from, to: timespan.to };
 
     if (this.panel.nowDelay && range.to === 'now') {
