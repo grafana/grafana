@@ -38,7 +38,7 @@ Name | Description
 The database user you specify when you add the data source should only be granted SELECT permissions on
 the specified database & tables you want to query. Grafana does not validate that the query is safe. The query
 could include any SQL statement. For example, statements like `DELETE FROM user;` and `DROP TABLE user;` would be
-executed. To protect against this we **Highly** recommmend you create a specific MSSQL user with restricted permissions.
+executed. To protect against this we **Highly** recommend you create a specific MSSQL user with restricted permissions.
 
 Example:
 
@@ -50,6 +50,7 @@ Example:
 Make sure the user does not get any unwanted privileges from the public role.
 
 ## Query Editor
+
 {{< docs-imagebox img="/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
 
 You find the MSSQL query editor in the metrics tab in Graph, Singlestat or Table panel's edit mode. You enter edit mode by clicking the
