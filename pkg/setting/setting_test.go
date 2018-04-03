@@ -37,8 +37,8 @@ func TestLoadingSettings(t *testing.T) {
 			So(appliedEnvOverrides, ShouldContain, "GF_SECURITY_ADMIN_PASSWORD=*********")
 		})
 
-		Convey("Should replace password when defined in environment2", func() {
-			os.Setenv("GF_DATABASE_URL", "postgres://grafana:sec{ret@postgres:5432/grafana")
+		Convey("Should return an error when url is invalid", func() {
+			os.Setenv("GF_DATABASE_URL", "postgres.%31://grafana:secret@postgres:5432/grafana")
 			err := NewConfigContext(&CommandLineArgs{HomePath: "../../"})
 
 			So(err, ShouldNotBeNil)
