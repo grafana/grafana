@@ -28,6 +28,7 @@ function ItemDescription({ item }) {
 }
 
 export default observer(({ item, removeItem, permissionChanged, itemIndex, folderInfo }) => {
+  console.log(item);
   const handleRemoveItem = evt => {
     evt.preventDefault();
     removeItem(itemIndex);
@@ -38,7 +39,6 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
   };
 
   const inheritedFromRoot = item.dashboardId === -1 && folderInfo && folderInfo.id === 0;
-  console.log(item.name);
 
   return (
     <tr className={setClassNameHelper(item.inherited)}>

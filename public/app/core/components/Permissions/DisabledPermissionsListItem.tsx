@@ -13,7 +13,7 @@ export default class DisabledPermissionListItem extends Component<IProps, any> {
     return (
       <tr className="gf-form-disabled">
         <td style={{ width: '1%' }}>
-          <i style={{ width: '25px' }} className="gicon gicon-shield" />
+          <i style={{ width: '25px', fontSize: '1.5rem' }} className="gicon gicon-shield" />
         </td>
         <td style={{ width: '90%' }}>
           {item.name}

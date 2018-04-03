@@ -30,6 +30,7 @@ export const NewPermissionsItem = types
     ),
     userId: types.maybe(types.number),
     userLogin: types.maybe(types.string),
+    userAvatarUrl: types.maybe(types.string),
     teamId: types.maybe(types.number),
     team: types.maybe(types.string),
     permission: types.optional(types.number, 1),
@@ -50,9 +51,10 @@ export const NewPermissionsItem = types
     },
   }))
   .actions(self => ({
-    setUser(userId: number, userLogin: string) {
+    setUser(userId: number, userLogin: string, userAvatarUrl: string) {
       self.userId = userId;
       self.userLogin = userLogin;
+      self.userAvatarUrl = userAvatarUrl;
       self.teamId = null;
       self.team = null;
     },
@@ -121,6 +123,7 @@ export const PermissionsStore = types
           teamId: undefined,
           userLogin: undefined,
           userId: undefined,
+          userAvatarUrl: undefined,
           role: undefined,
         };
         switch (self.newItem.type) {
@@ -131,6 +134,7 @@ export const PermissionsStore = types
           case aclTypeValues.USER.value:
             item.userLogin = self.newItem.userLogin;
             item.userId = self.newItem.userId;
+            item.userAvatarUrl = self.newItem.userAvatarUrl;
             break;
           case aclTypeValues.VIEWER.value:
           case aclTypeValues.EDITOR.value:
