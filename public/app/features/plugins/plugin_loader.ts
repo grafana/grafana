@@ -3,6 +3,7 @@ import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
 import moment from 'moment';
+import * as momenttz from 'moment-timezone';
 import angular from 'angular';
 import jquery from 'jquery';
 import config from 'app/core/config';
@@ -65,6 +66,7 @@ function exposeToPlugin(name: string, component: any) {
 
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
+exposeToPlugin('moment-timezone', momenttz);
 exposeToPlugin('jquery', jquery);
 exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
