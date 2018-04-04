@@ -108,7 +108,8 @@
           "steppedLine": false,
           "tooltip": {
             "value_type": "cumulative",
-            "query_as_alias": true
+            "query_as_alias": true,
+            "hide_invisible_series": false
           },
           "targets": [
             {
