@@ -192,7 +192,17 @@
 
   // Width needs to be set to prevent content width issues
   // Set to 99% instead of 100% for fixing Firefox issue (white stripe on the right of scrollbar)
-  width: 99%;
+  min-width: 99%;
+}
+
+// Fix for side menu on mobile devices
+.sidemenu-open.sidemenu-open--xs {
+  .main-view.baron {
+    min-width: 0%;
+  }
+}
+.main-view.baron {
+  min-width: 99%;
 }
 
 .baron__clipper {
