@@ -950,10 +950,12 @@ kbn.getUnitFormats = function() {
         { text: 'ops/sec (ops)', value: 'ops' },
         { text: 'reads/sec (rps)', value: 'rps' },
         { text: 'writes/sec (wps)', value: 'wps' },
+        { text: 'events/sec (eps)', value: 'eps' },
         { text: 'I/O ops/sec (iops)', value: 'iops' },
         { text: 'ops/min (opm)', value: 'opm' },
         { text: 'reads/min (rpm)', value: 'rpm' },
         { text: 'writes/min (wpm)', value: 'wpm' },
+        { text: 'events/min (epm)', value: 'epm' },
       ],
     },
     {
