@@ -23,13 +23,8 @@ export class KeybindingSrv {
 
     this.setupGlobal();
     appEvents.on('show-modal', () => (this.modalOpen = true));
-    $rootScope.onAppEvent('escTimepicker', () => {
-      if (!this.timepickerOpen) {
-        this.timepickerOpen = true;
-      } else {
-        this.timepickerOpen = false;
-      }
-    });
+    $rootScope.onAppEvent('timepickerOpen', () => (this.timepickerOpen = true));
+    $rootScope.onAppEvent('timepickerClosed', () => (this.timepickerOpen = false));
   }
 
   setupGlobal() {

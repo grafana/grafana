@@ -22,7 +22,6 @@ export class TimePickerCtrl {
   refresh: any;
   isUtc: boolean;
   firstDayOfWeek: number;
-  closeDropdown: any;
   isOpen: boolean;
 
   /** @ngInject */
@@ -96,9 +95,8 @@ export class TimePickerCtrl {
   }
 
   openDropdown() {
-    this.$rootScope.appEvent('escTimepicker');
     if (this.isOpen) {
-      this.isOpen = false;
+      this.closeDropdown();
       return;
     }
 
@@ -114,16 +112,21 @@ export class TimePickerCtrl {
 
     this.refresh.options.unshift({ text: 'off' });
     this.isOpen = true;
+    this.$rootScope.appEvent('timepickerOpen');
+  }
+
+  closeDropdown() {
+    this.isOpen = false;
+    this.$rootScope.appEvent('timepickerClosed');
   }
 
   applyCustom() {
-    this.$rootScope.appEvent('escTimepicker');
     if (this.refresh.value !== this.dashboard.refresh) {
       this.timeSrv.setAutoRefresh(this.refresh.value);
     }
 
     this.timeSrv.setTime(this.editTimeRaw);
-    this.isOpen = false;
+    this.closeDropdown();
   }
 
   absoluteFromChanged() {
@@ -139,7 +142,6 @@ export class TimePickerCtrl {
   }
 
   setRelativeFilter(timespan) {
-    this.$rootScope.appEvent('escTimepicker');
     var range = { from: timespan.from, to: timespan.to };
 
     if (this.panel.nowDelay && range.to === 'now') {
@@ -147,7 +149,7 @@ export class TimePickerCtrl {
     }
 
     this.timeSrv.setTime(range);
-    this.isOpen = false;
+    this.closeDropdown();
   }
 }
 
