@@ -27,14 +27,17 @@ export function geminiScrollbar() {
       $(scrollBarHTML).appendTo(scrollRoot);
       elem.addClass(scrollerClass);
 
-      let scrollbar = baron({
+      let scrollParams = {
         root: scrollRoot[0],
         scroller: scroller[0],
         bar: '.baron__bar',
         barOnCls: '_scrollbar',
         scrollingCls: '_scrolling',
         track: '.baron__track',
-      });
+        direction: 'v',
+      };
+
+      let scrollbar = baron(scrollParams);
 
       let lastPos = 0;
 
@@ -56,6 +59,11 @@ export function geminiScrollbar() {
         },
         scope
       );
+
+      appEvents.on('toggle-sidemenu', evt => {
+        // force updating dashboard width
+        scrollbar.scroll();
+      });
 
       scope.$on('$routeChangeSuccess', () => {
         lastPos = 0;

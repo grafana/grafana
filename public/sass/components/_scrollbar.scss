@@ -196,13 +196,8 @@
 }
 
 // Fix for side menu on mobile devices
-.sidemenu-open.sidemenu-open--xs {
-  .main-view.baron {
-    min-width: 0%;
-  }
-}
 .main-view.baron {
-  min-width: 99%;
+  min-width: unset;
 }
 
 .baron__clipper {
