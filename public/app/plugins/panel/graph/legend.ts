@@ -238,10 +238,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           tbodyElem.append(tableHeaderElem);
           tbodyElem.append(seriesElements);
           elem.append(tbodyElem);
-          tbodyElem.wrap('<div class="graph-legend-content"></div>');
+          tbodyElem.wrap('<div class="graph-legend-scroll"></div>');
         } else {
-          elem.append('<div class="graph-legend-content"></div>');
-          elem.find('.graph-legend-content').append(seriesElements);
+          elem.append('<div class="graph-legend-scroll"></div>');
+          elem.find('.graph-legend-scroll').append(seriesElements);
         }
 
         if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== legendRightDefaultWidth)) {
@@ -261,7 +261,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         `;
 
         let scrollRoot = elem;
-        let scroller = elem.find('.graph-legend-content');
+        let scroller = elem.find('.graph-legend-scroll');
 
         // clear existing scroll bar track to prevent duplication
         scrollRoot.find('.baron__track').remove();
