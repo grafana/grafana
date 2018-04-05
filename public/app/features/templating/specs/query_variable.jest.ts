@@ -40,11 +40,11 @@ describe('QueryVariable', () => {
   });
 
   describe('can convert and sort metric names', () => {
-    var variable = new QueryVariable({}, null, null, null, null);
-    variable.sort = 3; // Numerical (asc)
+    const variable = new QueryVariable({}, null, null, null, null);
+    let input;
 
-    describe('can sort a mixed array of metric variables', () => {
-      var input = [
+    beforeEach(() => {
+      input = [
         { text: '0', value: '0' },
         { text: '1', value: '1' },
         { text: null, value: 3 },
@@ -58,11 +58,18 @@ describe('QueryVariable', () => {
         { text: '', value: undefined },
         { text: undefined, value: '' },
       ];
+    });
 
-      var result = variable.metricNamesToVariableValues(input);
+    describe('can sort a mixed array of metric variables in numeric order', () => {
+      let result;
+
+      beforeEach(() => {
+        variable.sort = 3; // Numerical (asc)
+        result = variable.metricNamesToVariableValues(input);
+      });
+
       it('should return in same order', () => {
         var i = 0;
-
         expect(result.length).toBe(11);
         expect(result[i++].text).toBe('');
         expect(result[i++].text).toBe('0');
@@ -71,6 +78,28 @@ describe('QueryVariable', () => {
         expect(result[i++].text).toBe('4');
         expect(result[i++].text).toBe('5');
         expect(result[i++].text).toBe('6');
+      });
+    });
+
+    describe('can sort a mixed array of metric variables in alphabetical order', () => {
+      let result;
+
+      beforeEach(() => {
+        variable.sort = 5; // Alphabetical CI (asc)
+        result = variable.metricNamesToVariableValues(input);
+      });
+
+      it('should return in same order', () => {
+        var i = 0;
+        console.log(result);
+        expect(result.length).toBe(11);
+        expect(result[i++].text).toBe('');
+        expect(result[i++].text).toBe('0');
+        expect(result[i++].text).toBe('1');
+        expect(result[i++].text).toBe('10');
+        expect(result[i++].text).toBe('3');
+        expect(result[i++].text).toBe('4');
+        expect(result[i++].text).toBe('5');
       });
     });
   });

@@ -3,6 +3,7 @@ $login-border: #8daac5;
 .login {
   background-position: center;
   min-height: 85vh;
+  height: 80vh;
   background-repeat: no-repeat;
   min-width: 100%;
   margin-left: 0;
@@ -290,9 +291,14 @@ select:-webkit-autofill:focus {
 }
 
 @include media-breakpoint-up(md) {
+  .login-content {
+    flex: 1 0 100%;
+  }
+
   .login-branding {
     width: 45%;
     padding: 2rem 4rem;
+    flex-grow: 1;
 
     .logo-icon {
       width: 130px;
@@ -371,7 +377,7 @@ select:-webkit-autofill:focus {
       left: 0;
       right: 0;
       height: 100%;
-      content: "";
+      content: '';
       display: block;
     }
 
