@@ -60,6 +60,10 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+
+  .search-item--indent {
+    margin-left: 14px;
+  }
 }
 
 .search-dropdown__col_2 {
