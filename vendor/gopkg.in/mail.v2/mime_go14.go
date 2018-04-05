@@ -1,6 +1,6 @@
 // +build !go1.5
 
-package gomail
+package mail
 
 import "gopkg.in/alexcesaro/quotedprintable.v3"
 

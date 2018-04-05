@@ -28,7 +28,7 @@ An annotation is an event that is overlayed on top of graphs. The query can have
 Macros:
 - $__time(column) -&gt; column AS time
 - $__timeEpoch(column) -&gt; DATEDIFF(second, '1970-01-01', column) AS time
-- $__timeFilter(column) -&gt; column &gt;= DATEADD(s, 18446744066914186738, '1970-01-01') AND column &t;= DATEADD(s, 18446744066914187038, '1970-01-01')
+- $__timeFilter(column) -&gt; column &gt;= DATEADD(s, 18446744066914186738, '1970-01-01') AND column &lt;= DATEADD(s, 18446744066914187038, '1970-01-01')
 - $__unixEpochFilter(column) -&gt; column &gt;= 1492750877 AND column &lt;= 1492750877
 
 Or build your own conditionals using these macros which just return the values:

@@ -190,6 +190,7 @@ export class PanelCtrl {
         text: 'Duplicate',
         click: 'ctrl.duplicate()',
         role: 'Editor',
+        shortcut: 'p d',
       });
 
       menu.push({

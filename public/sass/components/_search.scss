@@ -31,7 +31,6 @@
     //padding: 0.5rem 1.5rem 0.5rem 0;
     padding: 1rem 1rem 0.75rem 1rem;
     height: 51px;
-    line-height: 51px;
     box-sizing: border-box;
     outline: none;
     background: $side-menu-bg;
@@ -62,7 +61,9 @@
   flex-direction: column;
   flex-grow: 1;
 
-  // overflow-y: scroll;
+  .search-item--indent {
+    margin-left: 14px;
+  }
 }
 
 .search-dropdown__col_2 {

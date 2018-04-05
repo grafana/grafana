@@ -3,6 +3,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import rst2html from 'rst2html';
 
+/** @ngInject */
 export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
   const funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
   const paramTemplate =

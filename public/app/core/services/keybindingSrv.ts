@@ -10,6 +10,7 @@ import 'mousetrap-global-bind';
 export class KeybindingSrv {
   helpModal: boolean;
   modalOpen = false;
+  timepickerOpen = false;
 
   /** @ngInject */
   constructor(private $rootScope, private $location) {
@@ -22,6 +23,8 @@ export class KeybindingSrv {
 
     this.setupGlobal();
     appEvents.on('show-modal', () => (this.modalOpen = true));
+    $rootScope.onAppEvent('timepickerOpen', () => (this.timepickerOpen = true));
+    $rootScope.onAppEvent('timepickerClosed', () => (this.timepickerOpen = false));
   }
 
   setupGlobal() {
@@ -73,7 +76,12 @@ export class KeybindingSrv {
     appEvents.emit('hide-modal');
 
     if (!this.modalOpen) {
-      this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      if (this.timepickerOpen) {
+        this.$rootScope.appEvent('closeTimepicker');
+        this.timepickerOpen = false;
+      } else {
+        this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      }
     } else {
       this.modalOpen = false;
     }
