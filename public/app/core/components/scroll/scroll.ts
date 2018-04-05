@@ -60,10 +60,16 @@ export function geminiScrollbar() {
         scope
       );
 
-      appEvents.on('toggle-sidemenu', evt => {
-        // force updating dashboard width
+      // force updating dashboard width
+      appEvents.on('toggle-sidemenu', forceUpdate, scope);
+      appEvents.on('toggle-sidemenu-hidden', forceUpdate, scope);
+      appEvents.on('toggle-view-mode', forceUpdate, scope);
+      appEvents.on('toggle-kiosk-mode', forceUpdate, scope);
+      appEvents.on('toggle-inactive-mode', forceUpdate, scope);
+
+      function forceUpdate() {
         scrollbar.scroll();
-      });
+      }
 
       scope.$on('$routeChangeSuccess', () => {
         lastPos = 0;

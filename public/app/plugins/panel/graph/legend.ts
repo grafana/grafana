@@ -131,8 +131,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         elem.empty();
 
         // Set min-width if side style and there is a value, otherwise remove the CSS propery
-        var width = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + 'px' : '';
+        // Set width so it works with IE11
+        var width: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + 'px' : '';
+        var ieWidth: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth - 1 + 'px' : '';
         elem.css('min-width', width);
+        elem.css('width', ieWidth);
 
         elem.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
@@ -238,10 +241,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           tbodyElem.append(tableHeaderElem);
           tbodyElem.append(seriesElements);
           elem.append(tbodyElem);
-          tbodyElem.wrap('<div class="graph-legend-content"></div>');
+          tbodyElem.wrap('<div class="graph-legend-scroll"></div>');
         } else {
-          elem.append('<div class="graph-legend-content"></div>');
-          elem.find('.graph-legend-content').append(seriesElements);
+          elem.append('<div class="graph-legend-scroll"></div>');
+          elem.find('.graph-legend-scroll').append(seriesElements);
         }
 
         if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== legendRightDefaultWidth)) {
@@ -261,7 +264,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         `;
 
         let scrollRoot = elem;
-        let scroller = elem.find('.graph-legend-content');
+        let scroller = elem.find('.graph-legend-scroll');
 
         // clear existing scroll bar track to prevent duplication
         scrollRoot.find('.baron__track').remove();
