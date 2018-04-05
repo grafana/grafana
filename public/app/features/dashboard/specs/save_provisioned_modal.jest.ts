@@ -1,5 +1,4 @@
 import { SaveProvisionedDashboardModalCtrl } from '../save_provisioned_modal';
-import { describe, it, expect } from 'test/lib/common';
 
 describe('SaveProvisionedDashboardModalCtrl', () => {
   var json = {
@@ -21,8 +20,11 @@ describe('SaveProvisionedDashboardModalCtrl', () => {
 
   var ctrl = new SaveProvisionedDashboardModalCtrl(mockDashboardSrv);
 
-  it('verify that the id have been removed', () => {
-    var copy = ctrl.getJsonForClipboard();
-    expect(copy).toBe(`{"title":"name"}`);
+  it('should remove id from dashboard model', () => {
+    expect(ctrl.dash.id).toBeUndefined();
+  });
+
+  it('should remove id from dashboard model in clipboard json', () => {
+    expect(ctrl.getJsonForClipboard()).toBe(JSON.stringify({ title: 'name' }, null, 2));
   });
 });
