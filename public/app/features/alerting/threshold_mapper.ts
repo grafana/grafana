@@ -1,9 +1,5 @@
 export class ThresholdMapper {
   static alertToGraphThresholds(panel) {
-    if (panel.type !== 'graph') {
-      return false;
-    }
-
     for (var i = 0; i < panel.alert.conditions.length; i++) {
       let condition = panel.alert.conditions[i];
       if (condition.type !== 'query') {

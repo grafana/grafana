@@ -170,8 +170,8 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	}
 
 	if dash.Dashboard.Id != 0 {
-		fr.log.Error("provisioned dashboard json files cannot contain id")
-		return provisioningMetadata, nil
+		dash.Dashboard.Data.Set("id", nil)
+		dash.Dashboard.Id = 0
 	}
 
 	if alreadyProvisioned {

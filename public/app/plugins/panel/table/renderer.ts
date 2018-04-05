@@ -47,7 +47,6 @@ export class TableRenderer {
     if (!style.thresholds) {
       return null;
     }
-
     for (var i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
         return style.colors[i];
@@ -100,6 +99,60 @@ export class TableRenderer {
       };
     }
 
+    if (column.style.type === 'string') {
+      return v => {
+        if (_.isArray(v)) {
+          v = v.join(', ');
+        }
+
+        const mappingType = column.style.mappingType || 0;
+
+        if (mappingType === 1 && column.style.valueMaps) {
+          for (let i = 0; i < column.style.valueMaps.length; i++) {
+            const map = column.style.valueMaps[i];
+
+            if (v === null) {
+              if (map.value === 'null') {
+                return map.text;
+              }
+              continue;
+            }
+
+            // Allow both numeric and string values to be mapped
+            if ((!_.isString(v) && Number(map.value) === Number(v)) || map.value === v) {
+              this.setColorState(v, column.style);
+              return this.defaultCellFormatter(map.text, column.style);
+            }
+          }
+        }
+
+        if (mappingType === 2 && column.style.rangeMaps) {
+          for (let i = 0; i < column.style.rangeMaps.length; i++) {
+            const map = column.style.rangeMaps[i];
+
+            if (v === null) {
+              if (map.from === 'null' && map.to === 'null') {
+                return map.text;
+              }
+              continue;
+            }
+
+            if (Number(map.from) <= Number(v) && Number(map.to) >= Number(v)) {
+              this.setColorState(v, column.style);
+              return this.defaultCellFormatter(map.text, column.style);
+            }
+          }
+        }
+
+        if (v === null || v === void 0) {
+          return '-';
+        }
+
+        this.setColorState(v, column.style);
+        return this.defaultCellFormatter(v, column.style);
+      };
+    }
+
     if (column.style.type === 'number') {
       let valueFormatter = kbn.valueFormats[column.unit || column.style.unit];
 
@@ -112,10 +165,7 @@ export class TableRenderer {
           return this.defaultCellFormatter(v, column.style);
         }
 
-        if (column.style.colorMode) {
-          this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
-        }
-
+        this.setColorState(v, column.style);
         return valueFormatter(v, column.style.decimals, null);
       };
     }
@@ -123,6 +173,23 @@ export class TableRenderer {
     return value => {
       return this.defaultCellFormatter(value, column.style);
     };
+  }
+
+  setColorState(value, style) {
+    if (!style.colorMode) {
+      return;
+    }
+
+    if (value === null || value === void 0 || _.isArray(value)) {
+      return;
+    }
+
+    var numericValue = Number(value);
+    if (numericValue === NaN) {
+      return;
+    }
+
+    this.colorState[style.colorMode] = this.getColorForValue(numericValue, style);
   }
 
   renderRowVariables(rowIndex) {

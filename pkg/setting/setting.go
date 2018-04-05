@@ -223,7 +223,7 @@ func shouldRedactURLKey(s string) bool {
 	return strings.Contains(uppercased, "DATABASE_URL")
 }
 
-func applyEnvVariableOverrides() {
+func applyEnvVariableOverrides() error {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range Cfg.Sections() {
 		for _, key := range section.Keys() {
@@ -238,7 +238,10 @@ func applyEnvVariableOverrides() {
 					envValue = "*********"
 				}
 				if shouldRedactURLKey(envKey) {
-					u, _ := url.Parse(envValue)
+					u, err := url.Parse(envValue)
+					if err != nil {
+						return fmt.Errorf("could not parse environment variable. key: %s, value: %s. error: %v", envKey, envValue, err)
+					}
 					ui := u.User
 					if ui != nil {
 						_, exists := ui.Password()
@@ -252,6 +255,8 @@ func applyEnvVariableOverrides() {
 			}
 		}
 	}
+
+	return nil
 }
 
 func applyCommandLineDefaultProperties(props map[string]string) {
@@ -377,7 +382,7 @@ func loadSpecifedConfigFile(configFile string) error {
 	return nil
 }
 
-func loadConfiguration(args *CommandLineArgs) {
+func loadConfiguration(args *CommandLineArgs) error {
 	var err error
 
 	// load config defaults
@@ -395,7 +400,7 @@ func loadConfiguration(args *CommandLineArgs) {
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
 		os.Exit(1)
-		return
+		return err
 	}
 
 	Cfg.BlockMode = false
@@ -413,7 +418,10 @@ func loadConfiguration(args *CommandLineArgs) {
 	}
 
 	// apply environment overrides
-	applyEnvVariableOverrides()
+	err = applyEnvVariableOverrides()
+	if err != nil {
+		return err
+	}
 
 	// apply command line overrides
 	applyCommandLineProperties(commandLineProps)
@@ -424,6 +432,8 @@ func loadConfiguration(args *CommandLineArgs) {
 	// update data path and logging config
 	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
 	initLogging()
+
+	return err
 }
 
 func pathExists(path string) bool {
@@ -471,7 +481,10 @@ func validateStaticRootPath() error {
 
 func NewConfigContext(args *CommandLineArgs) error {
 	setHomePath(args)
-	loadConfiguration(args)
+	err := loadConfiguration(args)
+	if err != nil {
+		return err
+	}
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")

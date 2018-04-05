@@ -104,10 +104,10 @@
     "test": "grunt test",
     "test:coverage": "grunt test --coverage=true",
     "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
-    "karma": "node ./node_modules/grunt-cli/bin/grunt karma:dev",
-    "jest": "node ./node_modules/jest-cli/bin/jest.js --notify --watch",
-    "api-tests": "node ./node_modules/jest-cli/bin/jest.js --notify --watch --config=tests/api/jest.js",
-    "precommit": "lint-staged && node ./node_modules/grunt-cli/bin/grunt precommit"
+    "karma": "grunt karma:dev",
+    "jest": "jest --notify --watch",
+    "api-tests": "jest --notify --watch --config=tests/api/jest.js",
+    "precommit": "lint-staged && grunt precommit"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
