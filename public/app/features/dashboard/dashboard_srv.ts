@@ -127,7 +127,6 @@ export class DashboardSrv {
   showDashboardProvisionedModal() {
     this.$rootScope.appEvent('show-modal', {
       templateHtml: '<save-provisioned-dashboard-modal dismiss="dismiss()"></save-provisioned-dashboard-modal>',
-      modalClass: 'modal--narrow',
     });
   }
 

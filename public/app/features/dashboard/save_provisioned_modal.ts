@@ -1,11 +1,12 @@
+import angular from 'angular';
+import { saveAs } from 'file-saver';
 import coreModule from 'app/core/core_module';
 
 const template = `
 <div class="modal-body">
   <div class="modal-header">
     <h2 class="modal-header-title">
-      <i class="fa fa-save"></i>
-      <span class="p-l-1">Cannot save provisioned dashboards</span>
+      <i class="fa fa-save"></i><span class="p-l-1">Cannot save provisioned dashboard</span>
     </h2>
 
     <a class="modal-header-close" ng-click="ctrl.dismiss();">
@@ -13,47 +14,48 @@ const template = `
     </a>
   </div>
 
-  <form name="ctrl.saveForm" class="modal-content" novalidate>
-    <h6 class="text-center">
+  <div class="modal-content">
+    <small>
       This dashboard cannot be saved from Grafana's UI since it has been provisioned from another source.
-      <i><a href="http://docs.grafana.org/administration/provisioning/#dashboards">
-        More info about provisioning.
-      </a></i>
-    </h6>
+      Copy the JSON or save it to a file below. Then you can update your dashboard in corresponding provisioning source.<br/>
+      <i>See <a class="external-link" href="http://docs.grafana.org/administration/provisioning/#dashboards" target="_blank">
+      documentation</a> for more information about provisioning.</i>
+    </small>
     <div class="p-t-2">
       <div class="gf-form">
-        <label class="gf-form-hint">
-          <textarea
-            type="text"
-            name="dashboardJson"
-            class="gf-form-input"
-            ng-model="ctrl.dashboardJson"
-            ng-model-options="{allowInvalid: true}"
-            autocomplete="off"
-            rows="3" /></textarea>
-        </label>
+        <code-editor content="ctrl.dashboardJson" data-mode="json" data-max-lines=15></code-editor>
+      </div>
+      <div class="gf-form-button-row">
+        <button class="btn btn-success" clipboard-button="ctrl.getJsonForClipboard()">
+          <i class="fa fa-clipboard"></i>&nbsp;Copy JSON to Clipboard
+        </button>
+        <button class="btn btn-secondary" clipboard-button="ctrl.save()">
+          <i class="fa fa-save"></i>&nbsp;Save JSON to file
+        </button>
+        <a class="btn btn-link" ng-click="ctrl.dismiss();">Cancel</a>
       </div>
     </div>
-
-    <div class="gf-form-button-row text-center">
-      <button type="submit" class="btn btn-success" clipboard-button="ctrl.getJsonForClipboard()" >
-        <i class="fa fa-clipboard"></i>&nbsp;Copy json
-      </button>
-      <button class="btn btn-inverse" ng-click="ctrl.dismiss();">Close</button>
-    </div>
-  </form>
+  </div>
 </div>
 `;
 
 export class SaveProvisionedDashboardModalCtrl {
+  dash: any;
   dashboardJson: string;
   dismiss: () => void;
 
   /** @ngInject */
   constructor(dashboardSrv) {
-    var dashboard = dashboardSrv.getCurrent().getSaveModelClone();
-    delete dashboard.id;
-    this.dashboardJson = JSON.stringify(dashboard);
+    this.dash = dashboardSrv.getCurrent().getSaveModelClone();
+    delete this.dash.id;
+    this.dashboardJson = JSON.stringify(this.dash, null, 2);
+  }
+
+  save() {
+    var blob = new Blob([angular.toJson(this.dash, true)], {
+      type: 'application/json;charset=utf-8',
+    });
+    saveAs(blob, this.dash.title + '-' + new Date().getTime() + '.json');
   }
 
   getJsonForClipboard() {
