@@ -3,8 +3,6 @@ import $ from 'jquery';
 import coreModule from '../core_module';
 
 export function dropdownTypeahead($compile) {
-  console.log('test');
-
   let inputTemplate =
     '<input type="text"' +
     ' class="gf-form-input input-medium tight-form-input"' +
@@ -124,7 +122,6 @@ export function dropdownTypeahead($compile) {
 }
 
 export function dropdownTypeahead2($compile) {
-  console.log('test2');
   let inputTemplate =
     '<input type="text"' + ' class="gf-form-input"' + ' spellcheck="false" style="display:none"></input>';
 
