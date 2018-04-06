@@ -48,7 +48,7 @@ class AddPermissions extends Component<IProps, any> {
       permissions.newItem.setTeam(null, null);
       return;
     }
-    return permissions.newItem.setTeam(team.id, team.name);
+    return permissions.newItem.setTeam(team.id, team.name, team.avatarUrl);
   }
 
   permissionPicked(permission: OptionWithDescription) {

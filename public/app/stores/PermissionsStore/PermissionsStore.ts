@@ -31,6 +31,7 @@ export const NewPermissionsItem = types
     userId: types.maybe(types.number),
     userLogin: types.maybe(types.string),
     userAvatarUrl: types.maybe(types.string),
+    teamAvatarUrl: types.maybe(types.string),
     teamId: types.maybe(types.number),
     team: types.maybe(types.string),
     permission: types.optional(types.number, 1),
@@ -58,11 +59,12 @@ export const NewPermissionsItem = types
       self.teamId = null;
       self.team = null;
     },
-    setTeam(teamId: number, team: string) {
+    setTeam(teamId: number, team: string, teamAvatarUrl: string) {
       self.userId = null;
       self.userLogin = null;
       self.teamId = teamId;
       self.team = team;
+      self.teamAvatarUrl = teamAvatarUrl;
     },
     setPermission(permission: number) {
       self.permission = permission;
@@ -124,12 +126,14 @@ export const PermissionsStore = types
           userLogin: undefined,
           userId: undefined,
           userAvatarUrl: undefined,
+          teamAvatarUrl: undefined,
           role: undefined,
         };
         switch (self.newItem.type) {
           case aclTypeValues.GROUP.value:
             item.team = self.newItem.team;
             item.teamId = self.newItem.teamId;
+            item.teamAvatarUrl = self.newItem.teamAvatarUrl;
             break;
           case aclTypeValues.USER.value:
             item.userLogin = self.newItem.userLogin;

@@ -8,13 +8,18 @@ const setClassNameHelper = inherited => {
 };
 
 function ItemAvatar({ item }) {
+  console.log(item);
   if (item.userAvatarUrl) {
     return <img className="filter-table__avatar" src={item.userAvatarUrl} />;
   }
   if (item.teamAvatarUrl) {
     return <img className="filter-table__avatar" src={item.teamAvatarUrl} />;
   }
-  return <span style={{ width: '25px' }} className={item.icon} />;
+  if (item.role === 'Editor') {
+    return <i style={{ width: '25px', fontSize: '1.5rem' }} className="gicon gicon-editor" />;
+  }
+
+  return <i style={{ width: '25px', fontSize: '1.5rem' }} className="gicon gicon-viewer" />;
 }
 
 function ItemDescription({ item }) {
@@ -28,7 +33,6 @@ function ItemDescription({ item }) {
 }
 
 export default observer(({ item, removeItem, permissionChanged, itemIndex, folderInfo }) => {
-  console.log(item);
   const handleRemoveItem = evt => {
     evt.preventDefault();
     removeItem(itemIndex);
