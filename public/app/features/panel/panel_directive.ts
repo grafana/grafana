@@ -125,6 +125,8 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
             barOnCls: '_scrollbar',
             scrollingCls: '_scrolling',
           });
+
+          panelScrollbar.scroll();
         }
       });
 

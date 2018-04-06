@@ -77,7 +77,6 @@ export function geminiScrollbar() {
       });
 
       scope.$on('$destroy', () => {
-        // scrollbar.destroy();
         scrollbar.dispose();
       });
     },
