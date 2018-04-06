@@ -278,6 +278,7 @@ func init() {
 		Namespace: exporterName,
 	}, []string{"version"})
 
+	bus.AddEventListener(handleStats)
 }
 
 func initMetricVars(settings *MetricSettings) {
@@ -341,18 +342,25 @@ var metricPublishCounter int64 = 0
 func updateTotalStats() {
 	metricPublishCounter++
 	if metricPublishCounter == 1 || metricPublishCounter%10 == 0 {
+		metricsLogger.Debug("Getting System Stats", "counter", metricPublishCounter)
 		statsQuery := models.GetSystemStatsQuery{}
 		if err := bus.Dispatch(&statsQuery); err != nil {
 			metricsLogger.Error("Failed to get system stats", "error", err)
 			return
 		}
-
-		M_StatTotal_Dashboards.Set(float64(statsQuery.Result.Dashboards))
-		M_StatTotal_Users.Set(float64(statsQuery.Result.Users))
-		M_StatActive_Users.Set(float64(statsQuery.Result.ActiveUsers))
-		M_StatTotal_Playlists.Set(float64(statsQuery.Result.Playlists))
-		M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
 	}
+}
+
+func handleStats(event *models.SystemStats) error {
+	metricsLogger.Debug("Got System Stats", "stats", event)
+
+	M_StatTotal_Dashboards.Set(float64(event.Dashboards))
+	M_StatTotal_Users.Set(float64(event.Users))
+	M_StatActive_Users.Set(float64(event.ActiveUsers))
+	M_StatTotal_Playlists.Set(float64(event.Playlists))
+	M_StatTotal_Orgs.Set(float64(event.Orgs))
+
+	return nil
 }
 
 func sendUsageStats() {

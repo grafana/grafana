@@ -68,6 +68,9 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 	}
 
 	query.Result = &stats
+
+	bus.Publish(&stats)
+
 	return err
 }
 
