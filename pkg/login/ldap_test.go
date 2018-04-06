@@ -65,6 +65,7 @@ func TestLdapAuther(t *testing.T) {
 			sc.userQueryReturns(nil)
 
 			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				DN:       "torkelo",
 				Username: "torkelo",
 				Email:    "my@email.com",
 				MemberOf: []string{"cn=editor"},
