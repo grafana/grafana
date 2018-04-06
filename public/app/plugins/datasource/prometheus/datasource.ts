@@ -6,8 +6,12 @@ import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 
-function prometheusSpecialRegexEscape(value) {
-  return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
+export function prometheusRegularEscape(value) {
+  return value.replace(/'/g, "\\\\'");
+}
+
+export function prometheusSpecialRegexEscape(value) {
+  return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
 }
 
 export class PrometheusDatasource {
@@ -80,7 +84,7 @@ export class PrometheusDatasource {
   interpolateQueryExpr(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
-      return value;
+      return prometheusRegularEscape(value);
     }
 
     if (typeof value === 'string') {
