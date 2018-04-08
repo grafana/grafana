@@ -35,12 +35,12 @@ json-tree {
     color: $variable;
     padding: 5px 10px 5px 15px;
     &::after {
-      content: ':';
+      content: ":";
     }
   }
   json-node.expandable {
     &::before {
-      content: '\25b6';
+      content: "\25b6";
       position: absolute;
       left: 0px;
       font-size: 8px;

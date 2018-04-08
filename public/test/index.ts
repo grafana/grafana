@@ -25,3 +25,7 @@ const context = (<any>require).context('../', true, /specs\.(tsx?|js)/);
 for (let key of context.keys()) {
   context(key);
 }
+
+
+
+

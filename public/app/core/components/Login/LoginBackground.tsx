@@ -4,14 +4,10 @@ const xCount = 50;
 const yCount = 50;
 
 function Cell({ x, y, flipIndex }) {
-  const index = y * xCount + x;
+  const index = (y * xCount) + x;
   const bgColor1 = getColor(x, y);
   return (
-    <div
-      className={`login-bg__item ${flipIndex === index ? 'login-bg-flip' : ''}`}
-      key={index}
-      style={{ background: bgColor1 }}
-    />
+    <div className={`login-bg__item ${flipIndex === index ? 'login-bg-flip' : ''}`} key={index} style={{background: bgColor1}} />
   );
 }
 
@@ -35,7 +31,7 @@ export default class LoginBackground extends Component<any, any> {
   }
 
   flipElements() {
-    const elementIndexToFlip = getRandomInt(0, xCount * yCount - 1);
+    const elementIndexToFlip = getRandomInt(0, (xCount * yCount) - 1);
     this.setState(prevState => {
       return {
         ...prevState,
@@ -61,7 +57,9 @@ export default class LoginBackground extends Component<any, any> {
           return (
             <div className="login-bg__row">
               {Array.from(Array(xCount)).map((el2, x) => {
-                return <Cell y={y} x={x} flipIndex={this.state.flipIndex} />;
+                return (
+                  <Cell y={y} x={x} flipIndex={this.state.flipIndex} />
+                );
               })}
             </div>
           );
@@ -1238,5 +1236,5 @@ function getColor(x, y) {
   // let randY = getRandomInt(0, y);
   // let randIndex = randY * xCount + randX;
 
-  return colors[(y * xCount + x) % colors.length];
+  return colors[(y*xCount + x) % colors.length];
 }

@@ -1,4 +1,4 @@
-var _global = <any>window;
+var _global = <any>(window);
 var beforeEach = _global.beforeEach;
 var afterEach = _global.afterEach;
 var before = _global.before;
@@ -12,4 +12,13 @@ var angularMocks = {
   inject: _global.inject,
 };
 
-export { beforeEach, afterEach, before, describe, it, sinon, expect, angularMocks };
+export {
+  beforeEach,
+  afterEach,
+  before,
+  describe,
+  it,
+  sinon,
+  expect,
+  angularMocks,
+};

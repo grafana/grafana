@@ -53,9 +53,9 @@ $enable-flex: true;
 // Typography
 // -------------------------
 
-$font-family-sans-serif: 'Roboto', Helvetica, Arial, sans-serif;
-$font-family-serif: Georgia, 'Times New Roman', Times, serif;
-$font-family-monospace: Menlo, Monaco, Consolas, 'Courier New', monospace;
+$font-family-sans-serif: "Roboto", Helvetica, Arial, sans-serif;
+$font-family-serif: Georgia, "Times New Roman", Times, serif;
+$font-family-monospace: Menlo, Monaco, Consolas, "Courier New", monospace;
 $font-family-base: $font-family-sans-serif !default;
 
 $font-size-root: 14px !default;
@@ -90,7 +90,7 @@ $lead-font-size: 1.25rem !default;
 $lead-font-weight: 300 !default;
 
 $headings-margin-bottom: ($spacer / 2) !default;
-$headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+$headings-font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 $headings-font-weight: 400 !default;
 $headings-line-height: 1.1 !default;
 
@@ -152,9 +152,16 @@ $input-padding-y-sm: 4px !default;
 $input-padding-x-lg: 20px !default;
 $input-padding-y-lg: 10px !default;
 
-$input-height: (($font-size-base * $line-height-base) + ($input-padding-y * 2)) !default;
-$input-height-lg: ( ($font-size-lg * $line-height-lg) + ($input-padding-y-lg * 2)) !default;
-$input-height-sm: ( ($font-size-sm * $line-height-sm) + ($input-padding-y-sm * 2)) !default;
+$input-height: (($font-size-base * $line-height-base) + ($input-padding-y * 2))
+  !default;
+$input-height-lg: (
+     ($font-size-lg * $line-height-lg) + ($input-padding-y-lg * 2)
+  )
+  !default;
+$input-height-sm: (
+     ($font-size-sm * $line-height-sm) + ($input-padding-y-sm * 2)
+  )
+  !default;
 
 $form-group-margin-bottom: $spacer-y !default;
 $gf-form-margin: 0.2rem;
@@ -214,9 +221,9 @@ $panel-padding: 0px 10px 5px 10px;
 $tabs-padding: 10px 15px 9px;
 
 $external-services: (
-    github: (bgColor: #464646, borderColor: #393939, icon: ''),
-    google: (bgColor: #e84d3c, borderColor: #b83e31, icon: ''),
-    grafanacom: (bgColor: inherit, borderColor: #393939, icon: ''),
-    oauth: (bgColor: inherit, borderColor: #393939, icon: '')
+    github: (bgColor: #464646, borderColor: #393939, icon: ""),
+    google: (bgColor: #e84d3c, borderColor: #b83e31, icon: ""),
+    grafanacom: (bgColor: inherit, borderColor: #393939, icon: ""),
+    oauth: (bgColor: inherit, borderColor: #393939, icon: "")
   )
   !default;
