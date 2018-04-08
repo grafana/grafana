@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
@@ -54,7 +53,6 @@ type DiscordNotifier struct {
 
 func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending alert notification to", "webhook_url", this.WebhookURL)
-	metrics.M_Alerting_Notification_Sent_Discord.Inc(1)
 
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err != nil {
