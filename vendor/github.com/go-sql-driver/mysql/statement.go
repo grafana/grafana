@@ -11,6 +11,7 @@ package mysql
 import (
 	"database/sql/driver"
 	"fmt"
+	"io"
 	"reflect"
 	"strconv"
 )
@@ -19,12 +20,14 @@ type mysqlStmt struct {
 	mc         *mysqlConn
 	id         uint32
 	paramCount int
-	columns    []mysqlField // cached from the first query
 }
 
 func (stmt *mysqlStmt) Close() error {
-	if stmt.mc == nil || stmt.mc.netConn == nil {
-		errLog.Print(ErrInvalidConn)
+	if stmt.mc == nil || stmt.mc.closed.IsSet() {
+		// driver.Stmt.Close can be called more than once, thus this function
+		// has to be idempotent.
+		// See also Issue #450 and golang/go#16019.
+		//errLog.Print(ErrInvalidConn)
 		return driver.ErrBadConn
 	}
 
@@ -42,14 +45,14 @@ func (stmt *mysqlStmt) ColumnConverter(idx int) driver.ValueConverter {
 }
 
 func (stmt *mysqlStmt) Exec(args []driver.Value) (driver.Result, error) {
-	if stmt.mc.netConn == nil {
+	if stmt.mc.closed.IsSet() {
 		errLog.Print(ErrInvalidConn)
 		return nil, driver.ErrBadConn
 	}
 	// Send command
 	err := stmt.writeExecutePacket(args)
 	if err != nil {
-		return nil, err
+		return nil, stmt.mc.markBadConn(err)
 	}
 
 	mc := stmt.mc
@@ -59,37 +62,45 @@ func (stmt *mysqlStmt) Exec(args []driver.Value) (driver.Result, error) {
 
 	// Read Result
 	resLen, err := mc.readResultSetHeaderPacket()
-	if err == nil {
-		if resLen > 0 {
-			// Columns
-			err = mc.readUntilEOF()
-			if err != nil {
-				return nil, err
-			}
+	if err != nil {
+		return nil, err
+	}
 
-			// Rows
-			err = mc.readUntilEOF()
+	if resLen > 0 {
+		// Columns
+		if err = mc.readUntilEOF(); err != nil {
+			return nil, err
 		}
-		if err == nil {
-			return &mysqlResult{
-				affectedRows: int64(mc.affectedRows),
-				insertId:     int64(mc.insertId),
-			}, nil
+
+		// Rows
+		if err := mc.readUntilEOF(); err != nil {
+			return nil, err
 		}
 	}
 
-	return nil, err
+	if err := mc.discardResults(); err != nil {
+		return nil, err
+	}
+
+	return &mysqlResult{
+		affectedRows: int64(mc.affectedRows),
+		insertId:     int64(mc.insertId),
+	}, nil
 }
 
 func (stmt *mysqlStmt) Query(args []driver.Value) (driver.Rows, error) {
-	if stmt.mc.netConn == nil {
+	return stmt.query(args)
+}
+
+func (stmt *mysqlStmt) query(args []driver.Value) (*binaryRows, error) {
+	if stmt.mc.closed.IsSet() {
 		errLog.Print(ErrInvalidConn)
 		return nil, driver.ErrBadConn
 	}
 	// Send command
 	err := stmt.writeExecutePacket(args)
 	if err != nil {
-		return nil, err
+		return nil, stmt.mc.markBadConn(err)
 	}
 
 	mc := stmt.mc
@@ -104,14 +115,15 @@ func (stmt *mysqlStmt) Query(args []driver.Value) (driver.Rows, error) {
 
 	if resLen > 0 {
 		rows.mc = mc
-		// Columns
-		// If not cached, read them and cache them
-		if stmt.columns == nil {
-			rows.columns, err = mc.readColumns(resLen)
-			stmt.columns = rows.columns
-		} else {
-			rows.columns = stmt.columns
-			err = mc.readUntilEOF()
+		rows.rs.columns, err = mc.readColumns(resLen)
+	} else {
+		rows.rs.done = true
+
+		switch err := rows.NextResultSet(); err {
+		case nil, io.EOF:
+			return rows, nil
+		default:
+			return nil, err
 		}
 	}
 
@@ -123,6 +135,12 @@ type converter struct{}
 func (c converter) ConvertValue(v interface{}) (driver.Value, error) {
 	if driver.IsValue(v) {
 		return v, nil
+	}
+
+	if v != nil {
+		if valuer, ok := v.(driver.Valuer); ok {
+			return valuer.Value()
+		}
 	}
 
 	rv := reflect.ValueOf(v)
@@ -145,6 +163,16 @@ func (c converter) ConvertValue(v interface{}) (driver.Value, error) {
 		return int64(u64), nil
 	case reflect.Float32, reflect.Float64:
 		return rv.Float(), nil
+	case reflect.Bool:
+		return rv.Bool(), nil
+	case reflect.Slice:
+		ek := rv.Type().Elem().Kind()
+		if ek == reflect.Uint8 {
+			return rv.Bytes(), nil
+		}
+		return nil, fmt.Errorf("unsupported type %T, a slice of %s", v, ek)
+	case reflect.String:
+		return rv.String(), nil
 	}
 	return nil, fmt.Errorf("unsupported type %T, a %s", v, rv.Kind())
 }

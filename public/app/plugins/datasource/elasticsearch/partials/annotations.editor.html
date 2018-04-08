@@ -3,9 +3,11 @@
 		<span class="gf-form-label width-14">Index name</span>
 		<input type="text" class="gf-form-input max-width-20" ng-model='ctrl.annotation.index' placeholder="events-*"></input>
 	</div>
-	<div class="gf-form">
-		<span class="gf-form-label width-14">Search query (lucene) <tip>Use [[filterName]] in query to replace part of the query with a filter value</tip></span>
-		<input type="text" class="gf-form-input max-width-20" ng-model='ctrl.annotation.query' placeholder="tags:deploy"></input>
+	<div class="gf-form-group">
+		<div class="gf-form">
+			<input type="text" class="gf-form-input" ng-model='ctrl.annotation.query'
+											placeholder="Elasticsearch lucene query"></input>
+		</div>
 	</div>
 </div>
 
@@ -13,24 +15,20 @@
 	<h6>Field mappings</h6>
 	<div class="gf-form-inline">
 		<div class="gf-form">
-			<span class="gf-form-label width-10">Time</span>
-			<input type="text" class="gf-form-input max-width-16" ng-model='ctrl.annotation.timeField' placeholder="@timestamp"></input>
+			<span class="gf-form-label">Time</span>
+			<input type="text" class="gf-form-input max-width-14" ng-model='ctrl.annotation.timeField' placeholder="@timestamp"></input>
 		</div>
-
 		<div class="gf-form">
-			<span class="gf-form-label width-10">Title</span>
+			<span class="gf-form-label">Text</span>
+			<input type="text" class="gf-form-input max-width-14" ng-model='ctrl.annotation.textField' placeholder=""></input>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label">Tags</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.tagsField' placeholder="tags"></input>
+		</div>
+		<div class="gf-form" ng-show="ctrl.annotation.titleField">
+			<span class="gf-form-label">Title <em class="muted">(depricated)</em></span>
 			<input type="text" class="gf-form-input max-width-16" ng-model='ctrl.annotation.titleField' placeholder="desc"></input>
-		</div>
-	</div>
-	<div class="gf-form-inline">
-		<div class="gf-form">
-			<span class="gf-form-label width-10">Tags</span>
-			<input type="text" class="gf-form-input max-width-16" ng-model='ctrl.annotation.tagsField' placeholder="tags"></input>
-		</div>
-
-		<div class="gf-form">
-			<span class="gf-form-label width-10">Text</span>
-			<input type="text" class="gf-form-input max-width-16" ng-model='ctrl.annotation.textField' placeholder=""></input>
 		</div>
 	</div>
 </div>

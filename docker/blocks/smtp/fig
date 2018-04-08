@@ -1,4 +1,0 @@
-snmpd:
-  build: blocks/snmpd
-  ports:
-    - "161:161"

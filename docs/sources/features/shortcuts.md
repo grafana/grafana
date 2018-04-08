@@ -8,7 +8,7 @@ weight = 7
 
 # Keyboard shortcuts
 
-{{< docs-imagebox img="/img/docs/v4/shortcuts.png" max-width="20rem" >}}
+{{< docs-imagebox img="/img/docs/v50/shortcuts.png" max-width="20rem" class="docs-image--right" >}}
 
 Grafana v4 introduces a number of really powerful keyboard shortcuts. You can now focus a panel
 by hovering over it with your mouse. With a panel focused you can simple hit `e` to toggle panel
@@ -34,20 +34,20 @@ Hit `?` on your keyboard to open the shortcuts help modal.
 - `d` `s`	Dashboard settings
 - `d` `v`	Toggle in-active / view mode
 - `d` `k`	Toggle kiosk mode (hides top nav)
+- `d` `E`	Expand all rows
+- `d` `C`	Collapse all rows
 - `mod+o`	Toggle shared graph crosshair
 
 ### Focused Panel
 - `e`	Toggle panel edit view
 - `v`	Toggle panel fullscreen view
 - `p` `s` Open Panel Share Modal
+- `p` `d` Duplicate Panel
 - `p` `r` Remove Panel
-
-### Focused Row
-- `r` `c`	Collapse Row
-- `r` `r`	Remove Row
 
 ### Time Range
 - `t` `z`	Zoom out time range
 - `t`	Move time range back
 - `t`	Move time range forward
 
+mod = CTRL on windows or linux and CMD key on Mac

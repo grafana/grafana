@@ -5,17 +5,27 @@ import (
 	"encoding/base64"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
 )
 
 var errSSERequiresSSL = awserr.New("ConfigError", "cannot send SSE keys over HTTP.", nil)
 
 func validateSSERequiresSSL(r *request.Request) {
-	if r.HTTPRequest.URL.Scheme != "https" {
-		p, _ := awsutil.ValuesAtPath(r.Params, "SSECustomerKey||CopySourceSSECustomerKey")
-		if len(p) > 0 {
+	if r.HTTPRequest.URL.Scheme == "https" {
+		return
+	}
+
+	if iface, ok := r.Params.(sseCustomerKeyGetter); ok {
+		if len(iface.getSSECustomerKey()) > 0 {
 			r.Error = errSSERequiresSSL
+			return
+		}
+	}
+
+	if iface, ok := r.Params.(copySourceSSECustomerKeyGetter); ok {
+		if len(iface.getCopySourceSSECustomerKey()) > 0 {
+			r.Error = errSSERequiresSSL
+			return
 		}
 	}
 }

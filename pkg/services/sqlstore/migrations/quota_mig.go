@@ -12,7 +12,7 @@ func addQuotaMigration(mg *Migrator) {
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: true},
 			{Name: "user_id", Type: DB_BigInt, Nullable: true},
-			{Name: "target", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "target", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "limit", Type: DB_BigInt, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
@@ -25,4 +25,8 @@ func addQuotaMigration(mg *Migrator) {
 
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", quotaV1)
+
+	mg.AddMigration("Update quota table charset", NewTableCharsetMigration("quota", []*Column{
+		{Name: "target", Type: DB_NVarchar, Length: 190, Nullable: false},
+	}))
 }

@@ -13,16 +13,18 @@ const (
 	ONLYFROMDB
 )
 
-// database column
+// Column defines database column
 type Column struct {
 	Name            string
+	TableName       string
 	FieldName       string
 	SQLType         SQLType
+	IsJSON          bool
 	Length          int
 	Length2         int
 	Nullable        bool
 	Default         string
-	Indexes         map[string]bool
+	Indexes         map[string]int
 	IsPrimaryKey    bool
 	IsAutoIncrement bool
 	MapType         int
@@ -31,24 +33,25 @@ type Column struct {
 	IsDeleted       bool
 	IsCascade       bool
 	IsVersion       bool
-	fieldPath       []string
 	DefaultIsEmpty  bool
 	EnumOptions     map[string]int
 	SetOptions      map[string]int
 	DisableTimeZone bool
 	TimeZone        *time.Location // column specified time zone
+	Comment         string
 }
 
 func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
 	return &Column{
 		Name:            name,
+		TableName:       "",
 		FieldName:       fieldName,
 		SQLType:         sqlType,
 		Length:          len1,
 		Length2:         len2,
 		Nullable:        nullable,
 		Default:         "",
-		Indexes:         make(map[string]bool),
+		Indexes:         make(map[string]int),
 		IsPrimaryKey:    false,
 		IsAutoIncrement: false,
 		MapType:         TWOSIDES,
@@ -57,9 +60,9 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		IsDeleted:       false,
 		IsCascade:       false,
 		IsVersion:       false,
-		fieldPath:       nil,
 		DefaultIsEmpty:  false,
 		EnumOptions:     make(map[string]int),
+		Comment:         "",
 	}
 }
 
@@ -119,12 +122,10 @@ func (col *Column) ValueOf(bean interface{}) (*reflect.Value, error) {
 
 func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 	var fieldValue reflect.Value
-	if col.fieldPath == nil {
-		col.fieldPath = strings.Split(col.FieldName, ".")
-	}
+	fieldPath := strings.Split(col.FieldName, ".")
 
 	if dataStruct.Type().Kind() == reflect.Map {
-		keyValue := reflect.ValueOf(col.fieldPath[len(col.fieldPath)-1])
+		keyValue := reflect.ValueOf(fieldPath[len(fieldPath)-1])
 		fieldValue = dataStruct.MapIndex(keyValue)
 		return &fieldValue, nil
 	} else if dataStruct.Type().Kind() == reflect.Interface {
@@ -132,19 +133,19 @@ func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 		dataStruct = &structValue
 	}
 
-	level := len(col.fieldPath)
-	fieldValue = dataStruct.FieldByName(col.fieldPath[0])
+	level := len(fieldPath)
+	fieldValue = dataStruct.FieldByName(fieldPath[0])
 	for i := 0; i < level-1; i++ {
 		if !fieldValue.IsValid() {
 			break
 		}
 		if fieldValue.Kind() == reflect.Struct {
-			fieldValue = fieldValue.FieldByName(col.fieldPath[i+1])
+			fieldValue = fieldValue.FieldByName(fieldPath[i+1])
 		} else if fieldValue.Kind() == reflect.Ptr {
 			if fieldValue.IsNil() {
 				fieldValue.Set(reflect.New(fieldValue.Type().Elem()))
 			}
-			fieldValue = fieldValue.Elem().FieldByName(col.fieldPath[i+1])
+			fieldValue = fieldValue.Elem().FieldByName(fieldPath[i+1])
 		} else {
 			return nil, fmt.Errorf("field  %v is not valid", col.FieldName)
 		}

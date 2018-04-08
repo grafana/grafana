@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Dave Collins <dave@davec.name>
+ * Copyright (c) 2013-2016 Dave Collins <dave@davec.name>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -129,7 +129,7 @@ func (d *dumpState) dumpPtr(v reflect.Value) {
 	d.w.Write(closeParenBytes)
 
 	// Display pointer information.
-	if len(pointerChain) > 0 {
+	if !d.cs.DisablePointerAddresses && len(pointerChain) > 0 {
 		d.w.Write(openParenBytes)
 		for i, addr := range pointerChain {
 			if i > 0 {
@@ -181,8 +181,6 @@ func (d *dumpState) dumpSlice(v reflect.Value) {
 		// Try to use existing uint8 slices and fall back to converting
 		// and copying if that fails.
 		case vt.Kind() == reflect.Uint8:
-			// TODO(davec): Fix up the disableUnsafe bits...
-
 			// We need an addressable interface to convert the type
 			// to a byte slice.  However, the reflect package won't
 			// give us an interface on certain things like
@@ -284,13 +282,13 @@ func (d *dumpState) dump(v reflect.Value) {
 	case reflect.Map, reflect.String:
 		valueLen = v.Len()
 	}
-	if valueLen != 0 || valueCap != 0 {
+	if valueLen != 0 || !d.cs.DisableCapacities && valueCap != 0 {
 		d.w.Write(openParenBytes)
 		if valueLen != 0 {
 			d.w.Write(lenEqualsBytes)
 			printInt(d.w, int64(valueLen), 10)
 		}
-		if valueCap != 0 {
+		if !d.cs.DisableCapacities && valueCap != 0 {
 			if valueLen != 0 {
 				d.w.Write(spaceBytes)
 			}

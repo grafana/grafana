@@ -1,4 +1,0 @@
-Package s3 signs HTTP requests for use with Amazon’s S3 API.
-
-Documentation:
-http://godoc.org/github.com/kr/s3

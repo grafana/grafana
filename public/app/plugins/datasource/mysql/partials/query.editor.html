@@ -1,0 +1,77 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false">
+	<div class="gf-form-inline">
+		<div class="gf-form gf-form--grow">
+			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
+			</code-editor>
+		</div>
+	</div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword">Format as</label>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
+			</div>
+		</div>
+		<div class="gf-form">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
+        Show Help
+        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+      </label>
+		</div>
+		<div class="gf-form" ng-show="ctrl.lastQueryMeta">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
+        Generated SQL
+        <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
+      </label>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.showLastQuerySQL">
+		<pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
+	</div>
+
+	<div class="gf-form"  ng-show="ctrl.showHelp">
+		<pre class="gf-form-pre alert alert-info">Time series:
+- return column named time or time_sec (in UTC), as a unix time stamp or any sql native date data type. You can use the macros below.
+- return column(s) with numeric datatype as values
+- (Optional: return column named <i>metric</i> to represent the series name. If no column named metric is found the column name of the value column is used as series name)
+
+Table:
+- return any set of columns
+
+Macros:
+- $__time(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
+- $__timeEpoch(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
+- $__timeFilter(column) -&gt;  UNIX_TIMESTAMP(time_date_time) &ge; 1492750877 AND UNIX_TIMESTAMP(time_date_time) &le; 1492750877
+- $__unixEpochFilter(column) -&gt;  time_unix_epoch &gt; 1492750877 AND time_unix_epoch &lt; 1492750877
+- $__timeGroup(column,'5m') -&gt; cast(cast(UNIX_TIMESTAMP(column)/(300) as signed)*300 as signed)
+
+Example of group by and order by with $__timeGroup:
+SELECT
+  $__timeGroup(timestamp_col, '1h') AS time,
+  sum(value_double) as value
+FROM yourtable
+GROUP BY 1
+ORDER BY 1
+
+Or build your own conditionals using these macros which just return the values:
+- $__timeFrom() -&gt;  FROM_UNIXTIME(1492750877)
+- $__timeTo() -&gt;  FROM_UNIXTIME(1492750877)
+- $__unixEpochFrom() -&gt;  1492750877
+- $__unixEpochTo() -&gt;  1492750877
+		</pre>
+	</div>
+
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.lastQueryError">
+		<pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+	</div>
+
+</query-editor-row>

@@ -1,17 +1,71 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
 
-	<div class="gf-form" ng-show="ctrl.target.textEditor">
-		<input type="text" class="gf-form-input" ng-model="ctrl.target.target" spellcheck="false" ng-blur="ctrl.refresh()"></input>
-	</div>
+  <div class="gf-form" ng-show="ctrl.target.textEditor">
+    <input type="text" class="gf-form-input" ng-model="ctrl.target.target" spellcheck="false" ng-blur="ctrl.targetTextChanged()"></input>
+  </div>
 
   <div ng-hide="ctrl.target.textEditor">
-		<div class="gf-form-inline">
-      <div ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index)" on-change="ctrl.segmentValueChanged(segment, $index)"></metric-segment>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-6 query-keyword">Series</label>
       </div>
 
-      <div ng-repeat="func in ctrl.functions" class="gf-form">
-        <span graphite-func-editor class="gf-form-label query-part"></span>
+      <div ng-if="ctrl.queryModel.seriesByTagUsed" ng-repeat="tag in ctrl.queryModel.tags" class="gf-form">
+        <gf-form-dropdown
+          model="tag.key"
+          allow-custom="true"
+          label-mode="true"
+          debounce="true"
+          placeholder="Tag key"
+          css-class="query-segment-key"
+          get-options="ctrl.getTags($index, $query)"
+          on-change="ctrl.tagChanged(tag, $index)"
+        />
+        <gf-form-dropdown
+          model="tag.operator"
+          label-mode="true"
+          css-class="query-segment-operator"
+          get-options="ctrl.getTagOperators()"
+          on-change="ctrl.tagChanged(tag, $index)"
+          min-input-width="30"
+        />
+        <gf-form-dropdown
+          model="tag.value"
+          allow-custom="true"
+          label-mode="true"
+          debounce="true"
+          css-class="query-segment-value"
+          placeholder="Tag value"
+          get-options="ctrl.getTagValues(tag, $index, $query)"
+          on-change="ctrl.tagChanged(tag, $index)"
+        />
+        <label class="gf-form-label query-keyword" ng-if="ctrl.showDelimiter($index)">AND</label>
+      </div>
+
+      <div ng-if="ctrl.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.addTagSegments" role="menuitem" class="gf-form">
+        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.addNewTag(segment)" debounce="true" />
+      </div>
+
+      <div ng-if="!ctrl.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
+        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index, $query)" on-change="ctrl.segmentValueChanged(segment, $index)" />
+      </div>
+
+      <div ng-if="ctrl.paused" class="gf-form">
+        <a ng-click="ctrl.unpause()" class="gf-form-label query-part"><i class="fa fa-play"></i></a>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-6 query-keyword">Functions</label>
+      </div>
+
+      <div ng-repeat="func in ctrl.queryModel.functions" class="gf-form">
+        <span graphite-func-editor class="gf-form-label query-part" ng-hide="func.hidden"></span>
       </div>
 
       <div class="gf-form dropdown">
@@ -19,8 +73,8 @@
       </div>
 
       <div class="gf-form gf-form--grow">
-				<div class="gf-form-label gf-form-label--grow"></div>
-			</div>
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
     </div>
   </div>
 

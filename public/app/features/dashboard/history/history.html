@@ -1,0 +1,118 @@
+<h3 class="dashboard-settings__header">
+  <a ng-click="ctrl.switchMode('list')">Versions</a>
+  <span ng-show="ctrl.mode === 'compare'">
+    &gt; Comparing {{ctrl.baseInfo.version}}
+    <i class="fa fa-arrows-h"></i>
+    {{ctrl.newInfo.version}}
+    <cite class="muted" ng-if="ctrl.isNewLatest">(Latest)</cite>
+  </span>
+</h3>
+
+<div ng-if="ctrl.mode === 'list'">
+  <div ng-if="ctrl.loading">
+    <i class="fa fa-spinner fa-spin"></i>
+    <em>Fetching history list&hellip;</em>
+  </div>
+
+  <div ng-if="!ctrl.loading">
+    <div class="gf-form-group">
+      <table class="filter-table">
+        <thead>
+          <tr>
+            <th class="width-4"></th>
+            <th class="width-4">Version</th>
+            <th class="width-14">Date</th>
+            <th class="width-10">Updated By</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="revision in ctrl.revisions">
+            <td class="filter-table__switch-cell" bs-tooltip="!revision.checked && ctrl.canCompare ? 'You can only compare 2 versions at a time' : ''" data-placement="right">
+              <gf-form-switch switch-class="gf-form-switch--table-cell" checked="revision.checked" on-change="ctrl.revisionSelectionChanged()" ng-disabled="!revision.checked && ctrl.canCompare">
+              </gf-form-switch>
+            </td>
+            <td class="text-center">{{revision.version}}</td>
+            <td>{{revision.createdDateString}}</td>
+            <td>{{revision.createdBy}}</td>
+            <td>{{revision.message}}</td>
+            <td class="text-right">
+              <a class="btn btn-inverse btn-small" ng-show="revision.version !== ctrl.dashboard.version" ng-click="ctrl.restore(revision.version)">
+                <i class="fa fa-history"></i>&nbsp;&nbsp;Restore
+              </a>
+              <a class="btn btn-outline-disabled btn-small" ng-show="revision.version === ctrl.dashboard.version">
+                <i class="fa fa-check"></i>&nbsp;&nbsp;Latest
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div ng-if="ctrl.appending">
+        <i class="fa fa-spinner fa-spin"></i>
+        <em>Fetching more entries&hellip;</em>
+      </div>
+
+      <div class="gf-form-group">
+        <div class="gf-form-button-row">
+          <button  type="button"
+                   class="btn gf-form-button btn-inverse"
+                   ng-if="ctrl.revisions.length >= ctrl.limit"
+                   ng-click="ctrl.addToLog()"
+                   ng-disabled="ctrl.isLastPage()">
+            Show more versions
+          </button>
+          <button type="button"
+                  class="btn btn-success"
+                  ng-if="ctrl.revisions.length > 1"
+                  ng-disabled="!ctrl.canCompare"
+                  ng-click="ctrl.getDiff(ctrl.diff)"
+                  bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'" data-placement="bottom">
+            <i class="fa fa-code-fork" ></i>&nbsp;&nbsp;Compare versions
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div ng-if="ctrl.mode === 'compare'">
+  <div ng-if="ctrl.loading">
+    <i class="fa fa-spinner fa-spin"></i>
+    <em>Fetching changes&hellip;</em>
+  </div>
+
+  <div ng-if="!ctrl.loading">
+    <button  type="button"
+             class="btn btn-danger pull-right"
+             ng-click="ctrl.restore(ctrl.baseInfo.version)"
+             ng-if="ctrl.isNewLatest">
+      <i class="fa fa-history" ></i>&nbsp;&nbsp;Restore to version {{ctrl.baseInfo.version}}
+    </button>
+    <section>
+      <p class="small muted">
+      <strong>Version {{ctrl.newInfo.version}}</strong> updated by
+      <span>{{ctrl.newInfo.createdBy}} </span>
+      <span>{{ctrl.newInfo.ageString}}</span>
+      <span> - {{ctrl.newInfo.message}}</span>
+      </p>
+      <p class="small muted">
+      <strong>Version {{ctrl.baseInfo.version}}</strong> updated by
+      <span>{{ctrl.baseInfo.createdBy}} </span>
+      <span>{{ctrl.baseInfo.ageString}}</span>
+      <span> - {{ctrl.baseInfo.message}}</span>
+      </p>
+    </section>
+
+    <div id="delta" diff-delta>
+      <div class="delta-basic" compile="ctrl.delta.basic"></div>
+    </div>
+
+    <div class="gf-form-button-row">
+      <button class="btn btn-secondary" ng-click="ctrl.getDiff('json')">View JSON Diff</button>
+    </div>
+
+    <div class="delta-html" ng-show="ctrl.diff === 'json'" compile="ctrl.delta.json"></div>
+  </div>
+</div>

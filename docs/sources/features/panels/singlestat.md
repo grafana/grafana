@@ -2,6 +2,7 @@
 title = "Singlestat Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "singlestat"]
 type = "docs"
+aliases = ["/reference/singlestat/"]
 [menu.docs]
 name = "Singlestat"
 parent = "panels"
@@ -11,69 +12,84 @@ weight = 2
 
 # Singlestat Panel
 
-![](/img/docs/v1/singlestat_panel2.png)
+{{< docs-imagebox img="/img/docs/v45/singlestat-panel.png" class="docs-image--no-shadow" max-width="900px" >}}
 
 The Singlestat Panel allows you to show the one main summary stat of a SINGLE series. It reduces the series into a single number (by looking at the max, min, average, or sum of values in the series). Singlestat also provides thresholds to color the stat or the Panel background. It can also translate the single number into a text value, and show a sparkline summary of the series.
 
 ### Singlestat Panel Configuration
 
-The singlestat panel has a normal query editor to allow you define your exact metric queries like many other Panels. Through the Options tab, you can access the Singlestat-specific functionality.
+The singlestat panel has a normal query editor to allow you define your exact metric queries like many other Panels. In the Options tab, you can access the Singlestat-specific functionality.
 
-<img class="no-shadow" src="/img/docs/v1/Singlestat-BaseSettings.png">
+{{< docs-imagebox img="/img/docs/v45/singlestat-value-options.png" class="docs-image--no-shadow" max-width="900px" >}}
 
-1. `Big Value`: Big Value refers to how we display the main stat for the Singlestat Panel. This is always a single value that is displayed in the Panel in between two strings, `Prefix` and  `Suffix`. The single number is calculated by choosing a function (min,max,average,current,total) of your metric query. This functions reduces your query into a single numeric value.
-2. `Font Size`: You can use this section to select the font size of the different texts in the Singlestat Panel, i.e. prefix, value and postfix.
-3. `Values`: The Value fields let you set the function (min, max, average, current, total, first, delta, range) that your entire query is reduced into a single value with. You can also set the font size of the Value field and font-size (as a %) of the metric query that the Panel is configured with. This reduces the entire query into a single summary value that is displayed.
-   * `min` - The smallest value in the series
-   * `max` - The largest value in the series
-   * `avg` - The average of all the non-null values in the series
-   * `current` - The last value in the series. If the series ends on null the previous value will be used.
-   * `total` - The sum of all the non-null values in the series
-   * `first` - The first value in the series
-   * `delta` - The total incremental increase (of a counter) in the series. An attempt is made to account for counter resets, but this will only be accurate for single instance metrics. Used to show total counter increase in time series.
-   * `diff` - The difference betwen 'current' (last value) and 'first'.
-   * `range` - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
-4. `Postfixes`: The Postfix fields let you define a custom label and font-size (as a %) to appear *after* the value
-5. `Units`: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
-6. `Decimals`: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.
+1. **Stats**: The Stats field let you set the function (min, max, average, current, total, first, delta, range) that your entire query is reduced into a single value with. This reduces the entire query into a single summary value that is displayed.
+   * **min** - The smallest value in the series
+   * **max** - The largest value in the series
+   * **avg** - The average of all the non-null values in the series
+   * **current** - The last value in the series. If the series ends on null the previous value will be used.
+   * **total** - The sum of all the non-null values in the series
+   * **first** - The first value in the series
+   * **delta** - The total incremental increase (of a counter) in the series. An attempt is made to account for counter resets, but this will only be accurate for single instance metrics. Used to show total counter increase in time series.
+   * **diff** - The difference betwen 'current' (last value) and 'first'.
+   * **range** - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
+2. **Prefix/Postfix**: The Prefix/Postfix fields let you define a custom label to appear *before/after* the value. The `$__name` variable can be used here to use the series name or alias from the metric query.
+3. **Units**: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
+4. **Decimals**: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.
+5. **Font Size**: You can use this section to select the font size of the different texts in the Singlestat Panel, i.e. prefix, value and postfix.
 
 ### Coloring
 
 The coloring options of the Singlestat Panel config allow you to dynamically change the colors based on the Singlestat value.
 
-<img class="no-shadow" src="/img/docs/v1/Singlestat-Coloring.png">
+{{< docs-imagebox img="/img/docs/v45/singlestat-color-options.png" max-width="500px" class="docs-image--right docs-image--no-shadow">}}
 
-1. `Background`: This checkbox applies the configured thresholds and colors to the entirety of the Singlestat Panel background.
-2. `Value`: This checkbox applies the configured thresholds and colors to the summary stat.
-3. `Thresholds`: Change the background and value colors dynamically within the panel, depending on the Singlestat value. The threshold field accepts **2 comma-separated** values which represent 3 ranges that correspond to the three colors directly to the right. For example: if the thresholds are 70, 90 then the first color represents < 70, the second color represents between 70 and 90 and the third color represents > 90.
-4. `Colors`: Select a color and opacity
-5. `Invert order`: This link toggles the threshold color order.</br>For example: Green, Orange, Red (<img class="no-shadow" src="/img/docs(v1/gyr.png">) will become Red, Orange, Green (<img class="no-shadow" src="/img/docs/v1/ryg.png">).
+1. **Background**: This checkbox applies the configured thresholds and colors to the entirety of the Singlestat Panel background.
+2. **Thresholds**: Change the background and value colors dynamically within the panel, depending on the Singlestat value. The threshold field accepts **2 comma-separated** values which represent 3 ranges that correspond to the three colors directly to the right. For example: if the thresholds are 70, 90 then the first color represents < 70, the second color represents between 70 and 90 and the third color represents > 90.
+3. **Colors**: Select a color and opacity
+4. **Value**: This checkbox applies the configured thresholds and colors to the summary stat.
+5. **Invert order**: This link toggles the threshold color order.</br>For example: Green, Orange, Red (<img class="no-shadow" src="/img/docs/v1/gyr.png">) will become Red, Orange, Green (<img class="no-shadow" src="/img/docs/v1/ryg.png">).
 
 ### Spark Lines
 
 Sparklines are a great way of seeing the historical data related to the summary stat, providing valuable context at a glance. Sparklines act differently than traditional Graph Panels and do not include x or y axis, coordinates, a legend, or ability to interact with the graph.
 
-<img class="no-shadow" src="/img/docs/v1/Singlestat-Sparklines.png">
+{{< docs-imagebox img="/img/docs/v45/singlestat-spark-options.png" max-width="500px" class="docs-image--right docs-image--no-shadow">}}
 
-1. `Show`: The show checkbox will toggle whether the spark line is shown in the Panel. When unselected, only the Singlestat value will appear.
-2. `Background`: Check if you want the sparklines to take up the full panel width, or uncheck if they should be below the main Singlestat value.
-3. `Line Color`: This color selection applies to the color of the sparkline itself.
-4. `Fill Color`: This color selection applies to the area below the sparkline.
+1. **Show**: The show checkbox will toggle whether the spark line is shown in the Panel. When unselected, only the Singlestat value will appear.
+2. **Full Height**: Check if you want the sparklines to take up the full panel height, or uncheck if they should be below the main Singlestat value.
+3. **Line Color**: This color selection applies to the color of the sparkline itself.
+4. **Fill Color**: This color selection applies to the area below the sparkline.
+
+<div class="clearfix"></div>
 
 > ***Pro-tip:*** Reduce the opacity on  fill colors for nice looking panels.
 
+### Gauge
+
+Gauges gives a clear picture of how high a value is in it's context. It's a great way to see if a value is close to the thresholds. The gauge uses the colors set in the color options.
+
+{{< docs-imagebox img="/img/docs/v45/singlestat-gauge-options.png" max-width="500px" class="docs-image--right docs-image--no-shadow">}}
+
+1. **Show**: The show checkbox will toggle wether the gauge is shown in the panel. When unselected, only the Singlestat value will appear.
+2. **Min/Max**: This sets the start and end point for the gauge.
+3. **Threshold Labels**: Check if you want to show the threshold labels. Thresholds are set in the color options.
+4. **Threshold Markers**: Check if you want to have a second meter showing the thresholds.
+
+<div class="clearfix"></div>
+
 ### Value to text mapping
+
+{{< docs-imagebox img="/img/docs/v45/singlestat-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
 
 Value to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
 
-<img class="no-shadow" src="/img/docs/v1/Singlestat-ValueMapping.png">
+<div class="clearfix"></div>
 
 ## Troubleshooting
 
 ### Multiple Series Error
 
-<img class="no-shadow" src="/img/docs/v2/Singlestat-MultiSeriesError.png">
-
+{{< docs-imagebox img="/img/docs/v45/singelstat-multiple-series-error.png" class="docs-image--right docs-image--no-shadow">}}
 
 Grafana 2.5 introduced stricter checking for multiple-series on singlestat panels. In previous versions, the panel logic did not verify that only a single series was used, and instead, displayed the first series encountered. Depending on your data source, this could have lead to inconsistent data being shown and/or a general confusion about which metric was being displayed.
 

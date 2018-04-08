@@ -122,7 +122,7 @@ function (angular, _, coreModule) {
     vm.selectValue = function(option, event, commitChange, excludeOthers) {
       if (!option) { return; }
 
-      option.selected = !option.selected;
+      option.selected = vm.variable.multi ? !option.selected: true;
 
       commitChange = commitChange || false;
       excludeOthers = excludeOthers || false;

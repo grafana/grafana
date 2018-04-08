@@ -1,21 +1,21 @@
 import '../playlist_edit_ctrl';
-import {describe, beforeEach, it, expect} from 'test/lib/common';
-import {PlaylistEditCtrl} from '../playlist_edit_ctrl';
+import { describe, beforeEach, it, expect } from 'test/lib/common';
+import { PlaylistEditCtrl } from '../playlist_edit_ctrl';
 
 describe('PlaylistEditCtrl', () => {
   var ctx: any;
   beforeEach(() => {
-    ctx = new PlaylistEditCtrl(null, null, null, null, { current: { params: {} } });
+    let navModelSrv = {
+      getNav: () => {
+        return { breadcrumbs: [], node: {} };
+      },
+    };
 
-    ctx.dashboardresult = [
-      { id: 2, title: 'dashboard: 2' },
-      { id: 3, title: 'dashboard: 3' }
-    ];
+    ctx = new PlaylistEditCtrl(null, null, null, { current: { params: {} } }, navModelSrv);
 
-    ctx.tagresult = [
-      { term: 'graphite', count: 1 },
-      { term: 'nyc', count: 2 }
-    ];
+    ctx.dashboardresult = [{ id: 2, title: 'dashboard: 2' }, { id: 3, title: 'dashboard: 3' }];
+
+    ctx.tagresult = [{ term: 'graphite', count: 1 }, { term: 'nyc', count: 2 }];
   });
 
   describe('searchresult returns 2 dashboards, ', () => {

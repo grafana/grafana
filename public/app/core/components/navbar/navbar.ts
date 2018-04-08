@@ -1,13 +1,22 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import config from 'app/core/config';
-import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from '../../core_module';
+import { NavModel } from '../../nav_model_srv';
+import appEvents from 'app/core/app_events';
 
 export class NavbarCtrl {
+  model: NavModel;
+
   /** @ngInject */
-  constructor(private $scope, private contextSrv) {
+  constructor() {}
+
+  showSearch() {
+    appEvents.emit('show-dash-search');
+  }
+
+  navItemClicked(navItem, evt) {
+    if (navItem.clickHandler) {
+      navItem.clickHandler();
+      evt.preventDefault();
+    }
   }
 }
 
@@ -17,18 +26,29 @@ export function navbarDirective() {
     templateUrl: 'public/app/core/components/navbar/navbar.html',
     controller: NavbarCtrl,
     bindToController: true,
-    transclude: true,
     controllerAs: 'ctrl',
     scope: {
-      title: "@",
-      titleUrl: "@",
-      iconUrl: "@",
+      model: '=',
     },
-    link: function(scope, elem, attrs, ctrl) {
-      ctrl.icon = attrs.icon;
-      elem.addClass('navbar');
-    }
+    link: function(scope, elem) {},
   };
 }
 
+export function pageH1() {
+  return {
+    restrict: 'E',
+    template: `
+    <h1 class="page-header__title">
+      <i class="page-header__icon {{::model.header.icon}}" ng-if="::model.header.icon"></i>
+      <img class="page-header__img" ng-src="{{::model.header.img}}" ng-if="::model.header.img"></i>
+      {{model.header.text}}
+    </h1>
+    `,
+    scope: {
+      model: '=',
+    },
+  };
+}
+
+coreModule.directive('pageH1', pageH1);
 coreModule.directive('navbar', navbarDirective);

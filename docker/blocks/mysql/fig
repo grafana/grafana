@@ -1,9 +1,0 @@
-mysql:
-  image: mysql:latest
-  environment:
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_DATABASE: grafana
-    MYSQL_USER: grafana
-    MYSQL_PASSWORD: password
-  ports:
-    - "3306:3306"

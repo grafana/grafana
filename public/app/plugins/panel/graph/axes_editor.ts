@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import kbn from 'app/core/utils/kbn';
 
 export class AxesEditorCtrl {
@@ -15,31 +13,32 @@ export class AxesEditorCtrl {
   constructor(private $scope, private $q) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    $scope.ctrl = this;
+    this.$scope.ctrl = this;
 
     this.unitFormats = kbn.getUnitFormats();
 
     this.logScales = {
-      'linear': 1,
+      linear: 1,
       'log (base 2)': 2,
       'log (base 10)': 10,
       'log (base 32)': 32,
-      'log (base 1024)': 1024
+      'log (base 1024)': 1024,
     };
 
     this.xAxisModes = {
-      'Time': 'time',
-      'Series': 'series',
+      Time: 'time',
+      Series: 'series',
+      Histogram: 'histogram',
       // 'Data field': 'field',
     };
 
-    this.xAxisStatOptions =  [
-      {text: 'Avg', value: 'avg'},
-      {text: 'Min', value: 'min'},
-      {text: 'Max', value: 'max'},
-      {text: 'Total', value: 'total'},
-      {text: 'Count', value: 'count'},
-      {text: 'Current', value: 'current'},
+    this.xAxisStatOptions = [
+      { text: 'Avg', value: 'avg' },
+      { text: 'Min', value: 'min' },
+      { text: 'Max', value: 'max' },
+      { text: 'Total', value: 'total' },
+      { text: 'Count', value: 'count' },
+      { text: 'Current', value: 'current' },
     ];
 
     if (this.panel.xaxis.mode === 'custom') {
@@ -58,22 +57,23 @@ export class AxesEditorCtrl {
     this.panelCtrl.render();
   }
 
-  xAxisOptionChanged()  {
-    if (!this.panel.xaxis.values || !this.panel.xaxis.values[0]){
-      this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
-    }
+  xAxisModeChanged() {
+    this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
+    this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
+  }
+
+  xAxisValueChanged() {
     this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
   }
 
   getDataFieldNames(onlyNumbers) {
     var props = this.panelCtrl.processor.getDataFieldNames(this.panelCtrl.dataList, onlyNumbers);
     var items = props.map(prop => {
-      return {text: prop, value: prop};
+      return { text: prop, value: prop };
     });
 
     return this.$q.when(items);
   }
-
 }
 
 /** @ngInject **/

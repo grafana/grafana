@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/gomail.v2"
+	gomail "gopkg.in/mail.v2"
 )
 
 var mailQueue chan *Message
@@ -101,13 +101,17 @@ func createDialer() (*gomail.Dialer, error) {
 
 	d := gomail.NewDialer(host, iPort, setting.Smtp.User, setting.Smtp.Password)
 	d.TLSConfig = tlsconfig
-	d.LocalName = setting.InstanceName
+	if setting.Smtp.EhloIdentity != "" {
+		d.LocalName = setting.Smtp.EhloIdentity
+	} else {
+		d.LocalName = setting.InstanceName
+	}
 	return d, nil
 }
 
 func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 	if !setting.Smtp.Enabled {
-		return nil, errors.New("Grafana mailing/smtp options not configured, contact your Grafana admin")
+		return nil, m.ErrSmtpNotEnabled
 	}
 
 	var buffer bytes.Buffer

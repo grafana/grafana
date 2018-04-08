@@ -23,67 +23,59 @@ func NewXormLogger(level glog.Lvl, grafanaLog glog.Logger) *XormLogger {
 }
 
 // Error implement core.ILogger
-func (s *XormLogger) Err(v ...interface{}) error {
+func (s *XormLogger) Error(v ...interface{}) {
 	if s.level <= glog.LvlError {
 		s.grafanaLog.Error(fmt.Sprint(v...))
 	}
-	return nil
 }
 
 // Errorf implement core.ILogger
-func (s *XormLogger) Errf(format string, v ...interface{}) error {
+func (s *XormLogger) Errorf(format string, v ...interface{}) {
 	if s.level <= glog.LvlError {
 		s.grafanaLog.Error(fmt.Sprintf(format, v...))
 	}
-	return nil
 }
 
 // Debug implement core.ILogger
-func (s *XormLogger) Debug(v ...interface{}) error {
+func (s *XormLogger) Debug(v ...interface{}) {
 	if s.level <= glog.LvlDebug {
 		s.grafanaLog.Debug(fmt.Sprint(v...))
 	}
-	return nil
 }
 
 // Debugf implement core.ILogger
-func (s *XormLogger) Debugf(format string, v ...interface{}) error {
+func (s *XormLogger) Debugf(format string, v ...interface{}) {
 	if s.level <= glog.LvlDebug {
 		s.grafanaLog.Debug(fmt.Sprintf(format, v...))
 	}
-	return nil
 }
 
 // Info implement core.ILogger
-func (s *XormLogger) Info(v ...interface{}) error {
+func (s *XormLogger) Info(v ...interface{}) {
 	if s.level <= glog.LvlInfo {
 		s.grafanaLog.Info(fmt.Sprint(v...))
 	}
-	return nil
 }
 
 // Infof implement core.ILogger
-func (s *XormLogger) Infof(format string, v ...interface{}) error {
+func (s *XormLogger) Infof(format string, v ...interface{}) {
 	if s.level <= glog.LvlInfo {
 		s.grafanaLog.Info(fmt.Sprintf(format, v...))
 	}
-	return nil
 }
 
 // Warn implement core.ILogger
-func (s *XormLogger) Warning(v ...interface{}) error {
+func (s *XormLogger) Warn(v ...interface{}) {
 	if s.level <= glog.LvlWarn {
 		s.grafanaLog.Warn(fmt.Sprint(v...))
 	}
-	return nil
 }
 
 // Warnf implement core.ILogger
-func (s *XormLogger) Warningf(format string, v ...interface{}) error {
+func (s *XormLogger) Warnf(format string, v ...interface{}) {
 	if s.level <= glog.LvlWarn {
 		s.grafanaLog.Warn(fmt.Sprintf(format, v...))
 	}
-	return nil
 }
 
 // Level implement core.ILogger
@@ -103,8 +95,7 @@ func (s *XormLogger) Level() core.LogLevel {
 }
 
 // SetLevel implement core.ILogger
-func (s *XormLogger) SetLevel(l core.LogLevel) error {
-	return nil
+func (s *XormLogger) SetLevel(l core.LogLevel) {
 }
 
 // ShowSQL implement core.ILogger

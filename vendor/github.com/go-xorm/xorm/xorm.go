@@ -5,7 +5,6 @@
 package xorm
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -17,7 +16,8 @@ import (
 )
 
 const (
-	Version string = "0.4.5.0204"
+	// Version show the xorm's version
+	Version string = "0.6.4.0910"
 )
 
 func regDrvsNDialects() bool {
@@ -31,6 +31,7 @@ func regDrvsNDialects() bool {
 		"mysql":    {"mysql", func() core.Driver { return &mysqlDriver{} }, func() core.Dialect { return &mysql{} }},
 		"mymysql":  {"mysql", func() core.Driver { return &mymysqlDriver{} }, func() core.Dialect { return &mysql{} }},
 		"postgres": {"postgres", func() core.Driver { return &pqDriver{} }, func() core.Dialect { return &postgres{} }},
+		"pgx":      {"postgres", func() core.Driver { return &pqDriver{} }, func() core.Dialect { return &postgres{} }},
 		"sqlite3":  {"sqlite3", func() core.Driver { return &sqlite3Driver{} }, func() core.Dialect { return &sqlite3{} }},
 		"oci8":     {"oracle", func() core.Driver { return &oci8Driver{} }, func() core.Dialect { return &oracle{} }},
 		"goracle":  {"oracle", func() core.Driver { return &goracleDriver{} }, func() core.Dialect { return &oracle{} }},
@@ -49,13 +50,16 @@ func close(engine *Engine) {
 	engine.Close()
 }
 
-// new a db manager according to the parameter. Currently support four
+func init() {
+	regDrvsNDialects()
+}
+
+// NewEngine new a db manager according to the parameter. Currently support four
 // drivers
 func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
-	regDrvsNDialects()
 	driver := core.QueryDriver(driverName)
 	if driver == nil {
-		return nil, errors.New(fmt.Sprintf("Unsupported driver name: %v", driverName))
+		return nil, fmt.Errorf("Unsupported driver name: %v", driverName)
 	}
 
 	uri, err := driver.Parse(driverName, dataSourceName)
@@ -65,7 +69,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 
 	dialect := core.QueryDialect(uri.DbType)
 	if dialect == nil {
-		return nil, errors.New(fmt.Sprintf("Unsupported dialect type: %v", uri.DbType))
+		return nil, fmt.Errorf("Unsupported dialect type: %v", uri.DbType)
 	}
 
 	db, err := core.Open(driverName, dataSourceName)
@@ -84,12 +88,19 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		Tables:        make(map[reflect.Type]*core.Table),
 		mutex:         &sync.RWMutex{},
 		TagIdentifier: "xorm",
-		Logger:        NewSimpleLogger(os.Stdout),
 		TZLocation:    time.Local,
+		tagHandlers:   defaultTagHandlers,
 	}
 
-	engine.dialect.SetLogger(engine.Logger)
+	if uri.DbType == core.SQLITE {
+		engine.DatabaseTZ = time.UTC
+	} else {
+		engine.DatabaseTZ = time.Local
+	}
 
+	logger := NewSimpleLogger(os.Stdout)
+	logger.SetLevel(core.LOG_INFO)
+	engine.SetLogger(logger)
 	engine.SetMapper(core.NewCacheMapper(new(core.SnakeMapper)))
 
 	runtime.SetFinalizer(engine, close)
@@ -97,7 +108,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	return engine, nil
 }
 
-// clone an engine
+// Clone clone an engine
 func (engine *Engine) Clone() (*Engine, error) {
 	return NewEngine(engine.DriverName(), engine.DataSourceName())
 }

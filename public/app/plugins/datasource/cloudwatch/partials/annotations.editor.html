@@ -3,18 +3,16 @@
 <div class="editor-row" style="padding: 2rem 0">
 	<div class="section">
 		<h5>Prefix matching</h5>
-		<div class="editor-option">
-			<editor-checkbox text="Enable" model="ctrl.annotation.prefixMatching"></editor-checkbox>
-		</div>
-
-		<div class="editor-option" ng-if="ctrl.annotation.prefixMatching">
-			<label class="small">Action</label>
-			<input type="text" class="input-small" ng-model='ctrl.annotation.actionPrefix'></input>
-		</div>
-
-		<div class="editor-option" ng-if="ctrl.annotation.prefixMatching">
-			<label class="small">Alarm Name</label>
-			<input type="text" class="input-small" ng-model='ctrl.annotation.alarmNamePrefix'></input>
+		<div class="gf-form-inline">
+			<gf-form-switch class="gf-form" label="Enable" checked="ctrl.annotation.prefixMatching" switch-class="max-width-6"></gf-form-switch>
+			<div class="gf-form" ng-if="ctrl.annotation.prefixMatching">
+				<span class="gf-form-label">Action</span>
+				<input type="text" class="gf-form-input" ng-model='ctrl.annotation.actionPrefix'></input>
+			</div>
+			<div class="gf-form" ng-if="ctrl.annotation.prefixMatching">
+				<span class="gf-form-label">Alarm Name</span>
+				<input type="text" class="gf-form-input" ng-model='ctrl.annotation.alarmNamePrefix'></input>
+			</div>
 		</div>
 	</div>
 </div>

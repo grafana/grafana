@@ -1,0 +1,102 @@
+<div class="editor-row">
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Y Axis</h5>
+    <div class="gf-form">
+      <label class="gf-form-label width-8">Unit</label>
+      <div class="gf-form-dropdown-typeahead width-12"
+           ng-model="ctrl.panel.yAxis.format"
+           dropdown-typeahead2="editor.unitFormats"
+           dropdown-typeahead-on-select="editor.setUnitFormat($subItem)">
+      </div>
+    </div>
+    <div ng-if="ctrl.panel.dataFormat == 'timeseries'">
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Scale</label>
+        <div class="gf-form-select-wrapper width-12">
+          <select class="gf-form-input" ng-model="ctrl.panel.yAxis.logBase" ng-options="v as k for (k, v) in editor.logScales" ng-change="ctrl.refresh()"></select>
+        </div>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Y-Min</label>
+        <input type="text" class="gf-form-input width-12" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.min" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Y-Max</label>
+        <input type="text" class="gf-form-input width-12" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.max" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-8">Decimals</label>
+      <input type="number" class="gf-form-input width-12" placeholder="auto" data-placement="right"
+      bs-tooltip="'Override automatic decimal precision for axis.'"
+      ng-model="ctrl.panel.yAxis.decimals" ng-change="ctrl.render()" ng-model-onblur>
+    </div>
+    <div class="gf-form" ng-if="ctrl.panel.dataFormat == 'tsbuckets'">
+      <label class="gf-form-label width-8">Bucket bound</label>
+      <div class="gf-form-select-wrapper max-width-12">
+        <select class="gf-form-input"
+          ng-model="ctrl.panel.yBucketBound" ng-options="v as k for (k, v) in editor.yBucketBoundModes" ng-change="ctrl.render()"
+          data-placement="right" bs-tooltip="'Use series label as an upper or lower bucket bound.'">
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section gf-form-group" ng-if="ctrl.panel.dataFormat == 'timeseries'">
+    <h5 class="section-heading">Buckets</h5>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-5">Y Axis</label>
+      </div>
+      <div class="gf-form" ng-show="ctrl.panel.yAxis.logBase === 1">
+        <label class="gf-form-label width-5">Buckets</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
+                                                                              bs-tooltip="'Number of buckets for Y axis.'"
+                                                                              ng-model="ctrl.panel.yBucketNumber" ng-change="ctrl.refresh()" ng-model-onblur>
+      </div>
+      <div class="gf-form" ng-show="ctrl.panel.yAxis.logBase === 1">
+        <label class="gf-form-label width-4">Size</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
+                                                                              bs-tooltip="'Size of bucket. Has priority over Buckets option.'"
+                                                                              ng-model="ctrl.panel.yBucketSize" ng-change="ctrl.refresh()" ng-model-onblur>
+      </div>
+      <div class="gf-form" ng-show="ctrl.panel.yAxis.logBase !== 1">
+        <label class="gf-form-label width-10">Split Factor</label>
+        <input type="number"
+               class="gf-form-input width-9"
+               placeholder="1"
+               data-placement="right"
+               bs-tooltip="'For log scales only. By default Y values is splitted by integer powers of log base (1, 2, 4, 8, 16, ... for log2). This option allows to split each default bucket into specified number of buckets.'"
+               ng-model="ctrl.panel.yAxis.splitFactor" ng-change="ctrl.refresh()" ng-model-onblur>
+        </input>
+      </div>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-5">X Axis</label>
+        <label class="gf-form-label width-5">Buckets</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
+                                                                              bs-tooltip="'Number of buckets for X axis.'"
+                                                                              ng-model="ctrl.panel.xBucketNumber" ng-change="ctrl.refresh()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-4">Size</label>
+        <input type="text" class="gf-form-input width-5" placeholder="auto" data-placement="right"
+                                                                            bs-tooltip="'Size of bucket. Number or interval (10s, 5m, 1h, etc). Supported intervals: ms, s, m, h, d, w, M, y. Has priority over Buckets option.'"
+                                                                            ng-model="ctrl.panel.xBucketSize" ng-change="ctrl.refresh()" ng-model-onblur>
+      </div>
+    </div>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Data format</h5>
+    <div class="gf-form">
+      <label class="gf-form-label width-5">Format</label>
+      <div class="gf-form-select-wrapper max-width-15">
+        <select class="gf-form-input" ng-model="ctrl.panel.dataFormat" ng-options="v as k for (k, v) in editor.dataFormats" ng-change="ctrl.render()"
+          data-placement="right" bs-tooltip="'Time series: create heatmap from regular time series. <br>Time series buckets: use histogram data returned from data source. Each series represents bucket which upper/lower bound is a series label.'">
+        </select>
+      </div>
+    </div>
+  </div>
+</div>

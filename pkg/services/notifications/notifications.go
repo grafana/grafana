@@ -147,7 +147,7 @@ func signUpStartedHandler(evt *events.SignUpStarted) error {
 		return nil
 	}
 
-	return sendEmailCommandHandler(&m.SendEmailCommand{
+	err := sendEmailCommandHandler(&m.SendEmailCommand{
 		To:       []string{evt.Email},
 		Template: tmplSignUpStarted,
 		Data: map[string]interface{}{
@@ -156,6 +156,12 @@ func signUpStartedHandler(evt *events.SignUpStarted) error {
 			"SignUpUrl": setting.ToAbsUrl(fmt.Sprintf("signup/?email=%s&code=%s", url.QueryEscape(evt.Email), url.QueryEscape(evt.Code))),
 		},
 	})
+	if err != nil {
+		return err
+	}
+
+	emailSentCmd := m.UpdateTempUserWithEmailSentCommand{Code: evt.Code}
+	return bus.Dispatch(&emailSentCmd)
 }
 
 func signUpCompletedHandler(evt *events.SignUpCompleted) error {

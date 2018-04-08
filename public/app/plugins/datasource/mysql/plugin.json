@@ -1,0 +1,22 @@
+{
+  "type": "datasource",
+  "name": "MySQL",
+  "id": "mysql",
+
+  "info": {
+    "description": "MySQL Data Source for Grafana",
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/mysql_logo.svg",
+      "large": "img/mysql_logo.svg"
+    },
+    "version": "5.0.0"
+  },
+
+  "alerting": true,
+  "annotations": true,
+  "metrics": true
+}

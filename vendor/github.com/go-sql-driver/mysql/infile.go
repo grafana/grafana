@@ -96,6 +96,10 @@ func deferredClose(err *error, closer io.Closer) {
 func (mc *mysqlConn) handleInFileRequest(name string) (err error) {
 	var rdr io.Reader
 	var data []byte
+	packetSize := 16 * 1024 // 16KB is small enough for disk readahead and large enough for TCP
+	if mc.maxWriteSize < packetSize {
+		packetSize = mc.maxWriteSize
+	}
 
 	if idx := strings.Index(name, "Reader::"); idx == 0 || (idx > 0 && name[idx-1] == '/') { // io.Reader
 		// The server might return an an absolute path. See issue #355.
@@ -108,8 +112,6 @@ func (mc *mysqlConn) handleInFileRequest(name string) (err error) {
 		if inMap {
 			rdr = handler()
 			if rdr != nil {
-				data = make([]byte, 4+mc.maxWriteSize)
-
 				if cl, ok := rdr.(io.Closer); ok {
 					defer deferredClose(&err, cl)
 				}
@@ -134,12 +136,8 @@ func (mc *mysqlConn) handleInFileRequest(name string) (err error) {
 				// get file size
 				if fi, err = file.Stat(); err == nil {
 					rdr = file
-					if fileSize := int(fi.Size()); fileSize <= mc.maxWriteSize {
-						data = make([]byte, 4+fileSize)
-					} else if fileSize <= mc.maxPacketAllowed {
-						data = make([]byte, 4+mc.maxWriteSize)
-					} else {
-						err = fmt.Errorf("local file '%s' too large: size: %d, max: %d", name, fileSize, mc.maxPacketAllowed)
+					if fileSize := int(fi.Size()); fileSize < packetSize {
+						packetSize = fileSize
 					}
 				}
 			}
@@ -149,7 +147,9 @@ func (mc *mysqlConn) handleInFileRequest(name string) (err error) {
 	}
 
 	// send content packets
-	if err == nil {
+	// if packetSize == 0, the Reader contains no data
+	if err == nil && packetSize > 0 {
+		data := make([]byte, 4+packetSize)
 		var n int
 		for err == nil {
 			n, err = rdr.Read(data[4:])
@@ -174,7 +174,8 @@ func (mc *mysqlConn) handleInFileRequest(name string) (err error) {
 
 	// read OK packet
 	if err == nil {
-		return mc.readResultOK()
+		_, err = mc.readResultOK()
+		return err
 	}
 
 	mc.readPacket()

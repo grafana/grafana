@@ -1,17 +1,13 @@
-///<reference path="../../../../headers/common.d.ts" />
-
-import {TestDataDatasource} from './datasource';
-import {TestDataQueryCtrl} from './query_ctrl';
+import { TestDataDatasource } from './datasource';
+import { TestDataQueryCtrl } from './query_ctrl';
 
 class TestDataAnnotationsQueryCtrl {
   annotation: any;
 
-  constructor() {
-  }
+  constructor() {}
 
   static template = '<h2>test data</h2>';
 }
-
 
 export {
   TestDataDatasource,
@@ -19,4 +15,3 @@ export {
   TestDataQueryCtrl as QueryCtrl,
   TestDataAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
-

@@ -22,6 +22,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -32,7 +33,7 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-const _VERSION = "0.2.0"
+const _VERSION = "0.6.0"
 
 func Version() string {
 	return _VERSION
@@ -145,7 +146,7 @@ func Form(formStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 		if parseErr != nil {
 			errors.Add([]string{}, ERR_DESERIALIZATION, parseErr.Error())
 		}
-		mapForm(formStruct, ctx.Req.Form, nil, errors)
+		errors = mapForm(formStruct, ctx.Req.Form, nil, errors)
 		validateAndMap(formStruct, ctx, errors, ifacePtr...)
 	}
 }
@@ -185,7 +186,7 @@ func MultipartForm(formStruct interface{}, ifacePtr ...interface{}) macaron.Hand
 				ctx.Req.MultipartForm = form
 			}
 		}
-		mapForm(formStruct, ctx.Req.MultipartForm.Value, ctx.Req.MultipartForm.File, errors)
+		errors = mapForm(formStruct, ctx.Req.MultipartForm.Value, ctx.Req.MultipartForm.File, errors)
 		validateAndMap(formStruct, ctx, errors, ifacePtr...)
 	}
 }
@@ -211,13 +212,35 @@ func Json(jsonStruct interface{}, ifacePtr ...interface{}) macaron.Handler {
 	}
 }
 
+// RawValidate is same as Validate but does not require a HTTP context,
+// and can be used independently just for validation.
+// This function does not support Validator interface.
+func RawValidate(obj interface{}) Errors {
+	var errs Errors
+	v := reflect.ValueOf(obj)
+	k := v.Kind()
+	if k == reflect.Interface || k == reflect.Ptr {
+		v = v.Elem()
+		k = v.Kind()
+	}
+	if k == reflect.Slice || k == reflect.Array {
+		for i := 0; i < v.Len(); i++ {
+			e := v.Index(i).Interface()
+			errs = validateStruct(errs, e)
+		}
+	} else {
+		errs = validateStruct(errs, obj)
+	}
+	return errs
+}
+
 // Validate is middleware to enforce required fields. If the struct
 // passed in implements Validator, then the user-defined Validate method
 // is executed, and its errors are mapped to the context. This middleware
 // performs no error handling: it merely detects errors and maps them.
 func Validate(obj interface{}) macaron.Handler {
 	return func(ctx *macaron.Context) {
-		var errors Errors
+		var errs Errors
 		v := reflect.ValueOf(obj)
 		k := v.Kind()
 		if k == reflect.Interface || k == reflect.Ptr {
@@ -227,27 +250,60 @@ func Validate(obj interface{}) macaron.Handler {
 		if k == reflect.Slice || k == reflect.Array {
 			for i := 0; i < v.Len(); i++ {
 				e := v.Index(i).Interface()
-				errors = validateStruct(errors, e)
+				errs = validateStruct(errs, e)
 				if validator, ok := e.(Validator); ok {
-					errors = validator.Validate(ctx, errors)
+					errs = validator.Validate(ctx, errs)
 				}
 			}
 		} else {
-			errors = validateStruct(errors, obj)
+			errs = validateStruct(errs, obj)
 			if validator, ok := obj.(Validator); ok {
-				errors = validator.Validate(ctx, errors)
+				errs = validator.Validate(ctx, errs)
 			}
 		}
-		ctx.Map(errors)
+		ctx.Map(errs)
 	}
 }
 
 var (
-	alphaDashPattern    = regexp.MustCompile("[^\\d\\w-_]")
-	alphaDashDotPattern = regexp.MustCompile("[^\\d\\w-_\\.]")
-	emailPattern        = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?")
-	urlPattern          = regexp.MustCompile(`(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
+	AlphaDashPattern    = regexp.MustCompile("[^\\d\\w-_]")
+	AlphaDashDotPattern = regexp.MustCompile("[^\\d\\w-_\\.]")
+	EmailPattern        = regexp.MustCompile("[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?")
 )
+
+// Copied from github.com/asaskevich/govalidator.
+const _MAX_URL_RUNE_COUNT = 2083
+const _MIN_URL_RUNE_COUNT = 3
+
+var (
+	urlSchemaRx    = `((ftp|tcp|udp|wss?|https?):\/\/)`
+	urlUsernameRx  = `(\S+(:\S*)?@)`
+	urlIPRx        = `([1-9]\d?|1\d\d|2[01]\d|22[0-3])(\.(1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.([0-9]\d?|1\d\d|2[0-4]\d|25[0-4]))`
+	ipRx           = `(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))`
+	urlSubdomainRx = `((www\.)|([a-zA-Z0-9]([-\.][-\._a-zA-Z0-9]+)*))`
+	urlPortRx      = `(:(\d{1,5}))`
+	urlPathRx      = `((\/|\?|#)[^\s]*)`
+	URLPattern     = regexp.MustCompile(`^` + urlSchemaRx + `?` + urlUsernameRx + `?` + `((` + urlIPRx + `|(\[` + ipRx + `\])|(([a-zA-Z0-9]([a-zA-Z0-9-_]+)?[a-zA-Z0-9]([-\.][a-zA-Z0-9]+)*)|(` + urlSubdomainRx + `?))?(([a-zA-Z\x{00a1}-\x{ffff}0-9]+-?-?)*[a-zA-Z\x{00a1}-\x{ffff}0-9]+)(?:\.([a-zA-Z\x{00a1}-\x{ffff}]{1,}))?))\.?` + urlPortRx + `?` + urlPathRx + `?$`)
+)
+
+// IsURL check if the string is an URL.
+func isURL(str string) bool {
+	if str == "" || utf8.RuneCountInString(str) >= _MAX_URL_RUNE_COUNT || len(str) <= _MIN_URL_RUNE_COUNT || strings.HasPrefix(str, ".") {
+		return false
+	}
+	u, err := url.Parse(str)
+	if err != nil {
+		return false
+	}
+	if strings.HasPrefix(u.Host, ".") {
+		return false
+	}
+	if u.Host == "" && (u.Path != "" && !strings.Contains(u.Path, ".")) {
+		return false
+	}
+	return URLPattern.MatchString(str)
+
+}
 
 type (
 	// Rule represents a validation rule.
@@ -255,18 +311,34 @@ type (
 		// IsMatch checks if rule matches.
 		IsMatch func(string) bool
 		// IsValid applies validation rule to condition.
-		IsValid func(Errors, string, interface{}) bool
+		IsValid func(Errors, string, interface{}) (bool, Errors)
 	}
-	// RuleMapper represents a validation rule mapper,
+
+	// ParamRule does same thing as Rule but passes rule itself to IsValid method.
+	ParamRule struct {
+		// IsMatch checks if rule matches.
+		IsMatch func(string) bool
+		// IsValid applies validation rule to condition.
+		IsValid func(Errors, string, string, interface{}) (bool, Errors)
+	}
+
+	// RuleMapper and ParamRuleMapper represent validation rule mappers,
 	// it allwos users to add custom validation rules.
-	RuleMapper []*Rule
+	RuleMapper      []*Rule
+	ParamRuleMapper []*ParamRule
 )
 
 var ruleMapper RuleMapper
+var paramRuleMapper ParamRuleMapper
 
 // AddRule adds new validation rule.
 func AddRule(r *Rule) {
 	ruleMapper = append(ruleMapper, r)
+}
+
+// AddParamRule adds new validation rule.
+func AddParamRule(r *ParamRule) {
+	paramRuleMapper = append(paramRuleMapper, r)
 }
 
 func in(fieldValue interface{}, arr string) bool {
@@ -356,17 +428,27 @@ VALIDATE_RULES:
 				break VALIDATE_RULES
 			}
 		case rule == "Required":
+			v := reflect.ValueOf(fieldValue)
+			if v.Kind() == reflect.Slice {
+				if v.Len() == 0 {
+					errors.Add([]string{field.Name}, ERR_REQUIRED, "Required")
+					break VALIDATE_RULES
+				}
+
+				continue
+			}
+
 			if reflect.DeepEqual(zero, fieldValue) {
 				errors.Add([]string{field.Name}, ERR_REQUIRED, "Required")
 				break VALIDATE_RULES
 			}
 		case rule == "AlphaDash":
-			if alphaDashPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
+			if AlphaDashPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
 				errors.Add([]string{field.Name}, ERR_ALPHA_DASH, "AlphaDash")
 				break VALIDATE_RULES
 			}
 		case rule == "AlphaDashDot":
-			if alphaDashDotPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
+			if AlphaDashDotPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
 				errors.Add([]string{field.Name}, ERR_ALPHA_DASH_DOT, "AlphaDashDot")
 				break VALIDATE_RULES
 			}
@@ -414,7 +496,7 @@ VALIDATE_RULES:
 				break VALIDATE_RULES
 			}
 		case rule == "Email":
-			if !emailPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
+			if !EmailPattern.MatchString(fmt.Sprintf("%v", fieldValue)) {
 				errors.Add([]string{field.Name}, ERR_EMAIL, "Email")
 				break VALIDATE_RULES
 			}
@@ -422,7 +504,7 @@ VALIDATE_RULES:
 			str := fmt.Sprintf("%v", fieldValue)
 			if len(str) == 0 {
 				continue
-			} else if !urlPattern.MatchString(str) {
+			} else if !isURL(str) {
 				errors.Add([]string{field.Name}, ERR_URL, "Url")
 				break VALIDATE_RULES
 			}
@@ -449,17 +531,29 @@ VALIDATE_RULES:
 		case strings.HasPrefix(rule, "Default("):
 			if reflect.DeepEqual(zero, fieldValue) {
 				if fieldVal.CanAddr() {
-					setWithProperType(field.Type.Kind(), rule[8:len(rule)-1], fieldVal, field.Tag.Get("form"), errors)
+					errors = setWithProperType(field.Type.Kind(), rule[8:len(rule)-1], fieldVal, field.Tag.Get("form"), errors)
 				} else {
 					errors.Add([]string{field.Name}, ERR_EXCLUDE, "Default")
 					break VALIDATE_RULES
 				}
 			}
 		default:
-			// Apply custom validation rules.
+			// Apply custom validation rules
+			var isValid bool
 			for i := range ruleMapper {
-				if ruleMapper[i].IsMatch(rule) && !ruleMapper[i].IsValid(errors, field.Name, fieldValue) {
-					break VALIDATE_RULES
+				if ruleMapper[i].IsMatch(rule) {
+					isValid, errors = ruleMapper[i].IsValid(errors, field.Name, fieldValue)
+					if !isValid {
+						break VALIDATE_RULES
+					}
+				}
+			}
+			for i := range paramRuleMapper {
+				if paramRuleMapper[i].IsMatch(rule) {
+					isValid, errors = paramRuleMapper[i].IsValid(errors, rule, field.Name, fieldValue)
+					if !isValid {
+						break VALIDATE_RULES
+					}
 				}
 			}
 		}
@@ -493,7 +587,7 @@ func SetNameMapper(nm NameMapper) {
 
 // Takes values from the form data and puts them into a struct
 func mapForm(formStruct reflect.Value, form map[string][]string,
-	formfile map[string][]*multipart.FileHeader, errors Errors) {
+	formfile map[string][]*multipart.FileHeader, errors Errors) Errors {
 
 	if formStruct.Kind() == reflect.Ptr {
 		formStruct = formStruct.Elem()
@@ -506,12 +600,12 @@ func mapForm(formStruct reflect.Value, form map[string][]string,
 
 		if typeField.Type.Kind() == reflect.Ptr && typeField.Anonymous {
 			structField.Set(reflect.New(typeField.Type.Elem()))
-			mapForm(structField.Elem(), form, formfile, errors)
+			errors = mapForm(structField.Elem(), form, formfile, errors)
 			if reflect.DeepEqual(structField.Elem().Interface(), reflect.Zero(structField.Elem().Type()).Interface()) {
 				structField.Set(reflect.Zero(structField.Type()))
 			}
 		} else if typeField.Type.Kind() == reflect.Struct {
-			mapForm(structField, form, formfile, errors)
+			errors = mapForm(structField, form, formfile, errors)
 		}
 
 		inputFieldName := parseFormName(typeField.Name, typeField.Tag.Get("form"))
@@ -526,11 +620,11 @@ func mapForm(formStruct reflect.Value, form map[string][]string,
 				sliceOf := structField.Type().Elem().Kind()
 				slice := reflect.MakeSlice(structField.Type(), numElems, numElems)
 				for i := 0; i < numElems; i++ {
-					setWithProperType(sliceOf, inputValue[i], slice.Index(i), inputFieldName, errors)
+					errors = setWithProperType(sliceOf, inputValue[i], slice.Index(i), inputFieldName, errors)
 				}
 				formStruct.Field(i).Set(slice)
 			} else {
-				setWithProperType(typeField.Type.Kind(), inputValue[0], structField, inputFieldName, errors)
+				errors = setWithProperType(typeField.Type.Kind(), inputValue[0], structField, inputFieldName, errors)
 			}
 			continue
 		}
@@ -551,13 +645,14 @@ func mapForm(formStruct reflect.Value, form map[string][]string,
 			structField.Set(reflect.ValueOf(inputFile[0]))
 		}
 	}
+	return errors
 }
 
 // This sets the value in a struct of an indeterminate type to the
 // matching value from the request (via Form middleware) in the
 // same type, so that not all deserialized values have to be strings.
 // Supported types are string, int, float, and bool.
-func setWithProperType(valueKind reflect.Kind, val string, structField reflect.Value, nameInTag string, errors Errors) {
+func setWithProperType(valueKind reflect.Kind, val string, structField reflect.Value, nameInTag string, errors Errors) Errors {
 	switch valueKind {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if val == "" {
@@ -582,7 +677,7 @@ func setWithProperType(valueKind reflect.Kind, val string, structField reflect.V
 	case reflect.Bool:
 		if val == "on" {
 			structField.SetBool(true)
-			return
+			break
 		}
 
 		if val == "" {
@@ -617,6 +712,7 @@ func setWithProperType(valueKind reflect.Kind, val string, structField reflect.V
 	case reflect.String:
 		structField.SetString(val)
 	}
+	return errors
 }
 
 // Don't pass in pointers to bind to. Can lead to bugs.

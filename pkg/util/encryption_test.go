@@ -18,9 +18,11 @@ func TestEncryption(t *testing.T) {
 	})
 
 	Convey("When decrypting basic payload", t, func() {
-		encrypted := Encrypt([]byte("grafana"), "1234")
-		decrypted := Decrypt(encrypted, "1234")
+		encrypted, encryptErr := Encrypt([]byte("grafana"), "1234")
+		decrypted, decryptErr := Decrypt(encrypted, "1234")
 
+		So(encryptErr, ShouldBeNil)
+		So(decryptErr, ShouldBeNil)
 		So(string(decrypted), ShouldEqual, "grafana")
 	})
 

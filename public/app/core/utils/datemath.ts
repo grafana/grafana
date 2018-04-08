@@ -1,14 +1,18 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import moment from 'moment';
 
 var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
-export function parse(text, roundUp?) {
-  if (!text) { return undefined; }
-  if (moment.isMoment(text)) { return text; }
-  if (_.isDate(text)) { return moment(text); }
+export function parse(text, roundUp?, timezone?) {
+  if (!text) {
+    return undefined;
+  }
+  if (moment.isMoment(text)) {
+    return text;
+  }
+  if (_.isDate(text)) {
+    return moment(text);
+  }
 
   var time;
   var mathString = '';
@@ -16,7 +20,11 @@ export function parse(text, roundUp?) {
   var parseString;
 
   if (text.substring(0, 3) === 'now') {
-    time = moment();
+    if (timezone === 'utc') {
+      time = moment.utc();
+    } else {
+      time = moment();
+    }
     mathString = text.substring('now'.length);
   } else {
     index = text.indexOf('||');
@@ -80,7 +88,9 @@ export function parseDateMath(mathString, time, roundUp?) {
       var numFrom = i;
       while (!isNaN(mathString.charAt(i))) {
         i++;
-        if (i > 10) { return undefined; }
+        if (i > 10) {
+          return undefined;
+        }
       }
       num = parseInt(mathString.substring(numFrom, i), 10);
     }
@@ -111,4 +121,3 @@ export function parseDateMath(mathString, time, roundUp?) {
   }
   return dateTime;
 }
-

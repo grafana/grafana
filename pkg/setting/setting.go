@@ -27,6 +27,7 @@ type Scheme string
 const (
 	HTTP              Scheme = "http"
 	HTTPS             Scheme = "https"
+	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
 )
 
@@ -49,11 +50,12 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath       string
-	HomePath       string
-	DataPath       string
-	PluginsPath    string
-	CustomInitPath = "conf/custom.ini"
+	LogsPath         string
+	HomePath         string
+	DataPath         string
+	PluginsPath      string
+	ProvisioningPath string
+	CustomInitPath   = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -65,6 +67,7 @@ var (
 	HttpAddr, HttpPort string
 	SshPort            int
 	CertFile, KeyFile  string
+	SocketPath         string
 	RouterLogging      bool
 	DataProxyLogging   bool
 	StaticRootPath     string
@@ -72,30 +75,38 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey             string
-	LogInRememberDays     int
-	CookieUserName        string
-	CookieRememberName    string
-	DisableGravatar       bool
-	EmailCodeValidMinutes int
-	DataProxyWhiteList    map[string]bool
+	SecretKey                        string
+	LogInRememberDays                int
+	CookieUserName                   string
+	CookieRememberName               string
+	DisableGravatar                  bool
+	EmailCodeValidMinutes            int
+	DataProxyWhiteList               map[string]bool
+	DisableBruteForceLoginProtection bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
 	ExternalSnapshotName  string
 	ExternalEnabled       bool
-	SnapShotTTLDays       int
 	SnapShotRemoveExpired bool
 
+	// Dashboard history
+	DashboardVersionsToKeep int
+
 	// User settings
-	AllowUserSignUp    bool
-	AllowUserOrgCreate bool
-	AutoAssignOrg      bool
-	AutoAssignOrgRole  string
-	VerifyEmailEnabled bool
-	LoginHint          string
-	DefaultTheme       string
-	DisableLoginForm   bool
+	AllowUserSignUp         bool
+	AllowUserOrgCreate      bool
+	AutoAssignOrg           bool
+	AutoAssignOrgRole       string
+	VerifyEmailEnabled      bool
+	LoginHint               string
+	DefaultTheme            string
+	DisableLoginForm        bool
+	DisableSignoutMenu      bool
+	ExternalUserMngLinkUrl  string
+	ExternalUserMngLinkName string
+	ExternalUserMngInfo     string
+	ViewersCanEdit          bool
 
 	// Http auth
 	AdminUser     string
@@ -116,8 +127,12 @@ var (
 	// Basic Auth
 	BasicAuthEnabled bool
 
+	// Plugin settings
+	PluginAppsSkipVerifyTLS bool
+
 	// Session settings.
-	SessionOptions session.Options
+	SessionOptions         session.Options
+	SessionConnMaxLifetime int64
 
 	// Global setting objects.
 	Cfg          *ini.File
@@ -157,7 +172,7 @@ var (
 	logger log.Logger
 
 	// Grafana.NET URL
-	GrafanaNetUrl string
+	GrafanaComUrl string
 
 	// S3 temp image store
 	S3TempImageStoreBucketUrl string
@@ -208,7 +223,7 @@ func shouldRedactURLKey(s string) bool {
 	return strings.Contains(uppercased, "DATABASE_URL")
 }
 
-func applyEnvVariableOverrides() {
+func applyEnvVariableOverrides() error {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range Cfg.Sections() {
 		for _, key := range section.Keys() {
@@ -223,7 +238,10 @@ func applyEnvVariableOverrides() {
 					envValue = "*********"
 				}
 				if shouldRedactURLKey(envKey) {
-					u, _ := url.Parse(envValue)
+					u, err := url.Parse(envValue)
+					if err != nil {
+						return fmt.Errorf("could not parse environment variable. key: %s, value: %s. error: %v", envKey, envValue, err)
+					}
 					ui := u.User
 					if ui != nil {
 						_, exists := ui.Password()
@@ -237,6 +255,8 @@ func applyEnvVariableOverrides() {
 			}
 		}
 	}
+
+	return nil
 }
 
 func applyCommandLineDefaultProperties(props map[string]string) {
@@ -258,12 +278,16 @@ func applyCommandLineDefaultProperties(props map[string]string) {
 
 func applyCommandLineProperties(props map[string]string) {
 	for _, section := range Cfg.Sections() {
+		sectionName := section.Name() + "."
+		if section.Name() == ini.DEFAULT_SECTION {
+			sectionName = ""
+		}
 		for _, key := range section.Keys() {
-			keyString := fmt.Sprintf("%s.%s", section.Name(), key.Name())
+			keyString := sectionName + key.Name()
 			value, exists := props[keyString]
 			if exists {
-				key.SetValue(value)
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+				key.SetValue(value)
 			}
 		}
 	}
@@ -303,7 +327,7 @@ func evalEnvVarExpression(value string) string {
 		envVar = strings.TrimSuffix(envVar, "}")
 		envValue := os.Getenv(envVar)
 
-		// if env variable is hostname and it is emtpy use os.Hostname as default
+		// if env variable is hostname and it is empty use os.Hostname as default
 		if envVar == "HOSTNAME" && envValue == "" {
 			envValue, _ = os.Hostname()
 		}
@@ -358,7 +382,7 @@ func loadSpecifedConfigFile(configFile string) error {
 	return nil
 }
 
-func loadConfiguration(args *CommandLineArgs) {
+func loadConfiguration(args *CommandLineArgs) error {
 	var err error
 
 	// load config defaults
@@ -376,7 +400,7 @@ func loadConfiguration(args *CommandLineArgs) {
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
 		os.Exit(1)
-		return
+		return err
 	}
 
 	Cfg.BlockMode = false
@@ -394,7 +418,10 @@ func loadConfiguration(args *CommandLineArgs) {
 	}
 
 	// apply environment overrides
-	applyEnvVariableOverrides()
+	err = applyEnvVariableOverrides()
+	if err != nil {
+		return err
+	}
 
 	// apply command line overrides
 	applyCommandLineProperties(commandLineProps)
@@ -405,6 +432,8 @@ func loadConfiguration(args *CommandLineArgs) {
 	// update data path and logging config
 	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
 	initLogging()
+
+	return err
 }
 
 func pathExists(path string) bool {
@@ -443,26 +472,24 @@ func validateStaticRootPath() error {
 		return nil
 	}
 
-	if _, err := os.Stat(path.Join(StaticRootPath, "css")); err == nil {
-		return nil
+	if _, err := os.Stat(path.Join(StaticRootPath, "build")); err != nil {
+		logger.Error("Failed to detect generated javascript files in public/build")
 	}
 
-	if _, err := os.Stat(StaticRootPath + "_gen/css"); err == nil {
-		StaticRootPath = StaticRootPath + "_gen"
-		return nil
-	}
-
-	return fmt.Errorf("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", StaticRootPath)
+	return nil
 }
 
 func NewConfigContext(args *CommandLineArgs) error {
 	setHomePath(args)
-	loadConfiguration(args)
+	err := loadConfiguration(args)
+	if err != nil {
+		return err
+	}
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
-
+	ProvisioningPath = makeAbsolute(Cfg.Section("paths").Key("provisioning").String(), HomePath)
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
 
@@ -471,6 +498,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 		Protocol = HTTPS
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
+	}
+	if server.Key("protocol").MustString("http") == "socket" {
+		Protocol = SOCKET
+		SocketPath = server.Key("socket").String()
 	}
 
 	Domain = server.Key("domain").MustString("localhost")
@@ -497,6 +528,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+	DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 
 	// read snapshots settings
 	snapshots := Cfg.Section("snapshots")
@@ -504,11 +536,14 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
-	SnapShotTTLDays = snapshots.Key("snapshot_TTL_days").MustInt(90)
+
+	// read dashboard settings
+	dashboards := Cfg.Section("dashboards")
+	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
-	for _, hostAndIp := range security.Key("data_source_proxy_whitelist").Strings(" ") {
+	for _, hostAndIp := range util.SplitString(security.Key("data_source_proxy_whitelist").String()) {
 		DataProxyWhiteList[hostAndIp] = true
 	}
 
@@ -520,14 +555,19 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
+	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
+	ExternalUserMngLinkUrl = users.Key("external_manage_link_url").String()
+	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
+	ExternalUserMngInfo = users.Key("external_manage_info").String()
+	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 
 	// auth
 	auth := Cfg.Section("auth")
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -547,9 +587,12 @@ func NewConfigContext(args *CommandLineArgs) error {
 	authBasic := Cfg.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 
+	// global plugin settings
+	PluginAppsSkipVerifyTLS = Cfg.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
+
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
-	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
+	PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -571,13 +614,17 @@ func NewConfigContext(args *CommandLineArgs) error {
 	readQuotaSettings()
 
 	if VerifyEmailEnabled && !Smtp.Enabled {
-		log.Warn("require_email_validation is enabled but smpt is disabled")
+		log.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
-	GrafanaNetUrl = Cfg.Section("grafana_net").Key("url").MustString("https://grafana.com")
+	// check old key  name
+	GrafanaComUrl = Cfg.Section("grafana_net").Key("url").MustString("")
+	if GrafanaComUrl == "" {
+		GrafanaComUrl = Cfg.Section("grafana_com").Key("url").MustString("https://grafana.com")
+	}
 
 	imageUploadingSection := Cfg.Section("external_image_storage")
-	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")
+	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("")
 	return nil
 }
 
@@ -601,6 +648,8 @@ func readSessionConfig() {
 	if SessionOptions.CookiePath == "" {
 		SessionOptions.CookiePath = "/"
 	}
+
+	SessionConnMaxLifetime = Cfg.Section("session").Key("conn_max_lifetime").MustInt64(14400)
 }
 
 func initLogging() {
@@ -623,14 +672,14 @@ func LogConfigurationInfo() {
 
 	if len(appliedCommandLineProperties) > 0 {
 		for _, prop := range appliedCommandLineProperties {
-			logger.Info("Config overriden from command line", "arg", prop)
+			logger.Info("Config overridden from command line", "arg", prop)
 		}
 	}
 
 	if len(appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
 		for _, prop := range appliedEnvOverrides {
-			logger.Info("Config overriden from Environment variable", "var", prop)
+			logger.Info("Config overridden from Environment variable", "var", prop)
 		}
 	}
 
@@ -638,4 +687,6 @@ func LogConfigurationInfo() {
 	logger.Info("Path Data", "path", DataPath)
 	logger.Info("Path Logs", "path", LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
+	logger.Info("Path Provisioning", "path", ProvisioningPath)
+	logger.Info("App mode " + Env)
 }

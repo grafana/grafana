@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"reflect"
 	"regexp"
-	"sync"
 )
 
 func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
@@ -15,12 +15,19 @@ func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
 		return "", []interface{}{}, ErrNoMapPointer
 	}
 
-	args := make([]interface{}, 0)
+	args := make([]interface{}, 0, len(vv.Elem().MapKeys()))
+	var err error
 	query = re.ReplaceAllStringFunc(query, func(src string) string {
-		args = append(args, vv.Elem().MapIndex(reflect.ValueOf(src[1:])).Interface())
+		v := vv.Elem().MapIndex(reflect.ValueOf(src[1:]))
+		if !v.IsValid() {
+			err = fmt.Errorf("map key %s is missing", src[1:])
+		} else {
+			args = append(args, v.Interface())
+		}
 		return "?"
 	})
-	return query, args, nil
+
+	return query, args, err
 }
 
 func StructToSlice(query string, st interface{}) (string, []interface{}, error) {
@@ -95,82 +102,12 @@ func (db *DB) QueryStruct(query string, st interface{}) (*Rows, error) {
 	return db.Query(query, args...)
 }
 
-type Row struct {
-	rows *Rows
-	// One of these two will be non-nil:
-	err error // deferred error for easy chaining
-}
-
-func (row *Row) Columns() ([]string, error) {
-	if row.err != nil {
-		return nil, row.err
-	}
-	return row.rows.Columns()
-}
-
-func (row *Row) Scan(dest ...interface{}) error {
-	if row.err != nil {
-		return row.err
-	}
-	defer row.rows.Close()
-
-	for _, dp := range dest {
-		if _, ok := dp.(*sql.RawBytes); ok {
-			return errors.New("sql: RawBytes isn't allowed on Row.Scan")
-		}
-	}
-
-	if !row.rows.Next() {
-		if err := row.rows.Err(); err != nil {
-			return err
-		}
-		return sql.ErrNoRows
-	}
-	err := row.rows.Scan(dest...)
-	if err != nil {
-		return err
-	}
-	// Make sure the query can be processed to completion with no errors.
-	if err := row.rows.Close(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (row *Row) ScanStructByName(dest interface{}) error {
-	if row.err != nil {
-		return row.err
-	}
-	return row.rows.ScanStructByName(dest)
-}
-
-func (row *Row) ScanStructByIndex(dest interface{}) error {
-	if row.err != nil {
-		return row.err
-	}
-	return row.rows.ScanStructByIndex(dest)
-}
-
-// scan data to a slice's pointer, slice's length should equal to columns' number
-func (row *Row) ScanSlice(dest interface{}) error {
-	if row.err != nil {
-		return row.err
-	}
-	return row.rows.ScanSlice(dest)
-}
-
-// scan data to a map's pointer
-func (row *Row) ScanMap(dest interface{}) error {
-	if row.err != nil {
-		return row.err
-	}
-	return row.rows.ScanMap(dest)
-}
-
 func (db *DB) QueryRow(query string, args ...interface{}) *Row {
 	rows, err := db.Query(query, args...)
-	return &Row{rows, err}
+	if err != nil {
+		return &Row{nil, err}
+	}
+	return &Row{rows, nil}
 }
 
 func (db *DB) QueryRowMap(query string, mp interface{}) *Row {
@@ -328,229 +265,12 @@ func (db *DB) ExecStruct(query string, st interface{}) (sql.Result, error) {
 	return db.DB.Exec(query, args...)
 }
 
-type Rows struct {
-	*sql.Rows
-	Mapper IMapper
-}
-
-// scan data to a struct's pointer according field index
-func (rs *Rows) ScanStructByIndex(dest ...interface{}) error {
-	if len(dest) == 0 {
-		return errors.New("at least one struct")
-	}
-
-	vvvs := make([]reflect.Value, len(dest))
-	for i, s := range dest {
-		vv := reflect.ValueOf(s)
-		if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
-			return errors.New("dest should be a struct's pointer")
-		}
-
-		vvvs[i] = vv.Elem()
-	}
-
-	cols, err := rs.Columns()
-	if err != nil {
-		return err
-	}
-	newDest := make([]interface{}, len(cols))
-
-	var i = 0
-	for _, vvv := range vvvs {
-		for j := 0; j < vvv.NumField(); j++ {
-			newDest[i] = vvv.Field(j).Addr().Interface()
-			i = i + 1
-		}
-	}
-
-	return rs.Rows.Scan(newDest...)
-}
-
 type EmptyScanner struct {
 }
 
 func (EmptyScanner) Scan(src interface{}) error {
 	return nil
 }
-
-var (
-	fieldCache      = make(map[reflect.Type]map[string]int)
-	fieldCacheMutex sync.RWMutex
-)
-
-func fieldByName(v reflect.Value, name string) reflect.Value {
-	t := v.Type()
-	fieldCacheMutex.RLock()
-	cache, ok := fieldCache[t]
-	fieldCacheMutex.RUnlock()
-	if !ok {
-		cache = make(map[string]int)
-		for i := 0; i < v.NumField(); i++ {
-			cache[t.Field(i).Name] = i
-		}
-		fieldCacheMutex.Lock()
-		fieldCache[t] = cache
-		fieldCacheMutex.Unlock()
-	}
-
-	if i, ok := cache[name]; ok {
-		return v.Field(i)
-	}
-
-	return reflect.Zero(t)
-}
-
-// scan data to a struct's pointer according field name
-func (rs *Rows) ScanStructByName(dest interface{}) error {
-	vv := reflect.ValueOf(dest)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
-		return errors.New("dest should be a struct's pointer")
-	}
-
-	cols, err := rs.Columns()
-	if err != nil {
-		return err
-	}
-
-	newDest := make([]interface{}, len(cols))
-	var v EmptyScanner
-	for j, name := range cols {
-		f := fieldByName(vv.Elem(), rs.Mapper.Table2Obj(name))
-		if f.IsValid() {
-			newDest[j] = f.Addr().Interface()
-		} else {
-			newDest[j] = &v
-		}
-	}
-
-	return rs.Rows.Scan(newDest...)
-}
-
-type cacheStruct struct {
-	value reflect.Value
-	idx   int
-}
-
-var (
-	reflectCache      = make(map[reflect.Type]*cacheStruct)
-	reflectCacheMutex sync.RWMutex
-)
-
-func ReflectNew(typ reflect.Type) reflect.Value {
-	reflectCacheMutex.RLock()
-	cs, ok := reflectCache[typ]
-	reflectCacheMutex.RUnlock()
-
-	const newSize = 200
-
-	if !ok || cs.idx+1 > newSize-1 {
-		cs = &cacheStruct{reflect.MakeSlice(reflect.SliceOf(typ), newSize, newSize), 0}
-		reflectCacheMutex.Lock()
-		reflectCache[typ] = cs
-		reflectCacheMutex.Unlock()
-	} else {
-		reflectCacheMutex.Lock()
-		cs.idx = cs.idx + 1
-		reflectCacheMutex.Unlock()
-	}
-	return cs.value.Index(cs.idx).Addr()
-}
-
-// scan data to a slice's pointer, slice's length should equal to columns' number
-func (rs *Rows) ScanSlice(dest interface{}) error {
-	vv := reflect.ValueOf(dest)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Slice {
-		return errors.New("dest should be a slice's pointer")
-	}
-
-	vvv := vv.Elem()
-	cols, err := rs.Columns()
-	if err != nil {
-		return err
-	}
-
-	newDest := make([]interface{}, len(cols))
-
-	for j := 0; j < len(cols); j++ {
-		if j >= vvv.Len() {
-			newDest[j] = reflect.New(vvv.Type().Elem()).Interface()
-		} else {
-			newDest[j] = vvv.Index(j).Addr().Interface()
-		}
-	}
-
-	err = rs.Rows.Scan(newDest...)
-	if err != nil {
-		return err
-	}
-
-	srcLen := vvv.Len()
-	for i := srcLen; i < len(cols); i++ {
-		vvv = reflect.Append(vvv, reflect.ValueOf(newDest[i]).Elem())
-	}
-	return nil
-}
-
-// scan data to a map's pointer
-func (rs *Rows) ScanMap(dest interface{}) error {
-	vv := reflect.ValueOf(dest)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
-		return errors.New("dest should be a map's pointer")
-	}
-
-	cols, err := rs.Columns()
-	if err != nil {
-		return err
-	}
-
-	newDest := make([]interface{}, len(cols))
-	vvv := vv.Elem()
-
-	for i, _ := range cols {
-		newDest[i] = ReflectNew(vvv.Type().Elem()).Interface()
-		//v := reflect.New(vvv.Type().Elem())
-		//newDest[i] = v.Interface()
-	}
-
-	err = rs.Rows.Scan(newDest...)
-	if err != nil {
-		return err
-	}
-
-	for i, name := range cols {
-		vname := reflect.ValueOf(name)
-		vvv.SetMapIndex(vname, reflect.ValueOf(newDest[i]).Elem())
-	}
-
-	return nil
-}
-
-/*func (rs *Rows) ScanMap(dest interface{}) error {
-	vv := reflect.ValueOf(dest)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
-		return errors.New("dest should be a map's pointer")
-	}
-
-	cols, err := rs.Columns()
-	if err != nil {
-		return err
-	}
-
-	newDest := make([]interface{}, len(cols))
-	err = rs.ScanSlice(newDest)
-	if err != nil {
-		return err
-	}
-
-	vvv := vv.Elem()
-
-	for i, name := range cols {
-		vname := reflect.ValueOf(name)
-		vvv.SetMapIndex(vname, reflect.ValueOf(newDest[i]).Elem())
-	}
-
-	return nil
-}*/
 
 type Tx struct {
 	*sql.Tx

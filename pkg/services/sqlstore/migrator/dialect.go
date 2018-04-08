@@ -19,6 +19,7 @@ type Dialect interface {
 	LikeStr() string
 	Default(col *Column) string
 	BooleanStr(bool) string
+	DateTimeFunc(string) string
 
 	CreateIndexSql(tableName string, index *Index) string
 	CreateTableSql(table *Table) string
@@ -29,6 +30,7 @@ type Dialect interface {
 
 	TableCheckSql(tableName string) (string, []interface{})
 	RenameTable(oldName string, newName string) string
+	UpdateTableSql(tableName string, columns []*Column) string
 }
 
 func NewDialect(name string) Dialect {
@@ -77,6 +79,10 @@ func (b *BaseDialect) Default(col *Column) string {
 	return col.Default
 }
 
+func (db *BaseDialect) DateTimeFunc(value string) string {
+	return value
+}
+
 func (b *BaseDialect) CreateTableSql(table *Table) string {
 	var sql string
 	sql = "CREATE TABLE IF NOT EXISTS "
@@ -102,7 +108,7 @@ func (b *BaseDialect) CreateTableSql(table *Table) string {
 
 	sql = sql[:len(sql)-2] + ")"
 	if b.dialect.SupportEngine() {
-		sql += " ENGINE=InnoDB DEFAULT CHARSET UTF8 "
+		sql += " ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci"
 	}
 
 	sql += ";"
@@ -159,4 +165,8 @@ func (db *BaseDialect) DropIndexSql(tableName string, index *Index) string {
 	var name string
 	name = index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
+}
+
+func (db *BaseDialect) UpdateTableSql(tableName string, columns []*Column) string {
+	return "-- NOT REQUIRED"
 }

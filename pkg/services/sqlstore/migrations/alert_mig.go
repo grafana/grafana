@@ -16,7 +16,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "message", Type: DB_Text, Nullable: false},
-			{Name: "state", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "state", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "settings", Type: DB_Text, Nullable: false},
 			{Name: "frequency", Type: DB_BigInt, Nullable: false},
 			{Name: "handler", Type: DB_BigInt, Nullable: false},
@@ -50,7 +50,7 @@ func addAlertMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "settings", Type: DB_Text, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
@@ -67,4 +67,19 @@ func addAlertMigrations(mg *Migrator) {
 	}))
 	mg.AddMigration("add index alert_notification org_id & name", NewAddIndexMigration(alert_notification, alert_notification.Indices[0]))
 
+	mg.AddMigration("Update alert table charset", NewTableCharsetMigration("alert", []*Column{
+		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "message", Type: DB_Text, Nullable: false},
+		{Name: "state", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "settings", Type: DB_Text, Nullable: false},
+		{Name: "severity", Type: DB_Text, Nullable: false},
+		{Name: "execution_error", Type: DB_Text, Nullable: false},
+		{Name: "eval_data", Type: DB_Text, Nullable: true},
+	}))
+
+	mg.AddMigration("Update alert_notification table charset", NewTableCharsetMigration("alert_notification", []*Column{
+		{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "settings", Type: DB_Text, Nullable: false},
+	}))
 }

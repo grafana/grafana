@@ -1,16 +1,17 @@
 # http://editorconfig.org
 root = true
 
-[*.go]
-indent_style = tab
+[*]
+indent_style = space
 indent_size = 2
 charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
+max_line_length = 120
 
-[*]
-indent_style = space
-indent_size = 2
+[*.go]
+indent_style = tab
+indent_size = 4
 charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true

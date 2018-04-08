@@ -1,8 +1,8 @@
 import '../query_ctrl';
 import 'app/core/services/segment_srv';
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
 import helpers from 'test/specs/helpers';
-import {InfluxQueryCtrl} from '../query_ctrl';
+import { InfluxQueryCtrl } from '../query_ctrl';
 
 describe('InfluxDBQueryCtrl', function() {
   var ctx = new helpers.ControllerTestContext();
@@ -10,24 +10,36 @@ describe('InfluxDBQueryCtrl', function() {
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(angularMocks.module(function($compileProvider) {
-    $compileProvider.preAssignBindingsEnabled(true);
-  }));
+  beforeEach(
+    angularMocks.module(function($compileProvider) {
+      $compileProvider.preAssignBindingsEnabled(true);
+    })
+  );
   beforeEach(ctx.providePhase());
 
-  beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {
-    ctx.$q = $q;
-    ctx.scope = $rootScope.$new();
-    ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
-    ctx.panelCtrl = {panel: {}};
-    ctx.panelCtrl.refresh = sinon.spy();
-    ctx.target = {target: {}};
-    ctx.ctrl = $controller(InfluxQueryCtrl, {$scope: ctx.scope}, {
-      panelCtrl: ctx.panelCtrl,
-      target: ctx.target,
-      datasource: ctx.datasource
-    });
-  }));
+  beforeEach(
+    angularMocks.inject(($rootScope, $controller, $q) => {
+      ctx.$q = $q;
+      ctx.scope = $rootScope.$new();
+      ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
+      ctx.target = { target: {} };
+      ctx.panelCtrl = {
+        panel: {
+          targets: [ctx.target],
+        },
+      };
+      ctx.panelCtrl.refresh = sinon.spy();
+      ctx.ctrl = $controller(
+        InfluxQueryCtrl,
+        { $scope: ctx.scope },
+        {
+          panelCtrl: ctx.panelCtrl,
+          target: ctx.target,
+          datasource: ctx.datasource,
+        }
+      );
+    })
+  );
 
   describe('init', function() {
     it('should init tagSegments', function() {
@@ -41,7 +53,7 @@ describe('InfluxDBQueryCtrl', function() {
 
   describe('when first tag segment is updated', function() {
     beforeEach(function() {
-      ctx.ctrl.tagSegmentUpdated({value: 'asd', type: 'plus-button'}, 0);
+      ctx.ctrl.tagSegmentUpdated({ value: 'asd', type: 'plus-button' }, 0);
     });
 
     it('should update tag key', function() {
@@ -56,8 +68,8 @@ describe('InfluxDBQueryCtrl', function() {
 
   describe('when last tag value segment is updated', function() {
     beforeEach(function() {
-      ctx.ctrl.tagSegmentUpdated({value: 'asd', type: 'plus-button'}, 0);
-      ctx.ctrl.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
+      ctx.ctrl.tagSegmentUpdated({ value: 'asd', type: 'plus-button' }, 0);
+      ctx.ctrl.tagSegmentUpdated({ value: 'server1', type: 'value' }, 2);
     });
 
     it('should update tag value', function() {
@@ -75,8 +87,8 @@ describe('InfluxDBQueryCtrl', function() {
 
   describe('when last tag value segment is updated to regex', function() {
     beforeEach(function() {
-      ctx.ctrl.tagSegmentUpdated({value: 'asd', type: 'plus-button'}, 0);
-      ctx.ctrl.tagSegmentUpdated({value: '/server.*/', type: 'value'}, 2);
+      ctx.ctrl.tagSegmentUpdated({ value: 'asd', type: 'plus-button' }, 0);
+      ctx.ctrl.tagSegmentUpdated({ value: '/server.*/', type: 'value' }, 2);
     });
 
     it('should update operator', function() {
@@ -87,9 +99,9 @@ describe('InfluxDBQueryCtrl', function() {
 
   describe('when second tag key is added', function() {
     beforeEach(function() {
-      ctx.ctrl.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
-      ctx.ctrl.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
-      ctx.ctrl.tagSegmentUpdated({value: 'key2', type: 'plus-button'}, 3);
+      ctx.ctrl.tagSegmentUpdated({ value: 'asd', type: 'plus-button' }, 0);
+      ctx.ctrl.tagSegmentUpdated({ value: 'server1', type: 'value' }, 2);
+      ctx.ctrl.tagSegmentUpdated({ value: 'key2', type: 'plus-button' }, 3);
     });
 
     it('should update tag key', function() {
@@ -103,10 +115,10 @@ describe('InfluxDBQueryCtrl', function() {
 
   describe('when condition is changed', function() {
     beforeEach(function() {
-      ctx.ctrl.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
-      ctx.ctrl.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
-      ctx.ctrl.tagSegmentUpdated({value: 'key2', type: 'plus-button'}, 3);
-      ctx.ctrl.tagSegmentUpdated({value: 'OR', type: 'condition'}, 3);
+      ctx.ctrl.tagSegmentUpdated({ value: 'asd', type: 'plus-button' }, 0);
+      ctx.ctrl.tagSegmentUpdated({ value: 'server1', type: 'value' }, 2);
+      ctx.ctrl.tagSegmentUpdated({ value: 'key2', type: 'plus-button' }, 3);
+      ctx.ctrl.tagSegmentUpdated({ value: 'OR', type: 'condition' }, 3);
     });
 
     it('should update tag condition', function() {
@@ -121,8 +133,8 @@ describe('InfluxDBQueryCtrl', function() {
 
   describe('when deleting first tag filter after value is selected', function() {
     beforeEach(function() {
-      ctx.ctrl.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
-      ctx.ctrl.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
+      ctx.ctrl.tagSegmentUpdated({ value: 'asd', type: 'plus-button' }, 0);
+      ctx.ctrl.tagSegmentUpdated({ value: 'server1', type: 'value' }, 2);
       ctx.ctrl.tagSegmentUpdated(ctx.ctrl.removeTagFilterSegment, 0);
     });
 
@@ -138,9 +150,9 @@ describe('InfluxDBQueryCtrl', function() {
 
   describe('when deleting second tag value before second tag value is complete', function() {
     beforeEach(function() {
-      ctx.ctrl.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
-      ctx.ctrl.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
-      ctx.ctrl.tagSegmentUpdated({value: 'key2', type: 'plus-button'}, 3);
+      ctx.ctrl.tagSegmentUpdated({ value: 'asd', type: 'plus-button' }, 0);
+      ctx.ctrl.tagSegmentUpdated({ value: 'server1', type: 'value' }, 2);
+      ctx.ctrl.tagSegmentUpdated({ value: 'key2', type: 'plus-button' }, 3);
       ctx.ctrl.tagSegmentUpdated(ctx.ctrl.removeTagFilterSegment, 4);
     });
 
@@ -152,9 +164,9 @@ describe('InfluxDBQueryCtrl', function() {
 
   describe('when deleting second tag value before second tag value is complete', function() {
     beforeEach(function() {
-      ctx.ctrl.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
-      ctx.ctrl.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
-      ctx.ctrl.tagSegmentUpdated({value: 'key2', type: 'plus-button'}, 3);
+      ctx.ctrl.tagSegmentUpdated({ value: 'asd', type: 'plus-button' }, 0);
+      ctx.ctrl.tagSegmentUpdated({ value: 'server1', type: 'value' }, 2);
+      ctx.ctrl.tagSegmentUpdated({ value: 'key2', type: 'plus-button' }, 3);
       ctx.ctrl.tagSegmentUpdated(ctx.ctrl.removeTagFilterSegment, 4);
     });
 
@@ -166,10 +178,10 @@ describe('InfluxDBQueryCtrl', function() {
 
   describe('when deleting second tag value after second tag filter is complete', function() {
     beforeEach(function() {
-      ctx.ctrl.tagSegmentUpdated({value: 'asd', type: 'plus-button' }, 0);
-      ctx.ctrl.tagSegmentUpdated({value: 'server1', type: 'value'}, 2);
-      ctx.ctrl.tagSegmentUpdated({value: 'key2', type: 'plus-button'}, 3);
-      ctx.ctrl.tagSegmentUpdated({value: 'value', type: 'value'}, 6);
+      ctx.ctrl.tagSegmentUpdated({ value: 'asd', type: 'plus-button' }, 0);
+      ctx.ctrl.tagSegmentUpdated({ value: 'server1', type: 'value' }, 2);
+      ctx.ctrl.tagSegmentUpdated({ value: 'key2', type: 'plus-button' }, 3);
+      ctx.ctrl.tagSegmentUpdated({ value: 'value', type: 'value' }, 6);
       ctx.ctrl.tagSegmentUpdated(ctx.ctrl.removeTagFilterSegment, 4);
     });
 

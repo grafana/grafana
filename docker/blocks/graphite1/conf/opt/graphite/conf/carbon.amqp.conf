@@ -1,0 +1,75 @@
+# This is a configuration file with AMQP enabled
+
+[cache]
+LOCAL_DATA_DIR =
+
+# Specify the user to drop privileges to
+# If this is blank carbon runs as the user that invokes it
+# This user must have write access to the local data directory
+USER =
+
+# Limit the size of the cache to avoid swapping or becoming CPU bound.
+# Sorts and serving cache queries gets more expensive as the cache grows.
+# Use the value "inf" (infinity) for an unlimited cache size.
+MAX_CACHE_SIZE = inf
+
+# Limits the number of whisper update_many() calls per second, which effectively
+# means the number of write requests sent to the disk. This is intended to
+# prevent over-utilizing the disk and thus starving the rest of the system.
+# When the rate of required updates exceeds this, then carbon's caching will
+# take effect and increase the overall throughput accordingly.
+MAX_UPDATES_PER_SECOND = 1000
+
+# Softly limits the number of whisper files that get created each minute.
+# Setting this value low (like at 50) is a good way to ensure your graphite
+# system will not be adversely impacted when a bunch of new metrics are
+# sent to it. The trade off is that it will take much longer for those metrics'
+# database files to all get created and thus longer until the data becomes usable.
+# Setting this value high (like "inf" for infinity) will cause graphite to create
+# the files quickly but at the risk of slowing I/O down considerably for a while.
+MAX_CREATES_PER_MINUTE = inf
+
+LINE_RECEIVER_INTERFACE = 0.0.0.0
+LINE_RECEIVER_PORT = 2003
+
+UDP_RECEIVER_INTERFACE = 0.0.0.0
+UDP_RECEIVER_PORT = 2003
+
+PICKLE_RECEIVER_INTERFACE = 0.0.0.0
+PICKLE_RECEIVER_PORT = 2004
+
+CACHE_QUERY_INTERFACE = 0.0.0.0
+CACHE_QUERY_PORT = 7002
+
+# Enable AMQP if you want to receve metrics using you amqp broker
+ENABLE_AMQP = True
+
+# Verbose means a line will be logged for every metric received
+# useful for testing
+AMQP_VERBOSE = True
+
+# your credentials for the amqp server
+# AMQP_USER = guest
+# AMQP_PASSWORD = guest
+
+# the network settings for the amqp server
+# AMQP_HOST = localhost
+# AMQP_PORT = 5672
+
+# if you want to include the metric name as part of the message body
+# instead of as the routing key, set this to True
+# AMQP_METRIC_NAME_IN_BODY = False
+
+# NOTE: you cannot run both a cache and a relay on the same server
+# with the default configuration, you have to specify a distinict
+# interfaces and ports for the listeners.
+
+[relay]
+LINE_RECEIVER_INTERFACE = 0.0.0.0
+LINE_RECEIVER_PORT = 2003
+
+PICKLE_RECEIVER_INTERFACE = 0.0.0.0
+PICKLE_RECEIVER_PORT = 2004
+
+CACHE_SERVERS = server1, server2, server3
+MAX_QUEUE_SIZE = 10000

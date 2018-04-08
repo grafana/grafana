@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -15,19 +16,25 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type RenderOpts struct {
-	Path     string
-	Width    string
-	Height   string
-	Timeout  string
-	OrgId    int64
-	Timezone string
+	Path           string
+	Width          string
+	Height         string
+	Timeout        string
+	OrgId          int64
+	UserId         int64
+	OrgRole        models.RoleType
+	Timezone       string
+	IsAlertContext bool
+	Encoding       string
 }
 
+var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with &timeout url parameter")
 var rendererLog log.Logger = log.New("png-renderer")
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {
@@ -65,38 +72,58 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		localDomain = setting.HttpAddr
 	}
 
-	url := fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, localDomain, setting.HttpPort, params.Path)
+	// &render=1 signals to the legacy redirect layer to
+	// avoid redirect these requests.
+	url := fmt.Sprintf("%s://%s:%s/%s&render=1", setting.Protocol, localDomain, setting.HttpPort, params.Path)
 
 	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))
 	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
 	pngPath = pngPath + ".png"
 
-	renderKey := middleware.AddRenderAuthKey(params.OrgId)
+	orgRole := params.OrgRole
+	if params.IsAlertContext {
+		orgRole = models.ROLE_ADMIN
+	}
+	renderKey := middleware.AddRenderAuthKey(params.OrgId, params.UserId, orgRole)
 	defer middleware.RemoveRenderAuthKey(renderKey)
+
+	timeout, err := strconv.Atoi(params.Timeout)
+	if err != nil {
+		timeout = 15
+	}
+
+	phantomDebugArg := "--debug=false"
+	if log.GetLogLevelFor("png-renderer") >= log.LvlDebug {
+		phantomDebugArg = "--debug=true"
+	}
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
 		"--web-security=false",
+		phantomDebugArg,
 		scriptPath,
 		"url=" + url,
 		"width=" + params.Width,
 		"height=" + params.Height,
 		"png=" + pngPath,
 		"domain=" + localDomain,
+		"timeout=" + strconv.Itoa(timeout),
 		"renderKey=" + renderKey,
 	}
 
+	if params.Encoding != "" {
+		cmdArgs = append([]string{fmt.Sprintf("--output-encoding=%s", params.Encoding)}, cmdArgs...)
+	}
+
 	cmd := exec.Command(binPath, cmdArgs...)
-	stdout, err := cmd.StdoutPipe()
+	output, err := cmd.StdoutPipe()
 
 	if err != nil {
+		rendererLog.Error("Could not acquire stdout pipe", err)
 		return "", err
 	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return "", err
-	}
+	cmd.Stderr = cmd.Stdout
 
 	if params.Timezone != "" {
 		baseEnviron := os.Environ()
@@ -105,29 +132,27 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	err = cmd.Start()
 	if err != nil {
+		rendererLog.Error("Could not start command", err)
 		return "", err
 	}
 
-	go io.Copy(os.Stdout, stdout)
-	go io.Copy(os.Stdout, stderr)
+	logWriter := log.NewLogWriter(rendererLog, log.LvlDebug, "[phantom] ")
+	go io.Copy(logWriter, output)
 
 	done := make(chan error)
 	go func() {
-		cmd.Wait()
+		if err := cmd.Wait(); err != nil {
+			rendererLog.Error("failed to render an image", "error", err)
+		}
 		close(done)
 	}()
-
-	timeout, err := strconv.Atoi(params.Timeout)
-	if err != nil {
-		timeout = 15
-	}
 
 	select {
 	case <-time.After(time.Duration(timeout) * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
 			rendererLog.Error("failed to kill", "error", err)
 		}
-		return "", fmt.Errorf("PhantomRenderer::renderToPng timeout (>%vs)", timeout)
+		return "", ErrTimeout
 	case <-done:
 	}
 

@@ -1,98 +1,65 @@
+.navbar-buttons--zoom {
+  display: none;
+}
 
-.dashnav-back-to-dashboard  {
+.navbar-page-btn {
+  max-width: 200px;
+}
+
+.gf-timepicker-nav-btn {
+  max-width: 120px;
+}
+
+.navbar-buttons--actions {
   display: none;
 }
 
 // Media queries
 // ---------------------
 
-@include media-breakpoint-down(sm) {
-  div.panel {
-    width: 100% !important;
-    padding: 0px !important;
+@include media-breakpoint-down(xs) {
+  input[type='text'],
+  input[type='number'],
+  textarea {
+    font-size: 16px;
   }
-  .panel-margin {
-    margin-right: 0;
-    margin-left: 0;
+}
+
+@include media-breakpoint-up(sm) {
+  .navbar-page-btn {
+    max-width: 250px;
   }
-  body {
-    padding: 0;
-  }
-  .page-dashboard .navbar-page-btn {
+  .gf-timepicker-nav-btn {
     max-width: 200px;
   }
-  .gf-timepicker-nav-btn {
-    max-width: 120px;
-  }
-  .dashnav-zoom-out,
-  .dashnav-move-timeframe,
-  .dashnav-action-icons {
-    display: none;
-  }
-  .page-container {
-    padding: ($spacer * 1) ($spacer * 2);
-  }
-
-  .dash-row-menu-container {
-    display: none;
-  }
 }
 
-@include media-breakpoint-down(xs) {
-  .page-dashboard .navbar-page-btn {
-    max-width: 150px;
-  }
-}
-
-// form styles
 @include media-breakpoint-up(md) {
-  .page-dashboard .navbar-page-btn {
-    max-width: 180px;
+  .navbar-buttons--actions {
+    display: flex;
   }
-  .gf-timepicker-nav-btn {
-    max-width: 120px;
-  }
-
-  .dashnav-move-timeframe {
-    display: none;
-  }
-
-  .panel-in-fullscreen {
-    .dashnav-action-icons {
-      display: none;
-    }
-    .dashnav-back-to-dashboard  {
-      display: block;
-    }
-  }
-}
-
-@include media-breakpoint-up(lg) {
-  .page-dashboard .navbar-page-btn {
-    max-width: 290px;
+  .navbar-page-btn {
+    max-width: 325px;
   }
   .gf-timepicker-nav-btn {
     max-width: 240px;
   }
-  .dashnav-zoom-out {
-    display: block;
+}
+
+@include media-breakpoint-up(lg) {
+  .navbar-buttons--zoom {
+    display: flex;
   }
-  .dashnav-move-timeframe {
-    display: block;
+  .navbar-page-btn {
+    max-width: 450px;
+  }
+  .gf-timepicker-nav-btn {
+    max-width: none;
   }
 }
 
 @include media-breakpoint-up(xl) {
-  .panel-in-fullscreen {
-    .dashnav-action-icons {
-      display: block;
-    }
-  }
-
-  .page-dashboard .navbar-page-btn {
-    max-width: none;
-  }
-  .gf-timepicker-nav-btn {
-    max-width: none;
+  .navbar-page-btn {
+    max-width: 600px;
   }
 }

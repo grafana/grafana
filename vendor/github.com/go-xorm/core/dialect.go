@@ -20,6 +20,7 @@ type Uri struct {
 	Laddr   string
 	Raddr   string
 	Timeout time.Duration
+	Schema  string
 }
 
 // a dialect is a driver's wrapper
@@ -84,7 +85,7 @@ type Base struct {
 	dialect        Dialect
 	driverName     string
 	dataSourceName string
-	Logger         ILogger
+	logger         ILogger
 	*Uri
 }
 
@@ -93,7 +94,7 @@ func (b *Base) DB() *DB {
 }
 
 func (b *Base) SetLogger(logger ILogger) {
-	b.Logger = logger
+	b.logger = logger
 }
 
 func (b *Base) Init(db *DB, dialect Dialect, uri *Uri, drivername, dataSourceName string) error {
@@ -151,10 +152,8 @@ func (db *Base) DropTableSql(tableName string) string {
 }
 
 func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
+	db.LogSQL(query, args)
 	rows, err := db.DB().Query(query, args...)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", query, args)
-	}
 	if err != nil {
 		return false, err
 	}
@@ -245,6 +244,9 @@ func (b *Base) CreateTableSql(table *Table, tableName, storeEngine, charset stri
 				sql += col.StringNoPk(b.dialect)
 			}
 			sql = strings.TrimSpace(sql)
+			if b.DriverName() == MYSQL && len(col.Comment) > 0 {
+				sql += " COMMENT '" + col.Comment + "'"
+			}
 			sql += ", "
 		}
 
@@ -277,17 +279,32 @@ func (b *Base) ForUpdateSql(query string) string {
 	return query + " FOR UPDATE"
 }
 
+func (b *Base) LogSQL(sql string, args []interface{}) {
+	if b.logger != nil && b.logger.IsShowSQL() {
+		if len(args) > 0 {
+			b.logger.Infof("[SQL] %v %v", sql, args)
+		} else {
+			b.logger.Infof("[SQL] %v", sql)
+		}
+	}
+}
+
 var (
-	dialects = map[DbType]func() Dialect{}
+	dialects = map[string]func() Dialect{}
 )
 
+// RegisterDialect register database dialect
 func RegisterDialect(dbName DbType, dialectFunc func() Dialect) {
 	if dialectFunc == nil {
 		panic("core: Register dialect is nil")
 	}
-	dialects[dbName] = dialectFunc // !nashtsai! allow override dialect
+	dialects[strings.ToLower(string(dbName))] = dialectFunc // !nashtsai! allow override dialect
 }
 
+// QueryDialect query if registed database dialect
 func QueryDialect(dbName DbType) Dialect {
-	return dialects[dbName]()
+	if d, ok := dialects[strings.ToLower(string(dbName))]; ok {
+		return d()
+	}
+	return nil
 }

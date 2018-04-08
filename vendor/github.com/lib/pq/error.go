@@ -153,6 +153,7 @@ var errorCodeNames = map[ErrorCode]string{
 	"22004": "null_value_not_allowed",
 	"22002": "null_value_no_indicator_parameter",
 	"22003": "numeric_value_out_of_range",
+	"2200H": "sequence_generator_limit_exceeded",
 	"22026": "string_data_length_mismatch",
 	"22001": "string_data_right_truncation",
 	"22011": "substring_error",
@@ -457,6 +458,19 @@ type PGError interface {
 
 func errorf(s string, args ...interface{}) {
 	panic(fmt.Errorf("pq: %s", fmt.Sprintf(s, args...)))
+}
+
+func errRecoverNoErrBadConn(err *error) {
+	e := recover()
+	if e == nil {
+		// Do nothing
+		return
+	}
+	var ok bool
+	*err, ok = e.(error)
+	if !ok {
+		*err = fmt.Errorf("pq: unexpected error: %#v", e)
+	}
 }
 
 func (c *conn) errRecover(err *error) {

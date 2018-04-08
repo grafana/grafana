@@ -7,10 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/go-macaron/session"
+	ms "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	l "github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
@@ -28,6 +29,18 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("Default middleware should allow get request", func(sc *scenarioContext) {
 			sc.fakeReq("GET", "/").exec()
 			So(sc.resp.Code, ShouldEqual, 200)
+		})
+
+		middlewareScenario("middleware should add Cache-Control header for GET requests to API", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/api/search").exec()
+			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
+		})
+
+		middlewareScenario("middleware should not add Cache-Control header to for non-API GET requests", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/").exec()
+			So(sc.resp.Header().Get("Cache-Control"), ShouldBeEmpty)
 		})
 
 		middlewareScenario("Non api request should init session", func(sc *scenarioContext) {
@@ -118,8 +131,8 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("UserId in session", func(sc *scenarioContext) {
 
-			sc.fakeReq("GET", "/").handler(func(c *Context) {
-				c.Session.Set(SESS_KEY_USERID, int64(12))
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
+				c.Session.Set(session.SESS_KEY_USERID, int64(12))
 			}).exec()
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
@@ -213,11 +226,11 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("When auth_proxy is enabled and request RemoteAddr is not trusted", func(sc *scenarioContext) {
+		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is not trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 192.168.2.1"
+			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
@@ -226,6 +239,24 @@ func TestMiddlewareContext(t *testing.T) {
 
 			Convey("should return 407 status code", func() {
 				So(sc.resp.Code, ShouldEqual, 407)
+				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 192.168.3.1 is not from the authentication proxy")
+			})
+		})
+
+		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is not trusted", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.RemoteAddr = "[2001:23]:12345"
+			sc.exec()
+
+			Convey("should return 407 status code", func() {
+				So(sc.resp.Code, ShouldEqual, 407)
+				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 2001:23 is not from the authentication proxy")
 			})
 		})
 
@@ -233,7 +264,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 192.168.2.1"
+			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
@@ -242,7 +273,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.req.RemoteAddr = "192.168.2.1:12345"
+			sc.req.RemoteAddr = "[2001::23]:12345"
 			sc.exec()
 
 			Convey("Should init context with user info", func() {
@@ -264,8 +295,8 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			// create session
-			sc.fakeReq("GET", "/").handler(func(c *Context) {
-				c.Session.Set(SESS_KEY_USERID, int64(33))
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
+				c.Session.Set(session.SESS_KEY_USERID, int64(33))
 			}).exec()
 
 			oldSessionID := sc.context.Session.ID()
@@ -288,7 +319,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.LdapEnabled = true
 
 			called := false
-			syncGrafanaUserWithLdapUser = func(ctx *Context, query *m.GetSignedInUserQuery) error {
+			syncGrafanaUserWithLdapUser = func(ctx *m.ReqContext, query *m.GetSignedInUserQuery) error {
 				called = true
 				return nil
 			}
@@ -324,11 +355,12 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 
 		sc.m.Use(GetContextHandler())
 		// mock out gc goroutine
-		startSessionGC = func() {}
-		sc.m.Use(Sessioner(&session.Options{}))
+		session.StartSessionGC = func() {}
+		sc.m.Use(Sessioner(&ms.Options{}, 0))
 		sc.m.Use(OrgRedirect())
+		sc.m.Use(AddDefaultResponseHeaders())
 
-		sc.defaultHandler = func(c *Context) {
+		sc.defaultHandler = func(c *m.ReqContext) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
@@ -343,13 +375,14 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 
 type scenarioContext struct {
 	m              *macaron.Macaron
-	context        *Context
+	context        *m.ReqContext
 	resp           *httptest.ResponseRecorder
 	apiKey         string
 	authHeader     string
 	respJson       map[string]interface{}
 	handlerFunc    handlerFunc
 	defaultHandler macaron.Handler
+	url            string
 
 	req *http.Request
 }
@@ -385,6 +418,20 @@ func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	return sc
 }
 
+func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map[string]string) *scenarioContext {
+	sc.resp = httptest.NewRecorder()
+	req, err := http.NewRequest(method, url, nil)
+	q := req.URL.Query()
+	for k, v := range queryParams {
+		q.Add(k, v)
+	}
+	req.URL.RawQuery = q.Encode()
+	So(err, ShouldBeNil)
+	sc.req = req
+
+	return sc
+}
+
 func (sc *scenarioContext) handler(fn handlerFunc) *scenarioContext {
 	sc.handlerFunc = fn
 	return sc
@@ -408,4 +455,4 @@ func (sc *scenarioContext) exec() {
 }
 
 type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *Context)
+type handlerFunc func(c *m.ReqContext)

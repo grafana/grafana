@@ -45,7 +45,7 @@ The javascript object that communicates with the database and transforms data to
 
 The Datasource should contain the following functions:
 
-```
+```javascript
 query(options) //used by panels to get data
 testDatasource() //used by datasource configuration page to make sure the connection is working
 annotationQuery(options) // used by dashboards to get annotations
@@ -84,15 +84,15 @@ An array of:
   {
     "target":"upper_75",
     "datapoints":[
-      [622,1450754160000],
-      [365,1450754220000]
+      [622, 1450754160000],
+      [365, 1450754220000]
     ]
   },
   {
     "target":"upper_90",
     "datapoints":[
-      [861,1450754160000],
-      [767,1450754220000]
+      [861, 1450754160000],
+      [767, 1450754220000]
     ]
   }
 ]
