@@ -134,7 +134,13 @@ export class SettingsCtrl {
   }
 
   saveDashboard() {
-    this.dashboardSrv.saveDashboard();
+    if (this.viewId === 'view_json') {
+      this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
+        window.location.reload();
+      });
+    } else {
+      this.dashboardSrv.saveDashboard();
+    }
   }
 
   onPostSave() {
