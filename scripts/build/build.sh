@@ -7,11 +7,22 @@
 GOPATH=/go
 REPO_PATH=$GOPATH/src/github.com/grafana/grafana
 
+
+
 cd /go/src/github.com/grafana/grafana
 echo "current dir: $(pwd)"
 
+
+cd .. 
+git clone git@github.com:bergquist/grafana-extensions.git extensions
+cd extensions
+./build.sh
+
+cd ../grafana
+
+
 if [ "$CIRCLE_TAG" != "" ]; then
-  echo "Building a release from tag $CIRCLE_TAG"
+  echo "Building a release from tag $ls"
   go run build.go -buildNumber=${CIRCLE_BUILD_NUM} -includeBuildNumber=false build
 else
   echo "Building incremental build for $CIRCLE_BRANCH"
