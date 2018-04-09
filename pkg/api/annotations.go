@@ -156,7 +156,7 @@ func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd
 	item := annotations.Item{
 		OrgId:  c.OrgId,
 		UserId: c.UserId,
-		Epoch:  cmd.When,
+		Epoch:  cmd.When * 1000,
 		Text:   text,
 		Tags:   tagsArray,
 	}
