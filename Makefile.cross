@@ -6,6 +6,7 @@ CCARMV7:=arm-linux-gnueabihf-gcc
 CCARM64:=aarch64-linux-gnu-gcc
 CCOSX64:=/tmp/osxcross/target/bin/o64-clang
 CCWIN64:=x86_64-w64-mingw32-gcc
+CCX64:=/tmp/x86_64-centos6-linux-gnu/bin/x86_64-centos6-linux-gnu-gcc
 
 go-dep:
 	go get -v github.com/golang/dep
@@ -23,7 +24,7 @@ win64-binaries: go-dep
 	go run build.go -goos windows -cc ${CCWIN64} build
 
 x86_64-binaries: go-dep
-	go run build.go build
+	CC=${CCX64} go run build.go build
 
 builder:
 	docker build -t grafana-builder -f Dockerfile.builder .
