@@ -187,7 +187,7 @@
 // Baron styles
 
 .baron {
-  display: inline-block;
+  // display: inline-block; // this brakes phantomjs rendering (width becomes 0)
   overflow: hidden;
 }
 
