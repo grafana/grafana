@@ -14,7 +14,7 @@
         data-min-length=0 data-items=1000 ng-model-onblur ng-change="ctrl.refreshMetricData()">
       </input>
       <info-popover mode="right-absolute">
-        Controls the name of the time series, using name or pattern. For example {{hostname}} will be replaced with label value for
+        Controls the name of the time series, using name or pattern. For example <span ng-non-bindable>{{hostname}}</span> will be replaced with label value for
         the label hostname.
       </info-popover>
     </div>
