@@ -28,4 +28,4 @@
     build: blocks/prometheus_random_data
     network_mode: host
     ports:
-      - "8080:8080"
+      - "8081:8080"

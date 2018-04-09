@@ -46,25 +46,49 @@ type AlertmanagerNotifier struct {
 }
 
 func (this *AlertmanagerNotifier) ShouldNotify(evalContext *alerting.EvalContext) bool {
+	this.log.Debug("Should notify", "ruleId", evalContext.Rule.Id, "state", evalContext.Rule.State, "previousState", evalContext.PrevAlertState)
+
+	// Do not notify when we become OK for the first time.
+	if (evalContext.PrevAlertState == m.AlertStatePending) && (evalContext.Rule.State == m.AlertStateOK) {
+		return false
+	}
+	// Notify on Alerting -> OK to resolve before alertmanager timeout.
+	if (evalContext.PrevAlertState == m.AlertStateAlerting) && (evalContext.Rule.State == m.AlertStateOK) {
+		return true
+	}
 	return evalContext.Rule.State == m.AlertStateAlerting
 }
 
-func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error {
+func (this *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, match *alerting.EvalMatch, ruleUrl string) *simplejson.Json {
+	alertJSON := simplejson.New()
+	alertJSON.Set("startsAt", evalContext.StartTime.UTC().Format(time.RFC3339))
+	if evalContext.Rule.State == m.AlertStateOK {
+		alertJSON.Set("endsAt", time.Now().UTC().Format(time.RFC3339))
+	}
+	alertJSON.Set("generatorURL", ruleUrl)
 
-	alerts := make([]interface{}, 0)
-	for _, match := range evalContext.EvalMatches {
-		alertJSON := simplejson.New()
-		alertJSON.Set("startsAt", evalContext.StartTime.UTC().Format(time.RFC3339))
-
-		if ruleUrl, err := evalContext.GetRuleUrl(); err == nil {
-			alertJSON.Set("generatorURL", ruleUrl)
+	// Annotations (summary and description are very commonly used).
+	alertJSON.SetPath([]string{"annotations", "summary"}, evalContext.Rule.Name)
+	description := ""
+	if evalContext.Rule.Message != "" {
+		description += evalContext.Rule.Message
+	}
+	if evalContext.Error != nil {
+		if description != "" {
+			description += "\n"
 		}
+		description += "Error: " + evalContext.Error.Error()
+	}
+	if description != "" {
+		alertJSON.SetPath([]string{"annotations", "description"}, description)
+	}
+	if evalContext.ImagePublicUrl != "" {
+		alertJSON.SetPath([]string{"annotations", "image"}, evalContext.ImagePublicUrl)
+	}
 
-		if evalContext.Rule.Message != "" {
-			alertJSON.SetPath([]string{"annotations", "description"}, evalContext.Rule.Message)
-		}
-
-		tags := make(map[string]string)
+	// Labels (from metrics tags + mandatory alertname).
+	tags := make(map[string]string)
+	if match != nil {
 		if len(match.Tags) == 0 {
 			tags["metric"] = match.Metric
 		} else {
@@ -72,10 +96,32 @@ func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) erro
 				tags[k] = v
 			}
 		}
-		tags["alertname"] = evalContext.Rule.Name
-		alertJSON.Set("labels", tags)
+	}
+	tags["alertname"] = evalContext.Rule.Name
+	alertJSON.Set("labels", tags)
+	return alertJSON
+}
 
-		alerts = append(alerts, alertJSON)
+func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error {
+	this.log.Info("Sending Alertmanager alert", "ruleId", evalContext.Rule.Id, "notification", this.Name)
+
+	ruleUrl, err := evalContext.GetRuleUrl()
+	if err != nil {
+		this.log.Error("Failed get rule link", "error", err)
+		return err
+	}
+
+	// Send one alert per matching series.
+	alerts := make([]interface{}, 0)
+	for _, match := range evalContext.EvalMatches {
+		alert := this.createAlert(evalContext, match, ruleUrl)
+		alerts = append(alerts, alert)
+	}
+
+	// This happens on ExecutionError or NoData
+	if len(alerts) == 0 {
+		alert := this.createAlert(evalContext, nil, ruleUrl)
+		alerts = append(alerts, alert)
 	}
 
 	bodyJSON := simplejson.NewFromAny(alerts)

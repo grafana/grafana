@@ -13,6 +13,7 @@ import (
 // DashboardService service for operating on dashboards
 type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
+	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 }
 
 // DashboardProvisioningService service for operating on provisioned dashboards
@@ -214,6 +215,20 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Da
 	return cmd.Result, nil
 }
 
+func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+	cmd, err := dr.buildSaveDashboardCommand(dto, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bus.Dispatch(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.Result, nil
+}
+
 type FakeDashboardService struct {
 	SaveDashboardResult *models.Dashboard
 	SaveDashboardError  error
@@ -228,6 +243,10 @@ func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Das
 	}
 
 	return s.SaveDashboardResult, s.SaveDashboardError
+}
+
+func (s *FakeDashboardService) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+	return s.SaveDashboard(dto)
 }
 
 func MockDashboardService(mock *FakeDashboardService) {

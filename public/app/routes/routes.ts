@@ -22,6 +22,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       reloadOnSearch: false,
       pageClass: 'page-dashboard',
     })
+    .when('/d/:uid', {
+      templateUrl: 'public/app/partials/dashboard.html',
+      controller: 'LoadDashboardCtrl',
+      reloadOnSearch: false,
+      pageClass: 'page-dashboard',
+    })
     .when('/dashboard/:type/:slug', {
       templateUrl: 'public/app/partials/dashboard.html',
       controller: 'LoadDashboardCtrl',
@@ -94,6 +100,11 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/dashboards/f/:uid/:slug', {
+      templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
+      controller: 'FolderDashboardsCtrl',
+      controllerAs: 'ctrl',
+    })
+    .when('/dashboards/f/:uid', {
       templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
       controller: 'FolderDashboardsCtrl',
       controllerAs: 'ctrl',
