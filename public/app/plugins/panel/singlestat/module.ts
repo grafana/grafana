@@ -18,7 +18,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   fontSizes: any[];
   unitFormats: any[];
   invalidGaugeRange: boolean;
-  invalidSparklineRange: boolean;
+  isIncorrectSparklineMinValue: boolean;
+  isNotInRange: boolean;
+  isSparklineValuesEqual: boolean;
+  isFullHeight: boolean;
   panel: any;
   events: any;
   valueNameOptions: any[] = [
@@ -277,7 +280,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     let result: any = {};
     result.decimals = Math.max(0, dec);
     result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
-
     return result;
   }
 
@@ -371,7 +373,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         }
       }
     }
-
+    //Check data value
     if (data.value === null || data.value === void 0) {
       data.valueFormatted = 'no value';
     }
@@ -465,7 +467,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ctrl.invalidGaugeRange = true;
         return;
       }
-
+      //circle-gauge-graph
       let plotCanvas = $('<div></div>');
       let plotCss = {
         top: '10px',
@@ -548,37 +550,63 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       $.plot(plotCanvas, [plotSeries], options);
     }
 
-    function addSparkline() {
-      let width = elem.width() + 20;
+    function addSparkline(): boolean | void {
+      const width = elem.width() + 20;
+      const height = ctrl.height;
+      const plotCanvas = $('<div></div>');
+      const plotCss: any = {
+        position: 'absolute',
+        left: '-5px',
+        bottom: '0px',
+        width: `${width - 10}px`,
+      };
+      const maxData = Math.max(...data.flotpairs.map(pair => pair[1]));
+
+      ctrl.isNotInRange =
+        maxData < panel.sparkline.minValue &&
+        !ctrl.panel.sparkline.full &&
+        panel.sparkline.minValue < panel.sparkline.maxValue &&
+        panel.sparkline.maxValue !== panel.sparkline.minValue;
+
+      ctrl.isIncorrectSparklineMinValue =
+        ctrl.panel.sparkline.maxValue &&
+        panel.sparkline.minValue > panel.sparkline.maxValue &&
+        !ctrl.panel.sparkline.full &&
+        !ctrl.isNotInRange;
+
+      ctrl.isSparklineValuesEqual =
+        panel.sparkline.maxValue === panel.sparkline.minValue &&
+        !ctrl.panel.sparkline.full &&
+        panel.sparkline.minValue &&
+        panel.sparkline.maxValue &&
+        !ctrl.isNotInRange;
+
       if (width < 30) {
         // element has not gotten it's width yet
         // delay sparkline render
         setTimeout(addSparkline, 30);
-        return;
+        return false;
       }
 
-      ctrl.invalidSparklineRange = false;
-      if (panel.sparkline.minValue > panel.sparkline.maxValue) {
-        ctrl.invalidSparklineRange = true;
-        return;
+      if (ctrl.isNotInRange || ctrl.isIncorrectSparklineMinValue || ctrl.isSparklineValuesEqual) {
+        return false;
       }
-
-      let height = ctrl.height;
-      let plotCanvas = $('<div></div>');
-      let plotCss: any = {};
-      plotCss.position = 'absolute';
 
       if (panel.sparkline.full) {
+        const dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
         plotCss.bottom = '5px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
-        let dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
-        plotCss.height = height - dynamicHeightMargin + 'px';
+        plotCss.height = `${height - dynamicHeightMargin}px`;
+        ctrl.panel.sparkline.minValue = 0;
+        ctrl.panel.sparkline.maxValue = 0;
+        ctrl.panel.sparkline.isFullHeight = false;
+      } else if (panel.sparkline.maxValue && maxData > panel.sparkline.minValue) {
+        const customHeight = Math.round(
+          height * (maxData - panel.sparkline.minValue) / (panel.sparkline.maxValue - panel.sparkline.minValue)
+        );
+        panel.sparkline.minValue = panel.sparkline.minValue || 0;
+        plotCss.height = `${customHeight}px`;
       } else {
-        plotCss.bottom = '0px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
-        plotCss.height = Math.floor(height * 0.25) + 'px';
+        plotCss.height = `${Math.floor(height * 0.25)}px`;
       }
 
       plotCanvas.css(plotCss);
