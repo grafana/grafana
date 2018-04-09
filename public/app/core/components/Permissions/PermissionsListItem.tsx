@@ -8,7 +8,6 @@ const setClassNameHelper = inherited => {
 };
 
 function ItemAvatar({ item }) {
-  console.log(item);
   if (item.userAvatarUrl) {
     return <img className="filter-table__avatar" src={item.userAvatarUrl} />;
   }
