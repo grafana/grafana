@@ -140,7 +140,7 @@ Tags | Optional field name to use for event tags (can be an array or a CSV strin
 
 ## Configure datasource with provisioning
 
-Its now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources).
+It's now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources).
 Here are some examples of how you can configure the Cloudwatch datasource using configuration.
 
 ```yaml

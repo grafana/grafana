@@ -103,7 +103,7 @@ Since 4.6.0 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. W
 
 ## Configure datasource with provisioning
 
-Its now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources
+It's now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources
 Here are some examples of how you can configure the Cloudwatch datasource using configuration.
 
 ```yaml
