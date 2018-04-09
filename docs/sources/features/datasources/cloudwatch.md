@@ -176,8 +176,9 @@ Grafana will issue a ListMetrics request.
 
 ## Configure datasource with provisioning
 
-It's now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources).
-Here is an example of how you can configure the Cloudwatch datasource using configuration.
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some examples of how you can configure the Cloudwatch datasource using configuration.
 
 Using a credentials file
 ```yaml

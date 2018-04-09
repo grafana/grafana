@@ -91,7 +91,8 @@ For details on OpenTSDB metric queries checkout the official [OpenTSDB documenta
 
 ## Configure datasource with provisioning
 
-It's now possible to configure datasources using config files with Grafanas [provisioning system](/administration/provisioning/#datasources).
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
 Here are some examples of how you can configure the Cloudwatch datasource using configuration.
 
 ```yaml
