@@ -172,7 +172,7 @@ ignored = [
   name = "golang.org/x/sync"
 
 [[constraint]]
-  name = "gopkg.in/gomail.v2"
+  name = "gopkg.in/mail.v2"
   branch = "v2"
 
 [[constraint]]

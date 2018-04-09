@@ -447,6 +447,7 @@ kbn.valueFormats.currencyDKK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyISK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyNOK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencySEK = kbn.formatBuilders.currency('kr');
+kbn.valueFormats.currencyCZK = kbn.formatBuilders.currency('czk');
 
 // Data (Binary)
 kbn.valueFormats.bits = kbn.formatBuilders.binarySIPrefix('b');
@@ -869,6 +870,7 @@ kbn.getUnitFormats = function() {
         { text: 'Icelandic Króna (kr)', value: 'currencyISK' },
         { text: 'Norwegian Krone (kr)', value: 'currencyNOK' },
         { text: 'Swedish Krona (kr)', value: 'currencySEK' },
+        { text: 'Czech koruna (czk)', value: 'currencyCZK' },
       ],
     },
     {

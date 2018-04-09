@@ -89,6 +89,9 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetTag("user_id", proxy.ctx.SignedInUser.UserId)
 	span.SetTag("org_id", proxy.ctx.SignedInUser.OrgId)
 
+	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
+	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
+
 	opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
@@ -96,6 +99,14 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
 	proxy.ctx.Resp.Header().Del("Set-Cookie")
+}
+
+func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
+	panelId := proxy.ctx.Req.Header.Get(headerName)
+	dashId, err := strconv.Atoi(panelId)
+	if err == nil {
+		span.SetTag(tagName, dashId)
+	}
 }
 
 func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {

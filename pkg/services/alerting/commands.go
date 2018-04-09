@@ -13,11 +13,7 @@ func init() {
 func validateDashboardAlerts(cmd *m.ValidateDashboardAlertsCommand) error {
 	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
 
-	if _, err := extractor.GetAlerts(); err != nil {
-		return err
-	}
-
-	return nil
+	return extractor.ValidateAlerts()
 }
 
 func updateDashboardAlerts(cmd *m.UpdateDashboardAlertsCommand) error {
@@ -29,15 +25,12 @@ func updateDashboardAlerts(cmd *m.UpdateDashboardAlertsCommand) error {
 
 	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
 
-	if alerts, err := extractor.GetAlerts(); err != nil {
-		return err
-	} else {
-		saveAlerts.Alerts = alerts
-	}
-
-	if err := bus.Dispatch(&saveAlerts); err != nil {
+	alerts, err := extractor.GetAlerts()
+	if err != nil {
 		return err
 	}
 
-	return nil
+	saveAlerts.Alerts = alerts
+
+	return bus.Dispatch(&saveAlerts)
 }
