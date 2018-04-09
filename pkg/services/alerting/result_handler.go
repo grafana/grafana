@@ -77,7 +77,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			Text:        "",
 			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(evalContext.PrevAlertState),
-			Epoch:       time.Now().Unix(),
+			Epoch:       time.Now().UnixNano() / int64(time.Millisecond),
 			Data:        annotationData,
 		}
 
