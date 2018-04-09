@@ -100,7 +100,7 @@ datasources:
 - name: Graphite
   # <string, required> datasource type. Required
   type: graphite
-  # <string, required> access mode. direct or proxy. Required
+  # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
   access: proxy
   # <int> org id. will default to orgId 1 if not specified
   orgId: 1

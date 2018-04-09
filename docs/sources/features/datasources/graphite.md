@@ -31,13 +31,22 @@ Name | Description
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
-*Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
+*Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 
-Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the browser.
+Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
+
+### Server access mode (Default)
+
+All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.
+
+### Browser access mode
+
+All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
 ## Metric editor
 
 ### Navigate metric segments
+
 Click the ``Select metric`` link to start navigating the metric space. One you start you can continue using the mouse
 or keyboard arrow keys. You can select a wildcard and still continue.
 

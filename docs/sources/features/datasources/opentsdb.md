@@ -28,10 +28,9 @@ Name | Description
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The http protocol, ip and port of you opentsdb server (default port is usually 4242)
-*Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
+*Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 *Version* | Version = opentsdb version, either <=2.1 or 2.2
 *Resolution* | Metrics from opentsdb may have datapoints with either second or millisecond resolution.
-
 
 ## Query editor
 
