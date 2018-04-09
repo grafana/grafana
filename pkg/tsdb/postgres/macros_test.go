@@ -85,7 +85,7 @@ func TestMacroEngine(t *testing.T) {
 			So(sql, ShouldEqual, "select 18446744066914187038")
 		})
 
-		timeRange := &tsdb.TimeRange{From: "-315622800000", To: "315529200000"} // 1960-1980
+		timeRange = &tsdb.TimeRange{From: "-315622800000", To: "315529200000"} // 1960-1980
 		Convey("interpolate __timeFilter function before epoch", func() {
 			sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
 			So(err, ShouldBeNil)
