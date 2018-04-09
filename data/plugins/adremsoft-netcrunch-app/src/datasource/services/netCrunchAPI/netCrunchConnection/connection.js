@@ -161,6 +161,7 @@ class NetCrunchConnection {
       if (self.serverConnectionReady != null) {
         self.serverConnectionReady
           .then(() => {
+            self.serverConnection.reloadOnLogout = false;
             self.netCrunchClient.logout(() => {
               resolve();
             });
@@ -186,7 +187,8 @@ class NetCrunchConnection {
 
         self.serverConnection = new adrem.Connection(apiURL);
         self.serverConnection.useWebSocket = false;
-        self.serverConnection.reloadOnLogout = false;
+        self.serverConnection.pageUrl = '/';
+        self.serverConnection.reloadOnLogout = true;
 
         self.netCrunchClient = self.serverConnection.Client;
 

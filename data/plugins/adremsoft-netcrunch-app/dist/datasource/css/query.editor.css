@@ -1,3 +1,6 @@
+.dropdown-submenu > a:after {
+  margin-right: -12px; }
+
 .nc-no-wrap-text, .nc-default-tile, .nc-node-tile .nc-node-description .nc-node-name, .nc-node-tile .nc-node-description .nc-node-address {
   white-space: nowrap;
   text-overflow: ellipsis;
