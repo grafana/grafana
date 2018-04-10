@@ -18,9 +18,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       const legendRightDefaultWidth = 10;
 
       scope.$on('$destroy', function() {
-        if (legendScrollbar) {
-          legendScrollbar.dispose();
-        }
+        destroyScrollbar();
       });
 
       ctrl.events.on('render-legend', () => {
@@ -288,6 +286,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           destroyScrollbar();
           legendScrollbar = baron(scrollbarParams);
         }
+        legendScrollbar.scroll();
       }
 
       function destroyScrollbar() {
