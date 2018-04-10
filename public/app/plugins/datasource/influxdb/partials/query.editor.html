@@ -5,6 +5,10 @@
       <textarea rows="3" class="gf-form-input" ng-model="ctrl.target.query" spellcheck="false" placeholder="InfuxDB Query" ng-model-onblur ng-change="ctrl.refresh()"></textarea>
     </div>
     <div class="gf-form-inline">
+      <div class="gf-form max-width-25">
+        <label class="gf-form-label query-keyword">TIME OFFSET</label>
+        <input type="text" class="gf-form-input" ng-model="ctrl.target.offset" spellcheck='false' placeholder="seconds" ng-blur="ctrl.refresh()">
+      </div>
       <div class="gf-form">
         <label class="gf-form-label query-keyword">FORMAT AS</label>
         <div class="gf-form-select-wrapper">
@@ -117,6 +121,16 @@
       <div class="gf-form gf-form--grow">
 				<div class="gf-form-label gf-form-label--grow"></div>
 			</div>
+    </div>
+
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">TIME OFFSET</label>
+        <input type="text" class="gf-form-input" ng-model="ctrl.target.offset" spellcheck='false' placeholder="seconds" ng-blur="ctrl.refresh()">
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
     </div>
 
     <div class="gf-form-inline">
