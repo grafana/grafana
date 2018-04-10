@@ -92,14 +92,14 @@ func (tr *TimeRange) ParseTo() (time.Time, error) {
 // EpochPrecisionToMs converts epoch precision to millisecond, if needed.
 // Only seconds to milliseconds supported right now
 func EpochPrecisionToMs(value float64) float64 {
-	if int64(value)/1e10 == 0 {
-		return float64(value * 1e3)
+	s := strconv.FormatFloat(value, 'e', -1, 64)
+	if strings.HasSuffix(s, "e+09") {
+		return value * float64(1e3)
 	}
 
-	s := strconv.FormatFloat(value, 'f', -1, 64)
-	if len(s) == 19 {
-		return float64(value / 1e6)
+	if strings.HasSuffix(s, "e+18") {
+		return value / float64(time.Millisecond)
 	}
 
-	return float64(value)
+	return value
 }

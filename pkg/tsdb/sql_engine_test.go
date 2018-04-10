@@ -1,6 +1,7 @@
 package tsdb
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 
 func TestSqlEngine(t *testing.T) {
 	Convey("SqlEngine", t, func() {
-		dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+		dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 
 		Convey("Given row values with time.Time as time columns", func() {
 			var nilPointer *time.Time
@@ -24,7 +25,7 @@ func TestSqlEngine(t *testing.T) {
 			}
 
 			Convey("When converting them should return epoch time with millisecond precision ", func() {
-				expected := float64(dt.UnixNano() / 1e6)
+				expected := float64(dt.UnixNano()) / float64(time.Millisecond)
 				So(fixtures[0].(float64), ShouldEqual, expected)
 				So(fixtures[1].(float64), ShouldEqual, expected)
 				So(fixtures[2], ShouldBeNil)
@@ -132,8 +133,8 @@ func TestSqlEngine(t *testing.T) {
 		})
 
 		Convey("Given row values with float64 as time columns", func() {
-			tSeconds := float64(dt.Unix())
-			tMilliseconds := float64(dt.UnixNano() / 1e6)
+			tSeconds := float64(dt.UnixNano()) / float64(time.Second)
+			tMilliseconds := float64(dt.UnixNano()) / float64(time.Millisecond)
 			tNanoSeconds := float64(dt.UnixNano())
 			var nilPointer *float64
 
@@ -151,10 +152,12 @@ func TestSqlEngine(t *testing.T) {
 			}
 
 			Convey("When converting them should return epoch time with millisecond precision ", func() {
-				So(fixtures[0].(float64), ShouldEqual, tSeconds*1e3)
-				So(fixtures[1].(float64), ShouldEqual, tSeconds*1e3)
+				So(fixtures[0].(float64), ShouldEqual, tMilliseconds)
+				So(fixtures[1].(float64), ShouldEqual, tMilliseconds)
 				So(fixtures[2].(float64), ShouldEqual, tMilliseconds)
 				So(fixtures[3].(float64), ShouldEqual, tMilliseconds)
+				fmt.Println(fixtures[4].(float64))
+				fmt.Println(tMilliseconds)
 				So(fixtures[4].(float64), ShouldEqual, tMilliseconds)
 				So(fixtures[5].(float64), ShouldEqual, tMilliseconds)
 				So(fixtures[6], ShouldBeNil)
