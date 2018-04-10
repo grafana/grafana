@@ -103,6 +103,16 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		return nil, err
 	}
 
+	if validateBeforeSaveCmd.Result.IsParentFolderChanged {
+		folderGuardian := guardian.New(dash.FolderId, dto.OrgId, dto.User)
+		if canSave, err := folderGuardian.CanSave(); err != nil || !canSave {
+			if err != nil {
+				return nil, err
+			}
+			return nil, models.ErrDashboardUpdateAccessDenied
+		}
+	}
+
 	guard := guardian.New(dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
 	if canSave, err := guard.CanSave(); err != nil || !canSave {
 		if err != nil {

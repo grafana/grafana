@@ -544,11 +544,19 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 		dash.SetId(existingByUid.Id)
 		dash.SetUid(existingByUid.Uid)
 		existing = existingByUid
+
+		if !dash.IsFolder {
+			cmd.Result.IsParentFolderChanged = true
+		}
 	}
 
 	if (existing.IsFolder && !dash.IsFolder) ||
 		(!existing.IsFolder && dash.IsFolder) {
 		return m.ErrDashboardTypeMismatch
+	}
+
+	if !dash.IsFolder && dash.FolderId != existing.FolderId {
+		cmd.Result.IsParentFolderChanged = true
 	}
 
 	// check for is someone else has written in between
@@ -586,6 +594,10 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *m.ValidateDashbo
 			return m.ErrDashboardFolderWithSameNameAsDashboard
 		}
 
+		if !dash.IsFolder && (dash.FolderId != existing.FolderId || dash.Id == 0) {
+			cmd.Result.IsParentFolderChanged = true
+		}
+
 		if cmd.Overwrite {
 			dash.SetId(existing.Id)
 			dash.SetUid(existing.Uid)
@@ -599,6 +611,7 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *m.ValidateDashbo
 }
 
 func ValidateDashboardBeforeSave(cmd *m.ValidateDashboardBeforeSaveCommand) (err error) {
+	cmd.Result = &m.ValidateDashboardBeforeSaveResult{}
 	return inTransaction(func(sess *DBSession) error {
 		if err = getExistingDashboardByIdOrUidForUpdate(sess, cmd); err != nil {
 			return err

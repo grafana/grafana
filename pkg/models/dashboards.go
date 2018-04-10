@@ -224,6 +224,10 @@ func GetFolderUrl(folderUid string, slug string) string {
 	return fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, folderUid, slug)
 }
 
+type ValidateDashboardBeforeSaveResult struct {
+	IsParentFolderChanged bool
+}
+
 //
 // COMMANDS
 //
@@ -268,6 +272,7 @@ type ValidateDashboardBeforeSaveCommand struct {
 	OrgId     int64
 	Dashboard *Dashboard
 	Overwrite bool
+	Result    *ValidateDashboardBeforeSaveResult
 }
 
 //
