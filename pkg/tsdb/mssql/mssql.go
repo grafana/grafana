@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"time"
-
 	"math"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -231,15 +229,18 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 			return err
 		}
 
+		// converts column named time to unix timestamp in milliseconds to make
+		// native mysql datetime types and epoch dates work in
+		// annotation and table queries.
+		tsdb.ConvertSqlTimeColumnToEpochMs(values, timeIndex)
+
 		switch columnValue := values[timeIndex].(type) {
 		case int64:
-			timestamp = float64(columnValue * 1000)
+			timestamp = float64(columnValue)
 		case float64:
-			timestamp = columnValue * 1000
-		case time.Time:
-			timestamp = (float64(columnValue.Unix()) * 1000) + float64(columnValue.Nanosecond()/1e6) // in case someone is trying to map times beyond 2262 :D
+			timestamp = columnValue
 		default:
-			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp")
+			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp, got: %T %v", columnValue, columnValue)
 		}
 
 		if metricIndex >= 0 {
