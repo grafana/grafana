@@ -1,9 +1,10 @@
+import angular from 'angular';
 import $ from 'jquery';
 import _ from 'lodash';
-import angular from 'angular';
 import Drop from 'tether-drop';
 
-function createAnnotationToolip(element, event, plot) {
+/** @ngInject */
+export function createAnnotationToolip(element, event, plot) {
   let injector = angular.element(document).injector();
   let content = document.createElement('div');
   content.innerHTML = '<annotation-tooltip event="event" on-edit="onEdit()"></annotation-tooltip>';
@@ -48,7 +49,8 @@ function createAnnotationToolip(element, event, plot) {
 
 let markerElementToAttachTo = null;
 
-function createEditPopover(element, event, plot) {
+/** @ngInject */
+export function createEditPopover(element, event, plot) {
   let eventManager = plot.getOptions().events.manager;
   if (eventManager.editorOpen) {
     // update marker element to attach to (needed in case of legend on the right
@@ -129,106 +131,130 @@ function createEditPopover(element, event, plot) {
 /**
  * A class that allows for the drawing an remove of some object
  */
-let DrawableEvent = function(object, drawFunc, clearFunc, moveFunc, left, top, width, height) {
-  let _object = object;
-  let _drawFunc = drawFunc;
-  let _clearFunc = clearFunc;
-  let _moveFunc = moveFunc;
-  let _position = { left: left, top: top };
-  let _width = width;
-  let _height = height;
+export class DrawableEvent {
+  _object: any;
+  _drawFunc: any;
+  _clearFunc: any;
+  _moveFunc: any;
+  _position: any;
+  _width: any;
+  _height: any;
 
-  this.width = function() {
-    return _width;
-  };
-  this.height = function() {
-    return _height;
-  };
-  this.position = function() {
-    return _position;
-  };
-  this.draw = function() {
-    _drawFunc(_object);
-  };
-  this.clear = function() {
-    _clearFunc(_object);
-  };
-  this.getObject = function() {
-    return _object;
-  };
-  this.moveTo = function(position) {
-    _position = position;
-    _moveFunc(_object, _position);
-  };
-};
+  /** @ngInject */
+  constructor(object, drawFunc, clearFunc, moveFunc, left, top, width, height) {
+    this._object = object;
+    this._drawFunc = drawFunc;
+    this._clearFunc = clearFunc;
+    this._moveFunc = moveFunc;
+    this._position = { left: left, top: top };
+    this._width = width;
+    this._height = height;
+  }
+
+  width() {
+    return this._width;
+  }
+  height() {
+    return this._height;
+  }
+  position() {
+    return this._position;
+  }
+  draw() {
+    this._drawFunc(this._object);
+  }
+  clear() {
+    this._clearFunc(this._object);
+  }
+  getObject() {
+    return this._object;
+  }
+  moveTo(position) {
+    this._position = position;
+    this._moveFunc(this._object, this._position);
+  }
+}
 
 /**
  * Event class that stores options (eventType, min, max, title, description) and the object to draw.
  */
-let VisualEvent = function(options, drawableEvent) {
-  let _parent;
-  let _options = options;
-  let _drawableEvent = drawableEvent;
-  let _hidden = false;
+export class VisualEvent {
+  _parent: any;
+  _options: any;
+  _drawableEvent: any;
+  _hidden: any;
 
-  this.visual = function() {
-    return _drawableEvent;
-  };
-  this.getOptions = function() {
-    return _options;
-  };
-  this.getParent = function() {
-    return _parent;
-  };
-  this.isHidden = function() {
-    return _hidden;
-  };
-  this.hide = function() {
-    _hidden = true;
-  };
-  this.unhide = function() {
-    _hidden = false;
-  };
-};
+  /** @ngInject */
+  constructor(options, drawableEvent) {
+    this._options = options;
+    this._drawableEvent = drawableEvent;
+    this._hidden = false;
+  }
+
+  visual() {
+    return this._drawableEvent;
+  }
+  getOptions() {
+    return this._options;
+  }
+  getParent() {
+    return this._parent;
+  }
+  isHidden() {
+    return this._hidden;
+  }
+  hide() {
+    this._hidden = true;
+  }
+  unhide() {
+    this._hidden = false;
+  }
+}
 
 /**
  * A Class that handles the event-markers inside the given plot
  */
-let EventMarkers = function(plot) {
-  let _events = [];
+export class EventMarkers {
+  _events: any;
+  _types: any;
+  _plot: any;
+  eventsEnabled: any;
 
-  this._types = [];
-  this._plot = plot;
-  this.eventsEnabled = false;
+  /** @ngInject */
+  constructor(plot) {
+    this._events = [];
+    this._types = [];
+    this._plot = plot;
+    this.eventsEnabled = false;
+  }
 
-  this.getEvents = function() {
-    return _events;
-  };
+  getEvents() {
+    return this._events;
+  }
 
-  this.setTypes = function(types) {
+  setTypes(types) {
     return (this._types = types);
-  };
+  }
 
   /**
    * create internal objects for the given events
    */
-  this.setupEvents = function(events) {
-    let that = this;
+  setupEvents(events) {
     let parts = _.partition(events, 'isRegion');
     let regions = parts[0];
     events = parts[1];
 
-    $.each(events, function(index, event) {
-      let ve = new VisualEvent(event, that._buildDiv(event));
-      _events.push(ve);
+    $.each(events, (index, event) => {
+      let ve = new VisualEvent(event, this._buildDiv(event));
+      this._events.push(ve);
     });
 
-    $.each(regions, function(index, event) {
-      let vre = new VisualEvent(event, that._buildRegDiv(event));
-      _events.push(vre);
+    $.each(regions, (index, event) => {
+      let vre = new VisualEvent(event, this._buildRegDiv(event));
+      this._events.push(vre);
     });
 
-    _events.sort(function(a, b) {
+    this._events.sort((a, b) => {
       let ao = a.getOptions(),
         bo = b.getOptions();
       if (ao.min > bo.min) {
@@ -239,18 +265,17 @@ let EventMarkers = function(plot) {
       }
       return 0;
     });
-  };
+  }
 
   /**
    * draw the events to the plot
    */
-  this.drawEvents = function() {
-    let that = this;
-    // let o = this._plot.getPlotOffset();
+  drawEvents() {
+    // var o = this._plot.getPlotOffset();
 
-    $.each(_events, function(index, event) {
+    $.each(this._events, (index, event) => {
       // check event is inside the graph range
-      if (that._insidePlot(event.getOptions().min) && !event.isHidden()) {
+      if (this._insidePlot(event.getOptions().min) && !event.isHidden()) {
         event.visual().draw();
       } else {
         event
@@ -259,55 +284,45 @@ let EventMarkers = function(plot) {
           .hide();
       }
     });
-  };
+  }
 
   /**
    * update the position of the event-markers (e.g. after scrolling or zooming)
    */
-  this.updateEvents = function() {
-    let that = this;
+  updateEvents() {
     let o = this._plot.getPlotOffset(),
       left,
       top;
     let xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
 
-    $.each(_events, function(index, event) {
-      top = o.top + that._plot.height() - event.visual().height();
+    $.each(this._events, (index, event) => {
+      top = o.top + this._plot.height() - event.visual().height();
       left = xaxis.p2c(event.getOptions().min) + o.left - event.visual().width() / 2;
       event.visual().moveTo({ top: top, left: left });
     });
-  };
+  }
 
   /**
    * remove all events from the plot
    */
-  this._clearEvents = function() {
-    $.each(_events, function(index, val) {
+  _clearEvents() {
+    $.each(this._events, (index, val) => {
       val.visual().clear();
     });
-    _events = [];
-  };
+    this._events = [];
+  }
 
   /**
    * create a DOM element for the given event
    */
-  this._buildDiv = function(event) {
+  _buildDiv(event) {
     let that = this;
 
     let container = this._plot.getPlaceholder();
     let o = this._plot.getPlotOffset();
-    let axes = this._plot.getAxes();
     let xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
-    let yaxis, top, left, color, markerSize, markerShow, lineStyle, lineWidth;
+    let top, left, color, markerSize, markerShow, lineStyle, lineWidth;
     let markerTooltip;
-
-    // determine the y axis used
-    if (axes.yaxis && axes.yaxis.used) {
-      yaxis = axes.yaxis;
-    }
-    if (axes.yaxis2 && axes.yaxis2.used) {
-      yaxis = axes.yaxis2;
-    }
 
     // map the eventType to a types object
     let eventTypeId = event.eventType;
@@ -444,27 +459,18 @@ let EventMarkers = function(plot) {
     );
 
     return drawableEvent;
-  };
+  }
 
   /**
    * create a DOM element for the given region
    */
-  this._buildRegDiv = function(event) {
+  _buildRegDiv(event) {
     let that = this;
 
     let container = this._plot.getPlaceholder();
     let o = this._plot.getPlotOffset();
-    let axes = this._plot.getAxes();
     let xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
-    let yaxis, top, left, lineWidth, regionWidth, lineStyle, color, markerTooltip;
-
-    // determine the y axis used
-    if (axes.yaxis && axes.yaxis.used) {
-      yaxis = axes.yaxis;
-    }
-    if (axes.yaxis2 && axes.yaxis2.used) {
-      yaxis = axes.yaxis2;
-    }
+    let top, left, lineWidth, regionWidth, lineStyle, color, markerTooltip;
 
     // map the eventType to a types object
     let eventTypeId = event.eventType;
@@ -502,14 +508,14 @@ let EventMarkers = function(plot) {
     let right = xaxis.p2c(timeTo) + o.left;
     regionWidth = right - left;
 
-    _.each([left, right], function(position) {
+    _.each([left, right], position => {
       let line = $('<div class="events_line flot-temp-elem"></div>').css({
         position: 'absolute',
         opacity: 0.8,
         left: position + 'px',
         top: 8,
         width: lineWidth + 'px',
-        height: that._plot.height() + topOffset,
+        height: this._plot.height() + topOffset,
         'border-left-width': lineWidth + 'px',
         'border-left-style': lineStyle,
         'border-left-color': color,
@@ -573,22 +579,24 @@ let EventMarkers = function(plot) {
     );
 
     return drawableEvent;
-  };
+  }
 
   /**
    * check if the event is inside visible range
    */
-  this._insidePlot = function(x) {
+  _insidePlot(x) {
     let xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
     let xc = xaxis.p2c(x);
     return xc > 0 && xc < xaxis.p2c(xaxis.max);
-  };
-};
+  }
+}
 
 /**
  * initialize the plugin for the given plot
  */
-function init(plot) {
+
+/** @ngInject */
+export function init(plot) {
   /*jshint validthis:true */
   let that = this;
   let eventMarkers = new EventMarkers(plot);
@@ -598,7 +606,7 @@ function init(plot) {
   };
 
   plot.hideEvents = function() {
-    $.each(eventMarkers._events, function(index, event) {
+    $.each(eventMarkers._events, (index, event) => {
       event
         .visual()
         .getObject()
@@ -608,7 +616,7 @@ function init(plot) {
 
   plot.showEvents = function() {
     plot.hideEvents();
-    $.each(eventMarkers._events, function(index, event) {
+    $.each(eventMarkers._events, (index, event) => {
       event.hide();
     });
 
