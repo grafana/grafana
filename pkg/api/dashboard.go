@@ -109,7 +109,6 @@ func GetDashboard(c *m.ReqContext) Response {
 	}
 
 	if isDashboardProvisioned.Result {
-		meta.CanEdit = true
 		meta.Provisioned = true
 	}
 
