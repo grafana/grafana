@@ -56,8 +56,9 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardByDashboardId) error {
-					return models.ErrDashboardProvisioningDoesNotExist
+				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+					cmd.Result = false
+					return nil
 				})
 
 				testCases := []struct {
@@ -84,8 +85,8 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			Convey("Should return validation error if dashboard is provisioned", func() {
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardByDashboardId) error {
-					cmd.Result = &models.DashboardProvisioning{}
+				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+					cmd.Result = true
 					return nil
 				})
 
@@ -105,8 +106,9 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			Convey("Should return validation error if alert data is invalid", func() {
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardByDashboardId) error {
-					return models.ErrDashboardProvisioningDoesNotExist
+				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+					cmd.Result = false
+					return nil
 				})
 
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {

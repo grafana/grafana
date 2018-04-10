@@ -27,8 +27,9 @@ func TestIntegratedDashboardService(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardByDashboardId) error {
-				return models.ErrDashboardProvisioningDoesNotExist
+			bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+				cmd.Result = false
+				return nil
 			})
 
 			savedFolder := saveTestFolder("Saved folder", testOrgId)

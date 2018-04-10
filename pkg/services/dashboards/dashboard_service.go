@@ -93,9 +93,15 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		}
 	}
 
-	err := dr.validateDashboardIsNotProvisioned(dash.Id)
+	isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dash.Id}
+	err := bus.Dispatch(isDashboardProvisioned)
+
 	if err != nil {
 		return nil, err
+	}
+
+	if isDashboardProvisioned.Result {
+		return nil, models.ErrDashboardCannotSaveProvisionedDashboard
 	}
 
 	validateBeforeSaveCmd := models.ValidateDashboardBeforeSaveCommand{
@@ -132,23 +138,6 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	}
 
 	return cmd, nil
-}
-
-func (dr *dashboardServiceImpl) validateDashboardIsNotProvisioned(dashboardId int64) error {
-	dpQuery := &models.GetProvisionedDashboardByDashboardId{DashboardId: dashboardId}
-	err := bus.Dispatch(dpQuery)
-
-	// provisioned dashboards cannot be saved. So we can only save
-	// this dashboard if ErrDashboardProvisioningDoesNotExist is returned
-	if err != nil && err != models.ErrDashboardProvisioningDoesNotExist {
-		return err
-	}
-
-	if err == nil {
-		return models.ErrDashboardCannotSaveProvisionedDashboard
-	}
-
-	return nil
 }
 
 func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand, dto *SaveDashboardDTO) error {
