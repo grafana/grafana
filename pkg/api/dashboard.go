@@ -104,6 +104,10 @@ func GetDashboard(c *m.ReqContext) Response {
 
 	dpQuery := &m.GetProvisionedDashboardByDashboardId{DashboardId: dash.Id}
 	err = bus.Dispatch(dpQuery)
+	if err != nil {
+		return Error(500, "Error while checking if dashboard is provisioned", err)
+	}
+
 	if dpQuery.Result != nil {
 		meta.CanEdit = true
 		meta.Provisioned = true
