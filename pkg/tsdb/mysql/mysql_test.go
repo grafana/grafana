@@ -3,25 +3,35 @@ package mysql
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-// To run this test, remove the Skip from SkipConvey
-// and set up a MySQL db named grafana_tests and a user/password grafana/password
+// To run this test, set runMySqlTests=true
+// and set up a MySQL db named grafana_ds_tests and a user/password grafana/password
 // Use the docker/blocks/mysql_tests/docker-compose.yaml to spin up a
 // preconfigured MySQL server suitable for running these tests.
 // Thers's also a dashboard.json in same directory that you can import to Grafana
 // once you've created a datasource for the test server/database.
 func TestMySQL(t *testing.T) {
-	SkipConvey("MySQL", t, func() {
+	// change to true to run the MySQL tests
+	runMySqlTests := false
+	// runMySqlTests := true
+
+	if !(sqlstore.IsTestDbMySql() || runMySqlTests) {
+		t.Skip()
+	}
+
+	Convey("MySQL", t, func() {
 		x := InitMySQLTestDB(t)
 
 		endpoint := &MysqlQueryEndpoint{
@@ -35,7 +45,7 @@ func TestMySQL(t *testing.T) {
 		sess := x.NewSession()
 		defer sess.Close()
 
-		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.Local)
+		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
 
 		Convey("Given a table with different native data types", func() {
 			if exists, err := sess.IsTableExist("mysql_types"); err != nil || exists {
@@ -121,9 +131,8 @@ func TestMySQL(t *testing.T) {
 				So(column[7].(float64), ShouldEqual, 1.11)
 				So(column[8].(float64), ShouldEqual, 2.22)
 				So(*column[9].(*float32), ShouldEqual, 3.33)
-				_, offset := time.Now().Zone()
-				So(column[10].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now().Add(time.Duration(offset)*time.Second))
-				So(column[11].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now().Add(time.Duration(offset)*time.Second))
+				So(column[10].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now())
+				So(column[11].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now())
 				So(column[12].(string), ShouldEqual, "11:11:11")
 				So(column[13].(int64), ShouldEqual, 2018)
 				So(*column[14].(*[]byte), ShouldHaveSameTypeAs, []byte{1})
@@ -137,8 +146,7 @@ func TestMySQL(t *testing.T) {
 				So(column[22].(string), ShouldEqual, "longblob")
 				So(column[23].(string), ShouldEqual, "val2")
 				So(column[24].(string), ShouldEqual, "a,b")
-				So(column[25].(time.Time).Format("2006-01-02T00:00:00Z"), ShouldEqual, time.Now().Format("2006-01-02T00:00:00Z"))
-				So(column[26].(float64), ShouldEqual, float64(1514764861000))
+				So(column[25].(time.Time).Format("2006-01-02T00:00:00Z"), ShouldEqual, time.Now().UTC().Format("2006-01-02T00:00:00Z"))
 				So(column[27], ShouldEqual, nil)
 				So(column[28], ShouldEqual, nil)
 				So(column[29], ShouldEqual, "")
@@ -647,15 +655,15 @@ func TestMySQL(t *testing.T) {
 }
 
 func InitMySQLTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr+"&parseTime=true")
-	x.DatabaseTZ = time.Local
-	x.TZLocation = time.Local
-
-	// x.ShowSQL()
-
+	x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, strings.Replace(sqlutil.TestDB_Mysql.ConnStr, "/grafana_tests", "/grafana_ds_tests", 1))
 	if err != nil {
 		t.Fatalf("Failed to init mysql db %v", err)
 	}
+
+	x.DatabaseTZ = time.UTC
+	x.TZLocation = time.UTC
+
+	// x.ShowSQL()
 
 	return x
 }
