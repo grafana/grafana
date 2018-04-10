@@ -2,6 +2,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../core_module';
 
+/** @ngInject */
 export function dropdownTypeahead($compile) {
   let inputTemplate =
     '<input type="text"' +
@@ -121,6 +122,7 @@ export function dropdownTypeahead($compile) {
   };
 }
 
+/** @ngInject */
 export function dropdownTypeahead2($compile) {
   let inputTemplate =
     '<input type="text"' + ' class="gf-form-input"' + ' spellcheck="false" style="display:none"></input>';
