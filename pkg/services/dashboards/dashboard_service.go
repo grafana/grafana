@@ -93,6 +93,11 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		}
 	}
 
+	err := dr.validateDashboardIsNotProvisioned(dash.Id)
+	if err != nil {
+		return nil, err
+	}
+
 	validateBeforeSaveCmd := models.ValidateDashboardBeforeSaveCommand{
 		OrgId:     dto.OrgId,
 		Dashboard: dash,
@@ -109,11 +114,6 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 			return nil, err
 		}
 		return nil, models.ErrDashboardUpdateAccessDenied
-	}
-
-	err := dr.validateDashboardIsNotProvisioned(dash.Id)
-	if err != nil {
-		return nil, err
 	}
 
 	cmd := &models.SaveDashboardCommand{
