@@ -309,7 +309,7 @@ func TestMySQL(t *testing.T) {
 		Convey("Given a table with metrics having multiple values and measurements", func() {
 			type metric_values struct {
 				Time                time.Time  `xorm:"datetime 'time' not null"`
-				TimeNullable        *time.Time `xorm:"datetime 'timeNullable' null"`
+				TimeNullable        *time.Time `xorm:"datetime(6) 'timeNullable' null"`
 				TimeInt64           int64      `xorm:"bigint(20) 'timeInt64' not null"`
 				TimeInt64Nullable   *int64     `xorm:"bigint(20) 'timeInt64Nullable' null"`
 				TimeFloat64         float64    `xorm:"double 'timeFloat64' not null"`
