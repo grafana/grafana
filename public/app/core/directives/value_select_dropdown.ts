@@ -17,6 +17,7 @@ export class ValueSelectDropdownCtrl {
   hide: any;
   onUpdated: any;
 
+  /** @ngInject */
   constructor(private $q) {}
 
   show() {
@@ -236,6 +237,7 @@ export class ValueSelectDropdownCtrl {
   }
 }
 
+/** @ngInject */
 export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
   return {
     scope: { variable: '=', onUpdated: '&' },
