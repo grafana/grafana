@@ -3,26 +3,36 @@ package postgres
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
 	_ "github.com/lib/pq"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-// To run this test, remove the Skip from SkipConvey
-// and set up a PostgreSQL db named grafanatest and a user/password grafanatest/grafanatest!
+// To run this test, set runMySqlTests=true
+// and set up a PostgreSQL db named grafanadstest and a user/password grafanatest/grafanatest!
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
 // Thers's also a dashboard.json in same directory that you can import to Grafana
 // once you've created a datasource for the test server/database.
 func TestPostgres(t *testing.T) {
-	SkipConvey("PostgreSQL", t, func() {
+	// change to true to run the MySQL tests
+	runPostgresTests := false
+	// runPostgresTests := true
+
+	if !(sqlstore.IsTestDbPostgres() || runPostgresTests) {
+		t.Skip()
+	}
+
+	Convey("PostgreSQL", t, func() {
 		x := InitPostgresTestDB(t)
 
 		endpoint := &PostgresQueryEndpoint{
@@ -157,8 +167,7 @@ func TestPostgres(t *testing.T) {
 			}
 
 			_, err = sess.InsertMulti(series)
-				So(err, ShouldBeNil)
-			}
+			So(err, ShouldBeNil)
 
 			Convey("When doing a metric query using timeGroup", func() {
 				query := &tsdb.TsdbQuery{
@@ -451,7 +460,7 @@ func TestPostgres(t *testing.T) {
 
 				So(len(queryResult.Series), ShouldEqual, 1)
 				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
-				})
+			})
 
 			Convey("When doing a metric query using epoch (int32 nullable) as time column should return metric with time in milliseconds", func() {
 				query := &tsdb.TsdbQuery{
@@ -473,7 +482,7 @@ func TestPostgres(t *testing.T) {
 
 				So(len(queryResult.Series), ShouldEqual, 1)
 				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
-				})
+			})
 
 			Convey("When doing a metric query using epoch (float32) as time column should return metric with time in milliseconds", func() {
 				query := &tsdb.TsdbQuery{
@@ -486,7 +495,7 @@ func TestPostgres(t *testing.T) {
 							RefId: "A",
 						},
 					},
-			}
+				}
 
 				resp, err := endpoint.Query(nil, nil, query)
 				So(err, ShouldBeNil)
@@ -508,7 +517,7 @@ func TestPostgres(t *testing.T) {
 							RefId: "A",
 						},
 					},
-			}
+				}
 
 				resp, err := endpoint.Query(nil, nil, query)
 				So(err, ShouldBeNil)
@@ -826,15 +835,15 @@ func TestPostgres(t *testing.T) {
 }
 
 func InitPostgresTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
+	x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, strings.Replace(sqlutil.TestDB_Postgres.ConnStr, "dbname=grafanatest", "dbname=grafanadstest", 1))
+	if err != nil {
+		t.Fatalf("Failed to init postgres db %v", err)
+	}
+
 	x.DatabaseTZ = time.UTC
 	x.TZLocation = time.UTC
 
 	// x.ShowSQL()
-
-	if err != nil {
-		t.Fatalf("Failed to init postgres db %v", err)
-	}
 
 	return x
 }

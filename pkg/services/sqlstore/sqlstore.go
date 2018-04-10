@@ -278,3 +278,10 @@ func IsTestDbMySql() bool {
 	return false
 }
 
+func IsTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == dbPostgres
+	}
+
+	return false
+}
