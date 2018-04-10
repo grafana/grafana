@@ -2,6 +2,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../core_module';
 
+/** @ngInject */
 export function metricSegment($compile, $sce) {
   let inputTemplate =
     '<input type="text" data-provide="typeahead" ' +
@@ -182,6 +183,7 @@ export function metricSegment($compile, $sce) {
   };
 }
 
+/** @ngInject */
 export function metricSegmentModel(uiSegmentSrv, $q) {
   return {
     template:
