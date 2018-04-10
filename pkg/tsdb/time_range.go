@@ -96,5 +96,10 @@ func EpochPrecisionToMs(value float64) float64 {
 		return float64(value * 1e3)
 	}
 
+	s := strconv.FormatFloat(value, 'f', -1, 64)
+	if len(s) == 19 {
+		return float64(value / 1e6)
+	}
+
 	return float64(value)
 }
