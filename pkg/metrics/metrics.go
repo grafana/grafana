@@ -277,8 +277,6 @@ func init() {
 		Help:      "Information about the Grafana",
 		Namespace: exporterName,
 	}, []string{"version"})
-
-	bus.AddEventListener(handleStats)
 }
 
 func initMetricVars(settings *MetricSettings) {
@@ -324,43 +322,36 @@ func initMetricVars(settings *MetricSettings) {
 func instrumentationLoop(settings *MetricSettings) chan struct{} {
 	M_Instance_Start.Inc()
 
+	// set the total stats gauges before we publishing metrics
+	updateTotalStats()
+
 	onceEveryDayTick := time.NewTicker(time.Hour * 24)
-	secondTicker := time.NewTicker(time.Second * time.Duration(settings.IntervalSeconds))
+	everyMinuteTicker := time.NewTicker(time.Minute)
+	defer onceEveryDayTick.Stop()
+	defer everyMinuteTicker.Stop()
 
 	for {
 		select {
 		case <-onceEveryDayTick.C:
 			sendUsageStats()
-		case <-secondTicker.C:
+		case <-everyMinuteTicker.C:
 			updateTotalStats()
 		}
 	}
 }
 
-var metricPublishCounter int64 = 0
-
 func updateTotalStats() {
-	metricPublishCounter++
-	if metricPublishCounter == 1 || metricPublishCounter%10 == 0 {
-		metricsLogger.Debug("Getting System Stats", "counter", metricPublishCounter)
-		statsQuery := models.GetSystemStatsQuery{}
-		if err := bus.Dispatch(&statsQuery); err != nil {
-			metricsLogger.Error("Failed to get system stats", "error", err)
-			return
-		}
+	statsQuery := models.GetSystemStatsQuery{}
+	if err := bus.Dispatch(&statsQuery); err != nil {
+		metricsLogger.Error("Failed to get system stats", "error", err)
+		return
 	}
-}
 
-func handleStats(event *models.SystemStats) error {
-	metricsLogger.Debug("Got System Stats", "stats", event)
-
-	M_StatTotal_Dashboards.Set(float64(event.Dashboards))
-	M_StatTotal_Users.Set(float64(event.Users))
-	M_StatActive_Users.Set(float64(event.ActiveUsers))
-	M_StatTotal_Playlists.Set(float64(event.Playlists))
-	M_StatTotal_Orgs.Set(float64(event.Orgs))
-
-	return nil
+	M_StatTotal_Dashboards.Set(float64(statsQuery.Result.Dashboards))
+	M_StatTotal_Users.Set(float64(statsQuery.Result.Users))
+	M_StatActive_Users.Set(float64(statsQuery.Result.ActiveUsers))
+	M_StatTotal_Playlists.Set(float64(statsQuery.Result.Playlists))
+	M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
 }
 
 func sendUsageStats() {
