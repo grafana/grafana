@@ -27,9 +27,9 @@ export class ValueSelectDropdownCtrl {
     this.options = this.variable.options;
     this.selectedValues = _.filter(this.options, { selected: true });
 
-    this.tags = _.map(this.variable.tags, function(value) {
+    this.tags = _.map(this.variable.tags, value => {
       let tag = { text: value, selected: false };
-      _.each(this.variable.current.tags, function(tagObj) {
+      _.each(this.variable.current.tags, tagObj => {
         if (tagObj.text === value) {
           tag = tagObj;
         }
@@ -50,7 +50,7 @@ export class ValueSelectDropdownCtrl {
 
     if (current.tags && current.tags.length) {
       // filer out values that are in selected tags
-      let selectedAndNotInTag = _.filter(this.variable.options, function(option) {
+      let selectedAndNotInTag = _.filter(this.variable.options, option => {
         if (!option.selected) {
           return false;
         }
@@ -77,7 +77,7 @@ export class ValueSelectDropdownCtrl {
   }
 
   clearSelections() {
-    _.each(this.options, function(option) {
+    _.each(this.options, option => {
       option.selected = false;
     });
 
@@ -93,10 +93,10 @@ export class ValueSelectDropdownCtrl {
       tagValuesPromise = this.$q.when(tag.values);
     }
 
-    tagValuesPromise.then(function(values) {
+    tagValuesPromise.then(values => {
       tag.values = values;
       tag.valuesText = values.join(' + ');
-      _.each(this.options, function(option) {
+      _.each(this.options, option => {
         if (_.indexOf(tag.values, option.value) !== -1) {
           option.selected = tag.selected;
         }
@@ -143,7 +143,7 @@ export class ValueSelectDropdownCtrl {
     excludeOthers = excludeOthers || false;
 
     let setAllExceptCurrentTo = function(newValue) {
-      _.each(this.options, function(other) {
+      _.each(this.options, other => {
         if (option !== other) {
           other.selected = newValue;
         }
@@ -180,9 +180,9 @@ export class ValueSelectDropdownCtrl {
     }
 
     // validate selected tags
-    _.each(this.tags, function(tag) {
+    _.each(this.tags, tag => {
       if (tag.selected) {
-        _.each(tag.values, function(value) {
+        _.each(tag.values, value => {
           if (!_.find(this.selectedValues, { value: value })) {
             tag.selected = false;
           }
@@ -224,7 +224,7 @@ export class ValueSelectDropdownCtrl {
 
   queryChanged() {
     this.highlightIndex = -1;
-    this.search.options = _.filter(this.options, function(option) {
+    this.search.options = _.filter(this.options, option => {
       return option.text.toLowerCase().indexOf(this.search.query.toLowerCase()) !== -1;
     });
 
@@ -280,7 +280,7 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
         }
       }
 
-      scope.$watch('vm.dropdownVisible', function(newValue) {
+      scope.$watch('vm.dropdownVisible', newValue => {
         if (newValue) {
           openDropdown();
         } else {
@@ -288,11 +288,11 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
         }
       });
 
-      let cleanUp = $rootScope.$on('template-variable-value-updated', function() {
+      let cleanUp = $rootScope.$on('template-variable-value-updated', () => {
         scope.vm.updateLinkText();
       });
 
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         cleanUp();
       });
 
