@@ -268,8 +268,12 @@
   }
 }
 
-.baron._scrolling > .baron__track .baron__bar {
+.panel-hover-highlight .baron__track .baron__bar {
   opacity: 0.6;
+}
+
+.baron._scrolling > .baron__track .baron__bar {
+  opacity: 0.9;
 }
 
 .baron__control {
