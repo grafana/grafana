@@ -22,7 +22,14 @@ export class ElasticQueryBuilder {
 
   buildTermsAgg(aggDef, queryNode, target) {
     var metricRef, metric, y;
-    queryNode.terms = { field: aggDef.field };
+    queryNode.terms = {};
+    if (aggDef.settings.scripted_field) {
+      queryNode.terms.script = {};
+      queryNode.terms.script['inline'] = aggDef.settings.scripted_field;
+      queryNode.terms.script['lang'] = 'painless';
+    } else {
+      queryNode.terms = { field: aggDef.field };
+    }
 
     if (!aggDef.settings) {
       return queryNode;

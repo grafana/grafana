@@ -106,6 +106,10 @@
 			</gf-form-dropdown>
 		</div>
 		<div class="gf-form offset-width-7">
+			<label class="gf-form-label width-10">Inline Script</label>
+			<input type="text" class="gf-form-input max-width-48" ng-model="agg.settings.scripted_field" ng-blur="onChangeInternal()">
+		</div>
+		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">Min Doc Count</label>
 			<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.min_doc_count" ng-blur="onChangeInternal()">
 		</div>
