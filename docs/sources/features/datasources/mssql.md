@@ -28,7 +28,7 @@ Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Host* | The IP address/hostname and optional port of your MSSQL instance. If port is omitted, default 1443 will be used.
+*Host* | The IP address/hostname and optional port of your MSSQL instance. If port is omitted, default 1433 will be used.
 *Database* | Name of your MSSQL database.
 *User* | Database user's login/username
 *Password* | Database user's password
