@@ -113,7 +113,8 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
           `;
 
           let scrollRoot = panelContent;
-          let scroller = panelContent.find(':first-child').find(':first-child');
+          let scroller = panelContent.find(':first').find(':first');
+
           scrollRoot.addClass(scrollRootClass);
           $(scrollBarHTML).appendTo(scrollRoot);
           scroller.addClass(scrollerClass);
