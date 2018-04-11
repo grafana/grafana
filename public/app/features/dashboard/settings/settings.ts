@@ -17,7 +17,14 @@ export class SettingsCtrl {
   hasUnsavedFolderChange: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $rootScope, private backendSrv, private dashboardSrv) {
+  constructor(
+    private $scope,
+    private $route,
+    private $location,
+    private $rootScope,
+    private backendSrv,
+    private dashboardSrv
+  ) {
     // temp hack for annotations and variables editors
     // that rely on inherited scope
     $scope.dashboard = this.dashboard;
@@ -93,8 +100,8 @@ export class SettingsCtrl {
     }
 
     this.sections.push({
-      title: 'View JSON',
-      id: 'view_json',
+      title: 'Dashboard JSON',
+      id: 'dashboard_json',
       icon: 'gicon gicon-json',
     });
 
@@ -134,13 +141,13 @@ export class SettingsCtrl {
   }
 
   saveDashboard() {
-    if (this.viewId === 'view_json') {
-      this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
-        window.location.reload();
-      });
-    } else {
-      this.dashboardSrv.saveDashboard();
-    }
+    this.dashboardSrv.saveDashboard();
+  }
+
+  saveDashboardJson() {
+    this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
+      this.$route.reload();
+    });
   }
 
   onPostSave() {
