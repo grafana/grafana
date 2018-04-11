@@ -34,6 +34,13 @@
   }
 }
 
+// fix for phantomjs
+.body--phantomjs {
+  .scroll-canvas {
+    overflow: hidden;
+  }
+}
+
 .page-body {
   padding-top: $spacer*2;
   min-height: 500px;
