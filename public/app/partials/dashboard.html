@@ -1,8 +1,8 @@
 <div dash-class ng-if="ctrl.dashboard">
 	<dashnav dashboard="ctrl.dashboard"></dashnav>
 
-	<div class="scroll-canvas scroll-canvas--dashboard">
-		<div grafana-scrollbar>
+	<div class="scroll-canvas scroll-canvas--dashboard" page-scrollbar>
+		<div>
 			<dashboard-settings dashboard="ctrl.dashboard"
 													ng-if="ctrl.dashboardViewState.state.editview"
 													class="dashboard-settings">

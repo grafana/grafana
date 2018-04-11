@@ -74,6 +74,7 @@
 
 .graph-legend-scroll {
   position: relative;
+  overflow: auto !important;
 }
 
 .graph-legend-icon {

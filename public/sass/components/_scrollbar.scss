@@ -106,22 +106,16 @@
   opacity: 0.9;
 }
 
-// Srollbars
+// Scrollbars
 //
 
-// ::-webkit-scrollbar {
-//   width: 8px;
-//   height: 8px;
-// }
-
-// ::-webkit-scrollbar:hover {
-//   height: 8px;
-// }
-
 ::-webkit-scrollbar {
-  // Hide system scrollbar (Mac OS X)
-  width: 0;
-  height: 0;
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar:hover {
+  height: 8px;
 }
 
 ::-webkit-scrollbar-button:start:decrement,
