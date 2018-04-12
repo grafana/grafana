@@ -23,6 +23,11 @@ export class ElasticQueryBuilder {
   buildTermsAgg(aggDef, queryNode, target) {
     var metricRef, metric, y;
     queryNode.terms = {};
+    if (!aggDef.settings) {
+      queryNode.terms = { field: aggDef.field };
+      return queryNode;
+    }
+
     if (aggDef.settings.scripted_field) {
       queryNode.terms.script = {};
       queryNode.terms.script['inline'] = aggDef.settings.scripted_field;
@@ -30,11 +35,7 @@ export class ElasticQueryBuilder {
     } else {
       queryNode.terms = { field: aggDef.field };
     }
-
-    if (!aggDef.settings) {
-      return queryNode;
-    }
-
+    
     queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
