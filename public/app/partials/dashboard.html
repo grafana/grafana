@@ -1,18 +1,18 @@
 <div dash-class ng-if="ctrl.dashboard">
 	<dashnav dashboard="ctrl.dashboard"></dashnav>
 
-	<div class="scroll-canvas scroll-canvas--dashboard" grafana-scrollbar>
-		<dashboard-settings dashboard="ctrl.dashboard"
-											  ng-if="ctrl.dashboardViewState.state.editview"
-												class="dashboard-settings">
-		</dashboard-settings>
+	<div class="scroll-canvas scroll-canvas--dashboard" page-scrollbar>
+    <dashboard-settings dashboard="ctrl.dashboard"
+                        ng-if="ctrl.dashboardViewState.state.editview"
+                        class="dashboard-settings">
+    </dashboard-settings>
 
-		<div class="dashboard-container">
-			<dashboard-submenu ng-if="ctrl.dashboard.meta.submenuEnabled" dashboard="ctrl.dashboard">
-			</dashboard-submenu>
+    <div class="dashboard-container">
+      <dashboard-submenu ng-if="ctrl.dashboard.meta.submenuEnabled" dashboard="ctrl.dashboard">
+      </dashboard-submenu>
 
-			<dashboard-grid get-panel-container="ctrl.getPanelContainer">
-			</dashboard-grid>
-		</div>
-	</div>
+      <dashboard-grid get-panel-container="ctrl.getPanelContainer">
+      </dashboard-grid>
+    </div>
+  </div>
 </div>

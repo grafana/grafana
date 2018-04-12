@@ -103,7 +103,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
 
   render() {
     return (
-      <div className="panel-container">
+      <div className="panel-container add-panel-container">
         <div className="add-panel">
           <div className="add-panel__header">
             <i className="gicon gicon-add-panel" />
