@@ -61,4 +61,52 @@ describe('file_export', () => {
       expect(text).toBe(expectedText);
     });
   });
+
+  describe('when exporting table data to csv', () => {
+    let tableCtx: any = {};
+    beforeEach(() => {
+      tableCtx = {
+        columns: [
+          { title: 'integer_value' },
+          { text: 'string_value' },
+          { title: 'float_value' },
+          { text: 'boolean_value' },
+        ],
+        rows: [
+          [1234, 'some_string', 1.234, true],
+          [0o765, 'some string with " in the middle', 1e-2, false],
+          [0o765, 'some string with "" in the middle', 1e-2, false],
+          [0o765, '"some string with " at the beginning', 1e-2, false],
+          [0o765, 'some string with " at the end"', 1e-2, false],
+          [0x123, 'some string with \n in the middle', 10.01, false],
+          [0x123, '\nsome string with \n at the beginning', 10.01, false],
+          [0x123, 'some string with \n at the end\n', 10.01, false],
+          [3, 'some string with \n\n in the middle', 10.01, false],
+          [3, 'some string with \\n in the middle', 10.01, false],
+          [0b1011, 'some string with ; in the middle', -12.34, true],
+          [123, 'some string with ;; in the middle', -12.34, true],
+        ],
+      };
+    });
+
+    it('should properly escape special characters and quote all string values', () => {
+      let text = fileExport.convertTableDataToCsv(tableCtx, false);
+      const expectedText =
+        '"integer_value";"string_value";"float_value";"boolean_value"\n' +
+        '1234;"some_string";1.234;true\n' +
+        '501;"some string with " in the middle";0.01;false\n' +
+        '501;""some string with " at the beginning";0.01;false\n' +
+        '501;"some string with " at the end"";0.01;false\n' +
+        '501;"some string with "" in the middle";0.01;false\n' +
+        '291;"some string with \\n in the middle";10.01;false\n' +
+        '291;"\\nsome string with \\n at the beginning";10.01;false\n' +
+        '291;"some string with \\n at the end\\n";10.01;false\n' +
+        '3;"some string with \\n\\n in the middle";10.01;false\n' +
+        '3;"some string with \\n in the middle";10.01;false\n' +
+        '11;"some string with ; in the middle";-12.34;true\n' +
+        '123;"some string with ;; in the middle";-12.34;true';
+
+      expect(text).toBe(expectedText);
+    });
+  });
 });
