@@ -7,6 +7,10 @@
     @include media-breakpoint-up(sm) {
       flex-direction: row;
 
+      .graph-panel__chart {
+        flex: 2 1 10px;
+      }
+
       .graph-legend {
         flex: 0 1 10px;
         max-height: 100%;
@@ -131,8 +135,20 @@
 // fix for phantomjs
 .body--phantomjs {
   .graph-panel--legend-right {
+    .graph-legend {
+      display: inline-block;
+    }
+
+    .graph-panel__chart {
+      display: flex;
+    }
+
     .graph-legend-table {
       display: table;
+
+      .graph-legend-scroll {
+        display: table;
+      }
     }
   }
 }
