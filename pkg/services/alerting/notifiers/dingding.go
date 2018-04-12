@@ -72,7 +72,10 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		this.log.Error("Failed to create Json data", "error", err, "dingding", this.Name)
 	}
 
-	body, _ := bodyJSON.MarshalJSON()
+	body, err := bodyJSON.MarshalJSON()
+	if err != nil {
+		return err
+	}
 
 	cmd := &m.SendWebhookSync{
 		Url:  this.Url,
