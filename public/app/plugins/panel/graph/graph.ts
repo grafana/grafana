@@ -443,7 +443,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
           // Expand ticks for pretty view
           min = Math.floor(min / tickStep) * tickStep;
-          max = Math.ceil(max / tickStep) * tickStep;
+          // 1.01 is 101% - ensure we have enough space for last bar
+          max = Math.ceil(max * 1.01 / tickStep) * tickStep;
 
           ticks = [];
           for (let i = min; i <= max; i += tickStep) {
