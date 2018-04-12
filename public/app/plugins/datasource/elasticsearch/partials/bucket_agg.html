@@ -106,8 +106,13 @@
 			</gf-form-dropdown>
 		</div>
 		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Inline Script</label>
-			<input type="text" class="gf-form-input max-width-48" ng-model="agg.settings.scripted_field" ng-blur="onChangeInternal()">
+			<label class="gf-form-label width-10">
+				Inline Script
+				<info-popover mode="right-normal">
+					Inline script defines a new on the fly field for this term aggregation, for example: doc['netflow.ipv4_src_addr'] ' - ' + doc['netflow.ipv4_dst_addr']
+				</info-popover>
+			</label>
+			<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.scripted_field" ng-blur="onChangeInternal()">
 		</div>
 		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">Min Doc Count</label>

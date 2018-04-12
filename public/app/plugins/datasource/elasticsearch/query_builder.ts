@@ -35,7 +35,7 @@ export class ElasticQueryBuilder {
     } else {
       queryNode.terms = { field: aggDef.field };
     }
-    
+
     queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
