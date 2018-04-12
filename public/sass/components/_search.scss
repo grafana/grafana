@@ -102,13 +102,20 @@
   }
 }
 
+.search-results-scroller {
+  display: flex;
+  position: relative;
+}
+
 .search-results-container {
-  height: 100%;
   display: block;
   padding: $spacer;
   position: relative;
   flex-grow: 10;
   margin-bottom: 1rem;
+
+  // Fix for search scroller in mobile view
+  height: unset;
 
   .label-tag {
     margin-left: 6px;
