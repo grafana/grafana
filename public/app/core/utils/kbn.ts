@@ -520,6 +520,7 @@ kbn.valueFormats.celsius = kbn.formatBuilders.fixedUnit('°C');
 kbn.valueFormats.farenheit = kbn.formatBuilders.fixedUnit('°F');
 kbn.valueFormats.kelvin = kbn.formatBuilders.fixedUnit('K');
 kbn.valueFormats.humidity = kbn.formatBuilders.fixedUnit('%H');
+kbn.valueFormats.relativehumidity = kbn.formatBuilders.fixedUnit('%RH');
 
 // Pressure
 kbn.valueFormats.pressurebar = kbn.formatBuilders.decimalSIPrefix('bar');
@@ -849,6 +850,7 @@ kbn.getUnitFormats = function() {
         { text: 'percent (0-100)', value: 'percent' },
         { text: 'percent (0.0-1.0)', value: 'percentunit' },
         { text: 'Humidity (%H)', value: 'humidity' },
+        { text: 'Relative Humidity (%RH)', value: 'relativehumidity' },
         { text: 'decibel', value: 'dB' },
         { text: 'hexadecimal (0x)', value: 'hex0x' },
         { text: 'hexadecimal', value: 'hex' },
