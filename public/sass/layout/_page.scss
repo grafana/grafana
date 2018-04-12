@@ -28,6 +28,7 @@
   width: 100%;
   overflow: auto;
   height: 100%;
+  -webkit-overflow-scrolling: touch;
 
   &--dashboard {
     height: calc(100% - 56px);
