@@ -117,6 +117,14 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           appEvents.emit('toggle-kiosk-mode');
         }
 
+        // check for 'inactive' url param for clean looks like kiosk, but with title
+        if (data.params.inactive) {
+          body.addClass('user-activity-low');
+
+          // for some reason, with this class it looks cleanest
+          body.addClass('sidemenu-open');
+        }
+
         // close all drops
         for (let drop of Drop.drops) {
           drop.destroy();
