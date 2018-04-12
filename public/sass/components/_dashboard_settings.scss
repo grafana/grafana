@@ -3,6 +3,20 @@
   height: 100%;
   display: flex;
   flex-direction: row;
+
+  //fix for fontawesome icons
+  .fa-lock {
+    &::before {
+      font-size: 20px;
+      text-align: center;
+      padding-left: 1px;
+    }
+  }
+  .fa-history {
+    &::before {
+      font-size: 17px;
+    }
+  }
 }
 
 .dashboard-page--settings-opening {
