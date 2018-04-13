@@ -198,7 +198,9 @@ export class QueryVariable implements Variable {
         }
       });
     } else if (sortType === 3) {
-      options = _.sortBy(options, opt => { return _.toLower(opt.text); });
+      options = _.sortBy(options, opt => {
+        return _.toLower(opt.text);
+      });
     }
 
     if (reverseSort) {
