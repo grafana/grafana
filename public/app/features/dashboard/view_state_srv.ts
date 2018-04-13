@@ -196,9 +196,10 @@ export class DashboardViewState {
     this.oldTimeRange = ctrl.range;
     this.fullscreenPanel = panelScope;
 
+    // Firefox doesn't return scrollTop postion properly if 'dash-scroll' is emitted after setViewMode()
+    this.$scope.appEvent('dash-scroll', { animate: false, pos: 0 });
     this.dashboard.setViewMode(ctrl.panel, true, ctrl.editMode);
     this.$scope.appEvent('panel-fullscreen-enter', { panelId: ctrl.panel.id });
-    this.$scope.appEvent('dash-scroll', { animate: false, pos: 0 });
   }
 
   registerPanel(panelScope) {
