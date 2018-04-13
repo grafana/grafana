@@ -19,7 +19,7 @@ type UpdateAnnotationsCmd struct {
 	Text                  string   `json:"text"`
 	Tags                  []string `json:"tags"`
 	IsRegion              bool     `json:"isRegion"`
-	RegionEndAnnotationId int64    `json:"regionEndId"`
+	RegionEndAnnotationId int64    `json:"regionEndAnnotationId"`
 	TimeEnd               int64    `json:"timeEnd"`
 	RegionId              int64    `json:"regionId"`
 }

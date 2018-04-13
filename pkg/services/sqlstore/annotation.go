@@ -82,6 +82,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		if item.Epoch != 0 {
 			existing.Epoch = item.Epoch
 		}
+
 		if item.Text != "" {
 			existing.Text = item.Text
 		}

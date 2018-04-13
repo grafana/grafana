@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
@@ -192,6 +193,9 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 		return Error(500, "Failed to get annotations", err)
 	}
 
+	annotation := items[0]
+	annotation.Time = annotation.Time * 1000
+
 	if resp := canSave(c, repo, annotationID); resp != nil {
 		return resp
 	}
@@ -205,22 +209,22 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	if cmd.Time != 0 {
 		epoch = cmd.Time
 	} else {
-		epoch = items[0].Time
+		epoch = annotation.Time
 	}
 	if cmd.Text != "" {
 		text = cmd.Text
 	} else {
-		text = items[0].Text
+		text = annotation.Text
 	}
 	if len(cmd.Tags) > 0 {
 		tags = cmd.Tags
 	} else {
-		tags = items[0].Tags
+		tags = annotation.Tags
 	}
 	if cmd.RegionId != 0 {
 		regionId = cmd.RegionId
 	} else {
-		regionId = items[0].RegionId
+		regionId = annotation.RegionId
 	}
 
 	item := annotations.Item{
@@ -247,6 +251,11 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 			// We don't know id of region right event, so set it to 0 and find then using query like
 			// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
 			itemRight.Id = 0
+
+			if err := repo.Update(&itemRight); err != nil {
+				return Error(500, fmt.Sprintf("Failed to update annotation for region end time %d.", cmd.TimeEnd), err)
+			}
+
 		} else { // allow for converting existing annotations into a region
 			itemRight = annotations.Item{
 				OrgId:    c.OrgId,
@@ -254,11 +263,12 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 				Id:       cmd.RegionEndAnnotationId,
 				RegionId: regionId,
 			}
+
+			if err := repo.Update(&itemRight); err != nil {
+				return Error(500, fmt.Sprintf("Failed to update annotation for region ending annotation %d.", cmd.RegionEndAnnotationId), err)
+			}
 		}
 
-		if err := repo.Update(&itemRight); err != nil {
-			return Error(500, "Failed to update annotation for region end time", err)
-		}
 	}
 
 	return Success("Annotation updated")
