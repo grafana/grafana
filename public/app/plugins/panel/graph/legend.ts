@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
-import PerfectScrollbar from 'perfect-scrollbar';
+import baron from 'baron';
 
 var module = angular.module('grafana.directives');
 
@@ -16,11 +16,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       var i;
       var legendScrollbar;
       const legendRightDefaultWidth = 10;
+      let legendElem = elem.parent();
 
       scope.$on('$destroy', function() {
-        if (legendScrollbar) {
-          legendScrollbar.destroy();
-        }
+        destroyScrollbar();
       });
 
       ctrl.events.on('render-legend', () => {
@@ -112,7 +111,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function render() {
-        let legendWidth = elem.width();
+        let legendWidth = legendElem.width();
         if (!ctrl.panel.legend.show) {
           elem.empty();
           firstRender = true;
@@ -134,8 +133,8 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         // Set width so it works with IE11
         var width: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + 'px' : '';
         var ieWidth: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth - 1 + 'px' : '';
-        elem.css('min-width', width);
-        elem.css('width', ieWidth);
+        legendElem.css('min-width', width);
+        legendElem.css('width', ieWidth);
 
         elem.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
@@ -241,8 +240,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           tbodyElem.append(tableHeaderElem);
           tbodyElem.append(seriesElements);
           elem.append(tbodyElem);
+          tbodyElem.wrap('<div class="graph-legend-scroll"></div>');
         } else {
-          elem.append(seriesElements);
+          elem.append('<div class="graph-legend-scroll"></div>');
+          elem.find('.graph-legend-scroll').append(seriesElements);
         }
 
         if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== legendRightDefaultWidth)) {
@@ -253,23 +254,45 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function addScrollbar() {
-        const scrollbarOptions = {
-          // Number of pixels the content height can surpass the container height without enabling the scroll bar.
-          scrollYMarginOffset: 2,
-          suppressScrollX: true,
-          wheelPropagation: true,
+        const scrollRootClass = 'baron baron__root';
+        const scrollerClass = 'baron__scroller';
+        const scrollBarHTML = `
+          <div class="baron__track">
+            <div class="baron__bar"></div>
+          </div>
+        `;
+
+        let scrollRoot = elem;
+        let scroller = elem.find('.graph-legend-scroll');
+
+        // clear existing scroll bar track to prevent duplication
+        scrollRoot.find('.baron__track').remove();
+
+        scrollRoot.addClass(scrollRootClass);
+        $(scrollBarHTML).appendTo(scrollRoot);
+        scroller.addClass(scrollerClass);
+
+        let scrollbarParams = {
+          root: scrollRoot[0],
+          scroller: scroller[0],
+          bar: '.baron__bar',
+          track: '.baron__track',
+          barOnCls: '_scrollbar',
+          scrollingCls: '_scrolling',
         };
 
         if (!legendScrollbar) {
-          legendScrollbar = new PerfectScrollbar(elem[0], scrollbarOptions);
+          legendScrollbar = baron(scrollbarParams);
         } else {
-          legendScrollbar.update();
+          destroyScrollbar();
+          legendScrollbar = baron(scrollbarParams);
         }
+        legendScrollbar.scroll();
       }
 
       function destroyScrollbar() {
         if (legendScrollbar) {
-          legendScrollbar.destroy();
+          legendScrollbar.dispose();
           legendScrollbar = undefined;
         }
       }

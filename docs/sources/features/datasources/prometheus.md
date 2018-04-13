@@ -34,7 +34,7 @@ Name | Description
 *Basic Auth* | Enable basic authentication to the Prometheus data source.
 *User* | Name of your Prometheus user
 *Password* | Database user's password
-*Scrape interval* | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s. 
+*Scrape interval* | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s.
 
 ## Query editor
 
@@ -100,3 +100,19 @@ The step option is useful to limit the number of events returned from your query
 ## Getting Grafana metrics into Prometheus
 
 Since 4.6.0 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
+
+## Configure datasource with provisioning
+
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+```
