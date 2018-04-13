@@ -155,6 +155,8 @@ export const PermissionsStore = types
         try {
           yield updateItems(self, updatedItems);
           self.items.push(newItem);
+          let sortedItems = self.items.sort((a, b) => b.sortRank - a.sortRank || a.name.localeCompare(b.name));
+          self.items = sortedItems;
           resetNewTypeInternal();
         } catch {}
         yield Promise.resolve();
@@ -214,9 +216,11 @@ const updateItems = (self, items) => {
 };
 
 const prepareServerResponse = (response, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
-  return response.map(item => {
-    return prepareItem(item, dashboardId, isFolder, isInRoot);
-  });
+  return response
+    .map(item => {
+      return prepareItem(item, dashboardId, isFolder, isInRoot);
+    })
+    .sort((a, b) => b.sortRank - a.sortRank || a.name.localeCompare(b.name));
 };
 
 const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
@@ -233,7 +237,7 @@ const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boo
     item.icon = 'fa fa-fw fa-street-view';
     item.name = item.role;
     item.sortRank = 30;
-    if (item.role === 'Viewer') {
+    if (item.role === 'Editor') {
       item.sortRank += 1;
     }
   }

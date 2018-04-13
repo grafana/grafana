@@ -15,10 +15,10 @@ function ItemAvatar({ item }) {
     return <img className="filter-table__avatar" src={item.teamAvatarUrl} />;
   }
   if (item.role === 'Editor') {
-    return <i style={{ width: '25px', fontSize: '1.5rem' }} className="gicon gicon-editor" />;
+    return <i style={{ width: '25px', height: '25px' }} className="gicon gicon-editor" />;
   }
 
-  return <i style={{ width: '25px', fontSize: '1.5rem' }} className="gicon gicon-viewer" />;
+  return <i style={{ width: '25px', height: '25px' }} className="gicon gicon-viewer" />;
 }
 
 function ItemDescription({ item }) {
