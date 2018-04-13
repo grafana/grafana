@@ -94,10 +94,10 @@ describe('file_export', () => {
       const expectedText =
         '"integer_value";"string_value";"float_value";"boolean_value"\n' +
         '1234;"some_string";1.234;true\n' +
-        '501;"some string with " in the middle";0.01;false\n' +
-        '501;""some string with " at the beginning";0.01;false\n' +
-        '501;"some string with " at the end"";0.01;false\n' +
-        '501;"some string with "" in the middle";0.01;false\n' +
+        '501;"some string with \\" in the middle";0.01;false\n' +
+        '501;"some string with \\"\\" in the middle";0.01;false\n' +
+        '501;"\\"some string with \\" at the beginning";0.01;false\n' +
+        '501;"some string with \\" at the end\\"";0.01;false\n' +
         '291;"some string with \\n in the middle";10.01;false\n' +
         '291;"\\nsome string with \\n at the beginning";10.01;false\n' +
         '291;"some string with \\n at the end\\n";10.01;false\n' +

@@ -116,7 +116,11 @@ export function convertTableDataToCsv(table, excel = false) {
   function escaped(text) {
     return text
       .replace(new RegExp(`(^|[^\\\\])${QUOTE}`, 'g'), (match, $1, offset, original) => $1 + '\\' + QUOTE)
-      .replace(new RegExp(`(^|[^\\\\])${ROW_END}`, 'g'), (match, $1, offset, original) => $1 + '\\' + ROW_END);
+      .replace(new RegExp(`(^|[^\\\\])${QUOTE}`, 'g'), (match, $1, offset, original) => $1 + '\\' + QUOTE)
+      .replace(new RegExp(`(^|[^\\\\])\n`, 'g'), (match, $1, offset, original) => $1 + '\\n')
+      .replace(new RegExp(`(^|[^\\\\])\n`, 'g'), (match, $1, offset, original) => $1 + '\\n')
+      .replace(new RegExp(`(^|[^\\\\])\r`, 'g'), (match, $1, offset, original) => $1 + '\\r')
+      .replace(new RegExp(`(^|[^\\\\])\r`, 'g'), (match, $1, offset, original) => $1 + '\\r');
   }
 
   let text = formatSpecialHeader(excel);
@@ -129,7 +133,6 @@ export function convertTableDataToCsv(table, excel = false) {
   // process data
   _.each(table.rows, function(row) {
     _.each(row, function(value) {
-      console.log(value);
       if (_.isNumber(value) || _.isBoolean(value)) {
         text += `${value}${COLUMN_END}`;
       } else {
