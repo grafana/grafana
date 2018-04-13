@@ -282,7 +282,7 @@ describe('templateSrv', function() {
     });
   });
 
-  describe('can hightlight variables in string', function() {
+  describe('can highlight variables in string', function() {
     beforeEach(function() {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
