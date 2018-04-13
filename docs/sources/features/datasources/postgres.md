@@ -233,7 +233,8 @@ datasources:
     url: localhost:5432
     database: grafana
     user: grafana
-    password: password
+    secureJsonData:
+      password: "Password!"
     jsonData:
       sslmode: "disable" # disable/require/verify-ca/verify-full
 
