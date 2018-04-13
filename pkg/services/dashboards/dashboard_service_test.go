@@ -79,13 +79,15 @@ func TestDashboardService(t *testing.T) {
 					dto.Dashboard.SetUid(tc.Uid)
 					dto.User = &models.SignedInUser{}
 
-					_, err := service.buildSaveDashboardCommand(dto, true)
+					_, err := service.buildSaveDashboardCommand(dto, true, false)
 					So(err, ShouldEqual, tc.Error)
 				}
 			})
 
 			Convey("Should return validation error if dashboard is provisioned", func() {
+				provisioningValidated := false
 				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+					provisioningValidated = true
 					cmd.Result = true
 					return nil
 				})
@@ -101,7 +103,8 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
-				_, err := service.buildSaveDashboardCommand(dto, false)
+				_, err := service.SaveDashboard(dto)
+				So(provisioningValidated, ShouldBeTrue)
 				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
 			})
 
@@ -118,6 +121,42 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard = models.NewDashboard("Dash")
 				_, err := service.SaveDashboard(dto)
 				So(err, ShouldEqual, models.ErrDashboardContainsInvalidAlertData)
+			})
+		})
+
+		Convey("Save provisioned dashboard validation", func() {
+			dto := &SaveDashboardDTO{}
+
+			Convey("Should not return validation error if dashboard is provisioned", func() {
+				provisioningValidated := false
+				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+					provisioningValidated = true
+					cmd.Result = true
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				dto.Dashboard = models.NewDashboard("Dash")
+				dto.Dashboard.SetId(3)
+				dto.User = &models.SignedInUser{UserId: 1}
+				_, err := service.SaveProvisionedDashboard(dto, nil)
+				So(err, ShouldBeNil)
+				So(provisioningValidated, ShouldBeFalse)
 			})
 		})
 
