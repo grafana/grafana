@@ -137,3 +137,23 @@ Query | You can leave the search query blank or specify a lucene query
 Time | The name of the time field, needs to be date field.
 Text | Event description field.
 Tags | Optional field name to use for event tags (can be an array or a CSV string).
+
+## Configure datasource with provisioning
+
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Elastic
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:9200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+```

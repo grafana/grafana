@@ -167,6 +167,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           if (sidemenuHidden) {
             sidemenuHidden = false;
             body.addClass('sidemenu-open');
+            appEvents.emit('toggle-inactive-mode');
             $timeout(function() {
               $rootScope.$broadcast('render');
             }, 100);

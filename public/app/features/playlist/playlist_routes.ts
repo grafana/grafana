@@ -1,5 +1,6 @@
 import angular from 'angular';
 
+/** @ngInject */
 function grafanaRoutes($routeProvider) {
   $routeProvider
     .when('/playlists', {
