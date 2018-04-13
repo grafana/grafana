@@ -123,6 +123,8 @@
     position: relative;
     opacity: 0.7;
     font-size: 130%;
+    height: 22px;
+    width: 22px;
   }
 
   .fa {
@@ -178,6 +180,7 @@ li.sidemenu-org-switcher {
   padding: 0.4rem 1rem 0.4rem 0.65rem;
   min-height: $navbarHeight;
   position: relative;
+  height: $navbarHeight - 1px;
 
   &:hover {
     background: $navbarButtonBackgroundHighlight;

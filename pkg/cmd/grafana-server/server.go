@@ -111,7 +111,7 @@ func (g *GrafanaServerImpl) initLogging() {
 	})
 
 	if err != nil {
-		g.log.Error(err.Error())
+		fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
 		os.Exit(1)
 	}
 

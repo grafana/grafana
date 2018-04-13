@@ -43,6 +43,40 @@ server is running on AWS you can use IAM Roles and authentication will be handle
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
+## IAM Policies
+
+Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
+and EC2 tags/instances. You can attach these permissions to IAM roles and
+utilize Grafana's built-in support for assuming roles.
+
+Here is a minimal policy example:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowReadingMetricsFromCloudWatch",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:ListMetrics",
+                "cloudwatch:GetMetricStatistics"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowReadingTagsFromEC2",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeTags",
+                "ec2:DescribeInstances"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
 ### AWS credentials file
 
 Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.

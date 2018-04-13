@@ -1,5 +1,13 @@
+.add-panel-container {
+  height: 100%;
+}
+
 .add-panel {
   height: 100%;
+
+  .baron__root {
+    height: calc(100% - 43px);
+  }
 }
 
 .add-panel__header {
@@ -39,7 +47,6 @@
   flex-direction: row;
   flex-wrap: wrap;
   overflow: auto;
-  height: calc(100% - 43px);
   align-content: flex-start;
   justify-content: space-around;
   position: relative;
