@@ -138,6 +138,7 @@ datasources:
 ```
 
 #### Custom Settings per Datasource
+Please refer to each datasource documentation for specific provisioning examples.
 
 | Datasource | Misc |
 | ---- | ---- |
