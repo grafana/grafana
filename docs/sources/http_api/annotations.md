@@ -32,7 +32,7 @@ Query Parameters:
 
 - `from`: epoch datetime in milliseconds. Optional.
 - `to`: epoch datetime in milliseconds. Optional.
-- `limit`: number. Optional - default is 10. Max limit for results returned.
+- `limit`: number. Optional - default is 100. Max limit for results returned.
 - `alertId`: number. Optional. Find annotations for a specified alert.
 - `dashboardId`: number. Optional. Find annotations that are scoped to a specific dashboard
 - `panelId`: number. Optional. Find annotations that are scoped to a specific panel
