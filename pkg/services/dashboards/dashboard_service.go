@@ -93,6 +93,16 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		}
 	}
 
+	validateBeforeSaveCmd := models.ValidateDashboardBeforeSaveCommand{
+		OrgId:     dto.OrgId,
+		Dashboard: dash,
+		Overwrite: dto.Overwrite,
+	}
+
+	if err := bus.Dispatch(&validateBeforeSaveCmd); err != nil {
+		return nil, err
+	}
+
 	if validateProvisionedDashboard {
 		isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dash.Id}
 		err := bus.Dispatch(isDashboardProvisioned)
@@ -104,16 +114,6 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		if isDashboardProvisioned.Result {
 			return nil, models.ErrDashboardCannotSaveProvisionedDashboard
 		}
-	}
-
-	validateBeforeSaveCmd := models.ValidateDashboardBeforeSaveCommand{
-		OrgId:     dto.OrgId,
-		Dashboard: dash,
-		Overwrite: dto.Overwrite,
-	}
-
-	if err := bus.Dispatch(&validateBeforeSaveCmd); err != nil {
-		return nil, err
 	}
 
 	guard := guardian.New(dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)

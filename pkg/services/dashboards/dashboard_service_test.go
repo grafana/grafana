@@ -160,6 +160,42 @@ func TestDashboardService(t *testing.T) {
 			})
 		})
 
+		Convey("Import dashboard validation", func() {
+			dto := &SaveDashboardDTO{}
+
+			Convey("Should return validation error if dashboard is provisioned", func() {
+				provisioningValidated := false
+				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+					provisioningValidated = true
+					cmd.Result = true
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				dto.Dashboard = models.NewDashboard("Dash")
+				dto.Dashboard.SetId(3)
+				dto.User = &models.SignedInUser{UserId: 1}
+				_, err := service.ImportDashboard(dto)
+				So(provisioningValidated, ShouldBeTrue)
+				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
+			})
+		})
+
 		Reset(func() {
 			guardian.New = origNewDashboardGuardian
 		})
