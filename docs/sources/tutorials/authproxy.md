@@ -108,7 +108,7 @@ In this example we use Apache as a reverseProxy in front of Grafana. Apache hand
 
     * The next part of the configuration is the tricky part. We use Apache’s rewrite engine to create our **X-WEBAUTH-USER header**, populated with the authenticated user.
 
-        * **RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER}, NS]**: This line is a little bit of magic. What it does, is for every request use the rewriteEngines look-ahead (LA-U) feature to determine what the REMOTE_USER variable would be set to after processing the request. Then assign the result to the variable PROXY_USER. This is neccessary as the REMOTE_USER variable is not available to the RequestHeader function.
+        * **RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER}, NS]**: This line is a little bit of magic. What it does, is for every request use the rewriteEngines look-ahead (LA-U) feature to determine what the REMOTE_USER variable would be set to after processing the request. Then assign the result to the variable PROXY_USER. This is necessary as the REMOTE_USER variable is not available to the RequestHeader function.
 
         * **RequestHeader set X-WEBAUTH-USER “%{PROXY_USER}e”**: With the authenticated username now stored in the PROXY_USER variable, we create a new HTTP request header that will be sent to our backend Grafana containing the username.
 
@@ -149,7 +149,7 @@ auto_sign_up = true
 
 ##### Grafana Container
 
-For this example, we use the offical Grafana docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/)
+For this example, we use the official Grafana docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/)
 
 * Create a file `grafana.ini` with the following contents
 
@@ -166,7 +166,7 @@ header_property = username
 auto_sign_up = true
 ```
 
-* Launch the Grafana container, using our custom grafana.ini to replace `/etc/grafana/grafana.ini`. We dont expose any ports for this container as it will only be connected to by our Apache container.
+* Launch the Grafana container, using our custom grafana.ini to replace `/etc/grafana/grafana.ini`. We don't expose any ports for this container as it will only be connected to by our Apache container.
 
 ```bash
 docker run -i -v $(pwd)/grafana.ini:/etc/grafana/grafana.ini --name grafana grafana/grafana
@@ -174,7 +174,7 @@ docker run -i -v $(pwd)/grafana.ini:/etc/grafana/grafana.ini --name grafana graf
 
 ### Apache Container
 
-For this example we use the offical Apache docker image available at [Docker Hub](https://hub.docker.com/_/httpd/)
+For this example we use the official Apache docker image available at [Docker Hub](https://hub.docker.com/_/httpd/)
 
 * Create a file `httpd.conf` with the following contents
 

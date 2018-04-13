@@ -78,7 +78,7 @@ the existing time series data in OpenTSDB, you need to run `tsdb uid metasync` o
 
 ### Nested Templating
 
-One template variable can be used to filter tag values for another template varible. First parameter is the metric name,
+One template variable can be used to filter tag values for another template variable. First parameter is the metric name,
 second parameter is the tag key for which you need to find tag values, and after that all other dependent template variables.
 Some examples are mentioned below to make nested template queries work successfully.
 
