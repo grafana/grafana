@@ -529,3 +529,23 @@ EXEC dbo.sp_test_datetime @from, @to
 
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule
 conditions.
+
+## Configure datasource with provisioning
+
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: MSSQL
+    type: mssql
+    url: localhost:1433
+    database: grafana
+    user: grafana
+    secureJsonData:
+      password: "Password!"
+
+```
