@@ -217,3 +217,24 @@ tags | Optional field name to use for event tags as a comma separated string.
 
 Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule
 conditions.
+
+## Configure datasource with provisioning
+
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Postgres
+    type: postgres
+    url: localhost:5432
+    database: grafana
+    user: grafana
+    password: password
+    jsonData:
+      sslmode: "disable" # disable/require/verify-ca/verify-full
+
+```

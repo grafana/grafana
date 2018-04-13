@@ -120,3 +120,21 @@ queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
 specify a tag or wildcard (leave empty should also work)
+
+## Configure datasource with provisioning
+
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Graphite
+    type: graphite
+    access: proxy
+    url: http://localhost:8080
+    jsonData:
+      graphiteVersion: "1.1"
+```

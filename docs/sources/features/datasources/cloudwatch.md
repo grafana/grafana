@@ -207,3 +207,37 @@ Amazon provides 1 million CloudWatch API requests each month at no additional ch
 it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
+
+## Configure datasource with provisioning
+
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+Using a credentials file
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Cloudwatch
+    type: cloudwatch
+    jsonData:
+      authType: credentials
+      defaultRegion: eu-west-2
+```
+
+Using `accessKey` and `secretKey`
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Cloudwatch
+    type: cloudwatch
+    jsonData:
+      authType: keys
+      defaultRegion: eu-west-2
+    secureJsonData:
+      accessKey: "<your access key>"
+      secretKey: "<your secret key>"
+```
