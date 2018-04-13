@@ -33,8 +33,7 @@ var (
 	ErrDashboardInvalidUid                     = errors.New("uid contains illegal characters")
 	ErrDashboardUidToLong                      = errors.New("uid to long. max 40 characters")
 	ErrDashboardCannotSaveProvisionedDashboard = errors.New("Cannot save provisioned dashboard")
-	//ErrDashboardProvisioningDoesNotExist       = errors.New("Dashboard provisioning does not exist")
-	RootFolderName = "General"
+	RootFolderName                             = "General"
 )
 
 type UpdatePluginDashboardError struct {
