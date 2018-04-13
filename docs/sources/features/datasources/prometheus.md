@@ -34,7 +34,7 @@ Name | Description
 *Basic Auth* | Enable basic authentication to the Prometheus data source.
 *User* | Name of your Prometheus user
 *Password* | Database user's password
-*Scrape interval* | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s. 
+*Scrape interval* | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s.
 
 ## Query editor
 
@@ -105,7 +105,7 @@ Since 4.6.0 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. W
 
 It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some examples of how you can configure the Cloudwatch datasource using configuration.
+Here are some provisioning examples for this datasource.
 
 ```yaml
 apiVersion: 1
