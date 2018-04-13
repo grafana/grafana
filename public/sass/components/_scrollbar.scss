@@ -9,6 +9,11 @@
   -ms-touch-action: auto;
 }
 
+// ._scrollbar {
+//   overflow-x: hidden !important;
+//   overflow-y: auto;
+// }
+
 /*
  * Scrollbar rail styles
  */
@@ -101,7 +106,7 @@
   opacity: 0.9;
 }
 
-// Srollbars
+// Scrollbars
 //
 
 ::-webkit-scrollbar {
@@ -171,4 +176,121 @@
   border: 1px solid $scrollbarBorder;
   border-top: 1px solid $scrollbarBorder;
   border-left: 1px solid $scrollbarBorder;
+}
+
+// Baron styles
+
+.baron {
+  // display: inline-block; // this brakes phantomjs rendering (width becomes 0)
+  overflow: hidden;
+}
+
+// Fix for side menu on mobile devices
+.main-view.baron {
+  width: unset;
+}
+
+.baron__clipper {
+  position: relative;
+  overflow: hidden;
+}
+
+.baron__scroller {
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+  /* remove line to customize scrollbar in iOs */
+}
+
+.baron__scroller::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.baron__track {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.baron._scrollbar .baron__track {
+  display: block;
+}
+
+.baron__free {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+}
+
+.baron__bar {
+  display: none;
+  position: absolute;
+  right: 0;
+  z-index: 1;
+  // width: 10px;
+  background: #999;
+
+  // height: 15px;
+  width: 15px;
+  transition: background-color 0.2s linear, opacity 0.2s linear;
+  opacity: 0;
+}
+
+.baron._scrollbar .baron__bar {
+  display: block;
+
+  @include gradient-vertical($scrollbarBackground, $scrollbarBackground2);
+  border-radius: 6px;
+  width: 6px;
+  /* there must be 'right' for ps__thumb-y */
+  right: 0px;
+  /* please don't change 'position' */
+  position: absolute;
+
+  // background-color: transparent;
+  // opacity: 0.6;
+
+  &:hover,
+  &:focus {
+    // background-color: transparent;
+    opacity: 0.9;
+  }
+}
+
+.panel-hover-highlight .baron__track .baron__bar {
+  opacity: 0.6;
+}
+
+.baron._scrolling > .baron__track .baron__bar {
+  opacity: 0.9;
+}
+
+// fix for phantomjs
+.body--phantomjs .baron__track .baron__bar {
+  opacity: 0 !important;
+}
+
+.baron__control {
+  display: none;
+}
+
+.baron.panel-content--scrollable {
+  // Width needs to be set to prevent content width issues
+  // Set to less than 100% for fixing Firefox issue (white stripe on the right of scrollbar)
+  width: calc(100% - 2px);
+
+  .baron__scroller {
+    padding-top: 1px;
+  }
 }

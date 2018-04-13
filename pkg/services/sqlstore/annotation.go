@@ -202,7 +202,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	}
 
 	if query.Limit == 0 {
-		query.Limit = 10
+		query.Limit = 100
 	}
 
 	sql.WriteString(fmt.Sprintf(" ORDER BY epoch DESC LIMIT %v", query.Limit))
