@@ -1,7 +1,7 @@
 +++
 title = "Using Microsoft SQL Server in Grafana"
 description = "Guide for using Microsoft SQL Server in Grafana"
-keywords = ["grafana", "MSSQL", "Microsoft", "SQL", "guide"]
+keywords = ["grafana", "MSSQL", "Microsoft", "SQL", "guide", "Azure SQL Database"]
 type = "docs"
 [menu.docs]
 name = "Microsoft SQL Server"
@@ -13,7 +13,7 @@ weight = 7
 
 > Only available in Grafana v5.1+.
 
-Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer.
+Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database.
 
 ## Adding the data source
 
