@@ -182,18 +182,55 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	annotationID := c.ParamsInt64(":annotationId")
 
 	repo := annotations.GetRepository()
+	query := &annotations.ItemQuery{
+		OrgId:        c.OrgId,
+		AnnotationId: annotationID,
+	}
+
+	items, err := repo.Find(query)
+	if err != nil {
+		return Error(500, "Failed to get annotations", err)
+	}
 
 	if resp := canSave(c, repo, annotationID); resp != nil {
 		return resp
 	}
 
+	var epoch int64
+	var text string
+	var tags []string
+	var regionId int64
+
+	// Only update fields explicitly sent in the cmd
+	if cmd.Time != 0 {
+		epoch = cmd.Time
+	} else {
+		epoch = items[0].Time
+	}
+	if cmd.Text != "" {
+		text = cmd.Text
+	} else {
+		text = items[0].Text
+	}
+	if len(cmd.Tags) > 0 {
+		tags = cmd.Tags
+	} else {
+		tags = items[0].Tags
+	}
+	if cmd.RegionId != 0 {
+		regionId = cmd.RegionId
+	} else {
+		regionId = items[0].RegionId
+	}
+
 	item := annotations.Item{
-		OrgId:  c.OrgId,
-		UserId: c.UserId,
-		Id:     annotationID,
-		Epoch:  cmd.Time / 1000,
-		Text:   cmd.Text,
-		Tags:   cmd.Tags,
+		OrgId:    c.OrgId,
+		UserId:   c.UserId,
+		Id:       annotationID,
+		Epoch:    epoch / 1000,
+		Text:     text,
+		Tags:     tags,
+		RegionId: regionId,
 	}
 
 	if err := repo.Update(&item); err != nil {
@@ -201,13 +238,23 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	}
 
 	if cmd.IsRegion {
-		itemRight := item
-		itemRight.RegionId = item.Id
-		itemRight.Epoch = cmd.TimeEnd / 1000
+		var itemRight annotations.Item
+		if cmd.RegionEndAnnotationId == 0 {
+			itemRight = item
+			itemRight.RegionId = item.Id
+			itemRight.Epoch = cmd.TimeEnd / 1000
 
-		// We don't know id of region right event, so set it to 0 and find then using query like
-		// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
-		itemRight.Id = 0
+			// We don't know id of region right event, so set it to 0 and find then using query like
+			// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
+			itemRight.Id = 0
+		} else { // allow for converting existing annotations into a region
+			itemRight = annotations.Item{
+				OrgId:    c.OrgId,
+				UserId:   c.UserId,
+				Id:       cmd.RegionEndAnnotationId,
+				RegionId: regionId,
+			}
+		}
 
 		if err := repo.Update(&itemRight); err != nil {
 			return Error(500, "Failed to update annotation for region end time", err)
