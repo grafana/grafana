@@ -83,11 +83,11 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("extract(epoch from %s) BETWEEN %d AND %d", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("extract(epoch from %s) BETWEEN %d AND %d", args[0], m.TimeRange.GetFromAsSecondsEpoch(), m.TimeRange.GetToAsSecondsEpoch()), nil
 	case "__timeFrom":
-		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("to_timestamp(%d)", m.TimeRange.GetFromAsSecondsEpoch()), nil
 	case "__timeTo":
-		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("to_timestamp(%d)", m.TimeRange.GetToAsSecondsEpoch()), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
@@ -114,11 +114,11 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.TimeRange.GetFromAsSecondsEpoch(), args[0], m.TimeRange.GetToAsSecondsEpoch()), nil
 	case "__unixEpochFrom":
-		return fmt.Sprintf("%d", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("%d", m.TimeRange.GetFromAsSecondsEpoch()), nil
 	case "__unixEpochTo":
-		return fmt.Sprintf("%d", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("%d", m.TimeRange.GetToAsSecondsEpoch()), nil
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}

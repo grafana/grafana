@@ -15,6 +15,14 @@ func NewTimeRange(from, to string) *TimeRange {
 	}
 }
 
+func NewFakeTimeRange(from, to string, now time.Time) *TimeRange {
+	return &TimeRange{
+		From: from,
+		To:   to,
+		now:  now,
+	}
+}
+
 type TimeRange struct {
 	From string
 	To   string
@@ -25,8 +33,16 @@ func (tr *TimeRange) GetFromAsMsEpoch() int64 {
 	return tr.MustGetFrom().UnixNano() / int64(time.Millisecond)
 }
 
+func (tr *TimeRange) GetFromAsSecondsEpoch() int64 {
+	return tr.GetFromAsMsEpoch() / 1000
+}
+
 func (tr *TimeRange) GetToAsMsEpoch() int64 {
 	return tr.MustGetTo().UnixNano() / int64(time.Millisecond)
+}
+
+func (tr *TimeRange) GetToAsSecondsEpoch() int64 {
+	return tr.GetToAsMsEpoch() / 1000
 }
 
 func (tr *TimeRange) MustGetFrom() time.Time {
