@@ -79,11 +79,19 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 		return fmt.Sprintf("extract(epoch from %s) as \"time\"", args[0]), nil
 	case "__timeFilter":
-		// dont use to_timestamp in this macro for redshift compatibility #9566
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("extract(epoch from %s) BETWEEN %d AND %d", args[0], m.TimeRange.GetFromAsSecondsEpoch(), m.TimeRange.GetToAsSecondsEpoch()), nil
+
+		pg_version := m.Query.DataSource.JsonData.Get("postgresVersion").MustInt(0)
+		if pg_version >= 80100 {
+			// postgres has to_timestamp(double) starting with 8.1
+			return fmt.Sprintf("%s BETWEEN to_timestamp(%d) AND to_timestamp(%d)", args[0], m.TimeRange.GetFromAsSecondsEpoch(), m.TimeRange.GetToAsSecondsEpoch()), nil
+		}
+
+		// dont use to_timestamp in this macro for redshift compatibility #9566
+		return fmt.Sprintf("%s BETWEEN 'epoch'::timestamptz + %d * '1s'::interval AND 'epoch'::timestamptz + %d * '1s'::interval", args[0], m.TimeRange.GetFromAsSecondsEpoch(), m.TimeRange.GetToAsSecondsEpoch()), nil
+
 	case "__timeFrom":
 		return fmt.Sprintf("to_timestamp(%d)", m.TimeRange.GetFromAsSecondsEpoch()), nil
 	case "__timeTo":
