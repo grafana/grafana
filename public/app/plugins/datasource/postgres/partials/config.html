@@ -38,6 +38,22 @@
 	</div>
 </div>
 
+<h3 class="page-heading">PostgreSQL details</h3>
+
+<div class="gf-form-group">
+	<div class="gf-form">
+		<span class="gf-form-label width-8">
+      Version
+      <info-popover mode="right-normal" position="top center">
+        This option controls what functions are used when expanding grafana macros.
+      </info-popover>
+    </span>
+    <span class="gf-form-select-wrapper">
+        <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.postgresVersion" ng-options="f.value as f.name for f in ctrl.postgresVersions"></select>
+    </span>
+	</div>
+</div>
+
 <div class="gf-form-group">
 	<div class="grafana-info-box">
 		<h5>User Permission</h5>

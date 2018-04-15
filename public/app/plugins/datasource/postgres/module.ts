@@ -8,8 +8,14 @@ class PostgresConfigCtrl {
 
   /** @ngInject **/
   constructor($scope) {
-    this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'require';
+    this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
   }
+
+  /* the values are chosen to be equivalent to `select current_setting('server_version_num');` */
+  postgresVersions = [
+    { name: '8.0+', value: 80000 },
+    { name: '8.1+', value: 80100 },
+  ];
 }
 
 const defaultQuery = `SELECT
