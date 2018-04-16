@@ -91,7 +91,7 @@ func TestLdapAuther(t *testing.T) {
 
 	})
 
-	Convey("When calling SyncSignedInUser", t, func() {
+	Convey("When calling SyncUser", t, func() {
 
 		mockLdapConnection := &mockLdapConn{}
 		ldapAuther := NewLdapAuthenticator(
@@ -131,11 +131,8 @@ func TestLdapAuther(t *testing.T) {
 
 		ldapAutherScenario("When ldapUser found call syncInfo and orgRoles", func(sc *scenarioContext) {
 			// arrange
-			signedInUser := &m.SignedInUser{
-				Email:  "roel@test.net",
-				UserId: 1,
-				Name:   "Roel Gerrits",
-				Login:  "roelgerrits",
+			query := &m.LoginUserQuery{
+				Username: "roelgerrits",
 			}
 
 			sc.userQueryReturns(&m.User{
@@ -147,7 +144,7 @@ func TestLdapAuther(t *testing.T) {
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
 
 			// act
-			syncErrResult := ldapAuther.SyncSignedInUser(nil, signedInUser)
+			syncErrResult := ldapAuther.SyncUser(query)
 
 			// assert
 			So(dialCalled, ShouldBeTrue)

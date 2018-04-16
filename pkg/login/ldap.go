@@ -25,7 +25,7 @@ type ILdapConn interface {
 
 type ILdapAuther interface {
 	Login(query *m.LoginUserQuery) error
-	SyncSignedInUser(ctx *m.ReqContext, signedInUser *m.SignedInUser) error
+	SyncUser(query *m.LoginUserQuery) error
 	GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error)
 }
 
@@ -125,12 +125,12 @@ func (a *ldapAuther) Login(query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (a *ldapAuther) SyncSignedInUser(ctx *m.ReqContext, signedInUser *m.SignedInUser) error {
+func (a *ldapAuther) SyncUser(query *m.LoginUserQuery) error {
+	// connect to ldap server
 	err := a.Dial()
 	if err != nil {
 		return err
 	}
-
 	defer a.conn.Close()
 
 	err = a.serverBind()
@@ -138,21 +138,21 @@ func (a *ldapAuther) SyncSignedInUser(ctx *m.ReqContext, signedInUser *m.SignedI
 		return err
 	}
 
-	ldapUser, err := a.searchForUser(signedInUser.Login)
+	// find user entry & attributes
+	ldapUser, err := a.searchForUser(query.Username)
 	if err != nil {
 		a.log.Error("Failed searching for user in ldap", "error", err)
 		return err
 	}
 
-	grafanaUser, err := a.GetGrafanaUserFor(ctx, ldapUser)
+	a.log.Debug("Ldap User found", "info", spew.Sdump(ldapUser))
+
+	grafanaUser, err := a.GetGrafanaUserFor(query.ReqContext, ldapUser)
 	if err != nil {
 		return err
 	}
 
-	signedInUser.Login = grafanaUser.Login
-	signedInUser.Email = grafanaUser.Email
-	signedInUser.Name = grafanaUser.Name
-
+	query.User = grafanaUser
 	return nil
 }
 

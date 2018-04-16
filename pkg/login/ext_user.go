@@ -78,9 +78,10 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 
 func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {
 	cmd := &m.CreateUserCommand{
-		Login: extUser.Login,
-		Email: extUser.Email,
-		Name:  extUser.Name,
+		Login:        extUser.Login,
+		Email:        extUser.Email,
+		Name:         extUser.Name,
+		SkipOrgSetup: len(extUser.OrgRoles) > 0,
 	}
 	if err := bus.Dispatch(cmd); err != nil {
 		return nil, err

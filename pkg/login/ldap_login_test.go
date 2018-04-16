@@ -127,7 +127,7 @@ func (a *mockLdapAuther) Login(query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (a *mockLdapAuther) SyncSignedInUser(ctx *m.ReqContext, signedInUser *m.SignedInUser) error {
+func (a *mockLdapAuther) SyncUser(query *m.LoginUserQuery) error {
 	return nil
 }
 

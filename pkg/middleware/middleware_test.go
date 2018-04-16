@@ -176,6 +176,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
+			setting.LdapEnabled = false
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
@@ -203,6 +204,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyAutoSignUp = true
+			setting.LdapEnabled = false
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				if query.UserId > 0 {
@@ -333,8 +335,9 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.LdapEnabled = true
 
 			called := false
-			syncGrafanaUserWithLdapUser = func(ctx *m.ReqContext, query *m.GetSignedInUserQuery) error {
+			syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
 				called = true
+				query.User = &m.User{Id: 32}
 				return nil
 			}
 
