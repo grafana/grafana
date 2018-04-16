@@ -11,7 +11,7 @@ describe('PermissionsStore', () => {
         { id: 3, dashboardId: 1, role: 'Editor', permission: 1, permissionName: 'Edit' },
         {
           id: 4,
-          dashboardId: 1,
+          dashboardId: 10,
           permission: 1,
           permissionName: 'View',
           teamId: 1,
@@ -53,7 +53,7 @@ describe('PermissionsStore', () => {
 
   it('should save update on permission change', async () => {
     expect(store.items[0].permission).toBe(1);
-    expect(store.items[0].permissionName).toBe('Edit');
+    expect(store.items[0].permissionName).toBe('View');
 
     await store.updatePermissionOnIndex(0, 2, 'Edit');
 
