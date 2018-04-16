@@ -254,7 +254,7 @@ func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
 
-	sort.Sort(sort.StringSlice(keys))
+	sort.Strings(keys)
 
 	result := make([]suggestData, 0)
 	for _, key := range keys {
@@ -283,7 +283,7 @@ func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 			return nil, errors.New("Unable to call AWS API")
 		}
 	}
-	sort.Sort(sort.StringSlice(namespaceMetrics))
+	sort.Strings(namespaceMetrics)
 
 	result := make([]suggestData, 0)
 	for _, name := range namespaceMetrics {
@@ -312,7 +312,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 			return nil, errors.New("Unable to call AWS API")
 		}
 	}
-	sort.Sort(sort.StringSlice(dimensionValues))
+	sort.Strings(dimensionValues)
 
 	result := make([]suggestData, 0)
 	for _, name := range dimensionValues {
