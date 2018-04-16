@@ -83,7 +83,7 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 
-		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.TimeRange.MustGetFrom().UTC().Format(time.RFC3339), m.TimeRange.MustGetTo().UTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeFrom":
 		return fmt.Sprintf("to_timestamp(%d)", m.TimeRange.GetFromAsSecondsEpoch()), nil
 	case "__timeTo":
