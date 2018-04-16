@@ -142,7 +142,7 @@ export class ValueSelectDropdownCtrl {
     commitChange = commitChange || false;
     excludeOthers = excludeOthers || false;
 
-    let setAllExceptCurrentTo = function(newValue) {
+    let setAllExceptCurrentTo = newValue => {
       _.each(this.options, other => {
         if (option !== other) {
           other.selected = newValue;
