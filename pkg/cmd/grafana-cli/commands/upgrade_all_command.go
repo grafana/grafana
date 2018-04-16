@@ -53,8 +53,7 @@ func upgradeAllCommand(c CommandLine) error {
 	for _, p := range pluginsToUpgrade {
 		logger.Infof("Updating %v \n", p.Id)
 
-		var err error
-		err = s.RemoveInstalledPlugin(pluginsDir, p.Id)
+		err := s.RemoveInstalledPlugin(pluginsDir, p.Id)
 		if err != nil {
 			return err
 		}
