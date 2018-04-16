@@ -9,7 +9,7 @@ var template = `
 </label>
 <div class="gf-form-switch {{ctrl.switchClass}}" ng-if="ctrl.show">
   <input id="check-{{ctrl.id}}" type="checkbox" ng-model="ctrl.checked" ng-change="ctrl.internalOnChange()">
-  <label for="check-{{ctrl.id}}" data-on="Yes" data-off="No"></label>
+  <label for="check-{{ctrl.id}}" class="{{ctrl.switchLabelClass}}" data-on="Yes" data-off="No"></label>
 </div>
 `;
 
@@ -45,6 +45,7 @@ export function switchDirective() {
       labelClass: '@',
       tooltip: '@',
       switchClass: '@',
+      switchLabelClass: '@',
       onChange: '&',
     },
     template: template,

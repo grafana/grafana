@@ -15,10 +15,10 @@ export class PostgresDatasource {
 
   interpolateVariable(value, variable) {
     if (typeof value === 'string') {
-      if (variable.multi || variable.includeAll) {
-        return "'" + value + "'";
-      } else {
+      if (variable.disableWrapWithQuotes) {
         return value;
+      } else {
+        return "'" + value + "'";
       }
     }
 
@@ -27,7 +27,11 @@ export class PostgresDatasource {
     }
 
     var quotedValues = _.map(value, function(val) {
-      return "'" + val + "'";
+      if (variable.disableWrapWithQuotes) {
+        return val;
+      } else {
+        return "'" + val + "'";
+      }
     });
     return quotedValues.join(',');
   }

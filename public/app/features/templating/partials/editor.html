@@ -258,6 +258,13 @@
 		 checked="current.includeAll"
 	 on-change="runQuery()">
 				</gf-form-switch>
+				<gf-form-switch class="gf-form"
+								label="Disable quotes wrapped in Values"
+								label-class="width-10"
+								switch-label-class="height-54"
+								checked="current.disableWrapWithQuotes"
+								on-change="runQuery()">
+				</gf-form-switch>
 			</div>
 			<div class="gf-form" ng-if="current.includeAll">
 				<span class="gf-form-label width-10">Custom all value</span>
