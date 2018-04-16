@@ -110,7 +110,7 @@ export function dropdownTypeahead($compile) {
         $input.val('');
         $button.show();
         $button.focus();
-        // clicking the function dropdown menu wont
+        // clicking the function dropdown menu won't
         // work if you remove class at once
         setTimeout(function() {
           elem.removeClass('open');
@@ -228,7 +228,7 @@ export function dropdownTypeahead2($compile) {
         $input.val('');
         $button.show();
         $button.focus();
-        // clicking the function dropdown menu wont
+        // clicking the function dropdown menu won't
         // work if you remove class at once
         setTimeout(function() {
           elem.removeClass('open');
