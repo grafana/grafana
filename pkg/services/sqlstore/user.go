@@ -154,7 +154,7 @@ func GetUserById(query *m.GetUserByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrUserNotFound
 	}
 
@@ -179,7 +179,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 		return err
 	}
 
-	if has == false && strings.Contains(query.LoginOrEmail, "@") {
+	if !has && strings.Contains(query.LoginOrEmail, "@") {
 		// If the user wasn't found, and it contains an "@" fallback to finding the
 		// user by email.
 		user = &m.User{Email: query.LoginOrEmail}
@@ -188,7 +188,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrUserNotFound
 	}
 
@@ -209,7 +209,7 @@ func GetUserByEmail(query *m.GetUserByEmailQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrUserNotFound
 	}
 
@@ -304,7 +304,7 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrUserNotFound
 	}
 

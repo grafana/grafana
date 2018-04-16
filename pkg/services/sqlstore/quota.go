@@ -31,7 +31,7 @@ func GetOrgQuotaByTarget(query *m.GetOrgQuotaByTargetQuery) error {
 	has, err := x.Get(&quota)
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		quota.Limit = query.Default
 	}
 
@@ -108,7 +108,7 @@ func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
 			return err
 		}
 		quota.Limit = cmd.Limit
-		if has == false {
+		if !has {
 			quota.Created = time.Now()
 			//No quota in the DB for this target, so create a new one.
 			if _, err := sess.Insert(&quota); err != nil {
@@ -133,7 +133,7 @@ func GetUserQuotaByTarget(query *m.GetUserQuotaByTargetQuery) error {
 	has, err := x.Get(&quota)
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		quota.Limit = query.Default
 	}
 
@@ -210,7 +210,7 @@ func UpdateUserQuota(cmd *m.UpdateUserQuotaCmd) error {
 			return err
 		}
 		quota.Limit = cmd.Limit
-		if has == false {
+		if !has {
 			quota.Created = time.Now()
 			//No quota in the DB for this target, so create a new one.
 			if _, err := sess.Insert(&quota); err != nil {

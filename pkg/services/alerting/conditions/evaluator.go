@@ -20,7 +20,7 @@ type AlertEvaluator interface {
 type NoValueEvaluator struct{}
 
 func (e *NoValueEvaluator) Eval(reducedValue null.Float) bool {
-	return reducedValue.Valid == false
+	return !reducedValue.Valid
 }
 
 type ThresholdEvaluator struct {
@@ -45,7 +45,7 @@ func newThresholdEvaluator(typ string, model *simplejson.Json) (*ThresholdEvalua
 }
 
 func (e *ThresholdEvaluator) Eval(reducedValue null.Float) bool {
-	if reducedValue.Valid == false {
+	if !reducedValue.Valid {
 		return false
 	}
 
@@ -88,7 +88,7 @@ func newRangedEvaluator(typ string, model *simplejson.Json) (*RangedEvaluator, e
 }
 
 func (e *RangedEvaluator) Eval(reducedValue null.Float) bool {
-	if reducedValue.Valid == false {
+	if !reducedValue.Valid {
 		return false
 	}
 

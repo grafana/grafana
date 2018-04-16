@@ -145,7 +145,7 @@ func (e MssqlQueryEndpoint) getTypedRowData(types []*sql.ColumnType, rows *core.
 	// convert types not handled by denisenkom/go-mssqldb
 	// unhandled types are returned as []byte
 	for i := 0; i < len(types); i++ {
-		if value, ok := values[i].([]byte); ok == true {
+		if value, ok := values[i].([]byte); ok {
 			switch types[i].DatabaseTypeName() {
 			case "MONEY", "SMALLMONEY", "DECIMAL":
 				if v, err := strconv.ParseFloat(string(value), 64); err == nil {
@@ -209,7 +209,7 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 	fillValue := null.Float{}
 	if fillMissing {
 		fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
-		if query.Model.Get("fillNull").MustBool(false) == false {
+		if !query.Model.Get("fillNull").MustBool(false) {
 			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
 			fillValue.Valid = true
 		}
@@ -244,7 +244,7 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 		}
 
 		if metricIndex >= 0 {
-			if columnValue, ok := values[metricIndex].(string); ok == true {
+			if columnValue, ok := values[metricIndex].(string); ok {
 				metric = columnValue
 			} else {
 				return fmt.Errorf("Column metric must be of type CHAR, VARCHAR, NCHAR or NVARCHAR. metric column name: %s type: %s but datatype is %T", columnNames[metricIndex], columnTypes[metricIndex].DatabaseTypeName(), values[metricIndex])
@@ -271,7 +271,7 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 			}
 
 			series, exist := pointsBySeries[metric]
-			if exist == false {
+			if !exist {
 				series = &tsdb.TimeSeries{Name: metric}
 				pointsBySeries[metric] = series
 				seriesByQueryOrder.PushBack(metric)
@@ -279,7 +279,7 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 
 			if fillMissing {
 				var intervalStart float64
-				if exist == false {
+				if !exist {
 					intervalStart = float64(tsdbQuery.TimeRange.MustGetFrom().UnixNano() / 1e6)
 				} else {
 					intervalStart = series.Points[len(series.Points)-1][1].Float64 + fillInterval
