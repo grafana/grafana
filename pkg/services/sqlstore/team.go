@@ -210,11 +210,7 @@ func GetTeamsByUser(query *m.GetTeamsByUserQuery) error {
 	sess.Where("team.org_id=? and team_member.user_id=?", query.OrgId, query.UserId)
 
 	err := sess.Find(&query.Result)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // AddTeamMember adds a user to a team

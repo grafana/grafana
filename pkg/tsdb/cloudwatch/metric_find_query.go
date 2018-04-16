@@ -566,11 +566,7 @@ func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error)
 			}
 			return !lastPage
 		})
-	if err != nil {
-		return resp, err
-	}
-
-	return resp, nil
+	return resp, err
 }
 
 var metricsCacheLock sync.Mutex

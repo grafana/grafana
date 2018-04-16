@@ -347,12 +347,7 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 
 	err := x.In("id", query.DashboardIds).Find(&dashboards)
 	query.Result = dashboards
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // GetDashboardPermissionsForUser returns the maximum permission the specified user has for a dashboard(s)
@@ -431,12 +426,7 @@ func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {
 
 	err := x.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
 	query.Result = dashboards
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 type DashboardSlugDTO struct {

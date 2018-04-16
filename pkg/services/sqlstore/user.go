@@ -253,11 +253,8 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 			Updated:  time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Id(cmd.UserId).Update(&user)
+		return err
 	})
 }
 
@@ -271,11 +268,8 @@ func UpdateUserLastSeenAt(cmd *m.UpdateUserLastSeenAtCommand) error {
 			LastSeenAt: time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Id(cmd.UserId).Update(&user)
+		return err
 	})
 }
 
@@ -479,10 +473,7 @@ func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
 			Updated:    time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.UserId).Cols("help_flags1").Update(&user); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Id(cmd.UserId).Cols("help_flags1").Update(&user)
+		return err
 	})
 }
