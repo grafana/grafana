@@ -55,6 +55,22 @@ a time pattern for the index name or a wildcard.
 Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences how queries are composed. Currently only 2.x and 5.x
 are supported.
 
+### Min time interval
+A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formated as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+Identifier | Description
+------------ | -------------
+`y`   | year
+`M`   | month
+`w`   | week
+`d`   | day
+`h`   | hour
+`m`   | minute
+`s`   | second
+`ms`  | millisecond
+
 ## Metric Query editor
 
 ![](/img/docs/elasticsearch/query_editor.png)
