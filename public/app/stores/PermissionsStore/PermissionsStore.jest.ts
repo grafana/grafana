@@ -74,6 +74,9 @@ describe('PermissionsStore', () => {
   });
 
   it('should be sorted by sort rank and alphabetically', async () => {
+    expect(store.items[0].name).toBe('MyTestTeam');
+    expect(store.items[1].name).toBe('Editor');
+    expect(store.items[2].name).toBe('Viewer');
     expect(store.items[3].name).toBe('MyTestTeam2');
     expect(store.items[4].name).toBe('MyTestUser');
   });
@@ -95,6 +98,15 @@ describe('PermissionsStore', () => {
 
     it('should add new overriding permission', () => {
       expect(store.items.length).toBe(6);
+    });
+
+    it('should be sorted by sort rank and alphabetically', async () => {
+      expect(store.items[0].name).toBe('MyTestTeam');
+      expect(store.items[1].name).toBe('Editor');
+      expect(store.items[2].name).toBe('Viewer');
+      expect(store.items[3].name).toBe('MyTestTeam');
+      expect(store.items[4].name).toBe('MyTestTeam2');
+      expect(store.items[5].name).toBe('MyTestUser');
     });
   });
 });
