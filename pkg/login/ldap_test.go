@@ -91,6 +91,127 @@ func TestLdapAuther(t *testing.T) {
 
 	})
 
+	Convey("When syncing ldap groups to grafana org roles", t, func() {
+
+		ldapAutherScenario("given no current user orgs", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=users", OrgRole: "Admin"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{"cn=users"},
+			})
+
+			Convey("Should create new org user", func() {
+				So(err, ShouldBeNil)
+				So(sc.addOrgUserCmd, ShouldNotBeNil)
+				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
+			})
+		})
+
+		ldapAutherScenario("given different current org role", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Admin"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{"cn=users"},
+			})
+
+			Convey("Should update org role", func() {
+				So(err, ShouldBeNil)
+				So(sc.updateOrgUserCmd, ShouldNotBeNil)
+				So(sc.updateOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
+			})
+		})
+
+		ldapAutherScenario("given current org role is removed in ldap", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Admin"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{
+				{OrgId: 1, Role: m.ROLE_EDITOR},
+				{OrgId: 2, Role: m.ROLE_EDITOR},
+			})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{"cn=users"},
+			})
+
+			Convey("Should remove org role", func() {
+				So(err, ShouldBeNil)
+				So(sc.removeOrgUserCmd, ShouldNotBeNil)
+			})
+		})
+
+		ldapAutherScenario("given org role is updated in config", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=admin", OrgId: 1, OrgRole: "Admin"},
+					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Viewer"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{"cn=users"},
+			})
+
+			Convey("Should update org role", func() {
+				So(err, ShouldBeNil)
+				So(sc.removeOrgUserCmd, ShouldBeNil)
+				So(sc.updateOrgUserCmd, ShouldNotBeNil)
+			})
+		})
+
+		ldapAutherScenario("given multiple matching ldap groups", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin"},
+					{GroupDN: "*", OrgId: 1, OrgRole: "Viewer"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_ADMIN}})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{"cn=admins"},
+			})
+
+			Convey("Should take first match, and ignore subsequent matches", func() {
+				So(err, ShouldBeNil)
+				So(sc.updateOrgUserCmd, ShouldBeNil)
+			})
+		})
+
+		ldapAutherScenario("given multiple matching ldap groups and no existing groups", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin"},
+					{GroupDN: "*", OrgId: 1, OrgRole: "Viewer"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{"cn=admins"},
+			})
+
+			Convey("Should take first match, and ignore subsequent matches", func() {
+				So(err, ShouldBeNil)
+				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
+			})
+		})
+
+	})
+
 	Convey("When calling SyncUser", t, func() {
 
 		mockLdapConnection := &mockLdapConn{}
