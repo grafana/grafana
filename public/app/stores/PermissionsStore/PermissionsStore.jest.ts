@@ -17,6 +17,22 @@ describe('PermissionsStore', () => {
           teamId: 1,
           teamName: 'MyTestTeam',
         },
+        {
+          id: 5,
+          dashboardId: 10,
+          permission: 1,
+          permissionName: 'View',
+          userId: 1,
+          userName: 'MyTestUser',
+        },
+        {
+          id: 6,
+          dashboardId: 10,
+          permission: 1,
+          permissionName: 'Edit',
+          teamId: 2,
+          teamName: 'MyTestTeam2',
+        },
       ])
     );
 
@@ -32,7 +48,10 @@ describe('PermissionsStore', () => {
       }
     );
 
+    console.log(store);
+
     await store.load(1, false, false);
+    console.log(store);
   });
 
   it('should save update on permission change', async () => {
