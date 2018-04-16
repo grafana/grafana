@@ -33,7 +33,7 @@ func validateInput(c CommandLine, pluginFolder string) error {
 	fileInfo, err := os.Stat(pluginsDir)
 	if err != nil {
 		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
-			return errors.New(fmt.Sprintf("pluginsDir (%s) is not a directory", pluginsDir))
+			return errors.New(fmt.Sprintf("pluginsDir (%s) is not a writable directory", pluginsDir))
 		}
 		return nil
 	}
