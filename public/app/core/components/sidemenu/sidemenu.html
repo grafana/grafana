@@ -54,6 +54,9 @@
       </span>
     </a>
     <ul class="dropdown-menu dropdown-menu--sidemenu" role="menu">
+      <li ng-if="item.subTitle" class="sidemenu-subtitle">
+        <span class="sidemenu-item-text">{{::item.subTitle}}</span>
+      </li>
       <li ng-if="item.showOrgSwitcher" class="sidemenu-org-switcher">
         <a ng-click="ctrl.switchOrg()">
           <div>
