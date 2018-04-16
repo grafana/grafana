@@ -35,12 +35,12 @@ export class Tracker {
 
     $window.onbeforeunload = () => {
       if (this.ignoreChanges()) {
-        return null;
+        return undefined;
       }
       if (this.hasChanges()) {
         return 'There are unsaved changes to this dashboard';
       }
-      return null;
+      return undefined;
     };
 
     scope.$on('$locationChangeStart', (event, next) => {
@@ -96,6 +96,9 @@ export class Tracker {
     dash.time = 0;
     dash.refresh = 0;
     dash.schemaVersion = 0;
+
+    // ignore iteration property
+    delete dash.iteration;
 
     // filter row and panels properties that should be ignored
     dash.rows = _.filter(dash.rows, function(row) {

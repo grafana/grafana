@@ -307,7 +307,7 @@ Content-Type: application/json
 
 `PUT /api/orgs/:orgId`
 
-Update Organisation, fields *Adress 1*, *Adress 2*, *City* are not implemented yet.
+Update Organisation, fields *Address 1*, *Address 2*, *City* are not implemented yet.
 
 **Example Request**:
 

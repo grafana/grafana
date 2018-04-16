@@ -92,7 +92,7 @@ export class DashboardSrv {
 
   save(clone, options) {
     options = options || {};
-    options.folderId = options.folderId || this.dash.meta.folderId || clone.folderId;
+    options.folderId = options.folderId >= 0 ? options.folderId : this.dash.meta.folderId || clone.folderId;
 
     return this.backendSrv
       .saveDashboard(clone, options)

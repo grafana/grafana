@@ -23,6 +23,8 @@ export class VariableEditorCtrl {
       { value: 2, text: 'Alphabetical (desc)' },
       { value: 3, text: 'Numerical (asc)' },
       { value: 4, text: 'Numerical (desc)' },
+      { value: 5, text: 'Alphabetical (case-insensitive, asc)' },
+      { value: 6, text: 'Alphabetical (case-insensitive, desc)' },
     ];
 
     $scope.hideOptions = [{ value: 0, text: '' }, { value: 1, text: 'Label' }, { value: 2, text: 'Variable' }];

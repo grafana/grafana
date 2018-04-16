@@ -152,8 +152,6 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simpl
 		MetricName: aws.String(query.MetricName),
 		Dimensions: query.Dimensions,
 		Period:     aws.Int64(int64(query.Period)),
-		StartTime:  aws.Time(startTime),
-		EndTime:    aws.Time(endTime),
 	}
 	if len(query.Statistics) > 0 {
 		params.Statistics = query.Statistics
@@ -162,15 +160,36 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simpl
 		params.ExtendedStatistics = query.ExtendedStatistics
 	}
 
-	if setting.Env == setting.DEV {
-		plog.Debug("CloudWatch query", "raw query", params)
+	// 1 minutes resolutin metrics is stored for 15 days, 15 * 24 * 60 = 21600
+	if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
+		return nil, errors.New("too long query period")
 	}
+	var resp *cloudwatch.GetMetricStatisticsOutput
+	for startTime.Before(endTime) {
+		params.StartTime = aws.Time(startTime)
+		if query.HighResolution {
+			startTime = startTime.Add(time.Duration(1440*query.Period) * time.Second)
+		} else {
+			startTime = endTime
+		}
+		params.EndTime = aws.Time(startTime)
 
-	resp, err := client.GetMetricStatisticsWithContext(ctx, params, request.WithResponseReadTimeout(10*time.Second))
-	if err != nil {
-		return nil, err
+		if setting.Env == setting.DEV {
+			plog.Debug("CloudWatch query", "raw query", params)
+		}
+
+		partResp, err := client.GetMetricStatisticsWithContext(ctx, params, request.WithResponseReadTimeout(10*time.Second))
+		if err != nil {
+			return nil, err
+		}
+		if resp != nil {
+			resp.Datapoints = append(resp.Datapoints, partResp.Datapoints...)
+		} else {
+			resp = partResp
+
+		}
+		metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc()
 	}
-	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc()
 
 	queryRes, err := parseResponse(resp, query)
 	if err != nil {
@@ -274,6 +293,8 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		alias = "{{metric}}_{{stat}}"
 	}
 
+	highResolution := model.Get("highResolution").MustBool(false)
+
 	return &CloudWatchQuery{
 		Region:             region,
 		Namespace:          namespace,
@@ -283,6 +304,7 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		ExtendedStatistics: aws.StringSlice(extendedStatistics),
 		Period:             period,
 		Alias:              alias,
+		HighResolution:     highResolution,
 	}, nil
 }
 

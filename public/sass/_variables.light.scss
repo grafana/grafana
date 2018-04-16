@@ -59,9 +59,8 @@ $critical: #ec2128;
 $body-bg: $gray-7;
 $page-bg: $gray-7;
 $body-color: $gray-1;
-//$text-color: $dark-4;
 $text-color: $gray-1;
-$text-color-strong: $white;
+$text-color-strong: $dark-2;
 $text-color-weak: $gray-2;
 $text-color-faint: $gray-4;
 $text-color-emphasis: $dark-5;
@@ -200,6 +199,7 @@ $input-invalid-border-color: lighten($red, 5%);
 // Sidemenu
 // -------------------------
 $side-menu-bg: $dark-2;
+$side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: $gray-1;
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
 $side-menu-link-color: $gray-6;

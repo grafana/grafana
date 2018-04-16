@@ -27,36 +27,36 @@ Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course
 
 Let's start with creating a new Dashboard. You can find the new Dashboard link on the right side of the Dashboard picker. You now have a blank Dashboard.
 
-<img class="no-shadow" src="/img/docs/v45/top_nav_annotated.png">
+<img class="no-shadow" src="/img/docs/v50/top_nav_annotated.png" width="580px">
 
 The image above shows you the top header for a Dashboard.
 
 1. Side menubar toggle: This toggles the side menu, allowing you to focus on the data presented in the dashboard. The side menu provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
-2. Dashboard dropdown: This dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage Dashboard playlists.
-3. Star Dashboard: Star (or unstar) the current Dashboard. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
-4. Share Dashboard: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
-5. Save dashboard: The current Dashboard will be saved with the current Dashboard name.
-6. Settings: Manage Dashboard settings and features such as Templating and Annotations.
+2. Dashboard dropdown: This dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard or folder, Import existing Dashboards, and manage Dashboard playlists.
+3. Add Panel: Adds a new panel to the current Dashboard
+4. Star Dashboard: Star (or unstar) the current Dashboard. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
+5. Share Dashboard: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
+6. Save dashboard: The current Dashboard will be saved with the current Dashboard name.
+7. Settings: Manage Dashboard settings and features such as Templating and Annotations.
 
-## Dashboards, Panels, Rows, the building blocks of Grafana...
+## Dashboards, Panels, the building blocks of Grafana...
 
-Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a number of Rows. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, Prometheus and Cloudwatch). The [Basic Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
+Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a grid. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, Prometheus and Cloudwatch). The [Basic Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
 
-<img src="/img/docs/v45/dashboard_annotated.png" class="no-shadow">
+<img src="/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px">
 
 1. Zoom out time range
 2. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
 3. Manual refresh button. Will cause all panels to refresh (fetch new data).
-4. Row controls menu. Via this menu you can add panels to the row, set row height and more.
-5. Dashboard panel. You edit panels by clicking the panel title.
-6. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
+4. Dashboard panel. You edit panels by clicking the panel title.
+5. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
 
 
 ## Adding & Editing Graphs and Panels
 
 ![](/img/docs/v45/metrics_tab.png)
 
-1. You add panels via row menu. The row menu is the icon to the left of each row.
+1. You add panels by clicking the Add panel icon on the top menu.
 2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
 3. This should take you to the `Metrics` tab. In this tab you should see the editor for your default data source.
 
@@ -64,7 +64,7 @@ When you click the `Metrics` tab, you are presented with a Query Editor that is 
 
 ## Drag-and-Drop panels
 
-You can Drag-and-Drop Panels within and between Rows. Click and hold the Panel title, and drag it to its new location. You can also easily resize panels by clicking the (-) and (+) icons.
+You can Drag-and-Drop Panels by simply clicking and holding the Panel title, and drag it to its new location. You can also easily resize panels by clicking the (-) and (+) icons.
 
 ![](/img/docs/animated_gifs/drag_drop.gif)
 

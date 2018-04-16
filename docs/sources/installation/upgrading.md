@@ -23,9 +23,9 @@ Before upgrading it can be a good idea to backup your Grafana database. This wil
 
 #### sqlite
 
-If you use sqlite you only need to make a backup of you `grafana.db` file. This is usually located at `/var/lib/grafana/grafana.db` on unix system.
+If you use sqlite you only need to make a backup of your `grafana.db` file. This is usually located at `/var/lib/grafana/grafana.db` on unix system.
 If you are unsure what database you use and where it is stored check you grafana configuration file. If you
-installed grafana to custom location using a binary tar/zip it is usally in `<grafana_install_dir>/data`.
+installed grafana to custom location using a binary tar/zip it is usually in `<grafana_install_dir>/data`.
 
 #### mysql
 
@@ -105,4 +105,7 @@ We are not aware of any issues upgrading directly from 2.x to 4.x but to be on t
 ## Upgrading to v5.0
 
 The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new
-positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana.
+positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some
+external panel plugins might need to be updated to work properly.
+
+For more details on the new panel positioning system, [click here]({{< relref "reference/dashboard.md#panel-size-position" >}})

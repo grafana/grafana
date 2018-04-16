@@ -68,10 +68,6 @@ type VictoropsNotifier struct {
 	log         log.Logger
 }
 
-func (this *VictoropsNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 // Notify sends notification to Victorops via POST to URL endpoint
 func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)

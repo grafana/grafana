@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
@@ -106,7 +105,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -166,7 +165,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -272,7 +271,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -330,7 +329,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -399,7 +398,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -469,7 +468,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -528,7 +527,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -595,7 +594,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				CallDeleteDashboardByUid(sc)
+				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -639,7 +638,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 			Convey("Should result in 412 Precondition failed", func() {
 				So(sc.resp.Code, ShouldEqual, 412)
-				result := sc.ToJson()
+				result := sc.ToJSON()
 				So(result.Get("status").MustString(), ShouldEqual, "multiple-slugs-exists")
 				So(result.Get("message").MustString(), ShouldEqual, m.ErrDashboardsWithSameSlugExists.Error())
 			})
@@ -687,7 +686,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 
 				Convey("It should return correct response data", func() {
-					result := sc.ToJson()
+					result := sc.ToJSON()
 					So(result.Get("status").MustString(), ShouldEqual, "success")
 					So(result.Get("id").MustInt64(), ShouldEqual, 2)
 					So(result.Get("uid").MustString(), ShouldEqual, "uid")
@@ -743,11 +742,57 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			}
 		})
 	})
+
+	Convey("Given two dashboards being compared", t, func() {
+		mockResult := []*m.DashboardAclInfoDTO{}
+		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+			query.Result = mockResult
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+			query.Result = &m.DashboardVersion{
+				Data: simplejson.NewFromAny(map[string]interface{}{
+					"title": "Dash" + string(query.DashboardId),
+				}),
+			}
+			return nil
+		})
+
+		cmd := dtos.CalculateDiffOptions{
+			Base: dtos.CalculateDiffTarget{
+				DashboardId: 1,
+				Version:     1,
+			},
+			New: dtos.CalculateDiffTarget{
+				DashboardId: 2,
+				Version:     2,
+			},
+			DiffType: "basic",
+		}
+
+		Convey("when user does not have permission", func() {
+			role := m.ROLE_VIEWER
+
+			postDiffScenario("When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
+				CallPostDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+		})
+
+		Convey("when user does have permission", func() {
+			role := m.ROLE_ADMIN
+
+			postDiffScenario("When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
+				CallPostDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+		})
+	})
 }
 
 func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
-	sc.handlerFunc = GetDashboard
-	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+	CallGetDashboard(sc)
 
 	So(sc.resp.Code, ShouldEqual, 200)
 
@@ -756,6 +801,11 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 	So(err, ShouldBeNil)
 
 	return dash
+}
+
+func CallGetDashboard(sc *scenarioContext) {
+	sc.handlerFunc = GetDashboard
+	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
 func CallGetDashboardVersion(sc *scenarioContext) {
@@ -787,12 +837,12 @@ func CallDeleteDashboard(sc *scenarioContext) {
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
 
-func CallDeleteDashboardByUid(sc *scenarioContext) {
+func CallDeleteDashboardByUID(sc *scenarioContext) {
 	bus.AddHandler("test", func(cmd *m.DeleteDashboardCommand) error {
 		return nil
 	})
 
-	sc.handlerFunc = DeleteDashboardByUid
+	sc.handlerFunc = DeleteDashboardByUID
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
 
@@ -811,7 +861,7 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
@@ -831,7 +881,29 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 	})
 }
 
-func (sc *scenarioContext) ToJson() *simplejson.Json {
+func postDiffScenario(desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions, role m.RoleType, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		sc := setupScenarioContext(url)
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+			sc.context = c
+			sc.context.SignedInUser = &m.SignedInUser{
+				OrgId:  TestOrgID,
+				UserId: TestUserID,
+			}
+			sc.context.OrgRole = role
+
+			return CalculateDashboardDiff(c, cmd)
+		})
+
+		sc.m.Post(routePattern, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
+func (sc *scenarioContext) ToJSON() *simplejson.Json {
 	var result *simplejson.Json
 	err := json.NewDecoder(sc.resp.Body).Decode(&result)
 	So(err, ShouldBeNil)

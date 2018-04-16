@@ -31,11 +31,8 @@ export class HelpCtrl {
         { keys: ['e'], description: 'Toggle panel edit view' },
         { keys: ['v'], description: 'Toggle panel fullscreen view' },
         { keys: ['p', 's'], description: 'Open Panel Share Modal' },
+        { keys: ['p', 'd'], description: 'Duplicate Panel' },
         { keys: ['p', 'r'], description: 'Remove Panel' },
-      ],
-      'Focused Row': [
-        { keys: ['r', 'c'], description: 'Collapse Row' },
-        { keys: ['r', 'r'], description: 'Remove Row' },
       ],
       'Time Range': [
         { keys: ['t', 'z'], description: 'Zoom out time range' },

@@ -14,7 +14,7 @@ import (
 // Typed errors
 var (
 	ErrDashboardNotFound                      = errors.New("Dashboard not found")
-	ErrFolderNotFound                         = errors.New("Folder not found")
+	ErrDashboardFolderNotFound                = errors.New("Folder not found")
 	ErrDashboardSnapshotNotFound              = errors.New("Dashboard snapshot not found")
 	ErrDashboardWithSameUIDExists             = errors.New("A dashboard with the same uid already exists")
 	ErrDashboardWithSameNameInFolderExists    = errors.New("A dashboard with the same name in the folder already exists")
@@ -112,9 +112,9 @@ func NewDashboard(title string) *Dashboard {
 // NewDashboardFolder creates a new dashboard folder
 func NewDashboardFolder(title string) *Dashboard {
 	folder := NewDashboard(title)
+	folder.IsFolder = true
 	folder.Data.Set("schemaVersion", 16)
-	folder.Data.Set("editable", true)
-	folder.Data.Set("hideControls", true)
+	folder.Data.Set("version", 0)
 	folder.IsFolder = true
 	return folder
 }
@@ -157,17 +157,13 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	return dash
 }
 
-// GetDashboardModel turns the command into the savable model
+// GetDashboardModel turns the command into the saveable model
 func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := NewDashboardFromJson(cmd.Dashboard)
 	userId := cmd.UserId
 
 	if userId == 0 {
 		userId = -1
-	}
-
-	if dash.Data.Get("version").MustInt(0) == 0 {
-		dash.CreatedBy = userId
 	}
 
 	dash.UpdatedBy = userId
@@ -213,14 +209,14 @@ func GetDashboardFolderUrl(isFolder bool, uid string, slug string) string {
 	return GetDashboardUrl(uid, slug)
 }
 
-// Return the html url for a dashboard
+// GetDashboardUrl return the html url for a dashboard
 func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
 }
 
-// Return the full url for a dashboard
+// GetFullDashboardUrl return the full url for a dashboard
 func GetFullDashboardUrl(uid string, slug string) string {
-	return fmt.Sprintf("%s%s", setting.AppUrl, GetDashboardUrl(uid, slug))
+	return fmt.Sprintf("%sd/%s/%s", setting.AppUrl, uid, slug)
 }
 
 // GetFolderUrl return the html url for a folder

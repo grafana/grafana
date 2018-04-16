@@ -315,6 +315,7 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 	}
 
 	query.Result = m.UserProfileDTO{
+		Id:             user.Id,
 		Name:           user.Name,
 		Email:          user.Email,
 		Login:          user.Login,
@@ -332,6 +333,7 @@ func GetUserOrgList(query *m.GetUserOrgListQuery) error {
 	sess.Join("INNER", "org", "org_user.org_id=org.id")
 	sess.Where("org_user.user_id=?", query.UserId)
 	sess.Cols("org.name", "org_user.role", "org_user.org_id")
+	sess.OrderBy("org.name")
 	err := sess.Find(&query.Result)
 	return err
 }

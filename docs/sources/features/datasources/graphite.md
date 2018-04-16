@@ -75,7 +75,7 @@ You can reference queries by the row “letter” that they’re on (similar to 
 ## Point consolidation
 
 All Graphite metrics are consolidated so that Graphite doesn't return more data points than there are pixels in the graph. By default,
-this consolidation is done using `avg` function. You can how Graphite consolidates metrics by adding the Graphite consolidateBy function.
+this consolidation is done using `avg` function. You can control how Graphite consolidates metrics by adding the Graphite consolidateBy function.
 
 > *Notice* This means that legend summary values (max, min, total) cannot be all correct at the same time. They are calculated
 > client side by Grafana. And depending on your consolidation function only one or two can be correct at the same time.
@@ -120,3 +120,21 @@ queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
 specify a tag or wildcard (leave empty should also work)
+
+## Configure datasource with provisioning
+
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Graphite
+    type: graphite
+    access: proxy
+    url: http://localhost:8080
+    jsonData:
+      graphiteVersion: "1.1"
+```

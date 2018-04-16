@@ -4,7 +4,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "5.0.0-beta4",
+  "version": "5.1.0-pre1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -102,12 +102,11 @@
     "watch": "webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
     "build": "grunt build",
     "test": "grunt test",
-    "test:coverage": "grunt test --coverage=true",
     "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
-    "karma": "node ./node_modules/grunt-cli/bin/grunt karma:dev",
-    "jest": "node ./node_modules/jest-cli/bin/jest.js --notify --watch",
-    "api-tests": "node ./node_modules/jest-cli/bin/jest.js --notify --watch --config=tests/api/jest.js",
-    "precommit": "lint-staged && node ./node_modules/grunt-cli/bin/grunt precommit"
+    "karma": "grunt karma:dev",
+    "jest": "jest --notify --watch",
+    "api-tests": "jest --notify --watch --config=tests/api/jest.js",
+    "precommit": "lint-staged && grunt precommit"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -118,7 +117,7 @@
       "prettier --write",
       "git add"
     ],
-    "*.go": [
+    "*pkg/**/*.go": [
       "gofmt -w -s",
       "git add"
     ]
@@ -136,6 +135,7 @@
     "angular-route": "^1.6.6",
     "angular-sanitize": "^1.6.6",
     "babel-polyfill": "^6.26.0",
+    "baron": "^3.0.3",
     "brace": "^0.10.0",
     "classnames": "^2.2.5",
     "clipboard": "^1.7.1",
@@ -151,11 +151,10 @@
     "moment": "^2.18.1",
     "mousetrap": "^1.6.0",
     "mousetrap-global-bind": "^1.1.0",
-    "perfect-scrollbar": "^1.2.0",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
-    "react-grid-layout": "^0.16.2",
+    "react-grid-layout-grafana": "0.16.0",
     "react-highlight-words": "^0.10.0",
     "react-popper": "^0.7.5",
     "react-select": "^1.1.0",
@@ -165,7 +164,7 @@
     "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "^5.4.3",
     "tether": "^1.4.0",
-    "tether-drop": "https://github.com/torkelo/drop",
+    "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "^1.4.1"
   }
 }

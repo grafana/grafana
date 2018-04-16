@@ -86,17 +86,63 @@ func (e *Engine) runJobDispatcher(grafanaCtx context.Context) error {
 		case <-grafanaCtx.Done():
 			return dispatcherGroup.Wait()
 		case job := <-e.execQueue:
-			dispatcherGroup.Go(func() error { return e.processJob(alertCtx, job) })
+			dispatcherGroup.Go(func() error { return e.processJobWithRetry(alertCtx, job) })
 		}
 	}
 }
 
 var (
 	unfinishedWorkTimeout time.Duration = time.Second * 5
-	alertTimeout          time.Duration = time.Second * 30
+	// TODO: Make alertTimeout and alertMaxAttempts configurable in the config file.
+	alertTimeout     time.Duration = time.Second * 30
+	alertMaxAttempts int           = 3
 )
 
-func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
+func (e *Engine) processJobWithRetry(grafanaCtx context.Context, job *Job) error {
+	defer func() {
+		if err := recover(); err != nil {
+			e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
+		}
+	}()
+
+	cancelChan := make(chan context.CancelFunc, alertMaxAttempts)
+	attemptChan := make(chan int, 1)
+
+	// Initialize with first attemptID=1
+	attemptChan <- 1
+	job.Running = true
+
+	for {
+		select {
+		case <-grafanaCtx.Done():
+			// In case grafana server context is cancel, let a chance to job processing
+			// to finish gracefully - by waiting a timeout duration - before forcing its end.
+			unfinishedWorkTimer := time.NewTimer(unfinishedWorkTimeout)
+			select {
+			case <-unfinishedWorkTimer.C:
+				return e.endJob(grafanaCtx.Err(), cancelChan, job)
+			case <-attemptChan:
+				return e.endJob(nil, cancelChan, job)
+			}
+		case attemptID, more := <-attemptChan:
+			if !more {
+				return e.endJob(nil, cancelChan, job)
+			}
+			go e.processJob(attemptID, attemptChan, cancelChan, job)
+		}
+	}
+}
+
+func (e *Engine) endJob(err error, cancelChan chan context.CancelFunc, job *Job) error {
+	job.Running = false
+	close(cancelChan)
+	for cancelFn := range cancelChan {
+		cancelFn()
+	}
+	return err
+}
+
+func (e *Engine) processJob(attemptID int, attemptChan chan int, cancelChan chan context.CancelFunc, job *Job) {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
@@ -104,14 +150,13 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 	}()
 
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertTimeout)
+	cancelChan <- cancelFn
 	span := opentracing.StartSpan("alert execution")
 	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
 
-	job.Running = true
 	evalContext := NewEvalContext(alertCtx, job.Rule)
 	evalContext.Ctx = alertCtx
 
-	done := make(chan struct{})
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -122,43 +167,36 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 					tlog.String("message", "failed to execute alert rule. panic was recovered."),
 				)
 				span.Finish()
-				close(done)
+				close(attemptChan)
 			}
 		}()
 
 		e.evalHandler.Eval(evalContext)
-		e.resultHandler.Handle(evalContext)
 
 		span.SetTag("alertId", evalContext.Rule.Id)
 		span.SetTag("dashboardId", evalContext.Rule.DashboardId)
 		span.SetTag("firing", evalContext.Firing)
 		span.SetTag("nodatapoints", evalContext.NoDataFound)
+		span.SetTag("attemptID", attemptID)
+
 		if evalContext.Error != nil {
 			ext.Error.Set(span, true)
 			span.LogFields(
 				tlog.Error(evalContext.Error),
-				tlog.String("message", "alerting execution failed"),
+				tlog.String("message", "alerting execution attempt failed"),
 			)
+			if attemptID < alertMaxAttempts {
+				span.Finish()
+				e.log.Debug("Job Execution attempt triggered retry", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
+				attemptChan <- (attemptID + 1)
+				return
+			}
 		}
 
+		evalContext.Rule.State = evalContext.GetNewState()
+		e.resultHandler.Handle(evalContext)
 		span.Finish()
-		close(done)
+		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
+		close(attemptChan)
 	}()
-
-	var err error = nil
-	select {
-	case <-grafanaCtx.Done():
-		select {
-		case <-time.After(unfinishedWorkTimeout):
-			cancelFn()
-			err = grafanaCtx.Err()
-		case <-done:
-		}
-	case <-done:
-	}
-
-	e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
-	job.Running = false
-	cancelFn()
-	return err
 }

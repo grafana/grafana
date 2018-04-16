@@ -17,7 +17,7 @@ func TestDashboardService(t *testing.T) {
 		service := dashboardServiceImpl{}
 
 		origNewDashboardGuardian := guardian.New
-		mockDashboardGuardian(&fakeDashboardGuardian{canSave: true})
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 		Convey("Save dashboard validation", func() {
 			dto := &SaveDashboardDTO{}
@@ -72,7 +72,7 @@ func TestDashboardService(t *testing.T) {
 					dto.Dashboard.SetUid(tc.Uid)
 					dto.User = &models.SignedInUser{}
 
-					_, err := service.buildSaveDashboardCommand(dto)
+					_, err := service.buildSaveDashboardCommand(dto, true)
 					So(err, ShouldEqual, tc.Error)
 				}
 			})
@@ -92,53 +92,4 @@ func TestDashboardService(t *testing.T) {
 			guardian.New = origNewDashboardGuardian
 		})
 	})
-}
-
-func mockDashboardGuardian(mock *fakeDashboardGuardian) {
-	guardian.New = func(dashId int64, orgId int64, user *models.SignedInUser) guardian.DashboardGuardian {
-		mock.orgId = orgId
-		mock.dashId = dashId
-		mock.user = user
-		return mock
-	}
-}
-
-type fakeDashboardGuardian struct {
-	dashId                      int64
-	orgId                       int64
-	user                        *models.SignedInUser
-	canSave                     bool
-	canEdit                     bool
-	canView                     bool
-	canAdmin                    bool
-	hasPermission               bool
-	checkPermissionBeforeUpdate bool
-}
-
-func (g *fakeDashboardGuardian) CanSave() (bool, error) {
-	return g.canSave, nil
-}
-
-func (g *fakeDashboardGuardian) CanEdit() (bool, error) {
-	return g.canEdit, nil
-}
-
-func (g *fakeDashboardGuardian) CanView() (bool, error) {
-	return g.canView, nil
-}
-
-func (g *fakeDashboardGuardian) CanAdmin() (bool, error) {
-	return g.canAdmin, nil
-}
-
-func (g *fakeDashboardGuardian) HasPermission(permission models.PermissionType) (bool, error) {
-	return g.hasPermission, nil
-}
-
-func (g *fakeDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
-	return g.checkPermissionBeforeUpdate, nil
-}
-
-func (g *fakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
-	return nil, nil
 }

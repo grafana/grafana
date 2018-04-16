@@ -3,8 +3,8 @@ package sqlstore
 import (
 	"fmt"
 	"testing"
+	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -14,10 +14,8 @@ import (
 )
 
 func TestDashboardDataAccess(t *testing.T) {
-	var x *xorm.Engine
-
 	Convey("Testing DB", t, func() {
-		x = InitTestDB(t)
+		InitTestDB(t)
 
 		Convey("Given saved dashboard", func() {
 			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
@@ -124,6 +122,24 @@ func TestDashboardDataAccess(t *testing.T) {
 				generateNewUid = util.GenerateShortUid
 			})
 
+			Convey("Should be able to create dashboard", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId: 1,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"title": "folderId",
+						"tags":  []interface{}{},
+					}),
+					UserId: 100,
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+				So(cmd.Result.CreatedBy, ShouldEqual, 100)
+				So(cmd.Result.Created.IsZero(), ShouldBeFalse)
+				So(cmd.Result.UpdatedBy, ShouldEqual, 100)
+				So(cmd.Result.Updated.IsZero(), ShouldBeFalse)
+			})
+
 			Convey("Should be able to update dashboard by id and remove folderId", func() {
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
@@ -134,6 +150,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 					Overwrite: true,
 					FolderId:  2,
+					UserId:    100,
 				}
 
 				err := SaveDashboard(&cmd)
@@ -149,6 +166,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 					FolderId:  0,
 					Overwrite: true,
+					UserId:    100,
 				}
 
 				err = SaveDashboard(&cmd)
@@ -162,6 +180,10 @@ func TestDashboardDataAccess(t *testing.T) {
 				err = GetDashboard(&query)
 				So(err, ShouldBeNil)
 				So(query.Result.FolderId, ShouldEqual, 0)
+				So(query.Result.CreatedBy, ShouldEqual, savedDash.CreatedBy)
+				So(query.Result.Created, ShouldEqual, savedDash.Created.Truncate(time.Second))
+				So(query.Result.UpdatedBy, ShouldEqual, 100)
+				So(query.Result.Updated.IsZero(), ShouldBeFalse)
 			})
 
 			Convey("Should be able to delete a dashboard folder and its children", func() {

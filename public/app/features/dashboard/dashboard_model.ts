@@ -129,7 +129,7 @@ export class DashboardModel {
     this.meta = meta;
   }
 
-  // cleans meta data and other non peristent state
+  // cleans meta data and other non persistent state
   getSaveModelClone() {
     // make clone
     var copy: any = {};
@@ -524,6 +524,34 @@ export class DashboardModel {
     this.removePanel(row);
   }
 
+  expandRows() {
+    for (let i = 0; i < this.panels.length; i++) {
+      var panel = this.panels[i];
+
+      if (panel.type !== 'row') {
+        continue;
+      }
+
+      if (panel.collapsed) {
+        this.toggleRow(panel);
+      }
+    }
+  }
+
+  collapseRows() {
+    for (let i = 0; i < this.panels.length; i++) {
+      var panel = this.panels[i];
+
+      if (panel.type !== 'row') {
+        continue;
+      }
+
+      if (!panel.collapsed) {
+        this.toggleRow(panel);
+      }
+    }
+  }
+
   setPanelFocus(id) {
     this.meta.focusPanelId = id;
   }
@@ -578,7 +606,7 @@ export class DashboardModel {
     if (panel.gridPos.x + panel.gridPos.w * 2 <= GRID_COLUMN_COUNT) {
       newPanel.gridPos.x += panel.gridPos.w;
     } else {
-      // add bellow
+      // add below
       newPanel.gridPos.y += panel.gridPos.h;
     }
 

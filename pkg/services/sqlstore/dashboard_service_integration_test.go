@@ -142,9 +142,9 @@ func TestIntegratedDashboardService(t *testing.T) {
 						So(err, ShouldNotBeNil)
 						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
-						So(sc.dashboardGuardianMock.dashId, ShouldEqual, 0)
-						So(sc.dashboardGuardianMock.orgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.user.UserId, ShouldEqual, cmd.UserId)
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, 0)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
 					})
 				})
 
@@ -165,9 +165,9 @@ func TestIntegratedDashboardService(t *testing.T) {
 						So(err, ShouldNotBeNil)
 						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
-						So(sc.dashboardGuardianMock.dashId, ShouldEqual, otherSavedFolder.Id)
-						So(sc.dashboardGuardianMock.orgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.user.UserId, ShouldEqual, cmd.UserId)
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, otherSavedFolder.Id)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
 					})
 				})
 
@@ -189,9 +189,9 @@ func TestIntegratedDashboardService(t *testing.T) {
 						So(err, ShouldNotBeNil)
 						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
-						So(sc.dashboardGuardianMock.dashId, ShouldEqual, savedDashInGeneralFolder.Id)
-						So(sc.dashboardGuardianMock.orgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.user.UserId, ShouldEqual, cmd.UserId)
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedDashInGeneralFolder.Id)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
 					})
 				})
 
@@ -213,9 +213,9 @@ func TestIntegratedDashboardService(t *testing.T) {
 						So(err, ShouldNotBeNil)
 						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
 
-						So(sc.dashboardGuardianMock.dashId, ShouldEqual, savedDashInFolder.Id)
-						So(sc.dashboardGuardianMock.orgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.user.UserId, ShouldEqual, cmd.UserId)
+						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedDashInFolder.Id)
+						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
+						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
 					})
 				})
 			})
@@ -363,7 +363,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 						Convey("It should result in folder not found error", func() {
 							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrFolderNotFound)
+							So(err, ShouldEqual, models.ErrDashboardFolderNotFound)
 						})
 					})
 
@@ -785,68 +785,16 @@ func TestIntegratedDashboardService(t *testing.T) {
 	})
 }
 
-func mockDashboardGuardian(mock *mockDashboardGuarder) {
-	guardian.New = func(dashId int64, orgId int64, user *models.SignedInUser) guardian.DashboardGuardian {
-		mock.orgId = orgId
-		mock.dashId = dashId
-		mock.user = user
-		return mock
-	}
-}
-
-type mockDashboardGuarder struct {
-	dashId                      int64
-	orgId                       int64
-	user                        *models.SignedInUser
-	canSave                     bool
-	canSaveCallCounter          int
-	canEdit                     bool
-	canView                     bool
-	canAdmin                    bool
-	hasPermission               bool
-	checkPermissionBeforeRemove bool
-	checkPermissionBeforeUpdate bool
-}
-
-func (g *mockDashboardGuarder) CanSave() (bool, error) {
-	g.canSaveCallCounter++
-	return g.canSave, nil
-}
-
-func (g *mockDashboardGuarder) CanEdit() (bool, error) {
-	return g.canEdit, nil
-}
-
-func (g *mockDashboardGuarder) CanView() (bool, error) {
-	return g.canView, nil
-}
-
-func (g *mockDashboardGuarder) CanAdmin() (bool, error) {
-	return g.canAdmin, nil
-}
-
-func (g *mockDashboardGuarder) HasPermission(permission models.PermissionType) (bool, error) {
-	return g.hasPermission, nil
-}
-
-func (g *mockDashboardGuarder) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error) {
-	return g.checkPermissionBeforeUpdate, nil
-}
-
-func (g *mockDashboardGuarder) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
-	return nil, nil
-}
-
 type scenarioContext struct {
-	dashboardGuardianMock *mockDashboardGuarder
+	dashboardGuardianMock *guardian.FakeDashboardGuardian
 }
 
 type scenarioFunc func(c *scenarioContext)
 
-func dashboardGuardianScenario(desc string, mock *mockDashboardGuarder, fn scenarioFunc) {
+func dashboardGuardianScenario(desc string, mock *guardian.FakeDashboardGuardian, fn scenarioFunc) {
 	Convey(desc, func() {
 		origNewDashboardGuardian := guardian.New
-		mockDashboardGuardian(mock)
+		guardian.MockDashboardGuardian(mock)
 
 		sc := &scenarioContext{
 			dashboardGuardianMock: mock,
@@ -861,15 +809,15 @@ func dashboardGuardianScenario(desc string, mock *mockDashboardGuarder, fn scena
 }
 
 type dashboardPermissionScenarioContext struct {
-	dashboardGuardianMock *mockDashboardGuarder
+	dashboardGuardianMock *guardian.FakeDashboardGuardian
 }
 
 type dashboardPermissionScenarioFunc func(sc *dashboardPermissionScenarioContext)
 
-func dashboardPermissionScenario(desc string, mock *mockDashboardGuarder, fn dashboardPermissionScenarioFunc) {
+func dashboardPermissionScenario(desc string, mock *guardian.FakeDashboardGuardian, fn dashboardPermissionScenarioFunc) {
 	Convey(desc, func() {
 		origNewDashboardGuardian := guardian.New
-		mockDashboardGuardian(mock)
+		guardian.MockDashboardGuardian(mock)
 
 		sc := &dashboardPermissionScenarioContext{
 			dashboardGuardianMock: mock,
@@ -884,8 +832,8 @@ func dashboardPermissionScenario(desc string, mock *mockDashboardGuarder, fn das
 }
 
 func permissionScenario(desc string, canSave bool, fn dashboardPermissionScenarioFunc) {
-	mock := &mockDashboardGuarder{
-		canSave: canSave,
+	mock := &guardian.FakeDashboardGuardian{
+		CanSaveValue: canSave,
 	}
 	dashboardPermissionScenario(desc, mock, fn)
 }
@@ -902,10 +850,10 @@ func callSaveWithError(cmd models.SaveDashboardCommand) error {
 	return err
 }
 
-func dashboardServiceScenario(desc string, mock *mockDashboardGuarder, fn scenarioFunc) {
+func dashboardServiceScenario(desc string, mock *guardian.FakeDashboardGuardian, fn scenarioFunc) {
 	Convey(desc, func() {
 		origNewDashboardGuardian := guardian.New
-		mockDashboardGuardian(mock)
+		guardian.MockDashboardGuardian(mock)
 
 		sc := &scenarioContext{
 			dashboardGuardianMock: mock,

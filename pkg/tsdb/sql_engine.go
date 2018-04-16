@@ -3,6 +3,7 @@ package tsdb
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
@@ -17,15 +18,15 @@ type SqlEngine interface {
 		ctx context.Context,
 		ds *models.DataSource,
 		query *TsdbQuery,
-		transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult) error,
-		transformToTable func(query *Query, rows *core.Rows, result *QueryResult) error,
+		transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
+		transformToTable func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
 	) (*Response, error)
 }
 
-// SqlMacroEngine interpolates macros into sql. It takes in the timeRange to be able to
-// generate queries that use from and to.
+// SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
+// timeRange to be able to generate queries that use from and to.
 type SqlMacroEngine interface {
-	Interpolate(timeRange *TimeRange, sql string) (string, error)
+	Interpolate(query *Query, timeRange *TimeRange, sql string) (string, error)
 }
 
 type DefaultSqlEngine struct {
@@ -77,8 +78,8 @@ func (e *DefaultSqlEngine) Query(
 	ctx context.Context,
 	dsInfo *models.DataSource,
 	tsdbQuery *TsdbQuery,
-	transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult) error,
-	transformToTable func(query *Query, rows *core.Rows, result *QueryResult) error,
+	transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
+	transformToTable func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
 ) (*Response, error) {
 	result := &Response{
 		Results: make(map[string]*QueryResult),
@@ -97,7 +98,7 @@ func (e *DefaultSqlEngine) Query(
 		queryResult := &QueryResult{Meta: simplejson.New(), RefId: query.RefId}
 		result.Results[query.RefId] = queryResult
 
-		rawSql, err := e.MacroEngine.Interpolate(tsdbQuery.TimeRange, rawSql)
+		rawSql, err := e.MacroEngine.Interpolate(query, tsdbQuery.TimeRange, rawSql)
 		if err != nil {
 			queryResult.Error = err
 			continue
@@ -117,13 +118,13 @@ func (e *DefaultSqlEngine) Query(
 
 		switch format {
 		case "time_series":
-			err := transformToTimeSeries(query, rows, queryResult)
+			err := transformToTimeSeries(query, rows, queryResult, tsdbQuery)
 			if err != nil {
 				queryResult.Error = err
 				continue
 			}
 		case "table":
-			err := transformToTable(query, rows, queryResult)
+			err := transformToTable(query, rows, queryResult, tsdbQuery)
 			if err != nil {
 				queryResult.Error = err
 				continue
@@ -132,4 +133,55 @@ func (e *DefaultSqlEngine) Query(
 	}
 
 	return result, nil
+}
+
+// ConvertSqlTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
+// to make native datetime types and epoch dates work in annotation and table queries.
+func ConvertSqlTimeColumnToEpochMs(values RowValues, timeIndex int) {
+	if timeIndex >= 0 {
+		switch value := values[timeIndex].(type) {
+		case time.Time:
+			values[timeIndex] = EpochPrecisionToMs(float64(value.UnixNano()))
+		case *time.Time:
+			if value != nil {
+				values[timeIndex] = EpochPrecisionToMs(float64((*value).UnixNano()))
+			}
+		case int64:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *int64:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case uint64:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *uint64:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case int32:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *int32:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case uint32:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *uint32:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case float64:
+			values[timeIndex] = EpochPrecisionToMs(value)
+		case *float64:
+			if value != nil {
+				values[timeIndex] = EpochPrecisionToMs(*value)
+			}
+		case float32:
+			values[timeIndex] = EpochPrecisionToMs(float64(value))
+		case *float32:
+			if value != nil {
+				values[timeIndex] = EpochPrecisionToMs(float64(*value))
+			}
+		}
+	}
 }

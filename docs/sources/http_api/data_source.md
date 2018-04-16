@@ -90,7 +90,7 @@ Content-Type: application/json
 
 ## Get a single data source by Name
 
-`GET /api/datasources/:name`
+`GET /api/datasources/name/:name`
 
 **Example Request**:
 

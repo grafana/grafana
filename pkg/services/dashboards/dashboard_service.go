@@ -13,6 +13,7 @@ import (
 // DashboardService service for operating on dashboards
 type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
+	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 }
 
 // DashboardProvisioningService service for operating on provisioned dashboards
@@ -41,7 +42,10 @@ type SaveDashboardDTO struct {
 	Dashboard *models.Dashboard
 }
 
-type dashboardServiceImpl struct{}
+type dashboardServiceImpl struct {
+	orgId int64
+	user  *models.SignedInUser
+}
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
 	cmd := &models.GetProvisionedDashboardDataQuery{Name: name}
@@ -53,7 +57,7 @@ func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*mod
 	return cmd.Result, nil
 }
 
-func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO) (*models.SaveDashboardCommand, error) {
+func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, validateAlerts bool) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.Title = strings.TrimSpace(dash.Title)
@@ -78,13 +82,15 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO)
 		return nil, models.ErrDashboardUidToLong
 	}
 
-	validateAlertsCmd := models.ValidateDashboardAlertsCommand{
-		OrgId:     dto.OrgId,
-		Dashboard: dash,
-	}
+	if validateAlerts {
+		validateAlertsCmd := models.ValidateDashboardAlertsCommand{
+			OrgId:     dto.OrgId,
+			Dashboard: dash,
+		}
 
-	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
-		return nil, models.ErrDashboardContainsInvalidAlertData
+		if err := bus.Dispatch(&validateAlertsCmd); err != nil {
+			return nil, models.ErrDashboardContainsInvalidAlertData
+		}
 	}
 
 	validateBeforeSaveCmd := models.ValidateDashboardBeforeSaveCommand{
@@ -142,7 +148,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
 	}
-	cmd, err := dr.buildSaveDashboardCommand(dto)
+	cmd, err := dr.buildSaveDashboardCommand(dto, true)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +178,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
 	}
-	cmd, err := dr.buildSaveDashboardCommand(dto)
+	cmd, err := dr.buildSaveDashboardCommand(dto, false)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +197,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 }
 
 func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	cmd, err := dr.buildSaveDashboardCommand(dto)
+	cmd, err := dr.buildSaveDashboardCommand(dto, true)
 	if err != nil {
 		return nil, err
 	}
@@ -202,6 +208,20 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Da
 	}
 
 	err = dr.updateAlerting(cmd, dto)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.Result, nil
+}
+
+func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+	cmd, err := dr.buildSaveDashboardCommand(dto, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bus.Dispatch(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -223,6 +243,10 @@ func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Das
 	}
 
 	return s.SaveDashboardResult, s.SaveDashboardError
+}
+
+func (s *FakeDashboardService) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
+	return s.SaveDashboard(dto)
 }
 
 func MockDashboardService(mock *FakeDashboardService) {

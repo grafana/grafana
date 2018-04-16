@@ -76,10 +76,10 @@ func TestFirst(t *testing.T) {
 	assert.True(s == "fallback", "must get string return fallback")
 
 	s, err = j.GetString("name")
-	assert.True(s == "anton" && err == nil, "name shoud match")
+	assert.True(s == "anton" && err == nil, "name should match")
 
 	s, err = j.GetString("address", "street")
-	assert.True(s == "Street 42" && err == nil, "street shoud match")
+	assert.True(s == "Street 42" && err == nil, "street should match")
 	//log.Println("s: ", s.String())
 
 	_, err = j.GetNumber("age")

@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"strconv"
-	"strings"
 
 	"gopkg.in/macaron.v1"
 
@@ -11,29 +10,17 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	l "github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/client_golang/prometheus"
 )
-
-type Context struct {
-	*macaron.Context
-	*m.SignedInUser
-
-	Session SessionStore
-
-	IsSignedIn     bool
-	IsRenderCall   bool
-	AllowAnonymous bool
-	Logger         log.Logger
-}
 
 func GetContextHandler() macaron.Handler {
 	return func(c *macaron.Context) {
-		ctx := &Context{
+		ctx := &m.ReqContext{
 			Context:        c,
 			SignedInUser:   &m.SignedInUser{},
-			Session:        GetSession(),
+			Session:        session.GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			Logger:         log.New("context"),
@@ -74,7 +61,7 @@ func GetContextHandler() macaron.Handler {
 	}
 }
 
-func initContextWithAnonymousUser(ctx *Context) bool {
+func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 	if !setting.AnonymousEnabled {
 		return false
 	}
@@ -94,9 +81,9 @@ func initContextWithAnonymousUser(ctx *Context) bool {
 	return true
 }
 
-func initContextWithUserSessionCookie(ctx *Context, orgId int64) bool {
+func initContextWithUserSessionCookie(ctx *m.ReqContext, orgId int64) bool {
 	// initialize session
-	if err := ctx.Session.Start(ctx); err != nil {
+	if err := ctx.Session.Start(ctx.Context); err != nil {
 		ctx.Logger.Error("Failed to start session", "error", err)
 		return false
 	}
@@ -117,7 +104,7 @@ func initContextWithUserSessionCookie(ctx *Context, orgId int64) bool {
 	return true
 }
 
-func initContextWithApiKey(ctx *Context) bool {
+func initContextWithApiKey(ctx *m.ReqContext) bool {
 	var keyString string
 	if keyString = getApiKey(ctx); keyString == "" {
 		return false
@@ -153,7 +140,7 @@ func initContextWithApiKey(ctx *Context) bool {
 	return true
 }
 
-func initContextWithBasicAuth(ctx *Context, orgId int64) bool {
+func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 
 	if !setting.BasicAuthEnabled {
 		return false
@@ -195,70 +182,8 @@ func initContextWithBasicAuth(ctx *Context, orgId int64) bool {
 	return true
 }
 
-// Handle handles and logs error by given status.
-func (ctx *Context) Handle(status int, title string, err error) {
-	if err != nil {
-		ctx.Logger.Error(title, "error", err)
-		if setting.Env != setting.PROD {
-			ctx.Data["ErrorMsg"] = err
-		}
-	}
-
-	ctx.Data["Title"] = title
-	ctx.Data["AppSubUrl"] = setting.AppSubUrl
-	ctx.Data["Theme"] = "dark"
-
-	ctx.HTML(status, "error")
-}
-
-func (ctx *Context) JsonOK(message string) {
-	resp := make(map[string]interface{})
-	resp["message"] = message
-	ctx.JSON(200, resp)
-}
-
-func (ctx *Context) IsApiRequest() bool {
-	return strings.HasPrefix(ctx.Req.URL.Path, "/api")
-}
-
-func (ctx *Context) JsonApiErr(status int, message string, err error) {
-	resp := make(map[string]interface{})
-
-	if err != nil {
-		ctx.Logger.Error(message, "error", err)
-		if setting.Env != setting.PROD {
-			resp["error"] = err.Error()
-		}
-	}
-
-	switch status {
-	case 404:
-		resp["message"] = "Not Found"
-	case 500:
-		resp["message"] = "Internal Server Error"
-	}
-
-	if message != "" {
-		resp["message"] = message
-	}
-
-	ctx.JSON(status, resp)
-}
-
-func (ctx *Context) HasUserRole(role m.RoleType) bool {
-	return ctx.OrgRole.Includes(role)
-}
-
-func (ctx *Context) HasHelpFlag(flag m.HelpFlags1) bool {
-	return ctx.HelpFlags1.HasFlag(flag)
-}
-
-func (ctx *Context) TimeRequest(timer prometheus.Summary) {
-	ctx.Data["perfmon.timer"] = timer
-}
-
 func AddDefaultResponseHeaders() macaron.Handler {
-	return func(ctx *Context) {
+	return func(ctx *m.ReqContext) {
 		if ctx.IsApiRequest() && ctx.Req.Method == "GET" {
 			ctx.Resp.Header().Add("Cache-Control", "no-cache")
 			ctx.Resp.Header().Add("Pragma", "no-cache")
