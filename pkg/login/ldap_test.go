@@ -77,16 +77,6 @@ func TestLdapAuther(t *testing.T) {
 				So(result.Login, ShouldEqual, "torkelo")
 			})
 
-			/*
-				Convey("Should create new user", func() {
-					So(sc.getUserByAuthInfoQuery.Login, ShouldEqual, "torkelo")
-					So(sc.getUserByAuthInfoQuery.Email, ShouldEqual, "my@email.com")
-
-					So(sc.createUserCmd.Login, ShouldEqual, "torkelo")
-					So(sc.createUserCmd.Email, ShouldEqual, "my@email.com")
-				})
-			*/
-
 		})
 
 	})
