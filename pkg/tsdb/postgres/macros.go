@@ -79,15 +79,15 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 		return fmt.Sprintf("extract(epoch from %s) as \"time\"", args[0]), nil
 	case "__timeFilter":
-		// don't use to_timestamp in this macro for redshift compatibility #9566
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("extract(epoch from %s) BETWEEN %d AND %d", args[0], m.TimeRange.GetFromAsSecondsEpoch(), m.TimeRange.GetToAsSecondsEpoch()), nil
+
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("to_timestamp(%d)", m.TimeRange.GetFromAsSecondsEpoch()), nil
+		return fmt.Sprintf("'%s'", m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeTo":
-		return fmt.Sprintf("to_timestamp(%d)", m.TimeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("'%s'", m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
