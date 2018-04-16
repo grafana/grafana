@@ -149,6 +149,14 @@
   color: #ebedf2;
 }
 
+.side-menu-subtitle {
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+  border-top: 1px solid $dropdownDividerBottom;
+  margin-top: 0.25rem;
+}
+
 li.sidemenu-org-switcher {
   border-bottom: 1px solid $dropdownDividerBottom;
 }

@@ -70,6 +70,9 @@
           {{::child.text}}
         </a>
       </li>
+      <li ng-if="item.subTitle" class="side-menu-subtitle">
+        <span class="sidemenu-item-text">{{::item.subTitle}}</span>
+      </li>
       <li class="side-menu-header">
         <span class="sidemenu-item-text">{{::item.text}}</span>
       </li>
