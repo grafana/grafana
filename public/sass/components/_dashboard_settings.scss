@@ -3,20 +3,6 @@
   height: 100%;
   display: flex;
   flex-direction: row;
-
-  //fix for fontawesome icons
-  .fa-lock {
-    &::before {
-      font-size: 20px;
-      text-align: center;
-      padding-left: 1px;
-    }
-  }
-  .fa-history {
-    &::before {
-      font-size: 17px;
-    }
-  }
 }
 
 .dashboard-page--settings-opening {
@@ -78,8 +64,13 @@
     background: $page-bg;
   }
 
-  i {
-    padding-right: 5px;
+  .gicon {
+    margin-bottom: 2px;
+  }
+
+  .fa {
+    font-size: 17px;
+    width: 16px;
   }
 }
 
