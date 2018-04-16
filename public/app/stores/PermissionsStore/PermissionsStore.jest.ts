@@ -11,27 +11,27 @@ describe('PermissionsStore', () => {
         { id: 3, dashboardId: 1, role: 'Editor', permission: 1, permissionName: 'Edit' },
         {
           id: 4,
-          dashboardId: 10,
+          dashboardId: 1,
           permission: 1,
           permissionName: 'View',
           teamId: 1,
-          teamName: 'MyTestTeam',
+          team: 'MyTestTeam',
         },
         {
           id: 5,
-          dashboardId: 10,
+          dashboardId: 1,
           permission: 1,
           permissionName: 'View',
           userId: 1,
-          userName: 'MyTestUser',
+          userLogin: 'MyTestUser',
         },
         {
           id: 6,
-          dashboardId: 10,
+          dashboardId: 1,
           permission: 1,
           permissionName: 'Edit',
           teamId: 2,
-          teamName: 'MyTestTeam2',
+          team: 'MyTestTeam2',
         },
       ])
     );
@@ -48,15 +48,12 @@ describe('PermissionsStore', () => {
       }
     );
 
-    console.log(store);
-
     await store.load(1, false, false);
-    console.log(store);
   });
 
   it('should save update on permission change', async () => {
     expect(store.items[0].permission).toBe(1);
-    expect(store.items[0].permissionName).toBe('View');
+    expect(store.items[0].permissionName).toBe('Edit');
 
     await store.updatePermissionOnIndex(0, 2, 'Edit');
 
@@ -67,13 +64,18 @@ describe('PermissionsStore', () => {
   });
 
   it('should save removed permissions automatically', async () => {
-    expect(store.items.length).toBe(3);
+    expect(store.items.length).toBe(5);
 
     await store.removeStoreItem(2);
 
-    expect(store.items.length).toBe(2);
+    expect(store.items.length).toBe(4);
     expect(backendSrv.post.mock.calls.length).toBe(1);
     expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/permissions');
+  });
+
+  it('should be sorted by sort rank and alphabetically', async () => {
+    expect(store.items[3].name).toBe('MyTestTeam2');
+    expect(store.items[4].name).toBe('MyTestUser');
   });
 
   describe('when one inherited and one not inherited team permission are added', () => {
@@ -92,7 +94,7 @@ describe('PermissionsStore', () => {
     });
 
     it('should add new overriding permission', () => {
-      expect(store.items.length).toBe(4);
+      expect(store.items.length).toBe(6);
     });
   });
 });
