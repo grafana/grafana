@@ -30,7 +30,9 @@ export default class CloudWatchDatasource {
 
     var queries = _.filter(options.targets, item => {
       return (
-        item.hide !== true && !!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)
+        (item.id !== '' || item.hide !== true) &&
+        ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
+          item.expression.length > 0)
       );
     }).map(item => {
       item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
@@ -38,6 +40,9 @@ export default class CloudWatchDatasource {
       item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
       item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+      item.id = this.templateSrv.replace(item.id, options.scopedVars);
+      item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+      item.returnData = typeof item.hide === 'undefined' ? true : !item.hide;
 
       return _.extend(
         {
@@ -384,11 +389,11 @@ export default class CloudWatchDatasource {
     var currentVariables = !_.isArray(variable.current.value)
       ? [variable.current]
       : variable.current.value.map(v => {
-          return {
-            text: v,
-            value: v,
-          };
-        });
+        return {
+          text: v,
+          value: v,
+        };
+      });
     let useSelectedVariables =
       selectedVariables.some(s => {
         return s.value === currentVariables[0].value;
@@ -399,6 +404,9 @@ export default class CloudWatchDatasource {
       scopedVar[variable.name] = v;
       t.refId = target.refId + '_' + v.value;
       t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
+      if (target.id) {
+        t.id = target.id + window.btoa(v.value).replace(/=/g, '0'); // generate unique id
+      }
       return t;
     });
   }

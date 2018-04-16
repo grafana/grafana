@@ -44,6 +44,7 @@ var (
 	M_Alerting_Notification_Sent         *prometheus.CounterVec
 	M_Aws_CloudWatch_GetMetricStatistics prometheus.Counter
 	M_Aws_CloudWatch_ListMetrics         prometheus.Counter
+	M_Aws_CloudWatch_GetMetricData       prometheus.Counter
 	M_DB_DataSource_QueryById            prometheus.Counter
 
 	// Timers
@@ -218,6 +219,12 @@ func init() {
 		Namespace: exporterName,
 	})
 
+	M_Aws_CloudWatch_GetMetricData = prometheus.NewCounter(prometheus.CounterOpts{
+		Name:      "aws_cloudwatch_get_metric_data_total",
+		Help:      "counter for getting metric data time series from aws",
+		Namespace: exporterName,
+	})
+
 	M_DB_DataSource_QueryById = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "db_datasource_query_by_id_total",
 		Help:      "counter for getting datasource by id",
@@ -307,6 +314,7 @@ func initMetricVars() {
 		M_Alerting_Notification_Sent,
 		M_Aws_CloudWatch_GetMetricStatistics,
 		M_Aws_CloudWatch_ListMetrics,
+		M_Aws_CloudWatch_GetMetricData,
 		M_DB_DataSource_QueryById,
 		M_Alerting_Active_Alerts,
 		M_StatTotal_Dashboards,
