@@ -16,10 +16,10 @@ import (
 )
 
 // To run this test, remove the Skip from SkipConvey
-// and set up a MSSQL db named grafanatest and a user/password grafana/Password!
+// The tests require a MSSQL db named grafanatest and a user/password grafana/Password!
 // Use the docker/blocks/mssql_tests/docker-compose.yaml to spin up a
 // preconfigured MSSQL server suitable for running these tests.
-// Thers's also a dashboard.json in same directory that you can import to Grafana
+// There is also a dashboard.json in same directory that you can import to Grafana
 // once you've created a datasource for the test server/database.
 // If needed, change the variable below to the IP address of the database.
 var serverIP string = "localhost"

@@ -17,11 +17,12 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-// To run this test, set runMySqlTests=true
-// and set up a PostgreSQL db named grafanadstest and a user/password grafanatest/grafanatest!
+// To run this test, set runPostgresTests=true
+// Or from the commandline: GRAFANA_TEST_DB=postgres go test -v ./pkg/tsdb/postgres
+// The tests require a PostgreSQL db named grafanadstest and a user/password grafanatest/grafanatest!
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
-// Thers's also a dashboard.json in same directory that you can import to Grafana
+// There is also a dashboard.json in same directory that you can import to Grafana
 // once you've created a datasource for the test server/database.
 func TestPostgres(t *testing.T) {
 	// change to true to run the MySQL tests

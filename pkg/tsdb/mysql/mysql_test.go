@@ -17,10 +17,11 @@ import (
 )
 
 // To run this test, set runMySqlTests=true
-// and set up a MySQL db named grafana_ds_tests and a user/password grafana/password
+// Or from the commandline: GRAFANA_TEST_DB=mysql go test -v ./pkg/tsdb/mysql
+// The tests require a MySQL db named grafana_ds_tests and a user/password grafana/password
 // Use the docker/blocks/mysql_tests/docker-compose.yaml to spin up a
 // preconfigured MySQL server suitable for running these tests.
-// Thers's also a dashboard.json in same directory that you can import to Grafana
+// There is also a dashboard.json in same directory that you can import to Grafana
 // once you've created a datasource for the test server/database.
 func TestMySQL(t *testing.T) {
 	// change to true to run the MySQL tests
