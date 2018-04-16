@@ -102,7 +102,6 @@
     "watch": "webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
     "build": "grunt build",
     "test": "grunt test",
-    "test:coverage": "grunt test --coverage=true",
     "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
     "karma": "grunt karma:dev",
     "jest": "jest --notify --watch",

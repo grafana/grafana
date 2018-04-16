@@ -221,7 +221,7 @@ describe('when transforming time series table', () => {
           expect(table.rows[0][2]).toBe(42);
         });
 
-        it('should return 2 rows for a mulitple queries with same label values plus one extra row', () => {
+        it('should return 2 rows for a multiple queries with same label values plus one extra row', () => {
           table = transformDataToTable(multipleQueriesDataSameLabels, panel);
           expect(table.rows.length).toBe(2);
           expect(table.rows[0][0]).toBe(time);
@@ -238,7 +238,7 @@ describe('when transforming time series table', () => {
           expect(table.rows[1][5]).toBe(7);
         });
 
-        it('should return 2 rows for mulitple queries with different label values', () => {
+        it('should return 2 rows for multiple queries with different label values', () => {
           table = transformDataToTable(multipleQueriesDataDifferentLabels, panel);
           expect(table.rows.length).toBe(2);
           expect(table.columns.length).toBe(6);

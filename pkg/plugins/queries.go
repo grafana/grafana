@@ -37,7 +37,7 @@ func GetPluginSettings(orgId int64) (map[string]*m.PluginSettingInfoDTO, error) 
 
 		// if it's included in app check app settings
 		if pluginDef.IncludedInAppId != "" {
-			// app componets are by default disabled
+			// app components are by default disabled
 			opt.Enabled = false
 
 			if appSettings, ok := pluginMap[pluginDef.IncludedInAppId]; ok {

@@ -52,14 +52,14 @@ function ($, _, angular, Drop) {
     var eventManager = plot.getOptions().events.manager;
     if (eventManager.editorOpen) {
       // update marker element to attach to (needed in case of legend on the right
-      // when there is a double render pass and the inital marker element is removed)
+      // when there is a double render pass and the initial marker element is removed)
       markerElementToAttachTo = element;
       return;
     }
 
     // mark as openend
     eventManager.editorOpened();
-    // set marker elment to attache to
+    // set marker element to attache to
     markerElementToAttachTo = element;
 
     // wait for element to be attached and positioned
