@@ -97,7 +97,7 @@ describe('InfluxQueryBuilder', function() {
       expect(query).toBe('SHOW TAG VALUES FROM "one_week"."cpu" WITH KEY = "app" WHERE "host" = \'server1\'');
     });
 
-    it('should not includ policy when policy is default', function() {
+    it('should not include policy when policy is default', function() {
       var builder = new InfluxQueryBuilder({
         measurement: 'cpu',
         policy: 'default',

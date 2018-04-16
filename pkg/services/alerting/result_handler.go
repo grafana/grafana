@@ -56,7 +56,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 
 		if err := bus.Dispatch(cmd); err != nil {
 			if err == m.ErrCannotChangeStateOnPausedAlert {
-				handler.log.Error("Cannot change state on alert thats pause", "error", err)
+				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err
 			}
 

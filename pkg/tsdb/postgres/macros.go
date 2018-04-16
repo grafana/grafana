@@ -79,7 +79,7 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 		return fmt.Sprintf("extract(epoch from %s) as \"time\"", args[0]), nil
 	case "__timeFilter":
-		// dont use to_timestamp in this macro for redshift compatibility #9566
+		// don't use to_timestamp in this macro for redshift compatibility #9566
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
