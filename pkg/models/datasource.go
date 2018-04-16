@@ -53,6 +53,9 @@ type DataSource struct {
 	JsonData          *simplejson.Json
 	SecureJsonData    securejsondata.SecureJsonData
 	ReadOnly          bool
+	TokenAuth         bool
+	TokenAuthType     string
+	TokenAuthValue    string
 
 	Created time.Time
 	Updated time.Time
@@ -115,6 +118,9 @@ type AddDataSourceCommand struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
+	TokenAuth         bool              `json:"tokenAuth"`
+	TokenAuthType     string            `json:"tokenAuthType"`
+	TokenAuthValue    string            `json:"tokenAuthValue"`
 
 	OrgId int64 `json:"-"`
 
@@ -139,6 +145,9 @@ type UpdateDataSourceCommand struct {
 	SecureJsonData    map[string]string `json:"secureJsonData"`
 	Version           int               `json:"version"`
 	ReadOnly          bool              `json:"readOnly"`
+	TokenAuth         bool              `json:"tokenAuth"`
+	TokenAuthType     string            `json:"tokenAuthType"`
+	TokenAuthValue    string            `json:"tokenAuthValue"`
 
 	OrgId int64 `json:"-"`
 	Id    int64 `json:"-"`

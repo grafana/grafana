@@ -73,6 +73,10 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 				dsMap["withCredentials"] = ds.WithCredentials
 			}
 
+			if ds.TokenAuth {
+				dsMap["tokenAuth"] = ds.TokenAuthType + " " + ds.TokenAuthValue
+			}
+
 			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.Password

@@ -107,6 +107,17 @@ func addDataSourceMigration(mg *Migrator) {
 		Name: "secure_json_data", Type: DB_Text, Nullable: true,
 	}))
 
+	// add columns to activate token auth option
+	mg.AddMigration("Add column token_auth", NewAddColumnMigration(tableV2, &Column{
+		Name: "token_auth", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add column token_auth_type", NewAddColumnMigration(tableV2, &Column{
+		Name: "token_auth_type", Type: DB_NVarchar, Length: 255, Nullable: true,
+	}))
+	mg.AddMigration("Add column token_auth_value", NewAddColumnMigration(tableV2, &Column{
+		Name: "token_auth_value", Type: DB_Text, Nullable: true,
+	}))
+
 	mg.AddMigration("Update data_source table charset", NewTableCharsetMigration(tableV2.Name, []*Column{
 		{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
 		{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},

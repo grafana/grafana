@@ -138,6 +138,11 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
 		}
 
+		if proxy.ds.TokenAuth {
+			req.Header.Del("Authorization")
+			req.Header.Add("Authorization", proxy.ds.TokenAuthType+" "+proxy.ds.TokenAuthValue)
+		}
+
 		dsAuth := req.Header.Get("X-DS-Authorization")
 		if len(dsAuth) > 0 {
 			req.Header.Del("X-DS-Authorization")
