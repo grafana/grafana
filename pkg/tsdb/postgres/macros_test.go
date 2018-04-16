@@ -45,7 +45,7 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select to_timestamp(%d)", from.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", from.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __timeGroup function", func() {
@@ -68,7 +68,7 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeTo(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select to_timestamp(%d)", to.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", to.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {
@@ -109,14 +109,14 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select to_timestamp(%d)", from.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", from.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __timeTo function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeTo(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select to_timestamp(%d)", to.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", to.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {
@@ -157,14 +157,14 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select to_timestamp(%d)", from.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", from.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __timeTo function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeTo(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select to_timestamp(%d)", to.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", to.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {

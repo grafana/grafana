@@ -85,9 +85,9 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 
 		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("to_timestamp(%d)", m.TimeRange.GetFromAsSecondsEpoch()), nil
+		return fmt.Sprintf("'%s'", m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeTo":
-		return fmt.Sprintf("to_timestamp(%d)", m.TimeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("'%s'", m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
