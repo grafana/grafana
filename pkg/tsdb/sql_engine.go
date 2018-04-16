@@ -135,20 +135,38 @@ func (e *DefaultSqlEngine) Query(
 	return result, nil
 }
 
-// ConvertTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
+// ConvertSqlTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
 // to make native datetime types and epoch dates work in annotation and table queries.
 func ConvertSqlTimeColumnToEpochMs(values RowValues, timeIndex int) {
 	if timeIndex >= 0 {
 		switch value := values[timeIndex].(type) {
 		case time.Time:
-			values[timeIndex] = EpochPrecisionToMs(float64(value.Unix()))
+			values[timeIndex] = EpochPrecisionToMs(float64(value.UnixNano()))
 		case *time.Time:
 			if value != nil {
-				values[timeIndex] = EpochPrecisionToMs(float64((*value).Unix()))
+				values[timeIndex] = EpochPrecisionToMs(float64((*value).UnixNano()))
 			}
 		case int64:
 			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
 		case *int64:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case uint64:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *uint64:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case int32:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *int32:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case uint32:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *uint32:
 			if value != nil {
 				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
 			}
@@ -157,6 +175,12 @@ func ConvertSqlTimeColumnToEpochMs(values RowValues, timeIndex int) {
 		case *float64:
 			if value != nil {
 				values[timeIndex] = EpochPrecisionToMs(*value)
+			}
+		case float32:
+			values[timeIndex] = EpochPrecisionToMs(float64(value))
+		case *float32:
+			if value != nil {
+				values[timeIndex] = EpochPrecisionToMs(float64(*value))
 			}
 		}
 	}
