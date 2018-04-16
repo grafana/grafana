@@ -175,25 +175,18 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 	switch subType {
 	case "regions":
 		data, err = e.handleGetRegions(ctx, parameters, queryContext)
-		break
 	case "namespaces":
 		data, err = e.handleGetNamespaces(ctx, parameters, queryContext)
-		break
 	case "metrics":
 		data, err = e.handleGetMetrics(ctx, parameters, queryContext)
-		break
 	case "dimension_keys":
 		data, err = e.handleGetDimensions(ctx, parameters, queryContext)
-		break
 	case "dimension_values":
 		data, err = e.handleGetDimensionValues(ctx, parameters, queryContext)
-		break
 	case "ebs_volume_ids":
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
-		break
 	case "ec2_instance_attribute":
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
-		break
 	}
 
 	transformToTable(data, queryResult)

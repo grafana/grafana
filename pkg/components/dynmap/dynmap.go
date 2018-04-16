@@ -585,7 +585,6 @@ func (v *Value) Null() error {
 	switch v.data.(type) {
 	case nil:
 		valid = v.exists // Valid only if j also exists, since other values could possibly also be nil
-		break
 	}
 
 	if valid {
@@ -607,7 +606,6 @@ func (v *Value) Array() ([]*Value, error) {
 	switch v.data.(type) {
 	case []interface{}:
 		valid = true
-		break
 	}
 
 	// Unsure if this is a good way to use slices, it's probably not
@@ -638,7 +636,6 @@ func (v *Value) Number() (json.Number, error) {
 	switch v.data.(type) {
 	case json.Number:
 		valid = true
-		break
 	}
 
 	if valid {
@@ -687,7 +684,6 @@ func (v *Value) Boolean() (bool, error) {
 	switch v.data.(type) {
 	case bool:
 		valid = true
-		break
 	}
 
 	if valid {
@@ -709,7 +705,6 @@ func (v *Value) Object() (*Object, error) {
 	switch v.data.(type) {
 	case map[string]interface{}:
 		valid = true
-		break
 	}
 
 	if valid {
@@ -746,7 +741,6 @@ func (v *Value) ObjectArray() ([]*Object, error) {
 	switch v.data.(type) {
 	case []interface{}:
 		valid = true
-		break
 	}
 
 	// Unsure if this is a good way to use slices, it's probably not
@@ -782,7 +776,6 @@ func (v *Value) String() (string, error) {
 	switch v.data.(type) {
 	case string:
 		valid = true
-		break
 	}
 
 	if valid {
