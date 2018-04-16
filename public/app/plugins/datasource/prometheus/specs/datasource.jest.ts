@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 import q from 'q';
-import { PrometheusDatasource } from '../datasource';
+import { PrometheusDatasource, prometheusSpecialRegexEscape, prometheusRegularEscape } from '../datasource';
 
 describe('PrometheusDatasource', () => {
   let ctx: any = {};
@@ -99,6 +99,43 @@ describe('PrometheusDatasource', () => {
         let seriesLabels = _.map(result.data, 'target');
         return expect(seriesLabels).toEqual(expected);
       });
+    });
+  });
+
+  describe('Prometheus regular escaping', function() {
+    it('should not escape simple string', function() {
+      expect(prometheusRegularEscape('cryptodepression')).toEqual('cryptodepression');
+    });
+    it("should escape '", function() {
+      expect(prometheusRegularEscape("looking'glass")).toEqual("looking\\\\'glass");
+    });
+    it('should escape multiple characters', function() {
+      expect(prometheusRegularEscape("'looking'glass'")).toEqual("\\\\'looking\\\\'glass\\\\'");
+    });
+  });
+
+  describe('Prometheus regexes escaping', function() {
+    it('should not escape simple string', function() {
+      expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
+    });
+    it('should escape $^*+?.()\\', function() {
+      expect(prometheusSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
+      expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
+      expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
+      expect(prometheusSpecialRegexEscape('looking[glass')).toEqual('looking\\\\[glass');
+      expect(prometheusSpecialRegexEscape('looking]glass')).toEqual('looking\\\\]glass');
+      expect(prometheusSpecialRegexEscape('looking$glass')).toEqual('looking\\\\$glass');
+      expect(prometheusSpecialRegexEscape('looking^glass')).toEqual('looking\\\\^glass');
+      expect(prometheusSpecialRegexEscape('looking*glass')).toEqual('looking\\\\*glass');
+      expect(prometheusSpecialRegexEscape('looking+glass')).toEqual('looking\\\\+glass');
+      expect(prometheusSpecialRegexEscape('looking?glass')).toEqual('looking\\\\?glass');
+      expect(prometheusSpecialRegexEscape('looking.glass')).toEqual('looking\\\\.glass');
+      expect(prometheusSpecialRegexEscape('looking(glass')).toEqual('looking\\\\(glass');
+      expect(prometheusSpecialRegexEscape('looking)glass')).toEqual('looking\\\\)glass');
+      expect(prometheusSpecialRegexEscape('looking\\glass')).toEqual('looking\\\\\\\\glass');
+    });
+    it('should escape multiple special characters', function() {
+      expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
     });
   });
 });

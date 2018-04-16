@@ -113,7 +113,7 @@ func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.D
 		return false, err
 	}
 
-	// evalute team rules
+	// evaluate team rules
 	for _, p := range acl {
 		for _, ug := range teams {
 			if ug.Id == p.TeamId && p.Permission >= permission {

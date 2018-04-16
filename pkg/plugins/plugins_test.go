@@ -12,7 +12,7 @@ import (
 
 func TestPluginScans(t *testing.T) {
 
-	Convey("When scaning for plugins", t, func() {
+	Convey("When scanning for plugins", t, func() {
 		setting.StaticRootPath, _ = filepath.Abs("../../public/")
 		setting.Cfg = ini.Empty()
 		err := initPlugins(context.Background())

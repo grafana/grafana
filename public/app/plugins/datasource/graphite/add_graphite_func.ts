@@ -4,6 +4,7 @@ import $ from 'jquery';
 import rst2html from 'rst2html';
 import Drop from 'tether-drop';
 
+/** @ngInject */
 export function graphiteAddFunc($compile) {
   const inputTemplate =
     '<input type="text"' + ' class="gf-form-input"' + ' spellcheck="false" style="display:none"></input>';
@@ -67,7 +68,7 @@ export function graphiteAddFunc($compile) {
         });
 
         $input.blur(function() {
-          // clicking the function dropdown menu wont
+          // clicking the function dropdown menu won't
           // work if you remove class at once
           setTimeout(function() {
             $input.val('');

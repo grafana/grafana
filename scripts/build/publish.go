@@ -125,7 +125,7 @@ func postRequest(url string, obj interface{}, desc string) {
 			} else {
 				log.Printf("Action: %s \t Failed - Status: %v", desc, res.Status)
 				log.Printf("Resp: %s", body)
-				log.Fatalf("Quiting")
+				log.Fatalf("Quitting")
 			}
 		}
 	}

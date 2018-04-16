@@ -23,6 +23,20 @@
 	</div>
 </div>
 
+
+<div class="gf-form-group">
+	<div class="grafana-info-box">
+		<h5>Database Access</h5>
+		<p>
+			Setting the database for this datasource does not deny access to other databases.  The InfluxDB query syntax allows
+			switching the database in the query.  For example:
+			<code>SHOW MEASUREMENTS ON _internal</code> or <code>SELECT * FROM "_internal".."database" LIMIT 10</code>
+			<br/><br/>
+			To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
+		</p>
+	</div>
+</div>
+
 <div class="gf-form-group">
 	<div class="gf-form-inline">
 		<div class="gf-form">

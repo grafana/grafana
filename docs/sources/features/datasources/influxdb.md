@@ -39,6 +39,22 @@ Proxy access means that the Grafana backend will proxy all requests from the bro
 `grafana-server`. This means that the URL you specify needs to be accessible from the server you are running Grafana on. Proxy access
 mode is also more secure as the username & password will never reach the browser.
 
+### Min time interval
+A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formated as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+Identifier | Description
+------------ | -------------
+`y`   | year
+`M`   | month
+`w`   | week
+`d`   | day
+`h`   | hour
+`m`   | minute
+`s`   | second
+`ms`  | millisecond
+
 ## Query Editor
 
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
@@ -174,3 +190,22 @@ SELECT title, description from events WHERE $timeFilter order asc
 For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
 part. If you only select one column you will not need to enter anything in the column mapping fields. The
 Tags field can be a comma separated string.
+
+## Configure datasource with provisioning
+
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    database: site
+    user: grafana
+    password: grafana
+    url: http://localhost:8086
+```

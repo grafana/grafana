@@ -8,7 +8,6 @@ import (
 	"math"
 	"reflect"
 	"strconv"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -239,15 +238,18 @@ func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 			return err
 		}
 
+		// converts column named time to unix timestamp in milliseconds to make
+		// native mysql datetime types and epoch dates work in
+		// annotation and table queries.
+		tsdb.ConvertSqlTimeColumnToEpochMs(values, timeIndex)
+
 		switch columnValue := values[timeIndex].(type) {
 		case int64:
-			timestamp = float64(columnValue * 1000)
+			timestamp = float64(columnValue)
 		case float64:
-			timestamp = columnValue * 1000
-		case time.Time:
-			timestamp = float64(columnValue.UnixNano() / 1e6)
+			timestamp = columnValue
 		default:
-			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp, got: %T %v", columnValue, columnValue)
+			return fmt.Errorf("Invalid type for column time/time_sec, must be of type timestamp or unix timestamp, got: %T %v", columnValue, columnValue)
 		}
 
 		if metricIndex >= 0 {
