@@ -149,12 +149,13 @@
   color: #ebedf2;
 }
 
-.side-menu-subtitle {
-  padding: 0.5rem 0.5rem 0.5rem 1rem;
+.sidemenu-subtitle {
+  padding: 0.5rem 1rem 0.5rem;
   font-size: $font-size-sm;
   color: $text-color-weak;
-  border-top: 1px solid $dropdownDividerBottom;
-  margin-top: 0.25rem;
+  border-bottom: 1px solid $dropdownDividerBottom;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
 }
 
 li.sidemenu-org-switcher {
