@@ -15,6 +15,14 @@ func NewTimeRange(from, to string) *TimeRange {
 	}
 }
 
+func NewFakeTimeRange(from, to string, now time.Time) *TimeRange {
+	return &TimeRange{
+		From: from,
+		To:   to,
+		now:  now,
+	}
+}
+
 type TimeRange struct {
 	From string
 	To   string
@@ -25,8 +33,16 @@ func (tr *TimeRange) GetFromAsMsEpoch() int64 {
 	return tr.MustGetFrom().UnixNano() / int64(time.Millisecond)
 }
 
+func (tr *TimeRange) GetFromAsSecondsEpoch() int64 {
+	return tr.GetFromAsMsEpoch() / 1000
+}
+
 func (tr *TimeRange) GetToAsMsEpoch() int64 {
 	return tr.MustGetTo().UnixNano() / int64(time.Millisecond)
+}
+
+func (tr *TimeRange) GetToAsSecondsEpoch() int64 {
+	return tr.GetToAsMsEpoch() / 1000
 }
 
 func (tr *TimeRange) MustGetFrom() time.Time {
@@ -92,9 +108,14 @@ func (tr *TimeRange) ParseTo() (time.Time, error) {
 // EpochPrecisionToMs converts epoch precision to millisecond, if needed.
 // Only seconds to milliseconds supported right now
 func EpochPrecisionToMs(value float64) float64 {
-	if int64(value)/1e10 == 0 {
-		return float64(value * 1e3)
+	s := strconv.FormatFloat(value, 'e', -1, 64)
+	if strings.HasSuffix(s, "e+09") {
+		return value * float64(1e3)
 	}
 
-	return float64(value)
+	if strings.HasSuffix(s, "e+18") {
+		return value / float64(time.Millisecond)
+	}
+
+	return value
 }

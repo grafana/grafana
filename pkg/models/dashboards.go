@@ -157,7 +157,7 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	return dash
 }
 
-// GetDashboardModel turns the command into the savable model
+// GetDashboardModel turns the command into the saveable model
 func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := NewDashboardFromJson(cmd.Dashboard)
 	userId := cmd.UserId

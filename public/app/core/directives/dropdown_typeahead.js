@@ -108,7 +108,7 @@ function (_, $, coreModule) {
           $input.val('');
           $button.show();
           $button.focus();
-          // clicking the function dropdown menu wont
+          // clicking the function dropdown menu won't
           // work if you remove class at once
           setTimeout(function() {
             elem.removeClass('open');
@@ -222,7 +222,7 @@ function (_, $, coreModule) {
           $input.val('');
           $button.show();
           $button.focus();
-          // clicking the function dropdown menu wont
+          // clicking the function dropdown menu won't
           // work if you remove class at once
           setTimeout(function() {
             elem.removeClass('open');

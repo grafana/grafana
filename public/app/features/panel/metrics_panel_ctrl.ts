@@ -73,7 +73,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.panel.snapshotData) {
       this.updateTimeRange();
       var data = this.panel.snapshotData;
-      // backward compatability
+      // backward compatibility
       if (!_.isArray(data)) {
         data = data.data;
       }

@@ -21,7 +21,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			}
 
 			err := GetAlertNotifications(cmd)
-			fmt.Printf("errror %v", err)
+			fmt.Printf("error %v", err)
 			So(err, ShouldBeNil)
 			So(cmd.Result, ShouldBeNil)
 		})

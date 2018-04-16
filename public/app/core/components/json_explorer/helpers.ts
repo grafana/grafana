@@ -2,7 +2,7 @@
 // Licence MIT, Copyright (c) 2015 Mohsen Azimi
 
 /*
- * Escapes `"` charachters from string
+ * Escapes `"` characters from string
 */
 function escapeString(str: string): string {
   return str.replace('"', '"');
@@ -100,7 +100,7 @@ export function cssClass(className: string): string {
 }
 
 /*
-  * Creates a new DOM element wiht given type and class
+  * Creates a new DOM element with given type and class
   * TODO: move me to helpers
 */
 export function createElement(type: string, className?: string, content?: Element | string): Element {
