@@ -110,7 +110,7 @@ to `Keep Last State` in order to basically ignore them.
 
 ## Notifications
 
-In alert tab you can also specify alert rule notifications along with a detailed messsage about the alert rule.
+In alert tab you can also specify alert rule notifications along with a detailed message about the alert rule.
 The message can contain anything, information about how you might solve the issue, link to runbook, etc.
 
 The actual notifications are configured and shared between multiple alerts. Read the

@@ -30,7 +30,7 @@ The singlestat panel has a normal query editor to allow you define your exact me
    * **total** - The sum of all the non-null values in the series
    * **first** - The first value in the series
    * **delta** - The total incremental increase (of a counter) in the series. An attempt is made to account for counter resets, but this will only be accurate for single instance metrics. Used to show total counter increase in time series.
-   * **diff** - The difference betwen 'current' (last value) and 'first'.
+   * **diff** - The difference between 'current' (last value) and 'first'.
    * **range** - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
 2. **Prefix/Postfix**: The Prefix/Postfix fields let you define a custom label to appear *before/after* the value. The `$__name` variable can be used here to use the series name or alias from the metric query.
 3. **Units**: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
@@ -70,7 +70,7 @@ Gauges gives a clear picture of how high a value is in it's context. It's a grea
 
 {{< docs-imagebox img="/img/docs/v45/singlestat-gauge-options.png" max-width="500px" class="docs-image--right docs-image--no-shadow">}}
 
-1. **Show**: The show checkbox will toggle wether the gauge is shown in the panel. When unselected, only the Singlestat value will appear.
+1. **Show**: The show checkbox will toggle whether the gauge is shown in the panel. When unselected, only the Singlestat value will appear.
 2. **Min/Max**: This sets the start and end point for the gauge.
 3. **Threshold Labels**: Check if you want to show the threshold labels. Thresholds are set in the color options.
 4. **Threshold Markers**: Check if you want to have a second meter showing the thresholds.

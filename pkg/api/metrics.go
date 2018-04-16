@@ -75,7 +75,7 @@ func GetTestDataScenarios(c *m.ReqContext) Response {
 	return JSON(200, &result)
 }
 
-// Genereates a index out of range error
+// Generates a index out of range error
 func GenerateError(c *m.ReqContext) Response {
 	var array []string
 	return JSON(200, array[20])

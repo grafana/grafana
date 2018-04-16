@@ -67,7 +67,7 @@ export function fetch(load): any {
     return '';
   }
 
-  // dont reload styles loaded in the head
+  // don't reload styles loaded in the head
   for (var i = 0; i < linkHrefs.length; i++) {
     if (load.address === linkHrefs[i]) {
       return '';
