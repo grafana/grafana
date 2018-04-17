@@ -219,7 +219,7 @@ func appendIfPossible(message string, extra string, sizeLimit int) string {
 
 func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	var cmd *m.SendWebhookSync
-	if evalContext.ImagePublicUrl == "" && this.UploadImage == true {
+	if evalContext.ImagePublicUrl == "" && this.UploadImage {
 		cmd = this.buildMessage(evalContext, true)
 	} else {
 		cmd = this.buildMessage(evalContext, false)

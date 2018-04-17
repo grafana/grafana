@@ -63,7 +63,7 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 		}
 
 		// do not allow plugin dashboard updates without overwrite flag
-		if existing.PluginId != "" && cmd.Overwrite == false {
+		if existing.PluginId != "" && !cmd.Overwrite {
 			return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
 		}
 	}
@@ -172,7 +172,7 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrDashboardNotFound
 	}
 
@@ -308,7 +308,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 		has, err := sess.Get(&dashboard)
 		if err != nil {
 			return err
-		} else if has == false {
+		} else if !has {
 			return m.ErrDashboardNotFound
 		}
 
@@ -347,12 +347,7 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 
 	err := x.In("id", query.DashboardIds).Find(&dashboards)
 	query.Result = dashboards
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // GetDashboardPermissionsForUser returns the maximum permission the specified user has for a dashboard(s)
@@ -431,12 +426,7 @@ func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {
 
 	err := x.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
 	query.Result = dashboards
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 type DashboardSlugDTO struct {
@@ -451,7 +441,7 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if exists == false {
+	} else if !exists {
 		return m.ErrDashboardNotFound
 	}
 
@@ -479,7 +469,7 @@ func GetDashboardUIDById(query *m.GetDashboardRefByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if exists == false {
+	} else if !exists {
 		return m.ErrDashboardNotFound
 	}
 
@@ -569,7 +559,7 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 	}
 
 	// do not allow plugin dashboard updates without overwrite flag
-	if existing.PluginId != "" && cmd.Overwrite == false {
+	if existing.PluginId != "" && !cmd.Overwrite {
 		return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
 	}
 

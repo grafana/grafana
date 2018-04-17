@@ -35,10 +35,8 @@ func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
 
 		// Update dashboard HasAcl flag
 		dashboard := m.Dashboard{HasAcl: true}
-		if _, err := sess.Cols("has_acl").Where("id=?", cmd.DashboardId).Update(&dashboard); err != nil {
-			return err
-		}
-		return nil
+		_, err = sess.Cols("has_acl").Where("id=?", cmd.DashboardId).Update(&dashboard)
+		return err
 	})
 }
 
