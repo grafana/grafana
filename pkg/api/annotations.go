@@ -203,7 +203,6 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	var epoch int64
 	var text string
 	var tags []string
-	var regionId int64
 
 	// Only update fields explicitly sent in the cmd
 	if cmd.Time != 0 {
@@ -221,28 +220,26 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	} else {
 		tags = annotation.Tags
 	}
-	if cmd.RegionId != 0 {
-		regionId = cmd.RegionId
-	} else {
-		regionId = annotation.RegionId
-	}
 
 	item := annotations.Item{
-		OrgId:    c.OrgId,
-		UserId:   c.UserId,
-		Id:       annotationID,
-		Epoch:    epoch / 1000,
-		Text:     text,
-		Tags:     tags,
-		RegionId: regionId,
-	}
-
-	if err := repo.Update(&item); err != nil {
-		return Error(500, "Failed to update annotation", err)
+		OrgId:  c.OrgId,
+		UserId: c.UserId,
+		Id:     annotationID,
+		Epoch:  epoch / 1000,
+		Text:   text,
+		Tags:   tags,
 	}
 
 	if cmd.IsRegion {
+
+		if cmd.RegionId != 0 {
+			item.RegionId = cmd.RegionId
+		} else {
+			item.RegionId = annotation.RegionId
+		}
+
 		var itemRight annotations.Item
+
 		if cmd.RegionEndAnnotationId == 0 {
 			itemRight = item
 			itemRight.RegionId = item.Id
@@ -261,7 +258,7 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 				OrgId:    c.OrgId,
 				UserId:   c.UserId,
 				Id:       cmd.RegionEndAnnotationId,
-				RegionId: regionId,
+				RegionId: item.RegionId,
 			}
 
 			if err := repo.Update(&itemRight); err != nil {
@@ -269,6 +266,12 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 			}
 		}
 
+	} else if cmd.RegionEndAnnotationId != 0 {
+		return Error(500, fmt.Sprintf("Failed to update annotation for region ending annotation %d. When transforming annotations into a region, isRegion must be true.", cmd.RegionEndAnnotationId), err)
+	}
+
+	if err := repo.Update(&item); err != nil {
+		return Error(500, "Failed to update annotation", err)
 	}
 
 	return Success("Annotation updated")
