@@ -54,6 +54,7 @@ var (
 	M_Alerting_Active_Alerts prometheus.Gauge
 	M_StatTotal_Dashboards   prometheus.Gauge
 	M_StatTotal_Users        prometheus.Gauge
+	M_StatActive_Users       prometheus.Gauge
 	M_StatTotal_Orgs         prometheus.Gauge
 	M_StatTotal_Playlists    prometheus.Gauge
 	M_Grafana_Version        *prometheus.GaugeVec
@@ -253,6 +254,12 @@ func init() {
 		Namespace: exporterName,
 	})
 
+	M_StatActive_Users = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_active_users",
+		Help:      "number of active users",
+		Namespace: exporterName,
+	})
+
 	M_StatTotal_Orgs = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_total_orgs",
 		Help:      "total amount of orgs",
@@ -270,7 +277,6 @@ func init() {
 		Help:      "Information about the Grafana",
 		Namespace: exporterName,
 	}, []string{"version"})
-
 }
 
 func initMetricVars(settings *MetricSettings) {
@@ -305,6 +311,7 @@ func initMetricVars(settings *MetricSettings) {
 		M_Alerting_Active_Alerts,
 		M_StatTotal_Dashboards,
 		M_StatTotal_Users,
+		M_StatActive_Users,
 		M_StatTotal_Orgs,
 		M_StatTotal_Playlists,
 		M_Grafana_Version)
@@ -315,35 +322,36 @@ func initMetricVars(settings *MetricSettings) {
 func instrumentationLoop(settings *MetricSettings) chan struct{} {
 	M_Instance_Start.Inc()
 
+	// set the total stats gauges before we publishing metrics
+	updateTotalStats()
+
 	onceEveryDayTick := time.NewTicker(time.Hour * 24)
-	secondTicker := time.NewTicker(time.Second * time.Duration(settings.IntervalSeconds))
+	everyMinuteTicker := time.NewTicker(time.Minute)
+	defer onceEveryDayTick.Stop()
+	defer everyMinuteTicker.Stop()
 
 	for {
 		select {
 		case <-onceEveryDayTick.C:
 			sendUsageStats()
-		case <-secondTicker.C:
+		case <-everyMinuteTicker.C:
 			updateTotalStats()
 		}
 	}
 }
 
-var metricPublishCounter int64 = 0
-
 func updateTotalStats() {
-	metricPublishCounter++
-	if metricPublishCounter == 1 || metricPublishCounter%10 == 0 {
-		statsQuery := models.GetSystemStatsQuery{}
-		if err := bus.Dispatch(&statsQuery); err != nil {
-			metricsLogger.Error("Failed to get system stats", "error", err)
-			return
-		}
-
-		M_StatTotal_Dashboards.Set(float64(statsQuery.Result.Dashboards))
-		M_StatTotal_Users.Set(float64(statsQuery.Result.Users))
-		M_StatTotal_Playlists.Set(float64(statsQuery.Result.Playlists))
-		M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
+	statsQuery := models.GetSystemStatsQuery{}
+	if err := bus.Dispatch(&statsQuery); err != nil {
+		metricsLogger.Error("Failed to get system stats", "error", err)
+		return
 	}
+
+	M_StatTotal_Dashboards.Set(float64(statsQuery.Result.Dashboards))
+	M_StatTotal_Users.Set(float64(statsQuery.Result.Users))
+	M_StatActive_Users.Set(float64(statsQuery.Result.ActiveUsers))
+	M_StatTotal_Playlists.Set(float64(statsQuery.Result.Playlists))
+	M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
 }
 
 func sendUsageStats() {
