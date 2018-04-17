@@ -68,12 +68,7 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 		}
 	}
 
-	err = syncOrgRoles(cmd.Result, extUser)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return syncOrgRoles(cmd.Result, extUser)
 }
 
 func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {
