@@ -162,8 +162,32 @@ Content-Type: application/json
 
 `PUT /api/annotations/:id`
 
+Updates an existing annotation with the values passed in.
+
+Available Parameters:
+
+- `time` [int]{optional}: Update the epoch of an existing annotation.
+- `timeEnd` [int]{optional}: Update the epoch of an existing annotation's ending time.
+- `isRegion` [bool]{optional}: Define whether or not an annotation belongs to a region.
+- `regionId` [int]{optional}: Update the regionId for an annotation.
+- `regionEndAnnotationId` [int]{optional}: The `id` of the annotation which marks the end of the region.
+- `tags` [string]{optional}: Update the tags for an annotation; acts as a *replace*, not an *append*.
+- `text` [string]{optional}: Update the annotation description.
+
 **Example Request**:
 
+Update the tags list for annotation `1100`:
+```json
+PUT /api/annotations/1100 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "tags":["tag1","tag2","tag3"]
+}
+```
+
+Convert an existing single annotation into a region with a `regionId` of `1141`:
 ```json
 PUT /api/annotations/1141 HTTP/1.1
 Accept: application/json
@@ -175,6 +199,20 @@ Content-Type: application/json
   "timeEnd":1507180805056,
   "text":"Annotation Description",
   "tags":["tag3","tag4","tag5"]
+}
+```
+
+Convert two existing annotations into a single region with a `regionId` of `100`:
+```json
+PUT /api/annotations/1200 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "isRegion": true,
+  "regionId": 100
+  "regionEndAnnotationId": 1201
+  "text": "Service Impact: IR-4023",
 }
 ```
 
