@@ -195,7 +195,7 @@ export class PanelCtrl {
 
       menu.push({
         text: 'Copy',
-        click: 'ctrl.addToPanelList()',
+        click: 'ctrl.copyPanel()',
         role: 'Editor',
       });
     }
@@ -260,9 +260,9 @@ export class PanelCtrl {
     });
   }
 
-  addToPanelList() {
+  copyPanel() {
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(this.panel.getSaveModel()));
-    appEvents.emit('alert-success', ['Panel temporarily added to panel list']);
+    appEvents.emit('alert-success', ['Panel copied. Open new panel to paste']);
   }
 
   replacePanel(newPanel, oldPanel) {
