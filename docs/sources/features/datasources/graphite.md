@@ -89,6 +89,18 @@ being displayed in your dashboard.
 Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
+Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, then you need to use the Grafana functions `tags` and `tag_values`.
+
+Query | Description
+------------ | -------------
+*tags()* | Returns all tags.
+*tags(server=~backend\*)* | Returns only tags that occur in series matching the filter expression.
+*tag_values(server)*  | Return tag values for the specified tag.
+*tag_values(server, server=~backend*)*  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
+*tag_values(server, server=~backend*, app=$apps)* | Multiple filter expressions and expressions can contain other variables.
+
+For more details, see the [Graphite docs on the autocomplete api for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
+
 ### Query variable
 
 The query you specify in the query field should be a metric find type of query. For example, a query like `prod.servers.*` will fill the
@@ -96,6 +108,10 @@ variable with all possible values that exist in the wildcard position.
 
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
+
+### Query Variables in Tag Queries
+
+Multi-value variables in tag queries use the syntax introduced in Grafana 5.0 for variables: `{var:regex}`. Non-tag queries will use the default glob formatting for multi-value variables. Checkout the [Advanced Formatting Options section in the Templating]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation for examples and details.
 
 ### Variable usage
 
