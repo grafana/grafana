@@ -403,6 +403,6 @@ func sendUsageStats() {
 	out, _ := json.MarshalIndent(report, "", " ")
 	data := bytes.NewBuffer(out)
 
-	client := http.Client{Timeout: time.Duration(5 * time.Second)}
+	client := http.Client{Timeout: 5 * time.Second}
 	go client.Post("https://stats.grafana.org/grafana-usage-report", "application/json", data)
 }
