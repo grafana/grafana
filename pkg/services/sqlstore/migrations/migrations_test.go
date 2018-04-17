@@ -25,7 +25,7 @@ func TestMigrations(t *testing.T) {
 			x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 			So(err, ShouldBeNil)
 
-			sqlutil.CleanDB(x)
+			NewDialect(x).CleanDB()
 
 			_, err = x.SQL(sql).Get(&r)
 			So(err, ShouldNotBeNil)

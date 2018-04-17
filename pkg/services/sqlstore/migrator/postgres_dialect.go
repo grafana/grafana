@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/go-xorm/xorm"
 )
 
 type Postgres struct {
 	BaseDialect
 }
 
-func NewPostgresDialect() *Postgres {
+func NewPostgresDialect(engine *xorm.Engine) *Postgres {
 	d := Postgres{}
 	d.BaseDialect.dialect = &d
+	d.BaseDialect.engine = engine
 	d.BaseDialect.driverName = POSTGRES
 	return &d
 }
@@ -23,10 +26,6 @@ func (db *Postgres) SupportEngine() bool {
 
 func (db *Postgres) Quote(name string) string {
 	return "\"" + name + "\""
-}
-
-func (db *Postgres) QuoteStr() string {
-	return "\""
 }
 
 func (b *Postgres) LikeStr() string {
@@ -117,8 +116,23 @@ func (db *Postgres) UpdateTableSql(tableName string, columns []*Column) string {
 	var statements = []string{}
 
 	for _, col := range columns {
-		statements = append(statements, "ALTER "+db.QuoteStr()+col.Name+db.QuoteStr()+" TYPE "+db.SqlType(col))
+		statements = append(statements, "ALTER "+db.Quote(col.Name)+" TYPE "+db.SqlType(col))
 	}
 
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
+}
+
+func (db *Postgres) CleanDB() error {
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	if _, err := sess.Exec("DROP SCHEMA public CASCADE;"); err != nil {
+		return fmt.Errorf("Failed to drop schema public")
+	}
+
+	if _, err := sess.Exec("CREATE SCHEMA public;"); err != nil {
+		return fmt.Errorf("Failed to create schema public")
+	}
+
+	return nil
 }

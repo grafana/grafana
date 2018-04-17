@@ -10,12 +10,18 @@ import (
 )
 
 func TestSavingTags(t *testing.T) {
+	InitTestDB(t)
+
 	Convey("Testing annotation saving/loading", t, func() {
-		InitTestDB(t)
 
 		repo := SqlAnnotationRepo{}
 
 		Convey("Can save tags", func() {
+			Reset(func() {
+				_, err := x.Exec("DELETE FROM annotation_tag WHERE 1=1")
+				So(err, ShouldBeNil)
+			})
+
 			tagPairs := []*models.Tag{
 				{Key: "outage"},
 				{Key: "type", Value: "outage"},
@@ -31,12 +37,19 @@ func TestSavingTags(t *testing.T) {
 }
 
 func TestAnnotations(t *testing.T) {
-	Convey("Testing annotation saving/loading", t, func() {
-		InitTestDB(t)
+	InitTestDB(t)
 
+	Convey("Testing annotation saving/loading", t, func() {
 		repo := SqlAnnotationRepo{}
 
 		Convey("Can save annotation", func() {
+			Reset(func() {
+				_, err := x.Exec("DELETE FROM annotation WHERE 1=1")
+				So(err, ShouldBeNil)
+				_, err = x.Exec("DELETE FROM annotation_tag WHERE 1=1")
+				So(err, ShouldBeNil)
+			})
+
 			annotation := &annotations.Item{
 				OrgId:       1,
 				UserId:      1,

@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -97,7 +96,7 @@ func NewEngine() *xorm.Engine {
 
 func SetEngine(engine *xorm.Engine) (err error) {
 	x = engine
-	dialect = migrator.NewDialect(x.DriverName())
+	dialect = migrator.NewDialect(x)
 
 	migrator := migrator.NewMigrator(x)
 	migrations.AddMigrations(migrator)
@@ -116,7 +115,7 @@ func getEngine() (*xorm.Engine, error) {
 
 	cnnstr := ""
 	switch DbCfg.Type {
-	case "mysql":
+	case migrator.MYSQL:
 		protocol := "tcp"
 		if strings.HasPrefix(DbCfg.Host, "/") {
 			protocol = "unix"
@@ -133,7 +132,7 @@ func getEngine() (*xorm.Engine, error) {
 			mysql.RegisterTLSConfig("custom", tlsCert)
 			cnnstr += "&tls=custom"
 		}
-	case "postgres":
+	case migrator.POSTGRES:
 		var host, port = "127.0.0.1", "5432"
 		fields := strings.Split(DbCfg.Host, ":")
 		if len(fields) > 0 && len(strings.TrimSpace(fields[0])) > 0 {
@@ -153,7 +152,7 @@ func getEngine() (*xorm.Engine, error) {
 			strings.Replace(DbCfg.ClientKeyPath, `'`, `\'`, -1),
 			strings.Replace(DbCfg.CaCertPath, `'`, `\'`, -1),
 		)
-	case "sqlite3":
+	case migrator.SQLITE:
 		if !filepath.IsAbs(DbCfg.Path) {
 			DbCfg.Path = filepath.Join(setting.DataPath, DbCfg.Path)
 		}
@@ -230,16 +229,10 @@ func LoadConfig() {
 	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 }
 
-var (
-	dbSqlite   = "sqlite"
-	dbMySql    = "mysql"
-	dbPostgres = "postgres"
-)
-
 func InitTestDB(t *testing.T) *xorm.Engine {
-	selectedDb := dbSqlite
-	// selectedDb := dbMySql
-	// selectedDb := dbPostgres
+	selectedDb := migrator.SQLITE
+	// selectedDb := migrator.MYSQL
+	// selectedDb := migrator.POSTGRES
 
 	var x *xorm.Engine
 	var err error
@@ -250,9 +243,9 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 	}
 
 	switch strings.ToLower(selectedDb) {
-	case dbMySql:
+	case migrator.MYSQL:
 		x, err = xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
-	case dbPostgres:
+	case migrator.POSTGRES:
 		x, err = xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
 	default:
 		x, err = xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
@@ -261,24 +254,29 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 	x.DatabaseTZ = time.UTC
 	x.TZLocation = time.UTC
 
-	// x.ShowSQL()
-
 	if err != nil {
 		t.Fatalf("Failed to init test database: %v", err)
 	}
 
-	sqlutil.CleanDB(x)
+	dialect = migrator.NewDialect(x)
+
+	err = dialect.CleanDB()
+	if err != nil {
+		t.Fatalf("Failed to clean test db %v", err)
+	}
 
 	if err := SetEngine(x); err != nil {
 		t.Fatal(err)
 	}
+
+	// x.ShowSQL()
 
 	return x
 }
 
 func IsTestDbMySql() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == dbMySql
+		return db == migrator.MYSQL
 	}
 
 	return false
@@ -286,7 +284,7 @@ func IsTestDbMySql() bool {
 
 func IsTestDbPostgres() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == dbPostgres
+		return db == migrator.POSTGRES
 	}
 
 	return false
