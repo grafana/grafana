@@ -51,7 +51,7 @@
 * **Switch Orgs**: Alphabetic order in Switch Organization modal [#11556](https://github.com/grafana/grafana/issues/11556)
 * **Postgres**: improve `$__timeFilter` macro [#11578](https://github.com/grafana/grafana/issues/11578), thx [@svenklemm](https://github.com/svenklemm)
 * **Permission list**: Improved ux [#10747](https://github.com/grafana/grafana/issues/10747)
-* **Dashboard**: sizing and positioning of settings menu icons [#11572](https://github.com/grafana/grafana/pull/11572)
+* **Dashboard**: Sizing and positioning of settings menu icons [#11572](https://github.com/grafana/grafana/pull/11572)
 
 ### Tech
 * Migrated JavaScript files to TypeScript
