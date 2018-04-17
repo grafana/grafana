@@ -173,7 +173,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.Permiss
 		return true, nil
 	}
 
-	return g.checkAcl(permission, acl)
+	return g.checkAcl(permission, existingPermissions)
 }
 
 // GetAcl returns dashboard acl

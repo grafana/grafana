@@ -91,7 +91,6 @@ describe('QueryVariable', () => {
 
       it('should return in same order', () => {
         var i = 0;
-        console.log(result);
         expect(result.length).toBe(11);
         expect(result[i++].text).toBe('');
         expect(result[i++].text).toBe('0');

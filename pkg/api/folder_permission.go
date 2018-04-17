@@ -33,6 +33,12 @@ func GetFolderPermissionList(c *m.ReqContext) Response {
 		perm.FolderId = folder.Id
 		perm.DashboardId = 0
 
+		perm.UserAvatarUrl = dtos.GetGravatarUrl(perm.UserEmail)
+
+		if perm.TeamId > 0 {
+			perm.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
+		}
+
 		if perm.Slug != "" {
 			perm.Url = m.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}

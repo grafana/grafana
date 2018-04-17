@@ -68,6 +68,7 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 	}
 
 	query.Result = &stats
+
 	return err
 }
 
