@@ -17,6 +17,7 @@
 * **IE11**: IE 11 compatibility [#11165](https://github.com/grafana/grafana/issues/11165)
 * **Scrolling**: Better scrolling experience [#11053](https://github.com/grafana/grafana/issues/11053), [#11252](https://github.com/grafana/grafana/issues/11252), [#10836](https://github.com/grafana/grafana/issues/10836), [#11185](https://github.com/grafana/grafana/issues/11185), [#11168](https://github.com/grafana/grafana/issues/11168)
 * **Docker**: Improved docker image (breaking changes regarding file ownership) [grafana-docker #141](https://github.com/grafana/grafana-docker/issues/141), thx [@Spindel](https://github.com/Spindel), [@ChristianKniep](https://github.com/ChristianKniep), [@brancz](https://github.com/brancz) and [@jangaraj](https://github.com/jangaraj)
+* **Folders** A folder admin cannot add user/team permissions for folder/its dashboards [#11173](https://github.com/grafana/grafana/issues/11173)
 
 ### Minor
 
