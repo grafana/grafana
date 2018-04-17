@@ -295,11 +295,12 @@ func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 	}
 
 	return inTransaction(func(sess *DBSession) error {
-		user := m.User{}
-		sess.Id(cmd.UserId).Get(&user)
+		user := m.User{
+			Id:    cmd.UserId,
+			OrgId: cmd.OrgId,
+		}
 
-		user.OrgId = cmd.OrgId
-		_, err := sess.Id(user.Id).Update(&user)
+		_, err := sess.Id(cmd.UserId).Update(&user)
 		return err
 	})
 }

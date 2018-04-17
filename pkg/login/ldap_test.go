@@ -118,6 +118,7 @@ func TestLdapAuther(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(sc.updateOrgUserCmd, ShouldNotBeNil)
 				So(sc.updateOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
 		})
 
@@ -139,6 +140,7 @@ func TestLdapAuther(t *testing.T) {
 			Convey("Should remove org role", func() {
 				So(err, ShouldBeNil)
 				So(sc.removeOrgUserCmd, ShouldNotBeNil)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
 		})
 
@@ -159,6 +161,7 @@ func TestLdapAuther(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(sc.removeOrgUserCmd, ShouldBeNil)
 				So(sc.updateOrgUserCmd, ShouldNotBeNil)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
 		})
 
@@ -178,6 +181,7 @@ func TestLdapAuther(t *testing.T) {
 			Convey("Should take first match, and ignore subsequent matches", func() {
 				So(err, ShouldBeNil)
 				So(sc.updateOrgUserCmd, ShouldBeNil)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
 		})
 
@@ -197,6 +201,7 @@ func TestLdapAuther(t *testing.T) {
 			Convey("Should take first match, and ignore subsequent matches", func() {
 				So(err, ShouldBeNil)
 				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
 		})
 
@@ -340,6 +345,11 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *m.SetUsingOrgCommand) error {
+			sc.setUsingOrgCmd = cmd
+			return nil
+		})
+
 		fn(sc)
 	})
 }
@@ -352,6 +362,7 @@ type scenarioContext struct {
 	updateOrgUserCmd       *m.UpdateOrgUserCommand
 	removeOrgUserCmd       *m.RemoveOrgUserCommand
 	updateUserCmd          *m.UpdateUserCommand
+	setUsingOrgCmd         *m.SetUsingOrgCommand
 }
 
 func (sc *scenarioContext) userQueryReturns(user *m.User) {

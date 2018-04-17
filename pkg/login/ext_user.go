@@ -99,14 +99,17 @@ func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
 
 	if extUser.Login != "" && extUser.Login != user.Login {
 		updateCmd.Login = extUser.Login
+		user.Login = extUser.Login
 		needsUpdate = true
 	}
 	if extUser.Email != "" && extUser.Email != user.Email {
 		updateCmd.Email = extUser.Email
+		user.Email = extUser.Email
 		needsUpdate = true
 	}
 	if extUser.Name != "" && extUser.Name != user.Name {
 		updateCmd.Name = extUser.Name
+		user.Name = extUser.Name
 		needsUpdate = true
 	}
 
@@ -168,6 +171,21 @@ func syncOrgRoles(user *m.User, extUser *m.ExternalUserInfo) error {
 	for _, orgId := range deleteOrgIds {
 		cmd := &m.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
 		if err := bus.Dispatch(cmd); err != nil {
+			return err
+		}
+	}
+
+	// update user's default org if needed
+	if _, ok := extUser.OrgRoles[user.OrgId]; !ok {
+		for orgId := range extUser.OrgRoles {
+			user.OrgId = orgId
+			break
+		}
+		err := bus.Dispatch(&m.SetUsingOrgCommand{
+			UserId: user.Id,
+			OrgId:  user.OrgId,
+		})
+		if err != nil {
 			return err
 		}
 	}
