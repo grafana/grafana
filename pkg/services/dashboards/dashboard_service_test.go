@@ -53,6 +53,7 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 					return nil
 				})
 
@@ -97,6 +98,7 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 					return nil
 				})
 
@@ -140,6 +142,7 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 					return nil
 				})
 
@@ -176,6 +179,7 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 					return nil
 				})
 
