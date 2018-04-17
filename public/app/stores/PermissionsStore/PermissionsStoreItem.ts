@@ -14,8 +14,9 @@ export const PermissionsStoreItem = types
     inherited: types.maybe(types.boolean),
     sortRank: types.maybe(types.number),
     icon: types.maybe(types.string),
-    nameHtml: types.maybe(types.string),
-    sortName: types.maybe(types.string),
+    name: types.maybe(types.string),
+    teamAvatarUrl: types.maybe(types.string),
+    userAvatarUrl: types.maybe(types.string),
   })
   .actions(self => ({
     updateRole: role => {
