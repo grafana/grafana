@@ -28,6 +28,7 @@ type DashboardMeta struct {
 	FolderId    int64     `json:"folderId"`
 	FolderTitle string    `json:"folderTitle"`
 	FolderUrl   string    `json:"folderUrl"`
+	Provisioned bool      `json:"provisioned"`
 }
 
 type DashboardFullWithMeta struct {

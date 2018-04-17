@@ -102,6 +102,16 @@ func GetDashboard(c *m.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
+	isDashboardProvisioned := &m.IsDashboardProvisionedQuery{DashboardId: dash.Id}
+	err = bus.Dispatch(isDashboardProvisioned)
+	if err != nil {
+		return Error(500, "Error while checking if dashboard is provisioned", err)
+	}
+
+	if isDashboardProvisioned.Result {
+		meta.Provisioned = true
+	}
+
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
@@ -228,7 +238,8 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 		err == m.ErrDashboardWithSameUIDExists ||
 		err == m.ErrFolderNotFound ||
 		err == m.ErrDashboardFolderCannotHaveParent ||
-		err == m.ErrDashboardFolderNameExists {
+		err == m.ErrDashboardFolderNameExists ||
+		err == m.ErrDashboardCannotSaveProvisionedDashboard {
 		return Error(400, err.Error(), nil)
 	}
 
