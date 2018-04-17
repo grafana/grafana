@@ -36,6 +36,27 @@ interpolation the variable value might be **escaped** in order to conform to the
 For example, a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific
 documentation article for details on value escaping during interpolation.
 
+### Advanced Formatting Options
+
+In Grafana 5.0, an additional option was added to control the formatting of the interpolation.
+
+Syntax: `${var_name:option}`
+
+Filter Option | Example | Raw | Interpolated | Description
+------------ | ------------- | ------------- | -------------  | -------------
+`glob` | ${servers:glob} |  `'test1', 'test2'` | `{test1,test2}` | (Default) Formats multi-value variable into a glob (for Graphite queries)
+`regex` | ${servers:regex} | `'test.', 'test2'` |  `(test\\.|test2)` | Formats multi-value variable into a regex string
+`pipe` | ${servers:pipe} | `'test.', 'test2'` |  `test.|test2` | Formats multi-value variable into a pipe-separated string
+`csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string (requires Grafana 5.1)
+`distributed`| ${servers:distributed} | `'test1', 'test2'` | `test1,servers=test2` | Formats multi-value variable in custom format for OpenTSDB.
+`lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
+
+Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
+
+If any invalid formatting option is specified, then `glob` is the default/fallback option.
+
+An alternative syntax is `[[var_name:option]]`.
+
 ### Variable options
 
 A variable is presented as a dropdown select box at the top of the dashboard. It has a current value and a set of **options**. The **options**
