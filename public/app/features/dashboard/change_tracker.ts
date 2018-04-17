@@ -150,8 +150,6 @@ export class ChangeTracker {
 
     var currentJson = angular.toJson(current, true);
     var originalJson = angular.toJson(original, true);
-    // console.log('current', currentJson);
-    // console.log('original', originalJson);
 
     return currentJson !== originalJson;
   }
