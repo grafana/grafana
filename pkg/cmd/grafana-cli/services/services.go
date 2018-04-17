@@ -42,7 +42,7 @@ func Init(version string, skipTLSVerify bool) {
 	}
 
 	HttpClient = http.Client{
-		Timeout:   time.Duration(10 * time.Second),
+		Timeout:   10 * time.Second,
 		Transport: tr,
 	}
 }

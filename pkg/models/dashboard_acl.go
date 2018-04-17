@@ -56,7 +56,10 @@ type DashboardAclInfoDTO struct {
 	UserId         int64          `json:"userId"`
 	UserLogin      string         `json:"userLogin"`
 	UserEmail      string         `json:"userEmail"`
+	UserAvatarUrl  string         `json:"userAvatarUrl"`
 	TeamId         int64          `json:"teamId"`
+	TeamEmail      string         `json:"teamEmail"`
+	TeamAvatarUrl  string         `json:"teamAvatarUrl"`
 	Team           string         `json:"team"`
 	Role           *RoleType      `json:"role,omitempty"`
 	Permission     PermissionType `json:"permission"`

@@ -204,7 +204,7 @@ export class TemplateSrv {
       value = variable.current.value;
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
-        // skip formating of custom all values
+        // skip formatting of custom all values
         if (variable.allValue) {
           return value;
         }

@@ -10,7 +10,7 @@
 - When stacking is enabled it is important that points align
 - If there are missing points for one series it can cause gaps or missing bars
 - You must use fill(0), and select a group by time low limit
-- Use the group by time option below your queries and specify for example &gt;10s if your metrics are written every 10 seconds
+- Use the group by time option below your queries and specify for example 10s if your metrics are written every 10 seconds
 - This will insert zeros for series that are missing measurements and will make stacking work properly
 
 #### Group by time
@@ -18,8 +18,7 @@
 - Leave the group by time field empty for each query and it will be calculated based on time range and pixel width of the graph
 - If you use fill(0) or fill(null) set a low limit for the auto group by time interval
 - The low limit can only be set in the group by time option below your queries
-- You set a low limit by adding a greater sign before the interval
-- Example: &gt;60s if you write metrics to InfluxDB every 60 seconds
+- Example: 60s if you write metrics to InfluxDB every 60 seconds
 
 #### Documentation links:
 

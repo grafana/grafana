@@ -168,7 +168,7 @@ Option | Description
 *Include All option* | Add a special `All` option whose value includes all options.
 *Custom all value* | By default the `All` value will include all options in combined expression. This can become very long and can have performance problems. Many times it can be better to specify a custom all value, like a wildcard regex. To make it possible to have custom regex, globs or lucene syntax in the **Custom all value** option it is never escaped so you will have to think avbout what is a valid value for your data source.
 
-### Formating multiple values
+### Formatting multiple values
 
 Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values to into a string that
 is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to
@@ -186,7 +186,7 @@ break the regex expression.
 **Elasticsearch** uses lucene query syntax, so the same variable would, in this case, be formatted as `("host1" OR "host2" OR "host3")`. In this case every value
 needs to be escaped so that the value can contain lucene control words and quotation marks.
 
-#### Formating troubles
+#### Formatting troubles
 
 Automatic escaping & formatting can cause problems and it can be tricky to grasp the logic is behind it.
 Especially for InfluxDB and Prometheus where the use of regex syntax requires that the variable is used in regex operator context.

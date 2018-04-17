@@ -56,7 +56,7 @@ function isStartOfRegion(event): boolean {
 export function dedupAnnotations(annotations) {
   let dedup = [];
 
-  // Split events by annotationId property existance
+  // Split events by annotationId property existence
   let events = _.partition(annotations, 'id');
 
   let eventsById = _.groupBy(events[0], 'id');
