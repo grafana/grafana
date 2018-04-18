@@ -54,6 +54,10 @@ export default class ScrollBar extends React.Component<Props, any> {
     return false;
   }
 
+  update() {
+    this.scrollbar.update();
+  }
+
   handleRef = ref => {
     this.container = ref;
   };

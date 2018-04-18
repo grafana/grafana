@@ -140,7 +140,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     for (const panel of this.dashboard.panels) {
       panel.resizeDone();
     }
-    this.triggerForceUpdate();
   }
 
   updateGridPos(item, layout) {
@@ -153,13 +152,11 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
   onResize(layout, oldItem, newItem) {
     this.panelMap[newItem.i].updateGridPos(newItem);
-    this.triggerForceUpdate();
   }
 
   onResizeStop(layout, oldItem, newItem) {
     this.updateGridPos(newItem, layout);
     this.panelMap[newItem.i].resizeDone();
-    this.triggerForceUpdate();
   }
 
   onDragStop(layout, oldItem, newItem) {
