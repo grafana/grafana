@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
-	l "github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
@@ -165,7 +164,7 @@ func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 
 	user := loginQuery.Result
 
-	loginUserQuery := l.LoginUserQuery{Username: username, Password: password, User: user}
+	loginUserQuery := m.LoginUserQuery{Username: username, Password: password, User: user}
 	if err := bus.Dispatch(&loginUserQuery); err != nil {
 		ctx.JsonApiErr(401, "Invalid username or password", err)
 		return true
