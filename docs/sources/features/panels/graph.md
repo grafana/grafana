@@ -126,7 +126,7 @@ It is just the sum of all data points received by Grafana.
 
 ### Hide series
 
-Hide series when all values of a serie from a metric query are of a specific value:
+Hide series when all values of a series from a metric query are of a specific value:
 
 - **With only nulls** - Value=*null* (default unchecked)
 - **With only zeros** - Value=*zero* (default unchecked)
