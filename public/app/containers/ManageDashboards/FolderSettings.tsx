@@ -1,4 +1,5 @@
 import React from 'react';
+import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
@@ -156,3 +157,5 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
     );
   }
 }
+
+export default hot(module)(FolderSettings);

@@ -1,8 +1,10 @@
 node_modules
 npm-debug.log
+yarn-error.log
 coverage/
 .aws-config.json
 awsconfig
+/.awcache
 /dist
 /public/build
 /public/views/index.html
