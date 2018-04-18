@@ -550,7 +550,7 @@ func shaFilesInDist() {
 			return nil
 		}
 
-		if strings.Contains(path, ".sha256") == false {
+		if !strings.Contains(path, ".sha256") {
 			err := shaFile(path)
 			if err != nil {
 				log.Printf("Failed to create sha file. error: %v\n", err)

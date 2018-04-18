@@ -302,8 +302,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 		// If we are using a POSIX LDAP schema it won't support memberOf, so we manually search the groups
 		var groupSearchResult *ldap.SearchResult
 		for _, groupSearchBase := range a.server.GroupSearchBaseDNs {
-			var filter_replace string
-			filter_replace = getLdapAttr(a.server.GroupSearchFilterUserAttribute, searchResult)
+			filter_replace := getLdapAttr(a.server.GroupSearchFilterUserAttribute, searchResult)
 			if a.server.GroupSearchFilterUserAttribute == "" {
 				filter_replace = getLdapAttr(a.server.Attr.Username, searchResult)
 			}
