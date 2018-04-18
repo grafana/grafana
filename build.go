@@ -28,8 +28,7 @@ var (
 	goarch    string
 	goos      string
 	gocc      string
-	gocxx     string
-	cgo       string
+	cgo       bool
 	pkgArch   string
 	version   string = "v1"
 	// deb & rpm does not support semver so have to handle their version a little differently
@@ -54,8 +53,7 @@ func main() {
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
 	flag.StringVar(&gocc, "cc", "", "CC")
-	flag.StringVar(&gocxx, "cxx", "", "CXX")
-	flag.StringVar(&cgo, "cgo-enabled", "", "CGO_ENABLED")
+	flag.BoolVar(&cgo, "cgo-enabled", cgo, "Enable cgo")
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
@@ -92,7 +90,7 @@ func main() {
 			build("grafana-server", "./pkg/cmd/grafana-server", []string{})
 
 		case "build":
-			clean()
+//			clean()
 			for _, binary := range binaries {
 				build(binary, "./pkg/cmd/"+binary, []string{})
 			}
@@ -389,7 +387,7 @@ func test(pkg string) {
 }
 
 func build(binaryName, pkg string, tags []string) {
-	binary := "./bin/" + binaryName
+	binary := fmt.Sprintf("./bin/%s-%s/%s", goos, goarch, binaryName)
 	if goos == "windows" {
 		binary += ".exe"
 	}
@@ -408,6 +406,7 @@ func build(binaryName, pkg string, tags []string) {
 	setBuildEnv()
 
 	runPrint("go", "version")
+	fmt.Printf("Targeting %s/%s\n", goos, goarch)
 	runPrint("go", args...)
 
 	// Create an md5 checksum of the binary, to be included in the archive for
@@ -442,6 +441,14 @@ func clean() {
 
 func setBuildEnv() {
 	os.Setenv("GOOS", goos)
+	if goos == "windows" {
+		// require windows >=7
+		os.Setenv("CGO_CFLAGS","-D_WIN32_WINNT=0x0601")
+	}
+	if goarch != "amd64" || goos != "linux" {
+		// needed for all other archs
+		cgo=true
+	}	
 	if strings.HasPrefix(goarch, "armv") {
 		os.Setenv("GOARCH", "arm")
 		os.Setenv("GOARM", goarch[4:])
@@ -451,14 +458,11 @@ func setBuildEnv() {
 	if goarch == "386" {
 		os.Setenv("GO386", "387")
 	}
-	if cgo != "" {
-		os.Setenv("CGO_ENABLED", cgo)
+	if cgo {
+		os.Setenv("CGO_ENABLED", "1")
 	}
 	if gocc != "" {
 		os.Setenv("CC", gocc)
-	}
-	if gocxx != "" {
-		os.Setenv("CXX", gocxx)
 	}
 }
 
