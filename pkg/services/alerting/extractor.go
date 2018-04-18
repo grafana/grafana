@@ -104,7 +104,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 
 		// backward compatibility check, can be removed later
 		enabled, hasEnabled := jsonAlert.CheckGet("enabled")
-		if hasEnabled && enabled.MustBool() == false {
+		if hasEnabled && !enabled.MustBool() {
 			continue
 		}
 

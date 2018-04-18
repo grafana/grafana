@@ -9,7 +9,6 @@ import (
 
 	ms "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
-	l "github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
@@ -72,7 +71,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(loginUserQuery *l.LoginUserQuery) error {
+			bus.AddHandler("test", func(loginUserQuery *m.LoginUserQuery) error {
 				return nil
 			})
 
@@ -177,9 +176,15 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
+			setting.LdapEnabled = false
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+				return nil
+			})
+
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 12}
 				return nil
 			})
 
@@ -199,6 +204,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyAutoSignUp = true
+			setting.LdapEnabled = false
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				if query.UserId > 0 {
@@ -209,8 +215,8 @@ func TestMiddlewareContext(t *testing.T) {
 				}
 			})
 
-			bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
-				cmd.Result = m.User{Id: 33}
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 33}
 				return nil
 			})
 
@@ -271,6 +277,11 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 33}
+				return nil
+			})
+
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
 			sc.req.RemoteAddr = "[2001::23]:12345"
@@ -288,6 +299,11 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = ""
+
+			bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
+				query.Result = &m.User{Id: 32}
+				return nil
+			})
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
@@ -319,10 +335,16 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.LdapEnabled = true
 
 			called := false
-			syncGrafanaUserWithLdapUser = func(ctx *m.ReqContext, query *m.GetSignedInUserQuery) error {
+			syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
 				called = true
+				query.User = &m.User{Id: 32}
 				return nil
 			}
+
+			bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
+				query.Result = &m.User{Id: 32}
+				return nil
+			})
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}

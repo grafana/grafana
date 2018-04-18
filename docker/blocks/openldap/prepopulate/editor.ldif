@@ -1,0 +1,10 @@
+dn: cn=ldapeditor,dc=grafana,dc=org
+mail: ldapeditor@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldapeditor
+cn: ldapeditor
+memberOf: cn=users,dc=grafana,dc=org

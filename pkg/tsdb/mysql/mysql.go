@@ -8,7 +8,6 @@ import (
 	"math"
 	"reflect"
 	"strconv"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -219,7 +218,7 @@ func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 	fillValue := null.Float{}
 	if fillMissing {
 		fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
-		if query.Model.Get("fillNull").MustBool(false) == false {
+		if !query.Model.Get("fillNull").MustBool(false) {
 			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
 			fillValue.Valid = true
 		}
@@ -239,19 +238,22 @@ func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 			return err
 		}
 
+		// converts column named time to unix timestamp in milliseconds to make
+		// native mysql datetime types and epoch dates work in
+		// annotation and table queries.
+		tsdb.ConvertSqlTimeColumnToEpochMs(values, timeIndex)
+
 		switch columnValue := values[timeIndex].(type) {
 		case int64:
-			timestamp = float64(columnValue * 1000)
+			timestamp = float64(columnValue)
 		case float64:
-			timestamp = columnValue * 1000
-		case time.Time:
-			timestamp = float64(columnValue.UnixNano() / 1e6)
+			timestamp = columnValue
 		default:
-			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp, got: %T %v", columnValue, columnValue)
+			return fmt.Errorf("Invalid type for column time/time_sec, must be of type timestamp or unix timestamp, got: %T %v", columnValue, columnValue)
 		}
 
 		if metricIndex >= 0 {
-			if columnValue, ok := values[metricIndex].(string); ok == true {
+			if columnValue, ok := values[metricIndex].(string); ok {
 				metric = columnValue
 			} else {
 				return fmt.Errorf("Column metric must be of type char,varchar or text, got: %T %v", values[metricIndex], values[metricIndex])
@@ -278,7 +280,7 @@ func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 			}
 
 			series, exist := pointsBySeries[metric]
-			if exist == false {
+			if !exist {
 				series = &tsdb.TimeSeries{Name: metric}
 				pointsBySeries[metric] = series
 				seriesByQueryOrder.PushBack(metric)
@@ -286,7 +288,7 @@ func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 
 			if fillMissing {
 				var intervalStart float64
-				if exist == false {
+				if !exist {
 					intervalStart = float64(tsdbQuery.TimeRange.MustGetFrom().UnixNano() / 1e6)
 				} else {
 					intervalStart = series.Points[len(series.Points)-1][1].Float64 + fillInterval

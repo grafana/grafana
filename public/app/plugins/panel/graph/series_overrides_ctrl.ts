@@ -31,7 +31,7 @@ export class SeriesOverridesCtrl {
 
       $scope.override[item.propertyName] = subItem.value;
 
-      // automatically disable lines for this series and the fill bellow to series
+      // automatically disable lines for this series and the fill below to series
       // can be removed by the user if they still want lines
       if (item.propertyName === 'fillBelowTo') {
         $scope.override['lines'] = false;

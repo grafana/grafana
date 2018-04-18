@@ -1,4 +1,4 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
 import PermissionsListItem from './PermissionsListItem';
 import DisabledPermissionsListItem from './DisabledPermissionsListItem';
 import { observer } from 'mobx-react';
@@ -23,7 +23,7 @@ class PermissionsList extends Component<IProps, any> {
           <DisabledPermissionsListItem
             key={0}
             item={{
-              nameHtml: 'Everyone with <span class="query-keyword">Admin</span> Role',
+              name: 'Admin',
               permission: 4,
               icon: 'fa fa-fw fa-street-view',
             }}

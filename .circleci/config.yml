@@ -1,6 +1,22 @@
 version: 2
 
 jobs:
+  codespell:
+    docker:
+      - image: circleci/python
+    steps:
+      - checkout
+      - run:
+          name: install codespell
+          command: 'sudo pip install codespell'
+      - run:
+          # Important: all words have to be in lowercase, and separated by "\n".
+          name: exclude known exceptions
+          command: 'echo -e "unknwon" > words_to_ignore.txt'
+      - run:
+          name: check documentation spelling errors
+          command: 'codespell -I ./words_to_ignore.txt docs/'
+
   test-frontend:
     docker:
       - image: circleci/node:6.11.4
@@ -103,6 +119,10 @@ workflows:
   version: 2
   test-and-build:
     jobs:
+      - codespell:
+          filters:
+            tags:
+              only: /.*/
       - build:
           filters:
             tags:

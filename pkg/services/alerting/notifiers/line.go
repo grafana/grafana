@@ -90,7 +90,7 @@ func (this *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send notification to LINE", "error", err, "body", string(body))
+		this.log.Error("Failed to send notification to LINE", "error", err, "body", body)
 		return err
 	}
 

@@ -392,7 +392,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "2 yaxis and axis lables",
+          "title": "2 yaxis and axis labels",
           "tooltip": {
             "msResolution": false,
             "shared": true,
@@ -894,7 +894,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Legend Table Single Series Should Take Minium Height",
+          "title": "Legend Table Single Series Should Take Minimum Height",
           "tooltip": {
             "shared": true,
             "sort": 0,

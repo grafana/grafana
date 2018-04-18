@@ -50,7 +50,7 @@ func (f *Float) UnmarshalJSON(data []byte) error {
 	}
 	switch x := v.(type) {
 	case float64:
-		f.Float64 = float64(x)
+		f.Float64 = x
 	case map[string]interface{}:
 		err = json.Unmarshal(data, &f.NullFloat64)
 	case nil:

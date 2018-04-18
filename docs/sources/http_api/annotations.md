@@ -180,14 +180,14 @@ Content-Type: application/json
 
 ## Delete Annotation By Id
 
-`DELETE /api/annotation/:id`
+`DELETE /api/annotations/:id`
 
 Deletes the annotation that matches the specified id.
 
 **Example Request**:
 
 ```http
-DELETE /api/annotation/1 HTTP/1.1
+DELETE /api/annotations/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -204,14 +204,14 @@ Content-Type: application/json
 
 ## Delete Annotation By RegionId
 
-`DELETE /api/annotation/region/:id`
+`DELETE /api/annotations/region/:id`
 
 Deletes the annotation that matches the specified region id. A region is an annotation that covers a timerange and has a start and end time. In the Grafana database, this is a stored as two annotations connected by a region id.
 
 **Example Request**:
 
 ```http
-DELETE /api/annotation/region/1 HTTP/1.1
+DELETE /api/annotations/region/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk

@@ -24,7 +24,7 @@ var validateLsCommand = func(pluginDir string) error {
 		return fmt.Errorf("error: %s", err)
 	}
 
-	if pluginDirInfo.IsDir() == false {
+	if !pluginDirInfo.IsDir() {
 		return errors.New("plugin path is not a directory")
 	}
 

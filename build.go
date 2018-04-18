@@ -41,6 +41,7 @@ var (
 	includeBuildNumber    bool     = true
 	buildNumber           int      = 0
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
+	isDev                 bool     = false
 )
 
 const minGoVersion = 1.8
@@ -61,6 +62,7 @@ func main() {
 	flag.BoolVar(&race, "race", race, "Use race detector")
 	flag.BoolVar(&includeBuildNumber, "includeBuildNumber", includeBuildNumber, "IncludeBuildNumber in package name")
 	flag.IntVar(&buildNumber, "buildNumber", 0, "Build number from CI system")
+	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
 	flag.Parse()
 
 	readVersionFromPackageJson()
@@ -394,7 +396,9 @@ func build(binaryName, pkg string, tags []string) {
 		binary += ".exe"
 	}
 
-	rmr(binary, binary+".md5")
+	if !isDev {
+		rmr(binary, binary+".md5")
+	}
 	args := []string{"build", "-ldflags", ldflags()}
 	if len(tags) > 0 {
 		args = append(args, "-tags", strings.Join(tags, ","))
@@ -405,16 +409,21 @@ func build(binaryName, pkg string, tags []string) {
 
 	args = append(args, "-o", binary)
 	args = append(args, pkg)
-	setBuildEnv()
 
-	runPrint("go", "version")
+	if !isDev {
+		setBuildEnv()
+		runPrint("go", "version")
+	}
+
 	runPrint("go", args...)
 
-	// Create an md5 checksum of the binary, to be included in the archive for
-	// automatic upgrades.
-	err := md5File(binary)
-	if err != nil {
-		log.Fatal(err)
+	if !isDev {
+		// Create an md5 checksum of the binary, to be included in the archive for
+		// automatic upgrades.
+		err := md5File(binary)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -435,6 +444,10 @@ func rmr(paths ...string) {
 }
 
 func clean() {
+	if isDev {
+		return
+	}
+
 	rmr("dist")
 	rmr("tmp")
 	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
@@ -550,7 +563,7 @@ func shaFilesInDist() {
 			return nil
 		}
 
-		if strings.Contains(path, ".sha256") == false {
+		if !strings.Contains(path, ".sha256") {
 			err := shaFile(path)
 			if err != nil {
 				log.Printf("Failed to create sha file. error: %v\n", err)

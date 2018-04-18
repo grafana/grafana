@@ -55,7 +55,7 @@ func GetApiKeyById(query *m.GetApiKeyByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrInvalidApiKey
 	}
 
@@ -69,7 +69,7 @@ func GetApiKeyByName(query *m.GetApiKeyByNameQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrInvalidApiKey
 	}
 

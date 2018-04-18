@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	httpClient http.Client = http.Client{Timeout: time.Duration(10 * time.Second)}
+	httpClient http.Client = http.Client{Timeout: 10 * time.Second}
 )
 
 type GrafanaNetPlugin struct {

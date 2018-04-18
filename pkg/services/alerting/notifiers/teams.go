@@ -13,7 +13,7 @@ func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "teams",
 		Name:        "Microsoft Teams",
-		Description: "Sends notifications using Incomming Webhook connector to Microsoft Teams",
+		Description: "Sends notifications using Incoming Webhook connector to Microsoft Teams",
 		Factory:     NewTeamsNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Teams settings</h3>
@@ -76,7 +76,7 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := this.Mention
-	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
+	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	} else {
 		message += " " // summary must not be empty

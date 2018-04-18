@@ -11,6 +11,7 @@ var scope = {
 
 var elem = $('<div></div>');
 var dashboard = {};
+var getSeriesFn;
 
 function describeSharedTooltip(desc, fn) {
   var ctx: any = {};
@@ -30,7 +31,7 @@ function describeSharedTooltip(desc, fn) {
   describe(desc, function() {
     beforeEach(function() {
       ctx.setupFn();
-      var tooltip = new GraphTooltip(elem, dashboard, scope);
+      var tooltip = new GraphTooltip(elem, dashboard, scope, getSeriesFn);
       ctx.results = tooltip.getMultiSeriesPlotHoverInfo(ctx.data, ctx.pos);
     });
 
@@ -39,7 +40,7 @@ function describeSharedTooltip(desc, fn) {
 }
 
 describe('findHoverIndexFromData', function() {
-  var tooltip = new GraphTooltip(elem, dashboard, scope);
+  var tooltip = new GraphTooltip(elem, dashboard, scope, getSeriesFn);
   var series = {
     data: [[100, 0], [101, 0], [102, 0], [103, 0], [104, 0], [105, 0], [106, 0], [107, 0]],
   };
