@@ -140,6 +140,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     for (const panel of this.dashboard.panels) {
       panel.resizeDone();
     }
+    this.triggerForceUpdate();
   }
 
   updateGridPos(item, layout) {

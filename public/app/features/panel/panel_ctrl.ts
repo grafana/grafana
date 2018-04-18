@@ -262,7 +262,7 @@ export class PanelCtrl {
 
   copyPanel() {
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(this.panel.getSaveModel()));
-    appEvents.emit('alert-success', ['Panel copied. Open new panel to paste']);
+    appEvents.emit('alert-success', ['Panel copied. Open Add Panel to paste']);
   }
 
   replacePanel(newPanel, oldPanel) {
