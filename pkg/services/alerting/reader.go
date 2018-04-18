@@ -16,7 +16,7 @@ type RuleReader interface {
 
 type DefaultRuleReader struct {
 	sync.RWMutex
-	serverID       string
+	//serverID       string
 	serverPosition int
 	clusterSize    int
 	log            log.Logger
