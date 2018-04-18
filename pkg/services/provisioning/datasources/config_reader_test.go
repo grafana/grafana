@@ -12,7 +12,6 @@ import (
 
 var (
 	logger                          log.Logger = log.New("fake.log")
-	oneDatasourcesConfig            string     = ""
 	twoDatasourcesConfig            string     = "./test-configs/two-datasources"
 	twoDatasourcesConfigPurgeOthers string     = "./test-configs/insert-two-delete-two"
 	doubleDatasourcesConfig         string     = "./test-configs/double-default"

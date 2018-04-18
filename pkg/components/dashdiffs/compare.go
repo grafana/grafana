@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	diff "github.com/yudai/gojsondiff"
 	deltaFormatter "github.com/yudai/gojsondiff/formatter"
@@ -15,11 +14,8 @@ import (
 var (
 	// ErrUnsupportedDiffType occurs when an invalid diff type is used.
 	ErrUnsupportedDiffType = errors.New("dashdiff: unsupported diff type")
-
 	// ErrNilDiff occurs when two compared interfaces are identical.
 	ErrNilDiff = errors.New("dashdiff: diff is nil")
-
-	diffLogger = log.New("dashdiffs")
 )
 
 type DiffType int

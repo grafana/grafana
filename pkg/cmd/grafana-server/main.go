@@ -33,7 +33,6 @@ import (
 var version = "5.0.0"
 var commit = "NA"
 var buildstamp string
-var build_date string
 
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
