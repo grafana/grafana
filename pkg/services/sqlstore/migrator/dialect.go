@@ -84,8 +84,7 @@ func (db *BaseDialect) DateTimeFunc(value string) string {
 }
 
 func (b *BaseDialect) CreateTableSql(table *Table) string {
-	var sql string
-	sql = "CREATE TABLE IF NOT EXISTS "
+	sql := "CREATE TABLE IF NOT EXISTS "
 	sql += b.dialect.Quote(table.Name) + " (\n"
 
 	pkList := table.PrimaryKeys
@@ -162,8 +161,7 @@ func (db *BaseDialect) RenameTable(oldName string, newName string) string {
 
 func (db *BaseDialect) DropIndexSql(tableName string, index *Index) string {
 	quote := db.dialect.Quote
-	var name string
-	name = index.XName(tableName)
+	name := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
 }
 

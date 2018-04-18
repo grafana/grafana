@@ -51,7 +51,7 @@ func (e *DefaultSqlEngine) InitEngine(driverName string, dsInfo *models.DataSour
 	defer engineCache.Unlock()
 
 	if engine, present := engineCache.cache[dsInfo.Id]; present {
-		if version, _ := engineCache.versions[dsInfo.Id]; version == dsInfo.Version {
+		if version := engineCache.versions[dsInfo.Id]; version == dsInfo.Version {
 			e.XormEngine = engine
 			return nil
 		}

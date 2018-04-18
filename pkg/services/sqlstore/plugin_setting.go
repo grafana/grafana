@@ -36,7 +36,7 @@ func GetPluginSettingById(query *m.GetPluginSettingByIdQuery) error {
 	has, err := x.Get(&pluginSetting)
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrPluginSettingNotFound
 	}
 	query.Result = &pluginSetting

@@ -154,7 +154,7 @@ func GetUserById(query *m.GetUserByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrUserNotFound
 	}
 
@@ -179,7 +179,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 		return err
 	}
 
-	if has == false && strings.Contains(query.LoginOrEmail, "@") {
+	if !has && strings.Contains(query.LoginOrEmail, "@") {
 		// If the user wasn't found, and it contains an "@" fallback to finding the
 		// user by email.
 		user = &m.User{Email: query.LoginOrEmail}
@@ -188,7 +188,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrUserNotFound
 	}
 
@@ -209,7 +209,7 @@ func GetUserByEmail(query *m.GetUserByEmailQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrUserNotFound
 	}
 
@@ -253,11 +253,8 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 			Updated:  time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Id(cmd.UserId).Update(&user)
+		return err
 	})
 }
 
@@ -271,11 +268,8 @@ func UpdateUserLastSeenAt(cmd *m.UpdateUserLastSeenAtCommand) error {
 			LastSeenAt: time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Id(cmd.UserId).Update(&user)
+		return err
 	})
 }
 
@@ -295,11 +289,12 @@ func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 	}
 
 	return inTransaction(func(sess *DBSession) error {
-		user := m.User{}
-		sess.Id(cmd.UserId).Get(&user)
+		user := m.User{
+			Id:    cmd.UserId,
+			OrgId: cmd.OrgId,
+		}
 
-		user.OrgId = cmd.OrgId
-		_, err := sess.Id(user.Id).Update(&user)
+		_, err := sess.Id(cmd.UserId).Update(&user)
 		return err
 	})
 }
@@ -310,7 +305,7 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrUserNotFound
 	}
 
@@ -445,6 +440,7 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 			"DELETE FROM dashboard_acl WHERE user_id = ?",
 			"DELETE FROM preferences WHERE user_id = ?",
 			"DELETE FROM team_member WHERE user_id = ?",
+			"DELETE FROM user_auth WHERE user_id = ?",
 		}
 
 		for _, sql := range deletes {
@@ -479,10 +475,7 @@ func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
 			Updated:    time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.UserId).Cols("help_flags1").Update(&user); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Id(cmd.UserId).Cols("help_flags1").Update(&user)
+		return err
 	})
 }

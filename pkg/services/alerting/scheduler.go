@@ -15,7 +15,7 @@ type SchedulerImpl struct {
 
 func NewScheduler() Scheduler {
 	return &SchedulerImpl{
-		jobs: make(map[int64]*Job, 0),
+		jobs: make(map[int64]*Job),
 		log:  log.New("alerting.scheduler"),
 	}
 }
@@ -23,7 +23,7 @@ func NewScheduler() Scheduler {
 func (s *SchedulerImpl) Update(rules []*Rule) {
 	s.log.Debug("Scheduling update", "ruleCount", len(rules))
 
-	jobs := make(map[int64]*Job, 0)
+	jobs := make(map[int64]*Job)
 
 	for i, rule := range rules {
 		var job *Job

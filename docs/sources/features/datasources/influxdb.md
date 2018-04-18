@@ -45,7 +45,7 @@ All requests will be made from the browser directly to the data source and may b
 
 ### Min time interval
 A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
-This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formated as a
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
 
 Identifier | Description
