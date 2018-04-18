@@ -1,8 +1,6 @@
 package login
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
@@ -24,13 +22,13 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 		Login:      extUser.Login,
 	}
 	err := bus.Dispatch(userQuery)
-	if err != nil {
-		if err != m.ErrUserNotFound {
-			return err
-		}
+	if err != m.ErrUserNotFound && err != nil {
+		return err
+	}
 
+	if err != nil {
 		if !cmd.SignupAllowed {
-			log.Warn(fmt.Sprintf("Not allowing %s login, user not found in internal user database and allow signup = false", extUser.AuthModule))
+			log.Warn("Not allowing %s login, user not found in internal user database and allow signup = false", extUser.AuthModule)
 			return ErrInvalidCredentials
 		}
 
@@ -58,10 +56,10 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 				return err
 			}
 		}
+
 	} else {
 		cmd.Result = userQuery.Result
 
-		// sync user info
 		err = updateUser(cmd.Result, extUser)
 		if err != nil {
 			return err
@@ -90,33 +88,32 @@ func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
 	updateCmd := &m.UpdateUserCommand{
 		UserId: user.Id,
 	}
-	needsUpdate := false
 
+	needsUpdate := false
 	if extUser.Login != "" && extUser.Login != user.Login {
 		updateCmd.Login = extUser.Login
 		user.Login = extUser.Login
 		needsUpdate = true
 	}
+
 	if extUser.Email != "" && extUser.Email != user.Email {
 		updateCmd.Email = extUser.Email
 		user.Email = extUser.Email
 		needsUpdate = true
 	}
+
 	if extUser.Name != "" && extUser.Name != user.Name {
 		updateCmd.Name = extUser.Name
 		user.Name = extUser.Name
 		needsUpdate = true
 	}
 
-	if needsUpdate {
-		log.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
-		err := bus.Dispatch(updateCmd)
-		if err != nil {
-			return err
-		}
+	if !needsUpdate {
+		return nil
 	}
 
-	return nil
+	log.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
+	return bus.Dispatch(updateCmd)
 }
 
 func syncOrgRoles(user *m.User, extUser *m.ExternalUserInfo) error {
@@ -176,13 +173,11 @@ func syncOrgRoles(user *m.User, extUser *m.ExternalUserInfo) error {
 			user.OrgId = orgId
 			break
 		}
-		err := bus.Dispatch(&m.SetUsingOrgCommand{
+
+		return bus.Dispatch(&m.SetUsingOrgCommand{
 			UserId: user.Id,
 			OrgId:  user.OrgId,
 		})
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil

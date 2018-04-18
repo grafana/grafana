@@ -125,7 +125,7 @@ func TestLdapAuther(t *testing.T) {
 		ldapAutherScenario("given current org role is removed in ldap", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
-					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Admin"},
+					{GroupDN: "cn=users", OrgId: 2, OrgRole: "Admin"},
 				},
 			})
 
@@ -140,7 +140,7 @@ func TestLdapAuther(t *testing.T) {
 			Convey("Should remove org role", func() {
 				So(err, ShouldBeNil)
 				So(sc.removeOrgUserCmd, ShouldNotBeNil)
-				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 2)
 			})
 		})
 
