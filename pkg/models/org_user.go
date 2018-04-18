@@ -48,9 +48,9 @@ func (r *RoleType) UnmarshalJSON(data []byte) error {
 
 	*r = RoleType(str)
 
-	if (*r).IsValid() == false {
+	if !(*r).IsValid() {
 		if (*r) != "" {
-			return errors.New(fmt.Sprintf("JSON validation error: invalid role value: %s", *r))
+			return fmt.Errorf("JSON validation error: invalid role value: %s", *r)
 		}
 
 		*r = ROLE_VIEWER

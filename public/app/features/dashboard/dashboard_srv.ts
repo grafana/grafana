@@ -105,6 +105,10 @@ export class DashboardSrv {
       this.setCurrent(this.create(clone, this.dash.meta));
     }
 
+    if (this.dash.meta.provisioned) {
+      return this.showDashboardProvisionedModal();
+    }
+
     if (!this.dash.meta.canSave && options.makeEditable !== true) {
       return Promise.resolve();
     }
@@ -118,6 +122,12 @@ export class DashboardSrv {
     }
 
     return this.save(this.dash.getSaveModelClone(), options);
+  }
+
+  showDashboardProvisionedModal() {
+    this.$rootScope.appEvent('show-modal', {
+      templateHtml: '<save-provisioned-dashboard-modal dismiss="dismiss()"></save-provisioned-dashboard-modal>',
+    });
   }
 
   showSaveAsModal() {

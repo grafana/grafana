@@ -37,12 +37,20 @@ func (tr *TimeRange) GetFromAsSecondsEpoch() int64 {
 	return tr.GetFromAsMsEpoch() / 1000
 }
 
+func (tr *TimeRange) GetFromAsTimeUTC() time.Time {
+	return tr.MustGetFrom().UTC()
+}
+
 func (tr *TimeRange) GetToAsMsEpoch() int64 {
 	return tr.MustGetTo().UnixNano() / int64(time.Millisecond)
 }
 
 func (tr *TimeRange) GetToAsSecondsEpoch() int64 {
 	return tr.GetToAsMsEpoch() / 1000
+}
+
+func (tr *TimeRange) GetToAsTimeUTC() time.Time {
+	return tr.MustGetTo().UTC()
 }
 
 func (tr *TimeRange) MustGetFrom() time.Time {

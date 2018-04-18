@@ -30,6 +30,8 @@ export const NewPermissionsItem = types
     ),
     userId: types.maybe(types.number),
     userLogin: types.maybe(types.string),
+    userAvatarUrl: types.maybe(types.string),
+    teamAvatarUrl: types.maybe(types.string),
     teamId: types.maybe(types.number),
     team: types.maybe(types.string),
     permission: types.optional(types.number, 1),
@@ -50,17 +52,19 @@ export const NewPermissionsItem = types
     },
   }))
   .actions(self => ({
-    setUser(userId: number, userLogin: string) {
+    setUser(userId: number, userLogin: string, userAvatarUrl: string) {
       self.userId = userId;
       self.userLogin = userLogin;
+      self.userAvatarUrl = userAvatarUrl;
       self.teamId = null;
       self.team = null;
     },
-    setTeam(teamId: number, team: string) {
+    setTeam(teamId: number, team: string, teamAvatarUrl: string) {
       self.userId = null;
       self.userLogin = null;
       self.teamId = teamId;
       self.team = team;
+      self.teamAvatarUrl = teamAvatarUrl;
     },
     setPermission(permission: number) {
       self.permission = permission;
@@ -121,16 +125,20 @@ export const PermissionsStore = types
           teamId: undefined,
           userLogin: undefined,
           userId: undefined,
+          userAvatarUrl: undefined,
+          teamAvatarUrl: undefined,
           role: undefined,
         };
         switch (self.newItem.type) {
           case aclTypeValues.GROUP.value:
             item.team = self.newItem.team;
             item.teamId = self.newItem.teamId;
+            item.teamAvatarUrl = self.newItem.teamAvatarUrl;
             break;
           case aclTypeValues.USER.value:
             item.userLogin = self.newItem.userLogin;
             item.userId = self.newItem.userId;
+            item.userAvatarUrl = self.newItem.userAvatarUrl;
             break;
           case aclTypeValues.VIEWER.value:
           case aclTypeValues.EDITOR.value:
@@ -147,6 +155,8 @@ export const PermissionsStore = types
         try {
           yield updateItems(self, updatedItems);
           self.items.push(newItem);
+          let sortedItems = self.items.sort((a, b) => b.sortRank - a.sortRank || a.name.localeCompare(b.name));
+          self.items = sortedItems;
           resetNewTypeInternal();
         } catch {}
         yield Promise.resolve();
@@ -206,9 +216,11 @@ const updateItems = (self, items) => {
 };
 
 const prepareServerResponse = (response, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
-  return response.map(item => {
-    return prepareItem(item, dashboardId, isFolder, isInRoot);
-  });
+  return response
+    .map(item => {
+      return prepareItem(item, dashboardId, isFolder, isInRoot);
+    })
+    .sort((a, b) => b.sortRank - a.sortRank || a.name.localeCompare(b.name));
 };
 
 const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
@@ -216,21 +228,16 @@ const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boo
 
   item.sortRank = 0;
   if (item.userId > 0) {
-    item.icon = 'fa fa-fw fa-user';
-    item.nameHtml = item.userLogin;
-    item.sortName = item.userLogin;
+    item.name = item.userLogin;
     item.sortRank = 10;
   } else if (item.teamId > 0) {
-    item.icon = 'fa fa-fw fa-users';
-    item.nameHtml = item.team;
-    item.sortName = item.team;
+    item.name = item.team;
     item.sortRank = 20;
   } else if (item.role) {
     item.icon = 'fa fa-fw fa-street-view';
-    item.nameHtml = `Everyone with <span class="query-keyword">${item.role}</span> Role`;
-    item.sortName = item.role;
+    item.name = item.role;
     item.sortRank = 30;
-    if (item.role === 'Viewer') {
+    if (item.role === 'Editor') {
       item.sortRank += 1;
     }
   }

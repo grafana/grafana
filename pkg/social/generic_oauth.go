@@ -182,7 +182,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	var data UserInfoJson
 	var err error
 
-	if s.extractToken(&data, token) != true {
+	if !s.extractToken(&data, token) {
 		response, err := HttpGet(client, s.apiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting user info: %s", err)
