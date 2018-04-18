@@ -1,30 +1,19 @@
-import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
-import helpers from 'test/specs/helpers';
 import { GraphiteDatasource } from '../datasource';
 import moment from 'moment';
 import _ from 'lodash';
+import $q from 'q';
+import { TemplateSrvStub } from 'test/specs/helpers';
 
-describe('graphiteDatasource', function() {
-  let ctx = new helpers.ServiceTestContext();
-  let instanceSettings: any = { url: [''], name: 'graphiteProd', jsonData: {} };
-
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['backendSrv', 'templateSrv']));
-  beforeEach(
-    angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-      ctx.$q = $q;
-      ctx.$httpBackend = $httpBackend;
-      ctx.$rootScope = $rootScope;
-      ctx.$injector = $injector;
-      $httpBackend.when('GET', /\.html$/).respond('');
-    })
-  );
+describe('graphiteDatasource', () => {
+  let ctx: any = {
+    backendSrv: {},
+    $q: $q,
+    templateSrv: new TemplateSrvStub(),
+  };
 
   beforeEach(function() {
-    ctx.ds = ctx.$injector.instantiate(GraphiteDatasource, {
-      instanceSettings: instanceSettings,
-    });
+    ctx.instanceSettings = { url: [''], name: 'graphiteProd', jsonData: {} };
+    ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When querying graphite with one target using query editor target spec', function() {
@@ -38,7 +27,7 @@ describe('graphiteDatasource', function() {
     let results;
     let requestOptions;
 
-    beforeEach(function() {
+    beforeEach(async () => {
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
         return ctx.$q.when({
@@ -46,40 +35,39 @@ describe('graphiteDatasource', function() {
         });
       };
 
-      ctx.ds.query(query).then(function(data) {
+      await ctx.ds.query(query).then(function(data) {
         results = data;
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should generate the correct query', function() {
-      expect(requestOptions.url).to.be('/render');
+      expect(requestOptions.url).toBe('/render');
     });
 
     it('should set unique requestId', function() {
-      expect(requestOptions.requestId).to.be('graphiteProd.panelId.3');
+      expect(requestOptions.requestId).toBe('graphiteProd.panelId.3');
     });
 
     it('should query correctly', function() {
       let params = requestOptions.data.split('&');
-      expect(params).to.contain('target=prod1.count');
-      expect(params).to.contain('target=prod2.count');
-      expect(params).to.contain('from=-1h');
-      expect(params).to.contain('until=now');
+      expect(params).toContain('target=prod1.count');
+      expect(params).toContain('target=prod2.count');
+      expect(params).toContain('from=-1h');
+      expect(params).toContain('until=now');
     });
 
     it('should exclude undefined params', function() {
       let params = requestOptions.data.split('&');
-      expect(params).to.not.contain('cacheTimeout=undefined');
+      expect(params).not.toContain('cacheTimeout=undefined');
     });
 
     it('should return series list', function() {
-      expect(results.data.length).to.be(1);
-      expect(results.data[0].target).to.be('prod1.count');
+      expect(results.data.length).toBe(1);
+      expect(results.data[0].target).toBe('prod1.count');
     });
 
     it('should convert to millisecond resolution', function() {
-      expect(results.data[0].datapoints[0][0]).to.be(10);
+      expect(results.data[0].datapoints[0][0]).toBe(10);
     });
   });
 
@@ -110,22 +98,21 @@ describe('graphiteDatasource', function() {
         ],
       };
 
-      beforeEach(() => {
+      beforeEach(async () => {
         ctx.backendSrv.datasourceRequest = function(options) {
           return ctx.$q.when(response);
         };
 
-        ctx.ds.annotationQuery(options).then(function(data) {
+        await ctx.ds.annotationQuery(options).then(function(data) {
           results = data;
         });
-        ctx.$rootScope.$apply();
       });
 
       it('should parse the tags string into an array', () => {
-        expect(_.isArray(results[0].tags)).to.eql(true);
-        expect(results[0].tags.length).to.eql(2);
-        expect(results[0].tags[0]).to.eql('tag1');
-        expect(results[0].tags[1]).to.eql('tag2');
+        expect(_.isArray(results[0].tags)).toEqual(true);
+        expect(results[0].tags.length).toEqual(2);
+        expect(results[0].tags[0]).toEqual('tag1');
+        expect(results[0].tags[1]).toEqual('tag2');
       });
     });
 
@@ -149,14 +136,14 @@ describe('graphiteDatasource', function() {
         ctx.ds.annotationQuery(options).then(function(data) {
           results = data;
         });
-        ctx.$rootScope.$apply();
+        // ctx.$rootScope.$apply();
       });
 
       it('should parse the tags string into an array', () => {
-        expect(_.isArray(results[0].tags)).to.eql(true);
-        expect(results[0].tags.length).to.eql(2);
-        expect(results[0].tags[0]).to.eql('tag1');
-        expect(results[0].tags[1]).to.eql('tag2');
+        expect(_.isArray(results[0].tags)).toEqual(true);
+        expect(results[0].tags.length).toEqual(2);
+        expect(results[0].tags[0]).toEqual('tag1');
+        expect(results[0].tags[1]).toEqual('tag2');
       });
     });
   });
@@ -166,21 +153,21 @@ describe('graphiteDatasource', function() {
       let results = ctx.ds.buildGraphiteParams({
         targets: [{}],
       });
-      expect(results.length).to.be(0);
+      expect(results.length).toBe(0);
     });
 
     it('should uri escape targets', function() {
       let results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'prod1.{test,test2}' }, { target: 'prod2.count' }],
       });
-      expect(results).to.contain('target=prod1.%7Btest%2Ctest2%7D');
+      expect(results).toContain('target=prod1.%7Btest%2Ctest2%7D');
     });
 
     it('should replace target placeholder', function() {
       let results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'series1' }, { target: 'series2' }, { target: 'asPercent(#A,#B)' }],
       });
-      expect(results[2]).to.be('target=asPercent(series1%2Cseries2)');
+      expect(results[2]).toBe('target=asPercent(series1%2Cseries2)');
     });
 
     it('should replace target placeholder for hidden series', function() {
@@ -191,35 +178,35 @@ describe('graphiteDatasource', function() {
           { target: 'asPercent(#A,#B)' },
         ],
       });
-      expect(results[0]).to.be('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
+      expect(results[0]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should replace target placeholder when nesting query references', function() {
       let results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'series1' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
       });
-      expect(results[2]).to.be('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
+      expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should fix wrong minute interval parameters', function() {
       let results = ctx.ds.buildGraphiteParams({
         targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')" }],
       });
-      expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
+      expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
     });
 
     it('should fix wrong month interval parameters', function() {
       let results = ctx.ds.buildGraphiteParams({
         targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')" }],
       });
-      expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
+      expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
     });
 
     it('should ignore empty targets', function() {
       let results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'series1' }, { target: '' }],
       });
-      expect(results.length).to.be(2);
+      expect(results.length).toBe(2);
     });
   });
 
@@ -231,7 +218,7 @@ describe('graphiteDatasource', function() {
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
         return ctx.$q.when({
-          data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
+          data: ['backend_01', 'backend_02'],
         });
       };
     });
@@ -241,10 +228,9 @@ describe('graphiteDatasource', function() {
         results = data;
       });
 
-      ctx.$rootScope.$apply();
-      expect(requestOptions.url).to.be('/tags/autoComplete/tags');
-      expect(requestOptions.params.expr).to.eql([]);
-      expect(results).not.to.be(null);
+      expect(requestOptions.url).toBe('/tags/autoComplete/tags');
+      expect(requestOptions.params.expr).toEqual([]);
+      expect(results).not.toBe(null);
     });
 
     it('should generate tags query with a filter expression', () => {
@@ -252,21 +238,19 @@ describe('graphiteDatasource', function() {
         results = data;
       });
 
-      ctx.$rootScope.$apply();
-      expect(requestOptions.url).to.be('/tags/autoComplete/tags');
-      expect(requestOptions.params.expr).to.eql(['server=backend_01']);
-      expect(results).not.to.be(null);
+      expect(requestOptions.url).toBe('/tags/autoComplete/tags');
+      expect(requestOptions.params.expr).toEqual(['server=backend_01']);
+      expect(results).not.toBe(null);
     });
 
-    it('should generate tag query for an expression with whitespace after', () => {
+    it('should generate tags query for an expression with whitespace after', () => {
       ctx.ds.metricFindQuery('tags(server=backend_01 )').then(data => {
         results = data;
       });
 
-      ctx.$rootScope.$apply();
-      expect(requestOptions.url).to.be('/tags/autoComplete/tags');
-      expect(requestOptions.params.expr).to.eql(['server=backend_01']);
-      expect(results).not.to.be(null);
+      expect(requestOptions.url).toBe('/tags/autoComplete/tags');
+      expect(requestOptions.params.expr).toEqual(['server=backend_01']);
+      expect(results).not.toBe(null);
     });
 
     it('should generate tag values query for one tag', () => {
@@ -274,11 +258,10 @@ describe('graphiteDatasource', function() {
         results = data;
       });
 
-      ctx.$rootScope.$apply();
-      expect(requestOptions.url).to.be('/tags/autoComplete/values');
-      expect(requestOptions.params.tag).to.be('server');
-      expect(requestOptions.params.expr).to.eql([]);
-      expect(results).not.to.be(null);
+      expect(requestOptions.url).toBe('/tags/autoComplete/values');
+      expect(requestOptions.params.tag).toBe('server');
+      expect(requestOptions.params.expr).toEqual([]);
+      expect(results).not.toBe(null);
     });
 
     it('should generate tag values query for a tag and expression', () => {
@@ -286,11 +269,10 @@ describe('graphiteDatasource', function() {
         results = data;
       });
 
-      ctx.$rootScope.$apply();
-      expect(requestOptions.url).to.be('/tags/autoComplete/values');
-      expect(requestOptions.params.tag).to.be('server');
-      expect(requestOptions.params.expr).to.eql(['server=~backend*']);
-      expect(results).not.to.be(null);
+      expect(requestOptions.url).toBe('/tags/autoComplete/values');
+      expect(requestOptions.params.tag).toBe('server');
+      expect(requestOptions.params.expr).toEqual(['server=~backend*']);
+      expect(results).not.toBe(null);
     });
 
     it('should generate tag values query for a tag with whitespace after', () => {
@@ -298,11 +280,10 @@ describe('graphiteDatasource', function() {
         results = data;
       });
 
-      ctx.$rootScope.$apply();
-      expect(requestOptions.url).to.be('/tags/autoComplete/values');
-      expect(requestOptions.params.tag).to.be('server');
-      expect(requestOptions.params.expr).to.eql([]);
-      expect(results).not.to.be(null);
+      expect(requestOptions.url).toBe('/tags/autoComplete/values');
+      expect(requestOptions.params.tag).toBe('server');
+      expect(requestOptions.params.expr).toEqual([]);
+      expect(results).not.toBe(null);
     });
 
     it('should generate tag values query for a tag and expression with whitespace after', () => {
@@ -310,11 +291,10 @@ describe('graphiteDatasource', function() {
         results = data;
       });
 
-      ctx.$rootScope.$apply();
-      expect(requestOptions.url).to.be('/tags/autoComplete/values');
-      expect(requestOptions.params.tag).to.be('server');
-      expect(requestOptions.params.expr).to.eql(['server=~backend*']);
-      expect(results).not.to.be(null);
+      expect(requestOptions.url).toBe('/tags/autoComplete/values');
+      expect(requestOptions.params.tag).toBe('server');
+      expect(requestOptions.params.expr).toEqual(['server=~backend*']);
+      expect(results).not.toBe(null);
     });
   });
 });
