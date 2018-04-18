@@ -1,5 +1,5 @@
 import React from 'react';
-import { AddPanelPanel } from './AddPanelPanel';
+import { AddPanelPanel } from './../dashgrid/AddPanelPanel';
 import { PanelModel } from '../panel_model';
 import { shallow } from 'enzyme';
 import config from '../../../core/config';
