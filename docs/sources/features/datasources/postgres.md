@@ -82,7 +82,7 @@ You can control the name of the Table panel columns by using regular `as ` SQL c
 
 The resulting table panel:
 
-![](/img/docs/v46/postgres_table.png)
+![postgres table](/img/docs/v46/postgres_table.png)
 
 ### Time series queries
 
@@ -190,6 +190,14 @@ WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp ASC
 ```
 
+#### Disabling Quoting for Multi-value Variables
+
+Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'. Do disable quoting, use the csv formatting option for variables:
+
+`${servers:csv}`
+
+Read more about variable formatting options in the [Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation.
+
 ## Annotations
 
 [Annotations]({{< relref "reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
@@ -218,9 +226,9 @@ tags | Optional field name to use for event tags as a comma separated string.
 Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule
 conditions.
 
-## Configure datasource with provisioning
+## Configure the Datasource with Provisioning
 
-It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
 
 Here are some provisioning examples for this datasource.
 
@@ -237,5 +245,4 @@ datasources:
       password: "Password!"
     jsonData:
       sslmode: "disable" # disable/require/verify-ca/verify-full
-
 ```

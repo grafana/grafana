@@ -38,7 +38,7 @@ documentation article for details on value escaping during interpolation.
 
 ### Advanced Formatting Options
 
-In Grafana 5.0, an additional option was added to control the formatting of the interpolation.
+In Grafana 5.0, a new syntax for variables was introduced to control the formatting of the interpolation.
 
 Syntax: `${var_name:option}`
 

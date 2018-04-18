@@ -38,12 +38,12 @@ Proxy access means that the Grafana backend will proxy all requests from the bro
 ## Metric editor
 
 ### Navigate metric segments
+
 Click the ``Select metric`` link to start navigating the metric space. One you start you can continue using the mouse
 or keyboard arrow keys. You can select a wildcard and still continue.
 
 {{< docs-imagebox img="/img/docs/v45/graphite_query1_still.png"
                   animated-gif="/img/docs/v45/graphite_query1.gif" >}}
-
 
 ### Functions
 
@@ -55,7 +55,6 @@ by the x icon.
 {{< docs-imagebox img="/img/docs/v45/graphite_query2_still.png"
                   animated-gif="/img/docs/v45/graphite_query2.gif" >}}
 
-
 ### Optional parameters
 
 Some functions like aliasByNode support an optional second argument. To add this parameter specify for example 3,-2 as the first parameter and the function editor will adapt and move the -2 to a second parameter. To remove the second optional parameter just click on it and leave it blank and the editor will remove it.
@@ -63,14 +62,12 @@ Some functions like aliasByNode support an optional second argument. To add this
 {{< docs-imagebox img="/img/docs/v45/graphite_query3_still.png"
                   animated-gif="/img/docs/v45/graphite_query3.gif" >}}
 
-
 ### Nested Queries
 
 You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to a graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
 
 {{< docs-imagebox img="/img/docs/v45/graphite_nested_queries_still.png"
                   animated-gif="/img/docs/v45/graphite_nested_queries.gif" >}}
-
 
 ## Point consolidation
 
@@ -97,7 +94,7 @@ Query | Description
 *tags(server=~backend\*)* | Returns only tags that occur in series matching the filter expression.
 *tag_values(server)*  | Return tag values for the specified tag.
 *tag_values(server, server=~backend*)*  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
-*tag_values(server, server=~backend*, app=$apps)* | Multiple filter expressions and expressions can contain other variables.
+*tag_values(server, server=~backend*, app=${apps:regex})* | Multiple filter expressions and expressions can contain other variables.
 
 For more details, see the [Graphite docs on the autocomplete api for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
@@ -109,14 +106,10 @@ variable with all possible values that exist in the wildcard position.
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
 
-### Query Variables in Tag Queries
-
-Multi-value variables in tag queries use the syntax introduced in Grafana 5.0 for variables: `{var:regex}`. Non-tag queries will use the default glob formatting for multi-value variables. Checkout the [Advanced Formatting Options section in the Templating]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation for examples and details.
-
-### Variable usage
+### Variable Usage
 
 You can use a variable in a metric node path or as a parameter to a function.
-![](/img/docs/v2/templated_variable_parameter.png)
+![variable](/img/docs/v2/templated_variable_parameter.png)
 
 There are two syntaxes:
 
@@ -128,6 +121,10 @@ the second syntax in expressions like  `my.server[[serverNumber]].count`.
 
 Example:
 [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
+
+### Variable Usage in Tag Queries
+
+Multi-value variables in tag queries use the advanced formatting syntax introduced in Grafana 5.0 for variables: `{var:regex}`. Non-tag queries will use the default glob formatting for multi-value variables. Checkout the [Advanced Formatting Options section in the Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation for examples and details.
 
 ## Annotations
 
