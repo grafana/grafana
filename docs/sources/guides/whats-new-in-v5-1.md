@@ -60,7 +60,7 @@ More information in the [Provisioning documentation](/features/datasources/prome
 
 ## New template variable interpolation syntax
 
-We now support a new option for rendering template variables that gives the user full control of how the value(s) should be rendered. In the table below you can see two examples and you can find all different options in the [template variable docs](http://docs.grafana.org/reference/templating/#advanced-formatting-options)
+We now support a new option for rendering template variables that gives the user full control of how the value(s) should be rendered. In the table below you can see two examples and you can find all different options in the [template variable docs](http://docs.grafana.org/reference/templating/#advanced-formatting-options).
 
 Filter Option | Example | Raw | Interpolated | Description
 ------------ | ------------- | ------------- | -------------  | -------------
@@ -71,9 +71,15 @@ Filter Option | Example | Raw | Interpolated | Description
 
 ## Prometheus
 
-The Prometheus datasource now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we are really happy to finally allow our users to render those as heatmaps.
+{{< docs-imagebox img="/img/docs/v51/prometheus_heatmap.png" max-width="800px" class="docs-image--right" >}}
+
+The Prometheus datasource now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we're
+really happy to finally allow our users to render those as heatmaps. Please read [Heatmap panel documentation](/features/panels/heatmap/#pre-bucketed-data)
+for more information on how to use it.
 
 Prometheus query editor also got support for autocomplete of template variables. More information in the [Prometheus data source documentation](/features/datasources/prometheus/).
+
+<div class="clearfix"></div>
 
 ## PostgreSQL
 
@@ -87,8 +93,9 @@ New enhancements includes support for filling in values for missing intervals, b
 
 {{< docs-imagebox img="/img/docs/v51/mssql_query_editor_showcase.png"  max-width= "800px" class="docs-image--right" >}}
 
-Grafana v5.1 now ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. Have logs or metric data in MSSQL? You can now visualize that data and
-define alert rules on it like any of our other data sources.
+Grafana v5.1 now ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any
+Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. Do you have metric or log data in MSSQL? You can now visualize
+that data and define alert rules on it like with any of Grafana's other core datasources.
 
 Same enhancements as described for PostgreSQL and MySQL are included in the MSSQL datasource.
 
