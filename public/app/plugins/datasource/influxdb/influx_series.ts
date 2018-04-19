@@ -151,11 +151,17 @@ export default class InfluxSeries {
 
     _.each(this.series, (series, seriesIndex) => {
       if (seriesIndex === 0) {
-        table.columns.push({ text: 'Time', type: 'time' });
+        j = 0;
+        // Check that the first column is indeed 'time'
+        if (series.columns[0] === 'time') {
+          // Push this now before the tags and with the right type
+          table.columns.push({ text: 'Time', type: 'time' });
+          j++;
+        }
         _.each(_.keys(series.tags), function(key) {
           table.columns.push({ text: key });
         });
-        for (j = 1; j < series.columns.length; j++) {
+        for (; j < series.columns.length; j++) {
           table.columns.push({ text: series.columns[j] });
         }
       }

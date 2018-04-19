@@ -159,8 +159,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   setTableColumnToSensibleDefault(tableData) {
-    if (this.tableColumnOptions.length === 1) {
-      this.panel.tableColumn = this.tableColumnOptions[0];
+    if (tableData.columns.length === 1) {
+      this.panel.tableColumn = tableData.columns[0].text;
     } else {
       this.panel.tableColumn = _.find(tableData.columns, col => {
         return col.type !== 'time';
