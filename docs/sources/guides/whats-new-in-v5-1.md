@@ -20,7 +20,7 @@ Grafana v5.1 brings new features, many enhancements and bug fixes. This article 
 * [New template variable interpolation syntax]({{< relref "#new-template-variable-interpolation-syntax" >}})
 * [Alerting]({{< relref "#alerting" >}})
 * [Datasources]({{< relref "#datasources" >}}) Enhancements to Prometheus, Cloudwatch, PostgreSQL and MySQL. This release also adds support for [Microsft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table datasource!
-* [Dashboard & Panels]({{< relref "#dashboard-panels" >}}) Enhancements to Graph and Table panels and improved control for adding new panels.
+* [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
 
 ## Scrolling
 
@@ -93,22 +93,20 @@ Please read [Using Microsoft SQL Server in Grafana documentation](/features/data
 
 <div class="clearfix"></div>
 
-## Dashboard & Panels
+## Dashboards & Panels
 
-### Adding new panels to a dashboard
+### Adding new panels to dashboards
 
 {{< docs-imagebox img="/img/docs/v51/dashboard_add_panel.png"  max-width= "800px" class="docs-image--right" >}}
 
-The control for adding new panels to dashboards now includes functionality to search for the type of panel
-you want to add. Further, the control has tabs separating functionality for adding and pasting panels:
+The control for adding new panels to dashboards have got some enhancements and now includes functionality to search for the type of panel
+you want to add. Further, the control has tabs separating functionality for adding new panels and pasting
+copied panels.
 
-* Under the `Add` tab you'll find all of the panel types that you can add.
-* Under the `Paste` tab you can paste a panel that you've earlier copied.
+By copying a panel in a dashboard it will be displayed in the `Paste` tab in *any* dashboard and allows you to paste the
+copied panel into the current dashboard.
 
-By copying a panel in a dashboard, see screenshot below, it will be available in the `Paste` tab in *any* dashboard.
-This should make it more intuitive to copy/paste panels between dashboards.
-
-![Copy panel](/img/docs/v51/dashboard_panel_copy.png)
+{{< docs-imagebox img="/img/docs/v51/dashboard_panel_copy.png"  max-width= "300px" >}}
 
 <div class="clearfix"></div>
 
