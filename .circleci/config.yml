@@ -31,7 +31,7 @@ jobs:
           command: 'gometalinter --install'
       - run:
           name: run some linters
-          command: 'gometalinter --vendor --deadline 6m --disable-all --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+          command: 'gometalinter --vendor --deadline 6m --disable-all --enable=structcheck --enable=unconvert --enable=varcheck ./pkg/...'
 
   test-frontend:
     docker:
