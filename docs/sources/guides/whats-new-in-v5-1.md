@@ -18,8 +18,8 @@ Grafana v5.1 brings new features, many enhancements and bug fixes. This article 
 * [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
 * [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
 * [New template variable interpolation syntax]({{< relref "#new-template-variable-interpolation-syntax" >}})
-* [Heatmap support for Prometehus]({{< relref "#prometheus" >}}) 
-* [Microsft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table datasource!
+* [Heatmap support for Prometheus]({{< relref "#prometheus" >}})
+* [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table datasource!
 * [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
 
 ## Improved scrolling experience
