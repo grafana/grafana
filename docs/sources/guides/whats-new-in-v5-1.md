@@ -14,7 +14,7 @@ weight = -7
 
 Grafana v5.1 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
-* [Scrolling]({{< relref "#scrolling" >}})
+* [Improved scrolling experience]({{< relref "#improved-scrolling-experience" >}})
 * [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
 * [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
 * [New template variable interpolation syntax]({{< relref "#new-template-variable-interpolation-syntax" >}})
@@ -22,9 +22,12 @@ Grafana v5.1 brings new features, many enhancements and bug fixes. This article 
 * [Microsft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table datasource!
 * [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
 
-## Scrolling
+## Improved scrolling experience
 
-
+In Grafana v5.0 we introduced a new scrollbar component. Unfortunately this introduced a lot of issues and in some scenarios removed
+the native scrolling functionality. Grafana v5.1 ships with a native scrollbar for all pages together with a scrollbar component for
+the dashboard grid and panels that's not overriding the native scrolling functionality. We hope that these changes and improvements should
+make the Grafana user experience much better!
 
 ## Improved docker image (breaking change)
 
