@@ -60,6 +60,15 @@ More information in the [Provisioning documentation](/features/datasources/prome
 
 ## New template variable interpolation syntax
 
+We now support a new option for rendering template variables that gives the user full control of how the value(s) should be rendered. In the table below you can see two examples and you can find all different options in the [template variable docs](http://docs.grafana.org/reference/templating/#advanced-formatting-options)
+
+Filter Option | Example | Raw | Interpolated | Description
+------------ | ------------- | ------------- | -------------  | -------------
+`glob` | ${servers:glob} |  `'test1', 'test2'` | `{test1,test2}` | (Default) Formats multi-value variable into a glob (for Graphite queries)
+`csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string (requires Grafana 5.1)
+`lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
+
+
 ## Prometheus
 
 The Prometheus datasource now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we are really happy to finally allow our users to render those as heatmaps.
