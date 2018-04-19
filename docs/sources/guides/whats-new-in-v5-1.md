@@ -66,7 +66,9 @@ New enhancements includes support for retries on failed alert queries and updati
 
 ### Prometheus
 
-New enhancements includes support for Prometheus histograms in the heatmap panel and autocomplete of template variables query editor. More information in the [Prometheus data source documentation](/features/datasources/prometheus/).
+The Prometheus datasource now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we are really happy to finally allow our users to render those as heatmaps.
+
+Prometheus query editor also got support for autocomplete of template variables. More information in the [Prometheus data source documentation](/features/datasources/prometheus/).
 
 ### Cloudwatch
 
