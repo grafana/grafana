@@ -20,11 +20,7 @@ func Init(ctx context.Context, homePath string, cfg *ini.File) error {
 
 	dashboardPath := path.Join(provisioningPath, "dashboards")
 	_, err := dashboards.Provision(ctx, dashboardPath)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func makeAbsolute(path string, root string) string {

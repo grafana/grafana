@@ -222,4 +222,99 @@ describe('graphiteDatasource', function() {
       expect(results.length).to.be(2);
     });
   });
+
+  describe('querying for template variables', () => {
+    let results;
+    let requestOptions;
+
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = function(options) {
+        requestOptions = options;
+        return ctx.$q.when({
+          data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
+        });
+      };
+    });
+
+    it('should generate tags query', () => {
+      ctx.ds.metricFindQuery('tags()').then(data => {
+        results = data;
+      });
+
+      ctx.$rootScope.$apply();
+      expect(requestOptions.url).to.be('/tags/autoComplete/tags');
+      expect(requestOptions.params.expr).to.eql([]);
+      expect(results).not.to.be(null);
+    });
+
+    it('should generate tags query with a filter expression', () => {
+      ctx.ds.metricFindQuery('tags(server=backend_01)').then(data => {
+        results = data;
+      });
+
+      ctx.$rootScope.$apply();
+      expect(requestOptions.url).to.be('/tags/autoComplete/tags');
+      expect(requestOptions.params.expr).to.eql(['server=backend_01']);
+      expect(results).not.to.be(null);
+    });
+
+    it('should generate tag query for an expression with whitespace after', () => {
+      ctx.ds.metricFindQuery('tags(server=backend_01 )').then(data => {
+        results = data;
+      });
+
+      ctx.$rootScope.$apply();
+      expect(requestOptions.url).to.be('/tags/autoComplete/tags');
+      expect(requestOptions.params.expr).to.eql(['server=backend_01']);
+      expect(results).not.to.be(null);
+    });
+
+    it('should generate tag values query for one tag', () => {
+      ctx.ds.metricFindQuery('tag_values(server)').then(data => {
+        results = data;
+      });
+
+      ctx.$rootScope.$apply();
+      expect(requestOptions.url).to.be('/tags/autoComplete/values');
+      expect(requestOptions.params.tag).to.be('server');
+      expect(requestOptions.params.expr).to.eql([]);
+      expect(results).not.to.be(null);
+    });
+
+    it('should generate tag values query for a tag and expression', () => {
+      ctx.ds.metricFindQuery('tag_values(server,server=~backend*)').then(data => {
+        results = data;
+      });
+
+      ctx.$rootScope.$apply();
+      expect(requestOptions.url).to.be('/tags/autoComplete/values');
+      expect(requestOptions.params.tag).to.be('server');
+      expect(requestOptions.params.expr).to.eql(['server=~backend*']);
+      expect(results).not.to.be(null);
+    });
+
+    it('should generate tag values query for a tag with whitespace after', () => {
+      ctx.ds.metricFindQuery('tag_values(server )').then(data => {
+        results = data;
+      });
+
+      ctx.$rootScope.$apply();
+      expect(requestOptions.url).to.be('/tags/autoComplete/values');
+      expect(requestOptions.params.tag).to.be('server');
+      expect(requestOptions.params.expr).to.eql([]);
+      expect(results).not.to.be(null);
+    });
+
+    it('should generate tag values query for a tag and expression with whitespace after', () => {
+      ctx.ds.metricFindQuery('tag_values(server , server=~backend* )').then(data => {
+        results = data;
+      });
+
+      ctx.$rootScope.$apply();
+      expect(requestOptions.url).to.be('/tags/autoComplete/values');
+      expect(requestOptions.params.tag).to.be('server');
+      expect(requestOptions.params.expr).to.eql(['server=~backend*']);
+      expect(results).not.to.be(null);
+    });
+  });
 });

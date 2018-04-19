@@ -43,6 +43,40 @@ server is running on AWS you can use IAM Roles and authentication will be handle
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
+## IAM Policies
+
+Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
+and EC2 tags/instances. You can attach these permissions to IAM roles and
+utilize Grafana's built-in support for assuming roles.
+
+Here is a minimal policy example:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowReadingMetricsFromCloudWatch",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:ListMetrics",
+                "cloudwatch:GetMetricStatistics"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowReadingTagsFromEC2",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeTags",
+                "ec2:DescribeInstances"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
 ### AWS credentials file
 
 Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.
@@ -87,7 +121,7 @@ Name | Description
 *namespaces()* | Returns a list of namespaces CloudWatch support.
 *metrics(namespace, [region])* | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)
 *dimension_keys(namespace)* | Returns a list of dimension keys in the namespace.
-*dimension_values(region, namespace, metric, dimension_key)* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric` and `dimension_key`.
+*dimension_values(region, namespace, metric, dimension_key, [filters])* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well.
 *ebs_volume_ids(region, instance_id)* | Returns a list of volume ids matching the specified `region`, `instance_id`.
 *ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.
 
@@ -104,6 +138,7 @@ Query | Service
 *dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)* | RedShift
 *dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)* | RDS
 *dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)* | S3
+*dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})* | CloudWatch Agent
 
 ## ec2_instance_attribute examples
 
@@ -172,3 +207,37 @@ Amazon provides 1 million CloudWatch API requests each month at no additional ch
 it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
+
+## Configure datasource with provisioning
+
+It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+Using a credentials file
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Cloudwatch
+    type: cloudwatch
+    jsonData:
+      authType: credentials
+      defaultRegion: eu-west-2
+```
+
+Using `accessKey` and `secretKey`
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Cloudwatch
+    type: cloudwatch
+    jsonData:
+      authType: keys
+      defaultRegion: eu-west-2
+    secureJsonData:
+      accessKey: "<your access key>"
+      secretKey: "<your secret key>"
+```

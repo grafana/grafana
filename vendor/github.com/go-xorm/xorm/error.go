@@ -23,4 +23,6 @@ var (
 	ErrNeedDeletedCond = errors.New("Delete need at least one condition")
 	// ErrNotImplemented not implemented
 	ErrNotImplemented = errors.New("Not implemented")
+	// ErrConditionType condition type unsupported
+	ErrConditionType = errors.New("Unsupported conditon type")
 )

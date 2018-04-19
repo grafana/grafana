@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 
@@ -144,7 +143,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			})
 		})
 
-		Convey("When trying to override inherited permissions with lower presedence", func() {
+		Convey("When trying to override inherited permissions with lower precedence", func() {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,
@@ -195,7 +194,7 @@ func updateDashboardPermissionScenario(desc string, url string, routePattern str
 
 		sc := setupScenarioContext(url)
 
-		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.OrgId = TestOrgID
 			sc.context.UserId = TestUserID

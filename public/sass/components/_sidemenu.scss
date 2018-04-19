@@ -123,6 +123,8 @@
     position: relative;
     opacity: 0.7;
     font-size: 130%;
+    height: 22px;
+    width: 22px;
   }
 
   .fa {
@@ -145,6 +147,15 @@
   background-color: $side-menu-item-hover-bg;
   font-size: 17px;
   color: #ebedf2;
+}
+
+.sidemenu-subtitle {
+  padding: 0.5rem 1rem 0.5rem;
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+  border-bottom: 1px solid $dropdownDividerBottom;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
 }
 
 li.sidemenu-org-switcher {
@@ -178,6 +189,7 @@ li.sidemenu-org-switcher {
   padding: 0.4rem 1rem 0.4rem 0.65rem;
   min-height: $navbarHeight;
   position: relative;
+  height: $navbarHeight - 1px;
 
   &:hover {
     background: $navbarButtonBackgroundHighlight;

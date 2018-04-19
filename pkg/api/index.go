@@ -6,13 +6,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
+func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	settings, err := getFrontendSettingsMap(c)
 	if err != nil {
 		return nil, err
@@ -33,13 +32,13 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		locale = parts[0]
 	}
 
-	appUrl := setting.AppUrl
-	appSubUrl := setting.AppSubUrl
+	appURL := setting.AppUrl
+	appSubURL := setting.AppSubUrl
 
 	// special case when doing localhost call from phantomjs
 	if c.IsRenderCall {
-		appUrl = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
-		appSubUrl = ""
+		appURL = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
+		appSubURL = ""
 		settings["appSubUrl"] = ""
 	}
 
@@ -63,8 +62,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		},
 		Settings:                settings,
 		Theme:                   prefs.Theme,
-		AppUrl:                  appUrl,
-		AppSubUrl:               appSubUrl,
+		AppUrl:                  appURL,
+		AppSubUrl:               appSubURL,
 		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
@@ -81,8 +80,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		data.User.Name = data.User.Login
 	}
 
-	themeUrlParam := c.Query("theme")
-	if themeUrlParam == "light" {
+	themeURLParam := c.Query("theme")
+	if themeURLParam == "light" {
 		data.User.LightTheme = true
 		data.Theme = "light"
 	}
@@ -119,9 +118,14 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	})
 
 	if c.IsSignedIn {
+		// Only set login if it's different from the name
+		var login string
+		if c.SignedInUser.Login != c.SignedInUser.NameOrFallback() {
+			login = c.SignedInUser.Login
+		}
 		profileNode := &dtos.NavLink{
 			Text:         c.SignedInUser.NameOrFallback(),
-			SubTitle:     c.SignedInUser.Login,
+			SubTitle:     login,
 			Id:           "profile",
 			Img:          data.User.GravatarUrl,
 			Url:          setting.AppSubUrl + "/profile",
@@ -285,6 +289,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:         "Help",
+		SubTitle:     fmt.Sprintf(`Grafana v%s (%s)`, setting.BuildVersion, setting.BuildCommit),
 		Id:           "help",
 		Url:          "#",
 		Icon:         "gicon gicon-question",
@@ -299,25 +304,26 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	return &data, nil
 }
 
-func Index(c *middleware.Context) {
-	if data, err := setIndexViewData(c); err != nil {
+func Index(c *m.ReqContext) {
+	data, err := setIndexViewData(c)
+	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
-	} else {
-		c.HTML(200, "index", data)
 	}
+	c.HTML(200, "index", data)
 }
 
-func NotFoundHandler(c *middleware.Context) {
+func NotFoundHandler(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return
 	}
 
-	if data, err := setIndexViewData(c); err != nil {
+	data, err := setIndexViewData(c)
+	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
-	} else {
-		c.HTML(404, "index", data)
 	}
+
+	c.HTML(404, "index", data)
 }

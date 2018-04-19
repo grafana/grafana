@@ -208,6 +208,7 @@ func generateImageCaption(evalContext *alerting.EvalContext, ruleUrl string, met
 
 	return message
 }
+
 func appendIfPossible(message string, extra string, sizeLimit int) string {
 	if len(extra)+len(message) <= sizeLimit {
 		return message + extra
@@ -216,13 +217,9 @@ func appendIfPossible(message string, extra string, sizeLimit int) string {
 	return message
 }
 
-func (this *TelegramNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	var cmd *m.SendWebhookSync
-	if evalContext.ImagePublicUrl == "" && this.UploadImage == true {
+	if evalContext.ImagePublicUrl == "" && this.UploadImage {
 		cmd = this.buildMessage(evalContext, true)
 	} else {
 		cmd = this.buildMessage(evalContext, false)

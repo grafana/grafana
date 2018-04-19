@@ -234,7 +234,12 @@ The maximum number of connections in the idle connection pool.
 ### max_open_conn
 The maximum number of open connections to the database.
 
+### conn_max_lifetime
+
+Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
+
 ### log_queries
+
 Set to `true` to log the sql calls and execution times.
 
 <hr />
@@ -477,7 +482,7 @@ Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.co
 
 First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
 
-Finaly set up the generic oauth module like this:
+Finally set up the generic oauth module like this:
 ```bash
 [auth.generic_oauth]
 name = Okta

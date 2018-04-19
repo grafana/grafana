@@ -7,11 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -136,8 +133,8 @@ func TestFoldersApiEndpoint(t *testing.T) {
 	})
 }
 
-func callGetFolderByUid(sc *scenarioContext) {
-	sc.handlerFunc = GetFolderByUid
+func callGetFolderByUID(sc *scenarioContext) {
+	sc.handlerFunc = GetFolderByUID
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
@@ -155,7 +152,7 @@ func createFolderScenario(desc string, url string, routePattern string, mock *fa
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: TestOrgID, UserId: TestUserID}
 
@@ -184,7 +181,7 @@ func updateFolderScenario(desc string, url string, routePattern string, mock *fa
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: TestOrgID, UserId: TestUserID}
 
@@ -205,50 +202,50 @@ func updateFolderScenario(desc string, url string, routePattern string, mock *fa
 }
 
 type fakeFolderService struct {
-	GetFoldersResult     []*models.Folder
+	GetFoldersResult     []*m.Folder
 	GetFoldersError      error
-	GetFolderByUidResult *models.Folder
-	GetFolderByUidError  error
-	GetFolderByIdResult  *models.Folder
-	GetFolderByIdError   error
-	CreateFolderResult   *models.Folder
+	GetFolderByUIDResult *m.Folder
+	GetFolderByUIDError  error
+	GetFolderByIDResult  *m.Folder
+	GetFolderByIDError   error
+	CreateFolderResult   *m.Folder
 	CreateFolderError    error
-	UpdateFolderResult   *models.Folder
+	UpdateFolderResult   *m.Folder
 	UpdateFolderError    error
-	DeleteFolderResult   *models.Folder
+	DeleteFolderResult   *m.Folder
 	DeleteFolderError    error
 	DeletedFolderUids    []string
 }
 
-func (s *fakeFolderService) GetFolders(limit int) ([]*models.Folder, error) {
+func (s *fakeFolderService) GetFolders(limit int) ([]*m.Folder, error) {
 	return s.GetFoldersResult, s.GetFoldersError
 }
 
-func (s *fakeFolderService) GetFolderById(id int64) (*models.Folder, error) {
-	return s.GetFolderByIdResult, s.GetFolderByIdError
+func (s *fakeFolderService) GetFolderByID(id int64) (*m.Folder, error) {
+	return s.GetFolderByIDResult, s.GetFolderByIDError
 }
 
-func (s *fakeFolderService) GetFolderByUid(uid string) (*models.Folder, error) {
-	return s.GetFolderByUidResult, s.GetFolderByUidError
+func (s *fakeFolderService) GetFolderByUID(uid string) (*m.Folder, error) {
+	return s.GetFolderByUIDResult, s.GetFolderByUIDError
 }
 
-func (s *fakeFolderService) CreateFolder(cmd *models.CreateFolderCommand) error {
+func (s *fakeFolderService) CreateFolder(cmd *m.CreateFolderCommand) error {
 	cmd.Result = s.CreateFolderResult
 	return s.CreateFolderError
 }
 
-func (s *fakeFolderService) UpdateFolder(existingUid string, cmd *models.UpdateFolderCommand) error {
+func (s *fakeFolderService) UpdateFolder(existingUID string, cmd *m.UpdateFolderCommand) error {
 	cmd.Result = s.UpdateFolderResult
 	return s.UpdateFolderError
 }
 
-func (s *fakeFolderService) DeleteFolder(uid string) (*models.Folder, error) {
+func (s *fakeFolderService) DeleteFolder(uid string) (*m.Folder, error) {
 	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
 	return s.DeleteFolderResult, s.DeleteFolderError
 }
 
 func mockFolderService(mock *fakeFolderService) {
-	dashboards.NewFolderService = func(orgId int64, user *models.SignedInUser) dashboards.FolderService {
+	dashboards.NewFolderService = func(orgId int64, user *m.SignedInUser) dashboards.FolderService {
 		return mock
 	}
 }

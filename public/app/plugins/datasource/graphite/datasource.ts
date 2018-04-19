@@ -50,6 +50,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       data: params.join('&'),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Dashboard-Id': options.dashboardId, // enables distributed tracing in ds_proxy
+        'X-Panel-Id': options.panelId, // enables distributed tracing in ds_proxy
       },
     };
 
@@ -318,7 +320,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
-        expr: _.map(expressions, expression => templateSrv.replace(expression)),
+        expr: _.map(expressions, expression => templateSrv.replace((expression || '').trim())),
       },
       // for cancellations
       requestId: options.requestId,
@@ -353,8 +355,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: _.map(expressions, expression => templateSrv.replace(expression)),
-        tag: templateSrv.replace(tag),
+        expr: _.map(expressions, expression => templateSrv.replace((expression || '').trim())),
+        tag: templateSrv.replace((tag || '').trim()),
       },
       // for cancellations
       requestId: options.requestId,

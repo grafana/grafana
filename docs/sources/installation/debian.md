@@ -15,7 +15,7 @@ weight = 1
 
 Description | Download
 ------------ | -------------
-Stable for Debian-based Linux | [grafana_5.0.0_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.0_amd64.deb)
+Stable for Debian-based Linux | [grafana_5.0.4_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.4_amd64.deb)
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
@@ -24,9 +24,9 @@ installation.
 
 
 ```bash
-wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.0_amd64.deb
+wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.0.4_amd64.deb
 sudo apt-get install -y adduser libfontconfig
-sudo dpkg -i grafana_5.0.0_amd64.deb
+sudo dpkg -i grafana_5.0.4_amd64.deb
 ```
 
 ## APT Repository
@@ -34,7 +34,7 @@ sudo dpkg -i grafana_5.0.0_amd64.deb
 Add the following line to your `/etc/apt/sources.list` file.
 
 ```bash
-deb https://packagecloud.io/grafana/stable/debian/ jessie main
+deb https://packagecloud.io/grafana/stable/debian/ stretch main
 ```
 
 Use the above line even if you are on Ubuntu or another Debian version.
@@ -42,7 +42,7 @@ There is also a testing repository if you want beta or release
 candidates.
 
 ```bash
-deb https://packagecloud.io/grafana/testing/debian/ jessie main
+deb https://packagecloud.io/grafana/testing/debian/ stretch main
 ```
 
 Then add the [Package Cloud](https://packagecloud.io/grafana) key. This

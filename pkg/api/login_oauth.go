@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,21 +15,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
 )
 
-var (
-	ErrProviderDeniedRequest = errors.New("Login provider denied login request")
-	ErrEmailNotAllowed       = errors.New("Required email domain not fulfilled")
-	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
-	ErrUsersQuotaReached     = errors.New("Users quota reached")
-	ErrNoEmail               = errors.New("Login provider didn't return an email address")
-	oauthLogger              = log.New("oauth")
-)
+var oauthLogger = log.New("oauth")
 
 func GenStateString() string {
 	rnd := make([]byte, 32)
@@ -38,7 +31,7 @@ func GenStateString() string {
 	return base64.URLEncoding.EncodeToString(rnd)
 }
 
-func OAuthLogin(ctx *middleware.Context) {
+func OAuthLogin(ctx *m.ReqContext) {
 	if setting.OAuthService == nil {
 		ctx.Handle(404, "OAuth not enabled", nil)
 		return
@@ -55,14 +48,14 @@ func OAuthLogin(ctx *middleware.Context) {
 	if errorParam != "" {
 		errorDesc := ctx.Query("error_description")
 		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
-		redirectWithError(ctx, ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
+		redirectWithError(ctx, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
 		return
 	}
 
 	code := ctx.Query("code")
 	if code == "" {
 		state := GenStateString()
-		ctx.Session.Set(middleware.SESS_KEY_OAUTH_STATE, state)
+		ctx.Session.Set(session.SESS_KEY_OAUTH_STATE, state)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -71,7 +64,7 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	savedState, ok := ctx.Session.Get(middleware.SESS_KEY_OAUTH_STATE).(string)
+	savedState, ok := ctx.Session.Get(session.SESS_KEY_OAUTH_STATE).(string)
 	if !ok {
 		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
 		return
@@ -148,54 +141,43 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
-		redirectWithError(ctx, ErrNoEmail)
+		redirectWithError(ctx, login.ErrNoEmail)
 		return
 	}
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
-		redirectWithError(ctx, ErrEmailNotAllowed)
+		redirectWithError(ctx, login.ErrEmailNotAllowed)
 		return
 	}
 
-	userQuery := m.GetUserByEmailQuery{Email: userInfo.Email}
-	err = bus.Dispatch(&userQuery)
+	extUser := &m.ExternalUserInfo{
+		AuthModule: "oauth_" + name,
+		AuthId:     userInfo.Id,
+		Name:       userInfo.Name,
+		Login:      userInfo.Login,
+		Email:      userInfo.Email,
+		OrgRoles:   map[int64]m.RoleType{},
+	}
 
-	// create account if missing
-	if err == m.ErrUserNotFound {
-		if !connect.IsSignupAllowed() {
-			redirectWithError(ctx, ErrSignUpNotAllowed)
-			return
-		}
-		limitReached, err := middleware.QuotaReached(ctx, "user")
-		if err != nil {
-			ctx.Handle(500, "Failed to get user quota", err)
-			return
-		}
-		if limitReached {
-			redirectWithError(ctx, ErrUsersQuotaReached)
-			return
-		}
-		cmd := m.CreateUserCommand{
-			Login:          userInfo.Login,
-			Email:          userInfo.Email,
-			Name:           userInfo.Name,
-			Company:        userInfo.Company,
-			DefaultOrgRole: userInfo.Role,
-		}
+	if userInfo.Role != "" {
+		extUser.OrgRoles[1] = m.RoleType(userInfo.Role)
+	}
 
-		if err = bus.Dispatch(&cmd); err != nil {
-			ctx.Handle(500, "Failed to create account", err)
-			return
-		}
-
-		userQuery.Result = &cmd.Result
-	} else if err != nil {
-		ctx.Handle(500, "Unexpected error", err)
+	// add/update user in grafana
+	cmd := &m.UpsertUserCommand{
+		ReqContext:    ctx,
+		ExternalUser:  extUser,
+		SignupAllowed: connect.IsSignupAllowed(),
+	}
+	err = bus.Dispatch(cmd)
+	if err != nil {
+		redirectWithError(ctx, err)
+		return
 	}
 
 	// login
-	loginUserWithUser(userQuery.Result, ctx)
+	loginUserWithUser(cmd.Result, ctx)
 
 	metrics.M_Api_Login_OAuth.Inc()
 
@@ -208,7 +190,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	ctx.Redirect(setting.AppSubUrl + "/")
 }
 
-func redirectWithError(ctx *middleware.Context, err error, v ...interface{}) {
+func redirectWithError(ctx *m.ReqContext, err error, v ...interface{}) {
 	ctx.Logger.Error(err.Error(), v...)
 	ctx.Session.Set("loginError", err.Error())
 	ctx.Redirect(setting.AppSubUrl + "/login")

@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -18,7 +17,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 	Convey("Folder permissions test", t, func() {
 		Convey("Given folder not exists", func() {
 			mock := &fakeFolderService{
-				GetFolderByUidError: m.ErrFolderNotFound,
+				GetFolderByUIDError: m.ErrFolderNotFound,
 			}
 
 			origNewFolderService := dashboards.NewFolderService
@@ -50,7 +49,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
 
 			mock := &fakeFolderService{
-				GetFolderByUidResult: &m.Folder{
+				GetFolderByUIDResult: &m.Folder{
 					Id:    1,
 					Uid:   "uid",
 					Title: "Folder",
@@ -97,7 +96,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			})
 
 			mock := &fakeFolderService{
-				GetFolderByUidResult: &m.Folder{
+				GetFolderByUIDResult: &m.Folder{
 					Id:    1,
 					Uid:   "uid",
 					Title: "Folder",
@@ -143,7 +142,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			})
 
 			mock := &fakeFolderService{
-				GetFolderByUidResult: &m.Folder{
+				GetFolderByUIDResult: &m.Folder{
 					Id:    1,
 					Uid:   "uid",
 					Title: "Folder",
@@ -179,7 +178,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			)
 
 			mock := &fakeFolderService{
-				GetFolderByUidResult: &m.Folder{
+				GetFolderByUIDResult: &m.Folder{
 					Id:    1,
 					Uid:   "uid",
 					Title: "Folder",
@@ -227,7 +226,7 @@ func updateFolderPermissionScenario(desc string, url string, routePattern string
 
 		sc := setupScenarioContext(url)
 
-		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.OrgId = TestOrgID
 			sc.context.UserId = TestUserID

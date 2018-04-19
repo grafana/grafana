@@ -4,7 +4,7 @@
   display: inline-block;
   padding: 2px 4px;
   font-size: $font-size-base * 0.846;
-  font-weight: bold;
+  font-weight: $font-weight-semi-bold;
   line-height: 14px; // ensure proper line-height if floated
   color: $white;
   vertical-align: baseline;

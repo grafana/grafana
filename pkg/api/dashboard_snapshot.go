@@ -6,14 +6,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetSharingOptions(c *middleware.Context) {
+func GetSharingOptions(c *m.ReqContext) {
 	c.JSON(200, util.DynMap{
 		"externalSnapshotURL":  setting.ExternalSnapshotUrl,
 		"externalSnapshotName": setting.ExternalSnapshotName,
@@ -21,7 +20,7 @@ func GetSharingOptions(c *middleware.Context) {
 	})
 }
 
-func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
+func CreateDashboardSnapshot(c *m.ReqContext, cmd m.CreateDashboardSnapshotCommand) {
 	if cmd.Name == "" {
 		cmd.Name = "Unnamed snapshot"
 	}
@@ -58,7 +57,7 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 }
 
 // GET /api/snapshots/:key
-func GetDashboardSnapshot(c *middleware.Context) {
+func GetDashboardSnapshot(c *m.ReqContext) {
 	key := c.Params(":key")
 	query := &m.GetDashboardSnapshotQuery{Key: key}
 
@@ -93,43 +92,43 @@ func GetDashboardSnapshot(c *middleware.Context) {
 }
 
 // GET /api/snapshots-delete/:key
-func DeleteDashboardSnapshot(c *middleware.Context) Response {
+func DeleteDashboardSnapshot(c *m.ReqContext) Response {
 	key := c.Params(":key")
 
 	query := &m.GetDashboardSnapshotQuery{DeleteKey: key}
 
 	err := bus.Dispatch(query)
 	if err != nil {
-		return ApiError(500, "Failed to get dashboard snapshot", err)
+		return Error(500, "Failed to get dashboard snapshot", err)
 	}
 
 	if query.Result == nil {
-		return ApiError(404, "Failed to get dashboard snapshot", nil)
+		return Error(404, "Failed to get dashboard snapshot", nil)
 	}
 	dashboard := query.Result.Dashboard
-	dashboardId := dashboard.Get("id").MustInt64()
+	dashboardID := dashboard.Get("id").MustInt64()
 
-	guardian := guardian.New(dashboardId, c.OrgId, c.SignedInUser)
+	guardian := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
 	canEdit, err := guardian.CanEdit()
 	if err != nil {
-		return ApiError(500, "Error while checking permissions for snapshot", err)
+		return Error(500, "Error while checking permissions for snapshot", err)
 	}
 
 	if !canEdit && query.Result.UserId != c.SignedInUser.UserId {
-		return ApiError(403, "Access denied to this snapshot", nil)
+		return Error(403, "Access denied to this snapshot", nil)
 	}
 
 	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: key}
 
 	if err := bus.Dispatch(cmd); err != nil {
-		return ApiError(500, "Failed to delete dashboard snapshot", err)
+		return Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
-	return Json(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from a CDN cache."})
+	return JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from a CDN cache."})
 }
 
 // GET /api/dashboard/snapshots
-func SearchDashboardSnapshots(c *middleware.Context) Response {
+func SearchDashboardSnapshots(c *m.ReqContext) Response {
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 
@@ -146,7 +145,7 @@ func SearchDashboardSnapshots(c *middleware.Context) Response {
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		return ApiError(500, "Search failed", err)
+		return Error(500, "Search failed", err)
 	}
 
 	dtos := make([]*m.DashboardSnapshotDTO, len(searchQuery.Result))
@@ -166,5 +165,5 @@ func SearchDashboardSnapshots(c *middleware.Context) Response {
 		}
 	}
 
-	return Json(200, dtos)
+	return JSON(200, dtos)
 }

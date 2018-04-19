@@ -71,13 +71,13 @@ Each field in the dashboard JSON is explained below with its usage:
 | **timepicker** | timepicker metadata, see [timepicker section](#timepicker) for details |
 | **templating** | templating metadata, see [templating section](#templating) for details |
 | **annotations** | annotations metadata, see [annotations section](#annotations) for details |
-| **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to the said schema |
+| **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to said schema |
 | **version** | version of the dashboard (integer), incremented each time the dashboard is updated |
 | **panels** | panels array, see below for detail. |
 
 ## Panels
 
-Panels are the building blocks a dashboard. It consists of datasource queries, type of graphs, aliases, etc. Panel JSON consists of an array of JSON objects, each representing a different panel. Most of the fields are common for all panels but some fields depends on the panel type. Following is an example of panel JSON of a text panel.
+Panels are the building blocks of a dashboard. It consists of datasource queries, type of graphs, aliases, etc. Panel JSON consists of an array of JSON objects, each representing a different panel. Most of the fields are common for all panels but some fields depend on the panel type. Following is an example of panel JSON of a text panel.
 
 ```json
 "panels": [
@@ -105,7 +105,7 @@ The gridPos property describes the panel size and position in grid coordinates.
 - `x` The x position, in same unit as `w`.
 - `y` The y position, in same unit as `h`.
 
-The grid has a negative gravity that moves panels up if there i empty space above a panel.
+The grid has a negative gravity that moves panels up if there is empty space above a panel.
 
 ### timepicker
 
@@ -161,7 +161,7 @@ Usage of the fields is explained below:
 
 ### templating
 
-`templating` fields contains array of template variables with their saved values along with some other metadata, for example:
+The `templating` field contains an array of template variables with their saved values along with some other metadata, for example:
 
 ```json
  "templating": {
@@ -236,7 +236,7 @@ Usage of the above mentioned fields in the templating section is explained below
 | Name | Usage |
 | ---- | ----- |
 | **enable** | whether templating is enabled or not |
-| **list** | an array of objects representing, each representing one template variable |
+| **list** | an array of objects each representing one template variable |
 | **allFormat** | format to use while fetching all values from datasource, eg: `wildcard`, `glob`, `regex`, `pipe`, etc. |
 | **current** | shows current selected variable text/value on the dashboard |
 | **datasource** | shows datasource for the variables |

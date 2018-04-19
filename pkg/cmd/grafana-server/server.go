@@ -49,7 +49,7 @@ type GrafanaServerImpl struct {
 	childRoutines *errgroup.Group
 	log           log.Logger
 
-	httpServer *api.HttpServer
+	httpServer *api.HTTPServer
 }
 
 func (g *GrafanaServerImpl) Start() error {
@@ -111,7 +111,7 @@ func (g *GrafanaServerImpl) initLogging() {
 	})
 
 	if err != nil {
-		g.log.Error(err.Error())
+		fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
 		os.Exit(1)
 	}
 
@@ -120,7 +120,7 @@ func (g *GrafanaServerImpl) initLogging() {
 }
 
 func (g *GrafanaServerImpl) startHttpServer() error {
-	g.httpServer = api.NewHttpServer()
+	g.httpServer = api.NewHTTPServer()
 
 	err := g.httpServer.Start(g.context)
 

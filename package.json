@@ -4,7 +4,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "5.0.1-pre1",
+  "version": "5.1.0-pre1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -104,10 +104,10 @@
     "test": "grunt test",
     "test:coverage": "grunt test --coverage=true",
     "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
-    "karma": "node ./node_modules/grunt-cli/bin/grunt karma:dev",
-    "jest": "node ./node_modules/jest-cli/bin/jest.js --notify --watch",
-    "api-tests": "node ./node_modules/jest-cli/bin/jest.js --notify --watch --config=tests/api/jest.js",
-    "precommit": "lint-staged && node ./node_modules/grunt-cli/bin/grunt precommit"
+    "karma": "grunt karma:dev",
+    "jest": "jest --notify --watch",
+    "api-tests": "jest --notify --watch --config=tests/api/jest.js",
+    "precommit": "lint-staged && grunt precommit"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -118,7 +118,7 @@
       "prettier --write",
       "git add"
     ],
-    "*.go": [
+    "*pkg/**/*.go": [
       "gofmt -w -s",
       "git add"
     ]
@@ -136,6 +136,7 @@
     "angular-route": "^1.6.6",
     "angular-sanitize": "^1.6.6",
     "babel-polyfill": "^6.26.0",
+    "baron": "^3.0.3",
     "brace": "^0.10.0",
     "classnames": "^2.2.5",
     "clipboard": "^1.7.1",
@@ -151,7 +152,6 @@
     "moment": "^2.18.1",
     "mousetrap": "^1.6.0",
     "mousetrap-global-bind": "^1.1.0",
-    "perfect-scrollbar": "^1.2.0",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",

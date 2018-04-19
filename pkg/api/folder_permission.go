@@ -5,15 +5,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetFolderPermissionList(c *middleware.Context) Response {
+func GetFolderPermissionList(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folder, err := s.GetFolderByUid(c.Params(":uid"))
+	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
 	if err != nil {
 		return toFolderError(err)
@@ -27,24 +26,30 @@ func GetFolderPermissionList(c *middleware.Context) Response {
 
 	acl, err := g.GetAcl()
 	if err != nil {
-		return ApiError(500, "Failed to get folder permissions", err)
+		return Error(500, "Failed to get folder permissions", err)
 	}
 
 	for _, perm := range acl {
 		perm.FolderId = folder.Id
 		perm.DashboardId = 0
 
+		perm.UserAvatarUrl = dtos.GetGravatarUrl(perm.UserEmail)
+
+		if perm.TeamId > 0 {
+			perm.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
+		}
+
 		if perm.Slug != "" {
 			perm.Url = m.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 	}
 
-	return Json(200, acl)
+	return JSON(200, acl)
 }
 
-func UpdateFolderPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func UpdateFolderPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folder, err := s.GetFolderByUid(c.Params(":uid"))
+	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
 	if err != nil {
 		return toFolderError(err)
@@ -80,13 +85,13 @@ func UpdateFolderPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardA
 		if err != nil {
 			if err == guardian.ErrGuardianPermissionExists ||
 				err == guardian.ErrGuardianOverride {
-				return ApiError(400, err.Error(), err)
+				return Error(400, err.Error(), err)
 			}
 
-			return ApiError(500, "Error while checking folder permissions", err)
+			return Error(500, "Error while checking folder permissions", err)
 		}
 
-		return ApiError(403, "Cannot remove own admin permission for a folder", nil)
+		return Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -98,11 +103,11 @@ func UpdateFolderPermissions(c *middleware.Context, apiCmd dtos.UpdateDashboardA
 		}
 
 		if err == m.ErrFolderAclInfoMissing || err == m.ErrFolderPermissionFolderEmpty {
-			return ApiError(409, err.Error(), err)
+			return Error(409, err.Error(), err)
 		}
 
-		return ApiError(500, "Failed to create permission", err)
+		return Error(500, "Failed to create permission", err)
 	}
 
-	return ApiSuccess("Folder permissions updated")
+	return Success("Folder permissions updated")
 }

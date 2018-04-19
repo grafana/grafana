@@ -41,6 +41,8 @@ Grafana ships with the following set of notification types:
 To enable email notifications you have to setup [SMTP settings](/installation/configuration/#smtp)
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
+Be aware that if you use the `local` image storage email servers and clients might not be
+able to access the image.
 
 ### Slack
 
@@ -57,6 +59,8 @@ Setting | Description
 Recipient | allows you to override the Slack recipient.
 Mention | make it possible to include a mention in the Slack notification sent by Grafana. Ex @here or @channel
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
+
+If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
 
 ### PagerDuty
 
@@ -149,10 +153,10 @@ Prometheus Alertmanager | `prometheus-alertmanager` | no
 
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessable (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
+Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini config file.
 
-Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If your using local image uploader, your Grafana instance need to be accessible by the internet.
+Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
 Currently only the Email Channels attaches images if no external image store is specified. To include images in alert notifications for other channels then you need to set up an external image store.
 

@@ -43,11 +43,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "title": "Production Overview",
     "tags": [ "templated" ],
     "timezone": "browser",
-    "rows": [
-      {
-      }
-    ],
-    "schemaVersion": 6,
+    "schemaVersion": 16,
     "version": 0
   },
   "folderId": 0,
@@ -140,11 +136,7 @@ Content-Type: application/json
     "title": "Production Overview",
     "tags": [ "templated" ],
     "timezone": "browser",
-    "rows": [
-      {
-      }
-    ],
-    "schemaVersion": 6,
+    "schemaVersion": 16,
     "version": 0
   },
   "meta": {
@@ -219,14 +211,9 @@ Content-Type: application/json
     "editable":false,
     "hideControls":true,
     "nav":[
-    {
-      "enable":false,
-      "type":"timepicker"
-    }
-    ],
-    "rows": [
       {
-
+        "enable":false,
+        "type":"timepicker"
       }
     ],
     "style":"dark",
@@ -322,11 +309,7 @@ Content-Type: application/json
     "title": "Production Overview",
     "tags": [ "templated" ],
     "timezone": "browser",
-    "rows": [
-      {
-      }
-    ],
-    "schemaVersion": 6,
+    "schemaVersion": 16,
     "version": 0
   },
   "meta": {

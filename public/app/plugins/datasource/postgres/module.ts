@@ -8,7 +8,7 @@ class PostgresConfigCtrl {
 
   /** @ngInject **/
   constructor($scope) {
-    this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'require';
+    this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
   }
 }
 

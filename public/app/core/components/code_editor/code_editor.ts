@@ -21,6 +21,8 @@
  * data-tab-size           - Tab size, default is 2.
  * data-behaviours-enabled - Specifies whether to use behaviors or not. "Behaviors" in this case is the auto-pairing of
  *                           special characters, like quotation marks, parenthesis, or brackets.
+ * data-snippets-enabled   - Specifies whether to use snippets or not. "Snippets" are small pieces of code that can be
+ *                           inserted via the completion box.
  *
  * Keybindings:
  * Ctrl-Enter (Command-Enter): run onChange() function
@@ -36,6 +38,8 @@ import 'brace/mode/text';
 import 'brace/snippets/text';
 import 'brace/mode/sql';
 import 'brace/snippets/sql';
+import 'brace/mode/sqlserver';
+import 'brace/snippets/sqlserver';
 import 'brace/mode/markdown';
 import 'brace/snippets/markdown';
 import 'brace/mode/json';
@@ -47,6 +51,7 @@ const DEFAULT_MODE = 'text';
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
 const DEFAULT_BEHAVIOURS = true;
+const DEFAULT_SNIPPETS = true;
 
 let editorTemplate = `<div></div>`;
 
@@ -57,6 +62,7 @@ function link(scope, elem, attrs) {
   let showGutter = attrs.showGutter !== undefined;
   let tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
   let behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIOURS;
+  let snippetsEnabled = attrs.snippetsEnabled ? attrs.snippetsEnabled === 'true' : DEFAULT_SNIPPETS;
 
   // Initialize editor
   let aceElem = elem.get(0);
@@ -141,7 +147,7 @@ function link(scope, elem, attrs) {
     codeEditor.setOptions({
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
-      enableSnippets: true,
+      enableSnippets: snippetsEnabled,
     });
 
     if (scope.getCompleter()) {

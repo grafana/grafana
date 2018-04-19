@@ -132,7 +132,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 	return nil
 }
 
-func DeleteAlertDefinition(dashboardId int64, sess *DBSession) error {
+func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	alerts := make([]*m.Alert, 0)
 	sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
@@ -255,7 +255,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		}
 
 		alert.State = cmd.State
-		alert.StateChanges += 1
+		alert.StateChanges++
 		alert.NewStateDate = timeNow()
 		alert.EvalData = cmd.EvalData
 

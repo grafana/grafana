@@ -102,11 +102,8 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		existing.Tags = item.Tags
 
-		if _, err := sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "tags").Update(existing); err != nil {
-			return err
-		}
-
-		return nil
+		_, err = sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "tags").Update(existing)
+		return err
 	})
 }
 
@@ -202,7 +199,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	}
 
 	if query.Limit == 0 {
-		query.Limit = 10
+		query.Limit = 100
 	}
 
 	sql.WriteString(fmt.Sprintf(" ORDER BY epoch DESC LIMIT %v", query.Limit))

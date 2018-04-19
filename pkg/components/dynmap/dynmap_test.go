@@ -21,7 +21,7 @@ func NewAssert(t *testing.T) *Assert {
 }
 
 func (assert *Assert) True(value bool, message string) {
-	if value == false {
+	if !value {
 		log.Panicln("Assert: ", message)
 	}
 }
@@ -76,10 +76,10 @@ func TestFirst(t *testing.T) {
 	assert.True(s == "fallback", "must get string return fallback")
 
 	s, err = j.GetString("name")
-	assert.True(s == "anton" && err == nil, "name shoud match")
+	assert.True(s == "anton" && err == nil, "name should match")
 
 	s, err = j.GetString("address", "street")
-	assert.True(s == "Street 42" && err == nil, "street shoud match")
+	assert.True(s == "Street 42" && err == nil, "street should match")
 	//log.Println("s: ", s.String())
 
 	_, err = j.GetNumber("age")
@@ -119,13 +119,13 @@ func TestFirst(t *testing.T) {
 	assert.True(s == "" && err != nil, "nonexistent string fail")
 
 	b, err := j.GetBoolean("true")
-	assert.True(b == true && err == nil, "bool true test")
+	assert.True(b && err == nil, "bool true test")
 
 	b, err = j.GetBoolean("false")
-	assert.True(b == false && err == nil, "bool false test")
+	assert.True(!b && err == nil, "bool false test")
 
 	b, err = j.GetBoolean("invalid_field")
-	assert.True(b == false && err != nil, "bool invalid test")
+	assert.True(!b && err != nil, "bool invalid test")
 
 	list, err := j.GetValueArray("list")
 	assert.True(list != nil && err == nil, "list should be an array")

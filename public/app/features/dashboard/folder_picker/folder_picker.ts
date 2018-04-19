@@ -19,9 +19,12 @@ export class FolderPickerCtrl {
   newFolderNameTouched: boolean;
   hasValidationError: boolean;
   validationError: any;
+  isEditor: boolean;
 
   /** @ngInject */
-  constructor(private backendSrv, private validationSrv) {
+  constructor(private backendSrv, private validationSrv, private contextSrv) {
+    this.isEditor = this.contextSrv.isEditor;
+
     if (!this.labelClass) {
       this.labelClass = 'width-7';
     }
@@ -38,19 +41,20 @@ export class FolderPickerCtrl {
 
     return this.backendSrv.get('api/search', params).then(result => {
       if (
-        query === '' ||
-        query.toLowerCase() === 'g' ||
-        query.toLowerCase() === 'ge' ||
-        query.toLowerCase() === 'gen' ||
-        query.toLowerCase() === 'gene' ||
-        query.toLowerCase() === 'gener' ||
-        query.toLowerCase() === 'genera' ||
-        query.toLowerCase() === 'general'
+        this.isEditor &&
+        (query === '' ||
+          query.toLowerCase() === 'g' ||
+          query.toLowerCase() === 'ge' ||
+          query.toLowerCase() === 'gen' ||
+          query.toLowerCase() === 'gene' ||
+          query.toLowerCase() === 'gener' ||
+          query.toLowerCase() === 'genera' ||
+          query.toLowerCase() === 'general')
       ) {
         result.unshift({ title: this.rootName, id: 0 });
       }
 
-      if (this.enableCreateNew && query === '') {
+      if (this.isEditor && this.enableCreateNew && query === '') {
         result.unshift({ title: '-- New Folder --', id: -1 });
       }
 

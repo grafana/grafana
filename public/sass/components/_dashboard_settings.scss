@@ -64,8 +64,13 @@
     background: $page-bg;
   }
 
-  i {
-    padding-right: 5px;
+  .gicon {
+    margin-bottom: 2px;
+  }
+
+  .fa {
+    font-size: 17px;
+    width: 16px;
   }
 }
 

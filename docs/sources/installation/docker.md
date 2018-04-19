@@ -12,7 +12,7 @@ weight = 4
 
 # Installing using Docker
 
-Grafana is very easy to install and run using the offical docker container.
+Grafana is very easy to install and run using the official docker container.
 
 ```bash
 $ docker run -d -p 3000:3000 grafana/grafana
@@ -83,7 +83,7 @@ $ docker run \
   -d \
   -p 3000:3000 \
   --name grafana \
-  grafana/grafana:4.5.2
+  grafana/grafana:5.0.2
 ```
 
 ## Configuring AWS Credentials for CloudWatch Support

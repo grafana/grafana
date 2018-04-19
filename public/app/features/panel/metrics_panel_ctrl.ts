@@ -73,13 +73,16 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.panel.snapshotData) {
       this.updateTimeRange();
       var data = this.panel.snapshotData;
-      // backward compatability
+      // backward compatibility
       if (!_.isArray(data)) {
         data = data.data;
       }
 
-      this.events.emit('data-snapshot-load', data);
-      return;
+      // Defer panel rendering till the next digest cycle.
+      // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.
+      return this.$timeout(() => {
+        this.events.emit('data-snapshot-load', data);
+      });
     }
 
     // // ignore if we have data stream
@@ -222,6 +225,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     var metricsQuery = {
       timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
+      dashboardId: this.dashboard.id,
       range: this.range,
       rangeRaw: this.range.raw,
       interval: this.interval,
