@@ -18,8 +18,8 @@ Grafana v5.1 brings new features, many enhancements and bug fixes. This article 
 * [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
 * [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
 * [New template variable interpolation syntax]({{< relref "#new-template-variable-interpolation-syntax" >}})
-* [Alerting]({{< relref "#alerting" >}})
-* [Datasources]({{< relref "#datasources" >}}) Enhancements to Prometheus, Cloudwatch, PostgreSQL and MySQL. This release also adds support for [Microsft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table datasource!
+* [Heatmap support for Prometehus]({{< relref "#prometheus" >}}) 
+* [Microsft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table datasource!
 * [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
 
 ## Scrolling
@@ -57,32 +57,21 @@ More information in the [Provisioning documentation](/features/datasources/prome
 
 ## New template variable interpolation syntax
 
-
-## Alerting
-
-New enhancements includes support for retries on failed alert queries and updating correct state when pausing/unpausing alerts.
-
-## Datasources
-
-### Prometheus
+## Prometheus
 
 The Prometheus datasource now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we are really happy to finally allow our users to render those as heatmaps.
 
 Prometheus query editor also got support for autocomplete of template variables. More information in the [Prometheus data source documentation](/features/datasources/prometheus/).
 
-### Cloudwatch
-
-New enhancements includes support for high resolution metrics and dimension filtering. More information in the [Cloudwatch data source documentation](/features/datasources/cloudwatch/).
-
-### PostgreSQL
+## PostgreSQL
 
 New enhancement includes support for filling in values for missing intervals and better precision handling and data type support for time columns. More information in the [PostgreSQL data source documentation](/features/datasources/postgres/#time-series-queries).
 
-### MySQL
+## MySQL
 
 New enhancements includes support for filling in values for missing intervals, better precision handling and data type support for time columns and any column except time and metric is now treated as a value column. More information in the [MySQL data source documentation](/features/datasources/mysql/#time-series-queries).
 
-### Microsoft SQL Server
+## Microsoft SQL Server
 
 {{< docs-imagebox img="/img/docs/v51/mssql_query_editor_showcase.png"  max-width= "800px" class="docs-image--right" >}}
 
