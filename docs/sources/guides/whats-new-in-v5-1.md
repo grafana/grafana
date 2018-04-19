@@ -16,11 +16,11 @@ Grafana v5.1 brings new features, many enhancements and bug fixes. This article 
 
 * [Improved scrolling experience]({{< relref "#improved-scrolling-experience" >}})
 * [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
-* [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
-* [New template variable interpolation syntax]({{< relref "#new-template-variable-interpolation-syntax" >}})
 * [Heatmap support for Prometheus]({{< relref "#prometheus" >}})
 * [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric & table datasource!
 * [Dashboards & Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
+* [New variable interpolation syntax]({{< relref "#new-variable-interpolation-syntax" >}})
+* [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
 
 ## Improved scrolling experience
 
@@ -43,32 +43,6 @@ Version | User    | User ID
 
 Please read the [updated documentation](/installation/docker/#migration-from-a-previous-version-of-the-docker-container-to-5-1-or-later) which includes migration instructions and more information.
 
-## Improved workflow for provisioned dashboards
-
-{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="800px" class="docs-image--right" >}}
-
-Grafana v5.1 brings an improved workflow for provisioned dashboards:
-
-* A populated `id` property in JSON is now automatically removed when provisioning dashboards.
-* When making changes to a provisioned dashboard you can `Save` the dashboard which now will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot to the right.
-
-
-Available options in the dialog will let you `Copy JSON to Clipboard` and/or `Save JSON to file` which can help you synchronize your dashboard changes back to the provisioning source.
-More information in the [Provisioning documentation](/features/datasources/prometheus/).
-
-<div class="clearfix"></div>
-
-## New template variable interpolation syntax
-
-We now support a new option for rendering template variables that gives the user full control of how the value(s) should be rendered. In the table below you can see two examples and you can find all different options in the [template variable docs](http://docs.grafana.org/reference/templating/#advanced-formatting-options).
-
-Filter Option | Example | Raw | Interpolated | Description
------------- | ------------- | ------------- | -------------  | -------------
-`glob` | ${servers:glob} |  `'test1', 'test2'` | `{test1,test2}` | (Default) Formats multi-value variable into a glob (for Graphite queries)
-`csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string (requires Grafana 5.1)
-`lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
-
-
 ## Prometheus
 
 {{< docs-imagebox img="/img/docs/v51/prometheus_heatmap.png" max-width="800px" class="docs-image--right" >}}
@@ -81,14 +55,6 @@ Prometheus query editor also got support for autocomplete of template variables.
 
 <div class="clearfix"></div>
 
-## PostgreSQL
-
-New enhancement includes support for filling in values for missing intervals and better precision handling and data type support for time columns. More information in the [PostgreSQL data source documentation](/features/datasources/postgres/#time-series-queries).
-
-## MySQL
-
-New enhancements includes support for filling in values for missing intervals, better precision handling and data type support for time columns and any column except time and metric is now treated as a value column. More information in the [MySQL data source documentation](/features/datasources/mysql/#time-series-queries).
-
 ## Microsoft SQL Server
 
 {{< docs-imagebox img="/img/docs/v51/mssql_query_editor_showcase.png"  max-width= "800px" class="docs-image--right" >}}
@@ -96,8 +62,6 @@ New enhancements includes support for filling in values for missing intervals, b
 Grafana v5.1 now ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any
 Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. Do you have metric or log data in MSSQL? You can now visualize
 that data and define alert rules on it like with any of Grafana's other core datasources.
-
-Same enhancements as described for PostgreSQL and MySQL are included in the MSSQL datasource.
 
 Please read [Using Microsoft SQL Server in Grafana documentation](/features/datasources/mssql/) for more detailed information on how to get started and use it.
 
@@ -127,6 +91,33 @@ New enhancements includes support for multiple series stacking in histogram mode
 ### Table Panel
 
 New enhancements includes support for mapping a numeric value/range to text and additional units. More information in the [Table panel documentation](/features/panels/table_panel/#string).
+
+## New variable interpolation syntax
+
+We now support a new option for rendering variables that gives the user full control of how the value(s) should be rendered.
+In the table below you can see some examples and you can find all different options in the [Variables documentation](http://docs.grafana.org/reference/templating/#advanced-formatting-options).
+
+Filter Option | Example | Raw | Interpolated | Description
+------------ | ------------- | ------------- | -------------  | -------------
+`glob` | ${servers:glob} |  `'test1', 'test2'` | `{test1,test2}` | Formats multi-value variable into a glob
+`regex` | ${servers:regex} | `'test.', 'test2'` |  `(test\\.|test2)` | Formats multi-value variable into a regex string
+`pipe` | ${servers:pipe} | `'test.', 'test2'` |  `test.|test2` | Formats multi-value variable into a pipe-separated string
+`csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
+
+## Improved workflow for provisioned dashboards
+
+{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="800px" class="docs-image--right" >}}
+
+Grafana v5.1 brings an improved workflow for provisioned dashboards:
+
+* A populated `id` property in JSON is now automatically removed when provisioning dashboards.
+* When making changes to a provisioned dashboard you can `Save` the dashboard which now will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot to the right.
+
+
+Available options in the dialog will let you `Copy JSON to Clipboard` and/or `Save JSON to file` which can help you synchronize your dashboard changes back to the provisioning source.
+More information in the [Provisioning documentation](/features/datasources/prometheus/).
+
+<div class="clearfix"></div>
 
 ## Changelog
 
