@@ -44,7 +44,18 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
   for (var i = 0; i < selectParts.length; i++) {
     var part = selectParts[i];
     if (part.def.category === categories.Aggregations) {
+      // count distinct is allowed
+      if (part.def.type === 'count' && partModel.def.type === 'distinct') {
+        break;
+      }
       selectParts[i] = partModel;
+      // remove next aggregation if distinct was replaced
+      if (part.def.type === 'distinct' && selectParts.length >= i + 2) {
+        var nextPart = selectParts[i + 1];
+        if (nextPart.def.category === categories.Aggregations) {
+          selectParts.splice(i + 1, 1);
+        }
+      }
       return;
     }
     if (part.def.category === categories.Selectors) {
