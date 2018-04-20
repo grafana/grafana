@@ -94,7 +94,7 @@ Query | Description
 *tags(server=~backend\*)* | Returns only tags that occur in series matching the filter expression.
 *tag_values(server)*  | Return tag values for the specified tag.
 *tag_values(server, server=~backend*)*  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
-*tag_values(server, server=~backend*, app=${apps:regex})* | Multiple filter expressions and expressions can contain other variables.
+*tag_values(server, server=~backend*, app=~${apps:regex})* | Multiple filter expressions and expressions can contain other variables.
 
 For more details, see the [Graphite docs on the autocomplete api for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
@@ -124,7 +124,15 @@ Example:
 
 ### Variable Usage in Tag Queries
 
-Multi-value variables in tag queries use the advanced formatting syntax introduced in Grafana 5.0 for variables: `{var:regex}`. Non-tag queries will use the default glob formatting for multi-value variables. Checkout the [Advanced Formatting Options section in the Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation for examples and details.
+Multi-value variables in tag queries use the advanced formatting syntax introduced in Grafana 5.0 for variables: `{var:regex}`. Non-tag queries will use the default glob formatting for multi-value variables.
+
+Example of a tag expression with regex formatting and using the Equal Tilde operator, `=~`:
+
+```text
+server=~${servers:regex}
+```
+
+Checkout the [Advanced Formatting Options section in the Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation for examples and details.
 
 ## Annotations
 
