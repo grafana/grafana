@@ -139,10 +139,6 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - gometalinter:
-          filters:
-            tags:
-              only: /.*/
       - build:
           filters:
             tags:
