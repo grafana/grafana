@@ -341,19 +341,19 @@ $input-border: 1px solid $input-border-color;
   margin-right: $gf-form-margin;
   position: relative;
   background-color: $input-bg;
-  padding-right: $input-padding-x;
   border: $input-border;
   border-radius: $input-border-radius;
 
   &::after {
     position: absolute;
     top: 35%;
-    right: $input-padding-x/2;
+    right: $input-padding-x;
     background-color: transparent;
     color: $input-color;
     font: normal normal normal $font-size-sm/1 FontAwesome;
     content: '\f0d7';
     pointer-events: none;
+    font-size: 11px;
   }
 
   .gf-form-input {

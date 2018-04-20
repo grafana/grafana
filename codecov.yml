@@ -8,6 +8,4 @@ coverage:
     patch: yes
     changes: no
 
-comment:
-  layout: "diff"
-  behavior: "once"
+comment: off

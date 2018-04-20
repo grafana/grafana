@@ -101,13 +101,14 @@ func LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
 		return Error(401, "Login is disabled", nil)
 	}
 
-	authQuery := login.LoginUserQuery{
-		Username:  cmd.User,
-		Password:  cmd.Password,
-		IpAddress: c.Req.RemoteAddr,
+	authQuery := &m.LoginUserQuery{
+		ReqContext: c,
+		Username:   cmd.User,
+		Password:   cmd.Password,
+		IpAddress:  c.Req.RemoteAddr,
 	}
 
-	if err := bus.Dispatch(&authQuery); err != nil {
+	if err := bus.Dispatch(authQuery); err != nil {
 		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
 			return Error(401, "Invalid username or password", err)
 		}

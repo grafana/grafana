@@ -7,7 +7,6 @@ package notifications
 import (
 	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"html/template"
 	"net"
@@ -135,7 +134,7 @@ func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 		subjectText, hasSubject := subjectData["value"]
 
 		if !hasSubject {
-			return nil, errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
+			return nil, fmt.Errorf("Missing subject in Template %s", cmd.Template)
 		}
 
 		subjectTmpl, err := template.New("subject").Parse(subjectText.(string))

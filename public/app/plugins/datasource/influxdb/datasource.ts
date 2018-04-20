@@ -54,7 +54,7 @@ export default class InfluxDatasource {
 
       queryTargets.push(target);
 
-      // backward compatability
+      // backward compatibility
       scopedVars.interval = scopedVars.__interval;
 
       queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);

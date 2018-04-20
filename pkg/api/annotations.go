@@ -2,7 +2,6 @@ package api
 
 import (
 	"strings"
-	"time"
 
 	"fmt"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -16,9 +15,10 @@ import (
 func GetAnnotations(c *m.ReqContext) Response {
 
 	query := &annotations.ItemQuery{
-		From:        c.QueryInt64("from") / 1000,
-		To:          c.QueryInt64("to") / 1000,
+		From:        c.QueryInt64("from"),
+		To:          c.QueryInt64("to"),
 		OrgId:       c.OrgId,
+		UserId:      c.QueryInt64("userId"),
 		AlertId:     c.QueryInt64("alertId"),
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
@@ -38,7 +38,7 @@ func GetAnnotations(c *m.ReqContext) Response {
 		if item.Email != "" {
 			item.AvatarUrl = dtos.GetGravatarUrl(item.Email)
 		}
-		item.Time = item.Time * 1000
+		item.Time = item.Time
 	}
 
 	return JSON(200, items)
@@ -69,14 +69,10 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 		UserId:      c.UserId,
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
-		Epoch:       cmd.Time / 1000,
+		Epoch:       cmd.Time,
 		Text:        cmd.Text,
 		Data:        cmd.Data,
 		Tags:        cmd.Tags,
-	}
-
-	if item.Epoch == 0 {
-		item.Epoch = time.Now().Unix()
 	}
 
 	if err := repo.Save(&item); err != nil {
@@ -98,7 +94,7 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 		}
 
 		item.Id = 0
-		item.Epoch = cmd.TimeEnd / 1000
+		item.Epoch = cmd.TimeEnd
 
 		if err := repo.Save(&item); err != nil {
 			return Error(500, "Failed save annotation for region end time", err)
@@ -133,9 +129,6 @@ func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd
 		return Error(500, "Failed to save Graphite annotation", err)
 	}
 
-	if cmd.When == 0 {
-		cmd.When = time.Now().Unix()
-	}
 	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
 
 	// Support tags in prior to Graphite 0.10.0 format (string of tags separated by space)
@@ -164,7 +157,7 @@ func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd
 	item := annotations.Item{
 		OrgId:  c.OrgId,
 		UserId: c.UserId,
-		Epoch:  cmd.When,
+		Epoch:  cmd.When * 1000,
 		Text:   text,
 		Tags:   tagsArray,
 	}

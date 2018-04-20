@@ -74,7 +74,7 @@ func TestMappingRowValue(t *testing.T) {
 
 	boolRowValue, _ := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_BOOL, BoolValue: true})
 	haveBool, ok := boolRowValue.(bool)
-	if !ok || haveBool != true {
+	if !ok || !haveBool {
 		t.Fatalf("Expected true, was %v", haveBool)
 	}
 
