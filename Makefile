@@ -30,6 +30,9 @@ build-docker-dev:
 	cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
 	cd packaging/docker && docker build --tag grafana/grafana:dev .
 
+build-docker-full:
+	docker build --tag grafana/grafana:dev .
+
 test-go:
 	go test -v ./pkg/...
 

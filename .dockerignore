@@ -3,9 +3,12 @@
 .git
 .gitignore
 .github
+.vscode
+bin
 data*
 dist
 docker
+Dockerfile
 docs
 dump.rdb
 node_modules
@@ -13,3 +16,4 @@ node_modules
 /tmp
 *.yml
 *.md
+/tmp
