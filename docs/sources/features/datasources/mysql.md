@@ -202,7 +202,7 @@ ORDER BY atimestamp ASC
 
 #### Disabling Quoting for Multi-value Variables
 
-Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'. Do disable quoting, use the csv formatting option for variables:
+Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. Do disable quoting, use the csv formatting option for variables:
 
 `${servers:csv}`
 
@@ -234,9 +234,9 @@ tags | Optional field name to use for event tags as a comma separated string.
 
 Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule conditions.
 
-## Configure datasource with provisioning
+## Configure the Datasource with Provisioning
 
-It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
 
 Here are some provisioning examples for this datasource.
 
