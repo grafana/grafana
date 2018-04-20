@@ -44,6 +44,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 
 	metrics.M_Alerting_Result_State.WithLabelValues(string(evalContext.Rule.State)).Inc()
 	if evalContext.ShouldUpdateAlertState() {
+
 		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &m.SetAlertStateCommand{
@@ -56,7 +57,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 
 		if err := bus.Dispatch(cmd); err != nil {
 			if err == m.ErrCannotChangeStateOnPausedAlert {
-				handler.log.Error("Cannot change state on alert thats pause", "error", err)
+				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err
 			}
 
@@ -68,6 +69,8 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			handler.log.Error("Failed to save state", "error", err)
 		}
 
+		alertEpoch := time.Now().Unix()
+
 		// save annotation
 		item := annotations.Item{
 			OrgId:       evalContext.Rule.OrgId,
@@ -77,7 +80,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			Text:        "",
 			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(evalContext.PrevAlertState),
-			Epoch:       time.Now().Unix(),
+			Epoch:       alertEpoch,
 			Data:        annotationData,
 		}
 
@@ -85,6 +88,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		if err := annotationRepo.Save(&item); err != nil {
 			handler.log.Error("Failed to save annotation for new alert state", "error", err)
 		}
+		evalContext.Epoch = alertEpoch
 	}
 
 	handler.notifier.SendIfNeeded(evalContext)

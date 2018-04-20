@@ -26,6 +26,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "eval_data", Type: DB_Text, Nullable: true},
 			{Name: "eval_date", Type: DB_DateTime, Nullable: true},
 			{Name: "new_state_date", Type: DB_DateTime, Nullable: false},
+			{Name: "prev_state_date", Type: DB_DateTime, Nullable: false},
 			{Name: "state_changes", Type: DB_Int, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},

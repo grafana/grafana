@@ -73,9 +73,10 @@ type Alert struct {
 	ExecutionError string
 	Frequency      int64
 
-	EvalData     *simplejson.Json
-	NewStateDate time.Time
-	StateChanges int
+	EvalData      *simplejson.Json
+	NewStateDate  time.Time
+	PrevStateDate time.Time
+	StateChanges  int
 
 	Created time.Time
 	Updated time.Time
@@ -197,6 +198,7 @@ type AlertListItemDTO struct {
 	Name           string           `json:"name"`
 	State          AlertStateType   `json:"state"`
 	NewStateDate   time.Time        `json:"newStateDate"`
+	PrevStateDate  time.Time        `json:"prevStateDate"`
 	EvalDate       time.Time        `json:"evalDate"`
 	EvalData       *simplejson.Json `json:"evalData"`
 	ExecutionError string           `json:"executionError"`
@@ -204,11 +206,12 @@ type AlertListItemDTO struct {
 }
 
 type AlertStateInfoDTO struct {
-	Id           int64          `json:"id"`
-	DashboardId  int64          `json:"dashboardId"`
-	PanelId      int64          `json:"panelId"`
-	State        AlertStateType `json:"state"`
-	NewStateDate time.Time      `json:"newStateDate"`
+	Id            int64          `json:"id"`
+	DashboardId   int64          `json:"dashboardId"`
+	PanelId       int64          `json:"panelId"`
+	State         AlertStateType `json:"state"`
+	NewStateDate  time.Time      `json:"newStateDate"`
+	PrevStateDate time.Time      `json:"prevStateDate"`
 }
 
 // "Internal" commands
