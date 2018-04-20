@@ -81,6 +81,20 @@ export class PrometheusDatasource {
     return this.backendSrv.datasourceRequest(options);
   }
 
+  // Use this for tab completion features, wont publish response to other components
+  helperRequest(url) {
+    const options: any = {
+      url: this.url + url,
+      silent: true,
+    };
+
+    if (this.basicAuth || this.withCredentials) {
+      options.withCredentials = true;
+    }
+
+    return this.backendSrv.datasourceRequest(options);
+  }
+
   interpolateQueryExpr(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
@@ -229,7 +243,7 @@ export class PrometheusDatasource {
       );
     }
 
-    return this._request('GET', url).then(result => {
+    return this.helperRequest(url).then(result => {
       this.metricsNameCache = {
         data: result.data.data,
         expire: Date.now() + 60 * 1000,
