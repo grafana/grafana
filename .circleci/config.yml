@@ -117,7 +117,7 @@ jobs:
       - image: circleci/python:2.7-stretch
     steps:
       - attach_workspace:
-          at: dist
+          at: .
       - run:
           name: install awscli
           command: 'sudo pip install awscli'
