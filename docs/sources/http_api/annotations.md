@@ -210,8 +210,8 @@ Content-Type: application/json
 
 {
   "isRegion": true,
-  "regionId": 100
-  "regionEndAnnotationId": 1201
+  "regionId": 100,
+  "regionEndAnnotationId": 1201,
   "text": "Service Impact: IR-4023",
 }
 ```
