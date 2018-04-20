@@ -61,6 +61,7 @@ Content-Type: application/json
         "value": 5.349999999999999
       }
     "newStateDate": "2016-12-25",
+    "prevStateDate": "2016-12-24"
     "executionError": "",
     "url": "http://grafana.com/dashboard/db/sensors"
   }

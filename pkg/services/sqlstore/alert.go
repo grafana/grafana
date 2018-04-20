@@ -73,6 +73,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 		alert.name,
 		alert.state,
 		alert.new_state_date,
+		alert.prev_state_date,
 		alert.eval_date,
 		alert.execution_error,
 		dashboard.uid as dashboard_uid,
@@ -193,6 +194,7 @@ func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 			alert.Created = timeNow()
 			alert.State = m.AlertStatePending
 			alert.NewStateDate = timeNow()
+			alert.PrevStateDate = timeNow()
 
 			_, err := sess.Insert(alert)
 			if err != nil {
@@ -256,6 +258,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 
 		alert.State = cmd.State
 		alert.StateChanges++
+		alert.PrevStateDate = alert.NewStateDate
 		alert.NewStateDate = timeNow()
 		alert.EvalData = cmd.EvalData
 
@@ -279,7 +282,7 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 		var buffer bytes.Buffer
 		params := make([]interface{}, 0)
 
-		buffer.WriteString(`UPDATE alert SET state = ?, new_state_date = ?`)
+		buffer.WriteString(`UPDATE alert SET state = ?, prev_state_date = new_state_date, new_state_date = ?`)
 		if cmd.Paused {
 			params = append(params, string(m.AlertStatePaused))
 			params = append(params, timeNow())
@@ -311,7 +314,7 @@ func PauseAllAlerts(cmd *m.PauseAllAlertCommand) error {
 			newState = string(m.AlertStatePending)
 		}
 
-		res, err := sess.Exec(`UPDATE alert SET state = ?, new_state_date = ?`, newState, timeNow())
+		res, err := sess.Exec(`UPDATE alert SET state = ?, prev_state_date = new_state_date, new_state_date = ?`, newState, timeNow())
 		if err != nil {
 			return err
 		}

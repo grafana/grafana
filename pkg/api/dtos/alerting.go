@@ -16,6 +16,7 @@ type AlertRule struct {
 	Message        string           `json:"message"`
 	State          m.AlertStateType `json:"state"`
 	NewStateDate   time.Time        `json:"newStateDate"`
+	PrevStateDate  time.Time        `json:"prevStateDate"`
 	EvalDate       time.Time        `json:"evalDate"`
 	EvalData       *simplejson.Json `json:"evalData"`
 	ExecutionError string           `json:"executionError"`

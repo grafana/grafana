@@ -3,6 +3,7 @@ package api
 import (
 	"strings"
 
+	"fmt"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
@@ -175,36 +176,95 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	annotationID := c.ParamsInt64(":annotationId")
 
 	repo := annotations.GetRepository()
+	query := &annotations.ItemQuery{
+		OrgId:        c.OrgId,
+		AnnotationId: annotationID,
+	}
+
+	items, err := repo.Find(query)
+	if err != nil {
+		return Error(500, "Failed to get annotations", err)
+	}
+
+	annotation := items[0]
+	annotation.Time = annotation.Time * 1000
 
 	if resp := canSave(c, repo, annotationID); resp != nil {
 		return resp
+	}
+
+	var epoch int64
+	var text string
+	var tags []string
+
+	// Only update fields explicitly sent in the cmd
+	if cmd.Time != 0 {
+		epoch = cmd.Time
+	} else {
+		epoch = annotation.Time
+	}
+	if cmd.Text != "" {
+		text = cmd.Text
+	} else {
+		text = annotation.Text
+	}
+	if len(cmd.Tags) > 0 {
+		tags = cmd.Tags
+	} else {
+		tags = annotation.Tags
 	}
 
 	item := annotations.Item{
 		OrgId:  c.OrgId,
 		UserId: c.UserId,
 		Id:     annotationID,
-		Epoch:  cmd.Time,
-		Text:   cmd.Text,
-		Tags:   cmd.Tags,
+		Epoch:  epoch / 1000,
+		Text:   text,
+		Tags:   tags,
+	}
+
+	if cmd.IsRegion {
+
+		if cmd.RegionId != 0 {
+			item.RegionId = cmd.RegionId
+		} else {
+			item.RegionId = annotation.RegionId
+		}
+
+		var itemRight annotations.Item
+
+		if cmd.RegionEndAnnotationId == 0 {
+			itemRight = item
+			itemRight.RegionId = item.Id
+			itemRight.Epoch = cmd.TimeEnd / 1000
+
+			// We don't know id of region right event, so set it to 0 and find then using query like
+			// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
+			itemRight.Id = 0
+
+			if err := repo.Update(&itemRight); err != nil {
+				return Error(500, fmt.Sprintf("Failed to update annotation for region end time %d.", cmd.TimeEnd), err)
+			}
+
+		} else { // allow for converting existing annotations into a region
+			itemRight = annotations.Item{
+				OrgId:    c.OrgId,
+				UserId:   c.UserId,
+				Id:       cmd.RegionEndAnnotationId,
+				RegionId: item.RegionId,
+			}
+
+			if err := repo.Update(&itemRight); err != nil {
+				return Error(500, fmt.Sprintf("Failed to update annotation for region ending annotation %d.", cmd.RegionEndAnnotationId), err)
+			}
+		}
+
+	} else if cmd.RegionEndAnnotationId != 0 {
+		return Error(500, fmt.Sprintf("Failed to update annotation for region ending annotation %d. When transforming annotations into a region, isRegion must be true.", cmd.RegionEndAnnotationId), err)
 	}
 
 	if err := repo.Update(&item); err != nil {
 		return Error(500, "Failed to update annotation", err)
-	}
-
-	if cmd.IsRegion {
-		itemRight := item
-		itemRight.RegionId = item.Id
-		itemRight.Epoch = cmd.TimeEnd
-
-		// We don't know id of region right event, so set it to 0 and find then using query like
-		// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
-		itemRight.Id = 0
-
-		if err := repo.Update(&itemRight); err != nil {
-			return Error(500, "Failed to update annotation for region end time", err)
-		}
 	}
 
 	return Success("Annotation updated")

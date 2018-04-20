@@ -14,12 +14,14 @@ type PostAnnotationsCmd struct {
 }
 
 type UpdateAnnotationsCmd struct {
-	Id       int64    `json:"id"`
-	Time     int64    `json:"time"`
-	Text     string   `json:"text"`
-	Tags     []string `json:"tags"`
-	IsRegion bool     `json:"isRegion"`
-	TimeEnd  int64    `json:"timeEnd"`
+	Id                    int64    `json:"id"`
+	Time                  int64    `json:"time"`
+	Text                  string   `json:"text"`
+	Tags                  []string `json:"tags"`
+	IsRegion              bool     `json:"isRegion"`
+	RegionEndAnnotationId int64    `json:"regionEndAnnotationId"`
+	TimeEnd               int64    `json:"timeEnd"`
+	RegionId              int64    `json:"regionId"`
 }
 
 type DeleteAnnotationsCmd struct {

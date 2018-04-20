@@ -69,6 +69,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			alert, _ := getAlertById(1)
 			stateDateBeforePause := alert.NewStateDate
+			prevStateDateBeforePause := alert.PrevStateDate
 
 			Convey("can pause all alerts", func() {
 				pauseAllAlerts(true)
@@ -89,11 +90,23 @@ func TestAlertingDataAccess(t *testing.T) {
 					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
 				})
 
+				Convey("pausing alerts should update their PrevStateDate", func() {
+					alert, _ = getAlertById(1)
+					prevStateDateAfterPause := alert.PrevStateDate
+					So(prevStateDateBeforePause, ShouldHappenBefore, prevStateDateAfterPause)
+				})
+
+				pauseAllAlerts(false)
 				Convey("unpausing alerts should update their NewStateDate again", func() {
-					pauseAllAlerts(false)
 					alert, _ = getAlertById(1)
 					stateDateAfterUnpause := alert.NewStateDate
 					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterUnpause)
+				})
+
+				Convey("unpausing alerts should update their PrevStateDate again", func() {
+					alert, _ = getAlertById(1)
+					prevStateDateAfterUnpause := alert.PrevStateDate
+					So(prevStateDateBeforePause, ShouldHappenBefore, prevStateDateAfterUnpause)
 				})
 			})
 		})
@@ -255,6 +268,8 @@ func TestPausingAlerts(t *testing.T) {
 
 		stateDateBeforePause := alert.NewStateDate
 		stateDateAfterPause := stateDateBeforePause
+		prevStateDateBeforePause := alert.PrevStateDate
+		prevStateDateAfterPause := prevStateDateBeforePause
 		Convey("when paused", func() {
 			pauseAlert(testDash.OrgId, 1, true)
 
@@ -263,6 +278,13 @@ func TestPausingAlerts(t *testing.T) {
 
 				stateDateAfterPause = alert.NewStateDate
 				So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
+			})
+
+			Convey("the PrevStateDate should be updated", func() {
+				alert, _ := getAlertById(1)
+
+				prevStateDateAfterPause = alert.PrevStateDate
+				So(prevStateDateBeforePause, ShouldHappenBefore, prevStateDateAfterPause)
 			})
 		})
 
@@ -274,6 +296,13 @@ func TestPausingAlerts(t *testing.T) {
 
 				stateDateAfterUnpause := alert.NewStateDate
 				So(stateDateAfterPause, ShouldHappenBefore, stateDateAfterUnpause)
+			})
+
+			Convey("the PrevStateDate should be updated again", func() {
+				alert, _ := getAlertById(1)
+
+				prevStateDateAfterUnpause := alert.PrevStateDate
+				So(prevStateDateAfterPause, ShouldHappenBefore, prevStateDateAfterUnpause)
 			})
 		})
 	})

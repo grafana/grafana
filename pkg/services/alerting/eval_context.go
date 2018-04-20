@@ -20,6 +20,7 @@ type EvalContext struct {
 	ConditionEvals string
 	StartTime      time.Time
 	EndTime        time.Time
+	Epoch          int64
 	Rule           *Rule
 	log            log.Logger
 

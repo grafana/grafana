@@ -86,9 +86,16 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			return errors.New("Annotation not found")
 		}
 
+		if item.Epoch != 0 {
+			existing.Epoch = item.Epoch
+		}
+
+		if item.Text != "" {
+			existing.Text = item.Text
+		}
+
 		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
-		existing.Epoch = item.Epoch
-		existing.Text = item.Text
+
 		if item.RegionId != 0 {
 			existing.RegionId = item.RegionId
 		}
@@ -106,9 +113,9 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 					}
 				}
 			}
-		}
 
-		existing.Tags = item.Tags
+			existing.Tags = item.Tags
+		}
 
 		_, err = sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "updated", "tags").Update(existing)
 		return err
