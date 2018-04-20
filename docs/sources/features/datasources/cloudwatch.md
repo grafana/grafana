@@ -208,9 +208,9 @@ it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each q
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
 
-## Configure datasource with provisioning
+## Configure the Datasource with Provisioning
 
-It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
 
 Here are some provisioning examples for this datasource.
 

@@ -53,7 +53,6 @@ or keyboard arrow keys. You can select a wildcard and still continue.
 {{< docs-imagebox img="/img/docs/v45/graphite_query1_still.png"
                   animated-gif="/img/docs/v45/graphite_query1.gif" >}}
 
-
 ### Functions
 
 Click the plus icon to the right to add a function. You can search for the function or select it from the menu. Once
@@ -64,7 +63,6 @@ by the x icon.
 {{< docs-imagebox img="/img/docs/v45/graphite_query2_still.png"
                   animated-gif="/img/docs/v45/graphite_query2.gif" >}}
 
-
 ### Optional parameters
 
 Some functions like aliasByNode support an optional second argument. To add this parameter specify for example 3,-2 as the first parameter and the function editor will adapt and move the -2 to a second parameter. To remove the second optional parameter just click on it and leave it blank and the editor will remove it.
@@ -72,14 +70,12 @@ Some functions like aliasByNode support an optional second argument. To add this
 {{< docs-imagebox img="/img/docs/v45/graphite_query3_still.png"
                   animated-gif="/img/docs/v45/graphite_query3.gif" >}}
 
-
 ### Nested Queries
 
 You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to a graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
 
 {{< docs-imagebox img="/img/docs/v45/graphite_nested_queries_still.png"
                   animated-gif="/img/docs/v45/graphite_nested_queries.gif" >}}
-
 
 ## Point consolidation
 
@@ -98,6 +94,18 @@ being displayed in your dashboard.
 Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
+Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, then you need to use the Grafana functions `tags` and `tag_values`.
+
+Query | Description
+------------ | -------------
+*tags()* | Returns all tags.
+*tags(server=~backend\*)* | Returns only tags that occur in series matching the filter expression.
+*tag_values(server)*  | Return tag values for the specified tag.
+*tag_values(server, server=~backend*)*  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
+*tag_values(server, server=~backend*, app=~${apps:regex})* | Multiple filter expressions and expressions can contain other variables.
+
+For more details, see the [Graphite docs on the autocomplete api for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
+
 ### Query variable
 
 The query you specify in the query field should be a metric find type of query. For example, a query like `prod.servers.*` will fill the
@@ -106,10 +114,10 @@ variable with all possible values that exist in the wildcard position.
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
 
-### Variable usage
+### Variable Usage
 
 You can use a variable in a metric node path or as a parameter to a function.
-![](/img/docs/v2/templated_variable_parameter.png)
+![variable](/img/docs/v2/templated_variable_parameter.png)
 
 There are two syntaxes:
 
@@ -122,6 +130,18 @@ the second syntax in expressions like  `my.server[[serverNumber]].count`.
 Example:
 [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
 
+### Variable Usage in Tag Queries
+
+Multi-value variables in tag queries use the advanced formatting syntax introduced in Grafana 5.0 for variables: `{var:regex}`. Non-tag queries will use the default glob formatting for multi-value variables.
+
+Example of a tag expression with regex formatting and using the Equal Tilde operator, `=~`:
+
+```text
+server=~${servers:regex}
+```
+
+Checkout the [Advanced Formatting Options section in the Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation for examples and details.
+
 ## Annotations
 
 [Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
@@ -130,9 +150,9 @@ queries via the Dashboard menu / Annotations view.
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
 specify a tag or wildcard (leave empty should also work)
 
-## Configure datasource with provisioning
+## Configure the Datasource with Provisioning
 
-It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
 
 Here are some provisioning examples for this datasource.
 
