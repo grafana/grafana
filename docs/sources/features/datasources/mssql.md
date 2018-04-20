@@ -295,6 +295,7 @@ SELECT hostname FROM host WHERE region IN ($region)
 ```
 
 ### Using Variables in Queries
+
 > From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.
 >
 > From Grafana 5.0.0, template variable values are only quoted when the template variable is a `multi-value`.
@@ -324,6 +325,14 @@ FROM table
 WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp
 ```
+
+#### Disabling Quoting for Multi-value Variables
+
+Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. Do disable quoting, use the csv formatting option for variables:
+
+`${servers:csv}`
+
+Read more about variable formatting options in the [Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 
@@ -530,9 +539,9 @@ EXEC dbo.sp_test_datetime @from, @to
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule
 conditions.
 
-## Configure datasource with provisioning
+## Configure the Datasource with Provisioning
 
-It's now possible to configure datasources using config files with Grafanas provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
 
 Here are some provisioning examples for this datasource.
 
