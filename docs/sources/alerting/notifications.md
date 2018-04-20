@@ -148,6 +148,7 @@ Pushover | `pushover` | no
 Telegram | `telegram` | no
 Line | `line` | no
 Prometheus Alertmanager | `prometheus-alertmanager` | no
+Webex Teams  | `webexteams` | yes
 
 
 
