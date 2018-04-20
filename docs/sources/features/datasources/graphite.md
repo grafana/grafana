@@ -101,8 +101,8 @@ Query | Description
 *tags()* | Returns all tags.
 *tags(server=~backend\*)* | Returns only tags that occur in series matching the filter expression.
 *tag_values(server)*  | Return tag values for the specified tag.
-*tag_values(server, server=~backend*)*  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
-*tag_values(server, server=~backend*, app=~${apps:regex})* | Multiple filter expressions and expressions can contain other variables.
+*tag_values(server, server=~backend\*)*  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
+*tag_values(server, server=~backend\*, app=~${apps:regex})* | Multiple filter expressions and expressions can contain other variables.
 
 For more details, see the [Graphite docs on the autocomplete api for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
