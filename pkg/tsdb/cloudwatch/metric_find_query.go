@@ -175,25 +175,18 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 	switch subType {
 	case "regions":
 		data, err = e.handleGetRegions(ctx, parameters, queryContext)
-		break
 	case "namespaces":
 		data, err = e.handleGetNamespaces(ctx, parameters, queryContext)
-		break
 	case "metrics":
 		data, err = e.handleGetMetrics(ctx, parameters, queryContext)
-		break
 	case "dimension_keys":
 		data, err = e.handleGetDimensions(ctx, parameters, queryContext)
-		break
 	case "dimension_values":
 		data, err = e.handleGetDimensionValues(ctx, parameters, queryContext)
-		break
 	case "ebs_volume_ids":
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
-		break
 	case "ec2_instance_attribute":
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
-		break
 	}
 
 	transformToTable(data, queryResult)
@@ -261,7 +254,7 @@ func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
 
-	sort.Sort(sort.StringSlice(keys))
+	sort.Strings(keys)
 
 	result := make([]suggestData, 0)
 	for _, key := range keys {
@@ -290,7 +283,7 @@ func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 			return nil, errors.New("Unable to call AWS API")
 		}
 	}
-	sort.Sort(sort.StringSlice(namespaceMetrics))
+	sort.Strings(namespaceMetrics)
 
 	result := make([]suggestData, 0)
 	for _, name := range namespaceMetrics {
@@ -319,7 +312,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 			return nil, errors.New("Unable to call AWS API")
 		}
 	}
-	sort.Sort(sort.StringSlice(dimensionValues))
+	sort.Strings(dimensionValues)
 
 	result := make([]suggestData, 0)
 	for _, name := range dimensionValues {
@@ -573,11 +566,7 @@ func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error)
 			}
 			return !lastPage
 		})
-	if err != nil {
-		return resp, err
-	}
-
-	return resp, nil
+	return resp, err
 }
 
 var metricsCacheLock sync.Mutex

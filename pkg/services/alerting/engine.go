@@ -15,8 +15,8 @@ import (
 )
 
 type Engine struct {
-	execQueue     chan *Job
-	clock         clock.Clock
+	execQueue chan *Job
+	//clock         clock.Clock
 	ticker        *Ticker
 	scheduler     Scheduler
 	evalHandler   EvalHandler

@@ -46,7 +46,7 @@ type Index struct {
 
 func (index *Index) XName(tableName string) string {
 	if index.Name == "" {
-		index.Name = fmt.Sprintf("%s", strings.Join(index.Cols, "_"))
+		index.Name = strings.Join(index.Cols, "_")
 	}
 
 	if !strings.HasPrefix(index.Name, "UQE_") &&

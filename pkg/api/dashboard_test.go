@@ -42,6 +42,11 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
+			query.Result = false
+			return nil
+		})
+
 		viewerRole := m.ROLE_VIEWER
 		editorRole := m.ROLE_EDITOR
 
@@ -191,6 +196,11 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		fakeDash.FolderId = 1
 		fakeDash.HasAcl = true
 		setting.ViewersCanEdit = false
+
+		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
+			query.Result = false
+			return nil
+		})
 
 		bus.AddHandler("test", func(query *m.GetDashboardsBySlugQuery) error {
 			dashboards := []*m.Dashboard{fakeDash}
@@ -625,6 +635,11 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		dashTwo.FolderId = 3
 		dashTwo.HasAcl = false
 
+		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
+			query.Result = false
+			return nil
+		})
+
 		bus.AddHandler("test", func(query *m.GetDashboardsBySlugQuery) error {
 			dashboards := []*m.Dashboard{dashOne, dashTwo}
 			query.Result = dashboards
@@ -720,6 +735,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{SaveError: m.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: 403},
 				{SaveError: m.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
 				{SaveError: m.ErrDashboardUidToLong, ExpectedStatusCode: 400},
+				{SaveError: m.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
 				{SaveError: m.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
 			}
 
@@ -747,6 +763,11 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		mockResult := []*m.DashboardAclInfoDTO{}
 		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = mockResult
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
+			query.Result = false
 			return nil
 		})
 

@@ -129,7 +129,7 @@ export class DashboardModel {
     this.meta = meta;
   }
 
-  // cleans meta data and other non peristent state
+  // cleans meta data and other non persistent state
   getSaveModelClone() {
     // make clone
     var copy: any = {};
@@ -606,7 +606,7 @@ export class DashboardModel {
     if (panel.gridPos.x + panel.gridPos.w * 2 <= GRID_COLUMN_COUNT) {
       newPanel.gridPos.x += panel.gridPos.w;
     } else {
-      // add bellow
+      // add below
       newPanel.gridPos.y += panel.gridPos.h;
     }
 
@@ -649,6 +649,7 @@ export class DashboardModel {
 
         for (let panel of row.panels) {
           // make sure y is adjusted (in case row moved while collapsed)
+          // console.log('yDiff', yDiff);
           panel.gridPos.y -= yDiff;
           // insert after row
           this.panels.splice(insertPos, 0, new PanelModel(panel));
@@ -657,7 +658,7 @@ export class DashboardModel {
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
         }
 
-        const pushDownAmount = yMax - row.gridPos.y;
+        const pushDownAmount = yMax - row.gridPos.y - 1;
 
         // push panels below down
         for (let panelIndex = insertPos; panelIndex < this.panels.length; panelIndex++) {

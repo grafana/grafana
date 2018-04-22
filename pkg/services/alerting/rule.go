@@ -55,8 +55,8 @@ func (e ValidationError) Error() string {
 }
 
 var (
-	ValueFormatRegex = regexp.MustCompile("^\\d+")
-	UnitFormatRegex  = regexp.MustCompile("\\w{1}$")
+	ValueFormatRegex = regexp.MustCompile(`^\d+`)
+	UnitFormatRegex  = regexp.MustCompile(`\w{1}$`)
 )
 
 var unitMultiplier = map[string]int{

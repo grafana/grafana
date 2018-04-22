@@ -38,7 +38,7 @@ export class DashboardViewState {
     });
 
     // this marks changes to location during this digest cycle as not to add history item
-    // dont want url changes like adding orgId to add browser history
+    // don't want url changes like adding orgId to add browser history
     $location.replace();
     this.update(this.getQueryStringState());
   }
@@ -196,7 +196,7 @@ export class DashboardViewState {
     this.oldTimeRange = ctrl.range;
     this.fullscreenPanel = panelScope;
 
-    // Firefox doesn't return scrollTop postion properly if 'dash-scroll' is emitted after setViewMode()
+    // Firefox doesn't return scrollTop position properly if 'dash-scroll' is emitted after setViewMode()
     this.$scope.appEvent('dash-scroll', { animate: false, pos: 0 });
     this.dashboard.setViewMode(ctrl.panel, true, ctrl.editMode);
     this.$scope.appEvent('panel-fullscreen-enter', { panelId: ctrl.panel.id });

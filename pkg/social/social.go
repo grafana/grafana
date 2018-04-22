@@ -14,6 +14,7 @@ import (
 )
 
 type BasicUserInfo struct {
+	Id      string
 	Name    string
 	Email   string
 	Login   string

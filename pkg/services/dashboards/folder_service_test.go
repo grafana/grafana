@@ -32,6 +32,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+				cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 				return models.ErrDashboardUpdateAccessDenied
 			})
 
@@ -92,6 +93,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+				cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 				return nil
 			})
 
@@ -108,11 +110,19 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
+			provisioningValidated := false
+
+			bus.AddHandler("test", func(query *models.IsDashboardProvisionedQuery) error {
+				provisioningValidated = true
+				return nil
+			})
+
 			Convey("When creating folder should not return access denied error", func() {
 				err := service.CreateFolder(&models.CreateFolderCommand{
 					Title: "Folder",
 				})
 				So(err, ShouldBeNil)
+				So(provisioningValidated, ShouldBeFalse)
 			})
 
 			Convey("When updating folder should not return access denied error", func() {
@@ -121,6 +131,7 @@ func TestFolderService(t *testing.T) {
 					Title: "Folder",
 				})
 				So(err, ShouldBeNil)
+				So(provisioningValidated, ShouldBeFalse)
 			})
 
 			Convey("When deleting folder by uid should not return access denied error", func() {

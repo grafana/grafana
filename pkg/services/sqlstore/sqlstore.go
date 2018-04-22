@@ -258,7 +258,7 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 	// x.ShowSQL()
 
 	if err != nil {
-		t.Fatalf("Failed to init in memory sqllite3 db %v", err)
+		t.Fatalf("Failed to init test database: %v", err)
 	}
 
 	sqlutil.CleanDB(x)
@@ -268,4 +268,20 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 	}
 
 	return x
+}
+
+func IsTestDbMySql() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == dbMySql
+	}
+
+	return false
+}
+
+func IsTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == dbPostgres
+	}
+
+	return false
 }

@@ -15,7 +15,23 @@ describe('PermissionsStore', () => {
           permission: 1,
           permissionName: 'View',
           teamId: 1,
-          teamName: 'MyTestTeam',
+          team: 'MyTestTeam',
+        },
+        {
+          id: 5,
+          dashboardId: 1,
+          permission: 1,
+          permissionName: 'View',
+          userId: 1,
+          userLogin: 'MyTestUser',
+        },
+        {
+          id: 6,
+          dashboardId: 1,
+          permission: 1,
+          permissionName: 'Edit',
+          teamId: 2,
+          team: 'MyTestTeam2',
         },
       ])
     );
@@ -48,13 +64,22 @@ describe('PermissionsStore', () => {
   });
 
   it('should save removed permissions automatically', async () => {
-    expect(store.items.length).toBe(3);
+    expect(store.items.length).toBe(5);
 
     await store.removeStoreItem(2);
 
-    expect(store.items.length).toBe(2);
+    expect(store.items.length).toBe(4);
     expect(backendSrv.post.mock.calls.length).toBe(1);
     expect(backendSrv.post.mock.calls[0][0]).toBe('/api/dashboards/id/1/permissions');
+  });
+
+  it('should be sorted by sort rank and alphabetically', async () => {
+    expect(store.items[0].name).toBe('MyTestTeam');
+    expect(store.items[0].dashboardId).toBe(10);
+    expect(store.items[1].name).toBe('Editor');
+    expect(store.items[2].name).toBe('Viewer');
+    expect(store.items[3].name).toBe('MyTestTeam2');
+    expect(store.items[4].name).toBe('MyTestUser');
   });
 
   describe('when one inherited and one not inherited team permission are added', () => {
@@ -73,7 +98,18 @@ describe('PermissionsStore', () => {
     });
 
     it('should add new overriding permission', () => {
-      expect(store.items.length).toBe(4);
+      expect(store.items.length).toBe(6);
+    });
+
+    it('should be sorted by sort rank and alphabetically', async () => {
+      expect(store.items[0].name).toBe('MyTestTeam');
+      expect(store.items[0].dashboardId).toBe(10);
+      expect(store.items[1].name).toBe('Editor');
+      expect(store.items[2].name).toBe('Viewer');
+      expect(store.items[3].name).toBe('MyTestTeam');
+      expect(store.items[3].dashboardId).toBe(1);
+      expect(store.items[4].name).toBe('MyTestTeam2');
+      expect(store.items[5].name).toBe('MyTestUser');
     });
   });
 });

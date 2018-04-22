@@ -57,7 +57,7 @@ func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*mod
 	return cmd.Result, nil
 }
 
-func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, validateAlerts bool) (*models.SaveDashboardCommand, error) {
+func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, validateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.Title = strings.TrimSpace(dash.Title)
@@ -101,6 +101,29 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 
 	if err := bus.Dispatch(&validateBeforeSaveCmd); err != nil {
 		return nil, err
+	}
+
+	if validateBeforeSaveCmd.Result.IsParentFolderChanged {
+		folderGuardian := guardian.New(dash.FolderId, dto.OrgId, dto.User)
+		if canSave, err := folderGuardian.CanSave(); err != nil || !canSave {
+			if err != nil {
+				return nil, err
+			}
+			return nil, models.ErrDashboardUpdateAccessDenied
+		}
+	}
+
+	if validateProvisionedDashboard {
+		isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dash.Id}
+		err := bus.Dispatch(isDashboardProvisioned)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if isDashboardProvisioned.Result {
+			return nil, models.ErrDashboardCannotSaveProvisionedDashboard
+		}
 	}
 
 	guard := guardian.New(dash.GetDashboardIdForSavePermissionCheck(), dto.OrgId, dto.User)
@@ -148,7 +171,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
 	}
-	cmd, err := dr.buildSaveDashboardCommand(dto, true)
+	cmd, err := dr.buildSaveDashboardCommand(dto, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +201,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 		UserId:  0,
 		OrgRole: models.ROLE_ADMIN,
 	}
-	cmd, err := dr.buildSaveDashboardCommand(dto, false)
+	cmd, err := dr.buildSaveDashboardCommand(dto, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +220,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 }
 
 func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	cmd, err := dr.buildSaveDashboardCommand(dto, true)
+	cmd, err := dr.buildSaveDashboardCommand(dto, true, true)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +239,7 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Da
 }
 
 func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
-	cmd, err := dr.buildSaveDashboardCommand(dto, false)
+	cmd, err := dr.buildSaveDashboardCommand(dto, false, true)
 	if err != nil {
 		return nil, err
 	}
