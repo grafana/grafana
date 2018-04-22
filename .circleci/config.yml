@@ -1,6 +1,38 @@
 version: 2
 
 jobs:
+  codespell:
+    docker:
+      - image: circleci/python
+    steps:
+      - checkout
+      - run:
+          name: install codespell
+          command: 'sudo pip install codespell'
+      - run:
+          # Important: all words have to be in lowercase, and separated by "\n".
+          name: exclude known exceptions
+          command: 'echo -e "unknwon" > words_to_ignore.txt'
+      - run:
+          name: check documentation spelling errors
+          command: 'codespell -I ./words_to_ignore.txt docs/'
+
+  gometalinter:
+    docker:
+      - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: install gometalinter tool
+          command: 'go get -u github.com/alecthomas/gometalinter'
+      - run:
+          name: install linters
+          command: 'gometalinter --install'
+      - run:
+          name: run some linters
+          command: 'gometalinter --vendor --deadline 6m --disable-all --enable=structcheck --enable=unconvert --enable=varcheck ./pkg/...'
+
   test-frontend:
     docker:
       - image: circleci/node:6.11.4
@@ -85,7 +117,7 @@ jobs:
       - image: circleci/python:2.7-stretch
     steps:
       - attach_workspace:
-          at: dist
+          at: .
       - run:
           name: install awscli
           command: 'sudo pip install awscli'
@@ -103,6 +135,10 @@ workflows:
   version: 2
   test-and-build:
     jobs:
+      - codespell:
+          filters:
+            tags:
+              only: /.*/
       - build:
           filters:
             tags:

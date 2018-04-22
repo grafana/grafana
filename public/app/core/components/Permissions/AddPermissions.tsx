@@ -39,7 +39,7 @@ class AddPermissions extends Component<IProps, any> {
       permissions.newItem.setUser(null, null);
       return;
     }
-    return permissions.newItem.setUser(user.id, user.login);
+    return permissions.newItem.setUser(user.id, user.login, user.avatarUrl);
   }
 
   teamPicked(team: Team) {
@@ -48,7 +48,7 @@ class AddPermissions extends Component<IProps, any> {
       permissions.newItem.setTeam(null, null);
       return;
     }
-    return permissions.newItem.setTeam(team.id, team.name);
+    return permissions.newItem.setTeam(team.id, team.name, team.avatarUrl);
   }
 
   permissionPicked(permission: OptionWithDescription) {

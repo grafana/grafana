@@ -33,7 +33,7 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}
 
 	return &http.Client{
-		Timeout:   time.Duration(30 * time.Second),
+		Timeout:   30 * time.Second,
 		Transport: transport,
 	}, nil
 }

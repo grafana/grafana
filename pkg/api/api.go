@@ -149,8 +149,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team (admin permission required)
 		apiRoute.Group("/teams", func(teamsRoute RouteRegister) {
-			teamsRoute.Get("/:teamId", wrap(GetTeamByID))
-			teamsRoute.Get("/search", wrap(SearchTeams))
 			teamsRoute.Post("/", bind(m.CreateTeamCommand{}), wrap(CreateTeam))
 			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), wrap(UpdateTeam))
 			teamsRoute.Delete("/:teamId", wrap(DeleteTeamByID))
@@ -158,6 +156,12 @@ func (hs *HTTPServer) registerRoutes() {
 			teamsRoute.Post("/:teamId/members", bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
 			teamsRoute.Delete("/:teamId/members/:userId", wrap(RemoveTeamMember))
 		}, reqOrgAdmin)
+
+		// team without requirement of user to be org admin
+		apiRoute.Group("/teams", func(teamsRoute RouteRegister) {
+			teamsRoute.Get("/:teamId", wrap(GetTeamByID))
+			teamsRoute.Get("/search", wrap(SearchTeams))
+		})
 
 		// org information available to all users.
 		apiRoute.Group("/org", func(orgRoute RouteRegister) {
@@ -170,7 +174,6 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
 			orgRoute.Post("/users", quota("user"), bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
-			orgRoute.Get("/users", wrap(GetOrgUsersForCurrentOrg))
 			orgRoute.Patch("/users/:userId", bind(m.UpdateOrgUserCommand{}), wrap(UpdateOrgUserForCurrentOrg))
 			orgRoute.Delete("/users/:userId", wrap(RemoveOrgUserForCurrentOrg))
 
@@ -183,6 +186,11 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/preferences", wrap(GetOrgPreferences))
 			orgRoute.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), wrap(UpdateOrgPreferences))
 		}, reqOrgAdmin)
+
+		// current org without requirement of user to be org admin
+		apiRoute.Group("/org", func(orgRoute RouteRegister) {
+			orgRoute.Get("/users", wrap(GetOrgUsersForCurrentOrg))
+		})
 
 		// create new org
 		apiRoute.Post("/orgs", quota("org"), bind(m.CreateOrgCommand{}), wrap(CreateOrg))

@@ -101,7 +101,3 @@ func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
 	webhookLog.Debug("Webhook failed", "statuscode", resp.Status, "body", string(body))
 	return fmt.Errorf("Webhook response status %v", resp.Status)
 }
-
-var addToWebhookQueue = func(msg *Webhook) {
-	webhookQueue <- msg
-}
