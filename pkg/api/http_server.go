@@ -211,6 +211,12 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 	data.Set("version", setting.BuildVersion)
 	data.Set("commit", setting.BuildCommit)
 
+	// remove once extensions is done
+	err := bus.Dispatch(&models.SyncUsersCommand{})
+	if err == bus.ErrHandlerNotFound {
+		log.Info("SyncUsersCommand not found")
+	}
+
 	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
