@@ -4,7 +4,6 @@ import { PanelModel } from '../panel_model';
 import { PanelContainer } from './PanelContainer';
 import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
 
 export interface DashboardRowProps {
   panel: PanelModel;
