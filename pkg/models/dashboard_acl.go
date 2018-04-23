@@ -69,6 +69,7 @@ type DashboardAclInfoDTO struct {
 	Slug           string         `json:"slug"`
 	IsFolder       bool           `json:"isFolder"`
 	Url            string         `json:"url"`
+	Inherited      bool           `json:"inherited"`
 }
 
 func (dto *DashboardAclInfoDTO) hasSameRoleAs(other *DashboardAclInfoDTO) bool {
