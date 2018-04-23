@@ -10,6 +10,7 @@ export class VariableEditorCtrl {
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
     $scope._ = _;
+    $scope.optionsLimit = 20;
 
     $scope.refreshOptions = [
       { value: 0, text: 'Never' },
@@ -164,6 +165,10 @@ export class VariableEditorCtrl {
 
     $scope.removeVariable = function(variable) {
       variableSrv.removeVariable(variable);
+    };
+
+    $scope.showMoreOptions = function() {
+      $scope.optionsLimit += 20;
     };
   }
 }
