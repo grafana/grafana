@@ -32,7 +32,7 @@ func TestUserAuth(t *testing.T) {
 			So(err, ShouldBeNil)
 			_, err = x.Exec("DELETE FROM org WHERE 1=1")
 			So(err, ShouldBeNil)
-			_, err = x.Exec("DELETE FROM user WHERE 1=1")
+			_, err = x.Exec("DELETE FROM " + dialect.Quote("user") + " WHERE 1=1")
 			So(err, ShouldBeNil)
 			_, err = x.Exec("DELETE FROM user_auth WHERE 1=1")
 			So(err, ShouldBeNil)
@@ -117,7 +117,7 @@ func TestUserAuth(t *testing.T) {
 			So(query.Result.Login, ShouldEqual, "loginuser1")
 
 			// remove user
-			_, err = x.Exec("DELETE FROM user WHERE id=?", query.Result.Id)
+			_, err = x.Exec("DELETE FROM "+dialect.Quote("user")+" WHERE id=?", query.Result.Id)
 			So(err, ShouldBeNil)
 
 			// get via user_auth for deleted user
