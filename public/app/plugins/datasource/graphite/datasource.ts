@@ -453,7 +453,13 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.testDatasource = function() {
-    return this.metricFindQuery('*').then(function() {
+    let query = {
+      panelId: 3,
+      rangeRaw: { from: 'now-1h', to: 'now' },
+      targets: [{ target: 'constantLine(100)' }],
+      maxDataPoints: 300,
+    };
+    return this.query(query).then(function() {
       return { status: 'success', message: 'Data source is working' };
     });
   };
