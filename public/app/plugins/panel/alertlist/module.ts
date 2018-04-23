@@ -21,6 +21,7 @@ class AlertListPanel extends PanelCtrl {
   currentAlerts: any = [];
   alertHistory: any = [];
   noAlertsMessage: string;
+
   // Set and populate defaults
   panelDefaults = {
     show: 'current',
@@ -28,6 +29,8 @@ class AlertListPanel extends PanelCtrl {
     stateFilter: [],
     onlyAlertsOnDashboard: false,
     sortOrder: 1,
+    dashboardFilter: '',
+    nameFilter: '',
   };
 
   /** @ngInject */
@@ -41,6 +44,17 @@ class AlertListPanel extends PanelCtrl {
     for (let key in this.panel.stateFilter) {
       this.stateFilter[this.panel.stateFilter[key]] = true;
     }
+
+    $scope.searchDashboards = function(queryStr, callback) {
+      console.log('searchDashboards');
+      backendSrv.search({ query: queryStr }).then(function(hits) {
+        var dashboards = _.map(hits, function(dash) {
+          return dash.title;
+        });
+
+        callback(dashboards);
+      });
+    };
   }
 
   sortResult(alerts) {
@@ -110,9 +124,20 @@ class AlertListPanel extends PanelCtrl {
         al.info = alertDef.getAlertAnnotationInfo(al);
         return al;
       });
+
       this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
 
+      if (this.panel.dashboardFilter || this.panel.nameFilter) {
+        this.alertHistory = this.filterAlerts(this.alertHistory);
+      }
       return this.alertHistory;
+    });
+  }
+
+  filterAlerts(alertList) {
+    let regex = new RegExp(this.panel.nameFilter, 'i');
+    return alertList.filter(alert => {
+      return regex.test(alert.alertName);
     });
   }
 
