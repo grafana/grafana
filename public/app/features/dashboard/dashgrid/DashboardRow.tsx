@@ -4,7 +4,6 @@ import { PanelModel } from '../panel_model';
 import { PanelContainer } from './PanelContainer';
 import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -95,7 +94,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
           {title}
           <span className="dashboard-row__panel_count">({hiddenPanels} hidden panels)</span>
         </a>
-        {config.bootData.user.orgRole !== 'Viewer' && (
+        {this.dashboard.meta.canEdit === true && (
           <div className="dashboard-row__actions">
             <a className="pointer" onClick={this.openSettings}>
               <i className="fa fa-cog" />
