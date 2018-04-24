@@ -1,7 +1,6 @@
 package search
 
 import (
-	"context"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -19,11 +18,6 @@ type SearchService struct {
 
 func (s *SearchService) Init() error {
 	s.Bus.AddHandler(s.searchHandler)
-
-	return nil
-}
-
-func (s *SearchService) Run(ctx context.Context) error {
 	return nil
 }
 

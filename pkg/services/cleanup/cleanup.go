@@ -28,8 +28,6 @@ func (service *CleanUpService) Init() error {
 }
 
 func (service *CleanUpService) Run(ctx context.Context) error {
-	service.log.Info("Initializing CleanUpService")
-
 	service.cleanUpTmpFiles()
 
 	ticker := time.NewTicker(time.Minute * 10)
@@ -41,8 +39,6 @@ func (service *CleanUpService) Run(ctx context.Context) error {
 			service.deleteExpiredDashboardVersions()
 			service.deleteOldLoginAttempts()
 		case <-ctx.Done():
-
-			service.log.Info("Stopped CleanUpService", "reason", ctx.Err())
 			return ctx.Err()
 		}
 	}

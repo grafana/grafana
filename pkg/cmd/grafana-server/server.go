@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -24,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -86,12 +86,6 @@ func (g *GrafanaServerImpl) Start() error {
 	}
 	defer tracingCloser.Close()
 
-	// init alerting
-	if setting.AlertingEnabled && setting.ExecuteAlerts {
-		engine := alerting.NewEngine()
-		g.childRoutines.Go(func() error { return engine.Run(g.context) })
-	}
-
 	if err = notifications.Init(); err != nil {
 		return fmt.Errorf("Notification service failed to initialize. error: %v", err)
 	}
@@ -112,15 +106,33 @@ func (g *GrafanaServerImpl) Start() error {
 
 	// Init & start services
 	for _, service := range services {
+		if registry.IsDisabled(service) {
+			continue
+		}
+
+		g.log.Info(fmt.Sprintf("Initializing %s", reflect.TypeOf(service).Elem().Name()))
+
 		if err := service.Init(); err != nil {
-			return fmt.Errorf("Failed to init service %v", err)
+			return fmt.Errorf("Service init failed %v", err)
 		}
 	}
 
+	// Start background services
 	for index := range services {
-		(func(service registry.Service) {
-			g.childRoutines.Go(func() error { return service.Run(g.context) })
-		})(services[index])
+		service, ok := services[index].(registry.BackgroundService)
+		if !ok {
+			continue
+		}
+
+		if registry.IsDisabled(services[index]) {
+			continue
+		}
+
+		g.childRoutines.Go(func() error {
+			err := service.Run(g.context)
+			g.log.Info(fmt.Sprintf("Stopped %s", reflect.TypeOf(service).Elem().Name()), "reason", err)
+			return err
+		})
 	}
 
 	sendSystemdNotification("READY=1")

@@ -2,6 +2,7 @@ package hello
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -18,11 +19,21 @@ type HelloService struct {
 }
 
 func (s *HelloService) Init() error {
-	s.log = log.New("hello init")
 	return nil
 }
 
 func (s *HelloService) Run(ctx context.Context) error {
-	s.log.Info("Start")
+
+	ticker := time.NewTicker(time.Minute * 10)
+
+	for {
+		select {
+		case <-ticker.C:
+			s.log.Info("ticker")
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
 	return nil
 }

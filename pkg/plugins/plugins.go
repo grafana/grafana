@@ -58,7 +58,7 @@ func (p *PluginManager) Run(ctx context.Context) error {
 		p.Kill()
 	}
 
-	p.log.Info("Stopped Plugins", "error", ctx.Err())
+	p.log.Info("Stopped Plugins", "reason", ctx.Err())
 	return ctx.Err()
 }
 
