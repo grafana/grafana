@@ -38,8 +38,13 @@ type UpdateAlertNotificationCommand struct {
 	Result *AlertNotification
 }
 
-type DeleteAlertNotificationCommand struct {
+type DeleteAlertNotificationByIdCommand struct {
 	Id    int64
+	OrgId int64
+}
+
+type DeleteAlertNotificationByNameCommand struct {
+	Name  string
 	OrgId int64
 }
 

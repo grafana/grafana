@@ -238,8 +238,8 @@ func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationComma
 	return JSON(200, cmd.Result)
 }
 
-func DeleteAlertNotification(c *m.ReqContext) Response {
-	cmd := m.DeleteAlertNotificationCommand{
+func DeleteAlertNotificationById(c *m.ReqContext) Response {
+	cmd := m.DeleteAlertNotificationByIdCommand{
 		OrgId: c.OrgId,
 		Id:    c.ParamsInt64("notificationId"),
 	}

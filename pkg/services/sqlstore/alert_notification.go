@@ -14,15 +14,24 @@ func init() {
 	bus.AddHandler("sql", GetAlertNotifications)
 	bus.AddHandler("sql", CreateAlertNotificationCommand)
 	bus.AddHandler("sql", UpdateAlertNotification)
-	bus.AddHandler("sql", DeleteAlertNotification)
+	bus.AddHandler("sql", DeleteAlertNotificationById)
+	bus.AddHandler("sql", DeleteAlertNotificationByName)
 	bus.AddHandler("sql", GetAlertNotificationsToSend)
 	bus.AddHandler("sql", GetAllAlertNotifications)
 }
 
-func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
+func DeleteAlertNotificationById(cmd *m.DeleteAlertNotificationByIdCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
 		_, err := sess.Exec(sql, cmd.OrgId, cmd.Id)
+		return err
+	})
+}
+
+func DeleteAlertNotificationByName(cmd *m.DeleteAlertNotificationByNameCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.name = ?"
+		_, err := sess.Exec(sql, cmd.OrgId, cmd.Name)
 		return err
 	})
 }

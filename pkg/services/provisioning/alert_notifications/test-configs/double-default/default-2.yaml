@@ -1,0 +1,4 @@
+alert_notifications:
+  - name: channel-2
+    type: slack
+    is_default: true
