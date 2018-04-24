@@ -61,6 +61,11 @@ func New() Bus {
 	return bus
 }
 
+// Want to get rid of global bus
+func GetBus() Bus {
+	return globalBus
+}
+
 func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 

@@ -11,9 +11,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/dashboards"
-
-	"github.com/grafana/grafana/pkg/initialization"
+	//"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/facebookgo/inject"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 
 	"golang.org/x/sync/errgroup"
@@ -24,14 +25,16 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
+
+	_ "github.com/grafana/grafana/pkg/services/cleanup"
+	_ "github.com/grafana/grafana/pkg/services/hello"
+	_ "github.com/grafana/grafana/pkg/services/search"
 )
 
 func NewGrafanaServer() *GrafanaServerImpl {
@@ -60,11 +63,10 @@ func (g *GrafanaServerImpl) Start() error {
 	g.writePIDFile()
 
 	// initSql
-	engine := sqlstore.NewEngine() // TODO: this should return an error
+	sqlstore.NewEngine() // TODO: this should return an error
 	sqlstore.EnsureAdminUser()
 
 	metrics.Init(setting.Cfg)
-	search.Init()
 	login.Init()
 	social.NewOAuthService()
 
@@ -90,36 +92,39 @@ func (g *GrafanaServerImpl) Start() error {
 		g.childRoutines.Go(func() error { return engine.Run(g.context) })
 	}
 
-	// cleanup service
-	cleanUpService := cleanup.NewCleanUpService()
-	g.childRoutines.Go(func() error { return cleanUpService.Run(g.context) })
-
 	if err = notifications.Init(); err != nil {
 		return fmt.Errorf("Notification service failed to initialize. error: %v", err)
 	}
 
-	for _, fn := range initialization.GetAllInitFuncs() {
-		g.childRoutines.Go(func() error {
-			extension, err := fn()
-			if err != nil {
-				return err
-			}
-			extension.Init(g.context, engine, setting.Cfg)
-			registerServices(extension)
-			return extension.Run()
-		})
+	serviceGraph := inject.Graph{}
+	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
+	services := registry.GetServices()
+
+	// Add all services to dependency graph
+	for _, service := range services {
+		serviceGraph.Provide(&inject.Object{Value: service})
+	}
+
+	// Inject dependencies to services
+	if err := serviceGraph.Populate(); err != nil {
+		return fmt.Errorf("Failed to populate service dependency: %v", err)
+	}
+
+	// Init & start services
+	for _, service := range services {
+		if err := service.Init(); err != nil {
+			return fmt.Errorf("Failed to init service %v", err)
+		}
+	}
+
+	for index := range services {
+		(func(service registry.Service) {
+			g.childRoutines.Go(func() error { return service.Run(g.context) })
+		})(services[index])
 	}
 
 	sendSystemdNotification("READY=1")
-
 	return g.startHttpServer()
-}
-
-func registerServices(s initialization.Service) {
-	dps, ok := s.(initialization.SetDashboardProvisioningService)
-	if ok {
-		dps.SetDashboardProvisioningService(dashboards.NewProvisioningService())
-	}
 }
 
 func (g *GrafanaServerImpl) initLogging() {

@@ -7,11 +7,10 @@ import (
 	"path"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,24 +18,18 @@ type CleanUpService struct {
 	log log.Logger
 }
 
-func NewCleanUpService() *CleanUpService {
-	return &CleanUpService{
-		log: log.New("cleanup"),
-	}
+func init() {
+	registry.RegisterService(&CleanUpService{})
+}
+
+func (service *CleanUpService) Init() error {
+	service.log = log.New("cleanup")
+	return nil
 }
 
 func (service *CleanUpService) Run(ctx context.Context) error {
 	service.log.Info("Initializing CleanUpService")
 
-	g, _ := errgroup.WithContext(ctx)
-	g.Go(func() error { return service.start(ctx) })
-
-	err := g.Wait()
-	service.log.Info("Stopped CleanUpService", "reason", err)
-	return err
-}
-
-func (service *CleanUpService) start(ctx context.Context) error {
 	service.cleanUpTmpFiles()
 
 	ticker := time.NewTicker(time.Minute * 10)
@@ -48,6 +41,8 @@ func (service *CleanUpService) start(ctx context.Context) error {
 			service.deleteExpiredDashboardVersions()
 			service.deleteOldLoginAttempts()
 		case <-ctx.Done():
+
+			service.log.Info("Stopped CleanUpService", "reason", ctx.Err())
 			return ctx.Err()
 		}
 	}
