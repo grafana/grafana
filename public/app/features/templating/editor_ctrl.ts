@@ -97,6 +97,7 @@ export class VariableEditorCtrl {
     };
 
     $scope.runQuery = function() {
+      $scope.optionsLimit = 20;
       return variableSrv.updateOptions($scope.current).catch(err => {
         if (err.data && err.data.message) {
           err.message = err.data.message;
