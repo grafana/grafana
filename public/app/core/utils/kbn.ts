@@ -485,6 +485,7 @@ kbn.valueFormats.EHs = kbn.formatBuilders.decimalSIPrefix('H/s', 6);
 
 // Throughput
 kbn.valueFormats.ops = kbn.formatBuilders.simpleCountUnit('ops');
+kbn.valueFormats.reqps = kbn.formatBuilders.simpleCountUnit('reqps');
 kbn.valueFormats.rps = kbn.formatBuilders.simpleCountUnit('rps');
 kbn.valueFormats.wps = kbn.formatBuilders.simpleCountUnit('wps');
 kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
@@ -948,6 +949,7 @@ kbn.getUnitFormats = function() {
       text: 'throughput',
       submenu: [
         { text: 'ops/sec (ops)', value: 'ops' },
+        { text: 'requets/sec (rps)', value: 'reqps' },
         { text: 'reads/sec (rps)', value: 'rps' },
         { text: 'writes/sec (wps)', value: 'wps' },
         { text: 'I/O ops/sec (iops)', value: 'iops' },
