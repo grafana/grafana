@@ -2,19 +2,13 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { DashboardRow } from '../dashgrid/DashboardRow';
 import { PanelModel } from '../panel_model';
-import config from '../../../core/config';
 
 describe('DashboardRow', () => {
   let wrapper, panel, getPanelContainer, dashboardMock;
 
   beforeEach(() => {
     dashboardMock = { toggleRow: jest.fn() };
-
-    config.bootData = {
-      user: {
-        orgRole: 'Admin',
-      },
-    };
+    dashboardMock.meta = { canEdit: true };
 
     getPanelContainer = jest.fn().mockReturnValue({
       getDashboard: jest.fn().mockReturnValue(dashboardMock),
@@ -42,7 +36,7 @@ describe('DashboardRow', () => {
   });
 
   it('should have zero actions as viewer', () => {
-    config.bootData.user.orgRole = 'Viewer';
+    dashboardMock.meta.canEdit = false;
     panel = new PanelModel({ collapsed: false });
     wrapper = shallow(<DashboardRow panel={panel} getPanelContainer={getPanelContainer} />);
     expect(wrapper.find('.dashboard-row__actions .pointer')).toHaveLength(0);
