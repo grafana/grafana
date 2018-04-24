@@ -12,8 +12,7 @@ import appEvents from 'app/core/app_events';
 export class FolderSettings extends React.Component<IContainerProps, any> {
   formSnapshot: any;
 
-  constructor(props) {
-    super(props);
+  componentDidMount() {
     this.loadStore();
   }
 

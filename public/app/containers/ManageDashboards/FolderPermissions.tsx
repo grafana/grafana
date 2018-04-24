@@ -16,6 +16,9 @@ export class FolderPermissions extends Component<IContainerProps, any> {
   constructor(props) {
     super(props);
     this.handleAddPermission = this.handleAddPermission.bind(this);
+  }
+
+  componentDidMount() {
     this.loadStore();
   }
 
