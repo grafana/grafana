@@ -5,6 +5,7 @@ import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
 export function prometheusRegularEscape(value) {
   return value.replace(/'/g, "\\\\'");
@@ -29,7 +30,7 @@ export class PrometheusDatasource {
   resultTransformer: ResultTransformer;
 
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
+  constructor(instanceSettings, private $q, private backendSrv: BackendSrv, private templateSrv, private timeSrv) {
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.name = instanceSettings.name;
@@ -43,13 +44,13 @@ export class PrometheusDatasource {
     this.resultTransformer = new ResultTransformer(templateSrv);
   }
 
-  _request(method, url, data?, requestId?) {
+  _request(url, data?, options?: any) {
     var options: any = {
       url: this.url + url,
-      method: method,
-      requestId: requestId,
+      method: this.httpMethod,
+      ...options,
     };
-    if (method === 'GET') {
+    if (options.method === 'GET') {
       if (!_.isEmpty(data)) {
         options.url =
           options.url +
@@ -82,17 +83,8 @@ export class PrometheusDatasource {
   }
 
   // Use this for tab completion features, wont publish response to other components
-  helperRequest(url) {
-    const options: any = {
-      url: this.url + url,
-      silent: true,
-    };
-
-    if (this.basicAuth || this.withCredentials) {
-      options.withCredentials = true;
-    }
-
-    return this.backendSrv.datasourceRequest(options);
+  metadataRequest(url) {
+    return this._request(url, null, { silent: true });
   }
 
   interpolateQueryExpr(value, variable, defaultFormatFn) {
@@ -220,7 +212,7 @@ export class PrometheusDatasource {
       end: end,
       step: query.step,
     };
-    return this._request(this.httpMethod, url, data, query.requestId);
+    return this._request(url, data, { requestId: query.requestId });
   }
 
   performInstantQuery(query, time) {
@@ -229,7 +221,7 @@ export class PrometheusDatasource {
       query: query.expr,
       time: time,
     };
-    return this._request(this.httpMethod, url, data, query.requestId);
+    return this._request(url, data, { requestId: query.requestId });
   }
 
   performSuggestQuery(query, cache = false) {
@@ -243,7 +235,7 @@ export class PrometheusDatasource {
       );
     }
 
-    return this.helperRequest(url).then(result => {
+    return this.metadataRequest(url).then(result => {
       this.metricsNameCache = {
         data: result.data.data,
         expire: Date.now() + 60 * 1000,
