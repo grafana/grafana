@@ -49,6 +49,11 @@ Example:
 
 Make sure the user does not get any unwanted privileges from the public role.
 
+### Known Issues
+
+MSSQL 2008 and 2008 R2 engine cannot handle login records when SSL encryption is not disabled. Due to this you may receive an `Login error: EOF` error when trying to create your datasource.
+To fix MSSQL 2008 R2 issue, install MSSQL 2008 R2 Service Pack 2. To fix MSSQL 2008 issue, install Microsoft MSSQL 2008 Service Pack 3 and Cumulative update package 3 for MSSQL 2008 SP3.
+
 ## Query Editor
 
 {{< docs-imagebox img="/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
