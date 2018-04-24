@@ -3,13 +3,14 @@ package notifiers
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"os"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"io"
-	"mime/multipart"
-	"os"
 )
 
 const (
@@ -133,6 +134,9 @@ func (this *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.Eval
 	}
 
 	ruleUrl, err := evalContext.GetRuleUrl()
+	if err != nil {
+		return nil, err
+	}
 
 	metrics := generateMetricsMessage(evalContext)
 	message := generateImageCaption(evalContext, ruleUrl, metrics)

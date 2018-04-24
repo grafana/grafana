@@ -27,12 +27,13 @@ jobs:
     steps:
       - checkout
       - run: 'go get -u gopkg.in/alecthomas/gometalinter.v2'
+      - run: 'go get -u github.com/gordonklaus/ineffassign'
       - run: 'go get -u github.com/opennota/check/cmd/structcheck'
       - run: 'go get -u github.com/mdempsky/unconvert'
       - run: 'go get -u github.com/opennota/check/cmd/varcheck'
       - run:
           name: run linters
-          command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+          command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
 
   test-frontend:
     docker:

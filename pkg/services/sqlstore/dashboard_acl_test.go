@@ -154,6 +154,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					DashboardId: savedFolder.Id,
 					Permission:  m.PERMISSION_EDIT,
 				})
+				So(err, ShouldBeNil)
 
 				q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
 				err = GetDashboardAclInfoList(q1)

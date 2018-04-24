@@ -13,6 +13,7 @@ func TestUploadToAzureBlob(t *testing.T) {
 		err := setting.NewConfigContext(&setting.CommandLineArgs{
 			HomePath: "../../../",
 		})
+		So(err, ShouldBeNil)
 
 		uploader, _ := NewImageUploader()
 
