@@ -72,6 +72,9 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 
 		var prefs m.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&prefs)
+		if err != nil {
+			return err
+		}
 
 		if !exists {
 			prefs = m.Preferences{

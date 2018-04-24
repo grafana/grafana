@@ -20,18 +20,20 @@ jobs:
   gometalinter:
     docker:
       - image: circleci/golang:1.10
+        environment:
+          # we need CGO because of go-sqlite3
+          CGO_ENABLED: 1
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
+      - run: 'go get -u gopkg.in/alecthomas/gometalinter.v2'
+      - run: 'go get -u github.com/gordonklaus/ineffassign'
+      - run: 'go get -u github.com/opennota/check/cmd/structcheck'
+      - run: 'go get -u github.com/mdempsky/unconvert'
+      - run: 'go get -u github.com/opennota/check/cmd/varcheck'
       - run:
-          name: install gometalinter tool
-          command: 'go get -u github.com/alecthomas/gometalinter'
-      - run:
-          name: install linters
-          command: 'gometalinter --install'
-      - run:
-          name: run some linters
-          command: 'gometalinter --vendor --deadline 6m --disable-all --enable=structcheck --enable=unconvert --enable=varcheck ./pkg/...'
+          name: run linters
+          command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
 
   test-frontend:
     docker:
@@ -136,6 +138,10 @@ workflows:
   test-and-build:
     jobs:
       - codespell:
+          filters:
+            tags:
+              only: /.*/
+      - gometalinter:
           filters:
             tags:
               only: /.*/

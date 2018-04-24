@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -17,6 +18,12 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
+		item.Created = time.Now().UnixNano() / int64(time.Millisecond)
+		item.Updated = item.Created
+		if item.Epoch == 0 {
+			item.Epoch = item.Created
+		}
+
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
@@ -79,6 +86,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			return errors.New("Annotation not found")
 		}
 
+		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
 		existing.Epoch = item.Epoch
 		existing.Text = item.Text
 		if item.RegionId != 0 {
@@ -102,7 +110,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		existing.Tags = item.Tags
 
-		_, err = sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "tags").Update(existing)
+		_, err = sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "updated", "tags").Update(existing)
 		return err
 	})
 }
@@ -124,6 +132,8 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 			annotation.text,
 			annotation.tags,
 			annotation.data,
+			annotation.created,
+			annotation.updated,
 			usr.email,
 			usr.login,
 			alert.name as alert_name
@@ -161,6 +171,11 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		params = append(params, query.PanelId)
 	}
 
+	if query.UserId != 0 {
+		sql.WriteString(` AND annotation.user_id = ?`)
+		params = append(params, query.UserId)
+	}
+
 	if query.From > 0 && query.To > 0 {
 		sql.WriteString(` AND annotation.epoch BETWEEN ? AND ?`)
 		params = append(params, query.From, query.To)
@@ -168,6 +183,8 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 	if query.Type == "alert" {
 		sql.WriteString(` AND annotation.alert_id > 0`)
+	} else if query.Type == "annotation" {
+		sql.WriteString(` AND annotation.alert_id = 0`)
 	}
 
 	if len(query.Tags) > 0 {

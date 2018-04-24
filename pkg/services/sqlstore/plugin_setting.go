@@ -48,6 +48,9 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 		var pluginSetting m.PluginSetting
 
 		exists, err := sess.Where("org_id=? and plugin_id=?", cmd.OrgId, cmd.PluginId).Get(&pluginSetting)
+		if err != nil {
+			return err
+		}
 		sess.UseBool("enabled")
 		sess.UseBool("pinned")
 		if !exists {

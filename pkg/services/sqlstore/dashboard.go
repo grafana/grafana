@@ -77,7 +77,7 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 	}
 
 	parentVersion := dash.Version
-	affectedRows := int64(0)
+	var affectedRows int64
 	var err error
 
 	if dash.Id == 0 {

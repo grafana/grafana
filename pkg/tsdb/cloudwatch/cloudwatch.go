@@ -271,7 +271,7 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		}
 	}
 
-	period := 300
+	var period int
 	if regexp.MustCompile(`^\d+$`).Match([]byte(p)) {
 		period, err = strconv.Atoi(p)
 		if err != nil {

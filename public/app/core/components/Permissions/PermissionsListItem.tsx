@@ -41,7 +41,7 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
     permissionChanged(itemIndex, permissionOption.value, permissionOption.label);
   };
 
-  const inheritedFromRoot = item.dashboardId === -1 && folderInfo && folderInfo.id === 0;
+  const inheritedFromRoot = item.dashboardId === -1 && !item.inherited;
 
   return (
     <tr className={setClassNameHelper(item.inherited)}>

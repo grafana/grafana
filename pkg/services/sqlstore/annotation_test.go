@@ -79,6 +79,12 @@ func TestAnnotations(t *testing.T) {
 				Convey("Can read tags", func() {
 					So(items[0].Tags, ShouldResemble, []string{"outage", "error", "type:outage", "server:server-1"})
 				})
+
+				Convey("Has created and updated values", func() {
+					So(items[0].Created, ShouldBeGreaterThan, 0)
+					So(items[0].Updated, ShouldBeGreaterThan, 0)
+					So(items[0].Updated, ShouldEqual, items[0].Created)
+				})
 			})
 
 			Convey("Can query for annotation by id", func() {
@@ -231,6 +237,10 @@ func TestAnnotations(t *testing.T) {
 					So(items[0].Tags, ShouldResemble, []string{"newtag1", "newtag2"})
 					So(items[0].Text, ShouldEqual, "something new")
 				})
+
+				Convey("Updated time has increased", func() {
+					So(items[0].Updated, ShouldBeGreaterThan, items[0].Created)
+				})
 			})
 
 			Convey("Can delete annotation", func() {
@@ -246,6 +256,7 @@ func TestAnnotations(t *testing.T) {
 				annotationId := items[0].Id
 
 				err = repo.Delete(&annotations.DeleteParams{Id: annotationId})
+				So(err, ShouldBeNil)
 
 				items, err = repo.Find(query)
 				So(err, ShouldBeNil)
