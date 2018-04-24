@@ -16,7 +16,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -24,14 +23,14 @@ import (
 )
 
 var (
-	versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
-	goarch    string
-	goos      string
-	gocc      string
-	gocxx     string
-	cgo       string
-	pkgArch   string
-	version   string = "v1"
+	//versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
+	goarch  string
+	goos    string
+	gocc    string
+	gocxx   string
+	cgo     string
+	pkgArch string
+	version string = "v1"
 	// deb & rpm does not support semver so have to handle their version a little differently
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
@@ -44,13 +43,13 @@ var (
 	isDev                 bool     = false
 )
 
-const minGoVersion = 1.8
-
 func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
 
 	ensureGoPath()
+
+	verifyGitRepoIsClean()
 
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
@@ -352,10 +351,6 @@ func ensureGoPath() {
 	}
 }
 
-func ChangeWorkingDir(dir string) {
-	os.Chdir(dir)
-}
-
 func grunt(params ...string) {
 	if runtime.GOOS == "windows" {
 		runPrint(`.\node_modules\.bin\grunt`, params...)
@@ -490,24 +485,6 @@ func buildStamp() int64 {
 	}
 	s, _ := strconv.ParseInt(string(bs), 10, 64)
 	return s
-}
-
-func buildArch() string {
-	os := goos
-	if os == "darwin" {
-		os = "macosx"
-	}
-	return fmt.Sprintf("%s-%s", os, goarch)
-}
-
-func run(cmd string, args ...string) []byte {
-	bs, err := runError(cmd, args...)
-	if err != nil {
-		log.Println(cmd, strings.Join(args, " "))
-		log.Println(string(bs))
-		log.Fatal(err)
-	}
-	return bytes.TrimSpace(bs)
 }
 
 func runError(cmd string, args ...string) ([]byte, error) {
