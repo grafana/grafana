@@ -7,8 +7,12 @@ describe('DashboardRow', () => {
   let wrapper, panel, getPanelContainer, dashboardMock;
 
   beforeEach(() => {
-    dashboardMock = { toggleRow: jest.fn() };
-    dashboardMock.meta = { canEdit: true };
+    dashboardMock = {
+      toggleRow: jest.fn(),
+      meta: {
+        canEdit: true,
+      },
+    };
 
     getPanelContainer = jest.fn().mockReturnValue({
       getDashboard: jest.fn().mockReturnValue(dashboardMock),
@@ -35,7 +39,7 @@ describe('DashboardRow', () => {
     expect(wrapper.find('.dashboard-row__actions .pointer')).toHaveLength(2);
   });
 
-  it('should have zero actions as viewer', () => {
+  it('should have zero actions when cannot edit', () => {
     dashboardMock.meta.canEdit = false;
     panel = new PanelModel({ collapsed: false });
     wrapper = shallow(<DashboardRow panel={panel} getPanelContainer={getPanelContainer} />);
