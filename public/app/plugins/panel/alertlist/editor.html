@@ -27,7 +27,11 @@
     </div>
     <div class="gf-form">
       <span class="gf-form-label width-8">Dashboard</span>
-      <input type="text" bs-typeahead="ctrl.searchDashboards" class="gf-form-input max-width-15" ng-model="ctrl.panel.dashboardFilter"  required placeholder="Dashboard Name" ng-change="ctrl.onRefresh()" />
+      <input type="text" bs-typeahead="ctrl.searchDashboards" class="gf-form-input max-width-15" ng-model="ctrl.panel.dashboardFilter" placeholder="Dashboard Name" ng-change="ctrl.onRefresh()" />
+    </div>
+    <div class="gf-form">
+      <span class="gf-form-label width-8">Folder</span>
+      <input type="text" bs-typeahead="ctrl.searchFolders" class="gf-form-input max-width-15" ng-model="ctrl.panel.folderFilter" placeholder="Folder Name" ng-change="ctrl.onRefresh()" />
     </div>
   </div>
   <div class="section gf-form-group" ng-show="ctrl.panel.show === 'current'">

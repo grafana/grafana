@@ -9,6 +9,7 @@ class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
   static scrollable = true;
   searchDashboards: any;
+  searchFolders: any;
   dashboardIds: any = [];
 
   showOptions = [{ text: 'Current state', value: 'current' }, { text: 'Recent state changes', value: 'changes' }];
@@ -50,11 +51,25 @@ class AlertListPanel extends PanelCtrl {
     this.searchDashboards = (queryStr, callback) => {
       this.backendSrv.search({ query: queryStr, type: 'dash-db' }).then(hits => {
         var dashboards = _.map(hits, dash => {
+          if (dash.folderTitle) {
+            this.dashboardIds.push([dash.title + ' (' + dash.folderTitle + ')', dash.id]);
+            return dash.title + ' (' + dash.folderTitle + ')';
+          }
           this.dashboardIds.push([dash.title, dash.id]);
           return dash.title;
         });
 
         callback(dashboards);
+      });
+    };
+
+    this.searchFolders = (queryStr, callback) => {
+      this.backendSrv.search({ query: queryStr, type: 'dash-folder' }).then(hits => {
+        var folders = _.map(hits, dash => {
+          return dash.title;
+        });
+
+        callback(folders);
       });
     };
   }
