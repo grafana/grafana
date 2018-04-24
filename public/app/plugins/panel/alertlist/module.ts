@@ -8,6 +8,8 @@ import * as dateMath from 'app/core/utils/datemath';
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
   static scrollable = true;
+  searchDashboards: any;
+  dashboardIds: any = [];
 
   showOptions = [{ text: 'Current state', value: 'current' }, { text: 'Recent state changes', value: 'changes' }];
 
@@ -45,10 +47,10 @@ class AlertListPanel extends PanelCtrl {
       this.stateFilter[this.panel.stateFilter[key]] = true;
     }
 
-    $scope.searchDashboards = function(queryStr, callback) {
-      console.log('searchDashboards');
-      backendSrv.search({ query: queryStr }).then(function(hits) {
-        var dashboards = _.map(hits, function(dash) {
+    this.searchDashboards = (queryStr, callback) => {
+      this.backendSrv.search({ query: queryStr, type: 'dash-db' }).then(hits => {
+        var dashboards = _.map(hits, dash => {
+          this.dashboardIds.push([dash.title, dash.id]);
           return dash.title;
         });
 
@@ -127,9 +129,14 @@ class AlertListPanel extends PanelCtrl {
 
       this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
 
-      if (this.panel.dashboardFilter || this.panel.nameFilter) {
+      if (this.panel.nameFilter) {
         this.alertHistory = this.filterAlerts(this.alertHistory);
       }
+
+      if (this.panel.dashboardFilter) {
+        this.alertHistory = this.dashboardAlertFilter(this.alertHistory);
+      }
+
       return this.alertHistory;
     });
   }
@@ -137,7 +144,25 @@ class AlertListPanel extends PanelCtrl {
   filterAlerts(alertList) {
     let regex = new RegExp(this.panel.nameFilter, 'i');
     return alertList.filter(alert => {
-      return regex.test(alert.alertName);
+      if (alert.alertName) {
+        return regex.test(alert.alertName);
+      }
+      return regex.test(alert.name);
+    });
+  }
+
+  dashboardAlertFilter(alertList) {
+    let dashId;
+    for (var i = 0; i < this.dashboardIds.length; i++) {
+      if (this.dashboardIds[i][0] === this.panel.dashboardFilter) {
+        dashId = this.dashboardIds[i][1];
+      }
+    }
+
+    return alertList.filter(alert => {
+      if (alert.dashboardId === dashId) {
+        return alert;
+      }
     });
   }
 
@@ -161,6 +186,14 @@ class AlertListPanel extends PanelCtrl {
         })
       );
       this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
+
+      if (this.panel.nameFilter) {
+        this.currentAlerts = this.filterAlerts(this.currentAlerts);
+      }
+
+      if (this.panel.dashboardFilter) {
+        this.currentAlerts = this.dashboardAlertFilter(this.currentAlerts);
+      }
 
       return this.currentAlerts;
     });
