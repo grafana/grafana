@@ -21,6 +21,27 @@ type Bus interface {
 	AddCtxHandler(handler HandlerFunc)
 	AddEventListener(handler HandlerFunc)
 	AddWildcardListener(handler HandlerFunc)
+
+	//WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+}
+
+func (b *InProcBus) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+
+	var session interface{}
+
+	//session.begin()
+
+	dbCtx := context.WithValue(ctx, "dbsession", session)
+
+	err := fn(dbCtx)
+
+	if err != nil {
+		//session.rollback()
+	} else {
+		//session.commit()
+	}
+
+	return err
 }
 
 type InProcBus struct {
