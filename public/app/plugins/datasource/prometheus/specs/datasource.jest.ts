@@ -43,6 +43,26 @@ describe('PrometheusDatasource', () => {
     });
   });
 
+  describe('When performing performSuggestQuery', () => {
+    it('should cache response', async () => {
+      ctx.backendSrvMock.datasourceRequest.mockReturnValue(
+        Promise.resolve({
+          status: 'success',
+          data: { data: ['value1', 'value2', 'value3'] },
+        })
+      );
+
+      let results = await ctx.ds.performSuggestQuery('value', true);
+
+      expect(results).toHaveLength(3);
+
+      ctx.backendSrvMock.datasourceRequest.mockReset();
+      results = await ctx.ds.performSuggestQuery('value', true);
+
+      expect(results).toHaveLength(3);
+    });
+  });
+
   describe('When converting prometheus histogram to heatmap format', () => {
     beforeEach(() => {
       ctx.query = {
