@@ -1,5 +1,5 @@
   prometheus:
-    build: blocks/prometheus
+    build: blocks/prometheus_mac
     ports:
       - "9090:9090"
 
