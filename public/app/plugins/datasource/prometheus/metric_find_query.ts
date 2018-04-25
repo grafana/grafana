@@ -121,7 +121,7 @@ export default class PrometheusMetricFindQuery {
 
     var self = this;
     return this.datasource.metadataRequest(url).then(function(result) {
-      return _.map(result.data.data, function(metric) {
+      return _.map(result.data.data, metric => {
         return {
           text: self.datasource.getOriginalMetricName(metric),
           expandable: true,

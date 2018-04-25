@@ -329,4 +329,8 @@ export class PrometheusDatasource {
     }
     return Math.ceil(date.valueOf() / 1000);
   }
+
+  getOriginalMetricName(labelData) {
+    return this.resultTransformer.getOriginalMetricName(labelData);
+  }
 }
