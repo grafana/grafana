@@ -42,7 +42,7 @@ var (
 	buildNumber           int      = 0
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 	isDev                 bool     = false
-	enterpriseBuild       bool     = false
+	enterprise            bool     = false
 )
 
 const minGoVersion = 1.8
@@ -62,7 +62,7 @@ func main() {
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
 	flag.BoolVar(&includeBuildNumber, "includeBuildNumber", includeBuildNumber, "IncludeBuildNumber in package name")
-	flag.BoolVar(&enterpriseBuild, "enterpriseBuild", enterpriseBuild, "Build enterprise version of Grafana")
+	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.IntVar(&buildNumber, "buildNumber", 0, "Build number from CI system")
 	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
 	flag.Parse()
@@ -300,18 +300,18 @@ func createPackage(options linuxPackageOptions) {
 	}
 
 	name := "grafana"
-	if enterpriseBuild {
+	if enterprise {
 		name += "-enterprise"
 	}
 	args = append(args, "--name", name)
 
 	description := "Grafana"
-	if enterpriseBuild {
+	if enterprise {
 		description += " Enterprise"
 	}
 	args = append(args, "--vendor", description)
 
-	if !enterpriseBuild {
+	if !enterprise {
 		args = append(args, "--license", "\"Apache 2.0\"")
 	}
 
@@ -449,7 +449,7 @@ func ldflags() string {
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
-	b.WriteString(fmt.Sprintf(" -X main.enterprise=%t", enterpriseBuild))
+	b.WriteString(fmt.Sprintf(" -X main.enterprise=%t", enterprise))
 	return b.String()
 }
 

@@ -45,10 +45,11 @@ var (
 	InstanceName string
 
 	// build
-	BuildVersion string
-	BuildCommit  string
-	BuildStamp   int64
-	Enterprise   bool
+	BuildVersion    string
+	BuildCommit     string
+	BuildStamp      int64
+	Enterprise      bool
+	ApplicationName string
 
 	// Paths
 	LogsPath         string
@@ -485,6 +486,11 @@ func NewConfigContext(args *CommandLineArgs) error {
 	err := loadConfiguration(args)
 	if err != nil {
 		return err
+	}
+
+	ApplicationName = "Grafana"
+	if Enterprise {
+		ApplicationName += " Enterprise"
 	}
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
