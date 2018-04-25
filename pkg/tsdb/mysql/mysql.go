@@ -265,16 +265,10 @@ func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 				continue
 			}
 
-			switch columnValue := values[i].(type) {
-			case int64:
-				value = null.FloatFrom(float64(columnValue))
-			case float64:
-				value = null.FloatFrom(columnValue)
-			case nil:
-				value.Valid = false
-			default:
-				return fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", col, columnValue, columnValue)
+			if value, err = tsdb.ConvertSqlValueColumnToFloat(col, values[i]); err != nil {
+				return err
 			}
+
 			if metricIndex == -1 {
 				metric = col
 			}
