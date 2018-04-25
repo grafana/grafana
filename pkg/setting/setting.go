@@ -48,6 +48,7 @@ var (
 	BuildVersion string
 	BuildCommit  string
 	BuildStamp   int64
+	Enterprise   bool
 
 	// Paths
 	LogsPath         string

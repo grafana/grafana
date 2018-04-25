@@ -160,7 +160,12 @@ func (g *GrafanaServerImpl) initLogging() {
 		os.Exit(1)
 	}
 
-	g.log.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
+	message := "Starting Grafana"
+	if setting.Enterprise {
+		message += " Enterprise"
+	}
+
+	g.log.Info(message, "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
 	setting.LogConfigurationInfo()
 }
 
