@@ -1,5 +1,5 @@
 const path = require('path');
-const {CheckerPlugin} = require('awesome-typescript-loader')
+const { CheckerPlugin } = require('awesome-typescript-loader');
 
 module.exports = {
   target: 'web',
@@ -11,8 +11,8 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, '../../public/build'),
-    filename: '[name].[chunkhash].js',
-    publicPath: "public/build/",
+    filename: '[name].[hash].js',
+    publicPath: "/public/build/",
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json'],
@@ -28,25 +28,6 @@ module.exports = {
   },
   module: {
     rules: [
-      {
-        test: /\.tsx?$/,
-        enforce: 'pre',
-        exclude: /node_modules/,
-        use: {
-          loader: 'tslint-loader',
-          options: {
-            emitErrors: true,
-            typeCheck: false,
-          }
-        }
-      },
-      {
-        test: /\.tsx?$/,
-        exclude: /node_modules/,
-        use: [
-          { loader: "awesome-typescript-loader" }
-        ]
-      },
       {
         test: require.resolve('jquery'),
         use: [
@@ -64,7 +45,7 @@ module.exports = {
         test: /\.html$/,
         exclude: /index\.template.html/,
         use: [
-          { loader:'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, '../../public')) + '&prefix=public'},
+          { loader: 'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, '../../public')) + '&prefix=public' },
           {
             loader: 'html-loader',
             options: {

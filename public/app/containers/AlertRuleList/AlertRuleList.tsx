@@ -1,4 +1,5 @@
 import React from 'react';
+import { hot } from 'react-hot-loader';
 import classNames from 'classnames';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
@@ -173,3 +174,5 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
     );
   }
 }
+
+export default hot(module)(AlertRuleList);
