@@ -43,6 +43,11 @@ export class InfluxQueryBuilder {
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
       if (withMeasurementFilter) {
+        if (withMeasurementFilter.match('/')) {
+          // Escape all "/" characters to prevent them
+          // from been mistreated as end of regular expression
+          withMeasurementFilter = withMeasurementFilter.replace(/\//g, '\\/');
+        }
         query += ' WITH MEASUREMENT =~ /' + withMeasurementFilter + '/';
       }
     } else if (type === 'FIELDS') {
