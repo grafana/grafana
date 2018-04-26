@@ -1,4 +1,4 @@
-import { isBoolean, isNumber, sortedUniq, sortedIndexOf, unescape as html_unescaped } from 'lodash';
+import { isBoolean, isNumber, sortedUniq, sortedIndexOf, unescape as htmlUnescaped } from 'lodash';
 import moment from 'moment';
 import { saveAs } from 'file-saver';
 import { isNullOrUndefined } from 'util';
@@ -12,12 +12,26 @@ const END_ROW = '\r\n';
 const QUOTE = '"';
 const EXPORT_FILENAME = 'grafana_data_export.csv';
 
-function csv_escaped(text) {
+function csvEscaped(text) {
   if (!text) {
     return text;
   }
 
   return text.split(QUOTE).join(QUOTE + QUOTE);
+}
+
+const domParser = new DOMParser();
+function htmlDecoded(text) {
+  if (!text) {
+    return text;
+  }
+
+  const regexp = /&[^;]+;/g;
+  function htmlDecoded(value) {
+    const parsedDom = domParser.parseFromString(value, 'text/html');
+    return parsedDom.body.textContent;
+  }
+  return text.replace(regexp, htmlDecoded).replace(regexp, htmlDecoded);
 }
 
 function formatSpecialHeader(useExcelHeader) {
@@ -32,7 +46,7 @@ function formatRow(row, addEndRowDelimiter = true) {
     } else if (isNumber(row[i])) {
       text += row[i].toLocaleString();
     } else {
-      text += `${QUOTE}${csv_escaped(html_unescaped(row[i]))}${QUOTE}`;
+      text += `${QUOTE}${csvEscaped(htmlUnescaped(htmlDecoded(row[i])))}${QUOTE}`;
     }
 
     if (i < row.length - 1) {
