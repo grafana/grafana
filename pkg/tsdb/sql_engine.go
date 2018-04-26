@@ -2,8 +2,11 @@ package tsdb
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/null"
 
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
@@ -184,4 +187,110 @@ func ConvertSqlTimeColumnToEpochMs(values RowValues, timeIndex int) {
 			}
 		}
 	}
+}
+
+// ConvertSqlValueColumnToFloat converts timeseries value column to float.
+func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (null.Float, error) {
+	var value null.Float
+
+	switch typedValue := columnValue.(type) {
+	case int:
+		value = null.FloatFrom(float64(typedValue))
+	case *int:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case int64:
+		value = null.FloatFrom(float64(typedValue))
+	case *int64:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case int32:
+		value = null.FloatFrom(float64(typedValue))
+	case *int32:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case int16:
+		value = null.FloatFrom(float64(typedValue))
+	case *int16:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case int8:
+		value = null.FloatFrom(float64(typedValue))
+	case *int8:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint64:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint64:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint32:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint32:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint16:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint16:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint8:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint8:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case float64:
+		value = null.FloatFrom(typedValue)
+	case *float64:
+		value = null.FloatFromPtr(typedValue)
+	case float32:
+		value = null.FloatFrom(float64(typedValue))
+	case *float32:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case nil:
+		value.Valid = false
+	default:
+		return null.NewFloat(0, false), fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", columnName, typedValue, typedValue)
+	}
+
+	return value, nil
 }

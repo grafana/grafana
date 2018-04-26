@@ -217,13 +217,13 @@ func (sc *scenarioContext) parentFolderPermissionScenario(pt permissionType, per
 
 	switch pt {
 	case USER:
-		folderPermissionList = []*m.DashboardAclInfoDTO{{OrgId: orgID, DashboardId: parentFolderID, UserId: userID, Permission: permission}}
+		folderPermissionList = []*m.DashboardAclInfoDTO{{OrgId: orgID, DashboardId: parentFolderID, UserId: userID, Permission: permission, Inherited: true}}
 	case TEAM:
-		folderPermissionList = []*m.DashboardAclInfoDTO{{OrgId: orgID, DashboardId: parentFolderID, TeamId: teamID, Permission: permission}}
+		folderPermissionList = []*m.DashboardAclInfoDTO{{OrgId: orgID, DashboardId: parentFolderID, TeamId: teamID, Permission: permission, Inherited: true}}
 	case EDITOR:
-		folderPermissionList = []*m.DashboardAclInfoDTO{{OrgId: orgID, DashboardId: parentFolderID, Role: &editorRole, Permission: permission}}
+		folderPermissionList = []*m.DashboardAclInfoDTO{{OrgId: orgID, DashboardId: parentFolderID, Role: &editorRole, Permission: permission, Inherited: true}}
 	case VIEWER:
-		folderPermissionList = []*m.DashboardAclInfoDTO{{OrgId: orgID, DashboardId: parentFolderID, Role: &viewerRole, Permission: permission}}
+		folderPermissionList = []*m.DashboardAclInfoDTO{{OrgId: orgID, DashboardId: parentFolderID, Role: &viewerRole, Permission: permission, Inherited: true}}
 	}
 
 	permissionScenario(fmt.Sprintf("and parent folder has %s with permission to %s", pt.String(), permission.String()), childDashboardID, sc, folderPermissionList, func(sc *scenarioContext) {

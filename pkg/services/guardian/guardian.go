@@ -154,12 +154,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.Permiss
 	// validate overridden permissions to be higher
 	for _, a := range acl {
 		for _, existingPerm := range existingPermissions {
-			// handle default permissions
-			if existingPerm.DashboardId == -1 {
-				existingPerm.DashboardId = g.dashId
-			}
-
-			if a.DashboardId == existingPerm.DashboardId {
+			if !existingPerm.Inherited {
 				continue
 			}
 
@@ -185,13 +180,6 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	query := m.GetDashboardAclInfoListQuery{DashboardId: g.dashId, OrgId: g.orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
-	}
-
-	for _, a := range query.Result {
-		// handle default permissions
-		if a.DashboardId == -1 {
-			a.DashboardId = g.dashId
-		}
 	}
 
 	g.acl = query.Result

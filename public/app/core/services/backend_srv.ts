@@ -170,7 +170,9 @@ export class BackendSrv {
 
     return this.$http(options)
       .then(response => {
-        appEvents.emit('ds-request-response', response);
+        if (!options.silent) {
+          appEvents.emit('ds-request-response', response);
+        }
         return response;
       })
       .catch(err => {
@@ -201,8 +203,9 @@ export class BackendSrv {
         if (err.data && !err.data.message && _.isString(err.data.error)) {
           err.data.message = err.data.error;
         }
-
-        appEvents.emit('ds-request-error', err);
+        if (!options.silent) {
+          appEvents.emit('ds-request-error', err);
+        }
         throw err;
       })
       .finally(() => {
