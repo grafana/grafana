@@ -1,7 +1,7 @@
-import {isBoolean, isNumber, sortedUniq, sortedIndexOf} from 'lodash';
+import { isBoolean, isNumber, sortedUniq, sortedIndexOf, unescape as html_unescaped } from 'lodash';
 import moment from 'moment';
 import { saveAs } from 'file-saver';
-import {isNullOrUndefined} from 'util';
+import { isNullOrUndefined } from 'util';
 
 const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 const POINT_TIME_INDEX = 1;
@@ -12,7 +12,7 @@ const END_ROW = '\r\n';
 const QUOTE = '"';
 const EXPORT_FILENAME = 'grafana_data_export.csv';
 
-function escaped(text) {
+function csv_escaped(text) {
   if (!text) {
     return text;
   }
@@ -20,25 +20,11 @@ function escaped(text) {
   return text.split(QUOTE).join(QUOTE + QUOTE);
 }
 
-const domParser = new DOMParser();
-function htmlDecoded(text) {
-  if (!text) {
-    return text;
-  }
-
-  const regexp = /&[^;]+;/g;
-  function htmlDecoded(value) {
-    const parsedDom = domParser.parseFromString(value, 'text/html');
-    return parsedDom.body.textContent;
-  }
-  return text.replace(regexp, htmlDecoded).replace(regexp, htmlDecoded);
-}
-
 function formatSpecialHeader(useExcelHeader) {
   return useExcelHeader ? `sep=${END_COLUMN}${END_ROW}` : '';
 }
 
-function formatRow(row, endRow = true) {
+function formatRow(row, addEndRowDelimiter = true) {
   let text = '';
   for (let i = 0; i < row.length; i += 1) {
     if (isBoolean(row[i]) || isNullOrUndefined(row[i])) {
@@ -46,27 +32,27 @@ function formatRow(row, endRow = true) {
     } else if (isNumber(row[i])) {
       text += row[i].toLocaleString();
     } else {
-      text += `${QUOTE}${escaped(htmlDecoded(row[i]))}${QUOTE}`;
+      text += `${QUOTE}${csv_escaped(html_unescaped(row[i]))}${QUOTE}`;
     }
 
-    if (i !== row.length - 1) {
+    if (i < row.length - 1) {
       text += END_COLUMN;
     }
   }
-  return endRow ? text + END_ROW : text;
+  return addEndRowDelimiter ? text + END_ROW : text;
 }
 
 export function convertSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  let text = formatSpecialHeader(excel) + formatRow(['Series','Time', 'Value']);
-  for (let seriesIndex = 0; seriesIndex <  seriesList.length; seriesIndex += 1) {
+  let text = formatSpecialHeader(excel) + formatRow(['Series', 'Time', 'Value']);
+  for (let seriesIndex = 0; seriesIndex < seriesList.length; seriesIndex += 1) {
     for (let i = 0; i < seriesList[seriesIndex].datapoints.length; i += 1) {
       text += formatRow(
         [
           seriesList[seriesIndex].alias,
           moment(seriesList[seriesIndex].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat),
-          seriesList[seriesIndex].datapoints[i][POINT_VALUE_INDEX]
+          seriesList[seriesIndex].datapoints[i][POINT_VALUE_INDEX],
         ],
-        i !== seriesList[seriesIndex].datapoints.length - 1 || seriesIndex !== seriesList.length - 1
+        i < seriesList[seriesIndex].datapoints.length - 1 || seriesIndex < seriesList.length - 1
       );
     }
   }
@@ -80,8 +66,15 @@ export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATET
 
 export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
   // add header
-  let text = formatSpecialHeader(excel)
-           + formatRow(['Time'].concat(seriesList.map(function(val) { return val.alias; })));
+  let text =
+    formatSpecialHeader(excel) +
+    formatRow(
+      ['Time'].concat(
+        seriesList.map(function(val) {
+          return val.alias;
+        })
+      )
+    );
   // process data
   seriesList = mergeSeriesByTime(seriesList);
 
@@ -89,8 +82,12 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
   for (let i = 0; i < seriesList[0].datapoints.length; i += 1) {
     const timestamp = moment(seriesList[0].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat);
     text += formatRow(
-      [timestamp].concat(seriesList.map(function(series) { return series.datapoints[i][POINT_VALUE_INDEX]; })),
-      i !== seriesList[0].datapoints.length - 1
+      [timestamp].concat(
+        seriesList.map(function(series) {
+          return series.datapoints[i][POINT_VALUE_INDEX];
+        })
+      ),
+      i < seriesList[0].datapoints.length - 1
     );
   }
 
@@ -137,10 +134,10 @@ export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAUL
 export function convertTableDataToCsv(table, excel = false) {
   let text = formatSpecialHeader(excel);
   // add headline
-  text += formatRow(table.columns.map(val => (val.title || val.text)));
+  text += formatRow(table.columns.map(val => val.title || val.text));
   // process data
   for (let i = 0; i < table.rows.length; i += 1) {
-    text += formatRow(table.rows[i], i !== table.rows.length - 1);
+    text += formatRow(table.rows[i], i < table.rows.length - 1);
   }
   return text;
 }
