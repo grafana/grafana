@@ -18,6 +18,10 @@ const extractSass = new ExtractTextPlugin({
   disable: HOT
 });
 
+const styleRules = require('./sass.rule.js')({
+  sourceMap: true, minimize: false, preserveUrl: true
+}, extractSass);
+
 const entries = HOT ? {
   app: [
     'webpack-dev-server/client?http://localhost:3333',
@@ -83,9 +87,8 @@ module.exports = merge(common, {
           }
         ]
       },
-      require('./sass.rule.js')({
-        sourceMap: true, minimize: false, preserveUrl: true
-      }, extractSass),
+      styleRules.css,
+      styleRules.scss,
       {
         test: /\.(ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
         loader: 'file-loader'

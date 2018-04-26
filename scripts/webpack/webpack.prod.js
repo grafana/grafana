@@ -9,6 +9,10 @@ const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
+const styleRules = require('./sass.rule.js')({
+  sourceMap: false, minimize: true, preserveUrl: false
+});
+
 module.exports = merge(common, {
   devtool: "source-map",
 
@@ -39,9 +43,8 @@ module.exports = merge(common, {
           { loader: "awesome-typescript-loader" }
         ]
       },
-      require('./sass.rule.js')({
-        sourceMap: false, minimize: true, preserveUrl: false
-      })
+      styleRules.css,
+      styleRules.scss,
     ]
   },
 
