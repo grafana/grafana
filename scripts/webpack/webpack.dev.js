@@ -19,7 +19,7 @@ const extractSass = new ExtractTextPlugin({
 });
 
 const styleRules = require('./sass.rule.js')({
-  sourceMap: true, minimize: false, preserveUrl: true
+  sourceMap: HOT, minimize: false, preserveUrl: true
 }, extractSass);
 
 const entries = HOT ? {
