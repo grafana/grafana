@@ -71,6 +71,7 @@ module.exports = merge(common, {
             loader: 'babel-loader',
             options: {
               plugins: [
+                'syntax-dynamic-import',
                 'react-hot-loader/babel',
               ],
             },

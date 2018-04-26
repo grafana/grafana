@@ -36,7 +36,12 @@ module.exports = merge(common, {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         use: [
-          { loader: "awesome-typescript-loader" }
+          {
+            loader: 'awesome-typescript-loader',
+            options: {
+              errorsAsWarnings: false,
+            },
+          },
         ]
       },
       require('./sass.rule.js')({
