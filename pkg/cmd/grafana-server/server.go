@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 
 	"golang.org/x/sync/errgroup"
@@ -25,8 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -34,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/tracing"
 
 	_ "github.com/grafana/grafana/pkg/extensions"
+	_ "github.com/grafana/grafana/pkg/plugins"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/search"
@@ -72,12 +72,6 @@ func (g *GrafanaServerImpl) Start() error {
 	metrics.Init(setting.Cfg)
 	login.Init()
 	social.NewOAuthService()
-
-	pluginManager, err := plugins.NewPluginManager(g.context)
-	if err != nil {
-		return fmt.Errorf("Failed to start plugins. error: %v", err)
-	}
-	g.childRoutines.Go(func() error { return pluginManager.Run(g.context) })
 
 	if err := provisioning.Init(g.context, setting.HomePath, setting.Cfg); err != nil {
 		return fmt.Errorf("Failed to provision Grafana from config. error: %v", err)
