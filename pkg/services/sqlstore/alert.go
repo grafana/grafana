@@ -40,7 +40,7 @@ func GetAlertById(query *m.GetAlertByIdQuery) error {
 
 func GetAllAlertQueryHandler(query *m.GetAllAlertsQuery) error {
 	var alerts []*m.Alert
-	err := x.Sql("select * from alert").Find(&alerts)
+	err := x.SQL("select * from alert").Find(&alerts)
 	if err != nil {
 		return err
 	}

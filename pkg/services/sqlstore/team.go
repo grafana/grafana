@@ -166,7 +166,7 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 		params = append(params, query.Limit, offset)
 	}
 
-	if err := x.Sql(sql.String(), params...).Find(&query.Result.Teams); err != nil {
+	if err := x.SQL(sql.String(), params...).Find(&query.Result.Teams); err != nil {
 		return err
 	}
 
