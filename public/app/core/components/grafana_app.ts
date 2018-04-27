@@ -8,11 +8,23 @@ import appEvents from 'app/core/app_events';
 import Drop from 'tether-drop';
 import { createStore } from 'app/stores/store';
 import colors from 'app/core/utils/colors';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export class GrafanaCtrl {
   /** @ngInject */
-  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, bridgeSrv, backendSrv) {
-    createStore(backendSrv);
+  constructor(
+    $scope,
+    alertSrv,
+    utilSrv,
+    $rootScope,
+    $controller,
+    contextSrv,
+    bridgeSrv,
+    backendSrv: BackendSrv,
+    datasourceSrv: DatasourceSrv
+  ) {
+    createStore({ backendSrv, datasourceSrv });
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
