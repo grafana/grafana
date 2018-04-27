@@ -60,9 +60,7 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 	}
 
 	// send invite email
-	c.Logger.Error("sending?")
 	if inviteDto.SendEmail && util.IsEmail(inviteDto.LoginOrEmail) {
-		c.Logger.Error("yes sending?")
 		emailCmd := m.SendEmailCommand{
 			To:       []string{inviteDto.LoginOrEmail},
 			Template: "new_user_invite.html",
