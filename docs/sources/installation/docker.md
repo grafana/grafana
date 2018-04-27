@@ -145,7 +145,7 @@ The docker container for Grafana has seen a major rewrite for 5.1.
 
 ### Removal of implicit volumes
 
-Previously `/var/lib/grafana`, `/etc/grafana` and `/var/log/grafana` were defined as volumes in the `Dockerfile`. This lead to the creation of three volumes each time a new instance of the Grafana container started, whether you wanted it or not.
+Previously `/var/lib/grafana`, `/etc/grafana` and `/var/log/grafana` were defined as volumes in the `Dockerfile`. This led to the creation of three volumes each time a new instance of the Grafana container started, whether you wanted it or not.
 
 You should always be careful to define your own named volume for storage, but if you depended on these volumes you should be aware that an upgraded container will no longer have them. 
 
@@ -153,7 +153,7 @@ You should always be careful to define your own named volume for storage, but if
 
 ### User ID changes
 
-In 5.1 we switched the id of the grafana user. Unfortunately this means that files created prior to 5.1 won't have the correct permissions for later versions. We made this change so that it would be easier for you to control what user Grafana is executed as (see examples below).
+In 5.1 we switched the id of the grafana user. Unfortunately this means that files created prior to 5.1 won't have the correct permissions for later versions. We made this change so that it would be more likely that the grafana users id would be unique to Grafana. For example, on Ubuntu 16.04 `104` is already in use by the syslog user.
 
 Version | User    | User ID
 --------|---------|---------
@@ -168,7 +168,7 @@ There are two possible solutions to this problem. Either you start the new conta
 docker run --user 104 --volume "<your volume mapping here>" grafana/grafana:5.1.0
 ```
 
-##### docker-compose.yml with custom user
+##### Specifying a user in docker-compose.yml
 ```yaml
 version: "2"
 
