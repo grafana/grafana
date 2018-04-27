@@ -19,6 +19,7 @@ export class PrometheusDatasource {
   type: string;
   editorSrc: string;
   name: string;
+  supportsExplore: boolean;
   supportMetrics: boolean;
   url: string;
   directUrl: string;
@@ -34,6 +35,7 @@ export class PrometheusDatasource {
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.name = instanceSettings.name;
+    this.supportsExplore = true;
     this.supportMetrics = true;
     this.url = instanceSettings.url;
     this.directUrl = instanceSettings.directUrl;
@@ -321,6 +323,14 @@ export class PrometheusDatasource {
         return { status: 'error', message: response.error };
       }
     });
+  }
+
+  getExploreState(panel) {
+    if (!panel.targets) {
+      return {};
+    }
+    const queries = panel.targets.map(t => ({ query: t.expr, format: t.format }));
+    return { queries };
   }
 
   getPrometheusTime(date, roundUp) {

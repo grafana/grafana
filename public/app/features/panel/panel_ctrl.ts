@@ -22,6 +22,7 @@ export class PanelCtrl {
   editorTabs: any;
   $scope: any;
   $injector: any;
+  $location: any;
   $timeout: any;
   fullscreen: boolean;
   inspector: any;
@@ -35,6 +36,7 @@ export class PanelCtrl {
 
   constructor($scope, $injector) {
     this.$injector = $injector;
+    this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
@@ -97,6 +99,12 @@ export class PanelCtrl {
     this.changeView(false, false);
   }
 
+  explore() {
+    // TS hack :<
+    const initialState = JSON.stringify(this['datasource'].getExploreState(this.panel));
+    this.$location.url(`/explore/${initialState}`);
+  }
+
   initEditMode() {
     this.editorTabs = [];
     this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
@@ -151,6 +159,16 @@ export class PanelCtrl {
         role: 'Editor',
         icon: 'fa fa-fw fa-edit',
         shortcut: 'e',
+      });
+    }
+
+    // TS hack :<
+    if ('datasource' in this && this['datasource'].supportsExplore) {
+      menu.push({
+        text: 'Explore',
+        click: 'ctrl.explore();',
+        icon: 'fa fa-fw fa-rocket',
+        shortcut: 'x',
       });
     }
 
