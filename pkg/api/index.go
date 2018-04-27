@@ -125,7 +125,7 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 			Icon:     "fa fa-rocket",
 			Url:      setting.AppSubUrl + "/explore",
 			Children: []*dtos.NavLink{
-				{Text: "New tab", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/explore/new"},
+				{Text: "New tab", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/explore"},
 			},
 		})
 	}

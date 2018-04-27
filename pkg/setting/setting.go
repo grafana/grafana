@@ -613,7 +613,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 
 	explore := Cfg.Section("explore")
-	ExploreEnabled = explore.Key("enabled").MustBool(true)
+	ExploreEnabled = explore.Key("enabled").MustBool(false)
 
 	readSessionConfig()
 	readSmtpSettings()
