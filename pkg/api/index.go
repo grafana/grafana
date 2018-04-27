@@ -289,7 +289,7 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:         "Help",
-		SubTitle:     fmt.Sprintf(`Grafana v%s (%s)`, setting.BuildVersion, setting.BuildCommit),
+		SubTitle:     fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit),
 		Id:           "help",
 		Url:          "#",
 		Icon:         "gicon gicon-question",

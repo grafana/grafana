@@ -41,6 +41,7 @@ var (
 	buildNumber           int      = 0
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 	isDev                 bool     = false
+	enterprise            bool     = false
 )
 
 func main() {
@@ -58,6 +59,7 @@ func main() {
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
 	flag.BoolVar(&includeBuildNumber, "includeBuildNumber", includeBuildNumber, "IncludeBuildNumber in package name")
+	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.IntVar(&buildNumber, "buildNumber", 0, "Build number from CI system")
 	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
 	flag.Parse()
@@ -283,17 +285,31 @@ func createPackage(options linuxPackageOptions) {
 		"-s", "dir",
 		"--description", "Grafana",
 		"-C", packageRoot,
-		"--vendor", "Grafana",
 		"--url", "https://grafana.com",
-		"--license", "\"Apache 2.0\"",
 		"--maintainer", "contact@grafana.com",
 		"--config-files", options.initdScriptFilePath,
 		"--config-files", options.etcDefaultFilePath,
 		"--config-files", options.systemdServiceFilePath,
 		"--after-install", options.postinstSrc,
-		"--name", "grafana",
+
 		"--version", linuxPackageVersion,
 		"-p", "./dist",
+	}
+
+	name := "grafana"
+	if enterprise {
+		name += "-enterprise"
+	}
+	args = append(args, "--name", name)
+
+	description := "Grafana"
+	if enterprise {
+		description += " Enterprise"
+	}
+	args = append(args, "--vendor", description)
+
+	if !enterprise {
+		args = append(args, "--license", "\"Apache 2.0\"")
 	}
 
 	if options.packageType == "rpm" {
@@ -412,6 +428,7 @@ func ldflags() string {
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
+	b.WriteString(fmt.Sprintf(" -X main.enterprise=%t", enterprise))
 	return b.String()
 }
 

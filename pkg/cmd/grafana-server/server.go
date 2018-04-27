@@ -8,9 +8,15 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"time"
 
+	"github.com/facebookgo/inject"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 
 	"golang.org/x/sync/errgroup"
@@ -20,15 +26,17 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
+
+	_ "github.com/grafana/grafana/pkg/extensions"
+	_ "github.com/grafana/grafana/pkg/services/alerting"
+	_ "github.com/grafana/grafana/pkg/services/cleanup"
+	_ "github.com/grafana/grafana/pkg/services/search"
 )
 
 func NewGrafanaServer() *GrafanaServerImpl {
@@ -48,18 +56,20 @@ type GrafanaServerImpl struct {
 	shutdownFn    context.CancelFunc
 	childRoutines *errgroup.Group
 	log           log.Logger
+	RouteRegister api.RouteRegister `inject:""`
 
-	httpServer *api.HTTPServer
+	HttpServer *api.HTTPServer `inject:""`
 }
 
 func (g *GrafanaServerImpl) Start() error {
 	g.initLogging()
 	g.writePIDFile()
 
-	initSql()
+	// initSql
+	sqlstore.NewEngine() // TODO: this should return an error
+	sqlstore.EnsureAdminUser()
 
 	metrics.Init(setting.Cfg)
-	search.Init()
 	login.Init()
 	social.NewOAuthService()
 
@@ -79,28 +89,62 @@ func (g *GrafanaServerImpl) Start() error {
 	}
 	defer tracingCloser.Close()
 
-	// init alerting
-	if setting.AlertingEnabled && setting.ExecuteAlerts {
-		engine := alerting.NewEngine()
-		g.childRoutines.Go(func() error { return engine.Run(g.context) })
-	}
-
-	// cleanup service
-	cleanUpService := cleanup.NewCleanUpService()
-	g.childRoutines.Go(func() error { return cleanUpService.Run(g.context) })
-
 	if err = notifications.Init(); err != nil {
 		return fmt.Errorf("Notification service failed to initialize. error: %v", err)
 	}
 
+	serviceGraph := inject.Graph{}
+	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
+	serviceGraph.Provide(&inject.Object{Value: dashboards.NewProvisioningService()})
+	serviceGraph.Provide(&inject.Object{Value: api.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
+	serviceGraph.Provide(&inject.Object{Value: api.HTTPServer{}})
+	services := registry.GetServices()
+
+	// Add all services to dependency graph
+	for _, service := range services {
+		serviceGraph.Provide(&inject.Object{Value: service})
+	}
+
+	serviceGraph.Provide(&inject.Object{Value: g})
+
+	// Inject dependencies to services
+	if err := serviceGraph.Populate(); err != nil {
+		return fmt.Errorf("Failed to populate service dependency: %v", err)
+	}
+
+	// Init & start services
+	for _, service := range services {
+		if registry.IsDisabled(service) {
+			continue
+		}
+
+		g.log.Info("Initializing " + reflect.TypeOf(service).Elem().Name())
+
+		if err := service.Init(); err != nil {
+			return fmt.Errorf("Service init failed %v", err)
+		}
+	}
+
+	// Start background services
+	for index := range services {
+		service, ok := services[index].(registry.BackgroundService)
+		if !ok {
+			continue
+		}
+
+		if registry.IsDisabled(services[index]) {
+			continue
+		}
+
+		g.childRoutines.Go(func() error {
+			err := service.Run(g.context)
+			g.log.Info("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)
+			return err
+		})
+	}
+
 	sendSystemdNotification("READY=1")
-
 	return g.startHttpServer()
-}
-
-func initSql() {
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
 }
 
 func (g *GrafanaServerImpl) initLogging() {
@@ -115,14 +159,14 @@ func (g *GrafanaServerImpl) initLogging() {
 		os.Exit(1)
 	}
 
-	g.log.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
+	g.log.Info("Starting "+setting.ApplicationName, "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
 	setting.LogConfigurationInfo()
 }
 
 func (g *GrafanaServerImpl) startHttpServer() error {
-	g.httpServer = api.NewHTTPServer()
+	g.HttpServer.Init()
 
-	err := g.httpServer.Start(g.context)
+	err := g.HttpServer.Start(g.context)
 
 	if err != nil {
 		return fmt.Errorf("Fail to start server. error: %v", err)
@@ -134,7 +178,7 @@ func (g *GrafanaServerImpl) startHttpServer() error {
 func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
 	g.log.Info("Shutdown started", "code", code, "reason", reason)
 
-	err := g.httpServer.Shutdown(g.context)
+	err := g.HttpServer.Shutdown(g.context)
 	if err != nil {
 		g.log.Error("Failed to shutdown server", "error", err)
 	}

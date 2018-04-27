@@ -12,6 +12,7 @@ func TestSearch(t *testing.T) {
 
 	Convey("Given search query", t, func() {
 		query := Query{Limit: 2000, SignedInUser: &m.SignedInUser{IsGrafanaAdmin: true}}
+		ss := &SearchService{}
 
 		bus.AddHandler("test", func(query *FindPersistedDashboardsQuery) error {
 			query.Result = HitList{
@@ -35,7 +36,7 @@ func TestSearch(t *testing.T) {
 		})
 
 		Convey("That is empty", func() {
-			err := searchHandler(&query)
+			err := ss.searchHandler(&query)
 			So(err, ShouldBeNil)
 
 			Convey("should return sorted results", func() {

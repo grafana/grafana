@@ -77,7 +77,7 @@ func EnsureAdminUser() {
 	log.Info("Created default admin user: %v", setting.AdminUser)
 }
 
-func NewEngine() {
+func NewEngine() *xorm.Engine {
 	x, err := getEngine()
 
 	if err != nil {
@@ -91,6 +91,8 @@ func NewEngine() {
 		sqlog.Error("Fail to initialize orm engine", "error", err)
 		os.Exit(1)
 	}
+
+	return x
 }
 
 func SetEngine(engine *xorm.Engine) (err error) {

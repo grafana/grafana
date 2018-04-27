@@ -2,13 +2,15 @@ package bus
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"reflect"
 )
 
 type HandlerFunc interface{}
 type CtxHandlerFunc func()
 type Msg interface{}
+
+var ErrHandlerNotFound = errors.New("handler not found")
 
 type Bus interface {
 	Dispatch(msg Msg) error
@@ -38,12 +40,17 @@ func New() Bus {
 	return bus
 }
 
+// Want to get rid of global bus
+func GetBus() Bus {
+	return globalBus
+}
+
 func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
 	var handler = b.handlers[msgName]
 	if handler == nil {
-		return fmt.Errorf("handler not found for %s", msgName)
+		return ErrHandlerNotFound
 	}
 
 	var params = make([]reflect.Value, 2)
@@ -64,7 +71,7 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 
 	var handler = b.handlers[msgName]
 	if handler == nil {
-		return fmt.Errorf("handler not found for %s", msgName)
+		return ErrHandlerNotFound
 	}
 
 	var params = make([]reflect.Value, 1)
