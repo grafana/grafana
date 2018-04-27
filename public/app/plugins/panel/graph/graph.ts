@@ -634,6 +634,9 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
       function configureAxisMode(axis, format) {
         axis.tickFormatter = function(val, axis) {
+          if (!kbn.valueFormats[format]) {
+            throw new Error(`Unit '${format}' is not supported`);
+          }
           return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
         };
       }
