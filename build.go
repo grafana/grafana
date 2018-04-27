@@ -16,7 +16,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -24,14 +23,14 @@ import (
 )
 
 var (
-	versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
-	goarch    string
-	goos      string
-	gocc      string
-	gocxx     string
-	cgo       string
-	pkgArch   string
-	version   string = "v1"
+	//versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
+	goarch  string
+	goos    string
+	gocc    string
+	gocxx   string
+	cgo     string
+	pkgArch string
+	version string = "v1"
 	// deb & rpm does not support semver so have to handle their version a little differently
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
@@ -43,8 +42,6 @@ var (
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 	isDev                 bool     = false
 )
-
-const minGoVersion = 1.8
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -326,20 +323,6 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("fpm", append([]string{"-t", options.packageType}, args...)...)
 }
 
-func verifyGitRepoIsClean() {
-	rs, err := runError("git", "ls-files", "--modified")
-	if err != nil {
-		log.Fatalf("Failed to check if git tree was clean, %v, %v\n", string(rs), err)
-		return
-	}
-	count := len(string(rs))
-	if count > 0 {
-		log.Fatalf("Git repository has modified files, aborting")
-	}
-
-	log.Println("Git repository is clean")
-}
-
 func ensureGoPath() {
 	if os.Getenv("GOPATH") == "" {
 		cwd, err := os.Getwd()
@@ -350,10 +333,6 @@ func ensureGoPath() {
 		log.Println("GOPATH is", gopath)
 		os.Setenv("GOPATH", gopath)
 	}
-}
-
-func ChangeWorkingDir(dir string) {
-	os.Chdir(dir)
 }
 
 func grunt(params ...string) {
@@ -490,24 +469,6 @@ func buildStamp() int64 {
 	}
 	s, _ := strconv.ParseInt(string(bs), 10, 64)
 	return s
-}
-
-func buildArch() string {
-	os := goos
-	if os == "darwin" {
-		os = "macosx"
-	}
-	return fmt.Sprintf("%s-%s", os, goarch)
-}
-
-func run(cmd string, args ...string) []byte {
-	bs, err := runError(cmd, args...)
-	if err != nil {
-		log.Println(cmd, strings.Join(args, " "))
-		log.Println(string(bs))
-		log.Fatal(err)
-	}
-	return bytes.TrimSpace(bs)
 }
 
 func runError(cmd string, args ...string) ([]byte, error) {
