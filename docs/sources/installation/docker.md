@@ -132,7 +132,28 @@ docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 graf
 
 ## Migration from a previous version of the docker container to 5.1 or later
 
-In 5.1 we switched the id of the grafana user. Unfortunately this means that files created prior to 5.1 won't have the correct permissions for later versions. We made this change so that it would be easier for you to control what user Grafana is executed as (see examples below).
+The docker container for Grafana has seen a major rewrite for 5.1.
+
+**Important changes**
+
+* file ownership is no longer modified during startup with `chown`
+* default user id `472` instead of `104`
+* no more implicit volumes
+  - `/var/lib/grafana`
+  - `/etc/grafana`
+  - `/var/log/grafana`
+
+### Removal of implicit volumes
+
+Previously `/var/lib/grafana`, `/etc/grafana` and `/var/log/grafana` were defined as volumes in the `Dockerfile`. This led to the creation of three volumes each time a new instance of the Grafana container started, whether you wanted it or not.
+
+You should always be careful to define your own named volume for storage, but if you depended on these volumes you should be aware that an upgraded container will no longer have them. 
+
+**Warning**: when migrating from an earlier version to 5.1 or later using docker compose and implicit volumes you need to use `docker inspect` to find out which volumes your container is mapped to so that you can map them to the upgraded container as well. You will also have to change file ownership (or user) as documented below.
+
+### User ID changes
+
+In 5.1 we switched the id of the grafana user. Unfortunately this means that files created prior to 5.1 won't have the correct permissions for later versions. We made this change so that it would be more likely that the grafana users id would be unique to Grafana. For example, on Ubuntu 16.04 `104` is already in use by the syslog user.
 
 Version | User    | User ID
 --------|---------|---------
@@ -141,13 +162,13 @@ Version | User    | User ID
 
 There are two possible solutions to this problem. Either you start the new container as the root user and change ownership from `104` to `472` or you start the upgraded container as user `104`.
 
-### Running docker as a different user
+#### Running docker as a different user
 
 ```bash
 docker run --user 104 --volume "<your volume mapping here>" grafana/grafana:5.1.0
 ```
 
-#### docker-compose.yml with custom user
+##### Specifying a user in docker-compose.yml
 ```yaml
 version: "2"
 
@@ -159,7 +180,7 @@ services:
     user: "104"
 ```
 
-### Modifying permissions
+#### Modifying permissions
 
 The commands below will run bash inside the Grafana container with your volume mapped in. This makes it possible to modify the file ownership to match the new container. Always be careful when modifying permissions. 
 
