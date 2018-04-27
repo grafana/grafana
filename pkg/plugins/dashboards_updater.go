@@ -1,8 +1,6 @@
 package plugins
 
 import (
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -11,10 +9,8 @@ func init() {
 	bus.AddEventListener(handlePluginStateChanged)
 }
 
-func updateAppDashboards() {
-	time.Sleep(time.Second * 5)
-
-	plog.Debug("Looking for App Dashboard Updates")
+func (pm *PluginManager) updateAppDashboards() {
+	pm.log.Debug("Looking for App Dashboard Updates")
 
 	query := m.GetPluginSettingsQuery{OrgId: 0}
 

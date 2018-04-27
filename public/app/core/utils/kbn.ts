@@ -596,7 +596,7 @@ kbn.valueFormats.radr = kbn.formatBuilders.decimalSIPrefix('R');
 kbn.valueFormats.radsvh = kbn.formatBuilders.decimalSIPrefix('Sv/h');
 
 // Concentration
-kbn.valueFormats.conppm = kbn.formatBuilders.fixedUnit('ppm');
+kbn.valueFormats.ppm = kbn.formatBuilders.fixedUnit('ppm');
 kbn.valueFormats.conppb = kbn.formatBuilders.fixedUnit('ppb');
 kbn.valueFormats.conngm3 = kbn.formatBuilders.fixedUnit('ng/m3');
 kbn.valueFormats.conngNm3 = kbn.formatBuilders.fixedUnit('ng/Nm3');
@@ -1101,7 +1101,7 @@ kbn.getUnitFormats = function() {
     {
       text: 'concentration',
       submenu: [
-        { text: 'parts-per-million (ppm)', value: 'conppm' },
+        { text: 'parts-per-million (ppm)', value: 'ppm' },
         { text: 'parts-per-billion (ppb)', value: 'conppb' },
         { text: 'nanogram per cubic metre (ng/m3)', value: 'conngm3' },
         { text: 'nanogram per normal cubic metre (ng/Nm3)', value: 'conngNm3' },
