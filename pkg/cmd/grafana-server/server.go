@@ -26,16 +26,17 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
 
+	// self registering services
 	_ "github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
+	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/search"
 )
 
@@ -56,9 +57,9 @@ type GrafanaServerImpl struct {
 	shutdownFn    context.CancelFunc
 	childRoutines *errgroup.Group
 	log           log.Logger
-	RouteRegister api.RouteRegister `inject:""`
 
-	HttpServer *api.HTTPServer `inject:""`
+	RouteRegister api.RouteRegister `inject:""`
+	HttpServer    *api.HTTPServer   `inject:""`
 }
 
 func (g *GrafanaServerImpl) Start() error {
@@ -88,10 +89,6 @@ func (g *GrafanaServerImpl) Start() error {
 		return fmt.Errorf("Tracing settings is not valid. error: %v", err)
 	}
 	defer tracingCloser.Close()
-
-	if err = notifications.Init(); err != nil {
-		return fmt.Errorf("Notification service failed to initialize. error: %v", err)
-	}
 
 	serviceGraph := inject.Graph{}
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
