@@ -4,6 +4,23 @@
   }
 }
 
+.query-row {
+  position: relative;
+
+  & + & {
+    margin-top: 0.5rem;
+  }
+}
+
+.query-row-tools {
+  position: absolute;
+  left: -4rem;
+  top: 0.33rem;
+  > * {
+    margin-right: 0.25rem;
+  }
+}
+
 .query-field {
   font-size: 14px;
   font-family: Consolas, Menlo, Courier, monospace;
@@ -14,14 +31,14 @@
   position: relative;
   display: inline-block;
   padding: 6px 7px 4px;
-  width: calc(100% - 6rem);
+  width: 100%;
   cursor: text;
   line-height: 1.5;
   color: rgba(0, 0, 0, 0.65);
   background-color: #fff;
   background-image: none;
   border: 1px solid lightgray;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: all 0.3s;
 }
 
