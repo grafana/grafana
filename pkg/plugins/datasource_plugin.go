@@ -76,7 +76,7 @@ func composeBinaryName(executable, os, arch string) string {
 	return fmt.Sprintf("%s_%s_%s%s", executable, os, strings.ToLower(arch), extension)
 }
 
-func (p *DataSourcePlugin) initBackendPlugin(ctx context.Context, log log.Logger) error {
+func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
 
 	err := p.spawnSubProcess()

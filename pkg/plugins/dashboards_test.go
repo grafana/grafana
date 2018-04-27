@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -18,7 +17,9 @@ func TestPluginDashboards(t *testing.T) {
 		setting.Cfg = ini.Empty()
 		sec, _ := setting.Cfg.NewSection("plugin.test-app")
 		sec.NewKey("path", "../../tests/test-app")
-		err := initPlugins(context.Background())
+
+		pm := &PluginManager{}
+		err := pm.Init()
 
 		So(err, ShouldBeNil)
 
