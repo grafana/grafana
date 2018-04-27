@@ -111,11 +111,14 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 	pm.checkForUpdates()
 
 	ticker := time.NewTicker(time.Minute * 10)
-	for {
+	run := true
+
+	for run {
 		select {
 		case <-ticker.C:
 			pm.checkForUpdates()
 		case <-ctx.Done():
+			run = false
 			break
 		}
 	}
@@ -125,7 +128,7 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 		p.Kill()
 	}
 
-	return nil
+	return ctx.Err()
 }
 
 func checkPluginPaths() error {
