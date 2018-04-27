@@ -205,11 +205,11 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	}
 
 	var loader PluginLoader
-	if pluginGoType, exists := PluginTypes[pluginCommon.Type]; !exists {
+	pluginGoType, exists := PluginTypes[pluginCommon.Type]
+	if !exists {
 		return errors.New("Unknown plugin type " + pluginCommon.Type)
-	} else {
-		loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 	}
+	loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 
 	reader.Seek(0, 0)
 	return loader.Load(jsonParser, currentDir)
@@ -230,9 +230,9 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 		return make([]byte, 0), nil
 	}
 
-	if data, err := ioutil.ReadFile(path); err != nil {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
 		return nil, err
-	} else {
-		return data, nil
 	}
+	return data, nil
 }

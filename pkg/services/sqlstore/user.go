@@ -47,10 +47,9 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error
 		}
 		if has {
 			return org.Id, nil
-		} else {
-			org.Name = "Main Org."
-			org.Id = 1
 		}
+		org.Name = "Main Org."
+		org.Id = 1
 	} else {
 		org.Name = cmd.OrgName
 		if len(org.Name) == 0 {

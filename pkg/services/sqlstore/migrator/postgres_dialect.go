@@ -45,9 +45,8 @@ func (b *Postgres) Default(col *Column) string {
 	if col.Type == DB_Bool {
 		if col.Default == "0" {
 			return "FALSE"
-		} else {
-			return "TRUE"
 		}
+		return "TRUE"
 	}
 	return col.Default
 }

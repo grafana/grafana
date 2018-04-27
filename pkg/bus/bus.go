@@ -61,9 +61,8 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	err := ret[0].Interface()
 	if err == nil {
 		return nil
-	} else {
-		return err.(error)
 	}
+	return err.(error)
 }
 
 func (b *InProcBus) Dispatch(msg Msg) error {
@@ -81,9 +80,8 @@ func (b *InProcBus) Dispatch(msg Msg) error {
 	err := ret[0].Interface()
 	if err == nil {
 		return nil
-	} else {
-		return err.(error)
 	}
+	return err.(error)
 }
 
 func (b *InProcBus) Publish(msg Msg) error {

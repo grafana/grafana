@@ -50,12 +50,12 @@ func (a *ldapAuther) Dial() error {
 	if a.server.RootCACert != "" {
 		certPool = x509.NewCertPool()
 		for _, caCertFile := range strings.Split(a.server.RootCACert, " ") {
-			if pem, err := ioutil.ReadFile(caCertFile); err != nil {
+			pem, err := ioutil.ReadFile(caCertFile)
+			if err != nil {
 				return err
-			} else {
-				if !certPool.AppendCertsFromPEM(pem) {
-					return errors.New("Failed to append CA certificate " + caCertFile)
-				}
+			}
+			if !certPool.AppendCertsFromPEM(pem) {
+				return errors.New("Failed to append CA certificate " + caCertFile)
 			}
 		}
 	}

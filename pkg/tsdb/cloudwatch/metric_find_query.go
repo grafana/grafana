@@ -222,9 +222,8 @@ func parseMultiSelectValue(input string) []string {
 			trimValues[i] = strings.TrimSpace(v)
 		}
 		return trimValues
-	} else {
-		return []string{trimmedInput}
 	}
+	return []string{trimmedInput}
 }
 
 // Whenever this list is updated, frontend list should also be updated.
