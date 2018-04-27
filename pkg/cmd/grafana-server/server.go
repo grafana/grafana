@@ -36,7 +36,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
-	_ "github.com/grafana/grafana/pkg/services/hello"
 	_ "github.com/grafana/grafana/pkg/services/search"
 )
 
