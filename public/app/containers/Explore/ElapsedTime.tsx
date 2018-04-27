@@ -4,7 +4,7 @@ const INTERVAL = 150;
 
 export default class ElapsedTime extends PureComponent<any, any> {
   offset: number;
-  timer: NodeJS.Timer;
+  timer: number;
 
   state = {
     elapsed: 0,
@@ -12,7 +12,7 @@ export default class ElapsedTime extends PureComponent<any, any> {
 
   start() {
     this.offset = Date.now();
-    this.timer = setInterval(this.tick, INTERVAL);
+    this.timer = window.setInterval(this.tick, INTERVAL);
   }
 
   tick = () => {

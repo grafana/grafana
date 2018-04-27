@@ -21,8 +21,12 @@ export function reactContainer($route, $location, backendSrv: BackendSrv, dataso
     restrict: 'E',
     template: '',
     link(scope, elem) {
-      let component = $route.current.locals.component.default;
-      let props = {
+      let component = $route.current.locals.component;
+      // Dynamic imports return whole module, need to extract default export
+      if (component.default) {
+        component = component.default;
+      }
+      const props = {
         backendSrv: backendSrv,
         datasourceSrv: datasourceSrv,
       };
