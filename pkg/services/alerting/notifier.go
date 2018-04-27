@@ -140,7 +140,7 @@ func (n *notificationService) createNotifierFor(model *m.AlertNotification) (Not
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
 
-var notifierFactories map[string]*NotifierPlugin = make(map[string]*NotifierPlugin)
+var notifierFactories = make(map[string]*NotifierPlugin)
 
 func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin

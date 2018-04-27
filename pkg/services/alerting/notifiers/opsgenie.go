@@ -41,7 +41,7 @@ func init() {
 }
 
 var (
-	opsgenieAlertURL string = "https://api.opsgenie.com/v2/alerts"
+	opsgenieAlertURL = "https://api.opsgenie.com/v2/alerts"
 )
 
 func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) {

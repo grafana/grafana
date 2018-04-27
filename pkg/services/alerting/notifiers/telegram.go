@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	telegramApiUrl string = "https://api.telegram.org/bot%s/%s"
+	telegramApiUrl = "https://api.telegram.org/bot%s/%s"
 )
 
 func init() {

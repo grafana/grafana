@@ -92,8 +92,8 @@ func (db *Postgres) SqlType(c *Column) string {
 		res = t
 	}
 
-	var hasLen1 bool = (c.Length > 0)
-	var hasLen2 bool = (c.Length2 > 0)
+	var hasLen1 = (c.Length > 0)
+	var hasLen2 = (c.Length2 > 0)
 	if hasLen2 {
 		res += "(" + strconv.Itoa(c.Length) + "," + strconv.Itoa(c.Length2) + ")"
 	} else if hasLen1 {

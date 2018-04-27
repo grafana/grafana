@@ -58,7 +58,7 @@ type DataSource struct {
 	Updated time.Time
 }
 
-var knownDatasourcePlugins map[string]bool = map[string]bool{
+var knownDatasourcePlugins = map[string]bool{
 	DS_ES:                       true,
 	DS_GRAPHITE:                 true,
 	DS_INFLUXDB:                 true,

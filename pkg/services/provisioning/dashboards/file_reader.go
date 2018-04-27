@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	checkDiskForChangesInterval time.Duration = time.Second * 3
+	checkDiskForChangesInterval = time.Second * 3
 
-	ErrFolderNameMissing error = errors.New("Folder name missing")
+	ErrFolderNameMissing = errors.New("Folder name missing")
 )
 
 type fileReader struct {

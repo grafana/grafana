@@ -133,7 +133,7 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 
 type ConditionFactory func(model *simplejson.Json, index int) (Condition, error)
 
-var conditionFactories map[string]ConditionFactory = make(map[string]ConditionFactory)
+var conditionFactories = make(map[string]ConditionFactory)
 
 func RegisterCondition(typeName string, factory ConditionFactory) {
 	conditionFactories[typeName] = factory
