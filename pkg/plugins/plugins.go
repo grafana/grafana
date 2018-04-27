@@ -11,8 +11,10 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,30 +41,12 @@ type PluginManager struct {
 	log log.Logger
 }
 
-func NewPluginManager(ctx context.Context) (*PluginManager, error) {
-	err := initPlugins(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &PluginManager{
-		log: log.New("plugins"),
-	}, nil
+func init() {
+	registry.RegisterService(&PluginManager{})
 }
 
-func (p *PluginManager) Run(ctx context.Context) error {
-	<-ctx.Done()
-
-	for _, p := range DataSources {
-		p.Kill()
-	}
-
-	p.log.Info("Stopped Plugins", "reason", ctx.Err())
-	return ctx.Err()
-}
-
-func initPlugins(ctx context.Context) error {
+func (pm *PluginManager) Init() error {
+	pm.log = log.New("plugins")
 	plog = log.New("plugins")
 
 	DataSources = map[string]*DataSourcePlugin{}
@@ -76,7 +60,7 @@ func initPlugins(ctx context.Context) error {
 		"app":        AppPlugin{},
 	}
 
-	plog.Info("Starting plugin search")
+	pm.log.Info("Starting plugin search")
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
 
 	// check if plugins dir exists
@@ -99,13 +83,6 @@ func initPlugins(ctx context.Context) error {
 	}
 
 	for _, ds := range DataSources {
-		if ds.Backend {
-			err := ds.initBackendPlugin(ctx, plog)
-			if err != nil {
-				plog.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
-			}
-		}
-
 		ds.initFrontendPlugin()
 	}
 
@@ -113,8 +90,40 @@ func initPlugins(ctx context.Context) error {
 		app.initApp()
 	}
 
-	go StartPluginUpdateChecker()
-	go updateAppDashboards()
+	return nil
+}
+
+func (pm *PluginManager) startBackendPlugins(ctx context.Context) error {
+	for _, ds := range DataSources {
+		if ds.Backend {
+			if err := ds.startBackendPlugin(ctx, plog); err != nil {
+				pm.log.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (pm *PluginManager) Run(ctx context.Context) error {
+	pm.startBackendPlugins(ctx)
+	pm.updateAppDashboards()
+	pm.checkForUpdates()
+
+	ticker := time.NewTicker(time.Minute * 10)
+	for {
+		select {
+		case <-ticker.C:
+			pm.checkForUpdates()
+		case <-ctx.Done():
+			break
+		}
+	}
+
+	// kil backend plugins
+	for _, p := range DataSources {
+		p.Kill()
+	}
 
 	return nil
 }
