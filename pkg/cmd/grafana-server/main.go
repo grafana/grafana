@@ -108,7 +108,7 @@ func listenToSystemSignals(server *GrafanaServerImpl, shutdownCompleted chan int
 	ignoreChan := make(chan os.Signal, 1)
 
 	signal.Notify(ignoreChan, syscall.SIGHUP)
-	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
 	case sig := <-signalChan:
