@@ -168,6 +168,9 @@ var (
 	AlertingEnabled bool
 	ExecuteAlerts   bool
 
+	// Explore UI
+	ExploreEnabled bool
+
 	// logger
 	logger log.Logger
 
@@ -608,6 +611,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	alerting := Cfg.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+
+	explore := Cfg.Section("explore")
+	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
 	readSessionConfig()
 	readSmtpSettings()
