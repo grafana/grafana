@@ -5,29 +5,11 @@ import TimeSeries from 'app/core/time_series2';
 
 import ElapsedTime from './ElapsedTime';
 import Legend from './Legend';
-import QueryField from './QueryField';
+import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Table from './Table';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-
-function buildQueryOptions({ format, interval, instant, now, query }) {
-  const to = now;
-  const from = to - 1000 * 60 * 60 * 3;
-  return {
-    interval,
-    range: {
-      from,
-      to,
-    },
-    targets: [
-      {
-        expr: query,
-        format,
-        instant,
-      },
-    ],
-  };
-}
+import { buildQueryOptions, ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
@@ -63,6 +45,7 @@ interface IExploreState {
   graphResult: any;
   latency: number;
   loading: any;
+  queries: any;
   requestOptions: any;
   showingGraph: boolean;
   showingTable: boolean;
@@ -72,7 +55,6 @@ interface IExploreState {
 // @observer
 export class Explore extends React.Component<any, IExploreState> {
   datasourceSrv: DatasourceSrv;
-  query: string;
 
   constructor(props) {
     super(props);
@@ -83,6 +65,7 @@ export class Explore extends React.Component<any, IExploreState> {
       graphResult: null,
       latency: 0,
       loading: false,
+      queries: ensureQueries(),
       requestOptions: null,
       showingGraph: true,
       showingTable: true,
@@ -100,6 +83,27 @@ export class Explore extends React.Component<any, IExploreState> {
     }
   }
 
+  handleAddQueryRow = index => {
+    const { queries } = this.state;
+    const nextQueries = [
+      ...queries.slice(0, index + 1),
+      { query: '', key: generateQueryKey() },
+      ...queries.slice(index + 1),
+    ];
+    this.setState({ queries: nextQueries });
+  };
+
+  handleChangeQuery = (query, index) => {
+    const { queries } = this.state;
+    const nextQuery = {
+      ...queries[index],
+      query,
+    };
+    const nextQueries = [...queries];
+    nextQueries[index] = nextQuery;
+    this.setState({ queries: nextQueries });
+  };
+
   handleClickGraphButton = () => {
     this.setState(state => ({ showingGraph: !state.showingGraph }));
   };
@@ -108,12 +112,13 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setState(state => ({ showingTable: !state.showingTable }));
   };
 
-  handleRequestError({ error }) {
-    console.error(error);
-  }
-
-  handleQueryChange = query => {
-    this.query = query;
+  handleRemoveQueryRow = index => {
+    const { queries } = this.state;
+    if (queries.length <= 1) {
+      return;
+    }
+    const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
+    this.setState({ queries: nextQueries }, () => this.handleSubmit());
   };
 
   handleSubmit = () => {
@@ -127,9 +132,8 @@ export class Explore extends React.Component<any, IExploreState> {
   };
 
   async runGraphQuery() {
-    const { query } = this;
-    const { datasource } = this.state;
-    if (!query) {
+    const { datasource, queries } = this.state;
+    if (!hasQuery(queries)) {
       return;
     }
     this.setState({ latency: 0, loading: true, graphResult: null });
@@ -139,7 +143,7 @@ export class Explore extends React.Component<any, IExploreState> {
       interval: datasource.interval,
       instant: false,
       now,
-      query,
+      queries: queries.map(q => q.query),
     });
     try {
       const res = await datasource.query(options);
@@ -153,14 +157,19 @@ export class Explore extends React.Component<any, IExploreState> {
   }
 
   async runTableQuery() {
-    const { query } = this;
-    const { datasource } = this.state;
-    if (!query) {
+    const { datasource, queries } = this.state;
+    if (!hasQuery(queries)) {
       return;
     }
     this.setState({ latency: 0, loading: true, tableResult: null });
     const now = Date.now();
-    const options = buildQueryOptions({ format: 'table', interval: datasource.interval, instant: true, now, query });
+    const options = buildQueryOptions({
+      format: 'table',
+      interval: datasource.interval,
+      instant: true,
+      now,
+      queries: queries.map(q => q.query),
+    });
     try {
       const res = await datasource.query(options);
       const tableModel = res.data[0];
@@ -182,10 +191,11 @@ export class Explore extends React.Component<any, IExploreState> {
       datasource,
       datasourceError,
       datasourceLoading,
+      graphResult,
       latency,
       loading,
+      queries,
       requestOptions,
-      graphResult,
       showingGraph,
       showingTable,
       tableResult,
@@ -205,7 +215,8 @@ export class Explore extends React.Component<any, IExploreState> {
           {datasource ? (
             <div className="m-r-3">
               <div className="nav m-b-1">
-                <div className="pull-right" style={{ paddingRight: '6rem' }}>
+                <div className="pull-right">
+                  {loading || latency ? <ElapsedTime time={latency} className="" /> : null}
                   <button type="submit" className="m-l-1 btn btn-primary" onClick={this.handleSubmit}>
                     <i className="fa fa-return" /> Run Query
                   </button>
@@ -219,15 +230,14 @@ export class Explore extends React.Component<any, IExploreState> {
                   </button>
                 </div>
               </div>
-              <div className="query-field-wrapper">
-                <QueryField
-                  request={this.request}
-                  onPressEnter={this.handleSubmit}
-                  onQueryChange={this.handleQueryChange}
-                  onRequestError={this.handleRequestError}
-                />
-              </div>
-              {loading || latency ? <ElapsedTime time={latency} className="m-l-1" /> : null}
+              <QueryRows
+                queries={queries}
+                request={this.request}
+                onAddQueryRow={this.handleAddQueryRow}
+                onChangeQuery={this.handleChangeQuery}
+                onExecuteQuery={this.handleSubmit}
+                onRemoveQueryRow={this.handleRemoveQueryRow}
+              />
               <main className="m-t-2">
                 {showingGraph ? (
                   <Graph data={graphResult} id="explore-1" options={requestOptions} height={graphHeight} />
