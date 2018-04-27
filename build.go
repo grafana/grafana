@@ -49,8 +49,6 @@ func main() {
 
 	ensureGoPath()
 
-	verifyGitRepoIsClean()
-
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
 	flag.StringVar(&gocc, "cc", "", "CC")
@@ -323,20 +321,6 @@ func createPackage(options linuxPackageOptions) {
 
 	fmt.Println("Creating package: ", options.packageType)
 	runPrint("fpm", append([]string{"-t", options.packageType}, args...)...)
-}
-
-func verifyGitRepoIsClean() {
-	rs, err := runError("git", "ls-files", "--modified")
-	if err != nil {
-		log.Fatalf("Failed to check if git tree was clean, %v, %v\n", string(rs), err)
-		return
-	}
-	count := len(string(rs))
-	if count > 0 {
-		log.Fatalf("Git repository has modified files, aborting")
-	}
-
-	log.Println("Git repository is clean")
 }
 
 func ensureGoPath() {
