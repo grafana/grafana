@@ -24,12 +24,12 @@ func RedirectFromLegacyDashboardURL() macaron.Handler {
 	return func(c *m.ReqContext) {
 		slug := c.Params("slug")
 
-		if slug != "" {
-			if url, err := getDashboardURLBySlug(c.OrgId, slug); err == nil {
-				url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
-				c.Redirect(url, 301)
-				return
-			}
+		if slug == "" {
+			return
+		}
+		if url, err := getDashboardURLBySlug(c.OrgId, slug); err == nil {
+			url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
+			c.Redirect(url, 301)
 		}
 	}
 }
@@ -39,17 +39,16 @@ func RedirectFromLegacyDashboardSoloURL() macaron.Handler {
 		slug := c.Params("slug")
 		renderRequest := c.QueryBool("render")
 
-		if slug != "" {
-			if url, err := getDashboardURLBySlug(c.OrgId, slug); err == nil {
-				if renderRequest && strings.Contains(url, setting.AppSubUrl) {
-					url = strings.Replace(url, setting.AppSubUrl, "", 1)
-				}
-
-				url = strings.Replace(url, "/d/", "/d-solo/", 1)
-				url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
-				c.Redirect(url, 301)
-				return
+		if slug == "" {
+			return
+		}
+		if url, err := getDashboardURLBySlug(c.OrgId, slug); err == nil {
+			if renderRequest && strings.Contains(url, setting.AppSubUrl) {
+				url = strings.Replace(url, setting.AppSubUrl, "", 1)
 			}
+			url = strings.Replace(url, "/d/", "/d-solo/", 1)
+			url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
+			c.Redirect(url, 301)
 		}
 	}
 }
