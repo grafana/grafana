@@ -100,10 +100,10 @@ func (e *Engine) runJobDispatcher(grafanaCtx context.Context) error {
 }
 
 var (
-	unfinishedWorkTimeout time.Duration = time.Second * 5
+	unfinishedWorkTimeout = time.Second * 5
 	// TODO: Make alertTimeout and alertMaxAttempts configurable in the config file.
-	alertTimeout     time.Duration = time.Second * 30
-	alertMaxAttempts int           = 3
+	alertTimeout     = time.Second * 30
+	alertMaxAttempts = 3
 )
 
 func (e *Engine) processJobWithRetry(grafanaCtx context.Context, job *Job) error {

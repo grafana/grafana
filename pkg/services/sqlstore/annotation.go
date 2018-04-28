@@ -29,13 +29,13 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 		}
 
 		if item.Tags != nil {
-			if tags, err := r.ensureTagsExist(sess, tags); err != nil {
+			tags, err := r.ensureTagsExist(sess, tags)
+			if err != nil {
 				return err
-			} else {
-				for _, tag := range tags {
-					if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
-						return err
-					}
+			}
+			for _, tag := range tags {
+				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
+					return err
 				}
 			}
 		}
@@ -94,16 +94,16 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		}
 
 		if item.Tags != nil {
-			if tags, err := r.ensureTagsExist(sess, models.ParseTagPairs(item.Tags)); err != nil {
+			tags, err := r.ensureTagsExist(sess, models.ParseTagPairs(item.Tags))
+			if err != nil {
 				return err
-			} else {
-				if _, err := sess.Exec("DELETE FROM annotation_tag WHERE annotation_id = ?", existing.Id); err != nil {
+			}
+			if _, err := sess.Exec("DELETE FROM annotation_tag WHERE annotation_id = ?", existing.Id); err != nil {
+				return err
+			}
+			for _, tag := range tags {
+				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.Id, tag.Id); err != nil {
 					return err
-				}
-				for _, tag := range tags {
-					if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.Id, tag.Id); err != nil {
-						return err
-					}
 				}
 			}
 		}

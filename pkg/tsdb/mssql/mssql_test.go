@@ -22,7 +22,7 @@ import (
 // There is also a dashboard.json in same directory that you can import to Grafana
 // once you've created a datasource for the test server/database.
 // If needed, change the variable below to the IP address of the database.
-var serverIP string = "localhost"
+var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
 	SkipConvey("MSSQL", t, func() {

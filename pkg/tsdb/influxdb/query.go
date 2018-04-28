@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	regexpOperatorPattern    *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
-	regexpMeasurementPattern *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
+	regexpOperatorPattern    = regexp.MustCompile(`^\/.*\/$`)
+	regexpMeasurementPattern = regexp.MustCompile(`^\/.*\/$`)
 )
 
 func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {

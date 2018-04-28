@@ -39,7 +39,7 @@ const (
 
 var (
 	// App settings.
-	Env          string = DEV
+	Env          = DEV
 	AppUrl       string
 	AppSubUrl    string
 	InstanceName string
@@ -158,7 +158,7 @@ var (
 	// LDAP
 	LdapEnabled     bool
 	LdapConfigFile  string
-	LdapAllowSignup bool = true
+	LdapAllowSignup = true
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -470,7 +470,7 @@ func setHomePath(args *CommandLineArgs) {
 	}
 }
 
-var skipStaticRootValidation bool = false
+var skipStaticRootValidation = false
 
 func validateStaticRootPath() error {
 	if skipStaticRootValidation {

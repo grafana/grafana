@@ -369,10 +369,9 @@ func (sc *scenarioContext) userQueryReturns(user *m.User) {
 	bus.AddHandler("test", func(query *m.GetUserByAuthInfoQuery) error {
 		if user == nil {
 			return m.ErrUserNotFound
-		} else {
-			query.Result = user
-			return nil
 		}
+		query.Result = user
+		return nil
 	})
 	bus.AddHandler("test", func(query *m.SetAuthInfoCommand) error {
 		return nil

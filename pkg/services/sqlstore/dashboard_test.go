@@ -104,9 +104,8 @@ func TestDashboardDataAccess(t *testing.T) {
 					timesCalled += 1
 					if timesCalled <= 2 {
 						return savedDash.Uid
-					} else {
-						return util.GenerateShortUid()
 					}
+					return util.GenerateShortUid()
 				}
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,

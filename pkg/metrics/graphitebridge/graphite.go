@@ -55,7 +55,7 @@ const (
 	AbortOnError
 )
 
-var metricCategoryPrefix []string = []string{
+var metricCategoryPrefix = []string{
 	"proxy_",
 	"api_",
 	"page_",
@@ -66,7 +66,7 @@ var metricCategoryPrefix []string = []string{
 	"go_",
 	"process_"}
 
-var trimMetricPrefix []string = []string{"grafana_"}
+var trimMetricPrefix = []string{"grafana_"}
 
 // Config defines the Graphite bridge config.
 type Config struct {

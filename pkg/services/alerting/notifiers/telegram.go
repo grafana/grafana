@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	telegramApiUrl string = "https://api.telegram.org/bot%s/%s"
+	telegramApiUrl = "https://api.telegram.org/bot%s/%s"
 )
 
 func init() {
@@ -91,9 +91,8 @@ func (this *TelegramNotifier) buildMessage(evalContext *alerting.EvalContext, se
 		cmd, err := this.buildMessageInlineImage(evalContext)
 		if err == nil {
 			return cmd
-		} else {
-			this.log.Error("Could not generate Telegram message with inline image.", "err", err)
 		}
+		this.log.Error("Could not generate Telegram message with inline image.", "err", err)
 	}
 
 	return this.buildMessageLinkedImage(evalContext)

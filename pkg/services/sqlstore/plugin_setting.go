@@ -75,34 +75,33 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 
 			_, err = sess.Insert(&pluginSetting)
 			return err
-		} else {
-			for key, data := range cmd.SecureJsonData {
-				encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
-				if err != nil {
-					return err
-				}
-
-				pluginSetting.SecureJsonData[key] = encryptedData
-			}
-
-			// add state change event on commit success
-			if pluginSetting.Enabled != cmd.Enabled {
-				sess.events = append(sess.events, &m.PluginStateChangedEvent{
-					PluginId: cmd.PluginId,
-					OrgId:    cmd.OrgId,
-					Enabled:  cmd.Enabled,
-				})
-			}
-
-			pluginSetting.Updated = time.Now()
-			pluginSetting.Enabled = cmd.Enabled
-			pluginSetting.JsonData = cmd.JsonData
-			pluginSetting.Pinned = cmd.Pinned
-			pluginSetting.PluginVersion = cmd.PluginVersion
-
-			_, err = sess.Id(pluginSetting.Id).Update(&pluginSetting)
-			return err
 		}
+		for key, data := range cmd.SecureJsonData {
+			encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
+			if err != nil {
+				return err
+			}
+
+			pluginSetting.SecureJsonData[key] = encryptedData
+		}
+
+		// add state change event on commit success
+		if pluginSetting.Enabled != cmd.Enabled {
+			sess.events = append(sess.events, &m.PluginStateChangedEvent{
+				PluginId: cmd.PluginId,
+				OrgId:    cmd.OrgId,
+				Enabled:  cmd.Enabled,
+			})
+		}
+
+		pluginSetting.Updated = time.Now()
+		pluginSetting.Enabled = cmd.Enabled
+		pluginSetting.JsonData = cmd.JsonData
+		pluginSetting.Pinned = cmd.Pinned
+		pluginSetting.PluginVersion = cmd.PluginVersion
+
+		_, err = sess.Id(pluginSetting.Id).Update(&pluginSetting)
+		return err
 	})
 }
 

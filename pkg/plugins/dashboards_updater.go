@@ -34,23 +34,24 @@ func (pm *PluginManager) updateAppDashboards() {
 }
 
 func autoUpdateAppDashboard(pluginDashInfo *PluginDashboardInfoDTO, orgId int64) error {
-	if dash, err := loadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path); err != nil {
+	dash, err := loadPluginDashboard(pluginDashInfo.PluginId, pluginDashInfo.Path)
+	if err != nil {
 		return err
-	} else {
-		plog.Info("Auto updating App dashboard", "dashboard", dash.Title, "newRev", pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
-		updateCmd := ImportDashboardCommand{
-			OrgId:     orgId,
-			PluginId:  pluginDashInfo.PluginId,
-			Overwrite: true,
-			Dashboard: dash.Data,
-			User:      &m.SignedInUser{UserId: 0, OrgRole: m.ROLE_ADMIN},
-			Path:      pluginDashInfo.Path,
-		}
-
-		if err := bus.Dispatch(&updateCmd); err != nil {
-			return err
-		}
 	}
+	plog.Info("Auto updating App dashboard", "dashboard", dash.Title, "newRev", pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
+	updateCmd := ImportDashboardCommand{
+		OrgId:     orgId,
+		PluginId:  pluginDashInfo.PluginId,
+		Overwrite: true,
+		Dashboard: dash.Data,
+		User:      &m.SignedInUser{UserId: 0, OrgRole: m.ROLE_ADMIN},
+		Path:      pluginDashInfo.Path,
+	}
+
+	if err := bus.Dispatch(&updateCmd); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -118,15 +119,14 @@ func handlePluginStateChanged(event *m.PluginStateChangedEvent) error {
 
 		if err := bus.Dispatch(&query); err != nil {
 			return err
-		} else {
-			for _, dash := range query.Result {
-				deleteCmd := m.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
+		}
+		for _, dash := range query.Result {
+			deleteCmd := m.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
 
-				plog.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
+			plog.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
 
-				if err := bus.Dispatch(&deleteCmd); err != nil {
-					return err
-				}
+			if err := bus.Dispatch(&deleteCmd); err != nil {
+				return err
 			}
 		}
 	}
