@@ -100,7 +100,7 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 		pluginSetting.Pinned = cmd.Pinned
 		pluginSetting.PluginVersion = cmd.PluginVersion
 
-		_, err = sess.Id(pluginSetting.Id).Update(&pluginSetting)
+		_, err = sess.ID(pluginSetting.Id).Update(&pluginSetting)
 		return err
 	})
 }
