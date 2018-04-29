@@ -326,11 +326,18 @@ export class PrometheusDatasource {
   }
 
   getExploreState(panel) {
-    if (!panel.targets) {
-      return {};
+    let state = {};
+    if (panel.targets) {
+      const queries = panel.targets.map(t => ({
+        query: this.templateSrv.replace(t.expr, {}, this.interpolateQueryExpr),
+        format: t.format,
+      }));
+      state = {
+        ...state,
+        queries,
+      };
     }
-    const queries = panel.targets.map(t => ({ query: t.expr, format: t.format }));
-    return { queries };
+    return state;
   }
 
   getPrometheusTime(date, roundUp) {

@@ -10,6 +10,7 @@ import Graph from './Graph';
 import Table from './Table';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { buildQueryOptions, ensureQueries, generateQueryKey, hasQuery } from './utils/query';
+import { decodePathComponent } from 'app/core/utils/location_util';
 
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
@@ -43,7 +44,7 @@ function parseInitialQueries(initial) {
     return [];
   }
   try {
-    const parsed = JSON.parse(initial);
+    const parsed = JSON.parse(decodePathComponent(initial));
     return parsed.queries.map(q => q.query);
   } catch (e) {
     console.error(e);

@@ -99,12 +99,6 @@ export class PanelCtrl {
     this.changeView(false, false);
   }
 
-  explore() {
-    // TS hack :<
-    const initialState = JSON.stringify(this['datasource'].getExploreState(this.panel));
-    this.$location.url(`/explore/${initialState}`);
-  }
-
   initEditMode() {
     this.editorTabs = [];
     this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
@@ -162,22 +156,15 @@ export class PanelCtrl {
       });
     }
 
-    // TS hack :<
-    if ('datasource' in this && this['datasource'].supportsExplore) {
-      menu.push({
-        text: 'Explore',
-        click: 'ctrl.explore();',
-        icon: 'fa fa-fw fa-rocket',
-        shortcut: 'x',
-      });
-    }
-
     menu.push({
       text: 'Share',
       click: 'ctrl.sharePanel();',
       icon: 'fa fa-fw fa-share',
       shortcut: 'p s',
     });
+
+    // Additional items from sub-class
+    menu.push(...this.getAdditionalMenuItems());
 
     let extendedMenu = this.getExtendedMenu();
     menu.push({
@@ -225,6 +212,11 @@ export class PanelCtrl {
 
     this.events.emit('init-panel-actions', menu);
     return menu;
+  }
+
+  // Override in sub-class to add items before extended menu
+  getAdditionalMenuItems() {
+    return [];
   }
 
   otherPanelInFullscreenMode() {
