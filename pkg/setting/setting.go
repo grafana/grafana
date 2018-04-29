@@ -190,8 +190,7 @@ var (
 type Cfg struct {
 	Raw *ini.File
 
-	ImagesDir string
-
+	ImagesDir                        string
 	DisableBruteForceLoginProtection bool
 }
 

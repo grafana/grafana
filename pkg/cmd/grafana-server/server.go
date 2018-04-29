@@ -49,6 +49,7 @@ func NewGrafanaServer() *GrafanaServerImpl {
 		shutdownFn:    shutdownFn,
 		childRoutines: childRoutines,
 		log:           log.New("server"),
+		cfg:           setting.NewCfg(),
 	}
 }
 
@@ -87,6 +88,7 @@ func (g *GrafanaServerImpl) Start() error {
 
 	serviceGraph := inject.Graph{}
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
+	serviceGraph.Provide(&inject.Object{Value: g.cfg})
 	serviceGraph.Provide(&inject.Object{Value: dashboards.NewProvisioningService()})
 	serviceGraph.Provide(&inject.Object{Value: api.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
 	serviceGraph.Provide(&inject.Object{Value: api.HTTPServer{}})
@@ -140,8 +142,6 @@ func (g *GrafanaServerImpl) Start() error {
 }
 
 func (g *GrafanaServerImpl) loadConfiguration() {
-	g.cfg = setting.NewCfg()
-
 	err := g.cfg.Load(&setting.CommandLineArgs{
 		Config:   *configFile,
 		HomePath: *homePath,
