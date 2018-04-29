@@ -16,8 +16,8 @@ type SmtpSettings struct {
 	TemplatesPattern         string
 }
 
-func readSmtpSettings() {
-	sec := Cfg.Section("smtp")
+func (cfg *Cfg) readSmtpSettings() {
+	sec := cfg.Raw.Section("smtp")
 	Smtp.Enabled = sec.Key("enabled").MustBool(false)
 	Smtp.Host = sec.Key("host").String()
 	Smtp.User = sec.Key("user").String()
@@ -29,7 +29,7 @@ func readSmtpSettings() {
 	Smtp.EhloIdentity = sec.Key("ehlo_identity").String()
 	Smtp.SkipVerify = sec.Key("skip_verify").MustBool(false)
 
-	emails := Cfg.Section("emails")
+	emails := cfg.Raw.Section("emails")
 	Smtp.SendWelcomeEmailOnSignUp = emails.Key("welcome_email_on_sign_up").MustBool(false)
 	Smtp.TemplatesPattern = emails.Key("templates_pattern").MustString("emails/*.html")
 }

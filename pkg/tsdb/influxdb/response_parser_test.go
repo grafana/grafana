@@ -13,7 +13,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		Convey("Response parser", func() {
 			parser := &ResponseParser{}
 
-			setting.NewConfigContext(&setting.CommandLineArgs{
+			cfg := setting.NewCfg()
+			cfg.Load(&setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 

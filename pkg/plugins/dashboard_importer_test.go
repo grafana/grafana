@@ -87,8 +87,8 @@ func TestDashboardImport(t *testing.T) {
 
 func pluginScenario(desc string, t *testing.T, fn func()) {
 	Convey("Given a plugin", t, func() {
-		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.test-app")
+		setting.Raw = ini.Empty()
+		sec, _ := setting.Raw.NewSection("plugin.test-app")
 		sec.NewKey("path", "../../tests/test-app")
 
 		pm := &PluginManager{}

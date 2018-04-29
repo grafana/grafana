@@ -137,7 +137,7 @@ var (
 	SessionConnMaxLifetime int64
 
 	// Global setting objects.
-	Cfg          *ini.File
+	Raw          *ini.File
 	ConfRootPath string
 	IsWindows    bool
 
@@ -187,8 +187,12 @@ var (
 	ImageUploadProvider string
 )
 
-type Settings struct {
+type Cfg struct {
 	Raw *ini.File
+
+	ImagesDir string
+
+	DisableBruteForceLoginProtection bool
 }
 
 type CommandLineArgs struct {
@@ -346,7 +350,7 @@ func evalEnvVarExpression(value string) string {
 }
 
 func evalConfigValues(file *ini.File) {
-	for _, section := range Cfg.Sections() {
+	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			key.SetValue(evalEnvVarExpression(key.Value()))
 		}
@@ -488,24 +492,33 @@ func validateStaticRootPath() error {
 	return nil
 }
 
-func NewConfigContext(args *CommandLineArgs) (Settings, error) {
+func NewCfg() *Cfg {
+	return &Cfg{}
+}
+
+func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	setHomePath(args)
 
-	parsedFile, err := loadConfiguration(args)
+	iniFile, err := loadConfiguration(args)
 	if err != nil {
 		return err
 	}
+
+	cfg.Raw = iniFile
+
+	// Temporary keep global, to make refactor in steps
+	Raw = cfg.Raw
 
 	ApplicationName = "Grafana"
 	if Enterprise {
 		ApplicationName += " Enterprise"
 	}
 
-	Env = Cfg.Section("").Key("app_mode").MustString("development")
-	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")
-	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
-	ProvisioningPath = makeAbsolute(Cfg.Section("paths").Key("provisioning").String(), HomePath)
-	server := Cfg.Section("server")
+	Env = iniFile.Section("").Key("app_mode").MustString("development")
+	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")
+	PluginsPath = makeAbsolute(iniFile.Section("paths").Key("plugins").String(), HomePath)
+	ProvisioningPath = makeAbsolute(iniFile.Section("paths").Key("provisioning").String(), HomePath)
+	server := iniFile.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
 
 	Protocol = HTTP
@@ -533,27 +546,28 @@ func NewConfigContext(args *CommandLineArgs) (Settings, error) {
 	}
 
 	// read data proxy settings
-	dataproxy := Cfg.Section("dataproxy")
+	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
 
 	// read security settings
-	security := Cfg.Section("security")
+	security := iniFile.Section("security")
 	SecretKey = security.Key("secret_key").String()
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
-	DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
+	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
+	DisableBruteForceLoginProtection = cfg.DisableBruteForceLoginProtection
 
 	// read snapshots settings
-	snapshots := Cfg.Section("snapshots")
+	snapshots := iniFile.Section("snapshots")
 	ExternalSnapshotUrl = snapshots.Key("external_snapshot_url").String()
 	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 
 	// read dashboard settings
-	dashboards := Cfg.Section("dashboards")
+	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
 
 	//  read data source proxy white list
@@ -566,7 +580,7 @@ func NewConfigContext(args *CommandLineArgs) (Settings, error) {
 	AdminUser = security.Key("admin_user").String()
 	AdminPassword = security.Key("admin_password").String()
 
-	users := Cfg.Section("users")
+	users := iniFile.Section("users")
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
@@ -580,17 +594,17 @@ func NewConfigContext(args *CommandLineArgs) (Settings, error) {
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 
 	// auth
-	auth := Cfg.Section("auth")
+	auth := iniFile.Section("auth")
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// anonymous access
-	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
-	AnonymousOrgName = Cfg.Section("auth.anonymous").Key("org_name").String()
-	AnonymousOrgRole = Cfg.Section("auth.anonymous").Key("org_role").String()
+	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
+	AnonymousOrgName = iniFile.Section("auth.anonymous").Key("org_name").String()
+	AnonymousOrgRole = iniFile.Section("auth.anonymous").Key("org_role").String()
 
 	// auth proxy
-	authProxy := Cfg.Section("auth.proxy")
+	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 	AuthProxyHeaderName = authProxy.Key("header_name").String()
 	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
@@ -599,63 +613,64 @@ func NewConfigContext(args *CommandLineArgs) (Settings, error) {
 	AuthProxyWhitelist = authProxy.Key("whitelist").String()
 
 	// basic auth
-	authBasic := Cfg.Section("auth.basic")
+	authBasic := iniFile.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 
 	// global plugin settings
-	PluginAppsSkipVerifyTLS = Cfg.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
+	PluginAppsSkipVerifyTLS = iniFile.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
 	// PhantomJS rendering
-	ImagesDir = filepath.Join(DataPath, "png")
+	cfg.ImagesDir = filepath.Join(DataPath, "png")
+	ImagesDir = cfg.ImagesDir
 	PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 
-	analytics := Cfg.Section("analytics")
+	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 
-	ldapSec := Cfg.Section("auth.ldap")
+	ldapSec := iniFile.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
 	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 
-	alerting := Cfg.Section("alerting")
+	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 
-	explore := Cfg.Section("explore")
+	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(false)
 
-	readSessionConfig()
-	readSmtpSettings()
-	readQuotaSettings()
+	cfg.readSessionConfig()
+	cfg.readSmtpSettings()
+	cfg.readQuotaSettings()
 
 	if VerifyEmailEnabled && !Smtp.Enabled {
 		log.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
 	// check old key  name
-	GrafanaComUrl = Cfg.Section("grafana_net").Key("url").MustString("")
+	GrafanaComUrl = iniFile.Section("grafana_net").Key("url").MustString("")
 	if GrafanaComUrl == "" {
-		GrafanaComUrl = Cfg.Section("grafana_com").Key("url").MustString("https://grafana.com")
+		GrafanaComUrl = iniFile.Section("grafana_com").Key("url").MustString("https://grafana.com")
 	}
 
-	imageUploadingSection := Cfg.Section("external_image_storage")
+	imageUploadingSection := iniFile.Section("external_image_storage")
 	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("")
 	return nil
 }
 
-func readSessionConfig() {
-	sec := Cfg.Section("session")
+func (cfg *Cfg) readSessionConfig() {
+	sec := cfg.Raw.Section("session")
 	SessionOptions = session.Options{}
 	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres", "memcache"})
 	SessionOptions.ProviderConfig = strings.Trim(sec.Key("provider_config").String(), "\" ")
 	SessionOptions.CookieName = sec.Key("cookie_name").MustString("grafana_sess")
 	SessionOptions.CookiePath = AppSubUrl
 	SessionOptions.Secure = sec.Key("cookie_secure").MustBool()
-	SessionOptions.Gclifetime = Cfg.Section("session").Key("gc_interval_time").MustInt64(86400)
-	SessionOptions.Maxlifetime = Cfg.Section("session").Key("session_life_time").MustInt64(86400)
+	SessionOptions.Gclifetime = cfg.Raw.Section("session").Key("gc_interval_time").MustInt64(86400)
+	SessionOptions.Maxlifetime = cfg.Raw.Section("session").Key("session_life_time").MustInt64(86400)
 	SessionOptions.IDLength = 16
 
 	if SessionOptions.Provider == "file" {
@@ -667,7 +682,7 @@ func readSessionConfig() {
 		SessionOptions.CookiePath = "/"
 	}
 
-	SessionConnMaxLifetime = Cfg.Section("session").Key("conn_max_lifetime").MustInt64(14400)
+	SessionConnMaxLifetime = cfg.Raw.Section("session").Key("conn_max_lifetime").MustInt64(14400)
 }
 
 func initLogging(file *ini.File) {
@@ -681,7 +696,7 @@ func initLogging(file *ini.File) {
 	log.ReadLoggingConfig(LogModes, LogsPath, file)
 }
 
-func LogConfigurationInfo() {
+func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer
 
 	for _, file := range configFiles {
