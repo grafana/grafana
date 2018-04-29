@@ -187,6 +187,10 @@ var (
 	ImageUploadProvider string
 )
 
+type Settings struct {
+	Raw *ini.File
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
@@ -228,9 +232,9 @@ func shouldRedactURLKey(s string) bool {
 	return strings.Contains(uppercased, "DATABASE_URL")
 }
 
-func applyEnvVariableOverrides() error {
+func applyEnvVariableOverrides(file *ini.File) error {
 	appliedEnvOverrides = make([]string, 0)
-	for _, section := range Cfg.Sections() {
+	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			sectionName := strings.ToUpper(strings.Replace(section.Name(), ".", "_", -1))
 			keyName := strings.ToUpper(strings.Replace(key.Name(), ".", "_", -1))
@@ -264,9 +268,9 @@ func applyEnvVariableOverrides() error {
 	return nil
 }
 
-func applyCommandLineDefaultProperties(props map[string]string) {
+func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) {
 	appliedCommandLineProperties = make([]string, 0)
-	for _, section := range Cfg.Sections() {
+	for _, section := range file.Sections() {
 		for _, key := range section.Keys() {
 			keyString := fmt.Sprintf("default.%s.%s", section.Name(), key.Name())
 			value, exists := props[keyString]
@@ -281,8 +285,8 @@ func applyCommandLineDefaultProperties(props map[string]string) {
 	}
 }
 
-func applyCommandLineProperties(props map[string]string) {
-	for _, section := range Cfg.Sections() {
+func applyCommandLineProperties(props map[string]string, file *ini.File) {
+	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
 		if section.Name() == ini.DEFAULT_SECTION {
 			sectionName = ""
@@ -341,7 +345,7 @@ func evalEnvVarExpression(value string) string {
 	})
 }
 
-func evalConfigValues() {
+func evalConfigValues(file *ini.File) {
 	for _, section := range Cfg.Sections() {
 		for _, key := range section.Keys() {
 			key.SetValue(evalEnvVarExpression(key.Value()))
@@ -349,7 +353,7 @@ func evalConfigValues() {
 	}
 }
 
-func loadSpecifedConfigFile(configFile string) error {
+func loadSpecifedConfigFile(configFile string, masterFile *ini.File) error {
 	if configFile == "" {
 		configFile = filepath.Join(HomePath, CustomInitPath)
 		// return without error if custom file does not exist
@@ -371,9 +375,9 @@ func loadSpecifedConfigFile(configFile string) error {
 				continue
 			}
 
-			defaultSec, err := Cfg.GetSection(section.Name())
+			defaultSec, err := masterFile.GetSection(section.Name())
 			if err != nil {
-				defaultSec, _ = Cfg.NewSection(section.Name())
+				defaultSec, _ = masterFile.NewSection(section.Name())
 			}
 			defaultKey, err := defaultSec.GetKey(key.Name())
 			if err != nil {
@@ -387,7 +391,7 @@ func loadSpecifedConfigFile(configFile string) error {
 	return nil
 }
 
-func loadConfiguration(args *CommandLineArgs) error {
+func loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	var err error
 
 	// load config defaults
@@ -401,44 +405,44 @@ func loadConfiguration(args *CommandLineArgs) error {
 	}
 
 	// load defaults
-	Cfg, err = ini.Load(defaultConfigFile)
+	parsedFile, err := ini.Load(defaultConfigFile)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
 		os.Exit(1)
-		return err
+		return nil, err
 	}
 
-	Cfg.BlockMode = false
+	parsedFile.BlockMode = false
 
 	// command line props
 	commandLineProps := getCommandLineProperties(args.Args)
 	// load default overrides
-	applyCommandLineDefaultProperties(commandLineProps)
+	applyCommandLineDefaultProperties(commandLineProps, parsedFile)
 
 	// load specified config file
-	err = loadSpecifedConfigFile(args.Config)
+	err = loadSpecifedConfigFile(args.Config, parsedFile)
 	if err != nil {
-		initLogging()
+		initLogging(parsedFile)
 		log.Fatal(3, err.Error())
 	}
 
 	// apply environment overrides
-	err = applyEnvVariableOverrides()
+	err = applyEnvVariableOverrides(parsedFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// apply command line overrides
-	applyCommandLineProperties(commandLineProps)
+	applyCommandLineProperties(commandLineProps, parsedFile)
 
 	// evaluate config values containing environment variables
-	evalConfigValues()
+	evalConfigValues(parsedFile)
 
 	// update data path and logging config
-	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-	initLogging()
+	DataPath = makeAbsolute(parsedFile.Section("paths").Key("data").String(), HomePath)
+	initLogging(parsedFile)
 
-	return err
+	return parsedFile, err
 }
 
 func pathExists(path string) bool {
@@ -484,9 +488,10 @@ func validateStaticRootPath() error {
 	return nil
 }
 
-func NewConfigContext(args *CommandLineArgs) error {
+func NewConfigContext(args *CommandLineArgs) (Settings, error) {
 	setHomePath(args)
-	err := loadConfiguration(args)
+
+	parsedFile, err := loadConfiguration(args)
 	if err != nil {
 		return err
 	}
@@ -665,15 +670,15 @@ func readSessionConfig() {
 	SessionConnMaxLifetime = Cfg.Section("session").Key("conn_max_lifetime").MustInt64(14400)
 }
 
-func initLogging() {
+func initLogging(file *ini.File) {
 	// split on comma
-	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
+	LogModes = strings.Split(file.Section("log").Key("mode").MustString("console"), ",")
 	// also try space
 	if len(LogModes) == 1 {
-		LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), " ")
+		LogModes = strings.Split(file.Section("log").Key("mode").MustString("console"), " ")
 	}
-	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
-	log.ReadLoggingConfig(LogModes, LogsPath, Cfg)
+	LogsPath = makeAbsolute(file.Section("paths").Key("logs").String(), HomePath)
+	log.ReadLoggingConfig(LogModes, LogsPath, file)
 }
 
 func LogConfigurationInfo() {
