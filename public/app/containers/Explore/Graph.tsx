@@ -1,6 +1,8 @@
 import $ from 'jquery';
 import React, { Component } from 'react';
+import moment from 'moment';
 
+import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
 
 import 'vendor/flot/jquery.flot';
@@ -90,8 +92,15 @@ class Graph extends Component<any, any> {
 
     const $el = $(`#${this.props.id}`);
     const ticks = $el.width() / 100;
-    const min = userOptions.range.from.valueOf();
-    const max = userOptions.range.to.valueOf();
+    let { from, to } = userOptions.range;
+    if (!moment.isMoment(from)) {
+      from = dateMath.parse(from, false);
+    }
+    if (!moment.isMoment(to)) {
+      to = dateMath.parse(to, true);
+    }
+    const min = from.valueOf();
+    const max = to.valueOf();
     const dynamicOptions = {
       xaxis: {
         mode: 'time',
