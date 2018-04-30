@@ -218,13 +218,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function renderPanel() {
-      var panelElem = elem.parents('.panel');
+      var panelElem = elem.parents('.panel-content');
       var rootElem = elem.find('.table-panel-scroll');
       var tbodyElem = elem.find('tbody');
       var footerElem = elem.find('.table-panel-footer');
 
       elem.css({ 'font-size': panel.fontSize });
-      panelElem.addClass('table-panel-wrapper');
+      panelElem.addClass('table-panel-content');
 
       appendTableRows(tbodyElem);
       appendPaginationControls(footerElem);
