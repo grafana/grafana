@@ -35,9 +35,10 @@ type HTTPServer struct {
 	context       context.Context
 	streamManager *live.StreamManager
 	cache         *gocache.Cache
-	RouteRegister RouteRegister `inject:""`
+	httpSrv       *http.Server
 
-	httpSrv *http.Server
+	RouteRegister RouteRegister `inject:""`
+	Bus           bus.Bus       `inject:""`
 }
 
 func (hs *HTTPServer) Init() {

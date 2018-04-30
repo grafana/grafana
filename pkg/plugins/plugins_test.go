@@ -13,7 +13,7 @@ func TestPluginScans(t *testing.T) {
 
 	Convey("When scanning for plugins", t, func() {
 		setting.StaticRootPath, _ = filepath.Abs("../../public/")
-		setting.Cfg = ini.Empty()
+		setting.Raw = ini.Empty()
 
 		pm := &PluginManager{}
 		err := pm.Init()
@@ -28,8 +28,8 @@ func TestPluginScans(t *testing.T) {
 	})
 
 	Convey("When reading app plugin definition", t, func() {
-		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.nginx-app")
+		setting.Raw = ini.Empty()
+		sec, _ := setting.Raw.NewSection("plugin.nginx-app")
 		sec.NewKey("path", "../../tests/test-app")
 
 		pm := &PluginManager{}

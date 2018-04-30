@@ -13,14 +13,15 @@ import (
 func TestEmailIntegrationTest(t *testing.T) {
 	SkipConvey("Given the notifications service", t, func() {
 		setting.StaticRootPath = "../../../public/"
-		setting.Smtp.Enabled = true
-		setting.Smtp.TemplatesPattern = "emails/*.html"
-		setting.Smtp.FromAddress = "from@address.com"
-		setting.Smtp.FromName = "Grafana Admin"
 		setting.BuildVersion = "4.0.0"
 
 		ns := &NotificationService{}
 		ns.Bus = bus.New()
+		ns.Cfg = setting.NewCfg()
+		ns.Cfg.Smtp.Enabled = true
+		ns.Cfg.Smtp.TemplatesPattern = "emails/*.html"
+		ns.Cfg.Smtp.FromAddress = "from@address.com"
+		ns.Cfg.Smtp.FromName = "Grafana Admin"
 
 		err := ns.Init()
 		So(err, ShouldBeNil)

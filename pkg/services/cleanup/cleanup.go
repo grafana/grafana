@@ -16,42 +16,43 @@ import (
 
 type CleanUpService struct {
 	log log.Logger
+	Cfg *setting.Cfg `inject:""`
 }
 
 func init() {
 	registry.RegisterService(&CleanUpService{})
 }
 
-func (service *CleanUpService) Init() error {
-	service.log = log.New("cleanup")
+func (srv *CleanUpService) Init() error {
+	srv.log = log.New("cleanup")
 	return nil
 }
 
-func (service *CleanUpService) Run(ctx context.Context) error {
-	service.cleanUpTmpFiles()
+func (srv *CleanUpService) Run(ctx context.Context) error {
+	srv.cleanUpTmpFiles()
 
 	ticker := time.NewTicker(time.Minute * 10)
 	for {
 		select {
 		case <-ticker.C:
-			service.cleanUpTmpFiles()
-			service.deleteExpiredSnapshots()
-			service.deleteExpiredDashboardVersions()
-			service.deleteOldLoginAttempts()
+			srv.cleanUpTmpFiles()
+			srv.deleteExpiredSnapshots()
+			srv.deleteExpiredDashboardVersions()
+			srv.deleteOldLoginAttempts()
 		case <-ctx.Done():
 			return ctx.Err()
 		}
 	}
 }
 
-func (service *CleanUpService) cleanUpTmpFiles() {
-	if _, err := os.Stat(setting.ImagesDir); os.IsNotExist(err) {
+func (srv *CleanUpService) cleanUpTmpFiles() {
+	if _, err := os.Stat(srv.Cfg.ImagesDir); os.IsNotExist(err) {
 		return
 	}
 
-	files, err := ioutil.ReadDir(setting.ImagesDir)
+	files, err := ioutil.ReadDir(srv.Cfg.ImagesDir)
 	if err != nil {
-		service.log.Error("Problem reading image dir", "error", err)
+		srv.log.Error("Problem reading image dir", "error", err)
 		return
 	}
 
@@ -63,36 +64,36 @@ func (service *CleanUpService) cleanUpTmpFiles() {
 	}
 
 	for _, file := range toDelete {
-		fullPath := path.Join(setting.ImagesDir, file.Name())
+		fullPath := path.Join(srv.Cfg.ImagesDir, file.Name())
 		err := os.Remove(fullPath)
 		if err != nil {
-			service.log.Error("Failed to delete temp file", "file", file.Name(), "error", err)
+			srv.log.Error("Failed to delete temp file", "file", file.Name(), "error", err)
 		}
 	}
 
-	service.log.Debug("Found old rendered image to delete", "deleted", len(toDelete), "keept", len(files))
+	srv.log.Debug("Found old rendered image to delete", "deleted", len(toDelete), "keept", len(files))
 }
 
-func (service *CleanUpService) deleteExpiredSnapshots() {
+func (srv *CleanUpService) deleteExpiredSnapshots() {
 	cmd := m.DeleteExpiredSnapshotsCommand{}
 	if err := bus.Dispatch(&cmd); err != nil {
-		service.log.Error("Failed to delete expired snapshots", "error", err.Error())
+		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
-		service.log.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
+		srv.log.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
 	}
 }
 
-func (service *CleanUpService) deleteExpiredDashboardVersions() {
+func (srv *CleanUpService) deleteExpiredDashboardVersions() {
 	cmd := m.DeleteExpiredVersionsCommand{}
 	if err := bus.Dispatch(&cmd); err != nil {
-		service.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
+		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
-		service.log.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
+		srv.log.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
 	}
 }
 
-func (service *CleanUpService) deleteOldLoginAttempts() {
-	if setting.DisableBruteForceLoginProtection {
+func (srv *CleanUpService) deleteOldLoginAttempts() {
+	if srv.Cfg.DisableBruteForceLoginProtection {
 		return
 	}
 
@@ -100,8 +101,8 @@ func (service *CleanUpService) deleteOldLoginAttempts() {
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
 	if err := bus.Dispatch(&cmd); err != nil {
-		service.log.Error("Problem deleting expired login attempts", "error", err.Error())
+		srv.log.Error("Problem deleting expired login attempts", "error", err.Error())
 	} else {
-		service.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
+		srv.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
 	}
 }

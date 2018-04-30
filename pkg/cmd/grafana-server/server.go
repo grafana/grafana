@@ -49,6 +49,7 @@ func NewGrafanaServer() *GrafanaServerImpl {
 		shutdownFn:    shutdownFn,
 		childRoutines: childRoutines,
 		log:           log.New("server"),
+		cfg:           setting.NewCfg(),
 	}
 }
 
@@ -57,28 +58,29 @@ type GrafanaServerImpl struct {
 	shutdownFn    context.CancelFunc
 	childRoutines *errgroup.Group
 	log           log.Logger
+	cfg           *setting.Cfg
 
 	RouteRegister api.RouteRegister `inject:""`
 	HttpServer    *api.HTTPServer   `inject:""`
 }
 
 func (g *GrafanaServerImpl) Start() error {
-	g.initLogging()
+	g.loadConfiguration()
 	g.writePIDFile()
 
 	// initSql
 	sqlstore.NewEngine() // TODO: this should return an error
 	sqlstore.EnsureAdminUser()
 
-	metrics.Init(setting.Cfg)
+	metrics.Init(g.cfg.Raw)
 	login.Init()
 	social.NewOAuthService()
 
-	if err := provisioning.Init(g.context, setting.HomePath, setting.Cfg); err != nil {
+	if err := provisioning.Init(g.context, setting.HomePath, g.cfg.Raw); err != nil {
 		return fmt.Errorf("Failed to provision Grafana from config. error: %v", err)
 	}
 
-	tracingCloser, err := tracing.Init(setting.Cfg)
+	tracingCloser, err := tracing.Init(g.cfg.Raw)
 	if err != nil {
 		return fmt.Errorf("Tracing settings is not valid. error: %v", err)
 	}
@@ -86,6 +88,7 @@ func (g *GrafanaServerImpl) Start() error {
 
 	serviceGraph := inject.Graph{}
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
+	serviceGraph.Provide(&inject.Object{Value: g.cfg})
 	serviceGraph.Provide(&inject.Object{Value: dashboards.NewProvisioningService()})
 	serviceGraph.Provide(&inject.Object{Value: api.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
 	serviceGraph.Provide(&inject.Object{Value: api.HTTPServer{}})
@@ -138,8 +141,8 @@ func (g *GrafanaServerImpl) Start() error {
 	return g.startHttpServer()
 }
 
-func (g *GrafanaServerImpl) initLogging() {
-	err := setting.NewConfigContext(&setting.CommandLineArgs{
+func (g *GrafanaServerImpl) loadConfiguration() {
+	err := g.cfg.Load(&setting.CommandLineArgs{
 		Config:   *configFile,
 		HomePath: *homePath,
 		Args:     flag.Args(),
@@ -151,7 +154,7 @@ func (g *GrafanaServerImpl) initLogging() {
 	}
 
 	g.log.Info("Starting "+setting.ApplicationName, "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
-	setting.LogConfigurationInfo()
+	g.cfg.LogConfigSources()
 }
 
 func (g *GrafanaServerImpl) startHttpServer() error {

@@ -28,7 +28,9 @@ func init() {
 }
 
 type NotificationService struct {
-	Bus          bus.Bus `inject:""`
+	Bus bus.Bus      `inject:""`
+	Cfg *setting.Cfg `inject:""`
+
 	mailQueue    chan *Message
 	webhookQueue chan *Webhook
 	log          log.Logger
@@ -54,13 +56,13 @@ func (ns *NotificationService) Init() error {
 		"Subject": subjectTemplateFunc,
 	})
 
-	templatePattern := filepath.Join(setting.StaticRootPath, setting.Smtp.TemplatesPattern)
+	templatePattern := filepath.Join(setting.StaticRootPath, ns.Cfg.Smtp.TemplatesPattern)
 	_, err := mailTemplates.ParseGlob(templatePattern)
 	if err != nil {
 		return err
 	}
 
-	if !util.IsEmail(setting.Smtp.FromAddress) {
+	if !util.IsEmail(ns.Cfg.Smtp.FromAddress) {
 		return errors.New("Invalid email address for SMTP from_address config")
 	}
 
@@ -81,7 +83,7 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 				ns.log.Error("Failed to send webrequest ", "error", err)
 			}
 		case msg := <-ns.mailQueue:
-			num, err := send(msg)
+			num, err := ns.send(msg)
 			tos := strings.Join(msg.To, "; ")
 			info := ""
 			if err != nil {
@@ -117,7 +119,7 @@ func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 }
 
 func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommandSync) error {
-	message, err := buildEmailMessage(&m.SendEmailCommand{
+	message, err := ns.buildEmailMessage(&m.SendEmailCommand{
 		Data:         cmd.Data,
 		Info:         cmd.Info,
 		Template:     cmd.Template,
@@ -130,12 +132,12 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		return err
 	}
 
-	_, err = send(message)
+	_, err = ns.send(message)
 	return err
 }
 
 func (ns *NotificationService) sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
-	message, err := buildEmailMessage(cmd)
+	message, err := ns.buildEmailMessage(cmd)
 
 	if err != nil {
 		return err
@@ -205,7 +207,7 @@ func (ns *NotificationService) signUpStartedHandler(evt *events.SignUpStarted) e
 }
 
 func (ns *NotificationService) signUpCompletedHandler(evt *events.SignUpCompleted) error {
-	if evt.Email == "" || !setting.Smtp.SendWelcomeEmailOnSignUp {
+	if evt.Email == "" || !ns.Cfg.Smtp.SendWelcomeEmailOnSignUp {
 		return nil
 	}
 

@@ -132,7 +132,7 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 }
 
 func checkPluginPaths() error {
-	for _, section := range setting.Cfg.Sections() {
+	for _, section := range setting.Raw.Sections() {
 		if strings.HasPrefix(section.Name(), "plugin.") {
 			path := section.Key("path").String()
 			if path != "" {

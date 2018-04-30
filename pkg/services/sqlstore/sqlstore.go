@@ -168,7 +168,7 @@ func getEngine() (*xorm.Engine, error) {
 	engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
 	engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
 	engine.SetConnMaxLifetime(time.Second * time.Duration(DbCfg.ConnMaxLifetime))
-	debugSql := setting.Cfg.Section("database").Key("log_queries").MustBool(false)
+	debugSql := setting.Raw.Section("database").Key("log_queries").MustBool(false)
 	if !debugSql {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
@@ -181,7 +181,7 @@ func getEngine() (*xorm.Engine, error) {
 }
 
 func LoadConfig() {
-	sec := setting.Cfg.Section("database")
+	sec := setting.Raw.Section("database")
 
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {

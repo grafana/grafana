@@ -46,7 +46,7 @@ func ReadSettings(file *ini.File) *MetricSettings {
 }
 
 func parseGraphiteSettings(settings *MetricSettings, file *ini.File) (*graphitebridge.Config, error) {
-	graphiteSection, err := setting.Cfg.GetSection("metrics.graphite")
+	graphiteSection, err := setting.Raw.GetSection("metrics.graphite")
 	if err != nil {
 		return nil, nil
 	}
