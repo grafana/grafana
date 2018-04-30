@@ -42,23 +42,29 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		settings["appSubUrl"] = ""
 	}
 
+	hasEditPermissionInFoldersQuery := m.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	if err := bus.Dispatch(&hasEditPermissionInFoldersQuery); err != nil {
+		return nil, err
+	}
+
 	var data = dtos.IndexViewData{
 		User: &dtos.CurrentUser{
-			Id:             c.UserId,
-			IsSignedIn:     c.IsSignedIn,
-			Login:          c.Login,
-			Email:          c.Email,
-			Name:           c.Name,
-			OrgCount:       c.OrgCount,
-			OrgId:          c.OrgId,
-			OrgName:        c.OrgName,
-			OrgRole:        c.OrgRole,
-			GravatarUrl:    dtos.GetGravatarUrl(c.Email),
-			IsGrafanaAdmin: c.IsGrafanaAdmin,
-			LightTheme:     prefs.Theme == "light",
-			Timezone:       prefs.Timezone,
-			Locale:         locale,
-			HelpFlags1:     c.HelpFlags1,
+			Id:                         c.UserId,
+			IsSignedIn:                 c.IsSignedIn,
+			Login:                      c.Login,
+			Email:                      c.Email,
+			Name:                       c.Name,
+			OrgCount:                   c.OrgCount,
+			OrgId:                      c.OrgId,
+			OrgName:                    c.OrgName,
+			OrgRole:                    c.OrgRole,
+			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
+			IsGrafanaAdmin:             c.IsGrafanaAdmin,
+			LightTheme:                 prefs.Theme == "light",
+			Timezone:                   prefs.Timezone,
+			Locale:                     locale,
+			HelpFlags1:                 c.HelpFlags1,
+			HasEditPermissionInFolders: hasEditPermissionInFoldersQuery.Result,
 		},
 		Settings:                settings,
 		Theme:                   prefs.Theme,
