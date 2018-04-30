@@ -42,55 +42,57 @@
   transition: all 0.3s;
 }
 
-.typeahead {
-  position: absolute;
-  z-index: auto;
-  top: -10000px;
-  left: -10000px;
-  opacity: 0;
-  border-radius: 4px;
-  transition: opacity 0.75s;
-  border: 1px solid #e4e4e4;
-  max-height: calc(66vh);
-  overflow-y: scroll;
-  max-width: calc(66%);
-  overflow-x: hidden;
-  outline: none;
-  list-style: none;
-  background: #fff;
-  color: rgba(0, 0, 0, 0.65);
-  transition: opacity 0.4s ease-out;
-}
+.explore {
+  .typeahead {
+    position: absolute;
+    z-index: auto;
+    top: -10000px;
+    left: -10000px;
+    opacity: 0;
+    border-radius: 4px;
+    transition: opacity 0.75s;
+    border: 1px solid #e4e4e4;
+    max-height: calc(66vh);
+    overflow-y: scroll;
+    max-width: calc(66%);
+    overflow-x: hidden;
+    outline: none;
+    list-style: none;
+    background: #fff;
+    color: rgba(0, 0, 0, 0.65);
+    transition: opacity 0.4s ease-out;
+  }
 
-.typeahead-group__title {
-  color: rgba(0, 0, 0, 0.43);
-  font-size: 12px;
-  line-height: 1.5;
-  padding: 8px 16px;
-}
+  .typeahead-group__title {
+    color: rgba(0, 0, 0, 0.43);
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 8px 16px;
+  }
 
-.typeahead-item {
-  line-height: 200%;
-  height: auto;
-  font-family: Consolas, Menlo, Courier, monospace;
-  padding: 0 16px 0 28px;
-  font-size: 12px;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  margin-left: -1px;
-  left: 1px;
-  position: relative;
-  z-index: 1;
-  display: block;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
-    background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
-}
+  .typeahead-item {
+    line-height: 200%;
+    height: auto;
+    font-family: Consolas, Menlo, Courier, monospace;
+    padding: 0 16px 0 28px;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    margin-left: -1px;
+    left: 1px;
+    position: relative;
+    z-index: 1;
+    display: block;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
+      background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
+  }
 
-.typeahead-item__selected {
-  background-color: #ecf6fd;
-  color: #108ee9;
+  .typeahead-item__selected {
+    background-color: #ecf6fd;
+    color: #108ee9;
+  }
 }
 
 /* SYNTAX */
