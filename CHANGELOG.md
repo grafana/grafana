@@ -1,3 +1,10 @@
+# 5.2.0 (unreleased)
+
+### Minor
+
+* **Graph**: Show invisible highest value bucket in histogram [#11498](https://github.com/grafana/grafana/issues/11498)
+
+
 # 5.1.0 (2018-04-26)
 
 * **Folders**: Default permissions on folder are not shown as inherited in its dashboards [#11668](https://github.com/grafana/grafana/issues/11668)
@@ -51,13 +58,13 @@
 * **Units**: Use B/s instead Bps for Bytes per second [#9342](https://github.com/grafana/grafana/pull/9342), thx [@mayli](https://github.com/mayli)
 * **Units**: Radiation units [#11001](https://github.com/grafana/grafana/issues/11001), thx [@victorclaessen](https://github.com/victorclaessen)
 * **Units**: Timeticks unit [#11183](https://github.com/grafana/grafana/pull/11183), thx [@jtyr](https://github.com/jtyr)
-* **Units**: Concentration units and "Normal cubic metre" [#11211](https://github.com/grafana/grafana/issues/11211), thx [@flopp999](https://github.com/flopp999) 
+* **Units**: Concentration units and "Normal cubic metre" [#11211](https://github.com/grafana/grafana/issues/11211), thx [@flopp999](https://github.com/flopp999)
 * **Units**: New currency - Czech koruna [#11384](https://github.com/grafana/grafana/pull/11384), thx [@Rohlik](https://github.com/Rohlik)
 * **Avatar**: Fix DISABLE_GRAVATAR option [#11095](https://github.com/grafana/grafana/issues/11095)
 * **Heatmap**: Disable log scale when using time time series buckets [#10792](https://github.com/grafana/grafana/issues/10792)
 * **Provisioning**: Remove `id` from json when provisioning dashboards, [#11138](https://github.com/grafana/grafana/issues/11138)
-* **Prometheus**: tooltip for legend format not showing properly [#11516](https://github.com/grafana/grafana/issues/11516), thx [@svenklemm](https://github.com/svenklemm) 
-* **Playlist**: Empty playlists cannot be deleted [#11133](https://github.com/grafana/grafana/issues/11133), thx [@kichristensen](https://github.com/kichristensen) 
+* **Prometheus**: tooltip for legend format not showing properly [#11516](https://github.com/grafana/grafana/issues/11516), thx [@svenklemm](https://github.com/svenklemm)
+* **Playlist**: Empty playlists cannot be deleted [#11133](https://github.com/grafana/grafana/issues/11133), thx [@kichristensen](https://github.com/kichristensen)
 * **Switch Orgs**: Alphabetic order in Switch Organization modal [#11556](https://github.com/grafana/grafana/issues/11556)
 * **Postgres**: improve `$__timeFilter` macro [#11578](https://github.com/grafana/grafana/issues/11578), thx [@svenklemm](https://github.com/svenklemm)
 * **Permission list**: Improved ux [#10747](https://github.com/grafana/grafana/issues/10747)
