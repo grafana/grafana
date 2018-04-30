@@ -1,6 +1,20 @@
 .explore {
+  .navbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .elapsed-time {
+    position: absolute;
+    right: -2.4rem;
+    top: 1.2rem;
+  }
   .graph-legend {
     flex-wrap: wrap;
+  }
+
+  .timepicker {
+    display: flex;
   }
 }
 

@@ -8,6 +8,7 @@ import Legend from './Legend';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Table from './Table';
+import TimePicker, { DEFAULT_RANGE } from './TimePicker';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { buildQueryOptions, ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 import { decodePathComponent } from 'app/core/utils/location_util';
@@ -15,40 +16,33 @@ import { decodePathComponent } from 'app/core/utils/location_util';
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
     const datapoints = seriesData.datapoints || [];
-    const alias = seriesData.target;
-
+    const responseAlias = seriesData.target;
+    const query = options.targets[index].expr;
+    const alias = responseAlias && responseAlias !== '{}' ? responseAlias : query;
     const colorIndex = index % colors.length;
     const color = colors[colorIndex];
 
     const series = new TimeSeries({
-      datapoints: datapoints,
-      alias: alias,
-      color: color,
+      datapoints,
+      alias,
+      color,
       unit: seriesData.unit,
     });
-
-    if (datapoints && datapoints.length > 0) {
-      const last = datapoints[datapoints.length - 1][1];
-      const from = options.range.from;
-      if (last - from < -10000) {
-        series.isOutsideRange = true;
-      }
-    }
 
     return series;
   });
 }
 
-function parseInitialQueries(initial) {
-  if (!initial) {
-    return [];
-  }
+function parseInitialState(initial) {
   try {
     const parsed = JSON.parse(decodePathComponent(initial));
-    return parsed.queries.map(q => q.query);
+    return {
+      queries: parsed.queries.map(q => q.query),
+      range: parsed.range,
+    };
   } catch (e) {
     console.error(e);
-    return [];
+    return { queries: [], range: DEFAULT_RANGE };
   }
 }
 
@@ -60,6 +54,7 @@ interface IExploreState {
   latency: number;
   loading: any;
   queries: any;
+  range: any;
   requestOptions: any;
   showingGraph: boolean;
   showingTable: boolean;
@@ -72,7 +67,7 @@ export class Explore extends React.Component<any, IExploreState> {
 
   constructor(props) {
     super(props);
-    const initialQueries = parseInitialQueries(props.routeParams.initial);
+    const { range, queries } = parseInitialState(props.routeParams.initial);
     this.state = {
       datasource: null,
       datasourceError: null,
@@ -80,7 +75,8 @@ export class Explore extends React.Component<any, IExploreState> {
       graphResult: null,
       latency: 0,
       loading: false,
-      queries: ensureQueries(initialQueries),
+      queries: ensureQueries(queries),
+      range: range || { ...DEFAULT_RANGE },
       requestOptions: null,
       showingGraph: true,
       showingTable: true,
@@ -119,6 +115,14 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setState({ queries: nextQueries });
   };
 
+  handleChangeTime = nextRange => {
+    const range = {
+      from: nextRange.from,
+      to: nextRange.to,
+    };
+    this.setState({ range }, () => this.handleSubmit());
+  };
+
   handleClickGraphButton = () => {
     this.setState(state => ({ showingGraph: !state.showingGraph }));
   };
@@ -147,7 +151,7 @@ export class Explore extends React.Component<any, IExploreState> {
   };
 
   async runGraphQuery() {
-    const { datasource, queries } = this.state;
+    const { datasource, queries, range } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
@@ -157,7 +161,7 @@ export class Explore extends React.Component<any, IExploreState> {
       format: 'time_series',
       interval: datasource.interval,
       instant: false,
-      now,
+      range,
       queries: queries.map(q => q.query),
     });
     try {
@@ -172,7 +176,7 @@ export class Explore extends React.Component<any, IExploreState> {
   }
 
   async runTableQuery() {
-    const { datasource, queries } = this.state;
+    const { datasource, queries, range } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
@@ -182,7 +186,7 @@ export class Explore extends React.Component<any, IExploreState> {
       format: 'table',
       interval: datasource.interval,
       instant: true,
-      now,
+      range,
       queries: queries.map(q => q.query),
     });
     try {
@@ -210,6 +214,7 @@ export class Explore extends React.Component<any, IExploreState> {
       latency,
       loading,
       queries,
+      range,
       requestOptions,
       showingGraph,
       showingTable,
@@ -229,14 +234,8 @@ export class Explore extends React.Component<any, IExploreState> {
 
           {datasource ? (
             <div className="m-r-3">
-              <div className="nav m-b-1">
-                <div className="pull-right">
-                  {loading || latency ? <ElapsedTime time={latency} className="" /> : null}
-                  <button type="submit" className="m-l-1 btn btn-primary" onClick={this.handleSubmit}>
-                    <i className="fa fa-return" /> Run Query
-                  </button>
-                </div>
-                <div>
+              <div className="nav m-b-1 navbar">
+                <div className="navbar-buttons">
                   <button className={graphButtonClassName} onClick={this.handleClickGraphButton}>
                     Graph
                   </button>
@@ -244,6 +243,14 @@ export class Explore extends React.Component<any, IExploreState> {
                     Table
                   </button>
                 </div>
+                <div className="navbar__spacer" />
+                <TimePicker range={range} onChangeTime={this.handleChangeTime} />
+                <div className="navbar-buttons">
+                  <button type="submit" className="btn btn-primary" onClick={this.handleSubmit}>
+                    <i className="fa fa-return" /> Run Query
+                  </button>
+                </div>
+                {loading || latency ? <ElapsedTime time={latency} className="" /> : null}
               </div>
               <QueryRows
                 queries={queries}

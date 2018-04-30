@@ -324,7 +324,12 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   explore() {
-    const exploreState = encodePathComponent(JSON.stringify(this.datasource.getExploreState(this.panel)));
+    const range = this.timeSrv.timeRangeForUrl();
+    const state = {
+      ...this.datasource.getExploreState(this.panel),
+      range,
+    };
+    const exploreState = encodePathComponent(JSON.stringify(state));
     this.$location.url(`/explore/${exploreState}`);
   }
 
