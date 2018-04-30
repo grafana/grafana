@@ -160,9 +160,6 @@ var (
 	LdapConfigFile  string
 	LdapAllowSignup bool = true
 
-	// SMTP email settings
-	Smtp SmtpSettings
-
 	// QUOTA
 	Quota QuotaSettings
 
@@ -189,6 +186,9 @@ var (
 
 type Cfg struct {
 	Raw *ini.File
+
+	// SMTP email settings
+	Smtp SmtpSettings
 
 	ImagesDir                        string
 	DisableBruteForceLoginProtection bool
@@ -645,7 +645,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
 
-	if VerifyEmailEnabled && !Smtp.Enabled {
+	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		log.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
