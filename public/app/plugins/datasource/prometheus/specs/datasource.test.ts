@@ -630,6 +630,45 @@ describe('PrometheusDatasource', () => {
       expect(results[0].text).toBe('testinstance');
       expect(results[0].time).toBe(123 * 1000);
     });
+
+    it('should return annotation list with seriesValueAsTiemstamp', () => {
+      const options = {
+        annotation: {
+          expr: 'timestamp_seconds',
+          tagKeys: 'job',
+          titleFormat: '{{job}}',
+          textFormat: '{{instance}}',
+          useValueForTime: true,
+        },
+        range: {
+          from: new Date('2014-04-10T05:20:10Z'),
+          to: new Date('2014-05-20T03:10:22Z'),
+        },
+      };
+      ctx.backendSrvMock.datasourceRequest.mockReturnValue(
+        Promise.resolve({
+          status: 'success',
+          data: {
+            resultType: 'matrix',
+            result: [
+              {
+                metric: {
+                  __name__: 'timestamp_milliseconds',
+                  instance: 'testinstance',
+                  job: 'testjob',
+                },
+                values: [[1443454528, '1500000000000']],
+              },
+            ],
+          },
+        })
+      );
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
+      ctx.ds.annotationQuery(options).then(function (results) {
+        expect(results[0].time).toEqual(1500000000000);
+        ctx.backendSrvMock.datasourceRequest.mockReset();
+      });
+    });
   });
 
   describe('When resultFormat is table and instant = true', () => {
