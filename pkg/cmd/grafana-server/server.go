@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 
 	"golang.org/x/sync/errgroup"
 
@@ -37,6 +36,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
+	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/search"
 )
 
@@ -75,10 +75,6 @@ func (g *GrafanaServerImpl) Start() error {
 	login.Init()
 	social.NewOAuthService()
 
-	if err := provisioning.Init(g.context, setting.HomePath, g.cfg.Raw); err != nil {
-		return fmt.Errorf("Failed to provision Grafana from config. error: %v", err)
-	}
-
 	tracingCloser, err := tracing.Init(g.cfg.Raw)
 	if err != nil {
 		return fmt.Errorf("Tracing settings is not valid. error: %v", err)
@@ -116,7 +112,7 @@ func (g *GrafanaServerImpl) Start() error {
 		g.log.Info("Initializing " + reflect.TypeOf(service).Elem().Name())
 
 		if err := service.Init(); err != nil {
-			return fmt.Errorf("Service init failed %v", err)
+			return fmt.Errorf("Service init failed: %v", err)
 		}
 	}
 
