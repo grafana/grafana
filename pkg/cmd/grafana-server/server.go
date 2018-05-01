@@ -177,7 +177,7 @@ func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
 	// call cancel func on root context
 	g.shutdownFn()
 
-	// wait for chid routines
+	// wait for child routines
 	if err := g.childRoutines.Wait(); err != nil && err != context.Canceled {
 		g.log.Error("Server shutdown completed", "error", err)
 	}
