@@ -2,11 +2,12 @@ import $ from 'jquery';
 import React, { Component } from 'react';
 import moment from 'moment';
 
+import 'vendor/flot/jquery.flot';
+import 'vendor/flot/jquery.flot.time';
 import * as dateMath from 'app/core/utils/datemath';
 import TimeSeries from 'app/core/time_series2';
 
-import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.time';
+import Legend from './Legend';
 
 // Copied from graph.ts
 function time_format(ticks, min, max) {
@@ -86,6 +87,7 @@ class Graph extends Component<any, any> {
       return;
     }
     const series = data.map((ts: TimeSeries) => ({
+      color: ts.color,
       label: ts.label,
       data: ts.getFlotPairs('null'),
     }));
@@ -120,12 +122,13 @@ class Graph extends Component<any, any> {
   }
 
   render() {
-    const style = {
-      height: this.props.height || '400px',
-      width: this.props.width || '100%',
-    };
-
-    return <div id={this.props.id} style={style} />;
+    const { data, height } = this.props;
+    return (
+      <div className="panel-container">
+        <div id={this.props.id} className="explore-graph" style={{ height }} />
+        <Legend data={data} />
+      </div>
+    );
   }
 }
 
