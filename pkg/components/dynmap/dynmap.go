@@ -639,26 +639,24 @@ func (v *Value) Object() (*Object, error) {
 		valid = true
 	}
 
+	if !valid {
+		return nil, ErrNotObject
+	}
+	obj := new(Object)
+	obj.valid = valid
+
+	m := make(map[string]*Value)
+
 	if valid {
-		obj := new(Object)
-		obj.valid = valid
-
-		m := make(map[string]*Value)
-
-		if valid {
-			for key, element := range v.data.(map[string]interface{}) {
-				m[key] = &Value{element, true}
-
-			}
+		for key, element := range v.data.(map[string]interface{}) {
+			m[key] = &Value{element, true}
 		}
-
-		obj.data = v.data
-		obj.m = m
-
-		return obj, nil
 	}
 
-	return nil, ErrNotObject
+	obj.data = v.data
+	obj.m = m
+
+	return obj, nil
 }
 
 // Attempts to typecast the current value into an object arrau.
@@ -678,23 +676,19 @@ func (v *Value) ObjectArray() ([]*Object, error) {
 	// Unsure if this is a good way to use slices, it's probably not
 	var slice []*Object
 
-	if valid {
-
-		for _, element := range v.data.([]interface{}) {
-			childValue := Value{element, true}
-			childObject, err := childValue.Object()
-
-			if err != nil {
-				return nil, ErrNotObjectArray
-			}
-			slice = append(slice, childObject)
-		}
-
-		return slice, nil
+	if !valid {
+		return nil, ErrNotObjectArray
 	}
+	for _, element := range v.data.([]interface{}) {
+		childValue := Value{element, true}
+		childObject, err := childValue.Object()
 
-	return nil, ErrNotObjectArray
-
+		if err != nil {
+			return nil, ErrNotObjectArray
+		}
+		slice = append(slice, childObject)
+	}
+	return slice, nil
 }
 
 // Attempts to typecast the current value into a string.
