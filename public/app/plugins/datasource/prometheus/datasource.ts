@@ -27,6 +27,7 @@ export class PrometheusDatasource {
   withCredentials: any;
   metricsNameCache: any;
   interval: string;
+  queryTimeout: string;
   httpMethod: string;
   resultTransformer: ResultTransformer;
 
@@ -42,6 +43,7 @@ export class PrometheusDatasource {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
+    this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.resultTransformer = new ResultTransformer(templateSrv);
   }
@@ -231,6 +233,9 @@ export class PrometheusDatasource {
       end: end,
       step: query.step,
     };
+    if (this.queryTimeout) {
+      data['timeout'] = this.queryTimeout;
+    }
     return this._request(url, data, { requestId: query.requestId });
   }
 
@@ -240,6 +245,9 @@ export class PrometheusDatasource {
       query: query.expr,
       time: time,
     };
+    if (this.queryTimeout) {
+      data['timeout'] = this.queryTimeout;
+    }
     return this._request(url, data, { requestId: query.requestId });
   }
 
