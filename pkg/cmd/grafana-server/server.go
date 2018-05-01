@@ -92,6 +92,8 @@ func (g *GrafanaServerImpl) Start() error {
 	serviceGraph.Provide(&inject.Object{Value: dashboards.NewProvisioningService()})
 	serviceGraph.Provide(&inject.Object{Value: api.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
 	serviceGraph.Provide(&inject.Object{Value: api.HTTPServer{}})
+
+	// self registered services
 	services := registry.GetServices()
 
 	// Add all services to dependency graph
@@ -172,15 +174,12 @@ func (g *GrafanaServerImpl) startHttpServer() error {
 func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
 	g.log.Info("Shutdown started", "code", code, "reason", reason)
 
-	err := g.HttpServer.Shutdown(g.context)
-	if err != nil {
-		g.log.Error("Failed to shutdown server", "error", err)
-	}
-
+	// call cancel func on root context
 	g.shutdownFn()
-	err = g.childRoutines.Wait()
-	if err != nil && err != context.Canceled {
-		g.log.Error("Server shutdown completed with an error", "error", err)
+
+	// wait for chid routines
+	if err := g.childRoutines.Wait(); err != nil && err != context.Canceled {
+		g.log.Error("Server shutdown completed", "error", err)
 	}
 }
 

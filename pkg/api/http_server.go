@@ -60,6 +60,16 @@ func (hs *HTTPServer) Start(ctx context.Context) error {
 	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
 	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
+
+	// handle http shutdown on server context done
+	go func() {
+		<-ctx.Done()
+		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
+			hs.log.Error("Failed to shutdown server", "error", err)
+		}
+		hs.log.Info("Stopped HTTP Server")
+	}()
+
 	switch setting.Protocol {
 	case setting.HTTP:
 		err = hs.httpSrv.ListenAndServe()
