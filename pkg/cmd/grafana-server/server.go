@@ -130,8 +130,8 @@ func (g *GrafanaServerImpl) Run() error {
 		}
 
 		g.childRoutines.Go(func() error {
-			// Skip starting new service is we are shutting down
-			// Ccan happen when service crash during startup
+			// Skip starting new service when shutting down
+			// Can happen when service stop/return during startup
 			if g.shutdownInProgress {
 				return nil
 			}
