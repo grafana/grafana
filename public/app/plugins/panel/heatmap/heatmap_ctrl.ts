@@ -55,6 +55,7 @@ let panelDefaults = {
     showHistogram: false,
   },
   highlightCards: true,
+  thresholds: [],
 };
 
 let colorModes = ['opacity', 'spectrum'];
@@ -106,6 +107,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   dataWarning: any;
   decimals: number;
   scaledDecimals: number;
+  displaySubTabIndex: number;
 
   /** @ngInject */
   constructor($scope, $injector, timeSrv) {
@@ -132,6 +134,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditor, 2);
     this.addEditorTab('Display', heatmapDisplayEditor, 3);
     this.unitFormats = kbn.getUnitFormats();
+    this.displaySubTabIndex = 0;
   }
 
   zoomOut(evt) {

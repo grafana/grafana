@@ -521,6 +521,28 @@ export default function link(scope, elem, attrs, ctrl) {
         tooltip.mouseOverBucket = false;
         resetCardHighLight(event);
       });
+
+    addThresholds();
+  }
+
+  function addThresholds() {
+    console.log(panel.thresholds);
+
+    let x1 = yAxisWidth;
+    let x2 = yAxisWidth + chartWidth;
+    let y = threshold => yScale(threshold.value) + chartTop;
+
+    // let thresholds = heatmap.selectAll('.heatmap-threshold').data(panel.thresholds);
+    let thresholdLines = _.filter(panel.thresholds, t => t.line);
+    let lines = heatmap.selectAll('.heatmap-threshold').data(thresholdLines);
+    lines
+      .enter()
+      .append('line')
+      .attr('x1', x1)
+      .attr('x2', x2)
+      .attr('y1', y)
+      .attr('y2', y)
+      .style('stroke', 'red');
   }
 
   function highlightCard(event) {
