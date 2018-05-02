@@ -54,11 +54,12 @@ func NewGrafanaServer() *GrafanaServerImpl {
 }
 
 type GrafanaServerImpl struct {
-	context       context.Context
-	shutdownFn    context.CancelFunc
-	childRoutines *errgroup.Group
-	log           log.Logger
-	cfg           *setting.Cfg
+	context        context.Context
+	shutdownFn     context.CancelFunc
+	childRoutines  *errgroup.Group
+	log            log.Logger
+	cfg            *setting.Cfg
+	shutdownReason string
 
 	RouteRegister api.RouteRegister `inject:""`
 	HttpServer    *api.HTTPServer   `inject:""`
@@ -135,7 +136,8 @@ func (g *GrafanaServerImpl) Start() error {
 	}
 
 	sendSystemdNotification("READY=1")
-	return g.startHttpServer()
+
+	return g.childRoutines.Wait()
 }
 
 func (g *GrafanaServerImpl) loadConfiguration() {
@@ -154,28 +156,28 @@ func (g *GrafanaServerImpl) loadConfiguration() {
 	g.cfg.LogConfigSources()
 }
 
-func (g *GrafanaServerImpl) startHttpServer() error {
-	g.HttpServer.Init()
-
-	err := g.HttpServer.Start(g.context)
-
-	if err != nil {
-		return fmt.Errorf("Fail to start server. error: %v", err)
-	}
-
-	return nil
-}
-
-func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
-	g.log.Info("Shutdown started", "code", code, "reason", reason)
+func (g *GrafanaServerImpl) Shutdown(reason string) {
+	g.log.Info("Shutdown started", "reason", reason)
+	g.shutdownReason = reason
 
 	// call cancel func on root context
 	g.shutdownFn()
 
 	// wait for child routines
-	if err := g.childRoutines.Wait(); err != nil && err != context.Canceled {
-		g.log.Error("Server shutdown completed", "error", err)
+	g.childRoutines.Wait()
+}
+
+func (g *GrafanaServerImpl) Exit(reason error) {
+	// default exit code is 1
+	code := 1
+
+	if reason == context.Canceled && g.shutdownReason != "" {
+		reason = fmt.Errorf(g.shutdownReason)
+		code = 0
 	}
+
+	g.log.Error("Server shutdown", "reason", reason)
+	os.Exit(code)
 }
 
 func (g *GrafanaServerImpl) writePIDFile() {

@@ -81,29 +81,20 @@ func main() {
 	setting.Enterprise, _ = strconv.ParseBool(enterprise)
 
 	metrics.M_Grafana_Version.WithLabelValues(version).Set(1)
-	shutdownCompleted := make(chan int)
+
 	server := NewGrafanaServer()
 
-	go listenToSystemSignals(server, shutdownCompleted)
+	go listenToSystemSignals(server)
 
-	go func() {
-		code := 0
-		if err := server.Start(); err != nil {
-			log.Error2("Startup failed", "error", err)
-			code = 1
-		}
+	err := server.Start()
 
-		exitChan <- code
-	}()
-
-	code := <-shutdownCompleted
-	log.Info2("Grafana shutdown completed.", "code", code)
+	trace.Stop()
 	log.Close()
-	os.Exit(code)
+
+	server.Exit(err)
 }
 
-func listenToSystemSignals(server *GrafanaServerImpl, shutdownCompleted chan int) {
-	var code int
+func listenToSystemSignals(server *GrafanaServerImpl) {
 	signalChan := make(chan os.Signal, 1)
 	ignoreChan := make(chan os.Signal, 1)
 
@@ -112,12 +103,6 @@ func listenToSystemSignals(server *GrafanaServerImpl, shutdownCompleted chan int
 
 	select {
 	case sig := <-signalChan:
-		trace.Stop() // Stops trace if profiling has been enabled
-		server.Shutdown(0, fmt.Sprintf("system signal: %s", sig))
-		shutdownCompleted <- 0
-	case code = <-exitChan:
-		trace.Stop() // Stops trace if profiling has been enabled
-		server.Shutdown(code, "startup error")
-		shutdownCompleted <- code
+		server.Shutdown(fmt.Sprintf("System signal: %s", sig))
 	}
 }

@@ -64,7 +64,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.streamManager.Run(ctx)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+	hs.log.Info("HTTP Server Listen", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
 	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
 
@@ -74,7 +74,6 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
-		hs.log.Info("Stopped HTTP Server")
 	}()
 
 	switch setting.Protocol {
@@ -110,12 +109,6 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		err = errors.New("Invalid Protocol")
 	}
 
-	return err
-}
-
-func (hs *HTTPServer) Shutdown(ctx context.Context) error {
-	err := hs.httpSrv.Shutdown(ctx)
-	hs.log.Info("Stopped HTTP server")
 	return err
 }
 
