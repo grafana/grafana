@@ -298,19 +298,18 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 		key := elem.Value.(string)
 		result.Series = append(result.Series, pointsBySeries[key])
 
-		if !fillMissing {
-			break
-		}
-		series := pointsBySeries[key]
-		// fill in values from last fetched value till interval end
-		intervalStart := series.Points[len(series.Points)-1][1].Float64
-		intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
+		if fillMissing {
+			series := pointsBySeries[key]
+			// fill in values from last fetched value till interval end
+			intervalStart := series.Points[len(series.Points)-1][1].Float64
+			intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
 
-		// align interval start
-		intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval
-		for i := intervalStart + fillInterval; i < intervalEnd; i += fillInterval {
-			series.Points = append(series.Points, tsdb.TimePoint{fillValue, null.FloatFrom(i)})
-			rowCount++
+			// align interval start
+			intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval
+			for i := intervalStart + fillInterval; i < intervalEnd; i += fillInterval {
+				series.Points = append(series.Points, tsdb.TimePoint{fillValue, null.FloatFrom(i)})
+				rowCount++
+			}
 		}
 	}
 
