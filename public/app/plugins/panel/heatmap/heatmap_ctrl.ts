@@ -139,7 +139,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   onRender() {
-    if (!this.range) {
+    if (!this.range || !this.series) {
       return;
     }
 
