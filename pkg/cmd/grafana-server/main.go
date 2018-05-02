@@ -39,7 +39,6 @@ var enterprise string
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
 var pidFile = flag.String("pidfile", "", "path to pid file")
-var exitChan = make(chan int)
 
 func main() {
 	v := flag.Bool("v", false, "prints current version and exits")
