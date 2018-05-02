@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/social"
@@ -37,6 +36,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/search"
+	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	_ "github.com/grafana/grafana/pkg/tracing"
 )
 
@@ -69,10 +69,6 @@ type GrafanaServerImpl struct {
 func (g *GrafanaServerImpl) Run() error {
 	g.loadConfiguration()
 	g.writePIDFile()
-
-	// initSql
-	sqlstore.NewEngine() // TODO: this should return an error
-	sqlstore.EnsureAdminUser()
 
 	login.Init()
 	social.NewOAuthService()
