@@ -24,6 +24,7 @@ func init() {
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
 	bus.AddHandler("sql", GetDashboardsBySlug)
 	bus.AddHandler("sql", ValidateDashboardBeforeSave)
+	bus.AddHandler("sql", HasEditPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUid
@@ -613,4 +614,28 @@ func ValidateDashboardBeforeSave(cmd *m.ValidateDashboardBeforeSaveCommand) (err
 
 		return nil
 	})
+}
+
+func HasEditPermissionInFolders(query *m.HasEditPermissionInFoldersQuery) error {
+	if query.SignedInUser.HasRole(m.ROLE_EDITOR) {
+		query.Result = true
+		return nil
+	}
+
+	builder := &SqlBuilder{}
+	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
+	builder.writeDashboardPermissionFilter(query.SignedInUser, m.PERMISSION_EDIT)
+
+	type folderCount struct {
+		Count int64
+	}
+
+	resp := make([]*folderCount, 0)
+	if err := x.Sql(builder.GetSqlString(), builder.params...).Find(&resp); err != nil {
+		return err
+	}
+
+	query.Result = len(resp) > 0 && resp[0].Count > 0
+
+	return nil
 }
