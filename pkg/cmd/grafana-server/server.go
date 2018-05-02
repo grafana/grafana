@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -84,7 +83,7 @@ func (g *GrafanaServerImpl) Run() error {
 
 	// Add all services to dependency graph
 	for _, service := range services {
-		serviceGraph.Provide(&inject.Object{Value: service})
+		serviceGraph.Provide(&inject.Object{Value: service.Instance})
 	}
 
 	serviceGraph.Provide(&inject.Object{Value: g})
@@ -96,25 +95,25 @@ func (g *GrafanaServerImpl) Run() error {
 
 	// Init & start services
 	for _, service := range services {
-		if registry.IsDisabled(service) {
+		if registry.IsDisabled(service.Instance) {
 			continue
 		}
 
-		g.log.Info("Initializing " + reflect.TypeOf(service).Elem().Name())
+		g.log.Info("Initializing " + service.Name)
 
-		if err := service.Init(); err != nil {
+		if err := service.Instance.Init(); err != nil {
 			return fmt.Errorf("Service init failed: %v", err)
 		}
 	}
 
 	// Start background services
-	for index := range services {
-		service, ok := services[index].(registry.BackgroundService)
+	for _, descriptor := range services {
+		service, ok := descriptor.Instance.(registry.BackgroundService)
 		if !ok {
 			continue
 		}
 
-		if registry.IsDisabled(services[index]) {
+		if registry.IsDisabled(descriptor.Instance) {
 			continue
 		}
 
@@ -129,9 +128,9 @@ func (g *GrafanaServerImpl) Run() error {
 
 			// If error is not canceled then the service crashed
 			if err != context.Canceled {
-				g.log.Error("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)
+				g.log.Error("Stopped "+descriptor.Name, "reason", err)
 			} else {
-				g.log.Info("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)
+				g.log.Info("Stopped "+descriptor.Name, "reason", err)
 			}
 
 			// Mark that we are in shutdown mode

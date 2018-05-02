@@ -36,7 +36,11 @@ var (
 )
 
 func init() {
-	registry.RegisterService(&SqlStore{})
+	registry.Register(&registry.Descriptor{
+		Name:         "SqlStore",
+		Instance:     &SqlStore{},
+		InitPriority: registry.High,
+	})
 }
 
 type SqlStore struct {
@@ -148,7 +152,7 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 		return nil, fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
 	}
 
-	sqlog.Info("Initializing DB", "dbtype", ss.dbCfg.Type)
+	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
 	engine, err := xorm.NewEngine(ss.dbCfg.Type, cnnstr)
 	if err != nil {
 		return nil, err
