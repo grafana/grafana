@@ -54,18 +54,19 @@ func NewGrafanaServer() *GrafanaServerImpl {
 }
 
 type GrafanaServerImpl struct {
-	context        context.Context
-	shutdownFn     context.CancelFunc
-	childRoutines  *errgroup.Group
-	log            log.Logger
-	cfg            *setting.Cfg
-	shutdownReason string
+	context            context.Context
+	shutdownFn         context.CancelFunc
+	childRoutines      *errgroup.Group
+	log                log.Logger
+	cfg                *setting.Cfg
+	shutdownReason     string
+	shutdownInProgress bool
 
 	RouteRegister api.RouteRegister `inject:""`
 	HttpServer    *api.HTTPServer   `inject:""`
 }
 
-func (g *GrafanaServerImpl) Start() error {
+func (g *GrafanaServerImpl) Run() error {
 	g.loadConfiguration()
 	g.writePIDFile()
 
@@ -129,8 +130,24 @@ func (g *GrafanaServerImpl) Start() error {
 		}
 
 		g.childRoutines.Go(func() error {
+			// Skip starting new service is we are shutting down
+			// Ccan happen when service crash during startup
+			if g.shutdownInProgress {
+				return nil
+			}
+
 			err := service.Run(g.context)
-			g.log.Info("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)
+
+			// If error is not canceled then the service crashed
+			if err != context.Canceled {
+				g.log.Error("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)
+			} else {
+				g.log.Info("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)
+			}
+
+			// Mark that we are in shutdown mode
+			// So more services are not started
+			g.shutdownInProgress = true
 			return err
 		})
 	}
@@ -159,6 +176,7 @@ func (g *GrafanaServerImpl) loadConfiguration() {
 func (g *GrafanaServerImpl) Shutdown(reason string) {
 	g.log.Info("Shutdown started", "reason", reason)
 	g.shutdownReason = reason
+	g.shutdownInProgress = true
 
 	// call cancel func on root context
 	g.shutdownFn()

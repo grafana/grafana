@@ -71,6 +71,8 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	// handle http shutdown on server context done
 	go func() {
 		<-ctx.Done()
+		// Hacky fix for race condition between ListenAndServe and Shutdown
+		time.Sleep(time.Millisecond * 100)
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}

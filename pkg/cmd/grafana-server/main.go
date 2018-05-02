@@ -86,7 +86,7 @@ func main() {
 
 	go listenToSystemSignals(server)
 
-	err := server.Start()
+	err := server.Run()
 
 	trace.Stop()
 	log.Close()
