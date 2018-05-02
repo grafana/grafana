@@ -168,8 +168,10 @@ func (j *Json) GetPath(branch ...string) *Json {
 //    js.Get("top_level").Get("array").GetIndex(1).Get("key").Int()
 func (j *Json) GetIndex(index int) *Json {
 	a, err := j.Array()
-	if err == nil && len(a) > index {
-		return &Json{a[index]}
+	if err == nil {
+		if len(a) > index {
+			return &Json{a[index]}
+		}
 	}
 	return &Json{nil}
 }
