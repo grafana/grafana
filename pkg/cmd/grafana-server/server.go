@@ -88,7 +88,6 @@ func (g *GrafanaServerImpl) Run() error {
 	serviceGraph.Provide(&inject.Object{Value: g.cfg})
 	serviceGraph.Provide(&inject.Object{Value: dashboards.NewProvisioningService()})
 	serviceGraph.Provide(&inject.Object{Value: api.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
-	serviceGraph.Provide(&inject.Object{Value: api.HTTPServer{}})
 
 	// self registered services
 	services := registry.GetServices()
