@@ -279,7 +279,7 @@ func init() {
 	}, []string{"version"})
 }
 
-func initMetricVars(settings *MetricSettings) {
+func initMetricVars() {
 	prometheus.MustRegister(
 		M_Instance_Start,
 		M_Page_Status,
@@ -316,28 +316,6 @@ func initMetricVars(settings *MetricSettings) {
 		M_StatTotal_Playlists,
 		M_Grafana_Version)
 
-	go instrumentationLoop(settings)
-}
-
-func instrumentationLoop(settings *MetricSettings) chan struct{} {
-	M_Instance_Start.Inc()
-
-	// set the total stats gauges before we publishing metrics
-	updateTotalStats()
-
-	onceEveryDayTick := time.NewTicker(time.Hour * 24)
-	everyMinuteTicker := time.NewTicker(time.Minute)
-	defer onceEveryDayTick.Stop()
-	defer everyMinuteTicker.Stop()
-
-	for {
-		select {
-		case <-onceEveryDayTick.C:
-			sendUsageStats()
-		case <-everyMinuteTicker.C:
-			updateTotalStats()
-		}
-	}
 }
 
 func updateTotalStats() {
