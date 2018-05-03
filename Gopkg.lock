@@ -112,6 +112,18 @@
   revision = "270bc3860bb94dd3a3ffd047377d746c5e276726"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/facebookgo/inject"
+  packages = ["."]
+  revision = "cc1aa653e50f6a9893bcaef89e673e5b24e1e97b"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/facebookgo/structtag"
+  packages = ["."]
+  revision = "217e25fb96916cc60332e399c9aa63f5c422ceed"
+
+[[projects]]
   name = "github.com/fatih/color"
   packages = ["."]
   revision = "570b54cabe6b8eb0bc2dfce68d964677d63b5260"
@@ -295,6 +307,12 @@
   name = "github.com/kr/text"
   packages = ["."]
   revision = "7cafcd837844e784b526369c9bce262804aebc60"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/leibowitz/moment"
+  packages = ["."]
+  revision = "8548108dcca204a1110b99e5fec966817499fe84"
 
 [[projects]]
   branch = "master"
@@ -649,6 +667,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2bd5b309496d57e2189a1cc28f5c1c41398c19729ba0cf53c8cbb17ea3f706b5"
+  inputs-digest = "4039f122ac5dd045948e003eb7a74c8864df1759b25147f1b2e2e8ad7a8414d6"
   solver-name = "gps-cdcl"
   solver-version = 1
