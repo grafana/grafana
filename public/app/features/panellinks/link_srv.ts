@@ -4,7 +4,7 @@ import kbn from 'app/core/utils/kbn';
 
 export class LinkSrv {
   /** @ngInject */
-  constructor(private templateSrv, private timeSrv) {}
+  constructor(private templateSrv, private timeSrv, private $sanitize) {}
 
   getLinkUrl(link) {
     var url = this.templateSrv.replace(link.url || '');
@@ -68,6 +68,7 @@ export class LinkSrv {
     var info: any = {};
     info.href = this.getLinkUrl(link);
     info.title = this.templateSrv.replace(link.title || '');
+    info.title = this.$sanitize(info.title);
     return info;
   }
 
@@ -104,6 +105,8 @@ export class LinkSrv {
     if (link.params) {
       info.href = this.appendToQueryString(info.href, this.templateSrv.replace(link.params, scopedVars));
     }
+
+    info.title = this.$sanitize(info.title);
 
     return info;
   }

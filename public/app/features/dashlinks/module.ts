@@ -15,7 +15,7 @@ function dashLinksContainer() {
 }
 
 /** @ngInject */
-function dashLink($compile, linkSrv) {
+function dashLink($compile, linkSrv, $sanitize) {
   return {
     restrict: 'E',
     link: function(scope, elem) {
@@ -52,7 +52,11 @@ function dashLink($compile, linkSrv) {
       }
 
       // tooltip
-      elem.find('a').tooltip({ title: scope.link.tooltip, html: true, container: 'body' });
+      elem.find('a').tooltip({
+        title: $sanitize(scope.link.tooltip),
+        html: true,
+        container: 'body',
+      });
       icon.attr('class', 'fa fa-fw ' + scope.link.icon);
       anchor.attr('target', scope.link.target);
 
