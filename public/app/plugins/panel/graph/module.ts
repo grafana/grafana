@@ -206,16 +206,16 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
     }
 
+    this.render(this.seriesList);
+
     this.annotationsPromise.then(
       result => {
         this.loading = false;
         this.alertState = result.alertState;
         this.annotations = result.annotations;
-        this.render(this.seriesList);
       },
       () => {
         this.loading = false;
-        this.render(this.seriesList);
       }
     );
   }
