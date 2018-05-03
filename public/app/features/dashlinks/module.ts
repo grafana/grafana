@@ -15,7 +15,7 @@ function dashLinksContainer() {
 }
 
 /** @ngInject */
-function dashLink($compile, linkSrv, $sanitize) {
+function dashLink($compile, $sanitize, linkSrv) {
   return {
     restrict: 'E',
     link: function(scope, elem) {

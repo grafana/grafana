@@ -13,7 +13,7 @@ describe('linkSrv', function() {
   var sanitizeMock = {};
 
   beforeEach(() => {
-    linkSrv = new LinkSrv(templateSrvMock, timeSrvMock, sanitizeMock);
+    linkSrv = new LinkSrv(sanitizeMock, templateSrvMock, timeSrvMock);
   });
 
   describe('when appending query strings', function() {

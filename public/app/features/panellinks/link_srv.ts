@@ -4,7 +4,7 @@ import kbn from 'app/core/utils/kbn';
 
 export class LinkSrv {
   /** @ngInject */
-  constructor(private templateSrv, private timeSrv, private $sanitize) {}
+  constructor(private $sanitize, private templateSrv, private timeSrv) {}
 
   getLinkUrl(link) {
     var url = this.templateSrv.replace(link.url || '');
