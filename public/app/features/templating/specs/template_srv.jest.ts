@@ -275,6 +275,11 @@ describe('templateSrv', function() {
       expect(result).toBe('test,test2');
     });
 
+    it('multi value and dblq format should render double-quotted string', function() {
+      var result = _templateSrv.formatValue(['test', 'test2'], 'dblq');
+      expect(result).toBe('"test","test2"');
+    });
+
     it('slash should be properly escaped in regex format', function() {
       var result = _templateSrv.formatValue('Gi3/14', 'regex');
       expect(result).toBe('Gi3\\/14');

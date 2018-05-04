@@ -80,6 +80,16 @@ export class TemplateSrv {
     return '(' + quotedValues.join(' OR ') + ')';
   }
 
+  dblqFormat(value) {
+    if (typeof value === 'string') {
+      return value;
+    }
+    var quotedValues = _.map(value, function(val) {
+      return '"' + val + '"';
+    });
+    return quotedValues.join(',');
+  }
+
   formatValue(value, format, variable) {
     // for some scopedVars there is no variable
     variable = variable || {};
@@ -102,6 +112,9 @@ export class TemplateSrv {
       }
       case 'lucene': {
         return this.luceneFormat(value);
+      }
+      case 'dblq': {
+        return this.dblqFormat(value);
       }
       case 'pipe': {
         if (typeof value === 'string') {

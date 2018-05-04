@@ -103,6 +103,7 @@ Filter Option | Example | Raw | Interpolated | Description
 `regex` | ${servers:regex} | `'test.', 'test2'` |  `(test\\.|test2)` | Formats multi-value variable into a regex string
 `pipe` | ${servers:pipe} | `'test.', 'test2'` |  `test.|test2` | Formats multi-value variable into a pipe-separated string
 `csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
+`dblq`| ${servers:dblq} |  `'test1', 'test2'` | `"test1","test2"` | Formats multi-value variable as a comma-separated double-quoted string
 
 ## Improved workflow for provisioned dashboards
 
