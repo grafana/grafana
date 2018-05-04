@@ -77,7 +77,7 @@
     border: none;
     color: $text-color;
     &.active span {
-      color: $blue;
+      color: $query-blue;
       font-weight: bold;
     }
     .text-info {
@@ -87,6 +87,12 @@
     &.btn-sm {
       font-size: $font-size-sm;
       padding: 5px 11px;
+    }
+    &:hover {
+      color: $text-color-strong;
+    }
+    &[disabled] {
+      color: $text-color;
     }
   }
 }
