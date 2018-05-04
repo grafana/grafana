@@ -22,8 +22,8 @@ export class DashboardModel {
   editable: any;
   graphTooltip: any;
   time: any;
+  originalTime: any;
   timepicker: any;
-  originalTimepicker: any;
   templating: any;
   originalTemplating: any;
   annotations: any;
@@ -70,8 +70,8 @@ export class DashboardModel {
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time || { from: 'now-6h', to: 'now' };
+    this.originalTime = _.cloneDeep(this.time);
     this.timepicker = data.timepicker || {};
-    this.originalTimepicker = _.cloneDeep(this.timepicker);
     this.templating = this.ensureListExist(data.templating);
     this.originalTemplating = _.map(this.templating.list, variable => {
       return { name: variable.name, current: _.clone(variable.current) };
@@ -136,7 +136,7 @@ export class DashboardModel {
   }
 
   // cleans meta data and other non persistent state
-  getSaveModelClone(saveVariables) {
+  getSaveModelClone(saveVariables, saveTimerange) {
     // make clone
     var copy: any = {};
     for (var property in this) {
@@ -158,6 +158,10 @@ export class DashboardModel {
           copy.templating.list[i].current = this.originalTemplating[i].current;
         }
       }
+    }
+
+    if (!saveTimerange) {
+      copy.time = this.originalTime;
     }
 
     // get panel save models

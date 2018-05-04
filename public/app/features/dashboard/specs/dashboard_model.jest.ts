@@ -41,9 +41,11 @@ describe('DashboardModel', function() {
   });
 
   describe('getSaveModelClone', function() {
+    let saveVariables = false;
+    let saveTimerange = false;
     it('should sort keys', () => {
       var model = new DashboardModel({});
-      var saveModel = model.getSaveModelClone();
+      var saveModel = model.getSaveModelClone(saveVariables, saveTimerange);
       var keys = _.keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
@@ -61,7 +63,7 @@ describe('DashboardModel', function() {
       model.addPanel({
         type: 'add-panel',
       });
-      var saveModel = model.getSaveModelClone();
+      var saveModel = model.getSaveModelClone(saveVariables, saveTimerange);
       var panels = saveModel.panels;
 
       expect(panels.length).toBe(1);
