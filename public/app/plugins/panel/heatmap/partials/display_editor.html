@@ -109,6 +109,6 @@
   </div>
 
   <div class="edit-tab-content" ng-if="ctrl.displaySubTabIndex === 1">
-		<graph-threshold-form panel-ctrl="ctrl"></graph-threshold-form>
+		<threshold-form thresholds="ctrl.panel.thresholds" on-change="ctrl.onThresholdChange"></threshold-form>
 	</div>
 </div>

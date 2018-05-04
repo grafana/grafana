@@ -128,6 +128,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
     this.onCardColorChange = this.onCardColorChange.bind(this);
+    this.onThresholdChange = this.onThresholdChange.bind(this);
   }
 
   onInitEditMode() {
@@ -301,6 +302,12 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
   onCardColorChange(newColor) {
     this.panel.color.cardColor = newColor;
+    this.render();
+  }
+
+  onThresholdChange(newThresholds) {
+    // console.log('Heatmap onThresholdChange()', threshold, index);
+    this.panel.thresholds = newThresholds;
     this.render();
   }
 

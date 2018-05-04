@@ -64,8 +64,8 @@
   }
 
   input + label::before {
-    font-family: "FontAwesome";
-    content: "\f096"; // square-o
+    font-family: 'FontAwesome';
+    content: '\f096'; // square-o
     color: $text-color-weak;
     transition: transform 0.4s;
     backface-visibility: hidden;
@@ -73,11 +73,11 @@
   }
 
   input + label::after {
-    content: "\f046"; // check-square-o
+    content: '\f046'; // check-square-o
     color: $orange;
     text-shadow: $text-shadow-strong;
 
-    font-family: "FontAwesome";
+    font-family: 'FontAwesome';
     transition: transform 0.4s;
     transform: rotateY(180deg);
     backface-visibility: hidden;
@@ -159,4 +159,13 @@ gf-form-switch[disabled] {
       text-shadow: none;
     }
   }
+}
+
+.gf-form-switch-react {
+  margin-bottom: $gf-form-margin;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  position: relative;
 }
