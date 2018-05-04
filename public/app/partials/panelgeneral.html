@@ -30,6 +30,12 @@
 				<option value=""></option>
 			</select>
 		</div>
+
+		<div ng-if="ctrl.__proto__.constructor.scrollable">
+			<br/>
+			<h5 class="section-heading">Height</h5>
+			<gf-form-switch class="gf-form" label-class="width-7" switch-class="max-width-6" label="Dynamic" checked="ctrl.panel.dynamicHeight" on-change="ctrl.render()"></gf-form-switch>
+		</div>
 	</div>
 
 	<panel-links-editor panel="ctrl.panel"></panel-links-editor>

@@ -66,6 +66,27 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
+    if (this.panel.dynamicHeight && this.panel.scroller) {
+      let height = 0;
+      $(this.panel.scroller[0].children[0])
+        .children()
+        .each((index, value) => {
+          height += $(value).outerHeight(true);
+        });
+
+      // Ignore small heights?  first cycles are usually small
+      if (height > 50) {
+        const h = Math.ceil(height / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN)) + 1;
+        if (h !== this.panel.gridPos.h) {
+          console.log('Change height?', this.height, height, h, this.panel.gridPos.h, this);
+          this.panel.gridPos.h = h;
+          this.events.emit('panel-size-changed');
+          this.dashboard.events.emit('row-expanded');
+        }
+      } else {
+        console.log('small height?', this.height, height, this);
+      }
+    }
     profiler.renderingCompleted(this.panel.id, this.timing);
   }
 
