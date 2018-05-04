@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -33,6 +32,7 @@ import (
 
 	// self registering services
 	_ "github.com/grafana/grafana/pkg/extensions"
+	_ "github.com/grafana/grafana/pkg/metrics"
 	_ "github.com/grafana/grafana/pkg/plugins"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
@@ -72,7 +72,6 @@ func (g *GrafanaServerImpl) Start() error {
 	sqlstore.NewEngine() // TODO: this should return an error
 	sqlstore.EnsureAdminUser()
 
-	metrics.Init(g.cfg.Raw)
 	login.Init()
 	social.NewOAuthService()
 
