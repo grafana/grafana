@@ -3,6 +3,8 @@ import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/dashboard/panellinks/link_srv';
+import { conditionalFormattingEditorComponent } from './conditional_formatting';
+import RuleEvaluator from 'app/core/services/rule_evaluation/rule_evaluator';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -74,7 +76,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       thresholdLabels: false,
     },
     tableColumn: '',
+    formattingRules: [],
   };
+  ruleEvaluator: RuleEvaluator;
 
   /** @ngInject */
   constructor($scope, $injector, private linkSrv) {
@@ -88,12 +92,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     this.onSparklineColorChange = this.onSparklineColorChange.bind(this);
     this.onSparklineFillChange = this.onSparklineFillChange.bind(this);
+
+    this.ruleEvaluator = new RuleEvaluator(this.dashboard.getTimezone());
   }
 
   onInitEditMode() {
     this.fontSizes = ['20%', '30%', '50%', '70%', '80%', '100%', '110%', '120%', '150%', '170%', '200%'];
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
+    this.addEditorTab('Conditonal Formatting', conditionalFormattingEditorComponent, 4);
     this.unitFormats = kbn.getUnitFormats();
   }
 
@@ -403,9 +410,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     let data, linkInfo;
     const $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
+    const ruleEval = this.ruleEvaluator;
 
     function applyColoringThresholds(value, valueString) {
-      const color = getColorForValue(data, value);
+      if (!panel.colorValue) {
+        return valueString;
+      }
+
+      const color = getColorForValue(ruleEval, data, value);
       if (color) {
         return '<span style="color:' + color + '">' + valueString + '</span>';
       }
@@ -527,7 +539,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
               width: thresholdMarkersWidth,
             },
             value: {
-              color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
+              color: panel.colorValue ? getColorForValue(ruleEval, data, data.valueRounded) : null,
               formatter: () => {
                 return getValueText();
               },
@@ -625,7 +637,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       const body = panel.gauge.show ? '' : getBigValueHtml();
 
       if (panel.colorBackground) {
-        const color = getColorForValue(data, data.value);
+        const color = getColorForValue(ruleEval, data, data.value);
         if (color) {
           $panelContainer.css('background-color', color);
           if (scope.fullscreen) {
@@ -715,18 +727,18 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 }
 
-function getColorForValue(data, value) {
-  if (!_.isFinite(value)) {
-    return null;
-  }
-
+function getColorForValue(ruleEvaluator, data, value) {
   for (let i = data.thresholds.length; i > 0; i--) {
-    if (value >= data.thresholds[i - 1]) {
+    if (ruleEvaluator.evaluateRule('gte', value, [data.thresholds[i - 1]])) {
       return data.colorMap[i];
     }
   }
 
-  return _.first(data.colorMap);
+  if (data.thresholds.length > 0 && ruleEvaluator.evaluateRule('lt', value, [data.thresholds[0]])) {
+    return data.colorMap[0];
+  }
+
+  return null;
 }
 
 export { SingleStatCtrl, SingleStatCtrl as PanelCtrl, getColorForValue };

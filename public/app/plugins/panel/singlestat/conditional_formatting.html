@@ -1,0 +1,45 @@
+<div class="gf-form-group">
+  <h5>Rules</h5>
+    <div class="gf-form-inline" ng-repeat="rule in ctrl.panel.formattingRules">
+      <div class="gf-form">
+        <label class="gf-form-label">If</label>
+      </div>
+
+      <div class="gf-form">
+        <div class="gf-form-select-wrapper">
+          <select class="gf-form-input" ng-model="rule.rule"
+                  ng-options="f.value as f.text for f in ctrl.ruleTypes" ng-change="ctrl.render()"></select>
+        </div>
+        <input type="text" ng-model="rule.value" class="gf-form-input width-8" ng-change="ctrl.render()" placeholder="value">
+      </div>
+
+      <div class="gf-form">
+        <label class="gf-form-label">Value</label>
+        <span class="gf-form-label">
+          <color-picker color="threshold.fillColor" onChange="ctrl.onFillColorChange($index)"></color-picker>
+        </span>
+      </div>
+
+      <div class="gf-form">
+        <label class="gf-form-label">Background</label>
+        <span class="gf-form-label">
+          <color-picker color="threshold.lineColor" onChange="ctrl.onLineColorChange($index)"></color-picker>
+        </span>
+      </div>
+
+      <div class="gf-form">
+        <label class="gf-form-label">
+          <a class="pointer" ng-click="ctrl.removeRule($index)">
+            <i class="fa fa-trash"></i>
+          </a>
+        </label>
+      </div>
+    </div>
+
+    <div class="gf-form-button-row">
+      <button class="btn btn-inverse" ng-click="ctrl.addRule()">
+        <i class="fa fa-plus"></i>&nbsp;Add rule
+      </button>
+    </div>
+  </div>
+</div>

@@ -21,7 +21,7 @@ describe('SingleStatCtrl', () => {
     },
   };
   SingleStatCtrl.prototype.dashboard = {
-    isTimezoneUtc: jest.fn(() => true),
+    getTimezone: jest.fn(() => 'utc'),
   };
   SingleStatCtrl.prototype.events = {
     on: () => {},

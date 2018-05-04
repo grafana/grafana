@@ -1,13 +1,17 @@
 import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
+import RuleEvaluator from 'app/core/services/rule_evaluation/rule_evaluator';
 
 export class TableRenderer {
   formatters: any[];
   colorState: any;
+  ruleEvaluator: RuleEvaluator;
 
   constructor(private panel, private table, private isUtc, private sanitize, private templateSrv) {
     this.initColumns();
+
+    this.ruleEvaluator = new RuleEvaluator(isUtc ? 'utc' : '');
   }
 
   setTable(table) {
@@ -47,12 +51,18 @@ export class TableRenderer {
     if (!style.thresholds) {
       return null;
     }
+
     for (let i = style.thresholds.length; i > 0; i--) {
-      if (value >= style.thresholds[i - 1]) {
+      if (this.ruleEvaluator.evaluateRule('gte', value, [style.thresholds[i - 1]])) {
         return style.colors[i];
       }
     }
-    return _.first(style.colors);
+
+    if (style.thresholds.length > 0 && this.ruleEvaluator.evaluateRule('lt', value, [style.thresholds[0]])) {
+      return style.colors[0];
+    }
+
+    return null;
   }
 
   defaultCellFormatter(v, style) {
