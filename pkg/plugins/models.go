@@ -91,7 +91,9 @@ type PluginInclude struct {
 	Role       m.RoleType `json:"role"`
 	AddToNav   bool       `json:"addToNav"`
 	DefaultNav bool       `json:"defaultNav"`
+	ShowAsTab  bool       `json:"showAsTab"`
 	Slug       string     `json:"slug"`
+	Icon       string     `json:"icon"`
 
 	Id string `json:"-"`
 }

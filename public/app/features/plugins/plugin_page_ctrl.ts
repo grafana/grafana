@@ -1,5 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
+import { PluginEditCtrl } from './plugin_edit_ctrl';
 
 var pluginInfoCache = {};
 
@@ -33,7 +34,17 @@ export class AppPageCtrl {
       return;
     }
 
-    let pluginNav = this.navModelSrv.getNav('plugin-page-' + app.id);
+    this.navModel = PluginEditCtrl.getPluginNavModel(app, this.$routeParams.slug);
+
+    // If anythign is active then the navigation was handled using tabs
+    for (let i = 0; i < this.navModel.main.children.length; i++) {
+      if (this.navModel.main.children[i].active) {
+        return;
+      }
+    }
+
+    // Don't show tabs
+    const pluginNav = this.navModelSrv.getNav('plugin-page-' + app.id);
 
     this.navModel = {
       main: {

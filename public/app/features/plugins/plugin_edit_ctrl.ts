@@ -24,10 +24,8 @@ export class PluginEditCtrl {
     this.init();
   }
 
-  setNavModel(model) {
-    let defaultTab = 'readme';
-
-    this.navModel = {
+  static getPluginNavModel(model: any, activeSlug?: string) {
+    let navModel = {
       main: {
         img: model.info.logos.large,
         subTitle: model.info.author.name,
@@ -39,31 +37,55 @@ export class PluginEditCtrl {
             icon: 'fa fa-fw fa-file-text-o',
             id: 'readme',
             text: 'Readme',
-            url: `plugins/${this.model.id}/edit?tab=readme`,
+            url: `plugins/${model.id}/edit?tab=readme`,
+            active: false,
           },
         ],
       },
     };
 
+    const tabs = _.filter(model.includes, { type: 'page', showAsTab: true });
+    if (tabs) {
+      _.forEach(tabs, t => {
+        navModel.main.children.push({
+          icon: t.icon,
+          id: t.slug,
+          text: t.name,
+          active: t.slug === activeSlug,
+          url: `plugins/${model.id}/page/${t.slug}`,
+        });
+      });
+    }
+
     if (model.type === 'app') {
-      this.navModel.main.children.push({
+      navModel.main.children.push({
         icon: 'gicon gicon-cog',
         id: 'config',
         text: 'Config',
-        url: `plugins/${this.model.id}/edit?tab=config`,
+        url: `plugins/${model.id}/edit?tab=config`,
+        active: false,
       });
 
       let hasDashboards = _.find(model.includes, { type: 'dashboard' });
 
       if (hasDashboards) {
-        this.navModel.main.children.push({
+        navModel.main.children.push({
           icon: 'gicon gicon-dashboard',
           id: 'dashboards',
           text: 'Dashboards',
-          url: `plugins/${this.model.id}/edit?tab=dashboards`,
+          url: `plugins/${model.id}/edit?tab=dashboards`,
+          active: false,
         });
       }
+    }
 
+    return navModel;
+  }
+
+  setNavModel(model) {
+    let defaultTab = 'readme';
+    this.navModel = PluginEditCtrl.getPluginNavModel(model);
+    if (model.type === 'app') {
       defaultTab = 'config';
     }
 
@@ -86,7 +108,9 @@ export class PluginEditCtrl {
       });
 
       this.includes = _.map(result.includes, plug => {
-        plug.icon = this.getPluginIcon(plug.type);
+        if (!plug.icon) {
+          plug.icon = this.getPluginIcon(plug.type);
+        }
         return plug;
       });
 
