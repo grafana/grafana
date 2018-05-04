@@ -14,15 +14,24 @@ const template = `
   </div>
 
   <form name="ctrl.saveForm" ng-submit="ctrl.save()" class="modal-content" novalidate>
-    <h6 class="text-center">Add a note to describe your changes</h6>
     <div class="p-t-2">
+      <div class="gf-form-group">
+		    <gf-form-switch class="gf-form"
+			    label="Save current time range" label-class="width-12" switch-class="max-width-6"
+			    checked="ctrl.saveTimerange" on-change="buildUrl()">
+		    </gf-form-switch>
+		    <gf-form-switch class="gf-form"
+			    label="Save current variables" label-class="width-12" switch-class="max-width-6"
+			    checked="ctrl.saveVariables" on-change="buildUrl()">
+		    </gf-form-switch>
+	    </div>
       <div class="gf-form">
         <label class="gf-form-hint">
           <input
             type="text"
             name="message"
             class="gf-form-input"
-            placeholder="Updates to &hellip;"
+            placeholder="Add a note to describe your changes &hellip;"
             give-focus="true"
             ng-model="ctrl.message"
             ng-model-options="{allowInvalid: true}"
@@ -40,7 +49,7 @@ const template = `
 
     <div class="gf-form-button-row text-center">
       <button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid">Save</button>
-      <button class="btn btn-inverse" ng-click="ctrl.dismiss();">Cancel</button>
+      <a class="btn btn-link" ng-click="ctrl.dismiss();">Cancel</a>
     </div>
   </form>
 </div>
@@ -48,6 +57,8 @@ const template = `
 
 export class SaveDashboardModalCtrl {
   message: string;
+  saveVariables = false;
+  saveTimerange = false;
   max: number;
   saveForm: any;
   dismiss: () => void;
@@ -64,8 +75,12 @@ export class SaveDashboardModalCtrl {
     }
 
     var dashboard = this.dashboardSrv.getCurrent();
-    var saveModel = dashboard.getSaveModelClone();
-    var options = { message: this.message };
+    var saveModel = dashboard.getSaveModelClone(this.saveVariables);
+    var options = {
+      message: this.message,
+      templating: this.saveVariables,
+      timepicker: this.saveTimerange,
+    };
 
     return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
   }

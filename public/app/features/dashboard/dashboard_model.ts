@@ -23,7 +23,9 @@ export class DashboardModel {
   graphTooltip: any;
   time: any;
   timepicker: any;
+  originalTimepicker: any;
   templating: any;
+  originalTemplating: any;
   annotations: any;
   refresh: any;
   snapshot: any;
@@ -69,7 +71,11 @@ export class DashboardModel {
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
+    this.originalTimepicker = _.cloneDeep(this.timepicker);
     this.templating = this.ensureListExist(data.templating);
+    this.originalTemplating = _.map(this.templating.list, variable => {
+      return { name: variable.name, current: _.clone(variable.current) };
+    });
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
@@ -130,7 +136,7 @@ export class DashboardModel {
   }
 
   // cleans meta data and other non persistent state
-  getSaveModelClone() {
+  getSaveModelClone(saveVariables) {
     // make clone
     var copy: any = {};
     for (var property in this) {
@@ -145,6 +151,14 @@ export class DashboardModel {
     copy.templating = {
       list: _.map(this.templating.list, variable => (variable.getSaveModel ? variable.getSaveModel() : variable)),
     };
+
+    if (!saveVariables && copy.templating.list.length === this.originalTemplating.length) {
+      for (let i = 0; i < copy.templating.list.length; i++) {
+        if (copy.templating.list[i].name === this.originalTemplating[i].name) {
+          copy.templating.list[i].current = this.originalTemplating[i].current;
+        }
+      }
+    }
 
     // get panel save models
     copy.panels = _.chain(this.panels)

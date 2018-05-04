@@ -99,8 +99,8 @@ export class ChangeTracker {
     // Expand all rows before making comparison. This is required because row expand / collapse
     // change order of panel array and panel positions.
     model.expandRows();
-
-    let dash = model.getSaveModelClone();
+    let templating = false;
+    let dash = model.getSaveModelClone(templating);
 
     // ignore time and refresh
     dash.time = 0;
