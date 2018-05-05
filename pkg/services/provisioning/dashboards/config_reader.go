@@ -58,7 +58,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 
 	files, err := ioutil.ReadDir(cr.path)
 	if err != nil {
-		cr.log.Error("cant read dashboard provisioning files from directory", "path", cr.path)
+		cr.log.Error("can't read dashboard provisioning files from directory", "path", cr.path)
 		return dashboards, nil
 	}
 

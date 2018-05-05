@@ -77,7 +77,7 @@ func EnsureAdminUser() {
 	log.Info("Created default admin user: %v", setting.AdminUser)
 }
 
-func NewEngine() {
+func NewEngine() *xorm.Engine {
 	x, err := getEngine()
 
 	if err != nil {
@@ -91,6 +91,8 @@ func NewEngine() {
 		sqlog.Error("Fail to initialize orm engine", "error", err)
 		os.Exit(1)
 	}
+
+	return x
 }
 
 func SetEngine(engine *xorm.Engine) (err error) {
@@ -166,7 +168,7 @@ func getEngine() (*xorm.Engine, error) {
 	engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
 	engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
 	engine.SetConnMaxLifetime(time.Second * time.Duration(DbCfg.ConnMaxLifetime))
-	debugSql := setting.Cfg.Section("database").Key("log_queries").MustBool(false)
+	debugSql := setting.Raw.Section("database").Key("log_queries").MustBool(false)
 	if !debugSql {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
@@ -179,7 +181,7 @@ func getEngine() (*xorm.Engine, error) {
 }
 
 func LoadConfig() {
-	sec := setting.Cfg.Section("database")
+	sec := setting.Raw.Section("database")
 
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
@@ -258,7 +260,7 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 	// x.ShowSQL()
 
 	if err != nil {
-		t.Fatalf("Failed to init in memory sqllite3 db %v", err)
+		t.Fatalf("Failed to init test database: %v", err)
 	}
 
 	sqlutil.CleanDB(x)
@@ -268,4 +270,20 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 	}
 
 	return x
+}
+
+func IsTestDbMySql() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == dbMySql
+	}
+
+	return false
+}
+
+func IsTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == dbPostgres
+	}
+
+	return false
 }

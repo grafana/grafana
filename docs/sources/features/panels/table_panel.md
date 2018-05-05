@@ -97,3 +97,14 @@ The column styles allow you control how dates and numbers are formatted.
 4. **Thresholds and Coloring**: Specify color mode and thresholds limits.
 5. **Type**: The three supported types of types are **Number**, **String** and **Date**. **Unit** and **Decimals**: Specify unit and decimal precision for numbers. **Format**: Specify date format for dates.
 
+
+### String
+#### Value/Range to text mapping
+
+> Only available in Grafana v5.1+.
+
+{{< docs-imagebox img="/img/docs/v51/table-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
+
+Value/range to text mapping allows you to translate numeric values into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the numeric values into a context-specific human-readable word or message.
+
+<div class="clearfix"></div>

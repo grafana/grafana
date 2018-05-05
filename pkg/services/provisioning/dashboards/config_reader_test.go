@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	simpleDashboardConfig string = "./test-configs/dashboards-from-disk"
-	oldVersion            string = "./test-configs/version-0"
-	brokenConfigs         string = "./test-configs/broken-configs"
+	simpleDashboardConfig = "./test-configs/dashboards-from-disk"
+	oldVersion            = "./test-configs/version-0"
+	brokenConfigs         = "./test-configs/broken-configs"
 )
 
 func TestDashboardsAsConfig(t *testing.T) {

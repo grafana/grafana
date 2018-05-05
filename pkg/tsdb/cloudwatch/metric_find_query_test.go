@@ -181,10 +181,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 }
 
 func TestParseMultiSelectValue(t *testing.T) {
-
-	var values []string
-
-	values = parseMultiSelectValue(" i-someInstance ")
+	values := parseMultiSelectValue(" i-someInstance ")
 	assert.Equal(t, []string{"i-someInstance"}, values)
 
 	values = parseMultiSelectValue("{i-05}")

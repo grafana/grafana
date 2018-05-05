@@ -485,6 +485,7 @@ kbn.valueFormats.EHs = kbn.formatBuilders.decimalSIPrefix('H/s', 6);
 
 // Throughput
 kbn.valueFormats.ops = kbn.formatBuilders.simpleCountUnit('ops');
+kbn.valueFormats.reqps = kbn.formatBuilders.simpleCountUnit('reqps');
 kbn.valueFormats.rps = kbn.formatBuilders.simpleCountUnit('rps');
 kbn.valueFormats.wps = kbn.formatBuilders.simpleCountUnit('wps');
 kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
@@ -595,7 +596,7 @@ kbn.valueFormats.radr = kbn.formatBuilders.decimalSIPrefix('R');
 kbn.valueFormats.radsvh = kbn.formatBuilders.decimalSIPrefix('Sv/h');
 
 // Concentration
-kbn.valueFormats.conppm = kbn.formatBuilders.fixedUnit('ppm');
+kbn.valueFormats.ppm = kbn.formatBuilders.fixedUnit('ppm');
 kbn.valueFormats.conppb = kbn.formatBuilders.fixedUnit('ppb');
 kbn.valueFormats.conngm3 = kbn.formatBuilders.fixedUnit('ng/m3');
 kbn.valueFormats.conngNm3 = kbn.formatBuilders.fixedUnit('ng/Nm3');
@@ -620,13 +621,13 @@ kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
     // Less than 1 min
     return kbn.toFixedScaled(size / 1000, decimals, scaledDecimals, 3, ' s');
   } else if (Math.abs(size) < 3600000) {
-    // Less than 1 hour, devide in minutes
+    // Less than 1 hour, divide in minutes
     return kbn.toFixedScaled(size / 60000, decimals, scaledDecimals, 5, ' min');
   } else if (Math.abs(size) < 86400000) {
-    // Less than one day, devide in hours
+    // Less than one day, divide in hours
     return kbn.toFixedScaled(size / 3600000, decimals, scaledDecimals, 7, ' hour');
   } else if (Math.abs(size) < 31536000000) {
-    // Less than one year, devide in days
+    // Less than one year, divide in days
     return kbn.toFixedScaled(size / 86400000, decimals, scaledDecimals, 8, ' day');
   }
 
@@ -638,15 +639,15 @@ kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
     return '';
   }
 
-  // Less than 1 µs, devide in ns
+  // Less than 1 µs, divide in ns
   if (Math.abs(size) < 0.000001) {
     return kbn.toFixedScaled(size * 1e9, decimals, scaledDecimals - decimals, -9, ' ns');
   }
-  // Less than 1 ms, devide in µs
+  // Less than 1 ms, divide in µs
   if (Math.abs(size) < 0.001) {
     return kbn.toFixedScaled(size * 1e6, decimals, scaledDecimals - decimals, -6, ' µs');
   }
-  // Less than 1 second, devide in ms
+  // Less than 1 second, divide in ms
   if (Math.abs(size) < 1) {
     return kbn.toFixedScaled(size * 1e3, decimals, scaledDecimals - decimals, -3, ' ms');
   }
@@ -654,16 +655,16 @@ kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
   if (Math.abs(size) < 60) {
     return kbn.toFixed(size, decimals) + ' s';
   } else if (Math.abs(size) < 3600) {
-    // Less than 1 hour, devide in minutes
+    // Less than 1 hour, divide in minutes
     return kbn.toFixedScaled(size / 60, decimals, scaledDecimals, 1, ' min');
   } else if (Math.abs(size) < 86400) {
-    // Less than one day, devide in hours
+    // Less than one day, divide in hours
     return kbn.toFixedScaled(size / 3600, decimals, scaledDecimals, 4, ' hour');
   } else if (Math.abs(size) < 604800) {
-    // Less than one week, devide in days
+    // Less than one week, divide in days
     return kbn.toFixedScaled(size / 86400, decimals, scaledDecimals, 5, ' day');
   } else if (Math.abs(size) < 31536000) {
-    // Less than one year, devide in week
+    // Less than one year, divide in week
     return kbn.toFixedScaled(size / 604800, decimals, scaledDecimals, 6, ' week');
   }
 
@@ -948,6 +949,7 @@ kbn.getUnitFormats = function() {
       text: 'throughput',
       submenu: [
         { text: 'ops/sec (ops)', value: 'ops' },
+        { text: 'requets/sec (rps)', value: 'reqps' },
         { text: 'reads/sec (rps)', value: 'rps' },
         { text: 'writes/sec (wps)', value: 'wps' },
         { text: 'I/O ops/sec (iops)', value: 'iops' },
@@ -1099,7 +1101,7 @@ kbn.getUnitFormats = function() {
     {
       text: 'concentration',
       submenu: [
-        { text: 'parts-per-million (ppm)', value: 'conppm' },
+        { text: 'parts-per-million (ppm)', value: 'ppm' },
         { text: 'parts-per-billion (ppb)', value: 'conppb' },
         { text: 'nanogram per cubic metre (ng/m3)', value: 'conngm3' },
         { text: 'nanogram per normal cubic metre (ng/Nm3)', value: 'conngNm3' },

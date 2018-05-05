@@ -35,15 +35,15 @@ type HTTPServer struct {
 	context       context.Context
 	streamManager *live.StreamManager
 	cache         *gocache.Cache
+	httpSrv       *http.Server
 
-	httpSrv *http.Server
+	RouteRegister RouteRegister `inject:""`
+	Bus           bus.Bus       `inject:""`
 }
 
-func NewHTTPServer() *HTTPServer {
-	return &HTTPServer{
-		log:   log.New("http.server"),
-		cache: gocache.New(5*time.Minute, 10*time.Minute),
-	}
+func (hs *HTTPServer) Init() {
+	hs.log = log.New("http.server")
+	hs.cache = gocache.New(5*time.Minute, 10*time.Minute)
 }
 
 func (hs *HTTPServer) Start(ctx context.Context) error {
@@ -60,6 +60,16 @@ func (hs *HTTPServer) Start(ctx context.Context) error {
 	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
 	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
+
+	// handle http shutdown on server context done
+	go func() {
+		<-ctx.Done()
+		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
+			hs.log.Error("Failed to shutdown server", "error", err)
+		}
+		hs.log.Info("Stopped HTTP Server")
+	}()
+
 	switch setting.Protocol {
 	case setting.HTTP:
 		err = hs.httpSrv.ListenAndServe()
@@ -139,7 +149,7 @@ func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
 	}
 
 	hs.httpSrv.TLSConfig = tlsCfg
-	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0)
+	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 
 	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 }

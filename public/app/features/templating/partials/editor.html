@@ -280,11 +280,14 @@
 		</div>
 
 		<div class="gf-form-group" ng-show="current.options.length">
-			<h5>Preview of values (shows max 20)</h5>
+			<h5>Preview of values</h5>
 			<div class="gf-form-inline">
-				<div class="gf-form" ng-repeat="option in current.options | limitTo: 20">
-					<span class="gf-form-label">{{option.text}}</span>
-				</div>
+				<div class="gf-form" ng-repeat="option in current.options | limitTo: optionsLimit">
+          <span class="gf-form-label">{{option.text}}</span>
+        </div>
+        <div class="gf-form" ng-if= "current.options.length > optionsLimit">
+          <a class="gf-form-label btn-secondary" ng-click="showMoreOptions()">Show more</a>
+        </div>
 			</div>
 		</div>
 

@@ -40,7 +40,7 @@ func init() {
 }
 
 var (
-	pagerdutyEventApiUrl string = "https://events.pagerduty.com/v2/enqueue"
+	pagerdutyEventApiUrl = "https://events.pagerduty.com/v2/enqueue"
 )
 
 func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error) {

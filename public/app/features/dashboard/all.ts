@@ -6,6 +6,7 @@ import './dashnav/dashnav';
 import './submenu/submenu';
 import './save_as_modal';
 import './save_modal';
+import './save_provisioned_modal';
 import './shareModalCtrl';
 import './share_snapshot_ctrl';
 import './dashboard_srv';

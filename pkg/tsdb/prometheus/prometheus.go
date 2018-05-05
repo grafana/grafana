@@ -108,8 +108,8 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 
 		span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.prometheus")
 		span.SetTag("expr", query.Expr)
-		span.SetTag("start_unixnano", int64(query.Start.UnixNano()))
-		span.SetTag("stop_unixnano", int64(query.End.UnixNano()))
+		span.SetTag("start_unixnano", query.Start.UnixNano())
+		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
 		value, err := client.QueryRange(ctx, query.Expr, timeRange)

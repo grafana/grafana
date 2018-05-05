@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"time"
-
 	"math"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -147,7 +145,7 @@ func (e MssqlQueryEndpoint) getTypedRowData(types []*sql.ColumnType, rows *core.
 	// convert types not handled by denisenkom/go-mssqldb
 	// unhandled types are returned as []byte
 	for i := 0; i < len(types); i++ {
-		if value, ok := values[i].([]byte); ok == true {
+		if value, ok := values[i].([]byte); ok {
 			switch types[i].DatabaseTypeName() {
 			case "MONEY", "SMALLMONEY", "DECIMAL":
 				if v, err := strconv.ParseFloat(string(value), 64); err == nil {
@@ -211,7 +209,7 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 	fillValue := null.Float{}
 	if fillMissing {
 		fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
-		if query.Model.Get("fillNull").MustBool(false) == false {
+		if !query.Model.Get("fillNull").MustBool(false) {
 			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
 			fillValue.Valid = true
 		}
@@ -231,19 +229,22 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 			return err
 		}
 
+		// converts column named time to unix timestamp in milliseconds to make
+		// native mysql datetime types and epoch dates work in
+		// annotation and table queries.
+		tsdb.ConvertSqlTimeColumnToEpochMs(values, timeIndex)
+
 		switch columnValue := values[timeIndex].(type) {
 		case int64:
-			timestamp = float64(columnValue * 1000)
+			timestamp = float64(columnValue)
 		case float64:
-			timestamp = columnValue * 1000
-		case time.Time:
-			timestamp = (float64(columnValue.Unix()) * 1000) + float64(columnValue.Nanosecond()/1e6) // in case someone is trying to map times beyond 2262 :D
+			timestamp = columnValue
 		default:
-			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp")
+			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp, got: %T %v", columnValue, columnValue)
 		}
 
 		if metricIndex >= 0 {
-			if columnValue, ok := values[metricIndex].(string); ok == true {
+			if columnValue, ok := values[metricIndex].(string); ok {
 				metric = columnValue
 			} else {
 				return fmt.Errorf("Column metric must be of type CHAR, VARCHAR, NCHAR or NVARCHAR. metric column name: %s type: %s but datatype is %T", columnNames[metricIndex], columnTypes[metricIndex].DatabaseTypeName(), values[metricIndex])
@@ -255,22 +256,16 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 				continue
 			}
 
-			switch columnValue := values[i].(type) {
-			case int64:
-				value = null.FloatFrom(float64(columnValue))
-			case float64:
-				value = null.FloatFrom(columnValue)
-			case nil:
-				value.Valid = false
-			default:
-				return fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", col, columnValue, columnValue)
+			if value, err = tsdb.ConvertSqlValueColumnToFloat(col, values[i]); err != nil {
+				return err
 			}
+
 			if metricIndex == -1 {
 				metric = col
 			}
 
 			series, exist := pointsBySeries[metric]
-			if exist == false {
+			if !exist {
 				series = &tsdb.TimeSeries{Name: metric}
 				pointsBySeries[metric] = series
 				seriesByQueryOrder.PushBack(metric)
@@ -278,7 +273,7 @@ func (e MssqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.
 
 			if fillMissing {
 				var intervalStart float64
-				if exist == false {
+				if !exist {
 					intervalStart = float64(tsdbQuery.TimeRange.MustGetFrom().UnixNano() / 1e6)
 				} else {
 					intervalStart = series.Points[len(series.Points)-1][1].Float64 + fillInterval

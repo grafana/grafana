@@ -113,7 +113,7 @@ func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.D
 		return false, err
 	}
 
-	// evalute team rules
+	// evaluate team rules
 	for _, p := range acl {
 		for _, ug := range teams {
 			if ug.Id == p.TeamId && p.Permission >= permission {
@@ -154,12 +154,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.Permiss
 	// validate overridden permissions to be higher
 	for _, a := range acl {
 		for _, existingPerm := range existingPermissions {
-			// handle default permissions
-			if existingPerm.DashboardId == -1 {
-				existingPerm.DashboardId = g.dashId
-			}
-
-			if a.DashboardId == existingPerm.DashboardId {
+			if !existingPerm.Inherited {
 				continue
 			}
 
@@ -173,7 +168,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission m.Permiss
 		return true, nil
 	}
 
-	return g.checkAcl(permission, acl)
+	return g.checkAcl(permission, existingPermissions)
 }
 
 // GetAcl returns dashboard acl
@@ -185,13 +180,6 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	query := m.GetDashboardAclInfoListQuery{DashboardId: g.dashId, OrgId: g.orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
-	}
-
-	for _, a := range query.Result {
-		// handle default permissions
-		if a.DashboardId == -1 {
-			a.DashboardId = g.dashId
-		}
 	}
 
 	g.acl = query.Result

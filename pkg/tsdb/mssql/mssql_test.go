@@ -16,13 +16,13 @@ import (
 )
 
 // To run this test, remove the Skip from SkipConvey
-// and set up a MSSQL db named grafanatest and a user/password grafana/Password!
+// The tests require a MSSQL db named grafanatest and a user/password grafana/Password!
 // Use the docker/blocks/mssql_tests/docker-compose.yaml to spin up a
 // preconfigured MSSQL server suitable for running these tests.
-// Thers's also a dashboard.json in same directory that you can import to Grafana
+// There is also a dashboard.json in same directory that you can import to Grafana
 // once you've created a datasource for the test server/database.
 // If needed, change the variable below to the IP address of the database.
-var serverIP string = "localhost"
+var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
 	SkipConvey("MSSQL", t, func() {
@@ -188,10 +188,8 @@ func TestMSSQL(t *testing.T) {
 				})
 			}
 
-			for _, s := range series {
-				_, err = sess.Insert(s)
-				So(err, ShouldBeNil)
-			}
+			_, err = sess.InsertMulti(series)
+			So(err, ShouldBeNil)
 
 			Convey("When doing a metric query using timeGroup", func() {
 				query := &tsdb.TsdbQuery{
@@ -312,10 +310,18 @@ func TestMSSQL(t *testing.T) {
 
 		Convey("Given a table with metrics having multiple values and measurements", func() {
 			type metric_values struct {
-				Time        time.Time
-				Measurement string
-				ValueOne    int64 `xorm:"integer 'valueOne'"`
-				ValueTwo    int64 `xorm:"integer 'valueTwo'"`
+				Time                time.Time
+				TimeInt64           int64    `xorm:"bigint 'timeInt64' not null"`
+				TimeInt64Nullable   *int64   `xorm:"bigint 'timeInt64Nullable' null"`
+				TimeFloat64         float64  `xorm:"float 'timeFloat64' not null"`
+				TimeFloat64Nullable *float64 `xorm:"float 'timeFloat64Nullable' null"`
+				TimeInt32           int32    `xorm:"int(11) 'timeInt32' not null"`
+				TimeInt32Nullable   *int32   `xorm:"int(11) 'timeInt32Nullable' null"`
+				TimeFloat32         float32  `xorm:"float(11) 'timeFloat32' not null"`
+				TimeFloat32Nullable *float32 `xorm:"float(11) 'timeFloat32Nullable' null"`
+				Measurement         string
+				ValueOne            int64 `xorm:"integer 'valueOne'"`
+				ValueTwo            int64 `xorm:"integer 'valueTwo'"`
 			}
 
 			if exist, err := sess.IsTableExist(metric_values{}); err != nil || exist {
@@ -330,26 +336,219 @@ func TestMSSQL(t *testing.T) {
 				return rand.Int63n(max-min) + min
 			}
 
+			var tInitial time.Time
+
 			series := []*metric_values{}
-			for _, t := range genTimeRangeByInterval(fromStart.Add(-30*time.Minute), 90*time.Minute, 5*time.Minute) {
-				series = append(series, &metric_values{
-					Time:        t,
-					Measurement: "Metric A",
-					ValueOne:    rnd(0, 100),
-					ValueTwo:    rnd(0, 100),
-				})
-				series = append(series, &metric_values{
-					Time:        t,
-					Measurement: "Metric B",
-					ValueOne:    rnd(0, 100),
-					ValueTwo:    rnd(0, 100),
-				})
+			for i, t := range genTimeRangeByInterval(fromStart.Add(-30*time.Minute), 90*time.Minute, 5*time.Minute) {
+				if i == 0 {
+					tInitial = t
+				}
+				tSeconds := t.Unix()
+				tSecondsInt32 := int32(tSeconds)
+				tSecondsFloat32 := float32(tSeconds)
+				tMilliseconds := tSeconds * 1e3
+				tMillisecondsFloat := float64(tMilliseconds)
+				first := metric_values{
+					Time:                t,
+					TimeInt64:           tMilliseconds,
+					TimeInt64Nullable:   &(tMilliseconds),
+					TimeFloat64:         tMillisecondsFloat,
+					TimeFloat64Nullable: &tMillisecondsFloat,
+					TimeInt32:           tSecondsInt32,
+					TimeInt32Nullable:   &tSecondsInt32,
+					TimeFloat32:         tSecondsFloat32,
+					TimeFloat32Nullable: &tSecondsFloat32,
+					Measurement:         "Metric A",
+					ValueOne:            rnd(0, 100),
+					ValueTwo:            rnd(0, 100),
+				}
+				second := first
+				second.Measurement = "Metric B"
+				second.ValueOne = rnd(0, 100)
+				second.ValueTwo = rnd(0, 100)
+
+				series = append(series, &first)
+				series = append(series, &second)
 			}
 
-			for _, s := range series {
-				_, err = sess.Insert(s)
+			_, err = sess.InsertMulti(series)
+			So(err, ShouldBeNil)
+
+			Convey("When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in milliseconds", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT TOP 1 timeInt64 as time, timeInt64 FROM metric_values ORDER BY time`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
 				So(err, ShouldBeNil)
-			}
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 1)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+			})
+
+			Convey("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable) should return metric with time in milliseconds", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT TOP 1 timeInt64Nullable as time, timeInt64Nullable FROM metric_values ORDER BY time`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 1)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+			})
+
+			Convey("When doing a metric query using epoch (float64) as time column and value column (float64) should return metric with time in milliseconds", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT TOP 1 timeFloat64 as time, timeFloat64 FROM metric_values ORDER BY time`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 1)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+			})
+
+			Convey("When doing a metric query using epoch (float64 nullable) as time column and value column (float64 nullable) should return metric with time in milliseconds", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT TOP 1 timeFloat64Nullable as time, timeFloat64Nullable FROM metric_values ORDER BY time`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 1)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+			})
+
+			Convey("When doing a metric query using epoch (int32) as time column and value column (int32) should return metric with time in milliseconds", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT TOP 1 timeInt32 as time, timeInt32 FROM metric_values ORDER BY time`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 1)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+			})
+
+			Convey("When doing a metric query using epoch (int32 nullable) as time column and value column (int32 nullable) should return metric with time in milliseconds", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT TOP 1 timeInt32Nullable as time, timeInt32Nullable FROM metric_values ORDER BY time`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 1)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+			})
+
+			Convey("When doing a metric query using epoch (float32) as time column and value column (float32) should return metric with time in milliseconds", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT TOP 1 timeFloat32 as time, timeFloat32 FROM metric_values ORDER BY time`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 1)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float64(float32(tInitial.Unix())))*1e3)
+			})
+
+			Convey("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable) should return metric with time in milliseconds", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT TOP 1 timeFloat32Nullable as time, timeFloat32Nullable FROM metric_values ORDER BY time`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 1)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float64(float32(tInitial.Unix())))*1e3)
+			})
 
 			Convey("When doing a metric query grouping by time and select metric column should return correct series", func() {
 				query := &tsdb.TsdbQuery{
@@ -476,7 +675,6 @@ func TestMSSQL(t *testing.T) {
 					resp, err := endpoint.Query(nil, nil, query)
 					queryResult := resp.Results["A"]
 					So(err, ShouldBeNil)
-					fmt.Println("query", "sql", queryResult.Meta)
 					So(queryResult.Error, ShouldBeNil)
 
 					So(len(queryResult.Series), ShouldEqual, 4)
@@ -696,7 +894,7 @@ func TestMSSQL(t *testing.T) {
 				columns := queryResult.Tables[0].Rows[0]
 
 				//Should be in milliseconds
-				So(columns[0].(float64), ShouldEqual, float64(dt.Unix()*1000))
+				So(columns[0].(float64), ShouldEqual, float64(dt.UnixNano()/1e6))
 			})
 
 			Convey("When doing an annotation query with a time column in epoch second format should return ms", func() {
@@ -850,14 +1048,14 @@ func TestMSSQL(t *testing.T) {
 
 func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
 	x, err := xorm.NewEngine(sqlutil.TestDB_Mssql.DriverName, strings.Replace(sqlutil.TestDB_Mssql.ConnStr, "localhost", serverIP, 1))
+	if err != nil {
+		t.Fatalf("Failed to init mssql db %v", err)
+	}
+
 	x.DatabaseTZ = time.UTC
 	x.TZLocation = time.UTC
 
 	// x.ShowSQL()
-
-	if err != nil {
-		t.Fatalf("Failed to init mssql db %v", err)
-	}
 
 	return x
 }

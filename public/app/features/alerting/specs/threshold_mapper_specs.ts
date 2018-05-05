@@ -4,7 +4,7 @@ import { ThresholdMapper } from '../threshold_mapper';
 
 describe('ThresholdMapper', () => {
   describe('with greater than evaluator', () => {
-    it('can mapp query conditions to thresholds', () => {
+    it('can map query conditions to thresholds', () => {
       var panel: any = {
         type: 'graph',
         alert: {
@@ -25,7 +25,7 @@ describe('ThresholdMapper', () => {
   });
 
   describe('with outside range evaluator', () => {
-    it('can mapp query conditions to thresholds', () => {
+    it('can map query conditions to thresholds', () => {
       var panel: any = {
         type: 'graph',
         alert: {
@@ -49,7 +49,7 @@ describe('ThresholdMapper', () => {
   });
 
   describe('with inside range evaluator', () => {
-    it('can mapp query conditions to thresholds', () => {
+    it('can map query conditions to thresholds', () => {
       var panel: any = {
         type: 'graph',
         alert: {

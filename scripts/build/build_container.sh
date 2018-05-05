@@ -12,6 +12,6 @@ if [[ -e ~/docker/centos.tar ]]; then
 else
   docker build --rm=false --tag "grafana/buildcontainer" ./scripts/build/
 
-  # save docker container so we dont have to recreate it next run
+  # save docker container so we don't have to recreate it next run
   docker save grafana/buildcontainer > ~/docker/centos.tar;
 fi

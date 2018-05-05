@@ -10,7 +10,8 @@ import (
 
 func TestUploadToGCS(t *testing.T) {
 	SkipConvey("[Integration test] for external_image_store.gcs", t, func() {
-		setting.NewConfigContext(&setting.CommandLineArgs{
+		cfg := setting.NewCfg()
+		cfg.Load(&setting.CommandLineArgs{
 			HomePath: "../../../",
 		})
 

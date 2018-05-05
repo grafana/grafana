@@ -11,12 +11,14 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 )
 
 type Engine struct {
-	execQueue     chan *Job
-	clock         clock.Clock
+	execQueue chan *Job
+	//clock         clock.Clock
 	ticker        *Ticker
 	scheduler     Scheduler
 	evalHandler   EvalHandler
@@ -25,31 +27,37 @@ type Engine struct {
 	resultHandler ResultHandler
 }
 
-func NewEngine() *Engine {
-	e := &Engine{
-		ticker:        NewTicker(time.Now(), time.Second*0, clock.New()),
-		execQueue:     make(chan *Job, 1000),
-		scheduler:     NewScheduler(),
-		evalHandler:   NewEvalHandler(),
-		ruleReader:    NewRuleReader(),
-		log:           log.New("alerting.engine"),
-		resultHandler: NewResultHandler(),
-	}
+func init() {
+	registry.RegisterService(&Engine{})
+}
 
+func NewEngine() *Engine {
+	e := &Engine{}
+	e.Init()
 	return e
 }
 
+func (e *Engine) IsDisabled() bool {
+	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+}
+
+func (e *Engine) Init() error {
+	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New())
+	e.execQueue = make(chan *Job, 1000)
+	e.scheduler = NewScheduler()
+	e.evalHandler = NewEvalHandler()
+	e.ruleReader = NewRuleReader()
+	e.log = log.New("alerting.engine")
+	e.resultHandler = NewResultHandler()
+	return nil
+}
+
 func (e *Engine) Run(ctx context.Context) error {
-	e.log.Info("Initializing Alerting")
-
 	alertGroup, ctx := errgroup.WithContext(ctx)
-
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
 	alertGroup.Go(func() error { return e.runJobDispatcher(ctx) })
 
 	err := alertGroup.Wait()
-
-	e.log.Info("Stopped Alerting", "reason", err)
 	return err
 }
 
@@ -92,10 +100,10 @@ func (e *Engine) runJobDispatcher(grafanaCtx context.Context) error {
 }
 
 var (
-	unfinishedWorkTimeout time.Duration = time.Second * 5
+	unfinishedWorkTimeout = time.Second * 5
 	// TODO: Make alertTimeout and alertMaxAttempts configurable in the config file.
-	alertTimeout     time.Duration = time.Second * 30
-	alertMaxAttempts int           = 3
+	alertTimeout     = time.Second * 30
+	alertMaxAttempts = 3
 )
 
 func (e *Engine) processJobWithRetry(grafanaCtx context.Context, job *Job) error {

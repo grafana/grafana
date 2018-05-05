@@ -1,5 +1,6 @@
   mysqltests:
-    image: mysql:latest
+    build:
+      context: blocks/mysql_tests
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana_tests
@@ -7,7 +8,4 @@
       MYSQL_PASSWORD: password
     ports:
       - "3306:3306"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     tmpfs: /var/lib/mysql:rw
