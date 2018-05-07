@@ -13,6 +13,8 @@ But it will give you an idea of our current vision and plan.
 ### Mid term (2-4 months)
   - Multi-Stat panel
   - Explore UI 
+  - React Panels 
+  - Templating Query Editor UI Plugin hook
   
 ### Long term (4 - 8 months)
 
