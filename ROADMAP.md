@@ -6,13 +6,13 @@ But it will give you an idea of our current vision and plan.
 ### Short term (1-2 months)
 
   - Elasticsearch alerting
-  - First login registration view
   - Crossplatform builds
   - Backend service refactorings
+  - Explore UI 
+  - First login registration view
   
 ### Mid term (2-4 months)
   - Multi-Stat panel
-  - Explore UI 
   - React Panels 
   - Templating Query Editor UI Plugin hook
   
