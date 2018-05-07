@@ -123,7 +123,7 @@ func getEngine() (*xorm.Engine, error) {
 		}
 
 		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
-			DbCfg.User, DbCfg.Pwd, protocol, DbCfg.Host, DbCfg.Name)
+			url.QueryEscape(DbCfg.User), url.QueryEscape(DbCfg.Pwd), protocol, DbCfg.Host, url.PathEscape(DbCfg.Name))
 
 		if DbCfg.SslMode == "true" || DbCfg.SslMode == "skip-verify" {
 			tlsCert, err := makeCert("custom", DbCfg)
@@ -142,13 +142,17 @@ func getEngine() (*xorm.Engine, error) {
 		if len(fields) > 1 && len(strings.TrimSpace(fields[1])) > 0 {
 			port = fields[1]
 		}
-		if DbCfg.Pwd == "" {
-			DbCfg.Pwd = "''"
-		}
-		if DbCfg.User == "" {
-			DbCfg.User = "''"
-		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode, DbCfg.ClientCertPath, DbCfg.ClientKeyPath, DbCfg.CaCertPath)
+		cnnstr = fmt.Sprintf("user='%s' password='%s' host='%s' port='%s' dbname='%s' sslmode='%s' sslcert='%s' sslkey='%s' sslrootcert='%s'",
+			strings.Replace(DbCfg.User, `'`, `\'`, -1),
+			strings.Replace(DbCfg.Pwd, `'`, `\'`, -1),
+			strings.Replace(host, `'`, `\'`, -1),
+			strings.Replace(port, `'`, `\'`, -1),
+			strings.Replace(DbCfg.Name, `'`, `\'`, -1),
+			strings.Replace(DbCfg.SslMode, `'`, `\'`, -1),
+			strings.Replace(DbCfg.ClientCertPath, `'`, `\'`, -1),
+			strings.Replace(DbCfg.ClientKeyPath, `'`, `\'`, -1),
+			strings.Replace(DbCfg.CaCertPath, `'`, `\'`, -1),
+		)
 	case "sqlite3":
 		if !filepath.IsAbs(DbCfg.Path) {
 			DbCfg.Path = filepath.Join(setting.DataPath, DbCfg.Path)
