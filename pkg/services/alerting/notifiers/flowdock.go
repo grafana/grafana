@@ -27,11 +27,13 @@ func NewFlowdockNotifier(model *models.AlertNotification) (alerting.Notifier, er
 
 	return &FlowdockNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		FlowToken:    flowToken,
 	}, nil
 }
 
 type FlowdockNotifier struct {
 	NotifierBase
+	FlowToken string
 }
 
 func (this *FlowdockNotifier) Notify(evalContext *alerting.EvalContext) error {
