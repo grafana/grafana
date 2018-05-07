@@ -104,12 +104,13 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 
 func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
 	return ns.sendWebRequestSync(ctx, &Webhook{
-		Url:        cmd.Url,
-		User:       cmd.User,
-		Password:   cmd.Password,
-		Body:       cmd.Body,
-		HttpMethod: cmd.HttpMethod,
-		HttpHeader: cmd.HttpHeader,
+		Url:         cmd.Url,
+		User:        cmd.User,
+		Password:    cmd.Password,
+		Body:        cmd.Body,
+		HttpMethod:  cmd.HttpMethod,
+		HttpHeader:  cmd.HttpHeader,
+		ContentType: cmd.ContentType,
 	})
 }
 

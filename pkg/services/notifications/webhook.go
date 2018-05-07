@@ -15,12 +15,13 @@ import (
 )
 
 type Webhook struct {
-	Url        string
-	User       string
-	Password   string
-	Body       string
-	HttpMethod string
-	HttpHeader map[string]string
+	Url         string
+	User        string
+	Password    string
+	Body        string
+	HttpMethod  string
+	HttpHeader  map[string]string
+	ContentType string
 }
 
 var netTransport = &http.Transport{
@@ -48,8 +49,13 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		return err
 	}
 
-	request.Header.Add("Content-Type", "application/json")
+	if webhook.ContentType == "" {
+		webhook.ContentType = "application/json"
+	}
+
+	request.Header.Add("Content-Type", webhook.ContentType)
 	request.Header.Add("User-Agent", "Grafana")
+
 	if webhook.User != "" && webhook.Password != "" {
 		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
 	}
