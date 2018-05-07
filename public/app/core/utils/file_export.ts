@@ -6,23 +6,47 @@ const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 const POINT_TIME_INDEX = 1;
 const POINT_VALUE_INDEX = 0;
 
-export function convertSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
+export function convertSeriesListToCsv(
+  seriesList,
+  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
+  excel = false,
+  isUtc = false
+) {
   var text = (excel ? 'sep=;\n' : '') + 'Series;Time;Value\n';
   _.each(seriesList, function(series) {
     _.each(series.datapoints, function(dp) {
       text +=
-        series.alias + ';' + moment(dp[POINT_TIME_INDEX]).format(dateTimeFormat) + ';' + dp[POINT_VALUE_INDEX] + '\n';
+        series.alias +
+        ';' +
+        (isUtc
+          ? moment(dp[POINT_TIME_INDEX])
+              .utc()
+              .format(dateTimeFormat)
+          : moment(dp[POINT_TIME_INDEX]).format(dateTimeFormat)) +
+        ';' +
+        dp[POINT_VALUE_INDEX] +
+        '\n';
     });
   });
   return text;
 }
 
-export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  var text = convertSeriesListToCsv(seriesList, dateTimeFormat, excel);
+export function exportSeriesListToCsv(
+  seriesList,
+  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
+  excel = false,
+  isUtc = false
+) {
+  var text = convertSeriesListToCsv(seriesList, dateTimeFormat, excel, isUtc);
   saveSaveBlob(text, 'grafana_data_export.csv');
 }
 
-export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
+export function convertSeriesListToCsvColumns(
+  seriesList,
+  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
+  excel = false,
+  isUtc = false
+) {
   let text = (excel ? 'sep=;\n' : '') + 'Time;';
   // add header
   _.each(seriesList, function(series) {
@@ -39,7 +63,11 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
     var cIndex = 0;
     dataArr.push([]);
     _.each(series.datapoints, function(dp) {
-      dataArr[0][cIndex] = moment(dp[POINT_TIME_INDEX]).format(dateTimeFormat);
+      dataArr[0][cIndex] = isUtc
+        ? moment(dp[POINT_TIME_INDEX])
+            .utc()
+            .format(dateTimeFormat)
+        : moment(dp[POINT_TIME_INDEX]).format(dateTimeFormat);
       dataArr[sIndex][cIndex] = dp[POINT_VALUE_INDEX];
       cIndex++;
     });
@@ -91,8 +119,13 @@ function mergeSeriesByTime(seriesList) {
   return seriesList;
 }
 
-export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
-  let text = convertSeriesListToCsvColumns(seriesList, dateTimeFormat, excel);
+export function exportSeriesListToCsvColumns(
+  seriesList,
+  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
+  excel = false,
+  isUtc = false
+) {
+  let text = convertSeriesListToCsvColumns(seriesList, dateTimeFormat, excel, isUtc);
   saveSaveBlob(text, 'grafana_data_export.csv');
 }
 
