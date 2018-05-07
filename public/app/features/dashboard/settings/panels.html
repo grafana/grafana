@@ -87,9 +87,10 @@
     <div class="gf-form">
       <gf-form-switch class="gf-form-inline" label="Datasource" checked="ctrl.showDatasource" label-class="width-7"></gf-form-switch>
       <div class="gf-form-inline">&nbsp;
-        <a ng-repeat="src in ctrl.stats.sources" href="#"
-          ng-click="ctrl.openDatasource(src.name)"
-          class="tag label label-tag" style="background-color: rgb(117, 117, 117); border-color: rgb(155, 155, 155); margin-right:10px;">
+        <a ng-repeat="src in ctrl.datasources" 
+          ng-href="{{ src.url }}"
+          class="tag label label-tag" 
+          style="background-color: rgb(117, 117, 117); border-color: rgb(155, 155, 155); margin-right:10px;">
           {{ src.count }}x {{ src.name }}
         </a>
       </div>

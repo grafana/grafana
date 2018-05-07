@@ -68,9 +68,20 @@
     margin-bottom: 2px;
   }
 
+  .icon-gf {
+    font-size: 15px;
+    width: 16px;
+    margin-left: -3px; /* must be some better way to shift left */
+    margin-right: 13px;
+  }
+
   .fa {
     font-size: 17px;
     width: 16px;
+  }
+
+  i {
+    margin-right: 10px;
   }
 }
 

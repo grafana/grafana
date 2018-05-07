@@ -3,12 +3,22 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import { PanelModel } from '../panel_model';
 
+export class DSInfo {
+  name: string = null;
+  url: string = null;
+  count = 0;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+}
+
 export class DashPanelsEditorCtrl {
   dashboard: any;
 
   stats: any;
+  datasources: DSInfo[] = [];
   panels: PanelModel[] = [];
-  datasources: string[] = [];
 
   // Set in the UI
   showAlerts: false;
@@ -18,7 +28,7 @@ export class DashPanelsEditorCtrl {
   showRepeats: false;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private $location) {
+  constructor(private $scope, private $location) {
     $scope.ctrl = this;
     this.updateStats();
   }
@@ -26,7 +36,6 @@ export class DashPanelsEditorCtrl {
   updateStats() {
     let stats = {
       alerts: 0,
-      sources: [],
       descriptions: 0,
       repeat: 0,
       skip: {}, // id = true
@@ -50,23 +59,16 @@ export class DashPanelsEditorCtrl {
         if (_.has(sources, panel.datasource)) {
           sources[panel.datasource].count++;
         } else {
-          sources[panel.datasource] = {
-            name: panel.datasource,
-            count: 1,
-          };
+          sources[panel.datasource] = new DSInfo(panel.datasource);
+          const cfg = _.get(config.datasources, panel.datasource);
+          if (cfg && cfg.id) {
+            sources[panel.datasource].url = 'datasources/edit/' + cfg.id;
+          }
         }
       }
       return true;
     });
-    stats.sources = _.sortBy(_.values(sources), ['-count']);
-    this.datasources = [''];
-    for (let i = 0; i < stats.sources.length; i++) {
-      this.datasources.push(stats.sources[i].name);
-    }
-    _.forEach(config.datasources, ds => {
-      this.datasources.push(ds.name);
-    });
-    this.datasources = _.uniq(this.datasources);
+    this.datasources = _.sortBy(_.values(sources), ['-count']);
     this.stats = stats;
   }
 
@@ -105,42 +107,16 @@ export class DashPanelsEditorCtrl {
     if (this.isRow(panel)) {
       return;
     }
-    this.$rootScope.appEvent('panel-change-view', {
-      fullscreen: true,
-      edit: false,
+
+    this.$location.search({
       panelId: panel.id,
+      fullscreen: true,
     });
   }
 
   removePanel(panel) {
-    console.log('Remove', panel);
     this.$scope.$root.appEvent('panel-remove', {
       panelId: panel.id,
-    });
-  }
-
-  openDatasource(name: string, evt) {
-    if (evt) {
-      evt.preventDefault();
-    }
-
-    const cfg = _.get(config.datasources, name);
-    if (cfg && cfg.id) {
-      this.$location.url('datasources/edit/' + cfg.id);
-    } else {
-      console.log('Unable to find datasource', name, config.datasources);
-    }
-  }
-
-  // Copiedfrom panel_ctrl... can we use the same one?
-  editPanelJson(panel) {
-    console.log('json', panel, this);
-    let editScope = this.$scope.$root.$new();
-    editScope.object = panel.getSaveModel();
-    //   editScope.updateHandler = pctrl.bind(this);
-    this.$scope.$root.appEvent('show-modal', {
-      src: 'public/app/partials/edit_json.html',
-      scope: editScope,
     });
   }
 }
