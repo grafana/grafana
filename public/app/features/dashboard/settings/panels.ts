@@ -1,6 +1,5 @@
 import angular from 'angular';
 import config from 'app/core/config';
-import { appEvents } from 'app/core/core';
 import _ from 'lodash';
 
 export class DashPanelsEditorCtrl {
@@ -88,33 +87,6 @@ export class DashPanelsEditorCtrl {
     console.log('TODO... somehow update the layout...');
   }
 
-  // Copiedfrom panel_ctrl... can we use the same one?
-  removePanel(panel, ask?: boolean) {
-    // confirm deletion
-    if (ask !== false) {
-      var text2, confirmText;
-
-      if (panel.alert) {
-        text2 = 'Panel includes an alert rule, removing panel will also remove alert rule';
-        confirmText = 'YES';
-      }
-
-      appEvents.emit('confirm-modal', {
-        title: 'Remove Panel',
-        text: 'Are you sure you want to remove this panel?',
-        text2: text2,
-        icon: 'fa-trash',
-        confirmText: confirmText,
-        yesText: 'Remove',
-        onConfirm: () => {
-          this.removePanel(panel, false);
-        },
-      });
-      return;
-    }
-    this.dashboard.removePanel(panel);
-  }
-
   showPanel(panel) {
     // Can't navigate to a row
     if (this.isRow(panel)) {
@@ -134,6 +106,13 @@ export class DashPanelsEditorCtrl {
       this.$rootScope.$apply(() => {
         this.$location.search(urlParams);
       });
+    });
+  }
+
+  removePanel(panel) {
+    console.log('Remove', panel);
+    this.$scope.$root.appEvent('panel-remove', {
+      panelId: panel.id,
     });
   }
 
