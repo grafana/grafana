@@ -125,7 +125,7 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 		sql, args := condition.Sql(mg.dialect)
 		results, err := sess.SQL(sql).Query(args...)
 		if err != nil || len(results) == 0 {
-			mg.Logger.Info("Skipping migration condition not fulfilled", "id", m.Id())
+			mg.Logger.Debug("Skipping migration condition not fulfilled", "id", m.Id())
 			return sess.Rollback()
 		}
 	}

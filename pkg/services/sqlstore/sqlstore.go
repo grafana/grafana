@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
@@ -31,8 +33,7 @@ var (
 	x       *xorm.Engine
 	dialect migrator.Dialect
 
-	UseSQLite3 bool
-	sqlog      log.Logger = log.New("sqlstore")
+	sqlog log.Logger = log.New("sqlstore")
 )
 
 func init() {
@@ -176,8 +177,11 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 func (ss *SqlStore) readConfig() {
 	sec := ss.Cfg.Raw.Section("database")
 
+	testUrl := sec.Key("url").String()
+
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
+		fmt.Printf("URL: %v", cfgURL)
 		dbURL, _ := url.Parse(cfgURL)
 		ss.dbCfg.Type = dbURL.Scheme
 		ss.dbCfg.Host = dbURL.Host
@@ -202,12 +206,8 @@ func (ss *SqlStore) readConfig() {
 		}
 	}
 	ss.dbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
-	ss.dbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(0)
+	ss.dbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(2)
 	ss.dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
-
-	if ss.dbCfg.Type == "sqlite3" {
-		UseSQLite3 = true
-	}
 
 	ss.dbCfg.SslMode = sec.Key("ssl_mode").String()
 	ss.dbCfg.CaCertPath = sec.Key("ca_cert_path").String()
@@ -217,67 +217,56 @@ func (ss *SqlStore) readConfig() {
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 }
 
-var (
-	dbSqlite   = "sqlite"
-	dbMySql    = "mysql"
-	dbPostgres = "postgres"
-)
+func InitTestDB(t *testing.T) *SqlStore {
+	sqlstore := &SqlStore{}
 
-// func InitTestDB(t *testing.T) *xorm.Engine {
-// 	selectedDb := dbSqlite
-// 	// selectedDb := dbMySql
-// 	// selectedDb := dbPostgres
-//
-// 	var x *xorm.Engine
-// 	var err error
-//
-// 	// environment variable present for test db?
-// 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-// 		selectedDb = db
-// 	}
-//
-// 	switch strings.ToLower(selectedDb) {
-// 	case dbMySql:
-// 		x, err = xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
-// 	case dbPostgres:
-// 		x, err = xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
-// 	default:
-// 		x, err = xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
-// 	}
-//
-// 	x.DatabaseTZ = time.UTC
-// 	x.TZLocation = time.UTC
-//
-// 	// x.ShowSQL()
-//
-// 	if err != nil {
-// 		t.Fatalf("Failed to init test database: %v", err)
-// 	}
-//
-// 	sqlutil.CleanDB(x)
-//
-// 	if err := SetEngine(x); err != nil {
-// 		t.Fatal(err)
-// 	}
-//
-// 	return x
-// }
-//
-// func IsTestDbMySql() bool {
-// 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-// 		return db == dbMySql
-// 	}
-//
-// 	return false
-// }
-//
-// func IsTestDbPostgres() bool {
-// 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-// 		return db == dbPostgres
-// 	}
-//
-// 	return false
-// }
+	selectedDb := "sqlite"
+
+	// environment variable present for test db?
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		selectedDb = db
+	}
+
+	// set test db config
+	sqlstore.Cfg = setting.NewCfg()
+	sec, _ := sqlstore.Cfg.Raw.NewSection("database")
+
+	switch selectedDb {
+	case "mysql":
+		sec.NewKey("url", sqlutil.TestDB_Mysql.ConnStr)
+	case "postgres":
+		sec.NewKey("url", sqlutil.TestDB_Postgres.ConnStr)
+	default:
+		sec.NewKey("url", sqlutil.TestDB_Sqlite3.ConnStr)
+	}
+
+	if err := sqlstore.Init(); err != nil {
+		t.Fatalf("Failed to init test database: %v", err)
+	}
+
+	sqlstore.engine.DatabaseTZ = time.UTC
+	sqlstore.engine.TZLocation = time.UTC
+
+	sqlutil.CleanDB(sqlstore.engine)
+
+	return sqlstore
+}
+
+func IsTestDbMySql() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == "mysql"
+	}
+
+	return false
+}
+
+func IsTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == "postgres"
+	}
+
+	return false
+}
 
 type DatabaseConfig struct {
 	Type, Host, Name, User, Pwd, Path, SslMode string

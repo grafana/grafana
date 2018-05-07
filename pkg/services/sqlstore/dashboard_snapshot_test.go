@@ -111,13 +111,13 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 func TestDeleteExpiredSnapshots(t *testing.T) {
 	Convey("Testing dashboard snapshots clean up", t, func() {
-		x := InitTestDB(t)
+		store := InitTestDB(t)
 
 		setting.SnapShotRemoveExpired = true
 
-		notExpiredsnapshot := createTestSnapshot(x, "key1", 1000)
-		createTestSnapshot(x, "key2", -1000)
-		createTestSnapshot(x, "key3", -1000)
+		notExpiredsnapshot := createTestSnapshot(store.engine, "key1", 1000)
+		createTestSnapshot(store.engine, "key2", -1000)
+		createTestSnapshot(store.engine, "key3", -1000)
 
 		Convey("Clean up old dashboard snapshots", func() {
 			err := DeleteExpiredSnapshots(&m.DeleteExpiredSnapshotsCommand{})
