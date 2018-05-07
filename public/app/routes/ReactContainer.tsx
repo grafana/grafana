@@ -29,6 +29,7 @@ export function reactContainer($route, $location, backendSrv: BackendSrv, dataso
       const props = {
         backendSrv: backendSrv,
         datasourceSrv: datasourceSrv,
+        routeParams: $route.current.params,
       };
 
       ReactDOM.render(WrapInProvider(store, component, props), elem[0]);

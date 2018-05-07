@@ -10,6 +10,7 @@ import Graph from './Graph';
 import Table from './Table';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { buildQueryOptions, ensureQueries, generateQueryKey, hasQuery } from './utils/query';
+import { decodePathComponent } from 'app/core/utils/location_util';
 
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
@@ -38,6 +39,19 @@ function makeTimeSeriesList(dataList, options) {
   });
 }
 
+function parseInitialQueries(initial) {
+  if (!initial) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(decodePathComponent(initial));
+    return parsed.queries.map(q => q.query);
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
 interface IExploreState {
   datasource: any;
   datasourceError: any;
@@ -58,6 +72,7 @@ export class Explore extends React.Component<any, IExploreState> {
 
   constructor(props) {
     super(props);
+    const initialQueries = parseInitialQueries(props.routeParams.initial);
     this.state = {
       datasource: null,
       datasourceError: null,
@@ -65,7 +80,7 @@ export class Explore extends React.Component<any, IExploreState> {
       graphResult: null,
       latency: 0,
       loading: false,
-      queries: ensureQueries(),
+      queries: ensureQueries(initialQueries),
       requestOptions: null,
       showingGraph: true,
       showingTable: true,
@@ -77,7 +92,7 @@ export class Explore extends React.Component<any, IExploreState> {
     const datasource = await this.props.datasourceSrv.get();
     const testResult = await datasource.testDatasource();
     if (testResult.status === 'success') {
-      this.setState({ datasource, datasourceError: null, datasourceLoading: false });
+      this.setState({ datasource, datasourceError: null, datasourceLoading: false }, () => this.handleSubmit());
     } else {
       this.setState({ datasource: null, datasourceError: testResult.message, datasourceLoading: false });
     }
