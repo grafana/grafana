@@ -3,6 +3,14 @@ import { MysqlQueryCtrl } from './query_ctrl';
 
 class MysqlConfigCtrl {
   static templateUrl = 'partials/config.html';
+
+  current: any;
+
+  /** @ngInject **/
+  constructor($scope) {
+    this.current.jsonData.max_open_conn = this.current.jsonData.max_open_conn || 10;
+    this.current.jsonData.max_idle_conn = this.current.jsonData.max_idle_conn || 10;
+  }
 }
 
 const defaultQuery = `SELECT

@@ -22,6 +22,17 @@
 			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="password"></input>
 		</div>
 	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-7">Open Connections</span>
+			<input type="number" step="1" class="gf-form-input" ng-model='ctrl.current.jsonData.max_open_conn' placeholder="10"></input>
+		</div>
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-7">Idle Connections</span>
+			<input type="number" step="1" class="gf-form-input" ng-model='ctrl.current.jsonData.max_idle_conn' placeholder="10"></input>
+		</div>
+	</div>
 </div>
 
 <div class="gf-form-group">
