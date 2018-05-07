@@ -19,8 +19,7 @@ export class DashPanelsEditorCtrl {
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $location) {
-    $scope.ctrl = this; // not sure why?
-
+    $scope.ctrl = this;
     this.updateStats();
   }
 
@@ -106,20 +105,10 @@ export class DashPanelsEditorCtrl {
     if (this.isRow(panel)) {
       return;
     }
-    console.log('Show', panel);
-    let urlParams = this.$location.search();
-    delete urlParams.fullscreen;
-    delete urlParams.panelId;
-    delete urlParams.edit;
-    delete urlParams.editview;
-
-    urlParams.panelId = panel.id;
-    urlParams.fullscreen = true;
-    urlParams.edit = true;
-    setTimeout(() => {
-      this.$rootScope.$apply(() => {
-        this.$location.search(urlParams);
-      });
+    this.$rootScope.appEvent('panel-change-view', {
+      fullscreen: true,
+      edit: false,
+      panelId: panel.id,
     });
   }
 
@@ -130,8 +119,17 @@ export class DashPanelsEditorCtrl {
     });
   }
 
-  openDatasource(name: string) {
-    console.log('TODO.... open: ', name);
+  openDatasource(name: string, evt) {
+    if (evt) {
+      evt.preventDefault();
+    }
+
+    const cfg = _.get(config.datasources, name);
+    if (cfg && cfg.id) {
+      this.$location.url('datasources/edit/' + cfg.id);
+    } else {
+      console.log('Unable to find datasource', name, config.datasources);
+    }
   }
 
   // Copiedfrom panel_ctrl... can we use the same one?

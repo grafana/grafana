@@ -104,7 +104,12 @@ export class DashboardViewState {
     // do not update url params if we are here
     // from routeUpdated event
     if (fromRouteUpdated !== true) {
-      this.$location.search(this.serializeToUrl());
+      let search = this.serializeToUrl();
+      if (search.editview) {
+        // dashboard parameter
+        delete search.editview;
+      }
+      this.$location.search(search);
     }
 
     this.syncState();
