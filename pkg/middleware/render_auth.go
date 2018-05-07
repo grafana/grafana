@@ -19,19 +19,17 @@ func initContextWithRenderAuth(ctx *m.ReqContext) bool {
 	renderKeysLock.Lock()
 	defer renderKeysLock.Unlock()
 
-	if renderUser, exists := renderKeys[key]; !exists {
+	renderUser, exists := renderKeys[key]
+	if !exists {
 		ctx.JsonApiErr(401, "Invalid Render Key", nil)
 		return true
-	} else {
-
-		ctx.IsSignedIn = true
-		ctx.SignedInUser = renderUser
-		ctx.IsRenderCall = true
-		return true
 	}
-}
 
-type renderContextFunc func(key string) (string, error)
+	ctx.IsSignedIn = true
+	ctx.SignedInUser = renderUser
+	ctx.IsRenderCall = true
+	return true
+}
 
 func AddRenderAuthKey(orgId int64, userId int64, orgRole m.RoleType) string {
 	renderKeysLock.Lock()

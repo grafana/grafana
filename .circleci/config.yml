@@ -1,0 +1,198 @@
+version: 2
+
+jobs:
+  codespell:
+    docker:
+      - image: circleci/python
+    steps:
+      - checkout
+      - run:
+          name: install codespell
+          command: 'sudo pip install codespell'
+      - run:
+          # Important: all words have to be in lowercase, and separated by "\n".
+          name: exclude known exceptions
+          command: 'echo -e "unknwon" > words_to_ignore.txt'
+      - run:
+          name: check documentation spelling errors
+          command: 'codespell -I ./words_to_ignore.txt docs/'
+
+  gometalinter:
+    docker:
+      - image: circleci/golang:1.10
+        environment:
+          # we need CGO because of go-sqlite3
+          CGO_ENABLED: 1
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run: 'go get -u gopkg.in/alecthomas/gometalinter.v2'
+      - run: 'go get -u github.com/tsenart/deadcode'
+      - run: 'go get -u github.com/gordonklaus/ineffassign'
+      - run: 'go get -u github.com/opennota/check/cmd/structcheck'
+      - run: 'go get -u github.com/mdempsky/unconvert'
+      - run: 'go get -u github.com/opennota/check/cmd/varcheck'
+      - run:
+          name: run linters
+          command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+
+  test-frontend:
+    docker:
+      - image: circleci/node:6.11.4
+    steps:
+      - checkout
+      - run:
+          name: install yarn
+          command: 'sudo npm install -g yarn --quiet'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      # Could we skip this step if the cache has been restored? `[ -d node_modules ] || yarn install ...` should be able to apply to build step as well
+      - run:
+          name: yarn install
+          command: 'yarn install --pure-lockfile --no-progress'
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - run:
+          name: frontend tests
+          command: './scripts/circle-test-frontend.sh'
+
+  test-backend:
+    docker:
+      - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: build backend and run go tests
+          command: './scripts/circle-test-backend.sh'
+
+  build:
+    docker:
+     - image: grafana/build-container:v0.1
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: build and package grafana
+          command: './scripts/build/build.sh'
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Build Grafana.com publisher
+          command: 'go build -o scripts/publish scripts/build/publish.go'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/grafana*
+            - scripts/*.sh
+            - scripts/publish
+
+  build-enterprise:
+    docker:
+     - image: grafana/build-container:v0.1
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: build and package grafana
+          command: './scripts/build/build_enterprise.sh'
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+
+  deploy-master:
+    docker:
+      - image: circleci/python:2.7-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: install awscli
+          command: 'sudo pip install awscli'
+      - run:
+          name: deploy to s3
+          command: 'aws s3 sync ./dist s3://$BUCKET_NAME/master'
+      - run:
+          name: Trigger Windows build
+          command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
+      - run:
+          name: Trigger Docker build
+          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}'
+      - run:
+          name: Publish to Grafana.com
+          command: './scripts/publish -apiKey ${GRAFANA_COM_API_KEY}'
+
+  deploy-release:
+    docker:
+      - image: circleci/python:2.7-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: install awscli
+          command: 'sudo pip install awscli'
+      - run:
+          name: deploy to s3
+          command: 'aws s3 sync ./dist s3://$BUCKET_NAME/release'
+      - run:
+          name: Trigger Windows build
+          command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} release'
+      - run:
+          name: Trigger Docker build
+          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN} ${CIRCLE_TAG}'
+
+workflows:
+  version: 2
+  test-and-build:
+    jobs:
+      - codespell:
+          filters:
+            tags:
+              only: /.*/
+      - gometalinter:
+          filters:
+            tags:
+              only: /.*/
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - test-frontend:
+          filters:
+            tags:
+              only: /.*/
+      - test-backend:
+          filters:
+            tags:
+              only: /.*/
+      - deploy-master:
+          requires:
+            - test-backend
+            - test-frontend
+            - build
+          filters:
+            branches:
+              only: master
+      - deploy-release:
+          requires:
+            - test-backend
+            - test-frontend
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+      # - build-enterprise:
+      #     filters:
+      #       tags:
+      #         only: /.*/

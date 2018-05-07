@@ -18,6 +18,7 @@ import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
+import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
 
 /** @ngInject **/
@@ -152,6 +153,16 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           var panelOptions = panel.yaxes[i];
           axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
           axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
+        }
+      }
+
+      function processRangeHook(plot) {
+        var yAxes = plot.getYAxes();
+        const align = panel.yaxis.align || false;
+
+        if (yAxes.length > 1 && align === true) {
+          const level = panel.yaxis.alignLevel || 0;
+          alignYLevel(yAxes, parseFloat(level));
         }
       }
 
@@ -294,6 +305,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           hooks: {
             draw: [drawHook],
             processOffset: [processOffsetHook],
+            processRange: [processRangeHook],
           },
           legend: { show: false },
           series: {
@@ -431,7 +443,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
           // Expand ticks for pretty view
           min = Math.floor(min / tickStep) * tickStep;
-          max = Math.ceil(max / tickStep) * tickStep;
+          // 1.01 is 101% - ensure we have enough space for last bar
+          max = Math.ceil(max * 1.01 / tickStep) * tickStep;
 
           ticks = [];
           for (let i = min; i <= max; i += tickStep) {
@@ -622,6 +635,9 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
       function configureAxisMode(axis, format) {
         axis.tickFormatter = function(val, axis) {
+          if (!kbn.valueFormats[format]) {
+            throw new Error(`Unit '${format}' is not supported`);
+          }
           return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
         };
       }

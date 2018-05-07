@@ -8,11 +8,23 @@ import appEvents from 'app/core/app_events';
 import Drop from 'tether-drop';
 import { createStore } from 'app/stores/store';
 import colors from 'app/core/utils/colors';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export class GrafanaCtrl {
   /** @ngInject */
-  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, bridgeSrv, backendSrv) {
-    createStore(backendSrv);
+  constructor(
+    $scope,
+    alertSrv,
+    utilSrv,
+    $rootScope,
+    $controller,
+    contextSrv,
+    bridgeSrv,
+    backendSrv: BackendSrv,
+    datasourceSrv: DatasourceSrv
+  ) {
+    createStore({ backendSrv, datasourceSrv });
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
@@ -117,6 +129,14 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           appEvents.emit('toggle-kiosk-mode');
         }
 
+        // check for 'inactive' url param for clean looks like kiosk, but with title
+        if (data.params.inactive) {
+          body.addClass('user-activity-low');
+
+          // for some reason, with this class it looks cleanest
+          body.addClass('sidemenu-open');
+        }
+
         // close all drops
         for (let drop of Drop.drops) {
           drop.destroy();
@@ -167,6 +187,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           if (sidemenuHidden) {
             sidemenuHidden = false;
             body.addClass('sidemenu-open');
+            appEvents.emit('toggle-inactive-mode');
             $timeout(function() {
               $rootScope.$broadcast('render');
             }, 100);

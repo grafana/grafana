@@ -35,10 +35,8 @@ func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
 
 		// Update dashboard HasAcl flag
 		dashboard := m.Dashboard{HasAcl: true}
-		if _, err := sess.Cols("has_acl").Where("id=?", cmd.DashboardId).Update(&dashboard); err != nil {
-			return err
-		}
-		return nil
+		_, err = sess.Cols("has_acl").Where("id=?", cmd.DashboardId).Update(&dashboard)
+		return err
 	})
 }
 
@@ -69,7 +67,8 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 		'' as title,
 		'' as slug,
 		'' as uid,` +
-			falseStr + ` AS is_folder
+			falseStr + ` AS is_folder,` +
+			falseStr + ` AS inherited
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
 		query.Result = make([]*m.DashboardAclInfoDTO, 0)
@@ -92,10 +91,12 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 				u.login AS user_login,
 				u.email AS user_email,
 				ug.name AS team,
+				ug.email AS team_email,
 				d.title,
 				d.slug,
 				d.uid,
-				d.is_folder
+				d.is_folder,
+				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + dialect.BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
 			FROM dashboard as d
 				LEFT JOIN dashboard folder on folder.id = d.folder_id
 				LEFT JOIN dashboard_acl AS da ON

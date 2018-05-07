@@ -1,8 +1,10 @@
 node_modules
 npm-debug.log
+yarn-error.log
 coverage/
 .aws-config.json
 awsconfig
+/.awcache
 /dist
 /public/build
 /public/views/index.html
@@ -46,6 +48,7 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
+/pkg/extensions
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm

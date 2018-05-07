@@ -226,7 +226,7 @@ func (this *thunderTask) Fetch() {
 	this.Done()
 }
 
-var client *http.Client = &http.Client{
+var client = &http.Client{
 	Timeout:   time.Second * 2,
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }
@@ -258,9 +258,6 @@ func (this *thunderTask) fetch() error {
 	this.Avatar.data = &bytes.Buffer{}
 	writer := bufio.NewWriter(this.Avatar.data)
 
-	if _, err = io.Copy(writer, resp.Body); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = io.Copy(writer, resp.Body)
+	return err
 }

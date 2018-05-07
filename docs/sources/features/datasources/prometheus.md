@@ -30,11 +30,11 @@ Name | Description
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The http protocol, ip and port of you Prometheus server (default port is usually 9090)
-*Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
+*Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 *Basic Auth* | Enable basic authentication to the Prometheus data source.
 *User* | Name of your Prometheus user
 *Password* | Database user's password
-*Scrape interval* | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s. 
+*Scrape interval* | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s.
 
 ## Query editor
 
@@ -50,7 +50,7 @@ Name | Description
 *Min step* | Set a lower limit for the Prometheus step option. Step controls how big the jumps are when the Prometheus query engine performs range queries. Sadly there is no official prometheus documentation to link to for this very important option.
 *Resolution* | Controls the step option. Small steps create high-resolution graphs but can be slow over larger time ranges, lowering the resolution can speed things up. `1/2` will try to set step option to generate 1 data point for every other pixel. A value of `1/10` will try to set step option so there is a data point every 10 pixels.
 *Metric lookup* | Search for metric names in this input field.
-*Format as* | **(New in v4.3)** Switch between Table & Time series. Table format will only work in the Table panel.
+*Format as* | Switch between Table, Time series or Heatmap. Table format will only work in the Table panel. Heatmap format is suitable for displaying metrics having histogram type on Heatmap panel. Under the hood, it converts cumulative histogram to regular and sorts series by the bucket bound.
 
 ## Templating
 
@@ -100,3 +100,19 @@ The step option is useful to limit the number of events returned from your query
 ## Getting Grafana metrics into Prometheus
 
 Since 4.6.0 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!
+
+## Configure the Datasource with Provisioning
+
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+```

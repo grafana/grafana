@@ -97,7 +97,7 @@ describe('GraphiteQueryCtrl', function() {
     });
   });
 
-  describe('when initalizing target without metric expression and only function', function() {
+  describe('when initializing target without metric expression and only function', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = 'asPercent(#A, #B)';
       ctx.ctrl.datasource.metricFindQuery.returns(ctx.$q.when([]));
@@ -130,7 +130,7 @@ describe('GraphiteQueryCtrl', function() {
     });
   });
 
-  describe('when initalizing target without metric expression and function with series-ref', function() {
+  describe('when initializing target without metric expression and function with series-ref', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = 'asPercent(metric.node.count, #A)';
       ctx.ctrl.datasource.metricFindQuery.returns(ctx.$q.when([]));
@@ -146,7 +146,7 @@ describe('GraphiteQueryCtrl', function() {
     });
   });
 
-  describe('when getting altSegments and metricFindQuery retuns empty array', function() {
+  describe('when getting altSegments and metricFindQuery returns empty array', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = 'test.count';
       ctx.ctrl.datasource.metricFindQuery.returns(ctx.$q.when([]));

@@ -22,6 +22,9 @@ func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
 	}
 
 	_, err := x.Insert(&playlist)
+	if err != nil {
+		return err
+	}
 
 	playlistItems := make([]m.PlaylistItem, 0)
 	for _, item := range cmd.Items {

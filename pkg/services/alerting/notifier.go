@@ -87,17 +87,17 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		IsAlertContext: true,
 	}
 
-	if ref, err := context.GetDashboardUID(); err != nil {
+	ref, err := context.GetDashboardUID()
+	if err != nil {
 		return err
-	} else {
-		renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
 	}
+	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
 
-	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {
+	imagePath, err := renderer.RenderToPng(renderOpts)
+	if err != nil {
 		return err
-	} else {
-		context.ImageOnDiskPath = imagePath
 	}
+	context.ImageOnDiskPath = imagePath
 
 	context.ImagePublicUrl, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
 	if err != nil {
@@ -117,12 +117,12 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 
 	var result []Notifier
 	for _, notification := range query.Result {
-		if not, err := n.createNotifierFor(notification); err != nil {
+		not, err := n.createNotifierFor(notification)
+		if err != nil {
 			return nil, err
-		} else {
-			if not.ShouldNotify(context) {
-				result = append(result, not)
-			}
+		}
+		if not.ShouldNotify(context) {
+			result = append(result, not)
 		}
 	}
 
@@ -140,7 +140,7 @@ func (n *notificationService) createNotifierFor(model *m.AlertNotification) (Not
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
 
-var notifierFactories map[string]*NotifierPlugin = make(map[string]*NotifierPlugin)
+var notifierFactories = make(map[string]*NotifierPlugin)
 
 func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin

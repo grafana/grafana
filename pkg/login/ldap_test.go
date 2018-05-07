@@ -18,7 +18,7 @@ func TestLdapAuther(t *testing.T) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{{}},
 			})
-			_, err := ldapAuther.GetGrafanaUserFor(&LdapUserInfo{})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{})
 
 			So(err, ShouldEqual, ErrInvalidCredentials)
 		})
@@ -34,7 +34,7 @@ func TestLdapAuther(t *testing.T) {
 
 			sc.userQueryReturns(user1)
 
-			result, err := ldapAuther.GetGrafanaUserFor(&LdapUserInfo{})
+			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{})
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, user1)
 		})
@@ -48,7 +48,7 @@ func TestLdapAuther(t *testing.T) {
 
 			sc.userQueryReturns(user1)
 
-			result, err := ldapAuther.GetGrafanaUserFor(&LdapUserInfo{MemberOf: []string{"cn=users"}})
+			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{MemberOf: []string{"cn=users"}})
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, user1)
 		})
@@ -64,18 +64,14 @@ func TestLdapAuther(t *testing.T) {
 
 			sc.userQueryReturns(nil)
 
-			result, err := ldapAuther.GetGrafanaUserFor(&LdapUserInfo{
+			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				DN:       "torkelo",
 				Username: "torkelo",
 				Email:    "my@email.com",
 				MemberOf: []string{"cn=editor"},
 			})
 
 			So(err, ShouldBeNil)
-
-			Convey("Should create new user", func() {
-				So(sc.createUserCmd.Login, ShouldEqual, "torkelo")
-				So(sc.createUserCmd.Email, ShouldEqual, "my@email.com")
-			})
 
 			Convey("Should return new user", func() {
 				So(result.Login, ShouldEqual, "torkelo")
@@ -95,7 +91,7 @@ func TestLdapAuther(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
-			err := ldapAuther.SyncOrgRoles(&m.User{}, &LdapUserInfo{
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
 				MemberOf: []string{"cn=users"},
 			})
 
@@ -114,7 +110,7 @@ func TestLdapAuther(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
-			err := ldapAuther.SyncOrgRoles(&m.User{}, &LdapUserInfo{
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
 				MemberOf: []string{"cn=users"},
 			})
 
@@ -122,24 +118,29 @@ func TestLdapAuther(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(sc.updateOrgUserCmd, ShouldNotBeNil)
 				So(sc.updateOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
 		})
 
 		ldapAutherScenario("given current org role is removed in ldap", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
-					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Admin"},
+					{GroupDN: "cn=users", OrgId: 2, OrgRole: "Admin"},
 				},
 			})
 
-			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
-			err := ldapAuther.SyncOrgRoles(&m.User{}, &LdapUserInfo{
-				MemberOf: []string{"cn=other"},
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{
+				{OrgId: 1, Role: m.ROLE_EDITOR},
+				{OrgId: 2, Role: m.ROLE_EDITOR},
+			})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{"cn=users"},
 			})
 
 			Convey("Should remove org role", func() {
 				So(err, ShouldBeNil)
 				So(sc.removeOrgUserCmd, ShouldNotBeNil)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 2)
 			})
 		})
 
@@ -152,7 +153,7 @@ func TestLdapAuther(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
-			err := ldapAuther.SyncOrgRoles(&m.User{}, &LdapUserInfo{
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
 				MemberOf: []string{"cn=users"},
 			})
 
@@ -160,6 +161,7 @@ func TestLdapAuther(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(sc.removeOrgUserCmd, ShouldBeNil)
 				So(sc.updateOrgUserCmd, ShouldNotBeNil)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
 		})
 
@@ -172,13 +174,14 @@ func TestLdapAuther(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_ADMIN}})
-			err := ldapAuther.SyncOrgRoles(&m.User{}, &LdapUserInfo{
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
 				MemberOf: []string{"cn=admins"},
 			})
 
 			Convey("Should take first match, and ignore subsequent matches", func() {
 				So(err, ShouldBeNil)
 				So(sc.updateOrgUserCmd, ShouldBeNil)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
 		})
 
@@ -191,19 +194,20 @@ func TestLdapAuther(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
-			err := ldapAuther.SyncOrgRoles(&m.User{}, &LdapUserInfo{
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
 				MemberOf: []string{"cn=admins"},
 			})
 
 			Convey("Should take first match, and ignore subsequent matches", func() {
 				So(err, ShouldBeNil)
 				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
+				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
 		})
 
 	})
 
-	Convey("When calling SyncSignedInUser", t, func() {
+	Convey("When calling SyncUser", t, func() {
 
 		mockLdapConnection := &mockLdapConn{}
 		ldapAuther := NewLdapAuthenticator(
@@ -243,17 +247,20 @@ func TestLdapAuther(t *testing.T) {
 
 		ldapAutherScenario("When ldapUser found call syncInfo and orgRoles", func(sc *scenarioContext) {
 			// arrange
-			signedInUser := &m.SignedInUser{
-				Email:  "roel@test.net",
-				UserId: 1,
-				Name:   "Roel Gerrits",
-				Login:  "roelgerrits",
+			query := &m.LoginUserQuery{
+				Username: "roelgerrits",
 			}
 
+			sc.userQueryReturns(&m.User{
+				Id:    1,
+				Email: "roel@test.net",
+				Name:  "Roel Gerrits",
+				Login: "roelgerrits",
+			})
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
 
 			// act
-			syncErrResult := ldapAuther.SyncSignedInUser(signedInUser)
+			syncErrResult := ldapAuther.SyncUser(query)
 
 			// assert
 			So(dialCalled, ShouldBeTrue)
@@ -299,6 +306,19 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 
 		sc := &scenarioContext{}
 
+		bus.AddHandler("test", UpsertUser)
+
+		bus.AddHandler("test", func(cmd *m.GetUserByAuthInfoQuery) error {
+			sc.getUserByAuthInfoQuery = cmd
+			sc.getUserByAuthInfoQuery.Result = &m.User{Login: cmd.Login}
+			return nil
+		})
+
+		bus.AddHandler("test", func(cmd *m.GetUserOrgListQuery) error {
+			sc.getUserOrgListQuery = cmd
+			return nil
+		})
+
 		bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
 			sc.createUserCmd = cmd
 			sc.createUserCmd.Result = m.User{Login: cmd.Login}
@@ -325,26 +345,36 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *m.SetUsingOrgCommand) error {
+			sc.setUsingOrgCmd = cmd
+			return nil
+		})
+
 		fn(sc)
 	})
 }
 
 type scenarioContext struct {
-	createUserCmd    *m.CreateUserCommand
-	addOrgUserCmd    *m.AddOrgUserCommand
-	updateOrgUserCmd *m.UpdateOrgUserCommand
-	removeOrgUserCmd *m.RemoveOrgUserCommand
-	updateUserCmd    *m.UpdateUserCommand
+	getUserByAuthInfoQuery *m.GetUserByAuthInfoQuery
+	getUserOrgListQuery    *m.GetUserOrgListQuery
+	createUserCmd          *m.CreateUserCommand
+	addOrgUserCmd          *m.AddOrgUserCommand
+	updateOrgUserCmd       *m.UpdateOrgUserCommand
+	removeOrgUserCmd       *m.RemoveOrgUserCommand
+	updateUserCmd          *m.UpdateUserCommand
+	setUsingOrgCmd         *m.SetUsingOrgCommand
 }
 
 func (sc *scenarioContext) userQueryReturns(user *m.User) {
-	bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
+	bus.AddHandler("test", func(query *m.GetUserByAuthInfoQuery) error {
 		if user == nil {
 			return m.ErrUserNotFound
-		} else {
-			query.Result = user
-			return nil
 		}
+		query.Result = user
+		return nil
+	})
+	bus.AddHandler("test", func(query *m.SetAuthInfoCommand) error {
+		return nil
 	})
 }
 

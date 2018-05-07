@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 
+	_ "github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -33,7 +34,7 @@ import (
 var version = "5.0.0"
 var commit = "NA"
 var buildstamp string
-var build_date string
+var enterprise string
 
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
@@ -77,6 +78,7 @@ func main() {
 	setting.BuildVersion = version
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
+	setting.Enterprise, _ = strconv.ParseBool(enterprise)
 
 	metrics.M_Grafana_Version.WithLabelValues(version).Set(1)
 	shutdownCompleted := make(chan int)
@@ -101,9 +103,9 @@ func main() {
 }
 
 func listenToSystemSignals(server *GrafanaServerImpl, shutdownCompleted chan int) {
+	var code int
 	signalChan := make(chan os.Signal, 1)
 	ignoreChan := make(chan os.Signal, 1)
-	code := 0
 
 	signal.Notify(ignoreChan, syscall.SIGHUP)
 	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)

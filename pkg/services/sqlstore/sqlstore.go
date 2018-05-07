@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -35,6 +36,7 @@ type DatabaseConfig struct {
 	ServerCertName                             string
 	MaxOpenConn                                int
 	MaxIdleConn                                int
+	ConnMaxLifetime                            int
 }
 
 var (
@@ -75,7 +77,7 @@ func EnsureAdminUser() {
 	log.Info("Created default admin user: %v", setting.AdminUser)
 }
 
-func NewEngine() {
+func NewEngine() *xorm.Engine {
 	x, err := getEngine()
 
 	if err != nil {
@@ -89,6 +91,8 @@ func NewEngine() {
 		sqlog.Error("Fail to initialize orm engine", "error", err)
 		os.Exit(1)
 	}
+
+	return x
 }
 
 func SetEngine(engine *xorm.Engine) (err error) {
@@ -119,7 +123,7 @@ func getEngine() (*xorm.Engine, error) {
 		}
 
 		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
-			DbCfg.User, DbCfg.Pwd, protocol, DbCfg.Host, DbCfg.Name)
+			url.QueryEscape(DbCfg.User), url.QueryEscape(DbCfg.Pwd), protocol, DbCfg.Host, url.PathEscape(DbCfg.Name))
 
 		if DbCfg.SslMode == "true" || DbCfg.SslMode == "skip-verify" {
 			tlsCert, err := makeCert("custom", DbCfg)
@@ -138,13 +142,17 @@ func getEngine() (*xorm.Engine, error) {
 		if len(fields) > 1 && len(strings.TrimSpace(fields[1])) > 0 {
 			port = fields[1]
 		}
-		if DbCfg.Pwd == "" {
-			DbCfg.Pwd = "''"
-		}
-		if DbCfg.User == "" {
-			DbCfg.User = "''"
-		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode, DbCfg.ClientCertPath, DbCfg.ClientKeyPath, DbCfg.CaCertPath)
+		cnnstr = fmt.Sprintf("user='%s' password='%s' host='%s' port='%s' dbname='%s' sslmode='%s' sslcert='%s' sslkey='%s' sslrootcert='%s'",
+			strings.Replace(DbCfg.User, `'`, `\'`, -1),
+			strings.Replace(DbCfg.Pwd, `'`, `\'`, -1),
+			strings.Replace(host, `'`, `\'`, -1),
+			strings.Replace(port, `'`, `\'`, -1),
+			strings.Replace(DbCfg.Name, `'`, `\'`, -1),
+			strings.Replace(DbCfg.SslMode, `'`, `\'`, -1),
+			strings.Replace(DbCfg.ClientCertPath, `'`, `\'`, -1),
+			strings.Replace(DbCfg.ClientKeyPath, `'`, `\'`, -1),
+			strings.Replace(DbCfg.CaCertPath, `'`, `\'`, -1),
+		)
 	case "sqlite3":
 		if !filepath.IsAbs(DbCfg.Path) {
 			DbCfg.Path = filepath.Join(setting.DataPath, DbCfg.Path)
@@ -159,23 +167,25 @@ func getEngine() (*xorm.Engine, error) {
 	engine, err := xorm.NewEngine(DbCfg.Type, cnnstr)
 	if err != nil {
 		return nil, err
-	} else {
-		engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
-		engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
-		debugSql := setting.Cfg.Section("database").Key("log_queries").MustBool(false)
-		if !debugSql {
-			engine.SetLogger(&xorm.DiscardLogger{})
-		} else {
-			engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
-			engine.ShowSQL(true)
-			engine.ShowExecTime(true)
-		}
 	}
+
+	engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
+	engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
+	engine.SetConnMaxLifetime(time.Second * time.Duration(DbCfg.ConnMaxLifetime))
+	debugSql := setting.Raw.Section("database").Key("log_queries").MustBool(false)
+	if !debugSql {
+		engine.SetLogger(&xorm.DiscardLogger{})
+	} else {
+		engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+		engine.ShowSQL(true)
+		engine.ShowExecTime(true)
+	}
+
 	return engine, nil
 }
 
 func LoadConfig() {
-	sec := setting.Cfg.Section("database")
+	sec := setting.Raw.Section("database")
 
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
@@ -204,6 +214,7 @@ func LoadConfig() {
 	}
 	DbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
 	DbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(0)
+	DbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
 
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true
@@ -227,8 +238,8 @@ var (
 
 func InitTestDB(t *testing.T) *xorm.Engine {
 	selectedDb := dbSqlite
-	//selectedDb := dbMySql
-	//selectedDb := dbPostgres
+	// selectedDb := dbMySql
+	// selectedDb := dbPostgres
 
 	var x *xorm.Engine
 	var err error
@@ -247,10 +258,13 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 		x, err = xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
 	}
 
+	x.DatabaseTZ = time.UTC
+	x.TZLocation = time.UTC
+
 	// x.ShowSQL()
 
 	if err != nil {
-		t.Fatalf("Failed to init in memory sqllite3 db %v", err)
+		t.Fatalf("Failed to init test database: %v", err)
 	}
 
 	sqlutil.CleanDB(x)
@@ -260,4 +274,20 @@ func InitTestDB(t *testing.T) *xorm.Engine {
 	}
 
 	return x
+}
+
+func IsTestDbMySql() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == dbMySql
+	}
+
+	return false
+}
+
+func IsTestDbPostgres() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == dbPostgres
+	}
+
+	return false
 }

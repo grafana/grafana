@@ -17,7 +17,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 	Convey("Folder permissions test", t, func() {
 		Convey("Given folder not exists", func() {
 			mock := &fakeFolderService{
-				GetFolderByUidError: m.ErrFolderNotFound,
+				GetFolderByUIDError: m.ErrFolderNotFound,
 			}
 
 			origNewFolderService := dashboards.NewFolderService
@@ -49,7 +49,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
 
 			mock := &fakeFolderService{
-				GetFolderByUidResult: &m.Folder{
+				GetFolderByUIDResult: &m.Folder{
 					Id:    1,
 					Uid:   "uid",
 					Title: "Folder",
@@ -96,7 +96,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			})
 
 			mock := &fakeFolderService{
-				GetFolderByUidResult: &m.Folder{
+				GetFolderByUIDResult: &m.Folder{
 					Id:    1,
 					Uid:   "uid",
 					Title: "Folder",
@@ -142,7 +142,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			})
 
 			mock := &fakeFolderService{
-				GetFolderByUidResult: &m.Folder{
+				GetFolderByUIDResult: &m.Folder{
 					Id:    1,
 					Uid:   "uid",
 					Title: "Folder",
@@ -178,7 +178,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			)
 
 			mock := &fakeFolderService{
-				GetFolderByUidResult: &m.Folder{
+				GetFolderByUIDResult: &m.Folder{
 					Id:    1,
 					Uid:   "uid",
 					Title: "Folder",

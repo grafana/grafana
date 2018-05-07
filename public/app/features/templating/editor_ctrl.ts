@@ -10,6 +10,7 @@ export class VariableEditorCtrl {
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
     $scope._ = _;
+    $scope.optionsLimit = 20;
 
     $scope.refreshOptions = [
       { value: 0, text: 'Never' },
@@ -23,6 +24,8 @@ export class VariableEditorCtrl {
       { value: 2, text: 'Alphabetical (desc)' },
       { value: 3, text: 'Numerical (asc)' },
       { value: 4, text: 'Numerical (desc)' },
+      { value: 5, text: 'Alphabetical (case-insensitive, asc)' },
+      { value: 6, text: 'Alphabetical (case-insensitive, desc)' },
     ];
 
     $scope.hideOptions = [{ value: 0, text: '' }, { value: 1, text: 'Label' }, { value: 2, text: 'Variable' }];
@@ -94,6 +97,7 @@ export class VariableEditorCtrl {
     };
 
     $scope.runQuery = function() {
+      $scope.optionsLimit = 20;
       return variableSrv.updateOptions($scope.current).catch(err => {
         if (err.data && err.data.message) {
           err.message = err.data.message;
@@ -162,6 +166,10 @@ export class VariableEditorCtrl {
 
     $scope.removeVariable = function(variable) {
       variableSrv.removeVariable(variable);
+    };
+
+    $scope.showMoreOptions = function() {
+      $scope.optionsLimit += 20;
     };
   }
 }

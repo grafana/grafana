@@ -133,7 +133,7 @@ export class HistoryListCtrl {
     return this.historySrv
       .getHistoryList(this.dashboard, options)
       .then(revisions => {
-        // set formated dates & default values
+        // set formatted dates & default values
         for (let rev of revisions) {
           rev.createdDateString = this.formatDate(rev.created);
           rev.ageString = this.formatBasicDate(rev.created);

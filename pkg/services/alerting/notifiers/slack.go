@@ -129,7 +129,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := this.Mention
-	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
+	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
 	image_url := ""

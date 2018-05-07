@@ -19,6 +19,7 @@
 
 	<div class="search-dropdown">
     <div class="search-dropdown__col_1">
+      <div class="search-results-scroller">
         <div class="search-results-container" grafana-scrollbar>
           <h6 ng-show="!ctrl.isLoading && ctrl.results.length === 0">No dashboards matching your query were found.</h6>
           <dashboard-search-results
@@ -27,6 +28,7 @@
             on-folder-expanding="ctrl.folderExpanding()"
             on-folder-expanded="ctrl.folderExpanded($folder)" />
         </div>
+      </div>
     </div>
 
     <div class="search-dropdown__col_2">

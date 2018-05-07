@@ -197,6 +197,10 @@ export class QueryVariable implements Variable {
           return parseInt(matches[1], 10);
         }
       });
+    } else if (sortType === 3) {
+      options = _.sortBy(options, opt => {
+        return _.toLower(opt.text);
+      });
     }
 
     if (reverseSort) {

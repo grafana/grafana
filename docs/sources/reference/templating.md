@@ -1,6 +1,6 @@
 +++
 title = "Variables"
-keywords = ["grafana", "templating", "documentation", "guide"]
+keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
 type = "docs"
 [menu.docs]
 name = "Variables"
@@ -35,6 +35,29 @@ Before queries are sent to your data source the query is **interpolated**, meani
 interpolation the variable value might be **escaped** in order to conform to the syntax of the query language and where it is used.
 For example, a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific
 documentation article for details on value escaping during interpolation.
+
+### Advanced Formatting Options
+
+> Only available in Grafana v5.1+.
+
+The formatting of the variable interpolation depends on the data source but there are some situations where you might want to change the default formatting. For example, the default for the MySql datasource is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases you might want to have a comma-separated string without quotes: `server01,server02`. This is now possible with the advanced formatting options.
+
+Syntax: `${var_name:option}`
+
+Filter Option | Example | Raw | Interpolated | Description
+------------ | ------------- | ------------- | -------------  | -------------
+`glob` | ${servers:glob} |  `'test1', 'test2'` | `{test1,test2}` | (Default) Formats multi-value variable into a glob (for Graphite queries)
+`regex` | ${servers:regex} | `'test.', 'test2'` | <code>(test\.&#124;test2)</code> | Formats multi-value variable into a regex string
+`pipe` | ${servers:pipe} | `'test.', 'test2'` |  <code>test.&#124;test2</code> | Formats multi-value variable into a pipe-separated string
+`csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
+`distributed`| ${servers:distributed} | `'test1', 'test2'` | `test1,servers=test2` | Formats multi-value variable in custom format for OpenTSDB.
+`lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
+
+Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
+
+If any invalid formatting option is specified, then `glob` is the default/fallback option.
+
+An alternative syntax (that might be deprecated in the future) is `[[var_name:option]]`.
 
 ### Variable options
 
@@ -80,6 +103,73 @@ Option | Description
 *Regex* | Regex to filter or capture specific parts of the names return by your data source query. Optional.
 *Sort* | Define sort order for options in dropdown. **Disabled** means that the order of options returned by your data source query will be used.
 
+#### Using regex to filter/modify values in the Variable dropdown
+
+Using the Regex Query Option, you filter the list of options returned by the Variable query or modify the options returned.
+
+Examples of filtering on the following list of options:
+
+```text
+backend_01
+backend_02
+backend_03
+backend_04
+```
+
+##### Filter so that only the options that end with `01` or `02` are returned:
+
+Regex:
+
+```regex
+/.*[01|02]/
+```
+
+Result:
+
+```text
+backend_01
+backend_02
+```
+
+##### Filter and modify the options using a regex capture group to return part of the text:
+
+Regex:
+
+```regex
+/.*(01|02)/
+```
+
+Result:
+
+```text
+01
+02
+```
+
+#### Filter and modify - Prometheus Example
+
+List of options:
+
+```text
+up{instance="demo.robustperception.io:9090",job="prometheus"} 1 1521630638000
+up{instance="demo.robustperception.io:9093",job="alertmanager"} 1 1521630638000
+up{instance="demo.robustperception.io:9100",job="node"} 1 1521630638000
+```
+
+Regex:
+
+```regex
+/.*instance="([^"]*).*/
+```
+
+Result:
+
+```text
+demo.robustperception.io:9090
+demo.robustperception.io:9093
+demo.robustperception.io:9100
+```
+
 ### Query expressions
 
 The query expressions are different for each data source.
@@ -99,13 +189,15 @@ Option | Description
 ------- | --------
 *Multi-value* | If enabled, the variable will support the selection of multiple options at the same time.
 *Include All option* | Add a special `All` option whose value includes all options.
-*Custom all value* | By default the `All` value will include all options in combined expression. This can become very long and can have performance problems. Many times it can be better to specify a custom all value, like a wildcard regex. To make it possible to have custom regex, globs or lucene syntax in the **Custom all value** option it is never escaped so you will have to think avbout what is a valid value for your data source.
+*Custom all value* | By default the `All` value will include all options in combined expression. This can become very long and can have performance problems. Many times it can be better to specify a custom all value, like a wildcard regex. To make it possible to have custom regex, globs or lucene syntax in the **Custom all value** option it is never escaped so you will have to think about what is a valid value for your data source.
 
-### Formating multiple values
+### Formatting multiple values
 
 Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values to into a string that
 is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to
 inform the templating interpolation engine what format to use for multiple values.
+
+Note that the *Custom all value* option on the variable will have to be left blank for Grafana to format all values into a single string.
 
 **Graphite**, for example, uses glob expressions. A variable with multiple values would, in this case, be interpolated as `{host1,host2,host3}` if
 the current variable value was *host1*, *host2* and *host3*.
@@ -117,7 +209,7 @@ break the regex expression.
 **Elasticsearch** uses lucene query syntax, so the same variable would, in this case, be formatted as `("host1" OR "host2" OR "host3")`. In this case every value
 needs to be escaped so that the value can contain lucene control words and quotation marks.
 
-#### Formating troubles
+#### Formatting troubles
 
 Automatic escaping & formatting can cause problems and it can be tricky to grasp the logic is behind it.
 Especially for InfluxDB and Prometheus where the use of regex syntax requires that the variable is used in regex operator context.
@@ -208,4 +300,3 @@ Variable values are always synced to the URL using the syntax `var-<varname>=val
 - [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
 - [Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)
 - [InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
-
