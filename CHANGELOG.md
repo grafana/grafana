@@ -8,11 +8,12 @@
 * **Variables**: Fix variable interpolation when using multiple formatting types [#11800](https://github.com/grafana/grafana/issues/11800), thx [@svenklemm](https://github.com/svenklemm)
 * **Dashboard**: Fix date selector styling for dark/light theme in time picker control [#11616](https://github.com/grafana/grafana/issues/11616)
 
-# 5.1.1 (unreleased)
+# 5.1.1 (2018-05-07)
 
 * **LDAP**: LDAP login with MariaDB/MySQL database and dn>100 chars not possible [#11754](https://github.com/grafana/grafana/issues/11754)
 * **Build**: AppVeyor Windows build missing version and commit info [#11758](https://github.com/grafana/grafana/issues/11758)
 * **Scroll**: Scroll can't start in graphs on Chrome mobile [#11710](https://github.com/grafana/grafana/issues/11710)
+* **Units**: Revert renaming of unit key ppm [#11743](https://github.com/grafana/grafana/issues/11743)
 
 # 5.1.0 (2018-04-26)
 
