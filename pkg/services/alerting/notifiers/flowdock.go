@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -33,14 +34,58 @@ func NewFlowdockNotifier(model *models.AlertNotification) (alerting.Notifier, er
 	return &FlowdockNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		FlowToken:    flowToken,
+		log:          log.New("alerting.notifier.flowdock"),
 	}, nil
 }
 
 type FlowdockNotifier struct {
 	NotifierBase
 	FlowToken string
+	log       log.Logger
 }
 
 func (this *FlowdockNotifier) Notify(evalContext *alerting.EvalContext) error {
+	this.log.Info("Executing Flowdock notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
+
+	_, err := evalContext.GetRuleUrl()
+	if err != nil {
+		this.log.Error("Failed to get rule link", "error", err)
+		return err
+	}
+
 	return nil
+}
+
+func (this *FlowdockNotifier) getBody(evalContext *alerting.EvalContext) map[string]interface{} {
+	body := map[string]interface{}{
+		"event":  "activity",
+		"status": this.getStatus(evalContext),
+	}
+
+	return body
+}
+
+func (this *FlowdockNotifier) getStatus(evalContext *alerting.EvalContext) map[string]string {
+	switch evalContext.Rule.State {
+	case models.AlertStateAlerting:
+		return map[string]string{
+			"color": "red",
+			"value": "Alerting",
+		}
+	case models.AlertStateOK:
+		return map[string]string{
+			"color": "green",
+			"value": "Ok",
+		}
+	case models.AlertStateNoData:
+		return map[string]string{
+			"color": "yellow",
+			"value": "No data",
+		}
+	default:
+		return map[string]string{
+			"color": "blue",
+			"value": "Unknown value",
+		}
+	}
 }
