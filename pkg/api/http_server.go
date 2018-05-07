@@ -26,8 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func init() {
+	registry.RegisterService(&HTTPServer{})
+}
 
 type HTTPServer struct {
 	log           log.Logger
@@ -41,12 +46,14 @@ type HTTPServer struct {
 	Bus           bus.Bus       `inject:""`
 }
 
-func (hs *HTTPServer) Init() {
+func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 	hs.cache = gocache.New(5*time.Minute, 10*time.Minute)
+
+	return nil
 }
 
-func (hs *HTTPServer) Start(ctx context.Context) error {
+func (hs *HTTPServer) Run(ctx context.Context) error {
 	var err error
 
 	hs.context = ctx
@@ -57,17 +64,18 @@ func (hs *HTTPServer) Start(ctx context.Context) error {
 	hs.streamManager.Run(ctx)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+	hs.log.Info("HTTP Server Listen", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
 	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
 
 	// handle http shutdown on server context done
 	go func() {
 		<-ctx.Done()
+		// Hacky fix for race condition between ListenAndServe and Shutdown
+		time.Sleep(time.Millisecond * 100)
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
-		hs.log.Info("Stopped HTTP Server")
 	}()
 
 	switch setting.Protocol {
@@ -103,12 +111,6 @@ func (hs *HTTPServer) Start(ctx context.Context) error {
 		err = errors.New("Invalid Protocol")
 	}
 
-	return err
-}
-
-func (hs *HTTPServer) Shutdown(ctx context.Context) error {
-	err := hs.httpSrv.Shutdown(ctx)
-	hs.log.Info("Stopped HTTP server")
 	return err
 }
 

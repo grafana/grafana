@@ -52,12 +52,11 @@ var (
 	ApplicationName string
 
 	// Paths
-	LogsPath         string
-	HomePath         string
-	DataPath         string
-	PluginsPath      string
-	ProvisioningPath string
-	CustomInitPath   = "conf/custom.ini"
+	LogsPath       string
+	HomePath       string
+	DataPath       string
+	PluginsPath    string
+	CustomInitPath = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -187,6 +186,9 @@ var (
 
 type Cfg struct {
 	Raw *ini.File
+
+	// Paths
+	ProvisioningPath string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -517,7 +519,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
 	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(iniFile.Section("paths").Key("plugins").String(), HomePath)
-	ProvisioningPath = makeAbsolute(iniFile.Section("paths").Key("provisioning").String(), HomePath)
+	cfg.ProvisioningPath = makeAbsolute(iniFile.Section("paths").Key("provisioning").String(), HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
 
@@ -728,6 +730,6 @@ func (cfg *Cfg) LogConfigSources() {
 	logger.Info("Path Data", "path", DataPath)
 	logger.Info("Path Logs", "path", LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
-	logger.Info("Path Provisioning", "path", ProvisioningPath)
+	logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	logger.Info("App mode " + Env)
 }

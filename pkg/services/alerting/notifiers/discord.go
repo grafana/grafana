@@ -91,8 +91,7 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	embed.Set("fields", fields)
 	embed.Set("footer", footer)
 
-	var image = make(map[string]interface{})
-
+	var image map[string]interface{}
 	var embeddedImage = false
 
 	if evalContext.ImagePublicUrl != "" {
@@ -141,6 +140,9 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 
 		fw, err = w.CreateFormFile("file", "graph.png")
+		if err != nil {
+			return err
+		}
 
 		if _, err = io.Copy(fw, f); err != nil {
 			return err
