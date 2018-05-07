@@ -1,4 +1,4 @@
-# Roadmap (2018-02-22)
+# Roadmap (2018-05-06)
 
 This roadmap is a tentative plan for the core development team. Things change constantly as PRs come in and priorities change. 
 But it will give you an idea of our current vision and plan. 
