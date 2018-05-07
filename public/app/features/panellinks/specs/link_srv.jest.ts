@@ -10,10 +10,9 @@ describe('linkSrv', function() {
   var linkSrv;
   var templateSrvMock = {};
   var timeSrvMock = {};
-  var sanitizeMock = {};
 
   beforeEach(() => {
-    linkSrv = new LinkSrv(sanitizeMock, templateSrvMock, timeSrvMock);
+    linkSrv = new LinkSrv(templateSrvMock, timeSrvMock);
   });
 
   describe('when appending query strings', function() {
