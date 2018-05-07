@@ -85,3 +85,15 @@
     margin-bottom: 10px;
   }
 }
+
+.dashboard-settings__panels-table {
+  td.small {
+    width: 5px;
+  }
+
+  td.gridPos {
+    width: 4em;
+    padding: 0px;
+    margin: 0px;
+  }
+}

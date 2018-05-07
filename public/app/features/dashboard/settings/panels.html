@@ -5,7 +5,7 @@
 
 <div class="gf-form-group">
 
-<table class="filter-table filter-table--hover">
+<table class="filter-table filter-table--hover dashboard-settings__panels-table">
   <thead>
     <tr>
       <th><img ng-src="{{ctrl.getIconFor(null)}}" height="20px;"/></th>
@@ -13,6 +13,7 @@
       <th ng-show="ctrl.showDatasource">Datasource</th>
       <th ng-show="ctrl.showAlerts">Alert</th>
       <th ng-show="ctrl.showAlerts">Every</th>
+      <th ng-show="ctrl.showRepeats">Repeat</th>
       <th ng-show="ctrl.showGridPos">X</th>
       <th ng-show="ctrl.showGridPos">Y</th>
       <th ng-show="ctrl.showGridPos">W</th>
@@ -21,9 +22,10 @@
     </tr>
   </thead>
   <tbody>
-    <tr ng-repeat-start="panel in ctrl.dashboard.panels track by $index">
-      <td style="width: 10px;" ng-click="ctrl.showPanel(panel)" class="pointer">
-        <img ng-src="{{ctrl.getIconFor(panel)}}" height="20px;" title="{{panel.type}} / {{panel.id}}" />
+    <tr ng-repeat-start="panel in ctrl.panels track by $index"
+      ng-model-options="{ updateOn: 'blur' }">
+      <td ng-click="ctrl.showPanel(panel)" class="pointer small" title="'{{panel.type}} / {{panel.id}}'">
+        <img ng-src="{{ctrl.getIconFor(panel)}}" height="20px;"/>
       </td>
       <td style="max-width: 100%; padding:2px 0px;" >
         <input type="text" class="gf-form-input" ng-model="panel.title" />
@@ -41,19 +43,22 @@
       <td ng-show="ctrl.showAlerts" style="width: 5em;" >
         <input ng-show="panel.alert" type="text" class="gf-form-input" ng-model="panel.alert.frequency" />
       </td>
-      <td ng-show="ctrl.showGridPos" style="width: 4em; padding:0px; margin:0px;">
-        <input type="number" class="gf-form-input" ng-model="panel.gridPos.x" ng-change="ctrl.layoutChanged()"/>
+      <td ng-show="ctrl.showRepeats" style="max-width: 100%;" >
+        <input ng-show="panel.repeat" type="text" class="gf-form-input" ng-model="panel.repeat" />
       </td>
-      <td ng-show="ctrl.showGridPos" style="width: 4em; padding:0px; margin:0px;">
-        <input type="number" class="gf-form-input" ng-model="panel.gridPos.y" ng-change="ctrl.layoutChanged()"/>
+      <td ng-show="ctrl.showGridPos" class="gridPos">
+        <input type="number" class="gf-form-input" ng-model="panel.gridPos.x" ng-change="ctrl.layoutChanged(panel)"/>
       </td>
-      <td ng-show="ctrl.showGridPos" style="width: 4em; padding:0px; margin:0px;">
-        <input type="number" class="gf-form-input" ng-model="panel.gridPos.w" ng-change="ctrl.layoutChanged()" max="24"/>
+      <td ng-show="ctrl.showGridPos" class="gridPos">
+        <input type="number" class="gf-form-input" ng-model="panel.gridPos.y" ng-change="ctrl.layoutChanged(panel)"/>
       </td>
-      <td ng-show="ctrl.showGridPos" style="width: 4em; padding:0px; margin:0px;">
-        <input type="number" class="gf-form-input" ng-model="panel.gridPos.h" ng-change="ctrl.layoutChanged()"/>
+      <td ng-show="ctrl.showGridPos" class="gridPos">
+        <input type="number" class="gf-form-input" ng-model="panel.gridPos.w" ng-change="ctrl.layoutChanged(panel)" max="24"/>
       </td>
-      <td style="width: 1%">
+      <td ng-show="ctrl.showGridPos" class="gridPos">
+        <input type="number" class="gf-form-input" ng-model="panel.gridPos.h" ng-change="ctrl.layoutChanged(panel)"/>
+      </td>
+      <td class="small">
         <a ng-click="ctrl.removePanel(panel)" class="btn btn-danger btn-small">
           <i class="fa fa-remove"></i>
         </a>
@@ -90,6 +95,11 @@
       </div>
     </div>
 
+    <div ng-show="ctrl.stats.repeat > 0" class="gf-form">
+      <gf-form-switch class="gf-form" label="Repeat Info" checked="ctrl.showRepeats" label-class="width-7"></gf-form-switch>
+      &nbsp; <em class="muted">{{ ctrl.stats.repeat }} Repeats Configured</em>
+    </div>
+
     <div class="gf-form">
       <gf-form-switch class="gf-form-inline" label="Description" checked="ctrl.showDescription" label-class="width-7"></gf-form-switch>
       &nbsp; <em class="muted">{{ ctrl.stats.descriptions }} Panels with Description</em>
@@ -97,7 +107,6 @@
 
     <div class="gf-form">
       <gf-form-switch class="gf-form-inline" label="Grid Position" checked="ctrl.showGridPos" label-class="width-7"></gf-form-switch>
-      &nbsp; <em ng-show="ctrl.showGridPos">NOTE: requires a save a full refresh to use changes!</em>
     </div>
   </div>
 

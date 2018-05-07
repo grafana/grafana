@@ -1,11 +1,13 @@
 import angular from 'angular';
 import config from 'app/core/config';
 import _ from 'lodash';
+import { PanelModel } from '../panel_model';
 
 export class DashPanelsEditorCtrl {
   dashboard: any;
 
   stats: any;
+  panels: PanelModel[] = [];
   datasources: string[] = [];
 
   // Set in the UI
@@ -13,6 +15,7 @@ export class DashPanelsEditorCtrl {
   showDescription: false;
   showDatasource: false;
   showGridPos: false;
+  showRepeats: false;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $location) {
@@ -26,16 +29,23 @@ export class DashPanelsEditorCtrl {
       alerts: 0,
       sources: [],
       descriptions: 0,
+      repeat: 0,
       skip: {}, // id = true
     };
     let sources = {};
 
-    _.forEach(this.dashboard.panels, panel => {
+    this.panels = _.filter(this.dashboard.panels, panel => {
+      if (panel.repeatPanelId) {
+        return false;
+      }
       if (panel.alert) {
         stats.alerts++;
       }
       if (panel.description) {
         stats.descriptions++;
+      }
+      if (panel.repeat) {
+        stats.repeat++;
       }
       if (panel.datasource) {
         if (_.has(sources, panel.datasource)) {
@@ -47,6 +57,7 @@ export class DashPanelsEditorCtrl {
           };
         }
       }
+      return true;
     });
     stats.sources = _.sortBy(_.values(sources), ['-count']);
     this.datasources = [''];
@@ -83,8 +94,11 @@ export class DashPanelsEditorCtrl {
     return 'row' === panel.type;
   }
 
-  layoutChanged() {
-    console.log('TODO... somehow update the layout...');
+  layoutChanged(panel) {
+    // trigger grid re-layout.  May change the order
+    panel.events.emit('panel-size-changed');
+    this.dashboard.events.emit('row-expanded');
+    this.updateStats();
   }
 
   showPanel(panel) {
@@ -92,7 +106,7 @@ export class DashPanelsEditorCtrl {
     if (this.isRow(panel)) {
       return;
     }
-
+    console.log('Show', panel);
     let urlParams = this.$location.search();
     delete urlParams.fullscreen;
     delete urlParams.panelId;
