@@ -13,7 +13,12 @@ func init() {
 		Factory:     NewFlowdockNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Flowdock settings</h3>
-      <div class="gf-form">
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-6">Flow token</span>
+        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.flowToken" placeholder="Flowdock flow token"></input>
+        <info-popover mode="right-absolute">
+            Instruction's for getting flow token can be found <a target="_blank" href="https://www.flowdock.com/api/integration-getting-started#/getting-started">here</a>
+        </info-popover>
       </div>
     `,
 	})
