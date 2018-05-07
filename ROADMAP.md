@@ -2,25 +2,17 @@
 
 This roadmap is a tentative plan for the core development team. Things change constantly as PRs come in and priorities change. 
 But it will give you an idea of our current vision and plan. 
-
+  
 ### Short term (1-2 months)
 
-- v5.1
-  - Build speed improvements & integration test execution
-  - Kubernetes friendly docker container
-  - Enterprise LDAP
-  - Provisioning workflow
-  - MSSQL datasource
-  
-### Mid term (2-4 months)
-
-- v5.2
-  - Azure monitor backend rewrite
   - Elasticsearch alerting
   - First login registration view
-  - Backend plugins? (alert notifiers, auth)
   - Crossplatform builds
-  - IFQL Initial support
+  - Backend service refactorings
+  
+### Mid term (2-4 months)
+  - Multi-Stat panel
+  - Explore UI 
   
 ### Long term (4 - 8 months)
 
