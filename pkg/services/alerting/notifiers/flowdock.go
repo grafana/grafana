@@ -20,6 +20,11 @@ func init() {
 }
 
 func NewFlowdockNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+	flowToken := model.Settings.Get("flowToken").MustString()
+	if flowToken == "" {
+		return nil, alerting.ValidationError{Reason: "Could not find flowToken in settings"}
+	}
+
 	return &FlowdockNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 	}, nil
