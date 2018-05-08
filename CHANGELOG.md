@@ -8,7 +8,7 @@
 * **Variables**: Fix variable interpolation when using multiple formatting types [#11800](https://github.com/grafana/grafana/issues/11800), thx [@svenklemm](https://github.com/svenklemm)
 * **Dashboard**: Fix date selector styling for dark/light theme in time picker control [#11616](https://github.com/grafana/grafana/issues/11616)
 * **Discord**: Alert notification channel type for Discord, [#7964](https://github.com/grafana/grafana/issues/7964) thx [@jereksel](https://github.com/jereksel), 
-
+* **InfluxDB**: Support SELECT queries in templating query, [5013](https://github.com/grafana/grafana/issues/5013)
 
 # 5.1.1 (2018-05-07)
 
