@@ -44,17 +44,19 @@ export class PluginEditCtrl {
       },
     };
 
-    const tabs = _.filter(model.includes, { type: 'page', showAsTab: true });
-    if (tabs) {
-      _.forEach(tabs, t => {
-        navModel.main.children.push({
-          icon: t.icon,
-          id: t.slug,
-          text: t.name,
-          active: t.slug === activeSlug,
-          url: `plugins/${model.id}/page/${t.slug}`,
+    if (model.enabled) {
+      const tabs = _.filter(model.includes, { type: 'page', showAsTab: true });
+      if (tabs) {
+        _.forEach(tabs, t => {
+          navModel.main.children.push({
+            icon: t.icon,
+            id: t.slug,
+            text: t.name,
+            active: t.slug === activeSlug,
+            url: `plugins/${model.id}/page/${t.slug}`,
+          });
         });
-      });
+      }
     }
 
     if (model.type === 'app') {
