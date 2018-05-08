@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -66,10 +67,11 @@ func (this *FlowdockNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 func (this *FlowdockNotifier) getBody(evalContext *alerting.EvalContext) map[string]interface{} {
 	return map[string]interface{}{
-		"event":  "activity",
-		"thread": this.getThread(evalContext),
-		"author": this.getAuthor(evalContext),
-		"title":  evalContext.GetNotificationTitle(),
+		"event":              "activity",
+		"thread":             this.getThread(evalContext),
+		"author":             this.getAuthor(evalContext),
+		"title":              evalContext.GetNotificationTitle(),
+		"external_thread_id": this.combineStartTimeAndRuleId(evalContext),
 	}
 }
 
@@ -126,4 +128,11 @@ func (this *FlowdockNotifier) getAuthor(evalContext *alerting.EvalContext) map[s
 		"name":   "Grafana",
 		"avatar": "https://grafana.com/assets/img/fav32.png",
 	}
+}
+
+func (this *FlowdockNotifier) combineStartTimeAndRuleId(evalContext *alerting.EvalContext) string {
+	startTime := evalContext.StartTime.Unix()
+	ruleId := evalContext.Rule.Id
+
+	return fmt.Sprintf("%d", (ruleId + startTime))
 }

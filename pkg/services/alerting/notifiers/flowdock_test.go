@@ -25,8 +25,9 @@ func BuildTestEvalContext() *alerting.EvalContext {
 	evalMatches := make([]*alerting.EvalMatch, 0)
 	evalMatches = append(evalMatches, evalMatch)
 
+	startTime, _ := time.Parse(time.RFC3339, "2018-05-06T18:30:00Z")
 	return &alerting.EvalContext{
-		StartTime:      time.Now(),
+		StartTime:      startTime,
 		Rule:           rule,
 		PrevAlertState: rule.State,
 		EvalMatches:    evalMatches,
@@ -186,6 +187,18 @@ func TestFlowdockNotifier(t *testing.T) {
 
 				correctBody := `<img src="https://example.com/image.png">`
 				So(threadMap["body"], ShouldEqual, correctBody)
+			})
+
+			Convey("calculate external thread id from rule and start time", func() {
+				json := `
+			{ "flowToken": "abcd1234" }
+				`
+				not, _ := BuildFlowdockNotifier(json)
+				flowdockNotifier := not.(*FlowdockNotifier)
+
+				testEvalContext := BuildTestEvalContext()
+				body := flowdockNotifier.getBody(testEvalContext)
+				So(body["external_thread_id"], ShouldEqual, "1525631400")
 			})
 		})
 	})
