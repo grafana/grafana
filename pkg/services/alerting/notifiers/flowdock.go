@@ -1,6 +1,8 @@
 package notifiers
 
 import (
+	"encoding/json"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -53,6 +55,12 @@ func (this *FlowdockNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
+	out, err := json.Marshal(evalContext)
+	if err != nil {
+		panic(err)
+	}
+
+	this.log.Info("Debug", string(out))
 	return nil
 }
 
@@ -60,6 +68,7 @@ func (this *FlowdockNotifier) getBody(evalContext *alerting.EvalContext) map[str
 	body := map[string]interface{}{
 		"event":  "activity",
 		"status": this.getStatus(evalContext),
+		"fields": this.getFields(evalContext),
 	}
 
 	return body
@@ -88,4 +97,15 @@ func (this *FlowdockNotifier) getStatus(evalContext *alerting.EvalContext) map[s
 			"value": "Unknown value",
 		}
 	}
+}
+
+func (this *FlowdockNotifier) getFields(evalContext *alerting.EvalContext) []map[string]string {
+	fields := make([]map[string]string, 0)
+	for _, evalMatch := range evalContext.EvalMatches {
+		fields = append(fields, map[string]string{
+			"label": evalMatch.Metric,
+			"value": evalMatch.Value.String(),
+		})
+	}
+	return fields
 }

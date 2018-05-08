@@ -19,7 +19,7 @@ func BuildTestEvalContext() *alerting.EvalContext {
 	}
 
 	evalMatch := &alerting.EvalMatch{
-		Value:  null.FloatFrom(100.0),
+		Value:  null.FloatFrom(10.123),
 		Metric: "A metric",
 	}
 	evalMatches := make([]*alerting.EvalMatch, 0)
@@ -110,6 +110,29 @@ func TestFlowdockNotifier(t *testing.T) {
 				statusMap := status.(map[string]string)
 				So(statusMap["color"], ShouldEqual, "yellow")
 				So(statusMap["value"], ShouldEqual, "No data")
+			})
+
+			Convey("EvalMatches should be translated to fields", func() {
+				json := `
+			{ "flowToken": "abcd1234" }
+				`
+				not, _ := BuildFlowdockNotifier(json)
+				flowdockNotifier := not.(*FlowdockNotifier)
+
+				testEvalContext := BuildTestEvalContext()
+				evalMatch := &alerting.EvalMatch{
+					Value:  null.FloatFrom(5.12345),
+					Metric: "Another metric",
+				}
+				testEvalContext.EvalMatches = append(testEvalContext.EvalMatches, evalMatch)
+
+				fields := flowdockNotifier.getBody(testEvalContext)["fields"]
+				fieldsList := fields.([]map[string]string)
+
+				So(fieldsList[0]["label"], ShouldEqual, "A metric")
+				So(fieldsList[0]["value"], ShouldEqual, "10.123")
+				So(fieldsList[1]["label"], ShouldEqual, "Another metric")
+				So(fieldsList[1]["value"], ShouldEqual, "5.123")
 			})
 		})
 	})
