@@ -14,7 +14,8 @@ export class ElasticQueryBuilder {
     filter[this.timeField] = {
       gte: '$timeFrom',
       lte: '$timeTo',
-      format: 'epoch_millis',
+      time_zone: '$timeZone',
+      format: "yyyy-MM-dd'T'HH:mm:ss.SSS",
     };
 
     return filter;
@@ -66,7 +67,8 @@ export class ElasticQueryBuilder {
     esAgg.field = this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
     esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
-    esAgg.format = 'epoch_millis';
+    esAgg.format = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+    esAgg.time_zone = '$timeZone';
 
     if (esAgg.interval === 'auto') {
       esAgg.interval = '$__interval';

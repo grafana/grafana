@@ -132,6 +132,7 @@ export function DashboardViewStateStub() {
 export function TimeSrvStub() {
   this.init = sinon.spy();
   this.time = {from: 'now-1h', to: 'now'};
+  this.dashboard = { timezone: 'utc'};
   this.timeRange = function(parse) {
     if (parse === false) {
       return this.time;
