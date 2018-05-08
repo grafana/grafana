@@ -53,6 +53,20 @@ func TestLdapAuther(t *testing.T) {
 			So(result, ShouldEqual, user1)
 		})
 
+		ldapAutherScenario("Given group match with different case", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=users", OrgRole: "Admin"},
+				},
+			})
+
+			sc.userQueryReturns(user1)
+
+			result, err := ldapAuther.GetGrafanaUserFor(&LdapUserInfo{MemberOf: []string{"CN=users"}})
+			So(err, ShouldBeNil)
+			So(result, ShouldEqual, user1)
+		})
+
 		ldapAutherScenario("Given no existing grafana user", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
