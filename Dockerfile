@@ -69,7 +69,7 @@ COPY --from=1 /usr/src/app/tools ./tools
 
 EXPOSE 3000
 
-COPY ./docker/run.sh /run.sh
+COPY ./scripts/docker/run.sh /run.sh
 
 USER grafana
 ENTRYPOINT [ "/run.sh" ]
