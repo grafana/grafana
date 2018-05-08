@@ -3,13 +3,14 @@ package notifiers
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"os"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"io"
-	"mime/multipart"
-	"os"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 )
 
 var (
-	telegramApiUrl string = "https://api.telegram.org/bot%s/%s"
+	telegramApiUrl = "https://api.telegram.org/bot%s/%s"
 )
 
 func init() {
@@ -90,9 +91,8 @@ func (this *TelegramNotifier) buildMessage(evalContext *alerting.EvalContext, se
 		cmd, err := this.buildMessageInlineImage(evalContext)
 		if err == nil {
 			return cmd
-		} else {
-			this.log.Error("Could not generate Telegram message with inline image.", "err", err)
 		}
+		this.log.Error("Could not generate Telegram message with inline image.", "err", err)
 	}
 
 	return this.buildMessageLinkedImage(evalContext)
@@ -133,6 +133,9 @@ func (this *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.Eval
 	}
 
 	ruleUrl, err := evalContext.GetRuleUrl()
+	if err != nil {
+		return nil, err
+	}
 
 	metrics := generateMetricsMessage(evalContext)
 	message := generateImageCaption(evalContext, ruleUrl, metrics)
@@ -219,7 +222,7 @@ func appendIfPossible(message string, extra string, sizeLimit int) string {
 
 func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	var cmd *m.SendWebhookSync
-	if evalContext.ImagePublicUrl == "" && this.UploadImage == true {
+	if evalContext.ImagePublicUrl == "" && this.UploadImage {
 		cmd = this.buildMessage(evalContext, true)
 	} else {
 		cmd = this.buildMessage(evalContext, false)

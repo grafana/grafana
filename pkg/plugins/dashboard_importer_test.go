@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"context"
 	"io/ioutil"
 	"testing"
 
@@ -88,13 +87,14 @@ func TestDashboardImport(t *testing.T) {
 
 func pluginScenario(desc string, t *testing.T, fn func()) {
 	Convey("Given a plugin", t, func() {
-		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.test-app")
+		setting.Raw = ini.Empty()
+		sec, _ := setting.Raw.NewSection("plugin.test-app")
 		sec.NewKey("path", "../../tests/test-app")
-		err := initPlugins(context.Background())
+
+		pm := &PluginManager{}
+		err := pm.Init()
 
 		So(err, ShouldBeNil)
-
 		Convey(desc, fn)
 	})
 }

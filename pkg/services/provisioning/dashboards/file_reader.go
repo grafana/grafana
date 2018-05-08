@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	checkDiskForChangesInterval time.Duration = time.Second * 3
+	checkDiskForChangesInterval = time.Second * 3
 
-	ErrFolderNameMissing error = errors.New("Folder name missing")
+	ErrFolderNameMissing = errors.New("Folder name missing")
 )
 
 type fileReader struct {
@@ -235,7 +235,6 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, service dashboards.DashboardPr
 func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
 	checkFilepath, err := filepath.EvalSymlinks(path)
 	if path != checkFilepath {
-		path = checkFilepath
 		fi, err := os.Lstat(checkFilepath)
 		if err != nil {
 			return nil, err

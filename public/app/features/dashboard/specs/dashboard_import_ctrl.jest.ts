@@ -56,7 +56,7 @@ describe('DashboardImportCtrl', function() {
     });
   });
 
-  describe('when specifing grafana.com url', function() {
+  describe('when specifying grafana.com url', function() {
     beforeEach(function() {
       ctx.ctrl.gnetUrl = 'http://grafana.com/dashboards/123';
       // setup api mock
@@ -73,7 +73,7 @@ describe('DashboardImportCtrl', function() {
     });
   });
 
-  describe('when specifing dashbord id', function() {
+  describe('when specifying dashboard id', function() {
     beforeEach(function() {
       ctx.ctrl.gnetUrl = '2342';
       // setup api mock

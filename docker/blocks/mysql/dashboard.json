@@ -2,7 +2,7 @@
   "__inputs": [
     {
       "name": "DS_MYSQL",
-      "label": "Mysql",
+      "label": "MySQL",
       "description": "",
       "type": "datasource",
       "pluginId": "mysql",
@@ -20,19 +20,19 @@
       "type": "panel",
       "id": "graph",
       "name": "Graph",
-      "version": ""
+      "version": "5.0.0"
     },
     {
       "type": "datasource",
       "id": "mysql",
       "name": "MySQL",
-      "version": "1.0.0"
+      "version": "5.0.0"
     },
     {
       "type": "panel",
       "id": "table",
       "name": "Table",
-      "version": ""
+      "version": "5.0.0"
     }
   ],
   "annotations": {
@@ -53,7 +53,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1518602729468,
+  "iteration": 1523372133566,
   "links": [],
   "panels": [
     {
@@ -118,7 +118,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
-      "timeShift": "1h",
+      "timeShift": null,
       "title": "Average logins / $summarize",
       "tooltip": {
         "shared": true,
@@ -150,7 +150,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -204,7 +208,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
-      "timeShift": "1h",
+      "timeShift": null,
       "title": "Average payments started/ended / $summarize",
       "tooltip": {
         "shared": true,
@@ -236,7 +240,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -284,7 +292,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
-      "timeShift": "1h",
+      "timeShift": null,
       "title": "Max CPU / $summarize",
       "tooltip": {
         "shared": true,
@@ -316,7 +324,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "columns": [],
@@ -369,7 +381,7 @@
           "target": ""
         }
       ],
-      "timeShift": "1h",
+      "timeShift": null,
       "title": "Values",
       "transform": "table",
       "type": "table"
@@ -428,7 +440,6 @@
         "auto_count": 5,
         "auto_min": "10s",
         "current": {
-          "selected": true,
           "text": "1m",
           "value": "1m"
         },
@@ -545,5 +556,5 @@
   "timezone": "",
   "title": "Grafana Fake Data Gen - MySQL",
   "uid": "DGsCac3kz",
-  "version": 6
+  "version": 8
 }

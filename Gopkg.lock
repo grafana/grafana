@@ -112,6 +112,18 @@
   revision = "270bc3860bb94dd3a3ffd047377d746c5e276726"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/facebookgo/inject"
+  packages = ["."]
+  revision = "cc1aa653e50f6a9893bcaef89e673e5b24e1e97b"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/facebookgo/structtag"
+  packages = ["."]
+  revision = "217e25fb96916cc60332e399c9aa63f5c422ceed"
+
+[[projects]]
   name = "github.com/fatih/color"
   packages = ["."]
   revision = "570b54cabe6b8eb0bc2dfce68d964677d63b5260"
@@ -350,6 +362,12 @@
   packages = ["."]
   revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
   version = "v2.1.0"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/prometheus/client_golang"
@@ -611,12 +629,6 @@
   version = "v1"
 
 [[projects]]
-  branch = "v2"
-  name = "gopkg.in/gomail.v2"
-  packages = ["."]
-  revision = "81ebce5c23dfd25c6c67194b37d3dd3f338c98b1"
-
-[[projects]]
   name = "gopkg.in/ini.v1"
   packages = ["."]
   revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
@@ -627,6 +639,12 @@
   packages = ["."]
   revision = "75f2e9b42e99652f0d82b28ccb73648f44615faa"
   version = "v1.2.4"
+
+[[projects]]
+  branch = "v2"
+  name = "gopkg.in/mail.v2"
+  packages = ["."]
+  revision = "5bc5c8bb07bd8d2803831fbaf8cbd630fcde2c68"
 
 [[projects]]
   name = "gopkg.in/redis.v2"
@@ -643,6 +661,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8a9e651fb8ea49dfd3c6ddc99bd3242b39e453ea9edd11321da79bd2c865e9d1"
+  inputs-digest = "bd54a1a836599d90b36d4ac1af56d716ef9ca5be4865e217bddd49e3d32a1997"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -230,7 +230,7 @@ export default class InfluxQuery {
     for (i = 0; i < this.groupByParts.length; i++) {
       var part = this.groupByParts[i];
       if (i > 0) {
-        // for some reason fill has no seperator
+        // for some reason fill has no separator
         groupBySection += part.def.type === 'fill' ? ' ' : ', ';
       }
       groupBySection += part.render('');

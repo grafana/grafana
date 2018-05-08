@@ -151,7 +151,7 @@ func TestAuthenticateUser(t *testing.T) {
 }
 
 type authScenarioContext struct {
-	loginUserQuery                   *LoginUserQuery
+	loginUserQuery                   *m.LoginUserQuery
 	grafanaLoginWasCalled            bool
 	ldapLoginWasCalled               bool
 	loginAttemptValidationWasCalled  bool
@@ -161,14 +161,14 @@ type authScenarioContext struct {
 type authScenarioFunc func(sc *authScenarioContext)
 
 func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
-	loginUsingGrafanaDB = func(query *LoginUserQuery) error {
+	loginUsingGrafanaDB = func(query *m.LoginUserQuery) error {
 		sc.grafanaLoginWasCalled = true
 		return err
 	}
 }
 
 func mockLoginUsingLdap(enabled bool, err error, sc *authScenarioContext) {
-	loginUsingLdap = func(query *LoginUserQuery) (bool, error) {
+	loginUsingLdap = func(query *m.LoginUserQuery) (bool, error) {
 		sc.ldapLoginWasCalled = true
 		return enabled, err
 	}
@@ -182,7 +182,7 @@ func mockLoginAttemptValidation(err error, sc *authScenarioContext) {
 }
 
 func mockSaveInvalidLoginAttempt(sc *authScenarioContext) {
-	saveInvalidLoginAttempt = func(query *LoginUserQuery) {
+	saveInvalidLoginAttempt = func(query *m.LoginUserQuery) {
 		sc.saveInvalidLoginAttemptWasCalled = true
 	}
 }
@@ -195,7 +195,7 @@ func authScenario(desc string, fn authScenarioFunc) {
 		origSaveInvalidLoginAttempt := saveInvalidLoginAttempt
 
 		sc := &authScenarioContext{
-			loginUserQuery: &LoginUserQuery{
+			loginUserQuery: &m.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",

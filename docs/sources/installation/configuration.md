@@ -482,7 +482,7 @@ Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.co
 
 First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
 
-Finaly set up the generic oauth module like this:
+Finally set up the generic oauth module like this:
 ```bash
 [auth.generic_oauth]
 name = Okta
@@ -658,6 +658,10 @@ Set to `true` to enable auto sign up of users who do not exist in Grafana DB. De
 ### whitelist
 
 Limit where auth proxy requests come from by configuring a list of IP addresses. This can be used to prevent users spoofing the X-WEBAUTH-USER header.
+
+### headers
+
+Used to define additional headers for `Name`, `Email` and/or `Login`, for example if the user's name is sent in the X-WEBAUTH-NAME header and their email address in the X-WEBAUTH-EMAIL header, set `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL`.
 
 <hr>
 

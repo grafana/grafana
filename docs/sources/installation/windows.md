@@ -8,12 +8,15 @@ parent = "installation"
 weight = 3
 +++
 
-
 # Installing on Windows
 
 Description | Download
 ------------ | -------------
-Latest stable package for Windows | [grafana-5.0.3.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.3.windows-x64.zip)
+Latest stable package for Windows | [grafana-5.1.1.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.1.windows-x64.zip)
+
+<!--
+Latest beta package for Windows | [grafana.5.1.0-beta1.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.0-beta5.windows-x64.zip)
+-->
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.

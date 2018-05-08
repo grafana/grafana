@@ -100,7 +100,7 @@ datasources:
 - name: Graphite
   # <string, required> datasource type. Required
   type: graphite
-  # <string, required> access mode. direct or proxy. Required
+  # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
   access: proxy
   # <int> org id. will default to orgId 1 if not specified
   orgId: 1
@@ -138,6 +138,7 @@ datasources:
 ```
 
 #### Custom Settings per Datasource
+Please refer to each datasource documentation for specific provisioning examples.
 
 | Datasource | Misc |
 | ---- | ---- |
@@ -196,16 +197,25 @@ providers:
   folder: ''
   type: file
   disableDeletion: false
-  editable: false
   options:
     path: /var/lib/grafana/dashboards
 ```
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
 
+#### Making changes to a provisioned dashboard
+
+It's possible to make changes to a provisioned dashboard in Grafana UI, but there's currently no possibility to automatically save the changes back to the provisioning source.
+However, if you make changes to a provisioned dashboard you can `Save` the dashboard which will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot below.
+Here available options will let you `Copy JSON to Clipboard` and/or `Save JSON to file` which can help you synchronize your dashboard changes back to the provisioning source.
+
+Note: The JSON shown in input field and when using `Copy JSON to Clipboard` and/or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
+
+{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 ### Reuseable Dashboard Urls
 
-If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifer.
+If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the urls given since the new dashboard url uses the uid as identifier.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
 By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 

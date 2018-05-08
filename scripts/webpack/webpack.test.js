@@ -9,8 +9,16 @@ config = merge(common, {
     'react/lib/ExecutionEnvironment': true,
     'react/lib/ReactContext': true,
   },
-  node: {
-    fs: 'empty'
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        exclude: /node_modules/,
+        use: [
+          { loader: "awesome-typescript-loader" }
+        ]
+      },
+    ]
   },
   plugins: [
     new webpack.SourceMapDevToolPlugin({

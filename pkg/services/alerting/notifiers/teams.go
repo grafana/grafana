@@ -13,7 +13,7 @@ func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "teams",
 		Name:        "Microsoft Teams",
-		Description: "Sends notifications using Incomming Webhook connector to Microsoft Teams",
+		Description: "Sends notifications using Incoming Webhook connector to Microsoft Teams",
 		Factory:     NewTeamsNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Teams settings</h3>

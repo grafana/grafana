@@ -1,6 +1,7 @@
 import angular from 'angular';
+import $ from 'jquery';
 import Drop from 'tether-drop';
-import PerfectScrollbar from 'perfect-scrollbar';
+import baron from 'baron';
 
 var module = angular.module('grafana.directives');
 
@@ -86,6 +87,9 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
 
       function panelHeightUpdated() {
         panelContent.css({ height: ctrl.height + 'px' });
+      }
+
+      function resizeScrollableContent() {
         if (panelScrollbar) {
           panelScrollbar.update();
         }
@@ -100,9 +104,30 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       // update scrollbar after mounting
       ctrl.events.on('component-did-mount', () => {
         if (ctrl.__proto__.constructor.scrollable) {
-          panelScrollbar = new PerfectScrollbar(panelContent[0], {
-            wheelPropagation: true,
+          const scrollRootClass = 'baron baron__root baron__clipper panel-content--scrollable';
+          const scrollerClass = 'baron__scroller';
+          const scrollBarHTML = `
+            <div class="baron__track">
+              <div class="baron__bar"></div>
+            </div>
+          `;
+
+          let scrollRoot = panelContent;
+          let scroller = panelContent.find(':first').find(':first');
+
+          scrollRoot.addClass(scrollRootClass);
+          $(scrollBarHTML).appendTo(scrollRoot);
+          scroller.addClass(scrollerClass);
+
+          panelScrollbar = baron({
+            root: scrollRoot[0],
+            scroller: scroller[0],
+            bar: '.baron__bar',
+            barOnCls: '_scrollbar',
+            scrollingCls: '_scrolling',
           });
+
+          panelScrollbar.scroll();
         }
       });
 
@@ -110,6 +135,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
         ctrl.calculatePanelHeight();
         panelHeightUpdated();
         $timeout(() => {
+          resizeScrollableContent();
           ctrl.render();
         });
       });
@@ -199,7 +225,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
         }
 
         if (panelScrollbar) {
-          panelScrollbar.update();
+          panelScrollbar.dispose();
         }
       });
     },

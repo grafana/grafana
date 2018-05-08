@@ -2,7 +2,6 @@ package api
 
 import (
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -15,9 +14,10 @@ import (
 func GetAnnotations(c *m.ReqContext) Response {
 
 	query := &annotations.ItemQuery{
-		From:        c.QueryInt64("from") / 1000,
-		To:          c.QueryInt64("to") / 1000,
+		From:        c.QueryInt64("from"),
+		To:          c.QueryInt64("to"),
 		OrgId:       c.OrgId,
+		UserId:      c.QueryInt64("userId"),
 		AlertId:     c.QueryInt64("alertId"),
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
@@ -37,7 +37,7 @@ func GetAnnotations(c *m.ReqContext) Response {
 		if item.Email != "" {
 			item.AvatarUrl = dtos.GetGravatarUrl(item.Email)
 		}
-		item.Time = item.Time * 1000
+		item.Time = item.Time
 	}
 
 	return JSON(200, items)
@@ -68,14 +68,10 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 		UserId:      c.UserId,
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
-		Epoch:       cmd.Time / 1000,
+		Epoch:       cmd.Time,
 		Text:        cmd.Text,
 		Data:        cmd.Data,
 		Tags:        cmd.Tags,
-	}
-
-	if item.Epoch == 0 {
-		item.Epoch = time.Now().Unix()
 	}
 
 	if err := repo.Save(&item); err != nil {
@@ -97,7 +93,7 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 		}
 
 		item.Id = 0
-		item.Epoch = cmd.TimeEnd / 1000
+		item.Epoch = cmd.TimeEnd
 
 		if err := repo.Save(&item); err != nil {
 			return Error(500, "Failed save annotation for region end time", err)
@@ -132,9 +128,6 @@ func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd
 		return Error(500, "Failed to save Graphite annotation", err)
 	}
 
-	if cmd.When == 0 {
-		cmd.When = time.Now().Unix()
-	}
 	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
 
 	// Support tags in prior to Graphite 0.10.0 format (string of tags separated by space)
@@ -163,7 +156,7 @@ func PostGraphiteAnnotation(c *m.ReqContext, cmd dtos.PostGraphiteAnnotationsCmd
 	item := annotations.Item{
 		OrgId:  c.OrgId,
 		UserId: c.UserId,
-		Epoch:  cmd.When,
+		Epoch:  cmd.When * 1000,
 		Text:   text,
 		Tags:   tagsArray,
 	}
@@ -191,7 +184,7 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 		OrgId:  c.OrgId,
 		UserId: c.UserId,
 		Id:     annotationID,
-		Epoch:  cmd.Time / 1000,
+		Epoch:  cmd.Time,
 		Text:   cmd.Text,
 		Tags:   cmd.Tags,
 	}
@@ -203,7 +196,7 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	if cmd.IsRegion {
 		itemRight := item
 		itemRight.RegionId = item.Id
-		itemRight.Epoch = cmd.TimeEnd / 1000
+		itemRight.Epoch = cmd.TimeEnd
 
 		// We don't know id of region right event, so set it to 0 and find then using query like
 		// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
@@ -288,22 +281,6 @@ func canSaveByDashboardID(c *m.ReqContext, dashboardID int64) (bool, error) {
 
 func canSave(c *m.ReqContext, repo annotations.Repository, annotationID int64) Response {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
-
-	if err != nil || len(items) == 0 {
-		return Error(500, "Could not find annotation to update", err)
-	}
-
-	dashboardID := items[0].DashboardId
-
-	if canSave, err := canSaveByDashboardID(c, dashboardID); err != nil || !canSave {
-		return dashboardGuardianResponse(err)
-	}
-
-	return nil
-}
-
-func canSaveByRegionID(c *m.ReqContext, repo annotations.Repository, regionID int64) Response {
-	items, err := repo.Find(&annotations.ItemQuery{RegionId: regionID, OrgId: c.OrgId})
 
 	if err != nil || len(items) == 0 {
 		return Error(500, "Could not find annotation to update", err)

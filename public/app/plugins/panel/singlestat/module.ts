@@ -77,7 +77,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private linkSrv) {
+  constructor($scope, $injector, private linkSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -159,8 +159,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   setTableColumnToSensibleDefault(tableData) {
-    if (this.tableColumnOptions.length === 1) {
-      this.panel.tableColumn = this.tableColumnOptions[0];
+    if (tableData.columns.length === 1) {
+      this.panel.tableColumn = tableData.columns[0].text;
     } else {
       this.panel.tableColumn = _.find(tableData.columns, col => {
         return col.type !== 'time';
@@ -308,7 +308,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         let formatFunc = kbn.valueFormats[this.panel.format];
         data.value = lastPoint[1];
         data.valueRounded = data.value;
-        data.valueFormatted = formatFunc(data.value, 0, 0);
+        data.valueFormatted = formatFunc(data.value, this.dashboard.isTimezoneUtc());
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;

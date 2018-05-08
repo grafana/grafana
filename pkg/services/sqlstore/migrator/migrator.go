@@ -97,17 +97,15 @@ func (mg *Migrator) Start() error {
 		mg.Logger.Debug("Executing", "sql", sql)
 
 		err := mg.inTransaction(func(sess *xorm.Session) error {
-
-			if err := mg.exec(m, sess); err != nil {
+			err := mg.exec(m, sess)
+			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
 				sess.Insert(&record)
 				return err
-			} else {
-				record.Success = true
-				sess.Insert(&record)
 			}
-
+			record.Success = true
+			sess.Insert(&record)
 			return nil
 		})
 

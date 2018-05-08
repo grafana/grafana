@@ -104,7 +104,7 @@ func (dr *dashboardServiceImpl) CreateFolder(cmd *models.CreateFolderCommand) er
 		User:      dr.user,
 	}
 
-	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false)
+	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false, false)
 	if err != nil {
 		return toFolderError(err)
 	}
@@ -141,7 +141,7 @@ func (dr *dashboardServiceImpl) UpdateFolder(existingUid string, cmd *models.Upd
 		Overwrite: cmd.Overwrite,
 	}
 
-	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false)
+	saveDashboardCmd, err := dr.buildSaveDashboardCommand(dto, false, false)
 	if err != nil {
 		return toFolderError(err)
 	}

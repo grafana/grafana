@@ -134,9 +134,8 @@ func (v *Value) get(key string) (*Value, error) {
 		child, ok := obj.Map()[key]
 		if ok {
 			return child, nil
-		} else {
-			return nil, KeyNotFoundError{key}
 		}
+		return nil, KeyNotFoundError{key}
 	}
 
 	return nil, err
@@ -174,17 +173,13 @@ func (v *Object) GetObject(keys ...string) (*Object, error) {
 
 	if err != nil {
 		return nil, err
-	} else {
-
-		obj, err := child.Object()
-
-		if err != nil {
-			return nil, err
-		} else {
-			return obj, nil
-		}
-
 	}
+	obj, err := child.Object()
+
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into a string.
@@ -196,18 +191,17 @@ func (v *Object) GetString(keys ...string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		return child.String()
 	}
+	return child.String()
 }
 
 func (v *Object) MustGetString(path string, def string) string {
 	keys := strings.Split(path, ".")
-	if str, err := v.GetString(keys...); err != nil {
+	str, err := v.GetString(keys...)
+	if err != nil {
 		return def
-	} else {
-		return str
 	}
+	return str
 }
 
 // Gets the value at key path and attempts to typecast the value into null.
@@ -233,16 +227,13 @@ func (v *Object) GetNumber(keys ...string) (json.Number, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-
-		n, err := child.Number()
-
-		if err != nil {
-			return "", err
-		} else {
-			return n, nil
-		}
 	}
+	n, err := child.Number()
+
+	if err != nil {
+		return "", err
+	}
+	return n, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into a float64.
@@ -254,16 +245,13 @@ func (v *Object) GetFloat64(keys ...string) (float64, error) {
 
 	if err != nil {
 		return 0, err
-	} else {
-
-		n, err := child.Float64()
-
-		if err != nil {
-			return 0, err
-		} else {
-			return n, nil
-		}
 	}
+	n, err := child.Float64()
+
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into a float64.
@@ -275,16 +263,13 @@ func (v *Object) GetInt64(keys ...string) (int64, error) {
 
 	if err != nil {
 		return 0, err
-	} else {
-
-		n, err := child.Int64()
-
-		if err != nil {
-			return 0, err
-		} else {
-			return n, nil
-		}
 	}
+	n, err := child.Int64()
+
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into a float64.
@@ -296,9 +281,8 @@ func (v *Object) GetInterface(keys ...string) (interface{}, error) {
 
 	if err != nil {
 		return nil, err
-	} else {
-		return child.Interface(), nil
 	}
+	return child.Interface(), nil
 }
 
 // Gets the value at key path and attempts to typecast the value into a bool.
@@ -311,7 +295,6 @@ func (v *Object) GetBoolean(keys ...string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
 	return child.Boolean()
 }
 
@@ -328,11 +311,8 @@ func (v *Object) GetValueArray(keys ...string) ([]*Value, error) {
 
 	if err != nil {
 		return nil, err
-	} else {
-
-		return child.Array()
-
 	}
+	return child.Array()
 }
 
 // Gets the value at key path and attempts to typecast the value into an array of objects.
@@ -347,30 +327,24 @@ func (v *Object) GetObjectArray(keys ...string) ([]*Object, error) {
 
 	if err != nil {
 		return nil, err
-	} else {
+	}
+	array, err := child.Array()
 
-		array, err := child.Array()
+	if err != nil {
+		return nil, err
+	}
+	typedArray := make([]*Object, len(array))
+
+	for index, arrayItem := range array {
+		typedArrayItem, err := arrayItem.
+			Object()
 
 		if err != nil {
 			return nil, err
-		} else {
-
-			typedArray := make([]*Object, len(array))
-
-			for index, arrayItem := range array {
-				typedArrayItem, err := arrayItem.
-					Object()
-
-				if err != nil {
-					return nil, err
-				} else {
-					typedArray[index] = typedArrayItem
-				}
-
-			}
-			return typedArray, nil
 		}
+		typedArray[index] = typedArrayItem
 	}
+	return typedArray, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into an array of string.
@@ -387,29 +361,23 @@ func (v *Object) GetStringArray(keys ...string) ([]string, error) {
 
 	if err != nil {
 		return nil, err
-	} else {
+	}
+	array, err := child.Array()
 
-		array, err := child.Array()
+	if err != nil {
+		return nil, err
+	}
+	typedArray := make([]string, len(array))
+
+	for index, arrayItem := range array {
+		typedArrayItem, err := arrayItem.String()
 
 		if err != nil {
 			return nil, err
-		} else {
-
-			typedArray := make([]string, len(array))
-
-			for index, arrayItem := range array {
-				typedArrayItem, err := arrayItem.String()
-
-				if err != nil {
-					return nil, err
-				} else {
-					typedArray[index] = typedArrayItem
-				}
-
-			}
-			return typedArray, nil
 		}
+		typedArray[index] = typedArrayItem
 	}
+	return typedArray, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into an array of numbers.
@@ -424,29 +392,23 @@ func (v *Object) GetNumberArray(keys ...string) ([]json.Number, error) {
 
 	if err != nil {
 		return nil, err
-	} else {
+	}
+	array, err := child.Array()
 
-		array, err := child.Array()
+	if err != nil {
+		return nil, err
+	}
+	typedArray := make([]json.Number, len(array))
+
+	for index, arrayItem := range array {
+		typedArrayItem, err := arrayItem.Number()
 
 		if err != nil {
 			return nil, err
-		} else {
-
-			typedArray := make([]json.Number, len(array))
-
-			for index, arrayItem := range array {
-				typedArrayItem, err := arrayItem.Number()
-
-				if err != nil {
-					return nil, err
-				} else {
-					typedArray[index] = typedArrayItem
-				}
-
-			}
-			return typedArray, nil
 		}
+		typedArray[index] = typedArrayItem
 	}
+	return typedArray, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into an array of floats.
@@ -456,29 +418,23 @@ func (v *Object) GetFloat64Array(keys ...string) ([]float64, error) {
 
 	if err != nil {
 		return nil, err
-	} else {
+	}
+	array, err := child.Array()
 
-		array, err := child.Array()
+	if err != nil {
+		return nil, err
+	}
+	typedArray := make([]float64, len(array))
+
+	for index, arrayItem := range array {
+		typedArrayItem, err := arrayItem.Float64()
 
 		if err != nil {
 			return nil, err
-		} else {
-
-			typedArray := make([]float64, len(array))
-
-			for index, arrayItem := range array {
-				typedArrayItem, err := arrayItem.Float64()
-
-				if err != nil {
-					return nil, err
-				} else {
-					typedArray[index] = typedArrayItem
-				}
-
-			}
-			return typedArray, nil
 		}
+		typedArray[index] = typedArrayItem
 	}
+	return typedArray, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into an array of ints.
@@ -488,29 +444,23 @@ func (v *Object) GetInt64Array(keys ...string) ([]int64, error) {
 
 	if err != nil {
 		return nil, err
-	} else {
+	}
+	array, err := child.Array()
 
-		array, err := child.Array()
+	if err != nil {
+		return nil, err
+	}
+	typedArray := make([]int64, len(array))
+
+	for index, arrayItem := range array {
+		typedArrayItem, err := arrayItem.Int64()
 
 		if err != nil {
 			return nil, err
-		} else {
-
-			typedArray := make([]int64, len(array))
-
-			for index, arrayItem := range array {
-				typedArrayItem, err := arrayItem.Int64()
-
-				if err != nil {
-					return nil, err
-				} else {
-					typedArray[index] = typedArrayItem
-				}
-
-			}
-			return typedArray, nil
 		}
+		typedArray[index] = typedArrayItem
 	}
+	return typedArray, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into an array of bools.
@@ -520,29 +470,23 @@ func (v *Object) GetBooleanArray(keys ...string) ([]bool, error) {
 
 	if err != nil {
 		return nil, err
-	} else {
+	}
+	array, err := child.Array()
 
-		array, err := child.Array()
+	if err != nil {
+		return nil, err
+	}
+	typedArray := make([]bool, len(array))
+
+	for index, arrayItem := range array {
+		typedArrayItem, err := arrayItem.Boolean()
 
 		if err != nil {
 			return nil, err
-		} else {
-
-			typedArray := make([]bool, len(array))
-
-			for index, arrayItem := range array {
-				typedArrayItem, err := arrayItem.Boolean()
-
-				if err != nil {
-					return nil, err
-				} else {
-					typedArray[index] = typedArrayItem
-				}
-
-			}
-			return typedArray, nil
 		}
+		typedArray[index] = typedArrayItem
 	}
+	return typedArray, nil
 }
 
 // Gets the value at key path and attempts to typecast the value into an array of nulls.
@@ -552,29 +496,23 @@ func (v *Object) GetNullArray(keys ...string) (int64, error) {
 
 	if err != nil {
 		return 0, err
-	} else {
+	}
+	array, err := child.Array()
 
-		array, err := child.Array()
+	if err != nil {
+		return 0, err
+	}
+	var length int64 = 0
+
+	for _, arrayItem := range array {
+		err := arrayItem.Null()
 
 		if err != nil {
 			return 0, err
-		} else {
-
-			var length int64 = 0
-
-			for _, arrayItem := range array {
-				err := arrayItem.Null()
-
-				if err != nil {
-					return 0, err
-				} else {
-					length++
-				}
-
-			}
-			return length, nil
 		}
+		length++
 	}
+	return length, nil
 }
 
 // Returns an error if the value is not actually null
@@ -585,15 +523,12 @@ func (v *Value) Null() error {
 	switch v.data.(type) {
 	case nil:
 		valid = v.exists // Valid only if j also exists, since other values could possibly also be nil
-		break
 	}
 
 	if valid {
 		return nil
 	}
-
 	return ErrNotNull
-
 }
 
 // Attempts to typecast the current value into an array.
@@ -607,24 +542,19 @@ func (v *Value) Array() ([]*Value, error) {
 	switch v.data.(type) {
 	case []interface{}:
 		valid = true
-		break
 	}
 
 	// Unsure if this is a good way to use slices, it's probably not
 	var slice []*Value
 
 	if valid {
-
 		for _, element := range v.data.([]interface{}) {
 			child := Value{element, true}
 			slice = append(slice, &child)
 		}
-
 		return slice, nil
 	}
-
 	return slice, ErrNotArray
-
 }
 
 // Attempts to typecast the current value into a number.
@@ -638,7 +568,6 @@ func (v *Value) Number() (json.Number, error) {
 	switch v.data.(type) {
 	case json.Number:
 		valid = true
-		break
 	}
 
 	if valid {
@@ -687,7 +616,6 @@ func (v *Value) Boolean() (bool, error) {
 	switch v.data.(type) {
 	case bool:
 		valid = true
-		break
 	}
 
 	if valid {
@@ -709,7 +637,6 @@ func (v *Value) Object() (*Object, error) {
 	switch v.data.(type) {
 	case map[string]interface{}:
 		valid = true
-		break
 	}
 
 	if valid {
@@ -746,7 +673,6 @@ func (v *Value) ObjectArray() ([]*Object, error) {
 	switch v.data.(type) {
 	case []interface{}:
 		valid = true
-		break
 	}
 
 	// Unsure if this is a good way to use slices, it's probably not
@@ -782,7 +708,6 @@ func (v *Value) String() (string, error) {
 	switch v.data.(type) {
 	case string:
 		valid = true
-		break
 	}
 
 	if valid {

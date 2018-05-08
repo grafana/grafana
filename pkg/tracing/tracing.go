@@ -32,7 +32,7 @@ func Init(file *ini.File) (io.Closer, error) {
 func parseSettings(file *ini.File) *TracingSettings {
 	settings := &TracingSettings{}
 
-	var section, err = setting.Cfg.GetSection("tracing.jaeger")
+	var section, err = setting.Raw.GetSection("tracing.jaeger")
 	if err != nil {
 		return settings
 	}

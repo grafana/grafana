@@ -443,7 +443,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
           // Expand ticks for pretty view
           min = Math.floor(min / tickStep) * tickStep;
-          max = Math.ceil(max / tickStep) * tickStep;
+          // 1.01 is 101% - ensure we have enough space for last bar
+          max = Math.ceil(max * 1.01 / tickStep) * tickStep;
 
           ticks = [];
           for (let i = min; i <= max; i += tickStep) {
@@ -634,6 +635,9 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
       function configureAxisMode(axis, format) {
         axis.tickFormatter = function(val, axis) {
+          if (!kbn.valueFormats[format]) {
+            throw new Error(`Unit '${format}' is not supported`);
+          }
           return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
         };
       }
