@@ -5,7 +5,7 @@ type = "docs"
 [menu.docs]
 name = "Developing Datasource Plugins"
 parent = "developing"
-weight = 6
+weight = 5
 +++
 
 # Datasources

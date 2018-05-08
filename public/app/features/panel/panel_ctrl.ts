@@ -22,6 +22,7 @@ export class PanelCtrl {
   editorTabs: any;
   $scope: any;
   $injector: any;
+  $location: any;
   $timeout: any;
   fullscreen: boolean;
   inspector: any;
@@ -35,6 +36,7 @@ export class PanelCtrl {
 
   constructor($scope, $injector) {
     this.$injector = $injector;
+    this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
@@ -161,6 +163,9 @@ export class PanelCtrl {
       shortcut: 'p s',
     });
 
+    // Additional items from sub-class
+    menu.push(...this.getAdditionalMenuItems());
+
     let extendedMenu = this.getExtendedMenu();
     menu.push({
       text: 'More ...',
@@ -207,6 +212,11 @@ export class PanelCtrl {
 
     this.events.emit('init-panel-actions', menu);
     return menu;
+  }
+
+  // Override in sub-class to add items before extended menu
+  getAdditionalMenuItems() {
+    return [];
   }
 
   otherPanelInFullscreenMode() {
