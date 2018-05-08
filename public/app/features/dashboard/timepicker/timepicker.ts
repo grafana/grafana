@@ -65,6 +65,42 @@ export class TimePickerCtrl {
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
     this.timeRaw = timeRaw;
+
+    // Add a human readable timespan to the tooltip
+    if (moment.isMoment(timeRaw.from) || moment.isMoment(timeRaw.to)) {
+      const diff = time.to.diff(time.from);
+      const duration = moment.duration(diff);
+      const days = duration.asDays();
+      if (days > 10) {
+        this.tooltip += '<br/><br/>' + duration.humanize();
+      } else {
+        let lines = 0;
+        var h = duration.hours();
+        var m = duration.minutes();
+        var s = duration.seconds();
+        this.tooltip += '<br/>';
+        if (days >= 2) {
+          this.tooltip += '<br/>' + duration.days() + ' days';
+          lines++;
+        } else if (days >= 1) {
+          this.tooltip += '<br/>1 day';
+          lines++;
+        }
+        if (h > 0 && lines < 2) {
+          this.tooltip += '<br/>' + h + ' hours';
+          lines++;
+        }
+        if (m > 0 && lines < 2) {
+          this.tooltip += '<br/>' + m + ' minutes';
+          lines++;
+        }
+        if (lines < 1) {
+          this.tooltip += '<br/>' + duration.asSeconds() + ' seconds';
+        } else if (s > 0 && lines < 2) {
+          this.tooltip += '<br/>' + s + ' seconds';
+        }
+      }
+    }
   }
 
   zoom(factor) {
