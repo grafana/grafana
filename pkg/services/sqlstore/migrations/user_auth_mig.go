@@ -22,8 +22,8 @@ func addUserAuthMigrations(mg *Migrator) {
 	// add indices
 	addTableIndicesMigrations(mg, "v1", userAuthV1)
 
-	mg.AddMigration("alter user_auth.auth_id to length 255", new(RawSqlMigration).
+	mg.AddMigration("alter user_auth.auth_id to length 190", new(RawSqlMigration).
 		Sqlite("SELECT 0 WHERE 0;").
-		Postgres("ALTER TABLE user_auth ALTER COLUMN auth_id TYPE VARCHAR(255);").
-		Mysql("ALTER TABLE user_auth MODIFY auth_id VARCHAR(255);"))
+		Postgres("ALTER TABLE user_auth ALTER COLUMN auth_id TYPE VARCHAR(190);").
+		Mysql("ALTER TABLE user_auth MODIFY auth_id VARCHAR(190);"))
 }
