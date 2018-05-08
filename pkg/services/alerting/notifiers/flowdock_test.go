@@ -134,6 +134,21 @@ func TestFlowdockNotifier(t *testing.T) {
 				So(fieldsList[1]["label"], ShouldEqual, "Another metric")
 				So(fieldsList[1]["value"], ShouldEqual, "5.123")
 			})
+
+			Convey("Use Grafana as an author", func() {
+				json := `
+			{ "flowToken": "abcd1234" }
+				`
+				not, _ := BuildFlowdockNotifier(json)
+				flowdockNotifier := not.(*FlowdockNotifier)
+
+				testEvalContext := BuildTestEvalContext()
+				author := flowdockNotifier.getBody(testEvalContext)["author"]
+				authorMap := author.(map[string]string)
+
+				So(authorMap["name"], ShouldEqual, "Grafana")
+				So(authorMap["avatar"], ShouldEqual, "https://grafana.com/assets/img/fav32.png")
+			})
 		})
 	})
 }

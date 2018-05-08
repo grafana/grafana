@@ -69,6 +69,7 @@ func (this *FlowdockNotifier) getBody(evalContext *alerting.EvalContext) map[str
 		"event":  "activity",
 		"status": this.getStatus(evalContext),
 		"fields": this.getFields(evalContext),
+		"author": this.getAuthor(evalContext),
 	}
 
 	return body
@@ -108,4 +109,11 @@ func (this *FlowdockNotifier) getFields(evalContext *alerting.EvalContext) []map
 		})
 	}
 	return fields
+}
+
+func (this *FlowdockNotifier) getAuthor(evalContext *alerting.EvalContext) map[string]string {
+	return map[string]string{
+		"name":   "Grafana",
+		"avatar": "https://grafana.com/assets/img/fav32.png",
+	}
 }
