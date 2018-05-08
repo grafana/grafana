@@ -12,6 +12,7 @@ export default class ResponseParser {
     }
 
     var influxdb11format = query.toLowerCase().indexOf('show tag values') >= 0;
+    var influxdbSelect = query.toLowerCase().indexOf('select') >= 0;
 
     var res = {};
     _.each(influxResults.series, serie => {
@@ -19,6 +20,8 @@ export default class ResponseParser {
         if (_.isArray(value)) {
           if (influxdb11format) {
             addUnique(res, value[1] || value[0]);
+          } else if (influxdbSelect) {
+            addUnique(res, value[1]);
           } else {
             addUnique(res, value[0]);
           }
