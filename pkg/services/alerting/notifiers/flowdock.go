@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
+
+const FlowdockMessageUrl = "https://api.flowdock.com/messages"
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
@@ -50,18 +53,33 @@ type FlowdockNotifier struct {
 func (this *FlowdockNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing Flowdock notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 
-	_, err := evalContext.GetRuleUrl()
-	if err != nil {
-		this.log.Error("Failed to get rule link", "error", err)
-		return err
-	}
-
 	out, err := json.Marshal(evalContext)
 	if err != nil {
 		panic(err)
 	}
 
 	this.log.Info("Debug", string(out))
+
+	body := this.getBody(evalContext)
+	body["flow_token"] = this.FlowToken
+
+	data, _ := json.Marshal(&body)
+	cmd := &models.SendWebhookSync{
+		Url:        FlowdockMessageUrl,
+		Body:       string(data),
+		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type": "application/json",
+		},
+	}
+
+	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+		this.log.Error(
+			"Failed to send notification to Flowdock", "error", err,
+			"webhook", this.Name, "body", string(data),
+		)
+		return err
+	}
 	return nil
 }
 
