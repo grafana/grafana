@@ -1,3 +1,5 @@
+-include local/Makefile
+
 all: deps build
 
 deps-go:

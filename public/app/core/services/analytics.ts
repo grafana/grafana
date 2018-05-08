@@ -19,6 +19,7 @@ export class Analytics {
       });
     ga.l = +new Date();
     ga('create', (<any>config).googleAnalyticsId, 'auto');
+    ga('set', 'anonymizeIp', true);
     return ga;
   }
 

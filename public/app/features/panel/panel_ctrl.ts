@@ -324,6 +324,7 @@ export class PanelCtrl {
     }
 
     var linkSrv = this.$injector.get('linkSrv');
+    var sanitize = this.$injector.get('$sanitize');
     var templateSrv = this.$injector.get('templateSrv');
     var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     var html = '<div class="markdown-html">';
@@ -346,7 +347,8 @@ export class PanelCtrl {
       html += '</ul>';
     }
 
-    return html + '</div>';
+    html += '</div>';
+    return sanitize(html);
   }
 
   openInspector() {
