@@ -25,8 +25,6 @@ export class MyPanelCtrl extends PanelCtrl {
   ...
 ```
 
-In this case, make sure the template has a single `<div>...</div>` root.  The plugin loader will modifiy that element adding a scrollbar.
-
 
 
 ### Examples
