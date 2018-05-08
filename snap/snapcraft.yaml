@@ -1,0 +1,58 @@
+name: grafana
+version: 4.5.0-1
+summary: The tool for monitoring and metric analytics & dashboards
+description: |
+  Grafana is an open source, feature rich metrics dashboard and graph editor for Graphite,
+  Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
+confinement: strict
+grade: stable
+
+apps:
+  grafana:
+    command: bin/grafana-internal
+    plugs:
+      - network
+      - network-bind
+    daemon: simple
+
+parts:
+  grafana-common:
+    plugin: dump
+    source: bin
+    organize:
+      grafana-internal: bin/
+  grafana:
+    plugin: nil
+    source-type: git
+    source: https://github.com/grafana/grafana
+    build: |
+      export GOPATH=$PWD/golang
+      mkdir -p $GOPATH/src/github.com/grafana
+      ln -s  $PWD $GOPATH/src/github.com/grafana/grafana
+      cd $GOPATH/src/github.com/grafana/grafana
+      go run build.go setup
+      go run build.go build
+    install: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/conf
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      cp conf/defaults.ini $SNAPCRAFT_PART_INSTALL/conf/
+      cp bin/* $SNAPCRAFT_PART_INSTALL/bin/
+    after: [go]
+  go:
+    source-tag: go1.8.3
+  grafana-ui:
+    plugin: nodejs
+    source-type: git
+    source: https://github.com/grafana/grafana
+    node-engine: '6.11.2'
+    node-package-manager: yarn
+    build: |
+      export PATH=$HOME/.npm-global/bin:$PATH
+      mkdir ~/.npm-global
+      npm config set prefix '~/.npm-global'
+      npm install -g yarn
+      yarn install --pure-lockfile
+      npm run build
+    install: |
+      cp -rf public_gen $SNAPCRAFT_PART_INSTALL/public
+    after: [grafana]
