@@ -85,7 +85,7 @@ module.exports = merge(common, {
         ]
       },
       require('./sass.rule.js')({
-        sourceMap: true, minimize: false, preserveUrl: true
+        sourceMap: true, minimize: false, preserveUrl: HOT
       }, extractSass),
       {
         test: /\.(ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,

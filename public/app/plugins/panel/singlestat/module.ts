@@ -77,7 +77,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private linkSrv) {
+  constructor($scope, $injector, private linkSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
