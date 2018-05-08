@@ -21,9 +21,7 @@ var panelTemplate = `
     </div>
 
     <div class="panel-content">
-      <div class="panel-height-helper">
-        <div><ng-transclude ></ng-transclude></div>
-      </div>
+      <ng-transclude class="panel-height-helper"></ng-transclude>
     </div>
   </div>
 
@@ -115,7 +113,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
           `;
 
           let scrollRoot = panelContent;
-          let scroller = panelContent.find(':first');
+          let scroller = panelContent.find(':first').find(':first');
 
           scrollRoot.addClass(scrollRootClass);
           $(scrollBarHTML).appendTo(scrollRoot);
