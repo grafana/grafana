@@ -75,9 +75,9 @@ export class TimePickerCtrl {
         this.tooltip += '<br/><br/>' + duration.humanize();
       } else {
         let lines = 0;
-        var h = duration.hours();
-        var m = duration.minutes();
-        var s = duration.seconds();
+        const h = duration.hours();
+        const m = duration.minutes();
+        const s = duration.seconds();
         this.tooltip += '<br/>';
         if (days >= 2) {
           this.tooltip += '<br/>' + duration.days() + ' days';
