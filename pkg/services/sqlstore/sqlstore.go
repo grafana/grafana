@@ -177,11 +177,8 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 func (ss *SqlStore) readConfig() {
 	sec := ss.Cfg.Raw.Section("database")
 
-	testUrl := sec.Key("url").String()
-
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
-		fmt.Printf("URL: %v", cfgURL)
 		dbURL, _ := url.Parse(cfgURL)
 		ss.dbCfg.Type = dbURL.Scheme
 		ss.dbCfg.Host = dbURL.Host
@@ -205,6 +202,7 @@ func (ss *SqlStore) readConfig() {
 			ss.dbCfg.Pwd = sec.Key("password").String()
 		}
 	}
+
 	ss.dbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
 	ss.dbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(2)
 	ss.dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
