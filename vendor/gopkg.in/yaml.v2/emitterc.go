@@ -995,9 +995,9 @@ func yaml_emitter_analyze_scalar(emitter *yaml_emitter_t, value []byte) bool {
 		space_break    = false
 
 		preceded_by_whitespace = false
-		followed_by_whitespace  = false
-		previous_space          = false
-		previous_break          = false
+		followed_by_whitespace = false
+		previous_space         = false
+		previous_break         = false
 	)
 
 	emitter.scalar_data.value = value

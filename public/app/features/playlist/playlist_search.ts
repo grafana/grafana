@@ -12,6 +12,7 @@ export class PlaylistSearchCtrl {
 
     $timeout(() => {
       this.query.query = '';
+      this.query.type = 'dash-db';
       this.searchDashboards();
     }, 100);
   }

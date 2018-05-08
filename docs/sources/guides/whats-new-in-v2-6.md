@@ -3,11 +3,6 @@ title = "What's New in Grafana v2.6"
 description = "Feature & improvement highlights for Grafana v2.6"
 keywords = ["grafana", "new", "documentation", "2.6"]
 type = "docs"
-[menu.docs]
-name = "Version 2.6"
-identifier = "v2.6"
-parent = "whatsnew"
-weight = 7
 +++
 
 # What's new in Grafana v2.6
@@ -20,7 +15,7 @@ support for multiple Cloudwatch credentials.
 <img src="/assets/img/features/table-panel.png">
 
 The new table panel is very flexible, supporting both multiple modes for time series as well as for
-table, annotation and raw JSON data. It also provides date formating and value formating and coloring options.
+table, annotation and raw JSON data. It also provides date formatting and value formatting and coloring options.
 
 ### Time series to rows
 

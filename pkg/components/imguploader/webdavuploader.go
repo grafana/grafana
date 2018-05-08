@@ -41,14 +41,20 @@ func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) 
 	url.Path = path.Join(url.Path, filename)
 
 	imgData, err := ioutil.ReadFile(pa)
+	if err != nil {
+		return "", err
+	}
+
 	req, err := http.NewRequest("PUT", url.String(), bytes.NewReader(imgData))
+	if err != nil {
+		return "", err
+	}
 
 	if u.username != "" {
 		req.SetBasicAuth(u.username, u.password)
 	}
 
 	res, err := netClient.Do(req)
-
 	if err != nil {
 		return "", err
 	}

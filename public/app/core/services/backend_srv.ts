@@ -170,7 +170,9 @@ export class BackendSrv {
 
     return this.$http(options)
       .then(response => {
-        appEvents.emit('ds-request-response', response);
+        if (!options.silent) {
+          appEvents.emit('ds-request-response', response);
+        }
         return response;
       })
       .catch(err => {
@@ -201,8 +203,9 @@ export class BackendSrv {
         if (err.data && !err.data.message && _.isString(err.data.error)) {
           err.data.message = err.data.error;
         }
-
-        appEvents.emit('ds-request-error', err);
+        if (!options.silent) {
+          appEvents.emit('ds-request-error', err);
+        }
         throw err;
       })
       .finally(() => {
@@ -221,8 +224,16 @@ export class BackendSrv {
     return this.get('/api/search', query);
   }
 
-  getDashboard(type, slug) {
-    return this.get('/api/dashboards/' + type + '/' + slug);
+  getDashboardBySlug(slug) {
+    return this.get(`/api/dashboards/db/${slug}`);
+  }
+
+  getDashboardByUid(uid: string) {
+    return this.get(`/api/dashboards/uid/${uid}`);
+  }
+
+  getFolderByUid(uid: string) {
+    return this.get(`/api/folders/${uid}`);
   }
 
   saveDashboard(dash, options) {
@@ -236,54 +247,51 @@ export class BackendSrv {
     });
   }
 
-  createDashboardFolder(name) {
-    const dash = {
-      schemaVersion: 16,
-      title: name.trim(),
-      editable: true,
-      panels: [],
-    };
+  createFolder(payload: any) {
+    return this.post('/api/folders', payload);
+  }
 
-    return this.post('/api/dashboards/db/', {
-      dashboard: dash,
-      isFolder: true,
-      overwrite: false,
-    }).then(res => {
-      return this.getDashboard('db', res.slug);
+  updateFolder(folder, options) {
+    options = options || {};
+
+    return this.put(`/api/folders/${folder.uid}`, {
+      title: folder.title,
+      version: folder.version,
+      overwrite: options.overwrite === true,
     });
   }
 
-  deleteDashboard(slug) {
-    let deferred = this.$q.defer();
-
-    this.getDashboard('db', slug).then(fullDash => {
-      this.delete(`/api/dashboards/db/${slug}`)
-        .then(() => {
-          deferred.resolve(fullDash);
-        })
-        .catch(err => {
-          deferred.reject(err);
-        });
-    });
-
-    return deferred.promise;
+  deleteFolder(uid: string, showSuccessAlert) {
+    return this.request({ method: 'DELETE', url: `/api/folders/${uid}`, showSuccessAlert: showSuccessAlert === true });
   }
 
-  deleteDashboards(dashboardSlugs) {
+  deleteDashboard(uid, showSuccessAlert) {
+    return this.request({
+      method: 'DELETE',
+      url: `/api/dashboards/uid/${uid}`,
+      showSuccessAlert: showSuccessAlert === true,
+    });
+  }
+
+  deleteFoldersAndDashboards(folderUids, dashboardUids) {
     const tasks = [];
 
-    for (let slug of dashboardSlugs) {
-      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, slug));
+    for (let folderUid of folderUids) {
+      tasks.push(this.createTask(this.deleteFolder.bind(this), true, folderUid, true));
+    }
+
+    for (let dashboardUid of dashboardUids) {
+      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, dashboardUid, true));
     }
 
     return this.executeInOrder(tasks, []);
   }
 
-  moveDashboards(dashboardSlugs, toFolder) {
+  moveDashboards(dashboardUids, toFolder) {
     const tasks = [];
 
-    for (let slug of dashboardSlugs) {
-      tasks.push(this.createTask(this.moveDashboard.bind(this), true, slug, toFolder));
+    for (let uid of dashboardUids) {
+      tasks.push(this.createTask(this.moveDashboard.bind(this), true, uid, toFolder));
     }
 
     return this.executeInOrder(tasks, []).then(result => {
@@ -295,10 +303,10 @@ export class BackendSrv {
     });
   }
 
-  private moveDashboard(slug, toFolder) {
+  private moveDashboard(uid, toFolder) {
     let deferred = this.$q.defer();
 
-    this.getDashboard('db', slug).then(fullDash => {
+    this.getDashboardByUid(uid).then(fullDash => {
       const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
 
       if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {

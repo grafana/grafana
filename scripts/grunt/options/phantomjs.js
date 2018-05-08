@@ -3,7 +3,7 @@ module.exports = function(config,grunt) {
 
   grunt.registerTask('phantomjs', 'Copy phantomjs binary to vendor/', function() {
 
-    var dest = './vendor/phantomjs/phantomjs';
+    var dest = './tools/phantomjs/phantomjs';
     var confDir = './node_modules/phantomjs-prebuilt/lib/';
 
     if (process.platform === "win32") {

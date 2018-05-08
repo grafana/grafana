@@ -72,18 +72,18 @@ const (
 	//
 	// For Tracer.Extract(): the carrier must be a `TextMapReader`.
 	//
-	// See HTTPHeadersCarrier for an implementation of both TextMapWriter
+	// See HTTPHeaderCarrier for an implementation of both TextMapWriter
 	// and TextMapReader that defers to an http.Header instance for storage.
 	// For example, Inject():
 	//
 	//    carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
 	//    err := span.Tracer().Inject(
-	//        span.Context(), opentracing.HTTPHeaders, carrier)
+	//        span, opentracing.HTTPHeaders, carrier)
 	//
 	// Or Extract():
 	//
 	//    carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
-	//    clientContext, err := tracer.Extract(
+	//    span, err := tracer.Extract(
 	//        opentracing.HTTPHeaders, carrier)
 	//
 	HTTPHeaders
@@ -144,15 +144,15 @@ func (c TextMapCarrier) Set(key, val string) {
 //
 // Example usage for server side:
 //
-//     carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
-//     clientContext, err := tracer.Extract(opentracing.HTTPHeaders, carrier)
+//     carrier := opentracing.HttpHeadersCarrier(httpReq.Header)
+//     spanContext, err := tracer.Extract(opentracing.HttpHeaders, carrier)
 //
 // Example usage for client side:
 //
 //     carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
 //     err := tracer.Inject(
 //         span.Context(),
-//         opentracing.HTTPHeaders,
+//         opentracing.HttpHeaders,
 //         carrier)
 //
 type HTTPHeadersCarrier http.Header

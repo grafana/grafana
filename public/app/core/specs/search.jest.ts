@@ -1,6 +1,12 @@
 import { SearchCtrl } from '../components/search/search';
 import { SearchSrv } from '../services/search_srv';
 
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    user: { orgId: 1 },
+  },
+}));
+
 describe('SearchCtrl', () => {
   const searchSrvStub = {
     search: (options: any) => {},
@@ -49,7 +55,7 @@ describe('SearchCtrl', () => {
         },
         {
           id: 0,
-          title: 'Root',
+          title: 'General',
           items: [{ id: 3, selected: false }, { id: 5, selected: false }],
           selected: false,
           expanded: true,
@@ -146,7 +152,7 @@ describe('SearchCtrl', () => {
         },
         {
           id: 0,
-          title: 'Root',
+          title: 'General',
           items: [{ id: 3, selected: false }, { id: 5, selected: false }],
           selected: false,
           expanded: true,

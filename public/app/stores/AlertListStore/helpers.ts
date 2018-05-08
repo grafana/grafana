@@ -1,4 +1,4 @@
-﻿import moment from 'moment';
+import moment from 'moment';
 import alertDef from 'app/features/alerting/alert_def';
 
 export function setStateFields(rule, state) {

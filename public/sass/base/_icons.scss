@@ -11,6 +11,14 @@
   vertical-align: middle;
 }
 
+.gicon--has-hover {
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
 .mini {
   width: 0.8em;
   height: 0.8em;
@@ -112,6 +120,10 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_data_sources.svg');
 }
 
+.gicon-editor {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_editor.svg');
+}
+
 .gicon-folder-new {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_folder.svg');
 }
@@ -172,6 +184,10 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_variable.svg');
 }
 
+.gicon-viewer {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_viewer.svg');
+}
+
 .gicon-zoom-out {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_zoom_out.svg');
 }
@@ -189,4 +205,9 @@
   .gicon-question {
     background-image: url('../img/icons_dark_theme/icon_question.svg');
   }
+}
+
+.fa--permissions-list {
+  min-width: 20px;
+  padding-right: 5px;
 }

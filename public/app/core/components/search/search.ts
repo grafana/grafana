@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
 import { SearchSrv } from 'app/core/services/search_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
@@ -15,6 +16,7 @@ export class SearchCtrl {
   ignoreClose: any;
   isLoading: boolean;
   initialFolderFilterTitle: string;
+  isEditor: string;
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
@@ -22,6 +24,9 @@ export class SearchCtrl {
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
 
     this.initialFolderFilterTitle = 'All';
+    this.getTags = this.getTags.bind(this);
+    this.onTagSelect = this.onTagSelect.bind(this);
+    this.isEditor = contextSrv.isEditor;
   }
 
   closeSearch() {
@@ -86,6 +91,19 @@ export class SearchCtrl {
         }
       }
     }
+  }
+
+  onFilterboxClick() {
+    this.giveSearchFocus = 0;
+    this.preventClose();
+  }
+
+  preventClose() {
+    this.ignoreClose = true;
+
+    this.$timeout(() => {
+      this.ignoreClose = false;
+    }, 100);
   }
 
   moveSelection(direction) {
@@ -160,7 +178,6 @@ export class SearchCtrl {
     if (_.indexOf(this.query.tag, tag) === -1) {
       this.query.tag.push(tag);
       this.search();
-      this.giveSearchFocus = this.giveSearchFocus + 1;
     }
   }
 
@@ -173,10 +190,17 @@ export class SearchCtrl {
   }
 
   getTags() {
-    return this.searchSrv.getDashboardTags().then(results => {
-      this.results = results;
-      this.giveSearchFocus = this.giveSearchFocus + 1;
-    });
+    return this.searchSrv.getDashboardTags();
+  }
+
+  onTagSelect(newTags) {
+    this.query.tag = _.map(newTags, tag => tag.value);
+    this.search();
+  }
+
+  clearSearchFilter() {
+    this.query.tag = [];
+    this.search();
   }
 
   showStarred() {

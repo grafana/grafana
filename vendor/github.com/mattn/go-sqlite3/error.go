@@ -7,12 +7,16 @@ package sqlite3
 
 import "C"
 
+// ErrNo inherit errno.
 type ErrNo int
 
+// ErrNoMask is mask code.
 const ErrNoMask C.int = 0xff
 
+// ErrNoExtended is extended errno.
 type ErrNoExtended int
 
+// Error implement sqlite error code.
 type Error struct {
 	Code         ErrNo         /* The error code returned by SQLite */
 	ExtendedCode ErrNoExtended /* The extended error code returned by SQLite */
@@ -52,14 +56,17 @@ var (
 	ErrWarning    = ErrNo(28) /* Warnings from sqlite3_log() */
 )
 
+// Error return error message from errno.
 func (err ErrNo) Error() string {
 	return Error{Code: err}.Error()
 }
 
+// Extend return extended errno.
 func (err ErrNo) Extend(by int) ErrNoExtended {
 	return ErrNoExtended(int(err) | (by << 8))
 }
 
+// Error return error message that is extended code.
 func (err ErrNoExtended) Error() string {
 	return Error{Code: ErrNo(C.int(err) & ErrNoMask), ExtendedCode: err}.Error()
 }
@@ -121,7 +128,7 @@ var (
 	ErrConstraintTrigger      = ErrConstraint.Extend(7)
 	ErrConstraintUnique       = ErrConstraint.Extend(8)
 	ErrConstraintVTab         = ErrConstraint.Extend(9)
-	ErrConstraintRowId        = ErrConstraint.Extend(10)
+	ErrConstraintRowID        = ErrConstraint.Extend(10)
 	ErrNoticeRecoverWAL       = ErrNotice.Extend(1)
 	ErrNoticeRecoverRollback  = ErrNotice.Extend(2)
 	ErrWarningAutoIndex       = ErrWarning.Extend(1)

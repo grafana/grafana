@@ -44,7 +44,7 @@ describe('timeSrv', function() {
       expect(time.raw.to).to.be('now');
     });
 
-    it('should handle formated dates', function() {
+    it('should handle formatted dates', function() {
       ctx.$location.search({ from: '20140410T052010', to: '20140520T031022' });
       ctx.service.init(_dashboard);
       var time = ctx.service.timeRange(true);
@@ -52,7 +52,7 @@ describe('timeSrv', function() {
       expect(time.to.valueOf()).to.equal(new Date('2014-05-20T03:10:22Z').getTime());
     });
 
-    it('should handle formated dates without time', function() {
+    it('should handle formatted dates without time', function() {
       ctx.$location.search({ from: '20140410', to: '20140520' });
       ctx.service.init(_dashboard);
       var time = ctx.service.timeRange(true);

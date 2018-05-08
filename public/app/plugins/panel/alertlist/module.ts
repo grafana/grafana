@@ -74,13 +74,19 @@ class AlertListPanel extends PanelCtrl {
   }
 
   onRefresh() {
+    let getAlertsPromise;
+
     if (this.panel.show === 'current') {
-      this.getCurrentAlertState();
+      getAlertsPromise = this.getCurrentAlertState();
     }
 
     if (this.panel.show === 'changes') {
-      this.getStateChanges();
+      getAlertsPromise = this.getStateChanges();
     }
+
+    getAlertsPromise.then(() => {
+      this.renderingCompleted();
+    });
   }
 
   getStateChanges() {
@@ -97,7 +103,7 @@ class AlertListPanel extends PanelCtrl {
     params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
     params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
 
-    this.backendSrv.get(`/api/annotations`, params).then(res => {
+    return this.backendSrv.get(`/api/annotations`, params).then(res => {
       this.alertHistory = _.map(res, al => {
         al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
         al.stateModel = alertDef.getStateDisplayModel(al.newState);
@@ -105,6 +111,8 @@ class AlertListPanel extends PanelCtrl {
         return al;
       });
       this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
+
+      return this.alertHistory;
     });
   }
 
@@ -117,7 +125,7 @@ class AlertListPanel extends PanelCtrl {
       params.dashboardId = this.dashboard.id;
     }
 
-    this.backendSrv.get(`/api/alerts`, params).then(res => {
+    return this.backendSrv.get(`/api/alerts`, params).then(res => {
       this.currentAlerts = this.sortResult(
         _.map(res, al => {
           al.stateModel = alertDef.getStateDisplayModel(al.state);
@@ -128,6 +136,8 @@ class AlertListPanel extends PanelCtrl {
         })
       );
       this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
+
+      return this.currentAlerts;
     });
   }
 

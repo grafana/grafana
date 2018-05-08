@@ -8,7 +8,6 @@ export class GraphiteConfigCtrl {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.graphiteVersion = this.current.jsonData.graphiteVersion || '0.9';
-
     this.autoDetectGraphiteVersion();
   }
 

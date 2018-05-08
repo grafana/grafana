@@ -10,18 +10,16 @@ import (
 type DashboardProvisioner struct {
 	cfgReader *configReader
 	log       log.Logger
-	ctx       context.Context
 }
 
-func Provision(ctx context.Context, configDirectory string) (*DashboardProvisioner, error) {
+func NewDashboardProvisioner(configDirectory string) *DashboardProvisioner {
+	log := log.New("provisioning.dashboard")
 	d := &DashboardProvisioner{
-		cfgReader: &configReader{path: configDirectory},
-		log:       log.New("provisioning.dashboard"),
-		ctx:       ctx,
+		cfgReader: &configReader{path: configDirectory, log: log},
+		log:       log,
 	}
 
-	err := d.Provision(ctx)
-	return d, err
+	return d
 }
 
 func (provider *DashboardProvisioner) Provision(ctx context.Context) error {

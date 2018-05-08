@@ -339,6 +339,15 @@ func DialOpen(d Dialer, name string) (_ driver.Conn, err error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// cn.ssl and cn.startup panic on error. Make sure we don't leak cn.c.
+	panicking := true
+	defer func() {
+		if panicking {
+			cn.c.Close()
+		}
+	}()
+
 	cn.ssl(o)
 	cn.buf = bufio.NewReader(cn.c)
 	cn.startup(o)
@@ -347,6 +356,7 @@ func DialOpen(d Dialer, name string) (_ driver.Conn, err error) {
 	if timeout, ok := o["connect_timeout"]; ok && timeout != "0" {
 		err = cn.c.SetDeadline(time.Time{})
 	}
+	panicking = false
 	return cn, err
 }
 

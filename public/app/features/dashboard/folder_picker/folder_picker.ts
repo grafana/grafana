@@ -12,16 +12,19 @@ export class FolderPickerCtrl {
   enterFolderCreation: any;
   exitFolderCreation: any;
   enableCreateNew: boolean;
-  rootName = 'Root';
+  rootName = 'General';
   folder: any;
   createNewFolder: boolean;
   newFolderName: string;
   newFolderNameTouched: boolean;
   hasValidationError: boolean;
   validationError: any;
+  isEditor: boolean;
 
   /** @ngInject */
-  constructor(private backendSrv, private validationSrv) {
+  constructor(private backendSrv, private validationSrv, private contextSrv) {
+    this.isEditor = this.contextSrv.isEditor;
+
     if (!this.labelClass) {
       this.labelClass = 'width-7';
     }
@@ -30,23 +33,28 @@ export class FolderPickerCtrl {
   }
 
   getOptions(query) {
-    var params = {
+    const params = {
       query: query,
       type: 'dash-folder',
+      permission: 'Edit',
     };
 
-    return this.backendSrv.search(params).then(result => {
+    return this.backendSrv.get('api/search', params).then(result => {
       if (
-        query === '' ||
-        query.toLowerCase() === 'r' ||
-        query.toLowerCase() === 'ro' ||
-        query.toLowerCase() === 'roo' ||
-        query.toLowerCase() === 'root'
+        this.isEditor &&
+        (query === '' ||
+          query.toLowerCase() === 'g' ||
+          query.toLowerCase() === 'ge' ||
+          query.toLowerCase() === 'gen' ||
+          query.toLowerCase() === 'gene' ||
+          query.toLowerCase() === 'gener' ||
+          query.toLowerCase() === 'genera' ||
+          query.toLowerCase() === 'general')
       ) {
         result.unshift({ title: this.rootName, id: 0 });
       }
 
-      if (this.enableCreateNew && query === '') {
+      if (this.isEditor && this.enableCreateNew && query === '') {
         result.unshift({ title: '-- New Folder --', id: -1 });
       }
 
@@ -69,7 +77,7 @@ export class FolderPickerCtrl {
     this.newFolderNameTouched = true;
 
     this.validationSrv
-      .validateNewDashboardOrFolderName(this.newFolderName)
+      .validateNewFolderName(this.newFolderName)
       .then(() => {
         this.hasValidationError = false;
       })
@@ -85,13 +93,13 @@ export class FolderPickerCtrl {
       evt.preventDefault();
     }
 
-    return this.backendSrv.createDashboardFolder(this.newFolderName).then(result => {
+    return this.backendSrv.createFolder({ title: this.newFolderName }).then(result => {
       appEvents.emit('alert-success', ['Folder Created', 'OK']);
 
       this.closeCreateFolder();
       this.folder = {
-        text: result.dashboard.title,
-        value: result.dashboard.id,
+        text: result.title,
+        value: result.id,
       };
       this.onFolderChange(this.folder);
     });
@@ -120,6 +128,9 @@ export class FolderPickerCtrl {
     if (this.initialFolderId && this.initialFolderId > 0) {
       this.getOptions('').then(result => {
         this.folder = _.find(result, { value: this.initialFolderId });
+        if (!this.folder) {
+          this.folder = { text: this.initialTitle, value: this.initialFolderId };
+        }
         this.onFolderLoad();
       });
     } else {

@@ -1,18 +1,25 @@
 import _ from 'lodash';
 
+import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
-import TableModel from 'app/core/table_model';
+import { ResultTransformer } from './result_transformer';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
-function prometheusSpecialRegexEscape(value) {
-  return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
+export function prometheusRegularEscape(value) {
+  return value.replace(/'/g, "\\\\'");
+}
+
+export function prometheusSpecialRegexEscape(value) {
+  return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
 }
 
 export class PrometheusDatasource {
   type: string;
   editorSrc: string;
   name: string;
+  supportsExplore: boolean;
   supportMetrics: boolean;
   url: string;
   directUrl: string;
@@ -20,26 +27,49 @@ export class PrometheusDatasource {
   withCredentials: any;
   metricsNameCache: any;
   interval: string;
+  httpMethod: string;
+  resultTransformer: ResultTransformer;
 
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
+  constructor(instanceSettings, private $q, private backendSrv: BackendSrv, private templateSrv, private timeSrv) {
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.name = instanceSettings.name;
+    this.supportsExplore = true;
     this.supportMetrics = true;
     this.url = instanceSettings.url;
     this.directUrl = instanceSettings.directUrl;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
+    this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
+    this.resultTransformer = new ResultTransformer(templateSrv);
   }
 
-  _request(method, url, requestId?) {
+  _request(url, data?, options?: any) {
     var options: any = {
       url: this.url + url,
-      method: method,
-      requestId: requestId,
+      method: this.httpMethod,
+      ...options,
     };
+    if (options.method === 'GET') {
+      if (!_.isEmpty(data)) {
+        options.url =
+          options.url +
+          '?' +
+          _.map(data, (v, k) => {
+            return encodeURIComponent(k) + '=' + encodeURIComponent(v);
+          }).join('&');
+      }
+    } else {
+      options.headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      options.transformRequest = data => {
+        return $.param(data);
+      };
+      options.data = data;
+    }
 
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
@@ -54,10 +84,15 @@ export class PrometheusDatasource {
     return this.backendSrv.datasourceRequest(options);
   }
 
+  // Use this for tab completion features, wont publish response to other components
+  metadataRequest(url) {
+    return this._request(url, null, { method: 'GET', silent: true });
+  }
+
   interpolateQueryExpr(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
-      return value;
+      return prometheusRegularEscape(value);
     }
 
     if (typeof value === 'string') {
@@ -80,7 +115,6 @@ export class PrometheusDatasource {
   }
 
   query(options) {
-    var self = this;
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
     var range = Math.ceil(end - start);
@@ -114,26 +148,27 @@ export class PrometheusDatasource {
     });
 
     return this.$q.all(allQueryPromise).then(responseList => {
-      var result = [];
+      let result = [];
 
       _.each(responseList, (response, index) => {
         if (response.status === 'error') {
           throw response.error;
         }
 
-        if (activeTargets[index].format === 'table') {
-          result.push(self.transformMetricDataToTable(response.data.data.result, responseList.length, index));
-        } else {
-          for (let metricData of response.data.data.result) {
-            if (response.data.data.resultType === 'matrix') {
-              let step = queries[index].step;
-              let range = this.clampRange(start, end, step);
-              result.push(self.transformMetricData(metricData, activeTargets[index], range.start, range.end, step));
-            } else if (response.data.data.resultType === 'vector') {
-              result.push(self.transformInstantMetricData(metricData, activeTargets[index]));
-            }
-          }
-        }
+        let step = queries[index].step;
+        let { start, end } = this.clampRange(start, end, step);
+        let transformerOptions = {
+          format: activeTargets[index].format,
+          step,
+          legendFormat: activeTargets[index].legendFormat,
+          start,
+          end,
+          responseListLength: responseList.length,
+          responseIndex: index,
+          refId: activeTargets[index].refId,
+        };
+
+        this.resultTransformer.transform(result, response, transformerOptions);
       });
 
       return { data: result };
@@ -183,21 +218,23 @@ export class PrometheusDatasource {
       throw { message: 'Invalid time range' };
     }
 
-    var url =
-      '/api/v1/query_range?query=' +
-      encodeURIComponent(query.expr) +
-      '&start=' +
-      start +
-      '&end=' +
-      end +
-      '&step=' +
-      query.step;
-    return this._request('GET', url, query.requestId);
+    var url = '/api/v1/query_range';
+    var data = {
+      query: query.expr,
+      start: start,
+      end: end,
+      step: query.step,
+    };
+    return this._request(url, data, { requestId: query.requestId });
   }
 
   performInstantQuery(query, time) {
-    var url = '/api/v1/query?query=' + encodeURIComponent(query.expr) + '&time=' + time;
-    return this._request('GET', url, query.requestId);
+    var url = '/api/v1/query';
+    var data = {
+      query: query.expr,
+      time: time,
+    };
+    return this._request(url, data, { requestId: query.requestId });
   }
 
   performSuggestQuery(query, cache = false) {
@@ -211,7 +248,7 @@ export class PrometheusDatasource {
       );
     }
 
-    return this._request('GET', url).then(result => {
+    return this.metadataRequest(url).then(result => {
       this.metricsNameCache = {
         data: result.data.data,
         expire: Date.now() + 60 * 1000,
@@ -275,9 +312,9 @@ export class PrometheusDatasource {
             var event = {
               annotation: annotation,
               time: Math.floor(parseFloat(value[0])) * 1000,
-              title: self.renderTemplate(titleFormat, series.metric),
+              title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
               tags: tags,
-              text: self.renderTemplate(textFormat, series.metric),
+              text: self.resultTransformer.renderTemplate(textFormat, series.metric),
             };
 
             eventList.push(event);
@@ -290,130 +327,29 @@ export class PrometheusDatasource {
   }
 
   testDatasource() {
-    return this.metricFindQuery('metrics(.*)').then(function() {
-      return { status: 'success', message: 'Data source is working' };
+    let now = new Date().getTime();
+    return this.performInstantQuery({ expr: '1+1' }, now / 1000).then(response => {
+      if (response.data.status === 'success') {
+        return { status: 'success', message: 'Data source is working' };
+      } else {
+        return { status: 'error', message: response.error };
+      }
     });
   }
 
-  transformMetricData(md, options, start, end, step) {
-    var dps = [],
-      metricLabel = null;
-
-    metricLabel = this.createMetricLabel(md.metric, options);
-
-    var stepMs = step * 1000;
-    var baseTimestamp = start * 1000;
-    for (let value of md.values) {
-      var dp_value = parseFloat(value[1]);
-      if (_.isNaN(dp_value)) {
-        dp_value = null;
-      }
-
-      var timestamp = parseFloat(value[0]) * 1000;
-      for (let t = baseTimestamp; t < timestamp; t += stepMs) {
-        dps.push([null, t]);
-      }
-      baseTimestamp = timestamp + stepMs;
-      dps.push([dp_value, timestamp]);
+  getExploreState(panel) {
+    let state = {};
+    if (panel.targets) {
+      const queries = panel.targets.map(t => ({
+        query: this.templateSrv.replace(t.expr, {}, this.interpolateQueryExpr),
+        format: t.format,
+      }));
+      state = {
+        ...state,
+        queries,
+      };
     }
-
-    var endTimestamp = end * 1000;
-    for (let t = baseTimestamp; t <= endTimestamp; t += stepMs) {
-      dps.push([null, t]);
-    }
-
-    return { target: metricLabel, datapoints: dps };
-  }
-
-  transformMetricDataToTable(md, resultCount: number, resultIndex: number) {
-    var table = new TableModel();
-    var i, j;
-    var metricLabels = {};
-
-    if (md.length === 0) {
-      return table;
-    }
-
-    // Collect all labels across all metrics
-    _.each(md, function(series) {
-      for (var label in series.metric) {
-        if (!metricLabels.hasOwnProperty(label)) {
-          metricLabels[label] = 1;
-        }
-      }
-    });
-
-    // Sort metric labels, create columns for them and record their index
-    var sortedLabels = _.keys(metricLabels).sort();
-    table.columns.push({ text: 'Time', type: 'time' });
-    _.each(sortedLabels, function(label, labelIndex) {
-      metricLabels[label] = labelIndex + 1;
-      table.columns.push({ text: label });
-    });
-    let valueText = resultCount > 1 ? `Value #${String.fromCharCode(65 + resultIndex)}` : 'Value';
-    table.columns.push({ text: valueText });
-
-    // Populate rows, set value to empty string when label not present.
-    _.each(md, function(series) {
-      if (series.value) {
-        series.values = [series.value];
-      }
-      if (series.values) {
-        for (i = 0; i < series.values.length; i++) {
-          var values = series.values[i];
-          var reordered: any = [values[0] * 1000];
-          if (series.metric) {
-            for (j = 0; j < sortedLabels.length; j++) {
-              var label = sortedLabels[j];
-              if (series.metric.hasOwnProperty(label)) {
-                reordered.push(series.metric[label]);
-              } else {
-                reordered.push('');
-              }
-            }
-          }
-          reordered.push(parseFloat(values[1]));
-          table.rows.push(reordered);
-        }
-      }
-    });
-
-    return table;
-  }
-
-  transformInstantMetricData(md, options) {
-    var dps = [],
-      metricLabel = null;
-    metricLabel = this.createMetricLabel(md.metric, options);
-    dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: metricLabel, datapoints: dps };
-  }
-
-  createMetricLabel(labelData, options) {
-    if (_.isUndefined(options) || _.isEmpty(options.legendFormat)) {
-      return this.getOriginalMetricName(labelData);
-    }
-
-    return this.renderTemplate(this.templateSrv.replace(options.legendFormat), labelData) || '{}';
-  }
-
-  renderTemplate(aliasPattern, aliasData) {
-    var aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-    return aliasPattern.replace(aliasRegex, function(match, g1) {
-      if (aliasData[g1]) {
-        return aliasData[g1];
-      }
-      return g1;
-    });
-  }
-
-  getOriginalMetricName(labelData) {
-    var metricName = labelData.__name__ || '';
-    delete labelData.__name__;
-    var labelPart = _.map(_.toPairs(labelData), function(label) {
-      return label[0] + '="' + label[1] + '"';
-    }).join(',');
-    return metricName + '{' + labelPart + '}';
+    return state;
   }
 
   getPrometheusTime(date, roundUp) {
@@ -421,5 +357,9 @@ export class PrometheusDatasource {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() / 1000);
+  }
+
+  getOriginalMetricName(labelData) {
+    return this.resultTransformer.getOriginalMetricName(labelData);
   }
 }

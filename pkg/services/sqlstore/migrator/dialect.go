@@ -19,6 +19,7 @@ type Dialect interface {
 	LikeStr() string
 	Default(col *Column) string
 	BooleanStr(bool) string
+	DateTimeFunc(string) string
 
 	CreateIndexSql(tableName string, index *Index) string
 	CreateTableSql(table *Table) string
@@ -78,9 +79,12 @@ func (b *BaseDialect) Default(col *Column) string {
 	return col.Default
 }
 
+func (db *BaseDialect) DateTimeFunc(value string) string {
+	return value
+}
+
 func (b *BaseDialect) CreateTableSql(table *Table) string {
-	var sql string
-	sql = "CREATE TABLE IF NOT EXISTS "
+	sql := "CREATE TABLE IF NOT EXISTS "
 	sql += b.dialect.Quote(table.Name) + " (\n"
 
 	pkList := table.PrimaryKeys
@@ -157,8 +161,7 @@ func (db *BaseDialect) RenameTable(oldName string, newName string) string {
 
 func (db *BaseDialect) DropIndexSql(tableName string, index *Index) string {
 	quote := db.dialect.Quote
-	var name string
-	name = index.XName(tableName)
+	name := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
 }
 

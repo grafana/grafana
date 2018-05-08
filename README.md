@@ -9,9 +9,6 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
 ![](http://docs.grafana.org/assets/img/features/dashboard_ex1.png)
 
-## Grafana v5 Alpha Preview
-Grafana master is now v5.0 alpha. This is going to be the biggest and most foundational release Grafana has ever had, coming with a ton of UX improvements, a new dashboard grid engine, dashboard folders, user teams and permissions. Checkout out this [video preview](https://www.youtube.com/watch?v=BC_YRNpqj5k) of Grafana v5.
-
 ## Installation
 Head to [docs.grafana.org](http://docs.grafana.org/installation/) and [download](https://grafana.com/get)
 the latest release.
@@ -27,13 +24,13 @@ the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.9
+- Go 1.10
 - NodeJS LTS
 
 ### Building the backend
 ```bash
 go get github.com/grafana/grafana
-cd ~/go/src/github.com/grafana/grafana
+cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup
 go run build.go build
 ```
@@ -42,27 +39,32 @@ go run build.go build
 
 For this you need nodejs (v.6+).
 
+To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-npm run build
-```
-
-To rebuild frontend assets (typescript, sass etc) as you change them start the watcher via.
-
-```bash
 npm run watch
 ```
 
-Run tests
+Build the assets, rebuild on file change with Hot Module Replacement (HMR), and serve them by webpack-dev-server (http://localhost:3333):
 ```bash
-npm run test
+yarn start
+# OR set a theme
+env GRAFANA_THEME=light yarn start
+```
+Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.
+
+Run tests 
+```bash
+npm run jest
 ```
 
-Run tests in watch mode
+Run karma tests
 ```bash
-npm run watch-test
+npm run karma
 ```
+
+Run
 
 ### Recompile backend on source change
 
@@ -86,8 +88,11 @@ In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = 
 
 ### Running tests
 
-- You can run backend Golang tests using "go test ./pkg/...".
-- Execute all frontend tests with "npm run test"
+#### Frontend
+Execute all frontend tests
+```bash
+npm run test
+```
 
 Writing & watching frontend tests (we have two test runners)
 
@@ -97,6 +102,18 @@ Writing & watching frontend tests (we have two test runners)
 - karma + mocha is used for testing angularjs components. We do want to migrate these test to jest over time (if possible).
   - Start watcher: `npm run karma`
   - Karma+Mocha runs all files that end with the name "_specs.ts".
+
+#### Backend
+```bash
+# Run Golang tests using sqlite3 as database (default)
+go test ./pkg/... 
+
+# Run Golang tests using mysql as database - convenient to use /docker/blocks/mysql_tests
+GRAFANA_TEST_DB=mysql go test ./pkg/... 
+
+# Run Golang tests using postgres as database - convenient to use /docker/blocks/postgres_tests
+GRAFANA_TEST_DB=postgres go test ./pkg/... 
+```
 
 ## Contribute
 

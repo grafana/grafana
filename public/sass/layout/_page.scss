@@ -23,14 +23,29 @@
   @include clearfix();
 }
 
+.page-full {
+  margin-left: $page-sidebar-margin;
+  padding-left: $spacer;
+  padding-right: $spacer;
+  @include clearfix();
+}
+
 .scroll-canvas {
   position: absolute;
   width: 100%;
   overflow: auto;
   height: 100%;
+  -webkit-overflow-scrolling: touch;
 
   &--dashboard {
     height: calc(100% - 56px);
+  }
+}
+
+// fix for phantomjs
+.body--phantomjs {
+  .scroll-canvas {
+    overflow: hidden;
   }
 }
 
@@ -66,9 +81,7 @@
 }
 
 .sidebar-content {
-  width: calc(
-    100% - #{$page-sidebar-width + $page-sidebar-margin}
-  ); // sidebar width + margin
+  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
 }
 
 .sidebar-container {
@@ -88,6 +101,12 @@
 
 .page-sub-heading {
   margin-bottom: $spacer;
+}
+
+.page-sub-heading-icon {
+  margin-left: $spacer;
+  vertical-align: 6px;
+  font-size: 13px;
 }
 
 .page-sidebar {

@@ -19,10 +19,10 @@ describe('DashboardImportCtrl', function() {
     };
 
     validationSrv = {
-      validateNewDashboardOrFolderName: jest.fn().mockReturnValue(Promise.resolve()),
+      validateNewDashboardName: jest.fn().mockReturnValue(Promise.resolve()),
     };
 
-    ctx.ctrl = new DashboardImportCtrl(backendSrv, validationSrv, navModelSrv, {}, {}, {});
+    ctx.ctrl = new DashboardImportCtrl(backendSrv, validationSrv, navModelSrv, {}, {});
   });
 
   describe('when uploading json', function() {
@@ -56,7 +56,7 @@ describe('DashboardImportCtrl', function() {
     });
   });
 
-  describe('when specifing grafana.com url', function() {
+  describe('when specifying grafana.com url', function() {
     beforeEach(function() {
       ctx.ctrl.gnetUrl = 'http://grafana.com/dashboards/123';
       // setup api mock
@@ -73,7 +73,7 @@ describe('DashboardImportCtrl', function() {
     });
   });
 
-  describe('when specifing dashbord id', function() {
+  describe('when specifying dashboard id', function() {
     beforeEach(function() {
       ctx.ctrl.gnetUrl = '2342';
       // setup api mock

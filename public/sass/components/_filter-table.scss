@@ -81,7 +81,11 @@
 
   &--hover {
     tbody tr:hover {
-      background: $dark-3;
+      background: $table-bg-hover;
     }
   }
+}
+.filter-table__weak-italic {
+  font-style: italic;
+  color: $text-color-weak;
 }

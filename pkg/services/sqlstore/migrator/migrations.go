@@ -1,7 +1,6 @@
 package migrator
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -113,7 +112,7 @@ func NewDropIndexMigration(table Table, index *Index) *DropIndexMigration {
 
 func (m *DropIndexMigration) Sql(dialect Dialect) string {
 	if m.index.Name == "" {
-		m.index.Name = fmt.Sprintf("%s", strings.Join(m.index.Cols, "_"))
+		m.index.Name = strings.Join(m.index.Cols, "_")
 	}
 	return dialect.DropIndexSql(m.tableName, m.index)
 }
@@ -180,7 +179,7 @@ type CopyTableDataMigration struct {
 	targetTable string
 	sourceCols  []string
 	targetCols  []string
-	colMap      map[string]string
+	//colMap      map[string]string
 }
 
 func NewCopyTableDataMigration(targetTable string, sourceTable string, colMap map[string]string) *CopyTableDataMigration {

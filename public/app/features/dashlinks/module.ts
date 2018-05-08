@@ -15,7 +15,7 @@ function dashLinksContainer() {
 }
 
 /** @ngInject */
-function dashLink($compile, linkSrv) {
+function dashLink($compile, $sanitize, linkSrv) {
   return {
     restrict: 'E',
     link: function(scope, elem) {
@@ -30,7 +30,9 @@ function dashLink($compile, linkSrv) {
       if (link.asDropdown) {
         template +=
           '<ul class="dropdown-menu" role="menu">' +
-          '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}">{{dash.title}}</a></li>' +
+          '<li ng-repeat="dash in link.searchHits">' +
+          '<a href="{{dash.url}}" target="{{dash.target}}">{{dash.title}}</a>' +
+          '</li>' +
           '</ul>';
       }
 
@@ -47,10 +49,21 @@ function dashLink($compile, linkSrv) {
         var linkInfo = linkSrv.getAnchorInfo(link);
         span.text(linkInfo.title);
         anchor.attr('href', linkInfo.href);
+        sanitizeAnchor();
+
+        // tooltip
+        elem.find('a').tooltip({
+          title: $sanitize(scope.link.tooltip),
+          html: true,
+          container: 'body',
+        });
       }
 
-      // tooltip
-      elem.find('a').tooltip({ title: scope.link.tooltip, html: true, container: 'body' });
+      function sanitizeAnchor() {
+        const anchorSanitized = $sanitize(anchor.parent().html());
+        anchor.parent().html(anchorSanitized);
+      }
+
       icon.attr('class', 'fa fa-fw ' + scope.link.icon);
       anchor.attr('target', scope.link.target);
 
@@ -84,6 +97,7 @@ export class DashLinksContainerCtrl {
               tags: linkDef.tags,
               keepTime: linkDef.keepTime,
               includeVars: linkDef.includeVars,
+              target: linkDef.targetBlank ? '_blank' : '_self',
               icon: 'fa fa-bars',
               asDropdown: true,
             },
@@ -128,6 +142,7 @@ export class DashLinksContainerCtrl {
               memo.push({
                 title: dash.title,
                 url: 'dashboard/' + dash.uri,
+                target: link.target,
                 icon: 'fa fa-th-large',
                 keepTime: link.keepTime,
                 includeVars: link.includeVars,

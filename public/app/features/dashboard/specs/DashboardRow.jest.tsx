@@ -7,14 +7,19 @@ describe('DashboardRow', () => {
   let wrapper, panel, getPanelContainer, dashboardMock;
 
   beforeEach(() => {
-    dashboardMock = {toggleRow: jest.fn()};
+    dashboardMock = {
+      toggleRow: jest.fn(),
+      meta: {
+        canEdit: true,
+      },
+    };
 
     getPanelContainer = jest.fn().mockReturnValue({
       getDashboard: jest.fn().mockReturnValue(dashboardMock),
-      getPanelLoader: jest.fn()
+      getPanelLoader: jest.fn(),
     });
 
-    panel = new PanelModel({collapsed: false});
+    panel = new PanelModel({ collapsed: false });
     wrapper = shallow(<DashboardRow panel={panel} getPanelContainer={getPanelContainer} />);
   });
 
@@ -30,4 +35,14 @@ describe('DashboardRow', () => {
     expect(dashboardMock.toggleRow.mock.calls).toHaveLength(1);
   });
 
+  it('should have two actions as admin', () => {
+    expect(wrapper.find('.dashboard-row__actions .pointer')).toHaveLength(2);
+  });
+
+  it('should have zero actions when cannot edit', () => {
+    dashboardMock.meta.canEdit = false;
+    panel = new PanelModel({ collapsed: false });
+    wrapper = shallow(<DashboardRow panel={panel} getPanelContainer={getPanelContainer} />);
+    expect(wrapper.find('.dashboard-row__actions .pointer')).toHaveLength(0);
+  });
 });

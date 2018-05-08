@@ -69,7 +69,7 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 
 	for _, include := range pb.Includes {
 		if include.Role == "" {
-			include.Role = m.RoleType(m.ROLE_VIEWER)
+			include.Role = m.ROLE_VIEWER
 		}
 	}
 

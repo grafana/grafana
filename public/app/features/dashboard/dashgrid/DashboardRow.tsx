@@ -27,6 +27,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     this.toggle = this.toggle.bind(this);
     this.openSettings = this.openSettings.bind(this);
     this.delete = this.delete.bind(this);
+    this.update = this.update.bind(this);
   }
 
   toggle() {
@@ -37,13 +38,18 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   }
 
+  update() {
+    this.dashboard.processRepeats();
+    this.forceUpdate();
+  }
+
   openSettings() {
     appEvents.emit('show-modal', {
       templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
       modalClass: 'modal--narrow',
       model: {
         row: this.props.panel,
-        onUpdated: this.forceUpdate.bind(this),
+        onUpdated: this.update.bind(this),
       },
     });
   }
@@ -88,14 +94,16 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
           {title}
           <span className="dashboard-row__panel_count">({hiddenPanels} hidden panels)</span>
         </a>
-        <div className="dashboard-row__actions">
-          <a className="pointer" onClick={this.openSettings}>
-            <i className="fa fa-cog" />
-          </a>
-          <a className="pointer" onClick={this.delete}>
-            <i className="fa fa-trash" />
-          </a>
-        </div>
+        {this.dashboard.meta.canEdit === true && (
+          <div className="dashboard-row__actions">
+            <a className="pointer" onClick={this.openSettings}>
+              <i className="fa fa-cog" />
+            </a>
+            <a className="pointer" onClick={this.delete}>
+              <i className="fa fa-trash" />
+            </a>
+          </div>
+        )}
         <div className="dashboard-row__drag grid-drag-handle" />
       </div>
     );

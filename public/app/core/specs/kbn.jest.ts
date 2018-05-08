@@ -348,3 +348,25 @@ describe('duration', function() {
     expect(str).toBe('1 year, 2 months, 0 weeks, 3 days, 4 hours, 5 minutes, 6 seconds, 7 milliseconds');
   });
 });
+
+describe('volume', function() {
+  it('1000m3', function() {
+    var str = kbn.valueFormats['m3'](1000, 1, null);
+    expect(str).toBe('1000.0 m3');
+  });
+});
+
+describe('hh:mm:ss', function() {
+  it('00:04:06', function() {
+    var str = kbn.valueFormats['dthms'](246, 1);
+    expect(str).toBe('00:04:06');
+  });
+  it('24:00:00', function() {
+    var str = kbn.valueFormats['dthms'](86400, 1);
+    expect(str).toBe('24:00:00');
+  });
+  it('6824413:53:20', function() {
+    var str = kbn.valueFormats['dthms'](24567890000, 1);
+    expect(str).toBe('6824413:53:20');
+  });
+});

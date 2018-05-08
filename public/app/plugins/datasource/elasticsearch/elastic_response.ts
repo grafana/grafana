@@ -175,7 +175,7 @@ export class ElasticResponse {
   }
 
   // This is quite complex
-  // neeed to recurise down the nested buckets to build series
+  // need to recurise down the nested buckets to build series
   processBuckets(aggs, target, seriesList, table, props, depth) {
     var bucket, aggDef, esAgg, aggId;
     var maxDepth = target.bucketAggs.length - 1;
@@ -338,7 +338,7 @@ export class ElasticResponse {
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || 'Unkown elatic error response';
+      result.message = err.reason || 'Unkown elastic error response';
     }
 
     if (response.$$config) {

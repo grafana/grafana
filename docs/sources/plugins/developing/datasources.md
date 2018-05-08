@@ -5,7 +5,7 @@ type = "docs"
 [menu.docs]
 name = "Developing Datasource Plugins"
 parent = "developing"
-weight = 6
+weight = 5
 +++
 
 # Datasources
@@ -84,15 +84,15 @@ An array of:
   {
     "target":"upper_75",
     "datapoints":[
-      [622,1450754160000],
-      [365,1450754220000]
+      [622, 1450754160000],
+      [365, 1450754220000]
     ]
   },
   {
     "target":"upper_90",
     "datapoints":[
-      [861,1450754160000],
-      [767,1450754220000]
+      [861, 1450754160000],
+      [767, 1450754220000]
     ]
   }
 ]

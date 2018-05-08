@@ -234,7 +234,12 @@ The maximum number of connections in the idle connection pool.
 ### max_open_conn
 The maximum number of open connections to the database.
 
+### conn_max_lifetime
+
+Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
+
 ### log_queries
+
 Set to `true` to log the sql calls and execution times.
 
 <hr />
@@ -296,7 +301,7 @@ options are `Admin` and `Editor`. e.g. :
 
 `auto_assign_org_role = Viewer`
 
-### viewers can edit
+### viewers_can_edit
 
 Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
 Defaults to `false`.
@@ -354,7 +359,7 @@ enabled = true
 allow_sign_up = true
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-scopes = user:email
+scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
@@ -387,6 +392,7 @@ scopes = user:email,read:org
 team_ids = 150,300
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 ```
 
@@ -405,6 +411,7 @@ client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
@@ -475,7 +482,7 @@ Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.co
 
 First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
 
-Finaly set up the generic oauth module like this:
+Finally set up the generic oauth module like this:
 ```bash
 [auth.generic_oauth]
 name = Okta
@@ -540,6 +547,70 @@ allowed_organizations =
     allowed_organizations =
     ```
 
+### Set up oauth2 with Auth0
+
+1.  Create a new Client in Auth0
+    - Name: Grafana
+    - Type: Regular Web Application
+
+2.  Go to the Settings tab and set:
+    - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
+
+3. Click Save Changes, then use the values at the top of the page to configure Grafana:
+
+    ```bash
+    [auth.generic_oauth]
+    enabled = true
+    allow_sign_up = true
+    team_ids =
+    allowed_organizations =
+    name = Auth0
+    client_id = <client id>
+    client_secret = <client secret>
+    scopes = openid profile email
+    auth_url = https://<domain>/authorize
+    token_url = https://<domain>/oauth/token
+    api_url = https://<domain>/userinfo
+    ```
+
+### Set up oauth2 with Azure Active Directory
+
+1.  Log in to portal.azure.com and click "Azure Active Directory" in the side menu, then click the "Properties" sub-menu item.
+
+2.  Copy the "Directory ID", this is needed for setting URLs later
+
+3.  Click "App Registrations" and add a new application registration:
+    - Name: Grafana
+    - Application type: Web app / API
+    - Sign-on URL: `https://<grafana domain>/login/generic_oauth`
+
+4.  Click the name of the new application to open the application details page.
+
+5.  Note down the "Application ID", this will be the OAuth client id.
+
+6.  Click "Settings", then click "Keys" and add a new entry under Passwords
+    - Key Description: Grafana OAuth
+    - Duration: Never Expires
+
+7.  Click Save then copy the key value, this will be the OAuth client secret.
+
+8.  Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = Azure AD
+    enabled = true
+    allow_sign_up = true
+    client_id = <application id>
+    client_secret = <key value>
+    scopes = openid email name
+    auth_url = https://login.microsoftonline.com/<directory id>/oauth2/authorize
+    token_url = https://login.microsoftonline.com/<directory id>/oauth2/token
+    api_url =
+    team_ids =
+    allowed_organizations =
+    ```
+
 <hr>
 
 ## [auth.basic]
@@ -588,6 +659,10 @@ Set to `true` to enable auto sign up of users who do not exist in Grafana DB. De
 
 Limit where auth proxy requests come from by configuring a list of IP addresses. This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 
+### headers
+
+Used to define additional headers for `Name`, `Email` and/or `Login`, for example if the user's name is sent in the X-WEBAUTH-NAME header and their email address in the X-WEBAUTH-EMAIL header, set `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL`.
+
 <hr>
 
 ## [session]
@@ -606,31 +681,6 @@ session provider you have configured.
 - **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full
 - **memcache:** ex:  127.0.0.1:11211
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
-
-If you use MySQL or Postgres as the session store you need to create the
-session table manually.
-
-Mysql Example:
-
-```bash
-CREATE TABLE `session` (
-    `key`       CHAR(16) NOT NULL,
-    `data`      BLOB,
-    `expiry`    INT(11) UNSIGNED NOT NULL,
-    PRIMARY KEY (`key`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-```
-
-Postgres Example:
-
-```bash
-CREATE TABLE session (
-    key       CHAR(16) NOT NULL,
-    data      BYTEA,
-    expiry    INTEGER NOT NULL,
-    PRIMARY KEY (key)
-);
-```
 
 Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 
@@ -756,17 +806,14 @@ Set root url to a Grafana instance where you want to publish external snapshots 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
 
-### remove expired snapshot
+### snapshot_remove_expired
 Enabled to automatically remove expired snapshots
-
-### remove snapshots after 90 days
-Time to live for snapshots.
 
 ## [external_image_storage]
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav, gcs, azure_blob). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
@@ -838,7 +885,5 @@ Container name where to store "Blob" images with random names. Creating the blob
 Defaults to true. Set to false to disable alerting engine and hide Alerting from UI.
 
 ### execute_alerts
-
-### execute_alerts = true
 
 Makes it possible to turn off alert rule execution.

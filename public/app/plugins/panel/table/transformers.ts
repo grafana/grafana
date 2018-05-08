@@ -243,7 +243,7 @@ transformers['table'] = {
                 row[columnIndex] = matchedRow[columnIndex];
               }
             }
-            // Dont visit this row again
+            // Don't visit this row again
             mergedRows[match] = matchedRow;
             // Keep looking for more rows to merge
             offset = match + 1;

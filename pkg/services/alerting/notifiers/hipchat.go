@@ -75,10 +75,6 @@ type HipChatNotifier struct {
 	log    log.Logger
 }
 
-func (this *HipChatNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing hipchat notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 
@@ -115,7 +111,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := ""
-	if evalContext.Rule.State != models.AlertStateOK { //dont add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
 

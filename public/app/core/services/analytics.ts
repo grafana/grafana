@@ -7,7 +7,11 @@ export class Analytics {
   constructor(private $rootScope, private $location) {}
 
   gaInit() {
-    $.getScript('https://www.google-analytics.com/analytics.js'); // jQuery shortcut
+    $.ajax({
+      url: 'https://www.google-analytics.com/analytics.js',
+      dataType: 'script',
+      cache: true,
+    });
     var ga = ((<any>window).ga =
       (<any>window).ga ||
       function() {
@@ -15,6 +19,7 @@ export class Analytics {
       });
     ga.l = +new Date();
     ga('create', (<any>config).googleAnalyticsId, 'auto');
+    ga('set', 'anonymizeIp', true);
     return ga;
   }
 

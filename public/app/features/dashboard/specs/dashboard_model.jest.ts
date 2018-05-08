@@ -49,6 +49,23 @@ describe('DashboardModel', function() {
       expect(keys[0]).toBe('annotations');
       expect(keys[1]).toBe('autoUpdate');
     });
+
+    it('should remove add panel panels', () => {
+      var model = new DashboardModel({});
+      model.addPanel({
+        type: 'add-panel',
+      });
+      model.addPanel({
+        type: 'graph',
+      });
+      model.addPanel({
+        type: 'add-panel',
+      });
+      var saveModel = model.getSaveModelClone();
+      var panels = saveModel.panels;
+
+      expect(panels.length).toBe(1);
+    });
   });
 
   describe('row and panel manipulation', function() {
@@ -357,14 +374,14 @@ describe('DashboardModel', function() {
           {
             id: 2,
             type: 'row',
-            gridPos: { x: 0, y: 6, w: 24, h: 2 },
+            gridPos: { x: 0, y: 6, w: 24, h: 1 },
             collapsed: true,
             panels: [
-              { id: 3, type: 'graph', gridPos: { x: 0, y: 2, w: 12, h: 2 } },
-              { id: 4, type: 'graph', gridPos: { x: 12, y: 2, w: 12, h: 2 } },
+              { id: 3, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+              { id: 4, type: 'graph', gridPos: { x: 12, y: 7, w: 12, h: 2 } },
             ],
           },
-          { id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 1, h: 1 } },
+          { id: 5, type: 'row', gridPos: { x: 0, y: 7, w: 1, h: 1 } },
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
@@ -382,7 +399,7 @@ describe('DashboardModel', function() {
     it('should position them below row', function() {
       expect(dashboard.panels[2].gridPos).toMatchObject({
         x: 0,
-        y: 8,
+        y: 7,
         w: 12,
         h: 2,
       });
@@ -391,7 +408,7 @@ describe('DashboardModel', function() {
     it('should move panels below down', function() {
       expect(dashboard.panels[4].gridPos).toMatchObject({
         x: 0,
-        y: 10,
+        y: 9,
         w: 1,
         h: 1,
       });

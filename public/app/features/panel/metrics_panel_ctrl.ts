@@ -6,6 +6,7 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
+import { encodePathComponent } from 'app/core/utils/location_util';
 
 import { metricsTabDirective } from './metrics_tab';
 
@@ -73,13 +74,16 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.panel.snapshotData) {
       this.updateTimeRange();
       var data = this.panel.snapshotData;
-      // backward compatability
+      // backward compatibility
       if (!_.isArray(data)) {
         data = data.data;
       }
 
-      this.events.emit('data-snapshot-load', data);
-      return;
+      // Defer panel rendering till the next digest cycle.
+      // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.
+      return this.$timeout(() => {
+        this.events.emit('data-snapshot-load', data);
+      });
     }
 
     // // ignore if we have data stream
@@ -222,6 +226,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     var metricsQuery = {
       timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
+      dashboardId: this.dashboard.id,
       range: this.range,
       rangeRaw: this.range.raw,
       interval: this.interval,
@@ -303,6 +308,24 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceName = datasource.name;
     this.datasource = null;
     this.refresh();
+  }
+
+  getAdditionalMenuItems() {
+    const items = [];
+    if (this.datasource.supportsExplore) {
+      items.push({
+        text: 'Explore',
+        click: 'ctrl.explore();',
+        icon: 'fa fa-fw fa-rocket',
+        shortcut: 'x',
+      });
+    }
+    return items;
+  }
+
+  explore() {
+    const exploreState = encodePathComponent(JSON.stringify(this.datasource.getExploreState(this.panel)));
+    this.$location.url(`/explore/${exploreState}`);
   }
 
   addQuery(target) {

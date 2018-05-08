@@ -10,15 +10,12 @@ function exit_if_fail {
     fi
 }
 
-cd /home/ubuntu/.go_workspace/src/github.com/grafana/grafana
-
 echo "running go fmt"
 exit_if_fail test -z "$(gofmt -s -l ./pkg | tee /dev/stderr)"
 
 echo "running go vet"
 exit_if_fail test -z "$(go vet ./pkg/... | tee /dev/stderr)"
 
-cd ~/dev/go/src/github.com/grafana/grafana
 echo "building backend with install to cache pkgs"
 exit_if_fail time go install ./pkg/cmd/grafana-server
 

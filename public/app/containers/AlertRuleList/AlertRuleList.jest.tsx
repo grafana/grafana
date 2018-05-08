@@ -23,7 +23,8 @@ describe('AlertRuleList', () => {
             .format(),
           evalData: {},
           executionError: '',
-          dashboardUri: 'db/mygool',
+          url: 'd/ufkcofof/my-goal',
+          canEdit: true,
         },
       ])
     );
@@ -45,7 +46,7 @@ describe('AlertRuleList', () => {
 
   it('should render 1 rule', () => {
     page.update();
-    let ruleNode = page.find('.card-item-wrapper');
+    let ruleNode = page.find('.alert-rule-item');
     expect(toJson(ruleNode)).toMatchSnapshot();
   });
 

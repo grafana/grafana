@@ -1,9 +1,13 @@
 import { describe, it, sinon, expect } from 'test/lib/common';
+import helpers from 'test/specs/helpers';
 
 import { PromCompleter } from '../completer';
 import { PrometheusDatasource } from '../datasource';
 
 describe('Prometheus editor completer', function() {
+  var ctx = new helpers.ServiceTestContext();
+  beforeEach(ctx.providePhase(['templateSrv']));
+
   function getSessionStub(data) {
     return {
       getTokenAt: sinon.stub().returns(data.currentToken),
@@ -39,7 +43,15 @@ describe('Prometheus editor completer', function() {
       .returns(Promise.resolve(['node_cpu'])),
   };
 
-  let completer = new PromCompleter(datasourceStub);
+  let templateSrv = {
+    variables: [
+      {
+        name: 'var_name',
+        options: [{ text: 'foo', value: 'foo', selected: false }, { text: 'bar', value: 'bar', selected: true }],
+      },
+    ],
+  };
+  let completer = new PromCompleter(datasourceStub, templateSrv);
 
   describe('When inside brackets', () => {
     it('Should return range vectors', () => {
@@ -61,16 +73,21 @@ describe('Prometheus editor completer', function() {
     it('Should return label name list', () => {
       const session = getSessionStub({
         currentToken: {
-          type: 'entity.name.tag',
+          type: 'entity.name.tag.label-matcher',
           value: 'j',
           index: 2,
           start: 9,
         },
         tokens: [
           { type: 'identifier', value: 'node_cpu' },
-          { type: 'paren.lparen', value: '{' },
-          { type: 'entity.name.tag', value: 'j', index: 2, start: 9 },
-          { type: 'paren.rparen', value: '}' },
+          { type: 'paren.lparen.label-matcher', value: '{' },
+          {
+            type: 'entity.name.tag.label-matcher',
+            value: 'j',
+            index: 2,
+            start: 9,
+          },
+          { type: 'paren.rparen.label-matcher', value: '}' },
         ],
         line: 'node_cpu{j}',
       });
@@ -85,19 +102,24 @@ describe('Prometheus editor completer', function() {
     it('Should return label name list', () => {
       const session = getSessionStub({
         currentToken: {
-          type: 'entity.name.tag',
+          type: 'entity.name.tag.label-matcher',
           value: 'j',
           index: 5,
           start: 22,
         },
         tokens: [
-          { type: 'paren.lparen', value: '{' },
-          { type: 'entity.name.tag', value: '__name__' },
-          { type: 'keyword.operator', value: '=~' },
-          { type: 'string.quoted', value: '"node_cpu"' },
-          { type: 'punctuation.operator', value: ',' },
-          { type: 'entity.name.tag', value: 'j', index: 5, start: 22 },
-          { type: 'paren.rparen', value: '}' },
+          { type: 'paren.lparen.label-matcher', value: '{' },
+          { type: 'entity.name.tag.label-matcher', value: '__name__' },
+          { type: 'keyword.operator.label-matcher', value: '=~' },
+          { type: 'string.quoted.label-matcher', value: '"node_cpu"' },
+          { type: 'punctuation.operator.label-matcher', value: ',' },
+          {
+            type: 'entity.name.tag.label-matcher',
+            value: 'j',
+            index: 5,
+            start: 22,
+          },
+          { type: 'paren.rparen.label-matcher', value: '}' },
         ],
         line: '{__name__=~"node_cpu",j}',
       });
@@ -112,24 +134,65 @@ describe('Prometheus editor completer', function() {
     it('Should return label value list', () => {
       const session = getSessionStub({
         currentToken: {
-          type: 'string.quoted',
+          type: 'string.quoted.label-matcher',
           value: '"n"',
           index: 4,
           start: 13,
         },
         tokens: [
           { type: 'identifier', value: 'node_cpu' },
-          { type: 'paren.lparen', value: '{' },
-          { type: 'entity.name.tag', value: 'job' },
-          { type: 'keyword.operator', value: '=' },
-          { type: 'string.quoted', value: '"n"', index: 4, start: 13 },
-          { type: 'paren.rparen', value: '}' },
+          { type: 'paren.lparen.label-matcher', value: '{' },
+          { type: 'entity.name.tag.label-matcher', value: 'job' },
+          { type: 'keyword.operator.label-matcher', value: '=' },
+          {
+            type: 'string.quoted.label-matcher',
+            value: '"n"',
+            index: 4,
+            start: 13,
+          },
+          { type: 'paren.rparen.label-matcher', value: '}' },
         ],
         line: 'node_cpu{job="n"}',
       });
 
       return completer.getCompletions(editor, session, { row: 0, column: 15 }, 'n', (s, res) => {
         expect(res[0].meta).to.eql('label value');
+      });
+    });
+  });
+
+  describe('When inside by', () => {
+    it('Should return label name list', () => {
+      const session = getSessionStub({
+        currentToken: {
+          type: 'entity.name.tag.label-list-matcher',
+          value: 'm',
+          index: 9,
+          start: 22,
+        },
+        tokens: [
+          { type: 'paren.lparen', value: '(' },
+          { type: 'keyword', value: 'count' },
+          { type: 'paren.lparen', value: '(' },
+          { type: 'identifier', value: 'node_cpu' },
+          { type: 'paren.rparen', value: '))' },
+          { type: 'text', value: ' ' },
+          { type: 'keyword.control', value: 'by' },
+          { type: 'text', value: ' ' },
+          { type: 'paren.lparen.label-list-matcher', value: '(' },
+          {
+            type: 'entity.name.tag.label-list-matcher',
+            value: 'm',
+            index: 9,
+            start: 22,
+          },
+          { type: 'paren.rparen.label-list-matcher', value: ')' },
+        ],
+        line: '(count(node_cpu)) by (m)',
+      });
+
+      return completer.getCompletions(editor, session, { row: 0, column: 23 }, 'm', (s, res) => {
+        expect(res[0].meta).to.eql('label name');
       });
     });
   });

@@ -66,8 +66,8 @@ func (db *Mysql) SqlType(c *Column) string {
 		res = c.Type
 	}
 
-	var hasLen1 bool = (c.Length > 0)
-	var hasLen2 bool = (c.Length2 > 0)
+	var hasLen1 = (c.Length > 0)
+	var hasLen2 = (c.Length2 > 0)
 
 	if res == DB_BigInt && !hasLen1 && !hasLen2 {
 		c.Length = 20

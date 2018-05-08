@@ -90,4 +90,29 @@ func addAnnotationMig(mg *Migrator) {
 		Sqlite(updateTextFieldSql).
 		Postgres(updateTextFieldSql).
 		Mysql(updateTextFieldSql))
+
+	//
+	// Add a 'created' & 'updated' column
+	//
+	mg.AddMigration("Add created time to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "created", Type: DB_BigInt, Nullable: true, Default: "0",
+	}))
+	mg.AddMigration("Add updated time to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "updated", Type: DB_BigInt, Nullable: true, Default: "0",
+	}))
+	mg.AddMigration("Add index for created in annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "created"}, Type: IndexType,
+	}))
+	mg.AddMigration("Add index for updated in annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "updated"}, Type: IndexType,
+	}))
+
+	//
+	// Convert epoch saved as seconds to miliseconds
+	//
+	updateEpochSql := "UPDATE annotation SET epoch = (epoch*1000) where epoch < 9999999999"
+	mg.AddMigration("Convert existing annotations from seconds to milliseconds", new(RawSqlMigration).
+		Sqlite(updateEpochSql).
+		Postgres(updateEpochSql).
+		Mysql(updateEpochSql))
 }
