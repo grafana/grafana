@@ -62,7 +62,7 @@ func TestLdapAuther(t *testing.T) {
 
 			sc.userQueryReturns(user1)
 
-			result, err := ldapAuther.GetGrafanaUserFor(&LdapUserInfo{MemberOf: []string{"CN=users"}})
+			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{MemberOf: []string{"CN=users"}})
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, user1)
 		})
