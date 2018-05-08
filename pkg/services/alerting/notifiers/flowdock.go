@@ -65,14 +65,20 @@ func (this *FlowdockNotifier) Notify(evalContext *alerting.EvalContext) error {
 }
 
 func (this *FlowdockNotifier) getBody(evalContext *alerting.EvalContext) map[string]interface{} {
-	body := map[string]interface{}{
+	return map[string]interface{}{
 		"event":  "activity",
+		"thread": this.getThread(evalContext),
+		"author": this.getAuthor(evalContext),
+		"title":  evalContext.GetNotificationTitle(),
+	}
+}
+
+func (this *FlowdockNotifier) getThread(evalContext *alerting.EvalContext) map[string]interface{} {
+	return map[string]interface{}{
+		"title":  evalContext.GetNotificationTitle(),
 		"status": this.getStatus(evalContext),
 		"fields": this.getFields(evalContext),
-		"author": this.getAuthor(evalContext),
 	}
-
-	return body
 }
 
 func (this *FlowdockNotifier) getStatus(evalContext *alerting.EvalContext) map[string]string {
