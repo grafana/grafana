@@ -44,7 +44,9 @@ docker-compose.yaml
 /conf/provisioning/**/custom.yaml
 profile.cov
 /grafana
+/local
 .notouch
+/Makefile.local
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug

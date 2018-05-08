@@ -111,7 +111,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'FolderDashboardsCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/explore', {
+    .when('/explore/:initial?', {
       template: '<react-container />',
       resolve: {
         component: () => import(/* webpackChunkName: "explore" */ 'app/containers/Explore/Explore'),

@@ -57,7 +57,7 @@
 
           var rootScope = body.injector().get('$rootScope');
           if (!rootScope) {return false;}
-          var panels = angular.element('div.panel:visible').length;
+          var panels = angular.element('plugin-component').length;
           return rootScope.panelsRendered >= panels;
         });
 

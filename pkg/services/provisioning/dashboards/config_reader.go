@@ -69,7 +69,7 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 
 		parsedDashboards, err := cr.parseConfigs(file)
 		if err != nil {
-
+			return nil, err
 		}
 
 		if len(parsedDashboards) > 0 {
