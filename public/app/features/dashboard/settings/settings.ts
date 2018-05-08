@@ -100,7 +100,7 @@ export class SettingsCtrl {
     }
 
     this.sections.push({
-      title: 'Dashboard JSON',
+      title: 'JSON Model',
       id: 'dashboard_json',
       icon: 'gicon gicon-json',
     });
