@@ -36,8 +36,14 @@
           <h5>Includes</h4>
           <ul class="ui-list plugin-info-list">
             <li ng-repeat="plug in ctrl.includes" class="plugin-info-list-item">
-              <i class="{{plug.icon}}"></i>
-              {{plug.name}}
+              <span ng-if="!plug.url">
+                <i class="{{plug.icon}}"></i>
+                {{plug.name}}
+              </span>
+              <a ng-if="plug.url" ng-href="{{plug.url}}" class="external-link">
+                <i class="{{plug.icon}}"></i>
+                {{plug.name}}
+              </a>
             </li>
           </ul>
         </section>

@@ -113,6 +113,10 @@ export class PluginEditCtrl {
         if (!plug.icon) {
           plug.icon = this.getPluginIcon(plug.type);
         }
+
+        if (this.model.enabled && plug.type === 'page' && plug.slug) {
+          plug.url = `plugins/${this.model.id}/page/${plug.slug}`;
+        }
         return plug;
       });
 
