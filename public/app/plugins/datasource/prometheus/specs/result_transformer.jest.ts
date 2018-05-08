@@ -47,6 +47,18 @@ describe('Prometheus Result Transformer', () => {
         { text: 'Value' },
       ]);
     });
+
+    it('should column title include refId if response count is more than 2', () => {
+      var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result, 2, "B");
+      expect(table.type).toBe('table');
+      expect(table.columns).toEqual([
+        { text: 'Time', type: 'time' },
+        { text: '__name__' },
+        { text: 'instance' },
+        { text: 'job' },
+        { text: 'Value #B' },
+      ]);
+    });
   });
 
   describe('When resultFormat is table and instant = true', () => {

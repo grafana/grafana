@@ -226,7 +226,7 @@ func (this *thunderTask) Fetch() {
 	this.Done()
 }
 
-var client *http.Client = &http.Client{
+var client = &http.Client{
 	Timeout:   time.Second * 2,
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }

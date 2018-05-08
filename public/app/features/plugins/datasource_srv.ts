@@ -15,7 +15,7 @@ export class DatasourceSrv {
     this.datasources = {};
   }
 
-  get(name) {
+  get(name?) {
     if (!name) {
       return this.get(config.defaultDatasource);
     }

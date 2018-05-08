@@ -16,6 +16,7 @@ describe('PermissionsStore', () => {
           permissionName: 'View',
           teamId: 1,
           team: 'MyTestTeam',
+          inherited: true,
         },
         {
           id: 5,

@@ -9,6 +9,7 @@ export function ControllerTestContext() {
 
   this.datasource = {};
   this.$element = {};
+  this.$sanitize = {};
   this.annotationsSrv = {};
   this.timeSrv = new TimeSrvStub();
   this.templateSrv = new TemplateSrvStub();
@@ -31,6 +32,7 @@ export function ControllerTestContext() {
       $provide.value('timeSrv', self.timeSrv);
       $provide.value('templateSrv', self.templateSrv);
       $provide.value('$element', self.$element);
+      $provide.value('$sanitize', self.$sanitize);
       _.each(mocks, function(value, key) {
         $provide.value(key, value);
       });

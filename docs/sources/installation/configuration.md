@@ -659,6 +659,10 @@ Set to `true` to enable auto sign up of users who do not exist in Grafana DB. De
 
 Limit where auth proxy requests come from by configuring a list of IP addresses. This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 
+### headers
+
+Used to define additional headers for `Name`, `Email` and/or `Login`, for example if the user's name is sent in the X-WEBAUTH-NAME header and their email address in the X-WEBAUTH-EMAIL header, set `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL`.
+
 <hr>
 
 ## [session]

@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	regexpOperatorPattern    *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
-	regexpMeasurementPattern *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
+	regexpOperatorPattern    = regexp.MustCompile(`^\/.*\/$`)
+	regexpMeasurementPattern = regexp.MustCompile(`^\/.*\/$`)
 )
 
 func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {
@@ -62,9 +62,8 @@ func (query *Query) renderTags() []string {
 			}
 		}
 
-		textValue := ""
-
 		// quote value unless regex or number
+		var textValue string
 		if tag.Operator == "=~" || tag.Operator == "!~" {
 			textValue = tag.Value
 		} else if tag.Operator == "<" || tag.Operator == ">" {
@@ -107,7 +106,7 @@ func (query *Query) renderSelectors(queryContext *tsdb.TsdbQuery) string {
 }
 
 func (query *Query) renderMeasurement() string {
-	policy := ""
+	var policy string
 	if query.Policy == "" || query.Policy == "default" {
 		policy = ""
 	} else {

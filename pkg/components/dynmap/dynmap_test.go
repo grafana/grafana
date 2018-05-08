@@ -60,6 +60,7 @@ func TestFirst(t *testing.T) {
   }`
 
 	j, err := NewObjectFromBytes([]byte(testJSON))
+	assert.True(err == nil, "failed to create new object from bytes")
 
 	a, err := j.GetObject("address")
 	assert.True(a != nil && err == nil, "failed to create json from string")
@@ -108,6 +109,7 @@ func TestFirst(t *testing.T) {
 	//log.Println("address: ", address)
 
 	s, err = address.GetString("street")
+	assert.True(s == "Street 42" && err == nil, "street mismatching")
 
 	addressAsString, err := j.GetString("address")
 	assert.True(addressAsString == "" && err != nil, "address should not be an string")
@@ -148,6 +150,7 @@ func TestFirst(t *testing.T) {
 		//assert.True(element.IsObject() == true, "first fail")
 
 		element, err := elementValue.Object()
+		assert.True(err == nil, "create element fail")
 
 		s, err = element.GetString("street")
 		assert.True(s == "Street 42" && err == nil, "second fail")
@@ -232,6 +235,7 @@ func TestSecond(t *testing.T) {
 			assert.True(fromName == "Tom Brady" && err == nil, "fromName mismatch")
 
 			actions, err := dataItem.GetObjectArray("actions")
+			assert.True(err == nil, "get object from array failed")
 
 			for index, action := range actions {
 

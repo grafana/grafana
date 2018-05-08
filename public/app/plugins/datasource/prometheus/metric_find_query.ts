@@ -46,7 +46,7 @@ export default class PrometheusMetricFindQuery {
       // return label values globally
       url = '/api/v1/label/' + label + '/values';
 
-      return this.datasource._request('GET', url).then(function(result) {
+      return this.datasource.metadataRequest(url).then(function(result) {
         return _.map(result.data.data, function(value) {
           return { text: value };
         });
@@ -56,7 +56,7 @@ export default class PrometheusMetricFindQuery {
       var end = this.datasource.getPrometheusTime(this.range.to, true);
       url = '/api/v1/series?match[]=' + encodeURIComponent(metric) + '&start=' + start + '&end=' + end;
 
-      return this.datasource._request('GET', url).then(function(result) {
+      return this.datasource.metadataRequest(url).then(function(result) {
         var _labels = _.map(result.data.data, function(metric) {
           return metric[label] || '';
         }).filter(function(label) {
@@ -76,7 +76,7 @@ export default class PrometheusMetricFindQuery {
   metricNameQuery(metricFilterPattern) {
     var url = '/api/v1/label/__name__/values';
 
-    return this.datasource._request('GET', url).then(function(result) {
+    return this.datasource.metadataRequest(url).then(function(result) {
       return _.chain(result.data.data)
         .filter(function(metricName) {
           var r = new RegExp(metricFilterPattern);
@@ -120,8 +120,8 @@ export default class PrometheusMetricFindQuery {
     var url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + start + '&end=' + end;
 
     var self = this;
-    return this.datasource._request('GET', url).then(function(result) {
-      return _.map(result.data.data, function(metric) {
+    return this.datasource.metadataRequest(url).then(function(result) {
+      return _.map(result.data.data, metric => {
         return {
           text: self.datasource.getOriginalMetricName(metric),
           expandable: true,

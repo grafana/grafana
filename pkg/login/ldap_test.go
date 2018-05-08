@@ -53,6 +53,20 @@ func TestLdapAuther(t *testing.T) {
 			So(result, ShouldEqual, user1)
 		})
 
+		ldapAutherScenario("Given group match with different case", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=users", OrgRole: "Admin"},
+				},
+			})
+
+			sc.userQueryReturns(user1)
+
+			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{MemberOf: []string{"CN=users"}})
+			So(err, ShouldBeNil)
+			So(result, ShouldEqual, user1)
+		})
+
 		ldapAutherScenario("Given no existing grafana user", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
@@ -369,10 +383,9 @@ func (sc *scenarioContext) userQueryReturns(user *m.User) {
 	bus.AddHandler("test", func(query *m.GetUserByAuthInfoQuery) error {
 		if user == nil {
 			return m.ErrUserNotFound
-		} else {
-			query.Result = user
-			return nil
 		}
+		query.Result = user
+		return nil
 	})
 	bus.AddHandler("test", func(query *m.SetAuthInfoCommand) error {
 		return nil

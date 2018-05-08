@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 
+	_ "github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -33,12 +34,11 @@ import (
 var version = "5.0.0"
 var commit = "NA"
 var buildstamp string
-var build_date string
+var enterprise string
 
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
 var pidFile = flag.String("pidfile", "", "path to pid file")
-var exitChan = make(chan int)
 
 func main() {
 	v := flag.Bool("v", false, "prints current version and exits")
@@ -77,45 +77,31 @@ func main() {
 	setting.BuildVersion = version
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
+	setting.Enterprise, _ = strconv.ParseBool(enterprise)
 
 	metrics.M_Grafana_Version.WithLabelValues(version).Set(1)
-	shutdownCompleted := make(chan int)
+
 	server := NewGrafanaServer()
 
-	go listenToSystemSignals(server, shutdownCompleted)
+	go listenToSystemSignals(server)
 
-	go func() {
-		code := 0
-		if err := server.Start(); err != nil {
-			log.Error2("Startup failed", "error", err)
-			code = 1
-		}
+	err := server.Run()
 
-		exitChan <- code
-	}()
-
-	code := <-shutdownCompleted
-	log.Info2("Grafana shutdown completed.", "code", code)
+	trace.Stop()
 	log.Close()
-	os.Exit(code)
+
+	server.Exit(err)
 }
 
-func listenToSystemSignals(server *GrafanaServerImpl, shutdownCompleted chan int) {
+func listenToSystemSignals(server *GrafanaServerImpl) {
 	signalChan := make(chan os.Signal, 1)
 	ignoreChan := make(chan os.Signal, 1)
-	code := 0
 
 	signal.Notify(ignoreChan, syscall.SIGHUP)
 	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	select {
 	case sig := <-signalChan:
-		trace.Stop() // Stops trace if profiling has been enabled
-		server.Shutdown(0, fmt.Sprintf("system signal: %s", sig))
-		shutdownCompleted <- 0
-	case code = <-exitChan:
-		trace.Stop() // Stops trace if profiling has been enabled
-		server.Shutdown(code, "startup error")
-		shutdownCompleted <- code
+		server.Shutdown(fmt.Sprintf("System signal: %s", sig))
 	}
 }

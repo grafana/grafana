@@ -77,11 +77,11 @@ Gauges gives a clear picture of how high a value is in it's context. It's a grea
 
 <div class="clearfix"></div>
 
-### Value to text mapping
+### Value/Range to text mapping
 
 {{< docs-imagebox img="/img/docs/v45/singlestat-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
 
-Value to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
+Value/Range to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
 
 <div class="clearfix"></div>
 

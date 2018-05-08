@@ -47,10 +47,9 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error
 		}
 		if has {
 			return org.Id, nil
-		} else {
-			org.Name = "Main Org."
-			org.Id = 1
 		}
+		org.Name = "Main Org."
+		org.Id = 1
 	} else {
 		org.Name = cmd.OrgName
 		if len(org.Name) == 0 {
@@ -168,11 +167,9 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 		return m.ErrUserNotFound
 	}
 
-	user := new(m.User)
-
 	// Try and find the user by login first.
 	// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
-	user = &m.User{Login: query.LoginOrEmail}
+	user := &m.User{Login: query.LoginOrEmail}
 	has, err := x.Get(user)
 
 	if err != nil {
@@ -202,9 +199,7 @@ func GetUserByEmail(query *m.GetUserByEmailQuery) error {
 		return m.ErrUserNotFound
 	}
 
-	user := new(m.User)
-
-	user = &m.User{Email: query.Email}
+	user := &m.User{Email: query.Email}
 	has, err := x.Get(user)
 
 	if err != nil {

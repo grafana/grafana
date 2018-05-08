@@ -23,6 +23,13 @@
   @include clearfix();
 }
 
+.page-full {
+  margin-left: $page-sidebar-margin;
+  padding-left: $spacer;
+  padding-right: $spacer;
+  @include clearfix();
+}
+
 .scroll-canvas {
   position: absolute;
   width: 100%;

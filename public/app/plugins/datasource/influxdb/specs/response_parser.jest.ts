@@ -85,6 +85,32 @@ describe('influxdb response parser', () => {
     });
   });
 
+  describe('SELECT response', () => {
+    var query = 'SELECT "usage_iowait" FROM "cpu" LIMIT 10';
+    var response = {
+      results: [
+        {
+          series: [
+            {
+              name: 'cpu',
+              columns: ['time', 'usage_iowait'],
+              values: [[1488465190006040638, 0.0], [1488465190006040638, 15.0], [1488465190006040638, 20.2]],
+            },
+          ],
+        },
+      ],
+    };
+
+    var result = parser.parse(query, response);
+
+    it('should return second column', () => {
+      expect(_.size(result)).toBe(3);
+      expect(result[0].text).toBe('0');
+      expect(result[1].text).toBe('15');
+      expect(result[2].text).toBe('20.2');
+    });
+  });
+
   describe('SHOW FIELD response', () => {
     var query = 'SHOW FIELD KEYS FROM "cpu"';
     describe('response from 0.10.0', () => {

@@ -6,6 +6,7 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
+import { encodePathComponent } from 'app/core/utils/location_util';
 
 import { metricsTabDirective } from './metrics_tab';
 
@@ -307,6 +308,24 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceName = datasource.name;
     this.datasource = null;
     this.refresh();
+  }
+
+  getAdditionalMenuItems() {
+    const items = [];
+    if (this.datasource.supportsExplore) {
+      items.push({
+        text: 'Explore',
+        click: 'ctrl.explore();',
+        icon: 'fa fa-fw fa-rocket',
+        shortcut: 'x',
+      });
+    }
+    return items;
+  }
+
+  explore() {
+    const exploreState = encodePathComponent(JSON.stringify(this.datasource.getExploreState(this.panel)));
+    this.$location.url(`/explore/${exploreState}`);
   }
 
   addQuery(target) {
