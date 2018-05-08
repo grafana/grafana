@@ -74,10 +74,14 @@ func (this *FlowdockNotifier) getBody(evalContext *alerting.EvalContext) map[str
 }
 
 func (this *FlowdockNotifier) getThread(evalContext *alerting.EvalContext) map[string]interface{} {
+	ruleUrl, _ := evalContext.GetRuleUrl()
+
 	return map[string]interface{}{
-		"title":  evalContext.GetNotificationTitle(),
-		"status": this.getStatus(evalContext),
-		"fields": this.getFields(evalContext),
+		"title":        evalContext.GetNotificationTitle(),
+		"status":       this.getStatus(evalContext),
+		"fields":       this.getFields(evalContext),
+		"external_url": ruleUrl,
+		"body":         `<img src="` + evalContext.ImagePublicUrl + `">`,
 	}
 }
 

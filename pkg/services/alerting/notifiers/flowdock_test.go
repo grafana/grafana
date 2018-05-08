@@ -30,6 +30,8 @@ func BuildTestEvalContext() *alerting.EvalContext {
 		Rule:           rule,
 		PrevAlertState: rule.State,
 		EvalMatches:    evalMatches,
+
+		ImagePublicUrl: "https://example.com/image.png",
 	}
 }
 
@@ -172,6 +174,18 @@ func TestFlowdockNotifier(t *testing.T) {
 			})
 
 			Convey("build thread", func() {
+				json := `
+			{ "flowToken": "abcd1234" }
+				`
+				not, _ := BuildFlowdockNotifier(json)
+				flowdockNotifier := not.(*FlowdockNotifier)
+
+				testEvalContext := BuildTestEvalContext()
+				thread := flowdockNotifier.getBody(testEvalContext)["thread"]
+				threadMap := thread.(map[string]interface{})
+
+				correctBody := `<img src="https://example.com/image.png">`
+				So(threadMap["body"], ShouldEqual, correctBody)
 			})
 		})
 	})
