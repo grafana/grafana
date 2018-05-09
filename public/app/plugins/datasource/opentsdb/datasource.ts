@@ -35,7 +35,6 @@ export default class OpenTsDatasource {
 
   // Called once per panel (graph)
   query(options) {
-    // console.log('query', options);
     var start = this.convertToTSDBTime(options.rangeRaw.from, false);
     var end = this.convertToTSDBTime(options.rangeRaw.to, true);
     var qs = [];
@@ -159,7 +158,7 @@ export default class OpenTsDatasource {
       //     {'target': 'metric.b', datapoints: [etc]},
       //   ]
       // }
-      console.log(data);
+      //console.log(data);
       return {
         'data': data
       };
