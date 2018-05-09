@@ -161,12 +161,12 @@ class TimeSrv {
 
     _.extend(this.time, time);
 
-    // disable refresh if zoom zoom out
+    // disable refresh when zooming out
     if (this.refresh) {
       const newRange = this.timeRange();
+      const newSpan = newRange.to.valueOf() - newRange.from.valueOf();
       const oldSpan = oldRange.to.valueOf() - oldRange.from.valueOf();
-      const nowSpan = newRange.to.valueOf() - newRange.from.valueOf();
-      if (nowSpan > oldSpan * 1.2) {
+      if (newSpan > oldSpan * 1.2) {
         this.setAutoRefresh(false);
       }
     }
