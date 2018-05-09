@@ -136,7 +136,12 @@ export class DashboardModel {
   }
 
   // cleans meta data and other non persistent state
-  getSaveModelClone(saveVariables, saveTimerange) {
+  getSaveModelClone(options?) {
+    let defaults = _.defaults(options || {}, {
+      templating: false,
+      saveTimerange: false,
+    });
+
     // make clone
     var copy: any = {};
     for (var property in this) {
@@ -152,7 +157,7 @@ export class DashboardModel {
       list: _.map(this.templating.list, variable => (variable.getSaveModel ? variable.getSaveModel() : variable)),
     };
 
-    if (!saveVariables && copy.templating.list.length === this.originalTemplating.length) {
+    if (!defaults.saveVariables && copy.templating.list.length === this.originalTemplating.length) {
       for (let i = 0; i < copy.templating.list.length; i++) {
         if (copy.templating.list[i].name === this.originalTemplating[i].name) {
           copy.templating.list[i].current = this.originalTemplating[i].current;
@@ -160,7 +165,7 @@ export class DashboardModel {
       }
     }
 
-    if (!saveTimerange) {
+    if (!defaults.saveTimerange) {
       copy.time = this.originalTime;
     }
 

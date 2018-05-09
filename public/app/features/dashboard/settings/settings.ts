@@ -118,9 +118,7 @@ export class SettingsCtrl {
     this.viewId = this.$location.search().editview;
 
     if (this.viewId) {
-      let saveVariables = false;
-      let saveTimerange = false;
-      this.json = JSON.stringify(this.dashboard.getSaveModelClone(saveVariables, saveTimerange), null, 2);
+      this.json = JSON.stringify(this.dashboard.getSaveModelClone(), null, 2);
     }
 
     if (this.viewId === 'settings' && this.dashboard.meta.canMakeEditable) {

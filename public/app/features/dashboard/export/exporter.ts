@@ -12,10 +12,7 @@ export class DashboardExporter {
     // this is pretty hacky and needs to be changed
     dashboard.cleanUpRepeats();
 
-    let saveVariables = false;
-    let saveTimerange = false;
-
-    var saveModel = dashboard.getSaveModelClone(saveVariables, saveTimerange);
+    var saveModel = dashboard.getSaveModelClone();
     saveModel.id = null;
 
     // undo repeat cleanup

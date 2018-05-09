@@ -314,10 +314,7 @@ export class BackendSrv {
         return;
       }
 
-      let saveVariables = false;
-      let saveTimerange = false;
-
-      const clone = model.getSaveModelClone(saveVariables, saveTimerange);
+      const clone = model.getSaveModelClone();
       let options = {
         folderId: toFolder.id,
         overwrite: false,

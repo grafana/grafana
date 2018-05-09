@@ -74,13 +74,14 @@ export class SaveDashboardModalCtrl {
       return;
     }
 
-    var dashboard = this.dashboardSrv.getCurrent();
-    var saveModel = dashboard.getSaveModelClone(this.saveVariables, this.saveTimerange);
     var options = {
-      message: this.message,
       templating: this.saveVariables,
       timepicker: this.saveTimerange,
+      message: this.message,
     };
+
+    var dashboard = this.dashboardSrv.getCurrent();
+    var saveModel = dashboard.getSaveModelClone(options);
 
     return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
   }
