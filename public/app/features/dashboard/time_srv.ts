@@ -8,7 +8,6 @@ class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: boolean;
-  oldRefresh: boolean;
   dashboard: any;
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
@@ -158,15 +157,18 @@ class TimeSrv {
   }
 
   setTime(time, fromRouteUpdate?) {
+    const oldRange = this.refresh ? this.timeRange() : null;
+
     _.extend(this.time, time);
 
-    // disable refresh if zoom in or zoom out
-    if (moment.isMoment(time.to)) {
-      this.oldRefresh = this.dashboard.refresh || this.oldRefresh;
-      this.setAutoRefresh(false);
-    } else if (this.oldRefresh && this.oldRefresh !== this.dashboard.refresh) {
-      this.setAutoRefresh(this.oldRefresh);
-      this.oldRefresh = null;
+    // disable refresh if zoom zoom out
+    if (this.refresh) {
+      const newRange = this.timeRange();
+      const oldSpan = oldRange.to.valueOf() - oldRange.from.valueOf();
+      const nowSpan = newRange.to.valueOf() - newRange.from.valueOf();
+      if (nowSpan > oldSpan * 1.2) {
+        this.setAutoRefresh(false);
+      }
     }
 
     // update url
