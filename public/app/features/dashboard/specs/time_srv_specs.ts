@@ -111,5 +111,14 @@ describe('timeSrv', function() {
       ctx.service.setTime({ from: 'now-1h', to: 'now-10s' });
       expect(_dashboard.refresh).to.be('10s');
     });
+
+    it('should disable refresh after zooming out', function() {
+      _dashboard.refresh = '10s';
+      ctx.service.setTime({ from: 'now-1h', to: 'now-10s' });
+      expect(_dashboard.refresh).to.be('10s');
+
+      ctx.service.setTime({ from: 'now-2h', to: 'now-10s' });
+      expect(_dashboard.refresh).to.be(false);
+    });
   });
 });
