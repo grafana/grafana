@@ -2,6 +2,7 @@ import angular from 'angular';
 import $ from 'jquery';
 import Drop from 'tether-drop';
 import baron from 'baron';
+import ResizeSensor from 'css-element-queries/src/ResizeSensor.js';
 
 var module = angular.module('grafana.directives');
 
@@ -22,7 +23,7 @@ var panelTemplate = `
 
     <div class="panel-content">
       <div class="panel-height-helper">
-        <div><ng-transclude ></ng-transclude></div>
+        <ng-transclude></ng-transclude>
       </div>
     </div>
   </div>
@@ -69,6 +70,8 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       var ctrl = scope.ctrl;
       var infoDrop;
       var panelScrollbar;
+      var panelInnerContent;
+      var panelInnerContentHeight = -1;
 
       // the reason for handling these classes this way is for performance
       // limit the watchers on panels etc
@@ -89,6 +92,20 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
 
       function panelHeightUpdated() {
         panelContent.css({ height: ctrl.height + 'px' });
+        if (ctrl.panel.dynamicHeight) {
+          panelInnerContentHeight = -1; // force checking
+          checkInnerContentHeight();
+        }
+      }
+
+      function checkInnerContentHeight() {
+        if (ctrl.panel.dynamicHeight && panelInnerContent) {
+          const v = panelInnerContent.outerHeight(true);
+          if (v !== panelInnerContentHeight) {
+            panelInnerContentHeight = v;
+            ctrl.dynamicHeightChanged(panelInnerContentHeight);
+          }
+        }
       }
 
       function resizeScrollableContent() {
@@ -117,9 +134,18 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
           let scrollRoot = panelContent;
           let scroller = panelContent.find(':first');
 
-          // Save the wrapper div to check content height after render
+          // Add a div under the scroller and watch for changes
           if (ctrl.panel.dynamicHeight) {
-            ctrl.wrapper = $(scroller).find(':first');
+            $(scroller).wrap('<div class="panel-height-helper"></div>');
+            scroller = panelContent.find(':first');
+
+            panelInnerContent = $(scroller).find(':first');
+            panelInnerContent.removeClass('panel-height-helper');
+            panelInnerContent.css('margin-right', '20px');
+            //panelInnerContent.css('border', '1px solid #FF0');
+
+            // tslint:disable-next-line
+            new ResizeSensor(panelInnerContent, checkInnerContentHeight);
           }
 
           scrollRoot.addClass(scrollRootClass);

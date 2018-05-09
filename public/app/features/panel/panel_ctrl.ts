@@ -33,7 +33,6 @@ export class PanelCtrl {
   events: Emitter;
   timing: any;
   loading: boolean;
-  wrapper: any; // dom element that contains the panel
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -69,29 +68,26 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
-    if (this.panel.dynamicHeight && this.wrapper) {
-      this.$timeout(() => {
-        let height = $(this.wrapper).outerHeight(true);
-        if (height > 10) {
-          const min = this.panel.dynamicHeightMIN || 50;
-          if (height < min) {
-            height = min;
-          }
-          if (this.panel.dynamicHeightMAX && height > this.panel.dynamicHeightMAX) {
-            height = this.panel.dynamicHeightMAX;
-          }
-
-          const h = Math.ceil(height / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN)) + 1;
-          if (h !== this.panel.gridPos.h) {
-            console.log('Dynamic Height Changed', this.height, height, h, this.panel.gridPos.h, this);
-            this.panel.gridPos.h = h;
-            this.events.emit('panel-size-changed');
-            this.dashboard.events.emit('row-expanded'); // triggers grid re-layout
-          }
-        }
-      }, 75);
-    }
     profiler.renderingCompleted(this.panel.id, this.timing);
+  }
+
+  dynamicHeightChanged(height: number): boolean {
+    const min = this.panel.dynamicHeightMIN || 50;
+    if (height < min) {
+      height = min;
+    }
+    if (this.panel.dynamicHeightMAX && height > this.panel.dynamicHeightMAX) {
+      height = this.panel.dynamicHeightMAX;
+    }
+    const h = Math.ceil((height + 5) / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN)) + 1;
+    if (h !== this.panel.gridPos.h) {
+      //console.log('Dynamic Height Changed', height, 'new:', h, 'old', this.panel.gridPos.h);
+      this.panel.gridPos.h = h;
+      this.events.emit('panel-size-changed');
+      this.dashboard.events.emit('row-expanded'); // triggers grid re-layout
+      return true;
+    }
+    return false;
   }
 
   refresh() {
@@ -347,6 +343,7 @@ export class PanelCtrl {
     }
 
     var linkSrv = this.$injector.get('linkSrv');
+    var sanitize = this.$injector.get('$sanitize');
     var templateSrv = this.$injector.get('templateSrv');
     var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     var html = '<div class="markdown-html">';
@@ -369,7 +366,8 @@ export class PanelCtrl {
       html += '</ul>';
     }
 
-    return html + '</div>';
+    html += '</div>';
+    return sanitize(html);
   }
 
   openInspector() {

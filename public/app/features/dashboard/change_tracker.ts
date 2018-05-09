@@ -124,6 +124,10 @@ export class ChangeTracker {
         delete panel.legend.sortDesc;
       }
 
+      if (panel.dynamicHeight) {
+        delete panel.gridPos.h;
+      }
+
       return true;
     });
 
