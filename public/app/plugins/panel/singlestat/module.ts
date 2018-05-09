@@ -308,7 +308,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         let formatFunc = kbn.valueFormats[this.panel.format];
         data.value = lastPoint[1];
         data.valueRounded = data.value;
-        data.valueFormatted = formatFunc(data.value, 0, 0);
+        data.valueFormatted = formatFunc(data.value, this.dashboard.isTimezoneUtc());
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;

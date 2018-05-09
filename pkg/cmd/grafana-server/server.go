@@ -138,7 +138,7 @@ func (g *GrafanaServerImpl) Run() error {
 			err := service.Run(g.context)
 
 			// If error is not canceled then the service crashed
-			if err != context.Canceled {
+			if err != context.Canceled && err != nil {
 				g.log.Error("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)
 			} else {
 				g.log.Info("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)

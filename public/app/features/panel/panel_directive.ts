@@ -132,7 +132,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
           `;
 
           let scrollRoot = panelContent;
-          let scroller = panelContent.find(':first');
+          let scroller = panelContent.find(':first').find(':first');
 
           // Add a div under the scroller and watch for changes
           if (ctrl.panel.dynamicHeight) {
