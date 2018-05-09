@@ -35,6 +35,7 @@ export default class OpenTsDatasource {
 
   // Called once per panel (graph)
   query(options) {
+    // console.log('query', options);
     var start = this.convertToTSDBTime(options.rangeRaw.from, false);
     var end = this.convertToTSDBTime(options.rangeRaw.to, true);
     var qs = [];
@@ -128,12 +129,16 @@ export default class OpenTsDatasource {
               );
             }.bind(this)
           );
-          return result;
+
+          // filter out 'hidden' gExps
+          return result.filter(function(data) {
+            data !== false;
+          });
         }.bind(this)
       );
     }
 
-    // call all query Promises into an array and concaternate their data into a return object
+    // call all queries into an array and concaternate their data into a return object
     return this.$q.all([queriesPromise, gexpPromise]).then(function(responses) {
       var data = [];
 
@@ -154,7 +159,7 @@ export default class OpenTsDatasource {
       //     {'target': 'metric.b', datapoints: [etc]},
       //   ]
       // }
-      //console.log(data);
+      console.log(data);
       return {
         'data': data
       };
@@ -449,13 +454,19 @@ export default class OpenTsDatasource {
   }
 
   transformGexpData(gExp, target, tsdbResolution) {
-    var metricLabel;
-    if (!target.gexpAlias || target.gexpAlias === '') {
-      metricLabel = target.gexp;
-    } else {
-      metricLabel = target.gexpAlias;
-    }
+    var metricLabel = '';
     var dps = this.getDatapointsAtCorrectResolution(gExp, tsdbResolution);
+
+    if (typeof target === 'undefined') {
+      // the metric is hidden
+      return false;
+    }
+
+    if (target.gexpAlias && target.gexpAlias !== '') {
+      metricLabel = target.gexpAlias;
+    } else {
+      metricLabel = target.gexp;
+    }
 
     return { target: metricLabel, datapoints: dps };
   }
