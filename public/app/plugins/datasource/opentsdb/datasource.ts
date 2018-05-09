@@ -131,8 +131,8 @@ export default class OpenTsDatasource {
           );
 
           // filter out 'hidden' gExps
-          return result.filter(function(data) {
-            data !== false;
+          return result.filter((value) => {
+            return value !== false;
           });
         }.bind(this)
       );
