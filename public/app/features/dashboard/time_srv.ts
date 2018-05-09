@@ -161,13 +161,19 @@ class TimeSrv {
 
     _.extend(this.time, time);
 
-    // disable refresh when zooming out
+    // disable refresh when zooming
     if (this.refresh) {
-      const newRange = this.timeRange();
-      const newSpan = newRange.to.valueOf() - newRange.from.valueOf();
-      const oldSpan = oldRange.to.valueOf() - oldRange.from.valueOf();
-      if (newSpan > oldSpan * 1.2) {
+      if (moment.isMoment(time.to)) {
+        // Only Zooming sets this as a raw moment?
         this.setAutoRefresh(false);
+      } else {
+        const newRange = this.timeRange();
+        const newSpan = newRange.to.valueOf() - newRange.from.valueOf();
+        const oldSpan = oldRange.to.valueOf() - oldRange.from.valueOf();
+        if (newSpan > oldSpan * 1.2) {
+          // Zooming Out
+          this.setAutoRefresh(false);
+        }
       }
     }
 
