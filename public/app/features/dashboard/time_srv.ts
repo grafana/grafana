@@ -157,23 +157,22 @@ class TimeSrv {
   }
 
   setTime(time, fromRouteUpdate?) {
-    const oldRange = this.refresh ? this.timeRange() : null;
+    const oldRange = this.timeRange();
 
     _.extend(this.time, time);
 
-    // disable refresh when zooming
-    if (this.refresh) {
-      if (moment.isMoment(time.to)) {
-        // Only Zooming sets this as a raw moment?
+    // Disable refresh when 'to' is a fixed time
+    if (moment.isMoment(time.to)) {
+      this.setAutoRefresh(false);
+    }
+
+    // Disable refresh when zooming out
+    if (this.dashboard.refresh) {
+      const newRange = this.timeRange();
+      const newSpan = newRange.to.valueOf() - newRange.from.valueOf();
+      const oldSpan = oldRange.to.valueOf() - oldRange.from.valueOf();
+      if (newSpan > oldSpan * 1.2) {
         this.setAutoRefresh(false);
-      } else {
-        const newRange = this.timeRange();
-        const newSpan = newRange.to.valueOf() - newRange.from.valueOf();
-        const oldSpan = oldRange.to.valueOf() - oldRange.from.valueOf();
-        if (newSpan > oldSpan * 1.2) {
-          // Zooming Out
-          this.setAutoRefresh(false);
-        }
       }
     }
 

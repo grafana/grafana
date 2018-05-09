@@ -95,17 +95,6 @@ describe('timeSrv', function() {
       expect(_dashboard.refresh).to.be('30s');
     });
 
-    it('should restore refresh after relative time range is set', function() {
-      _dashboard.refresh = '10s';
-      ctx.service.setTime({
-        from: moment([2011, 1, 1]),
-        to: moment([2015, 1, 1]),
-      });
-      expect(_dashboard.refresh).to.be(false);
-      ctx.service.setTime({ from: '2011-01-01', to: 'now' });
-      expect(_dashboard.refresh).to.be('10s');
-    });
-
     it('should keep refresh after relative time range is changed and now delay exists', function() {
       _dashboard.refresh = '10s';
       ctx.service.setTime({ from: 'now-1h', to: 'now-10s' });
