@@ -7,6 +7,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   aggregators: any;
   fillPolicies: any;
   filterTypes: any;
+  queryTypes: any;
   tsdbVersion: any;
   aggregator: any;
   downsampleInterval: any;
@@ -35,6 +36,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       'literal_or',
       'regexp',
     ];
+    this.queryTypes = ['metric', 'gexp'];
 
     this.tsdbVersion = this.datasource.tsdbVersion;
 
@@ -217,5 +219,40 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     }
 
     return errs;
+  }
+
+
+  getCollapsedText() {
+    var text = '';
+    if (this.target.queryType === 'metric' && this.target.metric) {
+      text = 'Metric: ' + this.target.aggregator + ':';
+      if (this.target.shouldComputeRate) {
+        text += 'rate';
+        if (this.target.isCounter) {
+          text += '{dropcounter';
+          if (this.target.counterMax && this.target.counterMax.length) {
+            text += ',' + parseInt(this.target.counterMax);
+          }
+          if (this.target.counterResetValue && this.target.counterResetValue.length) {
+            text += ',' + parseInt(this.target.counterResetValue);
+          }
+          text += '}';
+        }
+        text += ':';
+      }
+      text += this.target.metric;
+      if (_.size(this.target.tags) > 0) {
+        text += '{';
+        for (var key in this.target.tags) {
+          text += key + '=' + this.target.tags[key];
+        }
+        text += '}';
+      }
+    } else if (this.target.queryType === 'gexp' && this.target.gexp) {
+      text += 'GExp: ' + this.target.gexp;
+    } else {
+      text = 'No metric or gexp';
+    }
+    return text;
   }
 }
