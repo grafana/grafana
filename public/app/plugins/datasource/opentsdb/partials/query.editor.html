@@ -1,54 +1,45 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="true">
-	
 	<div class="gf-form-inline">
-		<div class="gf-form">
-			<label class="gf-form-label query-keyword">
+		<div class="gf-form max-width-25">
+			<label class="gf-form-label query-keyword width-8">
 				Type
 			</label>
 			<div class="gf-form-select-wrapper max-width-10">
-				<select ng-model="ctrl.target.queryType" class="gf-form-input"
-								ng-options="queryType for queryType in ctrl.queryTypes"
-								ng-change="ctrl.targetBlur()">
+				<select	ng-model="ctrl.target.queryType" class="gf-form-input"
+						ng-options="queryType for queryType in ctrl.queryTypes"
+						ng-change="ctrl.targetBlur()">
 			 	</select>
 			</div>
 		</div>
-
-		<div class="gf-form gf-form--grow">
-			<div class="gf-form-label gf-form-label--grow"></div>
-		</div>
-
 	</div>
-	<div ng-show="ctrl.target.queryType == 'gexp'">
+
+	<div ng-if="ctrl.target.queryType == 'gexp'">
 		<div class="gf-form-inline">
 			<div class="gf-form">
 				<label class="gf-form-label query-keyword width-8">
 					GExp
 				</label>
-				<input type="text" class="gf-form-input width-30" ng-model="ctrl.target.gexp"
-							 spellcheck='false' placeholder="gexp" ng-blur="ctrl.targetBlur()">
+				<input	type="text" class="gf-form-input width-30" ng-model="ctrl.target.gexp"
+						spellcheck='false' placeholder="gexp" ng-blur="ctrl.targetBlur()">
 				</input>
 			</div>
 			<div class="gf-form">
 				<label class="gf-form-label query-keyword width-6">
 					Alias:
 				</label>
-				<input  type="text" class="gf-form-input"
-		   					ng-model="ctrl.target.gexpAlias"
-								spellcheck='false'
-								placeholder="gexp alias"
-								ng-blur="ctrl.targetBlur()">
+				<input	type="text" class="gf-form-input"
+   						ng-model="ctrl.target.gexpAlias"
+						spellcheck='false'
+						placeholder="gexp alias"
+						ng-blur="ctrl.targetBlur()">
 				</input>
 			</div>
-
-			<div class="gf-form gf-form--grow">
-				<div class="gf-form-label gf-form-label--grow"></div>
-			</div>
-
 		</div>
 	</div>
-	<div ng-show="ctrl.target.queryType == 'metric'">
+
+	<div ng-if="ctrl.target.queryType == 'metric'">
 		<div class="gf-form-inline">
-			<div class="gf-form max-width-25">
+			<div class="gf-form">
 				<label class="gf-form-label query-keyword width-8">
 					Metric
 					<label class="gf-form-label" bs-tooltip="ctrl.errors.metric" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.metric">
