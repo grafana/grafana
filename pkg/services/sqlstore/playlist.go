@@ -64,7 +64,7 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 		Interval: playlist.Interval,
 	}
 
-	_, err := x.ID(cmd.Id).Cols("id", "name", "interval").Update(&playlist)
+	_, err := x.ID(cmd.Id).Cols("name", "interval").Update(&playlist)
 
 	if err != nil {
 		return err

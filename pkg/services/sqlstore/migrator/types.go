@@ -9,6 +9,7 @@ const (
 	POSTGRES = "postgres"
 	SQLITE   = "sqlite3"
 	MYSQL    = "mysql"
+	MSSQL    = "mssql"
 )
 
 type Migration interface {

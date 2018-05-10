@@ -86,10 +86,7 @@ func addAnnotationMig(mg *Migrator) {
 	// clear alert text
 	//
 	updateTextFieldSql := "UPDATE annotation SET TEXT = '' WHERE alert_id > 0"
-	mg.AddMigration("Update alert annotations and set TEXT to empty", new(RawSqlMigration).
-		Sqlite(updateTextFieldSql).
-		Postgres(updateTextFieldSql).
-		Mysql(updateTextFieldSql))
+	mg.AddMigration("Update alert annotations and set TEXT to empty", NewRawSqlMigration(updateTextFieldSql))
 
 	//
 	// Add a 'created' & 'updated' column
@@ -111,8 +108,5 @@ func addAnnotationMig(mg *Migrator) {
 	// Convert epoch saved as seconds to miliseconds
 	//
 	updateEpochSql := "UPDATE annotation SET epoch = (epoch*1000) where epoch < 9999999999"
-	mg.AddMigration("Convert existing annotations from seconds to milliseconds", new(RawSqlMigration).
-		Sqlite(updateEpochSql).
-		Postgres(updateEpochSql).
-		Mysql(updateEpochSql))
+	mg.AddMigration("Convert existing annotations from seconds to milliseconds", NewRawSqlMigration(updateEpochSql))
 }
