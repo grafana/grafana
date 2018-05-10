@@ -49,7 +49,7 @@ export default class OpenTsDatasource {
         if (target.queryType === 'metric') {
           qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
         } else if (target.queryType === 'gexp') {
-          gExps.push(target.gexp);
+          gExps.push(this.convertGExpToQuery(target));
         }
       }.bind(this)
     );
@@ -77,15 +77,18 @@ export default class OpenTsDatasource {
       }
     });
 
-    options.targets = _.filter(options.targets, function(query) {
-      return query.hide !== true;
-    });
-
     var queriesPromise;
     if (queries.length > 0) {
       queriesPromise = this.performTimeSeriesQuery(queries, start, end).then(
         function(response) {
-          var metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
+
+          // only index into classic 'metrics' queries
+          var tsqTargets = options.targets.filter((target) => {
+            return target.queryType === 'metric';
+          });
+
+          var metricToTargetMapping = this.mapMetricsToTargets(response.data, options, tsqTargets, this.tsdbVersion);
+
           var result = _.map(
             response.data,
             function(metricData, index) {
@@ -98,7 +101,7 @@ export default class OpenTsDatasource {
               return this.transformMetricData(
                 metricData,
                 groupByTags,
-                options.targets[index],
+                tsqTargets[index],
                 options,
                 this.tsdbResolution
               );
@@ -129,7 +132,6 @@ export default class OpenTsDatasource {
             }.bind(this)
           );
 
-          // filter out 'hidden' gExps
           return result.filter((value) => {
             return value !== false;
           });
@@ -513,6 +515,15 @@ export default class OpenTsDatasource {
     return label;
   }
 
+  convertGExpToQuery(target) {
+    // filter out a target if it is 'hidden'
+    if (target.hide === true) {
+      return null;
+    }
+
+    return target.gexp;
+  }
+
   convertTargetToQuery(target, options, tsdbVersion) {
     if (!target.metric || target.hide) {
       return null;
@@ -588,13 +599,13 @@ export default class OpenTsDatasource {
     return query;
   }
 
-  mapMetricsToTargets(metrics, options, tsdbVersion) {
+  mapMetricsToTargets(metrics, targets, options, tsdbVersion) {
     var interpolatedTagValue, arrTagV;
     return _.map(metrics, function(metricData) {
       if (tsdbVersion === 3) {
         return metricData.query.index;
       } else {
-        return _.findIndex(options.targets, function(target) {
+        return _.findIndex(targets, function(target) {
           if (target.filters && target.filters.length > 0) {
             return target.metric === metricData.metric;
           } else {
