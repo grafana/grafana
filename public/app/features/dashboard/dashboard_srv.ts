@@ -100,7 +100,7 @@ export class DashboardSrv {
       .catch(this.handleSaveDashboardError.bind(this, clone, options));
   }
 
-  saveDashboard(options, clone) {
+  saveDashboard(options?, clone?) {
     if (clone) {
       this.setCurrent(this.create(clone, this.dash.meta));
     }
@@ -122,6 +122,10 @@ export class DashboardSrv {
     }
 
     return this.save(this.dash.getSaveModelClone(), options);
+  }
+
+  saveJSONDashboard(json: string) {
+    return this.save(JSON.parse(json), {});
   }
 
   showDashboardProvisionedModal() {

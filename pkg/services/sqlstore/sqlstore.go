@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -67,8 +66,7 @@ func (ss *SqlStore) Init() error {
 
 	// temporarily still set global var
 	x = engine
-
-	dialect = migrator.NewDialect(x.DriverName())
+	dialect = migrator.NewDialect(x)
 	migrator := migrator.NewMigrator(x)
 	migrations.AddMigrations(migrator)
 
@@ -122,7 +120,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 	}
 
 	switch ss.dbCfg.Type {
-	case "mysql":
+	case migrator.MYSQL:
 		protocol := "tcp"
 		if strings.HasPrefix(ss.dbCfg.Host, "/") {
 			protocol = "unix"
@@ -139,7 +137,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			mysql.RegisterTLSConfig("custom", tlsCert)
 			cnnstr += "&tls=custom"
 		}
-	case "postgres":
+	case migrator.POSTGRES:
 		var host, port = "127.0.0.1", "5432"
 		fields := strings.Split(ss.dbCfg.Host, ":")
 		if len(fields) > 0 && len(strings.TrimSpace(fields[0])) > 0 {
@@ -155,7 +153,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			ss.dbCfg.User = "''"
 		}
 		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", ss.dbCfg.User, ss.dbCfg.Pwd, host, port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
-	case "sqlite3":
+	case migrator.SQLITE:
 		// special case for tests
 		if !filepath.IsAbs(ss.dbCfg.Path) {
 			ss.dbCfg.Path = filepath.Join(setting.DataPath, ss.dbCfg.Path)
@@ -243,7 +241,7 @@ func InitTestDB(t *testing.T) *SqlStore {
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true
 
-	dbType := "sqlite"
+	dbType := migrator.SQLITE
 
 	// environment variable present for test db?
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
@@ -264,6 +262,17 @@ func InitTestDB(t *testing.T) *SqlStore {
 		sec.NewKey("connection_string", sqlutil.TestDB_Sqlite3.ConnStr)
 	}
 
+	// need to get engine to clean db before we init
+	engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
+	if err != nil {
+		t.Fatalf("Failed to init test database: %v", err)
+	}
+
+	dialect = migrator.NewDialect(engine)
+	if err := dialect.CleanDB(); err != nil {
+		t.Fatalf("Failed to clean test db %v", err)
+	}
+
 	if err := sqlstore.Init(); err != nil {
 		t.Fatalf("Failed to init test database: %v", err)
 	}
@@ -271,14 +280,12 @@ func InitTestDB(t *testing.T) *SqlStore {
 	sqlstore.engine.DatabaseTZ = time.UTC
 	sqlstore.engine.TZLocation = time.UTC
 
-	sqlutil.CleanDB(sqlstore.engine)
-
 	return sqlstore
 }
 
 func IsTestDbMySql() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == "mysql"
+		return db == migrator.MYSQL
 	}
 
 	return false
@@ -286,7 +293,7 @@ func IsTestDbMySql() bool {
 
 func IsTestDbPostgres() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == "postgres"
+		return db == migrator.POSTGRES
 	}
 
 	return false

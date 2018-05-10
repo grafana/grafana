@@ -101,38 +101,88 @@ describeValueFormat('d', 245, 100, 0, '35 week');
 describeValueFormat('d', 2456, 10, 0, '6.73 year');
 
 describe('date time formats', function() {
+  const epoch = 1505634997920;
+  const utcTime = moment.utc(epoch);
+  const browserTime = moment(epoch);
+
   it('should format as iso date', function() {
-    var str = kbn.valueFormats.dateTimeAsIso(1505634997920, 1);
-    expect(str).toBe(moment(1505634997920).format('YYYY-MM-DD HH:mm:ss'));
+    var expected = browserTime.format('YYYY-MM-DD HH:mm:ss');
+    var actual = kbn.valueFormats.dateTimeAsIso(epoch);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as iso date (in UTC)', function() {
+    var expected = utcTime.format('YYYY-MM-DD HH:mm:ss');
+    var actual = kbn.valueFormats.dateTimeAsIso(epoch, true);
+    expect(actual).toBe(expected);
   });
 
   it('should format as iso date and skip date when today', function() {
     var now = moment();
-    var str = kbn.valueFormats.dateTimeAsIso(now.valueOf(), 1);
-    expect(str).toBe(now.format('HH:mm:ss'));
+    var expected = now.format('HH:mm:ss');
+    var actual = kbn.valueFormats.dateTimeAsIso(now.valueOf(), false);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as iso date (in UTC) and skip date when today', function() {
+    var now = moment.utc();
+    var expected = now.format('HH:mm:ss');
+    var actual = kbn.valueFormats.dateTimeAsIso(now.valueOf(), true);
+    expect(actual).toBe(expected);
   });
 
   it('should format as US date', function() {
-    var str = kbn.valueFormats.dateTimeAsUS(1505634997920, 1);
-    expect(str).toBe(moment(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
+    var expected = browserTime.format('MM/DD/YYYY h:mm:ss a');
+    var actual = kbn.valueFormats.dateTimeAsUS(epoch, false);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as US date (in UTC)', function() {
+    var expected = utcTime.format('MM/DD/YYYY h:mm:ss a');
+    var actual = kbn.valueFormats.dateTimeAsUS(epoch, true);
+    expect(actual).toBe(expected);
   });
 
   it('should format as US date and skip date when today', function() {
     var now = moment();
-    var str = kbn.valueFormats.dateTimeAsUS(now.valueOf(), 1);
-    expect(str).toBe(now.format('h:mm:ss a'));
+    var expected = now.format('h:mm:ss a');
+    var actual = kbn.valueFormats.dateTimeAsUS(now.valueOf(), false);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as US date (in UTC) and skip date when today', function() {
+    var now = moment.utc();
+    var expected = now.format('h:mm:ss a');
+    var actual = kbn.valueFormats.dateTimeAsUS(now.valueOf(), true);
+    expect(actual).toBe(expected);
   });
 
   it('should format as from now with days', function() {
     var daysAgo = moment().add(-7, 'd');
-    var str = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), 1);
-    expect(str).toBe('7 days ago');
+    var expected = '7 days ago';
+    var actual = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), false);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as from now with days (in UTC)', function() {
+    var daysAgo = moment.utc().add(-7, 'd');
+    var expected = '7 days ago';
+    var actual = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), true);
+    expect(actual).toBe(expected);
   });
 
   it('should format as from now with minutes', function() {
     var daysAgo = moment().add(-2, 'm');
-    var str = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), 1);
-    expect(str).toBe('2 minutes ago');
+    var expected = '2 minutes ago';
+    var actual = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), false);
+    expect(actual).toBe(expected);
+  });
+
+  it('should format as from now with minutes (in UTC)', function() {
+    var daysAgo = moment.utc().add(-2, 'm');
+    var expected = '2 minutes ago';
+    var actual = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), true);
+    expect(actual).toBe(expected);
   });
 });
 

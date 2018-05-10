@@ -1,14 +1,15 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 import * as dateMath from 'app/core/utils/datemath';
-import {angularMocks, sinon} from '../lib/common';
-import {PanelModel} from 'app/features/dashboard/panel_model';
+import { angularMocks, sinon } from '../lib/common';
+import { PanelModel } from 'app/features/dashboard/panel_model';
 
 export function ControllerTestContext() {
   var self = this;
 
   this.datasource = {};
   this.$element = {};
+  this.$sanitize = {};
   this.annotationsSrv = {};
   this.timeSrv = new TimeSrvStub();
   this.templateSrv = new TemplateSrvStub();
@@ -22,6 +23,7 @@ export function ControllerTestContext() {
       };
     },
   };
+  this.isUtc = false;
 
   this.providePhase = function(mocks) {
     return angularMocks.module(function($provide) {
@@ -30,6 +32,7 @@ export function ControllerTestContext() {
       $provide.value('timeSrv', self.timeSrv);
       $provide.value('templateSrv', self.templateSrv);
       $provide.value('$element', self.$element);
+      $provide.value('$sanitize', self.$sanitize);
       _.each(mocks, function(value, key) {
         $provide.value(key, value);
       });
@@ -42,8 +45,12 @@ export function ControllerTestContext() {
       self.$location = $location;
       self.$browser = $browser;
       self.$q = $q;
-      self.panel = new PanelModel({type: 'test'});
-      self.dashboard = {meta: {}};
+      self.panel = new PanelModel({ type: 'test' });
+      self.dashboard = { meta: {} };
+      self.isUtc = false;
+      self.dashboard.isTimezoneUtc = function() {
+        return self.isUtc;
+      };
 
       $rootScope.appEvent = sinon.spy();
       $rootScope.onAppEvent = sinon.spy();
@@ -53,14 +60,14 @@ export function ControllerTestContext() {
         $rootScope.colors.push('#' + i);
       }
 
-      config.panels['test'] = {info: {}};
+      config.panels['test'] = { info: {} };
       self.ctrl = $controller(
         Ctrl,
-        {$scope: self.scope},
+        { $scope: self.scope },
         {
           panel: self.panel,
           dashboard: self.dashboard,
-        },
+        }
       );
     });
   };
@@ -72,7 +79,7 @@ export function ControllerTestContext() {
       self.$browser = $browser;
       self.scope.contextSrv = {};
       self.scope.panel = {};
-      self.scope.dashboard = {meta: {}};
+      self.scope.dashboard = { meta: {} };
       self.scope.dashboardMeta = {};
       self.scope.dashboardViewState = new DashboardViewStateStub();
       self.scope.appEvent = sinon.spy();
@@ -90,6 +97,10 @@ export function ControllerTestContext() {
         $scope: self.scope,
       });
     });
+  };
+
+  this.setIsUtc = function(isUtc = false) {
+    self.isUtc = isUtc;
   };
 }
 
@@ -131,7 +142,7 @@ export function DashboardViewStateStub() {
 
 export function TimeSrvStub() {
   this.init = sinon.spy();
-  this.time = {from: 'now-1h', to: 'now'};
+  this.time = { from: 'now-1h', to: 'now' };
   this.timeRange = function(parse) {
     if (parse === false) {
       return this.time;
@@ -159,7 +170,7 @@ export function ContextSrvStub() {
 
 export function TemplateSrvStub() {
   this.variables = [];
-  this.templateSettings = {interpolate: /\[\[([\s\S]+?)\]\]/g};
+  this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
   this.data = {};
   this.replace = function(text) {
     return _.template(text, this.templateSettings)(this.data);
@@ -188,7 +199,7 @@ var allDeps = {
   TimeSrvStub: TimeSrvStub,
   ControllerTestContext: ControllerTestContext,
   ServiceTestContext: ServiceTestContext,
-  DashboardViewStateStub: DashboardViewStateStub
+  DashboardViewStateStub: DashboardViewStateStub,
 };
 
 // for legacy
