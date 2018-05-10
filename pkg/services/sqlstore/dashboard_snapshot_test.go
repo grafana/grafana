@@ -115,8 +115,8 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 		setting.SnapShotRemoveExpired = true
 
 		notExpiredsnapshot := createTestSnapshot(sqlstore, "key1", 1200)
-		createTestSnapshot(sqlstore, "key2", -1200)
-		createTestSnapshot(sqlstore, "key3", -1200)
+		createTestSnapshot(sqlstore, "key2", -1000)
+		createTestSnapshot(sqlstore, "key3", -1000)
 
 		err := DeleteExpiredSnapshots(&m.DeleteExpiredSnapshotsCommand{})
 		So(err, ShouldBeNil)
