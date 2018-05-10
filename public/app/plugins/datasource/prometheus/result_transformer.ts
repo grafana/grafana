@@ -8,7 +8,7 @@ export class ResultTransformer {
     let prometheusResult = response.data.data.result;
 
     if (options.format === 'table') {
-      result.push(this.transformMetricDataToTable(prometheusResult, options.responseListLength, options.responseIndex));
+      result.push(this.transformMetricDataToTable(prometheusResult, options.responseListLength, options.refId));
     } else if (options.format === 'heatmap') {
       let seriesList = [];
       prometheusResult.sort(sortSeriesByLabel);
@@ -58,7 +58,7 @@ export class ResultTransformer {
     return { target: metricLabel, datapoints: dps };
   }
 
-  transformMetricDataToTable(md, resultCount: number, resultIndex: number) {
+  transformMetricDataToTable(md, resultCount: number, refId: string) {
     var table = new TableModel();
     var i, j;
     var metricLabels = {};
@@ -83,7 +83,7 @@ export class ResultTransformer {
       metricLabels[label] = labelIndex + 1;
       table.columns.push({ text: label });
     });
-    let valueText = resultCount > 1 ? `Value #${String.fromCharCode(65 + resultIndex)}` : 'Value';
+    let valueText = resultCount > 1 ? `Value #${refId}` : 'Value';
     table.columns.push({ text: valueText });
 
     // Populate rows, set value to empty string when label not present.

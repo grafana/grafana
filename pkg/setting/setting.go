@@ -124,6 +124,7 @@ var (
 	AuthProxyAutoSignUp     bool
 	AuthProxyLdapSyncTtl    int
 	AuthProxyWhitelist      string
+	AuthProxyHeaders        map[string]string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -612,6 +613,14 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyWhitelist = authProxy.Key("whitelist").String()
+
+	AuthProxyHeaders = make(map[string]string)
+	for _, propertyAndHeader := range util.SplitString(authProxy.Key("headers").String()) {
+		split := strings.SplitN(propertyAndHeader, ":", 2)
+		if len(split) == 2 {
+			AuthProxyHeaders[split[0]] = split[1]
+		}
+	}
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
