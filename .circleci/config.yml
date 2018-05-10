@@ -95,6 +95,8 @@ jobs:
             - dist/grafana*
             - scripts/*.sh
             - scripts/publish
+      - store_artifacts:
+          path: dist
 
   build-enterprise:
     docker:
