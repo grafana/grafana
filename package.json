@@ -179,5 +179,8 @@
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "^1.4.1"
+  },
+  "resolutions": {
+    "caniuse-db": "1.0.30000772"
   }
 }
