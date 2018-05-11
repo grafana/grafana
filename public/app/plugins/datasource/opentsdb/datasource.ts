@@ -112,44 +112,62 @@ export default class OpenTsDatasource {
       );
     }
 
-    var gexpPromise;
+    // perform single gExp queries so that we can reliably map targets to results once all the promises are resolved
+    // (/query/gexp can perform combined queries but the result order is not determinate)
+    var gexpPromises = [];
     if (gExpressions.length > 0) {
-      gexpPromise = this.performTimeSeriesGExpression(gExpressions, start, end).then(
-        function(response) {
-          var gExpToTargetMapping = this.mapGExpToTargets(response.data, options);
-          var result = _.map(
-            response.data,
-            function(gexpData, index) {
-              index = gExpToTargetMapping[index];
-              if (index === -1) {
-                index = 0;
-              }
-              return this.transformGexpData(
-                gexpData,
-                options.targets[index],
-                this.tsdbResolution
-              );
-            }.bind(this)
-          );
+      for (var gexpIndex = 0; gexpIndex < gExpressions.length; gexpIndex++) {
+        var gexpPromise = this.performGExpressionQuery(gexpIndex, gExpressions[gexpIndex], start, end).then(
+          function(response) {
 
-          return result.filter((value) => {
-            return value !== false;
-          });
-        }.bind(this)
-      );
+            // only index into gexp queries
+            var gexpTargets = options.targets.filter((target) => {
+              return target.queryType === 'gexp';
+            });
+
+            var gExpTargetIndex = this.mapGExpToTargets(response.config.url);
+
+            var result = _.map(
+              response.data,
+              function(gexpData) {
+                var index = gExpTargetIndex;
+                if (index === -1) {
+                  index = 0;
+                }
+                return this.transformGexpData(
+                  gexpData,
+                  gexpTargets[index],
+                  this.tsdbResolution
+                );
+              }.bind(this)
+            );
+
+            return result.filter((value) => {
+              return value !== false;
+            });
+          }.bind(this)
+        );
+
+        gexpPromises.push(gexpPromise);
+      }
     }
 
     // call all queries into an array and concaternate their data into a return object
-    return this.$q.all([queriesPromise, gexpPromise]).then(function(responses) {
+    var tsdbQueryPromises = [queriesPromise].concat(gexpPromises);
+
+    // q.all([]) resolves all promises while keeping order in the return array
+    // (see: https://docs.angularjs.org/api/ng/service/$q#all)
+    return this.$q.all(tsdbQueryPromises).then(function(responses) {
       var data = [];
 
+      // response 0 from queriesPromise
       var queriesData = responses[0];
       if (queriesData && queriesData.length > 0) {
         data = data.concat(queriesData);
       }
 
-      var gexpData = responses[1];
-      if (gexpData && gexpData.length > 0) {
+      // response 1+ from gexpPromises
+      for (var gexpData of responses.slice(1)) {
         data = data.concat(gexpData);
       }
 
@@ -160,7 +178,7 @@ export default class OpenTsDatasource {
       //     {'target': 'metric.b', datapoints: [etc]},
       //   ]
       // }
-      //console.log(data);
+      //console.log('query data back to grafana', data);
       return {
         'data': data
       };
@@ -252,12 +270,9 @@ export default class OpenTsDatasource {
     return this.backendSrv.datasourceRequest(options);
   }
 
-  // retrieve gexp via GET to /api/query/gexp
-  performTimeSeriesGExpression(gExps, start, end) {
-    var urlParams = '?start=' + start;
-    _.each(gExps, function(gexp) {
-      urlParams += '&exp=' + gexp;
-    });
+  // retrieve a single gExp via GET to /api/query/gexp
+  performGExpressionQuery(idx, gExp, start, end) {
+    var urlParams = '?start=' + start + '&exp=' + gExp + '&gexpIndex=' + idx;
 
     var options = {
       method: 'GET',
@@ -455,19 +470,13 @@ export default class OpenTsDatasource {
   }
 
   transformGexpData(gExp, target, tsdbResolution) {
-    var metricLabel = '';
-    var dps = this.getDatapointsAtCorrectResolution(gExp, tsdbResolution);
-
     if (typeof target === 'undefined') {
       // the metric is hidden
       return false;
     }
 
-    if (target.gexpAlias && target.gexpAlias !== '') {
-      metricLabel = target.gexpAlias;
-    } else {
-      metricLabel = target.gexp;
-    }
+    var metricLabel = this.createGexpLabel(gExp, target);
+    var dps = this.getDatapointsAtCorrectResolution(gExp, tsdbResolution);
 
     return { target: metricLabel, datapoints: dps };
   }
@@ -511,6 +520,33 @@ export default class OpenTsDatasource {
     if (!_.isEmpty(tagData)) {
       label += '{' + tagData.join(', ') + '}';
     }
+
+    return label;
+  }
+
+  createGexpLabel(data, target) {
+    var label = '';
+
+    if (target.gexpAlias && target.gexpAlias !== '') {
+      // if the alias contains "$tag_foo" and the tag is present in the data, use the tag value as the name
+
+      var regex = /(.*)\$tag_(\w+)(.*)/;
+      var aliasMatch = target.gexpAlias.match(regex);
+
+      if (aliasMatch && !_.isEmpty(data.tags)) {
+        var tagk = aliasMatch[2];
+
+        if (tagk in data.tags) {
+          return aliasMatch[1] + data.tags[tagk] + aliasMatch[3];
+        }
+      }
+
+      // no $tag_, or $tag_ not matched
+      return target.gexpAlias;
+    }
+
+    // no alias; use the target as the name
+    label = target.gexp;
 
     return label;
   }
@@ -623,15 +659,16 @@ export default class OpenTsDatasource {
     });
   }
 
-  // A hack until opentsdb supports show_query feature for gexp
-  mapGExpToTargets(gExps, options) {
-    var targetIndexes = [];
-    _.each(options.targets, function(target, index) {
-      if (target.queryType === 'gexp') {
-        targetIndexes.push(index);
-      }
-    });
-    return targetIndexes;
+  mapGExpToTargets(queryUrl) {
+    // extract gexpIndex from URL
+    var regex = /.+gexpIndex=(\d+).*/;
+    var gexpIndex = queryUrl.match(regex);
+
+    if (!gexpIndex) {
+      return -1;
+    }
+
+    return gexpIndex[1];
   }
 
   convertToTSDBTime(date, roundUp) {
