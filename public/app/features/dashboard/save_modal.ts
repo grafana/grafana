@@ -1,4 +1,5 @@
 import coreModule from 'app/core/core_module';
+import _ from 'lodash';
 
 const template = `
 <div class="modal-body">
@@ -17,11 +18,11 @@ const template = `
     <div class="p-t-2">
       <div class="gf-form-group">
 		    <gf-form-switch class="gf-form"
-			    label="Save current time range" label-class="width-12" switch-class="max-width-6"
+			    label="Save current time range" ng-if="ctrl.compareTime()" label-class="width-12" switch-class="max-width-6"
 			    checked="ctrl.saveTimerange" on-change="buildUrl()">
 		    </gf-form-switch>
 		    <gf-form-switch class="gf-form"
-			    label="Save current variables" label-class="width-12" switch-class="max-width-6"
+			    label="Save current variables" ng-if="ctrl.compareTemplating()" label-class="width-12" switch-class="max-width-6"
 			    checked="ctrl.saveVariables" on-change="buildUrl()">
 		    </gf-form-switch>
 	    </div>
@@ -59,6 +60,11 @@ export class SaveDashboardModalCtrl {
   message: string;
   saveVariables = false;
   saveTimerange = false;
+  templating: any;
+  time: any;
+  originalTime: any;
+  current = [];
+  originalCurrent = [];
   max: number;
   saveForm: any;
   dismiss: () => void;
@@ -67,6 +73,27 @@ export class SaveDashboardModalCtrl {
   constructor(private dashboardSrv) {
     this.message = '';
     this.max = 64;
+    this.templating = dashboardSrv.dash.templating.list;
+  }
+
+  compareTime() {
+    _.isEqual(this.dashboardSrv.dash.time, this.dashboardSrv.dash.originalTime);
+  }
+
+  compareTemplating() {
+    if (this.dashboardSrv.dash.templating.list.length > 0) {
+      for (let i = 0; i < this.dashboardSrv.dash.templating.list.length; i++) {
+        if (
+          this.dashboardSrv.dash.templating.list[i].current.text !==
+          this.dashboardSrv.dash.originalTemplating[i].current.text
+        ) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return false;
+    }
   }
 
   save() {
