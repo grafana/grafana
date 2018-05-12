@@ -4,7 +4,7 @@
     environment:
       ACCEPT_EULA: Y
       MSSQL_SA_PASSWORD: Password!
-      MSSQL_PID: Express
+      MSSQL_PID: Developer
       MSSQL_DATABASE: grafana
       MSSQL_USER: grafana
       MSSQL_PASSWORD: Password!
