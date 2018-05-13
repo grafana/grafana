@@ -167,6 +167,9 @@ export class AlertTabCtrl {
     alert.noDataState = alert.noDataState || 'no_data';
     alert.executionErrorState = alert.executionErrorState || 'alerting';
     alert.frequency = alert.frequency || '60s';
+    alert.notifyFrequency = alert.notifyFrequency || 10;
+    alert.notifyOnce = alert.notifyOnce == null ? true : alert.notifyOnce;
+    alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
 

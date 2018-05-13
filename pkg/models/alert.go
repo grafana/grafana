@@ -72,6 +72,9 @@ type Alert struct {
 	Silenced       bool
 	ExecutionError string
 	Frequency      int64
+	NotifyOnce     bool
+	NotifyFreq     uint64
+	NotifyEval     uint64
 
 	EvalData     *simplejson.Json
 	NewStateDate time.Time
@@ -95,6 +98,8 @@ func (this *Alert) ContainsUpdates(other *Alert) bool {
 	result := false
 	result = result || this.Name != other.Name
 	result = result || this.Message != other.Message
+	result = result || this.NotifyOnce != other.NotifyOnce
+	result = result || (!other.NotifyOnce && this.NotifyFreq != other.NotifyFreq)
 
 	if this.Settings != nil && other.Settings != nil {
 		json1, err1 := this.Settings.Encode()
@@ -157,6 +162,10 @@ type SetAlertStateCommand struct {
 	EvalData *simplejson.Json
 
 	Timestamp time.Time
+}
+
+type IncAlertEvalCommand struct {
+	AlertId int64
 }
 
 //Queries

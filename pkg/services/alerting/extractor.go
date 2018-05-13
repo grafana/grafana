@@ -122,6 +122,8 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			Handler:     jsonAlert.Get("handler").MustInt64(),
 			Message:     jsonAlert.Get("message").MustString(),
 			Frequency:   frequency,
+			NotifyOnce:  jsonAlert.Get("notifyOnce").MustBool(),
+			NotifyFreq:  jsonAlert.Get("notifyFrequency").MustUint64(),
 		}
 
 		for _, condition := range jsonAlert.Get("conditions").MustArray() {
