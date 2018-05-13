@@ -21,6 +21,9 @@ type AlertRule struct {
 	ExecutionError string           `json:"executionError"`
 	Url            string           `json:"url"`
 	CanEdit        bool             `json:"canEdit"`
+	NotifyOnce     bool             `json:"notifyOnce"`
+	NotifyEval     uint64           `json:"notifyEval"`
+	NotifyFreq     uint64           `json:"notifyFrequency"`
 }
 
 type AlertNotification struct {

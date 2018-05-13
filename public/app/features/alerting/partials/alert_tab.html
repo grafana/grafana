@@ -31,6 +31,9 @@
 					<input type="text" class="gf-form-input width-20" ng-model="ctrl.alert.name">
 					<span class="gf-form-label">Evaluate every</span>
 					<input class="gf-form-input max-width-5" type="text" ng-model="ctrl.alert.frequency"></input>
+					<a class="gf-form-label" ng-click="ctrl.alert.notifyOnce = !ctrl.alert.notifyOnce;">{{ ctrl.alert.notifyOnce ? 'Notify on state change' : 'Notify every' }}</a>
+					<input class="gf-form-input max-width-5" type="number" ng-model="ctrl.alert.notifyFrequency" ng-hide="ctrl.alert.notifyOnce"></input>
+					<span class="gf-form-label" ng-hide="ctrl.alert.notifyOnce">evaluations</span>
 				</div>
 			</div>
 
