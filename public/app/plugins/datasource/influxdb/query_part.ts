@@ -445,4 +445,5 @@ export default {
   getCategories: function() {
     return categories;
   },
+  replaceAggregationAdd: replaceAggregationAddStrategy,
 };

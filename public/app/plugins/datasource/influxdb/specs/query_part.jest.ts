@@ -1,4 +1,5 @@
 import queryPart from '../query_part';
+import { registerAngularDirectives } from '../../../../core/core';
 
 describe('InfluxQueryPart', () => {
   describe('series with measurement only', () => {
@@ -39,6 +40,52 @@ describe('InfluxQueryPart', () => {
 
       expect(part.text).toBe('alias(test)');
       expect(part.render('mean(value)')).toBe('mean(value) AS "test"');
+    });
+
+    it('should nest distinct when count is selected', () => {
+      var selectParts = [
+        queryPart.create({
+          type: 'field',
+          category: queryPart.getCategories().Fields,
+        }),
+        queryPart.create({
+          type: 'count',
+          category: queryPart.getCategories().Aggregations,
+        })
+      ];
+      var partModel = queryPart.create({
+        type: 'distinct',
+      });
+
+      queryPart.replaceAggregationAdd(selectParts, partModel);
+
+      expect(selectParts[1].text).toBe("distinct()");
+      expect(selectParts[2].text).toBe("count()");
+    });
+
+    it('should replace count distinct if an aggregation is selected', () => {
+      var selectParts = [
+        queryPart.create({
+          type: 'field',
+          category: queryPart.getCategories().Fields,
+        }),
+        queryPart.create({
+          type: 'distinct',
+          category: queryPart.getCategories().Aggregations,
+        }),
+        queryPart.create({
+          type: 'count',
+          category: queryPart.getCategories().Aggregations,
+        })
+      ];
+      var partModel = queryPart.create({
+        type: 'mean',
+      });
+
+      queryPart.replaceAggregationAdd(selectParts, partModel);
+
+      expect(selectParts[1].text).toBe("mean()");
+      expect(selectParts).toHaveLength(2);
     });
   });
 });
