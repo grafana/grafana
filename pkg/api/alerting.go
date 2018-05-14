@@ -124,6 +124,59 @@ func GetAlert(c *m.ReqContext) Response {
 	return JSON(200, &query.Result)
 }
 
+// GET /api/alerts/status/:id
+func GetAlertStatus(c *m.ReqContext) Response {
+	id := c.ParamsInt64(":alertId")
+	alertQuery := m.GetAlertByIdQuery{Id: id}
+
+	if err := bus.Dispatch(&alertQuery); err != nil {
+		return Error(500, "List alerts failed", err)
+	}
+
+	if alertQuery.Result.State == m.AlertStateOK {
+		return JSON(200, &alertQuery.Result)
+	}
+
+	alert := alertQuery.Result
+	dashboardQuery := m.GetDashboardsQuery{DashboardIds: []int64{alert.DashboardId}}
+
+	if err := bus.Dispatch(&dashboardQuery); err != nil {
+		return Error(500, "Load dashboard failed", err)
+	}
+
+	backendCmd := alerting.AlertStatusCommand{
+		OrgId:     alert.OrgId,
+		Dashboard: dashboardQuery.Result[0],
+		PanelId:   alert.PanelId,
+	}
+
+	if err := bus.Dispatch(&backendCmd); err != nil {
+		if validationErr, ok := err.(alerting.ValidationError); ok {
+			return Error(422, validationErr.Error(), nil)
+		}
+		return Error(500, "Failed to test rule", err)
+	}
+
+	res := backendCmd.Result
+	dtoRes := &dtos.AlertStatusResult{
+		Firing:         res.Firing,
+		ConditionEvals: res.ConditionEvals,
+		State:          res.Rule.State,
+	}
+
+	if res.Error != nil {
+		dtoRes.Error = res.Error.Error()
+	}
+
+	for _, match := range res.EvalMatches {
+		dtoRes.EvalMatches = append(dtoRes.EvalMatches, &dtos.EvalMatch{Metric: match.Metric, Value: match.Value})
+	}
+
+	dtoRes.TimeMs = fmt.Sprintf("%1.3fms", res.GetDurationMs())
+
+	return JSON(200, dtoRes)
+}
+
 func GetAlertNotifiers(c *m.ReqContext) Response {
 	return JSON(200, alerting.GetNotifiers())
 }
