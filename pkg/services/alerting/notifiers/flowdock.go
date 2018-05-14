@@ -53,7 +53,6 @@ type FlowdockNotifier struct {
 
 func (this *FlowdockNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing Flowdock notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
-	this.log.Info("This took", "Ms", evalContext.GetDurationMs())
 	body := this.getBody(evalContext)
 	body["flow_token"] = this.FlowToken
 
