@@ -138,7 +138,7 @@ export class DashboardModel {
   // cleans meta data and other non persistent state
   getSaveModelClone(options?) {
     let defaults = _.defaults(options || {}, {
-      templating: false,
+      saveVariables: false,
       saveTimerange: false,
     });
 
@@ -153,6 +153,7 @@ export class DashboardModel {
     }
 
     // get variable save models
+    //console.log(this.templating.list);
     copy.templating = {
       list: _.map(this.templating.list, variable => (variable.getSaveModel ? variable.getSaveModel() : variable)),
     };

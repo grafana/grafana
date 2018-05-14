@@ -71,6 +71,7 @@ export class SaveDashboardModalCtrl {
 
   /** @ngInject */
   constructor(private dashboardSrv) {
+    console.log(dashboardSrv);
     this.message = '';
     this.max = 64;
     this.templating = dashboardSrv.dash.templating.list;
@@ -102,8 +103,8 @@ export class SaveDashboardModalCtrl {
     }
 
     var options = {
-      templating: this.saveVariables,
-      timepicker: this.saveTimerange,
+      saveVariables: this.saveVariables,
+      saveTimerange: this.saveTimerange,
       message: this.message,
     };
 

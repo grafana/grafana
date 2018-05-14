@@ -434,4 +434,63 @@ describe('DashboardModel', function() {
       });
     });
   });
+
+  describe('save variables and timeline', () => {
+    let model;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              name: 'Server',
+              current: {
+                selected: true,
+                text: 'server_001',
+                value: 'server_001',
+              },
+            },
+          ],
+        },
+        time: {
+          from: 'now-6h',
+          to: 'now',
+        },
+      });
+      model.templating.list[0] = {
+        name: 'Server',
+        current: {
+          selected: true,
+          text: 'server_002',
+          value: 'server_002',
+        },
+      };
+      model.time = {
+        from: 'now-3h',
+        to: 'now',
+      };
+    });
+
+    it('should not save variables and timeline', () => {
+      let options = {
+        saveVariables: false,
+        saveTimerange: false,
+      };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.templating.list[0].current.text).toBe('server_001');
+      expect(saveModel.time.from).toBe('now-6h');
+    });
+
+    it('should save variables and timeline', () => {
+      let options = {
+        saveVariables: true,
+        saveTimerange: true,
+      };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.templating.list[0].current.text).toBe('server_002');
+      expect(saveModel.time.from).toBe('now-3h');
+    });
+  });
 });
