@@ -5,10 +5,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func ValidateOrgAlert(c *m.ReqContext) {
@@ -159,7 +159,7 @@ func GetAlertStatus(c *m.ReqContext) Response {
 
 		evalMatches = append(evalMatches, map[string]interface{}{
 			"Metric": evt.Metric,
-			"Tags":	  evt.Tags,
+			"Tags":   evt.Tags,
 			"Value":  evt.Value.FullString(),
 		})
 	}

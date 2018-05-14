@@ -8,7 +8,7 @@ import (
 )
 
 type AlertStatusCommand struct {
-	Alert  *m.Alert
+	Alert *m.Alert
 
 	Result *EvalContext
 }
