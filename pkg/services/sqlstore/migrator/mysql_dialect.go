@@ -1,17 +1,21 @@
 package migrator
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/go-xorm/xorm"
 )
 
 type Mysql struct {
 	BaseDialect
 }
 
-func NewMysqlDialect() *Mysql {
+func NewMysqlDialect(engine *xorm.Engine) *Mysql {
 	d := Mysql{}
 	d.BaseDialect.dialect = &d
+	d.BaseDialect.engine = engine
 	d.BaseDialect.driverName = MYSQL
 	return &d
 }
@@ -22,10 +26,6 @@ func (db *Mysql) SupportEngine() bool {
 
 func (db *Mysql) Quote(name string) string {
 	return "`" + name + "`"
-}
-
-func (db *Mysql) QuoteStr() string {
-	return "`"
 }
 
 func (db *Mysql) AutoIncrStr() string {
@@ -104,4 +104,24 @@ func (db *Mysql) UpdateTableSql(tableName string, columns []*Column) string {
 	}
 
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
+}
+
+func (db *Mysql) CleanDB() error {
+	tables, _ := db.engine.DBMetas()
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	for _, table := range tables {
+		if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
+			return fmt.Errorf("failed to disable foreign key checks")
+		}
+		if _, err := sess.Exec("drop table " + table.Name + " ;"); err != nil {
+			return fmt.Errorf("failed to delete table: %v, err: %v", table.Name, err)
+		}
+		if _, err := sess.Exec("set foreign_key_checks = 1"); err != nil {
+			return fmt.Errorf("failed to disable foreign key checks")
+		}
+	}
+
+	return nil
 }

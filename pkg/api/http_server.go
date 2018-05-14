@@ -174,6 +174,7 @@ func (hs *HTTPServer) newMacaron() *macaron.Macaron {
 		hs.mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
+	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, setting.StaticRootPath, "", "public")
 	hs.mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
 
@@ -239,6 +240,12 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 	headers := func(c *macaron.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
+	}
+
+	if prefix == "public/build" {
+		headers = func(c *macaron.Context) {
+			c.Resp.Header().Set("Cache-Control", "public, max-age=31536000")
+		}
 	}
 
 	if setting.Env == setting.DEV {

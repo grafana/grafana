@@ -23,6 +23,7 @@ export function ControllerTestContext() {
       };
     },
   };
+  this.isUtc = false;
 
   this.providePhase = function(mocks) {
     return angularMocks.module(function($provide) {
@@ -46,6 +47,10 @@ export function ControllerTestContext() {
       self.$q = $q;
       self.panel = new PanelModel({ type: 'test' });
       self.dashboard = { meta: {} };
+      self.isUtc = false;
+      self.dashboard.isTimezoneUtc = function() {
+        return self.isUtc;
+      };
 
       $rootScope.appEvent = sinon.spy();
       $rootScope.onAppEvent = sinon.spy();
@@ -92,6 +97,10 @@ export function ControllerTestContext() {
         $scope: self.scope,
       });
     });
+  };
+
+  this.setIsUtc = function(isUtc = false) {
+    self.isUtc = isUtc;
   };
 }
 

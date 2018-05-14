@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/social"
-	"github.com/grafana/grafana/pkg/tracing"
 
 	// self registering services
 	_ "github.com/grafana/grafana/pkg/extensions"
@@ -38,6 +37,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/search"
+	_ "github.com/grafana/grafana/pkg/tracing"
 )
 
 func NewGrafanaServer() *GrafanaServerImpl {
@@ -76,12 +76,6 @@ func (g *GrafanaServerImpl) Run() error {
 
 	login.Init()
 	social.NewOAuthService()
-
-	tracingCloser, err := tracing.Init(g.cfg.Raw)
-	if err != nil {
-		return fmt.Errorf("Tracing settings is not valid. error: %v", err)
-	}
-	defer tracingCloser.Close()
 
 	serviceGraph := inject.Graph{}
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})

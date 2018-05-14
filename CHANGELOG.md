@@ -11,6 +11,12 @@
 * **InfluxDB**: Support SELECT queries in templating query, [#5013](https://github.com/grafana/grafana/issues/5013)
 * **Dashboard**: JSON Model under dashboard settings can now be updated & changes saved, [#1429](https://github.com/grafana/grafana/issues/1429), thx [@jereksel](https://github.com/jereksel)
 * **Security**: Fix XSS vulnerabilities in dashboard links [#11813](https://github.com/grafana/grafana/pull/11813)
+* **Singlestat**: Fix "time of last point" shows local time when dashboard timezone set to UTC [#10338](https://github.com/grafana/grafana/issues/10338)
+
+# 5.1.2 (2018-05-09)
+
+* **Database**: Fix MySql migration issue [#11862](https://github.com/grafana/grafana/issues/11862)
+* **Google Analytics**: Enable Google Analytics anonymizeIP setting for GDPR [#11656](https://github.com/grafana/grafana/pull/11656)
 
 # 5.1.1 (2018-05-07)
 

@@ -114,7 +114,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 	builder.Write(" ORDER BY name ASC")
 
 	if query.Limit != 0 {
-		builder.Write(" LIMIT ?", query.Limit)
+		builder.Write(dialect.Limit(query.Limit))
 	}
 
 	alerts := make([]*m.AlertListItemDTO, 0)
