@@ -137,18 +137,7 @@ func GetAlertStatus(c *m.ReqContext) Response {
 		return JSON(200, &alertQuery.Result)
 	}
 
-	alert := alertQuery.Result
-	dashboardQuery := m.GetDashboardsQuery{DashboardIds: []int64{alert.DashboardId}}
-
-	if err := bus.Dispatch(&dashboardQuery); err != nil {
-		return Error(500, "Load dashboard failed", err)
-	}
-
-	backendCmd := alerting.AlertStatusCommand{
-		OrgId:     alert.OrgId,
-		Dashboard: dashboardQuery.Result[0],
-		PanelId:   alert.PanelId,
-	}
+	backendCmd := alerting.AlertStatusCommand{Alert: alertQuery.Result}
 
 	if err := bus.Dispatch(&backendCmd); err != nil {
 		if validationErr, ok := err.(alerting.ValidationError); ok {
@@ -169,7 +158,9 @@ func GetAlertStatus(c *m.ReqContext) Response {
 	}
 
 	for _, match := range res.EvalMatches {
-		dtoRes.EvalMatches = append(dtoRes.EvalMatches, &dtos.EvalMatch{Metric: match.Metric, Value: match.Value})
+		dtoRes.EvalMatches = append(
+			dtoRes.EvalMatches,
+			&dtos.EvalMatch{Metric: match.Metric, Tags: match.Tags, Value: match.Value})
 	}
 
 	dtoRes.TimeMs = fmt.Sprintf("%1.3fms", res.GetDurationMs())

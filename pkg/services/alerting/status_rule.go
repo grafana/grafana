@@ -9,9 +9,7 @@ import (
 )
 
 type AlertStatusCommand struct {
-	Dashboard *m.Dashboard
-	PanelId int64
-	OrgId 	int64
+	Alert   *m.Alert
 
 	Result *EvalContext
 }
@@ -22,36 +20,24 @@ func init() {
 
 func handleAlertStatusCommand(cmd *AlertStatusCommand) error {
 
-	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
-
-	alerts, err := extractor.GetAlerts()
+	rule, err := NewRuleFromDBAlert(cmd.Alert)
 	if err != nil {
 		return err
 	}
 
-	for _, alert := range alerts {
-		if alert.PanelId == cmd.PanelId {
-			rule, err := NewRuleFromDBAlert(alert)
-			if err != nil {
-				return err
-			}
+	cmd.Result = updateState(rule)
 
-			cmd.Result = updateState(rule)
-			return nil
-		}
-	}
-
-	return fmt.Errorf("Could not find alert with panel id %d", cmd.PanelId)
+	return fmt.Errorf("Could not find alert with panel id %d", cmd.Alert.PanelId)
 }
 
 func updateState(rule *Rule) *EvalContext {
 	handler := NewEvalHandler()
 
-	context := NewEvalContext(context.Background(), rule)
-	context.IsTestRun = true
+	evalContext := NewEvalContext(context.Background(), rule)
+	evalContext.IsTestRun = true
 
-	handler.Eval(context)
-	context.Rule.State = context.GetNewState()
+	handler.Eval(evalContext)
+	evalContext.Rule.State = evalContext.GetNewState()
 
-	return context
+	return evalContext
 }
