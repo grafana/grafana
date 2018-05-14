@@ -3,6 +3,7 @@ package notifiers
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -142,8 +143,12 @@ func (this *FlowdockNotifier) getAuthor(evalContext *alerting.EvalContext) map[s
 }
 
 func (this *FlowdockNotifier) combineStartTimeAndRuleId(evalContext *alerting.EvalContext) string {
-	startTime := evalContext.StartTime.Unix()
+	startTime := evalContext.StartTime
+	beginningOfDay := time.Date(
+		startTime.Year(), startTime.Month(), startTime.Day(),
+		0, 0, 0, 0, startTime.Location())
+
 	ruleId := evalContext.Rule.Id
 
-	return fmt.Sprintf("%d", (ruleId + startTime))
+	return fmt.Sprintf("%d", (ruleId + beginningOfDay.Unix()))
 }

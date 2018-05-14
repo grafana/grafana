@@ -189,7 +189,7 @@ func TestFlowdockNotifier(t *testing.T) {
 				So(threadMap["body"], ShouldEqual, correctBody)
 			})
 
-			Convey("calculate external thread id from rule and start time", func() {
+			Convey("calculate external thread id from rule and date", func() {
 				json := `
 			{ "flowToken": "abcd1234" }
 				`
@@ -198,7 +198,7 @@ func TestFlowdockNotifier(t *testing.T) {
 
 				testEvalContext := BuildTestEvalContext()
 				body := flowdockNotifier.getBody(testEvalContext)
-				So(body["external_thread_id"], ShouldEqual, "1525631400")
+				So(body["external_thread_id"], ShouldEqual, "1525564800")
 			})
 		})
 	})
