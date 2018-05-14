@@ -1,12 +1,14 @@
 $font-size-heatmap-tick: 11px;
 
 .heatmap-canvas-wrapper {
-  // position: relative;
+  position: relative;
   cursor: crosshair;
+  display: flex;
 }
 
 .heatmap-panel {
   position: relative;
+  flex-grow: 1;
 
   .axis .tick {
     text {
@@ -88,6 +90,43 @@ $font-size-heatmap-tick: 11px;
     .domain {
       opacity: 0.4;
       stroke: $text-color-weak;
+    }
+  }
+}
+
+.heatmap-threshold-manager {
+  position: relative;
+  flex-grow: 0;
+  cursor: default;
+  // width: 110px;
+}
+
+.heatmap-wrapper {
+  // .threshold-handlers {
+  //   display: flex;
+  // }
+
+  .alert-handle-wrapper {
+    // position: relative;
+    position: absolute;
+
+    &--T1 {
+      // right: 0px;
+      right: 13px;
+      width: 245px;
+
+      .alert-handle-line {
+        width: 145px;
+      }
+    }
+
+    &--T0 {
+      right: 0px;
+      width: 129px;
+
+      .alert-handle-line {
+        width: 28px;
+      }
     }
   }
 }

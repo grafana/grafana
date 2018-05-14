@@ -2,10 +2,10 @@
   <aside class="edit-sidemenu-aside">
     <ul class="edit-sidemenu">
       <li ng-class="{active: ctrl.displaySubTabIndex === 0}">
-        <a ng-click="ctrl.displaySubTabIndex = 0">Draw options</a>
+        <a ng-click="ctrl.setDisplaySubTab(0)">Draw options</a>
       </li>
       <li ng-class="{active: ctrl.displaySubTabIndex === 1}">
-        <a ng-click="ctrl.displaySubTabIndex = 1">
+        <a ng-click="ctrl.setDisplaySubTab(1)">
           Thresholds <span class="muted">({{ctrl.panel.thresholds.length}})</span>
         </a>
       </li>

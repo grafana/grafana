@@ -6,7 +6,18 @@
 		</div>
 
 		<div class="heatmap-panel" ng-dblclick="ctrl.zoomOut()"></div>
+
+		<div class="heatmap-threshold-manager" ng-if="ctrl.showThresholdManager()">
+			<threshold-manager className="'threshold-handlers'"
+				thresholds="ctrl.panel.thresholds"
+				yPos="ctrl.thresholdManagerYPos.bind(ctrl)"
+				yPosInvert="ctrl.thresholdManagerYPosInvert.bind(ctrl)"
+				onChange="ctrl.onThresholdManagerChange.bind(ctrl)">
+			</threshold-manager>
+		</div>
 	</div>
+
+
 	<div class="heatmap-legend-wrapper" ng-if="ctrl.panel.legend.show">
 		<heatmap-legend></heatmap-legend>
 	</div>

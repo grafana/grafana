@@ -454,15 +454,15 @@ export default function link(scope, elem, attrs, ctrl) {
   function addHeatmapCanvas() {
     let heatmap_elem = $heatmap[0];
 
+    if (heatmap) {
+      heatmap.remove();
+    }
+
     width = Math.floor($heatmap.width()) - padding.right;
     height = Math.floor($heatmap.height()) - padding.bottom;
 
     cardPadding = panel.cards.cardPadding !== null ? panel.cards.cardPadding : CARD_PADDING;
     cardRound = panel.cards.cardRound !== null ? panel.cards.cardRound : CARD_ROUND;
-
-    if (heatmap) {
-      heatmap.remove();
-    }
 
     heatmap = d3
       .select(heatmap_elem)
@@ -847,6 +847,8 @@ export default function link(scope, elem, attrs, ctrl) {
     scope.chartHeight = chartHeight;
     scope.chartWidth = chartWidth;
     scope.chartTop = chartTop;
+    ctrl.yScale = yScale;
+    ctrl.chartTop = chartTop;
   }
 
   // Register selection listeners

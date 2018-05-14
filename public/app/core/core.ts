@@ -17,6 +17,7 @@ import './components/colorpicker/ColorPicker';
 import './components/colorpicker/SeriesColorPicker';
 import './components/colorpicker/spectrum_picker';
 import './components/ThresholdManager/ThresholdForm';
+import './components/ThresholdManager/ThresholdManager';
 import './services/search_srv';
 import './services/ng_react';
 

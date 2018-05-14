@@ -108,11 +108,15 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   decimals: number;
   scaledDecimals: number;
   displaySubTabIndex: number;
+  $timeout: any;
+  yScale: any;
+  chartTop: any;
 
   /** @ngInject */
   constructor($scope, $injector, timeSrv) {
     super($scope, $injector);
     this.timeSrv = timeSrv;
+    this.$timeout = $injector.get('$timeout');
     this.selectionActivated = false;
 
     _.defaultsDeep(this.panel, panelDefaults);
@@ -136,6 +140,13 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Display', heatmapDisplayEditor, 3);
     this.unitFormats = kbn.getUnitFormats();
     this.displaySubTabIndex = 0;
+  }
+
+  setDisplaySubTab(tabIndex) {
+    this.displaySubTabIndex = tabIndex;
+    this.$timeout(() => {
+      this.render();
+    });
   }
 
   zoomOut(evt) {
@@ -305,10 +316,43 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
+  showThresholdManager() {
+    let show = this.displaySubTabIndex === 1 && this.editMode;
+    return show;
+  }
+
   onThresholdChange(newThresholds) {
-    // console.log('Heatmap onThresholdChange()', threshold, index);
     this.panel.thresholds = newThresholds;
-    this.render();
+    this.$timeout(() => {
+      this.render();
+    });
+  }
+
+  onThresholdManagerChange(newValue, index) {
+    this.panel.thresholds[index].value = newValue;
+    this.$timeout(() => {
+      this.render();
+    });
+  }
+
+  thresholdManagerYPos(value) {
+    let yScale =
+      this.yScale ||
+      function() {
+        return 0;
+      };
+    let chartTop = this.chartTop || 0;
+    return yScale(value) + chartTop;
+  }
+
+  thresholdManagerYPosInvert(y) {
+    let yScaleInvert =
+      this.yScale.invert ||
+      function() {
+        return 0;
+      };
+    let chartTop = this.chartTop || 0;
+    return yScaleInvert(y - chartTop);
   }
 
   seriesHandler(seriesData) {
