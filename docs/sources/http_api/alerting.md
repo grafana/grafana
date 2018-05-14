@@ -50,19 +50,16 @@ Content-Type: application/json
     "id": 1,
     "dashboardId": 1,
     "panelId": 1,
+    "panelUId": "ABcdEFghij"
+    "dashboardSlug": "sensors",
     "name": "fire place sensor",
     "message": "Someone is trying to break in through the fire place",
     "state": "alerting",
+    "newStateDate": "2018-05-14T05:55:20+02:00",
     "evalDate": "0001-01-01T00:00:00Z",
-    "evalData": [
-      {
-        "metric": "fire",
-        "tags": null,
-        "value": 5.349999999999999
-      }
-    "newStateDate": "2016-12-25",
+    "evalData": null,
     "executionError": "",
-    "url": "http://grafana.com/dashboard/db/sensors"
+    "dashboardUri": "http://grafana.com/dashboard/db/sensors"
   }
 ]
 ```
@@ -86,15 +83,37 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 {
-  "id": 1,
-  "dashboardId": 1,
-  "panelId": 1,
-  "name": "fire place sensor",
-  "message": "Someone is trying to break in through the fire place",
-  "state": "alerting",
-  "newStateDate": "2016-12-25",
-  "executionError": "",
-  "url": "http://grafana.com/dashboard/db/sensors"
+  "Id": 1,
+  "Version": 0,
+  "OrgId": 1,
+  "DashboardId": 55,
+  "PanelId": 2,
+  "Name": "my mem alert",
+  "Message": "",
+  "Severity": "",
+  "State": "alerting",
+  "Handler": 1,
+  "Silenced": false,
+  "ExecutionError": " ",
+  "Frequency": 60,
+  "EvalData": {
+    "evalMatches": [
+      {
+        "metric": "mem_usage",
+        "tags": {
+          "name": "server.grafana.com"
+        },
+        "value": 98.765
+      }
+    ]
+  },
+  "NewStateDate": "2018-05-14T17:12:45+02:00",
+  "StateChanges": 3,
+  "Created": "2018-05-14T17:01:25+02:00",
+  "Updated": "2018-05-14T17:11:18+02:00",
+  "Settings": {
+    ...
+  }
 }
 ```
 
