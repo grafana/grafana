@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -26,8 +25,7 @@ func handleAlertStatusCommand(cmd *AlertStatusCommand) error {
 	}
 
 	cmd.Result = updateState(rule)
-
-	return fmt.Errorf("could not find alert with panel id %d", cmd.Alert.PanelId)
+	return nil
 }
 
 func updateState(rule *Rule) *EvalContext {
