@@ -146,7 +146,7 @@ func GetAlertStatus(c *m.ReqContext) Response {
 		if validationErr, ok := err.(alerting.ValidationError); ok {
 			return Error(422, validationErr.Error(), nil)
 		}
-		return Error(500, "Failed to test rule", err)
+		return Error(500, "Failed to get alert status", err)
 	}
 
 	evalContext := backendCmd.Result
