@@ -117,6 +117,13 @@ Content-Type: application/json
 }
 ```
 
+**Important Note**:
+"evalMatches" data is cached in the db when and only when the state of the alert changes
+(e.g. transitioning from "ok" to "alerting" state).
+
+If data from one server triggers the alert first and, before that server is seen leaving alerting state,
+a second server also enters a state that would trigger the alert, the second server will not be visible in "evalMatches" data.
+
 ## Pause alert
 
 `POST /api/alerts/:id/pause`
