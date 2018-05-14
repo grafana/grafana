@@ -80,8 +80,6 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example Response**:
-
 ```http
 HTTP/1.1 200
 Content-Type: application/json
@@ -97,6 +95,26 @@ Content-Type: application/json
   "url": "http://grafana.com/dashboard/db/sensors"
 }
 ```
+
+## Get current status of one alert
+
+`GET /api/alerts/status/:id`
+
+**Example Request**:
+
+```http
+GET /api/alerts/status/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+**Example Response**:
+
+see `GET /api/alerts/:id`
+
+This endpoint is the same as `GET /api/alerts/:id` during the "ok" state. 
+In other states it reloads the current EvalData on each call, rather than pulling it from cached values in the database.
+Therefore, the server-specific data provided by this endpoint should be more current, but it is also a somewhat more resource-intensive call.
 
 ## Pause alert
 
