@@ -9,7 +9,7 @@ import (
 )
 
 type AlertStatusCommand struct {
-	Alert   *m.Alert
+	Alert  *m.Alert
 
 	Result *EvalContext
 }
@@ -34,7 +34,6 @@ func updateState(rule *Rule) *EvalContext {
 	handler := NewEvalHandler()
 
 	evalContext := NewEvalContext(context.Background(), rule)
-	evalContext.IsTestRun = true
 
 	handler.Eval(evalContext)
 	evalContext.Rule.State = evalContext.GetNewState()
