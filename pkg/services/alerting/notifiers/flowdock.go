@@ -25,7 +25,7 @@ func init() {
         <span class="gf-form-label width-6">Flow token</span>
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.flowToken" placeholder="Flowdock flow token"></input>
         <info-popover mode="right-absolute">
-            Instruction's for getting flow token can be found <a target="_blank" href="https://www.flowdock.com/api/integration-getting-started#/getting-started">here</a>
+            Instructions for getting the flow token can be found <a target="_blank" href="https://www.flowdock.com/api/integration-getting-started#/getting-started">here</a>
         </info-popover>
       </div>
     `,
