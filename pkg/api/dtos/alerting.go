@@ -52,15 +52,6 @@ type AlertTestResultLog struct {
 	Data    interface{} `json:"data"`
 }
 
-type AlertStatusResult struct {
-	Firing         bool             `json:"firing"`
-	State          m.AlertStateType `json:"state"`
-	ConditionEvals string           `json:"conditionEvals"`
-	TimeMs         string           `json:"timeMs"`
-	Error          string           `json:"error,omitempty"`
-	EvalMatches    []*EvalMatch     `json:"matches,omitempty"`
-}
-
 type EvalMatch struct {
 	Tags   map[string]string `json:"tags,omitempty"`
 	Metric string            `json:"metric"`
