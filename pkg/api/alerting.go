@@ -8,6 +8,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func ValidateOrgAlert(c *m.ReqContext) {
@@ -133,11 +134,13 @@ func GetAlertStatus(c *m.ReqContext) Response {
 		return Error(500, "List alerts failed", err)
 	}
 
-	if alertQuery.Result.State == m.AlertStateOK {
-		return JSON(200, &alertQuery.Result)
+	alert := alertQuery.Result
+
+	if alert.State == m.AlertStateOK {
+		return JSON(200, &alert)
 	}
 
-	backendCmd := alerting.AlertStatusCommand{Alert: alertQuery.Result}
+	backendCmd := alerting.AlertStatusCommand{Alert: alert}
 
 	if err := bus.Dispatch(&backendCmd); err != nil {
 		if validationErr, ok := err.(alerting.ValidationError); ok {
@@ -146,26 +149,26 @@ func GetAlertStatus(c *m.ReqContext) Response {
 		return Error(500, "Failed to test rule", err)
 	}
 
-	res := backendCmd.Result
-	dtoRes := &dtos.AlertStatusResult{
-		Firing:         res.Firing,
-		ConditionEvals: res.ConditionEvals,
-		State:          res.Rule.State,
+	evalContext := backendCmd.Result
+
+	evalDataJSON := simplejson.New()
+
+	evalMatches := make([]map[string]interface{}, 0)
+
+	for _, evt := range evalContext.EvalMatches {
+
+		evalMatches = append(evalMatches, map[string]interface{}{
+			"Metric": evt.Metric,
+			"Tags":	  evt.Tags,
+			"Value":  evt.Value.FullString(),
+		})
 	}
 
-	if res.Error != nil {
-		dtoRes.Error = res.Error.Error()
-	}
+	evalDataJSON.Set("evalMatches", evalMatches)
 
-	for _, match := range res.EvalMatches {
-		dtoRes.EvalMatches = append(
-			dtoRes.EvalMatches,
-			&dtos.EvalMatch{Metric: match.Metric, Tags: match.Tags, Value: match.Value})
-	}
+	alert.EvalData = evalDataJSON
 
-	dtoRes.TimeMs = fmt.Sprintf("%1.3fms", res.GetDurationMs())
-
-	return JSON(200, dtoRes)
+	return JSON(200, alert)
 }
 
 func GetAlertNotifiers(c *m.ReqContext) Response {

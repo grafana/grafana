@@ -27,7 +27,7 @@ func handleAlertStatusCommand(cmd *AlertStatusCommand) error {
 
 	cmd.Result = updateState(rule)
 
-	return fmt.Errorf("Could not find alert with panel id %d", cmd.Alert.PanelId)
+	return fmt.Errorf("could not find alert with panel id %d", cmd.Alert.PanelId)
 }
 
 func updateState(rule *Rule) *EvalContext {
