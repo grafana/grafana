@@ -81,7 +81,10 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 		}
 
 		if r.MetaJson != "" {
-			metaJson, _ := simplejson.NewJson([]byte(r.MetaJson))
+			metaJson, err := simplejson.NewJson([]byte(r.MetaJson))
+			if err != nil {
+				tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
+			}
 			qr.Meta = metaJson
 		}
 
