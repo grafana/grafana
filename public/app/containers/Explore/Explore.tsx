@@ -80,6 +80,7 @@ export class Explore extends React.Component<any, IExploreState> {
       showingGraph: true,
       showingTable: true,
       tableResult: null,
+      ...props.initialState,
     };
   }
 
@@ -126,8 +127,22 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setState({ range }, () => this.handleSubmit());
   };
 
+  handleClickCloseSplit = () => {
+    const { onChangeSplit } = this.props;
+    if (onChangeSplit) {
+      onChangeSplit(false);
+    }
+  };
+
   handleClickGraphButton = () => {
     this.setState(state => ({ showingGraph: !state.showingGraph }));
+  };
+
+  handleClickSplit = () => {
+    const { onChangeSplit } = this.props;
+    if (onChangeSplit) {
+      onChangeSplit(true, this.state);
+    }
   };
 
   handleClickTableButton = () => {
@@ -211,6 +226,7 @@ export class Explore extends React.Component<any, IExploreState> {
   };
 
   render() {
+    const { position, split } = this.props;
     const {
       datasource,
       datasourceError,
@@ -230,16 +246,32 @@ export class Explore extends React.Component<any, IExploreState> {
     const graphHeight = showingBoth ? '200px' : '400px';
     const graphButtonActive = showingBoth || showingGraph ? 'active' : '';
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
+    const exploreClass = split ? 'explore explore-split' : 'explore';
     return (
-      <div className="explore">
+      <div className={exploreClass}>
         <div className="navbar">
-          <div>
-            <a className="navbar-page-btn">
-              <i className="fa fa-rocket" />
-              Explore
-            </a>
-          </div>
+          {position === 'left' ? (
+            <div>
+              <a className="navbar-page-btn">
+                <i className="fa fa-rocket" />
+                Explore
+              </a>
+            </div>
+          ) : (
+            <div className="navbar-buttons explore-first-button">
+              <button className="btn navbar-button" onClick={this.handleClickCloseSplit}>
+                Close Split
+              </button>
+            </div>
+          )}
           <div className="navbar__spacer" />
+          {position === 'left' && !split ? (
+            <div className="navbar-buttons">
+              <button className="btn navbar-button" onClick={this.handleClickSplit}>
+                Split
+              </button>
+            </div>
+          ) : null}
           <div className="navbar-buttons">
             <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.handleClickGraphButton}>
               Graph
@@ -278,7 +310,13 @@ export class Explore extends React.Component<any, IExploreState> {
             {queryError ? <div className="text-warning m-a-2">{queryError}</div> : null}
             <main className="m-t-2">
               {showingGraph ? (
-                <Graph data={graphResult} id="explore-1" options={requestOptions} height={graphHeight} />
+                <Graph
+                  data={graphResult}
+                  id={`explore-graph-${position}`}
+                  options={requestOptions}
+                  height={graphHeight}
+                  split={split}
+                />
               ) : null}
               {showingTable ? <Table data={tableResult} className="m-t-3" /> : null}
             </main>

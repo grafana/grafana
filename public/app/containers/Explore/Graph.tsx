@@ -75,6 +75,7 @@ class Graph extends Component<any, any> {
     if (
       prevProps.data !== this.props.data ||
       prevProps.options !== this.props.options ||
+      prevProps.split !== this.props.split ||
       prevProps.height !== this.props.height
     ) {
       this.draw();
