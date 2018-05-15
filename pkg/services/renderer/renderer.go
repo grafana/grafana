@@ -49,9 +49,9 @@ func (rs *RenderService) getChrome(ctx context.Context) (*chromedp.CDP, error) {
 		return nil, err
 	}
 
-	chromeInstance, err := chromedp.New(ctx,
+	cdp, err := chromedp.New(ctx,
 		chromedp.WithDebugf(func(msg string, data ...interface{}) {
-			// logFuncProxy(rs.log.Debug, msg, data...)
+			logFuncProxy(rs.log.Debug, msg, data...)
 		}),
 		chromedp.WithErrorf(func(msg string, data ...interface{}) {
 			logFuncProxy(rs.log.Error, msg, data...)
@@ -98,7 +98,7 @@ func (rs *RenderService) getChrome(ctx context.Context) (*chromedp.CDP, error) {
 		return nil, err
 	}
 
-	return chromeInstance, nil
+	return cdp, nil
 }
 
 func (rs *RenderService) Render(opts Opts) (string, error) {
@@ -106,7 +106,7 @@ func (rs *RenderService) Render(opts Opts) (string, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), opts.Timeout)
 	defer cancelFunc()
 
-	chromeInstance, err := rs.getChrome(ctx)
+	cdp, err := rs.getChrome(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -125,7 +125,7 @@ func (rs *RenderService) Render(opts Opts) (string, error) {
 	// run task list
 	start := time.Now()
 
-	err = chromeInstance.Run(ctx, rs.getScreenshotAction(opts.Width, opts.Height, url, renderKey, pngPath))
+	err = cdp.Run(ctx, rs.getScreenshotAction(opts.Width, opts.Height, url, renderKey, pngPath))
 	if err != nil {
 		rs.log.Error("could not take screenshot", "error", err)
 		return "", fmt.Errorf("Could not run tasklist: %s", err)
@@ -135,15 +135,6 @@ func (rs *RenderService) Render(opts Opts) (string, error) {
 		rs.log.Error("error during rendering", "err", err)
 		return "", fmt.Errorf("Error during rendering: %s", err)
 	}
-
-	time.Sleep(time.Second * 1)
-	var buf []byte
-	err = chromeInstance.Run(ctx, chromedp.Tasks{
-		chromedp.CaptureScreenshot(&buf),
-		chromedp.ActionFunc(func(context.Context, cdp.Executor) error {
-			return ioutil.WriteFile(pngPath, buf, 0644)
-		}),
-	})
 
 	timeTaken := time.Since(start)
 
@@ -183,8 +174,7 @@ func (rs *RenderService) getExecPath() (string, error) {
 		// the same for both 32 and 64bit
 		return filepath.Join(basePath, "chrome-win32/chrome.exe"), nil
 	} else if runtime.GOOS == "darwin" {
-		// return filepath.Join(basePath, "chrome-mac/Chromium.app/Contents/MacOS/Chromium"), nil
-		return filepath.Join(basePath, "chrome-mac/Chrome.app/Contents/MacOS/Chrome"), nil
+		return filepath.Join(basePath, "chrome-mac/Chromium.app/Contents/MacOS/Chromium"), nil
 	} else if runtime.GOOS == "linux" {
 		return filepath.Join(basePath, "chrome-linux/chrome"), nil
 	}
@@ -193,15 +183,15 @@ func (rs *RenderService) getExecPath() (string, error) {
 }
 
 func (rs *RenderService) getScreenshotAction(width, height int, url, renderKey, pngPath string) chromedp.Tasks {
-	// var buf []byte
+	var buf []byte
 	return chromedp.Tasks{
 		rs.getViewportAction(width, height),
 		rs.getCookieAction(getLocalDomain(), "renderKey", renderKey),
 		chromedp.Navigate(url),
-		// chromedp.CaptureScreenshot(&buf),
-		// chromedp.ActionFunc(func(context.Context, cdp.Executor) error {
-		// 	return ioutil.WriteFile(pngPath, buf, 0644)
-		// }),
+		chromedp.CaptureScreenshot(&buf),
+		chromedp.ActionFunc(func(context.Context, cdp.Executor) error {
+			return ioutil.WriteFile(pngPath, buf, 0644)
+		}),
 	}
 }
 
