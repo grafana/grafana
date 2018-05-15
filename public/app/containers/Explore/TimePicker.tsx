@@ -4,22 +4,43 @@ import moment from 'moment';
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 
+const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
 };
 
+export function parseTime(value, isUtc = false, asString = false) {
+  if (value.indexOf('now') !== -1) {
+    return value;
+  }
+  if (!isNaN(value)) {
+    const epoch = parseInt(value);
+    const m = isUtc ? moment.utc(epoch) : moment(epoch);
+    return asString ? m.format(DATE_FORMAT) : m;
+  }
+  return undefined;
+}
+
 export default class TimePicker extends PureComponent<any, any> {
   dropdownEl: any;
   constructor(props) {
     super(props);
+
+    const fromRaw = props.range ? props.range.from : DEFAULT_RANGE.from;
+    const toRaw = props.range ? props.range.to : DEFAULT_RANGE.to;
+    const range = {
+      from: parseTime(fromRaw),
+      to: parseTime(toRaw),
+    };
     this.state = {
-      fromRaw: props.range ? props.range.from : DEFAULT_RANGE.from,
-      isOpen: false,
-      isUtc: false,
-      rangeString: rangeUtil.describeTimeRange(props.range || DEFAULT_RANGE),
+      fromRaw: parseTime(fromRaw, props.isUtc, true),
+      isOpen: props.isOpen,
+      isUtc: props.isUtc,
+      rangeString: rangeUtil.describeTimeRange(range),
       refreshInterval: '',
-      toRaw: props.range ? props.range.to : DEFAULT_RANGE.to,
+      toRaw: parseTime(toRaw, props.isUtc, true),
     };
   }
 
@@ -49,14 +70,15 @@ export default class TimePicker extends PureComponent<any, any> {
     }
 
     const rangeString = rangeUtil.describeTimeRange(range);
-    to = moment.utc(to);
-    from = moment.utc(from);
+    // No need to convert to UTC again
+    to = moment(to);
+    from = moment(from);
 
     this.setState(
       {
         rangeString,
-        fromRaw: from,
-        toRaw: to,
+        fromRaw: from.format(DATE_FORMAT),
+        toRaw: to.format(DATE_FORMAT),
       },
       () => {
         onChangeTime({ to, from });
@@ -74,6 +96,27 @@ export default class TimePicker extends PureComponent<any, any> {
     this.setState({
       toRaw: e.target.value,
     });
+  };
+
+  handleClickApply = () => {
+    const { onChangeTime } = this.props;
+    const { toRaw, fromRaw } = this.state;
+    const range = {
+      from: dateMath.parse(fromRaw, false),
+      to: dateMath.parse(toRaw, true),
+    };
+    const rangeString = rangeUtil.describeTimeRange(range);
+    this.setState(
+      {
+        isOpen: false,
+        rangeString,
+      },
+      () => {
+        if (onChangeTime) {
+          onChangeTime(range);
+        }
+      }
+    );
   };
 
   handleClickLeft = () => this.move(-1);
@@ -118,7 +161,7 @@ export default class TimePicker extends PureComponent<any, any> {
     const timeOptions = this.getTimeOptions();
     return (
       <div ref={this.dropdownRef} className="gf-timepicker-dropdown">
-        <form name="timeForm" className="gf-timepicker-absolute-section">
+        <div className="gf-timepicker-absolute-section">
           <h3 className="section-heading">Custom range</h3>
 
           <label className="small">From:</label>
@@ -126,7 +169,7 @@ export default class TimePicker extends PureComponent<any, any> {
             <div className="gf-form max-width-28">
               <input
                 type="text"
-                className="gf-form-input input-large"
+                className="gf-form-input input-large timepicker-from"
                 value={fromRaw}
                 onChange={this.handleChangeFrom}
               />
@@ -136,7 +179,12 @@ export default class TimePicker extends PureComponent<any, any> {
           <label className="small">To:</label>
           <div className="gf-form-inline">
             <div className="gf-form max-width-28">
-              <input type="text" className="gf-form-input input-large" value={toRaw} onChange={this.handleChangeTo} />
+              <input
+                type="text"
+                className="gf-form-input input-large timepicker-to"
+                value={toRaw}
+                onChange={this.handleChangeTo}
+              />
             </div>
           </div>
 
@@ -146,7 +194,12 @@ export default class TimePicker extends PureComponent<any, any> {
               <select className="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
             </div>
           </div> */}
-        </form>
+          <div className="gf-form">
+            <button className="btn gf-form-btn btn-secondary" onClick={this.handleClickApply}>
+              Apply
+            </button>
+          </div>
+        </div>
 
         <div className="gf-timepicker-relative-section">
           <h3 className="section-heading">Quick ranges</h3>
@@ -172,16 +225,16 @@ export default class TimePicker extends PureComponent<any, any> {
     return (
       <div className="timepicker">
         <div className="navbar-buttons">
-          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickLeft}>
+          <button className="btn navbar-button navbar-button--tight timepicker-left" onClick={this.handleClickLeft}>
             <i className="fa fa-chevron-left" />
           </button>
           <button className="btn navbar-button gf-timepicker-nav-btn" onClick={this.handleClickPicker}>
             <i className="fa fa-clock-o" />
-            <span> {rangeString}</span>
+            <span className="timepicker-rangestring">{rangeString}</span>
             {isUtc ? <span className="gf-timepicker-utc">UTC</span> : null}
             {refreshInterval ? <span className="text-warning">&nbsp; Refresh every {refreshInterval}</span> : null}
           </button>
-          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickRight}>
+          <button className="btn navbar-button navbar-button--tight timepicker-right" onClick={this.handleClickRight}>
             <i className="fa fa-chevron-right" />
           </button>
         </div>

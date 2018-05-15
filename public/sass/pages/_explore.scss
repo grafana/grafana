@@ -36,6 +36,10 @@
 
   .timepicker {
     display: flex;
+
+    &-rangestring {
+      margin-left: 0.5em;
+    }
   }
 
   .run-icon {
