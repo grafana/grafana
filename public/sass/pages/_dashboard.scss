@@ -44,8 +44,16 @@ div.flot-text {
   padding: $panel-padding;
   height: calc(100% - 27px);
   position: relative;
+
   // Fixes scrolling on mobile devices
   overflow: auto;
+}
+
+// For larger screens, set back to hidden to avoid double scroll bars
+@include media-breakpoint-up(md) {
+  .panel-content {
+    overflow: hidden;
+  }
 }
 
 .panel-title-container {
