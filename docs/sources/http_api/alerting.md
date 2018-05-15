@@ -49,17 +49,17 @@ Content-Type: application/json
   {
     "id": 1,
     "dashboardId": 1,
-    "panelId": 1,
-    "panelUId": "ABcdEFghij"
+    "dashboardUId": "ABcdEFghij"
     "dashboardSlug": "sensors",
+    "panelId": 1,
     "name": "fire place sensor",
-    "message": "Someone is trying to break in through the fire place",
     "state": "alerting",
+    "message": "Someone is trying to break in through the fire place",
     "newStateDate": "2018-05-14T05:55:20+02:00",
     "evalDate": "0001-01-01T00:00:00Z",
     "evalData": null,
     "executionError": "",
-    "dashboardUri": "http://grafana.com/dashboard/db/sensors"
+    "url": "http://grafana.com/dashboard/db/sensors"
   }
 ]
 ```
@@ -83,37 +83,27 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 {
-  "Id": 1,
-  "Version": 0,
-  "OrgId": 1,
-  "DashboardId": 55,
-  "PanelId": 2,
-  "Name": "my mem alert",
-  "Message": "",
-  "Severity": "",
-  "State": "alerting",
-  "Handler": 1,
-  "Silenced": false,
-  "ExecutionError": " ",
-  "Frequency": 60,
-  "EvalData": {
-    "evalMatches": [
-      {
-        "metric": "mem_usage",
-        "tags": {
-          "name": "server.grafana.com"
-        },
-        "value": 98.765
-      }
-    ]
-  },
-  "NewStateDate": "2018-05-14T17:12:45+02:00",
-  "StateChanges": 3,
-  "Created": "2018-05-14T17:01:25+02:00",
-  "Updated": "2018-05-14T17:11:18+02:00",
-  "Settings": {
-    ...
-  }
+  "id": 1,
+  "dashboardId": 1,
+  "dashboardUId": "ABcdEFghij"
+  "dashboardSlug": "sensors",
+  "panelId": 1,
+  "name": "fire place sensor",
+  "state": "alerting",
+  "message": "Someone is trying to break in through the fire place",
+  "newStateDate": "2018-05-14T05:55:20+02:00",
+  "evalDate": "0001-01-01T00:00:00Z",
+  "evalData": "evalMatches": [
+    {
+      "metric": "movement",
+      "tags": {
+        "name": "fireplace_chimney"
+      },
+      "value": 98.765
+    }
+  ],
+  "executionError": "",
+  "url": "http://grafana.com/dashboard/db/sensors"
 }
 ```
 
