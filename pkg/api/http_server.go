@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/renderer"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,8 +43,9 @@ type HTTPServer struct {
 	cache         *gocache.Cache
 	httpSrv       *http.Server
 
-	RouteRegister RouteRegister `inject:""`
-	Bus           bus.Bus       `inject:""`
+	RouteRegister RouteRegister     `inject:""`
+	Bus           bus.Bus           `inject:""`
+	Renderer      renderer.Renderer `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

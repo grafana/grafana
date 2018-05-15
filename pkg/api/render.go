@@ -1,35 +1,58 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
-	"github.com/grafana/grafana/pkg/components/renderer"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/renderer"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func RenderToPng(c *m.ReqContext) {
+func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 	queryReader, err := util.NewUrlQueryReader(c.Req.URL)
 	if err != nil {
 		c.Handle(400, "Render parameters error", err)
 		return
 	}
+
 	queryParams := fmt.Sprintf("?%s", c.Req.URL.RawQuery)
 
-	renderOpts := &renderer.RenderOpts{
-		Path:     c.Params("*") + queryParams,
-		Width:    queryReader.Get("width", "800"),
-		Height:   queryReader.Get("height", "400"),
-		Timeout:  queryReader.Get("timeout", "60"),
-		OrgId:    c.OrgId,
-		UserId:   c.UserId,
-		OrgRole:  c.OrgRole,
-		Timezone: queryReader.Get("tz", ""),
-		Encoding: queryReader.Get("encoding", ""),
+	width, err := strconv.Atoi(queryReader.Get("width", "800"))
+	if err != nil {
+		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse width as int: %s", err))
+		return
 	}
 
-	pngPath, err := renderer.RenderToPng(renderOpts)
+	height, err := strconv.Atoi(queryReader.Get("height", "400"))
+	if err != nil {
+		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse height as int: %s", err))
+		return
+	}
+
+	timeout, err := strconv.Atoi(queryReader.Get("timeout", "60"))
+	if err != nil {
+		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse timeout as int: %s", err))
+		return
+	}
+
+	if queryReader.Get("tz", "") != "" || queryReader.Get("encoding", "") != "" {
+		c.Handle(400, "Unsupported parameter", errors.New("Unsupport query parameters tz or encoding"))
+		return
+	}
+
+	pngPath, err := hs.Renderer.Render(renderer.Opts{
+		Width:   width,
+		Height:  height,
+		Timeout: time.Duration(timeout) * time.Second,
+		OrgId:   c.OrgId,
+		UserId:  c.UserId,
+		OrgRole: c.OrgRole,
+		Path:    c.Params("*") + queryParams,
+	})
 
 	if err != nil && err == renderer.ErrTimeout {
 		c.Handle(500, err.Error(), err)
