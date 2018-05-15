@@ -71,6 +71,7 @@
   &--has-scroll {
     max-height: calc(100vh - 400px);
     position: relative;
+    overflow: auto;
   }
 }
 
