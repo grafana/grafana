@@ -1,7 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
-import baron from 'baron';
 
 var module = angular.module('grafana.directives');
 
@@ -14,13 +13,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       var data;
       var seriesList;
       var i;
-      var legendScrollbar;
-      const legendRightDefaultWidth = 10;
       let legendElem = elem.parent();
-
-      scope.$on('$destroy', function() {
-        destroyScrollbar();
-      });
 
       ctrl.events.on('render-legend', () => {
         data = ctrl.seriesList;
@@ -111,7 +104,6 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function render() {
-        let legendWidth = legendElem.width();
         if (!ctrl.panel.legend.show) {
           elem.empty();
           firstRender = true;
@@ -167,7 +159,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
 
         // render first time for getting proper legend height
-        if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== legendRightDefaultWidth)) {
+        if (!panel.legend.rightSide) {
           renderLegendElement(tableHeaderElem);
           elem.empty();
         }
@@ -231,8 +223,6 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function renderLegendElement(tableHeaderElem) {
-        let legendWidth = elem.width();
-
         var seriesElements = renderSeriesLegendElements();
 
         if (panel.legend.alignAsTable) {
@@ -244,56 +234,6 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         } else {
           elem.append('<div class="graph-legend-scroll"></div>');
           elem.find('.graph-legend-scroll').append(seriesElements);
-        }
-
-        if (!panel.legend.rightSide || (panel.legend.rightSide && legendWidth !== legendRightDefaultWidth)) {
-          addScrollbar();
-        } else {
-          destroyScrollbar();
-        }
-      }
-
-      function addScrollbar() {
-        const scrollRootClass = 'baron baron__root';
-        const scrollerClass = 'baron__scroller';
-        const scrollBarHTML = `
-          <div class="baron__track">
-            <div class="baron__bar"></div>
-          </div>
-        `;
-
-        let scrollRoot = elem;
-        let scroller = elem.find('.graph-legend-scroll');
-
-        // clear existing scroll bar track to prevent duplication
-        scrollRoot.find('.baron__track').remove();
-
-        scrollRoot.addClass(scrollRootClass);
-        $(scrollBarHTML).appendTo(scrollRoot);
-        scroller.addClass(scrollerClass);
-
-        let scrollbarParams = {
-          root: scrollRoot[0],
-          scroller: scroller[0],
-          bar: '.baron__bar',
-          track: '.baron__track',
-          barOnCls: '_scrollbar',
-          scrollingCls: '_scrolling',
-        };
-
-        if (!legendScrollbar) {
-          legendScrollbar = baron(scrollbarParams);
-        } else {
-          destroyScrollbar();
-          legendScrollbar = baron(scrollbarParams);
-        }
-        legendScrollbar.scroll();
-      }
-
-      function destroyScrollbar() {
-        if (legendScrollbar) {
-          legendScrollbar.dispose();
-          legendScrollbar = undefined;
         }
       }
     },

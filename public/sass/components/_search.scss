@@ -105,6 +105,7 @@
 .search-results-scroller {
   display: flex;
   position: relative;
+  overflow: auto;
 }
 
 .search-results-container {
