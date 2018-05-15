@@ -4,7 +4,6 @@ import classNames from 'classnames';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { PanelContainer } from './PanelContainer';
-import ScrollBar from 'app/core/components/ScrollBar/ScrollBar';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import Highlighter from 'react-highlight-words';
@@ -22,13 +21,10 @@ export interface AddPanelPanelState {
 }
 
 export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelPanelState> {
-  private scrollbar: ScrollBar;
-
   constructor(props) {
     super(props);
     this.handleCloseAddPanel = this.handleCloseAddPanel.bind(this);
     this.renderPanelItem = this.renderPanelItem.bind(this);
-    this.panelSizeChanged = this.panelSizeChanged.bind(this);
 
     this.state = {
       panelPlugins: this.getPanelPlugins(''),
@@ -36,20 +32,6 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
       filter: '',
       tab: 'Add',
     };
-  }
-
-  componentDidMount() {
-    this.props.panel.events.on('panel-size-changed', this.panelSizeChanged);
-  }
-
-  componentWillUnmount() {
-    this.props.panel.events.off('panel-size-changed', this.panelSizeChanged);
-  }
-
-  panelSizeChanged() {
-    setTimeout(() => {
-      this.scrollbar.update();
-    });
   }
 
   getPanelPlugins(filter) {
@@ -224,7 +206,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
               <i className="fa fa-close" />
             </button>
           </div>
-          <ScrollBar ref={element => (this.scrollbar = element)} className="add-panel__items">
+          <div className="add-panel__items">
             <div className="add-panel__searchbar">
               <label className="gf-form gf-form--grow gf-form--has-input-icon">
                 <input
@@ -238,7 +220,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
               </label>
             </div>
             {panelTab}
-          </ScrollBar>
+          </div>
         </div>
       </div>
     );
