@@ -18,7 +18,7 @@ const template = `
     <div class="p-t-2">
       <div class="gf-form-group">
 		    <gf-form-switch class="gf-form"
-			    label="Save current time range" ng-if="ctrl.compareTime()" label-class="width-12" switch-class="max-width-6"
+			    label="Save current time range" ng-if="!ctrl.compareTime()" label-class="width-12" switch-class="max-width-6"
 			    checked="ctrl.saveTimerange" on-change="buildUrl()">
 		    </gf-form-switch>
 		    <gf-form-switch class="gf-form"
@@ -71,19 +71,20 @@ export class SaveDashboardModalCtrl {
 
   /** @ngInject */
   constructor(private dashboardSrv) {
-    console.log(dashboardSrv);
     this.message = '';
     this.max = 64;
     this.templating = dashboardSrv.dash.templating.list;
   }
 
   compareTime() {
-    _.isEqual(this.dashboardSrv.dash.time, this.dashboardSrv.dash.originalTime);
+    return _.isEqual(this.dashboardSrv.dash.time, this.dashboardSrv.dash.originalTime);
   }
 
   compareTemplating() {
     if (this.dashboardSrv.dash.templating.list.length > 0) {
       for (let i = 0; i < this.dashboardSrv.dash.templating.list.length; i++) {
+        console.log(this.dashboardSrv.dash.templating.list[i].current.text);
+        console.log(this.dashboardSrv.dash.originalTemplating[i].current.text);
         if (
           this.dashboardSrv.dash.templating.list[i].current.text !==
           this.dashboardSrv.dash.originalTemplating[i].current.text
