@@ -22,9 +22,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"math"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -32,6 +35,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding"
+	"google.golang.org/grpc/encoding/proto"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/stats"
@@ -40,6 +44,8 @@ import (
 )
 
 // Compressor defines the interface gRPC uses to compress a message.
+//
+// Deprecated: use package encoding.
 type Compressor interface {
 	// Do compresses p into w.
 	Do(w io.Writer, p []byte) error
@@ -52,14 +58,34 @@ type gzipCompressor struct {
 }
 
 // NewGZIPCompressor creates a Compressor based on GZIP.
+//
+// Deprecated: use package encoding/gzip.
 func NewGZIPCompressor() Compressor {
+	c, _ := NewGZIPCompressorWithLevel(gzip.DefaultCompression)
+	return c
+}
+
+// NewGZIPCompressorWithLevel is like NewGZIPCompressor but specifies the gzip compression level instead
+// of assuming DefaultCompression.
+//
+// The error returned will be nil if the level is valid.
+//
+// Deprecated: use package encoding/gzip.
+func NewGZIPCompressorWithLevel(level int) (Compressor, error) {
+	if level < gzip.DefaultCompression || level > gzip.BestCompression {
+		return nil, fmt.Errorf("grpc: invalid compression level: %d", level)
+	}
 	return &gzipCompressor{
 		pool: sync.Pool{
 			New: func() interface{} {
-				return gzip.NewWriter(ioutil.Discard)
+				w, err := gzip.NewWriterLevel(ioutil.Discard, level)
+				if err != nil {
+					panic(err)
+				}
+				return w
 			},
 		},
-	}
+	}, nil
 }
 
 func (c *gzipCompressor) Do(w io.Writer, p []byte) error {
@@ -77,6 +103,8 @@ func (c *gzipCompressor) Type() string {
 }
 
 // Decompressor defines the interface gRPC uses to decompress a message.
+//
+// Deprecated: use package encoding.
 type Decompressor interface {
 	// Do reads the data from r and uncompress them.
 	Do(r io.Reader) ([]byte, error)
@@ -89,6 +117,8 @@ type gzipDecompressor struct {
 }
 
 // NewGZIPDecompressor creates a Decompressor based on GZIP.
+//
+// Deprecated: use package encoding/gzip.
 func NewGZIPDecompressor() Decompressor {
 	return &gzipDecompressor{}
 }
@@ -125,13 +155,13 @@ func (d *gzipDecompressor) Type() string {
 type callInfo struct {
 	compressorType        string
 	failFast              bool
-	headerMD              metadata.MD
-	trailerMD             metadata.MD
-	peer                  *peer.Peer
+	stream                *clientStream
 	traceInfo             traceInfo // in trace.go
 	maxReceiveMessageSize *int
 	maxSendMessageSize    *int
 	creds                 credentials.PerRPCCredentials
+	contentSubtype        string
+	codec                 baseCodec
 }
 
 func defaultCallInfo() *callInfo {
@@ -158,40 +188,66 @@ type EmptyCallOption struct{}
 func (EmptyCallOption) before(*callInfo) error { return nil }
 func (EmptyCallOption) after(*callInfo)        {}
 
-type beforeCall func(c *callInfo) error
-
-func (o beforeCall) before(c *callInfo) error { return o(c) }
-func (o beforeCall) after(c *callInfo)        {}
-
-type afterCall func(c *callInfo)
-
-func (o afterCall) before(c *callInfo) error { return nil }
-func (o afterCall) after(c *callInfo)        { o(c) }
-
 // Header returns a CallOptions that retrieves the header metadata
 // for a unary RPC.
 func Header(md *metadata.MD) CallOption {
-	return afterCall(func(c *callInfo) {
-		*md = c.headerMD
-	})
+	return HeaderCallOption{HeaderAddr: md}
+}
+
+// HeaderCallOption is a CallOption for collecting response header metadata.
+// The metadata field will be populated *after* the RPC completes.
+// This is an EXPERIMENTAL API.
+type HeaderCallOption struct {
+	HeaderAddr *metadata.MD
+}
+
+func (o HeaderCallOption) before(c *callInfo) error { return nil }
+func (o HeaderCallOption) after(c *callInfo) {
+	if c.stream != nil {
+		*o.HeaderAddr, _ = c.stream.Header()
+	}
 }
 
 // Trailer returns a CallOptions that retrieves the trailer metadata
 // for a unary RPC.
 func Trailer(md *metadata.MD) CallOption {
-	return afterCall(func(c *callInfo) {
-		*md = c.trailerMD
-	})
+	return TrailerCallOption{TrailerAddr: md}
 }
 
-// Peer returns a CallOption that retrieves peer information for a
-// unary RPC.
-func Peer(peer *peer.Peer) CallOption {
-	return afterCall(func(c *callInfo) {
-		if c.peer != nil {
-			*peer = *c.peer
+// TrailerCallOption is a CallOption for collecting response trailer metadata.
+// The metadata field will be populated *after* the RPC completes.
+// This is an EXPERIMENTAL API.
+type TrailerCallOption struct {
+	TrailerAddr *metadata.MD
+}
+
+func (o TrailerCallOption) before(c *callInfo) error { return nil }
+func (o TrailerCallOption) after(c *callInfo) {
+	if c.stream != nil {
+		*o.TrailerAddr = c.stream.Trailer()
+	}
+}
+
+// Peer returns a CallOption that retrieves peer information for a unary RPC.
+// The peer field will be populated *after* the RPC completes.
+func Peer(p *peer.Peer) CallOption {
+	return PeerCallOption{PeerAddr: p}
+}
+
+// PeerCallOption is a CallOption for collecting the identity of the remote
+// peer. The peer field will be populated *after* the RPC completes.
+// This is an EXPERIMENTAL API.
+type PeerCallOption struct {
+	PeerAddr *peer.Peer
+}
+
+func (o PeerCallOption) before(c *callInfo) error { return nil }
+func (o PeerCallOption) after(c *callInfo) {
+	if c.stream != nil {
+		if x, ok := peer.FromContext(c.stream.Context()); ok {
+			*o.PeerAddr = *x
 		}
-	})
+	}
 }
 
 // FailFast configures the action to take when an RPC is attempted on broken
@@ -205,36 +261,76 @@ func Peer(peer *peer.Peer) CallOption {
 //
 // By default, RPCs are "Fail Fast".
 func FailFast(failFast bool) CallOption {
-	return beforeCall(func(c *callInfo) error {
-		c.failFast = failFast
-		return nil
-	})
+	return FailFastCallOption{FailFast: failFast}
 }
+
+// FailFastCallOption is a CallOption for indicating whether an RPC should fail
+// fast or not.
+// This is an EXPERIMENTAL API.
+type FailFastCallOption struct {
+	FailFast bool
+}
+
+func (o FailFastCallOption) before(c *callInfo) error {
+	c.failFast = o.FailFast
+	return nil
+}
+func (o FailFastCallOption) after(c *callInfo) {}
 
 // MaxCallRecvMsgSize returns a CallOption which sets the maximum message size the client can receive.
 func MaxCallRecvMsgSize(s int) CallOption {
-	return beforeCall(func(o *callInfo) error {
-		o.maxReceiveMessageSize = &s
-		return nil
-	})
+	return MaxRecvMsgSizeCallOption{MaxRecvMsgSize: s}
 }
+
+// MaxRecvMsgSizeCallOption is a CallOption that indicates the maximum message
+// size the client can receive.
+// This is an EXPERIMENTAL API.
+type MaxRecvMsgSizeCallOption struct {
+	MaxRecvMsgSize int
+}
+
+func (o MaxRecvMsgSizeCallOption) before(c *callInfo) error {
+	c.maxReceiveMessageSize = &o.MaxRecvMsgSize
+	return nil
+}
+func (o MaxRecvMsgSizeCallOption) after(c *callInfo) {}
 
 // MaxCallSendMsgSize returns a CallOption which sets the maximum message size the client can send.
 func MaxCallSendMsgSize(s int) CallOption {
-	return beforeCall(func(o *callInfo) error {
-		o.maxSendMessageSize = &s
-		return nil
-	})
+	return MaxSendMsgSizeCallOption{MaxSendMsgSize: s}
 }
+
+// MaxSendMsgSizeCallOption is a CallOption that indicates the maximum message
+// size the client can send.
+// This is an EXPERIMENTAL API.
+type MaxSendMsgSizeCallOption struct {
+	MaxSendMsgSize int
+}
+
+func (o MaxSendMsgSizeCallOption) before(c *callInfo) error {
+	c.maxSendMessageSize = &o.MaxSendMsgSize
+	return nil
+}
+func (o MaxSendMsgSizeCallOption) after(c *callInfo) {}
 
 // PerRPCCredentials returns a CallOption that sets credentials.PerRPCCredentials
 // for a call.
 func PerRPCCredentials(creds credentials.PerRPCCredentials) CallOption {
-	return beforeCall(func(c *callInfo) error {
-		c.creds = creds
-		return nil
-	})
+	return PerRPCCredsCallOption{Creds: creds}
 }
+
+// PerRPCCredsCallOption is a CallOption that indicates the per-RPC
+// credentials to use for the call.
+// This is an EXPERIMENTAL API.
+type PerRPCCredsCallOption struct {
+	Creds credentials.PerRPCCredentials
+}
+
+func (o PerRPCCredsCallOption) before(c *callInfo) error {
+	c.creds = o.Creds
+	return nil
+}
+func (o PerRPCCredsCallOption) after(c *callInfo) {}
 
 // UseCompressor returns a CallOption which sets the compressor used when
 // sending the request.  If WithCompressor is also set, UseCompressor has
@@ -242,11 +338,82 @@ func PerRPCCredentials(creds credentials.PerRPCCredentials) CallOption {
 //
 // This API is EXPERIMENTAL.
 func UseCompressor(name string) CallOption {
-	return beforeCall(func(c *callInfo) error {
-		c.compressorType = name
-		return nil
-	})
+	return CompressorCallOption{CompressorType: name}
 }
+
+// CompressorCallOption is a CallOption that indicates the compressor to use.
+// This is an EXPERIMENTAL API.
+type CompressorCallOption struct {
+	CompressorType string
+}
+
+func (o CompressorCallOption) before(c *callInfo) error {
+	c.compressorType = o.CompressorType
+	return nil
+}
+func (o CompressorCallOption) after(c *callInfo) {}
+
+// CallContentSubtype returns a CallOption that will set the content-subtype
+// for a call. For example, if content-subtype is "json", the Content-Type over
+// the wire will be "application/grpc+json". The content-subtype is converted
+// to lowercase before being included in Content-Type. See Content-Type on
+// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests for
+// more details.
+//
+// If CallCustomCodec is not also used, the content-subtype will be used to
+// look up the Codec to use in the registry controlled by RegisterCodec. See
+// the documentation on RegisterCodec for details on registration. The lookup
+// of content-subtype is case-insensitive. If no such Codec is found, the call
+// will result in an error with code codes.Internal.
+//
+// If CallCustomCodec is also used, that Codec will be used for all request and
+// response messages, with the content-subtype set to the given contentSubtype
+// here for requests.
+func CallContentSubtype(contentSubtype string) CallOption {
+	return ContentSubtypeCallOption{ContentSubtype: strings.ToLower(contentSubtype)}
+}
+
+// ContentSubtypeCallOption is a CallOption that indicates the content-subtype
+// used for marshaling messages.
+// This is an EXPERIMENTAL API.
+type ContentSubtypeCallOption struct {
+	ContentSubtype string
+}
+
+func (o ContentSubtypeCallOption) before(c *callInfo) error {
+	c.contentSubtype = o.ContentSubtype
+	return nil
+}
+func (o ContentSubtypeCallOption) after(c *callInfo) {}
+
+// CallCustomCodec returns a CallOption that will set the given Codec to be
+// used for all request and response messages for a call. The result of calling
+// String() will be used as the content-subtype in a case-insensitive manner.
+//
+// See Content-Type on
+// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests for
+// more details. Also see the documentation on RegisterCodec and
+// CallContentSubtype for more details on the interaction between Codec and
+// content-subtype.
+//
+// This function is provided for advanced users; prefer to use only
+// CallContentSubtype to select a registered codec instead.
+func CallCustomCodec(codec Codec) CallOption {
+	return CustomCodecCallOption{Codec: codec}
+}
+
+// CustomCodecCallOption is a CallOption that indicates the codec used for
+// marshaling messages.
+// This is an EXPERIMENTAL API.
+type CustomCodecCallOption struct {
+	Codec Codec
+}
+
+func (o CustomCodecCallOption) before(c *callInfo) error {
+	c.codec = o.Codec
+	return nil
+}
+func (o CustomCodecCallOption) after(c *callInfo) {}
 
 // The format of the payload: compressed or not?
 type payloadFormat uint8
@@ -263,8 +430,8 @@ type parser struct {
 	// error types.
 	r io.Reader
 
-	// The header of a gRPC message. Find more detail
-	// at https://grpc.io/docs/guides/wire.html.
+	// The header of a gRPC message. Find more detail at
+	// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 	header [5]byte
 }
 
@@ -313,7 +480,7 @@ func (p *parser) recvMsg(maxReceiveMessageSize int) (pf payloadFormat, msg []byt
 // encode serializes msg and returns a buffer of message header and a buffer of msg.
 // If msg is nil, it generates the message header and an empty msg buffer.
 // TODO(ddyihai): eliminate extra Compressor parameter.
-func encode(c Codec, msg interface{}, cp Compressor, outPayload *stats.OutPayload, compressor encoding.Compressor) ([]byte, []byte, error) {
+func encode(c baseCodec, msg interface{}, cp Compressor, outPayload *stats.OutPayload, compressor encoding.Compressor) ([]byte, []byte, error) {
 	var (
 		b    []byte
 		cbuf *bytes.Buffer
@@ -390,7 +557,7 @@ func checkRecvPayload(pf payloadFormat, recvCompress string, haveCompressor bool
 // For the two compressor parameters, both should not be set, but if they are,
 // dc takes precedence over compressor.
 // TODO(dfawley): wrap the old compressor/decompressor using the new API?
-func recv(p *parser, c Codec, s *transport.Stream, dc Decompressor, m interface{}, maxReceiveMessageSize int, inPayload *stats.InPayload, compressor encoding.Compressor) error {
+func recv(p *parser, c baseCodec, s *transport.Stream, dc Decompressor, m interface{}, maxReceiveMessageSize int, inPayload *stats.InPayload, compressor encoding.Compressor) error {
 	pf, d, err := p.recvMsg(maxReceiveMessageSize)
 	if err != nil {
 		return err
@@ -485,6 +652,61 @@ func Errorf(c codes.Code, format string, a ...interface{}) error {
 	return status.Errorf(c, format, a...)
 }
 
+// setCallInfoCodec should only be called after CallOptions have been applied.
+func setCallInfoCodec(c *callInfo) error {
+	if c.codec != nil {
+		// codec was already set by a CallOption; use it.
+		return nil
+	}
+
+	if c.contentSubtype == "" {
+		// No codec specified in CallOptions; use proto by default.
+		c.codec = encoding.GetCodec(proto.Name)
+		return nil
+	}
+
+	// c.contentSubtype is already lowercased in CallContentSubtype
+	c.codec = encoding.GetCodec(c.contentSubtype)
+	if c.codec == nil {
+		return status.Errorf(codes.Internal, "no codec registered for content-subtype %s", c.contentSubtype)
+	}
+	return nil
+}
+
+// parseDialTarget returns the network and address to pass to dialer
+func parseDialTarget(target string) (net string, addr string) {
+	net = "tcp"
+
+	m1 := strings.Index(target, ":")
+	m2 := strings.Index(target, ":/")
+
+	// handle unix:addr which will fail with url.Parse
+	if m1 >= 0 && m2 < 0 {
+		if n := target[0:m1]; n == "unix" {
+			net = n
+			addr = target[m1+1:]
+			return net, addr
+		}
+	}
+	if m2 >= 0 {
+		t, err := url.Parse(target)
+		if err != nil {
+			return net, target
+		}
+		scheme := t.Scheme
+		addr = t.Path
+		if scheme == "unix" {
+			net = scheme
+			if addr == "" {
+				addr = t.Host
+			}
+			return net, addr
+		}
+	}
+
+	return net, target
+}
+
 // The SupportPackageIsVersion variables are referenced from generated protocol
 // buffer files to ensure compatibility with the gRPC version used.  The latest
 // support package version is 5.
@@ -500,6 +722,6 @@ const (
 )
 
 // Version is the current grpc version.
-const Version = "1.9.2"
+const Version = "1.12.0"
 
 const grpcUA = "grpc-go/" + Version

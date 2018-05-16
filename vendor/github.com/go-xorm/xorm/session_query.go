@@ -17,7 +17,17 @@ import (
 
 func (session *Session) genQuerySQL(sqlorArgs ...interface{}) (string, []interface{}, error) {
 	if len(sqlorArgs) > 0 {
-		return sqlorArgs[0].(string), sqlorArgs[1:], nil
+		switch sqlorArgs[0].(type) {
+		case string:
+			return sqlorArgs[0].(string), sqlorArgs[1:], nil
+		case *builder.Builder:
+			return sqlorArgs[0].(*builder.Builder).ToSQL()
+		case builder.Builder:
+			bd := sqlorArgs[0].(builder.Builder)
+			return bd.ToSQL()
+		default:
+			return "", nil, ErrUnSupportedType
+		}
 	}
 
 	if session.statement.RawSQL != "" {
@@ -54,13 +64,17 @@ func (session *Session) genQuerySQL(sqlorArgs ...interface{}) (string, []interfa
 		}
 	}
 
+	if err := session.statement.processIDParam(); err != nil {
+		return "", nil, err
+	}
+
 	condSQL, condArgs, err := builder.ToSQL(session.statement.cond)
 	if err != nil {
 		return "", nil, err
 	}
 
 	args := append(session.statement.joinArgs, condArgs...)
-	sqlStr, err := session.statement.genSelectSQL(columnStr, condSQL)
+	sqlStr, err := session.statement.genSelectSQL(columnStr, condSQL, true, true)
 	if err != nil {
 		return "", nil, err
 	}

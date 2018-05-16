@@ -242,18 +242,25 @@ func (s *Stream) sendWindowUpdate() error {
 
 	// Determine the delta update
 	max := s.session.config.MaxStreamWindowSize
-	delta := max - atomic.LoadUint32(&s.recvWindow)
+	var bufLen uint32
+	s.recvLock.Lock()
+	if s.recvBuf != nil {
+		bufLen = uint32(s.recvBuf.Len())
+	}
+	delta := (max - bufLen) - s.recvWindow
 
 	// Determine the flags if any
 	flags := s.sendFlags()
 
 	// Check if we can omit the update
 	if delta < (max/2) && flags == 0 {
+		s.recvLock.Unlock()
 		return nil
 	}
 
 	// Update our window
-	atomic.AddUint32(&s.recvWindow, delta)
+	s.recvWindow += delta
+	s.recvLock.Unlock()
 
 	// Send the header
 	s.controlHdr.encode(typeWindowUpdate, flags, s.id, delta)
@@ -396,16 +403,18 @@ func (s *Stream) readData(hdr header, flags uint16, conn io.Reader) error {
 	if length == 0 {
 		return nil
 	}
-	if remain := atomic.LoadUint32(&s.recvWindow); length > remain {
-		s.session.logger.Printf("[ERR] yamux: receive window exceeded (stream: %d, remain: %d, recv: %d)", s.id, remain, length)
-		return ErrRecvWindowExceeded
-	}
 
 	// Wrap in a limited reader
 	conn = &io.LimitedReader{R: conn, N: int64(length)}
 
 	// Copy into buffer
 	s.recvLock.Lock()
+
+	if length > s.recvWindow {
+		s.session.logger.Printf("[ERR] yamux: receive window exceeded (stream: %d, remain: %d, recv: %d)", s.id, s.recvWindow, length)
+		return ErrRecvWindowExceeded
+	}
+
 	if s.recvBuf == nil {
 		// Allocate the receive buffer just-in-time to fit the full data frame.
 		// This way we can read in the whole packet without further allocations.
@@ -418,7 +427,7 @@ func (s *Stream) readData(hdr header, flags uint16, conn io.Reader) error {
 	}
 
 	// Decrement the receive window
-	atomic.AddUint32(&s.recvWindow, ^uint32(length-1))
+	s.recvWindow -= length
 	s.recvLock.Unlock()
 
 	// Unblock any readers

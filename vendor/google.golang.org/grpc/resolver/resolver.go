@@ -29,26 +29,21 @@ var (
 
 // TODO(bar) install dns resolver in init(){}.
 
-// Register registers the resolver builder to the resolver map.
-// b.Scheme will be used as the scheme registered with this builder.
+// Register registers the resolver builder to the resolver map. b.Scheme will be
+// used as the scheme registered with this builder.
+//
+// NOTE: this function must only be called during initialization time (i.e. in
+// an init() function), and is not thread-safe. If multiple Resolvers are
+// registered with the same name, the one registered last will take effect.
 func Register(b Builder) {
 	m[b.Scheme()] = b
 }
 
 // Get returns the resolver builder registered with the given scheme.
-// If no builder is register with the scheme, the default scheme will
-// be used.
-// If the default scheme is not modified, "passthrough" will be the default
-// scheme, and the preinstalled dns resolver will be used.
-// If the default scheme is modified, and a resolver is registered with
-// the scheme, that resolver will be returned.
-// If the default scheme is modified, and no resolver is registered with
-// the scheme, nil will be returned.
+//
+// If no builder is register with the scheme, nil will be returned.
 func Get(scheme string) Builder {
 	if b, ok := m[scheme]; ok {
-		return b
-	}
-	if b, ok := m[defaultScheme]; ok {
 		return b
 	}
 	return nil
@@ -58,6 +53,11 @@ func Get(scheme string) Builder {
 // The default default scheme is "passthrough".
 func SetDefaultScheme(scheme string) {
 	defaultScheme = scheme
+}
+
+// GetDefaultScheme gets the default scheme that will be used.
+func GetDefaultScheme() string {
+	return defaultScheme
 }
 
 // AddressType indicates the address type returned by name resolution.
@@ -90,9 +90,8 @@ type Address struct {
 // BuildOption includes additional information for the builder to create
 // the resolver.
 type BuildOption struct {
-	// UserOptions can be used to pass configuration between DialOptions and the
-	// resolver.
-	UserOptions interface{}
+	// DisableServiceConfig indicates whether resolver should fetch service config data.
+	DisableServiceConfig bool
 }
 
 // ClientConn contains the callbacks for resolver to notify any updates
