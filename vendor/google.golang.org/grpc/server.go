@@ -37,8 +37,6 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/trace"
-
-	"google.golang.org/grpc/channelz"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding"
@@ -99,19 +97,11 @@ type Server struct {
 	m      map[string]*service // service name -> service info
 	events trace.EventLog
 
-	quit               chan struct{}
-	done               chan struct{}
-	quitOnce           sync.Once
-	doneOnce           sync.Once
-	channelzRemoveOnce sync.Once
-	serveWG            sync.WaitGroup // counts active Serve goroutines for GracefulStop
-
-	channelzID          int64 // channelz unique identification number
-	czmu                sync.RWMutex
-	callsStarted        int64
-	callsFailed         int64
-	callsSucceeded      int64
-	lastCallStartedTime time.Time
+	quit     chan struct{}
+	done     chan struct{}
+	quitOnce sync.Once
+	doneOnce sync.Once
+	serveWG  sync.WaitGroup // counts active Serve goroutines for GracefulStop
 }
 
 type options struct {
@@ -226,9 +216,7 @@ func RPCDecompressor(dc Decompressor) ServerOption {
 }
 
 // MaxMsgSize returns a ServerOption to set the max message size in bytes the server can receive.
-// If this is not set, gRPC uses the default limit.
-//
-// Deprecated: use MaxRecvMsgSize instead.
+// If this is not set, gRPC uses the default limit. Deprecated: use MaxRecvMsgSize instead.
 func MaxMsgSize(m int) ServerOption {
 	return MaxRecvMsgSize(m)
 }
@@ -355,10 +343,6 @@ func NewServer(opt ...ServerOption) *Server {
 		_, file, line, _ := runtime.Caller(1)
 		s.events = trace.NewEventLog("grpc.Server", fmt.Sprintf("%s:%d", file, line))
 	}
-
-	if channelz.IsOn() {
-		s.channelzID = channelz.RegisterServer(s, "")
-	}
 	return s
 }
 
@@ -474,25 +458,6 @@ func (s *Server) useTransportAuthenticator(rawConn net.Conn) (net.Conn, credenti
 	return s.opts.creds.ServerHandshake(rawConn)
 }
 
-type listenSocket struct {
-	net.Listener
-	channelzID int64
-}
-
-func (l *listenSocket) ChannelzMetric() *channelz.SocketInternalMetric {
-	return &channelz.SocketInternalMetric{
-		LocalAddr: l.Listener.Addr(),
-	}
-}
-
-func (l *listenSocket) Close() error {
-	err := l.Listener.Close()
-	if channelz.IsOn() {
-		channelz.RemoveEntry(l.channelzID)
-	}
-	return err
-}
-
 // Serve accepts incoming connections on the listener lis, creating a new
 // ServerTransport and service goroutine for each. The service goroutines
 // read gRPC requests and then call the registered handlers to reply to them.
@@ -521,19 +486,13 @@ func (s *Server) Serve(lis net.Listener) error {
 		}
 	}()
 
-	ls := &listenSocket{Listener: lis}
-	s.lis[ls] = true
-
-	if channelz.IsOn() {
-		ls.channelzID = channelz.RegisterListenSocket(ls, s.channelzID, "")
-	}
+	s.lis[lis] = true
 	s.mu.Unlock()
-
 	defer func() {
 		s.mu.Lock()
-		if s.lis != nil && s.lis[ls] {
-			ls.Close()
-			delete(s.lis, ls)
+		if s.lis != nil && s.lis[lis] {
+			lis.Close()
+			delete(s.lis, lis)
 		}
 		s.mu.Unlock()
 	}()
@@ -655,7 +614,6 @@ func (s *Server) newHTTP2Transport(c net.Conn, authInfo credentials.AuthInfo) tr
 		InitialConnWindowSize: s.opts.initialConnWindowSize,
 		WriteBufferSize:       s.opts.writeBufferSize,
 		ReadBufferSize:        s.opts.readBufferSize,
-		ChannelzParentID:      s.channelzID,
 	}
 	st, err := transport.NewServerTransport("http2", c, config)
 	if err != nil {
@@ -666,7 +624,6 @@ func (s *Server) newHTTP2Transport(c net.Conn, authInfo credentials.AuthInfo) tr
 		grpclog.Warningln("grpc: Server.Serve failed to create ServerTransport: ", err)
 		return nil
 	}
-
 	return st
 }
 
@@ -794,38 +751,6 @@ func (s *Server) removeConn(c io.Closer) {
 	}
 }
 
-// ChannelzMetric returns ServerInternalMetric of current server.
-// This is an EXPERIMENTAL API.
-func (s *Server) ChannelzMetric() *channelz.ServerInternalMetric {
-	s.czmu.RLock()
-	defer s.czmu.RUnlock()
-	return &channelz.ServerInternalMetric{
-		CallsStarted:             s.callsStarted,
-		CallsSucceeded:           s.callsSucceeded,
-		CallsFailed:              s.callsFailed,
-		LastCallStartedTimestamp: s.lastCallStartedTime,
-	}
-}
-
-func (s *Server) incrCallsStarted() {
-	s.czmu.Lock()
-	s.callsStarted++
-	s.lastCallStartedTime = time.Now()
-	s.czmu.Unlock()
-}
-
-func (s *Server) incrCallsSucceeded() {
-	s.czmu.Lock()
-	s.callsSucceeded++
-	s.czmu.Unlock()
-}
-
-func (s *Server) incrCallsFailed() {
-	s.czmu.Lock()
-	s.callsFailed++
-	s.czmu.Unlock()
-}
-
 func (s *Server) sendResponse(t transport.ServerTransport, stream *transport.Stream, msg interface{}, cp Compressor, opts *transport.Options, comp encoding.Compressor) error {
 	var (
 		outPayload *stats.OutPayload
@@ -850,16 +775,6 @@ func (s *Server) sendResponse(t transport.ServerTransport, stream *transport.Str
 }
 
 func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.Stream, srv *service, md *MethodDesc, trInfo *traceInfo) (err error) {
-	if channelz.IsOn() {
-		s.incrCallsStarted()
-		defer func() {
-			if err != nil && err != io.EOF {
-				s.incrCallsFailed()
-			} else {
-				s.incrCallsSucceeded()
-			}
-		}()
-	}
 	sh := s.opts.statsHandler
 	if sh != nil {
 		beginTime := time.Now()
@@ -953,9 +868,6 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 			}
 		}
 		return err
-	}
-	if channelz.IsOn() {
-		t.IncrMsgRecv()
 	}
 	if st := checkRecvPayload(pf, stream.RecvCompress(), dc != nil || decomp != nil); st != nil {
 		if e := t.WriteStatus(stream, st); e != nil {
@@ -1056,9 +968,6 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 		}
 		return err
 	}
-	if channelz.IsOn() {
-		t.IncrMsgSent()
-	}
 	if trInfo != nil {
 		trInfo.tr.LazyLog(&payload{sent: true, msg: reply}, true)
 	}
@@ -1069,16 +978,6 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 }
 
 func (s *Server) processStreamingRPC(t transport.ServerTransport, stream *transport.Stream, srv *service, sd *StreamDesc, trInfo *traceInfo) (err error) {
-	if channelz.IsOn() {
-		s.incrCallsStarted()
-		defer func() {
-			if err != nil && err != io.EOF {
-				s.incrCallsFailed()
-			} else {
-				s.incrCallsSucceeded()
-			}
-		}()
-	}
 	sh := s.opts.statsHandler
 	if sh != nil {
 		beginTime := time.Now()
@@ -1300,12 +1199,10 @@ type ServerTransportStream interface {
 	SetTrailer(md metadata.MD) error
 }
 
-// ServerTransportStreamFromContext returns the ServerTransportStream saved in
-// ctx. Returns nil if the given context has no stream associated with it
-// (which implies it is not an RPC invocation context).
-//
-// This API is EXPERIMENTAL.
-func ServerTransportStreamFromContext(ctx context.Context) ServerTransportStream {
+// serverStreamFromContext returns the server stream saved in ctx. Returns
+// nil if the given context has no stream associated with it (which implies
+// it is not an RPC invocation context).
+func serverTransportStreamFromContext(ctx context.Context) ServerTransportStream {
 	s, _ := ctx.Value(streamKey{}).(ServerTransportStream)
 	return s
 }
@@ -1326,12 +1223,6 @@ func (s *Server) Stop() {
 			close(s.done)
 		})
 	}()
-
-	s.channelzRemoveOnce.Do(func() {
-		if channelz.IsOn() {
-			channelz.RemoveEntry(s.channelzID)
-		}
-	})
 
 	s.mu.Lock()
 	listeners := s.lis
@@ -1371,17 +1262,11 @@ func (s *Server) GracefulStop() {
 		})
 	}()
 
-	s.channelzRemoveOnce.Do(func() {
-		if channelz.IsOn() {
-			channelz.RemoveEntry(s.channelzID)
-		}
-	})
 	s.mu.Lock()
 	if s.conns == nil {
 		s.mu.Unlock()
 		return
 	}
-
 	for lis := range s.lis {
 		lis.Close()
 	}
@@ -1442,7 +1327,7 @@ func SetHeader(ctx context.Context, md metadata.MD) error {
 	if md.Len() == 0 {
 		return nil
 	}
-	stream := ServerTransportStreamFromContext(ctx)
+	stream := serverTransportStreamFromContext(ctx)
 	if stream == nil {
 		return status.Errorf(codes.Internal, "grpc: failed to fetch the stream from the context %v", ctx)
 	}
@@ -1452,7 +1337,7 @@ func SetHeader(ctx context.Context, md metadata.MD) error {
 // SendHeader sends header metadata. It may be called at most once.
 // The provided md and headers set by SetHeader() will be sent.
 func SendHeader(ctx context.Context, md metadata.MD) error {
-	stream := ServerTransportStreamFromContext(ctx)
+	stream := serverTransportStreamFromContext(ctx)
 	if stream == nil {
 		return status.Errorf(codes.Internal, "grpc: failed to fetch the stream from the context %v", ctx)
 	}
@@ -1468,19 +1353,9 @@ func SetTrailer(ctx context.Context, md metadata.MD) error {
 	if md.Len() == 0 {
 		return nil
 	}
-	stream := ServerTransportStreamFromContext(ctx)
+	stream := serverTransportStreamFromContext(ctx)
 	if stream == nil {
 		return status.Errorf(codes.Internal, "grpc: failed to fetch the stream from the context %v", ctx)
 	}
 	return stream.SetTrailer(md)
-}
-
-// Method returns the method string for the server context.  The returned
-// string is in the format of "/service/method".
-func Method(ctx context.Context) (string, bool) {
-	s := ServerTransportStreamFromContext(ctx)
-	if s == nil {
-		return "", false
-	}
-	return s.Method(), true
 }

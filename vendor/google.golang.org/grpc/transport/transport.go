@@ -19,17 +19,16 @@
 // Package transport defines and implements message oriented communication
 // channel to complete various transactions (e.g., an RPC).  It is meant for
 // grpc-internal usage and is not intended to be imported directly by users.
-package transport // externally used as import "google.golang.org/grpc/transport"
+package transport // import "google.golang.org/grpc/transport"
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net"
 	"sync"
-	"sync/atomic"
 
 	"golang.org/x/net/context"
+	"golang.org/x/net/http2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -58,7 +57,6 @@ type recvBuffer struct {
 	c       chan recvMsg
 	mu      sync.Mutex
 	backlog []recvMsg
-	err     error
 }
 
 func newRecvBuffer() *recvBuffer {
@@ -70,13 +68,6 @@ func newRecvBuffer() *recvBuffer {
 
 func (b *recvBuffer) put(r recvMsg) {
 	b.mu.Lock()
-	if b.err != nil {
-		b.mu.Unlock()
-		// An error had occurred earlier, don't accept more
-		// data or errors.
-		return
-	}
-	b.err = r.err
 	if len(b.backlog) == 0 {
 		select {
 		case b.c <- r:
@@ -110,15 +101,14 @@ func (b *recvBuffer) get() <-chan recvMsg {
 	return b.c
 }
 
-//
 // recvBufferReader implements io.Reader interface to read the data from
 // recvBuffer.
 type recvBufferReader struct {
-	ctx     context.Context
-	ctxDone <-chan struct{} // cache of ctx.Done() (for performance).
-	recv    *recvBuffer
-	last    []byte // Stores the remaining data in the previous calls.
-	err     error
+	ctx    context.Context
+	goAway chan struct{}
+	recv   *recvBuffer
+	last   []byte // Stores the remaining data in the previous calls.
+	err    error
 }
 
 // Read reads the next len(p) bytes from last. If last is drained, it tries to
@@ -140,8 +130,10 @@ func (r *recvBufferReader) read(p []byte) (n int, err error) {
 		return copied, nil
 	}
 	select {
-	case <-r.ctxDone:
+	case <-r.ctx.Done():
 		return 0, ContextErr(r.ctx.Err())
+	case <-r.goAway:
+		return 0, errStreamDrain
 	case m := <-r.recv.get():
 		r.recv.load()
 		if m.err != nil {
@@ -153,7 +145,61 @@ func (r *recvBufferReader) read(p []byte) (n int, err error) {
 	}
 }
 
-type streamState uint32
+// All items in an out of a controlBuffer should be the same type.
+type item interface {
+	item()
+}
+
+// controlBuffer is an unbounded channel of item.
+type controlBuffer struct {
+	c       chan item
+	mu      sync.Mutex
+	backlog []item
+}
+
+func newControlBuffer() *controlBuffer {
+	b := &controlBuffer{
+		c: make(chan item, 1),
+	}
+	return b
+}
+
+func (b *controlBuffer) put(r item) {
+	b.mu.Lock()
+	if len(b.backlog) == 0 {
+		select {
+		case b.c <- r:
+			b.mu.Unlock()
+			return
+		default:
+		}
+	}
+	b.backlog = append(b.backlog, r)
+	b.mu.Unlock()
+}
+
+func (b *controlBuffer) load() {
+	b.mu.Lock()
+	if len(b.backlog) > 0 {
+		select {
+		case b.c <- b.backlog[0]:
+			b.backlog[0] = nil
+			b.backlog = b.backlog[1:]
+		default:
+		}
+	}
+	b.mu.Unlock()
+}
+
+// get returns the channel that receives an item in the buffer.
+//
+// Upon receipt of an item, the caller should call load to send another
+// item onto the channel if there is any.
+func (b *controlBuffer) get() <-chan item {
+	return b.c
+}
+
+type streamState uint8
 
 const (
 	streamActive    streamState = iota
@@ -168,8 +214,8 @@ type Stream struct {
 	st           ServerTransport    // nil for client side Stream
 	ctx          context.Context    // the associated context of the stream
 	cancel       context.CancelFunc // always nil for client side Stream
-	done         chan struct{}      // closed at the end of stream to unblock writers. On the client side.
-	ctxDone      <-chan struct{}    // same as done chan but for server side. Cache of ctx.Done() (for performance)
+	done         chan struct{}      // closed when the final status arrives
+	goAway       chan struct{}      // closed when a GOAWAY control message is received
 	method       string             // the associated RPC method of the stream
 	recvCompress string
 	sendCompress string
@@ -177,40 +223,33 @@ type Stream struct {
 	trReader     io.Reader
 	fc           *inFlow
 	recvQuota    uint32
-	wq           *writeQuota
+	waiters      waiters
 
 	// Callback to state application's intentions to read data. This
 	// is used to adjust flow control, if needed.
 	requestRead func(int)
 
-	headerChan chan struct{} // closed to indicate the end of header metadata.
-	headerDone uint32        // set when headerChan is closed. Used to avoid closing headerChan multiple times.
-	header     metadata.MD   // the received header metadata.
-	trailer    metadata.MD   // the key-value map of trailer metadata.
+	sendQuotaPool *quotaPool
+	headerChan    chan struct{} // closed to indicate the end of header metadata.
+	headerDone    bool          // set when headerChan is closed. Used to avoid closing headerChan multiple times.
+	header        metadata.MD   // the received header metadata.
+	trailer       metadata.MD   // the key-value map of trailer metadata.
 
-	headerOk bool // becomes true from the first header is about to send
+	mu       sync.RWMutex // guard the following
+	headerOk bool         // becomes true from the first header is about to send
 	state    streamState
 
 	status *status.Status // the status error received from the server
 
-	bytesReceived uint32 // indicates whether any bytes have been received on this stream
-	unprocessed   uint32 // set if the server sends a refused stream or GOAWAY including this stream
+	rstStream bool          // indicates whether a RST_STREAM frame needs to be sent
+	rstError  http2.ErrCode // the error that needs to be sent along with the RST_STREAM frame
+
+	bytesReceived bool // indicates whether any bytes have been received on this stream
+	unprocessed   bool // set if the server sends a refused stream or GOAWAY including this stream
 
 	// contentSubtype is the content-subtype for requests.
 	// this must be lowercase or the behavior is undefined.
 	contentSubtype string
-}
-
-func (s *Stream) swapState(st streamState) streamState {
-	return streamState(atomic.SwapUint32((*uint32)(&s.state), uint32(st)))
-}
-
-func (s *Stream) compareAndSwapState(oldState, newState streamState) bool {
-	return atomic.CompareAndSwapUint32((*uint32)(&s.state), uint32(oldState), uint32(newState))
-}
-
-func (s *Stream) getState() streamState {
-	return streamState(atomic.LoadUint32((*uint32)(&s.state)))
 }
 
 func (s *Stream) waitOnHeader() error {
@@ -219,9 +258,12 @@ func (s *Stream) waitOnHeader() error {
 		// only after having received headers.
 		return nil
 	}
+	wc := s.waiters
 	select {
-	case <-s.ctx.Done():
-		return ContextErr(s.ctx.Err())
+	case <-wc.ctx.Done():
+		return ContextErr(wc.ctx.Err())
+	case <-wc.goAway:
+		return errStreamDrain
 	case <-s.headerChan:
 		return nil
 	}
@@ -247,6 +289,12 @@ func (s *Stream) Done() <-chan struct{} {
 	return s.done
 }
 
+// GoAway returns a channel which is closed when the server sent GoAways signal
+// before this stream was initiated.
+func (s *Stream) GoAway() <-chan struct{} {
+	return s.goAway
+}
+
 // Header acquires the key-value pairs of header metadata once it
 // is available. It blocks until i) the metadata is ready or ii) there is no
 // header metadata or iii) the stream is canceled/expired.
@@ -255,9 +303,6 @@ func (s *Stream) Header() (metadata.MD, error) {
 	// Even if the stream is closed, header is returned if available.
 	select {
 	case <-s.headerChan:
-		if s.header == nil {
-			return nil, nil
-		}
 		return s.header.Copy(), nil
 	default:
 	}
@@ -267,10 +312,10 @@ func (s *Stream) Header() (metadata.MD, error) {
 // Trailer returns the cached trailer metedata. Note that if it is not called
 // after the entire stream is done, it could return an empty MD. Client
 // side only.
-// It can be safely read only after stream has ended that is either read
-// or write have returned io.EOF.
 func (s *Stream) Trailer() metadata.MD {
+	s.mu.RLock()
 	c := s.trailer.Copy()
+	s.mu.RUnlock()
 	return c
 }
 
@@ -300,23 +345,24 @@ func (s *Stream) Method() string {
 }
 
 // Status returns the status received from the server.
-// Status can be read safely only after the stream has ended,
-// that is, read or write has returned io.EOF.
 func (s *Stream) Status() *status.Status {
 	return s.status
 }
 
 // SetHeader sets the header metadata. This can be called multiple times.
 // Server side only.
-// This should not be called in parallel to other data writes.
 func (s *Stream) SetHeader(md metadata.MD) error {
-	if md.Len() == 0 {
-		return nil
-	}
-	if s.headerOk || atomic.LoadUint32((*uint32)(&s.state)) == uint32(streamDone) {
+	s.mu.Lock()
+	if s.headerOk || s.state == streamDone {
+		s.mu.Unlock()
 		return ErrIllegalHeaderWrite
 	}
+	if md.Len() == 0 {
+		s.mu.Unlock()
+		return nil
+	}
 	s.header = metadata.Join(s.header, md)
+	s.mu.Unlock()
 	return nil
 }
 
@@ -330,12 +376,13 @@ func (s *Stream) SendHeader(md metadata.MD) error {
 
 // SetTrailer sets the trailer metadata which will be sent with the RPC status
 // by the server. This can be called multiple times. Server side only.
-// This should not be called parallel to other data writes.
 func (s *Stream) SetTrailer(md metadata.MD) error {
 	if md.Len() == 0 {
 		return nil
 	}
+	s.mu.Lock()
 	s.trailer = metadata.Join(s.trailer, md)
+	s.mu.Unlock()
 	return nil
 }
 
@@ -375,15 +422,29 @@ func (t *transportReader) Read(p []byte) (n int, err error) {
 	return
 }
 
+// finish sets the stream's state and status, and closes the done channel.
+// s.mu must be held by the caller.  st must always be non-nil.
+func (s *Stream) finish(st *status.Status) {
+	s.status = st
+	s.state = streamDone
+	close(s.done)
+}
+
 // BytesReceived indicates whether any bytes have been received on this stream.
 func (s *Stream) BytesReceived() bool {
-	return atomic.LoadUint32(&s.bytesReceived) == 1
+	s.mu.Lock()
+	br := s.bytesReceived
+	s.mu.Unlock()
+	return br
 }
 
 // Unprocessed indicates whether the server did not process this stream --
 // i.e. it sent a refused stream or GOAWAY including this stream ID.
 func (s *Stream) Unprocessed() bool {
-	return atomic.LoadUint32(&s.unprocessed) == 1
+	s.mu.Lock()
+	br := s.unprocessed
+	s.mu.Unlock()
+	return br
 }
 
 // GoString is implemented by Stream so context.String() won't
@@ -413,7 +474,6 @@ type ServerConfig struct {
 	InitialConnWindowSize int32
 	WriteBufferSize       int
 	ReadBufferSize        int
-	ChannelzParentID      int64
 }
 
 // NewServerTransport creates a ServerTransport with conn or non-nil error
@@ -449,8 +509,6 @@ type ConnectOptions struct {
 	WriteBufferSize int
 	// ReadBufferSize sets the size of read buffer, which in turn determines how much data can be read at most for one read syscall.
 	ReadBufferSize int
-	// ChannelzParentID sets the addrConn id which initiate the creation of this client transport.
-	ChannelzParentID int64
 }
 
 // TargetInfo contains the information of the target such as network address and metadata.
@@ -550,12 +608,6 @@ type ClientTransport interface {
 
 	// GetGoAwayReason returns the reason why GoAway frame was received.
 	GetGoAwayReason() GoAwayReason
-
-	// IncrMsgSent increments the number of message sent through this transport.
-	IncrMsgSent()
-
-	// IncrMsgRecv increments the number of message received through this transport.
-	IncrMsgRecv()
 }
 
 // ServerTransport is the common interface for all gRPC server-side transport
@@ -589,12 +641,6 @@ type ServerTransport interface {
 
 	// Drain notifies the client this ServerTransport stops accepting new RPCs.
 	Drain()
-
-	// IncrMsgSent increments the number of message sent through this transport.
-	IncrMsgSent()
-
-	// IncrMsgRecv increments the number of message received through this transport.
-	IncrMsgRecv()
 }
 
 // streamErrorf creates an StreamError with the specified error code and description.
@@ -648,9 +694,6 @@ var (
 	// connection is draining. This could be caused by goaway or balancer
 	// removing the address.
 	errStreamDrain = streamErrorf(codes.Unavailable, "the connection is draining")
-	// errStreamDone is returned from write at the client side to indiacte application
-	// layer of an error.
-	errStreamDone = errors.New("the stream is done")
 	// StatusGoAway indicates that the server sent a GOAWAY that included this
 	// stream's ID in unprocessed RPCs.
 	statusGoAway = status.New(codes.Unavailable, "the stream is rejected because server is draining the connection")
@@ -668,6 +711,15 @@ func (e StreamError) Error() string {
 	return fmt.Sprintf("stream error: code = %s desc = %q", e.Code, e.Desc)
 }
 
+// waiters are passed to quotaPool get methods to
+// wait on in addition to waiting on quota.
+type waiters struct {
+	ctx    context.Context
+	tctx   context.Context
+	done   chan struct{}
+	goAway chan struct{}
+}
+
 // GoAwayReason contains the reason for the GoAway frame received.
 type GoAwayReason uint8
 
@@ -681,3 +733,39 @@ const (
 	// "too_many_pings".
 	GoAwayTooManyPings GoAwayReason = 2
 )
+
+// loopyWriter is run in a separate go routine. It is the single code path that will
+// write data on wire.
+func loopyWriter(ctx context.Context, cbuf *controlBuffer, handler func(item) error) {
+	for {
+		select {
+		case i := <-cbuf.get():
+			cbuf.load()
+			if err := handler(i); err != nil {
+				errorf("transport: Error while handling item. Err: %v", err)
+				return
+			}
+		case <-ctx.Done():
+			return
+		}
+	hasData:
+		for {
+			select {
+			case i := <-cbuf.get():
+				cbuf.load()
+				if err := handler(i); err != nil {
+					errorf("transport: Error while handling item. Err: %v", err)
+					return
+				}
+			case <-ctx.Done():
+				return
+			default:
+				if err := handler(&flushIO{}); err != nil {
+					errorf("transport: Error while flushing. Err: %v", err)
+					return
+				}
+				break hasData
+			}
+		}
+	}
+}

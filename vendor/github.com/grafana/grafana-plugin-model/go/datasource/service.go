@@ -16,12 +16,12 @@ type DatasourcePluginImpl struct {
 	Plugin DatasourcePlugin
 }
 
-func (p *DatasourcePluginImpl) GRPCServer(s *grpc.Server) error {
+func (p *DatasourcePluginImpl) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	RegisterDatasourcePluginServer(s, &GRPCServer{p.Plugin})
 	return nil
 }
 
-func (p *DatasourcePluginImpl) GRPCClient(c *grpc.ClientConn) (interface{}, error) {
+func (p *DatasourcePluginImpl) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
 	return &GRPCClient{NewDatasourcePluginClient(c)}, nil
 }
 

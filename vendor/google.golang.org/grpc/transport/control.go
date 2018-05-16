@@ -20,10 +20,13 @@ package transport
 
 import (
 	"fmt"
+	"io"
 	"math"
 	"sync"
-	"sync/atomic"
 	"time"
+
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/hpack"
 )
 
 const (
@@ -33,109 +36,202 @@ const (
 	initialWindowSize             = defaultWindowSize // for an RPC
 	infinity                      = time.Duration(math.MaxInt64)
 	defaultClientKeepaliveTime    = infinity
-	defaultClientKeepaliveTimeout = 20 * time.Second
+	defaultClientKeepaliveTimeout = time.Duration(20 * time.Second)
 	defaultMaxStreamsClient       = 100
 	defaultMaxConnectionIdle      = infinity
 	defaultMaxConnectionAge       = infinity
 	defaultMaxConnectionAgeGrace  = infinity
-	defaultServerKeepaliveTime    = 2 * time.Hour
-	defaultServerKeepaliveTimeout = 20 * time.Second
-	defaultKeepalivePolicyMinTime = 5 * time.Minute
+	defaultServerKeepaliveTime    = time.Duration(2 * time.Hour)
+	defaultServerKeepaliveTimeout = time.Duration(20 * time.Second)
+	defaultKeepalivePolicyMinTime = time.Duration(5 * time.Minute)
 	// max window limit set by HTTP2 Specs.
 	maxWindowSize = math.MaxInt32
-	// defaultWriteQuota is the default value for number of data
+	// defaultLocalSendQuota sets is default value for number of data
 	// bytes that each stream can schedule before some of it being
 	// flushed out.
-	defaultWriteQuota = 64 * 1024
+	defaultLocalSendQuota = 128 * 1024
 )
 
-// writeQuota is a soft limit on the amount of data a stream can
-// schedule before some of it is written out.
-type writeQuota struct {
-	quota int32
-	// get waits on read from when quota goes less than or equal to zero.
-	// replenish writes on it when quota goes positive again.
-	ch chan struct{}
-	// done is triggered in error case.
-	done <-chan struct{}
+// The following defines various control items which could flow through
+// the control buffer of transport. They represent different aspects of
+// control tasks, e.g., flow control, settings, streaming resetting, etc.
+
+type headerFrame struct {
+	streamID  uint32
+	hf        []hpack.HeaderField
+	endStream bool
 }
 
-func newWriteQuota(sz int32, done <-chan struct{}) *writeQuota {
-	return &writeQuota{
-		quota: sz,
-		ch:    make(chan struct{}, 1),
-		done:  done,
+func (*headerFrame) item() {}
+
+type continuationFrame struct {
+	streamID            uint32
+	endHeaders          bool
+	headerBlockFragment []byte
+}
+
+type dataFrame struct {
+	streamID  uint32
+	endStream bool
+	d         []byte
+	f         func()
+}
+
+func (*dataFrame) item() {}
+
+func (*continuationFrame) item() {}
+
+type windowUpdate struct {
+	streamID  uint32
+	increment uint32
+}
+
+func (*windowUpdate) item() {}
+
+type settings struct {
+	ss []http2.Setting
+}
+
+func (*settings) item() {}
+
+type settingsAck struct {
+}
+
+func (*settingsAck) item() {}
+
+type resetStream struct {
+	streamID uint32
+	code     http2.ErrCode
+}
+
+func (*resetStream) item() {}
+
+type goAway struct {
+	code      http2.ErrCode
+	debugData []byte
+	headsUp   bool
+	closeConn bool
+}
+
+func (*goAway) item() {}
+
+type flushIO struct {
+	closeTr bool
+}
+
+func (*flushIO) item() {}
+
+type ping struct {
+	ack  bool
+	data [8]byte
+}
+
+func (*ping) item() {}
+
+// quotaPool is a pool which accumulates the quota and sends it to acquire()
+// when it is available.
+type quotaPool struct {
+	mu      sync.Mutex
+	c       chan struct{}
+	version uint32
+	quota   int
+}
+
+// newQuotaPool creates a quotaPool which has quota q available to consume.
+func newQuotaPool(q int) *quotaPool {
+	qb := &quotaPool{
+		quota: q,
+		c:     make(chan struct{}, 1),
 	}
+	return qb
 }
 
-func (w *writeQuota) get(sz int32) error {
-	for {
-		if atomic.LoadInt32(&w.quota) > 0 {
-			atomic.AddInt32(&w.quota, -sz)
-			return nil
-		}
-		select {
-		case <-w.ch:
-			continue
-		case <-w.done:
-			return errStreamDone
-		}
+// add cancels the pending quota sent on acquired, incremented by v and sends
+// it back on acquire.
+func (qb *quotaPool) add(v int) {
+	qb.mu.Lock()
+	defer qb.mu.Unlock()
+	qb.lockedAdd(v)
+}
+
+func (qb *quotaPool) lockedAdd(v int) {
+	var wakeUp bool
+	if qb.quota <= 0 {
+		wakeUp = true // Wake up potential waiters.
 	}
-}
-
-func (w *writeQuota) replenish(n int) {
-	sz := int32(n)
-	a := atomic.AddInt32(&w.quota, sz)
-	b := a - sz
-	if b <= 0 && a > 0 {
+	qb.quota += v
+	if wakeUp && qb.quota > 0 {
 		select {
-		case w.ch <- struct{}{}:
+		case qb.c <- struct{}{}:
 		default:
 		}
 	}
 }
 
-type trInFlow struct {
-	limit               uint32
-	unacked             uint32
-	effectiveWindowSize uint32
+func (qb *quotaPool) addAndUpdate(v int) {
+	qb.mu.Lock()
+	qb.lockedAdd(v)
+	qb.version++
+	qb.mu.Unlock()
 }
 
-func (f *trInFlow) newLimit(n uint32) uint32 {
-	d := n - f.limit
-	f.limit = n
-	f.updateEffectiveWindowSize()
-	return d
-}
-
-func (f *trInFlow) onData(n uint32) uint32 {
-	f.unacked += n
-	if f.unacked >= f.limit/4 {
-		w := f.unacked
-		f.unacked = 0
-		f.updateEffectiveWindowSize()
-		return w
+func (qb *quotaPool) get(v int, wc waiters) (int, uint32, error) {
+	qb.mu.Lock()
+	if qb.quota > 0 {
+		if v > qb.quota {
+			v = qb.quota
+		}
+		qb.quota -= v
+		ver := qb.version
+		qb.mu.Unlock()
+		return v, ver, nil
 	}
-	f.updateEffectiveWindowSize()
-	return 0
+	qb.mu.Unlock()
+	for {
+		select {
+		case <-wc.ctx.Done():
+			return 0, 0, ContextErr(wc.ctx.Err())
+		case <-wc.tctx.Done():
+			return 0, 0, ErrConnClosing
+		case <-wc.done:
+			return 0, 0, io.EOF
+		case <-wc.goAway:
+			return 0, 0, errStreamDrain
+		case <-qb.c:
+			qb.mu.Lock()
+			if qb.quota > 0 {
+				if v > qb.quota {
+					v = qb.quota
+				}
+				qb.quota -= v
+				ver := qb.version
+				if qb.quota > 0 {
+					select {
+					case qb.c <- struct{}{}:
+					default:
+					}
+				}
+				qb.mu.Unlock()
+				return v, ver, nil
+
+			}
+			qb.mu.Unlock()
+		}
+	}
 }
 
-func (f *trInFlow) reset() uint32 {
-	w := f.unacked
-	f.unacked = 0
-	f.updateEffectiveWindowSize()
-	return w
+func (qb *quotaPool) compareAndExecute(version uint32, success, failure func()) bool {
+	qb.mu.Lock()
+	if version == qb.version {
+		success()
+		qb.mu.Unlock()
+		return true
+	}
+	failure()
+	qb.mu.Unlock()
+	return false
 }
 
-func (f *trInFlow) updateEffectiveWindowSize() {
-	atomic.StoreUint32(&f.effectiveWindowSize, f.limit-f.unacked)
-}
-
-func (f *trInFlow) getSize() uint32 {
-	return atomic.LoadUint32(&f.effectiveWindowSize)
-}
-
-// TODO(mmukhi): Simplify this code.
 // inFlow deals with inbound flow control
 type inFlow struct {
 	mu sync.Mutex
@@ -156,9 +252,9 @@ type inFlow struct {
 // It assumes that n is always greater than the old limit.
 func (f *inFlow) newLimit(n uint32) uint32 {
 	f.mu.Lock()
+	defer f.mu.Unlock()
 	d := n - f.limit
 	f.limit = n
-	f.mu.Unlock()
 	return d
 }
 
@@ -167,6 +263,7 @@ func (f *inFlow) maybeAdjust(n uint32) uint32 {
 		n = uint32(math.MaxInt32)
 	}
 	f.mu.Lock()
+	defer f.mu.Unlock()
 	// estSenderQuota is the receiver's view of the maximum number of bytes the sender
 	// can send without a window update.
 	estSenderQuota := int32(f.limit - (f.pendingData + f.pendingUpdate))
@@ -178,7 +275,7 @@ func (f *inFlow) maybeAdjust(n uint32) uint32 {
 	// for this message. Therefore we must send an update over the limit since there's an active read
 	// request from the application.
 	if estUntransmittedData > estSenderQuota {
-		// Sender's window shouldn't go more than 2^31 - 1 as specified in the HTTP spec.
+		// Sender's window shouldn't go more than 2^31 - 1 as speecified in the HTTP spec.
 		if f.limit+n > maxWindowSize {
 			f.delta = maxWindowSize - f.limit
 		} else {
@@ -187,24 +284,19 @@ func (f *inFlow) maybeAdjust(n uint32) uint32 {
 			// is padded; We will fallback on the current available window(at least a 1/4th of the limit).
 			f.delta = n
 		}
-		f.mu.Unlock()
 		return f.delta
 	}
-	f.mu.Unlock()
 	return 0
 }
 
 // onData is invoked when some data frame is received. It updates pendingData.
 func (f *inFlow) onData(n uint32) error {
 	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.pendingData += n
 	if f.pendingData+f.pendingUpdate > f.limit+f.delta {
-		limit := f.limit
-		rcvd := f.pendingData + f.pendingUpdate
-		f.mu.Unlock()
-		return fmt.Errorf("received %d-bytes data exceeding the limit %d bytes", rcvd, limit)
+		return fmt.Errorf("received %d-bytes data exceeding the limit %d bytes", f.pendingData+f.pendingUpdate, f.limit)
 	}
-	f.mu.Unlock()
 	return nil
 }
 
@@ -212,8 +304,8 @@ func (f *inFlow) onData(n uint32) error {
 // to be sent to the peer.
 func (f *inFlow) onRead(n uint32) uint32 {
 	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.pendingData == 0 {
-		f.mu.Unlock()
 		return 0
 	}
 	f.pendingData -= n
@@ -228,9 +320,15 @@ func (f *inFlow) onRead(n uint32) uint32 {
 	if f.pendingUpdate >= f.limit/4 {
 		wu := f.pendingUpdate
 		f.pendingUpdate = 0
-		f.mu.Unlock()
 		return wu
 	}
-	f.mu.Unlock()
 	return 0
+}
+
+func (f *inFlow) resetPendingUpdate() uint32 {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	n := f.pendingUpdate
+	f.pendingUpdate = 0
+	return n
 }

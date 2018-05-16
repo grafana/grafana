@@ -257,6 +257,7 @@ func (bw *balancerWrapper) HandleSubConnStateChange(sc balancer.SubConn, s conne
 		// Remove state for this sc.
 		delete(bw.connSt, sc)
 	}
+	return
 }
 
 func (bw *balancerWrapper) HandleResolvedAddrs([]resolver.Address, error) {
@@ -269,6 +270,7 @@ func (bw *balancerWrapper) HandleResolvedAddrs([]resolver.Address, error) {
 	}
 	// There should be a resolver inside the balancer.
 	// All updates here, if any, are ignored.
+	return
 }
 
 func (bw *balancerWrapper) Close() {
@@ -280,6 +282,7 @@ func (bw *balancerWrapper) Close() {
 		close(bw.startCh)
 	}
 	bw.balancer.Close()
+	return
 }
 
 // The picker is the balancerWrapper itself.

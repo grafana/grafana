@@ -36,12 +36,9 @@ var (
 	m = make(map[string]Builder)
 )
 
-// Register registers the balancer builder to the balancer map. b.Name
-// (lowercased) will be used as the name registered with this builder.
-//
-// NOTE: this function must only be called during initialization time (i.e. in
-// an init() function), and is not thread-safe. If multiple Balancers are
-// registered with the same name, the one registered last will take effect.
+// Register registers the balancer builder to the balancer map.
+// b.Name (lowercased) will be used as the name registered with
+// this builder.
 func Register(b Builder) {
 	m[strings.ToLower(b.Name())] = b
 }
@@ -129,8 +126,6 @@ type BuildOptions struct {
 	// to a remote load balancer server. The Balancer implementations
 	// can ignore this if it doesn't need to talk to remote balancer.
 	Dialer func(context.Context, string) (net.Conn, error)
-	// ChannelzParentID is the entity parent's channelz unique identification number.
-	ChannelzParentID int64
 }
 
 // Builder creates a balancer.
@@ -165,7 +160,7 @@ var (
 )
 
 // Picker is used by gRPC to pick a SubConn to send an RPC.
-// Balancer is expected to generate a new picker from its snapshot every time its
+// Balancer is expected to generate a new picker from its snapshot everytime its
 // internal state has changed.
 //
 // The pickers used by gRPC can be updated by ClientConn.UpdateBalancerState().

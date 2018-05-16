@@ -227,9 +227,9 @@
 
 [[projects]]
   branch = "renderer"
-  name = "github.com/grafana/grafana_plugin_model"
+  name = "github.com/grafana/grafana-plugin-model"
   packages = ["go/datasource"]
-  revision = "413ff63d785ec50065039c847387cd6d0ae611cd"
+  revision = "00e18e72110ac2fb113ff11bd0a63ca240926faa"
 
 [[projects]]
   branch = "master"
@@ -591,7 +591,6 @@
     "balancer",
     "balancer/base",
     "balancer/roundrobin",
-    "channelz",
     "codes",
     "connectivity",
     "credentials",
@@ -614,8 +613,8 @@
     "tap",
     "transport"
   ]
-  revision = "41344da2231b913fa3d983840a57a6b1b7b631a1"
-  version = "v1.12.0"
+  revision = "1e2570b1b19ade82d8dbb31bba4e65e9f9ef5b34"
+  version = "v1.11.1"
 
 [[projects]]
   branch = "v3"
@@ -668,6 +667,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2ca8c0c79a32776d2a666d5ab08e4ac34438e65e2c1fcde55d2fd2a64b57bede"
+  inputs-digest = "9bf1a014dd1f8f2290127ecdbf01e381b5adf205f2826bf11dc36d6c8d853af5"
   solver-name = "gps-cdcl"
   solver-version = 1

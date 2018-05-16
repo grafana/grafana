@@ -26,8 +26,6 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/balancer"
-	"google.golang.org/grpc/channelz"
-
 	"google.golang.org/grpc/connectivity"
 	lbpb "google.golang.org/grpc/grpclb/grpc_lb_v1/messages"
 	"google.golang.org/grpc/grpclog"
@@ -76,16 +74,15 @@ func (lb *lbBalancer) processServerList(l *lbpb.ServerList) {
 	}
 
 	// Call refreshSubConns to create/remove SubConns.
-	lb.refreshSubConns(backendAddrs)
-	// Regenerate and update picker no matter if there's update on backends (if
-	// any SubConn will be newed/removed). Because since the full serverList was
-	// different, there might be updates in drops or pick weights(different
-	// number of duplicates). We need to update picker with the fulllist.
-	//
-	// Now with cache, even if SubConn was newed/removed, there might be no
-	// state changes.
-	lb.regeneratePicker()
-	lb.cc.UpdateBalancerState(lb.state, lb.picker)
+	backendsUpdated := lb.refreshSubConns(backendAddrs)
+	// If no backend was updated, no SubConn will be newed/removed. But since
+	// the full serverList was different, there might be updates in drops or
+	// pick weights(different number of duplicates). We need to update picker
+	// with the fulllist.
+	if !backendsUpdated {
+		lb.regeneratePicker()
+		lb.cc.UpdateBalancerState(lb.state, lb.picker)
+	}
 }
 
 // refreshSubConns creates/removes SubConns with backendAddrs. It returns a bool
@@ -115,11 +112,7 @@ func (lb *lbBalancer) refreshSubConns(backendAddrs []resolver.Address) bool {
 				continue
 			}
 			lb.subConns[addrWithoutMD] = sc // Use the addr without MD as key for the map.
-			if _, ok := lb.scStates[sc]; !ok {
-				// Only set state of new sc to IDLE. The state could already be
-				// READY for cached SubConns.
-				lb.scStates[sc] = connectivity.Idle
-			}
+			lb.scStates[sc] = connectivity.Idle
 			sc.Connect()
 		}
 	}
@@ -175,7 +168,6 @@ func (lb *lbBalancer) sendLoadReport(s *balanceLoadClientStream, interval time.D
 		}
 	}
 }
-
 func (lb *lbBalancer) callRemoteBalancer() error {
 	lbClient := &loadBalancerClient{cc: lb.ccRemoteLB}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -251,13 +243,9 @@ func (lb *lbBalancer) dialRemoteLB(remoteLBName string) {
 	// Explicitly set pickfirst as the balancer.
 	dopts = append(dopts, WithBalancerName(PickFirstBalancerName))
 	dopts = append(dopts, withResolverBuilder(lb.manualResolver))
-	if channelz.IsOn() {
-		dopts = append(dopts, WithChannelzParentID(lb.opt.ChannelzParentID))
-	}
-
-	// DialContext using manualResolver.Scheme, which is a random scheme generated
+	// Dial using manualResolver.Scheme, which is a random scheme generated
 	// when init grpclb. The target name is not important.
-	cc, err := DialContext(context.Background(), "grpclb:///grpclb.server", dopts...)
+	cc, err := Dial("grpclb:///grpclb.server", dopts...)
 	if err != nil {
 		grpclog.Fatalf("failed to dial: %v", err)
 	}

@@ -27,7 +27,6 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/net/trace"
 	"google.golang.org/grpc/balancer"
-	"google.golang.org/grpc/channelz"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/metadata"
@@ -122,14 +121,6 @@ func NewClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 }
 
 func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, method string, opts ...CallOption) (_ ClientStream, err error) {
-	if channelz.IsOn() {
-		cc.incrCallsStarted()
-		defer func() {
-			if err != nil {
-				cc.incrCallsFailed()
-			}
-		}()
-	}
 	c := defaultCallInfo()
 	mc := cc.GetMethodConfig(method)
 	if mc.WaitForReady != nil {
@@ -281,7 +272,6 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 	cs := &clientStream{
 		opts:   opts,
 		c:      c,
-		cc:     cc,
 		desc:   desc,
 		codec:  c.codec,
 		cp:     cp,
@@ -323,7 +313,6 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 type clientStream struct {
 	opts []CallOption
 	c    *callInfo
-	cc   *ClientConn
 	desc *StreamDesc
 
 	codec baseCodec
@@ -412,13 +401,6 @@ func (cs *clientStream) finish(err error) {
 	}
 	cs.finished = true
 	cs.mu.Unlock()
-	if channelz.IsOn() {
-		if err != nil {
-			cs.cc.incrCallsFailed()
-		} else {
-			cs.cc.incrCallsSucceeded()
-		}
-	}
 	// TODO(retry): commit current attempt if necessary.
 	cs.attempt.finish(err)
 	for _, o := range cs.opts {
@@ -488,9 +470,6 @@ func (a *csAttempt) sendMsg(m interface{}) (err error) {
 			outPayload.SentTime = time.Now()
 			a.statsHandler.HandleRPC(a.ctx, outPayload)
 		}
-		if channelz.IsOn() {
-			a.t.IncrMsgSent()
-		}
 		return nil
 	}
 	return io.EOF
@@ -545,9 +524,6 @@ func (a *csAttempt) recvMsg(m interface{}) (err error) {
 	}
 	if inPayload != nil {
 		a.statsHandler.HandleRPC(a.ctx, inPayload)
-	}
-	if channelz.IsOn() {
-		a.t.IncrMsgRecv()
 	}
 	if cs.desc.ServerStreams {
 		// Subsequent messages should be received by subsequent RecvMsg calls.
@@ -672,6 +648,7 @@ func (ss *serverStream) SetTrailer(md metadata.MD) {
 		return
 	}
 	ss.s.SetTrailer(md)
+	return
 }
 
 func (ss *serverStream) SendMsg(m interface{}) (err error) {
@@ -691,9 +668,6 @@ func (ss *serverStream) SendMsg(m interface{}) (err error) {
 		if err != nil && err != io.EOF {
 			st, _ := status.FromError(toRPCErr(err))
 			ss.t.WriteStatus(ss.s, st)
-		}
-		if channelz.IsOn() && err == nil {
-			ss.t.IncrMsgSent()
 		}
 	}()
 	var outPayload *stats.OutPayload
@@ -735,9 +709,6 @@ func (ss *serverStream) RecvMsg(m interface{}) (err error) {
 			st, _ := status.FromError(toRPCErr(err))
 			ss.t.WriteStatus(ss.s, st)
 		}
-		if channelz.IsOn() && err == nil {
-			ss.t.IncrMsgRecv()
-		}
 	}()
 	var inPayload *stats.InPayload
 	if ss.statsHandler != nil {
@@ -761,5 +732,9 @@ func (ss *serverStream) RecvMsg(m interface{}) (err error) {
 // MethodFromServerStream returns the method string for the input stream.
 // The returned string is in the format of "/service/method".
 func MethodFromServerStream(stream ServerStream) (string, bool) {
-	return Method(stream.Context())
+	s := serverTransportStreamFromContext(stream.Context())
+	if s == nil {
+		return "", false
+	}
+	return s.Method(), true
 }

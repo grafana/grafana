@@ -101,7 +101,7 @@ ignored = [
 
 [[constraint]]
   branch = "renderer"
-  name = "github.com/grafana/grafana_plugin_model"
+  name = "github.com/grafana/grafana-plugin-model"
 
 [[constraint]]
   branch = "master"
@@ -113,7 +113,7 @@ ignored = [
 
 [[constraint]]
   name = "google.golang.org/grpc"
-  version = "1.1.0"
+  version = "v1.11.1"
 
 [[constraint]]
   branch = "master"
