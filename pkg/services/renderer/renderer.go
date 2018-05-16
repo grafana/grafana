@@ -36,6 +36,10 @@ func (rs *RenderService) Init() error {
 	return nil
 }
 
+func (rs *RenderService) Test() {
+
+}
+
 func (rs *RenderService) Run(ctx context.Context) error {
 	if plugins.Renderer == nil {
 		rs.log.Info("No renderer plugin found")
@@ -116,7 +120,17 @@ func (rs *RenderService) watchAndRestartPlugin(ctx context.Context) error {
 }
 
 func (rs *RenderService) Render(opts Opts) (string, error) {
-	return "localhost", nil
+	rsp, err := rs.grpcPlugin.Render(context.Background(), &RenderRequest{
+		Url: "test",
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	rs.log.Info("Response", "rsp", rsp.FilePath)
+
+	return "localhost", err
 }
 
 func getURL(path string) string {

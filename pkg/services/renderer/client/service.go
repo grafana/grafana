@@ -16,12 +16,12 @@ type RendererPluginImpl struct {
 	Plugin RendererPlugin
 }
 
-func (p *RendererPluginImpl) GRPCServer(s *grpc.Server) error {
+func (p *RendererPluginImpl) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
 	RegisterRendererServer(s, &GRPCServer{p.Plugin})
 	return nil
 }
 
-func (p *RendererPluginImpl) GRPCClient(c *grpc.ClientConn) (interface{}, error) {
+func (p *RendererPluginImpl) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
 	return &GRPCClient{NewRendererClient(c)}, nil
 }
 
