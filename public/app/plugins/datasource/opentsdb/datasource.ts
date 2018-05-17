@@ -46,6 +46,9 @@ export default class OpenTsDatasource {
         if (!target.metric && !target.gexp) {
           return;
         }
+        if (!target.queryType) {
+          target.queryType = 'metric';
+        }
         if (target.queryType === 'metric') {
           qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
         } else if (target.queryType === 'gexp') {
@@ -525,30 +528,11 @@ export default class OpenTsDatasource {
   }
 
   createGexpLabel(data, target) {
-    var label = '';
-
-    if (target.gexpAlias && target.gexpAlias !== '') {
-      // if the alias contains "$tag_foo" and the tag is present in the data, use the tag value as the name
-
-      var regex = /(.*)\$tag_(\w+)(.*)/;
-      var aliasMatch = target.gexpAlias.match(regex);
-
-      if (aliasMatch && !_.isEmpty(data.tags)) {
-        var tagk = aliasMatch[2];
-
-        if (tagk in data.tags) {
-          return aliasMatch[1] + data.tags[tagk] + aliasMatch[3];
-        }
-      }
-
-      // no $tag_, or $tag_ not matched
-      return target.gexpAlias;
+    if (!target.gexpAlias) {
+      return target.gexp;
     }
 
-    // no alias; use the target as the name
-    label = target.gexp;
-
-    return label;
+    return target.gexpAlias.replace(/\$tag_([a-zA-Z0-9-_\.\/]+)/g, function(all,m1) {return data.tags[m1];});
   }
 
   convertGExpToQuery(target) {
