@@ -115,7 +115,7 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 	Convey("Testing dashboard snapshots clean up", t, func() {
 		setting.SnapShotRemoveExpired = true
 
-		notExpiredsnapshot := createTestSnapshot(x, "key1", 1200)
+		notExpiredsnapshot := createTestSnapshot(x, "key1", 48000)
 		createTestSnapshot(x, "key2", -1200)
 		createTestSnapshot(x, "key3", -1200)
 
