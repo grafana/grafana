@@ -93,8 +93,6 @@ Directory where grafana will automatically scan and look for plugins
 
 ### provisioning
 
-> This feature is available in 5.0+
-
 Folder that contains [provisioning](/administration/provisioning) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
 
 ## [server]
@@ -717,7 +715,7 @@ Analytics ID here. By default this feature is disabled.
 
 ## [dashboards]
 
-### versions_to_keep (introduced in v5.0)
+### versions_to_keep
 
 Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
 
