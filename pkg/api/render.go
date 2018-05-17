@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -36,11 +35,6 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 	timeout, err := strconv.Atoi(queryReader.Get("timeout", "60"))
 	if err != nil {
 		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse timeout as int: %s", err))
-		return
-	}
-
-	if queryReader.Get("tz", "") != "" || queryReader.Get("encoding", "") != "" {
-		c.Handle(400, "Unsupported parameter", errors.New("Unsupport query parameters tz or encoding"))
 		return
 	}
 

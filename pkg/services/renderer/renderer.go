@@ -5,19 +5,21 @@ import (
 	"fmt"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
 	plugin "github.com/hashicorp/go-plugin"
 
+	. "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	. "github.com/grafana/grafana/pkg/services/renderer/client"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -29,6 +31,8 @@ type RenderService struct {
 	pluginClient *plugin.Client
 	grpcPlugin   RendererPlugin
 	pluginInfo   *plugins.RendererPlugin
+
+	Cfg *setting.Cfg `inject:""`
 }
 
 func (rs *RenderService) Init() error {
@@ -120,25 +124,36 @@ func (rs *RenderService) watchAndRestartPlugin(ctx context.Context) error {
 }
 
 func (rs *RenderService) Render(opts Opts) (string, error) {
+	pngPath := rs.getFilePathForNewImage()
+
 	rsp, err := rs.grpcPlugin.Render(context.Background(), &RenderRequest{
-		Url: "test",
+		Url:      rs.getURL(opts.Path),
+		Width:    int32(opts.Width),
+		Height:   int32(opts.Height),
+		FilePath: pngPath,
 	})
 
 	if err != nil {
 		return "", err
 	}
 
-	rs.log.Info("Response", "rsp", rsp.FilePath)
+	if rsp.Error != "" {
+		return "", fmt.Errorf("Rendering failed: %v", rsp.Error)
+	}
 
-	return "localhost", err
+	return pngPath, err
 }
 
-func getURL(path string) string {
-	// return "http://localhost:3000/api"
-	return fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, getLocalDomain(), setting.HttpPort, path)
+func (rs *RenderService) getFilePathForNewImage() string {
+	pngPath, _ := filepath.Abs(filepath.Join(rs.Cfg.ImagesDir, util.GetRandomString(20)))
+	return pngPath + ".png"
 }
 
-func getLocalDomain() string {
+func (rs *RenderService) getURL(path string) string {
+	return fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, rs.getLocalDomain(), setting.HttpPort, path)
+}
+
+func (rs *RenderService) getLocalDomain() string {
 	if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
 		return setting.HttpAddr
 	}
