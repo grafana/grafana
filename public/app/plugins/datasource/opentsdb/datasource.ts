@@ -46,6 +46,9 @@ export default class OpenTsDatasource {
         if (!target.metric && !target.gexp) {
           return;
         }
+        if (!target.queryType) {
+          target.queryType = 'metric';
+        }
         if (target.queryType === 'metric') {
           qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
         } else if (target.queryType === 'gexp') {
