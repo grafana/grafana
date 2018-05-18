@@ -79,7 +79,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		Timeout:   int32(opts.Timeout.Seconds()),
 		RenderKey: rs.getRenderKey(opts.UserId, opts.OrgId, opts.OrgRole),
 		Encoding:  opts.Encoding,
-		Timezone:  opts.Timezone,
+		Timezone:  isoTimeOffsetToPosixTz(opts.Timezone),
 		Domain:    rs.getLocalDomain(),
 	})
 
