@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	"golang.org/x/sync/errgroup"
 
@@ -75,7 +74,6 @@ func (g *GrafanaServerImpl) Run() error {
 	serviceGraph := inject.Graph{}
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
 	serviceGraph.Provide(&inject.Object{Value: g.cfg})
-	serviceGraph.Provide(&inject.Object{Value: dashboards.NewProvisioningService()})
 	serviceGraph.Provide(&inject.Object{Value: api.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
 
 	// self registered services
@@ -107,8 +105,10 @@ func (g *GrafanaServerImpl) Run() error {
 	}
 
 	// Start background services
-	for _, descriptor := range services {
-		service, ok := descriptor.Instance.(registry.BackgroundService)
+	for _, srv := range services {
+		// variable needed for accessing loop variable in function callback
+		descriptor := srv
+		service, ok := srv.Instance.(registry.BackgroundService)
 		if !ok {
 			continue
 		}
