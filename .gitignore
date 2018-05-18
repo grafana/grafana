@@ -14,8 +14,6 @@ awsconfig
 /tmp
 tools/phantomjs/phantomjs
 tools/phantomjs/phantomjs.exe
-tools/chrome*
-tools/renderer/dist
 profile.out
 coverage.txt
 
