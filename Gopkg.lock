@@ -232,7 +232,7 @@
     "go/datasource",
     "go/renderer"
   ]
-  revision = "ceb1246b1f224fd303e5caff7ca189e2edfbf325"
+  revision = "84176c64269d8060f99e750ee8aba6f062753336"
 
 [[projects]]
   branch = "master"
@@ -670,6 +670,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b82d9a348b843f0d4f100d7192cd054b7746f5e059eaf3bf9027455d19eb6349"
+  inputs-digest = "cdeb99713eda72e1ea84b5e6b110819785823cec9bc38b147efa0b86949ecff0"
   solver-name = "gps-cdcl"
   solver-version = 1

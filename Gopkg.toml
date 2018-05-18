@@ -112,14 +112,6 @@ ignored = [
   revision = "e8d22c780116115ae5624720c9af0c97afe4f551"
 
 [[constraint]]
-  name = "google.golang.org/grpc"
-  version = "v1.11.1"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/golang/protobuf"
-
-[[constraint]]
   branch = "master"
   name = "github.com/hashicorp/go-version"
 

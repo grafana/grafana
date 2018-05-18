@@ -88,6 +88,5 @@ func (rs *RenderingService) getLocalDomain() string {
 }
 
 func (rs *RenderingService) getRenderKey(orgId, userId int64, orgRole models.RoleType) string {
-	rs.log.Debug("adding render authkey", "orgid", orgId, "userid", userId, "role", orgRole)
 	return middleware.AddRenderAuthKey(orgId, userId, orgRole)
 }

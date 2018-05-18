@@ -72,11 +72,15 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 	pngPath := rs.getFilePathForNewImage()
 
 	rsp, err := rs.grpcPlugin.Render(ctx, &pluginModel.RenderRequest{
-		Url:      rs.getURL(opts.Path),
-		Width:    int32(opts.Width),
-		Height:   int32(opts.Height),
-		FilePath: pngPath,
-		Timeout:  int32(opts.Timeout),
+		Url:       rs.getURL(opts.Path),
+		Width:     int32(opts.Width),
+		Height:    int32(opts.Height),
+		FilePath:  pngPath,
+		Timeout:   int32(opts.Timeout),
+		RenderKey: rs.getRenderKey(opts.UserId, opts.OrgId, opts.OrgRole),
+		Encoding:  opts.Encoding,
+		Timezone:  opts.Timezone,
+		Domain:    rs.getLocalDomain(),
 	})
 
 	if err != nil {
