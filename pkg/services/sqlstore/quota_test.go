@@ -43,6 +43,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			Name:   "TestOrg",
 			UserId: 1,
 		}
+
 		err := CreateOrg(&userCmd)
 		So(err, ShouldBeNil)
 		orgId = userCmd.Result.Id
