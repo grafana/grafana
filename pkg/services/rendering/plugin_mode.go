@@ -76,7 +76,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		Width:     int32(opts.Width),
 		Height:    int32(opts.Height),
 		FilePath:  pngPath,
-		Timeout:   int32(opts.Timeout),
+		Timeout:   int32(opts.Timeout.Seconds()),
 		RenderKey: rs.getRenderKey(opts.UserId, opts.OrgId, opts.OrgRole),
 		Encoding:  opts.Encoding,
 		Timezone:  opts.Timezone,

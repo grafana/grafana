@@ -66,7 +66,7 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 	out, err := cmd.Output()
 
 	// check for timeout first
-	if ctx.Err() == context.DeadlineExceeded {
+	if commandCtx.Err() == context.DeadlineExceeded {
 		rs.log.Info("Rendering timed out")
 		return nil, ErrTimeout
 	}

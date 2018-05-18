@@ -65,7 +65,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	if rs.renderAction != nil {
 		return rs.renderAction(ctx, opts)
 	} else {
-		return nil, fmt.Errorf("Not renderer available found")
+		return nil, fmt.Errorf("No renderer found")
 	}
 }
 
