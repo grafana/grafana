@@ -77,6 +77,15 @@ jobs:
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
+      - restore_cache:
+          key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+      - run:
+          name: download phantomjs binaries
+          command: './scripts/build/download-phantomjs.sh'
+      - save_cache:
+          key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+          paths:
+            - /tmp/phantomjs
       - run:
           name: build and package grafana
           command: './scripts/build/build.sh'

@@ -47,7 +47,20 @@ if [ "$CIRCLE_TAG" != "" ]; then
   go run build.go -goos linux -pkg-arch amd64 -includeBuildNumber=false package-only latest
   go run build.go -goos linux -pkg-arch armv7 -includeBuildNumber=false package-only
   go run build.go -goos linux -pkg-arch arm64 -includeBuildNumber=false package-only
+
+  if [ -d '/tmp/phantomjs/darwin' ]; then
+    cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
+  else
+    echo 'PhantomJS binaries for darwin missing!'
+  fi
   go run build.go -goos darwin -pkg-arch amd64 -includeBuildNumber=false package-only
+
+  if [ -d '/tmp/phantomjs/windows' ]; then
+      cp /tmp/phantomjs/windows/phantomjs.exe tools/phantomjs/phantomjs.exe
+      rm tools/phantomjs/phantomjs
+  else
+      echo 'PhantomJS binaries for darwin missing!'
+  fi
   go run build.go -goos windows -pkg-arch amd64 -includeBuildNumber=false package-only
 else
   echo "Building frontend for $CIRCLE_BRANCH"
@@ -56,6 +69,19 @@ else
   go run build.go -goos linux -pkg-arch amd64 -buildNumber=${CIRCLE_BUILD_NUM} package-only latest
   go run build.go -goos linux -pkg-arch armv7 -buildNumber=${CIRCLE_BUILD_NUM} package-only
   go run build.go -goos linux -pkg-arch arm64 -buildNumber=${CIRCLE_BUILD_NUM} package-only
+
+  if [ -d '/tmp/phantomjs/darwin' ]; then
+    cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
+  else
+    echo 'PhantomJS binaries for darwin missing!'
+  fi
   go run build.go -goos darwin -pkg-arch amd64 -buildNumber=${CIRCLE_BUILD_NUM} package-only
+
+  if [ -d '/tmp/phantomjs/windows' ]; then
+      cp /tmp/phantomjs/windows/phantomjs.exe tools/phantomjs/phantomjs.exe
+      rm tools/phantomjs/phantomjs
+  else
+      echo 'PhantomJS binaries for windows missing!'
+  fi
   go run build.go -goos windows -pkg-arch amd64 -buildNumber=${CIRCLE_BUILD_NUM} package-only
 fi
