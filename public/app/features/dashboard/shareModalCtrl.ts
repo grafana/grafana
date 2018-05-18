@@ -1,5 +1,4 @@
 import angular from 'angular';
-import moment from 'moment';
 import config from 'app/core/config';
 
 export class ShareModalCtrl {
@@ -86,9 +85,26 @@ export class ShareModalCtrl {
         config.appSubUrl + '/render/dashboard-solo/'
       );
       $scope.imageUrl = $scope.imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
-      $scope.imageUrl += '&width=1000';
-      $scope.imageUrl += '&height=500';
-      $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format('Z'));
+      $scope.imageUrl += '&width=1000&height=500' + $scope.getLocalTimezone();
+    };
+
+    $scope.getLocalTimezone = function() {
+      // Older browser does not the internationalization API
+      if (!Intl.DateTimeFormat) {
+        return '';
+      }
+
+      const formatter = Intl.DateTimeFormat();
+      if (!formatter.resolvedOptions) {
+        return '';
+      }
+
+      const options = Intl.DateTimeFormat().resolvedOptions();
+      if (!options.timeZone) {
+        return '';
+      }
+
+      return '&tz=' + options.timeZone;
     };
 
     $scope.getShareUrl = function() {
