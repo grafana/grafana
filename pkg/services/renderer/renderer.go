@@ -3,16 +3,11 @@ package renderer
 import (
 	"context"
 	"fmt"
-	"os/exec"
-	"path"
 	"path/filepath"
-	"runtime"
-	"strings"
-	"time"
 
 	plugin "github.com/hashicorp/go-plugin"
 
-	. "github.com/grafana/grafana-plugin-model/go/renderer"
+	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -29,8 +24,9 @@ func init() {
 type RenderService struct {
 	log          log.Logger
 	pluginClient *plugin.Client
-	grpcPlugin   RendererPlugin
+	grpcPlugin   pluginModel.RendererPlugin
 	pluginInfo   *plugins.RendererPlugin
+	renderAction renderFunc
 
 	Cfg *setting.Cfg `inject:""`
 }
@@ -40,13 +36,9 @@ func (rs *RenderService) Init() error {
 	return nil
 }
 
-func (rs *RenderService) Test() {
-
-}
-
 func (rs *RenderService) Run(ctx context.Context) error {
 	if plugins.Renderer == nil {
-		rs.log.Info("No renderer plugin found")
+		rs.renderAction = rs.renderViaPhantomJS
 		<-ctx.Done()
 		return nil
 	}
@@ -56,6 +48,8 @@ func (rs *RenderService) Run(ctx context.Context) error {
 	if err := rs.startPlugin(ctx); err != nil {
 		return err
 	}
+
+	rs.renderAction = rs.renderViaPlugin
 
 	err := rs.watchAndRestartPlugin(ctx)
 
@@ -67,81 +61,12 @@ func (rs *RenderService) Run(ctx context.Context) error {
 	return err
 }
 
-func (rs *RenderService) startPlugin(ctx context.Context) error {
-	cmd := composeBinaryName("plugin_start", runtime.GOOS, runtime.GOARCH)
-	fullpath := path.Join(rs.pluginInfo.PluginDir, cmd)
-
-	var handshakeConfig = plugin.HandshakeConfig{
-		ProtocolVersion:  1,
-		MagicCookieKey:   "grafana_plugin_type",
-		MagicCookieValue: "renderer",
+func (rs *RenderService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
+	if rs.renderAction != nil {
+		return rs.renderAction(ctx, opts)
+	} else {
+		return nil, fmt.Errorf("Not renderer available found")
 	}
-
-	rs.log.Info("Renderer path", "fullpath", fullpath)
-
-	rs.pluginClient = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins: map[string]plugin.Plugin{
-			plugins.Renderer.Id: &RendererPluginImpl{},
-		},
-		Cmd:              exec.Command(fullpath),
-		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
-		Logger:           plugins.LogWrapper{Logger: rs.log},
-	})
-
-	rpcClient, err := rs.pluginClient.Client()
-	if err != nil {
-		return err
-	}
-
-	raw, err := rpcClient.Dispense(rs.pluginInfo.Id)
-	if err != nil {
-		return err
-	}
-
-	rs.grpcPlugin = raw.(RendererPlugin)
-
-	return nil
-}
-
-func (rs *RenderService) watchAndRestartPlugin(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 1)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			if rs.pluginClient.Exited() {
-				err := rs.startPlugin(ctx)
-				rs.log.Debug("Render plugin existed, restarting...")
-				if err != nil {
-					rs.log.Error("Failed to start render plugin", err)
-				}
-			}
-		}
-	}
-}
-
-func (rs *RenderService) Render(opts Opts) (string, error) {
-	pngPath := rs.getFilePathForNewImage()
-
-	rsp, err := rs.grpcPlugin.Render(context.Background(), &RenderRequest{
-		Url:      rs.getURL(opts.Path),
-		Width:    int32(opts.Width),
-		Height:   int32(opts.Height),
-		FilePath: pngPath,
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	if rsp.Error != "" {
-		return "", fmt.Errorf("Rendering failed: %v", rsp.Error)
-	}
-
-	return pngPath, err
 }
 
 func (rs *RenderService) getFilePathForNewImage() string {
@@ -150,7 +75,8 @@ func (rs *RenderService) getFilePathForNewImage() string {
 }
 
 func (rs *RenderService) getURL(path string) string {
-	return fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, rs.getLocalDomain(), setting.HttpPort, path)
+	// &render=1 signals to the legacy redirect layer to
+	return fmt.Sprintf("%s://%s:%s/%s&render=1", setting.Protocol, rs.getLocalDomain(), setting.HttpPort, path)
 }
 
 func (rs *RenderService) getLocalDomain() string {
@@ -164,14 +90,4 @@ func (rs *RenderService) getLocalDomain() string {
 func (rs *RenderService) getRenderKey(orgId, userId int64, orgRole models.RoleType) string {
 	rs.log.Debug("adding render authkey", "orgid", orgId, "userid", userId, "role", orgRole)
 	return middleware.AddRenderAuthKey(orgId, userId, orgRole)
-}
-
-func composeBinaryName(executable, os, arch string) string {
-	var extension string
-	os = strings.ToLower(os)
-	if os == "windows" {
-		extension = ".exe"
-	}
-
-	return fmt.Sprintf("%s_%s_%s%s", executable, os, strings.ToLower(arch), extension)
 }

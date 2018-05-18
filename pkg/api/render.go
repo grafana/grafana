@@ -38,14 +38,16 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		return
 	}
 
-	pngPath, err := hs.Renderer.Render(renderer.Opts{
-		Width:   width,
-		Height:  height,
-		Timeout: time.Duration(timeout) * time.Second,
-		OrgId:   c.OrgId,
-		UserId:  c.UserId,
-		OrgRole: c.OrgRole,
-		Path:    c.Params("*") + queryParams,
+	result, err := hs.Renderer.Render(c.Req.Context(), renderer.Opts{
+		Width:    width,
+		Height:   height,
+		Timeout:  time.Duration(timeout) * time.Second,
+		OrgId:    c.OrgId,
+		UserId:   c.UserId,
+		OrgRole:  c.OrgRole,
+		Path:     c.Params("*") + queryParams,
+		Timezone: queryReader.Get("tz", ""),
+		Encoding: queryReader.Get("encoding", ""),
 	})
 
 	if err != nil && err == renderer.ErrTimeout {
@@ -59,5 +61,5 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 	}
 
 	c.Resp.Header().Set("Content-Type", "image/png")
-	http.ServeFile(c.Resp, c.Req.Request, pngPath)
+	http.ServeFile(c.Resp, c.Req.Request, result.FilePath)
 }
