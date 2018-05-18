@@ -12,13 +12,13 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/renderer"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 )
 
 type AlertingService struct {
-	Renderer renderer.Renderer `inject:""`
+	RenderService rendering.Service `inject:""`
 
 	execQueue chan *Job
 	//clock         clock.Clock
@@ -51,7 +51,7 @@ func (e *AlertingService) Init() error {
 	e.evalHandler = NewEvalHandler()
 	e.ruleReader = NewRuleReader()
 	e.log = log.New("alerting.engine")
-	e.resultHandler = NewResultHandler(e.Renderer)
+	e.resultHandler = NewResultHandler(e.RenderService)
 	return nil
 }
 

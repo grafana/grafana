@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/renderer"
+	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
 type ResultHandler interface {
@@ -21,10 +21,10 @@ type DefaultResultHandler struct {
 	log      log.Logger
 }
 
-func NewResultHandler(renderer renderer.Renderer) *DefaultResultHandler {
+func NewResultHandler(renderService rendering.Service) *DefaultResultHandler {
 	return &DefaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: NewNotificationService(renderer),
+		notifier: NewNotificationService(renderService),
 	}
 }
 

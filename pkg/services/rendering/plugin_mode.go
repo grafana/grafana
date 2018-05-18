@@ -1,4 +1,4 @@
-package renderer
+package rendering
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	plugin "github.com/hashicorp/go-plugin"
 )
 
-func (rs *RenderService) startPlugin(ctx context.Context) error {
+func (rs *RenderingService) startPlugin(ctx context.Context) error {
 	cmd := plugins.ComposePluginStartCommmand("plugin_start")
 	fullpath := path.Join(rs.pluginInfo.PluginDir, cmd)
 
@@ -49,7 +49,7 @@ func (rs *RenderService) startPlugin(ctx context.Context) error {
 	return nil
 }
 
-func (rs *RenderService) watchAndRestartPlugin(ctx context.Context) error {
+func (rs *RenderingService) watchAndRestartPlugin(ctx context.Context) error {
 	ticker := time.NewTicker(time.Second * 1)
 
 	for {
@@ -68,7 +68,7 @@ func (rs *RenderService) watchAndRestartPlugin(ctx context.Context) error {
 	}
 }
 
-func (rs *RenderService) renderViaPlugin(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*RenderResult, error) {
 	pngPath := rs.getFilePathForNewImage()
 
 	rsp, err := rs.grpcPlugin.Render(ctx, &pluginModel.RenderRequest{

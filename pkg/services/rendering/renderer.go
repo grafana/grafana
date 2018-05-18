@@ -1,4 +1,4 @@
-package renderer
+package rendering
 
 import (
 	"context"
@@ -18,10 +18,10 @@ import (
 )
 
 func init() {
-	registry.RegisterService(&RenderService{})
+	registry.RegisterService(&RenderingService{})
 }
 
-type RenderService struct {
+type RenderingService struct {
 	log          log.Logger
 	pluginClient *plugin.Client
 	grpcPlugin   pluginModel.RendererPlugin
@@ -31,12 +31,12 @@ type RenderService struct {
 	Cfg *setting.Cfg `inject:""`
 }
 
-func (rs *RenderService) Init() error {
-	rs.log = log.New("renderer")
+func (rs *RenderingService) Init() error {
+	rs.log = log.New("rendering")
 	return nil
 }
 
-func (rs *RenderService) Run(ctx context.Context) error {
+func (rs *RenderingService) Run(ctx context.Context) error {
 	if plugins.Renderer == nil {
 		rs.renderAction = rs.renderViaPhantomJS
 		<-ctx.Done()
@@ -61,7 +61,7 @@ func (rs *RenderService) Run(ctx context.Context) error {
 	return err
 }
 
-func (rs *RenderService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	if rs.renderAction != nil {
 		return rs.renderAction(ctx, opts)
 	} else {
@@ -69,17 +69,17 @@ func (rs *RenderService) Render(ctx context.Context, opts Opts) (*RenderResult, 
 	}
 }
 
-func (rs *RenderService) getFilePathForNewImage() string {
+func (rs *RenderingService) getFilePathForNewImage() string {
 	pngPath, _ := filepath.Abs(filepath.Join(rs.Cfg.ImagesDir, util.GetRandomString(20)))
 	return pngPath + ".png"
 }
 
-func (rs *RenderService) getURL(path string) string {
+func (rs *RenderingService) getURL(path string) string {
 	// &render=1 signals to the legacy redirect layer to
 	return fmt.Sprintf("%s://%s:%s/%s&render=1", setting.Protocol, rs.getLocalDomain(), setting.HttpPort, path)
 }
 
-func (rs *RenderService) getLocalDomain() string {
+func (rs *RenderingService) getLocalDomain() string {
 	if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
 		return setting.HttpAddr
 	}
@@ -87,7 +87,7 @@ func (rs *RenderService) getLocalDomain() string {
 	return "localhost"
 }
 
-func (rs *RenderService) getRenderKey(orgId, userId int64, orgRole models.RoleType) string {
+func (rs *RenderingService) getRenderKey(orgId, userId int64, orgRole models.RoleType) string {
 	rs.log.Debug("adding render authkey", "orgid", orgId, "userid", userId, "role", orgRole)
 	return middleware.AddRenderAuthKey(orgId, userId, orgRole)
 }

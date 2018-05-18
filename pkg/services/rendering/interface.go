@@ -1,4 +1,4 @@
-package renderer
+package rendering
 
 import (
 	"context"
@@ -29,6 +29,6 @@ type RenderResult struct {
 
 type renderFunc func(ctx context.Context, options Opts) (*RenderResult, error)
 
-type Renderer interface {
+type Service interface {
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
 }

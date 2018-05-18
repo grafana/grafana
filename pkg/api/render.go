@@ -7,7 +7,7 @@ import (
 	"time"
 
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/renderer"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,7 +38,7 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		return
 	}
 
-	result, err := hs.Renderer.Render(c.Req.Context(), renderer.Opts{
+	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
 		Width:    width,
 		Height:   height,
 		Timeout:  time.Duration(timeout) * time.Second,
@@ -50,7 +50,7 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		Encoding: queryReader.Get("encoding", ""),
 	})
 
-	if err != nil && err == renderer.ErrTimeout {
+	if err != nil && err == rendering.ErrTimeout {
 		c.Handle(500, err.Error(), err)
 		return
 	}

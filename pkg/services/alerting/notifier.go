@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/services/renderer"
+	"github.com/grafana/grafana/pkg/services/rendering"
 
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -28,16 +28,16 @@ type NotificationService interface {
 	SendIfNeeded(context *EvalContext) error
 }
 
-func NewNotificationService(renderer renderer.Renderer) NotificationService {
+func NewNotificationService(renderService rendering.Service) NotificationService {
 	return &notificationService{
-		log:      log.New("alerting.notifier"),
-		renderer: renderer,
+		log:           log.New("alerting.notifier"),
+		renderService: renderService,
 	}
 }
 
 type notificationService struct {
-	log      log.Logger
-	renderer renderer.Renderer
+	log           log.Logger
+	renderService rendering.Service
 }
 
 func (n *notificationService) SendIfNeeded(context *EvalContext) error {
@@ -78,7 +78,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 
-	renderOpts := renderer.Opts{
+	renderOpts := rendering.Opts{
 		Width:   1000,
 		Height:  500,
 		Timeout: time.Second * 30,
@@ -93,7 +93,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 
 	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
 
-	result, err := n.renderer.Render(context.Ctx, renderOpts)
+	result, err := n.renderService.Render(context.Ctx, renderOpts)
 	if err != nil {
 		return err
 	}

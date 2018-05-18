@@ -1,4 +1,4 @@
-package renderer
+package rendering
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func (rs *RenderService) renderViaPhantomJS(ctx context.Context, opts Opts) (*RenderResult, error) {
+func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (*RenderResult, error) {
 	rs.log.Info("Rendering", "path", opts.Path)
 
 	var executable = "phantomjs"
