@@ -138,6 +138,7 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
 		}
 
+		// Datasource token authentification support added - Copyright © 2018 Bosch Rexroth AG
 		if proxy.ds.TokenAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", proxy.ds.TokenAuthType+" "+proxy.ds.TokenAuthValue)

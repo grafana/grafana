@@ -1,3 +1,5 @@
+// Datasource token authentification support added - Copyright © 2018 Bosch Rexroth AG
+
 package models
 
 import (

@@ -107,7 +107,7 @@ func addDataSourceMigration(mg *Migrator) {
 		Name: "secure_json_data", Type: DB_Text, Nullable: true,
 	}))
 
-	// add columns to activate token auth option
+	// Datasource token authentification support added - Copyright © 2018 Bosch Rexroth AG
 	mg.AddMigration("Add column token_auth", NewAddColumnMigration(tableV2, &Column{
 		Name: "token_auth", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
