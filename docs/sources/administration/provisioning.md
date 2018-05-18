@@ -94,7 +94,7 @@ deleteDatasources:
     orgId: 1
 
 # list of datasources to insert/update depending
-# whats available in the database
+# what's available in the database
 datasources:
   # <string, required> name of the datasource. Required
 - name: Graphite
