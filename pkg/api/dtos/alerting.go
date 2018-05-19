@@ -21,18 +21,17 @@ type AlertRule struct {
 	ExecutionError string           `json:"executionError"`
 	Url            string           `json:"url"`
 	CanEdit        bool             `json:"canEdit"`
-	NotifyOnce     bool             `json:"notifyOnce"`
-	NotifyEval     uint64           `json:"notifyEval"`
-	NotifyFreq     uint64           `json:"notifyFrequency"`
 }
 
 type AlertNotification struct {
-	Id        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Type      string    `json:"type"`
-	IsDefault bool      `json:"isDefault"`
-	Created   time.Time `json:"created"`
-	Updated   time.Time `json:"updated"`
+	Id         int64     `json:"id"`
+	Name       string    `json:"name"`
+	Type       string    `json:"type"`
+	IsDefault  bool      `json:"isDefault"`
+	NotifyOnce bool      `json:"notifyOnce"`
+	Frequency  bool      `json:"frequency"`
+	Created    time.Time `json:"created"`
+	Updated    time.Time `json:"updated"`
 }
 
 type AlertTestCommand struct {
@@ -62,9 +61,11 @@ type EvalMatch struct {
 }
 
 type NotificationTestCommand struct {
-	Name     string           `json:"name"`
-	Type     string           `json:"type"`
-	Settings *simplejson.Json `json:"settings"`
+	Name       string           `json:"name"`
+	Type       string           `json:"type"`
+	NotifyOnce bool             `json:"notifyOnce"`
+	Frequency  time.Duration    `json:"frequency"`
+	Settings   *simplejson.Json `json:"settings"`
 }
 
 type PauseAlertCommand struct {

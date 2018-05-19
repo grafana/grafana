@@ -11,6 +11,7 @@ export class AlertNotificationEditCtrl {
   model: any;
   defaults: any = {
     type: 'email',
+    notifyOnce: true,
     settings: {
       httpMethod: 'POST',
       autoResolve: true,
@@ -102,6 +103,7 @@ export class AlertNotificationEditCtrl {
     var payload = {
       name: this.model.name,
       type: this.model.type,
+      frequency: this.model.frequency,
       settings: this.model.settings,
     };
 

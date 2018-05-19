@@ -19,6 +19,8 @@ type Notifier interface {
 
 	GetNotifierId() int64
 	GetIsDefault() bool
+	GetNotifyOnce() bool
+	GetFrequency() time.Duration
 }
 
 type NotifierSlice []Notifier
