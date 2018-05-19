@@ -23,9 +23,6 @@ type Rule struct {
 	State               m.AlertStateType
 	Conditions          []Condition
 	Notifications       []int64
-	NotifyOnce          bool
-	NotifyFreq          uint64
-	NotifyEval          uint64
 }
 
 type ValidationError struct {
@@ -100,9 +97,6 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.Name = ruleDef.Name
 	model.Message = ruleDef.Message
 	model.Frequency = ruleDef.Frequency
-	model.NotifyOnce = ruleDef.NotifyOnce
-	model.NotifyFreq = ruleDef.NotifyFreq
-	model.NotifyEval = ruleDef.NotifyEval
 	model.State = ruleDef.State
 	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
 	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))

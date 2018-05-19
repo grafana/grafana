@@ -22,7 +22,6 @@ func init() {
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
 	bus.AddHandler("sql", PauseAlert)
 	bus.AddHandler("sql", PauseAllAlerts)
-	bus.AddHandler("sql", IncAlertEval)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -189,7 +188,7 @@ func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 			if alertToUpdate.ContainsUpdates(alert) {
 				alert.Updated = timeNow()
 				alert.State = alertToUpdate.State
-				sess.MustCols("message", "notify_freq", "notify_once")
+				sess.MustCols("message")
 				_, err := sess.Id(alert.Id).Update(alert)
 				if err != nil {
 					return err
@@ -343,23 +342,4 @@ func GetAlertStatesForDashboard(query *m.GetAlertStatesForDashboardQuery) error 
 	err := x.SQL(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
 
 	return err
-}
-
-func IncAlertEval(cmd *m.IncAlertEvalCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		alert := m.Alert{}
-
-		if _, err := sess.Id(cmd.AlertId).Get(&alert); err != nil {
-			return err
-		}
-
-		alert.NotifyEval = (alert.NotifyEval + 1) % alert.NotifyFreq
-
-		sess.MustCols("notify_eval")
-		if _, err := sess.Id(cmd.AlertId).Update(alert); err != nil {
-			return err
-		}
-
-		return nil
-	})
 }

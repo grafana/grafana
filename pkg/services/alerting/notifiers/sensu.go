@@ -51,7 +51,7 @@ func NewSensuNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &SensuNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.NotifyOnce, model.Frequency, model.Settings),
 		Url:          url,
 		User:         model.Settings.Get("username").MustString(),
 		Source:       model.Settings.Get("source").MustString(),

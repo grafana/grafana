@@ -29,9 +29,6 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "state_changes", Type: DB_Int, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
-			{Name: "notify_once", Type: DB_Bool, Nullable: false},
-			{Name: "notify_freq", Type: DB_Int, Nullable: false},
-			{Name: "notify_eval", Type: DB_Int, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"org_id", "id"}, Type: IndexType},
@@ -68,7 +65,31 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("Add column is_default", NewAddColumnMigration(alert_notification, &Column{
 		Name: "is_default", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
+	mg.AddMigration("Add column frequency", NewAddColumnMigration(alert_notification, &Column{
+		Name: "frequency", Type: DB_BigInt, Nullable: true,
+	}))
+	mg.AddMigration("Add column notify_once", NewAddColumnMigration(alert_notification, &Column{
+		Name: "notify_once", Type: DB_Bool, Nullable: false, Default: "1",
+	}))
 	mg.AddMigration("add index alert_notification org_id & name", NewAddIndexMigration(alert_notification, alert_notification.Indices[0]))
+
+	notification_journal := Table{
+		Name: "notification_journal",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
+			{Name: "notifier_id", Type: DB_BigInt, Nullable: false},
+			{Name: "sent_at", Type: DB_DateTime, Nullable: false},
+			{Name: "success", Type: DB_Bool, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"org_id", "alert_id", "notifier_id"}, Type: IndexType},
+		},
+	}
+
+	mg.AddMigration("create notification_journal table v1", NewAddTableMigration(notification_journal))
+	mg.AddMigration("add index notification_journal org_id & alert_id & notifier_id", NewAddIndexMigration(notification_journal, notification_journal.Indices[0]))
 
 	mg.AddMigration("Update alert table charset", NewTableCharsetMigration("alert", []*Column{
 		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},

@@ -88,7 +88,6 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		}
 	}
 
-	bus.Dispatch(&m.IncAlertEvalCommand{AlertId: evalContext.Rule.Id})
 	handler.notifier.SendIfNeeded(evalContext)
 
 	return nil

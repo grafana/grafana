@@ -33,7 +33,7 @@ func NewAlertmanagerNotifier(model *m.AlertNotification) (alerting.Notifier, err
 	}
 
 	return &AlertmanagerNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.NotifyOnce, model.Frequency, model.Settings),
 		Url:          url,
 		log:          log.New("alerting.notifier.prometheus-alertmanager"),
 	}, nil

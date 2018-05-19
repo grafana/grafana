@@ -56,7 +56,7 @@ func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	}
 
 	return &OpsGenieNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.NotifyOnce, model.Frequency, model.Settings),
 		ApiKey:       apiKey,
 		ApiUrl:       apiUrl,
 		AutoClose:    autoClose,

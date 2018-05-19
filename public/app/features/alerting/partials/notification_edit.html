@@ -18,6 +18,11 @@
           </select>
         </div>
       </div>
+      <div class="gf-form">
+        <a class="gf-form-label width-12" ng-click="ctrl.model.notifyOnce = !ctrl.model.notifyOnce;">{{ ctrl.model.notifyOnce ? 'Notify on state change' : 'Notify at most every' }}</a>
+        <input class="gf-form-input max-width-10" type="number" required ng-model="ctrl.model.frequency" required ng-hide="ctrl.model.notifyOnce"></input>
+        <span class="gf-form-label max-width-5" ng-hide="ctrl.model.notifyOnce">seconds</span>
+      </div>
       <gf-form-switch
           class="gf-form"
           label="Send on all alerts"

@@ -143,3 +143,18 @@ func (c *EvalContext) GetNewState() m.AlertStateType {
 
 	return m.AlertStateOK
 }
+
+func (c *EvalContext) LastNotify(notifierId int64) *time.Time {
+	cmd := &m.GetLatestNotificationQuery{
+		OrgId:      c.Rule.OrgId,
+		AlertId:    c.Rule.Id,
+		NotifierId: notifierId,
+	}
+	if err := bus.Dispatch(cmd); err != nil {
+		c.log.Warn("Could not determine last time alert",
+			c.Rule.Name, "notified")
+		return nil
+	}
+
+	return &cmd.Result.SentAt
+}

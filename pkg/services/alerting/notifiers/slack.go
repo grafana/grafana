@@ -78,7 +78,7 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	return &SlackNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.NotifyOnce, model.Frequency, model.Settings),
 		Url:          url,
 		Recipient:    recipient,
 		Mention:      mention,
