@@ -60,8 +60,14 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error
 	org.Created = time.Now()
 	org.Updated = time.Now()
 
-	if _, err := sess.Insert(&org); err != nil {
-		return 0, err
+	if org.Id != 0 {
+		if _, err := sess.InsertId(&org); err != nil {
+			return 0, err
+		}
+	} else {
+		if _, err := sess.InsertOne(&org); err != nil {
+			return 0, err
+		}
 	}
 
 	sess.publishAfterCommit(&events.OrgCreated{

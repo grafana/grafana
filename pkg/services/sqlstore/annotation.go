@@ -50,7 +50,7 @@ func (r *SqlAnnotationRepo) ensureTagsExist(sess *DBSession, tags []*models.Tag)
 		var existingTag models.Tag
 
 		// check if it exists
-		if exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tag.Key, tag.Value).Get(&existingTag); err != nil {
+		if exists, err := sess.Table("tag").Where(dialect.Quote("key")+"=? AND "+dialect.Quote("value")+"=?", tag.Key, tag.Value).Get(&existingTag); err != nil {
 			return nil, err
 		} else if exists {
 			tag.Id = existingTag.Id
@@ -146,7 +146,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	params = append(params, query.OrgId)
 
 	if query.AnnotationId != 0 {
-		fmt.Print("annotation query")
+		// fmt.Print("annotation query")
 		sql.WriteString(` AND annotation.id = ?`)
 		params = append(params, query.AnnotationId)
 	}
@@ -193,10 +193,10 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		tags := models.ParseTagPairs(query.Tags)
 		for _, tag := range tags {
 			if tag.Value == "" {
-				keyValueFilters = append(keyValueFilters, "(tag.key = ?)")
+				keyValueFilters = append(keyValueFilters, "(tag."+dialect.Quote("key")+" = ?)")
 				params = append(params, tag.Key)
 			} else {
-				keyValueFilters = append(keyValueFilters, "(tag.key = ? AND tag.value = ?)")
+				keyValueFilters = append(keyValueFilters, "(tag."+dialect.Quote("key")+" = ? AND tag."+dialect.Quote("value")+" = ?)")
 				params = append(params, tag.Key, tag.Value)
 			}
 		}
@@ -219,7 +219,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		query.Limit = 100
 	}
 
-	sql.WriteString(fmt.Sprintf(" ORDER BY epoch DESC LIMIT %v", query.Limit))
+	sql.WriteString(" ORDER BY epoch DESC" + dialect.Limit(query.Limit))
 
 	items := make([]*annotations.ItemDTO, 0)
 

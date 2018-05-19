@@ -19,6 +19,7 @@ export class PrometheusDatasource {
   type: string;
   editorSrc: string;
   name: string;
+  supportsExplore: boolean;
   supportMetrics: boolean;
   url: string;
   directUrl: string;
@@ -34,6 +35,7 @@ export class PrometheusDatasource {
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
     this.name = instanceSettings.name;
+    this.supportsExplore = true;
     this.supportMetrics = true;
     this.url = instanceSettings.url;
     this.directUrl = instanceSettings.directUrl;
@@ -105,10 +107,18 @@ export class PrometheusDatasource {
     return this.templateSrv.variableExists(target.expr);
   }
 
+  clampRange(start, end, step) {
+    const clampedEnd = Math.ceil(end / step) * step;
+    const clampedRange = Math.floor((end - start) / step) * step;
+    return {
+      end: clampedEnd,
+      start: clampedEnd - clampedRange,
+    };
+  }
+
   query(options) {
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
-    var range = Math.ceil(end - start);
 
     var queries = [];
     var activeTargets = [];
@@ -121,7 +131,7 @@ export class PrometheusDatasource {
       }
 
       activeTargets.push(target);
-      queries.push(this.createQuery(target, options, range));
+      queries.push(this.createQuery(target, options, start, end));
     }
 
     // No valid targets, return the empty result to save a round trip.
@@ -131,7 +141,7 @@ export class PrometheusDatasource {
 
     var allQueryPromise = _.map(queries, query => {
       if (!query.instant) {
-        return this.performTimeSeriesQuery(query, start, end);
+        return this.performTimeSeriesQuery(query, query.start, query.end);
       } else {
         return this.performInstantQuery(query, end);
       }
@@ -145,7 +155,8 @@ export class PrometheusDatasource {
           throw response.error;
         }
 
-        let transformerOptions = {
+        // Keeping original start/end for transformers
+        const transformerOptions = {
           format: activeTargets[index].format,
           step: queries[index].step,
           legendFormat: activeTargets[index].legendFormat,
@@ -163,9 +174,10 @@ export class PrometheusDatasource {
     });
   }
 
-  createQuery(target, options, range) {
+  createQuery(target, options, start, end) {
     var query: any = {};
     query.instant = target.instant;
+    var range = Math.ceil(end - start);
 
     var interval = kbn.interval_to_seconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
@@ -189,6 +201,12 @@ export class PrometheusDatasource {
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(target.expr, scopedVars, this.interpolateQueryExpr);
     query.requestId = options.panelId + target.refId;
+
+    // Align query interval with step
+    const adjusted = this.clampRange(start, end, query.step);
+    query.start = adjusted.start;
+    query.end = adjusted.end;
+
     return query;
   }
 
@@ -268,22 +286,18 @@ export class PrometheusDatasource {
       return this.$q.when([]);
     }
 
-    var interpolated = this.templateSrv.replace(expr, {}, this.interpolateQueryExpr);
-
-    var step = '60s';
-    if (annotation.step) {
-      step = this.templateSrv.replace(annotation.step);
-    }
-
+    var step = annotation.step || '60s';
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
-    var query = {
-      expr: interpolated,
-      step: this.adjustInterval(kbn.interval_to_seconds(step), 0, Math.ceil(end - start), 1) + 's',
+    // Unsetting min interval
+    const queryOptions = {
+      ...options,
+      interval: '0s',
     };
+    const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
 
     var self = this;
-    return this.performTimeSeriesQuery(query, start, end).then(function(results) {
+    return this.performTimeSeriesQuery(query, query.start, query.end).then(function(results) {
       var eventList = [];
       tagKeys = tagKeys.split(',');
 
@@ -322,6 +336,21 @@ export class PrometheusDatasource {
         return { status: 'error', message: response.error };
       }
     });
+  }
+
+  getExploreState(panel) {
+    let state = {};
+    if (panel.targets) {
+      const queries = panel.targets.map(t => ({
+        query: this.templateSrv.replace(t.expr, {}, this.interpolateQueryExpr),
+        format: t.format,
+      }));
+      state = {
+        ...state,
+        queries,
+      };
+    }
+    return state;
   }
 
   getPrometheusTime(date, roundUp) {
