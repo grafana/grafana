@@ -39,11 +39,10 @@ export class PostgresQueryBuilder {
   }
 
   buildValueQuery(column: string) {
-    var query = "SELECT DISTINCT " + this.queryModel.quoteIdentifier(column) + "::text";
+    var query = "SELECT DISTINCT quote_literal(" + column + ")";
     query += " FROM " + this.queryModel.quoteIdentifier(this.target.schema);
     query += "." + this.queryModel.quoteIdentifier(this.target.table);
-    query += " ORDER BY " + this.queryModel.quoteIdentifier(column);
-    query += " LIMIT 100";
+    query += " ORDER BY 1 LIMIT 100";
     return query;
   }
 
