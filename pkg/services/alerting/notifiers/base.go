@@ -45,6 +45,10 @@ func defaultShouldNotify(context *alerting.EvalContext, notifyOnce bool, frequen
 	if !notifyOnce && lastNotify != nil && lastNotify.Add(frequency).After(time.Now()) {
 		return false
 	}
+	// Do not notify if alert state if OK or pending even on repeated notify
+	if !notifyOnce && (context.Rule.State == m.AlertStateOK || context.Rule.State == m.AlertStatePending) {
+		return false
+	}
 	// Do not notify when we become OK for the first time.
 	if (context.PrevAlertState == m.AlertStatePending) && (context.Rule.State == m.AlertStateOK) {
 		return false

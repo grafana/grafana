@@ -10,7 +10,9 @@ import (
 	tlog "github.com/opentracing/opentracing-go/log"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -205,6 +207,18 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		}
 
 		evalContext.Rule.State = evalContext.GetNewState()
+		if evalContext.Rule.State == m.AlertStateOK && evalContext.PrevAlertState != m.AlertStateOK {
+			for _, notifierId := range evalContext.Rule.Notifications {
+				cmd := &m.CleanNotificationJournalCommand{
+					AlertId:    evalContext.Rule.Id,
+					NotifierId: notifierId,
+					OrgId:      evalContext.Rule.OrgId,
+				}
+				if err := bus.Dispatch(cmd); err != nil {
+					e.log.Error("Failed to clean up old notification records", "notifier", notifierId, "alert", evalContext.Rule.Id, "Error", err)
+				}
+			}
+		}
 		e.resultHandler.Handle(evalContext)
 		span.Finish()
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
