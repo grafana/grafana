@@ -41,6 +41,7 @@ func defaultShouldNotify(context *alerting.EvalContext, notifyOnce bool, frequen
 	if context.PrevAlertState == context.Rule.State && notifyOnce {
 		return false
 	}
+	// Do not notify if interval has not elapsed
 	if !notifyOnce && lastNotify != nil && lastNotify.Add(frequency).After(time.Now()) {
 		return false
 	}

@@ -151,8 +151,8 @@ func (c *EvalContext) LastNotify(notifierId int64) *time.Time {
 		NotifierId: notifierId,
 	}
 	if err := bus.Dispatch(cmd); err != nil {
-		c.log.Warn("Could not determine last time alert",
-			c.Rule.Name, "notified")
+		c.log.Warn("Could not determine last time alert notifier fired",
+			"Alert name", c.Rule.Name, "Error", err)
 		return nil
 	}
 
