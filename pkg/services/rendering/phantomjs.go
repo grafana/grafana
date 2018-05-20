@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (*RenderResult, error) {
@@ -24,8 +23,8 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 	}
 
 	url := rs.getURL(opts.Path)
-	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
-	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))
+	binPath, _ := filepath.Abs(filepath.Join(rs.Cfg.PhantomDir, executable))
+	scriptPath, _ := filepath.Abs(filepath.Join(rs.Cfg.PhantomDir, "render.js"))
 	pngPath := rs.getFilePathForNewImage()
 
 	renderKey := middleware.AddRenderAuthKey(opts.OrgId, opts.UserId, opts.OrgRole)

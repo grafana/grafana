@@ -37,6 +37,13 @@ func (rs *RenderingService) Init() error {
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
+	if rs.Cfg.RendererUrl != "" {
+		rs.log.Info("Backend rendering via external http server")
+		rs.renderAction = rs.renderViaHttp
+		<-ctx.Done()
+		return nil
+	}
+
 	if plugins.Renderer == nil {
 		rs.renderAction = rs.renderViaPhantomJS
 		<-ctx.Done()
