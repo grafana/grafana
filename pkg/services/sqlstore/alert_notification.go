@@ -144,6 +144,10 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
 		}
 
+		if cmd.Frequency == "" {
+			return fmt.Errorf("Alert notification frequency required")
+		}
+
 		frequency, err_convert := time.ParseDuration(cmd.Frequency)
 		if err_convert != nil {
 			return err
@@ -194,6 +198,10 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault
 		current.NotifyOnce = cmd.NotifyOnce
+
+		if cmd.Frequency == "" {
+			return fmt.Errorf("Alert notification frequency required")
+		}
 
 		frequency, err_convert := time.ParseDuration(cmd.Frequency)
 		if err_convert != nil {
