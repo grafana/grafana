@@ -3,6 +3,7 @@ package notifiers
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
@@ -18,19 +19,19 @@ func TestBaseNotifier(t *testing.T) {
 			Convey("can parse false value", func() {
 				bJson.Set("uploadImage", false)
 
-				base := NewNotifierBase(1, false, "name", "email", bJson)
+				base := NewNotifierBase(1, false, "name", "email", true, 0, bJson)
 				So(base.UploadImage, ShouldBeFalse)
 			})
 
 			Convey("can parse true value", func() {
 				bJson.Set("uploadImage", true)
 
-				base := NewNotifierBase(1, false, "name", "email", bJson)
+				base := NewNotifierBase(1, false, "name", "email", true, 0, bJson)
 				So(base.UploadImage, ShouldBeTrue)
 			})
 
 			Convey("default value should be true for backwards compatibility", func() {
-				base := NewNotifierBase(1, false, "name", "email", bJson)
+				base := NewNotifierBase(1, false, "name", "email", true, 0, bJson)
 				So(base.UploadImage, ShouldBeTrue)
 			})
 		})
@@ -41,7 +42,8 @@ func TestBaseNotifier(t *testing.T) {
 					State: m.AlertStatePending,
 				})
 				context.Rule.State = m.AlertStateOK
-				So(defaultShouldNotify(context), ShouldBeFalse)
+				timeNow := time.Now()
+				So(defaultShouldNotify(context, true, 0, &timeNow), ShouldBeFalse)
 			})
 
 			Convey("ok -> alerting", func() {
@@ -49,7 +51,8 @@ func TestBaseNotifier(t *testing.T) {
 					State: m.AlertStateOK,
 				})
 				context.Rule.State = m.AlertStateAlerting
-				So(defaultShouldNotify(context), ShouldBeTrue)
+				timeNow := time.Now()
+				So(defaultShouldNotify(context, true, 0, &timeNow), ShouldBeTrue)
 			})
 		})
 	})

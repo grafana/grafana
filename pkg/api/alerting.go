@@ -193,12 +193,15 @@ func GetAlertNotifications(c *m.ReqContext) Response {
 
 	for _, notification := range query.Result {
 		result = append(result, &dtos.AlertNotification{
-			Id:        notification.Id,
-			Name:      notification.Name,
-			Type:      notification.Type,
-			IsDefault: notification.IsDefault,
-			Created:   notification.Created,
-			Updated:   notification.Updated,
+			Id:         notification.Id,
+			Name:       notification.Name,
+			Type:       notification.Type,
+			IsDefault:  notification.IsDefault,
+			Created:    notification.Created,
+			Updated:    notification.Updated,
+			Frequency:  notification.Frequency.String(),
+			NotifyOnce: notification.NotifyOnce,
+			Settings:   notification.Settings,
 		})
 	}
 
@@ -215,7 +218,19 @@ func GetAlertNotificationByID(c *m.ReqContext) Response {
 		return Error(500, "Failed to get alert notifications", err)
 	}
 
-	return JSON(200, query.Result)
+	result := &dtos.AlertNotification{
+		Id:         query.Result.Id,
+		Name:       query.Result.Name,
+		Type:       query.Result.Type,
+		IsDefault:  query.Result.IsDefault,
+		Created:    query.Result.Created,
+		Updated:    query.Result.Updated,
+		Frequency:  query.Result.Frequency.String(),
+		NotifyOnce: query.Result.NotifyOnce,
+		Settings:   query.Result.Settings,
+	}
+
+	return JSON(200, result)
 }
 
 func CreateAlertNotification(c *m.ReqContext, cmd m.CreateAlertNotificationCommand) Response {
@@ -225,7 +240,19 @@ func CreateAlertNotification(c *m.ReqContext, cmd m.CreateAlertNotificationComma
 		return Error(500, "Failed to create alert notification", err)
 	}
 
-	return JSON(200, cmd.Result)
+	result := &dtos.AlertNotification{
+		Id:         cmd.Result.Id,
+		Name:       cmd.Result.Name,
+		Type:       cmd.Result.Type,
+		IsDefault:  cmd.Result.IsDefault,
+		Created:    cmd.Result.Created,
+		Updated:    cmd.Result.Updated,
+		Frequency:  cmd.Result.Frequency.String(),
+		NotifyOnce: cmd.Result.NotifyOnce,
+		Settings:   cmd.Result.Settings,
+	}
+
+	return JSON(200, result)
 }
 
 func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationCommand) Response {
@@ -235,7 +262,19 @@ func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationComma
 		return Error(500, "Failed to update alert notification", err)
 	}
 
-	return JSON(200, cmd.Result)
+	result := &dtos.AlertNotification{
+		Id:         cmd.Result.Id,
+		Name:       cmd.Result.Name,
+		Type:       cmd.Result.Type,
+		IsDefault:  cmd.Result.IsDefault,
+		Created:    cmd.Result.Created,
+		Updated:    cmd.Result.Updated,
+		Frequency:  cmd.Result.Frequency.String(),
+		NotifyOnce: cmd.Result.NotifyOnce,
+		Settings:   cmd.Result.Settings,
+	}
+
+	return JSON(200, result)
 }
 
 func DeleteAlertNotification(c *m.ReqContext) Response {

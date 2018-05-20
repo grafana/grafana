@@ -56,7 +56,9 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 										alert_notification.created,
 										alert_notification.updated,
 										alert_notification.settings,
-										alert_notification.is_default
+										alert_notification.is_default,
+										alert_notification.notify_once,
+										alert_notification.frequency
 										FROM alert_notification
 	  							`)
 
@@ -94,7 +96,9 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 										alert_notification.created,
 										alert_notification.updated,
 										alert_notification.settings,
-										alert_notification.is_default
+										alert_notification.is_default,
+										alert_notification.notify_once,
+										alert_notification.frequency
 										FROM alert_notification
 	  							`)
 
@@ -140,19 +144,24 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
 		}
 
+		frequency, err_convert := time.ParseDuration(cmd.Frequency)
+		if err_convert != nil {
+			return err
+		}
+
 		alertNotification := &m.AlertNotification{
 			OrgId:      cmd.OrgId,
 			Name:       cmd.Name,
 			Type:       cmd.Type,
 			Settings:   cmd.Settings,
 			NotifyOnce: cmd.NotifyOnce,
-			Frequency:  cmd.Frequency,
+			Frequency:  frequency,
 			Created:    time.Now(),
 			Updated:    time.Now(),
 			IsDefault:  cmd.IsDefault,
 		}
 
-		if _, err = sess.Insert(alertNotification); err != nil {
+		if _, err = sess.MustCols("notify_once").Insert(alertNotification); err != nil {
 			return err
 		}
 
@@ -184,8 +193,15 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.Name = cmd.Name
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault
+		current.NotifyOnce = cmd.NotifyOnce
 
-		sess.UseBool("is_default")
+		frequency, err_convert := time.ParseDuration(cmd.Frequency)
+		if err_convert != nil {
+			return err
+		}
+		current.Frequency = frequency
+
+		sess.UseBool("is_default", "notify_once")
 
 		if affected, err := sess.ID(cmd.Id).Update(current); err != nil {
 			return err
@@ -219,7 +235,7 @@ func RecordNotificationJournal(cmd *m.RecordNotificationJournalCommand) error {
 func GetLatestNotification(cmd *m.GetLatestNotificationQuery) error {
 	return inTransaction(func(sess *DBSession) error {
 		notificationJournal := &m.NotificationJournal{}
-		_, err := sess.OrderBy("notification_journal.sent_at").Desc().Where("notification_journal.org_id = ? AND notification_journal.alert_id = ? AND notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(notificationJournal)
+		_, err := sess.Desc("notification_journal.sent_at").Limit(1).Where("notification_journal.org_id = ? AND notification_journal.alert_id = ? AND notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(notificationJournal)
 		if err != nil {
 			return err
 		}

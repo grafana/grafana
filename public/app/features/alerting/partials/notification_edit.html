@@ -20,8 +20,7 @@
       </div>
       <div class="gf-form">
         <a class="gf-form-label width-12" ng-click="ctrl.model.notifyOnce = !ctrl.model.notifyOnce;">{{ ctrl.model.notifyOnce ? 'Notify on state change' : 'Notify at most every' }}</a>
-        <input class="gf-form-input max-width-10" type="number" required ng-model="ctrl.model.frequency" required ng-hide="ctrl.model.notifyOnce"></input>
-        <span class="gf-form-label max-width-5" ng-hide="ctrl.model.notifyOnce">seconds</span>
+        <input class="gf-form-input max-width-15" type="text" ng-model="ctrl.model.frequency" ng-if="!ctrl.model.notifyOnce"></input>
       </div>
       <gf-form-switch
           class="gf-form"

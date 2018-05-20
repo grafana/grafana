@@ -24,14 +24,15 @@ type AlertRule struct {
 }
 
 type AlertNotification struct {
-	Id         int64     `json:"id"`
-	Name       string    `json:"name"`
-	Type       string    `json:"type"`
-	IsDefault  bool      `json:"isDefault"`
-	NotifyOnce bool      `json:"notifyOnce"`
-	Frequency  bool      `json:"frequency"`
-	Created    time.Time `json:"created"`
-	Updated    time.Time `json:"updated"`
+	Id         int64            `json:"id"`
+	Name       string           `json:"name"`
+	Type       string           `json:"type"`
+	IsDefault  bool             `json:"isDefault"`
+	NotifyOnce bool             `json:"notifyOnce"`
+	Frequency  string           `json:"frequency"`
+	Created    time.Time        `json:"created"`
+	Updated    time.Time        `json:"updated"`
+	Settings   *simplejson.Json `json:"settings"`
 }
 
 type AlertTestCommand struct {
@@ -64,7 +65,7 @@ type NotificationTestCommand struct {
 	Name       string           `json:"name"`
 	Type       string           `json:"type"`
 	NotifyOnce bool             `json:"notifyOnce"`
-	Frequency  time.Duration    `json:"frequency"`
+	Frequency  string           `json:"frequency"`
 	Settings   *simplejson.Json `json:"settings"`
 }
 

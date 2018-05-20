@@ -22,8 +22,8 @@ type AlertNotification struct {
 type CreateAlertNotificationCommand struct {
 	Name       string           `json:"name"  binding:"Required"`
 	Type       string           `json:"type"  binding:"Required"`
-	NotifyOnce bool             `json:"notifyOnce"  binding:"Required"`
-	Frequency  time.Duration    `json:"frequency"`
+	NotifyOnce bool             `json:"notifyOnce"`
+	Frequency  string           `json:"frequency"`
 	IsDefault  bool             `json:"isDefault"`
 	Settings   *simplejson.Json `json:"settings"`
 
@@ -35,7 +35,7 @@ type UpdateAlertNotificationCommand struct {
 	Id         int64            `json:"id"  binding:"Required"`
 	Name       string           `json:"name"  binding:"Required"`
 	Type       string           `json:"type"  binding:"Required"`
-	NotifyOnce string           `json:"notifyOnce"  binding:"Required"`
+	NotifyOnce bool             `json:"notifyOnce"`
 	Frequency  string           `json:"frequency"`
 	IsDefault  bool             `json:"isDefault"`
 	Settings   *simplejson.Json `json:"settings"  binding:"Required"`
