@@ -75,7 +75,7 @@ export class TemplateSrv {
       return luceneEscape(value);
     }
     if (value instanceof Array && value.length === 0) {
-        return '__empty__';
+      return '__empty__';
     }
     var quotedValues = _.map(value, function(val) {
       return '"' + luceneEscape(val) + '"';

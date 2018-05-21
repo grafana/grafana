@@ -31,10 +31,23 @@ const entries = HOT ? {
     vendor: require('./dependencies'),
   };
 
+const output = HOT ? {
+  path: path.resolve(__dirname, '../../public/build'),
+  filename: '[name].[hash].js',
+  publicPath: "/public/build/",
+} : {
+    path: path.resolve(__dirname, '../../public/build'),
+    filename: '[name].[hash].js',
+    // Keep publicPath relative for host.com/grafana/ deployments
+    publicPath: "public/build/",
+  };
+
 module.exports = merge(common, {
   devtool: "cheap-module-source-map",
 
   entry: entries,
+
+  output: output,
 
   resolve: {
     extensions: ['.scss', '.ts', '.tsx', '.es6', '.js', '.json', '.svg', '.woff2', '.png'],
@@ -66,23 +79,20 @@ module.exports = merge(common, {
       {
         test: /\.tsx?$/,
         exclude: /node_modules/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
+        use: {
+          loader: 'awesome-typescript-loader',
+          options: {
+            useCache: true,
+            useBabel: HOT,
+            babelOptions: {
+              babelrc: false,
               plugins: [
                 'syntax-dynamic-import',
-                'react-hot-loader/babel',
-              ],
-            },
+                'react-hot-loader/babel'
+              ]
+            }
           },
-          {
-            loader: 'awesome-typescript-loader',
-            options: {
-              useCache: true,
-            },
-          }
-        ]
+        }
       },
       require('./sass.rule.js')({
         sourceMap: true, minimize: false, preserveUrl: HOT

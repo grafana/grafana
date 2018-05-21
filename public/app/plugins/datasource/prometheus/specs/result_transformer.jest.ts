@@ -49,7 +49,7 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('should column title include refId if response count is more than 2', () => {
-      var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result, 2, "B");
+      var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result, 2, 'B');
       expect(table.type).toBe('table');
       expect(table.columns).toEqual([
         { text: 'Time', type: 'time' },

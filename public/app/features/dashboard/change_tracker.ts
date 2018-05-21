@@ -110,6 +110,7 @@ export class ChangeTracker {
     // ignore iteration property
     delete dash.iteration;
 
+    let hasDynamicHeight = false;
     dash.panels = _.filter(dash.panels, panel => {
       if (panel.repeatPanelId) {
         return false;
@@ -124,7 +125,11 @@ export class ChangeTracker {
         delete panel.legend.sortDesc;
       }
 
+      // ignore all h parameters after a dynamic height
       if (panel.dynamicHeight) {
+        hasDynamicHeight = true;
+      }
+      if (hasDynamicHeight) {
         delete panel.gridPos.h;
       }
 

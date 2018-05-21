@@ -13,6 +13,10 @@
 * **Security**: Fix XSS vulnerabilities in dashboard links [#11813](https://github.com/grafana/grafana/pull/11813)
 * **Singlestat**: Fix "time of last point" shows local time when dashboard timezone set to UTC [#10338](https://github.com/grafana/grafana/issues/10338)
 
+# 5.1.3 (2018-05-16)
+
+* **Scroll**: Graph panel / legend texts shifts on the left each time we move scrollbar on firefox [#11830](https://github.com/grafana/grafana/issues/11830)
+
 # 5.1.2 (2018-05-09)
 
 * **Database**: Fix MySql migration issue [#11862](https://github.com/grafana/grafana/issues/11862)

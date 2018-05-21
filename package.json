@@ -178,7 +178,10 @@
     "slate-react": "^0.12.4",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
-    "tinycolor2": "^1.4.1",
-    "css-element-queries": "1.0.2"
+    "css-element-queries": "1.0.2",
+    "tinycolor2": "^1.4.1"
+  },
+  "resolutions": {
+    "caniuse-db": "1.0.30000772"
   }
 }

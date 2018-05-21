@@ -495,7 +495,9 @@ func validateStaticRootPath() error {
 }
 
 func NewCfg() *Cfg {
-	return &Cfg{}
+	return &Cfg{
+		Raw: ini.Empty(),
+	}
 }
 
 func (cfg *Cfg) Load(args *CommandLineArgs) error {

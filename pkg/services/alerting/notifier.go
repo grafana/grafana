@@ -3,6 +3,7 @@ package alerting
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"golang.org/x/sync/errgroup"
 
@@ -92,6 +93,11 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
+
+	if strings.HasPrefix(context.Rule.Message, "RENDER:") {
+		renderOpts.Path = scontext.Rule.Message[:len("RENDER:")]
+	}
+	n.log.Info("alert-rendering", "path", renderOpts.Path)
 
 	imagePath, err := renderer.RenderToPng(renderOpts)
 	if err != nil {
