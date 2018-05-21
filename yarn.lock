@@ -9001,6 +9001,12 @@ react-sizeme@^2.3.6:
     lodash.debounce "^4.0.8"
     lodash.throttle "^4.1.1"
 
+react-table@^6.8.5:
+  version "6.8.5"
+  resolved "https://registry.yarnpkg.com/react-table/-/react-table-6.8.5.tgz#88460a98d6e7c28ba323b1ceb6db3f4eab9c3357"
+  dependencies:
+    classnames "^2.2.5"
+
 react-test-renderer@^16.0.0, react-test-renderer@^16.0.0-0:
   version "16.3.2"
   resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-16.3.2.tgz#3d1ed74fda8db42521fdf03328e933312214749a"
