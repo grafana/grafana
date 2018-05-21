@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/core/components/query_part/query_part';
+import { SqlPartDef, SqlPart, functionRenderer, suffixRenderer } from 'app/core/components/sql_part/sql_part';
 
 var index = [];
 
@@ -9,11 +9,11 @@ function createPart(part): any {
     throw { message: 'Could not find query part ' + part.type };
   }
 
-  return new QueryPart(part, def);
+  return new SqlPart(part, def);
 }
 
 function register(options: any) {
-  index[options.type] = new QueryPartDef(options);
+  index[options.type] = new SqlPartDef(options);
 }
 
 function aliasRenderer(part, innerExpr) {
