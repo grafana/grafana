@@ -186,9 +186,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function appendTableRows(tbodyElem) {
-      ctrl.renderer.setTable(data);
-      tbodyElem.empty();
-      tbodyElem.html(ctrl.renderer.render(ctrl.pageIndex));
+      //ctrl.renderer.setTable(data);
+      //tbodyElem.empty();
+      //tbodyElem.html(ctrl.renderer.render(ctrl.pageIndex));
     }
 
     function switchPage(e) {
