@@ -2,16 +2,31 @@ import _ from 'lodash';
 
 export class SqlPartDef {
   type: string;
+  style: string;
   label: string;
   params: any[];
   defaultParams: any[];
+  wrapOpen: string;
+  wrapClose: string;
   renderer: any;
   category: any;
   addStrategy: any;
 
   constructor(options: any) {
     this.type = options.type;
-    this.label = options.label;
+    if (options.label) {
+      this.label = options.label;
+    } else {
+      this.label = this.type[0].toUpperCase() + this.type.substring(1) + ':';
+    }
+    this.style = options.style;
+    if (this.style === "function") {
+      this.wrapOpen = "(";
+      this.wrapClose = ")";
+    } else {
+      this.wrapOpen = " ";
+      this.wrapClose = " ";
+    }
     this.params = options.params;
     this.defaultParams = options.defaultParams;
     this.renderer = options.renderer;
