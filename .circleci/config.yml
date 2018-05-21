@@ -1,3 +1,14 @@
+aliases:
+  # Workflow filters
+  - &filter-only-release
+    branches:
+      ignore: /.*/
+    tags:
+      only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+  - &filter-not-release
+    tags:
+      ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+
 version: 2
 
 jobs:
@@ -199,25 +210,15 @@ workflows:
   test-and-build:
     jobs:
       - build:
-          filters:
-            tags:
-              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-not-release
       - codespell:
-          filters:
-            tags:
-              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-not-release
       - gometalinter:
-          filters:
-            tags:
-              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-not-release
       - test-frontend:
-          filters:
-            tags:
-              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-not-release
       - test-backend:
-          filters:
-            tags:
-              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-not-release
       - deploy-master:
           requires:
             - test-backend
@@ -231,35 +232,15 @@ workflows:
   release:
     jobs:
       - build-all:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-only-release
       - codespell:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-only-release
       - gometalinter:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-only-release
       - test-frontend:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-only-release
       - test-backend:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-only-release
       - deploy-release:
           requires:
             - build-all
@@ -267,11 +248,7 @@ workflows:
             - test-frontend
             - codespell
             - gometalinter
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+          filters: *filter-only-release
   nightly-master:
     triggers:
       - schedule:
