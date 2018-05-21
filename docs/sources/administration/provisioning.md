@@ -154,7 +154,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert | boolean | *All* | Enable TLS authentication using CA cert |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
-| timeInterval | string | Elastic, Influxdb & Prometheus | Lowest interval/step value that should be used for this data source |
+| timeInterval | string | Elastic, InfluxDB & Prometheus | Lowest interval/step value that should be used for this data source |
 | esVersion | string | Elastic | Elasticsearch version as an number (2/5/56) |
 | timeField | string | Elastic | Which field that should be used as timestamp |
 | interval | string | Elastic | Index date time format |
@@ -162,9 +162,9 @@ Since not all datasources have the same configuration settings we only have the 
 | assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
 | customMetricsNamespaces | string | Cloudwatch | Namespaces of Custom Metrics |
-| tsdbVersion | string | OpenTsdb | Version |
-| tsdbResolution | string | OpenTsdb | Resolution |
-| sslmode | string | Postgre | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| tsdbVersion | string | OpenTSDB | Version |
+| tsdbResolution | string | OpenTSDB | Resolution |
+| sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
 
 #### Secure Json Data
 
@@ -177,8 +177,8 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsCACert | string | *All* |CA cert for out going requests |
 | tlsClientCert | string | *All* |TLS Client cert for outgoing requests |
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
-| password | string | Postgre | password |
-| user | string | Postgre | user |
+| password | string | PostgreSQL | password |
+| user | string | PostgreSQL | user |
 | accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
 
