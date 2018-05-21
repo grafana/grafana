@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 if [ ! -d '/tmp/phantomjs' ]; then
-  _version="2.1.16"
+  _version="2.1.1"
 
   curl -L https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-$_version-windows.zip > /tmp/phantomjs-win.zip
   curl -L https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-$_version-macosx.zip > /tmp/phantomjs-mac.zip
