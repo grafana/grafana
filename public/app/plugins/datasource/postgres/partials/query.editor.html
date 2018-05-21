@@ -28,6 +28,20 @@
 
     </div>
 
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">Time column</label>
+        <metric-segment segment="ctrl.timeColumnSegment" get-options="ctrl.getTimeColumnSegments()" on-change="ctrl.timeColumnChanged()"></metric-segment>
+        <label class="gf-form-label query-keyword width-8">Metric column</label>
+        <metric-segment segment="ctrl.metricColumnSegment" get-options="ctrl.getMetricColumnSegments()" on-change="ctrl.metricColumnChanged()"></metric-segment>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+
+    </div>
+
     <div class="gf-form-inline" ng-repeat="selectParts in ctrl.queryModel.selectModels">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-7">
@@ -50,20 +64,6 @@
       <div class="gf-form gf-form--grow">
         <div class="gf-form-label gf-form-label--grow"></div>
       </div>
-    </div>
-
-    <div class="gf-form-inline">
-      <div class="gf-form">
-        <label class="gf-form-label query-keyword width-7">Time column</label>
-        <metric-segment segment="ctrl.timeColumnSegment" get-options="ctrl.getTimeColumnSegments()" on-change="ctrl.timeColumnChanged()"></metric-segment>
-        <label class="gf-form-label query-keyword width-8">Metric column</label>
-        <metric-segment segment="ctrl.metricColumnSegment" get-options="ctrl.getMetricColumnSegments()" on-change="ctrl.metricColumnChanged()"></metric-segment>
-      </div>
-
-      <div class="gf-form gf-form--grow">
-        <div class="gf-form-label gf-form-label--grow"></div>
-      </div>
-
     </div>
 
     <div class="gf-form-inline">

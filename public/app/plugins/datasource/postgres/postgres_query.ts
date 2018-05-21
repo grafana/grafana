@@ -175,9 +175,13 @@ export default class PostgresQuery {
       } else {
         args = timeGroup.params[0];
       }
-      query += '$__timeGroup(' + this.quoteIdentifier(target.timeColumn) + ',' + args + '),';
+      query += '$__timeGroup(' + this.quoteIdentifier(target.timeColumn) + ',' + args + ')';
     } else {
-      query += this.quoteIdentifier(target.timeColumn) + ' AS time,';
+      query += this.quoteIdentifier(target.timeColumn) + ' AS time';
+    }
+
+    if (this.target.metricColumn !== 'None') {
+      query += "," + this.quoteIdentifier(this.target.metricColumn) + " AS metric";
     }
 
     var i, y;
@@ -189,14 +193,7 @@ export default class PostgresQuery {
         selectText = part.render(selectText);
       }
 
-      if (i > 0) {
-        query += ', ';
-      }
-      query += selectText;
-    }
-
-    if (this.target.metricColumn !== 'None') {
-      query += "," + this.quoteIdentifier(this.target.metricColumn) + " AS metric";
+      query += ', ' + selectText;
     }
 
     query += ' FROM ' + this.quoteIdentifier(target.schema) + '.' + this.quoteIdentifier(target.table) + ' WHERE ';
@@ -225,6 +222,9 @@ export default class PostgresQuery {
 
     if (groupBySection.length) {
       query += ' GROUP BY ' + groupBySection;
+      if (this.target.metricColumn !== "None") {
+        query += ",2";
+      }
     }
 
     query += ' ORDER BY 1';
