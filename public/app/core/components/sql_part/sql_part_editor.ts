@@ -4,7 +4,7 @@ import coreModule from 'app/core/core_module';
 
 var template = `
 <div class="dropdown cascade-open">
-<a ng-click="showActionsMenu()" class="query-part-name pointer dropdown-toggle" data-toggle="dropdown">{{part.def.type}}</a>
+<a ng-click="showActionsMenu()" class="query-part-name pointer dropdown-toggle" data-toggle="dropdown">{{part.def.label}}</a>
 <span>(</span><span class="query-part-parameters"></span><span>)</span>
 <ul class="dropdown-menu">
   <li ng-repeat="action in partActions">

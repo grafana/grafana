@@ -2,6 +2,7 @@ import _ from 'lodash';
 
 export class SqlPartDef {
   type: string;
+  label: string;
   params: any[];
   defaultParams: any[];
   renderer: any;
@@ -10,6 +11,7 @@ export class SqlPartDef {
 
   constructor(options: any) {
     this.type = options.type;
+    this.label = options.label;
     this.params = options.params;
     this.defaultParams = options.defaultParams;
     this.renderer = options.renderer;

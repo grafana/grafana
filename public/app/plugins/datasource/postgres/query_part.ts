@@ -85,6 +85,7 @@ function addColumnStrategy(selectParts, partModel, query) {
 
 register({
   type: 'column',
+  label: 'Column:',
   addStrategy: addColumnStrategy,
   params: [{ type: 'column', dynamicLookup: true }],
   defaultParams: ['value'],
@@ -93,6 +94,7 @@ register({
 
 register({
   type: 'aggregate',
+  label: 'Aggregate:',
   addStrategy: replaceAggregationAddStrategy,
   params: [{name: 'name', type: 'string', dynamicLookup: true}],
   defaultParams: ['avg'],
@@ -101,6 +103,7 @@ register({
 
 register({
   type: 'math',
+  label: 'Math:',
   addStrategy: addMathStrategy,
   params: [{ name: 'expr', type: 'string' }],
   defaultParams: [' / 100'],
@@ -109,6 +112,7 @@ register({
 
 register({
   type: 'alias',
+  label: 'Alias:',
   addStrategy: addAliasStrategy,
   params: [{ name: 'name', type: 'string', quote: 'double' }],
   defaultParams: ['alias'],
@@ -118,6 +122,7 @@ register({
 
 register({
   type: 'time',
+  label: 'time',
   params: [
     {
       name: 'interval',
