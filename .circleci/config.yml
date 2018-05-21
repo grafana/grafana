@@ -77,6 +77,36 @@ jobs:
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
+      - run:
+          name: build and package grafana
+          command: './scripts/build/build.sh'
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Build Grafana.com publisher
+          command: 'go build -o scripts/publish scripts/build/publish.go'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/grafana*
+            - scripts/*.sh
+            - scripts/publish
+      - store_artifacts:
+          path: dist
+
+  build-all:
+    docker:
+     - image: grafana/build-container:crosscompile
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
       - restore_cache:
           key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
       - run:
@@ -88,7 +118,7 @@ jobs:
             - /tmp/phantomjs
       - run:
           name: build and package grafana
-          command: './scripts/build/build.sh'
+          command: './scripts/build/build-all.sh'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
@@ -168,45 +198,99 @@ workflows:
   version: 2
   test-and-build:
     jobs:
-      - codespell:
-          filters:
-            tags:
-              only: /.*/
-      - gometalinter:
-          filters:
-            tags:
-              only: /.*/
       - build:
           filters:
             tags:
-              only: /.*/
+              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+      - codespell:
+          filters:
+            tags:
+              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+      - gometalinter:
+          filters:
+            tags:
+              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
       - test-frontend:
           filters:
             tags:
-              only: /.*/
+              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
       - test-backend:
           filters:
             tags:
-              only: /.*/
+              ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
       - deploy-master:
           requires:
             - test-backend
             - test-frontend
             - build
+            - codespell
+            - gometalinter
           filters:
             branches:
               only: master
-      - deploy-release:
-          requires:
-            - test-backend
-            - test-frontend
-            - build
+  release:
+    jobs:
+      - build-all:
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
-      # - build-enterprise:
-      #     filters:
-      #       tags:
-      #         only: /.*/
+      - codespell:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+      - gometalinter:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+      - test-frontend:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+      - test-backend:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+      - deploy-release:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+  nightly-master:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+                - crosscompile
+    jobs:
+      - build-all
+      - codespell
+      - gometalinter
+      - test-frontend
+      - test-backend
+      - deploy-master:
+          requires:
+            - build-all
+            - codespell
+            - gometalinter
+            - test-frontend
+            - test-backend
