@@ -329,6 +329,7 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
 			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), wrap(PauseAlert))
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
+			alertsRoute.Get("/status/:alertId", ValidateOrgAlert, wrap(GetAlertStatus))
 			alertsRoute.Get("/", wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))
 		})

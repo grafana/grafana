@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -122,6 +123,52 @@ func GetAlert(c *m.ReqContext) Response {
 	}
 
 	return JSON(200, &query.Result)
+}
+
+// GET /api/alerts/status/:id
+func GetAlertStatus(c *m.ReqContext) Response {
+	id := c.ParamsInt64(":alertId")
+	alertQuery := m.GetAlertByIdQuery{Id: id}
+
+	if err := bus.Dispatch(&alertQuery); err != nil {
+		return Error(500, "List alerts failed", err)
+	}
+
+	alert := alertQuery.Result
+
+	if alert.State == m.AlertStateOK {
+		return JSON(200, &alert)
+	}
+
+	backendCmd := alerting.AlertStatusCommand{Alert: alert}
+
+	if err := bus.Dispatch(&backendCmd); err != nil {
+		if validationErr, ok := err.(alerting.ValidationError); ok {
+			return Error(422, validationErr.Error(), nil)
+		}
+		return Error(500, "Failed to get alert status", err)
+	}
+
+	evalContext := backendCmd.Result
+
+	evalDataJSON := simplejson.New()
+
+	evalMatches := make([]map[string]interface{}, 0)
+
+	for _, evt := range evalContext.EvalMatches {
+
+		evalMatches = append(evalMatches, map[string]interface{}{
+			"Metric": evt.Metric,
+			"Tags":   evt.Tags,
+			"Value":  evt.Value.FullString(),
+		})
+	}
+
+	evalDataJSON.Set("evalMatches", evalMatches)
+
+	alert.EvalData = evalDataJSON
+
+	return JSON(200, alert)
 }
 
 func GetAlertNotifiers(c *m.ReqContext) Response {
