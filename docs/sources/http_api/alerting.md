@@ -49,18 +49,15 @@ Content-Type: application/json
   {
     "id": 1,
     "dashboardId": 1,
+    "dashboardUId": "ABcdEFghij"
+    "dashboardSlug": "sensors",
     "panelId": 1,
     "name": "fire place sensor",
-    "message": "Someone is trying to break in through the fire place",
     "state": "alerting",
+    "message": "Someone is trying to break in through the fire place",
+    "newStateDate": "2018-05-14T05:55:20+02:00",
     "evalDate": "0001-01-01T00:00:00Z",
-    "evalData": [
-      {
-        "metric": "fire",
-        "tags": null,
-        "value": 5.349999999999999
-      }
-    "newStateDate": "2016-12-25",
+    "evalData": null,
     "executionError": "",
     "url": "http://grafana.com/dashboard/db/sensors"
   }
@@ -88,15 +85,34 @@ Content-Type: application/json
 {
   "id": 1,
   "dashboardId": 1,
+  "dashboardUId": "ABcdEFghij"
+  "dashboardSlug": "sensors",
   "panelId": 1,
   "name": "fire place sensor",
-  "message": "Someone is trying to break in through the fire place",
   "state": "alerting",
-  "newStateDate": "2016-12-25",
+  "message": "Someone is trying to break in through the fire place",
+  "newStateDate": "2018-05-14T05:55:20+02:00",
+  "evalDate": "0001-01-01T00:00:00Z",
+  "evalData": "evalMatches": [
+    {
+      "metric": "movement",
+      "tags": {
+        "name": "fireplace_chimney"
+      },
+      "value": 98.765
+    }
+  ],
   "executionError": "",
   "url": "http://grafana.com/dashboard/db/sensors"
 }
 ```
+
+**Important Note**:
+"evalMatches" data is cached in the db when and only when the state of the alert changes
+(e.g. transitioning from "ok" to "alerting" state).
+
+If data from one server triggers the alert first and, before that server is seen leaving alerting state,
+a second server also enters a state that would trigger the alert, the second server will not be visible in "evalMatches" data.
 
 ## Pause alert
 
