@@ -54,9 +54,11 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 			})
+		})
 
+		Convey("When user is anonymous", func() {
 			Convey("Should be able to delete snapshot by deleteKey", func() {
-				loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", m.ROLE_EDITOR, func(sc *scenarioContext) {
+				anonymousUserScenario("When calling GET on", "GET", "/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteDashboardSnapshotByDeleteKey
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{"deleteKey": "12345"}).exec()
 
