@@ -1,5 +1,4 @@
 import queryPart from '../query_part';
-import { registerAngularDirectives } from '../../../../core/core';
 
 describe('InfluxQueryPart', () => {
   describe('series with measurement only', () => {
@@ -55,12 +54,40 @@ describe('InfluxQueryPart', () => {
       ];
       var partModel = queryPart.create({
         type: 'distinct',
+        category: queryPart.getCategories().Aggregations,
       });
 
       queryPart.replaceAggregationAdd(selectParts, partModel);
 
       expect(selectParts[1].text).toBe("distinct()");
       expect(selectParts[2].text).toBe("count()");
+    });
+
+    it('should convert to count distinct when distinct is selected and count added', () => {
+      var selectParts = [
+        queryPart.create({
+          type: 'field',
+          category: queryPart.getCategories().Fields,
+        }),
+        queryPart.create({
+          type: 'distinct',
+          category: queryPart.getCategories().Aggregations,
+        }),
+        queryPart.create({
+          type: 'max',
+          category: queryPart.getCategories().Selectors,
+        })
+      ];
+      var partModel = queryPart.create({
+        type: 'count',
+        category: queryPart.getCategories().Aggregations,
+      });
+
+      queryPart.replaceAggregationAdd(selectParts, partModel);
+
+      expect(selectParts[1].text).toBe("distinct()");
+      expect(selectParts[2].text).toBe("count()");
+      expect(selectParts[3].text).toBe("max()");
     });
 
     it('should replace count distinct if an aggregation is selected', () => {
@@ -80,6 +107,7 @@ describe('InfluxQueryPart', () => {
       ];
       var partModel = queryPart.create({
         type: 'mean',
+        category: queryPart.getCategories().Selectors,
       });
 
       queryPart.replaceAggregationAdd(selectParts, partModel);
