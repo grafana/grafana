@@ -1,6 +1,7 @@
 <link rel="stylesheet" href="https://unpkg.com/react-table@latest/react-table.css">
 <div class="table-panel-container">
-	<react-table data="ctrl.table" height="ctrl.height" page-size="ctrl.panel.pageSize">
+	<react-table data="ctrl.table" panel-styles="ctrl.panel.styles" page-size="ctrl.panel.pageSize" height="ctrl.height" utc="ctrl.dashboard.isTimezoneUtc()"
+	 sanitize="ctrl.$sanitize">
 	</react-table>
 </div>
 <div class="datapoints-warning" ng-show="ctrl.table.rows.length===0">

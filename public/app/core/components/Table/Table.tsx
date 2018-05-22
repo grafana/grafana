@@ -1,13 +1,18 @@
 import _ from 'lodash';
+import moment from 'moment';
 import React from 'react';
 import ReactTable from 'react-table';
 import { react2AngularDirective } from 'app/core/utils/react2angular';
+import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
 
 export interface IProps {
   data: any;
-  height: number;
+  panelStyles: any;
   pageSize: number;
+  height: number;
+  utc: boolean;
+  sanitize: any;
 }
 
 export class Table extends React.Component<IProps, any> {
@@ -22,12 +27,12 @@ export class Table extends React.Component<IProps, any> {
     this.formatters = [];
     this.colorState = {};
 
-    for (let colIndex = 0; colIndex < this.table.columns.length; colIndex++) {
-      let column = this.table.columns[colIndex];
+    for (let colIndex = 0; colIndex < this.props.data.columns.length; colIndex++) {
+      let column = this.props.data.columns[colIndex];
       column.title = column.text;
 
-      for (let i = 0; i < this.panel.styles.length; i++) {
-        let style = this.panel.styles[i];
+      for (let i = 0; i < this.props.panelStyles.length; i++) {
+        let style = this.props.panelStyles[i];
 
         var regex = kbn.stringToJsRegex(style.pattern);
         if (column.text.match(regex)) {
@@ -67,7 +72,7 @@ export class Table extends React.Component<IProps, any> {
     }
 
     if (style && style.sanitize) {
-      return this.sanitize(v);
+      return this.props.sanitize(v);
     } else {
       return _.escape(v);
     }
@@ -94,7 +99,7 @@ export class Table extends React.Component<IProps, any> {
           v = v[0];
         }
         var date = moment(v);
-        if (this.isUtc) {
+        if (this.props.utc) {
           date = date.utc();
         }
         return date.format(column.style.dateFormat);
@@ -197,7 +202,7 @@ export class Table extends React.Component<IProps, any> {
   renderRowVariables(rowIndex) {
     let scopedVars = {};
     let cell_variable;
-    let row = this.table.rows[rowIndex];
+    let row = this.props.data.rows[rowIndex];
     for (let i = 0; i < row.length; i++) {
       cell_variable = `__cell_${i}`;
       scopedVars[cell_variable] = { value: row[i] };
@@ -206,35 +211,28 @@ export class Table extends React.Component<IProps, any> {
   }
 
   formatColumnValue(colIndex, value) {
-    return this.formatters[colIndex] ? this.formatters[colIndex](value) : value;
+    return this.formatters[colIndex] ? _.bind(this.formatters[colIndex], this)(value) : value;
   }
 
   renderCell(columnIndex, rowIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
 
-    var column = this.table.columns[columnIndex];
-    var style = '';
+    var column = this.props.data.columns[columnIndex];
+    var style = {};
     var cellClasses = [];
     var cellClass = '';
 
     if (this.colorState.cell) {
-      style = ' style="background-color:' + this.colorState.cell + ';color: white"';
+      style['backgroundColor'] = this.colorState.cell;
+      style['color'] = 'white';
       this.colorState.cell = null;
     } else if (this.colorState.value) {
-      style = ' style="color:' + this.colorState.value + '"';
+      style['color'] = this.colorState.value;
       this.colorState.value = null;
     }
 
-    // because of the fixed table headers css only solution
-    // there is an issue if header cell is wider the cell
-    // this hack adds header content to cell (not visible)
-    var columnHtml = '';
-    if (addWidthHack) {
-      columnHtml = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].title + '</div>';
-    }
-
     if (value === undefined) {
-      style = ' style="display:none;"';
+      style['display'] = 'none';
       column.hidden = true;
     } else {
       column.hidden = false;
@@ -244,43 +242,75 @@ export class Table extends React.Component<IProps, any> {
       cellClasses.push('table-panel-cell-pre');
     }
 
+    let columnHtml;
     if (column.style && column.style.link) {
       // Render cell as link
       var scopedVars = this.renderRowVariables(rowIndex);
       scopedVars['__cell'] = { value: value };
 
-      var cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
-      var cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
+      var cellLink = templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
+      var cellLinkTooltip = templateSrv.replace(column.style.linkTooltip, scopedVars);
       var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');
-      columnHtml += `
-        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right">
-          ${value}
+      columnHtml = (
+        <a
+          href={cellLink}
+          target={cellTarget}
+          data-link-tooltip
+          data-original-title={cellLinkTooltip}
+          data-placement="right"
+        >
+          {value}
         </a>
-      `;
+      );
     } else {
-      columnHtml += value;
+      columnHtml = <span>{value}</span>;
     }
 
+    let filterLink;
     if (column.filterable) {
       cellClasses.push('table-panel-cell-filterable');
-      columnHtml += `
-        <a class="table-panel-filter-link" data-link-tooltip data-original-title="Filter out value" data-placement="bottom"
-           data-row="${rowIndex}" data-column="${columnIndex}" data-operator="!=">
-          <i class="fa fa-search-minus"></i>
-        </a>
-        <a class="table-panel-filter-link" data-link-tooltip data-original-title="Filter for value" data-placement="bottom"
-           data-row="${rowIndex}" data-column="${columnIndex}" data-operator="=">
-          <i class="fa fa-search-plus"></i>
-        </a>`;
+      filterLink = (
+        <span>
+          <a
+            className="table-panel-filter-link"
+            data-link-tooltip
+            data-original-title="Filter out value"
+            data-placement="bottom"
+            data-row={rowIndex}
+            data-column={columnIndex}
+            data-operator="!="
+          >
+            <i className="fa fa-search-minus" />
+          </a>
+          <a
+            className="table-panel-filter-link"
+            data-link-tooltip
+            data-original-title="Filter for value"
+            data-placement="bottom"
+            data-row={rowIndex}
+            data-column={columnIndex}
+            data-operator="="
+          >
+            <i className="fa fa-search-plus" />
+          </a>
+        </span>
+      );
     }
 
     if (cellClasses.length) {
-      cellClass = ' class="' + cellClasses.join(' ') + '"';
+      cellClass = cellClasses.join(' ');
     }
 
-    columnHtml = '<td' + cellClass + style + '>' + columnHtml + '</td>';
+    style['width'] = '100%';
+    style['height'] = '100%';
+    columnHtml = (
+      <div className={cellClass} style={style}>
+        {columnHtml}
+        {filterLink}
+      </div>
+    );
     return columnHtml;
   }
 
@@ -288,17 +318,21 @@ export class Table extends React.Component<IProps, any> {
     let rows = [];
     let columns = [];
     if (this.props.data) {
+      this.initColumns();
       let columnNames = this.props.data.columns.map(c => {
         return c.text;
       });
       rows = this.props.data.rows.map(row => {
         return _.zipObject(columnNames, row);
       });
-      columns = this.props.data.columns.map(c => {
+      columns = this.props.data.columns.map((c, columnIndex) => {
         return {
           Header: c.text,
           accessor: c.text,
           filterable: !!c.filterble,
+          Cell: row => {
+            return this.renderCell(columnIndex, row.index, row.value);
+          },
         };
       });
       console.log(templateSrv);
@@ -314,9 +348,20 @@ export class Table extends React.Component<IProps, any> {
           height: this.props.height - 20 + 'px',
         }}
         showPaginationBottom
+        getTdProps={(state, rowInfo, column, instance) => {
+          return {
+            onClick: (e, handleOriginal) => {
+              console.log('filter', rowInfo.row[column.id]);
+
+              if (handleOriginal) {
+                handleOriginal();
+              }
+            },
+          };
+        }}
       />
     );
   }
 }
 
-react2AngularDirective('reactTable', Table, ['data', 'height', 'pageSize']);
+react2AngularDirective('reactTable', Table, ['data', 'panelStyles', 'pageSize', 'height', 'utc', 'sanitize']);
