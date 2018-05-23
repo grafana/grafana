@@ -278,7 +278,9 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 	}
 
 	for k, v := range a.Settings {
-		root[k] = v
+		if k != "" && v != nil {
+			root[k] = v
+		}
 	}
 
 	return json.Marshal(root)
@@ -297,7 +299,9 @@ func (a *PipelineAggregation) MarshalJSON() ([]byte, error) {
 	}
 
 	for k, v := range a.Settings {
-		root[k] = v
+		if k != "" && v != nil {
+			root[k] = v
+		}
 	}
 
 	return json.Marshal(root)
