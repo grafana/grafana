@@ -1,3 +1,14 @@
+aliases:
+  # Workflow filters
+  - &filter-only-release
+    branches:
+      ignore: /.*/
+    tags:
+      only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+  - &filter-not-release
+    tags:
+      ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+
 version: 2
 
 jobs:
@@ -46,7 +57,6 @@ jobs:
           command: 'sudo npm install -g yarn --quiet'
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
-      # Could we skip this step if the cache has been restored? `[ -d node_modules ] || yarn install ...` should be able to apply to build step as well
       - run:
           name: yarn install
           command: 'yarn install --pure-lockfile --no-progress'
@@ -68,15 +78,27 @@ jobs:
           name: build backend and run go tests
           command: './scripts/circle-test-backend.sh'
 
-  build:
+  build-all:
     docker:
-     - image: grafana/build-container:v0.1
+     - image: grafana/build-container:1.0.0
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - restore_cache:
+          key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+      - run:
+          name: download phantomjs binaries
+          command: './scripts/build/download-phantomjs.sh'
+      - save_cache:
+          key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+          paths:
+            - /tmp/phantomjs
+      - run:
           name: build and package grafana
-          command: './scripts/build/build.sh'
+          command: './scripts/build/build-all.sh'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
@@ -92,6 +114,8 @@ jobs:
             - dist/grafana*
             - scripts/*.sh
             - scripts/publish
+      - store_artifacts:
+          path: dist
 
   build-enterprise:
     docker:
@@ -154,45 +178,43 @@ workflows:
   version: 2
   test-and-build:
     jobs:
+      - build-all:
+          filters: *filter-not-release
       - codespell:
-          filters:
-            tags:
-              only: /.*/
+          filters: *filter-not-release
       - gometalinter:
-          filters:
-            tags:
-              only: /.*/
-      - build:
-          filters:
-            tags:
-              only: /.*/
+          filters: *filter-not-release
       - test-frontend:
-          filters:
-            tags:
-              only: /.*/
+          filters: *filter-not-release
       - test-backend:
-          filters:
-            tags:
-              only: /.*/
+          filters: *filter-not-release
       - deploy-master:
           requires:
+            - build-all
             - test-backend
             - test-frontend
-            - build
+            - codespell
+            - gometalinter
           filters:
             branches:
               only: master
+  release:
+    jobs:
+      - build-all:
+          filters: *filter-only-release
+      - codespell:
+          filters: *filter-only-release
+      - gometalinter:
+          filters: *filter-only-release
+      - test-frontend:
+          filters: *filter-only-release
+      - test-backend:
+          filters: *filter-only-release
       - deploy-release:
           requires:
+            - build-all
             - test-backend
             - test-frontend
-            - build
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
-      # - build-enterprise:
-      #     filters:
-      #       tags:
-      #         only: /.*/
+            - codespell
+            - gometalinter
+          filters: *filter-only-release
