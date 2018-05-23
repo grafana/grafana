@@ -94,13 +94,13 @@ deleteDatasources:
     orgId: 1
 
 # list of datasources to insert/update depending
-# whats available in the database
+# what's available in the database
 datasources:
   # <string, required> name of the datasource. Required
 - name: Graphite
   # <string, required> datasource type. Required
   type: graphite
-  # <string, required> access mode. direct or proxy. Required
+  # <string, required> access mode. proxy or direct (Server or Browser in the UI). Required
   access: proxy
   # <int> org id. will default to orgId 1 if not specified
   orgId: 1
@@ -154,7 +154,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert | boolean | *All* | Enable TLS authentication using CA cert |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
-| timeInterval | string | Elastic, Influxdb & Prometheus | Lowest interval/step value that should be used for this data source |
+| timeInterval | string | Elastic, InfluxDB & Prometheus | Lowest interval/step value that should be used for this data source |
 | esVersion | string | Elastic | Elasticsearch version as an number (2/5/56) |
 | timeField | string | Elastic | Which field that should be used as timestamp |
 | interval | string | Elastic | Index date time format |
@@ -162,9 +162,9 @@ Since not all datasources have the same configuration settings we only have the 
 | assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
 | customMetricsNamespaces | string | Cloudwatch | Namespaces of Custom Metrics |
-| tsdbVersion | string | OpenTsdb | Version |
-| tsdbResolution | string | OpenTsdb | Resolution |
-| sslmode | string | Postgre | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| tsdbVersion | string | OpenTSDB | Version |
+| tsdbResolution | string | OpenTSDB | Resolution |
+| sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
 
 #### Secure Json Data
 
@@ -177,8 +177,8 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsCACert | string | *All* |CA cert for out going requests |
 | tlsClientCert | string | *All* |TLS Client cert for outgoing requests |
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
-| password | string | Postgre | password |
-| user | string | Postgre | user |
+| password | string | PostgreSQL | password |
+| user | string | PostgreSQL | user |
 | accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
 
@@ -197,12 +197,21 @@ providers:
   folder: ''
   type: file
   disableDeletion: false
-  editable: false
   options:
     path: /var/lib/grafana/dashboards
 ```
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
+
+#### Making changes to a provisioned dashboard
+
+It's possible to make changes to a provisioned dashboard in Grafana UI, but there's currently no possibility to automatically save the changes back to the provisioning source.
+However, if you make changes to a provisioned dashboard you can `Save` the dashboard which will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot below.
+Here available options will let you `Copy JSON to Clipboard` and/or `Save JSON to file` which can help you synchronize your dashboard changes back to the provisioning source.
+
+Note: The JSON shown in input field and when using `Copy JSON to Clipboard` and/or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
+
+{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reuseable Dashboard Urls
 

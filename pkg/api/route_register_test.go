@@ -51,7 +51,7 @@ func TestRouteSimpleRegister(t *testing.T) {
 	}
 
 	// Setup
-	rr := newRouteRegister(func(name string) macaron.Handler {
+	rr := NewRouteRegister(func(name string) macaron.Handler {
 		return emptyHandler(name)
 	})
 
@@ -96,7 +96,7 @@ func TestRouteGroupedRegister(t *testing.T) {
 	}
 
 	// Setup
-	rr := newRouteRegister()
+	rr := NewRouteRegister()
 
 	rr.Delete("/admin", emptyHandler("1"))
 	rr.Get("/down", emptyHandler("1"), emptyHandler("2"))
@@ -150,7 +150,7 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 	}
 
 	// Setup
-	rr := newRouteRegister(func(name string) macaron.Handler {
+	rr := NewRouteRegister(func(name string) macaron.Handler {
 		return emptyHandler(name)
 	})
 

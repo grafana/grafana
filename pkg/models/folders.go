@@ -89,3 +89,12 @@ type UpdateFolderCommand struct {
 
 	Result *Folder
 }
+
+//
+// QUERIES
+//
+
+type HasEditPermissionInFoldersQuery struct {
+	SignedInUser *SignedInUser
+	Result       bool
+}

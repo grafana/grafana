@@ -11,8 +11,10 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,30 +41,12 @@ type PluginManager struct {
 	log log.Logger
 }
 
-func NewPluginManager(ctx context.Context) (*PluginManager, error) {
-	err := initPlugins(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &PluginManager{
-		log: log.New("plugins"),
-	}, nil
+func init() {
+	registry.RegisterService(&PluginManager{})
 }
 
-func (p *PluginManager) Run(ctx context.Context) error {
-	<-ctx.Done()
-
-	for _, p := range DataSources {
-		p.Kill()
-	}
-
-	p.log.Info("Stopped Plugins", "error", ctx.Err())
-	return ctx.Err()
-}
-
-func initPlugins(ctx context.Context) error {
+func (pm *PluginManager) Init() error {
+	pm.log = log.New("plugins")
 	plog = log.New("plugins")
 
 	DataSources = map[string]*DataSourcePlugin{}
@@ -76,7 +60,7 @@ func initPlugins(ctx context.Context) error {
 		"app":        AppPlugin{},
 	}
 
-	plog.Info("Starting plugin search")
+	pm.log.Info("Starting plugin search")
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
 
 	// check if plugins dir exists
@@ -99,13 +83,6 @@ func initPlugins(ctx context.Context) error {
 	}
 
 	for _, ds := range DataSources {
-		if ds.Backend {
-			err := ds.initBackendPlugin(ctx, plog)
-			if err != nil {
-				plog.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
-			}
-		}
-
 		ds.initFrontendPlugin()
 	}
 
@@ -113,14 +90,49 @@ func initPlugins(ctx context.Context) error {
 		app.initApp()
 	}
 
-	go StartPluginUpdateChecker()
-	go updateAppDashboards()
+	return nil
+}
+
+func (pm *PluginManager) startBackendPlugins(ctx context.Context) error {
+	for _, ds := range DataSources {
+		if ds.Backend {
+			if err := ds.startBackendPlugin(ctx, plog); err != nil {
+				pm.log.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
+			}
+		}
+	}
 
 	return nil
 }
 
+func (pm *PluginManager) Run(ctx context.Context) error {
+	pm.startBackendPlugins(ctx)
+	pm.updateAppDashboards()
+	pm.checkForUpdates()
+
+	ticker := time.NewTicker(time.Minute * 10)
+	run := true
+
+	for run {
+		select {
+		case <-ticker.C:
+			pm.checkForUpdates()
+		case <-ctx.Done():
+			run = false
+			break
+		}
+	}
+
+	// kil backend plugins
+	for _, p := range DataSources {
+		p.Kill()
+	}
+
+	return ctx.Err()
+}
+
 func checkPluginPaths() error {
-	for _, section := range setting.Cfg.Sections() {
+	for _, section := range setting.Raw.Sections() {
 		if strings.HasPrefix(section.Name(), "plugin.") {
 			path := section.Key("path").String()
 			if path != "" {
@@ -193,11 +205,11 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	}
 
 	var loader PluginLoader
-	if pluginGoType, exists := PluginTypes[pluginCommon.Type]; !exists {
+	pluginGoType, exists := PluginTypes[pluginCommon.Type]
+	if !exists {
 		return errors.New("Unknown plugin type " + pluginCommon.Type)
-	} else {
-		loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 	}
+	loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 
 	reader.Seek(0, 0)
 	return loader.Load(jsonParser, currentDir)
@@ -218,9 +230,9 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 		return make([]byte, 0), nil
 	}
 
-	if data, err := ioutil.ReadFile(path); err != nil {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
 		return nil, err
-	} else {
-		return data, nil
 	}
+	return data, nil
 }

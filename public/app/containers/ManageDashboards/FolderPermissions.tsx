@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
 import IContainerProps from 'app/containers/IContainerProps';
@@ -15,6 +16,9 @@ export class FolderPermissions extends Component<IContainerProps, any> {
   constructor(props) {
     super(props);
     this.handleAddPermission = this.handleAddPermission.bind(this);
+  }
+
+  componentDidMount() {
     this.loadStore();
   }
 
@@ -72,3 +76,5 @@ export class FolderPermissions extends Component<IContainerProps, any> {
     );
   }
 }
+
+export default hot(module)(FolderPermissions);

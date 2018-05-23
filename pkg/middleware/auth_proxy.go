@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/mail"
+	"reflect"
 	"strings"
 	"time"
 
@@ -109,6 +110,16 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 		} else {
 			ctx.Handle(500, "Auth proxy header property invalid", nil)
 			return true
+		}
+
+		for _, field := range []string{"Name", "Email", "Login"} {
+			if setting.AuthProxyHeaders[field] == "" {
+				continue
+			}
+
+			if val := ctx.Req.Header.Get(setting.AuthProxyHeaders[field]); val != "" {
+				reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(val)
+			}
 		}
 
 		// add/update user in grafana

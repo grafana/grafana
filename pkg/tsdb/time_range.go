@@ -54,19 +54,19 @@ func (tr *TimeRange) GetToAsTimeUTC() time.Time {
 }
 
 func (tr *TimeRange) MustGetFrom() time.Time {
-	if res, err := tr.ParseFrom(); err != nil {
+	res, err := tr.ParseFrom()
+	if err != nil {
 		return time.Unix(0, 0)
-	} else {
-		return res
 	}
+	return res
 }
 
 func (tr *TimeRange) MustGetTo() time.Time {
-	if res, err := tr.ParseTo(); err != nil {
+	res, err := tr.ParseTo()
+	if err != nil {
 		return time.Unix(0, 0)
-	} else {
-		return res
 	}
+	return res
 }
 
 func tryParseUnixMsEpoch(val string) (time.Time, bool) {

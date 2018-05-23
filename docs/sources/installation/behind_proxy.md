@@ -53,7 +53,7 @@ server {
 ```bash
 [server]
 domain = foo.bar
-root_url = %(protocol)s://%(domain)s:/grafana
+root_url = %(protocol)s://%(domain)s/grafana/
 ```
 
 #### Nginx configuration with sub path
@@ -98,7 +98,7 @@ Given:
     ```bash
     [server]
     domain = localhost:8080
-    root_url = %(protocol)s://%(domain)s:/grafana
+    root_url = %(protocol)s://%(domain)s/grafana/
     ```
 
 Create an Inbound Rule for the parent website (localhost:8080 in this example) in IIS Manager with the following settings:

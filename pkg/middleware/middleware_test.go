@@ -210,9 +210,8 @@ func TestMiddlewareContext(t *testing.T) {
 				if query.UserId > 0 {
 					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
 					return nil
-				} else {
-					return m.ErrUserNotFound
 				}
+				return m.ErrUserNotFound
 			})
 
 			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {

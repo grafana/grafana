@@ -224,8 +224,6 @@ const prepareServerResponse = (response, dashboardId: number, isFolder: boolean,
 };
 
 const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
-  item.inherited = !isFolder && !isInRoot && dashboardId !== item.dashboardId;
-
   item.sortRank = 0;
   if (item.userId > 0) {
     item.name = item.userLogin;
