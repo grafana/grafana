@@ -490,10 +490,14 @@ func castToNullFloat(j *simplejson.Json) null.Float {
 		return null.FloatFrom(f)
 	}
 
-	s, err := j.String()
-	if err == nil {
-		v, _ := strconv.ParseFloat(s, 64)
-		return null.FloatFromPtr(&v)
+	if s, err := j.String(); err == nil {
+		if strings.ToLower(s) == "nan" {
+			return null.NewFloat(0, false)
+		}
+
+		if v, err := strconv.ParseFloat(s, 64); err == nil {
+			return null.FloatFromPtr(&v)
+		}
 	}
 
 	return null.NewFloat(0, false)
