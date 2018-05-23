@@ -22,8 +22,7 @@ import (
 const loggerName = "tsdb.elasticsearch.client"
 
 var (
-	clientLog          = log.New(loggerName)
-	intervalCalculator = tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: 15 * time.Second})
+	clientLog = log.New(loggerName)
 )
 
 // Client represents a client which can interact with elasticsearch api
