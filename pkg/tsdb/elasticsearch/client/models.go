@@ -293,7 +293,7 @@ type PipelineAggregation struct {
 // MarshalJSON returns the JSON encoding of the pipeline aggregation
 func (a *PipelineAggregation) MarshalJSON() ([]byte, error) {
 	root := map[string]interface{}{
-		"bucket_path": a.BucketPath,
+		"buckets_path": a.BucketPath,
 	}
 
 	for k, v := range a.Settings {
