@@ -50,15 +50,23 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
       }
       // remove next aggregation if distinct was replaced
       if (part.def.type === 'distinct') {
+        if (partModel.def.type === 'distinct') {
+          return;
+        }
+        var morePartsAvailable = selectParts.length >= i + 2;
         if (partModel.def.type !== 'count') {
-          if (selectParts.length >= i + 2) {
+          if (morePartsAvailable) {
             var nextPart = selectParts[i + 1];
             if (nextPart.def.category === categories.Aggregations) {
               selectParts.splice(i + 1, 1);
             }
           }
         } else {
-          selectParts.splice(i + 1, 0, partModel);
+          if (morePartsAvailable && selectParts[i + 1].def.category !== categories.Aggregations) {
+            selectParts.splice(i + 1, 0, partModel);
+          } else if (!morePartsAvailable) {
+            selectParts.splice(i + 1, 0, partModel);
+          }
           return;
         }
       }

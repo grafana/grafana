@@ -73,10 +73,6 @@ describe('InfluxQueryPart', () => {
           type: 'distinct',
           category: queryPart.getCategories().Aggregations,
         }),
-        queryPart.create({
-          type: 'max',
-          category: queryPart.getCategories().Selectors,
-        })
       ];
       var partModel = queryPart.create({
         type: 'count',
@@ -87,7 +83,6 @@ describe('InfluxQueryPart', () => {
 
       expect(selectParts[1].text).toBe("distinct()");
       expect(selectParts[2].text).toBe("count()");
-      expect(selectParts[3].text).toBe("max()");
     });
 
     it('should replace count distinct if an aggregation is selected', () => {
@@ -114,6 +109,61 @@ describe('InfluxQueryPart', () => {
 
       expect(selectParts[1].text).toBe("mean()");
       expect(selectParts).toHaveLength(2);
+    });
+
+    it('should not allowed nested counts when count distinct is selected', () => {
+      var selectParts = [
+        queryPart.create({
+          type: 'field',
+          category: queryPart.getCategories().Fields,
+        }),
+        queryPart.create({
+          type: 'distinct',
+          category: queryPart.getCategories().Aggregations,
+        }),
+        queryPart.create({
+          type: 'count',
+          category: queryPart.getCategories().Aggregations,
+        })
+      ];
+      var partModel = queryPart.create({
+        type: 'count',
+        category: queryPart.getCategories().Aggregations,
+      });
+
+      queryPart.replaceAggregationAdd(selectParts, partModel);
+
+      expect(selectParts[1].text).toBe("distinct()");
+      expect(selectParts[2].text).toBe("count()");
+      expect(selectParts).toHaveLength(3);
+    });
+  });
+
+    it('should not remove count distinct when distinct is added', () => {
+      var selectParts = [
+        queryPart.create({
+          type: 'field',
+          category: queryPart.getCategories().Fields,
+        }),
+        queryPart.create({
+          type: 'distinct',
+          category: queryPart.getCategories().Aggregations,
+        }),
+        queryPart.create({
+          type: 'count',
+          category: queryPart.getCategories().Aggregations,
+        })
+      ];
+      var partModel = queryPart.create({
+        type: 'distinct',
+        category: queryPart.getCategories().Aggregations,
+      });
+
+      queryPart.replaceAggregationAdd(selectParts, partModel);
+
+      expect(selectParts[1].text).toBe("distinct()");
+      expect(selectParts[2].text).toBe("count()");
+      expect(selectParts).toHaveLength(3);
     });
   });
 });
