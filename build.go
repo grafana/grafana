@@ -144,7 +144,7 @@ func packageGrafana() {
 	grunt(postProcessArgs...)
 	pkgArch = previousPkgArch
 
-	if goos == "linux" && goarch == "amd64"{
+	if goos == "linux" {
 		createLinuxPackages()
 	}
 }
@@ -229,6 +229,10 @@ type linuxPackageOptions struct {
 }
 
 func createDebPackages() {
+	previousPkgArch := pkgArch
+	if pkgArch == "armv7" {
+		pkgArch = "armhf"
+    }
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
 		homeDir:                "/usr/share/grafana",
@@ -246,9 +250,15 @@ func createDebPackages() {
 
 		depends: []string{"adduser", "libfontconfig"},
 	})
+	pkgArch = previousPkgArch
 }
 
 func createRpmPackages() {
+	previousPkgArch := pkgArch
+	switch {
+		case pkgArch == "armv7" : pkgArch = "armhfp"
+		case pkgArch == "arm64" : pkgArch = "aarch64"
+	}
 	createPackage(linuxPackageOptions{
 		packageType:            "rpm",
 		homeDir:                "/usr/share/grafana",
@@ -266,6 +276,7 @@ func createRpmPackages() {
 
 		depends: []string{"/sbin/service", "fontconfig", "freetype", "urw-fonts"},
 	})
+	pkgArch = previousPkgArch
 }
 
 func createLinuxPackages() {
