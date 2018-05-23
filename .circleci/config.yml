@@ -78,39 +78,9 @@ jobs:
           name: build backend and run go tests
           command: './scripts/circle-test-backend.sh'
 
-  build:
-    docker:
-     - image: grafana/build-container:crosscompile
-    working_directory: /go/src/github.com/grafana/grafana
-    steps:
-      - checkout
-      - run:
-          name: prepare build tools
-          command: '/tmp/bootstrap.sh'
-      - run:
-          name: build and package grafana
-          command: './scripts/build/build.sh'
-      - run:
-          name: sign packages
-          command: './scripts/build/sign_packages.sh'
-      - run:
-          name: sha-sum packages
-          command: 'go run build.go sha-dist'
-      - run:
-          name: Build Grafana.com publisher
-          command: 'go build -o scripts/publish scripts/build/publish.go'
-      - persist_to_workspace:
-          root: .
-          paths:
-            - dist/grafana*
-            - scripts/*.sh
-            - scripts/publish
-      - store_artifacts:
-          path: dist
-
   build-all:
     docker:
-     - image: grafana/build-container:crosscompile
+     - image: grafana/build-container:1.0.0
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -208,7 +178,7 @@ workflows:
   version: 2
   test-and-build:
     jobs:
-      - build:
+      - build-all:
           filters: *filter-not-release
       - codespell:
           filters: *filter-not-release
@@ -220,7 +190,7 @@ workflows:
           filters: *filter-not-release
       - deploy-master:
           requires:
-            - build
+            - build-all
             - test-backend
             - test-frontend
             - codespell
@@ -248,18 +218,3 @@ workflows:
             - codespell
             - gometalinter
           filters: *filter-only-release
-  nightly-master:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-                - crosscompile
-    jobs:
-      - build-all
-      - codespell
-      - gometalinter
-      - test-frontend
-      - test-backend
