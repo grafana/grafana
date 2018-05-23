@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	defaultDashboards = "./test-dashboards/folder-one"
-	brokenDashboards  = "./test-dashboards/broken-dashboards"
-	oneDashboard      = "./test-dashboards/one-dashboard"
-	containingId      = "./test-dashboards/containing-id"
+	defaultDashboards = "./testdata/test-dashboards/folder-one"
+	brokenDashboards  = "./testdata/test-dashboards/broken-dashboards"
+	oneDashboard      = "./testdata/test-dashboards/one-dashboard"
+	containingId      = "./testdata/test-dashboards/containing-id"
 
 	fakeService *fakeDashboardProvisioningService
 )

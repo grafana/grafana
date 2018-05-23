@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -110,14 +109,14 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 }
 
 func TestDeleteExpiredSnapshots(t *testing.T) {
-	x := InitTestDB(t)
+	sqlstore := InitTestDB(t)
 
 	Convey("Testing dashboard snapshots clean up", t, func() {
 		setting.SnapShotRemoveExpired = true
 
-		notExpiredsnapshot := createTestSnapshot(x, "key1", 1200)
-		createTestSnapshot(x, "key2", -1200)
-		createTestSnapshot(x, "key3", -1200)
+		notExpiredsnapshot := createTestSnapshot(sqlstore, "key1", 48000)
+		createTestSnapshot(sqlstore, "key2", -1200)
+		createTestSnapshot(sqlstore, "key3", -1200)
 
 		err := DeleteExpiredSnapshots(&m.DeleteExpiredSnapshotsCommand{})
 		So(err, ShouldBeNil)
@@ -146,7 +145,7 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 	})
 }
 
-func createTestSnapshot(x *xorm.Engine, key string, expires int64) *m.DashboardSnapshot {
+func createTestSnapshot(sqlstore *SqlStore, key string, expires int64) *m.DashboardSnapshot {
 	cmd := m.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
@@ -163,7 +162,7 @@ func createTestSnapshot(x *xorm.Engine, key string, expires int64) *m.DashboardS
 	// Set expiry date manually - to be able to create expired snapshots
 	if expires < 0 {
 		expireDate := time.Now().Add(time.Second * time.Duration(expires))
-		_, err = x.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
+		_, err = sqlstore.engine.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
 		So(err, ShouldBeNil)
 	}
 
