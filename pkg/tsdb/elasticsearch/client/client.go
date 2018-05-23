@@ -104,7 +104,7 @@ func (c *baseClientImpl) GetTimeField() string {
 }
 
 func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
-	return tsdb.GetIntervalFrom(c.ds, simplejson.NewFromAny(map[string]string{
+	return tsdb.GetIntervalFrom(c.ds, simplejson.NewFromAny(map[string]interface{}{
 		"interval": queryInterval,
 	}), 5*time.Second)
 }
