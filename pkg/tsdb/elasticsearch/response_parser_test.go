@@ -2,9 +2,10 @@ package elasticsearch
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 )
 
 func testElasticsearchResponse(body string, target Query) *tsdb.QueryResult {
