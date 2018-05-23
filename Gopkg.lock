@@ -310,12 +310,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/leibowitz/moment"
-  packages = ["."]
-  revision = "8548108dcca204a1110b99e5fec966817499fe84"
-
-[[projects]]
-  branch = "master"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -667,6 +661,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4039f122ac5dd045948e003eb7a74c8864df1759b25147f1b2e2e8ad7a8414d6"
+  inputs-digest = "bd54a1a836599d90b36d4ac1af56d716ef9ca5be4865e217bddd49e3d32a1997"
   solver-name = "gps-cdcl"
   solver-version = 1

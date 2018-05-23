@@ -1,12 +1,21 @@
 package elasticsearch
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
+// Query represents the time series query model of the datasource
+type Query struct {
+	TimeField  string       `json:"timeField"`
+	RawQuery   string       `json:"query"`
+	BucketAggs []*BucketAgg `json:"bucketAggs"`
+	Metrics    []*MetricAgg `json:"metrics"`
+	Alias      string       `json:"alias"`
+	Interval   string
+	RefID      string
+}
+
+// BucketAgg represents a bucket aggregation of the time series query model of the datasource
 type BucketAgg struct {
 	Field    string           `json:"field"`
 	ID       string           `json:"id"`
@@ -14,120 +23,55 @@ type BucketAgg struct {
 	Type     string           `jsons:"type"`
 }
 
-type Metric struct {
+// MetricAgg represents a metric aggregation of the time series query model of the datasource
+type MetricAgg struct {
 	Field             string           `json:"field"`
 	Hide              bool             `json:"hide"`
 	ID                string           `json:"id"`
 	PipelineAggregate string           `json:"pipelineAgg"`
 	Settings          *simplejson.Json `json:"settings"`
+	Meta              *simplejson.Json `json:"meta"`
 	Type              string           `json:"type"`
 }
 
-type QueryHeader struct {
-	SearchType                 string      `json:"search_type"`
-	IgnoreUnavailable          bool        `json:"ignore_unavailable"`
-	Index                      interface{} `json:"index"`
-	MaxConcurrentShardRequests int         `json:"max_concurrent_shard_requests,omitempty"`
+var metricAggType = map[string]string{
+	"count":          "Count",
+	"avg":            "Average",
+	"sum":            "Sum",
+	"max":            "Max",
+	"min":            "Min",
+	"extended_stats": "Extended Stats",
+	"percentiles":    "Percentiles",
+	"cardinality":    "Unique Count",
+	"moving_avg":     "Moving Average",
+	"derivative":     "Derivative",
+	"raw_document":   "Raw Document",
 }
 
-func (q *QueryHeader) String() string {
-	r, _ := json.Marshal(q)
-	return string(r)
+var extendedStats = map[string]string{
+	"avg":                        "Avg",
+	"min":                        "Min",
+	"max":                        "Max",
+	"sum":                        "Sum",
+	"count":                      "Count",
+	"std_deviation":              "Std Dev",
+	"std_deviation_bounds_upper": "Std Dev Upper",
+	"std_deviation_bounds_lower": "Std Dev Lower",
 }
 
-type Request struct {
-	Query map[string]interface{} `json:"query"`
-	Aggs  Aggs                   `json:"aggs"`
-	Size  int                    `json:"size"`
+var pipelineAggType = map[string]string{
+	"moving_avg": "moving_avg",
+	"derivative": "derivative",
 }
 
-type Aggs map[string]interface{}
-
-type HistogramAgg struct {
-	Interval    string `json:"interval,omitempty"`
-	Field       string `json:"field"`
-	MinDocCount int    `json:"min_doc_count"`
-	Missing     string `json:"missing,omitempty"`
-}
-
-type DateHistogramAgg struct {
-	HistogramAgg
-	ExtendedBounds ExtendedBounds `json:"extended_bounds"`
-	Format         string         `json:"format"`
-}
-
-type FiltersAgg struct {
-	Filters map[string]interface{} `json:"filters"`
-}
-
-type TermsAgg struct {
-	Field   string                 `json:"field"`
-	Size    int                    `json:"size"`
-	Order   map[string]interface{} `json:"order"`
-	Missing string                 `json:"missing,omitempty"`
-}
-
-type TermsAggWrap struct {
-	Terms TermsAgg `json:"terms"`
-	Aggs  Aggs     `json:"aggs"`
-}
-
-type ExtendedBounds struct {
-	Min string `json:"min"`
-	Max string `json:"max"`
-}
-
-type RangeFilter struct {
-	Range map[string]RangeFilterSetting `json:"range"`
-}
-type RangeFilterSetting struct {
-	Gte    string `json:"gte"`
-	Lte    string `json:"lte"`
-	Format string `json:"format"`
-}
-
-func newRangeFilter(field string, rangeFilterSetting RangeFilterSetting) *RangeFilter {
-	return &RangeFilter{
-		map[string]RangeFilterSetting{field: rangeFilterSetting}}
-}
-
-type QueryStringFilter struct {
-	QueryString QueryStringFilterSetting `json:"query_string"`
-}
-type QueryStringFilterSetting struct {
-	AnalyzeWildcard bool   `json:"analyze_wildcard"`
-	Query           string `json:"query"`
-}
-
-func newQueryStringFilter(analyzeWildcard bool, query string) *QueryStringFilter {
-	return &QueryStringFilter{QueryStringFilterSetting{AnalyzeWildcard: analyzeWildcard, Query: query}}
-}
-
-type BoolQuery struct {
-	Filter []interface{} `json:"filter"`
-}
-
-type Responses struct {
-	Responses []Response `json:"responses"`
-}
-
-type Response struct {
-	Status       int                    `json:"status"`
-	Err          map[string]interface{} `json:"error"`
-	Aggregations map[string]interface{} `json:"aggregations"`
-}
-
-func (r *Response) getErrMsg() string {
-	var msg bytes.Buffer
-	errJson := simplejson.NewFromAny(r.Err)
-	errType, err := errJson.Get("type").String()
-	if err == nil {
-		msg.WriteString(fmt.Sprintf("type:%s", errType))
+func isPipelineAgg(metricType string) bool {
+	if _, ok := pipelineAggType[metricType]; ok {
+		return true
 	}
+	return false
+}
 
-	reason, err := errJson.Get("type").String()
-	if err == nil {
-		msg.WriteString(fmt.Sprintf("reason:%s", reason))
-	}
-	return msg.String()
+func describeMetric(metricType, field string) string {
+	text := metricAggType[metricType]
+	return text + " " + field
 }
