@@ -137,7 +137,6 @@ describe('InfluxQueryPart', () => {
       expect(selectParts[2].text).toBe("count()");
       expect(selectParts).toHaveLength(3);
     });
-  });
 
     it('should not remove count distinct when distinct is added', () => {
       var selectParts = [
