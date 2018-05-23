@@ -2,12 +2,14 @@ package api
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/search"
 )
 
 func ValidateOrgAlert(c *m.ReqContext) {
@@ -46,12 +48,60 @@ func GetAlertStatesForDashboard(c *m.ReqContext) Response {
 
 // GET /api/alerts
 func GetAlerts(c *m.ReqContext) Response {
+	dashboardQuery := c.Query("dashboardQuery")
+	dashboardTags := c.QueryStrings("dashboardTag")
+	stringDashboardIDs := c.QueryStrings("dashboardId")
+	stringFolderIDs := c.QueryStrings("folderId")
+
+	dashboardIDs := make([]int64, 0)
+	for _, id := range stringDashboardIDs {
+		dashboardID, err := strconv.ParseInt(id, 10, 64)
+		if err == nil {
+			dashboardIDs = append(dashboardIDs, dashboardID)
+		}
+	}
+
+	if dashboardQuery != "" || len(dashboardTags) > 0 || len(stringFolderIDs) > 0 {
+		folderIDs := make([]int64, 0)
+		for _, id := range stringFolderIDs {
+			folderID, err := strconv.ParseInt(id, 10, 64)
+			if err == nil {
+				folderIDs = append(folderIDs, folderID)
+			}
+		}
+
+		searchQuery := search.Query{
+			Title:        dashboardQuery,
+			Tags:         dashboardTags,
+			SignedInUser: c.SignedInUser,
+			Limit:        1000,
+			OrgId:        c.OrgId,
+			DashboardIds: dashboardIDs,
+			Type:         string(search.DashHitDB),
+			FolderIds:    folderIDs,
+			Permission:   m.PERMISSION_EDIT,
+		}
+
+		err := bus.Dispatch(&searchQuery)
+		if err != nil {
+			return Error(500, "List alerts failed", err)
+		}
+
+		dashboardIDs = make([]int64, 0)
+		for _, d := range searchQuery.Result {
+			if d.Id > 0 {
+				dashboardIDs = append(dashboardIDs, d.Id)
+			}
+		}
+	}
+
 	query := m.GetAlertsQuery{
-		OrgId:       c.OrgId,
-		DashboardId: c.QueryInt64("dashboardId"),
-		PanelId:     c.QueryInt64("panelId"),
-		Limit:       c.QueryInt64("limit"),
-		User:        c.SignedInUser,
+		OrgId:        c.OrgId,
+		DashboardIDs: dashboardIDs,
+		PanelId:      c.QueryInt64("panelId"),
+		Limit:        c.QueryInt64("limit"),
+		User:         c.SignedInUser,
+		Query:        c.Query("query"),
 	}
 
 	states := c.QueryStrings("state")
