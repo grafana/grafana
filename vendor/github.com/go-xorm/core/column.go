@@ -79,16 +79,16 @@ func (col *Column) String(d Dialect) string {
 		}
 	}
 
+	if col.Default != "" {
+		sql += "DEFAULT " + col.Default + " "
+	}
+
 	if d.ShowCreateNull() {
 		if col.Nullable {
 			sql += "NULL "
 		} else {
 			sql += "NOT NULL "
 		}
-	}
-
-	if col.Default != "" {
-		sql += "DEFAULT " + col.Default + " "
 	}
 
 	return sql
@@ -99,16 +99,16 @@ func (col *Column) StringNoPk(d Dialect) string {
 
 	sql += d.SqlType(col) + " "
 
+	if col.Default != "" {
+		sql += "DEFAULT " + col.Default + " "
+	}
+
 	if d.ShowCreateNull() {
 		if col.Nullable {
 			sql += "NULL "
 		} else {
 			sql += "NOT NULL "
 		}
-	}
-
-	if col.Default != "" {
-		sql += "DEFAULT " + col.Default + " "
 	}
 
 	return sql

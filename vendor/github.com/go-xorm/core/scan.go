@@ -44,6 +44,9 @@ func convertTime(dest *NullTime, src interface{}) error {
 		}
 		*dest = NullTime(t)
 		return nil
+	case time.Time:
+		*dest = NullTime(s)
+		return nil
 	case nil:
 	default:
 		return fmt.Errorf("unsupported driver -> Scan pair: %T -> %T", src, dest)

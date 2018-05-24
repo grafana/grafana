@@ -93,40 +93,40 @@ const (
 )
 
 type Stat_t struct {
-	Dev       uint64
-	Ino       uint64
-	Mode      uint32
-	Nlink     uint32
-	Uid       uint32
-	Gid       uint32
-	Rdev      uint64
-	Size      int64
-	Atim      Timespec
-	Mtim      Timespec
-	Ctim      Timespec
-	Blksize   int32
-	Pad_cgo_0 [4]byte
-	Blocks    int64
-	Fstype    [16]int8
+	Dev     uint64
+	Ino     uint64
+	Mode    uint32
+	Nlink   uint32
+	Uid     uint32
+	Gid     uint32
+	Rdev    uint64
+	Size    int64
+	Atim    Timespec
+	Mtim    Timespec
+	Ctim    Timespec
+	Blksize int32
+	_       [4]byte
+	Blocks  int64
+	Fstype  [16]int8
 }
 
 type Flock_t struct {
-	Type      int16
-	Whence    int16
-	Pad_cgo_0 [4]byte
-	Start     int64
-	Len       int64
-	Sysid     int32
-	Pid       int32
-	Pad       [4]int64
+	Type   int16
+	Whence int16
+	_      [4]byte
+	Start  int64
+	Len    int64
+	Sysid  int32
+	Pid    int32
+	Pad    [4]int64
 }
 
 type Dirent struct {
-	Ino       uint64
-	Off       int64
-	Reclen    uint16
-	Name      [1]int8
-	Pad_cgo_0 [5]byte
+	Ino    uint64
+	Off    int64
+	Reclen uint16
+	Name   [1]int8
+	_      [5]byte
 }
 
 type _Fsblkcnt_t uint64
@@ -213,13 +213,13 @@ type IPv6Mreq struct {
 type Msghdr struct {
 	Name         *byte
 	Namelen      uint32
-	Pad_cgo_0    [4]byte
+	_            [4]byte
 	Iov          *Iovec
 	Iovlen       int32
-	Pad_cgo_1    [4]byte
+	_            [4]byte
 	Accrights    *int8
 	Accrightslen int32
-	Pad_cgo_2    [4]byte
+	_            [4]byte
 }
 
 type Cmsghdr struct {
@@ -271,11 +271,11 @@ type Utsname struct {
 }
 
 type Ustat_t struct {
-	Tfree     int64
-	Tinode    uint64
-	Fname     [6]int8
-	Fpack     [6]int8
-	Pad_cgo_0 [4]byte
+	Tfree  int64
+	Tinode uint64
+	Fname  [6]int8
+	Fpack  [6]int8
+	_      [4]byte
 }
 
 const (
@@ -295,21 +295,21 @@ const (
 )
 
 type IfMsghdr struct {
-	Msglen    uint16
-	Version   uint8
-	Type      uint8
-	Addrs     int32
-	Flags     int32
-	Index     uint16
-	Pad_cgo_0 [2]byte
-	Data      IfData
+	Msglen  uint16
+	Version uint8
+	Type    uint8
+	Addrs   int32
+	Flags   int32
+	Index   uint16
+	_       [2]byte
+	Data    IfData
 }
 
 type IfData struct {
 	Type       uint8
 	Addrlen    uint8
 	Hdrlen     uint8
-	Pad_cgo_0  [1]byte
+	_          [1]byte
 	Mtu        uint32
 	Metric     uint32
 	Baudrate   uint32
@@ -328,30 +328,30 @@ type IfData struct {
 }
 
 type IfaMsghdr struct {
-	Msglen    uint16
-	Version   uint8
-	Type      uint8
-	Addrs     int32
-	Flags     int32
-	Index     uint16
-	Pad_cgo_0 [2]byte
-	Metric    int32
+	Msglen  uint16
+	Version uint8
+	Type    uint8
+	Addrs   int32
+	Flags   int32
+	Index   uint16
+	_       [2]byte
+	Metric  int32
 }
 
 type RtMsghdr struct {
-	Msglen    uint16
-	Version   uint8
-	Type      uint8
-	Index     uint16
-	Pad_cgo_0 [2]byte
-	Flags     int32
-	Addrs     int32
-	Pid       int32
-	Seq       int32
-	Errno     int32
-	Use       int32
-	Inits     uint32
-	Rmx       RtMetrics
+	Msglen  uint16
+	Version uint8
+	Type    uint8
+	Index   uint16
+	_       [2]byte
+	Flags   int32
+	Addrs   int32
+	Pid     int32
+	Seq     int32
+	Errno   int32
+	Use     int32
+	Inits   uint32
+	Rmx     RtMetrics
 }
 
 type RtMetrics struct {
@@ -388,9 +388,9 @@ type BpfStat struct {
 }
 
 type BpfProgram struct {
-	Len       uint32
-	Pad_cgo_0 [4]byte
-	Insns     *BpfInsn
+	Len   uint32
+	_     [4]byte
+	Insns *BpfInsn
 }
 
 type BpfInsn struct {
@@ -406,30 +406,30 @@ type BpfTimeval struct {
 }
 
 type BpfHdr struct {
-	Tstamp    BpfTimeval
-	Caplen    uint32
-	Datalen   uint32
-	Hdrlen    uint16
-	Pad_cgo_0 [2]byte
+	Tstamp  BpfTimeval
+	Caplen  uint32
+	Datalen uint32
+	Hdrlen  uint16
+	_       [2]byte
 }
 
 type Termios struct {
-	Iflag     uint32
-	Oflag     uint32
-	Cflag     uint32
-	Lflag     uint32
-	Cc        [19]uint8
-	Pad_cgo_0 [1]byte
+	Iflag uint32
+	Oflag uint32
+	Cflag uint32
+	Lflag uint32
+	Cc    [19]uint8
+	_     [1]byte
 }
 
 type Termio struct {
-	Iflag     uint16
-	Oflag     uint16
-	Cflag     uint16
-	Lflag     uint16
-	Line      int8
-	Cc        [8]uint8
-	Pad_cgo_0 [1]byte
+	Iflag uint16
+	Oflag uint16
+	Cflag uint16
+	Lflag uint16
+	Line  int8
+	Cc    [8]uint8
+	_     [1]byte
 }
 
 type Winsize struct {

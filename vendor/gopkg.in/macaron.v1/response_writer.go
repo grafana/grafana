@@ -42,11 +42,12 @@ type ResponseWriter interface {
 type BeforeFunc func(ResponseWriter)
 
 // NewResponseWriter creates a ResponseWriter that wraps an http.ResponseWriter
-func NewResponseWriter(rw http.ResponseWriter) ResponseWriter {
-	return &responseWriter{rw, 0, 0, nil}
+func NewResponseWriter(method string, rw http.ResponseWriter) ResponseWriter {
+	return &responseWriter{method, rw, 0, 0, nil}
 }
 
 type responseWriter struct {
+	method string
 	http.ResponseWriter
 	status      int
 	size        int
@@ -59,13 +60,15 @@ func (rw *responseWriter) WriteHeader(s int) {
 	rw.status = s
 }
 
-func (rw *responseWriter) Write(b []byte) (int, error) {
+func (rw *responseWriter) Write(b []byte) (size int, err error) {
 	if !rw.Written() {
 		// The status will be StatusOK if WriteHeader has not been called yet
 		rw.WriteHeader(http.StatusOK)
 	}
-	size, err := rw.ResponseWriter.Write(b)
-	rw.size += size
+	if rw.method != "HEAD" {
+		size, err = rw.ResponseWriter.Write(b)
+		rw.size += size
+	}
 	return size, err
 }
 
