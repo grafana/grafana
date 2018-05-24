@@ -7,6 +7,11 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"sync"
+)
+
+var (
+	DefaultCacheSize = 200
 )
 
 func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
@@ -58,9 +63,16 @@ func StructToSlice(query string, st interface{}) (string, []interface{}, error) 
 	return query, args, nil
 }
 
+type cacheStruct struct {
+	value reflect.Value
+	idx   int
+}
+
 type DB struct {
 	*sql.DB
-	Mapper IMapper
+	Mapper            IMapper
+	reflectCache      map[reflect.Type]*cacheStruct
+	reflectCacheMutex sync.RWMutex
 }
 
 func Open(driverName, dataSourceName string) (*DB, error) {
@@ -68,11 +80,32 @@ func Open(driverName, dataSourceName string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DB{db, NewCacheMapper(&SnakeMapper{})}, nil
+	return &DB{
+		DB:           db,
+		Mapper:       NewCacheMapper(&SnakeMapper{}),
+		reflectCache: make(map[reflect.Type]*cacheStruct),
+	}, nil
 }
 
 func FromDB(db *sql.DB) *DB {
-	return &DB{db, NewCacheMapper(&SnakeMapper{})}
+	return &DB{
+		DB:           db,
+		Mapper:       NewCacheMapper(&SnakeMapper{}),
+		reflectCache: make(map[reflect.Type]*cacheStruct),
+	}
+}
+
+func (db *DB) reflectNew(typ reflect.Type) reflect.Value {
+	db.reflectCacheMutex.Lock()
+	defer db.reflectCacheMutex.Unlock()
+	cs, ok := db.reflectCache[typ]
+	if !ok || cs.idx+1 > DefaultCacheSize-1 {
+		cs = &cacheStruct{reflect.MakeSlice(reflect.SliceOf(typ), DefaultCacheSize, DefaultCacheSize), 0}
+		db.reflectCache[typ] = cs
+	} else {
+		cs.idx = cs.idx + 1
+	}
+	return cs.value.Index(cs.idx).Addr()
 }
 
 func (db *DB) Query(query string, args ...interface{}) (*Rows, error) {
@@ -83,7 +116,7 @@ func (db *DB) Query(query string, args ...interface{}) (*Rows, error) {
 		}
 		return nil, err
 	}
-	return &Rows{rows, db.Mapper}, nil
+	return &Rows{rows, db}, nil
 }
 
 func (db *DB) QueryMap(query string, mp interface{}) (*Rows, error) {
@@ -128,8 +161,8 @@ func (db *DB) QueryRowStruct(query string, st interface{}) *Row {
 
 type Stmt struct {
 	*sql.Stmt
-	Mapper IMapper
-	names  map[string]int
+	db    *DB
+	names map[string]int
 }
 
 func (db *DB) Prepare(query string) (*Stmt, error) {
@@ -145,7 +178,7 @@ func (db *DB) Prepare(query string) (*Stmt, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Stmt{stmt, db.Mapper, names}, nil
+	return &Stmt{stmt, db, names}, nil
 }
 
 func (s *Stmt) ExecMap(mp interface{}) (sql.Result, error) {
@@ -179,7 +212,7 @@ func (s *Stmt) Query(args ...interface{}) (*Rows, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Rows{rows, s.Mapper}, nil
+	return &Rows{rows, s.db}, nil
 }
 
 func (s *Stmt) QueryMap(mp interface{}) (*Rows, error) {
@@ -274,7 +307,7 @@ func (EmptyScanner) Scan(src interface{}) error {
 
 type Tx struct {
 	*sql.Tx
-	Mapper IMapper
+	db *DB
 }
 
 func (db *DB) Begin() (*Tx, error) {
@@ -282,7 +315,7 @@ func (db *DB) Begin() (*Tx, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Tx{tx, db.Mapper}, nil
+	return &Tx{tx, db}, nil
 }
 
 func (tx *Tx) Prepare(query string) (*Stmt, error) {
@@ -298,7 +331,7 @@ func (tx *Tx) Prepare(query string) (*Stmt, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Stmt{stmt, tx.Mapper, names}, nil
+	return &Stmt{stmt, tx.db, names}, nil
 }
 
 func (tx *Tx) Stmt(stmt *Stmt) *Stmt {
@@ -327,7 +360,7 @@ func (tx *Tx) Query(query string, args ...interface{}) (*Rows, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Rows{rows, tx.Mapper}, nil
+	return &Rows{rows, tx.db}, nil
 }
 
 func (tx *Tx) QueryMap(query string, mp interface{}) (*Rows, error) {

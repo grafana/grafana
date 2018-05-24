@@ -1,11 +1,12 @@
 package core
 
 import (
-	"errors"
-	"fmt"
-	"time"
 	"bytes"
 	"encoding/gob"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
 )
 
 const (
@@ -55,11 +56,10 @@ func encodeIds(ids []PK) (string, error) {
 	return buf.String(), err
 }
 
-
 func decodeIds(s string) ([]PK, error) {
 	pks := make([]PK, 0)
 
-	dec := gob.NewDecoder(bytes.NewBufferString(s))
+	dec := gob.NewDecoder(strings.NewReader(s))
 	err := dec.Decode(&pks)
 
 	return pks, err
