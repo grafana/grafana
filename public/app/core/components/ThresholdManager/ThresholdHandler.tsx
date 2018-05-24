@@ -2,6 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 
 const LINE_PADDING = 13;
+const BOTTOM_PADDING = 20;
 
 export interface IProps {
   index: number;
@@ -14,6 +15,7 @@ export interface IProps {
 
 export class ThresholdHandler extends React.Component<IProps, any> {
   handlerElem: any;
+  thresholdManagerElem: any;
   lastY: number;
 
   constructor(props) {
@@ -28,6 +30,7 @@ export class ThresholdHandler extends React.Component<IProps, any> {
     };
 
     this.setHandlerRef = this.setHandlerRef.bind(this);
+    this.setWrapperRef = this.setWrapperRef.bind(this);
     this.onInitDragging = this.onInitDragging.bind(this);
     this.onStopDragging = this.onStopDragging.bind(this);
     this.onDrag = this.onDrag.bind(this);
@@ -39,6 +42,15 @@ export class ThresholdHandler extends React.Component<IProps, any> {
 
   setHandlerRef(elem) {
     this.handlerElem = elem;
+  }
+
+  setWrapperRef(elem) {
+    if (elem && _.hasIn(elem, 'parentElement.parentElement.parentElement')) {
+      this.thresholdManagerElem = elem.parentElement.parentElement.parentElement;
+      // When new threshold handler was added, trigger render() to place element in proper position
+      // if threshold value is out of Y axis bounds.
+      this.forceUpdate();
+    }
   }
 
   onInitDragging(evt) {
@@ -58,7 +70,8 @@ export class ThresholdHandler extends React.Component<IProps, any> {
       this.lastY = evt.clientY;
     } else {
       const diff = evt.clientY - this.lastY;
-      const y = this.state.posTop + diff;
+      let y = this.state.posTop + diff;
+      y = this.limitYPos(y);
       const value = _.round(this.props.yPosInvert(y + LINE_PADDING), 0);
       this.setState({ posTop: y, value: value });
       this.lastY = evt.clientY;
@@ -83,6 +96,18 @@ export class ThresholdHandler extends React.Component<IProps, any> {
     return y;
   }
 
+  /**
+   * Limit position of threshold handler element if threshold value is out of Y axis bounds.
+   */
+  limitYPos(y) {
+    if (this.thresholdManagerElem) {
+      let thresholdManagerHeight = this.thresholdManagerElem.clientHeight || +Infinity;
+      y = Math.min(thresholdManagerHeight - LINE_PADDING - BOTTOM_PADDING, y);
+      y = Math.max(0, y);
+    }
+    return y;
+  }
+
   setPositionFromProps() {
     const value = _.toNumber(this.props.threshold.value) || 0;
     const y = this.getYPos(value);
@@ -99,12 +124,17 @@ export class ThresholdHandler extends React.Component<IProps, any> {
       stateclassName = 'critical';
     }
 
-    const y = this.state.dragging ? this.state.posTop : this.getYPos(value);
+    let y = this.state.dragging ? this.state.posTop : this.getYPos(value);
+    y = this.limitYPos(y);
     const valueLabel = this.state.dragging ? this.state.value : value;
     const style = _.assign({ top: y }, this.props.style);
 
     return (
-      <div className={`alert-handle-wrapper alert-handle-wrapper--T${handlerIndex}`} style={style}>
+      <div
+        className={`alert-handle-wrapper alert-handle-wrapper--T${handlerIndex}`}
+        style={style}
+        ref={this.setWrapperRef}
+      >
         <div className={`alert-handle-line alert-handle-line--${stateclassName}`} />
         <div className="alert-handle" data-handle-index={handlerIndex} ref={this.setHandlerRef}>
           <i className={`icon-gf icon-gf-${stateclassName} alert-state-${stateclassName}`} />
