@@ -86,13 +86,13 @@ func (ss *SqlStore) Init() error {
 }
 
 func (ss *SqlStore) ensureAdminUser() error {
-	statsQuery := m.GetSystemStatsQuery{}
+	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 
-	if err := bus.Dispatch(&statsQuery); err != nil {
+	if err := bus.Dispatch(&systemUserCountQuery); err != nil {
 		fmt.Errorf("Could not determine if admin user exists: %v", err)
 	}
 
-	if statsQuery.Result.Users > 0 {
+	if systemUserCountQuery.Result.Count > 0 {
 		return nil
 	}
 

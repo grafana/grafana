@@ -24,14 +24,20 @@ func TestMetrics(t *testing.T) {
 		var getSystemStatsQuery *models.GetSystemStatsQuery
 		bus.AddHandler("test", func(query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{
-				Dashboards:  1,
-				Datasources: 2,
-				Users:       3,
-				ActiveUsers: 4,
-				Orgs:        5,
-				Playlists:   6,
-				Alerts:      7,
-				Stars:       8,
+				Dashboards:            1,
+				Datasources:           2,
+				Users:                 3,
+				ActiveUsers:           4,
+				Orgs:                  5,
+				Playlists:             6,
+				Alerts:                7,
+				Stars:                 8,
+				Folders:               9,
+				DashboardPermissions:  10,
+				FolderPermissions:     11,
+				ProvisionedDashboards: 12,
+				Snapshots:             13,
+				Teams:                 14,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -126,6 +132,12 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.active_users.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.ActiveUsers)
 				So(metrics.Get("stats.datasources.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Datasources)
 				So(metrics.Get("stats.stars.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Stars)
+				So(metrics.Get("stats.folders.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Folders)
+				So(metrics.Get("stats.dashboard_permissions.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.DashboardPermissions)
+				So(metrics.Get("stats.folder_permissions.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.FolderPermissions)
+				So(metrics.Get("stats.provisioned_dashboards.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.ProvisionedDashboards)
+				So(metrics.Get("stats.snapshots.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Snapshots)
+				So(metrics.Get("stats.teams.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Teams)
 
 				So(metrics.Get("stats.ds."+models.DS_ES+".count").MustInt(), ShouldEqual, 9)
 				So(metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt(), ShouldEqual, 10)

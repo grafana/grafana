@@ -1,14 +1,20 @@
 package models
 
 type SystemStats struct {
-	Dashboards  int64
-	Datasources int64
-	Users       int64
-	ActiveUsers int64
-	Orgs        int64
-	Playlists   int64
-	Alerts      int64
-	Stars       int64
+	Dashboards            int64
+	Datasources           int64
+	Users                 int64
+	ActiveUsers           int64
+	Orgs                  int64
+	Playlists             int64
+	Alerts                int64
+	Stars                 int64
+	Snapshots             int64
+	Teams                 int64
+	DashboardPermissions  int64
+	FolderPermissions     int64
+	Folders               int64
+	ProvisionedDashboards int64
 }
 
 type DataSourceStats struct {
@@ -39,4 +45,12 @@ type AdminStats struct {
 
 type GetAdminStatsQuery struct {
 	Result *AdminStats
+}
+
+type SystemUserCountStats struct {
+	Count int64
+}
+
+type GetSystemUserCountStatsQuery struct {
+	Result *SystemUserCountStats
 }

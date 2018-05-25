@@ -368,6 +368,12 @@ func sendUsageStats() {
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
 	metrics["stats.stars.count"] = statsQuery.Result.Stars
+	metrics["stats.folders.count"] = statsQuery.Result.Folders
+	metrics["stats.dashboard_permissions.count"] = statsQuery.Result.DashboardPermissions
+	metrics["stats.folder_permissions.count"] = statsQuery.Result.FolderPermissions
+	metrics["stats.provisioned_dashboards.count"] = statsQuery.Result.ProvisionedDashboards
+	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
+	metrics["stats.teams.count"] = statsQuery.Result.Teams
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {

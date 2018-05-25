@@ -11,6 +11,7 @@ func init() {
 	bus.AddHandler("sql", GetSystemStats)
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetAdminStats)
+	bus.AddHandler("sql", GetSystemUserCountStats)
 }
 
 var activeUserTimeLimit = time.Hour * 24 * 30
@@ -51,14 +52,32 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("alert") + `
 	  ) AS alerts,
-			(
-				SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` where last_seen_at > ?
-	  ) as active_users
+		(
+			SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` where last_seen_at > ?
+		) as active_users,
+		(
+			SELECT COUNT(id) FROM ` + dialect.Quote("dashboard") + ` where is_folder = ?
+		) as folders,
+		(
+			SELECT COUNT(acl.id) FROM ` + dialect.Quote("dashboard_acl") + ` as acl inner join ` + dialect.Quote("dashboard") + ` as d on d.id = acl.dashboard_id where d.is_folder = ?
+	  ) as dashboard_permissions,
+		(
+			SELECT COUNT(acl.id) FROM ` + dialect.Quote("dashboard_acl") + ` as acl inner join ` + dialect.Quote("dashboard") + ` as d on d.id = acl.dashboard_id where d.is_folder = ?
+		) as folder_permissions,
+		(
+			SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `
+		) as provisioned_dashboards,
+		(
+			SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `
+		) as snapshots,
+		(
+			SELECT COUNT(id) FROM ` + dialect.Quote("team") + `
+		) as teams
 			`
 
 	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
 	var stats m.SystemStats
-	_, err := x.SQL(rawSql, activeUserDeadlineDate).Get(&stats)
+	_, err := x.SQL(rawSql, activeUserDeadlineDate, dialect.BooleanStr(true), dialect.BooleanStr(false), dialect.BooleanStr(true)).Get(&stats)
 	if err != nil {
 		return err
 	}
@@ -120,5 +139,18 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
 	}
 
 	query.Result = &stats
+	return err
+}
+
+func GetSystemUserCountStats(query *m.GetSystemUserCountStatsQuery) error {
+	var rawSql = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+	var stats m.SystemUserCountStats
+	_, err := x.SQL(rawSql).Get(&stats)
+	if err != nil {
+		return err
+	}
+
+	query.Result = &stats
+
 	return err
 }
