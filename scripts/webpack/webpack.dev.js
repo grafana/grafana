@@ -113,6 +113,25 @@ module.exports = merge(common, {
     ]
   },
 
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        manifest: {
+          chunks: "initial",
+          test: "vendor",
+          name: "vendor",
+          enforce: true
+        },
+        vendor: {
+          chunks: "initial",
+          test: "vendor",
+          name: "vendor",
+          enforce: true
+        }
+      }
+    }
+  },
+
   plugins: [
     new CleanWebpackPlugin('../public/build', { allowExternal: true }),
     extractSass,
@@ -131,9 +150,6 @@ module.exports = merge(common, {
       'process.env': {
         'NODE_ENV': JSON.stringify('development')
       }
-    }),
-    new webpack.optimize.CommonsChunkPlugin({
-      names: ['vendor', 'manifest'],
     }),
     // new BundleAnalyzerPlugin({
     //   analyzerPort: 8889

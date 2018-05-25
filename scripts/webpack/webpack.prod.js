@@ -57,6 +57,25 @@ module.exports = merge(common, {
     },
   },
 
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        manifest: {
+          chunks: "initial",
+          test: "vendor",
+          name: "vendor",
+          enforce: true
+        },
+        vendor: {
+          chunks: "initial",
+          test: "vendor",
+          name: "vendor",
+          enforce: true
+        }
+      }
+    }
+  },
+
   plugins: [
     new ExtractTextPlugin({
       filename: 'grafana.[name].css',
@@ -75,9 +94,6 @@ module.exports = merge(common, {
       template: path.resolve(__dirname, '../../public/views/index.template.html'),
       inject: 'body',
       chunks: ['manifest', 'vendor', 'app'],
-    }),
-    new webpack.optimize.CommonsChunkPlugin({
-      names: ['vendor', 'manifest'],
     }),
     function () {
       this.plugin("done", function (stats) {
