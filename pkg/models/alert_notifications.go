@@ -1,9 +1,14 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+)
+
+var (
+	ErrNotificationFrequencyNotFound = errors.New("Notification frequency not specified")
 )
 
 type AlertNotification struct {
