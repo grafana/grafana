@@ -8,6 +8,7 @@ import * as ticksUtils from 'app/core/utils/ticks';
 import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
+import thresholdColors from 'app/core/components/ThresholdManager/thresholdColors';
 
 let MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -530,9 +531,12 @@ export default function link(scope, elem, attrs, ctrl) {
     let x2 = yAxisWidth + chartWidth;
     let y = threshold => yScale(threshold.value) + chartTop;
 
-    let getLineColor = threshold => (threshold.colorMode === 'custom' ? threshold.lineColor : 'red');
+    let getLineColor = threshold =>
+      threshold.colorMode === 'custom' ? threshold.lineColor : thresholdColors.getLineColor(threshold.colorMode);
 
-    // let thresholds = heatmap.selectAll('.heatmap-threshold').data(panel.thresholds);
+    let getFillColor = threshold =>
+      threshold.colorMode === 'custom' ? threshold.fillColor : thresholdColors.getFillColor(threshold.colorMode);
+
     let thresholdLines = _.filter(panel.thresholds, t => t.line && t.value);
     let lines = heatmap.selectAll('.heatmap-threshold').data(thresholdLines);
     lines
@@ -542,7 +546,21 @@ export default function link(scope, elem, attrs, ctrl) {
       .attr('x2', x2)
       .attr('y1', y)
       .attr('y2', y)
+      .style('fill', getFillColor)
       .style('stroke', getLineColor);
+
+    let thresholdFills = _.filter(panel.thresholds, t => t.fill && t.value);
+    let fills = heatmap.selectAll('.heatmap-threshold-fill').data(thresholdFills);
+    let getFillY = t => (t.op === 'gt' ? chartTop : y(t));
+    let getFillHeight = t => (t.op === 'gt' ? y(t) - chartTop : chartBottom - y(t));
+    fills
+      .enter()
+      .append('rect')
+      .attr('x', x1)
+      .attr('width', chartWidth)
+      .attr('y', getFillY)
+      .attr('height', getFillHeight)
+      .style('fill', getFillColor);
   }
 
   function highlightCard(event) {
