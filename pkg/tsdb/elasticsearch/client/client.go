@@ -119,6 +119,9 @@ type multiRequest struct {
 }
 
 func (c *baseClientImpl) executeBatchRequest(uriPath string, requests []*multiRequest) (*http.Response, error) {
+	clientLog.Debug("Encoding batch requests to json", "batch requests", len(requests))
+	start := time.Now()
+
 	payload := bytes.Buffer{}
 	for _, r := range requests {
 		reqHeader, err := json.Marshal(r.header)
@@ -133,6 +136,9 @@ func (c *baseClientImpl) executeBatchRequest(uriPath string, requests []*multiRe
 		}
 		payload.WriteString(string(reqBody) + "\n")
 	}
+
+	elapsed := time.Now().Sub(start)
+	clientLog.Debug("Encoded batch requests to json", "took", elapsed)
 
 	return c.executeRequest(http.MethodPost, uriPath, payload.Bytes())
 }
@@ -151,6 +157,9 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*h
 	if err != nil {
 		return nil, err
 	}
+
+	clientLog.Debug("Executing request", "url", req.URL.String(), "method", method)
+
 	req.Header.Set("User-Agent", "Grafana")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -169,21 +178,27 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*h
 		return nil, err
 	}
 
-	if method == http.MethodPost {
-		clientLog.Debug("Executing request", "url", req.URL.String(), "method", method)
-	} else {
-		clientLog.Debug("Executing request", "url", req.URL.String(), "method", method)
-	}
-
+	start := time.Now()
+	defer func() {
+		elapsed := time.Now().Sub(start)
+		clientLog.Debug("Executed request", "took", elapsed)
+	}()
 	return ctxhttp.Do(c.ctx, httpClient, req)
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
+	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
+
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	res, err := c.executeBatchRequest("_msearch", multiRequests)
 	if err != nil {
 		return nil, err
 	}
+
+	clientLog.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
+
+	start := time.Now()
+	clientLog.Debug("Decoding multisearch json response")
 
 	var msr MultiSearchResponse
 	defer res.Body.Close()
@@ -193,7 +208,8 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		return nil, err
 	}
 
-	clientLog.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
+	elapsed := time.Now().Sub(start)
+	clientLog.Debug("Decoded multisearch json response", "took", elapsed)
 
 	msr.status = res.StatusCode
 
