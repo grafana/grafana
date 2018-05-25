@@ -148,8 +148,9 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 			return fmt.Errorf("Alert notification frequency required")
 		}
 
-		frequency, err_convert := time.ParseDuration(cmd.Frequency)
-		if err_convert != nil {
+		var frequency time.Duration
+		frequency, err = time.ParseDuration(cmd.Frequency)
+		if err != nil {
 			return err
 		}
 
@@ -200,7 +201,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.NotifyOnce = cmd.NotifyOnce
 
 		if cmd.Frequency == "" {
-			return fmt.Errorf("Alert notification frequency required")
+			return m.ErrNotificationFrequencyNotFound
 		}
 
 		frequency, err_convert := time.ParseDuration(cmd.Frequency)

@@ -18,10 +18,6 @@
           </select>
         </div>
       </div>
-      <div class="gf-form">
-        <a class="gf-form-label width-12" ng-click="ctrl.model.notifyOnce = !ctrl.model.notifyOnce;">{{ ctrl.model.notifyOnce ? 'Notify on state change' : 'Notify at most every' }}</a>
-        <input class="gf-form-input max-width-15" type="text" ng-model="ctrl.model.frequency" ng-if="!ctrl.model.notifyOnce"></input>
-      </div>
       <gf-form-switch
           class="gf-form"
           label="Send on all alerts"
@@ -36,6 +32,17 @@
           checked="ctrl.model.settings.uploadImage"
           tooltip="Captures an image and include it in the notification">
       </gf-form-switch>
+      <gf-form-switch
+          class="gf-form"
+          label="Notify once"
+          label-class="width-12"
+          checked="ctrl.model.notifyOnce"
+          tooltip="Choose to either notify on state change or at every interval">
+      </gf-form-switch>
+      <div class="gf-form">
+        <span class="gf-form-label width-12" ng-if="!ctrl.model.notifyOnce">Notify every</span>
+        <input class="gf-form-input max-width-15" type="text" required ng-model="ctrl.model.frequency" required ng-if="!ctrl.model.notifyOnce"></input>
+      </div>
     </div>
 
     <div class="gf-form-group" ng-include src="ctrl.notifierTemplateId">
