@@ -394,6 +394,35 @@ func sendUsageStats() {
 	}
 	metrics["stats.ds.other.count"] = dsOtherCount
 
+	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
+	if err := bus.Dispatch(&dsAccessStats); err != nil {
+		metricsLogger.Error("Failed to get datasource access stats", "error", err)
+		return
+	}
+
+	// send access counters for each data source
+	// but ignore any custom data sources
+	// as sending that name could be sensitive information
+	dsAccessOtherCount := make(map[string]int64)
+	for _, dsAccessStat := range dsAccessStats.Result {
+		if dsAccessStat.Access == "" {
+			continue
+		}
+
+		access := strings.ToLower(dsAccessStat.Access)
+
+		if models.IsKnownDataSourcePlugin(dsAccessStat.Type) {
+			metrics["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
+		} else {
+			old := dsAccessOtherCount[access]
+			dsAccessOtherCount[access] = old + dsAccessStat.Count
+		}
+	}
+
+	for access, count := range dsAccessOtherCount {
+		metrics["stats.ds_access.other."+access+".count"] = count
+	}
+
 	out, _ := json.MarshalIndent(report, "", " ")
 	data := bytes.NewBuffer(out)
 

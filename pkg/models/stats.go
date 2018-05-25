@@ -30,6 +30,16 @@ type GetDataSourceStatsQuery struct {
 	Result []*DataSourceStats
 }
 
+type DataSourceAccessStats struct {
+	Type   string
+	Access string
+	Count  int64
+}
+
+type GetDataSourceAccessStatsQuery struct {
+	Result []*DataSourceAccessStats
+}
+
 type AdminStats struct {
 	Users       int `json:"users"`
 	Orgs        int `json:"orgs"`

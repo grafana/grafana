@@ -10,6 +10,7 @@ import (
 func init() {
 	bus.AddHandler("sql", GetSystemStats)
 	bus.AddHandler("sql", GetDataSourceStats)
+	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
 	bus.AddHandler("sql", GetSystemUserCountStats)
 }
@@ -19,6 +20,13 @@ var activeUserTimeLimit = time.Hour * 24 * 30
 func GetDataSourceStats(query *m.GetDataSourceStatsQuery) error {
 	var rawSql = `SELECT COUNT(*) as count, type FROM data_source GROUP BY type`
 	query.Result = make([]*m.DataSourceStats, 0)
+	err := x.SQL(rawSql).Find(&query.Result)
+	return err
+}
+
+func GetDataSourceAccessStats(query *m.GetDataSourceAccessStatsQuery) error {
+	var rawSql = `SELECT COUNT(*) as count, type, access FROM data_source GROUP BY type, access`
+	query.Result = make([]*m.DataSourceAccessStats, 0)
 	err := x.SQL(rawSql).Find(&query.Result)
 	return err
 }

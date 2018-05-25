@@ -23,5 +23,17 @@ func TestStatsDataAccess(t *testing.T) {
 			err := GetSystemUserCountStats(&query)
 			So(err, ShouldBeNil)
 		})
+
+		Convey("Get datasource stats should not results in error", func() {
+			query := m.GetDataSourceStatsQuery{}
+			err := GetDataSourceStats(&query)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Get datasource access stats should not results in error", func() {
+			query := m.GetDataSourceAccessStatsQuery{}
+			err := GetDataSourceAccessStats(&query)
+			So(err, ShouldBeNil)
+		})
 	})
 }
