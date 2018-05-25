@@ -332,6 +332,8 @@ func updateTotalStats() {
 	M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
 }
 
+var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
+
 func sendUsageStats() {
 	if !setting.ReportingEnabled {
 		return
@@ -390,5 +392,5 @@ func sendUsageStats() {
 	data := bytes.NewBuffer(out)
 
 	client := http.Client{Timeout: 5 * time.Second}
-	go client.Post("https://stats.grafana.org/grafana-usage-report", "application/json", data)
+	go client.Post(usageStatsURL, "application/json", data)
 }
