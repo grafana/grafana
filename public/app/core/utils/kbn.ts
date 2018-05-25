@@ -816,8 +816,8 @@ kbn.valueFormats.timeticks = function(size, decimals, scaledDecimals) {
   return kbn.valueFormats.s(size / 100, decimals, scaledDecimals);
 };
 
-kbn.valueFormats.dateTimeAsIso = function(epoch) {
-  var time = moment(epoch);
+kbn.valueFormats.dateTimeAsIso = function(epoch, isUtc) {
+  var time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
     return time.format('HH:mm:ss');
@@ -825,8 +825,8 @@ kbn.valueFormats.dateTimeAsIso = function(epoch) {
   return time.format('YYYY-MM-DD HH:mm:ss');
 };
 
-kbn.valueFormats.dateTimeAsUS = function(epoch) {
-  var time = moment(epoch);
+kbn.valueFormats.dateTimeAsUS = function(epoch, isUtc) {
+  var time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
     return time.format('h:mm:ss a');
@@ -834,8 +834,9 @@ kbn.valueFormats.dateTimeAsUS = function(epoch) {
   return time.format('MM/DD/YYYY h:mm:ss a');
 };
 
-kbn.valueFormats.dateTimeFromNow = function(epoch) {
-  return moment(epoch).fromNow();
+kbn.valueFormats.dateTimeFromNow = function(epoch, isUtc) {
+  var time = isUtc ? moment.utc(epoch) : moment(epoch);
+  return time.fromNow();
 };
 
 ///// FORMAT MENU /////
@@ -988,17 +989,17 @@ kbn.getUnitFormats = function() {
     {
       text: 'velocity',
       submenu: [
-        { text: 'm/s', value: 'velocityms' },
-        { text: 'km/h', value: 'velocitykmh' },
-        { text: 'mph', value: 'velocitymph' },
+        { text: 'metres/second (m/s)', value: 'velocityms' },
+        { text: 'kilometers/hour (km/h)', value: 'velocitykmh' },
+        { text: 'miles/hour (mph)', value: 'velocitymph' },
         { text: 'knot (kn)', value: 'velocityknot' },
       ],
     },
     {
       text: 'volume',
       submenu: [
-        { text: 'millilitre', value: 'mlitre' },
-        { text: 'litre', value: 'litre' },
+        { text: 'millilitre (mL)', value: 'mlitre' },
+        { text: 'litre (L)', value: 'litre' },
         { text: 'cubic metre', value: 'm3' },
         { text: 'Normal cubic metre', value: 'Nm3' },
         { text: 'cubic decimetre', value: 'dm3' },

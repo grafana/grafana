@@ -12,7 +12,7 @@ class PluginListCtrl extends PanelCtrl {
   panelDefaults = {};
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv, private $location) {
+  constructor($scope, $injector, private backendSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);

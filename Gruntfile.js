@@ -12,6 +12,10 @@ module.exports = function (grunt) {
     platform: process.platform.replace('win32', 'windows'),
   };
 
+  if (grunt.option('platform')) {
+    config.platform = grunt.option('platform');
+  }
+
   if (grunt.option('arch')) {
     config.arch = grunt.option('arch');
   } else {

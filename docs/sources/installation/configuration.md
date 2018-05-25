@@ -93,8 +93,6 @@ Directory where grafana will automatically scan and look for plugins
 
 ### provisioning
 
-> This feature is available in 5.0+
-
 Folder that contains [provisioning](/administration/provisioning) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
 
 ## [server]
@@ -659,6 +657,10 @@ Set to `true` to enable auto sign up of users who do not exist in Grafana DB. De
 
 Limit where auth proxy requests come from by configuring a list of IP addresses. This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 
+### headers
+
+Used to define additional headers for `Name`, `Email` and/or `Login`, for example if the user's name is sent in the X-WEBAUTH-NAME header and their email address in the X-WEBAUTH-EMAIL header, set `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL`.
+
 <hr>
 
 ## [session]
@@ -713,7 +715,7 @@ Analytics ID here. By default this feature is disabled.
 
 ## [dashboards]
 
-### versions_to_keep (introduced in v5.0)
+### versions_to_keep
 
 Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
 

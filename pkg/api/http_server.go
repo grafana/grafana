@@ -26,8 +26,14 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func init() {
+	registry.RegisterService(&HTTPServer{})
+}
 
 type HTTPServer struct {
 	log           log.Logger
@@ -37,16 +43,20 @@ type HTTPServer struct {
 	cache         *gocache.Cache
 	httpSrv       *http.Server
 
-	RouteRegister RouteRegister `inject:""`
-	Bus           bus.Bus       `inject:""`
+	RouteRegister RouteRegister     `inject:""`
+	Bus           bus.Bus           `inject:""`
+	RenderService rendering.Service `inject:""`
+	Cfg           *setting.Cfg      `inject:""`
 }
 
-func (hs *HTTPServer) Init() {
+func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 	hs.cache = gocache.New(5*time.Minute, 10*time.Minute)
+
+	return nil
 }
 
-func (hs *HTTPServer) Start(ctx context.Context) error {
+func (hs *HTTPServer) Run(ctx context.Context) error {
 	var err error
 
 	hs.context = ctx
@@ -57,17 +67,18 @@ func (hs *HTTPServer) Start(ctx context.Context) error {
 	hs.streamManager.Run(ctx)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+	hs.log.Info("HTTP Server Listen", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
 	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
 
 	// handle http shutdown on server context done
 	go func() {
 		<-ctx.Done()
+		// Hacky fix for race condition between ListenAndServe and Shutdown
+		time.Sleep(time.Millisecond * 100)
 		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 			hs.log.Error("Failed to shutdown server", "error", err)
 		}
-		hs.log.Info("Stopped HTTP Server")
 	}()
 
 	switch setting.Protocol {
@@ -103,12 +114,6 @@ func (hs *HTTPServer) Start(ctx context.Context) error {
 		err = errors.New("Invalid Protocol")
 	}
 
-	return err
-}
-
-func (hs *HTTPServer) Shutdown(ctx context.Context) error {
-	err := hs.httpSrv.Shutdown(ctx)
-	hs.log.Info("Stopped HTTP server")
 	return err
 }
 
@@ -172,11 +177,12 @@ func (hs *HTTPServer) newMacaron() *macaron.Macaron {
 		hs.mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
+	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, setting.StaticRootPath, "", "public")
 	hs.mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
 
 	if setting.ImageUploadProvider == "local" {
-		hs.mapStatic(m, setting.ImagesDir, "", "/public/img/attachments")
+		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
@@ -237,6 +243,12 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 	headers := func(c *macaron.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
+	}
+
+	if prefix == "public/build" {
+		headers = func(c *macaron.Context) {
+			c.Resp.Header().Set("Cache-Control", "public, max-age=31536000")
+		}
 	}
 
 	if setting.Env == setting.DEV {

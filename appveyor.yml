@@ -38,16 +38,3 @@ artifacts:
   - path: grafana-*windows-*.*
     name: binzip
     type: zip
-
-deploy:
-  - provider: Environment
-    name: GrafanaReleaseMaster
-    on:
-      buildType: master
-
-  - provider: Environment
-    name: GrafanaReleaseRelease
-    on:
-      buildType: release
-
-

@@ -52,12 +52,11 @@ var (
 	ApplicationName string
 
 	// Paths
-	LogsPath         string
-	HomePath         string
-	DataPath         string
-	PluginsPath      string
-	ProvisioningPath string
-	CustomInitPath   = "conf/custom.ini"
+	LogsPath       string
+	HomePath       string
+	DataPath       string
+	PluginsPath    string
+	CustomInitPath = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -125,6 +124,7 @@ var (
 	AuthProxyAutoSignUp     bool
 	AuthProxyLdapSyncTtl    int
 	AuthProxyWhitelist      string
+	AuthProxyHeaders        map[string]string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -140,10 +140,6 @@ var (
 	Raw          *ini.File
 	ConfRootPath string
 	IsWindows    bool
-
-	// PhantomJs Rendering
-	ImagesDir  string
-	PhantomDir string
 
 	// for logging purposes
 	configFiles                  []string
@@ -187,10 +183,16 @@ var (
 type Cfg struct {
 	Raw *ini.File
 
+	// Paths
+	ProvisioningPath string
+
 	// SMTP email settings
 	Smtp SmtpSettings
 
+	// Rendering
 	ImagesDir                        string
+	PhantomDir                       string
+	RendererUrl                      string
 	DisableBruteForceLoginProtection bool
 }
 
@@ -492,7 +494,9 @@ func validateStaticRootPath() error {
 }
 
 func NewCfg() *Cfg {
-	return &Cfg{}
+	return &Cfg{
+		Raw: ini.Empty(),
+	}
 }
 
 func (cfg *Cfg) Load(args *CommandLineArgs) error {
@@ -516,7 +520,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
 	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(iniFile.Section("paths").Key("plugins").String(), HomePath)
-	ProvisioningPath = makeAbsolute(iniFile.Section("paths").Key("provisioning").String(), HomePath)
+	cfg.ProvisioningPath = makeAbsolute(iniFile.Section("paths").Key("provisioning").String(), HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
 
@@ -611,6 +615,14 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyWhitelist = authProxy.Key("whitelist").String()
 
+	AuthProxyHeaders = make(map[string]string)
+	for _, propertyAndHeader := range util.SplitString(authProxy.Key("headers").String()) {
+		split := strings.SplitN(propertyAndHeader, ":", 2)
+		if len(split) == 2 {
+			AuthProxyHeaders[split[0]] = split[1]
+		}
+	}
+
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
@@ -618,10 +630,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// global plugin settings
 	PluginAppsSkipVerifyTLS = iniFile.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
-	// PhantomJS rendering
+	// Rendering
+	renderSec := iniFile.Section("rendering")
+	cfg.RendererUrl = renderSec.Key("server_url").String()
 	cfg.ImagesDir = filepath.Join(DataPath, "png")
-	ImagesDir = cfg.ImagesDir
-	PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
+	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -719,6 +732,6 @@ func (cfg *Cfg) LogConfigSources() {
 	logger.Info("Path Data", "path", DataPath)
 	logger.Info("Path Logs", "path", LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
-	logger.Info("Path Provisioning", "path", ProvisioningPath)
+	logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
 	logger.Info("App mode " + Env)
 }

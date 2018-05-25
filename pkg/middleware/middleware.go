@@ -49,7 +49,6 @@ func GetContextHandler() macaron.Handler {
 
 		c.Map(ctx)
 
-		// update last seen at
 		// update last seen every 5min
 		if ctx.ShouldUpdateLastSeenAt() {
 			ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
