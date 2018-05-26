@@ -45,7 +45,7 @@ export class SqlPart {
     this.part = part;
     this.def = def;
     if (!this.def) {
-      throw { message: 'Could not find query part ' + part.type };
+      throw { message: 'Could not find sql part ' + part.type };
     }
 
     part.params = part.params || _.clone(this.def.defaultParams);
@@ -130,6 +130,3 @@ export function identityRenderer(part, innerExpr) {
   return part.params[0];
 }
 
-export function quotedIdentityRenderer(part, innerExpr) {
-  return '"' + part.params[0] + '"';
-}
