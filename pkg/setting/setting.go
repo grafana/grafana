@@ -141,10 +141,6 @@ var (
 	ConfRootPath string
 	IsWindows    bool
 
-	// PhantomJs Rendering
-	ImagesDir  string
-	PhantomDir string
-
 	// for logging purposes
 	configFiles                  []string
 	appliedCommandLineProperties []string
@@ -193,7 +189,10 @@ type Cfg struct {
 	// SMTP email settings
 	Smtp SmtpSettings
 
+	// Rendering
 	ImagesDir                        string
+	PhantomDir                       string
+	RendererUrl                      string
 	DisableBruteForceLoginProtection bool
 }
 
@@ -631,10 +630,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// global plugin settings
 	PluginAppsSkipVerifyTLS = iniFile.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
-	// PhantomJS rendering
+	// Rendering
+	renderSec := iniFile.Section("rendering")
+	cfg.RendererUrl = renderSec.Key("server_url").String()
 	cfg.ImagesDir = filepath.Join(DataPath, "png")
-	ImagesDir = cfg.ImagesDir
-	PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
+	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

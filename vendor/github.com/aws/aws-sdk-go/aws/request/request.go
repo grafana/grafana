@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
+	"github.com/aws/aws-sdk-go/internal/sdkio"
 )
 
 const (
@@ -224,6 +225,9 @@ func (r *Request) SetContext(ctx aws.Context) {
 
 // WillRetry returns if the request's can be retried.
 func (r *Request) WillRetry() bool {
+	if !aws.IsReaderSeekable(r.Body) && r.HTTPRequest.Body != NoBody {
+		return false
+	}
 	return r.Error != nil && aws.BoolValue(r.Retryable) && r.RetryCount < r.MaxRetries()
 }
 
@@ -255,6 +259,7 @@ func (r *Request) SetStringBody(s string) {
 // SetReaderBody will set the request's body reader.
 func (r *Request) SetReaderBody(reader io.ReadSeeker) {
 	r.Body = reader
+	r.BodyStart, _ = reader.Seek(0, sdkio.SeekCurrent) // Get the Bodies current offset.
 	r.ResetBody()
 }
 
@@ -290,6 +295,11 @@ func (r *Request) Presign(expire time.Duration) (string, error) {
 func (r *Request) PresignRequest(expire time.Duration) (string, http.Header, error) {
 	r = r.copy()
 	return getPresignedURL(r, expire)
+}
+
+// IsPresigned returns true if the request represents a presigned API url.
+func (r *Request) IsPresigned() bool {
+	return r.ExpireTime != 0
 }
 
 func getPresignedURL(r *Request, expire time.Duration) (string, http.Header, error) {
@@ -332,7 +342,7 @@ func debugLogReqError(r *Request, stage string, retrying bool, err error) {
 
 // Build will build the request's object so it can be signed and sent
 // to the service. Build will also validate all the request's parameters.
-// Anny additional build Handlers set on this request will be run
+// Any additional build Handlers set on this request will be run
 // in the order they were set.
 //
 // The request will only be built once. Multiple calls to build will have
@@ -393,7 +403,7 @@ func (r *Request) getNextRequestBody() (io.ReadCloser, error) {
 	// of the SDK if they used that field.
 	//
 	// Related golang/go#18257
-	l, err := computeBodyLength(r.Body)
+	l, err := aws.SeekerLen(r.Body)
 	if err != nil {
 		return nil, awserr.New(ErrCodeSerialization, "failed to compute request body size", err)
 	}
@@ -411,7 +421,8 @@ func (r *Request) getNextRequestBody() (io.ReadCloser, error) {
 		// Transfer-Encoding: chunked bodies for these methods.
 		//
 		// This would only happen if a aws.ReaderSeekerCloser was used with
-		// a io.Reader that was not also an io.Seeker.
+		// a io.Reader that was not also an io.Seeker, or did not implement
+		// Len() method.
 		switch r.Operation.HTTPMethod {
 		case "GET", "HEAD", "DELETE":
 			body = NoBody
@@ -421,42 +432,6 @@ func (r *Request) getNextRequestBody() (io.ReadCloser, error) {
 	}
 
 	return body, nil
-}
-
-// Attempts to compute the length of the body of the reader using the
-// io.Seeker interface. If the value is not seekable because of being
-// a ReaderSeekerCloser without an unerlying Seeker -1 will be returned.
-// If no error occurs the length of the body will be returned.
-func computeBodyLength(r io.ReadSeeker) (int64, error) {
-	seekable := true
-	// Determine if the seeker is actually seekable. ReaderSeekerCloser
-	// hides the fact that a io.Readers might not actually be seekable.
-	switch v := r.(type) {
-	case aws.ReaderSeekerCloser:
-		seekable = v.IsSeeker()
-	case *aws.ReaderSeekerCloser:
-		seekable = v.IsSeeker()
-	}
-	if !seekable {
-		return -1, nil
-	}
-
-	curOffset, err := r.Seek(0, 1)
-	if err != nil {
-		return 0, err
-	}
-
-	endOffset, err := r.Seek(0, 2)
-	if err != nil {
-		return 0, err
-	}
-
-	_, err = r.Seek(curOffset, 0)
-	if err != nil {
-		return 0, err
-	}
-
-	return endOffset - curOffset, nil
 }
 
 // GetBody will return an io.ReadSeeker of the Request's underlying
