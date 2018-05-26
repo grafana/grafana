@@ -8,6 +8,7 @@ export class SqlPartDef {
   defaultParams: any[];
   wrapOpen: string;
   wrapClose: string;
+  separator: string;
   renderer: any;
   category: any;
   addStrategy: any;
@@ -23,9 +24,11 @@ export class SqlPartDef {
     if (this.style === "function") {
       this.wrapOpen = "(";
       this.wrapClose = ")";
+      this.separator = ", ";
     } else {
       this.wrapOpen = " ";
       this.wrapClose = " ";
+      this.separator = " ";
     }
     this.params = options.params;
     this.defaultParams = options.defaultParams;

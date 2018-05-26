@@ -153,7 +153,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           }
 
           if (index > 0) {
-            $('<span>, </span>').appendTo($paramsContainer);
+            $('<span>' + partDef.separator + '</span>').appendTo($paramsContainer);
           }
 
           var paramValue = templateSrv.highlightVariablesAsHtml(part.params[index]);
