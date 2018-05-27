@@ -236,10 +236,4 @@ export default class PostgresQuery {
     return query;
   }
 
-  renderAdhocFilters(filters) {
-    var conditions = _.map(filters, (tag, index) => {
-      return this.renderWhereConstraint(tag, index, false);
-    });
-    return conditions.join(' ');
-  }
 }
