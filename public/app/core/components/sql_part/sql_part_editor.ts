@@ -15,7 +15,7 @@ var template = `
 
 /** @ngInject */
 export function sqlPartEditorDirective($compile, templateSrv) {
-  var paramTemplate = '<input type="text" class="hide input-mini tight-form-func-param"></input>';
+  var paramTemplate = '<input type="text" class="hide input-mini"></input>';
 
   return {
     restrict: 'E',
@@ -101,7 +101,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           }
 
           $scope.$apply(function() {
-            $scope.handleEvent({ $event: { name: 'get-param-options' } }).then(function(result) {
+            $scope.handleEvent({ $event: { name: 'get-param-options', param: param } }).then(function(result) {
               var dynamicOptions = _.map(result, function(op) {
                 return op.value;
               });
