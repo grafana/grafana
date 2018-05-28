@@ -50,16 +50,24 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       data: params.join('&'),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Dashboard-Id': options.dashboardId, // enables distributed tracing in ds_proxy
-        'X-Panel-Id': options.panelId, // enables distributed tracing in ds_proxy
       },
     };
+
+    this.addTracingHeaders(httpOptions, options);
 
     if (options.panelId) {
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;
     }
 
     return this.doGraphiteRequest(httpOptions).then(this.convertDataPointsToMs);
+  };
+
+  this.addTracingHeaders = function(httpOptions, options) {
+    var proxyMode = !this.url.match(/^http/);
+    if (proxyMode) {
+      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Panel-Id'] = options.panelId;
+    }
   };
 
   this.convertDataPointsToMs = function(result) {
