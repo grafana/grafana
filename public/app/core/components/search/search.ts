@@ -17,6 +17,7 @@ export class SearchCtrl {
   isLoading: boolean;
   initialFolderFilterTitle: string;
   isEditor: string;
+  hasEditPermissionInFolders: boolean;
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
@@ -27,6 +28,7 @@ export class SearchCtrl {
     this.getTags = this.getTags.bind(this);
     this.onTagSelect = this.onTagSelect.bind(this);
     this.isEditor = contextSrv.isEditor;
+    this.hasEditPermissionInFolders = contextSrv.hasEditPermissionInFolders;
   }
 
   closeSearch() {
