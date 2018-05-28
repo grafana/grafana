@@ -104,6 +104,7 @@ var (
 	DefaultTheme            string
 	DisableLoginForm        bool
 	DisableSignoutMenu      bool
+	SignoutRedirectUrl      string
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
@@ -600,6 +601,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	auth := iniFile.Section("auth")
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+	SignoutRedirectUrl = auth.Key("signout_redirect_url").String()
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
