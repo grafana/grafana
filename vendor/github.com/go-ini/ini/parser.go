@@ -19,10 +19,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
 )
+
+var pythonMultiline = regexp.MustCompile("^(\\s+)([^\n]+)")
 
 type tokenType int
 
@@ -194,7 +197,8 @@ func hasSurroundedQuote(in string, quote byte) bool {
 }
 
 func (p *parser) readValue(in []byte,
-	ignoreContinuation, ignoreInlineComment, unescapeValueDoubleQuotes, unescapeValueCommentSymbols bool) (string, error) {
+	parserBufferSize int,
+	ignoreContinuation, ignoreInlineComment, unescapeValueDoubleQuotes, unescapeValueCommentSymbols, allowPythonMultilines bool) (string, error) {
 
 	line := strings.TrimLeftFunc(string(in), unicode.IsSpace)
 	if len(line) == 0 {
@@ -224,11 +228,13 @@ func (p *parser) readValue(in []byte,
 		return line[startIdx : pos+startIdx], nil
 	}
 
+	lastChar := line[len(line)-1]
 	// Won't be able to reach here if value only contains whitespace
 	line = strings.TrimSpace(line)
+	trimmedLastChar := line[len(line)-1]
 
 	// Check continuation lines when desired
-	if !ignoreContinuation && line[len(line)-1] == '\\' {
+	if !ignoreContinuation && trimmedLastChar == '\\' {
 		return p.readContinuationLines(line[:len(line)-1])
 	}
 
@@ -252,7 +258,50 @@ func (p *parser) readValue(in []byte,
 		if strings.Contains(line, `\#`) {
 			line = strings.Replace(line, `\#`, "#", -1)
 		}
+	} else if allowPythonMultilines && lastChar == '\n' {
+		parserBufferPeekResult, _ := p.buf.Peek(parserBufferSize)
+		peekBuffer := bytes.NewBuffer(parserBufferPeekResult)
+
+		identSize := -1
+		val := line
+
+		for {
+			peekData, peekErr := peekBuffer.ReadBytes('\n')
+			if peekErr != nil {
+				if peekErr == io.EOF {
+					return val, nil
+				}
+				return "", peekErr
+			}
+
+			peekMatches := pythonMultiline.FindStringSubmatch(string(peekData))
+			if len(peekMatches) != 3 {
+				return val, nil
+			}
+
+			currentIdentSize := len(peekMatches[1])
+			// NOTE: Return if not a python-ini multi-line value.
+			if currentIdentSize < 0 {
+				return val, nil
+			}
+			identSize = currentIdentSize
+
+			// NOTE: Just advance the parser reader (buffer) in-sync with the peek buffer.
+			_, err := p.readUntil('\n')
+			if err != nil {
+				return "", err
+			}
+
+			val += fmt.Sprintf("\n%s", peekMatches[2])
+		}
+
+		// NOTE: If it was a Python multi-line value,
+		// return the appended value.
+		if identSize > 0 {
+			return val, nil
+		}
 	}
+
 	return line, nil
 }
 
@@ -276,6 +325,29 @@ func (f *File) parse(reader io.Reader) (err error) {
 
 	var line []byte
 	var inUnparseableSection bool
+
+	// NOTE: Iterate and increase `currentPeekSize` until
+	// the size of the parser buffer is found.
+	// TODO: When Golang 1.10 is the lowest version supported,
+	// replace with `parserBufferSize := p.buf.Size()`.
+	parserBufferSize := 0
+	// NOTE: Peek 1kb at a time.
+	currentPeekSize := 1024
+
+	if f.options.AllowPythonMultilineValues {
+		for {
+			peekBytes, _ := p.buf.Peek(currentPeekSize)
+			peekBytesLength := len(peekBytes)
+
+			if parserBufferSize >= peekBytesLength {
+				break
+			}
+
+			currentPeekSize *= 2
+			parserBufferSize = peekBytesLength
+		}
+	}
+
 	for !p.isEOF {
 		line, err = p.readUntil('\n')
 		if err != nil {
@@ -352,10 +424,12 @@ func (f *File) parse(reader io.Reader) (err error) {
 			// Treat as boolean key when desired, and whole line is key name.
 			if IsErrDelimiterNotFound(err) && f.options.AllowBooleanKeys {
 				kname, err := p.readValue(line,
+					parserBufferSize,
 					f.options.IgnoreContinuation,
 					f.options.IgnoreInlineComment,
 					f.options.UnescapeValueDoubleQuotes,
-					f.options.UnescapeValueCommentSymbols)
+					f.options.UnescapeValueCommentSymbols,
+					f.options.AllowPythonMultilineValues)
 				if err != nil {
 					return err
 				}
@@ -379,10 +453,12 @@ func (f *File) parse(reader io.Reader) (err error) {
 		}
 
 		value, err := p.readValue(line[offset:],
+			parserBufferSize,
 			f.options.IgnoreContinuation,
 			f.options.IgnoreInlineComment,
 			f.options.UnescapeValueDoubleQuotes,
-			f.options.UnescapeValueCommentSymbols)
+			f.options.UnescapeValueCommentSymbols,
+			f.options.AllowPythonMultilineValues)
 		if err != nil {
 			return err
 		}

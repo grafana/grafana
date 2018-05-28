@@ -4,7 +4,7 @@
 // requests to Amazon Elastic Compute Cloud.
 //
 // Amazon Elastic Compute Cloud (Amazon EC2) provides resizable computing capacity
-// in the AWS Cloud. Using Amazon EC2 eliminates your need to invest in hardware
+// in the AWS Cloud. Using Amazon EC2 eliminates the need to invest in hardware
 // up front, so you can develop and deploy applications faster.
 //
 // See https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15 for more information on this service.
