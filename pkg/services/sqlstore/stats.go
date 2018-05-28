@@ -32,60 +32,43 @@ func GetDataSourceAccessStats(query *m.GetDataSourceAccessStatsQuery) error {
 }
 
 func GetSystemStats(query *m.GetSystemStatsQuery) error {
-	var rawSql = `SELECT
-			(
-				SELECT COUNT(*)
-		FROM ` + dialect.Quote("user") + `
-	  ) AS users,
-			(
-				SELECT COUNT(*)
-		FROM ` + dialect.Quote("org") + `
-	  ) AS orgs,
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("dashboard") + `
-	  ) AS dashboards,
-		(
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("data_source") + `
-	  ) AS datasources,
-	  (
-		SELECT COUNT(*) FROM ` + dialect.Quote("star") + `
-	  ) AS stars,
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("playlist") + `
-	  ) AS playlists,
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("alert") + `
-	  ) AS alerts,
-		(
-			SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` where last_seen_at > ?
-		) as active_users,
-		(
-			SELECT COUNT(id) FROM ` + dialect.Quote("dashboard") + ` where is_folder = ?
-		) as folders,
-		(
-			SELECT COUNT(acl.id) FROM ` + dialect.Quote("dashboard_acl") + ` as acl inner join ` + dialect.Quote("dashboard") + ` as d on d.id = acl.dashboard_id where d.is_folder = ?
-	  ) as dashboard_permissions,
-		(
-			SELECT COUNT(acl.id) FROM ` + dialect.Quote("dashboard_acl") + ` as acl inner join ` + dialect.Quote("dashboard") + ` as d on d.id = acl.dashboard_id where d.is_folder = ?
-		) as folder_permissions,
-		(
-			SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `
-		) as provisioned_dashboards,
-		(
-			SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `
-		) as snapshots,
-		(
-			SELECT COUNT(id) FROM ` + dialect.Quote("team") + `
-		) as teams
-			`
+	sb := &SqlBuilder{}
+	sb.Write("SELECT ")
+	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + `) AS users,`)
+	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
+	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard") + `) AS dashboards,`)
+	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
+	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
+	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
+	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
 
 	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
+	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` where last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
+
+	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` where is_folder = ?) AS folders,`, dialect.BooleanStr(true))
+
+	sb.Write(`(
+		SELECT COUNT(acl.id)
+		FROM `+dialect.Quote("dashboard_acl")+` as acl
+			inner join `+dialect.Quote("dashboard")+` as d
+			on d.id = acl.dashboard_id
+		WHERE d.is_folder = ?
+	) AS dashboard_permissions,`, dialect.BooleanStr(false))
+
+	sb.Write(`(
+		SELECT COUNT(acl.id)
+		FROM `+dialect.Quote("dashboard_acl")+` as acl
+			inner join `+dialect.Quote("dashboard")+` as d
+			on d.id = acl.dashboard_id
+		WHERE d.is_folder = ?
+	) AS folder_permissions,`, dialect.BooleanStr(true))
+
+	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
+	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
+	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams`)
+
 	var stats m.SystemStats
-	_, err := x.SQL(rawSql, activeUserDeadlineDate, dialect.BooleanStr(true), dialect.BooleanStr(false), dialect.BooleanStr(true)).Get(&stats)
+	_, err := x.SQL(sb.GetSqlString(), sb.params...).Get(&stats)
 	if err != nil {
 		return err
 	}
