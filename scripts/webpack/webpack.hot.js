@@ -5,45 +5,38 @@ const common = require('./webpack.common.js');
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-
-const extractSass = new ExtractTextPlugin({
-  filename: "grafana.[name].css"
-});
 
 module.exports = merge(common, {
-  devtool: "cheap-module-source-map",
-
   entry: {
-    app: './public/app/index.ts',
-    dark: './public/sass/grafana.dark.scss',
-    light: './public/sass/grafana.light.scss',
-    vendor: require('./dependencies'),
+    app: [
+      'webpack-dev-server/client?http://localhost:3333',
+      './public/app/dev.ts',
+    ],
   },
 
   output: {
     path: path.resolve(__dirname, '../../public/build'),
     filename: '[name].[hash].js',
-    // Keep publicPath relative for host.com/grafana/ deployments
-    publicPath: "public/build/",
+    publicPath: "/public/build/",
+  },
+
+  resolve: {
+    extensions: ['.scss', '.ts', '.tsx', '.es6', '.js', '.json', '.svg', '.woff2', '.png'],
+  },
+
+  devServer: {
+    publicPath: '/public/build/',
+    hot: true,
+    port: 3333,
+    proxy: {
+      '!/public/build': 'http://localhost:3000'
+    }
   },
 
   module: {
     rules: [
-      {
-        test: /\.tsx?$/,
-        enforce: 'pre',
-        exclude: /node_modules/,
-        use: {
-          loader: 'tslint-loader',
-          options: {
-            emitErrors: true,
-            typeCheck: false,
-          }
-        }
-      },
       {
         test: /\.tsx?$/,
         exclude: /node_modules/,
@@ -51,12 +44,25 @@ module.exports = merge(common, {
           loader: 'awesome-typescript-loader',
           options: {
             useCache: true,
+            useBabel: true,
+            babelOptions: {
+              babelrc: false,
+              plugins: [
+                'syntax-dynamic-import',
+                'react-hot-loader/babel'
+              ]
+            }
           },
         }
       },
-      require('./sass.rule.js')({
-        sourceMap: true, minimize: false, preserveUrl: false
-      }, extractSass),
+      {
+        test: /\.scss$/,
+        use: [
+          "style-loader", // creates style nodes from JS strings
+          "css-loader", // translates CSS into CommonJS
+          "sass-loader" // compiles Sass to CSS
+        ]
+      },
       {
         test: /\.(png|jpg|gif|ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
         loader: 'file-loader'
@@ -66,25 +72,20 @@ module.exports = merge(common, {
 
   plugins: [
     new CleanWebpackPlugin('../public/build', { allowExternal: true }),
-    extractSass,
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index.template.html'),
       inject: 'body',
-      chunks: ['manifest', 'vendor', 'app'],
+      alwaysWriteToDisk: true
     }),
+    new HtmlWebpackHarddiskPlugin(),
     new webpack.NamedModulesPlugin(),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.DefinePlugin({
+      'GRAFANA_THEME': JSON.stringify(process.env.GRAFANA_THEME || 'dark'),
       'process.env': {
         'NODE_ENV': JSON.stringify('development')
       }
     }),
-    new webpack.optimize.CommonsChunkPlugin({
-      names: ['vendor', 'manifest'],
-    }),
-    // new BundleAnalyzerPlugin({
-    //   analyzerPort: 8889
-    // })
   ]
 });
