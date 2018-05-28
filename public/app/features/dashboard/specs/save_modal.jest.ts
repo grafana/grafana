@@ -4,7 +4,7 @@ jest.mock('app/core/services/context_srv', () => ({}));
 
 describe('SaveDashboardModal', () => {
   describe('save modal checkboxes', () => {
-    it('should hide checkboxes', () => {
+    it('should show checkboxes', () => {
       let fakeDashboardSrv = {
         dash: {
           templating: {
@@ -42,11 +42,11 @@ describe('SaveDashboardModal', () => {
       };
       let modal = new SaveDashboardModalCtrl(fakeDashboardSrv);
 
-      expect(modal.compareTime()).toBe(false);
-      expect(modal.compareTemplating()).toBe(true);
+      expect(modal.timeChange).toBe(true);
+      expect(modal.variableChange).toBe(true);
     });
 
-    it('should show checkboxes', () => {
+    it('should hide checkboxes', () => {
       let fakeDashboardSrv = {
         dash: {
           templating: {
@@ -83,8 +83,8 @@ describe('SaveDashboardModal', () => {
         },
       };
       let modal = new SaveDashboardModalCtrl(fakeDashboardSrv);
-      expect(modal.compareTime()).toBe(true);
-      expect(modal.compareTemplating()).toBe(false);
+      expect(modal.timeChange).toBe(false);
+      expect(modal.variableChange).toBe(false);
     });
   });
 });
