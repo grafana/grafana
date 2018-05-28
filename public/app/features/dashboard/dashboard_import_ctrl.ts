@@ -7,6 +7,7 @@ export class DashboardImportCtrl {
   jsonText: string;
   parseError: string;
   nameExists: boolean;
+  uidExists: boolean;
   dash: any;
   inputs: any[];
   inputsValid: boolean;
@@ -16,6 +17,10 @@ export class DashboardImportCtrl {
   titleTouched: boolean;
   hasNameValidationError: boolean;
   nameValidationError: any;
+  hasUidValidationError: boolean;
+  uidValidationError: any;
+  autoGenerateUid: boolean;
+  autoGenerateUidValue: string;
 
   /** @ngInject */
   constructor(private backendSrv, private validationSrv, navModelSrv, private $location, $routeParams) {
@@ -23,6 +28,9 @@ export class DashboardImportCtrl {
 
     this.step = 1;
     this.nameExists = false;
+    this.uidExists = false;
+    this.autoGenerateUid = true;
+    this.autoGenerateUidValue = 'auto-generated';
 
     // check gnetId in url
     if ($routeParams.gnetId) {
@@ -61,6 +69,7 @@ export class DashboardImportCtrl {
 
     this.inputsValid = this.inputs.length === 0;
     this.titleChanged();
+    this.uidChanged(true);
   }
 
   setDatasourceOptions(input, inputModel) {
@@ -104,6 +113,28 @@ export class DashboardImportCtrl {
 
         this.hasNameValidationError = true;
         this.nameValidationError = err.message;
+      });
+  }
+
+  uidChanged(initial) {
+    this.uidExists = false;
+    this.hasUidValidationError = false;
+
+    if (initial === true && this.dash.uid) {
+      this.autoGenerateUidValue = 'value set';
+    }
+
+    this.backendSrv
+      .getDashboardByUid(this.dash.uid)
+      .then(res => {
+        this.uidExists = true;
+        this.hasUidValidationError = true;
+        this.uidValidationError = `Dashboard named '${res.dashboard.title}' in folder '${
+          res.meta.folderTitle
+        }' has the same uid`;
+      })
+      .catch(err => {
+        err.isHandled = true;
       });
   }
 
