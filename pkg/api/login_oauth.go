@@ -75,9 +75,10 @@ func OAuthLogin(ctx *m.ReqContext) {
 		ctx.Handle(500, "login.OAuthLogin(state mismatch)", nil)
 		return
 	}
-
+	
 	// handle call back
 	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: setting.OAuthService.OAuthInfos[name].TlsSkipVerify,
 		},
