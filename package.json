@@ -102,7 +102,7 @@
   },
   "scripts": {
     "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
-    "start": "webpack-dev-server --progress --colors --config scripts/webpack/webpack.dev.js",
+    "start": "webpack-dev-server --progress --colors --config scripts/webpack/webpack.hot.js",
     "watch": "webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
     "build": "grunt build",
     "test": "grunt test",
