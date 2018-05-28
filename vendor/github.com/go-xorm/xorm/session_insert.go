@@ -66,12 +66,11 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 		return 0, errors.New("could not insert a empty slice")
 	}
 
-	if err := session.statement.setRefBean(sliceValue.Index(0).Interface()); err != nil {
+	if err := session.statement.setRefValue(reflect.ValueOf(sliceValue.Index(0).Interface())); err != nil {
 		return 0, err
 	}
 
-	tableName := session.statement.TableName()
-	if len(tableName) <= 0 {
+	if len(session.statement.TableName()) <= 0 {
 		return 0, ErrTableNotFound
 	}
 
@@ -116,11 +115,15 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 				if col.IsDeleted {
 					continue
 				}
-				if session.statement.omitColumnMap.contain(col.Name) {
-					continue
+				if session.statement.ColumnStr != "" {
+					if _, ok := getFlagForColumn(session.statement.columnMap, col); !ok {
+						continue
+					}
 				}
-				if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
-					continue
+				if session.statement.OmitStr != "" {
+					if _, ok := getFlagForColumn(session.statement.columnMap, col); ok {
+						continue
+					}
 				}
 				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
 					val, t := session.engine.nowTime(col)
@@ -167,11 +170,15 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 				if col.IsDeleted {
 					continue
 				}
-				if session.statement.omitColumnMap.contain(col.Name) {
-					continue
+				if session.statement.ColumnStr != "" {
+					if _, ok := getFlagForColumn(session.statement.columnMap, col); !ok {
+						continue
+					}
 				}
-				if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
-					continue
+				if session.statement.OmitStr != "" {
+					if _, ok := getFlagForColumn(session.statement.columnMap, col); ok {
+						continue
+					}
 				}
 				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
 					val, t := session.engine.nowTime(col)
@@ -206,6 +213,7 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 
 	var sql = "INSERT INTO %s (%v%v%v) VALUES (%v)"
 	var statement string
+	var tableName = session.statement.TableName()
 	if session.engine.dialect.DBType() == core.ORACLE {
 		sql = "INSERT ALL INTO %s (%v%v%v) VALUES (%v) SELECT 1 FROM DUAL"
 		temp := fmt.Sprintf(") INTO %s (%v%v%v) VALUES (",
@@ -232,7 +240,9 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 		return 0, err
 	}
 
-	session.cacheInsert(tableName)
+	if cacher := session.engine.getCacher2(table); cacher != nil && session.statement.UseCache {
+		session.cacheInsert(table, tableName)
+	}
 
 	lenAfterClosures := len(session.afterClosures)
 	for i := 0; i < size; i++ {
@@ -288,7 +298,7 @@ func (session *Session) InsertMulti(rowsSlicePtr interface{}) (int64, error) {
 }
 
 func (session *Session) innerInsert(bean interface{}) (int64, error) {
-	if err := session.statement.setRefBean(bean); err != nil {
+	if err := session.statement.setRefValue(rValue(bean)); err != nil {
 		return 0, err
 	}
 	if len(session.statement.TableName()) <= 0 {
@@ -306,8 +316,8 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 	if processor, ok := interface{}(bean).(BeforeInsertProcessor); ok {
 		processor.BeforeInsert()
 	}
-
-	colNames, args, err := session.genInsertColumns(bean)
+	// --
+	colNames, args, err := genCols(session.statement.RefTable, session, bean, false, false)
 	if err != nil {
 		return 0, err
 	}
@@ -392,7 +402,9 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 		defer handleAfterInsertProcessorFunc(bean)
 
-		session.cacheInsert(tableName)
+		if cacher := session.engine.getCacher2(table); cacher != nil && session.statement.UseCache {
+			session.cacheInsert(table, tableName)
+		}
 
 		if table.Version != "" && session.statement.checkVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
@@ -435,7 +447,9 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		}
 		defer handleAfterInsertProcessorFunc(bean)
 
-		session.cacheInsert(tableName)
+		if cacher := session.engine.getCacher2(table); cacher != nil && session.statement.UseCache {
+			session.cacheInsert(table, tableName)
+		}
 
 		if table.Version != "" && session.statement.checkVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
@@ -476,7 +490,9 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 		defer handleAfterInsertProcessorFunc(bean)
 
-		session.cacheInsert(tableName)
+		if cacher := session.engine.getCacher2(table); cacher != nil && session.statement.UseCache {
+			session.cacheInsert(table, tableName)
+		}
 
 		if table.Version != "" && session.statement.checkVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
@@ -523,104 +539,16 @@ func (session *Session) InsertOne(bean interface{}) (int64, error) {
 	return session.innerInsert(bean)
 }
 
-func (session *Session) cacheInsert(table string) error {
-	if !session.statement.UseCache {
-		return nil
+func (session *Session) cacheInsert(table *core.Table, tables ...string) error {
+	if table == nil {
+		return ErrCacheFailed
 	}
-	cacher := session.engine.getCacher(table)
-	if cacher == nil {
-		return nil
+
+	cacher := session.engine.getCacher2(table)
+	for _, t := range tables {
+		session.engine.logger.Debug("[cache] clear sql:", t)
+		cacher.ClearIds(t)
 	}
-	session.engine.logger.Debug("[cache] clear sql:", table)
-	cacher.ClearIds(table)
+
 	return nil
-}
-
-// genInsertColumns generates insert needed columns
-func (session *Session) genInsertColumns(bean interface{}) ([]string, []interface{}, error) {
-	table := session.statement.RefTable
-	colNames := make([]string, 0, len(table.ColumnsSeq()))
-	args := make([]interface{}, 0, len(table.ColumnsSeq()))
-
-	for _, col := range table.Columns() {
-		if col.MapType == core.ONLYFROMDB {
-			continue
-		}
-
-		if col.IsDeleted {
-			continue
-		}
-
-		if session.statement.omitColumnMap.contain(col.Name) {
-			continue
-		}
-
-		if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
-			continue
-		}
-
-		if _, ok := session.statement.incrColumns[col.Name]; ok {
-			continue
-		} else if _, ok := session.statement.decrColumns[col.Name]; ok {
-			continue
-		}
-
-		fieldValuePtr, err := col.ValueOf(bean)
-		if err != nil {
-			return nil, nil, err
-		}
-		fieldValue := *fieldValuePtr
-
-		if col.IsAutoIncrement {
-			switch fieldValue.Type().Kind() {
-			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int, reflect.Int64:
-				if fieldValue.Int() == 0 {
-					continue
-				}
-			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint, reflect.Uint64:
-				if fieldValue.Uint() == 0 {
-					continue
-				}
-			case reflect.String:
-				if len(fieldValue.String()) == 0 {
-					continue
-				}
-			case reflect.Ptr:
-				if fieldValue.Pointer() == 0 {
-					continue
-				}
-			}
-		}
-
-		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
-		if _, ok := getFlagForColumn(session.statement.nullableMap, col); ok {
-			if col.Nullable && isZero(fieldValue.Interface()) {
-				var nilValue *int
-				fieldValue = reflect.ValueOf(nilValue)
-			}
-		}
-
-		if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime /*&& isZero(fieldValue.Interface())*/ {
-			// if time is non-empty, then set to auto time
-			val, t := session.engine.nowTime(col)
-			args = append(args, val)
-
-			var colName = col.Name
-			session.afterClosures = append(session.afterClosures, func(bean interface{}) {
-				col := table.GetColumn(colName)
-				setColumnTime(bean, col, t)
-			})
-		} else if col.IsVersion && session.statement.checkVersion {
-			args = append(args, 1)
-		} else {
-			arg, err := session.value2Interface(col, fieldValue)
-			if err != nil {
-				return colNames, args, err
-			}
-			args = append(args, arg)
-		}
-
-		colNames = append(colNames, col.Name)
-	}
-	return colNames, args, nil
 }

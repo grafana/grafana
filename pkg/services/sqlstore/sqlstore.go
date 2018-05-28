@@ -277,8 +277,8 @@ func InitTestDB(t *testing.T) *SqlStore {
 		t.Fatalf("Failed to init test database: %v", err)
 	}
 
-	//// sqlstore.engine.DatabaseTZ = time.UTC
-	//// sqlstore.engine.TZLocation = time.UTC
+	sqlstore.engine.DatabaseTZ = time.UTC
+	sqlstore.engine.TZLocation = time.UTC
 
 	return sqlstore
 }
