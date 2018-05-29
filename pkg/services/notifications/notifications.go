@@ -113,6 +113,7 @@ func (ns *NotificationService) sendWebhookSync(ctx context.Context, cmd *m.SendW
 		HttpMethod:  cmd.HttpMethod,
 		HttpHeader:  cmd.HttpHeader,
 		ContentType: cmd.ContentType,
+		Type:        cmd.Type,
 	})
 }
 
@@ -230,6 +231,7 @@ func (ns *NotificationService) annotationCreatedHandler(evt *events.AnnotationCr
 			User:     ns.Cfg.Webhook.User,
 			Password: ns.Cfg.Webhook.Password,
 			Body:     evt.Body,
+			Type:     "annotation",
 		}
 	}
 	return nil
@@ -242,6 +244,7 @@ func (ns *NotificationService) annotationUpdatedHandler(evt *events.AnnotationUp
 			User:     ns.Cfg.Webhook.User,
 			Password: ns.Cfg.Webhook.Password,
 			Body:     evt.Body,
+			Type:     "annotation",
 		}
 	}
 	return nil

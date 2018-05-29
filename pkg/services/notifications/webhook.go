@@ -11,6 +11,7 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -22,6 +23,7 @@ type Webhook struct {
 	HttpMethod  string
 	HttpHeader  map[string]string
 	ContentType string
+	Type        string
 }
 
 var netTransport = &http.Transport{
@@ -38,6 +40,10 @@ var netClient = &http.Client{
 }
 
 func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
+	status := 0
+	timer := metrics.NewSummaryTimer(metrics.M_Webhook_Execution_Time, &status, webhook.Type)
+	defer timer.ObserveDuration()
+
 	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
 
 	if webhook.HttpMethod == "" {
@@ -68,6 +74,8 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 	if err != nil {
 		return err
 	}
+
+	status = resp.StatusCode
 
 	if resp.StatusCode/100 == 2 {
 		return nil
