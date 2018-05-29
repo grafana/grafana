@@ -71,12 +71,3 @@ datasources:
       authType: credentials
       defaultRegion: eu-west-2
 
-  - name: Cloudwatch keys
-    type: cloudwatch
-    editable: true
-    jsonData:
-      authType: keys
-      defaultRegion: eu-west-2
-    secureJsonData:
-      accessKey: AKIAJL347VWN6MK63N2A
-      secretKey: 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
