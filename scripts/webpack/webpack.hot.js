@@ -26,6 +26,8 @@ module.exports = merge(common, {
     extensions: ['.scss', '.ts', '.tsx', '.es6', '.js', '.json', '.svg', '.woff2', '.png'],
   },
 
+  devtool: 'eval-source-map',
+
   devServer: {
     publicPath: '/public/build/',
     hot: true,

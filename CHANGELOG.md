@@ -13,6 +13,10 @@
 * **Security**: Fix XSS vulnerabilities in dashboard links [#11813](https://github.com/grafana/grafana/pull/11813)
 * **Singlestat**: Fix "time of last point" shows local time when dashboard timezone set to UTC [#10338](https://github.com/grafana/grafana/issues/10338)
 * **Prometheus**: Add support for passing timeout parameter to Prometheus [#11788](https://github.com/grafana/grafana/pull/11788), thx [@mtanda](https://github.com/mtanda)
+* **Login**: Add optional option sign out url for generic oauth [#9847](https://github.com/grafana/grafana/issues/9847), thx [@roidelapluie](https://github.com/roidelapluie)
+* **Login**: Use proxy server from environment variable if available [#9703](https://github.com/grafana/grafana/issues/9703), thx [@iyeonok](https://github.com/iyeonok)
+* **Invite users**: Friendlier error message when smtp is not configured [#12087](https://github.com/grafana/grafana/issues/12087), thx [@thurt](https://github.com/thurt)
+* **Graphite**: Don't send distributed tracing headers when using direct/browser access mode [#11494](https://github.com/grafana/grafana/issues/11494)
 
 # 5.1.3 (2018-05-16)
 
