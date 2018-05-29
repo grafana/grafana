@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 )
 
 func GetAnnotations(c *m.ReqContext) Response {
@@ -103,6 +105,16 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 			"id":      startID,
 			"endId":   item.Id,
 		})
+	}
+
+	// notify via webhook if payload has 'notify' field
+	if item.Data != nil && item.Data.Get("notify").MustBool() {
+		b, err := item.Data.MarshalJSON()
+		if err == nil {
+			bus.Publish(&events.AnnotationCreated{
+				Body: string(b),
+			})
+		}
 	}
 
 	return JSON(200, util.DynMap{

@@ -46,10 +46,13 @@ func (ns *NotificationService) Init() error {
 	ns.Bus.AddHandler(ns.sendEmailCommandHandler)
 
 	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandlerSync)
-	ns.Bus.AddHandlerCtx(ns.SendWebhookSync)
+	ns.Bus.AddHandlerCtx(ns.sendWebhookSync)
 
 	ns.Bus.AddEventListener(ns.signUpStartedHandler)
 	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
+
+	ns.Bus.AddEventListener(ns.annotationCreatedHandler)
+	ns.Bus.AddEventListener(ns.annotationUpdatedHandler)
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
@@ -78,7 +81,6 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 		select {
 		case webhook := <-ns.webhookQueue:
 			err := ns.sendWebRequestSync(context.Background(), webhook)
-
 			if err != nil {
 				ns.log.Error("Failed to send webrequest ", "error", err)
 			}
@@ -102,7 +104,7 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
+func (ns *NotificationService) sendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
 	return ns.sendWebRequestSync(ctx, &Webhook{
 		Url:         cmd.Url,
 		User:        cmd.User,
@@ -219,4 +221,28 @@ func (ns *NotificationService) signUpCompletedHandler(evt *events.SignUpComplete
 			"Name": evt.Name,
 		},
 	})
+}
+
+func (ns *NotificationService) annotationCreatedHandler(evt *events.AnnotationCreated) error {
+	if ns.Cfg.Webhook.Enabled {
+		ns.webhookQueue <- &Webhook{
+			Url:      ns.Cfg.Webhook.Url,
+			User:     ns.Cfg.Webhook.User,
+			Password: ns.Cfg.Webhook.Password,
+			Body:     evt.Body,
+		}
+	}
+	return nil
+}
+
+func (ns *NotificationService) annotationUpdatedHandler(evt *events.AnnotationUpdated) error {
+	if ns.Cfg.Webhook.Enabled {
+		ns.webhookQueue <- &Webhook{
+			Url:      ns.Cfg.Webhook.Url,
+			User:     ns.Cfg.Webhook.User,
+			Password: ns.Cfg.Webhook.Password,
+			Body:     evt.Body,
+		}
+	}
+	return nil
 }
