@@ -33,8 +33,8 @@
 					<td class="pointer" ng-click="ctrl.edit(annotation)">
 						{{annotation.datasource || 'Default'}}
 					</td>
-					<td style="width: 1%"><i ng-click="_.move(ctrl.annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-					<td style="width: 1%"><i ng-click="_.move(ctrl.annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+					<td style="width: 1%"><i ng-click="ctrl.move($index,-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+					<td style="width: 1%"><i ng-click="ctrl.move($index,1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 					<td style="width: 1%">
 						<a ng-click="ctrl.removeAnnotation(annotation)" class="btn btn-danger btn-mini" ng-hide="annotation.builtIn">
 							<i class="fa fa-remove"></i>
