@@ -48,15 +48,13 @@ module.exports = merge(common, {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         use: {
-          loader: 'awesome-typescript-loader',
+          loader: 'ts-loader',
           options: {
-            useCache: true,
+            transpileOnly: true
           },
-        }
+        },
       },
-      require('./sass.rule.js')({
-        sourceMap: true, minimize: false, preserveUrl: false
-      }, extractSass),
+      require('./sass.rule.js')({ sourceMap: false, minimize: false, preserveUrl: false }, extractSass),
       {
         test: /\.(png|jpg|gif|ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
         loader: 'file-loader'

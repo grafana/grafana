@@ -35,26 +35,17 @@ module.exports = merge(common, {
       {
         test: /\.tsx?$/,
         exclude: /node_modules/,
-        use: [
-          {
-            loader: 'awesome-typescript-loader',
-            options: {
-              errorsAsWarnings: false,
-            },
+        use: {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true
           },
-        ]
+        },
       },
       require('./sass.rule.js')({
         sourceMap: false, minimize: true, preserveUrl: false
       })
     ]
-  },
-
-  devServer: {
-    noInfo: true,
-    stats: {
-      chunks: false,
-    },
   },
 
   optimization: {
