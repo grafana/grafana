@@ -101,7 +101,7 @@
 .btn-success {
   @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
 
-  &.saving {
+  &--processing {
     @include button-outline-variant($gray-1);
     @include box-shadow(none);
     cursor: default;

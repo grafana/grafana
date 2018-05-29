@@ -39,9 +39,14 @@ const template = `
     </div>
 
     <div class="gf-form-button-row text-center">
-      <button type="submit" id="saveButton" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid">
-        <span ng-if="!ctrl.saving">Save</span>
-        <span ng-if="ctrl.saving === true">Saving...</span>
+      <button
+        type="submit"
+        class="btn btn-success"
+        ng-class="{'btn-success--processing': ctrl.isSaving}"
+        ng-disabled="ctrl.saveForm.$invalid"
+      >
+        <span ng-if="!ctrl.isSaving">Save</span>
+        <span ng-if="ctrl.isSaving === true">Saving...</span>
       </button>
       <button class="btn btn-inverse" ng-click="ctrl.dismiss();">Cancel</button>
     </div>
@@ -53,14 +58,14 @@ export class SaveDashboardModalCtrl {
   message: string;
   max: number;
   saveForm: any;
-  saving: boolean;
+  isSaving: boolean;
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private dashboardSrv) {
+  constructor(private dashboardSrv, private $timeout) {
     this.message = '';
     this.max = 64;
-    this.saving = false;
+    this.isSaving = false;
   }
 
   save() {
@@ -68,19 +73,12 @@ export class SaveDashboardModalCtrl {
       return;
     }
 
-    this.setSaving();
-
     var dashboard = this.dashboardSrv.getCurrent();
     var saveModel = dashboard.getSaveModelClone();
     var options = { message: this.message };
 
+    this.isSaving = true;
     return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
-  }
-
-  setSaving() {
-    let saveButton = document.querySelector('#saveButton');
-    saveButton.className += ' saving';
-    this.saving = true;
   }
 }
 
