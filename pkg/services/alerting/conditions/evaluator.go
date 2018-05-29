@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	defaultTypes []string = []string{"gt", "lt"}
-	rangedTypes  []string = []string{"within_range", "outside_range"}
+	defaultTypes = []string{"gt", "lt"}
+	rangedTypes  = []string{"within_range", "outside_range"}
 )
 
 type AlertEvaluator interface {

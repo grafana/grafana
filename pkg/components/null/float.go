@@ -106,6 +106,15 @@ func (f Float) String() string {
 	return fmt.Sprintf("%1.3f", f.Float64)
 }
 
+// FullString returns float as string in full precision
+func (f Float) FullString() string {
+	if !f.Valid {
+		return "null"
+	}
+
+	return fmt.Sprintf("%f", f.Float64)
+}
+
 // SetValid changes this Float's value and also sets it to be non-null.
 func (f *Float) SetValid(n float64) {
 	f.Float64 = n

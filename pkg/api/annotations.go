@@ -294,19 +294,3 @@ func canSave(c *m.ReqContext, repo annotations.Repository, annotationID int64) R
 
 	return nil
 }
-
-func canSaveByRegionID(c *m.ReqContext, repo annotations.Repository, regionID int64) Response {
-	items, err := repo.Find(&annotations.ItemQuery{RegionId: regionID, OrgId: c.OrgId})
-
-	if err != nil || len(items) == 0 {
-		return Error(500, "Could not find annotation to update", err)
-	}
-
-	dashboardID := items[0].DashboardId
-
-	if canSave, err := canSaveByDashboardID(c, dashboardID); err != nil || !canSave {
-		return dashboardGuardianResponse(err)
-	}
-
-	return nil
-}

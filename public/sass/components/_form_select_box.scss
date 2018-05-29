@@ -102,5 +102,6 @@ $select-option-selected-bg: $dropdownLinkBackgroundActive;
 .gf-form-input--form-dropdown-right {
   .Select-menu-outer {
     right: 0;
+    left: unset;
   }
 }

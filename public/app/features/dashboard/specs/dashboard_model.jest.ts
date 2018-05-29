@@ -405,7 +405,7 @@ describe('DashboardModel', function() {
       });
     });
 
-    it.only('should move panels below down', function() {
+    it('should move panels below down', function() {
       expect(dashboard.panels[4].gridPos).toMatchObject({
         x: 0,
         y: 9,

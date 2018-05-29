@@ -31,8 +31,6 @@ func initContextWithRenderAuth(ctx *m.ReqContext) bool {
 	return true
 }
 
-type renderContextFunc func(key string) (string, error)
-
 func AddRenderAuthKey(orgId int64, userId int64, orgRole m.RoleType) string {
 	renderKeysLock.Lock()
 

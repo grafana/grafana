@@ -14,6 +14,7 @@ describe('PrometheusDatasource', () => {
   };
 
   ctx.backendSrvMock = {};
+
   ctx.templateSrvMock = {
     replace: a => a,
   };
@@ -21,6 +22,45 @@ describe('PrometheusDatasource', () => {
 
   beforeEach(() => {
     ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
+  });
+
+  describe('Datasource metadata requests', () => {
+    it('should perform a GET request with the default config', () => {
+      ctx.backendSrvMock.datasourceRequest = jest.fn();
+      ctx.ds.metadataRequest('/foo');
+      expect(ctx.backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
+      expect(ctx.backendSrvMock.datasourceRequest.mock.calls[0][0].method).toBe('GET');
+    });
+
+    it('should still perform a GET request with the DS HTTP method set to POST', () => {
+      ctx.backendSrvMock.datasourceRequest = jest.fn();
+      const postSettings = _.cloneDeep(instanceSettings);
+      postSettings.jsonData.httpMethod = 'POST';
+      const ds = new PrometheusDatasource(postSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
+      ds.metadataRequest('/foo');
+      expect(ctx.backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
+      expect(ctx.backendSrvMock.datasourceRequest.mock.calls[0][0].method).toBe('GET');
+    });
+  });
+
+  describe('When performing performSuggestQuery', () => {
+    it('should cache response', async () => {
+      ctx.backendSrvMock.datasourceRequest.mockReturnValue(
+        Promise.resolve({
+          status: 'success',
+          data: { data: ['value1', 'value2', 'value3'] },
+        })
+      );
+
+      let results = await ctx.ds.performSuggestQuery('value', true);
+
+      expect(results).toHaveLength(3);
+
+      ctx.backendSrvMock.datasourceRequest.mockReset();
+      results = await ctx.ds.performSuggestQuery('value', true);
+
+      expect(results).toHaveLength(3);
+    });
   });
 
   describe('When converting prometheus histogram to heatmap format', () => {

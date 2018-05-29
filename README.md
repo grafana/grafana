@@ -39,11 +39,20 @@ go run build.go build
 
 For this you need nodejs (v.6+).
 
+To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
 npm run watch
 ```
+
+Build the assets, rebuild on file change with Hot Module Replacement (HMR), and serve them by webpack-dev-server (http://localhost:3333):
+```bash
+yarn start
+# OR set a theme
+env GRAFANA_THEME=light yarn start
+```
+Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.
 
 Run tests 
 ```bash
@@ -54,6 +63,8 @@ Run karma tests
 ```bash
 npm run karma
 ```
+
+Run
 
 ### Recompile backend on source change
 

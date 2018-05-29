@@ -141,5 +141,9 @@ func getDiff(baseData, newData *simplejson.Json) (interface{}, diff.Diff, error)
 
 	left := make(map[string]interface{})
 	err = json.Unmarshal(leftBytes, &left)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return left, jsonDiff, nil
 }

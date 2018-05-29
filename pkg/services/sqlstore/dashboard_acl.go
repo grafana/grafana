@@ -67,7 +67,8 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 		'' as title,
 		'' as slug,
 		'' as uid,` +
-			falseStr + ` AS is_folder
+			falseStr + ` AS is_folder,` +
+			falseStr + ` AS inherited
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
 		query.Result = make([]*m.DashboardAclInfoDTO, 0)
@@ -94,7 +95,8 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 				d.title,
 				d.slug,
 				d.uid,
-				d.is_folder
+				d.is_folder,
+				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + dialect.BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
 			FROM dashboard as d
 				LEFT JOIN dashboard folder on folder.id = d.folder_id
 				LEFT JOIN dashboard_acl AS da ON

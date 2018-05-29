@@ -106,11 +106,11 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 		return setting.AppUrl, nil
 	}
 
-	if ref, err := c.GetDashboardUID(); err != nil {
+	ref, err := c.GetDashboardUID()
+	if err != nil {
 		return "", err
-	} else {
-		return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
 	}
+	return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
 }
 
 func (c *EvalContext) GetNewState() m.AlertStateType {

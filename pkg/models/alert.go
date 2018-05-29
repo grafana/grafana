@@ -34,8 +34,8 @@ const (
 )
 
 var (
-	ErrCannotChangeStateOnPausedAlert error = fmt.Errorf("Cannot change state on pause alert")
-	ErrRequiresNewState               error = fmt.Errorf("update alert state requires a new state.")
+	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("Cannot change state on pause alert")
+	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state.")
 )
 
 func (s AlertStateType) IsValid() bool {
@@ -161,12 +161,13 @@ type SetAlertStateCommand struct {
 
 //Queries
 type GetAlertsQuery struct {
-	OrgId       int64
-	State       []string
-	DashboardId int64
-	PanelId     int64
-	Limit       int64
-	User        *SignedInUser
+	OrgId        int64
+	State        []string
+	DashboardIDs []int64
+	PanelId      int64
+	Limit        int64
+	Query        string
+	User         *SignedInUser
 
 	Result []*AlertListItemDTO
 }
