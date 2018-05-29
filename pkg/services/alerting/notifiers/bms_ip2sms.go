@@ -1,15 +1,15 @@
-go 
 package notifiers
 
 import (
 	"encoding/base64"
+	"mime/multipart"
 	"encoding/xml"
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"mime/multipart"
 )
 
 var (
