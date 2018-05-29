@@ -62,7 +62,7 @@ export class SaveDashboardModalCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private dashboardSrv, private $timeout) {
+  constructor(private dashboardSrv) {
     this.message = '';
     this.max = 64;
     this.isSaving = false;
