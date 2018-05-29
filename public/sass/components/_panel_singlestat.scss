@@ -7,7 +7,6 @@
 
 .singlestat-panel-value-container {
   line-height: 1;
-  display: table-cell;
   position: absolute;
   z-index: 1;
   font-size: 3em;
@@ -16,7 +15,6 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding-bottom: 10px;
 }
 
 .singlestat-panel-prefix {
