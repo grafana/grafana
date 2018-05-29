@@ -31,8 +31,11 @@ div.flot-text {
 .panel-container {
   background-color: $panel-bg;
   border: $panel-border;
-  position: relative;
   border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
 
   &.panel-transparent {
     background-color: transparent;
