@@ -50,7 +50,7 @@ describe('InfluxQueryPart', () => {
         queryPart.create({
           type: 'count',
           category: queryPart.getCategories().Aggregations,
-        })
+        }),
       ];
       var partModel = queryPart.create({
         type: 'distinct',
@@ -59,8 +59,8 @@ describe('InfluxQueryPart', () => {
 
       queryPart.replaceAggregationAdd(selectParts, partModel);
 
-      expect(selectParts[1].text).toBe("distinct()");
-      expect(selectParts[2].text).toBe("count()");
+      expect(selectParts[1].text).toBe('distinct()');
+      expect(selectParts[2].text).toBe('count()');
     });
 
     it('should convert to count distinct when distinct is selected and count added', () => {
@@ -81,8 +81,8 @@ describe('InfluxQueryPart', () => {
 
       queryPart.replaceAggregationAdd(selectParts, partModel);
 
-      expect(selectParts[1].text).toBe("distinct()");
-      expect(selectParts[2].text).toBe("count()");
+      expect(selectParts[1].text).toBe('distinct()');
+      expect(selectParts[2].text).toBe('count()');
     });
 
     it('should replace count distinct if an aggregation is selected', () => {
@@ -98,7 +98,7 @@ describe('InfluxQueryPart', () => {
         queryPart.create({
           type: 'count',
           category: queryPart.getCategories().Aggregations,
-        })
+        }),
       ];
       var partModel = queryPart.create({
         type: 'mean',
@@ -107,7 +107,7 @@ describe('InfluxQueryPart', () => {
 
       queryPart.replaceAggregationAdd(selectParts, partModel);
 
-      expect(selectParts[1].text).toBe("mean()");
+      expect(selectParts[1].text).toBe('mean()');
       expect(selectParts).toHaveLength(2);
     });
 
@@ -124,7 +124,7 @@ describe('InfluxQueryPart', () => {
         queryPart.create({
           type: 'count',
           category: queryPart.getCategories().Aggregations,
-        })
+        }),
       ];
       var partModel = queryPart.create({
         type: 'count',
@@ -133,8 +133,8 @@ describe('InfluxQueryPart', () => {
 
       queryPart.replaceAggregationAdd(selectParts, partModel);
 
-      expect(selectParts[1].text).toBe("distinct()");
-      expect(selectParts[2].text).toBe("count()");
+      expect(selectParts[1].text).toBe('distinct()');
+      expect(selectParts[2].text).toBe('count()');
       expect(selectParts).toHaveLength(3);
     });
 
@@ -151,7 +151,7 @@ describe('InfluxQueryPart', () => {
         queryPart.create({
           type: 'count',
           category: queryPart.getCategories().Aggregations,
-        })
+        }),
       ];
       var partModel = queryPart.create({
         type: 'distinct',
@@ -160,9 +160,29 @@ describe('InfluxQueryPart', () => {
 
       queryPart.replaceAggregationAdd(selectParts, partModel);
 
-      expect(selectParts[1].text).toBe("distinct()");
-      expect(selectParts[2].text).toBe("count()");
+      expect(selectParts[1].text).toBe('distinct()');
+      expect(selectParts[2].text).toBe('count()');
       expect(selectParts).toHaveLength(3);
+    });
+
+    it('should remove distinct when sum aggregation is selected', () => {
+      var selectParts = [
+        queryPart.create({
+          type: 'field',
+          category: queryPart.getCategories().Fields,
+        }),
+        queryPart.create({
+          type: 'distinct',
+          category: queryPart.getCategories().Aggregations,
+        }),
+      ];
+      var partModel = queryPart.create({
+        type: 'sum',
+        category: queryPart.getCategories().Aggregations,
+      });
+      queryPart.replaceAggregationAdd(selectParts, partModel);
+
+      expect(selectParts[1].text).toBe('sum()');
     });
   });
 });

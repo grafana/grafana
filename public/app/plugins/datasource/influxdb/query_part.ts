@@ -55,11 +55,11 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
       if (part.def.type === 'distinct') {
         var morePartsAvailable = selectParts.length >= i + 2;
         if (partModel.def.type !== 'count' && morePartsAvailable) {
-            var nextPart = selectParts[i + 1];
-            if (nextPart.def.category === categories.Aggregations) {
-              selectParts.splice(i + 1, 1);
-            }
-        } else {
+          var nextPart = selectParts[i + 1];
+          if (nextPart.def.category === categories.Aggregations) {
+            selectParts.splice(i + 1, 1);
+          }
+        } else if (partModel.def.type === 'count') {
           if (!morePartsAvailable || selectParts[i + 1].def.type !== 'count') {
             selectParts.splice(i + 1, 0, partModel);
           }
