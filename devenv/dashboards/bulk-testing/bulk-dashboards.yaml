@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+ - name: 'Bulk dashboards'
+   folder: 'Bulk dashboards'
+   type: file
+   options:
+     path: /home/carl/go/src/github.com/grafana/grafana/devenv/dashboards/bulk-testing
+
