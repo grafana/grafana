@@ -113,6 +113,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/explore/:initial?', {
       template: '<react-container />',
       resolve: {
+        roles: () => ['Editor', 'Admin'],
         component: () => import(/* webpackChunkName: "explore" */ 'app/containers/Explore/Wrapper'),
       },
     })
