@@ -162,7 +162,7 @@ class AlertListPanel extends PanelCtrl {
       params.query = this.panel.nameFilter;
     }
 
-    if (this.panel.folderId) {
+    if (this.panel.folderId >= 0) {
       params.folderId = this.panel.folderId;
     }
 
