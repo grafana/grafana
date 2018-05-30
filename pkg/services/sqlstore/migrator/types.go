@@ -40,9 +40,10 @@ const (
 )
 
 type Index struct {
-	Name string
-	Type int
-	Cols []string
+	Name         string
+	Type         int
+	Cols         []string
+	NullableCols []string // columns that should not be included in unique index when null
 }
 
 func (index *Index) XName(tableName string) string {

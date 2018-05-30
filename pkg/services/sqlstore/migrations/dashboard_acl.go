@@ -18,8 +18,8 @@ func addDashboardAclMigrations(mg *Migrator) {
 		},
 		Indices: []*Index{
 			{Cols: []string{"dashboard_id"}},
-			{Cols: []string{"dashboard_id", "user_id"}, Type: UniqueIndex},
-			{Cols: []string{"dashboard_id", "team_id"}, Type: UniqueIndex},
+			{Cols: []string{"dashboard_id", "user_id"}, Type: UniqueIndex, NullableCols: []string{"user_id"}},
+			{Cols: []string{"dashboard_id", "team_id"}, Type: UniqueIndex, NullableCols: []string{"team_id"}},
 		},
 	}
 

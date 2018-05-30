@@ -24,5 +24,10 @@ func addUserAuthMigrations(mg *Migrator) {
 
 	mg.AddMigration("alter user_auth.auth_id to length 190", NewRawSqlMigration("").
 		Postgres("ALTER TABLE user_auth ALTER COLUMN auth_id TYPE VARCHAR(190);").
-		Mysql("ALTER TABLE user_auth MODIFY auth_id VARCHAR(190);"))
+		Mysql("ALTER TABLE user_auth MODIFY auth_id VARCHAR(190);").
+		Mssql(`
+			DROP INDEX IDX_user_auth_auth_module_auth_id ON user_auth;
+			ALTER TABLE user_auth ALTER COLUMN auth_id VARCHAR(190) NOT NULL;
+			CREATE INDEX "IDX_user_auth_auth_module_auth_id" ON "user_auth" ("auth_module","auth_id");
+			`))
 }

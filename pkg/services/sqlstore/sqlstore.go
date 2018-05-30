@@ -162,8 +162,17 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
 		cnnstr = "file:" + ss.dbCfg.Path + "?cache=shared&mode=rwc"
 	case migrator.MSSQL:
-		cnnstr = fmt.Sprintf(`server=%s;password=%s;user id=%s;database=%s`,
-			ss.dbCfg.Host, ss.dbCfg.Pwd, ss.dbCfg.User,
+		var host, port = "127.0.0.1", "1433"
+		fields := strings.Split(ss.dbCfg.Host, ":")
+		if len(fields) > 0 && len(strings.TrimSpace(fields[0])) > 0 {
+			host = fields[0]
+		}
+		if len(fields) > 1 && len(strings.TrimSpace(fields[1])) > 0 {
+			port = fields[1]
+		}
+		// xorm only supports the 'semicolon seperated key=value pairs' style connection string currently
+		cnnstr = fmt.Sprintf(`log=8;user id=%s;password=%s;server=%s;port=%s;database=%s`,
+			ss.dbCfg.User, ss.dbCfg.Pwd, host, port,
 			ss.dbCfg.Name,
 		)
 		fmt.Println(cnnstr)
