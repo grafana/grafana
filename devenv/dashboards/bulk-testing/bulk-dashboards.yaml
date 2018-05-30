@@ -5,5 +5,5 @@ providers:
    folder: 'Bulk dashboards'
    type: file
    options:
-     path: /home/carl/go/src/github.com/grafana/grafana/devenv/dashboards/bulk-testing
+     path: devenv/dashboards/bulk-testing
 
