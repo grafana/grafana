@@ -1,5 +1,5 @@
   mysql:
-    image: mysql:latest
+    image: mysql:5.6
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana
