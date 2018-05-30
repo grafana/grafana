@@ -14,7 +14,7 @@ export class KeybindingSrv {
   timepickerOpen = false;
 
   /** @ngInject */
-  constructor(private $rootScope, private $location, private datasourceSrv) {
+  constructor(private $rootScope, private $location, private datasourceSrv, private timeSrv) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
       Mousetrap.reset();
@@ -182,7 +182,12 @@ export class KeybindingSrv {
         const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
         const datasource = await this.datasourceSrv.get(panel.datasource);
         if (datasource && datasource.supportsExplore) {
-          const exploreState = encodePathComponent(JSON.stringify(datasource.getExploreState(panel)));
+          const range = this.timeSrv.timeRangeForUrl();
+          const state = {
+            ...datasource.getExploreState(panel),
+            range,
+          };
+          const exploreState = encodePathComponent(JSON.stringify(state));
           this.$location.url(`/explore/${exploreState}`);
         }
       }

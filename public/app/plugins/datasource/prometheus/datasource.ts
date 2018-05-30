@@ -164,6 +164,7 @@ export class PrometheusDatasource {
           legendFormat: activeTargets[index].legendFormat,
           start: start,
           end: end,
+          query: queries[index].expr,
           responseListLength: responseList.length,
           responseIndex: index,
           refId: activeTargets[index].refId,
