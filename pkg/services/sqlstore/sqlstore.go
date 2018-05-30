@@ -170,11 +170,16 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 		if len(fields) > 1 && len(strings.TrimSpace(fields[1])) > 0 {
 			port = fields[1]
 		}
-		// xorm only supports the 'semicolon seperated key=value pairs' style connection string currently
-		cnnstr = fmt.Sprintf(`log=8;user id=%s;password=%s;server=%s;port=%s;database=%s`,
-			ss.dbCfg.User, ss.dbCfg.Pwd, host, port,
-			ss.dbCfg.Name,
-		)
+		cnnstr = fmt.Sprintf(`server=%s;port=%s;database=%s`, host, port, ss.dbCfg.Name)
+		if ss.dbCfg.User != "" {
+			cnnstr += fmt.Sprintf(";user id=%s;password=%s", ss.dbCfg.User, ss.dbCfg.Pwd)
+		}
+		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "none" || ss.dbCfg.SslMode == "false" {
+			if ss.dbCfg.SslMode == "none" {
+				ss.dbCfg.SslMode = "disable" //disable is a bad default for mssql. Need to set to 'none' in order to use mssql driver's "disable" mode
+			}
+			cnnstr += ";encrypt=" + ss.dbCfg.SslMode
+		}
 		fmt.Println(cnnstr)
 	default:
 		return "", fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
