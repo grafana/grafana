@@ -1,0 +1,24 @@
+
+<div class="gf-form-group">
+	<div class="gf-form">
+		<input type="text" class="gf-form-input" ng-model='ctrl.annotation.query' placeholder="select text from events where $timeFilter limit 1000"></input>
+	</div>
+</div>
+
+<h5 class="section-heading">Field mappings <tip>If your influxdb query returns more than one field you need to specify the column names below. An annotation event is composed of a title, tags, and an additional text field.</tip></h5>
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-4">Text</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.textColumn' placeholder=""></input>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-4">Tags</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.tagsColumn' placeholder=""></input>
+		</div>
+		<div class="gf-form" ng-show="ctrl.annotation.titleColumn">
+			<span class="gf-form-label width-4">Title <em class="muted">(deprecated)</em></span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.titleColumn' placeholder=""></input>
+		</div>
+	</div>
+</div>
