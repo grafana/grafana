@@ -183,3 +183,13 @@ func (db *Mssql) PostInsertId(table string, sess *xorm.Session) error {
 	_, err := sess.Exec(fmt.Sprintf("SET IDENTITY_INSERT %s OFF", db.Quote(table)))
 	return err
 }
+
+func (db *Mssql) Limit(limit int64) string {
+	return db.LimitOffset(limit, 0)
+}
+
+func (db *Mssql) LimitOffset(limit int64, offset int64) string {
+	// really rather hacky, but works in sql server 2012+.
+	// alternatively, a bunch of queries would need to be reworked to support TOP N
+	return fmt.Sprintf(" OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", offset, limit)
+}

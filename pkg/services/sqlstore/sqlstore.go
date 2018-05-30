@@ -171,7 +171,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			port = fields[1]
 		}
 		cnnstr = fmt.Sprintf(`server=%s;port=%s;database=%s`, host, port, ss.dbCfg.Name)
-		if ss.dbCfg.User != "" {
+		if ss.dbCfg.User != "" && ss.dbCfg.Pwd != "" {
 			cnnstr += fmt.Sprintf(";user id=%s;password=%s", ss.dbCfg.User, ss.dbCfg.Pwd)
 		}
 		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "none" || ss.dbCfg.SslMode == "false" {
