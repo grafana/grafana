@@ -1,4 +1,5 @@
 import React from 'react';
+import Draggable from 'react-draggable';
 import _ from 'lodash';
 
 const LINE_PADDING = 13;
@@ -14,70 +15,49 @@ export interface IProps {
 }
 
 export class ThresholdHandler extends React.Component<IProps, any> {
-  handlerElem: any;
   thresholdManagerElem: any;
-  lastY: number;
 
   constructor(props) {
     super(props);
 
-    const threshold = this.props.threshold;
-    const value = threshold.value || 0;
     this.state = {
-      value: value || 0,
+      value: this.props.threshold.value || 0,
       dragging: false,
-      posTop: this.getYPos(value),
     };
   }
 
-  componentDidMount() {
-    this.handlerElem.addEventListener('mousedown', this.onInitDragging);
+  static getDerivedStateFromProps(props, state) {
+    // Sync state value if props was changed
+    const value = _.toNumber(props.threshold.value) || 0;
+    if (state.value !== value) {
+      return { value: value };
+    } else {
+      return null;
+    }
   }
-
-  setHandlerRef = elem => {
-    this.handlerElem = elem;
-  };
 
   setWrapperRef = elem => {
     if (elem && _.hasIn(elem, 'parentElement.parentElement.parentElement')) {
       this.thresholdManagerElem = elem.parentElement.parentElement.parentElement;
+      console.log(this.thresholdManagerElem);
       // When new threshold handler was added, trigger render() to place element in proper position
       // if threshold value is out of Y axis bounds.
       this.forceUpdate();
     }
   };
 
-  onInitDragging = evt => {
+  onStartDragging = (evt, data) => {
     this.setState({ dragging: true });
-    this.setPositionFromProps();
-    this.handlerElem.addEventListener('mousemove', this.onDrag);
-    this.handlerElem.addEventListener('mouseup', this.onStopDragging);
-    this.handlerElem.addEventListener('mouseleave', this.onStopDragging);
   };
 
-  onDrag = evt => {
-    if (!this.state.dragging) {
-      return;
-    }
-
-    if (this.lastY === null || this.lastY === undefined) {
-      this.lastY = evt.clientY;
-    } else {
-      const diff = evt.clientY - this.lastY;
-      let y = this.state.posTop + diff;
-      y = this.limitYPos(y);
-      const value = _.round(this.props.yPosInvert(y + LINE_PADDING), 0);
-      this.setState({ posTop: y, value: value });
-      this.lastY = evt.clientY;
-    }
+  onDrag = (evt, data) => {
+    let y = data.y;
+    const value = _.round(this.props.yPosInvert(y + LINE_PADDING), 0);
+    this.setState({ value: value });
   };
 
   onStopDragging = evt => {
     this.setState({ dragging: false });
-    this.lastY = null;
-    this.handlerElem.removeEventListener('mousemove', this.onDrag);
-    this.handlerElem.removeEventListener('mouseup', this.onStopDragging);
-    this.handlerElem.removeEventListener('mouseleave', this.onStopDragging);
     this.onChange();
   };
 
@@ -86,58 +66,73 @@ export class ThresholdHandler extends React.Component<IProps, any> {
   }
 
   getYPos(value) {
-    const y = this.props.yPos(value) - LINE_PADDING;
-    return y;
+    return this.props.yPos(value) - LINE_PADDING;
   }
 
   /**
    * Limit position of threshold handler element if threshold value is out of Y axis bounds.
    */
   limitYPos(y) {
-    if (this.thresholdManagerElem) {
-      let thresholdManagerHeight = this.thresholdManagerElem.clientHeight || +Infinity;
-      y = Math.min(thresholdManagerHeight - LINE_PADDING - BOTTOM_PADDING, y);
-      y = Math.max(0, y);
-    }
+    y = Math.min(this.getBottomY(), y);
+    y = Math.max(0, y);
     return y;
   }
 
-  setPositionFromProps() {
-    const value = _.toNumber(this.props.threshold.value) || 0;
-    const y = this.getYPos(value);
-    this.setState({ posTop: y, value: value });
+  getBottomY() {
+    if (!this.thresholdManagerElem) {
+      return +Infinity;
+    }
+    let thresholdManagerHeight = this.thresholdManagerElem.clientHeight || +Infinity;
+    return thresholdManagerHeight - LINE_PADDING - BOTTOM_PADDING;
+  }
+
+  getStateClassName(colorMode) {
+    const stateclassName = colorMode === 'custom' ? 'critical' : colorMode;
+    return stateclassName;
   }
 
   render() {
-    const threshold = this.props.threshold;
-    const value = threshold.value || 0;
     const handlerIndex = this.props.index;
-
-    let stateclassName = threshold.colorMode;
-    if (threshold.colorMode === 'custom') {
-      stateclassName = 'critical';
-    }
-
-    let y = this.state.dragging ? this.state.posTop : this.getYPos(value);
-    y = this.limitYPos(y);
+    const threshold = this.props.threshold;
+    const stateclassName = this.getStateClassName(threshold.colorMode);
+    const value = threshold.value || 0;
     const valueLabel = this.state.dragging ? this.state.value : value;
-    const style = _.assign({ top: y }, this.props.style);
+
+    let y = this.getYPos(value);
+    y = this.limitYPos(y);
+    const position = { x: 0, y: y };
+    const bounds = {
+      top: 0,
+      bottom: this.getBottomY(),
+      left: 0,
+      right: 0,
+    };
 
     return (
-      <div
-        className={`alert-handle-wrapper alert-handle-wrapper--T${handlerIndex}`}
-        style={style}
-        ref={this.setWrapperRef}
+      <Draggable
+        axis="y"
+        handle=".alert-handle"
+        position={position}
+        bounds={bounds}
+        onStart={this.onStartDragging}
+        onDrag={this.onDrag}
+        onStop={this.onStopDragging}
       >
-        <div className={`alert-handle-line alert-handle-line--${stateclassName}`} />
-        <div className="alert-handle" data-handle-index={handlerIndex} ref={this.setHandlerRef}>
-          <i className={`icon-gf icon-gf-${stateclassName} alert-state-${stateclassName}`} />
-          <span className="alert-handle-value">
-            {valueLabel}
-            <i className="alert-handle-grip" />
-          </span>
+        <div
+          className={`alert-handle-wrapper alert-handle-wrapper--T${handlerIndex}`}
+          style={this.props.style}
+          ref={this.setWrapperRef}
+        >
+          <div className={`alert-handle-line alert-handle-line--${stateclassName}`} />
+          <div className="alert-handle" data-handle-index={handlerIndex}>
+            <i className={`icon-gf icon-gf-${stateclassName} alert-state-${stateclassName}`} />
+            <span className="alert-handle-value">
+              {valueLabel}
+              <i className="alert-handle-grip" />
+            </span>
+          </div>
         </div>
-      </div>
+      </Draggable>
     );
   }
 }
