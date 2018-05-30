@@ -74,6 +74,9 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 		}
 
 		if err := bus.Dispatch(&emailCmd); err != nil {
+			if err == m.ErrSmtpNotEnabled {
+				return Error(412, err.Error(), err)
+			}
 			return Error(500, "Failed to send email invite", err)
 		}
 

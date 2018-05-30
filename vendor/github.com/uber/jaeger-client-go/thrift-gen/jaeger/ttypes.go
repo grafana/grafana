@@ -6,7 +6,7 @@ package jaeger
 import (
 	"bytes"
 	"fmt"
-	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/uber/jaeger-client-go/thrift"
 )
 
 // (needed to ensure safety because of naive import list construction.)

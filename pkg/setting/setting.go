@@ -104,6 +104,7 @@ var (
 	DefaultTheme            string
 	DisableLoginForm        bool
 	DisableSignoutMenu      bool
+	SignoutRedirectUrl      string
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
@@ -140,10 +141,6 @@ var (
 	Raw          *ini.File
 	ConfRootPath string
 	IsWindows    bool
-
-	// PhantomJs Rendering
-	ImagesDir  string
-	PhantomDir string
 
 	// for logging purposes
 	configFiles                  []string
@@ -193,7 +190,10 @@ type Cfg struct {
 	// SMTP email settings
 	Smtp SmtpSettings
 
+	// Rendering
 	ImagesDir                        string
+	PhantomDir                       string
+	RendererUrl                      string
 	DisableBruteForceLoginProtection bool
 }
 
@@ -601,6 +601,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	auth := iniFile.Section("auth")
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+	SignoutRedirectUrl = auth.Key("signout_redirect_url").String()
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -631,10 +632,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// global plugin settings
 	PluginAppsSkipVerifyTLS = iniFile.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
-	// PhantomJS rendering
+	// Rendering
+	renderSec := iniFile.Section("rendering")
+	cfg.RendererUrl = renderSec.Key("server_url").String()
 	cfg.ImagesDir = filepath.Join(DataPath, "png")
-	ImagesDir = cfg.ImagesDir
-	PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
+	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

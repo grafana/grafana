@@ -85,11 +85,11 @@ ignored = [
 
 [[constraint]]
   name = "github.com/go-xorm/core"
-  version = "0.5.7"
+  version = "=0.5.7"
 
 [[constraint]]
   name = "github.com/go-xorm/xorm"
-  version = "0.6.4"
+  version = "=0.6.4"
 
 [[constraint]]
   name = "github.com/gorilla/websocket"
@@ -100,12 +100,16 @@ ignored = [
   version = "1.1.1"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/grafana/grafana_plugin_model"
+  branch = "renderer"
+  name = "github.com/grafana/grafana-plugin-model"
 
 [[constraint]]
   branch = "master"
   name = "github.com/hashicorp/go-hclog"
+
+[[constraint]]
+  name = "github.com/hashicorp/go-plugin"
+  revision = "e8d22c780116115ae5624720c9af0c97afe4f551"
 
 [[constraint]]
   branch = "master"
