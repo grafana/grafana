@@ -11,6 +11,7 @@ class AlertListPanel extends PanelCtrl {
   searchDashboards: any;
   searchFolders: any;
   dashboardIds: any = [];
+  folderIds: any = [];
 
   showOptions = [{ text: 'Current state', value: 'current' }, { text: 'Recent state changes', value: 'changes' }];
 
@@ -58,17 +59,16 @@ class AlertListPanel extends PanelCtrl {
           this.dashboardIds.push([dash.title, dash.id]);
           return dash.title;
         });
-
         callback(dashboards);
       });
     };
 
     this.searchFolders = (queryStr, callback) => {
       this.backendSrv.search({ query: queryStr, type: 'dash-folder' }).then(hits => {
-        var folders = _.map(hits, dash => {
-          return dash.title;
+        var folders = _.map(hits, folder => {
+          this.folderIds.push([folder.title, folder.id]);
+          return folder.title;
         });
-
         callback(folders);
       });
     };
@@ -127,6 +127,26 @@ class AlertListPanel extends PanelCtrl {
       newState: this.panel.stateFilter,
     };
 
+    if (this.panel.nameFilter) {
+      params.query = this.panel.nameFilter;
+    }
+
+    if (this.panel.dashboardFilter) {
+      for (var i = 0; i < this.dashboardIds.length; i++) {
+        if (this.dashboardIds[i][0] === this.panel.dashboardFilter) {
+          params.dashboardId = this.dashboardIds[i][1];
+        }
+      }
+    }
+
+    if (this.panel.folderFilter) {
+      for (var j = 0; j < this.folderIds.length; j++) {
+        if (this.folderIds[j][0] === this.panel.folderFilter) {
+          params.folderId = this.folderIds[j][1];
+        }
+      }
+    }
+
     if (this.panel.onlyAlertsOnDashboard) {
       params.dashboardId = this.dashboard.id;
     }
@@ -144,40 +164,7 @@ class AlertListPanel extends PanelCtrl {
 
       this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
 
-      if (this.panel.nameFilter) {
-        this.alertHistory = this.filterAlerts(this.alertHistory);
-      }
-
-      if (this.panel.dashboardFilter) {
-        this.alertHistory = this.dashboardAlertFilter(this.alertHistory);
-      }
-
       return this.alertHistory;
-    });
-  }
-
-  filterAlerts(alertList) {
-    let regex = new RegExp(this.panel.nameFilter, 'i');
-    return alertList.filter(alert => {
-      if (alert.alertName) {
-        return regex.test(alert.alertName);
-      }
-      return regex.test(alert.name);
-    });
-  }
-
-  dashboardAlertFilter(alertList) {
-    let dashId;
-    for (var i = 0; i < this.dashboardIds.length; i++) {
-      if (this.dashboardIds[i][0] === this.panel.dashboardFilter) {
-        dashId = this.dashboardIds[i][1];
-      }
-    }
-
-    return alertList.filter(alert => {
-      if (alert.dashboardId === dashId) {
-        return alert;
-      }
     });
   }
 
@@ -185,6 +172,26 @@ class AlertListPanel extends PanelCtrl {
     var params: any = {
       state: this.panel.stateFilter,
     };
+
+    if (this.panel.nameFilter) {
+      params.query = this.panel.nameFilter;
+    }
+
+    if (this.panel.dashboardFilter) {
+      for (var i = 0; i < this.dashboardIds.length; i++) {
+        if (this.dashboardIds[i][0] === this.panel.dashboardFilter) {
+          params.dashboardId = this.dashboardIds[i][1];
+        }
+      }
+    }
+
+    if (this.panel.folderFilter) {
+      for (var j = 0; j < this.folderIds.length; j++) {
+        if (this.folderIds[j][0] === this.panel.folderFilter) {
+          params.folderId = this.folderIds[j][1];
+        }
+      }
+    }
 
     if (this.panel.onlyAlertsOnDashboard) {
       params.dashboardId = this.dashboard.id;
@@ -201,14 +208,6 @@ class AlertListPanel extends PanelCtrl {
         })
       );
       this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
-
-      if (this.panel.nameFilter) {
-        this.currentAlerts = this.filterAlerts(this.currentAlerts);
-      }
-
-      if (this.panel.dashboardFilter) {
-        this.currentAlerts = this.dashboardAlertFilter(this.currentAlerts);
-      }
 
       return this.currentAlerts;
     });
