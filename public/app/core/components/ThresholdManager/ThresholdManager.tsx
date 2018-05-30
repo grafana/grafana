@@ -1,5 +1,4 @@
 import React from 'react';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
 import { ThresholdHandler } from './ThresholdHandler';
 
 export interface IProps {
@@ -17,8 +16,6 @@ export class ThresholdManager extends React.Component<IProps, any> {
     this.state = {
       value: 0,
     };
-
-    this.onChange = this.onChange.bind(this);
   }
 
   onChange(index, newValue) {
@@ -57,11 +54,3 @@ export class ThresholdManager extends React.Component<IProps, any> {
     );
   }
 }
-
-react2AngularDirective('thresholdManager', ThresholdManager, [
-  'thresholds',
-  'className',
-  ['yPos', { watchDepth: 'reference', wrapApply: true }],
-  ['yPosInvert', { watchDepth: 'reference', wrapApply: true }],
-  ['onChange', { watchDepth: 'reference', wrapApply: true }],
-]);

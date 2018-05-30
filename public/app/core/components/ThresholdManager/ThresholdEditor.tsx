@@ -17,9 +17,6 @@ export class ThresholdEditor extends React.Component<IProps, any> {
 
     // thresholdValue should be defined for <input> component to be controlled
     this.state = { thresholdValue: props.threshold.value || 0 };
-
-    this.onInputChange = this.onInputChange.bind(this);
-    this.onRemove = this.onRemove.bind(this);
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
@@ -33,14 +30,14 @@ export class ThresholdEditor extends React.Component<IProps, any> {
     this.props.onChange(threshold, this.props.index);
   }
 
-  onInputChange(e) {
+  onInputChange = e => {
     const newValue = e.target.value;
     this.setState({ thresholdValue: newValue });
 
     let threshold = this.props.threshold;
     threshold.value = newValue;
     this.onThresholdChange(threshold);
-  }
+  };
 
   onPropertyChange(propertyName, newValue) {
     let threshold = this.props.threshold;
@@ -48,9 +45,9 @@ export class ThresholdEditor extends React.Component<IProps, any> {
     this.onThresholdChange(threshold);
   }
 
-  onRemove() {
+  onRemove = () => {
     this.props.onRemove(this.props.index);
-  }
+  };
 
   render() {
     const operatorOptions = ['gt', 'lt'];

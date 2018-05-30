@@ -28,40 +28,34 @@ export class ThresholdHandler extends React.Component<IProps, any> {
       dragging: false,
       posTop: this.getYPos(value),
     };
-
-    this.setHandlerRef = this.setHandlerRef.bind(this);
-    this.setWrapperRef = this.setWrapperRef.bind(this);
-    this.onInitDragging = this.onInitDragging.bind(this);
-    this.onStopDragging = this.onStopDragging.bind(this);
-    this.onDrag = this.onDrag.bind(this);
   }
 
   componentDidMount() {
     this.handlerElem.addEventListener('mousedown', this.onInitDragging);
   }
 
-  setHandlerRef(elem) {
+  setHandlerRef = elem => {
     this.handlerElem = elem;
-  }
+  };
 
-  setWrapperRef(elem) {
+  setWrapperRef = elem => {
     if (elem && _.hasIn(elem, 'parentElement.parentElement.parentElement')) {
       this.thresholdManagerElem = elem.parentElement.parentElement.parentElement;
       // When new threshold handler was added, trigger render() to place element in proper position
       // if threshold value is out of Y axis bounds.
       this.forceUpdate();
     }
-  }
+  };
 
-  onInitDragging(evt) {
+  onInitDragging = evt => {
     this.setState({ dragging: true });
     this.setPositionFromProps();
     this.handlerElem.addEventListener('mousemove', this.onDrag);
     this.handlerElem.addEventListener('mouseup', this.onStopDragging);
     this.handlerElem.addEventListener('mouseleave', this.onStopDragging);
-  }
+  };
 
-  onDrag(evt) {
+  onDrag = evt => {
     if (!this.state.dragging) {
       return;
     }
@@ -76,16 +70,16 @@ export class ThresholdHandler extends React.Component<IProps, any> {
       this.setState({ posTop: y, value: value });
       this.lastY = evt.clientY;
     }
-  }
+  };
 
-  onStopDragging(evt) {
+  onStopDragging = evt => {
     this.setState({ dragging: false });
     this.lastY = null;
     this.handlerElem.removeEventListener('mousemove', this.onDrag);
     this.handlerElem.removeEventListener('mouseup', this.onStopDragging);
     this.handlerElem.removeEventListener('mouseleave', this.onStopDragging);
     this.onChange();
-  }
+  };
 
   onChange() {
     this.props.onChange(this.state.value);
