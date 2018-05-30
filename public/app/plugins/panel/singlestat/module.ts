@@ -715,11 +715,10 @@ function getColorForValue(data, value) {
     return null;
   }
 
-  if (value >= data.thresholds[0]) {
-    if (value > data.thresholds[1]) {
-      return data.colorMap[2];
+  for (var i = data.thresholds.length; i > 0; i--) {
+    if (value >= data.thresholds[i - 1]) {
+      return data.colorMap[i];
     }
-    return data.colorMap[1];
   }
 
   return _.first(data.colorMap);
