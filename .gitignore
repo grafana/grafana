@@ -66,3 +66,5 @@ debug.test
 /vendor/**/.editorconfig
 /vendor/**/appengine*
 *.orig
+
+/devenv/dashboards/bulk-testing/*.json

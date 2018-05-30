@@ -13,12 +13,12 @@ import (
 var (
 	logger log.Logger = log.New("fake.log")
 
-	twoDatasourcesConfig            = "./test-configs/two-datasources"
-	twoDatasourcesConfigPurgeOthers = "./test-configs/insert-two-delete-two"
-	doubleDatasourcesConfig         = "./test-configs/double-default"
-	allProperties                   = "./test-configs/all-properties"
-	versionZero                     = "./test-configs/version-0"
-	brokenYaml                      = "./test-configs/broken-yaml"
+	twoDatasourcesConfig            = "testdata/two-datasources"
+	twoDatasourcesConfigPurgeOthers = "testdata/insert-two-delete-two"
+	doubleDatasourcesConfig         = "testdata/double-default"
+	allProperties                   = "testdata/all-properties"
+	versionZero                     = "testdata/version-0"
+	brokenYaml                      = "testdata/broken-yaml"
 
 	fakeRepo *fakeRepository
 )
