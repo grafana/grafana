@@ -87,11 +87,15 @@ func GetAlerts(c *m.ReqContext) Response {
 			return Error(500, "List alerts failed", err)
 		}
 
-		dashboardIDs = make([]int64, 0)
 		for _, d := range searchQuery.Result {
-			if d.Id > 0 {
+			if d.Type == search.DashHitDB && d.Id > 0 {
 				dashboardIDs = append(dashboardIDs, d.Id)
 			}
+		}
+
+		// if we didn't find any dashboards, return empty result
+		if len(dashboardIDs) == 0 {
+			return JSON(200, []*m.AlertListItemDTO{})
 		}
 	}
 
