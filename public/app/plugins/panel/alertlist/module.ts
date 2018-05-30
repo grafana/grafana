@@ -120,32 +120,17 @@ class AlertListPanel extends PanelCtrl {
     });
   }
 
+  onFolderChange(folder: any) {
+    this.panel.folderId = folder.id;
+    this.refresh();
+  }
+
   getStateChanges() {
     var params: any = {
       limit: this.panel.limit,
       type: 'alert',
       newState: this.panel.stateFilter,
     };
-
-    if (this.panel.nameFilter) {
-      params.query = this.panel.nameFilter;
-    }
-
-    if (this.panel.dashboardFilter) {
-      for (var i = 0; i < this.dashboardIds.length; i++) {
-        if (this.dashboardIds[i][0] === this.panel.dashboardFilter) {
-          params.dashboardId = this.dashboardIds[i][1];
-        }
-      }
-    }
-
-    if (this.panel.folderFilter) {
-      for (var j = 0; j < this.folderIds.length; j++) {
-        if (this.folderIds[j][0] === this.panel.folderFilter) {
-          params.folderId = this.folderIds[j][1];
-        }
-      }
-    }
 
     if (this.panel.onlyAlertsOnDashboard) {
       params.dashboardId = this.dashboard.id;
@@ -177,18 +162,14 @@ class AlertListPanel extends PanelCtrl {
       params.query = this.panel.nameFilter;
     }
 
+    if (this.panel.folderId) {
+      params.folderId = this.panel.folderId;
+    }
+
     if (this.panel.dashboardFilter) {
       for (var i = 0; i < this.dashboardIds.length; i++) {
         if (this.dashboardIds[i][0] === this.panel.dashboardFilter) {
           params.dashboardId = this.dashboardIds[i][1];
-        }
-      }
-    }
-
-    if (this.panel.folderFilter) {
-      for (var j = 0; j < this.folderIds.length; j++) {
-        if (this.folderIds[j][0] === this.panel.folderFilter) {
-          params.folderId = this.folderIds[j][1];
         }
       }
     }
