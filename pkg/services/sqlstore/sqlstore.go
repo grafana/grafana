@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 
+	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	_ "github.com/lib/pq"
@@ -160,6 +161,12 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 		}
 		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
 		cnnstr = "file:" + ss.dbCfg.Path + "?cache=shared&mode=rwc"
+	case migrator.MSSQL:
+		cnnstr = fmt.Sprintf(`server=%s;password=%s;user id=%s;database=%s`,
+			ss.dbCfg.Host, ss.dbCfg.Pwd, ss.dbCfg.User,
+			ss.dbCfg.Name,
+		)
+		fmt.Println(cnnstr)
 	default:
 		return "", fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
 	}
