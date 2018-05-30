@@ -32,6 +32,25 @@ jobs:
             name: mysql integration tests
             command: 'GRAFANA_TEST_DB=mysql go test ./pkg/...'
 
+  postgres-integration-test:
+    docker:
+      - image: circleci/golang:1.10
+      - image: circleci/postgres:9.3-ram
+        environment:
+          POSTGRES_USER: grafanatest
+          POSTGRES_PASSWORD: grafanatest
+          POSTGRES_DB: grafanatest
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+        - checkout
+        - run: sudo apt update
+        - run: sudo apt install -y postgresql-client
+        - run: dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
+        - run: 'PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f docker/blocks/postgres_tests/setup.sql'
+        - run:
+            name: postgres integration tests
+            command: 'GRAFANA_TEST_DB=postgres go test ./pkg/...'
+
   codespell:
     docker:
       - image: circleci/python
@@ -210,6 +229,8 @@ workflows:
           filters: *filter-not-release
       - mysql-integration-test:
           filters: *filter-not-release
+      - postgres-integration-test:
+          filters: *filter-not-release
       - deploy-master:
           requires:
             - build-all
@@ -218,6 +239,7 @@ workflows:
             - codespell
             - gometalinter
             - mysql-integration-test
+            - postgres-integration-test
           filters:
             branches:
               only: master
@@ -235,6 +257,8 @@ workflows:
           filters: *filter-only-release
       - mysql-integration-test:
           filters: *filter-only-release
+      - postgres-integration-test:
+          filters: *filter-only-release
       - deploy-release:
           requires:
             - build-all
@@ -243,4 +267,5 @@ workflows:
             - codespell
             - gometalinter
             - mysql-integration-test
+            - postgres-integration-test
           filters: *filter-only-release
