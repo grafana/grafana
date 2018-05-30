@@ -30,11 +30,12 @@
       <input type="text" bs-typeahead="ctrl.searchDashboards" class="gf-form-input max-width-15" ng-model="ctrl.panel.dashboardFilter" placeholder="Dashboard Name" ng-change="ctrl.onRefresh()" />
     </div>
     <div class="gf-form">
-      <folder-picker  root-name="All"
-                      initial-folder-id="ctrl.panel.folderId"
+      <folder-picker  initial-folder-id="ctrl.panel.folderId"
+                      on-load="ctrl.onFolderChange($folder)"
 											on-change="ctrl.onFolderChange($folder)"
                       label-class="width-8"
-                      initial-title="'All'" >
+                      initial-title="'All'"
+                      enable-reset="true" >
 			</folder-picker>
     </div>
   </div>
