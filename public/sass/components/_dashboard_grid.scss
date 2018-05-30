@@ -18,6 +18,20 @@
     height: 100% !important;
     transform: translate(0px, 0px) !important;
   }
+
+  // Disable grid interaction indicators in fullscreen panels
+
+  .panel-header:hover {
+    background-color: inherit;
+  }
+
+  .panel-title-container {
+    cursor: pointer;
+  }
+
+  .react-resizable-handle {
+    display: none;
+  }
 }
 
 @include media-breakpoint-down(sm) {
