@@ -179,7 +179,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
       function userActivityDetected() {
         lastActivity = new Date().getTime();
-        console.log('active', lastActivity);
         if (!activeUser) {
           activeUser = true;
           body.removeClass('user-activity-low');
