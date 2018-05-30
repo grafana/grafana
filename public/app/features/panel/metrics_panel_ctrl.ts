@@ -1,9 +1,9 @@
-import config from 'app/core/config';
 import $ from 'jquery';
 import _ from 'lodash';
+
+import config from 'app/core/config';
 import kbn from 'app/core/utils/kbn';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
-
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 import { encodePathComponent } from 'app/core/utils/location_util';
