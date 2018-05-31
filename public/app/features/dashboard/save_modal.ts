@@ -1,4 +1,5 @@
 import coreModule from 'app/core/core_module';
+import _ from 'lodash';
 
 const template = `
 <div class="modal-body">
@@ -14,19 +15,29 @@ const template = `
   </div>
 
   <form name="ctrl.saveForm" ng-submit="ctrl.save()" class="modal-content" novalidate>
-    <h6 class="text-center">Add a note to describe your changes</h6>
-    <div class="p-t-2">
+    <div class="p-t-1">
+      <div class="gf-form-group" ng-if="ctrl.timeChange || ctrl.variableChange">
+		    <gf-form-switch class="gf-form"
+			    label="Save current time range" ng-if="ctrl.timeChange" label-class="width-12" switch-class="max-width-6"
+			    checked="ctrl.saveTimerange" on-change="buildUrl()">
+		    </gf-form-switch>
+		    <gf-form-switch class="gf-form"
+			    label="Save current variables" ng-if="ctrl.variableChange" label-class="width-12" switch-class="max-width-6"
+			    checked="ctrl.saveVariables" on-change="buildUrl()">
+		    </gf-form-switch>
+	    </div>
       <div class="gf-form">
         <label class="gf-form-hint">
           <input
             type="text"
             name="message"
             class="gf-form-input"
-            placeholder="Updates to &hellip;"
+            placeholder="Add a note to describe your changes &hellip;"
             give-focus="true"
             ng-model="ctrl.message"
             ng-model-options="{allowInvalid: true}"
             ng-maxlength="this.max"
+            maxlength="64"
             autocomplete="off" />
           <small class="gf-form-hint-text muted" ng-cloak>
             <span ng-class="{'text-error': ctrl.saveForm.message.$invalid && ctrl.saveForm.message.$dirty }">
@@ -40,7 +51,7 @@ const template = `
 
     <div class="gf-form-button-row text-center">
       <button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid">Save</button>
-      <button class="btn btn-inverse" ng-click="ctrl.dismiss();">Cancel</button>
+      <a class="btn btn-link" ng-click="ctrl.dismiss();">Cancel</a>
     </div>
   </form>
 </div>
@@ -48,14 +59,51 @@ const template = `
 
 export class SaveDashboardModalCtrl {
   message: string;
+  saveVariables = false;
+  saveTimerange = false;
+  templating: any;
+  time: any;
+  originalTime: any;
+  current = [];
+  originalCurrent = [];
   max: number;
   saveForm: any;
   dismiss: () => void;
+  timeChange = false;
+  variableChange = false;
 
   /** @ngInject */
   constructor(private dashboardSrv) {
     this.message = '';
     this.max = 64;
+    this.templating = dashboardSrv.dash.templating.list;
+
+    this.compareTemplating();
+    this.compareTime();
+  }
+
+  compareTime() {
+    if (_.isEqual(this.dashboardSrv.dash.time, this.dashboardSrv.dash.originalTime)) {
+      this.timeChange = false;
+    } else {
+      this.timeChange = true;
+    }
+  }
+
+  compareTemplating() {
+    if (this.dashboardSrv.dash.templating.list.length > 0) {
+      for (let i = 0; i < this.dashboardSrv.dash.templating.list.length; i++) {
+        if (
+          this.dashboardSrv.dash.templating.list[i].current.text !==
+          this.dashboardSrv.dash.originalTemplating[i].current.text
+        ) {
+          return (this.variableChange = true);
+        }
+      }
+      return (this.variableChange = false);
+    } else {
+      return (this.variableChange = false);
+    }
   }
 
   save() {
@@ -63,9 +111,14 @@ export class SaveDashboardModalCtrl {
       return;
     }
 
+    var options = {
+      saveVariables: this.saveVariables,
+      saveTimerange: this.saveTimerange,
+      message: this.message,
+    };
+
     var dashboard = this.dashboardSrv.getCurrent();
-    var saveModel = dashboard.getSaveModelClone();
-    var options = { message: this.message };
+    var saveModel = dashboard.getSaveModelClone(options);
 
     return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
   }

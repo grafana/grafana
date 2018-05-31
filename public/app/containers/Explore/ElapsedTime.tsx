@@ -41,6 +41,6 @@ export default class ElapsedTime extends PureComponent<any, any> {
     const { elapsed } = this.state;
     const { className, time } = this.props;
     const value = (time || elapsed) / 1000;
-    return <span className={className}>{value.toFixed(1)}s</span>;
+    return <span className={`elapsed-time ${className}`}>{value.toFixed(1)}s</span>;
   }
 }
