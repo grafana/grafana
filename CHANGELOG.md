@@ -1,5 +1,9 @@
 # 5.2.0 (unreleased)
 
+### Breaking change
+
+* **Dashboard**: Modified time range and variables are now not saved by default [#10748](https://github.com/grafana/grafana/issues/10748), [#8805](https://github.com/grafana/grafana/issues/8805)
+
 ### Minor
 
 * **Graph**: Show invisible highest value bucket in histogram [#11498](https://github.com/grafana/grafana/issues/11498)
