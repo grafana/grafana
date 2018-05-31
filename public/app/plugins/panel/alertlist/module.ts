@@ -8,10 +8,6 @@ import * as dateMath from 'app/core/utils/datemath';
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
   static scrollable = true;
-  searchDashboards: any;
-  searchFolders: any;
-  dashboardIds: any = [];
-  folderIds: any = [];
 
   showOptions = [{ text: 'Current state', value: 'current' }, { text: 'Recent state changes', value: 'changes' }];
 
@@ -49,30 +45,6 @@ class AlertListPanel extends PanelCtrl {
     for (let key in this.panel.stateFilter) {
       this.stateFilter[this.panel.stateFilter[key]] = true;
     }
-
-    this.searchDashboards = (queryStr, callback) => {
-      this.backendSrv.search({ query: queryStr, type: 'dash-db' }).then(hits => {
-        var dashboards = _.map(hits, dash => {
-          if (dash.folderTitle) {
-            this.dashboardIds.push([dash.title + ' (' + dash.folderTitle + ')', dash.id]);
-            return dash.title + ' (' + dash.folderTitle + ')';
-          }
-          this.dashboardIds.push([dash.title, dash.id]);
-          return dash.title;
-        });
-        callback(dashboards);
-      });
-    };
-
-    this.searchFolders = (queryStr, callback) => {
-      this.backendSrv.search({ query: queryStr, type: 'dash-folder' }).then(hits => {
-        var folders = _.map(hits, folder => {
-          this.folderIds.push([folder.title, folder.id]);
-          return folder.title;
-        });
-        callback(folders);
-      });
-    };
   }
 
   sortResult(alerts) {
@@ -168,15 +140,15 @@ class AlertListPanel extends PanelCtrl {
     }
 
     if (this.panel.dashboardFilter) {
-      for (var i = 0; i < this.dashboardIds.length; i++) {
-        if (this.dashboardIds[i][0] === this.panel.dashboardFilter) {
-          params.dashboardId = this.dashboardIds[i][1];
-        }
-      }
+      params.dashboardQuery = this.panel.dashboardFilter;
     }
 
     if (this.panel.onlyAlertsOnDashboard) {
       params.dashboardId = this.dashboard.id;
+    }
+
+    if (this.panel.dashboardTags) {
+      params.dashboardTag = this.panel.dashboardTags;
     }
 
     return this.backendSrv.get(`/api/alerts`, params).then(res => {
