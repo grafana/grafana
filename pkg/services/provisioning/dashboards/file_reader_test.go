@@ -3,6 +3,7 @@ package dashboards
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -52,7 +53,9 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
 			So(err, ShouldBeNil)
 
-			So(reader.Path, ShouldEqual, "/var/lib/grafana/dashboards")
+			if runtime.GOOS != "windows" {
+				So(reader.Path, ShouldEqual, "/var/lib/grafana/dashboards")
+			}
 			So(filepath.IsAbs(reader.Path), ShouldBeTrue)
 		})
 
