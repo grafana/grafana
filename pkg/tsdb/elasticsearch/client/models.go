@@ -2,11 +2,14 @@ package es
 
 import (
 	"encoding/json"
+
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
+	Interval    tsdb.Interval
 	Size        int
 	Sort        map[string]interface{}
 	Query       *Query

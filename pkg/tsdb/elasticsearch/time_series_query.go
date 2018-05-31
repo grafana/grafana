@@ -3,8 +3,6 @@ package elasticsearch
 import (
 	"fmt"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -47,7 +45,7 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		}
 		interval := e.intervalCalculator.Calculate(e.tsdbQuery.TimeRange, minInterval)
 
-		b := ms.Search()
+		b := ms.Search(interval)
 		b.Size(0)
 		filters := b.Query().Bool().Filter()
 		filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
@@ -78,7 +76,7 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		for _, bucketAgg := range q.BucketAggs {
 			switch bucketAgg.Type {
 			case "date_histogram":
-				aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, interval)
+				aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
 			case "histogram":
 				aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
 			case "filters":
@@ -125,7 +123,7 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 	return rp.getTimeSeries()
 }
 
-func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string, interval tsdb.Interval) es.AggBuilder {
+func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string) es.AggBuilder {
 	aggBuilder.DateHistogram(bucketAgg.ID, bucketAgg.Field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
 		a.Interval = bucketAgg.Settings.Get("interval").MustString("auto")
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
@@ -135,10 +133,6 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 		if a.Interval == "auto" {
 			a.Interval = "$__interval"
 		}
-
-		a.Interval = strings.Replace(a.Interval, "$interval", interval.Text, -1)
-		a.Interval = strings.Replace(a.Interval, "$__interval_ms", strconv.FormatInt(interval.Value.Nanoseconds()/int64(time.Millisecond), 10), -1)
-		a.Interval = strings.Replace(a.Interval, "$__interval", interval.Text, -1)
 
 		if missing, err := bucketAgg.Settings.Get("missing").String(); err == nil {
 			a.Missing = &missing

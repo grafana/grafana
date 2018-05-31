@@ -268,7 +268,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
 			hAgg := firstLevel.Aggregation.Aggregation.(*es.DateHistogramAgg)
 			So(hAgg.Field, ShouldEqual, "@timestamp")
-			So(hAgg.Interval, ShouldEqual, "15s")
+			So(hAgg.Interval, ShouldEqual, "$__interval")
 			So(hAgg.MinDocCount, ShouldEqual, 2)
 		})
 

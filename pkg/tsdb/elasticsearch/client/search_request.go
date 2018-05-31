@@ -2,11 +2,14 @@ package es
 
 import (
 	"strings"
+
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
 	version      int
+	interval     tsdb.Interval
 	index        string
 	size         int
 	sort         map[string]interface{}
@@ -16,9 +19,10 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(version int) *SearchRequestBuilder {
+func NewSearchRequestBuilder(version int, interval tsdb.Interval) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
 		version:     version,
+		interval:    interval,
 		sort:        make(map[string]interface{}),
 		customProps: make(map[string]interface{}),
 		aggBuilders: make([]AggBuilder, 0),
@@ -30,6 +34,7 @@ func NewSearchRequestBuilder(version int) *SearchRequestBuilder {
 func (b *SearchRequestBuilder) Build() (*SearchRequest, error) {
 	sr := SearchRequest{
 		Index:       b.index,
+		Interval:    b.interval,
 		Size:        b.size,
 		Sort:        b.sort,
 		CustomProps: b.customProps,
@@ -128,8 +133,8 @@ func NewMultiSearchRequestBuilder(version int) *MultiSearchRequestBuilder {
 }
 
 // Search initiates and returns a new search request builder
-func (m *MultiSearchRequestBuilder) Search() *SearchRequestBuilder {
-	b := NewSearchRequestBuilder(m.version)
+func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval) *SearchRequestBuilder {
+	b := NewSearchRequestBuilder(m.version, interval)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b
 }

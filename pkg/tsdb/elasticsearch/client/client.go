@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +25,10 @@ const loggerName = "tsdb.elasticsearch.client"
 var (
 	clientLog = log.New(loggerName)
 )
+
+var newDatasourceHttpClient = func(ds *models.DataSource) (*http.Client, error) {
+	return ds.GetHttpClient()
+}
 
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
@@ -57,23 +62,18 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb
 		return nil, err
 	}
 
-	bc := &baseClientImpl{
-		ctx:       ctx,
-		ds:        ds,
-		version:   version,
-		timeField: timeField,
-		indices:   indices,
-	}
-
 	clientLog.Debug("Creating new client", "version", version, "timeField", timeField, "indices", strings.Join(indices, ", "))
 
 	switch version {
-	case 2:
-		return newV2Client(bc)
-	case 5:
-		return newV5Client(bc)
-	case 56:
-		return newV56Client(bc)
+	case 2, 5, 56:
+		return &baseClientImpl{
+			ctx:       ctx,
+			ds:        ds,
+			version:   version,
+			timeField: timeField,
+			indices:   indices,
+			timeRange: timeRange,
+		}, nil
 	}
 
 	return nil, fmt.Errorf("elasticsearch version=%d is not supported", version)
@@ -93,6 +93,7 @@ type baseClientImpl struct {
 	version   int
 	timeField string
 	indices   []string
+	timeRange *tsdb.TimeRange
 }
 
 func (c *baseClientImpl) GetVersion() int {
@@ -114,11 +115,20 @@ func (c *baseClientImpl) getSettings() *simplejson.Json {
 }
 
 type multiRequest struct {
-	header map[string]interface{}
-	body   interface{}
+	header   map[string]interface{}
+	body     interface{}
+	interval tsdb.Interval
 }
 
 func (c *baseClientImpl) executeBatchRequest(uriPath string, requests []*multiRequest) (*http.Response, error) {
+	bytes, err := c.encodeBatchRequests(requests)
+	if err != nil {
+		return nil, err
+	}
+	return c.executeRequest(http.MethodPost, uriPath, bytes)
+}
+
+func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
 	clientLog.Debug("Encoding batch requests to json", "batch requests", len(requests))
 	start := time.Now()
 
@@ -134,13 +144,18 @@ func (c *baseClientImpl) executeBatchRequest(uriPath string, requests []*multiRe
 		if err != nil {
 			return nil, err
 		}
-		payload.WriteString(string(reqBody) + "\n")
+
+		body := string(reqBody)
+		body = strings.Replace(body, "$__interval_ms", strconv.FormatInt(r.interval.Value.Nanoseconds()/int64(time.Millisecond), 10), -1)
+		body = strings.Replace(body, "$__interval", r.interval.Text, -1)
+
+		payload.WriteString(body + "\n")
 	}
 
 	elapsed := time.Now().Sub(start)
 	clientLog.Debug("Encoded batch requests to json", "took", elapsed)
 
-	return c.executeRequest(http.MethodPost, uriPath, payload.Bytes())
+	return payload.Bytes(), nil
 }
 
 func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*http.Response, error) {
@@ -173,7 +188,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*h
 		req.SetBasicAuth(c.ds.User, c.ds.Password)
 	}
 
-	httpClient, err := c.ds.GetHttpClient()
+	httpClient, err := newDatasourceHttpClient(c.ds)
 	if err != nil {
 		return nil, err
 	}
@@ -220,77 +235,26 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 	multiRequests := []*multiRequest{}
 
 	for _, searchReq := range searchRequests {
-		multiRequests = append(multiRequests, &multiRequest{
+		mr := multiRequest{
 			header: map[string]interface{}{
 				"search_type":        "query_then_fetch",
 				"ignore_unavailable": true,
 				"index":              strings.Join(c.indices, ","),
 			},
-			body: searchReq,
-		})
-	}
+			body:     searchReq,
+			interval: searchReq.Interval,
+		}
 
-	return multiRequests
-}
+		if c.version == 2 {
+			mr.header["search_type"] = "count"
+		}
 
-type v2Client struct {
-	baseClient
-}
+		if c.version >= 56 {
+			maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
+			mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
+		}
 
-func newV2Client(bc baseClient) (*v2Client, error) {
-	c := v2Client{
-		baseClient: bc,
-	}
-
-	return &c, nil
-}
-
-func (c *v2Client) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {
-	multiRequests := c.baseClient.createMultiSearchRequests(searchRequests)
-
-	for _, mr := range multiRequests {
-		mr.header["search_type"] = "count"
-	}
-
-	return multiRequests
-}
-
-type v5Client struct {
-	baseClient
-}
-
-func newV5Client(bc baseClient) (*v5Client, error) {
-	c := v5Client{
-		baseClient: bc,
-	}
-
-	return &c, nil
-}
-
-type v56Client struct {
-	*v5Client
-	maxConcurrentShardRequests int
-}
-
-func newV56Client(bc baseClient) (*v56Client, error) {
-	v5Client := v5Client{
-		baseClient: bc,
-	}
-	maxConcurrentShardRequests := bc.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
-
-	c := v56Client{
-		v5Client:                   &v5Client,
-		maxConcurrentShardRequests: maxConcurrentShardRequests,
-	}
-
-	return &c, nil
-}
-
-func (c *v56Client) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {
-	multiRequests := c.v5Client.createMultiSearchRequests(searchRequests)
-
-	for _, mr := range multiRequests {
-		mr.header["max_concurrent_shard_requests"] = c.maxConcurrentShardRequests
+		multiRequests = append(multiRequests, &mr)
 	}
 
 	return multiRequests
