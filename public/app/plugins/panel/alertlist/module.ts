@@ -35,6 +35,7 @@ class AlertListPanel extends PanelCtrl {
     sortOrder: 1,
     dashboardFilter: '',
     nameFilter: '',
+    folderId: null,
   };
 
   /** @ngInject */

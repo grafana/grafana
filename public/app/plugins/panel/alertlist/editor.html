@@ -19,7 +19,7 @@
     </div>
     <gf-form-switch class="gf-form" label="Alerts from this dashboard" label-class="width-18" checked="ctrl.panel.onlyAlertsOnDashboard" on-change="ctrl.updateStateFilter()"></gf-form-switch>
   </div>
-  <div class="section gf-form-group">
+  <div class="section gf-form-group" ng-show="ctrl.panel.show === 'current'">
     <h5 class="section-heading">Filter</h5>
     <div class="gf-form">
       <span class="gf-form-label width-8">Alert name</span>
