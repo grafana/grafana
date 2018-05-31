@@ -161,6 +161,9 @@ class AlertListPanel extends PanelCtrl {
           return al;
         })
       );
+      if (this.currentAlerts.length > this.panel.limit) {
+        this.currentAlerts = this.currentAlerts.slice(0, this.panel.limit);
+      }
       this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
 
       return this.currentAlerts;
