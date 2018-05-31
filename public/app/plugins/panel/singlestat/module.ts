@@ -580,6 +580,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           lines: {
             show: true,
             fill: 1,
+            zero: false,
             lineWidth: 1,
             fillColor: panel.sparkline.fillColor,
           },
@@ -713,11 +714,13 @@ function getColorForValue(data, value) {
   if (!_.isFinite(value)) {
     return null;
   }
+
   for (var i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i - 1]) {
       return data.colorMap[i];
     }
   }
+
   return _.first(data.colorMap);
 }
 

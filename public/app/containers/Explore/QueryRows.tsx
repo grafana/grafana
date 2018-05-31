@@ -48,10 +48,10 @@ class QueryRow extends PureComponent<any, any> {
     return (
       <div className="query-row">
         <div className="query-row-tools">
-          <button className="btn btn-small btn-inverse" onClick={this.handleClickAddButton}>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickAddButton}>
             <i className="fa fa-plus" />
           </button>
-          <button className="btn btn-small btn-inverse" onClick={this.handleClickRemoveButton}>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickRemoveButton}>
             <i className="fa fa-minus" />
           </button>
         </div>
@@ -60,6 +60,7 @@ class QueryRow extends PureComponent<any, any> {
             initialQuery={edited ? null : query}
             onPressEnter={this.handlePressEnter}
             onQueryChange={this.handleChangeQuery}
+            placeholder="Enter a PromQL query"
             request={request}
           />
         </div>

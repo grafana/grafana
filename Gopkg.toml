@@ -85,11 +85,11 @@ ignored = [
 
 [[constraint]]
   name = "github.com/go-xorm/core"
-  version = "0.5.7"
+  version = "=0.5.7"
 
 [[constraint]]
   name = "github.com/go-xorm/xorm"
-  version = "0.6.4"
+  version = "=0.6.4"
 
 [[constraint]]
   name = "github.com/gorilla/websocket"

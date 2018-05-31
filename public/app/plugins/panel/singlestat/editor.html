@@ -61,7 +61,7 @@
     <div class="gf-form-inline">
       <div class="gf-form max-width-21">
         <label class="gf-form-label width-8">Thresholds
-          <tip>Define two threshold values&lt;br /&gt; 50,80 will produce: &lt;50 = Green, 50:80 = Yellow, &gt;80 = Red</tip>
+          <tip>Define two threshold values&lt;br /&gt; 50,80 will produce: value &lt; 50 = Green, 50 &lt;= value &lt; 80 = Yellow, value &gt;= 80 = Red</tip>
         </label>
         <input type="text" class="gf-form-input" ng-model="ctrl.panel.thresholds" ng-blur="ctrl.render()" placeholder="50,80"></input>
       </div>

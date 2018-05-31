@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/go-xorm/builder"
@@ -52,9 +51,7 @@ func (engine *Engine) buildConds(table *core.Table, bean interface{},
 
 		fieldValuePtr, err := col.ValueOf(bean)
 		if err != nil {
-			if !strings.Contains(err.Error(), "is not valid") {
-				engine.logger.Warn(err)
-			}
+			engine.logger.Error(err)
 			continue
 		}
 

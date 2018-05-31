@@ -405,17 +405,17 @@ angular-native-dragdrop@^1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/angular-native-dragdrop/-/angular-native-dragdrop-1.2.2.tgz#d646c6b75b131c48073c3f6e36a225b2726d8bae"
 
-angular-route@^1.6.6:
-  version "1.6.10"
-  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.6.10.tgz#4247a32eab19495624623e96c1626dfba17ebf21"
+angular-route@1.6.6:
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.6.6.tgz#8c11748aa195c717b1b615a7e746442bfc7c61f4"
 
-angular-sanitize@^1.6.6:
-  version "1.6.10"
-  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.6.10.tgz#635a362afb2dd040179f17d3a5455962b2c1918f"
+angular-sanitize@1.6.6:
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.6.6.tgz#0fd065a19931517fbece66596d325d72b6e06041"
 
-angular@^1.6.6:
-  version "1.6.10"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.6.10.tgz#eed3080a34d29d0f681ff119b18ce294e3f74826"
+angular@1.6.6:
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.6.6.tgz#fd5a3cfb437ce382d854ee01120797978527cb64"
 
 ansi-align@^2.0.0:
   version "2.0.0"
@@ -728,9 +728,9 @@ autoprefixer@^6.3.1, autoprefixer@^6.4.0:
     postcss "^5.2.16"
     postcss-value-parser "^3.2.3"
 
-awesome-typescript-loader@^3.2.3:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/awesome-typescript-loader/-/awesome-typescript-loader-3.5.0.tgz#4d4d10cba7a04ed433dfa0334250846fb11a1a5a"
+awesome-typescript-loader@^4.0.0:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/awesome-typescript-loader/-/awesome-typescript-loader-4.0.1.tgz#bddae8183f06eb65184390d596e4342ca2089281"
   dependencies:
     chalk "^2.3.1"
     enhanced-resolve "3.3.0"
@@ -885,14 +885,6 @@ babel-jest@^22.4.3:
   dependencies:
     babel-plugin-istanbul "^4.1.5"
     babel-preset-jest "^22.4.3"
-
-babel-loader@^7.1.2:
-  version "7.1.4"
-  resolved "https://registry.yarnpkg.com/babel-loader/-/babel-loader-7.1.4.tgz#e3463938bd4e6d55d1c174c5485d406a188ed015"
-  dependencies:
-    find-cache-dir "^1.0.0"
-    loader-utils "^1.0.2"
-    mkdirp "^0.5.1"
 
 babel-messages@^6.23.0:
   version "6.23.0"
@@ -2068,10 +2060,6 @@ comment-parser@^0.3.1:
   resolved "https://registry.yarnpkg.com/comment-parser/-/comment-parser-0.3.2.tgz#3c03f0776b86a36dfd9a0a2c97c6307f332082fe"
   dependencies:
     readable-stream "^2.0.4"
-
-commondir@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/commondir/-/commondir-1.0.1.tgz#ddd800da0c66127393cca5950ea968a3aaf1253b"
 
 compare-versions@^3.1.0:
   version "3.1.0"
@@ -3270,7 +3258,7 @@ enhanced-resolve@3.3.0:
     object-assign "^4.0.1"
     tapable "^0.2.5"
 
-enhanced-resolve@^3.0.0, enhanced-resolve@^3.4.0:
+enhanced-resolve@^3.4.0:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-3.4.1.tgz#0421e339fd71419b3da13d129b3979040230476e"
   dependencies:
@@ -3870,11 +3858,12 @@ file-entry-cache@^1.1.1:
     flat-cache "^1.2.1"
     object-assign "^4.0.1"
 
-file-loader@^0.11.2:
-  version "0.11.2"
-  resolved "https://registry.yarnpkg.com/file-loader/-/file-loader-0.11.2.tgz#4ff1df28af38719a6098093b88c82c71d1794a34"
+file-loader@^1.1.11:
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/file-loader/-/file-loader-1.1.11.tgz#6fe886449b0f2a936e43cabaac0cdbfb369506f8"
   dependencies:
     loader-utils "^1.0.2"
+    schema-utils "^0.4.5"
 
 file-saver@^1.3.3:
   version "1.3.8"
@@ -3941,14 +3930,6 @@ finalhandler@1.1.1:
     parseurl "~1.3.2"
     statuses "~1.4.0"
     unpipe "~1.0.0"
-
-find-cache-dir@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/find-cache-dir/-/find-cache-dir-1.0.0.tgz#9288e3e9e3cc3748717d39eade17cf71fc30ee6f"
-  dependencies:
-    commondir "^1.0.1"
-    make-dir "^1.0.0"
-    pkg-dir "^2.0.0"
 
 find-index@^0.1.1:
   version "0.1.1"
@@ -6091,7 +6072,7 @@ jshint@~2.9.4:
     shelljs "0.3.x"
     strip-json-comments "1.0.x"
 
-json-loader@^0.5.4, json-loader@^0.5.7:
+json-loader@^0.5.4:
   version "0.5.7"
   resolved "https://registry.yarnpkg.com/json-loader/-/json-loader-0.5.7.tgz#dca14a70235ff82f0ac9a3abeb60d337a365185d"
 
@@ -8917,22 +8898,22 @@ react-dom@^16.2.0:
     object-assign "^4.1.1"
     prop-types "^15.6.0"
 
-"react-draggable@^2.2.6 || ^3.0.3", react-draggable@^3.0.3:
+react-draggable@3.x, "react-draggable@^2.2.6 || ^3.0.3":
   version "3.0.5"
   resolved "https://registry.yarnpkg.com/react-draggable/-/react-draggable-3.0.5.tgz#c031e0ed4313531f9409d6cd84c8ebcec0ddfe2d"
   dependencies:
     classnames "^2.2.5"
     prop-types "^15.6.0"
 
-react-grid-layout-grafana@0.16.0:
-  version "0.16.0"
-  resolved "https://registry.yarnpkg.com/react-grid-layout-grafana/-/react-grid-layout-grafana-0.16.0.tgz#12242153fcd0bb80a26af8e41694bc2fde788b3a"
+react-grid-layout@0.16.6:
+  version "0.16.6"
+  resolved "https://registry.yarnpkg.com/react-grid-layout/-/react-grid-layout-0.16.6.tgz#9b2407a2b946c2260ebaf66f13b556e1da4efeb2"
   dependencies:
     classnames "2.x"
     lodash.isequal "^4.0.0"
     prop-types "15.x"
-    react-draggable "^3.0.3"
-    react-resizable "^1.7.5"
+    react-draggable "3.x"
+    react-resizable "1.x"
 
 react-highlight-words@^0.10.0:
   version "0.10.0"
@@ -8941,15 +8922,15 @@ react-highlight-words@^0.10.0:
     highlight-words-core "^1.1.0"
     prop-types "^15.5.8"
 
-react-hot-loader@^4.0.1:
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/react-hot-loader/-/react-hot-loader-4.1.2.tgz#5e8025f5bc5605506586b46eb2c6cc4006fd54d7"
+react-hot-loader@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/react-hot-loader/-/react-hot-loader-4.2.0.tgz#4a2ec79114f872e28ea786e04889d643ad3dfb7c"
   dependencies:
     fast-levenshtein "^2.0.6"
     global "^4.3.0"
     hoist-non-react-statics "^2.5.0"
     prop-types "^15.6.1"
-    react-lifecycles-compat "^3.0.2"
+    react-lifecycles-compat "^3.0.4"
     shallowequal "^1.0.2"
 
 react-immutable-proptypes@^2.1.0:
@@ -8966,9 +8947,9 @@ react-is@^16.3.2:
   version "16.3.2"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.3.2.tgz#f4d3d0e2f5fbb6ac46450641eb2e25bf05d36b22"
 
-react-lifecycles-compat@^3.0.2:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.2.tgz#7279047275bd727a912e25f734c0559527e84eff"
+react-lifecycles-compat@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
 
 react-popper@^0.7.5:
   version "0.7.5"
@@ -8992,7 +8973,7 @@ react-reconciler@^0.7.0:
     object-assign "^4.1.1"
     prop-types "^15.6.0"
 
-react-resizable@^1.7.5:
+react-resizable@1.x:
   version "1.7.5"
   resolved "https://registry.yarnpkg.com/react-resizable/-/react-resizable-1.7.5.tgz#83eb75bb3684da6989bbbf4f826e1470f0af902e"
   dependencies:
@@ -9668,9 +9649,9 @@ sass-lint@^1.10.2, sass-lint@^1.12.0:
     path-is-absolute "^1.0.0"
     util "^0.10.3"
 
-sass-loader@^6.0.6:
-  version "6.0.7"
-  resolved "https://registry.yarnpkg.com/sass-loader/-/sass-loader-6.0.7.tgz#dd2fdb3e7eeff4a53f35ba6ac408715488353d00"
+sass-loader@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/sass-loader/-/sass-loader-7.0.1.tgz#fd937259ccba3a9cfe0d5f8a98746d48adfcc261"
   dependencies:
     clone-deep "^2.0.1"
     loader-utils "^1.0.1"
@@ -9726,7 +9707,7 @@ semver-diff@^2.0.0:
   dependencies:
     semver "^5.0.3"
 
-"semver@2 >=2.2.1 || 3.x || 4 || 5", "semver@2 || 3 || 4 || 5", "semver@2.x || 3.x || 4 || 5", "semver@^2.3.0 || 3.x || 4 || 5", semver@^5.0.1, semver@^5.0.3, semver@^5.1.0, semver@^5.3.0, semver@^5.4.1, semver@^5.5.0:
+"semver@2 >=2.2.1 || 3.x || 4 || 5", "semver@2 || 3 || 4 || 5", "semver@2.x || 3.x || 4 || 5", "semver@^2.3.0 || 3.x || 4 || 5", semver@^5.0.3, semver@^5.1.0, semver@^5.3.0, semver@^5.4.1, semver@^5.5.0:
   version "5.5.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.5.0.tgz#dc4bbc7a6ca9d916dee5d43516f0092b58f7b8ab"
 
@@ -10470,9 +10451,9 @@ strip-json-comments@~2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
 
-style-loader@^0.20.3:
-  version "0.20.3"
-  resolved "https://registry.yarnpkg.com/style-loader/-/style-loader-0.20.3.tgz#ebef06b89dec491bcb1fdb3452e913a6fd1c10c4"
+style-loader@^0.21.0:
+  version "0.21.0"
+  resolved "https://registry.yarnpkg.com/style-loader/-/style-loader-0.21.0.tgz#68c52e5eb2afc9ca92b6274be277ee59aea3a852"
   dependencies:
     loader-utils "^1.1.0"
     schema-utils "^0.4.5"
@@ -10798,16 +10779,6 @@ ts-jest@^22.0.0:
     jest-config "^22.4.2"
     pkg-dir "^2.0.0"
     yargs "^11.0.0"
-
-ts-loader@^3.2.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-3.5.0.tgz#151d004dcddb4cf8e381a3bf9d6b74c2d957a9c0"
-  dependencies:
-    chalk "^2.3.0"
-    enhanced-resolve "^3.0.0"
-    loader-utils "^1.0.2"
-    micromatch "^3.1.4"
-    semver "^5.0.1"
 
 tslib@^1.8.0, tslib@^1.8.1:
   version "1.9.0"
