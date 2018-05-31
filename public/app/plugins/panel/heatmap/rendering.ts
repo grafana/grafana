@@ -537,7 +537,7 @@ export default function link(scope, elem, attrs, ctrl) {
     let getFillColor = threshold =>
       threshold.colorMode === 'custom' ? threshold.fillColor : thresholdColors.getFillColor(threshold.colorMode);
 
-    let thresholdLines = _.filter(panel.thresholds, t => t.line && t.value);
+    let thresholdLines = _.filter(panel.thresholds, t => t.line && _.isNumber(t.value));
     let lines = heatmap.selectAll('.heatmap-threshold').data(thresholdLines);
     lines
       .enter()
@@ -549,7 +549,7 @@ export default function link(scope, elem, attrs, ctrl) {
       .style('fill', getFillColor)
       .style('stroke', getLineColor);
 
-    let thresholdFills = _.filter(panel.thresholds, t => t.fill && t.value);
+    let thresholdFills = _.filter(panel.thresholds, t => t.fill && _.isNumber(t.value));
     let fills = heatmap.selectAll('.heatmap-threshold-fill').data(thresholdFills);
     let getFillY = t => (t.op === 'gt' ? chartTop : y(t));
     let getFillHeight = t => (t.op === 'gt' ? y(t) - chartTop : chartBottom - y(t));

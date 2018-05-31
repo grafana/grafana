@@ -16,14 +16,18 @@ export class ThresholdEditor extends React.Component<IProps, any> {
     super(props);
 
     // thresholdValue should be defined for <input> component to be controlled
-    this.state = { thresholdValue: props.threshold.value || 0 };
+    this.state = {
+      thresholdValue: toNumberOrEmptyString(props.threshold.value),
+    };
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
     // Update state from props before rendering in order to keep it synced
     // https://reactjs.org/docs/react-component.html#static-getderivedstatefromprops
     // https://reactjs.org/docs/react-component.html#unsafe_componentwillupdate
-    return { thresholdValue: nextProps.threshold.value || 0 };
+    return {
+      thresholdValue: toNumberOrEmptyString(nextProps.threshold.value),
+    };
   }
 
   onThresholdChange(threshold) {
@@ -31,11 +35,11 @@ export class ThresholdEditor extends React.Component<IProps, any> {
   }
 
   onInputChange = e => {
-    const newValue = e.target.value;
+    let newValue = toNumberOrEmptyString(e.target.value);
     this.setState({ thresholdValue: newValue });
 
     let threshold = this.props.threshold;
-    threshold.value = newValue;
+    threshold.value = newValue === '' ? undefined : newValue;
     this.onThresholdChange(threshold);
   };
 
@@ -154,4 +158,9 @@ export class ThresholdEditor extends React.Component<IProps, any> {
       </div>
     );
   }
+}
+
+function toNumberOrEmptyString(value: string): number | string {
+  let num = Number(value);
+  return isNaN(num) || value === '' ? '' : num;
 }

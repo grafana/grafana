@@ -21,14 +21,14 @@ export class ThresholdHandler extends React.Component<IProps, any> {
     super(props);
 
     this.state = {
-      value: this.props.threshold.value || 0,
+      value: this.props.threshold.value,
       dragging: false,
     };
   }
 
   static getDerivedStateFromProps(props, state) {
     // Sync state value if props was changed
-    const value = _.toNumber(props.threshold.value) || 0;
+    const value = props.threshold.value;
     if (state.value !== value) {
       return { value: value };
     } else {
@@ -39,7 +39,6 @@ export class ThresholdHandler extends React.Component<IProps, any> {
   setWrapperRef = elem => {
     if (elem && _.hasIn(elem, 'parentElement.parentElement.parentElement')) {
       this.thresholdManagerElem = elem.parentElement.parentElement.parentElement;
-      console.log(this.thresholdManagerElem);
       // When new threshold handler was added, trigger render() to place element in proper position
       // if threshold value is out of Y axis bounds.
       this.forceUpdate();
@@ -66,6 +65,9 @@ export class ThresholdHandler extends React.Component<IProps, any> {
   }
 
   getYPos(value) {
+    if (_.isNil(value)) {
+      return 0;
+    }
     return this.props.yPos(value) - LINE_PADDING;
   }
 
@@ -95,7 +97,7 @@ export class ThresholdHandler extends React.Component<IProps, any> {
     const handlerIndex = this.props.index;
     const threshold = this.props.threshold;
     const stateclassName = this.getStateClassName(threshold.colorMode);
-    const value = threshold.value || 0;
+    const value = threshold.value;
     const valueLabel = this.state.dragging ? this.state.value : value;
 
     let y = this.getYPos(value);
