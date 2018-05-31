@@ -546,6 +546,7 @@ export default function link(scope, elem, attrs, ctrl) {
       .attr('x2', x2)
       .attr('y1', y)
       .attr('y2', y)
+      .style('stroke-width', 2)
       .style('fill', getFillColor)
       .style('stroke', getLineColor);
 
