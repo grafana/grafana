@@ -47,20 +47,21 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Error("Cannot read directory", "error", err)
 	}
 
-	path, err := filepath.EvalSymlinks(path)
+	copy := path
+	path, err := filepath.Abs(path)
+	if err != nil {
+		log.Error("Could not create absolute path ", "path", path)
+		path = copy //if .Abs return an error we fallback to path
+	}
+
+	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
 		log.Error("Failed to read content of symlinked path: %s", path)
 	}
 
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		log.Error("Could not create absolute path ", "path", path)
-		absPath = path //if .Abs return an error we fallback to path
-	}
-
 	return &fileReader{
 		Cfg:              cfg,
-		Path:             absPath,
+		Path:             path,
 		log:              log,
 		dashboardService: dashboards.NewProvisioningService(),
 	}, nil
