@@ -85,7 +85,7 @@ class DashListCtrl extends PanelCtrl {
       limit: this.panel.limit,
       query: this.panel.query,
       tag: this.panel.tags,
-      folderId: this.panel.folderId,
+      folderIds: this.panel.folderId,
     };
 
     return this.backendSrv.search(params).then(result => {
