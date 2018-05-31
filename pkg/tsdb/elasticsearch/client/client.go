@@ -79,14 +79,6 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb
 	return nil, fmt.Errorf("elasticsearch version=%d is not supported", version)
 }
 
-type baseClient interface {
-	Client
-	getSettings() *simplejson.Json
-	executeBatchRequest(uriPath string, requests []*multiRequest) (*http.Response, error)
-	executeRequest(method, uriPath string, body []byte) (*http.Response, error)
-	createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest
-}
-
 type baseClientImpl struct {
 	ctx       context.Context
 	ds        *models.DataSource
