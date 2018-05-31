@@ -68,6 +68,7 @@ func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
 	So(len(ds.Options), ShouldEqual, 1)
 	So(ds.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 	So(ds.DisableDeletion, ShouldBeTrue)
+	So(ds.IntervalSeconds, ShouldEqual, 10)
 
 	ds2 := cfg[1]
 	So(ds2.Name, ShouldEqual, "default")
@@ -78,4 +79,5 @@ func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
 	So(len(ds2.Options), ShouldEqual, 1)
 	So(ds2.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 	So(ds2.DisableDeletion, ShouldBeFalse)
+	So(ds2.IntervalSeconds, ShouldEqual, 3)
 }

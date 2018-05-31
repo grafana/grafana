@@ -3,6 +3,7 @@
   folder: 'developers'
   editable: true
   disableDeletion: true
+  intervalSeconds: 10
   type: file
   options:
     path: /var/lib/grafana/dashboards

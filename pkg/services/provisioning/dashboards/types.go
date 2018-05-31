@@ -17,6 +17,7 @@ type DashboardsAsConfig struct {
 	Editable        bool
 	Options         map[string]interface{}
 	DisableDeletion bool
+	IntervalSeconds int64
 }
 
 type DashboardsAsConfigV0 struct {
@@ -27,6 +28,7 @@ type DashboardsAsConfigV0 struct {
 	Editable        bool                   `json:"editable" yaml:"editable"`
 	Options         map[string]interface{} `json:"options" yaml:"options"`
 	DisableDeletion bool                   `json:"disableDeletion" yaml:"disableDeletion"`
+	IntervalSeconds int64                  `json:"intervalSeconds" yaml:"intervalSeconds"`
 }
 
 type ConfigVersion struct {
@@ -45,6 +47,7 @@ type DashboardProviderConfigs struct {
 	Editable        bool                   `json:"editable" yaml:"editable"`
 	Options         map[string]interface{} `json:"options" yaml:"options"`
 	DisableDeletion bool                   `json:"disableDeletion" yaml:"disableDeletion"`
+	IntervalSeconds int64                  `json:"intervalSeconds" yaml:"intervalSeconds"`
 }
 
 func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig, folderId int64) (*dashboards.SaveDashboardDTO, error) {
@@ -75,6 +78,7 @@ func mapV0ToDashboardAsConfig(v0 []*DashboardsAsConfigV0) []*DashboardsAsConfig 
 			Editable:        v.Editable,
 			Options:         v.Options,
 			DisableDeletion: v.DisableDeletion,
+			IntervalSeconds: v.IntervalSeconds,
 		})
 	}
 
@@ -93,6 +97,7 @@ func (dc *DashboardAsConfigV1) mapToDashboardAsConfig() []*DashboardsAsConfig {
 			Editable:        v.Editable,
 			Options:         v.Options,
 			DisableDeletion: v.DisableDeletion,
+			IntervalSeconds: v.IntervalSeconds,
 		})
 	}
 

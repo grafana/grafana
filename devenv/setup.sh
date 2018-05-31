@@ -5,7 +5,7 @@ bulkDashboard() {
     requiresJsonnet
 
     COUNTER=0
-    MAX=4
+    MAX=400
     while [  $COUNTER -lt $MAX ]; do
         jsonnet -o "dashboards/bulk-testing/dashboard${COUNTER}.json" -e "local bulkDash = import 'dashboards/bulk-testing/bulkdash.jsonnet'; bulkDash + {  uid: 'uid-${COUNTER}',  title: 'title-${COUNTER}' }"
         let COUNTER=COUNTER+1
