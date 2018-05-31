@@ -628,6 +628,11 @@ export default function link(scope, elem, attrs, ctrl) {
     } else if (xScale(d.x) + cardWidth > chartWidth) {
       // Cut card right to prevent overlay
       w = chartWidth - xScale(d.x) - cardPadding;
+
+      // Prevent drawing cards which are out of canvas
+      if (w <= 0) {
+        return 0;
+      }
     } else {
       w = cardWidth;
     }
