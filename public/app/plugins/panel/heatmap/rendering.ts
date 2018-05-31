@@ -529,7 +529,7 @@ export default function link(scope, elem, attrs, ctrl) {
   function addThresholds() {
     let x1 = yAxisWidth;
     let x2 = yAxisWidth + chartWidth;
-    let y = threshold => yScale(threshold.value) + chartTop;
+    let y = threshold => Math.min(yScale(threshold.value), chartHeight) + chartTop;
 
     let getLineColor = threshold =>
       threshold.colorMode === 'custom' ? threshold.lineColor : thresholdColors.getLineColor(threshold.colorMode);
@@ -552,7 +552,7 @@ export default function link(scope, elem, attrs, ctrl) {
     let thresholdFills = _.filter(panel.thresholds, t => t.fill && _.isNumber(t.value));
     let fills = heatmap.selectAll('.heatmap-threshold-fill').data(thresholdFills);
     let getFillY = t => (t.op === 'gt' ? chartTop : y(t));
-    let getFillHeight = t => (t.op === 'gt' ? y(t) - chartTop : chartBottom - y(t));
+    let getFillHeight = t => getThresholdFillHeight(t, y);
     fills
       .enter()
       .append('rect')
@@ -561,6 +561,16 @@ export default function link(scope, elem, attrs, ctrl) {
       .attr('y', getFillY)
       .attr('height', getFillHeight)
       .style('fill', getFillColor);
+  }
+
+  function getThresholdFillHeight(threshold, yScale) {
+    let height;
+    if (threshold.op === 'gt') {
+      height = yScale(threshold) - chartTop;
+    } else {
+      height = chartBottom - yScale(threshold);
+    }
+    return Math.max(height, 0);
   }
 
   function highlightCard(event) {
