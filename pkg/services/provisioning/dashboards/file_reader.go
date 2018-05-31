@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/bus"
 
@@ -161,13 +163,18 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	provisionedData, alreadyProvisioned := provisionedDashboardRefs[path]
 	upToDate := alreadyProvisioned && provisionedData.Updated >= resolvedFileInfo.ModTime().Unix()
 
-	dash, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderId)
+	jsonFile, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderId)
 	if err != nil {
 		fr.log.Error("failed to load dashboard from ", "file", path, "error", err)
 		return provisioningMetadata, nil
 	}
 
+	if provisionedData != nil && jsonFile.checkSum == provisionedData.CheckSum {
+		upToDate = true
+	}
+
 	// keeps track of what uid's and title's we have already provisioned
+	dash := jsonFile.dashboard
 	provisioningMetadata.uid = dash.Dashboard.Uid
 	provisioningMetadata.title = dash.Dashboard.Title
 
@@ -185,7 +192,13 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 	}
 
 	fr.log.Debug("saving new dashboard", "file", path)
-	dp := &models.DashboardProvisioning{ExternalId: path, Name: fr.Cfg.Name, Updated: resolvedFileInfo.ModTime().Unix()}
+	dp := &models.DashboardProvisioning{
+		ExternalId: path,
+		Name:       fr.Cfg.Name,
+		Updated:    resolvedFileInfo.ModTime().Unix(),
+		CheckSum:   jsonFile.checkSum,
+	}
+
 	_, err = fr.dashboardService.SaveProvisionedDashboard(dash, dp)
 	return provisioningMetadata, err
 }
@@ -283,14 +296,30 @@ func validateWalkablePath(fileInfo os.FileInfo) (bool, error) {
 	return true, nil
 }
 
-func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time, folderId int64) (*dashboards.SaveDashboardDTO, error) {
+type dashboardJsonFile struct {
+	dashboard    *dashboards.SaveDashboardDTO
+	checkSum     string
+	lastModified time.Time
+}
+
+func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time, folderId int64) (*dashboardJsonFile, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer reader.Close()
 
-	data, err := simplejson.NewFromReader(reader)
+	all, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	checkSum, err := util.Md5SumString(string(all))
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := simplejson.NewJson(all)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +329,11 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 		return nil, err
 	}
 
-	return dash, nil
+	return &dashboardJsonFile{
+		dashboard:    dash,
+		checkSum:     checkSum,
+		lastModified: lastModified,
+	}, nil
 }
 
 type provisioningMetadata struct {
@@ -328,7 +361,6 @@ func (checker provisioningSanityChecker) track(pm provisioningMetadata) {
 	if len(pm.title) > 0 {
 		checker.titleUsage[pm.title] += 1
 	}
-
 }
 
 func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
@@ -343,5 +375,4 @@ func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
 			log.Error("the same 'title' is used more than once", "title", title, "provider", checker.provisioningProvider)
 		}
 	}
-
 }
