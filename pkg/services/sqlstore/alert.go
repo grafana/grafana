@@ -82,8 +82,16 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 
 	builder.Write(`WHERE alert.org_id = ?`, query.OrgId)
 
-	if query.DashboardId != 0 {
-		builder.Write(` AND alert.dashboard_id = ?`, query.DashboardId)
+	if len(strings.TrimSpace(query.Query)) > 0 {
+		builder.Write(" AND alert.name "+dialect.LikeStr()+" ?", "%"+query.Query+"%")
+	}
+
+	if len(query.DashboardIDs) > 0 {
+		builder.sql.WriteString(` AND alert.dashboard_id IN (?` + strings.Repeat(",?", len(query.DashboardIDs)-1) + `) `)
+
+		for _, dbID := range query.DashboardIDs {
+			builder.AddParams(dbID)
+		}
 	}
 
 	if query.PanelId != 0 {

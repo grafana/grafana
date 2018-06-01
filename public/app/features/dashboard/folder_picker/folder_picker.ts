@@ -12,6 +12,7 @@ export class FolderPickerCtrl {
   enterFolderCreation: any;
   exitFolderCreation: any;
   enableCreateNew: boolean;
+  enableReset: boolean;
   rootName = 'General';
   folder: any;
   createNewFolder: boolean;
@@ -58,6 +59,10 @@ export class FolderPickerCtrl {
         result.unshift({ title: '-- New Folder --', id: -1 });
       }
 
+      if (this.enableReset && query === '' && this.initialTitle !== '') {
+        result.unshift({ title: this.initialTitle, id: null });
+      }
+
       return _.map(result, item => {
         return { text: item.title, value: item.id };
       });
@@ -65,7 +70,9 @@ export class FolderPickerCtrl {
   }
 
   onFolderChange(option) {
-    if (option.value === -1) {
+    if (!option) {
+      option = { value: 0, text: this.rootName };
+    } else if (option.value === -1) {
       this.createNewFolder = true;
       this.enterFolderCreation();
       return;
@@ -134,7 +141,7 @@ export class FolderPickerCtrl {
         this.onFolderLoad();
       });
     } else {
-      if (this.initialTitle) {
+      if (this.initialTitle && this.initialFolderId === null) {
         this.folder = { text: this.initialTitle, value: null };
       } else {
         this.folder = { text: this.rootName, value: 0 };
@@ -171,6 +178,7 @@ export function folderPicker() {
       enterFolderCreation: '&',
       exitFolderCreation: '&',
       enableCreateNew: '@',
+      enableReset: '@',
     },
   };
 }
