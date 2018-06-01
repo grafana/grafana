@@ -208,6 +208,12 @@
   color: $list-item-link-color;
 }
 
+.search-item__body-folder-title {
+  color: $text-color-weak;
+  font-style: italic;
+  padding-left: 0.25rem;
+}
+
 .search-item__icon {
   padding: 5px;
   flex: 0 0 auto;
