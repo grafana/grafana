@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"testing"
-
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -110,11 +109,12 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Viewer cannot read alerts", func() {
-			alertQuery := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_VIEWER}}
+			viewerUser := &m.SignedInUser{OrgRole: m.ROLE_VIEWER, OrgId: 1}
+			alertQuery := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 			err2 := HandleAlertsQuery(&alertQuery)
 
 			So(err2, ShouldBeNil)
-			So(alertQuery.Result, ShouldHaveLength, 0)
+			So(alertQuery.Result, ShouldHaveLength, 1)
 		})
 
 		Convey("Alerts with same dashboard id and panel id should update", func() {

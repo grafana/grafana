@@ -79,7 +79,7 @@ func GetAlerts(c *m.ReqContext) Response {
 			DashboardIds: dashboardIDs,
 			Type:         string(search.DashHitDB),
 			FolderIds:    folderIDs,
-			Permission:   m.PERMISSION_EDIT,
+			Permission:   m.PERMISSION_VIEW,
 		}
 
 		err := bus.Dispatch(&searchQuery)
