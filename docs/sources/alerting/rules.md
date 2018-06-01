@@ -27,7 +27,9 @@ and the conditions that need to be met for the alert to change state and trigger
 ## Execution
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `OpenTSDB`, `MySQL`, `Postgres` and `Cloudwatch`.
+of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `Elasticsearch`, `InfluxDB`, `OpenTSDB`, `MySQL`, `Postgres` and `Cloudwatch`.
+
+> Alerting support for Elasticsearch is only available in Grafana v5.2 and above.
 
 ### Clustering
 
@@ -152,6 +154,8 @@ filters = alerting.scheduler:debug \
           tsdb.prometheus:debug \
           tsdb.opentsdb:debug \
           tsdb.influxdb:debug \
+          tsdb.elasticsearch:debug \
+          tsdb.elasticsearch.client:debug \
 ```
 
 If you want to log raw query sent to your TSDB and raw response in log you also have to set grafana.ini option `app_mode` to

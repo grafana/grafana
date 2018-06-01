@@ -20,6 +20,7 @@
     "version": "5.0.0"
   },
 
+  "alerting": true,
   "annotations": true,
   "metrics": true,
 
