@@ -18,19 +18,17 @@ echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building releases from tag $CIRCLE_TAG"
-  go run build.go -goarch armv7 -cc ${CCARMV7} -includeBuildNumber=false build
-  go run build.go -goarch arm64 -cc ${CCARM64} -includeBuildNumber=false build
-  go run build.go -goos darwin -cc ${CCOSX64} -includeBuildNumber=false build
-  go run build.go -goos windows -cc ${CCWIN64} -includeBuildNumber=false build
-  CC=${CCX64} go run build.go -includeBuildNumber=false build
+  OPT="-includeBuildNumber=false"
 else
   echo "Building incremental build for $CIRCLE_BRANCH"
-  go run build.go -goarch armv7 -cc ${CCARMV7} -buildNumber=${CIRCLE_BUILD_NUM} build
-  go run build.go -goarch arm64 -cc ${CCARM64} -buildNumber=${CIRCLE_BUILD_NUM} build
-  go run build.go -goos darwin -cc ${CCOSX64} -buildNumber=${CIRCLE_BUILD_NUM} build
-  go run build.go -goos windows -cc ${CCWIN64} -buildNumber=${CIRCLE_BUILD_NUM} build
-  CC=${CCX64} go run build.go -buildNumber=${CIRCLE_BUILD_NUM} build
+  OPT="-buildNumber=${CIRCLE_BUILD_NUM}"
 fi
+
+go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
+go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
+go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
+go run build.go -goos windows -cc ${CCWIN64} ${OPT} build
+CC=${CCX64} go run build.go ${OPT} build
 
 yarn install --pure-lockfile --no-progress
 
@@ -41,47 +39,31 @@ if [ -d "dist" ]; then
 fi
 
 if [ "$CIRCLE_TAG" != "" ]; then
-  echo "Building frontend from tag $CIRCLE_TAG"
-  go run build.go -includeBuildNumber=false build-frontend
-  echo "Packaging a release from tag $CIRCLE_TAG"
-  go run build.go -goos linux -pkg-arch amd64 -includeBuildNumber=false package-only latest
-  go run build.go -goos linux -pkg-arch armv7 -includeBuildNumber=false package-only
-  go run build.go -goos linux -pkg-arch arm64 -includeBuildNumber=false package-only
-
-  if [ -d '/tmp/phantomjs/darwin' ]; then
-    cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
-  else
-    echo 'PhantomJS binaries for darwin missing!'
-  fi
-  go run build.go -goos darwin -pkg-arch amd64 -includeBuildNumber=false package-only
-
-  if [ -d '/tmp/phantomjs/windows' ]; then
-      cp /tmp/phantomjs/windows/phantomjs.exe tools/phantomjs/phantomjs.exe
-      rm tools/phantomjs/phantomjs
-  else
-      echo 'PhantomJS binaries for darwin missing!'
-  fi
-  go run build.go -goos windows -pkg-arch amd64 -includeBuildNumber=false package-only
+  echo "Building frontend and packaging from tag $CIRCLE_TAG"
 else
-  echo "Building frontend for $CIRCLE_BRANCH"
-  go run build.go -buildNumber=${CIRCLE_BUILD_NUM} build-frontend
-  echo "Packaging incremental build for $CIRCLE_BRANCH"
-  go run build.go -goos linux -pkg-arch amd64 -buildNumber=${CIRCLE_BUILD_NUM} package-only latest
-  go run build.go -goos linux -pkg-arch armv7 -buildNumber=${CIRCLE_BUILD_NUM} package-only
-  go run build.go -goos linux -pkg-arch arm64 -buildNumber=${CIRCLE_BUILD_NUM} package-only
-
-  if [ -d '/tmp/phantomjs/darwin' ]; then
-    cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
-  else
-    echo 'PhantomJS binaries for darwin missing!'
-  fi
-  go run build.go -goos darwin -pkg-arch amd64 -buildNumber=${CIRCLE_BUILD_NUM} package-only
-
-  if [ -d '/tmp/phantomjs/windows' ]; then
-      cp /tmp/phantomjs/windows/phantomjs.exe tools/phantomjs/phantomjs.exe
-      rm tools/phantomjs/phantomjs
-  else
-      echo 'PhantomJS binaries for windows missing!'
-  fi
-  go run build.go -goos windows -pkg-arch amd64 -buildNumber=${CIRCLE_BUILD_NUM} package-only
+  echo "Building frontend and packaging incremental build for $CIRCLE_BRANCH"
 fi
+echo "Building frontend"
+go run build.go ${OPT} build-frontend
+echo "Packaging"
+go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only latest
+#removing amd64 phantomjs bin for armv7/arm64 packages
+rm tools/phantomjs/phantomjs
+go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
+go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+
+if [ -d '/tmp/phantomjs/darwin' ]; then
+  cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
+else
+  echo 'PhantomJS binaries for darwin missing!'
+fi
+go run build.go -goos darwin -pkg-arch amd64 ${OPT} package-only
+
+if [ -d '/tmp/phantomjs/windows' ]; then
+  cp /tmp/phantomjs/windows/phantomjs.exe tools/phantomjs/phantomjs.exe
+  rm tools/phantomjs/phantomjs
+else
+    echo 'PhantomJS binaries for darwin missing!'
+fi
+go run build.go -goos windows -pkg-arch amd64 ${OPT} package-only
+

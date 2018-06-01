@@ -64,8 +64,6 @@ Run karma tests
 npm run karma
 ```
 
-Run
-
 ### Recompile backend on source change
 
 To rebuild on source change.

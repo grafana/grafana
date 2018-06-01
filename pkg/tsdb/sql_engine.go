@@ -144,10 +144,10 @@ func ConvertSqlTimeColumnToEpochMs(values RowValues, timeIndex int) {
 	if timeIndex >= 0 {
 		switch value := values[timeIndex].(type) {
 		case time.Time:
-			values[timeIndex] = EpochPrecisionToMs(float64(value.UnixNano()))
+			values[timeIndex] = float64(value.UnixNano()) / float64(time.Millisecond)
 		case *time.Time:
 			if value != nil {
-				values[timeIndex] = EpochPrecisionToMs(float64((*value).UnixNano()))
+				values[timeIndex] = float64((*value).UnixNano()) / float64(time.Millisecond)
 			}
 		case int64:
 			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))

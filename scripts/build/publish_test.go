@@ -13,13 +13,13 @@ type testPackage struct {
 
 var testData = []testPackage{
 	{
-		path:    "grafana-5.2.0-474pre1.arm64.rpm",
+		path:    "grafana-5.2.0-474pre1.aarch64.rpm",
 		version: "5.2.0-474pre1",
 		os:      "rhel",
 		arch:    "arm64",
 	},
 	{
-		path:    "grafana-5.2.0-474pre1.armv7.rpm",
+		path:    "grafana-5.2.0-474pre1.armhfp.rpm",
 		version: "5.2.0-474pre1",
 		os:      "rhel",
 		arch:    "armv7",
@@ -73,7 +73,7 @@ var testData = []testPackage{
 		arch:    "arm64",
 	},
 	{
-		path:    "grafana_5.2.0-474pre1_armv7.deb",
+		path:    "grafana_5.2.0-474pre1_armhf.deb",
 		version: "5.2.0-474pre1",
 		os:      "deb",
 		arch:    "armv7",
@@ -100,5 +100,11 @@ func TestFileWalker(t *testing.T) {
 		if actualPackageInfo.Arch != packageInfo.arch {
 			t.Errorf("Testing (%v), expected %v to be %v.", packageInfo.path, actualPackageInfo.Arch, packageInfo.arch)
 		}
+	}
+
+	incorrectPackageName := "grafana_5.2.0-474pre1_armfoo.deb"
+	_, err := mapPackage(incorrectPackageName, incorrectPackageName, []byte{})
+	if err == nil {
+		t.Errorf("Testing (%v), expected to fail due to an unrecognized arch, but signalled no error.", incorrectPackageName)
 	}
 }

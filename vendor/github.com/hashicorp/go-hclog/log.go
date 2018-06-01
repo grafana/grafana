@@ -37,6 +37,18 @@ const (
 	Error Level = 5
 )
 
+// When processing a value of this type, the logger automatically treats the first
+// argument as a Printf formatting string and passes the rest as the values to be
+// formatted. For example: L.Info(Fmt{"%d beans/day", beans}). This is a simple
+// convience type for when formatting is required.
+type Format []interface{}
+
+// Fmt returns a Format type. This is a convience function for creating a Format
+// type.
+func Fmt(str string, args ...interface{}) Format {
+	return append(Format{str}, args...)
+}
+
 // LevelFromString returns a Level type for the named log level, or "NoLevel" if
 // the level string is invalid. This facilitates setting the log level via
 // config or environment variable by name in a predictable way.

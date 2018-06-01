@@ -70,6 +70,10 @@ export class AnnotationsEditorCtrl {
     this.mode = 'list';
   }
 
+  move(index, dir) {
+    _.move(this.annotations, index, index + dir);
+  }
+
   add() {
     this.annotations.push(this.currentAnnotation);
     this.reset();

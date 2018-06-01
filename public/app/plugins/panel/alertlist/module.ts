@@ -21,6 +21,7 @@ class AlertListPanel extends PanelCtrl {
   currentAlerts: any = [];
   alertHistory: any = [];
   noAlertsMessage: string;
+
   // Set and populate defaults
   panelDefaults = {
     show: 'current',
@@ -28,6 +29,9 @@ class AlertListPanel extends PanelCtrl {
     stateFilter: [],
     onlyAlertsOnDashboard: false,
     sortOrder: 1,
+    dashboardFilter: '',
+    nameFilter: '',
+    folderId: null,
   };
 
   /** @ngInject */
@@ -89,6 +93,11 @@ class AlertListPanel extends PanelCtrl {
     });
   }
 
+  onFolderChange(folder: any) {
+    this.panel.folderId = folder.id;
+    this.refresh();
+  }
+
   getStateChanges() {
     var params: any = {
       limit: this.panel.limit,
@@ -110,6 +119,7 @@ class AlertListPanel extends PanelCtrl {
         al.info = alertDef.getAlertAnnotationInfo(al);
         return al;
       });
+
       this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
 
       return this.alertHistory;
@@ -121,8 +131,24 @@ class AlertListPanel extends PanelCtrl {
       state: this.panel.stateFilter,
     };
 
+    if (this.panel.nameFilter) {
+      params.query = this.panel.nameFilter;
+    }
+
+    if (this.panel.folderId >= 0) {
+      params.folderId = this.panel.folderId;
+    }
+
+    if (this.panel.dashboardFilter) {
+      params.dashboardQuery = this.panel.dashboardFilter;
+    }
+
     if (this.panel.onlyAlertsOnDashboard) {
       params.dashboardId = this.dashboard.id;
+    }
+
+    if (this.panel.dashboardTags) {
+      params.dashboardTag = this.panel.dashboardTags;
     }
 
     return this.backendSrv.get(`/api/alerts`, params).then(res => {
@@ -135,6 +161,9 @@ class AlertListPanel extends PanelCtrl {
           return al;
         })
       );
+      if (this.currentAlerts.length > this.panel.limit) {
+        this.currentAlerts = this.currentAlerts.slice(0, this.panel.limit);
+      }
       this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
 
       return this.currentAlerts;

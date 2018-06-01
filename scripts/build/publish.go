@@ -18,13 +18,16 @@ import (
 var apiUrl = flag.String("apiUrl", "https://grafana.com/api", "api url")
 var apiKey = flag.String("apiKey", "", "api key")
 var version = ""
-var versionRe = regexp.MustCompile(`grafana-(.*)(\.|_)(arm64|armv7|darwin|linux|windows|x86_64)`)
-var debVersionRe = regexp.MustCompile(`grafana_(.*)_(arm64|armv7|amd64)\.deb`)
+var versionRe = regexp.MustCompile(`grafana-(.*)(\.|_)(arm64|armhfp|aarch64|armv7|darwin|linux|windows|x86_64)`)
+var debVersionRe = regexp.MustCompile(`grafana_(.*)_(arm64|armv7|armhf|amd64)\.deb`)
 var builds = []build{}
 var architectureMapping = map[string]string{
-	"amd64":"amd64",
 	"armv7":"armv7",
+	"armhfp":"armv7",
+	"armhf":"armv7",
 	"arm64":"arm64",
+	"aarch64":"arm64",
+	"amd64":"amd64",
 	"x86_64":"amd64",
 }
 
@@ -77,6 +80,8 @@ func mapPackage(path string, name string, shaBytes []byte) (build, error) {
 		log.Printf("Version detected: %v", version)
 	} else if (len(debResult) > 0) {
 		version = string(debResult[1])
+	} else {
+		return build{}, fmt.Errorf("Unable to figure out version from '%v'", name)
 	}
 
 	os := ""
@@ -95,6 +100,9 @@ func mapPackage(path string, name string, shaBytes []byte) (build, error) {
 	if strings.HasSuffix(name, ".deb") {
 		os = "deb"
 	}
+	if os == "" {
+		return build{}, fmt.Errorf("Unable to figure out os from '%v'", name)
+	}
 
 	arch := ""
 	for archListed, archReal := range architectureMapping {
@@ -102,6 +110,9 @@ func mapPackage(path string, name string, shaBytes []byte) (build, error) {
 			arch = archReal
 			break
 		}
+	}
+	if arch == "" {
+		return build{}, fmt.Errorf("Unable to figure out arch from '%v'", name)
 	}
 
 	return build{
@@ -125,7 +136,8 @@ func packageWalker(path string, f os.FileInfo, err error) error {
 	build, err := mapPackage(path, f.Name(), shaBytes)
 
 	if err != nil {
-		return err
+		log.Printf("Could not map metadata from package: %v", err)
+		return nil
 	}
 
 	builds = append(builds, build)

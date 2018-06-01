@@ -4,10 +4,10 @@ import colors from 'app/core/utils/colors';
 import TimeSeries from 'app/core/time_series2';
 
 import ElapsedTime from './ElapsedTime';
-import Legend from './Legend';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Table from './Table';
+import TimePicker, { DEFAULT_RANGE } from './TimePicker';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { buildQueryOptions, ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 import { decodePathComponent } from 'app/core/utils/location_util';
@@ -16,39 +16,30 @@ function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
     const datapoints = seriesData.datapoints || [];
     const alias = seriesData.target;
-
     const colorIndex = index % colors.length;
     const color = colors[colorIndex];
 
     const series = new TimeSeries({
-      datapoints: datapoints,
-      alias: alias,
-      color: color,
+      datapoints,
+      alias,
+      color,
       unit: seriesData.unit,
     });
-
-    if (datapoints && datapoints.length > 0) {
-      const last = datapoints[datapoints.length - 1][1];
-      const from = options.range.from;
-      if (last - from < -10000) {
-        series.isOutsideRange = true;
-      }
-    }
 
     return series;
   });
 }
 
-function parseInitialQueries(initial) {
-  if (!initial) {
-    return [];
-  }
+function parseInitialState(initial) {
   try {
     const parsed = JSON.parse(decodePathComponent(initial));
-    return parsed.queries.map(q => q.query);
+    return {
+      queries: parsed.queries.map(q => q.query),
+      range: parsed.range,
+    };
   } catch (e) {
     console.error(e);
-    return [];
+    return { queries: [], range: DEFAULT_RANGE };
   }
 }
 
@@ -60,6 +51,8 @@ interface IExploreState {
   latency: number;
   loading: any;
   queries: any;
+  queryError: any;
+  range: any;
   requestOptions: any;
   showingGraph: boolean;
   showingTable: boolean;
@@ -72,7 +65,7 @@ export class Explore extends React.Component<any, IExploreState> {
 
   constructor(props) {
     super(props);
-    const initialQueries = parseInitialQueries(props.routeParams.initial);
+    const { range, queries } = parseInitialState(props.routeParams.initial);
     this.state = {
       datasource: null,
       datasourceError: null,
@@ -80,11 +73,14 @@ export class Explore extends React.Component<any, IExploreState> {
       graphResult: null,
       latency: 0,
       loading: false,
-      queries: ensureQueries(initialQueries),
+      queries: ensureQueries(queries),
+      queryError: null,
+      range: range || { ...DEFAULT_RANGE },
       requestOptions: null,
       showingGraph: true,
       showingTable: true,
       tableResult: null,
+      ...props.initialState,
     };
   }
 
@@ -96,6 +92,10 @@ export class Explore extends React.Component<any, IExploreState> {
     } else {
       this.setState({ datasource: null, datasourceError: testResult.message, datasourceLoading: false });
     }
+  }
+
+  componentDidCatch(error) {
+    console.error(error);
   }
 
   handleAddQueryRow = index => {
@@ -119,8 +119,30 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setState({ queries: nextQueries });
   };
 
+  handleChangeTime = nextRange => {
+    const range = {
+      from: nextRange.from,
+      to: nextRange.to,
+    };
+    this.setState({ range }, () => this.handleSubmit());
+  };
+
+  handleClickCloseSplit = () => {
+    const { onChangeSplit } = this.props;
+    if (onChangeSplit) {
+      onChangeSplit(false);
+    }
+  };
+
   handleClickGraphButton = () => {
     this.setState(state => ({ showingGraph: !state.showingGraph }));
+  };
+
+  handleClickSplit = () => {
+    const { onChangeSplit } = this.props;
+    if (onChangeSplit) {
+      onChangeSplit(true, this.state);
+    }
   };
 
   handleClickTableButton = () => {
@@ -147,17 +169,17 @@ export class Explore extends React.Component<any, IExploreState> {
   };
 
   async runGraphQuery() {
-    const { datasource, queries } = this.state;
+    const { datasource, queries, range } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
-    this.setState({ latency: 0, loading: true, graphResult: null });
+    this.setState({ latency: 0, loading: true, graphResult: null, queryError: null });
     const now = Date.now();
     const options = buildQueryOptions({
       format: 'time_series',
       interval: datasource.interval,
       instant: false,
-      now,
+      range,
       queries: queries.map(q => q.query),
     });
     try {
@@ -165,24 +187,25 @@ export class Explore extends React.Component<any, IExploreState> {
       const result = makeTimeSeriesList(res.data, options);
       const latency = Date.now() - now;
       this.setState({ latency, loading: false, graphResult: result, requestOptions: options });
-    } catch (error) {
-      console.error(error);
-      this.setState({ loading: false, graphResult: error });
+    } catch (response) {
+      console.error(response);
+      const queryError = response.data ? response.data.error : response;
+      this.setState({ loading: false, queryError });
     }
   }
 
   async runTableQuery() {
-    const { datasource, queries } = this.state;
+    const { datasource, queries, range } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
-    this.setState({ latency: 0, loading: true, tableResult: null });
+    this.setState({ latency: 0, loading: true, queryError: null, tableResult: null });
     const now = Date.now();
     const options = buildQueryOptions({
       format: 'table',
       interval: datasource.interval,
       instant: true,
-      now,
+      range,
       queries: queries.map(q => q.query),
     });
     try {
@@ -190,9 +213,10 @@ export class Explore extends React.Component<any, IExploreState> {
       const tableModel = res.data[0];
       const latency = Date.now() - now;
       this.setState({ latency, loading: false, tableResult: tableModel, requestOptions: options });
-    } catch (error) {
-      console.error(error);
-      this.setState({ loading: false, tableResult: null });
+    } catch (response) {
+      console.error(response);
+      const queryError = response.data ? response.data.error : response;
+      this.setState({ loading: false, queryError });
     }
   }
 
@@ -202,6 +226,7 @@ export class Explore extends React.Component<any, IExploreState> {
   };
 
   render() {
+    const { position, split } = this.props;
     const {
       datasource,
       datasourceError,
@@ -210,59 +235,93 @@ export class Explore extends React.Component<any, IExploreState> {
       latency,
       loading,
       queries,
+      queryError,
+      range,
       requestOptions,
       showingGraph,
       showingTable,
       tableResult,
     } = this.state;
     const showingBoth = showingGraph && showingTable;
-    const graphHeight = showingBoth ? '200px' : null;
-    const graphButtonClassName = showingBoth || showingGraph ? 'btn m-r-1' : 'btn btn-inverse m-r-1';
-    const tableButtonClassName = showingBoth || showingTable ? 'btn m-r-1' : 'btn btn-inverse m-r-1';
+    const graphHeight = showingBoth ? '200px' : '400px';
+    const graphButtonActive = showingBoth || showingGraph ? 'active' : '';
+    const tableButtonActive = showingBoth || showingTable ? 'active' : '';
+    const exploreClass = split ? 'explore explore-split' : 'explore';
     return (
-      <div className="explore">
-        <div className="page-body page-full">
-          <h2 className="page-sub-heading">Explore</h2>
-          {datasourceLoading ? <div>Loading datasource...</div> : null}
-
-          {datasourceError ? <div title={datasourceError}>Error connecting to datasource.</div> : null}
-
-          {datasource ? (
-            <div className="m-r-3">
-              <div className="nav m-b-1">
-                <div className="pull-right">
-                  {loading || latency ? <ElapsedTime time={latency} className="" /> : null}
-                  <button type="submit" className="m-l-1 btn btn-primary" onClick={this.handleSubmit}>
-                    <i className="fa fa-return" /> Run Query
-                  </button>
-                </div>
-                <div>
-                  <button className={graphButtonClassName} onClick={this.handleClickGraphButton}>
-                    Graph
-                  </button>
-                  <button className={tableButtonClassName} onClick={this.handleClickTableButton}>
-                    Table
-                  </button>
-                </div>
-              </div>
-              <QueryRows
-                queries={queries}
-                request={this.request}
-                onAddQueryRow={this.handleAddQueryRow}
-                onChangeQuery={this.handleChangeQuery}
-                onExecuteQuery={this.handleSubmit}
-                onRemoveQueryRow={this.handleRemoveQueryRow}
-              />
-              <main className="m-t-2">
-                {showingGraph ? (
-                  <Graph data={graphResult} id="explore-1" options={requestOptions} height={graphHeight} />
-                ) : null}
-                {showingGraph ? <Legend data={graphResult} /> : null}
-                {showingTable ? <Table data={tableResult} className="m-t-3" /> : null}
-              </main>
+      <div className={exploreClass}>
+        <div className="navbar">
+          {position === 'left' ? (
+            <div>
+              <a className="navbar-page-btn">
+                <i className="fa fa-rocket" />
+                Explore
+              </a>
+            </div>
+          ) : (
+            <div className="navbar-buttons explore-first-button">
+              <button className="btn navbar-button" onClick={this.handleClickCloseSplit}>
+                Close Split
+              </button>
+            </div>
+          )}
+          <div className="navbar__spacer" />
+          {position === 'left' && !split ? (
+            <div className="navbar-buttons">
+              <button className="btn navbar-button" onClick={this.handleClickSplit}>
+                Split
+              </button>
             </div>
           ) : null}
+          <div className="navbar-buttons">
+            <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.handleClickGraphButton}>
+              Graph
+            </button>
+            <button className={`btn navbar-button ${tableButtonActive}`} onClick={this.handleClickTableButton}>
+              Table
+            </button>
+          </div>
+          <TimePicker range={range} onChangeTime={this.handleChangeTime} />
+          <div className="navbar-buttons relative">
+            <button className="btn navbar-button--primary" onClick={this.handleSubmit}>
+              Run Query <i className="fa fa-level-down run-icon" />
+            </button>
+            {loading || latency ? <ElapsedTime time={latency} className="text-info" /> : null}
+          </div>
         </div>
+
+        {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
+
+        {datasourceError ? (
+          <div className="explore-container" title={datasourceError}>
+            Error connecting to datasource.
+          </div>
+        ) : null}
+
+        {datasource ? (
+          <div className="explore-container">
+            <QueryRows
+              queries={queries}
+              request={this.request}
+              onAddQueryRow={this.handleAddQueryRow}
+              onChangeQuery={this.handleChangeQuery}
+              onExecuteQuery={this.handleSubmit}
+              onRemoveQueryRow={this.handleRemoveQueryRow}
+            />
+            {queryError ? <div className="text-warning m-a-2">{queryError}</div> : null}
+            <main className="m-t-2">
+              {showingGraph ? (
+                <Graph
+                  data={graphResult}
+                  id={`explore-graph-${position}`}
+                  options={requestOptions}
+                  height={graphHeight}
+                  split={split}
+                />
+              ) : null}
+              {showingTable ? <Table data={tableResult} className="m-t-3" /> : null}
+            </main>
+          </div>
+        ) : null}
       </div>
     );
   }

@@ -76,5 +76,13 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			res := part.Render(query, queryContext, "mean(value)")
 			So(res, ShouldEqual, `mean(value) AS "test"`)
 		})
+
+		Convey("render count distinct", func() {
+			part, err := NewQueryPart("count", []string{})
+			So(err, ShouldBeNil)
+
+			res := part.Render(query, queryContext, "distinct(value)")
+			So(res, ShouldEqual, `count(distinct(value))`)
+		})
 	})
 }

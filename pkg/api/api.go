@@ -375,7 +375,7 @@ func (hs *HTTPServer) registerRoutes() {
 	}, reqGrafanaAdmin)
 
 	// rendering
-	r.Get("/render/*", reqSignedIn, RenderToPng)
+	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
 
 	// grafana.net proxy
 	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
