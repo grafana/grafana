@@ -47,9 +47,15 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Error("Cannot read directory", "error", err)
 	}
 
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		log.Error("Could not create absolute path ", "path", path)
+		absPath = path //if .Abs return an error we fallback to path
+	}
+
 	return &fileReader{
 		Cfg:              cfg,
-		Path:             path,
+		Path:             absPath,
 		log:              log,
 		dashboardService: dashboards.NewProvisioningService(),
 	}, nil
