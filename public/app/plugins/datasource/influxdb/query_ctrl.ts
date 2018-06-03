@@ -280,25 +280,37 @@ export class InfluxQueryCtrl extends QueryCtrl {
       }
     }
 
-    var query, addTemplateVars;
+    var queries = [];
+    var addTemplateVars;
     if (segment.type === 'key' || segment.type === 'plus-button') {
-      query = this.queryBuilder.buildExploreQuery('TAG_KEYS');
+      queries.push(this.queryBuilder.buildExploreQuery('TAG_KEYS'));
       addTemplateVars = false;
+      queries.push(this.queryBuilder.buildExploreQuery('FIELDS'));
     } else if (segment.type === 'value') {
-      query = this.queryBuilder.buildExploreQuery('TAG_VALUES', this.tagSegments[index - 2].value);
+      queries.push(this.queryBuilder.buildExploreQuery('TAG_VALUES', this.tagSegments[index - 2].value));
       addTemplateVars = true;
     }
 
-    return this.datasource
-      .metricFindQuery(query)
-      .then(this.transformToSegments(addTemplateVars))
-      .then(results => {
+    var finalResult = [];
+    var self = this;
+    return queries
+      .reduce((sequence, query) => {
+        return sequence.then(() => {
+          return self.datasource
+            .metricFindQuery(query)
+            .then(self.transformToSegments(addTemplateVars))
+            .then(results => (finalResult = finalResult.concat(results)))
+            .catch(self.handleQueryError.bind(self));
+        });
+      }, Promise.resolve())
+      .then(() => {
         if (segment.type === 'key') {
-          results.splice(0, 0, angular.copy(this.removeTagFilterSegment));
+          finalResult.splice(0, 0, angular.copy(self.removeTagFilterSegment));
         }
-        return results;
       })
-      .catch(this.handleQueryError.bind(this));
+      .then(() => {
+        return finalResult;
+      });
   }
 
   getFieldSegments() {
