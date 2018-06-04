@@ -23,10 +23,11 @@
     </div>
 
     <div class="gf-form">
-      <folder-picker  root-name="All"
-                      initial-folder-id="ctrl.panel.folderId"
+      <folder-picker  initial-folder-id="ctrl.panel.folderId"
 											on-change="ctrl.onFolderChange($folder)"
-											label-class="width-6">
+                      label-class="width-6"
+                      initial-title="'All'"
+                      enable-reset="true">
 			</folder-picker>
     </div>
 
