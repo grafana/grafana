@@ -312,9 +312,6 @@ export class ElasticQueryBuilder {
         terms: {
           field: queryDef.field,
           size: size,
-          order: {
-            _term: 'asc',
-          },
         },
       },
     };
