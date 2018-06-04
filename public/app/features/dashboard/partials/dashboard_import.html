@@ -82,6 +82,18 @@
 
       <div class="gf-form-inline">
         <div class="gf-form gf-form--grow">
+          <folder-picker initial-folder-id="ctrl.folderId"
+            on-change="ctrl.onFolderChange($folder)"
+            enter-folder-creation="ctrl.onEnterFolderCreation()"
+            exit-folder-creation="ctrl.onExitFolderCreation()"
+            enable-create-new="true"
+            label-class="width-15">
+          </folder-picker>
+        </div>
+      </div>
+
+      <div class="gf-form-inline">
+        <div class="gf-form gf-form--grow">
           <span class="gf-form-label width-15">
             Unique identifier (uid)
             <info-popover mode="right-normal">

@@ -21,6 +21,8 @@ export class DashboardImportCtrl {
   uidValidationError: any;
   autoGenerateUid: boolean;
   autoGenerateUidValue: string;
+  folderId: number;
+  isValidFolderSelection: boolean;
 
   /** @ngInject */
   constructor(private backendSrv, private validationSrv, navModelSrv, private $location, $routeParams) {
@@ -31,6 +33,7 @@ export class DashboardImportCtrl {
     this.uidExists = false;
     this.autoGenerateUid = true;
     this.autoGenerateUidValue = 'auto-generated';
+    this.folderId = 0;
 
     // check gnetId in url
     if ($routeParams.gnetId) {
@@ -102,7 +105,7 @@ export class DashboardImportCtrl {
     this.nameExists = false;
 
     this.validationSrv
-      .validateNewDashboardName(0, this.dash.title)
+      .validateNewDashboardName(this.folderId, this.dash.title)
       .then(() => {
         this.hasNameValidationError = false;
       })
@@ -138,6 +141,19 @@ export class DashboardImportCtrl {
       });
   }
 
+  onFolderChange(folder) {
+    this.folderId = folder.id;
+    this.titleChanged();
+  }
+
+  onEnterFolderCreation() {
+    this.inputsValid = false;
+  }
+
+  onExitFolderCreation() {
+    this.inputsValid = true;
+  }
+
   saveDashboard() {
     var inputs = this.inputs.map(input => {
       return {
@@ -153,6 +169,7 @@ export class DashboardImportCtrl {
         dashboard: this.dash,
         overwrite: true,
         inputs: inputs,
+        folderId: this.folderId,
       })
       .then(res => {
         this.$location.url(res.importedUrl);
