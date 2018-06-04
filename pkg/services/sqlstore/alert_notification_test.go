@@ -11,7 +11,6 @@ import (
 func TestAlertNotificationSQLAccess(t *testing.T) {
 	Convey("Testing Alert notification sql access", t, func() {
 		InitTestDB(t)
-		var err error
 
 		Convey("Alert notifications should be empty", func() {
 			cmd := &m.GetAlertNotificationsQuery{
@@ -24,6 +23,58 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(cmd.Result, ShouldBeNil)
 		})
 
+		Convey("Cannot save alert notifier with notitfyonce = false", func() {
+			cmd := &m.CreateAlertNotificationCommand{
+				Name:       "ops",
+				Type:       "email",
+				OrgId:      1,
+				NotifyOnce: false,
+				Settings:   simplejson.New(),
+			}
+
+			Convey("and missing frequency", func() {
+				err := CreateAlertNotificationCommand(cmd)
+				So(err, ShouldEqual, m.ErrNotificationFrequencyNotFound)
+			})
+
+			Convey("invalid frequency", func() {
+				cmd.Frequency = "invalid duration"
+
+				err := CreateAlertNotificationCommand(cmd)
+				So(err.Error(), ShouldEqual, "time: invalid duration invalid duration")
+			})
+		})
+
+		Convey("Cannot update alert notifier with notitfyonce = false", func() {
+			cmd := &m.CreateAlertNotificationCommand{
+				Name:       "ops update",
+				Type:       "email",
+				OrgId:      1,
+				NotifyOnce: true,
+				Settings:   simplejson.New(),
+			}
+
+			err := CreateAlertNotificationCommand(cmd)
+			So(err, ShouldBeNil)
+
+			updateCmd := &m.UpdateAlertNotificationCommand{
+				Id:         cmd.Result.Id,
+				NotifyOnce: false,
+			}
+
+			Convey("and missing frequency", func() {
+				err := UpdateAlertNotification(updateCmd)
+				So(err, ShouldEqual, m.ErrNotificationFrequencyNotFound)
+			})
+
+			Convey("invalid frequency", func() {
+				updateCmd.Frequency = "invalid duration"
+
+				err := UpdateAlertNotification(updateCmd)
+				So(err.Error(), ShouldEqual, "time: invalid duration invalid duration")
+			})
+		})
+
 		Convey("Can save Alert Notification", func() {
 			cmd := &m.CreateAlertNotificationCommand{
 				Name:       "ops",
@@ -34,7 +85,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				Settings:   simplejson.New(),
 			}
 
-			err = CreateAlertNotificationCommand(cmd)
+			err := CreateAlertNotificationCommand(cmd)
 			So(err, ShouldBeNil)
 			So(cmd.Result.Id, ShouldNotEqual, 0)
 			So(cmd.Result.OrgId, ShouldNotEqual, 0)

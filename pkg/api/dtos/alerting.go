@@ -1,26 +1,51 @@
 package dtos
 
 import (
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type AlertRule struct {
-	Id             int64            `json:"id"`
-	DashboardId    int64            `json:"dashboardId"`
-	PanelId        int64            `json:"panelId"`
-	Name           string           `json:"name"`
-	Message        string           `json:"message"`
-	State          m.AlertStateType `json:"state"`
-	NewStateDate   time.Time        `json:"newStateDate"`
-	EvalDate       time.Time        `json:"evalDate"`
-	EvalData       *simplejson.Json `json:"evalData"`
-	ExecutionError string           `json:"executionError"`
-	Url            string           `json:"url"`
-	CanEdit        bool             `json:"canEdit"`
+	Id             int64                 `json:"id"`
+	DashboardId    int64                 `json:"dashboardId"`
+	PanelId        int64                 `json:"panelId"`
+	Name           string                `json:"name"`
+	Message        string                `json:"message"`
+	State          models.AlertStateType `json:"state"`
+	NewStateDate   time.Time             `json:"newStateDate"`
+	EvalDate       time.Time             `json:"evalDate"`
+	EvalData       *simplejson.Json      `json:"evalData"`
+	ExecutionError string                `json:"executionError"`
+	Url            string                `json:"url"`
+	CanEdit        bool                  `json:"canEdit"`
+}
+
+func removeZeroesFromDuration(interval time.Duration) string {
+	frequency := interval.String()
+
+	frequency = strings.Replace(frequency, "0h", "", 1)
+	frequency = strings.Replace(frequency, "0m", "", 1)
+	frequency = strings.Replace(frequency, "0s", "", 1)
+
+	return frequency
+}
+
+func NewAlertNotification(notification *models.AlertNotification) *AlertNotification {
+	return &AlertNotification{
+		Id:         notification.Id,
+		Name:       notification.Name,
+		Type:       notification.Type,
+		IsDefault:  notification.IsDefault,
+		Created:    notification.Created,
+		Updated:    notification.Updated,
+		Frequency:  removeZeroesFromDuration(notification.Frequency),
+		NotifyOnce: notification.NotifyOnce,
+		Settings:   notification.Settings,
+	}
 }
 
 type AlertNotification struct {
@@ -42,7 +67,7 @@ type AlertTestCommand struct {
 
 type AlertTestResult struct {
 	Firing         bool                  `json:"firing"`
-	State          m.AlertStateType      `json:"state"`
+	State          models.AlertStateType `json:"state"`
 	ConditionEvals string                `json:"conditionEvals"`
 	TimeMs         string                `json:"timeMs"`
 	Error          string                `json:"error,omitempty"`

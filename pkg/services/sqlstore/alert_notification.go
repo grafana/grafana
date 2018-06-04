@@ -144,14 +144,16 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
 		}
 
-		if cmd.Frequency == "" {
-			return fmt.Errorf("Alert notification frequency required")
-		}
-
 		var frequency time.Duration
-		frequency, err = time.ParseDuration(cmd.Frequency)
-		if err != nil {
-			return err
+		if !cmd.NotifyOnce {
+			if cmd.Frequency == "" {
+				return m.ErrNotificationFrequencyNotFound
+			}
+
+			frequency, err = time.ParseDuration(cmd.Frequency)
+			if err != nil {
+				return err
+			}
 		}
 
 		alertNotification := &m.AlertNotification{
@@ -200,22 +202,25 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.IsDefault = cmd.IsDefault
 		current.NotifyOnce = cmd.NotifyOnce
 
-		if cmd.Frequency == "" {
-			return m.ErrNotificationFrequencyNotFound
-		}
+		if !current.NotifyOnce {
+			if cmd.Frequency == "" {
+				return m.ErrNotificationFrequencyNotFound
+			}
 
-		frequency, err := time.ParseDuration(cmd.Frequency)
-		if err != nil {
-			return err
+			frequency, err := time.ParseDuration(cmd.Frequency)
+			if err != nil {
+				return err
+			}
+
+			current.Frequency = frequency
 		}
-		current.Frequency = frequency
 
 		sess.UseBool("is_default", "notify_once")
 
 		if affected, err := sess.ID(cmd.Id).Update(current); err != nil {
 			return err
 		} else if affected == 0 {
-			return fmt.Errorf("Could not find alert notification")
+			return fmt.Errorf("Could not update alert notification")
 		}
 
 		cmd.Result = &current
