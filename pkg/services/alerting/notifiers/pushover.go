@@ -99,7 +99,7 @@ func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 		return nil, alerting.ValidationError{Reason: "API token not given"}
 	}
 	return &PushoverNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.NotifyOnce, model.Frequency, model.Settings),
 		UserKey:      userKey,
 		ApiToken:     apiToken,
 		Priority:     priority,

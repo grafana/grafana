@@ -1,6 +1,8 @@
 package notifiers
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -12,9 +14,11 @@ type NotifierBase struct {
 	Id          int64
 	IsDeault    bool
 	UploadImage bool
+	NotifyOnce  bool
+	Frequency   time.Duration
 }
 
-func NewNotifierBase(id int64, isDefault bool, name, notifierType string, model *simplejson.Json) NotifierBase {
+func NewNotifierBase(id int64, isDefault bool, name, notifierType string, notifyOnce bool, frequency time.Duration, model *simplejson.Json) NotifierBase {
 	uploadImage := true
 	value, exist := model.CheckGet("uploadImage")
 	if exist {
@@ -27,12 +31,22 @@ func NewNotifierBase(id int64, isDefault bool, name, notifierType string, model 
 		IsDeault:    isDefault,
 		Type:        notifierType,
 		UploadImage: uploadImage,
+		NotifyOnce:  notifyOnce,
+		Frequency:   frequency,
 	}
 }
 
-func defaultShouldNotify(context *alerting.EvalContext) bool {
+func defaultShouldNotify(context *alerting.EvalContext, notifyOnce bool, frequency time.Duration, lastNotify *time.Time) bool {
 	// Only notify on state change.
-	if context.PrevAlertState == context.Rule.State {
+	if context.PrevAlertState == context.Rule.State && notifyOnce {
+		return false
+	}
+	// Do not notify if interval has not elapsed
+	if !notifyOnce && lastNotify != nil && lastNotify.Add(frequency).After(time.Now()) {
+		return false
+	}
+	// Do not notify if alert state if OK or pending even on repeated notify
+	if !notifyOnce && (context.Rule.State == m.AlertStateOK || context.Rule.State == m.AlertStatePending) {
 		return false
 	}
 	// Do not notify when we become OK for the first time.
@@ -43,7 +57,8 @@ func defaultShouldNotify(context *alerting.EvalContext) bool {
 }
 
 func (n *NotifierBase) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
+	lastNotify := context.LastNotify(n.Id)
+	return defaultShouldNotify(context, n.NotifyOnce, n.Frequency, lastNotify)
 }
 
 func (n *NotifierBase) GetType() string {
@@ -60,4 +75,12 @@ func (n *NotifierBase) GetNotifierId() int64 {
 
 func (n *NotifierBase) GetIsDefault() bool {
 	return n.IsDeault
+}
+
+func (n *NotifierBase) GetNotifyOnce() bool {
+	return n.NotifyOnce
+}
+
+func (n *NotifierBase) GetFrequency() time.Duration {
+	return n.Frequency
 }

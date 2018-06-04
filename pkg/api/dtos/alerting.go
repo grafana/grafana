@@ -24,12 +24,15 @@ type AlertRule struct {
 }
 
 type AlertNotification struct {
-	Id        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Type      string    `json:"type"`
-	IsDefault bool      `json:"isDefault"`
-	Created   time.Time `json:"created"`
-	Updated   time.Time `json:"updated"`
+	Id         int64            `json:"id"`
+	Name       string           `json:"name"`
+	Type       string           `json:"type"`
+	IsDefault  bool             `json:"isDefault"`
+	NotifyOnce bool             `json:"notifyOnce"`
+	Frequency  string           `json:"frequency"`
+	Created    time.Time        `json:"created"`
+	Updated    time.Time        `json:"updated"`
+	Settings   *simplejson.Json `json:"settings"`
 }
 
 type AlertTestCommand struct {
@@ -59,9 +62,11 @@ type EvalMatch struct {
 }
 
 type NotificationTestCommand struct {
-	Name     string           `json:"name"`
-	Type     string           `json:"type"`
-	Settings *simplejson.Json `json:"settings"`
+	Name       string           `json:"name"`
+	Type       string           `json:"type"`
+	NotifyOnce bool             `json:"notifyOnce"`
+	Frequency  string           `json:"frequency"`
+	Settings   *simplejson.Json `json:"settings"`
 }
 
 type PauseAlertCommand struct {

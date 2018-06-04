@@ -17,6 +17,9 @@ func init() {
 	bus.AddHandler("sql", DeleteAlertNotification)
 	bus.AddHandler("sql", GetAlertNotificationsToSend)
 	bus.AddHandler("sql", GetAllAlertNotifications)
+	bus.AddHandler("sql", RecordNotificationJournal)
+	bus.AddHandler("sql", GetLatestNotification)
+	bus.AddHandler("sql", CleanNotificationJournal)
 }
 
 func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
@@ -53,7 +56,9 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 										alert_notification.created,
 										alert_notification.updated,
 										alert_notification.settings,
-										alert_notification.is_default
+										alert_notification.is_default,
+										alert_notification.notify_once,
+										alert_notification.frequency
 										FROM alert_notification
 	  							`)
 
@@ -91,7 +96,9 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 										alert_notification.created,
 										alert_notification.updated,
 										alert_notification.settings,
-										alert_notification.is_default
+										alert_notification.is_default,
+										alert_notification.notify_once,
+										alert_notification.frequency
 										FROM alert_notification
 	  							`)
 
@@ -137,17 +144,29 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
 		}
 
-		alertNotification := &m.AlertNotification{
-			OrgId:     cmd.OrgId,
-			Name:      cmd.Name,
-			Type:      cmd.Type,
-			Settings:  cmd.Settings,
-			Created:   time.Now(),
-			Updated:   time.Now(),
-			IsDefault: cmd.IsDefault,
+		if cmd.Frequency == "" {
+			return fmt.Errorf("Alert notification frequency required")
 		}
 
-		if _, err = sess.Insert(alertNotification); err != nil {
+		var frequency time.Duration
+		frequency, err = time.ParseDuration(cmd.Frequency)
+		if err != nil {
+			return err
+		}
+
+		alertNotification := &m.AlertNotification{
+			OrgId:      cmd.OrgId,
+			Name:       cmd.Name,
+			Type:       cmd.Type,
+			Settings:   cmd.Settings,
+			NotifyOnce: cmd.NotifyOnce,
+			Frequency:  frequency,
+			Created:    time.Now(),
+			Updated:    time.Now(),
+			IsDefault:  cmd.IsDefault,
+		}
+
+		if _, err = sess.MustCols("notify_once").Insert(alertNotification); err != nil {
 			return err
 		}
 
@@ -179,8 +198,19 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.Name = cmd.Name
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault
+		current.NotifyOnce = cmd.NotifyOnce
 
-		sess.UseBool("is_default")
+		if cmd.Frequency == "" {
+			return m.ErrNotificationFrequencyNotFound
+		}
+
+		frequency, err_convert := time.ParseDuration(cmd.Frequency)
+		if err_convert != nil {
+			return err
+		}
+		current.Frequency = frequency
+
+		sess.UseBool("is_default", "notify_once")
 
 		if affected, err := sess.ID(cmd.Id).Update(current); err != nil {
 			return err
@@ -190,5 +220,44 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 
 		cmd.Result = &current
 		return nil
+	})
+}
+
+func RecordNotificationJournal(cmd *m.RecordNotificationJournalCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		journalEntry := &m.NotificationJournal{
+			OrgId:      cmd.OrgId,
+			AlertId:    cmd.AlertId,
+			NotifierId: cmd.NotifierId,
+			SentAt:     cmd.SentAt,
+			Success:    cmd.Success,
+		}
+
+		if _, err := sess.Insert(journalEntry); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func GetLatestNotification(cmd *m.GetLatestNotificationQuery) error {
+	return inTransaction(func(sess *DBSession) error {
+		notificationJournal := &m.NotificationJournal{}
+		_, err := sess.Desc("notification_journal.sent_at").Limit(1).Where("notification_journal.org_id = ? AND notification_journal.alert_id = ? AND notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(notificationJournal)
+		if err != nil {
+			return err
+		}
+
+		cmd.Result = notificationJournal
+		return nil
+	})
+}
+
+func CleanNotificationJournal(cmd *m.CleanNotificationJournalCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		sql := "DELETE FROM notification_journal WHERE notification_journal.org_id = ? AND notification_journal.alert_id = ? AND notification_journal.notifier_id = ?"
+		_, err := sess.Exec(sql, cmd.OrgId, cmd.AlertId, cmd.NotifierId)
+		return err
 	})
 }
