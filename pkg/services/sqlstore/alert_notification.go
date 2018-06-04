@@ -204,8 +204,8 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 			return m.ErrNotificationFrequencyNotFound
 		}
 
-		frequency, err_convert := time.ParseDuration(cmd.Frequency)
-		if err_convert != nil {
+		frequency, err := time.ParseDuration(cmd.Frequency)
+		if err != nil {
 			return err
 		}
 		current.Frequency = frequency
