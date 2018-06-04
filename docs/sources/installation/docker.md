@@ -134,7 +134,7 @@ docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 graf
 
 It's possible to supply Grafana with configuration through files. This works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/) as the secrets by default gets mapped into `/run/secrets/<name of secret>` of the container.
 
-You can do this with any of the configration options in conf/grafana.ini by setting `GF_<SectionName>_<KeyName>_FILE` to the path of the file holding the secret.
+You can do this with any of the configuration options in conf/grafana.ini by setting `GF_<SectionName>_<KeyName>_FILE` to the path of the file holding the secret.
 
 Let's say you want to set the admin password this way.
 
