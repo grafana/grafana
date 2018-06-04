@@ -43,7 +43,7 @@ describe('SaveDashboardModal', () => {
       let modal = new SaveDashboardModalCtrl(fakeDashboardSrv);
 
       expect(modal.timeChange).toBe(true);
-      expect(modal.variableChange).toBe(true);
+      expect(modal.variableValueChange).toBe(true);
     });
 
     it('should hide checkboxes', () => {
@@ -83,7 +83,7 @@ describe('SaveDashboardModal', () => {
       };
       let modal = new SaveDashboardModalCtrl(fakeDashboardSrv);
       expect(modal.timeChange).toBe(false);
-      expect(modal.variableChange).toBe(false);
+      expect(modal.variableValueChange).toBe(false);
     });
 
     it('should hide variable checkboxes', () => {
@@ -122,7 +122,7 @@ describe('SaveDashboardModal', () => {
         },
       };
       let modal = new SaveDashboardModalCtrl(fakeDashboardSrv);
-      expect(modal.variableChange).toBe(false);
+      expect(modal.variableValueChange).toBe(false);
     });
   });
 });
