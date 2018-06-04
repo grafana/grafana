@@ -211,6 +211,10 @@ coreModule.directive('datasourceHttpSettings', function() {
       pre: function($scope, elem, attrs) {
         // do not show access option if direct access is disabled
         $scope.showAccessOption = $scope.noDirectAccess !== 'true';
+        $scope.showAccessHelp = false;
+        $scope.toggleAccessHelp = function() {
+          $scope.showAccessHelp = !$scope.showAccessHelp;
+        };
 
         $scope.getSuggestUrls = function() {
           return [$scope.suggestUrl];
