@@ -68,11 +68,17 @@ div.flot-text {
   font-weight: $font-weight-semi-bold;
   position: relative;
   width: 100%;
-  display: block;
-  padding-bottom: 2px;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  padding: 4px 0 4px;
 }
 
 .panel-title-text {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: calc(100% - 28px);
   cursor: pointer;
   font-weight: $font-weight-semi-bold;
 
@@ -97,7 +103,7 @@ div.flot-text {
   width: 16px;
   height: 16px;
   left: 1px;
-  top: 4px;
+  top: 2px;
 
   &:hover {
     color: $link-hover-color;
@@ -114,8 +120,6 @@ div.flot-text {
 }
 
 .panel-header {
-  text-align: center;
-
   &:hover {
     transition: background-color 0.1s ease-in-out;
     background-color: $panel-header-hover-bg;
