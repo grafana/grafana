@@ -17,7 +17,7 @@ class DashListCtrl extends PanelCtrl {
     search: false,
     starred: true,
     headings: true,
-    folderId: 0,
+    folderId: null,
   };
 
   /** @ngInject */
@@ -85,7 +85,8 @@ class DashListCtrl extends PanelCtrl {
       limit: this.panel.limit,
       query: this.panel.query,
       tag: this.panel.tags,
-      folderId: this.panel.folderId,
+      folderIds: this.panel.folderId,
+      type: 'dash-db',
     };
 
     return this.backendSrv.search(params).then(result => {
