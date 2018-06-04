@@ -54,7 +54,6 @@ describe('SaveDashboardModal', () => {
               {
                 current: {
                   selected: true,
-                  //tags: Array(0),
                   text: 'server_002',
                   value: 'server_002',
                 },
@@ -84,6 +83,45 @@ describe('SaveDashboardModal', () => {
       };
       let modal = new SaveDashboardModalCtrl(fakeDashboardSrv);
       expect(modal.timeChange).toBe(false);
+      expect(modal.variableChange).toBe(false);
+    });
+
+    it('should hide variable checkboxes', () => {
+      let fakeDashboardSrv = {
+        dash: {
+          templating: {
+            list: [
+              {
+                current: {
+                  selected: true,
+                  text: 'server_002',
+                  value: 'server_002',
+                },
+                name: 'Server',
+              },
+              {
+                current: {
+                  selected: true,
+                  text: 'web_002',
+                  value: 'web_002',
+                },
+                name: 'Web',
+              },
+            ],
+          },
+          originalTemplating: [
+            {
+              current: {
+                selected: true,
+                text: 'server_002',
+                value: 'server_002',
+              },
+              name: 'Server',
+            },
+          ],
+        },
+      };
+      let modal = new SaveDashboardModalCtrl(fakeDashboardSrv);
       expect(modal.variableChange).toBe(false);
     });
   });
