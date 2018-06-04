@@ -66,7 +66,7 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 		fr.log.Error("failed to search for dashboards", "error", err)
 	}
 
-	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.IntervalSeconds))
+	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 
 	running := false
 

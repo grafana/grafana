@@ -22,7 +22,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			cfg, err := cfgProvider.readConfig()
 			So(err, ShouldBeNil)
 
-			validateDashboardAsConfig(cfg)
+			validateDashboardAsConfig(t, cfg)
 		})
 
 		Convey("Can read config file in version 0 format", func() {
@@ -30,7 +30,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			cfg, err := cfgProvider.readConfig()
 			So(err, ShouldBeNil)
 
-			validateDashboardAsConfig(cfg)
+			validateDashboardAsConfig(t, cfg)
 		})
 
 		Convey("Should skip invalid path", func() {
@@ -56,7 +56,9 @@ func TestDashboardsAsConfig(t *testing.T) {
 		})
 	})
 }
-func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
+func validateDashboardAsConfig(t *testing.T, cfg []*DashboardsAsConfig) {
+	t.Helper()
+
 	So(len(cfg), ShouldEqual, 2)
 
 	ds := cfg[0]
@@ -68,7 +70,7 @@ func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
 	So(len(ds.Options), ShouldEqual, 1)
 	So(ds.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 	So(ds.DisableDeletion, ShouldBeTrue)
-	So(ds.IntervalSeconds, ShouldEqual, 10)
+	So(ds.UpdateIntervalSeconds, ShouldEqual, 10)
 
 	ds2 := cfg[1]
 	So(ds2.Name, ShouldEqual, "default")
@@ -79,5 +81,5 @@ func validateDashboardAsConfig(cfg []*DashboardsAsConfig) {
 	So(len(ds2.Options), ShouldEqual, 1)
 	So(ds2.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 	So(ds2.DisableDeletion, ShouldBeFalse)
-	So(ds2.IntervalSeconds, ShouldEqual, 3)
+	So(ds2.UpdateIntervalSeconds, ShouldEqual, 3)
 }
