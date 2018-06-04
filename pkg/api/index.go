@@ -233,7 +233,7 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		}
 	}
 
-	if c.OrgRole == m.ROLE_ADMIN {
+	if c.IsGrafanaAdmin || c.OrgRole == m.ROLE_ADMIN {
 		cfgNode := &dtos.NavLink{
 			Id:       "cfg",
 			Text:     "Configuration",
@@ -287,10 +287,24 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 			},
 		}
 
-		if c.IsGrafanaAdmin {
+		if c.OrgRole != m.ROLE_ADMIN {
+			cfgNode = &dtos.NavLink{
+				Id:       "cfg",
+				Text:     "Configuration",
+				SubTitle: "Organization: " + c.OrgName,
+				Icon:     "gicon gicon-cog",
+				Url:      setting.AppSubUrl + "/admin/users",
+				Children: make([]*dtos.NavLink, 0),
+			}
+		}
+
+		if c.OrgRole == m.ROLE_ADMIN && c.IsGrafanaAdmin {
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
 				Divider: true, HideFromTabs: true, Id: "admin-divider", Text: "Text",
 			})
+		}
+
+		if c.IsGrafanaAdmin {
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
 				Text:         "Server Admin",
 				HideFromTabs: true,
