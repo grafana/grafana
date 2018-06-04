@@ -226,7 +226,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  branch = "renderer"
+  branch = "master"
   name = "github.com/grafana/grafana-plugin-model"
   packages = [
     "go/datasource",
@@ -670,6 +670,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6c7ae4bcbe7fa4430d3bdbf204df1b7c59cba88151fbcefa167ce15e6351b6d3"
+  inputs-digest = "08b97771990365d506af4788acb33cdf283ce89856669262ecb84860ad45bfcb"
   solver-name = "gps-cdcl"
   solver-version = 1

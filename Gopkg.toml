@@ -100,7 +100,7 @@ ignored = [
   version = "1.1.1"
 
 [[constraint]]
-  branch = "renderer"
+  branch = "master"
   name = "github.com/grafana/grafana-plugin-model"
 
 [[constraint]]
