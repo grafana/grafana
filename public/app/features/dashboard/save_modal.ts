@@ -91,6 +91,9 @@ export class SaveDashboardModalCtrl {
   }
 
   compareTemplating() {
+    if (this.dashboardSrv.dash.originalTemplating.length !== this.dashboardSrv.dash.templating.list.length) {
+      return (this.variableChange = false);
+    }
     if (this.dashboardSrv.dash.templating.list.length > 0) {
       for (let i = 0; i < this.dashboardSrv.dash.templating.list.length; i++) {
         if (
