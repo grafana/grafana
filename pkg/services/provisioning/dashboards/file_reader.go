@@ -48,23 +48,14 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}
 
 	copy := path
-
-	// get absolut path of config file
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Error("Could not create absolute path ", "path", path)
 	}
 
-	// follow the symlink to get the real path
 	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
 		log.Error("Failed to read content of symlinked path: %s", path)
-	}
-
-	// get the absolut path in case the symlink is relative
-	path, err = filepath.Abs(path)
-	if err != nil {
-		log.Error("Could not create absolute path ", "path", path)
 	}
 
 	if path == "" {
