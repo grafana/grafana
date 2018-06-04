@@ -113,15 +113,22 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 				}
 			}
 
-			for k, v := range esAgg.Get("buckets").MustMap() {
-				bucket := simplejson.NewFromAny(v)
+			buckets := esAgg.Get("buckets").MustMap()
+			bucketKeys := make([]string, 0)
+			for k := range buckets {
+				bucketKeys = append(bucketKeys, k)
+			}
+			sort.Strings(bucketKeys)
+
+			for _, bucketKey := range bucketKeys {
+				bucket := simplejson.NewFromAny(buckets[bucketKey])
 				newProps := make(map[string]string, 0)
 
 				for k, v := range props {
 					newProps[k] = v
 				}
 
-				newProps["filter"] = k
+				newProps["filter"] = bucketKey
 
 				err = rp.processBuckets(bucket.MustMap(), target, series, table, newProps, depth+1)
 				if err != nil {

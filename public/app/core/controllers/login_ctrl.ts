@@ -11,10 +11,15 @@ export class LoginCtrl {
       password: '',
     };
 
+    $scope.command = {};
+    $scope.result = '';
+
     contextSrv.sidemenu = false;
 
     $scope.oauth = config.oauth;
     $scope.oauthEnabled = _.keys(config.oauth).length > 0;
+    $scope.ldapEnabled = config.ldapEnabled;
+    $scope.authProxyEnabled = config.authProxyEnabled;
 
     $scope.disableLoginForm = config.disableLoginForm;
     $scope.disableUserSignUp = config.disableUserSignUp;
@@ -37,6 +42,43 @@ export class LoginCtrl {
       } else {
         $scope.signUp();
       }
+    };
+
+    $scope.changeView = function() {
+      let loginView = document.querySelector('#login-view');
+      let changePasswordView = document.querySelector('#change-password-view');
+
+      loginView.className += ' add';
+      setTimeout(() => {
+        loginView.className += ' hidden';
+      }, 250);
+      setTimeout(() => {
+        changePasswordView.classList.remove('hidden');
+      }, 251);
+      setTimeout(() => {
+        changePasswordView.classList.remove('remove');
+      }, 301);
+
+      setTimeout(() => {
+        document.getElementById('newPassword').focus();
+      }, 400);
+    };
+
+    $scope.changePassword = function() {
+      $scope.command.oldPassword = 'admin';
+
+      if ($scope.command.newPassword !== $scope.command.confirmNew) {
+        $scope.appEvent('alert-warning', ['New passwords do not match', '']);
+        return;
+      }
+
+      backendSrv.put('/api/user/password', $scope.command).then(function() {
+        $scope.toGrafana();
+      });
+    };
+
+    $scope.skip = function() {
+      $scope.toGrafana();
     };
 
     $scope.loginModeChanged = function(newValue) {
@@ -65,16 +107,26 @@ export class LoginCtrl {
       }
 
       backendSrv.post('/login', $scope.formModel).then(function(result) {
-        var params = $location.search();
+        $scope.result = result;
 
-        if (params.redirect && params.redirect[0] === '/') {
-          window.location.href = config.appSubUrl + params.redirect;
-        } else if (result.redirectUrl) {
-          window.location.href = result.redirectUrl;
-        } else {
-          window.location.href = config.appSubUrl + '/';
+        if ($scope.formModel.password !== 'admin' || $scope.ldapEnabled || $scope.authProxyEnabled) {
+          $scope.toGrafana();
+          return;
         }
+        $scope.changeView();
       });
+    };
+
+    $scope.toGrafana = function() {
+      var params = $location.search();
+
+      if (params.redirect && params.redirect[0] === '/') {
+        window.location.href = config.appSubUrl + params.redirect;
+      } else if ($scope.result.redirectUrl) {
+        window.location.href = $scope.result.redirectUrl;
+      } else {
+        window.location.href = config.appSubUrl + '/';
+      }
     };
 
     $scope.init();
