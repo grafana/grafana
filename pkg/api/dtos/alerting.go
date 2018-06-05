@@ -1,7 +1,7 @@
 package dtos
 
 import (
-	"strings"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/null"
@@ -24,14 +24,27 @@ type AlertRule struct {
 	CanEdit        bool                  `json:"canEdit"`
 }
 
-func removeZeroesFromDuration(interval time.Duration) string {
-	frequency := interval.String()
+func formatShort(interval time.Duration) string {
+	var result string
 
-	frequency = strings.Replace(frequency, "0h", "", 1)
-	frequency = strings.Replace(frequency, "0m", "", 1)
-	frequency = strings.Replace(frequency, "0s", "", 1)
+	hours := interval / time.Hour
+	if hours > 0 {
+		result += fmt.Sprintf("%dh", hours)
+	}
 
-	return frequency
+	remaining := interval - (hours * time.Hour)
+	mins := remaining / time.Minute
+	if mins > 0 {
+		result += fmt.Sprintf("%dm", mins)
+	}
+
+	remaining = remaining - (mins * time.Minute)
+	seconds := remaining / time.Second
+	if seconds > 0 {
+		result += fmt.Sprintf("%ds", seconds)
+	}
+
+	return result
 }
 
 func NewAlertNotification(notification *models.AlertNotification) *AlertNotification {
@@ -42,7 +55,7 @@ func NewAlertNotification(notification *models.AlertNotification) *AlertNotifica
 		IsDefault:  notification.IsDefault,
 		Created:    notification.Created,
 		Updated:    notification.Updated,
-		Frequency:  removeZeroesFromDuration(notification.Frequency),
+		Frequency:  formatShort(notification.Frequency),
 		NotifyOnce: notification.NotifyOnce,
 		Settings:   notification.Settings,
 	}

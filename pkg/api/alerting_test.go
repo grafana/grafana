@@ -2,7 +2,6 @@ package api
 
 import (
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -11,24 +10,6 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 )
-
-func TestRemoveZeroUnitsFromInterval(t *testing.T) {
-	tcs := []struct {
-		interval time.Duration
-		expected string
-	}{
-		{interval: time.Duration(time.Hour), expected: "1h"},
-		{interval: time.Duration(time.Hour + time.Minute), expected: "1h1m"},
-		{interval: time.Duration((time.Hour * 10) + time.Minute), expected: "10h1m"},
-	}
-
-	for _, tc := range tcs {
-		got := removeZeroesFromDuration(tc.interval)
-		if got != tc.expected {
-			t.Errorf("expected %s got %s internval: %v", tc.expected, got, tc.interval)
-		}
-	}
-}
 
 func TestAlertingApiEndpoint(t *testing.T) {
 	Convey("Given an alert in a dashboard with an acl", t, func() {
