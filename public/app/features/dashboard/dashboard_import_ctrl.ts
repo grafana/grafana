@@ -33,7 +33,7 @@ export class DashboardImportCtrl {
     this.uidExists = false;
     this.autoGenerateUid = true;
     this.autoGenerateUidValue = 'auto-generated';
-    this.folderId = 0;
+    this.folderId = Number($routeParams.folderId) || 0;
 
     // check gnetId in url
     if ($routeParams.gnetId) {
