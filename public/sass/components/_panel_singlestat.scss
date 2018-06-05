@@ -7,14 +7,13 @@
 
 .singlestat-panel-value-container {
   line-height: 1;
-  position: absolute;
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  position: relative;
   z-index: 1;
   font-size: 3em;
-  font-weight: bold;
-  margin: 0;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  font-weight: $font-weight-semi-bold;
 }
 
 .singlestat-panel-prefix {

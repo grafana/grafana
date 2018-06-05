@@ -1,0 +1,24 @@
+<datasource-http-settings current="ctrl.current" no-direct-access="true" suggest-url="http://localhost:8093">
+</datasource-http-settings>
+
+<h3 class="page-heading">InfluxDB Details</h3>
+
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">Default Database</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.database' placeholder="" required></input>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-7">User</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder=""></input>
+		</div>
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-7">Password</span>
+			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder=""></input>
+		</div>
+	</div>
+</div>

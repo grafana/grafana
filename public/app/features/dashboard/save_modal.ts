@@ -16,13 +16,13 @@ const template = `
 
   <form name="ctrl.saveForm" ng-submit="ctrl.save()" class="modal-content" novalidate>
     <div class="p-t-1">
-      <div class="gf-form-group" ng-if="ctrl.timeChange || ctrl.variableChange">
+      <div class="gf-form-group" ng-if="ctrl.timeChange || ctrl.variableValueChange">
 		    <gf-form-switch class="gf-form"
 			    label="Save current time range" ng-if="ctrl.timeChange" label-class="width-12" switch-class="max-width-6"
 			    checked="ctrl.saveTimerange" on-change="buildUrl()">
 		    </gf-form-switch>
 		    <gf-form-switch class="gf-form"
-			    label="Save current variables" ng-if="ctrl.variableChange" label-class="width-12" switch-class="max-width-6"
+			    label="Save current variables" ng-if="ctrl.variableValueChange" label-class="width-12" switch-class="max-width-6"
 			    checked="ctrl.saveVariables" on-change="buildUrl()">
 		    </gf-form-switch>
 	    </div>
@@ -70,7 +70,7 @@ export class SaveDashboardModalCtrl {
   saveForm: any;
   dismiss: () => void;
   timeChange = false;
-  variableChange = false;
+  variableValueChange = false;
 
   /** @ngInject */
   constructor(private dashboardSrv) {
@@ -91,18 +91,24 @@ export class SaveDashboardModalCtrl {
   }
 
   compareTemplating() {
+    //checks if variables has been added or removed, if so variables will be saved automatically
+    if (this.dashboardSrv.dash.originalTemplating.length !== this.dashboardSrv.dash.templating.list.length) {
+      return (this.variableValueChange = false);
+    }
+
+    //checks if variable value has changed
     if (this.dashboardSrv.dash.templating.list.length > 0) {
       for (let i = 0; i < this.dashboardSrv.dash.templating.list.length; i++) {
         if (
           this.dashboardSrv.dash.templating.list[i].current.text !==
           this.dashboardSrv.dash.originalTemplating[i].current.text
         ) {
-          return (this.variableChange = true);
+          return (this.variableValueChange = true);
         }
       }
-      return (this.variableChange = false);
+      return (this.variableValueChange = false);
     } else {
-      return (this.variableChange = false);
+      return (this.variableValueChange = false);
     }
   }
 
