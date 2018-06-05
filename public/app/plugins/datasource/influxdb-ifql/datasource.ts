@@ -54,22 +54,31 @@ export default class InfluxDatasource {
     this.supportMetrics = true;
   }
 
-  query(options) {
+  prepareQueries(options) {
     const targets = _.cloneDeep(options.targets);
-    const queryTargets = targets.filter(t => t.query);
+    const timeFilter = this.getTimeFilter(options);
+    options.scopedVars.range = { value: timeFilter };
+
+    // Filter empty queries and replace grafana variables
+    const queryTargets = targets.filter(t => t.query).map(t => {
+      const interpolated = this.templateSrv.replace(t.query, options.scopedVars);
+      return {
+        ...t,
+        query: interpolated,
+      };
+    });
+
+    return queryTargets;
+  }
+
+  query(options) {
+    const queryTargets = this.prepareQueries(options);
     if (queryTargets.length === 0) {
       return Promise.resolve({ data: [] });
     }
 
-    // replace grafana variables
-    const timeFilter = this.getTimeFilter(options);
-    options.scopedVars.timeFilter = { value: timeFilter };
-
     const queries = queryTargets.map(target => {
       const { query, resultFormat } = target;
-
-      // TODO replace templated variables
-      // allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
       if (resultFormat === 'table') {
         return (
@@ -224,32 +233,29 @@ export default class InfluxDatasource {
   }
 
   getTimeFilter(options) {
-    var from = this.getInfluxTime(options.rangeRaw.from, false);
-    var until = this.getInfluxTime(options.rangeRaw.to, true);
-    var fromIsAbsolute = from[from.length - 1] === 'ms';
-
-    if (until === 'now()' && !fromIsAbsolute) {
-      return 'time >= ' + from;
+    const from = this.getInfluxTime(options.rangeRaw.from, false);
+    const to = this.getInfluxTime(options.rangeRaw.to, true);
+    if (to === 'now') {
+      return `start: ${from}`;
     }
-
-    return 'time >= ' + from + ' and time <= ' + until;
+    return `start: ${from}, stop: ${to}`;
   }
 
   getInfluxTime(date, roundUp) {
     if (_.isString(date)) {
       if (date === 'now') {
-        return 'now()';
+        return date;
       }
 
-      var parts = /^now-(\d+)([d|h|m|s])$/.exec(date);
+      const parts = /^now\s*-\s*(\d+)([d|h|m|s])$/.exec(date);
       if (parts) {
-        var amount = parseInt(parts[1]);
-        var unit = parts[2];
-        return 'now() - ' + amount + unit;
+        const amount = parseInt(parts[1]);
+        const unit = parts[2];
+        return '-' + amount + unit;
       }
       date = dateMath.parse(date, roundUp);
     }
 
-    return date.valueOf() + 'ms';
+    return date.toISOString();
   }
 }
