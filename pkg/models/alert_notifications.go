@@ -75,7 +75,7 @@ type GetAllAlertNotificationsQuery struct {
 	Result []*AlertNotification
 }
 
-type NotificationJournal struct {
+type AlertNotificationJournal struct {
 	Id         int64
 	OrgId      int64
 	AlertId    int64
@@ -97,7 +97,7 @@ type GetLatestNotificationQuery struct {
 	AlertId    int64
 	NotifierId int64
 
-	Result *NotificationJournal
+	Result *AlertNotificationJournal
 }
 
 type CleanNotificationJournalCommand struct {

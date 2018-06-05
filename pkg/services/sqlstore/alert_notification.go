@@ -2,10 +2,12 @@ package sqlstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -20,6 +22,8 @@ func init() {
 	bus.AddHandler("sql", RecordNotificationJournal)
 	bus.AddHandler("sql", GetLatestNotification)
 	bus.AddHandler("sql", CleanNotificationJournal)
+
+	bus.AddCtxHandler("sql", GetLastestNotification2)
 }
 
 func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
@@ -230,7 +234,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 
 func RecordNotificationJournal(cmd *m.RecordNotificationJournalCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		journalEntry := &m.NotificationJournal{
+		journalEntry := &m.AlertNotificationJournal{
 			OrgId:      cmd.OrgId,
 			AlertId:    cmd.AlertId,
 			NotifierId: cmd.NotifierId,
@@ -246,10 +250,38 @@ func RecordNotificationJournal(cmd *m.RecordNotificationJournalCommand) error {
 	})
 }
 
+func startSession(ctx context.Context) *DBSession {
+	value := ctx.Value("db-session")
+	var sess *xorm.Session
+	sess, ok := value.(*xorm.Session)
+
+	if !ok {
+		return newSession()
+	}
+
+	old := newSession()
+	old.Session = sess
+
+	return old
+}
+
+func GetLastestNotification2(ctx context.Context, cmd *m.GetLatestNotificationQuery) error {
+	sess := startSession(ctx)
+
+	notificationJournal := &m.AlertNotificationJournal{}
+	_, err := sess.Desc("alert_notification_journal.sent_at").Limit(1).Where("alert_notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(notificationJournal)
+	if err != nil {
+		return err
+	}
+
+	cmd.Result = notificationJournal
+	return nil
+}
+
 func GetLatestNotification(cmd *m.GetLatestNotificationQuery) error {
 	return inTransaction(func(sess *DBSession) error {
-		notificationJournal := &m.NotificationJournal{}
-		_, err := sess.Desc("notification_journal.sent_at").Limit(1).Where("notification_journal.org_id = ? AND notification_journal.alert_id = ? AND notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(notificationJournal)
+		notificationJournal := &m.AlertNotificationJournal{}
+		_, err := sess.Desc("alert_notification_journal.sent_at").Limit(1).Where("alert_notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(notificationJournal)
 		if err != nil {
 			return err
 		}
@@ -261,7 +293,7 @@ func GetLatestNotification(cmd *m.GetLatestNotificationQuery) error {
 
 func CleanNotificationJournal(cmd *m.CleanNotificationJournalCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		sql := "DELETE FROM notification_journal WHERE notification_journal.org_id = ? AND notification_journal.alert_id = ? AND notification_journal.notifier_id = ?"
+		sql := "DELETE FROM alert_notification_journal WHERE notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?"
 		_, err := sess.Exec(sql, cmd.OrgId, cmd.AlertId, cmd.NotifierId)
 		return err
 	})
