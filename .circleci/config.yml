@@ -183,16 +183,21 @@ jobs:
           command: 'sudo pip install awscli'
       - run:
           name: deploy to s3
-          command: 'aws s3 sync ./dist s3://$BUCKET_NAME/master'
+          command: |
+            # Also
+            cp dist/grafana-latest.linux-x64.tar.gz dist/grafana-master-${CIRCLE_SHA1:7}.linux-x64.tar.gz
+            aws s3 sync ./dist s3://$BUCKET_NAME/master
       - run:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
       - run:
           name: Trigger Docker build
-          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}'
+          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN} master-${CIRCLE_SHA1:7}'
       - run:
           name: Publish to Grafana.com
-          command: './scripts/publish -apiKey ${GRAFANA_COM_API_KEY}'
+          command: |
+            rm dist/grafana-master-${CIRCLE_SHA1:7}.linux-x64.tar.gz
+            ./scripts/publish -apiKey ${GRAFANA_COM_API_KEY}
 
   deploy-release:
     docker:
@@ -240,9 +245,9 @@ workflows:
             - gometalinter
             - mysql-integration-test
             - postgres-integration-test
-          filters:
-            branches:
-              only: master
+          #filters:
+          #  branches:
+          #    only: master
   release:
     jobs:
       - build-all:
