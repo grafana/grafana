@@ -418,7 +418,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getSpan(className, fontSize, value) {
-      value = templateSrv.replace(value, data.scopedVars);
+      if (panel.repeat && !data.scopedVars) {
+        value = panel.repeat;
+      } else {
+        value = templateSrv.replace(value, data.scopedVars);
+      }
       return '<span class="' + className + '" style="font-size:' + fontSize + '">' + value + '</span>';
     }
 
