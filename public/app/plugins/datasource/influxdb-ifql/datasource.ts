@@ -81,13 +81,9 @@ export default class InfluxDatasource {
       const { query, resultFormat } = target;
 
       if (resultFormat === 'table') {
-        return (
-          this._seriesQuery(query, options)
-            .then(response => parseResults(response.data))
-            // Keep only first result from each request
-            .then(results => results[0])
-            .then(getTableModelFromResult)
-        );
+        return this._seriesQuery(query, options)
+          .then(response => parseResults(response.data))
+          .then(results => results.map(getTableModelFromResult));
       } else {
         return this._seriesQuery(query, options)
           .then(response => parseResults(response.data))

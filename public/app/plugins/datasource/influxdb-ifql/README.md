@@ -16,11 +16,9 @@ Read more about InfluxDB here:
 
 ## Roadmap
 
-- Sync Grafana time ranges with `range()`
-- Template variable expansion
+- metricFindQuery
 - Syntax highlighting
 - Tab completion (functions, values)
-- Result helpers (result counts, table previews)
 - Annotations support
 - Alerting integration
 - Explore UI integration
