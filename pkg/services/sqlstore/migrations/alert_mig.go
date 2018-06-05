@@ -75,7 +75,7 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("add index alert_notification org_id & name", NewAddIndexMigration(alert_notification, alert_notification.Indices[0]))
 
 	notification_journal := Table{
-		Name: "notification_journal",
+		Name: "alert_notification_journal",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
