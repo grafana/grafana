@@ -3,54 +3,56 @@ package notifiers
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 type NotifierBase struct {
-	Name        string
-	Type        string
-	Id          int64
-	IsDeault    bool
-	UploadImage bool
-	NotifyOnce  bool
-	Frequency   time.Duration
+	Name         string
+	Type         string
+	Id           int64
+	IsDeault     bool
+	UploadImage  bool
+	SendReminder bool
+	Frequency    time.Duration
 }
 
-func NewNotifierBase(id int64, isDefault bool, name, notifierType string, notifyOnce bool, frequency time.Duration, model *simplejson.Json) NotifierBase {
+func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	uploadImage := true
-	value, exist := model.CheckGet("uploadImage")
+	value, exist := model.Settings.CheckGet("uploadImage")
 	if exist {
 		uploadImage = value.MustBool()
 	}
 
 	return NotifierBase{
-		Id:          id,
-		Name:        name,
-		IsDeault:    isDefault,
-		Type:        notifierType,
-		UploadImage: uploadImage,
-		NotifyOnce:  notifyOnce,
-		Frequency:   frequency,
+		Id:           model.Id,
+		Name:         model.Name,
+		IsDeault:     model.IsDefault,
+		Type:         model.Type,
+		UploadImage:  uploadImage,
+		SendReminder: model.SendReminder,
+		Frequency:    model.Frequency,
 	}
 }
 
-func defaultShouldNotify(context *alerting.EvalContext, notifyOnce bool, frequency time.Duration, lastNotify *time.Time) bool {
+func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequency time.Duration, lastNotify *time.Time) bool {
 	// Only notify on state change.
-	if context.PrevAlertState == context.Rule.State && notifyOnce {
+	if context.PrevAlertState == context.Rule.State && !sendReminder {
 		return false
 	}
+
 	// Do not notify if interval has not elapsed
-	if !notifyOnce && lastNotify != nil && lastNotify.Add(frequency).After(time.Now()) {
+	if sendReminder && lastNotify != nil && lastNotify.Add(frequency).After(time.Now()) {
 		return false
 	}
+
 	// Do not notify if alert state if OK or pending even on repeated notify
-	if !notifyOnce && (context.Rule.State == m.AlertStateOK || context.Rule.State == m.AlertStatePending) {
+	if sendReminder && (context.Rule.State == models.AlertStateOK || context.Rule.State == models.AlertStatePending) {
 		return false
 	}
+
 	// Do not notify when we become OK for the first time.
-	if (context.PrevAlertState == m.AlertStatePending) && (context.Rule.State == m.AlertStateOK) {
+	if (context.PrevAlertState == models.AlertStatePending) && (context.Rule.State == models.AlertStateOK) {
 		return false
 	}
 	return true
@@ -58,7 +60,7 @@ func defaultShouldNotify(context *alerting.EvalContext, notifyOnce bool, frequen
 
 func (n *NotifierBase) ShouldNotify(context *alerting.EvalContext) bool {
 	lastNotify := context.LastNotify(n.Id)
-	return defaultShouldNotify(context, n.NotifyOnce, n.Frequency, lastNotify)
+	return defaultShouldNotify(context, n.SendReminder, n.Frequency, lastNotify)
 }
 
 func (n *NotifierBase) GetType() string {
@@ -77,8 +79,8 @@ func (n *NotifierBase) GetIsDefault() bool {
 	return n.IsDeault
 }
 
-func (n *NotifierBase) GetNotifyOnce() bool {
-	return n.NotifyOnce
+func (n *NotifierBase) GetSendReminder() bool {
+	return n.SendReminder
 }
 
 func (n *NotifierBase) GetFrequency() time.Duration {

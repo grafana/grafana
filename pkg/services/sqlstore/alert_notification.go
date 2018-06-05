@@ -57,7 +57,7 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 										alert_notification.updated,
 										alert_notification.settings,
 										alert_notification.is_default,
-										alert_notification.notify_once,
+										alert_notification.send_reminder,
 										alert_notification.frequency
 										FROM alert_notification
 	  							`)
@@ -97,7 +97,7 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 										alert_notification.updated,
 										alert_notification.settings,
 										alert_notification.is_default,
-										alert_notification.notify_once,
+										alert_notification.send_reminder,
 										alert_notification.frequency
 										FROM alert_notification
 	  							`)
@@ -145,7 +145,7 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		var frequency time.Duration
-		if !cmd.NotifyOnce {
+		if cmd.SendReminder {
 			if cmd.Frequency == "" {
 				return m.ErrNotificationFrequencyNotFound
 			}
@@ -157,18 +157,18 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		alertNotification := &m.AlertNotification{
-			OrgId:      cmd.OrgId,
-			Name:       cmd.Name,
-			Type:       cmd.Type,
-			Settings:   cmd.Settings,
-			NotifyOnce: cmd.NotifyOnce,
-			Frequency:  frequency,
-			Created:    time.Now(),
-			Updated:    time.Now(),
-			IsDefault:  cmd.IsDefault,
+			OrgId:        cmd.OrgId,
+			Name:         cmd.Name,
+			Type:         cmd.Type,
+			Settings:     cmd.Settings,
+			SendReminder: cmd.SendReminder,
+			Frequency:    frequency,
+			Created:      time.Now(),
+			Updated:      time.Now(),
+			IsDefault:    cmd.IsDefault,
 		}
 
-		if _, err = sess.MustCols("notify_once").Insert(alertNotification); err != nil {
+		if _, err = sess.MustCols("send_reminder").Insert(alertNotification); err != nil {
 			return err
 		}
 
@@ -200,9 +200,9 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.Name = cmd.Name
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault
-		current.NotifyOnce = cmd.NotifyOnce
+		current.SendReminder = cmd.SendReminder
 
-		if !current.NotifyOnce {
+		if current.SendReminder {
 			if cmd.Frequency == "" {
 				return m.ErrNotificationFrequencyNotFound
 			}
@@ -215,7 +215,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 			current.Frequency = frequency
 		}
 
-		sess.UseBool("is_default", "notify_once")
+		sess.UseBool("is_default", "send_reminder")
 
 		if affected, err := sess.ID(cmd.Id).Update(current); err != nil {
 			return err

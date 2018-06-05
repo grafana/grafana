@@ -19,7 +19,7 @@ type Notifier interface {
 
 	GetNotifierId() int64
 	GetIsDefault() bool
-	GetNotifyOnce() bool
+	GetSendReminder() bool
 	GetFrequency() time.Duration
 }
 
