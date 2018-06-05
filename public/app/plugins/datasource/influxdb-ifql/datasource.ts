@@ -25,7 +25,7 @@ function serializeParams(params) {
 const MAX_SERIES = 20;
 export default class InfluxDatasource {
   type: string;
-  urls: any;
+  url: string;
   username: string;
   password: string;
   name: string;
@@ -40,7 +40,7 @@ export default class InfluxDatasource {
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private templateSrv) {
     this.type = 'influxdb-ifql';
-    this.urls = instanceSettings.url.split(',').map(url => url.trim());
+    this.url = instanceSettings.url.trim();
 
     this.username = instanceSettings.username;
     this.password = instanceSettings.password;
@@ -115,25 +115,8 @@ export default class InfluxDatasource {
     return {};
   }
 
-  targetContainsTemplate(target) {
-    for (let group of target.groupBy) {
-      for (let param of group.params) {
-        if (this.templateSrv.variableExists(param)) {
-          return true;
-        }
-      }
-    }
-
-    for (let i in target.tags) {
-      if (this.templateSrv.variableExists(target.tags[i].value)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   metricFindQuery(query: string, options?: any) {
+    // TODO not implemented
     var interpolated = this.templateSrv.replace(query, null, 'regex');
 
     return this._seriesQuery(interpolated, options).then(_.curry(parseResults)(query));
@@ -166,11 +149,6 @@ export default class InfluxDatasource {
   }
 
   _influxRequest(method: string, url: string, data: any, options?: any) {
-    // TODO reinstante Round-robin
-    // const currentUrl = this.urls.shift();
-    // this.urls.push(currentUrl);
-    const currentUrl = this.urls[0];
-
     let params: any = {
       orgName: this.orgName,
     };
@@ -180,19 +158,13 @@ export default class InfluxDatasource {
       params.p = this.password;
     }
 
-    if (options && options.database) {
-      params.db = options.database;
-    } else if (this.database) {
-      params.db = this.database;
-    }
-
     // data sent as GET param
     _.extend(params, data);
     data = null;
 
     let req: any = {
       method: method,
-      url: currentUrl + url,
+      url: this.url + url,
       params: params,
       data: data,
       precision: 'ms',
