@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -35,6 +37,8 @@ var (
 	sqlog log.Logger = log.New("sqlstore")
 )
 
+const ContextSessionName = "db-session"
+
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "SqlStore",
@@ -45,6 +49,7 @@ func init() {
 
 type SqlStore struct {
 	Cfg *setting.Cfg `inject:""`
+	Bus bus.Bus      `inject:""`
 
 	dbCfg           DatabaseConfig
 	engine          *xorm.Engine
@@ -77,6 +82,10 @@ func (ss *SqlStore) Init() error {
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
 
+	ss.Bus.SetTransactionManager(&SQLTransactionManager{
+		engine: ss.engine,
+	})
+
 	// ensure admin user
 	if ss.skipEnsureAdmin {
 		return nil
@@ -85,10 +94,47 @@ func (ss *SqlStore) Init() error {
 	return ss.ensureAdminUser()
 }
 
+type SQLTransactionManager struct {
+	engine *xorm.Engine
+}
+
+func (stm *SQLTransactionManager) Begin(ctx context.Context) (context.Context, error) {
+	sess := stm.engine.NewSession()
+	err := sess.Begin()
+	if err != nil {
+		return ctx, err
+	}
+
+	withValue := context.WithValue(ctx, ContextSessionName, sess)
+
+	return withValue, nil
+}
+
+func (stm *SQLTransactionManager) End(ctx context.Context, err error) error {
+	value := ctx.Value(ContextSessionName)
+	sess, ok := value.(*xorm.Session)
+	if !ok {
+		return errors.New("context is missing transaction")
+	}
+
+	if err != nil {
+		sess.Rollback()
+		return err
+	}
+
+	defer sess.Close()
+
+	return sess.Commit()
+}
+
 func (ss *SqlStore) ensureAdminUser() error {
 	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 
-	if err := bus.Dispatch(&systemUserCountQuery); err != nil {
+	err := bus.InTransaction(context.Background(), func(ctx context.Context) error {
+		return bus.DispatchCtx(ctx, &systemUserCountQuery)
+	})
+
+	if err != nil {
 		return fmt.Errorf("Could not determine if admin user exists: %v", err)
 	}
 
@@ -240,6 +286,7 @@ func (ss *SqlStore) readConfig() {
 func InitTestDB(t *testing.T) *SqlStore {
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true
+	sqlstore.Bus = bus.New()
 
 	dbType := migrator.SQLITE
 

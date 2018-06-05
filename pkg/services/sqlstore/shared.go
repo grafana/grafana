@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"reflect"
 	"time"
 
@@ -29,10 +30,35 @@ func inTransaction(callback dbTransactionFunc) error {
 	return inTransactionWithRetry(callback, 0)
 }
 
+func startSession(ctx context.Context) *DBSession {
+	value := ctx.Value(ContextSessionName)
+	var sess *xorm.Session
+	sess, ok := value.(*xorm.Session)
+
+	if !ok {
+		return newSession()
+	}
+
+	old := newSession()
+	old.Session = sess
+
+	return old
+}
+
+func withDbSession(ctx context.Context, callback dbTransactionFunc) error {
+	sess := startSession(ctx)
+
+	return callback(sess)
+}
+
 func inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
+	return inTransactionWithRetryCtx(context.Background(), callback, retry)
+}
+
+func inTransactionWithRetryCtx(ctx context.Context, callback dbTransactionFunc, retry int) error {
 	var err error
 
-	sess := newSession()
+	sess := startSession(ctx)
 	defer sess.Close()
 
 	if err = sess.Begin(); err != nil {
