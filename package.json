@@ -157,6 +157,7 @@
     "moment": "^2.18.1",
     "mousetrap": "^1.6.0",
     "mousetrap-global-bind": "^1.1.0",
+    "papaparse": "^4.4.0",
     "prismjs": "^1.6.0",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",

@@ -12,6 +12,7 @@ const (
 	DS_GRAPHITE      = "graphite"
 	DS_INFLUXDB      = "influxdb"
 	DS_INFLUXDB_08   = "influxdb_08"
+	DS_INFLUXDB_IFQL = "influxdb-ifql"
 	DS_ES            = "elasticsearch"
 	DS_OPENTSDB      = "opentsdb"
 	DS_CLOUDWATCH    = "cloudwatch"
