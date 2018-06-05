@@ -16,22 +16,29 @@ func TestBaseNotifier(t *testing.T) {
 		Convey("default constructor for notifiers", func() {
 			bJson := simplejson.New()
 
+			model := &m.AlertNotification{
+				Id:       1,
+				Name:     "name",
+				Type:     "email",
+				Settings: bJson,
+			}
+
 			Convey("can parse false value", func() {
 				bJson.Set("uploadImage", false)
 
-				base := NewNotifierBase(1, false, "name", "email", true, 0, bJson)
+				base := NewNotifierBase(model)
 				So(base.UploadImage, ShouldBeFalse)
 			})
 
 			Convey("can parse true value", func() {
 				bJson.Set("uploadImage", true)
 
-				base := NewNotifierBase(1, false, "name", "email", true, 0, bJson)
+				base := NewNotifierBase(model)
 				So(base.UploadImage, ShouldBeTrue)
 			})
 
 			Convey("default value should be true for backwards compatibility", func() {
-				base := NewNotifierBase(1, false, "name", "email", true, 0, bJson)
+				base := NewNotifierBase(model)
 				So(base.UploadImage, ShouldBeTrue)
 			})
 		})

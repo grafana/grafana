@@ -23,13 +23,13 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(cmd.Result, ShouldBeNil)
 		})
 
-		Convey("Cannot save alert notifier with notitfyonce = false", func() {
+		Convey("Cannot save alert notifier with send reminder = true", func() {
 			cmd := &m.CreateAlertNotificationCommand{
-				Name:       "ops",
-				Type:       "email",
-				OrgId:      1,
-				NotifyOnce: false,
-				Settings:   simplejson.New(),
+				Name:         "ops",
+				Type:         "email",
+				OrgId:        1,
+				SendReminder: true,
+				Settings:     simplejson.New(),
 			}
 
 			Convey("and missing frequency", func() {
@@ -47,19 +47,19 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 		Convey("Cannot update alert notifier with notitfyonce = false", func() {
 			cmd := &m.CreateAlertNotificationCommand{
-				Name:       "ops update",
-				Type:       "email",
-				OrgId:      1,
-				NotifyOnce: true,
-				Settings:   simplejson.New(),
+				Name:         "ops update",
+				Type:         "email",
+				OrgId:        1,
+				SendReminder: false,
+				Settings:     simplejson.New(),
 			}
 
 			err := CreateAlertNotificationCommand(cmd)
 			So(err, ShouldBeNil)
 
 			updateCmd := &m.UpdateAlertNotificationCommand{
-				Id:         cmd.Result.Id,
-				NotifyOnce: false,
+				Id:           cmd.Result.Id,
+				SendReminder: true,
 			}
 
 			Convey("and missing frequency", func() {
@@ -71,18 +71,19 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				updateCmd.Frequency = "invalid duration"
 
 				err := UpdateAlertNotification(updateCmd)
+				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "time: invalid duration invalid duration")
 			})
 		})
 
 		Convey("Can save Alert Notification", func() {
 			cmd := &m.CreateAlertNotificationCommand{
-				Name:       "ops",
-				Type:       "email",
-				OrgId:      1,
-				NotifyOnce: true,
-				Frequency:  "10s",
-				Settings:   simplejson.New(),
+				Name:         "ops",
+				Type:         "email",
+				OrgId:        1,
+				SendReminder: true,
+				Frequency:    "10s",
+				Settings:     simplejson.New(),
 			}
 
 			err := CreateAlertNotificationCommand(cmd)
@@ -98,13 +99,13 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 			Convey("Can update alert notification", func() {
 				newCmd := &m.UpdateAlertNotificationCommand{
-					Name:       "NewName",
-					Type:       "webhook",
-					OrgId:      cmd.Result.OrgId,
-					NotifyOnce: true,
-					Frequency:  "10s",
-					Settings:   simplejson.New(),
-					Id:         cmd.Result.Id,
+					Name:         "NewName",
+					Type:         "webhook",
+					OrgId:        cmd.Result.OrgId,
+					SendReminder: true,
+					Frequency:    "10s",
+					Settings:     simplejson.New(),
+					Id:           cmd.Result.Id,
 				}
 				err := UpdateAlertNotification(newCmd)
 				So(err, ShouldBeNil)
@@ -113,12 +114,12 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		})
 
 		Convey("Can search using an array of ids", func() {
-			cmd1 := m.CreateAlertNotificationCommand{Name: "nagios", Type: "webhook", OrgId: 1, NotifyOnce: true, Frequency: "10s", Settings: simplejson.New()}
-			cmd2 := m.CreateAlertNotificationCommand{Name: "slack", Type: "webhook", OrgId: 1, NotifyOnce: true, Frequency: "10s", Settings: simplejson.New()}
-			cmd3 := m.CreateAlertNotificationCommand{Name: "ops2", Type: "email", OrgId: 1, NotifyOnce: true, Frequency: "10s", Settings: simplejson.New()}
-			cmd4 := m.CreateAlertNotificationCommand{IsDefault: true, Name: "default", Type: "email", OrgId: 1, NotifyOnce: true, Frequency: "10s", Settings: simplejson.New()}
+			cmd1 := m.CreateAlertNotificationCommand{Name: "nagios", Type: "webhook", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
+			cmd2 := m.CreateAlertNotificationCommand{Name: "slack", Type: "webhook", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
+			cmd3 := m.CreateAlertNotificationCommand{Name: "ops2", Type: "email", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
+			cmd4 := m.CreateAlertNotificationCommand{IsDefault: true, Name: "default", Type: "email", OrgId: 1, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
 
-			otherOrg := m.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, NotifyOnce: true, Frequency: "10s", Settings: simplejson.New()}
+			otherOrg := m.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
 
 			So(CreateAlertNotificationCommand(&cmd1), ShouldBeNil)
 			So(CreateAlertNotificationCommand(&cmd2), ShouldBeNil)

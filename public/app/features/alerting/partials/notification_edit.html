@@ -34,14 +34,27 @@
       </gf-form-switch>
       <gf-form-switch
           class="gf-form"
-          label="Notify once"
+          label="Send reminder"
           label-class="width-12"
-          checked="ctrl.model.notifyOnce"
+          checked="ctrl.model.sendReminder"
           tooltip="Choose to either notify on state change or at every interval">
       </gf-form-switch>
-      <div class="gf-form">
-        <span class="gf-form-label width-12" ng-if="!ctrl.model.notifyOnce">Notify every</span>
-        <input class="gf-form-input max-width-15" type="text" required ng-model="ctrl.model.frequency" required ng-if="!ctrl.model.notifyOnce"></input>
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <span class="gf-form-label width-12" ng-if="ctrl.model.sendReminder">Send reminder every</span>
+          <input
+            class="gf-form-input max-width-15"
+            type="text"
+            ng-model="ctrl.model.frequency"
+            ng-required="ctrl.model.sendReminder"
+            ng-if="ctrl.model.sendReminder"
+            spellcheck='false'
+            placeholder='15m'></input>
+          <info-popover mode="right-absolute">
+            Specify at what interval you want reminder's about this alerting beeing triggered.
+            Ex. 60s, 10m, 30m, 1h
+          </info-popover>
+        </div>
       </div>
     </div>
 

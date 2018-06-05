@@ -11,7 +11,7 @@ export class AlertNotificationEditCtrl {
   model: any;
   defaults: any = {
     type: 'email',
-    notifyOnce: true,
+    sendReminder: false,
     frequency: '15m',
     settings: {
       httpMethod: 'POST',
