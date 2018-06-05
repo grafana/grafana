@@ -3,6 +3,8 @@ package notifiers
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -15,6 +17,8 @@ type NotifierBase struct {
 	UploadImage  bool
 	SendReminder bool
 	Frequency    time.Duration
+
+	log log.Logger
 }
 
 func NewNotifierBase(model *models.AlertNotification) NotifierBase {
@@ -32,6 +36,7 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 		UploadImage:  uploadImage,
 		SendReminder: model.SendReminder,
 		Frequency:    model.Frequency,
+		log:          log.New("alerting.notifier." + model.Name),
 	}
 }
 
@@ -55,12 +60,24 @@ func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequ
 	if (context.PrevAlertState == models.AlertStatePending) && (context.Rule.State == models.AlertStateOK) {
 		return false
 	}
+
 	return true
 }
 
-func (n *NotifierBase) ShouldNotify(context *alerting.EvalContext) bool {
-	lastNotify := context.LastNotify(n.Id)
-	return defaultShouldNotify(context, n.SendReminder, n.Frequency, lastNotify)
+// ShouldNotify checks this evaluation should send an alert notification
+func (n *NotifierBase) ShouldNotify(c *alerting.EvalContext) bool {
+	cmd := &models.GetLatestNotificationQuery{
+		OrgId:      c.Rule.OrgId,
+		AlertId:    c.Rule.Id,
+		NotifierId: n.Id,
+	}
+
+	if err := bus.Dispatch(cmd); err != nil {
+		n.log.Error("Could not determine last time alert notifier fired", "Alert name", c.Rule.Name, "Error", err)
+		return false
+	}
+
+	return defaultShouldNotify(c, n.SendReminder, n.Frequency, &cmd.Result.SentAt)
 }
 
 func (n *NotifierBase) GetType() string {

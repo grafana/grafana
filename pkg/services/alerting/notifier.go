@@ -131,6 +131,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 		if err != nil {
 			return nil, err
 		}
+
 		if not.ShouldNotify(context) {
 			result = append(result, not)
 		}

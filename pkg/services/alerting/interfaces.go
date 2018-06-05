@@ -15,6 +15,8 @@ type Notifier interface {
 	Notify(evalContext *EvalContext) error
 	GetType() string
 	NeedsImage() bool
+
+	// ShouldNotify checks this evaluation should send an alert notification
 	ShouldNotify(evalContext *EvalContext) bool
 
 	GetNotifierId() int64
