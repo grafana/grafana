@@ -1,5 +1,7 @@
 # 5.2.0 (unreleased)
 
+# 5.2.0-beta1 (2018-06-05)
+
 ### New Features
 
 * **Elasticsearch**: Alerting support [#5893](https://github.com/grafana/grafana/issues/5893), thx [@WPH95](https://github.com/WPH95)
