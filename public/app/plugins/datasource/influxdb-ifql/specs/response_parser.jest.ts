@@ -1,4 +1,5 @@
 import {
+  getAnnotationsFromResult,
   getNameFromRecord,
   getTableModelFromResult,
   getTimeSeriesFromResult,
@@ -13,6 +14,17 @@ describe('influxdb ifql response parser', () => {
     it('expects three results', () => {
       const results = parseResults(response);
       expect(results.length).toBe(2);
+    });
+  });
+
+  describe('getAnnotationsFromResult()', () => {
+    it('expects a list of annotations', () => {
+      const results = parseResults(response);
+      const annotations = getAnnotationsFromResult(results[0], { tagsCol: 'cpu' });
+      expect(annotations.length).toBe(300);
+      expect(annotations[0].tags.length).toBe(1);
+      expect(annotations[0].tags[0]).toBe('cpu-total');
+      expect(annotations[0].text).toBe('0');
     });
   });
 

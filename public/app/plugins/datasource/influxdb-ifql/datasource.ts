@@ -2,7 +2,13 @@ import _ from 'lodash';
 
 import * as dateMath from 'app/core/utils/datemath';
 
-import { getTableModelFromResult, getTimeSeriesFromResult, getValuesFromResult, parseResults } from './response_parser';
+import {
+  getAnnotationsFromResult,
+  getTableModelFromResult,
+  getTimeSeriesFromResult,
+  getValuesFromResult,
+  parseResults,
+} from './response_parser';
 import expandMacros from './metric_find_query';
 
 function serializeParams(params) {
@@ -101,11 +107,22 @@ export default class InfluxDatasource {
       });
     }
 
-    var timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw });
-    var query = options.annotation.query.replace('$timeFilter', timeFilter);
-    query = this.templateSrv.replace(query, null, 'regex');
+    const { query } = options.annotation;
+    const queryOptions = {
+      scopedVars: {},
+      ...options,
+      silent: true,
+    };
+    const target = this.prepareQueryTarget({ query }, queryOptions);
 
-    return {};
+    return this._seriesQuery(target.query, queryOptions).then(response => {
+      const results = parseResults(response.data);
+      if (results.length === 0) {
+        throw { message: 'No results in response from InfluxDB' };
+      }
+      const annotations = _.flatten(results.map(result => getAnnotationsFromResult(result, options.annotation)));
+      return annotations;
+    });
   }
 
   metricFindQuery(query: string, options?: any) {

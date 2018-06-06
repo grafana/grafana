@@ -25,6 +25,5 @@ Read more about InfluxDB here:
 
 - Syntax highlighting
 - Tab completion (functions, values)
-- Annotations support
 - Alerting integration
 - Explore UI integration
