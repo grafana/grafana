@@ -86,3 +86,8 @@ export function getTimeSeriesFromResult(result: string) {
 
   return seriesList;
 }
+
+export function getValuesFromResult(result: string) {
+  const data = parseCSV(result);
+  return data.map(record => record['_value']);
+}

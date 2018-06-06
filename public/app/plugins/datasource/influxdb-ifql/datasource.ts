@@ -2,7 +2,8 @@ import _ from 'lodash';
 
 import * as dateMath from 'app/core/utils/datemath';
 
-import { getTableModelFromResult, getTimeSeriesFromResult, parseResults } from './response_parser';
+import { getTableModelFromResult, getTimeSeriesFromResult, getValuesFromResult, parseResults } from './response_parser';
+import expandMacros from './metric_find_query';
 
 function serializeParams(params) {
   if (!params) {
@@ -54,25 +55,21 @@ export default class InfluxDatasource {
     this.supportMetrics = true;
   }
 
-  prepareQueries(options) {
-    const targets = _.cloneDeep(options.targets);
+  prepareQueryTarget(target, options) {
+    // Replace grafana variables
     const timeFilter = this.getTimeFilter(options);
     options.scopedVars.range = { value: timeFilter };
-
-    // Filter empty queries and replace grafana variables
-    const queryTargets = targets.filter(t => t.query).map(t => {
-      const interpolated = this.templateSrv.replace(t.query, options.scopedVars);
-      return {
-        ...t,
-        query: interpolated,
-      };
-    });
-
-    return queryTargets;
+    const interpolated = this.templateSrv.replace(target.query, options.scopedVars);
+    return {
+      ...target,
+      query: interpolated,
+    };
   }
 
   query(options) {
-    const queryTargets = this.prepareQueries(options);
+    const queryTargets = options.targets
+      .filter(target => target.query)
+      .map(target => this.prepareQueryTarget(target, options));
     if (queryTargets.length === 0) {
       return Promise.resolve({ data: [] });
     }
@@ -112,10 +109,23 @@ export default class InfluxDatasource {
   }
 
   metricFindQuery(query: string, options?: any) {
-    // TODO not implemented
-    var interpolated = this.templateSrv.replace(query, null, 'regex');
+    const interpreted = expandMacros(query);
 
-    return this._seriesQuery(interpolated, options).then(_.curry(parseResults)(query));
+    // Use normal querier in silent mode
+    const queryOptions = {
+      rangeRaw: { to: 'now', from: 'now - 1h' },
+      scopedVars: {},
+      ...options,
+      silent: true,
+    };
+    const target = this.prepareQueryTarget({ query: interpreted }, queryOptions);
+    return this._seriesQuery(target.query, queryOptions).then(response => {
+      const results = parseResults(response.data);
+      const values = _.uniq(_.flatten(results.map(getValuesFromResult)));
+      return values
+        .filter(value => value && value[0] !== '_') // Ignore internal fields
+        .map(value => ({ text: value }));
+    });
   }
 
   _seriesQuery(query: string, options?: any) {

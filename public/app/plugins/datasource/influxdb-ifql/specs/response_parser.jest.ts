@@ -2,6 +2,7 @@ import {
   getNameFromRecord,
   getTableModelFromResult,
   getTimeSeriesFromResult,
+  getValuesFromResult,
   parseResults,
   parseValue,
 } from '../response_parser';
@@ -30,6 +31,14 @@ describe('influxdb ifql response parser', () => {
       const series = getTimeSeriesFromResult(results[0]);
       expect(series.length).toBe(50);
       expect(series[0].datapoints.length).toBe(6);
+    });
+  });
+
+  describe('getValuesFromResult()', () => {
+    it('returns all values from the _value field in the response', () => {
+      const results = parseResults(response);
+      const values = getValuesFromResult(results[0]);
+      expect(values.length).toBe(300);
     });
   });
 
