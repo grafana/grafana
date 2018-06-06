@@ -85,14 +85,17 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
 
     const title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
-    const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
+    const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
+    const panels = count === 1 ? 'panel' : 'panels';
 
     return (
       <div className={classes}>
         <a className="dashboard-row__title pointer" onClick={this.toggle}>
           <i className={chevronClass} />
           {title}
-          <span className="dashboard-row__panel_count">({hiddenPanels} panels)</span>
+          <span className="dashboard-row__panel_count">
+            ({count} {panels})
+          </span>
         </a>
         {this.dashboard.meta.canEdit === true && (
           <div className="dashboard-row__actions">
