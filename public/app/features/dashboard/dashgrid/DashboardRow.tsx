@@ -87,19 +87,6 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     const title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
     const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
-    const sss = {
-      border: '1px solid red',
-      display: 'flex',
-      flexDirection: 'row',
-      flex: 2,
-      cursor: 'pointer',
-      marginRight: '12px',
-    };
-
-    // {this.state.collapsed === '4true' && (
-    //   <div style={sss} onClick={this.toggle}>&nbsp;</div>
-    // )}
-
     return (
       <div className={classes}>
         <a className="dashboard-row__title pointer" onClick={this.toggle}>
@@ -115,6 +102,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
             <a className="pointer" onClick={this.delete}>
               <i className="fa fa-trash" />
             </a>
+          </div>
+        )}
+        {this.state.collapsed === true && (
+          <div className="dashboard-row__toggle-target" onClick={this.toggle}>
+            &nbsp;
           </div>
         )}
         <div className="dashboard-row__drag grid-drag-handle" />

@@ -19,6 +19,12 @@
     .dashboard-row__actions {
       visibility: hidden;
     }
+
+    .dashboard-row__toggle-target {
+      flex: 1;
+      cursor: pointer;
+      margin-right: 15px;
+    }
   }
 
   &:hover {
@@ -46,7 +52,6 @@
   color: $text-muted;
   visibility: hidden;
   opacity: 0;
-  flex-grow: 1;
   transition: 200ms opacity ease-in 200ms;
 
   a {
