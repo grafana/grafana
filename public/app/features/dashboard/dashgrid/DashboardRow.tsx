@@ -30,7 +30,8 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     this.update = this.update.bind(this);
   }
 
-  toggle() {
+  toggle(e) {
+    e.stopPropagation();
     this.dashboard.toggleRow(this.props.panel);
 
     this.setState(prevState => {
@@ -38,12 +39,14 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   }
 
-  update() {
+  update(e) {
+    e.stopPropagation();
     this.dashboard.processRepeats();
     this.forceUpdate();
   }
 
-  openSettings() {
+  openSettings(e) {
+    e.stopPropagation();
     appEvents.emit('show-modal', {
       templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
       modalClass: 'modal--narrow',
@@ -84,15 +87,15 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       'fa-chevron-right': this.state.collapsed,
     });
 
-    let title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
+    const title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
     const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
     return (
-      <div className={classes}>
+      <div className={classes} onClick={this.state.collapsed ? this.toggle : null}>
         <a className="dashboard-row__title pointer" onClick={this.toggle}>
           <i className={chevronClass} />
           {title}
-          <span className="dashboard-row__panel_count">({hiddenPanels} hidden panels)</span>
+          <span className="dashboard-row__panel_count">({hiddenPanels} panels)</span>
         </a>
         {this.dashboard.meta.canEdit === true && (
           <div className="dashboard-row__actions">

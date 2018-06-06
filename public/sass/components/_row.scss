@@ -6,15 +6,19 @@
 
   &--collapsed {
     background: $panel-bg;
+    cursor: pointer;
 
     .dashboard-row__panel_count {
       display: inline-block;
     }
 
-    .dashboard-row__drag,
-    .dashboard-row__actions {
+    .dashboard-row__drag {
       visibility: visible;
       opacity: 1;
+    }
+
+    .dashboard-row__actions {
+      visibility: hidden;
     }
   }
 
@@ -69,7 +73,7 @@
   cursor: move;
   width: 1rem;
   height: 100%;
-  background: url("../img/grab_dark.svg") no-repeat 50% 50%;
+  background: url('../img/grab_dark.svg') no-repeat 50% 50%;
   background-size: 8px;
   visibility: hidden;
   position: absolute;
