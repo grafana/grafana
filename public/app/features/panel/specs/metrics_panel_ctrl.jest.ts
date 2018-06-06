@@ -1,8 +1,19 @@
 jest.mock('app/core/core', () => ({}));
+jest.mock('app/core/config', () => {
+  return {
+    exploreEnabled: true,
+    panels: {
+      test: {
+        id: 'test',
+        name: 'test',
+      },
+    },
+  };
+});
 
-import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
 import q from 'q';
 import { PanelModel } from 'app/features/dashboard/panel_model';
+import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
 
 describe('MetricsPanelCtrl', () => {
   let ctrl;
