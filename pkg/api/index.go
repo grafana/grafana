@@ -95,6 +95,7 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	if hasEditPermissionInFoldersQuery.Result {
 		children := []*dtos.NavLink{
 			{Text: "Dashboard", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/dashboard/new"},
+			{Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/import"},
 		}
 
 		if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
