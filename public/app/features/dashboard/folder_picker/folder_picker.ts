@@ -132,23 +132,26 @@ export class FolderPickerCtrl {
   }
 
   private loadInitialValue() {
-    if (this.initialFolderId && this.initialFolderId > 0) {
-      this.getOptions('').then(result => {
+    this.getOptions('').then(result => {
+      if (!_.isNil(this.initialFolderId)) {
+        // If initialFolderId is set, try to find it in result or return null
         this.folder = _.find(result, { value: this.initialFolderId });
         if (!this.folder) {
-          this.folder = { text: this.initialTitle, value: this.initialFolderId };
+          this.folder = { text: this.initialTitle, value: null };
         }
-        this.onFolderLoad();
-      });
-    } else {
-      if (this.initialTitle && this.initialFolderId === null) {
-        this.folder = { text: this.initialTitle, value: null };
       } else {
-        this.folder = { text: this.rootName, value: 0 };
+        // If initialFolderId isn't set, return General folder for Editor
+        // or first available for user, otherwise return null
+        if (this.isEditor) {
+          this.folder = { text: this.rootName, value: 0 };
+        } else if (result.length > 0) {
+          this.folder = result[0];
+        } else {
+          this.folder = { text: this.initialTitle, value: null };
+        }
       }
-
       this.onFolderLoad();
-    }
+    });
   }
 
   private onFolderLoad() {
