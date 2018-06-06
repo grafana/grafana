@@ -43,12 +43,12 @@ type Client interface {
 var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb.TimeRange) (Client, error) {
 	version, err := ds.JsonData.Get("esVersion").Int()
 	if err != nil {
-		return nil, fmt.Errorf("eleasticsearch version is required, err=%v", err)
+		return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
 	}
 
 	timeField, err := ds.JsonData.Get("timeField").String()
 	if err != nil {
-		return nil, fmt.Errorf("eleasticsearch time field name is required, err=%v", err)
+		return nil, fmt.Errorf("elasticsearch time field name is required, err=%v", err)
 	}
 
 	indexInterval := ds.JsonData.Get("interval").MustString()
