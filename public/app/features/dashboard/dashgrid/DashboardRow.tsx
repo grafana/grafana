@@ -30,8 +30,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     this.update = this.update.bind(this);
   }
 
-  toggle(e) {
-    e.stopPropagation();
+  toggle() {
     this.dashboard.toggleRow(this.props.panel);
 
     this.setState(prevState => {
@@ -39,14 +38,12 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   }
 
-  update(e) {
-    e.stopPropagation();
+  update() {
     this.dashboard.processRepeats();
     this.forceUpdate();
   }
 
-  openSettings(e) {
-    e.stopPropagation();
+  openSettings() {
     appEvents.emit('show-modal', {
       templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
       modalClass: 'modal--narrow',
@@ -90,8 +87,21 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     const title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
     const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
+    const sss = {
+      border: '1px solid red',
+      display: 'flex',
+      flexDirection: 'row',
+      flex: 2,
+      cursor: 'pointer',
+      marginRight: '12px',
+    };
+
+    // {this.state.collapsed === '4true' && (
+    //   <div style={sss} onClick={this.toggle}>&nbsp;</div>
+    // )}
+
     return (
-      <div className={classes} onClick={this.state.collapsed ? this.toggle : null}>
+      <div className={classes}>
         <a className="dashboard-row__title pointer" onClick={this.toggle}>
           <i className={chevronClass} />
           {title}
