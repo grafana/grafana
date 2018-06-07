@@ -85,6 +85,9 @@ div.flot-text {
   &:hover {
     color: $link-hover-color;
   }
+  .panel-has-alert & {
+    max-width: calc(100% - 54px);
+  }
 }
 
 .panel-menu-container {
