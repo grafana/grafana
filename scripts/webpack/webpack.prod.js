@@ -10,12 +10,13 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 module.exports = merge(common, {
+  mode: 'production',
   devtool: "source-map",
 
   entry: {
     dark: './public/sass/grafana.dark.scss',
     light: './public/sass/grafana.light.scss',
-    vendor: require('./dependencies'),
+    // vendor: require('./dependencies'),
   },
 
   module: {
@@ -51,17 +52,10 @@ module.exports = merge(common, {
   optimization: {
     splitChunks: {
       cacheGroups: {
-        manifest: {
-          chunks: "initial",
-          test: "vendor",
-          name: "vendor",
-          enforce: true
-        },
-        vendor: {
-          chunks: "initial",
-          test: "vendor",
-          name: "vendor",
-          enforce: true
+        commons: {
+          test: /[\\/]node_modules[\\/]/,
+          name: "vendors",
+          chunks: "all"
         }
       }
     }
@@ -84,7 +78,7 @@ module.exports = merge(common, {
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index.template.html'),
       inject: 'body',
-      chunks: ['manifest', 'vendor', 'app'],
+      chunks: ['vendors', 'app'],
     }),
     function () {
       this.plugin("done", function (stats) {
