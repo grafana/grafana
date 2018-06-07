@@ -143,30 +143,32 @@ func (ss *SqlStore) ensureAdminUser() error {
 	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 
 	err := bus.InTransaction(context.Background(), func(ctx context.Context) error {
-		return bus.DispatchCtx(ctx, &systemUserCountQuery)
+
+		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+		if err != nil {
+			return fmt.Errorf("Could not determine if admin user exists: %v", err)
+		}
+
+		if systemUserCountQuery.Result.Count > 0 {
+			return nil
+		}
+
+		cmd := m.CreateUserCommand{}
+		cmd.Login = setting.AdminUser
+		cmd.Email = setting.AdminUser + "@localhost"
+		cmd.Password = setting.AdminPassword
+		cmd.IsAdmin = true
+
+		if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+			return fmt.Errorf("Failed to create admin user: %v", err)
+		}
+
+		ss.log.Info("Created default admin", "user", setting.AdminUser)
+
+		return nil
 	})
 
-	if err != nil {
-		return fmt.Errorf("Could not determine if admin user exists: %v", err)
-	}
-
-	if systemUserCountQuery.Result.Count > 0 {
-		return nil
-	}
-
-	cmd := m.CreateUserCommand{}
-	cmd.Login = setting.AdminUser
-	cmd.Email = setting.AdminUser + "@localhost"
-	cmd.Password = setting.AdminPassword
-	cmd.IsAdmin = true
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return fmt.Errorf("Failed to create admin user: %v", err)
-	}
-
-	ss.log.Info("Created default admin user: %v", setting.AdminUser)
-
-	return nil
+	return err
 }
 
 func (ss *SqlStore) buildConnectionString() (string, error) {
