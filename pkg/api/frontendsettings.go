@@ -73,6 +73,11 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 				dsMap["withCredentials"] = ds.WithCredentials
 			}
 
+			// Datasource token authentification support added - Copyright © 2018 Bosch Rexroth AG
+			if ds.TokenAuth {
+				dsMap["tokenAuth"] = ds.TokenAuthType + " " + ds.TokenAuthValue
+			}
+
 			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.Password

@@ -1,3 +1,5 @@
+// Datasource token authentification support added - Copyright © 2018 Bosch Rexroth AG
+
 package sqlstore
 
 import (
@@ -110,10 +112,14 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
 			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
-			Created:           time.Now(),
-			Updated:           time.Now(),
-			Version:           1,
-			ReadOnly:          cmd.ReadOnly,
+			TokenAuth:         cmd.TokenAuth,
+			TokenAuthType:     cmd.TokenAuthType,
+			TokenAuthValue:    cmd.TokenAuthValue,
+
+			Created:  time.Now(),
+			Updated:  time.Now(),
+			Version:  1,
+			ReadOnly: cmd.ReadOnly,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -158,6 +164,9 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
 			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
+			TokenAuth:         cmd.TokenAuth,
+			TokenAuthType:     cmd.TokenAuthType,
+			TokenAuthValue:    cmd.TokenAuthValue,
 			Updated:           time.Now(),
 			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,
@@ -167,6 +176,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
 		sess.UseBool("read_only")
+		sess.UseBool("token_auth")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

@@ -27,23 +27,29 @@ type DataSource struct {
 	SecureJsonFields  map[string]bool  `json:"secureJsonFields"`
 	Version           int              `json:"version"`
 	ReadOnly          bool             `json:"readOnly"`
+	TokenAuth         bool             `json:"tokenAuth"`
+	TokenAuthType     string           `json:"tokenAuthType"`
+	TokenAuthValue    string           `json:"tokenAuthValue"`
 }
 
 type DataSourceListItemDTO struct {
-	Id          int64            `json:"id"`
-	OrgId       int64            `json:"orgId"`
-	Name        string           `json:"name"`
-	Type        string           `json:"type"`
-	TypeLogoUrl string           `json:"typeLogoUrl"`
-	Access      m.DsAccess       `json:"access"`
-	Url         string           `json:"url"`
-	Password    string           `json:"password"`
-	User        string           `json:"user"`
-	Database    string           `json:"database"`
-	BasicAuth   bool             `json:"basicAuth"`
-	IsDefault   bool             `json:"isDefault"`
-	JsonData    *simplejson.Json `json:"jsonData,omitempty"`
-	ReadOnly    bool             `json:"readOnly"`
+	Id             int64            `json:"id"`
+	OrgId          int64            `json:"orgId"`
+	Name           string           `json:"name"`
+	Type           string           `json:"type"`
+	TypeLogoUrl    string           `json:"typeLogoUrl"`
+	Access         m.DsAccess       `json:"access"`
+	Url            string           `json:"url"`
+	Password       string           `json:"password"`
+	User           string           `json:"user"`
+	Database       string           `json:"database"`
+	BasicAuth      bool             `json:"basicAuth"`
+	IsDefault      bool             `json:"isDefault"`
+	JsonData       *simplejson.Json `json:"jsonData,omitempty"`
+	ReadOnly       bool             `json:"readOnly"`
+	TokenAuth      bool             `json:"tokenAuth"`
+	TokenAuthType  string           `json:"tokenAuthType"`
+	TokenAuthValue string           `json:"tokenAuthValue"`
 }
 
 type DataSourceList []DataSourceListItemDTO
