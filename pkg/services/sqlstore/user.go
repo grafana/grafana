@@ -31,7 +31,7 @@ func init() {
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
-	bus.AddCtxHandler("sql", CreateUserCtx)
+	bus.AddHandlerCtx("sql", CreateUserCtx)
 }
 
 func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error) {

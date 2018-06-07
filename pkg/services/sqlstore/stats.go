@@ -14,7 +14,7 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
 	bus.AddHandler("sql", GetSystemUserCountStats)
-	bus.AddCtxHandler("sql", GetSystemUserCountStatsCtx)
+	bus.AddHandlerCtx("sql", GetSystemUserCountStatsCtx)
 }
 
 var activeUserTimeLimit = time.Hour * 24 * 30

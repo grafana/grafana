@@ -28,7 +28,7 @@ type Bus interface {
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 
 	AddHandler(handler HandlerFunc)
-	AddCtxHandler(handler HandlerFunc)
+	AddHandlerCtx(handler HandlerFunc)
 	AddEventListener(handler HandlerFunc)
 	AddWildcardListener(handler HandlerFunc)
 
@@ -146,7 +146,7 @@ func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	b.handlers[queryTypeName] = handler
 }
 
-func (b *InProcBus) AddCtxHandler(handler HandlerFunc) {
+func (b *InProcBus) AddHandlerCtx(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	queryTypeName := handlerType.In(1).Elem().Name()
 	b.handlers[queryTypeName] = handler
@@ -168,8 +168,8 @@ func AddHandler(implName string, handler HandlerFunc) {
 }
 
 // Package level functions
-func AddCtxHandler(implName string, handler HandlerFunc) {
-	globalBus.AddCtxHandler(handler)
+func AddHandlerCtx(implName string, handler HandlerFunc) {
+	globalBus.AddHandlerCtx(handler)
 }
 
 // Package level functions
