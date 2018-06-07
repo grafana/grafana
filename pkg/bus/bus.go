@@ -13,7 +13,7 @@ type Msg interface{}
 var ErrHandlerNotFound = errors.New("handler not found")
 
 type TransactionWrapper interface {
-	Wrapp(ctx context.Context, fn func(ctx context.Context) error) error
+	Wrap(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type Bus interface {
@@ -39,7 +39,7 @@ type Bus interface {
 }
 
 func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return b.transactionWrapper.Wrapp(ctx, fn)
+	return b.transactionWrapper.Wrap(ctx, fn)
 }
 
 type InProcBus struct {
@@ -213,6 +213,6 @@ func ClearBusHandlers() {
 
 type noopTransactionManager struct{}
 
-func (*noopTransactionManager) Wrapp(ctx context.Context, fn func(ctx context.Context) error) error {
+func (*noopTransactionManager) Wrap(ctx context.Context, fn func(ctx context.Context) error) error {
 	return nil
 }

@@ -99,11 +99,11 @@ type SQLTransactionManager struct {
 	engine *xorm.Engine
 }
 
-func (stm *SQLTransactionManager) Wrapp(ctx context.Context, fn func(ctx context.Context) error) error {
-	return stm.wrappInternal(ctx, fn, 0)
+func (stm *SQLTransactionManager) Wrap(ctx context.Context, fn func(ctx context.Context) error) error {
+	return stm.wrapInternal(ctx, fn, 0)
 }
 
-func (stm *SQLTransactionManager) wrappInternal(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
+func (stm *SQLTransactionManager) wrapInternal(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
 	sess := startSession(ctx)
 	defer sess.Close()
 
@@ -117,14 +117,16 @@ func (stm *SQLTransactionManager) wrappInternal(ctx context.Context, fn func(ctx
 			sess.Rollback()
 			time.Sleep(time.Millisecond * time.Duration(10))
 			sqlog.Info("Database table locked, sleeping then retrying", "retry", retry)
-			return stm.wrappInternal(ctx, fn, retry+1)
+			return stm.wrapInternal(ctx, fn, retry+1)
 		}
 	}
 
 	if err != nil {
 		sess.Rollback()
 		return err
-	} else if err = sess.Commit(); err != nil {
+	}
+
+	if err = sess.Commit(); err != nil {
 		return err
 	}
 
