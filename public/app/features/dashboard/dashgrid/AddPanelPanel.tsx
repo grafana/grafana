@@ -229,7 +229,8 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
               <label className="gf-form gf-form--grow gf-form--has-input-icon">
                 <input
                   type="text"
-                  className="gf-form-input max-width-20"
+                  autoFocus
+                  className="gf-form-input gf-form--grow"
                   placeholder="Panel Search Filter"
                   value={this.state.filter}
                   onChange={this.filterChange.bind(this)}
