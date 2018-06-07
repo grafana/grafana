@@ -2,12 +2,10 @@ package sqlstore
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -246,21 +244,6 @@ func RecordNotificationJournal(cmd *m.RecordNotificationJournalCommand) error {
 
 		return nil
 	})
-}
-
-func startSession(ctx context.Context) *DBSession {
-	value := ctx.Value("db-session")
-	var sess *xorm.Session
-	sess, ok := value.(*xorm.Session)
-
-	if !ok {
-		return newSession()
-	}
-
-	old := newSession()
-	old.Session = sess
-
-	return old
 }
 
 func GetLatestNotification(cmd *m.GetLatestNotificationQuery) error {
