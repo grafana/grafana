@@ -1,8 +1,10 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
 
   <div class="gf-form">
-    <textarea rows="3" class="gf-form-input" ng-model="ctrl.target.query" spellcheck="false" placeholder="IFQL Query" ng-model-onblur
+    <textarea rows="10" class="gf-form-input" ng-model="ctrl.target.query" spellcheck="false" placeholder="IFQL Query" ng-model-onblur
       ng-change="ctrl.refresh()"></textarea>
+    <!-- Result preview -->
+    <textarea rows="10" class="gf-form-input" ng-model="ctrl.dataPreview" readonly></textarea>
   </div>
   <div class="gf-form-inline">
     <div class="gf-form">
@@ -12,9 +14,15 @@
           ng-change="ctrl.refresh()"></select>
       </div>
     </div>
-    <div class="gf-form max-width-25" ng-hide="ctrl.target.resultFormat === 'table'">
-      <label class="gf-form-label query-keyword">ALIAS BY</label>
-      <input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
+    <div class="gf-form" ng-if="ctrl.panelCtrl.loading">
+      <label class="gf-form-label">
+        <i class="fa fa-spinner fa-spin"></i> Loading</label>
+    </div>
+    <div class="gf-form" ng-if="!ctrl.panelCtrl.loading">
+      <label class="gf-form-label">Result tables</label>
+      <input type="text" class="gf-form-input" ng-model="ctrl.resultTableCount" disabled="disabled">
+      <label class="gf-form-label">Result records</label>
+      <input type="text" class="gf-form-input" ng-model="ctrl.resultRecordCount" disabled="disabled">
     </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>

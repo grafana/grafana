@@ -13,41 +13,27 @@ describe('InfluxDB (IFQL)', () => {
     targets: [],
   };
 
-  let queries: any[];
-
-  describe('prepareQueries()', () => {
-    it('filters empty queries', () => {
-      queries = ds.prepareQueries(DEFAULT_OPTIONS);
-      expect(queries.length).toBe(0);
-
-      queries = ds.prepareQueries({
-        ...DEFAULT_OPTIONS,
-        targets: [{ query: '' }],
-      });
-      expect(queries.length).toBe(0);
-    });
+  describe('prepareQueryTarget()', () => {
+    let target: any;
 
     it('replaces $range variable', () => {
-      queries = ds.prepareQueries({
-        ...DEFAULT_OPTIONS,
-        targets: [{ query: 'from(db: "test") |> range($range)' }],
-      });
-      expect(queries.length).toBe(1);
-      expect(queries[0].query).toBe('from(db: "test") |> range(start: -3h)');
+      target = ds.prepareQueryTarget({ query: 'from(db: "test") |> range($range)' }, DEFAULT_OPTIONS);
+      expect(target.query).toBe('from(db: "test") |> range(start: -3h)');
     });
 
     it('replaces $range variable with custom dates', () => {
       const to = moment();
       const from = moment().subtract(1, 'hours');
-      queries = ds.prepareQueries({
-        ...DEFAULT_OPTIONS,
-        rangeRaw: { to, from },
-        targets: [{ query: 'from(db: "test") |> range($range)' }],
-      });
-      expect(queries.length).toBe(1);
+      target = ds.prepareQueryTarget(
+        { query: 'from(db: "test") |> range($range)' },
+        {
+          ...DEFAULT_OPTIONS,
+          rangeRaw: { to, from },
+        }
+      );
       const start = from.toISOString();
       const stop = to.toISOString();
-      expect(queries[0].query).toBe(`from(db: "test") |> range(start: ${start}, stop: ${stop})`);
+      expect(target.query).toBe(`from(db: "test") |> range(start: ${start}, stop: ${stop})`);
     });
   });
 });

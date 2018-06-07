@@ -4,7 +4,7 @@
   "id": "influxdb-ifql",
   "defaultMatchFormat": "regex values",
   "metrics": true,
-  "annotations": false,
+  "annotations": true,
   "alerting": false,
   "queryOptions": {
     "minInterval": true
