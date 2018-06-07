@@ -151,6 +151,7 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 		"authProxyEnabled":        setting.AuthProxyEnabled,
 		"ldapEnabled":             setting.LdapEnabled,
 		"alertingEnabled":         setting.AlertingEnabled,
+		"exploreEnabled":          setting.ExploreEnabled,
 		"googleAnalyticsId":       setting.GoogleAnalyticsId,
 		"disableLoginForm":        setting.DisableLoginForm,
 		"externalUserMngInfo":     setting.ExternalUserMngInfo,
