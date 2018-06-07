@@ -22,8 +22,6 @@ func init() {
 	bus.AddHandler("sql", RecordNotificationJournal)
 	bus.AddHandler("sql", GetLatestNotification)
 	bus.AddHandler("sql", CleanNotificationJournal)
-
-	bus.AddCtxHandler("sql", GetLastestNotification2)
 }
 
 func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
@@ -263,19 +261,6 @@ func startSession(ctx context.Context) *DBSession {
 	old.Session = sess
 
 	return old
-}
-
-func GetLastestNotification2(ctx context.Context, cmd *m.GetLatestNotificationQuery) error {
-	sess := startSession(ctx)
-
-	notificationJournal := &m.AlertNotificationJournal{}
-	_, err := sess.Desc("alert_notification_journal.sent_at").Limit(1).Where("alert_notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(notificationJournal)
-	if err != nil {
-		return err
-	}
-
-	cmd.Result = notificationJournal
-	return nil
 }
 
 func GetLatestNotification(cmd *m.GetLatestNotificationQuery) error {
