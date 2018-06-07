@@ -63,22 +63,20 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
   }
 
   render() {
-    const { panel } = this.props;
-
     // special handling for rows
-    if (panel.type === 'row') {
-      return <DashboardRow panel={panel} getPanelContainer={this.props.getPanelContainer} />;
+    if (this.props.panel.type === 'row') {
+      return <DashboardRow panel={this.props.panel} getPanelContainer={this.props.getPanelContainer} />;
     }
 
     if (this.props.panel.type === 'add-panel') {
-      return <AddPanelPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />;
+      return <AddPanelPanel panel={this.props.panel} getPanelContainer={this.props.getPanelContainer} />;
     }
 
+    // Stub element while loading.  This should never actually be visible.
     if (this.state.delayLoading) {
-      // Lazy loading indication.  Should never be visible
       return (
         <div>
-          <i className="fa fa-spinner fa-spin" /> {panel.title}...
+          <i className="fa fa-spinner fa-spin" /> {this.props.panel.title}...
         </div>
       );
     }

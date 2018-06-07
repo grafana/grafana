@@ -98,8 +98,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     const layout = [];
     this.panelMap = {};
 
+    // add a flag to enable/disable this feature?
     if (true) {
-      // flag to enable/disable this feature
       for (let i = 5; i < this.dashboard.panels.length; i++) {
         let p = this.dashboard.panels[i];
         if (typeof p.lazyloading === 'undefined') {
@@ -111,6 +111,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     for (let panel of this.dashboard.panels) {
       let stringId = panel.id.toString();
       this.panelMap[stringId] = panel;
+
       if (!panel.gridPos) {
         console.log('panel without gridpos');
         continue;
