@@ -84,18 +84,15 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       'fa-chevron-right': this.state.collapsed,
     });
 
-    const title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
-    const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
-    const panels = count === 1 ? 'panel' : 'panels';
+    let title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
+    const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
     return (
       <div className={classes}>
         <a className="dashboard-row__title pointer" onClick={this.toggle}>
           <i className={chevronClass} />
           {title}
-          <span className="dashboard-row__panel_count">
-            ({count} {panels})
-          </span>
+          <span className="dashboard-row__panel_count">({hiddenPanels} hidden panels)</span>
         </a>
         {this.dashboard.meta.canEdit === true && (
           <div className="dashboard-row__actions">
@@ -105,11 +102,6 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
             <a className="pointer" onClick={this.delete}>
               <i className="fa fa-trash" />
             </a>
-          </div>
-        )}
-        {this.state.collapsed === true && (
-          <div className="dashboard-row__toggle-target" onClick={this.toggle}>
-            &nbsp;
           </div>
         )}
         <div className="dashboard-row__drag grid-drag-handle" />

@@ -13,6 +13,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   fullscreen: true,
   isEditing: true,
+  lazyloading: true,
 };
 
 export class PanelModel {
@@ -35,6 +36,7 @@ export class PanelModel {
   // non persisted
   fullscreen: boolean;
   isEditing: boolean;
+  lazyloading: boolean;
   events: Emitter;
 
   constructor(model) {
