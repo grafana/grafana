@@ -5,7 +5,7 @@ import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel } from '../dashboard_model';
 import { PanelContainer } from './PanelContainer';
 import { PanelModel } from '../panel_model';
-import { LazyRegistry } from './LazyLoader';
+import { LazyLoader } from './LazyLoader';
 import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 
@@ -69,7 +69,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   panelContainer: PanelContainer;
   dashboard: DashboardModel;
   panelMap: { [id: string]: PanelModel };
-  lazyloading = new LazyRegistry();
+  lazyloading = new LazyLoader();
 
   element: any;
 

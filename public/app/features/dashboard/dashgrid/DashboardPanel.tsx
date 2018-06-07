@@ -4,7 +4,6 @@ import { PanelContainer } from './PanelContainer';
 import { AttachedPanel } from './PanelLoader';
 import { DashboardRow } from './DashboardRow';
 import { AddPanelPanel } from './AddPanelPanel';
-import { LazyLoader } from './LazyLoader';
 
 export interface DashboardPanelProps {
   panel: PanelModel;
@@ -64,19 +63,26 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
   }
 
   render() {
+    const { panel } = this.props;
+
     // special handling for rows
-    if (this.props.panel.type === 'row') {
-      return <DashboardRow panel={this.props.panel} getPanelContainer={this.props.getPanelContainer} />;
+    if (panel.type === 'row') {
+      return <DashboardRow panel={panel} getPanelContainer={this.props.getPanelContainer} />;
     }
 
     if (this.props.panel.type === 'add-panel') {
-      return <AddPanelPanel panel={this.props.panel} getPanelContainer={this.props.getPanelContainer} />;
+      return <AddPanelPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />;
     }
 
     if (this.state.load) {
       return <div ref={element => (this.element = element)} className="panel-height-helper" />;
     }
 
-    return <LazyLoader wrapper={this} />;
+    // Lazy loading indication
+    return (
+      <div>
+        <i className="fa fa-spinner fa-spin" /> {panel.title}...
+      </div>
+    );
   }
 }
