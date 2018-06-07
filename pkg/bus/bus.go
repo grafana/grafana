@@ -12,8 +12,8 @@ type Msg interface{}
 
 var ErrHandlerNotFound = errors.New("handler not found")
 
-type TransactionWrapper interface {
-	Wrap(ctx context.Context, fn func(ctx context.Context) error) error
+type TransactionManager interface {
+	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type Bus interface {
@@ -35,19 +35,18 @@ type Bus interface {
 	// SetTransactionManager allows the user to replace the internal
 	// noop TransactionManager that is responsible for manageing
 	// transactions in `InTransaction`
-	SetTransactionManager(tm TransactionWrapper)
+	SetTransactionManager(tm TransactionManager)
 }
 
 func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return b.transactionWrapper.Wrap(ctx, fn)
+	return b.txMng.InTransaction(ctx, fn)
 }
 
 type InProcBus struct {
 	handlers          map[string]HandlerFunc
 	listeners         map[string][]HandlerFunc
 	wildcardListeners []HandlerFunc
-
-	transactionWrapper TransactionWrapper
+	txMng             TransactionManager
 }
 
 // temp stuff, not sure how to handle bus instance, and init yet
@@ -58,8 +57,7 @@ func New() Bus {
 	bus.handlers = make(map[string]HandlerFunc)
 	bus.listeners = make(map[string][]HandlerFunc)
 	bus.wildcardListeners = make([]HandlerFunc, 0)
-
-	bus.transactionWrapper = &noopTransactionManager{}
+	bus.txMng = &noopTransactionManager{}
 
 	return bus
 }
@@ -69,12 +67,8 @@ func GetBus() Bus {
 	return globalBus
 }
 
-func SetTransactionManager(tm TransactionWrapper) {
-	globalBus.SetTransactionManager(tm)
-}
-
-func (b *InProcBus) SetTransactionManager(tm TransactionWrapper) {
-	b.transactionWrapper = tm
+func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
+	b.txMng = tm
 }
 
 func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
@@ -213,6 +207,6 @@ func ClearBusHandlers() {
 
 type noopTransactionManager struct{}
 
-func (*noopTransactionManager) Wrap(ctx context.Context, fn func(ctx context.Context) error) error {
+func (*noopTransactionManager) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	return nil
 }

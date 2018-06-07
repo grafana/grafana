@@ -23,11 +23,10 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
-	sqlite3 "github.com/mattn/go-sqlite3"
 
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -82,9 +81,7 @@ func (ss *SqlStore) Init() error {
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
 
-	ss.Bus.SetTransactionManager(&SQLTransactionManager{
-		engine: ss.engine,
-	})
+	ss.Bus.SetTransactionManager(ss)
 
 	// ensure admin user
 	if ss.skipEnsureAdmin {
@@ -94,57 +91,10 @@ func (ss *SqlStore) Init() error {
 	return ss.ensureAdminUser()
 }
 
-// SQLTransactionManager begin/end transaction
-type SQLTransactionManager struct {
-	engine *xorm.Engine
-}
-
-func (stm *SQLTransactionManager) Wrap(ctx context.Context, fn func(ctx context.Context) error) error {
-	return stm.wrapInternal(ctx, fn, 0)
-}
-
-func (stm *SQLTransactionManager) wrapInternal(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
-	sess := startSession(ctx)
-	defer sess.Close()
-
-	withValue := context.WithValue(ctx, ContextSessionName, sess)
-
-	err := fn(withValue)
-
-	// special handling of database locked errors for sqlite, then we can retry 3 times
-	if sqlError, ok := err.(sqlite3.Error); ok && retry < 5 {
-		if sqlError.Code == sqlite3.ErrLocked {
-			sess.Rollback()
-			time.Sleep(time.Millisecond * time.Duration(10))
-			sqlog.Info("Database table locked, sleeping then retrying", "retry", retry)
-			return stm.wrapInternal(ctx, fn, retry+1)
-		}
-	}
-
-	if err != nil {
-		sess.Rollback()
-		return err
-	}
-
-	if err = sess.Commit(); err != nil {
-		return err
-	}
-
-	if len(sess.events) > 0 {
-		for _, e := range sess.events {
-			if err = bus.Publish(e); err != nil {
-				log.Error(3, "Failed to publish event after commit", err)
-			}
-		}
-	}
-
-	return nil
-}
-
 func (ss *SqlStore) ensureAdminUser() error {
 	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 
-	err := bus.InTransaction(context.Background(), func(ctx context.Context) error {
+	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
 
 		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
 		if err != nil {

@@ -31,7 +31,6 @@ func init() {
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
-
 	bus.AddCtxHandler("sql", CreateUserCtx)
 }
 

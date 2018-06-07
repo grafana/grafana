@@ -2,52 +2,53 @@ package sqlstore
 
 import (
 	"context"
-	"reflect"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
-type DBSession struct {
-	*xorm.Session
-	events []interface{}
+func (ss *SqlStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return ss.inTransactionWithRetry(ctx, fn, 0)
 }
 
-type dbTransactionFunc func(sess *DBSession) error
+func (ss *SqlStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
+	sess := startSession(ctx)
+	defer sess.Close()
 
-func (sess *DBSession) publishAfterCommit(msg interface{}) {
-	sess.events = append(sess.events, msg)
-}
+	withValue := context.WithValue(ctx, ContextSessionName, sess)
 
-func newSession() *DBSession {
-	return &DBSession{Session: x.NewSession()}
-}
+	err := fn(withValue)
 
-func inTransaction(callback dbTransactionFunc) error {
-	return inTransactionWithRetry(callback, 0)
-}
-
-func startSession(ctx context.Context) *DBSession {
-	value := ctx.Value(ContextSessionName)
-	var sess *DBSession
-	sess, ok := value.(*DBSession)
-
-	if !ok {
-		newSess := newSession()
-		newSess.Begin()
-		return newSess
+	// special handling of database locked errors for sqlite, then we can retry 3 times
+	if sqlError, ok := err.(sqlite3.Error); ok && retry < 5 {
+		if sqlError.Code == sqlite3.ErrLocked {
+			sess.Rollback()
+			time.Sleep(time.Millisecond * time.Duration(10))
+			ss.log.Info("Database table locked, sleeping then retrying", "retry", retry)
+			return ss.inTransactionWithRetry(ctx, fn, retry+1)
+		}
 	}
 
-	return sess
-}
+	if err != nil {
+		sess.Rollback()
+		return err
+	}
 
-func withDbSession(ctx context.Context, callback dbTransactionFunc) error {
-	sess := startSession(ctx)
+	if err = sess.Commit(); err != nil {
+		return err
+	}
 
-	return callback(sess)
+	if len(sess.events) > 0 {
+		for _, e := range sess.events {
+			if err = bus.Publish(e); err != nil {
+				ss.log.Error("Failed to publish event after commit", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
@@ -94,22 +95,6 @@ func inTransactionWithRetryCtx(ctx context.Context, callback dbTransactionFunc, 
 	return nil
 }
 
-func (sess *DBSession) InsertId(bean interface{}) (int64, error) {
-	table := sess.DB().Mapper.Obj2Table(getTypeName(bean))
-
-	dialect.PreInsertId(table, sess.Session)
-
-	id, err := sess.Session.InsertOne(bean)
-
-	dialect.PostInsertId(table, sess.Session)
-
-	return id, err
-}
-
-func getTypeName(bean interface{}) (res string) {
-	t := reflect.TypeOf(bean)
-	for t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-	return t.Name()
+func inTransaction(callback dbTransactionFunc) error {
+	return inTransactionWithRetry(callback, 0)
 }
