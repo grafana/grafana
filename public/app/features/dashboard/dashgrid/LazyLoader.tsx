@@ -16,7 +16,7 @@ export class LazyLoader {
     }
   }
 
-  setScroller(element: any, onChangeCallback: any) {
+  init(element: any, onChangeCallback: any) {
     this.onChangeCallback = onChangeCallback;
     this.scroller = element;
     this.updateScrollListener();

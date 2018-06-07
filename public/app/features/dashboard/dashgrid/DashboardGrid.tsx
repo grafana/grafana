@@ -69,7 +69,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   panelContainer: PanelContainer;
   dashboard: DashboardModel;
   panelMap: { [id: string]: PanelModel };
-  lazyloading = new LazyLoader();
+  lazy: LazyLoader;
 
   element: any;
 
@@ -83,6 +83,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onWidthChange = this.onWidthChange.bind(this);
 
     this.state = { animated: false };
+    this.lazy = new LazyLoader();
 
     // subscribe to dashboard events
     this.dashboard = this.panelContainer.getDashboard();
@@ -164,7 +165,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onLayoutChange(layout);
 
     // Check all panels
-    this.lazyloading.checkVisibility(true);
+    this.lazy.checkVisibility(true);
   }
 
   onResize(layout, oldItem, newItem) {
@@ -174,7 +175,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   onResizeStop(layout, oldItem, newItem) {
     this.updateGridPos(newItem, layout);
     this.panelMap[newItem.i].resizeDone();
-    this.lazyloading.checkVisibility(true);
+    this.lazy.checkVisibility(true);
   }
 
   onDragStop(layout, oldItem, newItem) {
@@ -193,14 +194,14 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     });
 
     // Point the lazy loader to the scrolling element
-    this.lazyloading.setScroller(
+    this.lazy.init(
       this.element.domEl.parentElement.parentElement.parentElement,
       this.forceRender.bind(this) // render after a change
     );
   }
 
   componentWillUnmount() {
-    this.lazyloading.updateScrollListener(true); // remove the scroll listener
+    this.lazy.updateScrollListener(true); // remove the scroll listener
   }
 
   renderPanels() {
@@ -209,7 +210,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     for (let panel of this.dashboard.panels) {
       const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
       panelElements.push(
-        <div key={panel.id.toString()} ref={el => this.lazyloading.register(panel, el)} className={panelClasses}>
+        <div key={panel.id.toString()} ref={el => this.lazy.register(panel, el)} className={panelClasses}>
           <DashboardPanel panel={panel} lazy={panel.lazyloading} getPanelContainer={this.props.getPanelContainer} />
         </div>
       );
