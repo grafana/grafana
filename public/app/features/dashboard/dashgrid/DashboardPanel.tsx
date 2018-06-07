@@ -12,7 +12,7 @@ export interface DashboardPanelProps {
 }
 
 export interface DashboardPanelState {
-  load: boolean;
+  delayLoading: boolean;
 }
 
 export class DashboardPanel extends React.Component<DashboardPanelProps, DashboardPanelState> {
@@ -22,7 +22,7 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
   constructor(props) {
     super(props);
     this.state = {
-      load: !props.lazy,
+      delayLoading: props.lazy,
     };
   }
 
@@ -50,14 +50,14 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (!this.attachedPanel) {
-      if (this.state.load) {
+      if (!this.state.delayLoading) {
         this.componentDidMount();
         return;
       }
 
       // If the lazy state changed, then try to update
       if (!this.props.lazy) {
-        this.setState({ load: true });
+        this.setState({ delayLoading: false });
       }
     }
   }
@@ -74,15 +74,15 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
       return <AddPanelPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />;
     }
 
-    if (this.state.load) {
-      return <div ref={element => (this.element = element)} className="panel-height-helper" />;
+    if (this.state.delayLoading) {
+      // Lazy loading indication.  Should never be visible
+      return (
+        <div>
+          <i className="fa fa-spinner fa-spin" /> {panel.title}...
+        </div>
+      );
     }
 
-    // Lazy loading indication
-    return (
-      <div>
-        <i className="fa fa-spinner fa-spin" /> {panel.title}...
-      </div>
-    );
+    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
   }
 }

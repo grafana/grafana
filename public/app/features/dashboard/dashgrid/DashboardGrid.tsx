@@ -99,6 +99,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.panelMap = {};
 
     if (true) {
+      // flag to enable/disable this feature
       for (let i = 5; i < this.dashboard.panels.length; i++) {
         let p = this.dashboard.panels[i];
         if (typeof p.lazyloading === 'undefined') {
@@ -212,6 +213,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         </div>
       );
     }
+
     return panelElements;
   }
 
