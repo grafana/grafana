@@ -1,3 +1,5 @@
+// Datasource token authentification support added - Copyright © 2018 Bosch Rexroth AG
+
 package api
 
 import (
@@ -20,19 +22,22 @@ func GetDataSources(c *m.ReqContext) Response {
 	result := make(dtos.DataSourceList, 0)
 	for _, ds := range query.Result {
 		dsItem := dtos.DataSourceListItemDTO{
-			Id:        ds.Id,
-			OrgId:     ds.OrgId,
-			Name:      ds.Name,
-			Url:       ds.Url,
-			Type:      ds.Type,
-			Access:    ds.Access,
-			Password:  ds.Password,
-			Database:  ds.Database,
-			User:      ds.User,
-			BasicAuth: ds.BasicAuth,
-			IsDefault: ds.IsDefault,
-			JsonData:  ds.JsonData,
-			ReadOnly:  ds.ReadOnly,
+			Id:             ds.Id,
+			OrgId:          ds.OrgId,
+			Name:           ds.Name,
+			Url:            ds.Url,
+			Type:           ds.Type,
+			Access:         ds.Access,
+			Password:       ds.Password,
+			Database:       ds.Database,
+			User:           ds.User,
+			BasicAuth:      ds.BasicAuth,
+			IsDefault:      ds.IsDefault,
+			JsonData:       ds.JsonData,
+			ReadOnly:       ds.ReadOnly,
+			TokenAuth:      ds.TokenAuth,
+			TokenAuthType:  ds.TokenAuthType,
+			TokenAuthValue: ds.TokenAuthValue,
 		}
 
 		if plugin, exists := plugins.DataSources[ds.Type]; exists {
@@ -257,6 +262,9 @@ func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
 		SecureJsonFields:  map[string]bool{},
 		Version:           ds.Version,
 		ReadOnly:          ds.ReadOnly,
+		TokenAuth:         ds.TokenAuth,
+		TokenAuthType:     ds.TokenAuthType,
+		TokenAuthValue:    ds.TokenAuthValue,
 	}
 
 	for k, v := range ds.SecureJsonData {
