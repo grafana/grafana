@@ -44,6 +44,25 @@ func GetContextHandler() macaron.Handler {
 			initContextWithAnonymousUser(ctx) {
 		}
 
+		// Consider a scenario where when we configure a org to log in using an anonymous identity,
+		// the expected result is that regardless of whether the user is logged in,
+		// they can have specific permissions for the org.
+		if setting.AnonymousEnabled {
+			orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
+			if err := bus.Dispatch(&orgQuery); err == nil {
+				orgIdQuery := ctx.Req.URL.Query().Get("orgId")
+				if orgIdQuery != "" {
+					orgId, _ = strconv.ParseInt(orgIdQuery, 10, 64)
+				}
+				if orgId == orgQuery.Result.Id && orgQuery.Result.Id != ctx.OrgId {
+					//ctx.AllowAnonymous = true
+					ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
+					ctx.OrgId = orgQuery.Result.Id
+					ctx.OrgName = orgQuery.Result.Name
+				}
+			}
+		}
+
 		ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
 		ctx.Data["ctx"] = ctx
 
