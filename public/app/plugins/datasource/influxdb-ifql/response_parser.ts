@@ -1,4 +1,5 @@
 import Papa from 'papaparse';
+import flatten from 'lodash/flatten';
 import groupBy from 'lodash/groupBy';
 
 import TableModel from 'app/core/table_model';
@@ -6,17 +7,25 @@ import TableModel from 'app/core/table_model';
 const filterColumnKeys = key => key && key[0] !== '_' && key !== 'result' && key !== 'table';
 
 const IGNORE_FIELDS_FOR_NAME = ['result', '', 'table'];
+
+export const getTagsFromRecord = record =>
+  Object.keys(record)
+    .filter(key => key[0] !== '_')
+    .filter(key => IGNORE_FIELDS_FOR_NAME.indexOf(key) === -1)
+    .reduce((tags, key) => {
+      tags[key] = record[key];
+      return tags;
+    }, {});
+
 export const getNameFromRecord = record => {
   // Measurement and field
   const metric = [record._measurement, record._field];
 
   // Add tags
-  const tags = Object.keys(record)
-    .filter(key => key[0] !== '_')
-    .filter(key => IGNORE_FIELDS_FOR_NAME.indexOf(key) === -1)
-    .map(key => `${key}=${record[key]}`);
+  const tags = getTagsFromRecord(record);
+  const tagValues = Object.keys(tags).map(key => `${key}=${tags[key]}`);
 
-  return [...metric, ...tags].join(' ');
+  return [...metric, ...tagValues].join(' ');
 };
 
 const parseCSV = (input: string) =>
@@ -34,6 +43,33 @@ export const parseTime = (input: string) => Date.parse(input);
 
 export function parseResults(response: string): any[] {
   return response.trim().split(/\n\s*\s/);
+}
+
+export function getAnnotationsFromResult(result: string, options: any) {
+  const data = parseCSV(result);
+  if (data.length === 0) {
+    return [];
+  }
+
+  const annotations = [];
+  const textSelector = options.textCol || '_value';
+  const tagsSelector = options.tagsCol || '';
+  const tagSelection = tagsSelector.split(',').map(t => t.trim());
+
+  data.forEach(record => {
+    // Remove empty values, then split in different tags for comma separated values
+    const tags = getTagsFromRecord(record);
+    const tagValues = flatten(tagSelection.filter(tag => tags[tag]).map(tag => tags[tag].split(',')));
+
+    annotations.push({
+      annotation: options,
+      time: parseTime(record._time),
+      tags: tagValues,
+      text: record[textSelector],
+    });
+  });
+
+  return annotations;
 }
 
 export function getTableModelFromResult(result: string) {
@@ -85,4 +121,9 @@ export function getTimeSeriesFromResult(result: string) {
     });
 
   return seriesList;
+}
+
+export function getValuesFromResult(result: string) {
+  const data = parseCSV(result);
+  return data.map(record => record['_value']);
 }

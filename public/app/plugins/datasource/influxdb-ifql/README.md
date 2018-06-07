@@ -14,13 +14,16 @@ Read more about InfluxDB here:
 
 [http://docs.grafana.org/datasources/influxdb/](http://docs.grafana.org/datasources/influxdb/)
 
+## Supported Template Variable Macros:
+
+* List all measurements for a given database: `measurements(database)`
+* List all tags for a given database and measurement: `tags(database, measurement)`
+* List all tag values for a given database, measurement, and tag: `tag_valuess(database, measurement, tag)`
+* List all field keys for a given database and measurement: `field_keys(database, measurement)`
+
 ## Roadmap
 
-- Sync Grafana time ranges with `range()`
-- Template variable expansion
 - Syntax highlighting
 - Tab completion (functions, values)
-- Result helpers (result counts, table previews)
-- Annotations support
 - Alerting integration
 - Explore UI integration
