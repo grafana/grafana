@@ -10,6 +10,7 @@ import (
 
 var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with &timeout url parameter")
 var ErrNoRenderer = errors.New("No renderer plugin found nor is an external render server configured")
+var ErrPhantomJSNotInstalled = errors.New("PhantomJS executable not found")
 
 type Opts struct {
 	Width    int
