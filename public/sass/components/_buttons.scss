@@ -109,7 +109,8 @@
     &:hover,
     &:active,
     &:active:hover,
-    &:focus {
+    &:focus,
+    &:disabled {
       color: $gray-1;
       background-color: transparent;
       border-color: $gray-1;
