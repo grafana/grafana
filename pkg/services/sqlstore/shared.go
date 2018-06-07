@@ -32,17 +32,16 @@ func inTransaction(callback dbTransactionFunc) error {
 
 func startSession(ctx context.Context) *DBSession {
 	value := ctx.Value(ContextSessionName)
-	var sess *xorm.Session
-	sess, ok := value.(*xorm.Session)
+	var sess *DBSession
+	sess, ok := value.(*DBSession)
 
 	if !ok {
-		return newSession()
+		newSess := newSession()
+		newSess.Begin()
+		return newSess
 	}
 
-	old := newSession()
-	old.Session = sess
-
-	return old
+	return sess
 }
 
 func withDbSession(ctx context.Context, callback dbTransactionFunc) error {

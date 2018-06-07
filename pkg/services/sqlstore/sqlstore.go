@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -26,6 +25,7 @@ import (
 	"github.com/go-xorm/xorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	sqlite3 "github.com/mattn/go-sqlite3"
 
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
 )
@@ -94,37 +94,49 @@ func (ss *SqlStore) Init() error {
 	return ss.ensureAdminUser()
 }
 
+// SQLTransactionManager begin/end transaction
 type SQLTransactionManager struct {
 	engine *xorm.Engine
 }
 
-func (stm *SQLTransactionManager) Begin(ctx context.Context) (context.Context, error) {
-	sess := stm.engine.NewSession()
-	err := sess.Begin()
-	if err != nil {
-		return ctx, err
-	}
+func (stm *SQLTransactionManager) Wrapp(ctx context.Context, fn func(ctx context.Context) error) error {
+	return stm.wrappInternal(ctx, fn, 0)
+}
+
+func (stm *SQLTransactionManager) wrappInternal(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
+	sess := startSession(ctx)
+	defer sess.Close()
 
 	withValue := context.WithValue(ctx, ContextSessionName, sess)
 
-	return withValue, nil
-}
+	err := fn(withValue)
 
-func (stm *SQLTransactionManager) End(ctx context.Context, err error) error {
-	value := ctx.Value(ContextSessionName)
-	sess, ok := value.(*xorm.Session)
-	if !ok {
-		return errors.New("context is missing transaction")
+	// special handling of database locked errors for sqlite, then we can retry 3 times
+	if sqlError, ok := err.(sqlite3.Error); ok && retry < 5 {
+		if sqlError.Code == sqlite3.ErrLocked {
+			sess.Rollback()
+			time.Sleep(time.Millisecond * time.Duration(10))
+			sqlog.Info("Database table locked, sleeping then retrying", "retry", retry)
+			return stm.wrappInternal(ctx, fn, retry+1)
+		}
 	}
 
 	if err != nil {
 		sess.Rollback()
 		return err
+	} else if err = sess.Commit(); err != nil {
+		return err
 	}
 
-	defer sess.Close()
+	if len(sess.events) > 0 {
+		for _, e := range sess.events {
+			if err = bus.Publish(e); err != nil {
+				log.Error(3, "Failed to publish event after commit", err)
+			}
+		}
+	}
 
-	return sess.Commit()
+	return nil
 }
 
 func (ss *SqlStore) ensureAdminUser() error {

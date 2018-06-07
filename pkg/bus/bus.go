@@ -12,9 +12,8 @@ type Msg interface{}
 
 var ErrHandlerNotFound = errors.New("handler not found")
 
-type TransactionManager interface {
-	Begin(ctx context.Context) (context.Context, error)
-	End(ctx context.Context, err error) error
+type TransactionWrapper interface {
+	Wrapp(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type Bus interface {
@@ -25,7 +24,7 @@ type Bus interface {
 	// InTransaction starts a transaction and store it in the context.
 	// The caller can then pass a function with multiple DispatchCtx calls that
 	// all will be executed in the same transaction. InTransaction will rollback if the
-	// callback returns an error.s
+	// callback returns an error.
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
 
 	AddHandler(handler HandlerFunc)
@@ -36,19 +35,11 @@ type Bus interface {
 	// SetTransactionManager allows the user to replace the internal
 	// noop TransactionManager that is responsible for manageing
 	// transactions in `InTransaction`
-	SetTransactionManager(tm TransactionManager)
+	SetTransactionManager(tm TransactionWrapper)
 }
 
 func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	ctxWithTran, err := b.transactionManager.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = fn(ctxWithTran)
-	b.transactionManager.End(ctxWithTran, err)
-
-	return err
+	return b.transactionWrapper.Wrapp(ctx, fn)
 }
 
 type InProcBus struct {
@@ -56,7 +47,7 @@ type InProcBus struct {
 	listeners         map[string][]HandlerFunc
 	wildcardListeners []HandlerFunc
 
-	transactionManager TransactionManager
+	transactionWrapper TransactionWrapper
 }
 
 // temp stuff, not sure how to handle bus instance, and init yet
@@ -68,7 +59,7 @@ func New() Bus {
 	bus.listeners = make(map[string][]HandlerFunc)
 	bus.wildcardListeners = make([]HandlerFunc, 0)
 
-	bus.transactionManager = &NoopTransactionManager{}
+	bus.transactionWrapper = &noopTransactionManager{}
 
 	return bus
 }
@@ -78,12 +69,12 @@ func GetBus() Bus {
 	return globalBus
 }
 
-func SetTransactionManager(tm TransactionManager) {
+func SetTransactionManager(tm TransactionWrapper) {
 	globalBus.SetTransactionManager(tm)
 }
 
-func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
-	b.transactionManager = tm
+func (b *InProcBus) SetTransactionManager(tm TransactionWrapper) {
+	b.transactionWrapper = tm
 }
 
 func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
@@ -208,6 +199,10 @@ func Publish(msg Msg) error {
 	return globalBus.Publish(msg)
 }
 
+// InTransaction starts a transaction and store it in the context.
+// The caller can then pass a function with multiple DispatchCtx calls that
+// all will be executed in the same transaction. InTransaction will rollback if the
+// callback returns an error.
 func InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	return globalBus.InTransaction(ctx, fn)
 }
@@ -216,7 +211,8 @@ func ClearBusHandlers() {
 	globalBus = New()
 }
 
-type NoopTransactionManager struct{}
+type noopTransactionManager struct{}
 
-func (*NoopTransactionManager) Begin(ctx context.Context) (context.Context, error) { return ctx, nil }
-func (*NoopTransactionManager) End(ctx context.Context, err error) error           { return err }
+func (*noopTransactionManager) Wrapp(ctx context.Context, fn func(ctx context.Context) error) error {
+	return nil
+}
