@@ -6,7 +6,6 @@ import coreModule from 'app/core/core_module';
 import { importPluginModule } from './plugin_loader';
 
 import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
-import { DashboardRowCtrl } from './row_ctrl';
 
 /** @ngInject **/
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
@@ -59,15 +58,6 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
   }
 
   function loadPanelComponentInfo(scope, attrs) {
-    if (scope.panel.type === 'row') {
-      return $q.when({
-        name: 'dashboard-row',
-        bindings: { dashboard: '=', panel: '=' },
-        attrs: { dashboard: 'ctrl.dashboard', panel: 'panel' },
-        Component: DashboardRowCtrl,
-      });
-    }
-
     var componentInfo: any = {
       name: 'panel-plugin-' + scope.panel.type,
       bindings: { dashboard: '=', panel: '=', row: '=' },
