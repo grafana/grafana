@@ -15,6 +15,7 @@ const extractSass = new ExtractTextPlugin({
 
 module.exports = merge(common, {
   devtool: "cheap-module-source-map",
+  mode: 'development',
 
   entry: {
     app: './public/app/index.ts',
@@ -65,17 +66,10 @@ module.exports = merge(common, {
   optimization: {
     splitChunks: {
       cacheGroups: {
-        manifest: {
-          chunks: "initial",
-          test: "vendor",
+        commons: {
+          test: /[\\/]node_modules[\\/]/,
           name: "vendor",
-          enforce: true
-        },
-        vendor: {
-          chunks: "initial",
-          test: "vendor",
-          name: "vendor",
-          enforce: true
+          chunks: "all"
         }
       }
     }
@@ -92,11 +86,6 @@ module.exports = merge(common, {
     }),
     new webpack.NamedModulesPlugin(),
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.DefinePlugin({
-      'process.env': {
-        'NODE_ENV': JSON.stringify('development')
-      }
-    }),
     // new BundleAnalyzerPlugin({
     //   analyzerPort: 8889
     // })

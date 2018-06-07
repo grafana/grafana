@@ -16,7 +16,6 @@ module.exports = merge(common, {
   entry: {
     dark: './public/sass/grafana.dark.scss',
     light: './public/sass/grafana.light.scss',
-    // vendor: require('./dependencies'),
   },
 
   module: {
@@ -68,11 +67,6 @@ module.exports = merge(common, {
     new ngAnnotatePlugin(),
     new UglifyJSPlugin({
       sourceMap: true,
-    }),
-    new webpack.DefinePlugin({
-      'process.env': {
-        'NODE_ENV': JSON.stringify('production')
-      }
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
