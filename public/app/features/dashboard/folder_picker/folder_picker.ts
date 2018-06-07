@@ -132,24 +132,24 @@ export class FolderPickerCtrl {
   }
 
   private loadInitialValue() {
+    const resetFolder = { text: this.initialTitle, value: null };
+    const rootFolder = { text: this.rootName, value: 0 };
     this.getOptions('').then(result => {
-      if (!_.isNil(this.initialFolderId)) {
-        // If initialFolderId is set, try to find it in result or return null
-        this.folder = _.find(result, { value: this.initialFolderId });
-        if (!this.folder) {
-          this.folder = { text: this.initialTitle, value: null };
-        }
-      } else {
-        // If initialFolderId isn't set, return General folder for Editor
-        // or first available for user, otherwise return null
+      let folder;
+      if (this.initialFolderId) {
+        folder = _.find(result, { value: this.initialFolderId });
+      } else if (this.enableReset && this.initialTitle && this.initialFolderId === null) {
+        folder = resetFolder;
+      }
+
+      if (!folder) {
         if (this.isEditor) {
-          this.folder = { text: this.rootName, value: 0 };
-        } else if (result.length > 0) {
-          this.folder = result[0];
+          folder = rootFolder;
         } else {
-          this.folder = { text: this.initialTitle, value: null };
+          folder = result.length > 0 ? result[0] : resetFolder;
         }
       }
+      this.folder = folder;
       this.onFolderLoad();
     });
   }

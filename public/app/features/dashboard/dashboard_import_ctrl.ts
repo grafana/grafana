@@ -154,11 +154,11 @@ export class DashboardImportCtrl {
   }
 
   onExitFolderCreation() {
-    this.inputsValid = true;
+    this.inputValueChanged();
   }
 
   isValid() {
-    return this.inputsValid && !this.hasNameValidationError && this.folderId !== null;
+    return this.inputsValid && this.folderId !== null;
   }
 
   saveDashboard() {
