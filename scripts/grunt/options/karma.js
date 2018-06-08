@@ -1,4 +1,4 @@
-module.exports = function(config) {
+module.exports = function (config) {
   'use strict';
 
   return {
@@ -10,7 +10,10 @@ module.exports = function(config) {
     debug: {
       configFile: 'karma.conf.js',
       singleRun: false,
-      browsers: ['Chrome']
+      browsers: ['Chrome'],
+      mime: {
+        'text/x-typescript': ['ts', 'tsx']
+      },
     },
 
     test: {
