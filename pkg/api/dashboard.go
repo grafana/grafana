@@ -103,7 +103,7 @@ func GetDashboard(c *m.ReqContext) Response {
 	}
 
 	isDashboardProvisioned := &m.IsDashboardProvisionedQuery{DashboardId: dash.Id}
-	err = bus.Dispatch(isDashboardProvisioned)
+	err = bus.DispatchCtx(c.Req.Context(), isDashboardProvisioned)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
