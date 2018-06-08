@@ -188,12 +188,11 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   renderPanels() {
     const panelElements = [];
 
-    let idx = 0;
     for (let panel of this.dashboard.panels) {
       const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
       panelElements.push(
         <div key={panel.id.toString()} ref={e => this.observer.watch(e, panel)} className={panelClasses}>
-          <DashboardPanel panel={panel} lazy={idx++ > 0} getPanelContainer={this.props.getPanelContainer} />
+          <DashboardPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />
         </div>
       );
     }

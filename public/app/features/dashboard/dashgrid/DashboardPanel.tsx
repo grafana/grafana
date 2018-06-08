@@ -8,7 +8,6 @@ import { PANEL_VISIBILITY_CHANGED_EVENT } from './PanelObserver';
 
 export interface DashboardPanelProps {
   panel: PanelModel;
-  lazy: boolean;
   getPanelContainer: () => PanelContainer;
 }
 
@@ -23,7 +22,7 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
   constructor(props) {
     super(props);
     this.state = {
-      lazyLoading: props.lazy,
+      lazyLoading: true,
     };
 
     // Listen for visibility changes
@@ -81,7 +80,6 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
       <div>
         {this.state.lazyLoading === true && (
           <div>
-            {' '}
             {/* This should never be visible */}
             <i className="fa fa-spinner fa-spin" /> {this.props.panel.title}...
           </div>
