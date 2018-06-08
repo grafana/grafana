@@ -4,6 +4,7 @@ import { PanelContainer } from './PanelContainer';
 import { AttachedPanel } from './PanelLoader';
 import { DashboardRow } from './DashboardRow';
 import { AddPanelPanel } from './AddPanelPanel';
+import { PANEL_VISIBILITY_CHANGED_EVENT } from './PanelObserver';
 
 export interface DashboardPanelProps {
   panel: PanelModel;
@@ -12,7 +13,7 @@ export interface DashboardPanelProps {
 }
 
 export interface DashboardPanelState {
-  delayLoading: boolean;
+  lazyLoading: boolean;
 }
 
 export class DashboardPanel extends React.Component<DashboardPanelProps, DashboardPanelState> {
@@ -22,8 +23,18 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
   constructor(props) {
     super(props);
     this.state = {
-      delayLoading: props.lazy,
+      lazyLoading: props.lazy,
     };
+
+    // Listen for visibility changes
+    this.props.panel.events.on(PANEL_VISIBILITY_CHANGED_EVENT, this.panelVisibilityChanged.bind(this));
+  }
+
+  panelVisibilityChanged(vis) {
+    if (vis && !this.attachedPanel) {
+      this.setState({ lazyLoading: false });
+    }
+    console.log('CHANGED: ', vis, this.props.panel.title);
   }
 
   componentDidMount() {
@@ -34,12 +45,13 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
       return; // already attached
     }
 
-    const panel = this.props.panel;
-    const panelContainer = this.props.getPanelContainer();
-    const dashboard = panelContainer.getDashboard();
-    const loader = panelContainer.getPanelLoader();
-    this.attachedPanel = loader.load(this.element, panel, dashboard);
-    panel.lazyloading = false;
+    if (!this.state.lazyLoading) {
+      const panel = this.props.panel;
+      const panelContainer = this.props.getPanelContainer();
+      const dashboard = panelContainer.getDashboard();
+      const loader = panelContainer.getPanelLoader();
+      this.attachedPanel = loader.load(this.element, panel, dashboard);
+    }
   }
 
   componentWillUnmount() {
@@ -49,16 +61,9 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    if (!this.attachedPanel) {
-      if (!this.state.delayLoading) {
-        this.componentDidMount();
-        return;
-      }
-
-      // If the lazy state changed, then try to update
-      if (!this.props.lazy) {
-        this.setState({ delayLoading: false });
-      }
+    // If the lazy load state changed
+    if (!this.attachedPanel && !this.state.lazyLoading) {
+      this.componentDidMount();
     }
   }
 
@@ -72,15 +77,17 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
       return <AddPanelPanel panel={this.props.panel} getPanelContainer={this.props.getPanelContainer} />;
     }
 
-    // Stub element while loading.  This should never actually be visible.
-    if (this.state.delayLoading) {
-      return (
-        <div>
-          <i className="fa fa-spinner fa-spin" /> {this.props.panel.title}...
-        </div>
-      );
-    }
-
-    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
+    return (
+      <div>
+        {this.state.lazyLoading === true && (
+          <div>
+            {' '}
+            {/* This should never be visible */}
+            <i className="fa fa-spinner fa-spin" /> {this.props.panel.title}...
+          </div>
+        )}
+        <div ref={element => (this.element = element)} className="panel-height-helper" />
+      </div>
+    );
   }
 }
