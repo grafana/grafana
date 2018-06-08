@@ -117,10 +117,12 @@ export class PanelObserverScroll implements PanelObserver {
 
   // Check visibility for all elements
   updateVisibilityProps(view_top: number, view_bottom: number) {
+    //console.log( 'CHECK In Viewport', view_top, view_bottom );
     this.registry.forEach((element, panel) => {
       const top = this.getTop(element);
       const bottom = top + element.offsetHeight;
       const vis = !(view_top > bottom || view_bottom < top);
+      //console.log( 'VIS', vis, panel.title, top, bottom );
       if (panel.visible !== vis) {
         panel.visible = vis;
         panel.events.emit(PANEL_VISIBILITY_CHANGED_EVENT, vis);
