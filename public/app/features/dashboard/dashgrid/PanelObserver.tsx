@@ -6,7 +6,7 @@ export const PANEL_VISIBILITY_CHANGED_EVENT = 'panel-visibility-changed';
 
 export interface PanelObserver {
   dispose: () => void;
-  watch: (e: any, panel: PanelModel) => boolean;
+  watch: (e: any, panel: PanelModel) => void;
   check: () => void;
 }
 
@@ -29,7 +29,7 @@ export class PanelObserverScroll implements PanelObserver {
     this.updateScrollListenerCallback(true);
   }
 
-  watch(e: HTMLElement, panel: PanelModel): boolean {
+  watch(e: HTMLElement, panel: PanelModel) {
     if (e && panel) {
       let x = this.findScrollWindow(e);
       if (this.scroller) {
@@ -42,7 +42,6 @@ export class PanelObserverScroll implements PanelObserver {
       this.registry.set(panel, e);
       this.updateScrollListenerCallback();
     }
-    return false;
   }
 
   // Called externally on big change
@@ -145,12 +144,11 @@ export class PanelObserverIntersection implements PanelObserver {
     this.observer.disconnect();
   }
 
-  watch(e: HTMLElement, panel: PanelModel): boolean {
+  watch(e: HTMLElement, panel: PanelModel) {
     if (e && panel) {
       e['data-garfana-panel'] = panel;
       this.observer.observe(e);
     }
-    return false;
   }
 
   // Called externally on big change

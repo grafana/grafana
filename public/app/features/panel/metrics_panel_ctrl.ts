@@ -31,6 +31,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   dataSubscription: any;
   dataList: any;
   nextRefId: string;
+  refreshWhenVisible: boolean;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -52,6 +53,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
+    this.events.on('panel-visibility-changed', this.onPanelVisibilityChanged.bind(this));
   }
 
   private onPanelTearDown() {
@@ -66,9 +68,22 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 
+  private onPanelVisibilityChanged(vis) {
+    if (this.refreshWhenVisible) {
+      this.refresh();
+      this.refreshWhenVisible = false;
+    }
+  }
+
   private onMetricsPanelRefresh() {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode()) {
+      return;
+    }
+
+    // Delay refresh until the panel is visible
+    if (this.panel.visible === false) {
+      this.refreshWhenVisible = true;
       return;
     }
 
