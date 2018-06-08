@@ -73,9 +73,13 @@ func (n *NotifierBase) ShouldNotify(c *alerting.EvalContext) bool {
 		NotifierId: n.Id,
 	}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx, cmd); err != nil {
 		n.log.Error("Could not determine last time alert notifier fired", "Alert name", c.Rule.Name, "Error", err)
 		return false
+	}
+
+	if !cmd.Result.Success {
+		return true
 	}
 
 	return defaultShouldNotify(c, n.SendReminder, n.Frequency, &cmd.Result.SentAt)
