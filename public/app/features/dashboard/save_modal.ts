@@ -133,9 +133,7 @@ export class SaveDashboardModalCtrl {
 
     this.isSaving = true;
 
-    setTimeout(() => {
-      return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
-    }, 5000);
+    return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
   }
 }
 
