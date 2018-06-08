@@ -1,13 +1,14 @@
 'use strict';
 
 const merge = require('webpack-merge');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const common = require('./webpack.common.js');
 const webpack = require('webpack');
 const path = require('path');
 const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 
 module.exports = merge(common, {
   mode: 'production',
@@ -53,26 +54,31 @@ module.exports = merge(common, {
       cacheGroups: {
         commons: {
           test: /[\\/]node_modules[\\/]/,
-          name: "vendors",
+          name: "vendor",
           chunks: "all"
         }
       }
-    }
+    },
+    minimizer: [
+      new UglifyJsPlugin({
+        cache: true,
+        parallel: true,
+        sourceMap: true
+      }),
+      new OptimizeCSSAssetsPlugin({})
+    ]
   },
 
   plugins: [
-    new ExtractTextPlugin({
-      filename: 'grafana.[name].css',
+    new MiniCssExtractPlugin({
+      filename: "grafana.[name].css"
     }),
     new ngAnnotatePlugin(),
-    new UglifyJSPlugin({
-      sourceMap: true,
-    }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index.template.html'),
       inject: 'body',
-      chunks: ['vendors', 'app'],
+      chunks: ['vendor', 'app'],
     }),
     function () {
       this.plugin("done", function (stats) {
