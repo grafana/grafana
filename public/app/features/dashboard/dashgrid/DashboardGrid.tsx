@@ -82,7 +82,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
     this.state = { animated: false };
     this.observer = new PanelObserverScroll();
-    if (true) {
+    if (false) {
       this.observer = new PanelObserverIntersection();
     }
 

@@ -16,7 +16,7 @@ export class PanelObserverScroll implements PanelObserver {
   private scroller: any;
   private listener: any = null;
 
-  static readonly MARGIN: number = 0; // Say something it visible if it is close to the window
+  static readonly MARGIN: number = 200; // Say something it visible if it is close to the window
 
   constructor() {}
 
@@ -29,13 +29,13 @@ export class PanelObserverScroll implements PanelObserver {
     this.updateScrollListenerCallback(true);
   }
 
+  // this may be called a couple times as
   watch(e: HTMLElement, panel: PanelModel) {
     if (e && panel) {
       let x = this.findScrollWindow(e);
       if (this.scroller) {
         if (x !== this.scroller) {
           console.error('???? did the root scroll element change????');
-          // debugger;
         }
       }
       this.scroller = x;
@@ -63,6 +63,16 @@ export class PanelObserverScroll implements PanelObserver {
       t = t.parentElement;
     }
     return null;
+  }
+
+  // The grid layout sets the positions explicitly using transform: translage(x, y);
+  private getTop(element: HTMLElement): number {
+    if (element['data-top'] && element['data-last-transform'] === element.style.transform) {
+      return element['data-top'];
+    }
+    const xform = element.style.transform; // translate(0px, 200px)
+    const top = parseInt(xform.substring(xform.lastIndexOf(' ') + 1, xform.lastIndexOf('p')));
+    return (element['data-top'] = top);
   }
 
   //---------------------------------------------------------
@@ -94,13 +104,12 @@ export class PanelObserverScroll implements PanelObserver {
     if (_.isEmpty(this.registry)) {
       this.updateScrollListenerCallback(true);
     } else if (this.scroller) {
-      const bottom = this.scroller.offsetHeight + this.scroller.scrollTop;
-      const round = Math.ceil(bottom / 10) * 10;
-      if (round !== this.lastChecked || force) {
-        this.lastChecked = round;
+      const top = Math.floor(this.scroller.scrollTop / 25) * 25; // check every 25 pixels
+      if (top !== this.lastChecked || force === true) {
+        this.lastChecked = top;
         this.updateVisibilityProps(
           this.scroller.scrollTop - PanelObserverScroll.MARGIN,
-          bottom + PanelObserverScroll.MARGIN
+          this.scroller.scrollTop + PanelObserverScroll.MARGIN + this.scroller.offsetHeight
         );
       }
     }
@@ -109,14 +118,9 @@ export class PanelObserverScroll implements PanelObserver {
   // Check visibility for all elements
   updateVisibilityProps(view_top: number, view_bottom: number) {
     this.registry.forEach((element, panel) => {
-      //const rect = element.getBoundingClientRect();
-      const xform = element.style.transform; // translate(0px, 200px)
-      const top = parseInt(xform.substring(xform.lastIndexOf(' ') + 1, xform.lastIndexOf('p')));
+      const top = this.getTop(element);
       const bottom = top + element.offsetHeight;
       const vis = !(view_top > bottom || view_bottom < top);
-
-      // debugger;
-
       if (panel.visible !== vis) {
         panel.visible = vis;
         panel.events.emit(PANEL_VISIBILITY_CHANGED_EVENT, vis);
@@ -131,7 +135,7 @@ export class PanelObserverIntersection implements PanelObserver {
   constructor() {
     this.observer = new IntersectionObserver(this.callback.bind(this), {
       root: null, // the viewport
-      rootMargin: '100px', // buffer by 100
+      rootMargin: '200px', // buffer by 100
       threshold: 0, // any pixel
     });
   }
