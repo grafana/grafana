@@ -44,7 +44,7 @@ module.exports = merge(common, {
         },
       },
       require('./sass.rule.js')({
-        sourceMap: false, minimize: true, preserveUrl: false
+        sourceMap: false, minimize: false, preserveUrl: false
       })
     ]
   },
