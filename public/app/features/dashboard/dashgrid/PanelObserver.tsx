@@ -125,3 +125,50 @@ export class PanelObserverScroll implements PanelObserver {
     });
   }
 }
+
+export class PanelObserverIntersection implements PanelObserver {
+  observer: IntersectionObserver;
+
+  constructor() {
+    this.observer = new IntersectionObserver(this.callback.bind(this), {
+      root: null, // the viewport
+      rootMargin: '100px', // buffer by 100
+      threshold: 0, // any pixel
+    });
+  }
+
+  //---------------------------------------------------------
+  // API
+  //---------------------------------------------------------
+
+  dispose() {
+    this.observer.disconnect();
+  }
+
+  watch(e: HTMLElement, panel: PanelModel): boolean {
+    if (e && panel) {
+      e['data-garfana-panel'] = panel;
+      this.observer.observe(e);
+    }
+    return false;
+  }
+
+  // Called externally on big change
+  check() {
+    // nothing?
+  }
+
+  //---------------------------------------------------------
+  // Internal
+  //---------------------------------------------------------
+
+  private callback(entries: IntersectionObserverEntry[]) {
+    entries.forEach(entry => {
+      const panel = entry.target['data-garfana-panel'];
+      if (panel.visible !== entry.isIntersecting) {
+        panel.visible = entry.isIntersecting;
+        panel.events.emit(PANEL_VISIBILITY_CHANGED_EVENT, entry.isIntersecting);
+      }
+    });
+  }
+}
