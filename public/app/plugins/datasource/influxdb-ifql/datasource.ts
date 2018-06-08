@@ -157,7 +157,7 @@ export default class InfluxDatasource {
 
     return this._influxRequest('POST', '/v1/query', { q: query })
       .then(res => {
-        if (res && res.trim()) {
+        if (res && res.data && res.data.trim()) {
           return { status: 'success', message: 'Data source connected and database found.' };
         }
         return {
