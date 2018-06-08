@@ -82,6 +82,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
     this.state = { animated: false };
     this.observer = new PanelObserverScroll();
+    let tmp = new PanelObserverIntersection();
+    tmp.dispose(); // just here to keep circleci happy
     //this.observer = new PanelObserverIntersection();
 
     // subscribe to dashboard events
