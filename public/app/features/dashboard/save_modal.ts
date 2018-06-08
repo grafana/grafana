@@ -55,7 +55,7 @@ const template = `
         type="submit"
         class="btn btn-success"
         ng-class="{'btn-success--processing': ctrl.isSaving}"
-        ng-disabled="ctrl.saveForm.$invalid"
+        ng-disabled="ctrl.saveForm.$invalid || ctrl.isSaving"
       >
         <span ng-if="!ctrl.isSaving">Save</span>
         <span ng-if="ctrl.isSaving === true">Saving...</span>
@@ -131,11 +131,11 @@ export class SaveDashboardModalCtrl {
     var dashboard = this.dashboardSrv.getCurrent();
     var saveModel = dashboard.getSaveModelClone(options);
 
-    let myBtn = <HTMLInputElement>document.getElementById('saveBtn');
-    myBtn.disabled = true;
     this.isSaving = true;
 
-    return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
+    setTimeout(() => {
+      return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
+    }, 5000);
   }
 }
 
