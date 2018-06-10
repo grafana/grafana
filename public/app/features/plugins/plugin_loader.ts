@@ -20,7 +20,6 @@ import * as d3 from 'd3';
 // Bleading edge plugin developers
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 // rxjs
 import { Observable } from 'rxjs/Observable';
@@ -77,7 +76,6 @@ exposeToPlugin('rxjs/Observable', Observable);
 // React tools
 exposeToPlugin('react', React);
 exposeToPlugin('react-dom', ReactDOM);
-exposeToPlugin('app/core/utils/react2angular', react2AngularDirective);
 
 // backward compatible path
 exposeToPlugin('vendor/npm/rxjs/Rx', {
