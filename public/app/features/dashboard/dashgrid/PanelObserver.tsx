@@ -6,19 +6,18 @@ export const PANEL_VISIBILITY_CHANGED_EVENT = 'panel-visibility-changed';
 
 export interface PanelObserver {
   dispose: () => void;
-  watch: (e: any, panel: PanelModel) => void;
+  watch: (e: HTMLElement, panel: PanelModel) => void;
   check: () => void;
 }
 
 export class PanelObserverScroll implements PanelObserver {
-  private registry = new Map<PanelModel, any>();
+  private registry = new Map<PanelModel, HTMLElement>();
   private lastChecked = -1;
-  private scroller: any;
-  private listener: any = null;
+  private scroller: HTMLElement;
+  private listener: Function = null;
+  private checkPending = false;
 
   static readonly MARGIN: number = 200; // Say something it visible if it is close to the window
-
-  constructor() {}
 
   //---------------------------------------------------------
   // API
@@ -41,6 +40,21 @@ export class PanelObserverScroll implements PanelObserver {
       this.scroller = x;
       this.registry.set(panel, e);
       this.updateScrollListenerCallback();
+
+      this.checkPending = true;
+      setTimeout(() => {
+        if (this.checkPending) {
+          this.checkPending = true;
+
+          // Remove any stale elements from the DOM
+          this.registry.forEach((elem, panel) => {
+            if (!document.body.contains(elem)) {
+              this.registry.delete(panel);
+            }
+          });
+          this.updateVisibility(true);
+        }
+      }, 10);
     }
   }
 

@@ -24,22 +24,13 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
     this.state = {
       lazyLoading: true,
     };
-
-    // Listen for visibility changes
-    this.props.panel.events.on(PANEL_VISIBILITY_CHANGED_EVENT, this.panelVisibilityChanged.bind(this));
   }
 
-  panelVisibilityChanged(vis) {
-    if (vis && !this.attachedPanel) {
-      this.setState({ lazyLoading: false });
-    }
-    console.log('CHANGED: ', vis, this.props.panel.title);
-  }
-
-  componentDidMount() {
+  private checkAttachedElement() {
     if (!this.element) {
       return;
     }
+
     if (this.attachedPanel) {
       return; // already attached
     }
@@ -53,16 +44,33 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
     }
   }
 
+  panelVisibilityChanged = vis => {
+    //console.log('VISIBILITY Changed: ', vis, this.props.panel.title );
+    if (this.element && vis && !this.attachedPanel && this.state.lazyLoading) {
+      this.setState({ lazyLoading: false });
+      console.log('Load (delayed): ', this.props.panel.id, this.props.panel.title);
+    }
+  };
+
+  componentDidMount() {
+    //console.log('DID Mount: ',this.props.panel.title, this.props.panel.visible );
+    this.props.panel.events.on(PANEL_VISIBILITY_CHANGED_EVENT, this.panelVisibilityChanged);
+    this.checkAttachedElement();
+  }
+
   componentWillUnmount() {
+    //console.log('Will Unmount: ',this.props.panel.title, this.props.panel.visible );
+    this.props.panel.events.off(PANEL_VISIBILITY_CHANGED_EVENT, this.panelVisibilityChanged);
     if (this.attachedPanel) {
       this.attachedPanel.destroy();
+      this.attachedPanel = null;
     }
+    this.element = null;
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    // If the lazy load state changed
     if (!this.attachedPanel && !this.state.lazyLoading) {
-      this.componentDidMount();
+      this.checkAttachedElement();
     }
   }
 
@@ -76,14 +84,16 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, Dashboa
       return <AddPanelPanel panel={this.props.panel} getPanelContainer={this.props.getPanelContainer} />;
     }
 
+    // Spinner is distracting on load...
+    // {this.state.lazyLoading === true && (
+    //   <div>
+    //     {/* This should never be visible */}
+    //     <i className="fa fa-spinner fa-spin" /> {this.props.panel.title}...
+    //   </div>
+    // )}
+
     return (
       <div>
-        {this.state.lazyLoading === true && (
-          <div>
-            {/* This should never be visible */}
-            <i className="fa fa-spinner fa-spin" /> {this.props.panel.title}...
-          </div>
-        )}
         <div ref={element => (this.element = element)} className="panel-height-helper" />
       </div>
     );
