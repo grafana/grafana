@@ -76,25 +76,13 @@ func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
 func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
-	// we prefer to use the handler that support context.Context
 	var handler = b.handlersWithCtx[msgName]
-	var withCtx = true
-
-	// fallback to use classic handlers
-	if handler == nil {
-		withCtx = false
-		handler = b.handlers[msgName]
-	}
-
 	if handler == nil {
 		return ErrHandlerNotFound
 	}
 
 	var params = []reflect.Value{}
-	if withCtx {
-		params = append(params, reflect.ValueOf(ctx))
-	}
-
+	params = append(params, reflect.ValueOf(ctx))
 	params = append(params, reflect.ValueOf(msg))
 
 	ret := reflect.ValueOf(handler).Call(params)

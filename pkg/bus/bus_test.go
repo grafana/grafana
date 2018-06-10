@@ -33,22 +33,23 @@ func TestDispatchCtxCanUseNormalHandlers(t *testing.T) {
 		t.Errorf("expected bus to return HandlerNotFound is no handler is registered")
 	}
 
+	bus.AddHandler(handler)
+	bus.AddHandlerCtx(handlerWithCtx)
+
 	t.Run("when a normal handler is registered", func(t *testing.T) {
-		bus.AddHandler(handler)
-		bus.DispatchCtx(context.Background(), &testQuery{})
+		bus.Dispatch(&testQuery{})
 
 		if handlerCallCount != 1 {
-			t.Errorf("Expected normal handler to be called once")
+			t.Errorf("Expected normal handler to be called 1 time. was called %d", handlerCallCount)
 		}
+	})
 
-		t.Run("when a ctx handler is registered", func(t *testing.T) {
-			bus.AddHandlerCtx(handlerWithCtx)
-			bus.DispatchCtx(context.Background(), &testQuery{})
+	t.Run("when a ctx handler is registered", func(t *testing.T) {
+		bus.DispatchCtx(context.Background(), &testQuery{})
 
-			if handlerWithCtxCallCount != 1 {
-				t.Errorf("Expected ctx handler to be called once")
-			}
-		})
+		if handlerWithCtxCallCount != 1 {
+			t.Errorf("Expected ctx handler to be called 1 time. was called %d", handlerWithCtxCallCount)
+		}
 	})
 }
 

@@ -13,8 +13,7 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
-	bus.AddHandler("sql", GetSystemUserCountStats)
-	bus.AddHandlerCtx("sql", GetSystemUserCountStatsCtx)
+	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
 }
 
 var activeUserTimeLimit = time.Hour * 24 * 30
@@ -135,7 +134,7 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
 	return err
 }
 
-func GetSystemUserCountStatsCtx(ctx context.Context, query *m.GetSystemUserCountStatsQuery) error {
+func GetSystemUserCountStats(ctx context.Context, query *m.GetSystemUserCountStatsQuery) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
 
 		var rawSql = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
@@ -149,17 +148,4 @@ func GetSystemUserCountStatsCtx(ctx context.Context, query *m.GetSystemUserCount
 
 		return err
 	})
-}
-
-func GetSystemUserCountStats(query *m.GetSystemUserCountStatsQuery) error {
-	var rawSql = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
-	var stats m.SystemUserCountStats
-	_, err := x.SQL(rawSql).Get(&stats)
-	if err != nil {
-		return err
-	}
-
-	query.Result = &stats
-
-	return err
 }
