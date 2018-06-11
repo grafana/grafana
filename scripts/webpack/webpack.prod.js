@@ -53,7 +53,7 @@ module.exports = merge(common, {
     splitChunks: {
       cacheGroups: {
         commons: {
-          test: /[\\/]node_modules[\\/]/,
+          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           name: "vendor",
           chunks: "all"
         }
