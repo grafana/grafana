@@ -58,6 +58,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     postfixFontSize: '50%',
     thresholds: '',
     colorBackground: false,
+    circleBackground: false,
     colorValue: false,
     colors: ['#299c46', 'rgba(237, 129, 40, 0.89)', '#d44a3a'],
     sparkline: {
@@ -402,6 +403,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var templateSrv = this.templateSrv;
     var data, linkInfo;
     var $panelContainer = elem.find('.panel-container');
+    var $panelContent = elem.find('.panel-content');
     elem = elem.find('.singlestat-panel');
 
     function applyColoringThresholds(value, valueString) {
@@ -632,6 +634,33 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       } else {
         $panelContainer.css('background-color', '');
         elem.css('background-color', '');
+        panel.circleBackground = false;
+      }
+
+      if (panel.circleBackground) {
+        let circleHeight = $($panelContainer.height())[0] - 27;
+        let circleWidth = $($panelContainer.width())[0];
+
+        $($panelContainer).addClass('circle');
+
+        if (circleWidth >= circleHeight) {
+          $panelContent.css({
+            'border-radius': '50%',
+            width: circleHeight + 'px',
+            height: circleHeight + 'px',
+            'background-color': color,
+          });
+        } else {
+          $panelContent.css({
+            'border-radius': '50%',
+            width: circleWidth + 'px',
+            height: circleWidth + 'px',
+            'background-color': color,
+          });
+        }
+      } else {
+        $($panelContainer).removeClass('circle');
+        $panelContent.css({ 'border-radius': '0', width: 'auto', height: 'auto' });
       }
 
       elem.html(body);

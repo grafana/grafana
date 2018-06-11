@@ -38,6 +38,14 @@ div.flot-text {
     background-color: transparent;
     border: none;
   }
+  &.circle {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    background-color: transparent !important;
+    border: none;
+  }
 }
 
 .panel-content {
@@ -123,6 +131,7 @@ div.flot-text {
 }
 
 .panel-header {
+  width: 100%;
   &:hover {
     transition: background-color 0.1s ease-in-out;
     background-color: $panel-header-hover-bg;
