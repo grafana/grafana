@@ -14,7 +14,7 @@ export class PanelObserverScroll implements PanelObserver {
   private registry = new Map<PanelModel, HTMLElement>();
   private lastChecked = -1;
   private scroller: HTMLElement;
-  private listener: Function = null;
+  private listener: EventListenerOrEventListenerObject = null;
   private checkPending = false;
 
   static readonly MARGIN: number = 200; // Say something it visible if it is close to the window
@@ -118,7 +118,7 @@ export class PanelObserverScroll implements PanelObserver {
     if (_.isEmpty(this.registry)) {
       this.updateScrollListenerCallback(true);
     } else if (this.scroller) {
-      const top = Math.floor(this.scroller.scrollTop / 25) * 25; // check every 25 pixels
+      const top = Math.floor(this.scroller.scrollTop / 10) * 10; // check every 10 pixels
       if (top !== this.lastChecked || force === true) {
         this.lastChecked = top;
         this.updateVisibilityProps(
