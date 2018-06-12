@@ -1,5 +1,3 @@
-import {describe, beforeEach, it, expect} from 'test/lib/common';
-
 import {SemVersion, isVersionGtOrEq} from 'app/core/utils/version';
 
 describe("SemVersion", () => {
@@ -8,10 +6,10 @@ describe("SemVersion", () => {
   describe('parsing', () => {
     it('should parse version properly', () => {
       let semver = new SemVersion(version);
-      expect(semver.major).to.be(1);
-      expect(semver.minor).to.be(0);
-      expect(semver.patch).to.be(0);
-      expect(semver.meta).to.be('alpha.1');
+      expect(semver.major).toBe(1);
+      expect(semver.minor).toBe(0);
+      expect(semver.patch).toBe(0);
+      expect(semver.meta).toBe('alpha.1');
     });
   });
 
@@ -30,7 +28,7 @@ describe("SemVersion", () => {
         {value: '3.5', expected: false},
       ];
       cases.forEach((testCase) => {
-        expect(semver.isGtOrEq(testCase.value)).to.be(testCase.expected);
+        expect(semver.isGtOrEq(testCase.value)).toBe(testCase.expected);
       });
     });
   });
@@ -48,7 +46,7 @@ describe("SemVersion", () => {
         {values: ['3.4.5', '3.5'], expected: false},
       ];
       cases.forEach((testCase) => {
-        expect(isVersionGtOrEq(testCase.values[0], testCase.values[1])).to.be(testCase.expected);
+        expect(isVersionGtOrEq(testCase.values[0], testCase.values[1])).toBe(testCase.expected);
       });
     });
   });
