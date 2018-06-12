@@ -335,20 +335,30 @@ class QueryField extends React.Component<any, any> {
   }
 
   onKeyDown = (event, change) => {
-    if (this.menuEl) {
-      const { typeaheadIndex, suggestions } = this.state;
+    const { typeaheadIndex, suggestions } = this.state;
 
-      switch (event.key) {
-        case 'Escape': {
-          if (this.menuEl) {
-            event.preventDefault();
-            this.resetTypeahead();
-            return true;
-          }
-          break;
+    switch (event.key) {
+      case 'Escape': {
+        if (this.menuEl) {
+          event.preventDefault();
+          event.stopPropagation();
+          this.resetTypeahead();
+          return true;
         }
+        break;
+      }
 
-        case 'Tab': {
+      case ' ': {
+        if (event.ctrlKey) {
+          event.preventDefault();
+          this.handleTypeahead();
+          return true;
+        }
+        break;
+      }
+
+      case 'Tab': {
+        if (this.menuEl) {
           // Dont blur input
           event.preventDefault();
           if (!suggestions || suggestions.length === 0) {
@@ -364,25 +374,30 @@ class QueryField extends React.Component<any, any> {
           this.applyTypeahead(change, suggestion);
           return true;
         }
+        break;
+      }
 
-        case 'ArrowDown': {
+      case 'ArrowDown': {
+        if (this.menuEl) {
           // Select next suggestion
           event.preventDefault();
           this.setState({ typeaheadIndex: typeaheadIndex + 1 });
-          break;
         }
+        break;
+      }
 
-        case 'ArrowUp': {
+      case 'ArrowUp': {
+        if (this.menuEl) {
           // Select previous suggestion
           event.preventDefault();
           this.setState({ typeaheadIndex: Math.max(0, typeaheadIndex - 1) });
-          break;
         }
+        break;
+      }
 
-        default: {
-          // console.log('default key', event.key, event.which, event.charCode, event.locale, data.key);
-          break;
-        }
+      default: {
+        // console.log('default key', event.key, event.which, event.charCode, event.locale, data.key);
+        break;
       }
     }
     return undefined;
