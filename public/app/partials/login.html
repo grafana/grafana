@@ -98,6 +98,29 @@
           </div>
         </form>
       </div>
+      <div class="login-inner-box login-inner-box--register remove hidden" id="register-grafana-view" styling="padding: 0 4rem">
+        <div class="text-left login-change-password-info"
+             style="background: rgba(0,0,0,.6); padding: 1rem 2rem; box-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);">
+          <h5 style="opacity: 1">Register a Grafana.com account</h5>
+          <strong>Grafana.com lets you:</strong>
+          <ul>
+            <li>Download & share Grafana dashboards and plugins</li>
+            <li>Post questions and get answers on our community forum </li>
+            <li>Stay up to date on new Grafana releases and news</li>
+            <li>Access to Grafana cloud</li>
+            <li>Run 3 million checks a month with worldPing global performance monitoring</li>
+          </ul>
+          <div class="text-center" style="width: 100%; margin-top: 1rem">
+            <a href="http://grafana.com" target="_blank">Learn more</a>
+          </div>
+
+        </div>
+          <div class="login-button-group login-button-group--right text-right">
+            <button type="submit" class="btn btn-large p-x-2" ng-click="toGrafana();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-success': loginForm.$valid}">
+              Continue to Grafana
+            </button>
+          </div>
+      </div>
       <div class="clearfix"></div>
     </div>
   </div>
