@@ -25,12 +25,8 @@ import (
 )
 
 var (
-	logger = log.New("data-proxy-log")
-	client = &http.Client{
-		Timeout:   time.Second * 30,
-		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
-	}
-	tokenCache = map[int64]*jwtToken{}
+	logger     = log.New("data-proxy-log")
+	tokenCache = map[string]*jwtToken{}
 )
 
 type jwtToken struct {
@@ -40,12 +36,17 @@ type jwtToken struct {
 }
 
 type DataSourceProxy struct {
-	ds        *m.DataSource
-	ctx       *m.ReqContext
-	targetUrl *url.URL
-	proxyPath string
-	route     *plugins.AppPluginRoute
-	plugin    *plugins.DataSourcePlugin
+	ds         *m.DataSource
+	ctx        *m.ReqContext
+	targetUrl  *url.URL
+	proxyPath  string
+	route      *plugins.AppPluginRoute
+	plugin     *plugins.DataSourcePlugin
+	httpClient HttpClient
+}
+
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
@@ -57,6 +58,10 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		ctx:       ctx,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
+		httpClient: &http.Client{
+			Timeout:   time.Second * 30,
+			Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
+		},
 	}
 }
 
@@ -311,7 +316,7 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 }
 
 func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
-	if cachedToken, found := tokenCache[proxy.ds.Id]; found {
+	if cachedToken, found := tokenCache[proxy.getAccessTokenCacheKey()]; found {
 		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
 			logger.Info("Using token from cache")
 			return cachedToken.AccessToken, nil
@@ -336,7 +341,7 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
 
-	resp, err := client.Do(getTokenReq)
+	resp, err := proxy.httpClient.Do(getTokenReq)
 	if err != nil {
 		return "", err
 	}
@@ -350,10 +355,14 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 
 	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
 	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
-	tokenCache[proxy.ds.Id] = &token
+	tokenCache[proxy.getAccessTokenCacheKey()] = &token
 
 	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
 	return token.AccessToken, nil
+}
+
+func (proxy *DataSourceProxy) getAccessTokenCacheKey() string {
+	return fmt.Sprintf("%v_%v_%v", proxy.ds.Id, proxy.route.Path, proxy.route.Method)
 }
 
 func interpolateString(text string, data templateData) (string, error) {
