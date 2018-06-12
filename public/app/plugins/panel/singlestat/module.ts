@@ -403,7 +403,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var templateSrv = this.templateSrv;
     var data, linkInfo;
     var $panelContainer = elem.find('.panel-container');
-    var $panelContent = elem.find('.panel-content');
+    var $singlestatPanel = elem.find('.singlestat-panel');
     elem = elem.find('.singlestat-panel');
 
     function applyColoringThresholds(value, valueString) {
@@ -644,14 +644,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         $($panelContainer).addClass('circle');
 
         if (circleWidth >= circleHeight) {
-          $panelContent.css({
+          $singlestatPanel.css({
             'border-radius': '50%',
             width: circleHeight + 'px',
             height: circleHeight + 'px',
             'background-color': color,
           });
         } else {
-          $panelContent.css({
+          $singlestatPanel.css({
             'border-radius': '50%',
             width: circleWidth + 'px',
             height: circleWidth + 'px',
@@ -660,7 +660,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         }
       } else {
         $($panelContainer).removeClass('circle');
-        $panelContent.css({ 'border-radius': '0', width: 'auto', height: 'auto' });
+        $singlestatPanel.css({ 'border-radius': '0', width: '', height: '' });
       }
 
       elem.html(body);
