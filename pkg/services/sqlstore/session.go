@@ -29,7 +29,6 @@ func startSession(ctx context.Context) *DBSession {
 
 	if !ok {
 		newSess := newSession()
-		newSess.Begin()
 		return newSess
 	}
 

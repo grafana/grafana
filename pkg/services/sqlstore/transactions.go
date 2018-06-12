@@ -17,6 +17,10 @@ func (ss *SqlStore) inTransactionWithRetry(ctx context.Context, fn func(ctx cont
 	sess := startSession(ctx)
 	defer sess.Close()
 
+	if err := sess.Begin(); err != nil {
+		return err
+	}
+
 	withValue := context.WithValue(ctx, ContextSessionName, sess)
 
 	err := fn(withValue)
@@ -59,6 +63,7 @@ func inTransactionWithRetryCtx(ctx context.Context, callback dbTransactionFunc, 
 	var err error
 
 	sess := startSession(ctx)
+
 	defer sess.Close()
 
 	if err = sess.Begin(); err != nil {
