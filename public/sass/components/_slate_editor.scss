@@ -67,6 +67,11 @@
   .typeahead-item__selected {
     background-color: $typeahead-selected-bg;
     color: $typeahead-selected-color;
+
+    .typeahead-item-hint {
+      font-size: $font-size-xs;
+      color: $text-color;
+    }
   }
 }
 

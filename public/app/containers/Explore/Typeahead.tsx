@@ -23,12 +23,13 @@ class TypeaheadItem extends React.PureComponent<any, any> {
   };
 
   render() {
-    const { isSelected, label, onClickItem } = this.props;
+    const { hint, isSelected, label, onClickItem } = this.props;
     const className = isSelected ? 'typeahead-item typeahead-item__selected' : 'typeahead-item';
     const onClick = () => onClickItem(label);
     return (
       <li ref={this.getRef} className={className} onClick={onClick}>
         {label}
+        {hint && isSelected ? <div className="typeahead-item-hint">{hint}</div> : null}
       </li>
     );
   }
@@ -43,12 +44,14 @@ class TypeaheadGroup extends React.PureComponent<any, any> {
         <ul className="typeahead-group__list">
           {items.map(item => {
             const text = typeof item === 'object' ? item.text : item;
+            const label = typeof item === 'object' ? item.display || item.text : item;
             return (
               <TypeaheadItem
                 key={text}
                 onClickItem={onClickItem}
                 isSelected={selected.indexOf(text) > -1}
-                label={text}
+                hint={item.hint}
+                label={label}
               />
             );
           })}
