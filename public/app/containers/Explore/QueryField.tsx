@@ -522,10 +522,17 @@ class QueryField extends React.Component<any, any> {
 
     // Align menu overlay to editor node
     if (node) {
+      // Read from DOM
       const rect = node.parentElement.getBoundingClientRect();
-      menu.style.opacity = 1;
-      menu.style.top = `${rect.top + window.scrollY + rect.height + 4}px`;
-      menu.style.left = `${rect.left + window.scrollX - 2}px`;
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY;
+
+      // Write DOM
+      requestAnimationFrame(() => {
+        menu.style.opacity = 1;
+        menu.style.top = `${rect.top + scrollY + rect.height + 4}px`;
+        menu.style.left = `${rect.left + scrollX - 2}px`;
+      });
     }
   };
 
