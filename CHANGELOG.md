@@ -3,6 +3,7 @@
 ### Minor
 
 * **Dashboard**: Fix so panel titles doesn't wrap [#11074](https://github.com/grafana/grafana/issues/11074)
+* **Dashboard**: Prevent double-click when saving dashboard [#11963](https://github.com/grafana/grafana/issues/11963)
 
 # 5.2.0-beta1 (2018-06-05)
 
