@@ -1,5 +1,4 @@
 import '../playlist_edit_ctrl';
-import { describe, beforeEach, it, expect } from 'test/lib/common';
 import { PlaylistEditCtrl } from '../playlist_edit_ctrl';
 
 describe('PlaylistEditCtrl', () => {
@@ -20,13 +19,13 @@ describe('PlaylistEditCtrl', () => {
 
   describe('searchresult returns 2 dashboards, ', () => {
     it('found dashboard should be 2', () => {
-      expect(ctx.dashboardresult.length).to.be(2);
+      expect(ctx.dashboardresult.length).toBe(2);
     });
 
     it('filtred result should be 2', () => {
       ctx.filterFoundPlaylistItems();
-      expect(ctx.filteredDashboards.length).to.be(2);
-      expect(ctx.filteredTags.length).to.be(2);
+      expect(ctx.filteredDashboards.length).toBe(2);
+      expect(ctx.filteredTags.length).toBe(2);
     });
 
     describe('adds one dashboard to playlist, ', () => {
@@ -37,16 +36,16 @@ describe('PlaylistEditCtrl', () => {
       });
 
       it('playlistitems should be increased by one', () => {
-        expect(ctx.playlistItems.length).to.be(2);
+        expect(ctx.playlistItems.length).toBe(2);
       });
 
       it('filtred playlistitems should be reduced by one', () => {
-        expect(ctx.filteredDashboards.length).to.be(1);
-        expect(ctx.filteredTags.length).to.be(1);
+        expect(ctx.filteredDashboards.length).toBe(1);
+        expect(ctx.filteredTags.length).toBe(1);
       });
 
       it('found dashboard should be 2', () => {
-        expect(ctx.dashboardresult.length).to.be(2);
+        expect(ctx.dashboardresult.length).toBe(2);
       });
 
       describe('removes one dashboard from playlist, ', () => {
@@ -57,14 +56,14 @@ describe('PlaylistEditCtrl', () => {
         });
 
         it('playlistitems should be increased by one', () => {
-          expect(ctx.playlistItems.length).to.be(0);
+          expect(ctx.playlistItems.length).toBe(0);
         });
 
         it('found dashboard should be 2', () => {
-          expect(ctx.dashboardresult.length).to.be(2);
-          expect(ctx.filteredDashboards.length).to.be(2);
-          expect(ctx.filteredTags.length).to.be(2);
-          expect(ctx.tagresult.length).to.be(2);
+          expect(ctx.dashboardresult.length).toBe(2);
+          expect(ctx.filteredDashboards.length).toBe(2);
+          expect(ctx.filteredTags.length).toBe(2);
+          expect(ctx.tagresult.length).toBe(2);
         });
       });
     });
