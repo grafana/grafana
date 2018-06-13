@@ -150,7 +150,7 @@ func TestAccountDataAccess(t *testing.T) {
 				})
 
 				Convey("Can set using org", func() {
-					cmd := m.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.Id}
+					cmd := m.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.OrgId}
 					err := SetUsingOrg(&cmd)
 					So(err, ShouldBeNil)
 
@@ -159,12 +159,24 @@ func TestAccountDataAccess(t *testing.T) {
 						err := GetSignedInUser(&query)
 
 						So(err, ShouldBeNil)
-						So(query.Result.OrgId, ShouldEqual, ac1.Id)
+						So(query.Result.OrgId, ShouldEqual, ac1.OrgId)
 						So(query.Result.Email, ShouldEqual, "ac2@test.com")
 						So(query.Result.Name, ShouldEqual, "ac2 name")
 						So(query.Result.Login, ShouldEqual, "ac2")
 						So(query.Result.OrgName, ShouldEqual, "ac1@test.com")
 						So(query.Result.OrgRole, ShouldEqual, "Viewer")
+					})
+
+					Convey("Should set last org as current when removing user from current", func() {
+						remCmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id}
+						err := RemoveOrgUser(&remCmd)
+						So(err, ShouldBeNil)
+
+						query := m.GetSignedInUserQuery{UserId: ac2.Id}
+						err = GetSignedInUser(&query)
+
+						So(err, ShouldBeNil)
+						So(query.Result.OrgId, ShouldEqual, ac2.OrgId)
 					})
 				})
 
