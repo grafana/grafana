@@ -629,6 +629,14 @@ export class PrometheusDatasource {
     return Math.ceil(date.valueOf() / 1000);
   }
 
+  getTimeRange() {
+    let range = this.timeSrv.timeRange();
+    return {
+      from: this.getPrometheusTime(range.from, false),
+      to: this.getPrometheusTime(range.to, true)
+    };
+  }
+
   getOriginalMetricName(labelData) {
     return this.resultTransformer.getOriginalMetricName(labelData);
   }

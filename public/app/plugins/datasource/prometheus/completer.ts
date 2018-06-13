@@ -113,7 +113,7 @@ export class PromCompleter {
         _.uniq(
           _.flatten(
             result.map(r => {
-              return Object.keys(r.metric);
+              return Object.keys(r);
             })
           )
         ),
@@ -151,7 +151,7 @@ export class PromCompleter {
       var labelValues = this.transformToCompletions(
         _.uniq(
           result.map(r => {
-            return r.metric[labelName];
+            return r[labelName];
           })
         ),
         'label value'
@@ -191,7 +191,7 @@ export class PromCompleter {
             _.uniq(
               _.flatten(
                 result.map(r => {
-                  return Object.keys(r.metric);
+                  return Object.keys(r);
                 })
               )
             ),
@@ -233,7 +233,7 @@ export class PromCompleter {
               _.uniq(
                 _.flatten(
                   result.map(r => {
-                    return Object.keys(r.metric);
+                    return Object.keys(r);
                   })
                 )
               ),
@@ -249,7 +249,7 @@ export class PromCompleter {
               _.uniq(
                 _.flatten(
                   result.map(r => {
-                    return Object.keys(r.metric);
+                    return Object.keys(r);
                   })
                 )
               ),
@@ -276,9 +276,11 @@ export class PromCompleter {
       }
       query = '{__name__' + op + '"' + expr + '"}';
     }
-    return this.datasource.performInstantQuery({ expr: query }, new Date().getTime() / 1000).then(response => {
-      this.labelQueryCache[expr] = response.data.data.result;
-      return response.data.data.result;
+    let range = this.datasource.getTimeRange();
+    let url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + range.from + '&end=' + range.to;
+    return this.datasource.metadataRequest(url).then(response => {
+      this.labelQueryCache[expr] = response.data.data;
+      return response.data.data;
     });
   }
 
