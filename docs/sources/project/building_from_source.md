@@ -66,7 +66,7 @@ You can run a local instance of Grafana by running:
 ```bash
 ./bin/grafana-server
 ```
-If you built the binary with `go run build.go build`, run `./bin/grafana-server`
+Or, if you built the binary with `go run build.go build`, run `./bin/<os>-<architecture>/grafana-server`
 
 If you built it with `go build .`, run `./grafana`
 
