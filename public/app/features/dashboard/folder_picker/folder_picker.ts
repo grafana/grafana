@@ -132,23 +132,26 @@ export class FolderPickerCtrl {
   }
 
   private loadInitialValue() {
-    if (this.initialFolderId && this.initialFolderId > 0) {
-      this.getOptions('').then(result => {
-        this.folder = _.find(result, { value: this.initialFolderId });
-        if (!this.folder) {
-          this.folder = { text: this.initialTitle, value: this.initialFolderId };
-        }
-        this.onFolderLoad();
-      });
-    } else {
-      if (this.initialTitle && this.initialFolderId === null) {
-        this.folder = { text: this.initialTitle, value: null };
-      } else {
-        this.folder = { text: this.rootName, value: 0 };
+    const resetFolder = { text: this.initialTitle, value: null };
+    const rootFolder = { text: this.rootName, value: 0 };
+    this.getOptions('').then(result => {
+      let folder;
+      if (this.initialFolderId) {
+        folder = _.find(result, { value: this.initialFolderId });
+      } else if (this.enableReset && this.initialTitle && this.initialFolderId === null) {
+        folder = resetFolder;
       }
 
+      if (!folder) {
+        if (this.isEditor) {
+          folder = rootFolder;
+        } else {
+          folder = result.length > 0 ? result[0] : resetFolder;
+        }
+      }
+      this.folder = folder;
       this.onFolderLoad();
-    }
+    });
   }
 
   private onFolderLoad() {
