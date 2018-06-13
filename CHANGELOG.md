@@ -1,5 +1,9 @@
 # 5.2.0 (unreleased)
 
+### New Features
+
+* **Dashboard**: Import dashboard to folder [#10796](https://github.com/grafana/grafana/issues/10796)
+
 ### Minor
 
 * **Dashboard**: Fix so panel titles doesn't wrap [#11074](https://github.com/grafana/grafana/issues/11074)
