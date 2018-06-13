@@ -39,7 +39,7 @@ function (angular, _) {
     };
   });
 
-  module.directive('dashLink', function($compile, linkSrv) {
+  module.directive('dashLink', function($compile, $sanitize, linkSrv) {
     return {
       restrict: 'E',
       link: function(scope, elem) {
@@ -68,10 +68,21 @@ function (angular, _) {
           var linkInfo = linkSrv.getAnchorInfo(link);
           span.text(linkInfo.title);
           anchor.attr("href", linkInfo.href);
+          sanitizeAnchor();
+
+          // tooltip
+          elem.find('a').tooltip({
+            title: $sanitize(scope.link.tooltip),
+            html: true,
+            container: 'body',
+          });
         }
 
-        // tooltip
-        elem.find('a').tooltip({ title: scope.link.tooltip, html: true, container: 'body' });
+        function sanitizeAnchor() {
+          var anchorSanitized = $sanitize(anchor.parent().html());
+          anchor.parent().html(anchorSanitized);
+        }
+
         icon.attr('class', 'fa fa-fw ' + scope.link.icon);
         anchor.attr('target', scope.link.target);
 
