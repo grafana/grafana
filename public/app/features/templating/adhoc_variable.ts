@@ -3,6 +3,7 @@ import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class AdhocVariable implements Variable {
   filters: any[];
+  removeFromUrl: number;
 
   defaults = {
     type: 'adhoc',
@@ -11,6 +12,7 @@ export class AdhocVariable implements Variable {
     hide: 0,
     datasource: null,
     filters: [],
+    removeFromUrl: 0,
   };
 
   /** @ngInject **/

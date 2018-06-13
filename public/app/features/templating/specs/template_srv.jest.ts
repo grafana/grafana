@@ -345,6 +345,51 @@ describe('templateSrv', function() {
     });
   });
 
+  describe('fillVariableValuesForUrl with hidden URL', function() {
+    beforeEach(function() {
+      initTemplateSrv([
+        {
+          name: 'test',
+          hide: 2,
+          removeFromUrl: 1,
+          current: { value: 'value' },
+          getValueForUrl: function() {
+            return this.current.value;
+          },
+        },
+      ]);
+    });
+
+    it('should not include template variable value in url', function() {
+      var params = {};
+      _templateSrv.fillVariableValuesForUrl(params);
+      expect(params['var-test']).toBe(undefined);
+    });
+  });
+
+  describe('fillVariableValuesForUrl with multi value with hidden URL', function() {
+    beforeEach(function() {
+      initTemplateSrv([
+        {
+          type: 'query',
+          name: 'test',
+          hide: 2,
+          removeFromUrl: 1,
+          current: { value: ['val1', 'val2'] },
+          getValueForUrl: function() {
+            return this.current.value;
+          },
+        },
+      ]);
+    });
+
+    it('should not include template variable value in url', function() {
+      var params = {};
+      _templateSrv.fillVariableValuesForUrl(params);
+      expect(params['var-test']).toBe(undefined);
+    });
+  });
+
   describe('fillVariableValuesForUrl with multi value and scopedVars', function() {
     beforeEach(function() {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: ['val1', 'val2'] } }]);
@@ -356,6 +401,20 @@ describe('templateSrv', function() {
         test: { value: 'val1' },
       });
       expect(params['var-test']).toBe('val1');
+    });
+  });
+
+  describe('fillVariableValuesForUrl with multi value, scopedVars and hidden URL', function() {
+    beforeEach(function() {
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: ['val1', 'val2'] } }]);
+    });
+
+    it('should set scoped value as url params', function() {
+      var params = {};
+      _templateSrv.fillVariableValuesForUrl(params, {
+        test: { name: 'test', value: 'val1', hide: 2, removeFromUrl: 1 },
+      });
+      expect(params['var-test']).toBe(undefined);
     });
   });
 

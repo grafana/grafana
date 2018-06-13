@@ -7,6 +7,7 @@ export class DatasourceVariable implements Variable {
   options: any;
   current: any;
   refresh: any;
+  removeFromUrl: number;
 
   defaults = {
     type: 'datasource',
@@ -18,6 +19,7 @@ export class DatasourceVariable implements Variable {
     options: [],
     query: '',
     refresh: 1,
+    removeFromUrl: 0,
   };
 
   /** @ngInject **/

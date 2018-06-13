@@ -7,6 +7,7 @@ export class CustomVariable implements Variable {
   includeAll: boolean;
   multi: boolean;
   current: any;
+  removeFromUrl: number;
 
   defaults = {
     type: 'custom',
@@ -19,6 +20,7 @@ export class CustomVariable implements Variable {
     includeAll: false,
     multi: false,
     allValue: null,
+    removeFromUrl: 0,
   };
 
   /** @ngInject **/

@@ -29,6 +29,7 @@ export class VariableEditorCtrl {
     ];
 
     $scope.hideOptions = [{ value: 0, text: '' }, { value: 1, text: 'Label' }, { value: 2, text: 'Variable' }];
+    $scope.removeFromUrlOptions = [{ value: 1, text: 'Yes' }, { value: 0, text: 'No' }];
 
     $scope.init = function() {
       $scope.mode = 'list';
@@ -155,6 +156,7 @@ export class VariableEditorCtrl {
       $scope.current.name = old.name;
       $scope.current.hide = old.hide;
       $scope.current.label = old.label;
+      $scope.current.removeFromUrl = old.removeFromUrl;
 
       var oldIndex = _.indexOf(this.variables, old);
       if (oldIndex !== -1) {
