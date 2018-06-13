@@ -96,13 +96,23 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 func (b *InProcBus) Dispatch(msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
-	var handler = b.handlers[msgName]
+	var handler = b.handlersWithCtx[msgName]
+	withCtx := true
+
+	if handler == nil {
+		withCtx = false
+		handler = b.handlers[msgName]
+	}
+
 	if handler == nil {
 		return ErrHandlerNotFound
 	}
 
-	var params = make([]reflect.Value, 1)
-	params[0] = reflect.ValueOf(msg)
+	var params = []reflect.Value{}
+	if withCtx {
+		params = append(params, reflect.ValueOf(context.Background()))
+	}
+	params = append(params, reflect.ValueOf(msg))
 
 	ret := reflect.ValueOf(handler).Call(params)
 	err := ret[0].Interface()
