@@ -290,14 +290,18 @@ func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 	}
 
 	return inTransaction(func(sess *DBSession) error {
-		user := m.User{
-			Id:    cmd.UserId,
-			OrgId: cmd.OrgId,
-		}
-
-		_, err := sess.Id(cmd.UserId).Update(&user)
-		return err
+		return setUsingOrgInTransaction(sess, cmd.UserId, cmd.OrgId)
 	})
+}
+
+func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error {
+	user := m.User{
+		Id:    userID,
+		OrgId: orgID,
+	}
+
+	_, err := sess.Id(userID).Update(&user)
+	return err
 }
 
 func GetUserProfile(query *m.GetUserProfileQuery) error {
