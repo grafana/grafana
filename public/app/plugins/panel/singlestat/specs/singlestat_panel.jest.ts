@@ -1,5 +1,3 @@
-import { describe, it, expect } from 'test/lib/common';
-
 import { getColorForValue } from '../module';
 
 describe('grafanaSingleStat', function() {
@@ -11,31 +9,31 @@ describe('grafanaSingleStat', function() {
       };
 
       it('5 should return green', () => {
-        expect(getColorForValue(data, 5)).to.be('green');
+        expect(getColorForValue(data, 5)).toBe('green');
       });
 
       it('19.9 should return green', () => {
-        expect(getColorForValue(data, 19.9)).to.be('green');
+        expect(getColorForValue(data, 19.9)).toBe('green');
       });
 
       it('20 should return yellow', () => {
-        expect(getColorForValue(data, 20)).to.be('yellow');
+        expect(getColorForValue(data, 20)).toBe('yellow');
       });
 
       it('20.1 should return yellow', () => {
-        expect(getColorForValue(data, 20.1)).to.be('yellow');
+        expect(getColorForValue(data, 20.1)).toBe('yellow');
       });
 
       it('25 should return yellow', () => {
-        expect(getColorForValue(data, 25)).to.be('yellow');
+        expect(getColorForValue(data, 25)).toBe('yellow');
       });
 
       it('50 should return red', () => {
-        expect(getColorForValue(data, 50)).to.be('red');
+        expect(getColorForValue(data, 50)).toBe('red');
       });
 
       it('55 should return red', () => {
-        expect(getColorForValue(data, 55)).to.be('red');
+        expect(getColorForValue(data, 55)).toBe('red');
       });
     });
   });
@@ -47,15 +45,15 @@ describe('grafanaSingleStat', function() {
     };
 
     it('-30 should return green', () => {
-      expect(getColorForValue(data, -30)).to.be('green');
+      expect(getColorForValue(data, -30)).toBe('green');
     });
 
     it('1 should return green', () => {
-      expect(getColorForValue(data, 1)).to.be('yellow');
+      expect(getColorForValue(data, 1)).toBe('yellow');
     });
 
     it('22 should return green', () => {
-      expect(getColorForValue(data, 22)).to.be('red');
+      expect(getColorForValue(data, 22)).toBe('red');
     });
   });
 
@@ -66,7 +64,7 @@ describe('grafanaSingleStat', function() {
     };
 
     it('-30 should return green', () => {
-      expect(getColorForValue(data, -26)).to.be('yellow');
+      expect(getColorForValue(data, -26)).toBe('yellow');
     });
   });
 });
