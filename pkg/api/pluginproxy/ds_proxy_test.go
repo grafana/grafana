@@ -165,7 +165,8 @@ func TestDSRouteRule(t *testing.T) {
 					json, err := ioutil.ReadFile("./test-data/access-token-1.json")
 					So(err, ShouldBeNil)
 
-					proxy1 := NewDataSourceProxyWithMock(ds, plugin, ctx, "pathwithtoken1", json)
+					client = newFakeHTTPClient(json)
+					proxy1 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
 					proxy1.route = plugin.Routes[0]
 					proxy1.applyRoute(req)
 
@@ -178,7 +179,8 @@ func TestDSRouteRule(t *testing.T) {
 						So(err, ShouldBeNil)
 
 						req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
-						proxy2 := NewDataSourceProxyWithMock(ds, plugin, ctx, "pathwithtoken2", json2)
+						client = newFakeHTTPClient(json2)
+						proxy2 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken2")
 						proxy2.route = plugin.Routes[1]
 						proxy2.applyRoute(req)
 
@@ -192,7 +194,8 @@ func TestDSRouteRule(t *testing.T) {
 						Convey("third call to first route should add cached access token", func() {
 							req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
 
-							proxy3 := NewDataSourceProxyWithMock(ds, plugin, ctx, "pathwithtoken1", []byte{})
+							client = newFakeHTTPClient([]byte{})
+							proxy3 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
 							proxy3.route = plugin.Routes[0]
 							proxy3.applyRoute(req)
 
@@ -322,11 +325,11 @@ func TestDSRouteRule(t *testing.T) {
 	})
 }
 
-type HttpClientStub struct {
+type httpClientStub struct {
 	fakeBody []byte
 }
 
-func (c *HttpClientStub) Do(req *http.Request) (*http.Response, error) {
+func (c *httpClientStub) Do(req *http.Request) (*http.Response, error) {
 	bodyJSON, _ := simplejson.NewJson(c.fakeBody)
 	_, passedTokenCacheTest := bodyJSON.CheckGet("expires_on")
 	So(passedTokenCacheTest, ShouldBeTrue)
@@ -340,17 +343,8 @@ func (c *HttpClientStub) Do(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func NewDataSourceProxyWithMock(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string, fakeBody []byte) *DataSourceProxy {
-	targetURL, _ := url.Parse(ds.Url)
-
-	return &DataSourceProxy{
-		ds:        ds,
-		plugin:    plugin,
-		ctx:       ctx,
-		proxyPath: proxyPath,
-		targetUrl: targetURL,
-		httpClient: &HttpClientStub{
-			fakeBody: fakeBody,
-		},
+func newFakeHTTPClient(fakeBody []byte) httpClient {
+	return &httpClientStub{
+		fakeBody: fakeBody,
 	}
 }

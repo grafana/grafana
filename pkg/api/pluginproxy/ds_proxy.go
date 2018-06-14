@@ -27,6 +27,7 @@ import (
 var (
 	logger     = log.New("data-proxy-log")
 	tokenCache = map[string]*jwtToken{}
+	client     = newHTTPClient()
 )
 
 type jwtToken struct {
@@ -36,16 +37,15 @@ type jwtToken struct {
 }
 
 type DataSourceProxy struct {
-	ds         *m.DataSource
-	ctx        *m.ReqContext
-	targetUrl  *url.URL
-	proxyPath  string
-	route      *plugins.AppPluginRoute
-	plugin     *plugins.DataSourcePlugin
-	httpClient HttpClient
+	ds        *m.DataSource
+	ctx       *m.ReqContext
+	targetUrl *url.URL
+	proxyPath string
+	route     *plugins.AppPluginRoute
+	plugin    *plugins.DataSourcePlugin
 }
 
-type HttpClient interface {
+type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
@@ -58,10 +58,13 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		ctx:       ctx,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
-		httpClient: &http.Client{
-			Timeout:   time.Second * 30,
-			Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
-		},
+	}
+}
+
+func newHTTPClient() httpClient {
+	return &http.Client{
+		Timeout:   time.Second * 30,
+		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
 }
 
@@ -341,7 +344,7 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
 
-	resp, err := proxy.httpClient.Do(getTokenReq)
+	resp, err := client.Do(getTokenReq)
 	if err != nil {
 		return "", err
 	}
