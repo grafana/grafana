@@ -575,8 +575,6 @@ kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m3');
 kbn.valueFormats.Nm3 = kbn.formatBuilders.fixedUnit('Nm3');
 kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm3');
 kbn.valueFormats.gallons = kbn.formatBuilders.fixedUnit('gal');
-kbn.valueFormats.flowmlpm = kbn.formatBuilders.decimalSIPrefix('L', -1);
-kbn.valueFormats.flowlpm = kbn.formatBuilders.decimalSIPrefix('L');
  
 // Flow
 kbn.valueFormats.flowgpm = kbn.formatBuilders.fixedUnit('gpm');
@@ -584,6 +582,8 @@ kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
 kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
 kbn.valueFormats.litreh = kbn.formatBuilders.fixedUnit('l/h');
+kbn.valueFormats.flowmlpm = kbn.formatBuilders.decimalSIPrefix('L', -1);
+kbn.valueFormats.flowlpm = kbn.formatBuilders.decimalSIPrefix('L');
 
 // Angle
 kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
@@ -1011,9 +1011,6 @@ kbn.getUnitFormats = function() {
         { text: 'Normal cubic metre', value: 'Nm3' },
         { text: 'cubic decimetre', value: 'dm3' },
         { text: 'gallons', value: 'gallons' },
-        { text: 'milliLitre/min (mL/min)', value: 'flowmlpm' },
-        { text: 'Litre/min (l/min)', value: 'flowlpm' },
-
       ],
     },
     {
@@ -1080,6 +1077,8 @@ kbn.getUnitFormats = function() {
         { text: 'Cubic feet/sec (cfs)', value: 'flowcfs' },
         { text: 'Cubic feet/min (cfm)', value: 'flowcfm' },
         { text: 'Litre/hour', value: 'litreh' },
+        { text: 'milliLitre/min (mL/min)', value: 'flowmlpm' },
+        { text: 'Litre/min (l/min)', value: 'flowlpm' },
       ],
     },
     {
