@@ -250,6 +250,7 @@ func (ss *SqlStore) readConfig() {
 }
 
 func InitTestDB(t *testing.T) *SqlStore {
+	t.Helper()
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true
 	sqlstore.Bus = bus.New()
