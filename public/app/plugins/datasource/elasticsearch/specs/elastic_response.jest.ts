@@ -1,13 +1,13 @@
 import { describe, beforeEach, it, expect } from 'test/lib/common';
 import { ElasticResponse } from '../elastic_response';
 
-describe('ElasticResponse', function() {
+describe('ElasticResponse', () => {
   var targets;
   var response;
   var result;
 
-  describe('simple query and count', function() {
-    beforeEach(function() {
+  describe('simple query and count', () => {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -39,19 +39,19 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return 1 series', function() {
-      expect(result.data.length).to.be(1);
-      expect(result.data[0].target).to.be('Count');
-      expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].datapoints[0][0]).to.be(10);
-      expect(result.data[0].datapoints[0][1]).to.be(1000);
+    it('should return 1 series', () => {
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].target).toBe('Count');
+      expect(result.data[0].datapoints.length).toBe(2);
+      expect(result.data[0].datapoints[0][0]).toBe(10);
+      expect(result.data[0].datapoints[0][1]).toBe(1000);
     });
   });
 
-  describe('simple query count & avg aggregation', function() {
+  describe('simple query count & avg aggregation', () => {
     var result;
 
-    beforeEach(function() {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -85,22 +85,22 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return 2 series', function() {
-      expect(result.data.length).to.be(2);
-      expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].datapoints[0][0]).to.be(10);
-      expect(result.data[0].datapoints[0][1]).to.be(1000);
+    it('should return 2 series', () => {
+      expect(result.data.length).toBe(2);
+      expect(result.data[0].datapoints.length).toBe(2);
+      expect(result.data[0].datapoints[0][0]).toBe(10);
+      expect(result.data[0].datapoints[0][1]).toBe(1000);
 
-      expect(result.data[1].target).to.be('Average value');
-      expect(result.data[1].datapoints[0][0]).to.be(88);
-      expect(result.data[1].datapoints[1][0]).to.be(99);
+      expect(result.data[1].target).toBe('Average value');
+      expect(result.data[1].datapoints[0][0]).toBe(88);
+      expect(result.data[1].datapoints[1][0]).toBe(99);
     });
   });
 
-  describe('single group by query one metric', function() {
+  describe('single group by query one metric', () => {
     var result;
 
-    beforeEach(function() {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -141,18 +141,18 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return 2 series', function() {
-      expect(result.data.length).to.be(2);
-      expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].target).to.be('server1');
-      expect(result.data[1].target).to.be('server2');
+    it('should return 2 series', () => {
+      expect(result.data.length).toBe(2);
+      expect(result.data[0].datapoints.length).toBe(2);
+      expect(result.data[0].target).toBe('server1');
+      expect(result.data[1].target).toBe('server2');
     });
   });
 
-  describe('single group by query two metrics', function() {
+  describe('single group by query two metrics', () => {
     var result;
 
-    beforeEach(function() {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -199,20 +199,20 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return 2 series', function() {
-      expect(result.data.length).to.be(4);
-      expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].target).to.be('server1 Count');
-      expect(result.data[1].target).to.be('server1 Average @value');
-      expect(result.data[2].target).to.be('server2 Count');
-      expect(result.data[3].target).to.be('server2 Average @value');
+    it('should return 2 series', () => {
+      expect(result.data.length).toBe(4);
+      expect(result.data[0].datapoints.length).toBe(2);
+      expect(result.data[0].target).toBe('server1 Count');
+      expect(result.data[1].target).toBe('server1 Average @value');
+      expect(result.data[2].target).toBe('server2 Count');
+      expect(result.data[3].target).toBe('server2 Average @value');
     });
   });
 
-  describe('with percentiles ', function() {
+  describe('with percentiles ', () => {
     var result;
 
-    beforeEach(function() {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -246,21 +246,21 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return 2 series', function() {
-      expect(result.data.length).to.be(2);
-      expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].target).to.be('p75');
-      expect(result.data[1].target).to.be('p90');
-      expect(result.data[0].datapoints[0][0]).to.be(3.3);
-      expect(result.data[0].datapoints[0][1]).to.be(1000);
-      expect(result.data[1].datapoints[1][0]).to.be(4.5);
+    it('should return 2 series', () => {
+      expect(result.data.length).toBe(2);
+      expect(result.data[0].datapoints.length).toBe(2);
+      expect(result.data[0].target).toBe('p75');
+      expect(result.data[1].target).toBe('p90');
+      expect(result.data[0].datapoints[0][0]).toBe(3.3);
+      expect(result.data[0].datapoints[0][1]).toBe(1000);
+      expect(result.data[1].datapoints[1][0]).toBe(4.5);
     });
   });
 
-  describe('with extended_stats', function() {
+  describe('with extended_stats', () => {
     var result;
 
-    beforeEach(function() {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -322,21 +322,21 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return 4 series', function() {
-      expect(result.data.length).to.be(4);
-      expect(result.data[0].datapoints.length).to.be(1);
-      expect(result.data[0].target).to.be('server1 Max');
-      expect(result.data[1].target).to.be('server1 Std Dev Upper');
+    it('should return 4 series', () => {
+      expect(result.data.length).toBe(4);
+      expect(result.data[0].datapoints.length).toBe(1);
+      expect(result.data[0].target).toBe('server1 Max');
+      expect(result.data[1].target).toBe('server1 Std Dev Upper');
 
-      expect(result.data[0].datapoints[0][0]).to.be(10.2);
-      expect(result.data[1].datapoints[0][0]).to.be(3);
+      expect(result.data[0].datapoints[0][0]).toBe(10.2);
+      expect(result.data[1].datapoints[0][0]).toBe(3);
     });
   });
 
-  describe('single group by with alias pattern', function() {
+  describe('single group by with alias pattern', () => {
     var result;
 
-    beforeEach(function() {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -385,19 +385,19 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return 2 series', function() {
-      expect(result.data.length).to.be(3);
-      expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].target).to.be('server1 Count and {{not_exist}} server1');
-      expect(result.data[1].target).to.be('server2 Count and {{not_exist}} server2');
-      expect(result.data[2].target).to.be('0 Count and {{not_exist}} 0');
+    it('should return 2 series', () => {
+      expect(result.data.length).toBe(3);
+      expect(result.data[0].datapoints.length).toBe(2);
+      expect(result.data[0].target).toBe('server1 Count and {{not_exist}} server1');
+      expect(result.data[1].target).toBe('server2 Count and {{not_exist}} server2');
+      expect(result.data[2].target).toBe('0 Count and {{not_exist}} 0');
     });
   });
 
-  describe('histogram response', function() {
+  describe('histogram response', () => {
     var result;
 
-    beforeEach(function() {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -420,16 +420,16 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return table with byte and count', function() {
-      expect(result.data[0].rows.length).to.be(3);
+    it('should return table with byte and count', () => {
+      expect(result.data[0].rows.length).toBe(3);
       expect(result.data[0].columns).to.eql([{ text: 'bytes', filterable: true }, { text: 'Count' }]);
     });
   });
 
-  describe('with two filters agg', function() {
+  describe('with two filters agg', () => {
     var result;
 
-    beforeEach(function() {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -472,16 +472,16 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return 2 series', function() {
-      expect(result.data.length).to.be(2);
-      expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].target).to.be('@metric:cpu');
-      expect(result.data[1].target).to.be('@metric:logins.count');
+    it('should return 2 series', () => {
+      expect(result.data.length).toBe(2);
+      expect(result.data[0].datapoints.length).toBe(2);
+      expect(result.data[0].target).toBe('@metric:cpu');
+      expect(result.data[1].target).toBe('@metric:logins.count');
     });
   });
 
-  describe('with dropfirst and last aggregation', function() {
-    beforeEach(function() {
+  describe('with dropfirst and last aggregation', () => {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -528,14 +528,14 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should remove first and last value', function() {
-      expect(result.data.length).to.be(2);
-      expect(result.data[0].datapoints.length).to.be(1);
+    it('should remove first and last value', () => {
+      expect(result.data.length).toBe(2);
+      expect(result.data[0].datapoints.length).toBe(1);
     });
   });
 
-  describe('No group by time', function() {
-    beforeEach(function() {
+  describe('No group by time', () => {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -570,21 +570,21 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return table', function() {
-      expect(result.data.length).to.be(1);
-      expect(result.data[0].type).to.be('table');
-      expect(result.data[0].rows.length).to.be(2);
-      expect(result.data[0].rows[0][0]).to.be('server-1');
-      expect(result.data[0].rows[0][1]).to.be(1000);
-      expect(result.data[0].rows[0][2]).to.be(369);
+    it('should return table', () => {
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].type).toBe('table');
+      expect(result.data[0].rows.length).toBe(2);
+      expect(result.data[0].rows[0][0]).toBe('server-1');
+      expect(result.data[0].rows[0][1]).toBe(1000);
+      expect(result.data[0].rows[0][2]).toBe(369);
 
-      expect(result.data[0].rows[1][0]).to.be('server-2');
-      expect(result.data[0].rows[1][1]).to.be(2000);
+      expect(result.data[0].rows[1][0]).toBe('server-2');
+      expect(result.data[0].rows[1][1]).toBe(2000);
     });
   });
 
-  describe('Multiple metrics of same type', function() {
-    beforeEach(function() {
+  describe('Multiple metrics of same type', () => {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -615,15 +615,15 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should include field in metric name', function() {
-      expect(result.data[0].type).to.be('table');
-      expect(result.data[0].rows[0][1]).to.be(1000);
-      expect(result.data[0].rows[0][2]).to.be(3000);
+    it('should include field in metric name', () => {
+      expect(result.data[0].type).toBe('table');
+      expect(result.data[0].rows[0][1]).toBe(1000);
+      expect(result.data[0].rows[0][2]).toBe(3000);
     });
   });
 
-  describe('Raw documents query', function() {
-    beforeEach(function() {
+  describe('Raw documents query', () => {
+    beforeEach(() => {
       targets = [
         {
           refId: 'A',
@@ -657,13 +657,13 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return docs', function() {
-      expect(result.data.length).to.be(1);
-      expect(result.data[0].type).to.be('docs');
-      expect(result.data[0].total).to.be(100);
-      expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].datapoints[0].sourceProp).to.be('asd');
-      expect(result.data[0].datapoints[0].fieldProp).to.be('field');
+    it('should return docs', () => {
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].type).toBe('docs');
+      expect(result.data[0].total).toBe(100);
+      expect(result.data[0].datapoints.length).toBe(2);
+      expect(result.data[0].datapoints[0].sourceProp).toBe('asd');
+      expect(result.data[0].datapoints[0].fieldProp).toBe('field');
     });
   });
 });
