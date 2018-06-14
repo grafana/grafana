@@ -84,5 +84,13 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			res := part.Render(query, queryContext, "distinct(value)")
 			So(res, ShouldEqual, `count(distinct(value))`)
 		})
+
+		Convey("render mode", func() {
+			part, err := NewQueryPart("mode", []string{})
+			So(err, ShouldBeNil)
+
+			res := part.Render(query, queryContext, "value")
+			So(res, ShouldEqual, `mode(value)`)
+		})
 	})
 }
