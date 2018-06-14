@@ -56,7 +56,7 @@ class QueryRow extends PureComponent<any, any> {
             <i className="fa fa-minus" />
           </button>
         </div>
-        <div className="query-field-wrapper">
+        <div className="slate-query-field-wrapper">
           <QueryField
             initialQuery={edited ? null : query}
             portalPrefix="explore"
