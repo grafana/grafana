@@ -331,6 +331,27 @@ Content-Type: application/json
 {"message":"Organization updated"}
 ```
 
+## Delete Organisation
+
+`DELETE /api/orgs/:orgId`
+
+**Example Request**:
+
+```http
+DELETE /api/orgs/1 HTTP/1.1
+Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{"message":"Organization deleted"}
+```
+
 ## Get Users in Organisation
 
 `GET /api/orgs/:orgId/users`
