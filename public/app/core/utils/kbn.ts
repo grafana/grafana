@@ -575,7 +575,7 @@ kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m3');
 kbn.valueFormats.Nm3 = kbn.formatBuilders.fixedUnit('Nm3');
 kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm3');
 kbn.valueFormats.gallons = kbn.formatBuilders.fixedUnit('gal');
- 
+
 // Flow
 kbn.valueFormats.flowgpm = kbn.formatBuilders.fixedUnit('gpm');
 kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
