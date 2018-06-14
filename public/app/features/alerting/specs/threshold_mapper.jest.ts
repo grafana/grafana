@@ -18,9 +18,9 @@ describe('ThresholdMapper', () => {
       };
 
       var updated = ThresholdMapper.alertToGraphThresholds(panel);
-      expect(updated).to.be(true);
-      expect(panel.thresholds[0].op).to.be('gt');
-      expect(panel.thresholds[0].value).to.be(100);
+      expect(updated).toBe(true);
+      expect(panel.thresholds[0].op).toBe('gt');
+      expect(panel.thresholds[0].value).toBe(100);
     });
   });
 
@@ -39,12 +39,12 @@ describe('ThresholdMapper', () => {
       };
 
       var updated = ThresholdMapper.alertToGraphThresholds(panel);
-      expect(updated).to.be(true);
-      expect(panel.thresholds[0].op).to.be('lt');
-      expect(panel.thresholds[0].value).to.be(100);
+      expect(updated).toBe(true);
+      expect(panel.thresholds[0].op).toBe('lt');
+      expect(panel.thresholds[0].value).toBe(100);
 
-      expect(panel.thresholds[1].op).to.be('gt');
-      expect(panel.thresholds[1].value).to.be(200);
+      expect(panel.thresholds[1].op).toBe('gt');
+      expect(panel.thresholds[1].value).toBe(200);
     });
   });
 
@@ -63,12 +63,12 @@ describe('ThresholdMapper', () => {
       };
 
       var updated = ThresholdMapper.alertToGraphThresholds(panel);
-      expect(updated).to.be(true);
-      expect(panel.thresholds[0].op).to.be('gt');
-      expect(panel.thresholds[0].value).to.be(100);
+      expect(updated).toBe(true);
+      expect(panel.thresholds[0].op).toBe('gt');
+      expect(panel.thresholds[0].value).toBe(100);
 
-      expect(panel.thresholds[1].op).to.be('lt');
-      expect(panel.thresholds[1].value).to.be(200);
+      expect(panel.thresholds[1].op).toBe('lt');
+      expect(panel.thresholds[1].value).toBe(200);
     });
   });
 });
