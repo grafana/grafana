@@ -579,6 +579,8 @@ kbn.valueFormats.flowgpm = kbn.formatBuilders.fixedUnit('gpm');
 kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
 kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
+kbn.valueFormats.flowmlpm = kbn.formatBuilders.decimalSIPrefix('L', -1);
+kbn.valueFormats.flowlpm = kbn.formatBuilders.decimalSIPrefix('L');
 
 // Angle
 kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
@@ -1069,6 +1071,8 @@ kbn.getUnitFormats = function() {
         { text: 'Cubic meters/sec (cms)', value: 'flowcms' },
         { text: 'Cubic feet/sec (cfs)', value: 'flowcfs' },
         { text: 'Cubic feet/min (cfm)', value: 'flowcfm' },
+        { text: 'milliLitre/min (mL/min)', value: 'flowmlpm' },
+        { text: 'Litre/min (l/min)', value: 'flowlpm' },
       ],
     },
     {
