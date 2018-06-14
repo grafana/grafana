@@ -14,60 +14,60 @@ describe('given dashboard with repeated panels', () => {
 
   beforeEach(done => {
     dash = {
-      templating: { list: [] },
-      annotations: { list: [] },
+      templating: {
+        list: [
+          {
+            name: 'apps',
+            type: 'query',
+            datasource: 'gfdb',
+            current: { value: 'Asd', text: 'Asd' },
+            options: [{ value: 'Asd', text: 'Asd' }],
+          },
+          {
+            name: 'prefix',
+            type: 'constant',
+            current: { value: 'collectd', text: 'collectd' },
+            options: [],
+          },
+          {
+            name: 'ds',
+            type: 'datasource',
+            query: 'testdb',
+            current: { value: 'prod', text: 'prod' },
+            options: [],
+          },
+        ],
+      },
+      annotations: {
+        list: [
+          {
+            name: 'logs',
+            datasource: 'gfdb',
+          },
+        ],
+      },
+      panels: [
+        { id: 6, datasource: 'gfdb', type: 'graph' },
+        { id: 7 },
+        {
+          id: 8,
+          datasource: '-- Mixed --',
+          targets: [{ datasource: 'other' }],
+        },
+        { id: 9, datasource: '$ds' },
+        {
+          id: 2,
+          repeat: 'apps',
+          datasource: 'gfdb',
+          type: 'graph',
+        },
+        { id: 3, repeat: null, repeatPanelId: 2 },
+      ],
     };
 
     config.buildInfo = {
       version: '3.0.2',
     };
-
-    dash.templating.list.push({
-      name: 'apps',
-      type: 'query',
-      datasource: 'gfdb',
-      current: { value: 'Asd', text: 'Asd' },
-      options: [{ value: 'Asd', text: 'Asd' }],
-    });
-
-    dash.templating.list.push({
-      name: 'prefix',
-      type: 'constant',
-      current: { value: 'collectd', text: 'collectd' },
-      options: [],
-    });
-
-    dash.templating.list.push({
-      name: 'ds',
-      type: 'datasource',
-      query: 'testdb',
-      current: { value: 'prod', text: 'prod' },
-      options: [],
-    });
-
-    dash.annotations.list.push({
-      name: 'logs',
-      datasource: 'gfdb',
-    });
-
-    dash.panels = [
-      { id: 6, datasource: 'gfdb', type: 'graph' },
-      { id: 7 },
-      {
-        id: 8,
-        datasource: '-- Mixed --',
-        targets: [{ datasource: 'other' }],
-      },
-      { id: 9, datasource: '$ds' },
-    ];
-
-    dash.panels.push({
-      id: 2,
-      repeat: 'apps',
-      datasource: 'gfdb',
-      type: 'graph',
-    });
-    dash.panels.push({ id: 3, repeat: null, repeatPanelId: 2 });
 
     //Stubs test function calls
     var datasourceSrvStub = { get: jest.fn(arg => getStub(arg)) };
@@ -157,38 +157,38 @@ describe('given dashboard with repeated panels', () => {
   });
 });
 
+// Stub responses
+var stubs = [];
+stubs['gfdb'] = {
+  name: 'gfdb',
+  meta: { id: 'testdb', info: { version: '1.2.1' }, name: 'TestDB' },
+};
+
+stubs['other'] = {
+  name: 'other',
+  meta: { id: 'other', info: { version: '1.2.1' }, name: 'OtherDB' },
+};
+
+stubs['-- Mixed --'] = {
+  name: 'mixed',
+  meta: {
+    id: 'mixed',
+    info: { version: '1.2.1' },
+    name: 'Mixed',
+    builtIn: true,
+  },
+};
+
+stubs['-- Grafana --'] = {
+  name: '-- Grafana --',
+  meta: {
+    id: 'grafana',
+    info: { version: '1.2.1' },
+    name: 'grafana',
+    builtIn: true,
+  },
+};
+
 function getStub(arg) {
-  // Stub responses
-  var stubs = [];
-  stubs['gfdb'] = {
-    name: 'gfdb',
-    meta: { id: 'testdb', info: { version: '1.2.1' }, name: 'TestDB' },
-  };
-
-  stubs['other'] = {
-    name: 'other',
-    meta: { id: 'other', info: { version: '1.2.1' }, name: 'OtherDB' },
-  };
-
-  stubs['-- Mixed --'] = {
-    name: 'mixed',
-    meta: {
-      id: 'mixed',
-      info: { version: '1.2.1' },
-      name: 'Mixed',
-      builtIn: true,
-    },
-  };
-
-  stubs['-- Grafana --'] = {
-    name: '-- Grafana --',
-    meta: {
-      id: 'grafana',
-      info: { version: '1.2.1' },
-      name: 'grafana',
-      builtIn: true,
-    },
-  };
-
   return Promise.resolve(stubs[arg]);
 }
