@@ -1,4 +1,3 @@
-import { describe, beforeEach, it, expect } from 'test/lib/common';
 import { ElasticResponse } from '../elastic_response';
 
 describe('ElasticResponse', () => {
@@ -422,7 +421,7 @@ describe('ElasticResponse', () => {
 
     it('should return table with byte and count', () => {
       expect(result.data[0].rows.length).toBe(3);
-      expect(result.data[0].columns).to.eql([{ text: 'bytes', filterable: true }, { text: 'Count' }]);
+      expect(result.data[0].columns).toEqual([{ text: 'bytes', filterable: true }, { text: 'Count' }]);
     });
   });
 
