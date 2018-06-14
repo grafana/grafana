@@ -135,7 +135,7 @@ class QueryField extends React.Component<any, any> {
     if (!this.state.metrics) {
       return;
     }
-    setPrismTokens(this.props.language, 'metrics', this.state.metrics);
+    setPrismTokens(this.props.prismLanguage, 'metrics', this.state.metrics);
 
     // Trigger re-render
     window.requestAnimationFrame(() => {
