@@ -17,6 +17,10 @@ import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 
+// Bleading edge plugin developers
+import React from 'react';
+import ReactDOM from 'react-dom';
+
 // rxjs
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -68,6 +72,10 @@ exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
+
+// React tools
+exposeToPlugin('react', React);
+exposeToPlugin('react-dom', ReactDOM);
 
 // backward compatible path
 exposeToPlugin('vendor/npm/rxjs/Rx', {
