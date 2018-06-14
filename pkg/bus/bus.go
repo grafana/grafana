@@ -220,5 +220,5 @@ func ClearBusHandlers() {
 type noopTransactionManager struct{}
 
 func (*noopTransactionManager) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return nil
+	return fn(ctx)
 }
