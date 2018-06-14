@@ -1,5 +1,3 @@
-import { describe, it, expect } from '../../../../../test/lib/common';
-
 import angular from 'angular';
 import TimeSeries from 'app/core/time_series2';
 import { ThresholdManager } from '../threshold_manager';
@@ -38,16 +36,16 @@ describe('ThresholdManager', function() {
       it('should add fill for threshold with fill: true', function() {
         var markings = ctx.options.grid.markings;
 
-        expect(markings[0].yaxis.from).to.be(300);
-        expect(markings[0].yaxis.to).to.be(Infinity);
-        expect(markings[0].color).to.be('rgba(234, 112, 112, 0.12)');
+        expect(markings[0].yaxis.from).toBe(300);
+        expect(markings[0].yaxis.to).toBe(Infinity);
+        expect(markings[0].color).toBe('rgba(234, 112, 112, 0.12)');
       });
 
       it('should add line', function() {
         var markings = ctx.options.grid.markings;
-        expect(markings[1].yaxis.from).to.be(300);
-        expect(markings[1].yaxis.to).to.be(300);
-        expect(markings[1].color).to.be('rgba(237, 46, 24, 0.60)');
+        expect(markings[1].yaxis.from).toBe(300);
+        expect(markings[1].yaxis.to).toBe(300);
+        expect(markings[1].color).toBe('rgba(237, 46, 24, 0.60)');
       });
     });
 
@@ -59,14 +57,14 @@ describe('ThresholdManager', function() {
 
       it('should add fill for first thresholds to next threshold', function() {
         var markings = ctx.options.grid.markings;
-        expect(markings[0].yaxis.from).to.be(200);
-        expect(markings[0].yaxis.to).to.be(300);
+        expect(markings[0].yaxis.from).toBe(200);
+        expect(markings[0].yaxis.to).toBe(300);
       });
 
       it('should add fill for last thresholds to infinity', function() {
         var markings = ctx.options.grid.markings;
-        expect(markings[1].yaxis.from).to.be(300);
-        expect(markings[1].yaxis.to).to.be(Infinity);
+        expect(markings[1].yaxis.from).toBe(300);
+        expect(markings[1].yaxis.to).toBe(Infinity);
       });
     });
 
@@ -78,14 +76,14 @@ describe('ThresholdManager', function() {
 
       it('should add fill for first thresholds to next threshold', function() {
         var markings = ctx.options.grid.markings;
-        expect(markings[0].yaxis.from).to.be(300);
-        expect(markings[0].yaxis.to).to.be(200);
+        expect(markings[0].yaxis.from).toBe(300);
+        expect(markings[0].yaxis.to).toBe(200);
       });
 
       it('should add fill for last thresholds to itself', function() {
         var markings = ctx.options.grid.markings;
-        expect(markings[1].yaxis.from).to.be(200);
-        expect(markings[1].yaxis.to).to.be(200);
+        expect(markings[1].yaxis.from).toBe(200);
+        expect(markings[1].yaxis.to).toBe(200);
       });
     });
 
@@ -97,14 +95,14 @@ describe('ThresholdManager', function() {
 
       it('should add fill for first thresholds to next threshold', function() {
         var markings = ctx.options.grid.markings;
-        expect(markings[0].yaxis.from).to.be(300);
-        expect(markings[0].yaxis.to).to.be(Infinity);
+        expect(markings[0].yaxis.from).toBe(300);
+        expect(markings[0].yaxis.to).toBe(Infinity);
       });
 
       it('should add fill for last thresholds to itself', function() {
         var markings = ctx.options.grid.markings;
-        expect(markings[1].yaxis.from).to.be(200);
-        expect(markings[1].yaxis.to).to.be(-Infinity);
+        expect(markings[1].yaxis.from).toBe(200);
+        expect(markings[1].yaxis.to).toBe(-Infinity);
       });
     });
 
@@ -130,12 +128,12 @@ describe('ThresholdManager', function() {
 
       it('should add first threshold for left axis', function() {
         var markings = ctx.options.grid.markings;
-        expect(markings[0].yaxis.from).to.be(100);
+        expect(markings[0].yaxis.from).toBe(100);
       });
 
       it('should add second threshold for right axis', function() {
         var markings = ctx.options.grid.markings;
-        expect(markings[1].y2axis.from).to.be(200);
+        expect(markings[1].y2axis.from).toBe(200);
       });
     });
   });
