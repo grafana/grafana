@@ -69,43 +69,8 @@ describe('given dashboard with repeated panels', () => {
     });
     dash.panels.push({ id: 3, repeat: null, repeatPanelId: 2 });
 
-    //Mock test function calls
-    var datasourceSrvStub = {
-      get: jest.fn(arg => {
-        if (arg === 'gfdb') {
-          return Promise.resolve({
-            name: 'gfdb',
-            meta: { id: 'testdb', info: { version: '1.2.1' }, name: 'TestDB' },
-          });
-        } else if (arg === 'other') {
-          return Promise.resolve({
-            name: 'other',
-            meta: { id: 'other', info: { version: '1.2.1' }, name: 'OtherDB' },
-          });
-        } else if (arg === '-- Mixed --') {
-          return Promise.resolve({
-            name: 'mixed',
-            meta: {
-              id: 'mixed',
-              info: { version: '1.2.1' },
-              name: 'Mixed',
-              builtIn: true,
-            },
-          });
-        } else if (arg === '-- Grafana --') {
-          return Promise.resolve({
-            name: '-- Grafana --',
-            meta: {
-              id: 'grafana',
-              info: { version: '1.2.1' },
-              name: 'grafana',
-              builtIn: true,
-            },
-          });
-        }
-        return 0;
-      }),
-    };
+    //Stubs test function calls
+    var datasourceSrvStub = { get: jest.fn(arg => getStub(arg)) };
 
     config.panels['graph'] = {
       id: 'graph',
@@ -191,3 +156,39 @@ describe('given dashboard with repeated panels', () => {
     expect(variable.options[0].value).toBe('${VAR_PREFIX}');
   });
 });
+
+function getStub(arg) {
+  // Stub responses
+  var stubs = [];
+  stubs['gfdb'] = {
+    name: 'gfdb',
+    meta: { id: 'testdb', info: { version: '1.2.1' }, name: 'TestDB' },
+  };
+
+  stubs['other'] = {
+    name: 'other',
+    meta: { id: 'other', info: { version: '1.2.1' }, name: 'OtherDB' },
+  };
+
+  stubs['-- Mixed --'] = {
+    name: 'mixed',
+    meta: {
+      id: 'mixed',
+      info: { version: '1.2.1' },
+      name: 'Mixed',
+      builtIn: true,
+    },
+  };
+
+  stubs['-- Grafana --'] = {
+    name: '-- Grafana --',
+    meta: {
+      id: 'grafana',
+      info: { version: '1.2.1' },
+      name: 'grafana',
+      builtIn: true,
+    },
+  };
+
+  return Promise.resolve(stubs[arg]);
+}
