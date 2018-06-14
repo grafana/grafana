@@ -16,7 +16,7 @@ func TestCleanUpTmpFiles(t *testing.T) {
 		}
 		now := time.Now()
 		secondAgo := now.Add(-time.Second)
-		dayAgo := now.Add(-time.Second * 3600 * 24 * 7)
+		twoDaysAgo := now.Add(-time.Second * 3600 * 24 * 2)
 		weekAgo := now.Add(-time.Second * 3600 * 24 * 7)
 
 		Convey("Should not cleanup recent files", func() {
@@ -24,7 +24,7 @@ func TestCleanUpTmpFiles(t *testing.T) {
 		})
 
 		Convey("Should cleanup older files", func() {
-			So(service.shouldCleanupTempFile(dayAgo, now), ShouldBeTrue)
+			So(service.shouldCleanupTempFile(twoDaysAgo, now), ShouldBeTrue)
 		})
 
 		Convey("After increasing temporary files lifetime, older files should be kept", func() {
