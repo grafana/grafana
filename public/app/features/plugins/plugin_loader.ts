@@ -7,7 +7,6 @@ import angular from 'angular';
 import jquery from 'jquery';
 
 // Experimental module exports
-import papaparse from 'papaparse';
 import prismjs from 'prismjs';
 import slate from 'slate';
 import slateReact from 'slate-react';
@@ -86,7 +85,6 @@ exposeToPlugin('slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
-exposeToPlugin('papaparse', papaparse);
 
 // backward compatible path
 exposeToPlugin('vendor/npm/rxjs/Rx', {
