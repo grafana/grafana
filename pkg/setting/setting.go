@@ -641,7 +641,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.ImagesDir = filepath.Join(DataPath, "png")
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(
-		time.Duration(time.Second*3600*24),
+		time.Duration(time.Second * 3600 * 24),
 	)
 
 	analytics := iniFile.Section("analytics")

@@ -1,10 +1,9 @@
 package cleanup
 
 import (
-	"testing"
-
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
+	"testing"
 	"time"
 )
 
@@ -21,21 +20,21 @@ func TestCleanUpTmpFiles(t *testing.T) {
 		weekAgo := now.Add(-time.Second * 3600 * 24 * 7)
 
 		Convey("Should not cleanup recent files", func() {
-			So(service.shouldCleanupTempFile(secondAgo, now), ShouldBeFalse);
+			So(service.shouldCleanupTempFile(secondAgo, now), ShouldBeFalse)
 		})
 
 		Convey("Should cleanup older files", func() {
-			So(service.shouldCleanupTempFile(dayAgo, now), ShouldBeTrue);
+			So(service.shouldCleanupTempFile(dayAgo, now), ShouldBeTrue)
 		})
 
 		Convey("After increasing temporary files lifetime, older files should be kept", func() {
 			cfg.TempDataLifetime, _ = time.ParseDuration("1000h")
-			So(service.shouldCleanupTempFile(weekAgo, now), ShouldBeFalse);
+			So(service.shouldCleanupTempFile(weekAgo, now), ShouldBeFalse)
 		})
 
 		Convey("If lifetime is 0, files should never be cleaned up", func() {
 			cfg.TempDataLifetime = 0
-			So(service.shouldCleanupTempFile(weekAgo, now), ShouldBeFalse);
+			So(service.shouldCleanupTempFile(weekAgo, now), ShouldBeFalse)
 		})
 	})
 
