@@ -25,7 +25,7 @@ export class BarStat extends React.Component<IProps, any> {
   }
 
   render() {
-    console.log(this.props);
+    // console.log(this.props);
     const stat = this.props.stat;
     const valueColor = this.props.color || DEFAULT_COLOR;
     const bgColor = getBGColor(valueColor);

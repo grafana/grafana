@@ -6,6 +6,7 @@ import { BarStat } from './BarStat';
 export interface IProps {
   stats: any[];
   options: any;
+  width: number;
 }
 
 export class MultiStat extends React.Component<IProps, any> {
@@ -20,26 +21,24 @@ export class MultiStat extends React.Component<IProps, any> {
   }
 
   render() {
-    const stats = this.props.stats || [];
-    let barWidths = _.map(stats, () => null);
     const thresholds = getThresholds(this.props.options.thresholds);
     const colorMap = this.props.options.colors;
+    const stats = this.props.stats || [];
+    let barWidths = _.map(stats, () => null);
+    // console.log(this.props);
 
-    console.log(this.props);
-    if (this.rootElem) {
-      const rootElemWidth = this.rootElem.clientWidth;
-      const values = _.map(stats, 'value');
-      const maxVal = _.max(values);
-      const minVal = _.min(values);
-      const delta = maxVal - minVal;
-      const minWidth = rootElemWidth * 0.3;
-      const maxWidth = rootElemWidth * 0.9;
-      const deltaWidth = maxWidth - minWidth;
-      _.forEach(values, (v, i) => {
-        let width = (v - minVal) / delta * deltaWidth + minWidth;
-        barWidths[i] = Math.max(minWidth, width);
-      });
-    }
+    const rootElemWidth = this.props.width;
+    const values = _.map(stats, 'value');
+    const maxVal = _.max(values);
+    const minVal = _.min(values);
+    const delta = maxVal - minVal;
+    const minWidth = rootElemWidth * 0.3;
+    const maxWidth = rootElemWidth * 0.9;
+    const deltaWidth = maxWidth - minWidth;
+    _.forEach(values, (v, i) => {
+      let width = (v - minVal) / delta * deltaWidth + minWidth;
+      barWidths[i] = Math.max(minWidth, width);
+    });
 
     const statElements = stats.map((stat, index) => {
       const color = getColorForValue(stat.value, thresholds, colorMap);
@@ -71,4 +70,5 @@ function getColorForValue(value: number, thresholds: number[], colorMap: string[
 react2AngularDirective('multiStat', MultiStat, [
   ['stats', { watchDepth: 'reference' }],
   ['options', { watchDepth: 'reference' }],
+  ['width', { watchDepth: 'reference' }],
 ]);

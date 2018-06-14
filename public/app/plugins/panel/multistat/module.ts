@@ -1,5 +1,8 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { MultiStat } from './components/MultiStat';
 import TimeSeries from 'app/core/time_series2';
 import { getDecimalsForValue } from 'app/core/utils/ticks';
 import defaults from './defaults';
@@ -170,6 +173,39 @@ class MultiStatCtrl extends MetricsPanelCtrl {
   }
 
   setValueMapping(data) {}
+
+  link(scope, elem, attrs, ctrl) {
+    const multistatElem = elem.find('.multistat-panel');
+
+    function render() {
+      if (!ctrl.data) {
+        return;
+      }
+
+      scope.width = multistatElem.width();
+      renderMultiStatComponent();
+    }
+
+    function renderMultiStatComponent() {
+      const multistatProps = {
+        stats: ctrl.data,
+        options: ctrl.panel,
+        width: scope.width,
+      };
+      const multistatReactElem = React.createElement(MultiStat, multistatProps);
+      ReactDOM.render(multistatReactElem, multistatElem[0]);
+    }
+
+    this.events.on('render', function() {
+      render();
+      ctrl.renderingCompleted();
+    });
+
+    // cleanup when scope is destroyed
+    scope.$on('$destroy', () => {
+      ReactDOM.unmountComponentAtNode(multistatElem[0]);
+    });
+  }
 }
 
 export { MultiStatCtrl, MultiStatCtrl as PanelCtrl };
