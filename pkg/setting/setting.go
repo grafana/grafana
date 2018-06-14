@@ -640,9 +640,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.RendererUrl = renderSec.Key("server_url").String()
 	cfg.ImagesDir = filepath.Join(DataPath, "png")
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
-	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(
-		time.Duration(time.Second * 3600 * 24),
-	)
+	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
