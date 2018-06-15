@@ -95,7 +95,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 				NotifierId: notifierId,
 				OrgId:      evalContext.Rule.OrgId,
 			}
-			if err := bus.Dispatch(cmd); err != nil {
+			if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 				handler.log.Error("Failed to clean up old notification records", "notifier", notifierId, "alert", evalContext.Rule.Id, "Error", err)
 			}
 		}

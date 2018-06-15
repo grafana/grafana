@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -17,9 +18,9 @@ func init() {
 	bus.AddHandler("sql", DeleteAlertNotification)
 	bus.AddHandler("sql", GetAlertNotificationsToSend)
 	bus.AddHandler("sql", GetAllAlertNotifications)
-	bus.AddHandler("sql", RecordNotificationJournal)
-	bus.AddHandler("sql", GetLatestNotification)
-	bus.AddHandler("sql", CleanNotificationJournal)
+	bus.AddHandlerCtx("sql", RecordNotificationJournal)
+	bus.AddHandlerCtx("sql", GetLatestNotification)
+	bus.AddHandlerCtx("sql", CleanNotificationJournal)
 }
 
 func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
@@ -228,8 +229,8 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 	})
 }
 
-func RecordNotificationJournal(cmd *m.RecordNotificationJournalCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func RecordNotificationJournal(ctx context.Context, cmd *m.RecordNotificationJournalCommand) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		journalEntry := &m.AlertNotificationJournal{
 			OrgId:      cmd.OrgId,
 			AlertId:    cmd.AlertId,
@@ -246,8 +247,8 @@ func RecordNotificationJournal(cmd *m.RecordNotificationJournalCommand) error {
 	})
 }
 
-func GetLatestNotification(cmd *m.GetLatestNotificationQuery) error {
-	return inTransaction(func(sess *DBSession) error {
+func GetLatestNotification(ctx context.Context, cmd *m.GetLatestNotificationQuery) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		notificationJournal := &m.AlertNotificationJournal{}
 		_, err := sess.Desc("alert_notification_journal.sent_at").Limit(1).Where("alert_notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?", cmd.OrgId, cmd.AlertId, cmd.NotifierId).Get(notificationJournal)
 		if err != nil {
@@ -259,8 +260,8 @@ func GetLatestNotification(cmd *m.GetLatestNotificationQuery) error {
 	})
 }
 
-func CleanNotificationJournal(cmd *m.CleanNotificationJournalCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func CleanNotificationJournal(ctx context.Context, cmd *m.CleanNotificationJournalCommand) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification_journal WHERE notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?"
 		_, err := sess.Exec(sql, cmd.OrgId, cmd.AlertId, cmd.NotifierId)
 		return err
