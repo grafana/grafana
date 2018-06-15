@@ -16,6 +16,7 @@ describe('timeSrv', function() {
     cancel: jest.fn(),
     cancelAll: jest.fn(),
   };
+
   var location = {
     search: jest.fn(() => ({})),
   };
