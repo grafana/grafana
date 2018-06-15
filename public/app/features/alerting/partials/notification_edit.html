@@ -39,6 +39,11 @@
           checked="ctrl.model.sendReminder"
           tooltip="Choose to either notify on state change or at every interval">
       </gf-form-switch>
+      <div class="gf-form">
+        <span class="alert alert-info width-30" ng-if="ctrl.model.sendReminder">
+          Alert reminders are sent after rules are evaluated. Therefore the alert rule interval has to be lower than the reminder frequency
+        </span>
+      </div>
       <div class="gf-form-inline">
         <div class="gf-form">
           <span class="gf-form-label width-12" ng-if="ctrl.model.sendReminder">Send reminder every</span>
@@ -50,8 +55,8 @@
             ng-if="ctrl.model.sendReminder"
             spellcheck='false'
             placeholder='15m'></input>
-          <info-popover mode="right-absolute">
-            Specify at what interval you want reminder's about this alerting beeing triggered.
+          <info-popover mode="right-absolute" ng-if="ctrl.model.sendReminder">
+            Specify at what interval you want reminder's about this alerting being triggered.
             Ex. 60s, 10m, 30m, 1h
           </info-popover>
         </div>
