@@ -8,7 +8,6 @@ export class AlertNotificationsListCtrl {
   constructor(private backendSrv, navModelSrv) {
     this.loadNotifications();
     this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
-    this.asd = 1;
   }
 
   loadNotifications() {
