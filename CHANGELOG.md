@@ -2,6 +2,21 @@
 
 ### New Features
 
+* **Dashboard**: Import dashboard to folder [#10796](https://github.com/grafana/grafana/issues/10796)
+
+### Minor
+
+* **Dashboard**: Fix so panel titles doesn't wrap [#11074](https://github.com/grafana/grafana/issues/11074)
+* **Dashboard**: Prevent double-click when saving dashboard [#11963](https://github.com/grafana/grafana/issues/11963)
+* **Dashboard**: AutoFocus the add-panel search filter [#12189](https://github.com/grafana/grafana/pull/12189) thx [@ryantxu](https://github.com/ryantxu)
+* **Units**: W/m2 (energy), l/h (flow) and kPa (pressure) [#11233](https://github.com/grafana/grafana/pull/11233), thx [@flopp999](https://github.com/flopp999)
+* **Units**: Litre/min (flow) and milliLitre/min (flow) [#12282](https://github.com/grafana/grafana/pull/12282), thx [@flopp999](https://github.com/flopp999)
+* **Alerting**: Fix mobile notifications for Microsoft Teams alert notifier [#11484](https://github.com/grafana/grafana/pull/11484), thx [@manacker](https://github.com/manacker)
+
+# 5.2.0-beta1 (2018-06-05)
+
+### New Features
+
 * **Elasticsearch**: Alerting support [#5893](https://github.com/grafana/grafana/issues/5893), thx [@WPH95](https://github.com/WPH95)
 * **Login**: Change admin password after first login [#11882](https://github.com/grafana/grafana/issues/11882)
 * **Alert list panel**: Updated to support filtering alerts by name, dashboard title, folder, tags [#11500](https://github.com/grafana/grafana/issues/11500), [#8168](https://github.com/grafana/grafana/issues/8168), [#6541](https://github.com/grafana/grafana/issues/6541)
@@ -35,6 +50,8 @@
 * **Alert list panel**: Show alerts for user with viewer role [#11167](https://github.com/grafana/grafana/issues/11167)
 * **Provisioning**: Verify checksum of dashboards before updating to reduce load on database [#11670](https://github.com/grafana/grafana/issues/11670)
 * **Provisioning**: Support symlinked files in dashboard provisioning config files [#11958](https://github.com/grafana/grafana/issues/11958)
+* **Dashboard list panel**: Search dashboards by folder [#11525](https://github.com/grafana/grafana/issues/11525)
+* **Sidenav**: Always show server admin link in sidenav if grafana admin [#11657](https://github.com/grafana/grafana/issues/11657)
 
 # 5.1.3 (2018-05-16)
 

@@ -13,6 +13,10 @@
       <i class="fa fa-plus"></i>
       Folder
     </a>
+    <a class="btn btn-success" href="{{ctrl.importDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
+      <i class="fa fa-plus"></i>
+      Import
+    </a>
   </div>
 
   <div class="page-action-bar page-action-bar--narrow" ng-show="ctrl.hasFilters">

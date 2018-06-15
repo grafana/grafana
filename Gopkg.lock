@@ -226,7 +226,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  branch = "renderer"
+  branch = "master"
   name = "github.com/grafana/grafana-plugin-model"
   packages = [
     "go/datasource",
@@ -331,8 +331,8 @@
 [[projects]]
   name = "github.com/mattn/go-sqlite3"
   packages = ["."]
-  revision = "6c771bb9887719704b210e87e934f08be014bdb1"
-  version = "v1.6.0"
+  revision = "323a32be5a2421b8c7087225079c6c900ec397cd"
+  version = "v1.7.0"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -670,6 +670,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6c7ae4bcbe7fa4430d3bdbf204df1b7c59cba88151fbcefa167ce15e6351b6d3"
+  inputs-digest = "85cc057e0cc074ab5b43bd620772d63d51e07b04e8782fcfe55e6929d2fc40f7"
   solver-name = "gps-cdcl"
   solver-version = 1

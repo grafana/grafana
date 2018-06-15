@@ -30,7 +30,7 @@
         </div>
       </div>
       <div class="gf-form">
-        <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showAccessHelp = !ctrl.showAccessHelp">
+        <label class="gf-form-label query-keyword pointer" ng-click="toggleAccessHelp()">
           Help&nbsp;
           <i class="fa fa-caret-down" ng-show="ctrl.showAccessHelp"></i>
           <i class="fa fa-caret-right" ng-hide="ctrl.showAccessHelp">&nbsp;</i>
@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <div class="alert alert-info" ng-show="ctrl.showAccessHelp">
+    <div class="alert alert-info" ng-show="showAccessHelp">
       <div class="alert-body">
         <p>
           Access mode controls how requests to the data source will be handled.

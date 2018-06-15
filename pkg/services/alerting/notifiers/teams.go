@@ -41,10 +41,8 @@ func NewTeamsNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 
 type TeamsNotifier struct {
 	NotifierBase
-	Url       string
-	Recipient string
-	Mention   string
-	log       log.Logger
+	Url string
+	log log.Logger
 }
 
 func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -75,17 +73,17 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	message := this.Mention
-	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
-		message += " " + evalContext.Rule.Message
-	} else {
-		message += " " // summary must not be empty
+	message := ""
+	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
+		message = evalContext.Rule.Message
 	}
 
 	body := map[string]interface{}{
-		"@type":      "MessageCard",
-		"@context":   "http://schema.org/extensions",
-		"summary":    message,
+		"@type":    "MessageCard",
+		"@context": "http://schema.org/extensions",
+		// summary MUST not be empty or the webhook request fails
+		// summary SHOULD contain some meaningful information, since it is used for mobile notifications
+		"summary":    evalContext.GetNotificationTitle(),
 		"title":      evalContext.GetNotificationTitle(),
 		"themeColor": evalContext.GetStateModel().Color,
 		"sections": []map[string]interface{}{

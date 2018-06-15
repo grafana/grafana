@@ -199,7 +199,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       body.mousemove(userActivityDetected);
       body.keydown(userActivityDetected);
       // set useCapture = true to catch event here
-      document.addEventListener('wheel', userActivityDetected, true);
+      document.addEventListener('wheel', userActivityDetected, { capture: true, passive: true });
       // treat tab change as activity
       document.addEventListener('visibilitychange', userActivityDetected);
 
