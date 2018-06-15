@@ -49,6 +49,11 @@ $ docker run \
   grafana/grafana:5.1.0
 ```
 
+## Running of the master branch
+
+For every successful commit we publish a Grafana container to [`grafana/grafana`](https://hub.docker.com/r/grafana/grafana/tags/) and [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags/). In `grafana/grafana` container we will always overwrite the `master` tag with the latest version. In `grafana/grafana-dev` we will include
+the git commit in the tag. If you run Grafana master in production we **strongly** recommend that you use the later since different machines might run different version of grafana if they pull the master tag at different times. 
+
 ## Installing Plugins for Grafana
 
 Pass the plugins you want installed to docker with the `GF_INSTALL_PLUGINS` environment variable as a comma separated list. This will pass each plugin name to `grafana-cli plugins install ${plugin}` and install them when Grafana starts.
