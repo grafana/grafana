@@ -78,6 +78,10 @@ func (n *NotifierBase) ShouldNotify(c *alerting.EvalContext) bool {
 		return false
 	}
 
+	// this currently serves two purposes.
+	// 1. make sure failed notifications try again
+	// 2. make sure we send notifications if no previous exist
+	// this should be refactored //Carl Bergquist
 	if !cmd.Result.Success {
 		return true
 	}

@@ -262,7 +262,7 @@ func GetLatestNotification(ctx context.Context, cmd *m.GetLatestNotificationQuer
 
 func CleanNotificationJournal(ctx context.Context, cmd *m.CleanNotificationJournalCommand) error {
 	return inTransactionCtx(ctx, func(sess *DBSession) error {
-		sql := "DELETE FROM alert_notification_journal WHERE notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?"
+		sql := "DELETE FROM alert_notification_journal WHERE alert_notification_journal.org_id = ? AND alert_notification_journal.alert_id = ? AND alert_notification_journal.notifier_id = ?"
 		_, err := sess.Exec(sql, cmd.OrgId, cmd.AlertId, cmd.NotifierId)
 		return err
 	})
