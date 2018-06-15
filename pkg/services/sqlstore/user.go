@@ -82,7 +82,7 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error
 }
 
 func CreateUser(ctx context.Context, cmd *m.CreateUserCommand) error {
-	return inTransactionWithRetryCtx(ctx, func(sess *DBSession) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		orgId, err := getOrgIdForNewUser(cmd, sess)
 		if err != nil {
 			return err
@@ -152,7 +152,7 @@ func CreateUser(ctx context.Context, cmd *m.CreateUserCommand) error {
 		}
 
 		return nil
-	}, 0)
+	})
 }
 
 func GetUserById(query *m.GetUserByIdQuery) error {

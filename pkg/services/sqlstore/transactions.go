@@ -100,3 +100,7 @@ func inTransactionWithRetryCtx(ctx context.Context, callback dbTransactionFunc, 
 func inTransaction(callback dbTransactionFunc) error {
 	return inTransactionWithRetry(callback, 0)
 }
+
+func inTransactionCtx(ctx context.Context, callback dbTransactionFunc) error {
+	return inTransactionWithRetryCtx(ctx, callback, 0)
+}
