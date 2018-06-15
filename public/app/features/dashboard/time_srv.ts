@@ -231,3 +231,4 @@ class TimeSrv {
 }
 
 coreModule.service('timeSrv', TimeSrv);
+export { TimeSrv };
