@@ -65,8 +65,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			State: tc.newState,
 		})
 		evalContext.Rule.State = tc.prevState
-		timeNow := time.Now()
-		if defaultShouldNotify(evalContext, true, 0, &timeNow) != tc.expected {
+		if defaultShouldNotify(evalContext, true, 0, time.Now()) != tc.expected {
 			t.Errorf("failed %s. expected %+v to return %v", tc.name, tc, tc.expected)
 		}
 	}

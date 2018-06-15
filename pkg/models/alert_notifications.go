@@ -80,7 +80,7 @@ type AlertNotificationJournal struct {
 	OrgId      int64
 	AlertId    int64
 	NotifierId int64
-	SentAt     time.Time
+	SentAt     int64
 	Success    bool
 }
 
@@ -88,7 +88,7 @@ type RecordNotificationJournalCommand struct {
 	OrgId      int64
 	AlertId    int64
 	NotifierId int64
-	SentAt     time.Time
+	SentAt     int64
 	Success    bool
 }
 

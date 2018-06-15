@@ -74,24 +74,6 @@ func addAlertMigrations(mg *Migrator) {
 
 	mg.AddMigration("add index alert_notification org_id & name", NewAddIndexMigration(alert_notification, alert_notification.Indices[0]))
 
-	notification_journal := Table{
-		Name: "alert_notification_journal",
-		Columns: []*Column{
-			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
-			{Name: "notifier_id", Type: DB_BigInt, Nullable: false},
-			{Name: "sent_at", Type: DB_DateTime, Nullable: false},
-			{Name: "success", Type: DB_Bool, Nullable: false},
-		},
-		Indices: []*Index{
-			{Cols: []string{"org_id", "alert_id", "notifier_id"}, Type: IndexType},
-		},
-	}
-
-	mg.AddMigration("create notification_journal table v1", NewAddTableMigration(notification_journal))
-	mg.AddMigration("add index notification_journal org_id & alert_id & notifier_id", NewAddIndexMigration(notification_journal, notification_journal.Indices[0]))
-
 	mg.AddMigration("Update alert table charset", NewTableCharsetMigration("alert", []*Column{
 		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 		{Name: "message", Type: DB_Text, Nullable: false},
@@ -107,4 +89,22 @@ func addAlertMigrations(mg *Migrator) {
 		{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
 		{Name: "settings", Type: DB_Text, Nullable: false},
 	}))
+
+	notification_journal := Table{
+		Name: "alert_notification_journal",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
+			{Name: "notifier_id", Type: DB_BigInt, Nullable: false},
+			{Name: "sent_at", Type: DB_BigInt, Nullable: false},
+			{Name: "success", Type: DB_Bool, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"org_id", "alert_id", "notifier_id"}, Type: IndexType},
+		},
+	}
+
+	mg.AddMigration("create notification_journal table v1", NewAddTableMigration(notification_journal))
+	mg.AddMigration("add index notification_journal org_id & alert_id & notifier_id", NewAddIndexMigration(notification_journal, notification_journal.Indices[0]))
 }

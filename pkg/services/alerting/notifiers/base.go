@@ -41,14 +41,14 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	}
 }
 
-func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequency time.Duration, lastNotify *time.Time) bool {
+func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequency time.Duration, lastNotify time.Time) bool {
 	// Only notify on state change.
 	if context.PrevAlertState == context.Rule.State && !sendReminder {
 		return false
 	}
 
 	// Do not notify if interval has not elapsed
-	if sendReminder && lastNotify != nil && lastNotify.Add(frequency).After(time.Now()) {
+	if sendReminder && !lastNotify.IsZero() && lastNotify.Add(frequency).After(time.Now()) {
 		return false
 	}
 
@@ -86,7 +86,7 @@ func (n *NotifierBase) ShouldNotify(c *alerting.EvalContext) bool {
 		return true
 	}
 
-	return defaultShouldNotify(c, n.SendReminder, n.Frequency, &cmd.Result.SentAt)
+	return defaultShouldNotify(c, n.SendReminder, n.Frequency, time.Unix(cmd.Result.SentAt, 0))
 }
 
 func (n *NotifierBase) GetType() string {

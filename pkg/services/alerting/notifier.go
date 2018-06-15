@@ -87,7 +87,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 					OrgId:      evalContext.Rule.OrgId,
 					AlertId:    evalContext.Rule.Id,
 					NotifierId: not.GetNotifierId(),
-					SentAt:     time.Now(),
+					SentAt:     time.Now().Unix(),
 					Success:    success,
 				}
 
