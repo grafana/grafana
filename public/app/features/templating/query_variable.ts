@@ -22,6 +22,7 @@ export class QueryVariable implements Variable {
   tagsQuery: string;
   tagValuesQuery: string;
   tags: any[];
+  removeFromUrl: number;
 
   defaults = {
     type: 'query',
@@ -42,6 +43,7 @@ export class QueryVariable implements Variable {
     useTags: false,
     tagsQuery: '',
     tagValuesQuery: '',
+    removeFromUrl: 0,
   };
 
   /** @ngInject **/

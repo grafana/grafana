@@ -250,9 +250,13 @@ export class TemplateSrv {
   fillVariableValuesForUrl(params, scopedVars) {
     _.each(this.variables, function(variable) {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
-        params['var-' + variable.name] = scopedVars[variable.name].value;
+        if (scopedVars[variable.name].removeFromUrl !== 1) {
+          params['var-' + variable.name] = scopedVars[variable.name].value;
+        }
       } else {
-        params['var-' + variable.name] = variable.getValueForUrl();
+        if (variable.removeFromUrl !== 1) {
+          params['var-' + variable.name] = variable.getValueForUrl();
+        }
       }
     });
   }

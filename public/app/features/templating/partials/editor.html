@@ -108,6 +108,14 @@
 					</div>
 				</div>
 			</div>
+			<div ng-if="current.hide === 2" class="gf-form-inline">
+				<div class="gf-form max-width-19">
+					<span class="gf-form-label width-9">Remove from URL</span>
+					<div class="gf-form-select-wrapper max-width-12">
+						<select class="gf-form-input" ng-model="current.removeFromUrl" ng-options="f.value as f.text for f in removeFromUrlOptions"></select>
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<div ng-if="current.type === 'interval'" class="gf-form-group">
