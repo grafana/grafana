@@ -25,12 +25,9 @@ import (
 )
 
 var (
-	logger = log.New("data-proxy-log")
-	client = &http.Client{
-		Timeout:   time.Second * 30,
-		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
-	}
-	tokenCache = map[int64]*jwtToken{}
+	logger     = log.New("data-proxy-log")
+	tokenCache = map[string]*jwtToken{}
+	client     = newHTTPClient()
 )
 
 type jwtToken struct {
@@ -48,6 +45,10 @@ type DataSourceProxy struct {
 	plugin    *plugins.DataSourcePlugin
 }
 
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
 	targetURL, _ := url.Parse(ds.Url)
 
@@ -57,6 +58,13 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		ctx:       ctx,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
+	}
+}
+
+func newHTTPClient() httpClient {
+	return &http.Client{
+		Timeout:   time.Second * 30,
+		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
 }
 
@@ -311,7 +319,7 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 }
 
 func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
-	if cachedToken, found := tokenCache[proxy.ds.Id]; found {
+	if cachedToken, found := tokenCache[proxy.getAccessTokenCacheKey()]; found {
 		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
 			logger.Info("Using token from cache")
 			return cachedToken.AccessToken, nil
@@ -350,10 +358,14 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 
 	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
 	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
-	tokenCache[proxy.ds.Id] = &token
+	tokenCache[proxy.getAccessTokenCacheKey()] = &token
 
 	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
 	return token.AccessToken, nil
+}
+
+func (proxy *DataSourceProxy) getAccessTokenCacheKey() string {
+	return fmt.Sprintf("%v_%v_%v", proxy.ds.Id, proxy.route.Path, proxy.route.Method)
 }
 
 func interpolateString(text string, data templateData) (string, error) {
