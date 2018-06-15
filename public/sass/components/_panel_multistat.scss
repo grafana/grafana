@@ -4,6 +4,7 @@
 
   .multistat-horizontal {
     margin: 0.3rem;
+    display: flex;
   }
 }
 
@@ -15,7 +16,8 @@
 .multistat-value-container {
   padding: 10px;
   position: relative;
-  top: 40%;
+  top: 30%;
+  width: 100%;
 }
 
 .multistat-bar {

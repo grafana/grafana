@@ -181,7 +181,9 @@ class MultiStatCtrl extends MetricsPanelCtrl {
         return;
       }
 
-      scope.width = multistatElem.width();
+      const width = multistatElem.width();
+      const height = multistatElem.height();
+      scope.size = { w: width, h: height };
       renderMultiStatComponent();
     }
 
@@ -189,7 +191,7 @@ class MultiStatCtrl extends MetricsPanelCtrl {
       const multistatProps = {
         stats: ctrl.data,
         options: ctrl.panel,
-        width: scope.width,
+        size: scope.size,
       };
       const multistatReactElem = React.createElement(MultiStat, multistatProps);
       ReactDOM.render(multistatReactElem, multistatElem[0]);

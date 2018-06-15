@@ -1,11 +1,12 @@
 import _ from 'lodash';
 import React from 'react';
 import { BarStat } from './BarStat';
+import { ISize } from './types';
 
 export interface IProps {
   stats: any[];
   options: any;
-  width: number;
+  size: ISize;
   getColor: (v: number) => string;
 }
 
@@ -19,7 +20,7 @@ export class MultiStatBar extends React.Component<IProps, any> {
     let barWidths = _.map(stats, () => null);
     // console.log(this.props);
 
-    const rootElemWidth = this.props.width;
+    const rootElemWidth = this.props.size.w;
     const values = _.map(stats, 'value');
     const maxVal = _.max(values);
     const minVal = _.min(values);

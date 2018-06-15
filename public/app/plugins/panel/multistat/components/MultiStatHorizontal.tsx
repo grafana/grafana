@@ -1,11 +1,12 @@
 // import _ from 'lodash';
 import React from 'react';
 import { HorizontalStat } from './HorizontalStat';
+import { ISize } from './types';
 
 export interface IProps {
   stats: any[];
   options: any;
-  width: number;
+  size: ISize;
   getColor: (v: number) => string;
 }
 
@@ -16,12 +17,13 @@ export class MultiStatHorizontal extends React.Component<IProps, any> {
 
   render() {
     const stats = this.props.stats || [];
-    const rootElemWidth = this.props.width;
+    const rootElemWidth = this.props.size.w;
     const statWidth = stats.length > 0 ? rootElemWidth / stats.length : 0;
+    const size = { w: statWidth, h: this.props.size.h };
 
     const statElements = stats.map((stat, index) => {
       const color = this.props.getColor(stat.value);
-      return <HorizontalStat key={index} stat={stat} color={color} width={statWidth} />;
+      return <HorizontalStat key={index} stat={stat} color={color} size={size} options={this.props.options} />;
     });
 
     return <div className="multistat-container">{statElements}</div>;

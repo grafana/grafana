@@ -1,20 +1,13 @@
 import React from 'react';
+import { SparkLine } from './SparkLine';
+import { IStat, ISize } from './types';
 import { getBGColor } from './shared';
-
-interface IStat {
-  alias?: string;
-  label?: string;
-  value: number;
-  valueRounded: number;
-  valueFormatted: string;
-  flotpairs: any[];
-  scopedVars?: any;
-}
 
 export interface IProps {
   stat: IStat;
-  width?: number;
+  size?: ISize;
   color?: string;
+  options?: any;
 }
 
 export class HorizontalStat extends React.Component<IProps, any> {
@@ -28,7 +21,7 @@ export class HorizontalStat extends React.Component<IProps, any> {
     const bgColor = getBGColor(valueColor, 0.1);
 
     let containerStyle: React.CSSProperties = {
-      width: this.props.width,
+      width: this.props.size.w,
       background: bgColor,
     };
     let valueStyle: React.CSSProperties = {
@@ -40,6 +33,7 @@ export class HorizontalStat extends React.Component<IProps, any> {
         <span className="singlestat-panel-value multistat-value-container" style={valueStyle}>
           {stat.valueFormatted}
         </span>
+        <SparkLine stat={stat} options={this.props.options} color={valueColor} size={this.props.size} />
       </div>
     );
   }
