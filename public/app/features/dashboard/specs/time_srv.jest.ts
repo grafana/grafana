@@ -3,8 +3,6 @@ import '../time_srv';
 import moment from 'moment';
 
 describe('timeSrv', function() {
-  //var ctx = new helpers.ServiceTestContext();
-
   var rootScope = {
     $on: jest.fn(),
     onAppEvent: jest.fn(),
@@ -21,18 +19,15 @@ describe('timeSrv', function() {
     search: jest.fn(() => ({})),
   };
 
-  var timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+  var timeSrv;
 
   var _dashboard: any = {
     time: { from: 'now-6h', to: 'now' },
     getTimezone: jest.fn(() => 'browser'),
   };
 
-  //beforeEach(angularMocks.module('grafana.core'));
-  //beforeEach(angularMocks.module('grafana.services'));
-  //beforeEach(ctx.createService('timeSrv'));
-
   beforeEach(function() {
+    timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
     timeSrv.init(_dashboard);
   });
 
@@ -54,7 +49,14 @@ describe('timeSrv', function() {
 
   describe('init time from url', function() {
     it('should handle relative times', function() {
-      timeSrv.$location.search({ from: 'now-2d', to: 'now' });
+      location = {
+        search: jest.fn(() => ({
+          from: 'now-2d',
+          to: 'now',
+        })),
+      };
+
+      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
       timeSrv.init(_dashboard);
       var time = timeSrv.timeRange();
       expect(time.raw.from).toBe('now-2d');
@@ -62,7 +64,15 @@ describe('timeSrv', function() {
     });
 
     it('should handle formatted dates', function() {
-      timeSrv.$location.search({ from: '20140410T052010', to: '20140520T031022' });
+      location = {
+        search: jest.fn(() => ({
+          from: '20140410T052010',
+          to: '20140520T031022',
+        })),
+      };
+
+      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+
       timeSrv.init(_dashboard);
       var time = timeSrv.timeRange();
       expect(time.from.valueOf()).toEqual(new Date('2014-04-10T05:20:10Z').getTime());
@@ -70,7 +80,15 @@ describe('timeSrv', function() {
     });
 
     it('should handle formatted dates without time', function() {
-      timeSrv.$location.search({ from: '20140410', to: '20140520' });
+      location = {
+        search: jest.fn(() => ({
+          from: '20140410',
+          to: '20140520',
+        })),
+      };
+
+      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+
       timeSrv.init(_dashboard);
       var time = timeSrv.timeRange();
       expect(time.from.valueOf()).toEqual(new Date('2014-04-10T00:00:00Z').getTime());
@@ -78,7 +96,15 @@ describe('timeSrv', function() {
     });
 
     it('should handle epochs', function() {
-      timeSrv.$location.search({ from: '1410337646373', to: '1410337665699' });
+      location = {
+        search: jest.fn(() => ({
+          from: '1410337646373',
+          to: '1410337665699',
+        })),
+      };
+
+      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+
       timeSrv.init(_dashboard);
       var time = timeSrv.timeRange();
       expect(time.from.valueOf()).toEqual(1410337646373);
@@ -86,10 +112,15 @@ describe('timeSrv', function() {
     });
 
     it('should handle bad dates', function() {
-      timeSrv.$location.search({
-        from: '20151126T00010%3C%2Fp%3E%3Cspan%20class',
-        to: 'now',
-      });
+      location = {
+        search: jest.fn(() => ({
+          from: '20151126T00010%3C%2Fp%3E%3Cspan%20class',
+          to: 'now',
+        })),
+      };
+
+      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+
       _dashboard.time.from = 'now-6h';
       timeSrv.init(_dashboard);
       expect(timeSrv.time.from).toEqual('now-6h');
