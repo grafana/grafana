@@ -40,12 +40,11 @@ export default class InfluxDatasource {
   }
 
   query(options) {
-    var timeFilter = this.getTimeFilter(options);
     var scopedVars = options.scopedVars;
     var targets = _.cloneDeep(options.targets);
     var queryTargets = [];
     var queryModel;
-    var i, y;
+    var i, j, k, y;
 
     var allQueries = _.map(targets, target => {
       if (target.hide) {
@@ -58,7 +57,21 @@ export default class InfluxDatasource {
       scopedVars.interval = scopedVars.__interval;
 
       queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);
-      return queryModel.render(true);
+      var rendered = queryModel.render(true);
+
+      var timeFilter = this.getTimeFilter(options, target.offset);
+
+      // add global adhoc filters to timeFilter
+      var adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+      if (adhocFilters.length > 0) {
+        timeFilter += ' AND ' + queryModel.renderAdhocFilters(adhocFilters);
+      }
+
+      // replace grafana variables
+      scopedVars.timeFilter = {value: timeFilter};
+
+      // replace templated variables
+      return this.templateSrv.replace(rendered, scopedVars);
     }).reduce((acc, current) => {
       if (current !== '') {
         acc += ';' + current;
@@ -70,18 +83,6 @@ export default class InfluxDatasource {
       return this.$q.when({ data: [] });
     }
 
-    // add global adhoc filters to timeFilter
-    var adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    if (adhocFilters.length > 0) {
-      timeFilter += ' AND ' + queryModel.renderAdhocFilters(adhocFilters);
-    }
-
-    // replace grafana variables
-    scopedVars.timeFilter = { value: timeFilter };
-
-    // replace templated variables
-    allQueries = this.templateSrv.replace(allQueries, scopedVars);
-
     return this._seriesQuery(allQueries, options).then((data): any => {
       if (!data || !data.results) {
         return [];
@@ -92,6 +93,14 @@ export default class InfluxDatasource {
         var result = data.results[i];
         if (!result || !result.series) {
           continue;
+        }
+
+        if (queryTargets[i].offset) {
+          for (j = 0; j < data.results[i].series.length; j++) {
+            for (k = 0; k < data.results[i].series[j].values.length; k++) {
+              data.results[i].series[j].values[k][0] += (queryTargets[i].offset * 1000);
+            }
+          }
         }
 
         var target = queryTargets[i];
@@ -131,7 +140,7 @@ export default class InfluxDatasource {
       });
     }
 
-    var timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw });
+    var timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw }, 0);
     var query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, null, 'regex');
 
@@ -289,10 +298,15 @@ export default class InfluxDatasource {
     );
   }
 
-  getTimeFilter(options) {
+  getTimeFilter(options, offset) {
     var from = this.getInfluxTime(options.rangeRaw.from, false);
     var until = this.getInfluxTime(options.rangeRaw.to, true);
     var fromIsAbsolute = from[from.length - 1] === 'ms';
+
+    if (offset) {
+      from = '(' + from + ')' + ' - ' + offset + 's';
+      until = '(' + until + ')' + ' - ' + offset + 's';
+    }
 
     if (until === 'now()' && !fromIsAbsolute) {
       return 'time >= ' + from;
