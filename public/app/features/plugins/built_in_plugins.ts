@@ -4,7 +4,6 @@ import * as elasticsearchPlugin from 'app/plugins/datasource/elasticsearch/modul
 import * as opentsdbPlugin from 'app/plugins/datasource/opentsdb/module';
 import * as grafanaPlugin from 'app/plugins/datasource/grafana/module';
 import * as influxdbPlugin from 'app/plugins/datasource/influxdb/module';
-import * as influxdbIfqlPlugin from 'app/plugins/datasource/influxdb-ifql/module';
 import * as mixedPlugin from 'app/plugins/datasource/mixed/module';
 import * as mysqlPlugin from 'app/plugins/datasource/mysql/module';
 import * as postgresPlugin from 'app/plugins/datasource/postgres/module';
@@ -31,7 +30,6 @@ const builtInPlugins = {
   'app/plugins/datasource/opentsdb/module': opentsdbPlugin,
   'app/plugins/datasource/grafana/module': grafanaPlugin,
   'app/plugins/datasource/influxdb/module': influxdbPlugin,
-  'app/plugins/datasource/influxdb-ifql/module': influxdbIfqlPlugin,
   'app/plugins/datasource/mixed/module': mixedPlugin,
   'app/plugins/datasource/mysql/module': mysqlPlugin,
   'app/plugins/datasource/postgres/module': postgresPlugin,
