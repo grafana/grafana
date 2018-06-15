@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -18,11 +17,9 @@ type testQuery struct {
 var ProvokedError = errors.New("testing error.")
 
 func TestTransaction(t *testing.T) {
-	InitTestDB(t)
+	ss := InitTestDB(t)
 
 	Convey("InTransaction asdf asdf", t, func() {
-		ss := SqlStore{log: log.New("test-logger")}
-
 		cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
 
 		err := AddApiKey(cmd)
@@ -50,7 +47,6 @@ func TestTransaction(t *testing.T) {
 				}
 
 				return ProvokedError
-
 			})
 
 			So(err, ShouldEqual, ProvokedError)

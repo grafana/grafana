@@ -14,16 +14,16 @@ func (ss *SqlStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 }
 
 func (ss *SqlStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
-	sess := startSession(ctx)
-	defer sess.Close()
-
-	if err := sess.Begin(); err != nil {
+	sess, err := startSession(ctx, ss.engine, true)
+	if err != nil {
 		return err
 	}
 
+	defer sess.Close()
+
 	withValue := context.WithValue(ctx, ContextSessionName, sess)
 
-	err := fn(withValue)
+	err = fn(withValue)
 
 	// special handling of database locked errors for sqlite, then we can retry 3 times
 	if sqlError, ok := err.(sqlite3.Error); ok && retry < 5 {
@@ -60,15 +60,12 @@ func inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
 }
 
 func inTransactionWithRetryCtx(ctx context.Context, callback dbTransactionFunc, retry int) error {
-	var err error
-
-	sess := startSession(ctx)
-
-	defer sess.Close()
-
-	if err = sess.Begin(); err != nil {
+	sess, err := startSession(ctx, x, true)
+	if err != nil {
 		return err
 	}
+
+	defer sess.Close()
 
 	err = callback(sess)
 
