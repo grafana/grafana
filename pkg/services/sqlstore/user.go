@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +31,7 @@ func init() {
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
+	bus.AddHandlerCtx("sql", CreateUserCtx)
 }
 
 func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error) {
@@ -79,77 +81,87 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error
 	return org.Id, nil
 }
 
+func internalCreateUser(sess *DBSession, cmd *m.CreateUserCommand) error {
+	orgId, err := getOrgIdForNewUser(cmd, sess)
+	if err != nil {
+		return err
+	}
+
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
+	// create user
+	user := m.User{
+		Email:         cmd.Email,
+		Name:          cmd.Name,
+		Login:         cmd.Login,
+		Company:       cmd.Company,
+		IsAdmin:       cmd.IsAdmin,
+		OrgId:         orgId,
+		EmailVerified: cmd.EmailVerified,
+		Created:       time.Now(),
+		Updated:       time.Now(),
+		LastSeenAt:    time.Now().AddDate(-10, 0, 0),
+	}
+
+	if len(cmd.Password) > 0 {
+		user.Salt = util.GetRandomString(10)
+		user.Rands = util.GetRandomString(10)
+		user.Password = util.EncodePassword(cmd.Password, user.Salt)
+	}
+
+	sess.UseBool("is_admin")
+
+	if _, err := sess.Insert(&user); err != nil {
+		return err
+	}
+
+	sess.publishAfterCommit(&events.UserCreated{
+		Timestamp: user.Created,
+		Id:        user.Id,
+		Name:      user.Name,
+		Login:     user.Login,
+		Email:     user.Email,
+	})
+
+	cmd.Result = user
+
+	// create org user link
+	if !cmd.SkipOrgSetup {
+		orgUser := m.OrgUser{
+			OrgId:   orgId,
+			UserId:  user.Id,
+			Role:    m.ROLE_ADMIN,
+			Created: time.Now(),
+			Updated: time.Now(),
+		}
+
+		if setting.AutoAssignOrg && !user.IsAdmin {
+			if len(cmd.DefaultOrgRole) > 0 {
+				orgUser.Role = m.RoleType(cmd.DefaultOrgRole)
+			} else {
+				orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+			}
+		}
+
+		if _, err = sess.Insert(&orgUser); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func CreateUserCtx(ctx context.Context, cmd *m.CreateUserCommand) error {
+	return inTransactionWithRetryCtx(ctx, func(sess *DBSession) error {
+		return internalCreateUser(sess, cmd)
+	}, 0)
+}
+
 func CreateUser(cmd *m.CreateUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		orgId, err := getOrgIdForNewUser(cmd, sess)
-		if err != nil {
-			return err
-		}
-
-		if cmd.Email == "" {
-			cmd.Email = cmd.Login
-		}
-
-		// create user
-		user := m.User{
-			Email:         cmd.Email,
-			Name:          cmd.Name,
-			Login:         cmd.Login,
-			Company:       cmd.Company,
-			IsAdmin:       cmd.IsAdmin,
-			OrgId:         orgId,
-			EmailVerified: cmd.EmailVerified,
-			Created:       time.Now(),
-			Updated:       time.Now(),
-			LastSeenAt:    time.Now().AddDate(-10, 0, 0),
-		}
-
-		if len(cmd.Password) > 0 {
-			user.Salt = util.GetRandomString(10)
-			user.Rands = util.GetRandomString(10)
-			user.Password = util.EncodePassword(cmd.Password, user.Salt)
-		}
-
-		sess.UseBool("is_admin")
-
-		if _, err := sess.Insert(&user); err != nil {
-			return err
-		}
-
-		sess.publishAfterCommit(&events.UserCreated{
-			Timestamp: user.Created,
-			Id:        user.Id,
-			Name:      user.Name,
-			Login:     user.Login,
-			Email:     user.Email,
-		})
-
-		cmd.Result = user
-
-		// create org user link
-		if !cmd.SkipOrgSetup {
-			orgUser := m.OrgUser{
-				OrgId:   orgId,
-				UserId:  user.Id,
-				Role:    m.ROLE_ADMIN,
-				Created: time.Now(),
-				Updated: time.Now(),
-			}
-
-			if setting.AutoAssignOrg && !user.IsAdmin {
-				if len(cmd.DefaultOrgRole) > 0 {
-					orgUser.Role = m.RoleType(cmd.DefaultOrgRole)
-				} else {
-					orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
-				}
-			}
-
-			if _, err = sess.Insert(&orgUser); err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return internalCreateUser(sess, cmd)
 	})
 }
 

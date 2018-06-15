@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -22,10 +23,10 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -34,6 +35,8 @@ var (
 
 	sqlog log.Logger = log.New("sqlstore")
 )
+
+const ContextSessionName = "db-session"
 
 func init() {
 	registry.Register(&registry.Descriptor{
@@ -45,6 +48,7 @@ func init() {
 
 type SqlStore struct {
 	Cfg *setting.Cfg `inject:""`
+	Bus bus.Bus      `inject:""`
 
 	dbCfg           DatabaseConfig
 	engine          *xorm.Engine
@@ -77,6 +81,8 @@ func (ss *SqlStore) Init() error {
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
 
+	ss.Bus.SetTransactionManager(ss)
+
 	// ensure admin user
 	if ss.skipEnsureAdmin {
 		return nil
@@ -88,27 +94,33 @@ func (ss *SqlStore) Init() error {
 func (ss *SqlStore) ensureAdminUser() error {
 	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 
-	if err := bus.Dispatch(&systemUserCountQuery); err != nil {
-		return fmt.Errorf("Could not determine if admin user exists: %v", err)
-	}
+	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
 
-	if systemUserCountQuery.Result.Count > 0 {
+		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+		if err != nil {
+			return fmt.Errorf("Could not determine if admin user exists: %v", err)
+		}
+
+		if systemUserCountQuery.Result.Count > 0 {
+			return nil
+		}
+
+		cmd := m.CreateUserCommand{}
+		cmd.Login = setting.AdminUser
+		cmd.Email = setting.AdminUser + "@localhost"
+		cmd.Password = setting.AdminPassword
+		cmd.IsAdmin = true
+
+		if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+			return fmt.Errorf("Failed to create admin user: %v", err)
+		}
+
+		ss.log.Info("Created default admin", "user", setting.AdminUser)
+
 		return nil
-	}
+	})
 
-	cmd := m.CreateUserCommand{}
-	cmd.Login = setting.AdminUser
-	cmd.Email = setting.AdminUser + "@localhost"
-	cmd.Password = setting.AdminPassword
-	cmd.IsAdmin = true
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return fmt.Errorf("Failed to create admin user: %v", err)
-	}
-
-	ss.log.Info("Created default admin user: %v", setting.AdminUser)
-
-	return nil
+	return err
 }
 
 func (ss *SqlStore) buildConnectionString() (string, error) {
@@ -238,8 +250,10 @@ func (ss *SqlStore) readConfig() {
 }
 
 func InitTestDB(t *testing.T) *SqlStore {
+	t.Helper()
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true
+	sqlstore.Bus = bus.New()
 
 	dbType := migrator.SQLITE
 
