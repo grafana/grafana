@@ -1,5 +1,21 @@
 .multistat-panel {
   position: relative;
+  height: 100%;
+
+  .multistat-horizontal {
+    margin: 0.3rem;
+  }
+}
+
+.multistat-container {
+  display: flex;
+  height: 100%;
+}
+
+.multistat-value-container {
+  padding: 10px;
+  position: relative;
+  top: 40%;
 }
 
 .multistat-bar {

@@ -1,7 +1,9 @@
 import _ from 'lodash';
 import React from 'react';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
-import { BarStat } from './BarStat';
+import { MultiStatBar } from './MultiStatBar';
+import { MultiStatHorizontal } from './MultiStatHorizontal';
+
+const MAX_BAR_LAYOUT_WIDTH = 500;
 
 export interface IProps {
   stats: any[];
@@ -10,42 +12,20 @@ export interface IProps {
 }
 
 export class MultiStat extends React.Component<IProps, any> {
-  rootElem: any;
-
   constructor(props) {
     super(props);
-  }
-
-  setRootElemRef(elem) {
-    this.rootElem = elem;
   }
 
   render() {
     const thresholds = getThresholds(this.props.options.thresholds);
     const colorMap = this.props.options.colors;
-    const stats = this.props.stats || [];
-    let barWidths = _.map(stats, () => null);
-    // console.log(this.props);
-
-    const rootElemWidth = this.props.width;
-    const values = _.map(stats, 'value');
-    const maxVal = _.max(values);
-    const minVal = _.min(values);
-    const delta = maxVal - minVal;
-    const minWidth = rootElemWidth * 0.3;
-    const maxWidth = rootElemWidth * 0.9;
-    const deltaWidth = maxWidth - minWidth;
-    _.forEach(values, (v, i) => {
-      let width = (v - minVal) / delta * deltaWidth + minWidth;
-      barWidths[i] = Math.max(minWidth, width);
-    });
-
-    const statElements = stats.map((stat, index) => {
-      const color = getColorForValue(stat.value, thresholds, colorMap);
-      return <BarStat key={index} stat={stat} color={color} width={barWidths[index]} />;
-    });
-
-    return <div ref={this.setRootElemRef.bind(this)}>{statElements}</div>;
+    const getColor = getColorFunc(thresholds, colorMap);
+    const rootWidth = this.props.width;
+    if (rootWidth < MAX_BAR_LAYOUT_WIDTH) {
+      return <MultiStatBar {...this.props} getColor={getColor} />;
+    } else {
+      return <MultiStatHorizontal {...this.props} getColor={getColor} />;
+    }
   }
 }
 
@@ -67,8 +47,6 @@ function getColorForValue(value: number, thresholds: number[], colorMap: string[
   return _.first(colorMap);
 }
 
-react2AngularDirective('multiStat', MultiStat, [
-  ['stats', { watchDepth: 'reference' }],
-  ['options', { watchDepth: 'reference' }],
-  ['width', { watchDepth: 'reference' }],
-]);
+function getColorFunc(thresholds: number[], colorMap: string[]): (v: number) => string {
+  return value => getColorForValue(value, thresholds, colorMap);
+}

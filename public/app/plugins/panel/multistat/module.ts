@@ -2,12 +2,11 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { MultiStat } from './components/MultiStat';
 import TimeSeries from 'app/core/time_series2';
-import { getDecimalsForValue } from 'app/core/utils/ticks';
 import defaults from './defaults';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import './components/MultiStat';
+import { getDecimalsForValue } from 'app/core/utils/ticks';
+import { MultiStat } from './components/MultiStat';
 
 class MultiStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';

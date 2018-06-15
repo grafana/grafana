@@ -1,5 +1,5 @@
 import React from 'react';
-import tinycolor from 'tinycolor2';
+import { getBGColor } from './shared';
 
 interface IStat {
   alias?: string;
@@ -52,10 +52,4 @@ export class BarStat extends React.Component<IProps, any> {
       </div>
     );
   }
-}
-
-function getBGColor(color: string): string {
-  const tc = tinycolor(color);
-  tc.setAlpha(0.3);
-  return tc.toRgbString();
 }
