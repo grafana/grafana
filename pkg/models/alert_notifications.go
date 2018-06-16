@@ -9,6 +9,7 @@ import (
 
 var (
 	ErrNotificationFrequencyNotFound = errors.New("Notification frequency not specified")
+	ErrJournalingNotFound            = errors.New("alert notification journaling not found")
 )
 
 type AlertNotification struct {

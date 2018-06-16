@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -11,6 +12,48 @@ import (
 func TestAlertNotificationSQLAccess(t *testing.T) {
 	Convey("Testing Alert notification sql access", t, func() {
 		InitTestDB(t)
+
+		Convey("Alert notification journal", func() {
+			var alertId int64 = 5
+			var orgId int64 = 5
+			var notifierId int64 = 5
+
+			Convey("Getting last journal should raise error if no one exists", func() {
+				query := &m.GetLatestNotificationQuery{AlertId: alertId, OrgId: orgId, NotifierId: notifierId}
+				err := GetLatestNotification(context.Background(), query)
+				So(err, ShouldEqual, m.ErrJournalingNotFound)
+
+				Convey("shoulbe be able to record two journaling events", func() {
+					createCmd := &m.RecordNotificationJournalCommand{AlertId: alertId, NotifierId: notifierId, OrgId: orgId, Success: true, SentAt: 1}
+
+					err := RecordNotificationJournal(context.Background(), createCmd)
+					So(err, ShouldBeNil)
+
+					createCmd.SentAt += 1000 //increase epoch
+
+					err = RecordNotificationJournal(context.Background(), createCmd)
+					So(err, ShouldBeNil)
+
+					Convey("get last journaling event", func() {
+						err := GetLatestNotification(context.Background(), query)
+						So(err, ShouldBeNil)
+						So(query.Result.SentAt, ShouldEqual, 1001)
+
+						Convey("be able to clear all journaling for an notifier", func() {
+							cmd := &m.CleanNotificationJournalCommand{AlertId: alertId, NotifierId: notifierId, OrgId: orgId}
+							err := CleanNotificationJournal(context.Background(), cmd)
+							So(err, ShouldBeNil)
+
+							Convey("querying for last junaling should raise error", func() {
+								query := &m.GetLatestNotificationQuery{AlertId: alertId, OrgId: orgId, NotifierId: notifierId}
+								err := GetLatestNotification(context.Background(), query)
+								So(err, ShouldEqual, m.ErrJournalingNotFound)
+							})
+						})
+					})
+				})
+			})
+		})
 
 		Convey("Alert notifications should be empty", func() {
 			cmd := &m.GetAlertNotificationsQuery{
