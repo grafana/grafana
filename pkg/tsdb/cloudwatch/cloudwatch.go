@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -142,6 +143,10 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simpl
 	endTime, err := queryContext.TimeRange.ParseTo()
 	if err != nil {
 		return nil, err
+	}
+
+	if endTime.Before(startTime) {
+		return nil, fmt.Errorf("Invalid time range: End time can't be before start time")
 	}
 
 	params := &cloudwatch.GetMetricStatisticsInput{
