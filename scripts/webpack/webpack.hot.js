@@ -23,7 +23,7 @@ module.exports = merge(common, {
   },
 
   resolve: {
-    extensions: ['.scss', '.ts', '.tsx', '.es6', '.js', '.json', '.svg', '.woff2', '.png'],
+    extensions: ['.scss', '.ts', '.tsx', '.es6', '.js', '.json', '.svg', '.woff2', '.png', '.html'],
   },
 
   devtool: 'eval-source-map',

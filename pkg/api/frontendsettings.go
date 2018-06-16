@@ -85,13 +85,6 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 				dsMap["database"] = ds.Database
 				dsMap["url"] = url
 			}
-
-			if ds.Type == m.DS_INFLUXDB_IFQL {
-				dsMap["username"] = ds.User
-				dsMap["password"] = ds.Password
-				dsMap["database"] = ds.Database
-				dsMap["url"] = url
-			}
 		}
 
 		if ds.Type == m.DS_ES {
@@ -99,10 +92,6 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 		}
 
 		if ds.Type == m.DS_INFLUXDB {
-			dsMap["database"] = ds.Database
-		}
-
-		if ds.Type == m.DS_INFLUXDB_IFQL {
 			dsMap["database"] = ds.Database
 		}
 
@@ -151,6 +140,7 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 		"authProxyEnabled":        setting.AuthProxyEnabled,
 		"ldapEnabled":             setting.LdapEnabled,
 		"alertingEnabled":         setting.AlertingEnabled,
+		"exploreEnabled":          setting.ExploreEnabled,
 		"googleAnalyticsId":       setting.GoogleAnalyticsId,
 		"disableLoginForm":        setting.DisableLoginForm,
 		"externalUserMngInfo":     setting.ExternalUserMngInfo,

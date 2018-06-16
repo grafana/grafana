@@ -13,6 +13,13 @@ $login-border: #8daac5;
   justify-content: center;
   background-image: url(../img/heatmap_bg_test.svg);
   background-size: cover;
+  color: #d8d9da;
+  & a {
+    color: #d8d9da !important;
+  }
+  & .btn-primary {
+    @include buttonBackground(#ff6600, #bc3e06);
+  }
 }
 
 input:-webkit-autofill,
@@ -25,8 +32,9 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px $black inset;
-  -webkit-text-fill-color: $gray-7 !important;
+  -webkit-box-shadow: 0 0 0px 1000px $black inset !important;
+  -webkit-text-fill-color: #fbfbfb !important;
+  box-shadow: 0 0 0px 1000px $black inset;
 }
 
 .login-form-group {
@@ -46,6 +54,8 @@ select:-webkit-autofill:focus {
   border: 1px solid $login-border;
   border-radius: 4px;
   opacity: 0.6;
+  background: $black;
+  color: #fbfbfb;
 
   &:focus {
     border: 1px solid $login-border;
@@ -103,7 +113,7 @@ select:-webkit-autofill:focus {
   }
 
   .icon-gf-grafana_wordmark {
-    color: $link-color;
+    color: darken($white, 11%);
     position: relative;
     font-size: 2rem;
     text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);

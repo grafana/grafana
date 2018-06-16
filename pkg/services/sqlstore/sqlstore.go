@@ -89,7 +89,7 @@ func (ss *SqlStore) ensureAdminUser() error {
 	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 
 	if err := bus.Dispatch(&systemUserCountQuery); err != nil {
-		fmt.Errorf("Could not determine if admin user exists: %v", err)
+		return fmt.Errorf("Could not determine if admin user exists: %v", err)
 	}
 
 	if systemUserCountQuery.Result.Count > 0 {
