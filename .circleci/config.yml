@@ -224,6 +224,8 @@ workflows:
     jobs:
       - build-all:
           filters: *filter-not-release
+      - build-enterprise:
+          filters: *filter-not-release
       - codespell:
           filters: *filter-not-release
       - gometalinter:
