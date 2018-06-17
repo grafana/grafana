@@ -163,6 +163,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		Name:       fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName),
 		Login:      ldapUser.Username,
 		Email:      ldapUser.Email,
+		Groups:     ldapUser.MemberOf,
 		OrgRoles:   map[int64]m.RoleType{},
 	}
 

@@ -4,12 +4,15 @@ export default class TeamDetailsCtrl {
   team: Team;
   teamMembers: User[] = [];
   navModel: any;
+  teamGroups: TeamGroup[] = [];
+  newGroupId: string;
 
   /** @ngInject **/
   constructor(private $scope, private backendSrv, private $routeParams, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'teams', 0);
     this.userPicked = this.userPicked.bind(this);
     this.get = this.get.bind(this);
+    this.newGroupId = '';
     this.get();
   }
 
@@ -20,6 +23,9 @@ export default class TeamDetailsCtrl {
       });
       this.backendSrv.get(`/api/teams/${this.$routeParams.id}/members`).then(result => {
         this.teamMembers = result;
+      });
+      this.backendSrv.get(`/api/teams/${this.$routeParams.id}/groups`).then(result => {
+        this.teamGroups = result;
       });
     }
   }
@@ -57,6 +63,20 @@ export default class TeamDetailsCtrl {
       this.get();
     });
   }
+
+  addGroup() {
+    this.backendSrv.post(`/api/teams/${this.$routeParams.id}/groups`, { groupId: this.newGroupId }).then(() => {
+      this.get();
+    });
+  }
+
+  removeGroup(group: TeamGroup) {
+    this.backendSrv.delete(`/api/teams/${this.$routeParams.id}/groups/${group.groupId}`).then(this.get);
+  }
+}
+
+export interface TeamGroup {
+  groupId: string;
 }
 
 export interface Team {
