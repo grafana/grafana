@@ -162,6 +162,7 @@ var (
 
 	// Alerting
 	AlertingEnabled bool
+	AlertingOKEnabled bool
 	ExecuteAlerts   bool
 
 	// Explore UI
@@ -651,6 +652,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
+	AlertingOKEnabled = alerting.Key("ok_enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 
 	explore := iniFile.Section("explore")
