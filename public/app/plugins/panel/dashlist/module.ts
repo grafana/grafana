@@ -18,6 +18,7 @@ class DashListCtrl extends PanelCtrl {
     starred: true,
     headings: true,
     folderId: null,
+    templating: false,
   };
 
   /** @ngInject */
@@ -76,6 +77,8 @@ class DashListCtrl extends PanelCtrl {
   }
 
   getSearch() {
+    var thisArg = this;
+
     this.groups[2].show = this.panel.search;
     if (!this.panel.search) {
       return Promise.resolve();
@@ -90,7 +93,27 @@ class DashListCtrl extends PanelCtrl {
     };
 
     return this.backendSrv.search(params).then(result => {
-      this.groups[2].list = result;
+      if (thisArg.panel.templating) {
+        var templateSrv = thisArg.$injector.get('templateSrv');
+        var templateVars = templateSrv.variables.map(el => {
+          var value = el.getValueForUrl();
+          if (value instanceof Array) {
+            return value
+              .map(val => {
+                return 'var-' + el.name + '=' + val;
+              })
+              .join('&');
+          } else {
+            return 'var-' + el.name + '=' + value;
+          }
+        });
+        this.groups[2].list = result.map(el => {
+          el.url += '?' + templateVars.join('&');
+          return el;
+        });
+      } else {
+        this.groups[2].list = result;
+      }
     });
   }
 
