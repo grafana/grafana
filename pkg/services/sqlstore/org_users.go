@@ -59,7 +59,7 @@ func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
 
 		orgUser.Role = cmd.Role
 		orgUser.Updated = time.Now()
-		_, err = sess.Id(orgUser.Id).Update(&orgUser)
+		_, err = sess.ID(orgUser.Id).Update(&orgUser)
 		if err != nil {
 			return err
 		}

@@ -64,7 +64,7 @@ func UpdateTeam(cmd *m.UpdateTeamCommand) error {
 
 		sess.MustCols("email")
 
-		affectedRows, err := sess.Id(cmd.Id).Update(&team)
+		affectedRows, err := sess.ID(cmd.Id).Update(&team)
 
 		if err != nil {
 			return err
@@ -165,7 +165,7 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 		sql.WriteString(dialect.LimitOffset(int64(query.Limit), int64(offset)))
 	}
 
-	if err := x.Sql(sql.String(), params...).Find(&query.Result.Teams); err != nil {
+	if err := x.SQL(sql.String(), params...).Find(&query.Result.Teams); err != nil {
 		return err
 	}
 

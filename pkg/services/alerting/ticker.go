@@ -37,10 +37,6 @@ func NewTicker(last time.Time, initialOffset time.Duration, c clock.Clock) *Tick
 	return t
 }
 
-func (t *Ticker) updateOffset(offset time.Duration) {
-	t.newOffset <- offset
-}
-
 func (t *Ticker) run() {
 	for {
 		next := t.last.Add(time.Duration(1) * time.Second)

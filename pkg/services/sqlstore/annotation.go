@@ -110,7 +110,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		existing.Tags = item.Tags
 
-		_, err = sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "updated", "tags").Update(existing)
+		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "region_id", "updated", "tags").Update(existing)
 		return err
 	})
 }
@@ -223,7 +223,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 	items := make([]*annotations.ItemDTO, 0)
 
-	if err := x.Sql(sql.String(), params...).Find(&items); err != nil {
+	if err := x.SQL(sql.String(), params...).Find(&items); err != nil {
 		return nil, err
 	}
 
