@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { BarStat } from './BarStat';
-import { ISize } from './types';
+import { ISize } from '../types';
 
 export interface IProps {
   stats: any[];

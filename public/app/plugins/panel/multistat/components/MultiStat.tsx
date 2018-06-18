@@ -1,14 +1,14 @@
 import _ from 'lodash';
 import React from 'react';
-import { ISize } from './types';
+import { ISize, Panel, Layout } from '../types';
 import { MultiStatBar } from './MultiStatBar';
 import { MultiStatHorizontal } from './MultiStatHorizontal';
 
-const MAX_BAR_LAYOUT_WIDTH = 500;
+// const MAX_BAR_LAYOUT_WIDTH = 500;
 
 export interface IProps {
   stats: any[];
-  options: any;
+  options: Panel;
   size: ISize;
 }
 
@@ -18,11 +18,12 @@ export class MultiStat extends React.Component<IProps, any> {
   }
 
   render() {
-    const thresholds = getThresholds(this.props.options.thresholds);
-    const colorMap = this.props.options.colors;
+    const options = this.props.options;
+    const thresholds = getThresholds(options.thresholds);
+    const colorMap = options.colors;
     const getColor = getColorFunc(thresholds, colorMap);
-    const rootWidth = this.props.size.w;
-    if (rootWidth < MAX_BAR_LAYOUT_WIDTH) {
+    // const rootWidth = this.props.size.w;
+    if (options.layout === Layout.Vertical) {
       return <MultiStatBar {...this.props} getColor={getColor} />;
     } else {
       return <MultiStatHorizontal {...this.props} getColor={getColor} />;
