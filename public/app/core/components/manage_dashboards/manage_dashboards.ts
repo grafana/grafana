@@ -294,6 +294,16 @@ export class ManageDashboardsCtrl {
 
     return url;
   }
+
+  importDashboardUrl() {
+    let url = 'dashboard/import';
+
+    if (this.folderId) {
+      url += `?folderId=${this.folderId}`;
+    }
+
+    return url;
+  }
 }
 
 export function manageDashboardsDirective() {
