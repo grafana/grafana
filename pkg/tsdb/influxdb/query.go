@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	regexpOperatorPattern    *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
-	regexpMeasurementPattern *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
+	regexpOperatorPattern    = regexp.MustCompile(`^\/.*\/$`)
+	regexpMeasurementPattern = regexp.MustCompile(`^\/.*\/$`)
 )
 
 func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {
@@ -29,39 +29,14 @@ func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {
 		res += query.renderGroupBy(queryContext)
 	}
 
-	interval, err := getDefinedInterval(query, queryContext)
-	if err != nil {
-		return "", err
-	}
+	calculator := tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{})
+	interval := calculator.Calculate(queryContext.TimeRange, query.Interval)
 
 	res = strings.Replace(res, "$timeFilter", query.renderTimeFilter(queryContext), -1)
 	res = strings.Replace(res, "$interval", interval.Text, -1)
 	res = strings.Replace(res, "$__interval_ms", strconv.FormatInt(interval.Value.Nanoseconds()/int64(time.Millisecond), 10), -1)
 	res = strings.Replace(res, "$__interval", interval.Text, -1)
 	return res, nil
-}
-
-func getDefinedInterval(query *Query, queryContext *tsdb.TsdbQuery) (*tsdb.Interval, error) {
-	defaultInterval := tsdb.CalculateInterval(queryContext.TimeRange)
-
-	if query.Interval == "" {
-		return &defaultInterval, nil
-	}
-
-	setInterval := strings.Replace(strings.Replace(query.Interval, "<", "", 1), ">", "", 1)
-	parsedSetInterval, err := time.ParseDuration(setInterval)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if strings.Contains(query.Interval, ">") {
-		if defaultInterval.Value > parsedSetInterval {
-			return &defaultInterval, nil
-		}
-	}
-
-	return &tsdb.Interval{Value: parsedSetInterval, Text: setInterval}, nil
 }
 
 func (query *Query) renderTags() []string {
@@ -87,15 +62,14 @@ func (query *Query) renderTags() []string {
 			}
 		}
 
-		textValue := ""
-
 		// quote value unless regex or number
+		var textValue string
 		if tag.Operator == "=~" || tag.Operator == "!~" {
 			textValue = tag.Value
 		} else if tag.Operator == "<" || tag.Operator == ">" {
 			textValue = tag.Value
 		} else {
-			textValue = fmt.Sprintf("'%s'", tag.Value)
+			textValue = fmt.Sprintf("'%s'", strings.Replace(tag.Value, `\`, `\\`, -1))
 		}
 
 		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, textValue))
@@ -132,7 +106,7 @@ func (query *Query) renderSelectors(queryContext *tsdb.TsdbQuery) string {
 }
 
 func (query *Query) renderMeasurement() string {
-	policy := ""
+	var policy string
 	if query.Policy == "" || query.Policy == "default" {
 		policy = ""
 	} else {

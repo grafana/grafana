@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 )
 
 type GraphiteExecutor struct {
@@ -28,12 +28,9 @@ func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint,
 	return &GraphiteExecutor{}, nil
 }
 
-var (
-	glog log.Logger
-)
+var glog = log.New("tsdb.graphite")
 
 func init() {
-	glog = log.New("tsdb.graphite")
 	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
 }
 
@@ -52,6 +49,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	for _, query := range tsdbQuery.Queries {
+		glog.Info("graphite", "query", query.Model)
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
 			target = fixIntervalFormat(fullTarget)
 		} else {
@@ -79,6 +77,9 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	span.SetTag("target", target)
 	span.SetTag("from", from)
 	span.SetTag("until", until)
+	span.SetTag("datasource_id", dsInfo.Id)
+	span.SetTag("org_id", dsInfo.OrgId)
+
 	defer span.Finish()
 
 	opentracing.GlobalTracer().Inject(
@@ -158,7 +159,7 @@ func formatTimeRange(input string) string {
 	if input == "now" {
 		return input
 	}
-	return strings.Replace(strings.Replace(input, "m", "min", -1), "M", "mon", -1)
+	return strings.Replace(strings.Replace(strings.Replace(input, "now", "", -1), "m", "min", -1), "M", "mon", -1)
 }
 
 func fixIntervalFormat(target string) string {

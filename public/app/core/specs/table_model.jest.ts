@@ -3,7 +3,7 @@ import TableModel from 'app/core/table_model';
 describe('when sorting table desc', () => {
   var table;
   var panel = {
-    sort: {col: 0, desc: true},
+    sort: { col: 0, desc: true },
   };
 
   beforeEach(() => {
@@ -19,17 +19,16 @@ describe('when sorting table desc', () => {
     expect(table.rows[2][0]).toBe(100);
   });
 
-  it ('should mark column being sorted', () => {
+  it('should mark column being sorted', () => {
     expect(table.columns[0].sort).toBe(true);
     expect(table.columns[0].desc).toBe(true);
   });
-
 });
 
 describe('when sorting table asc', () => {
   var table;
   var panel = {
-    sort: {col: 1, desc: false},
+    sort: { col: 1, desc: false },
   };
 
   beforeEach(() => {
@@ -44,6 +43,4 @@ describe('when sorting table asc', () => {
     expect(table.rows[1][1]).toBe(11);
     expect(table.rows[2][1]).toBe(15);
   });
-
 });
-

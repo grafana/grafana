@@ -1,0 +1,15 @@
+.awcache
+.dockerignore
+.git
+.gitignore
+.github
+data*
+dist
+docker
+docs
+dump.rdb
+node_modules
+/local
+/tmp
+*.yml
+*.md

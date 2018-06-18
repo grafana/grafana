@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import './graph';
 import './legend';
 import './series_overrides_ctrl';
@@ -8,9 +6,9 @@ import './thresholds_form';
 import template from './template';
 import _ from 'lodash';
 import config from 'app/core/config';
-import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
-import {DataProcessor} from './data_processor';
-import {axesEditorComponent} from './axes_editor';
+import { MetricsPanelCtrl, alertTab } from 'app/plugins/sdk';
+import { DataProcessor } from './data_processor';
+import { axesEditorComponent } from './axes_editor';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -39,7 +37,7 @@ class GraphCtrl extends MetricsPanelCtrl {
         logBase: 1,
         min: null,
         max: null,
-        format: 'short'
+        format: 'short',
       },
       {
         label: null,
@@ -47,38 +45,42 @@ class GraphCtrl extends MetricsPanelCtrl {
         logBase: 1,
         min: null,
         max: null,
-        format: 'short'
-      }
+        format: 'short',
+      },
     ],
     xaxis: {
       show: true,
       mode: 'time',
       name: null,
       values: [],
-      buckets: null
+      buckets: null,
+    },
+    yaxis: {
+      align: false,
+      alignLevel: null,
     },
     // show/hide lines
-    lines         : true,
+    lines: true,
     // fill factor
-    fill          : 1,
+    fill: 1,
     // line width in pixels
-    linewidth     : 1,
+    linewidth: 1,
     // show/hide dashed line
-    dashes        : false,
+    dashes: false,
     // length of a dash
-    dashLength    : 10,
+    dashLength: 10,
     // length of space between two dashes
-    spaceLength   : 10,
+    spaceLength: 10,
     // show hide points
-    points        : false,
+    points: false,
     // point radius in pixels
-    pointradius   : 5,
+    pointradius: 5,
     // show hide bars
-    bars          : false,
+    bars: false,
     // enable/disable stacking
-    stack         : false,
+    stack: false,
     // stack percentage mode
-    percentage    : false,
+    percentage: false,
     // legend options
     legend: {
       show: true, // disable/enable legend
@@ -87,14 +89,14 @@ class GraphCtrl extends MetricsPanelCtrl {
       max: false,
       current: false,
       total: false,
-      avg: false
+      avg: false,
     },
     // how null points should be handled
-    nullPointMode : 'null',
+    nullPointMode: 'null',
     // staircase line mode
     steppedLine: false,
     // tooltip options
-    tooltip       : {
+    tooltip: {
       value_type: 'individual',
       shared: true,
       sort: 0,
@@ -143,8 +145,8 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitPanelActions(actions) {
-    actions.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
-    actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
+    actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
+    actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()' });
   }
 
   issueQueries(datasource) {
@@ -177,7 +179,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onDataReceived(dataList) {
     this.dataList = dataList;
-    this.seriesList = this.processor.getSeriesList({dataList: dataList, range: this.range});
+    this.seriesList = this.processor.getSeriesList({
+      dataList: dataList,
+      range: this.range,
+    });
 
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {
@@ -187,10 +192,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     if (datapointsCount === 0) {
       this.dataWarning = {
         title: 'No data points',
-        tip: 'No datapoints returned from data query'
+        tip: 'No datapoints returned from data query',
       };
     } else {
-
       for (let series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
@@ -202,31 +206,36 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
     }
 
-    this.annotationsPromise.then(result => {
-      this.loading = false;
-      this.alertState = result.alertState;
-      this.annotations = result.annotations;
-      this.render(this.seriesList);
-    }, () => {
-      this.loading = false;
-      this.render(this.seriesList);
-    });
+    this.annotationsPromise.then(
+      result => {
+        this.loading = false;
+        this.alertState = result.alertState;
+        this.annotations = result.annotations;
+        this.render(this.seriesList);
+      },
+      () => {
+        this.loading = false;
+        this.render(this.seriesList);
+      }
+    );
   }
 
   onRender() {
-    if (!this.seriesList) { return; }
+    if (!this.seriesList) {
+      return;
+    }
 
     for (let series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
       if (series.unit) {
-        this.panel.yaxes[series.yaxis-1].format = series.unit;
+        this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
     }
   }
 
   changeSeriesColor(series, color) {
-    series.color = color;
+    series.setColor(color);
     this.panel.aliasColors[series.alias] = series.color;
     this.render();
   }
@@ -244,7 +253,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  toggleSeriesExclusiveMode (serie) {
+  toggleSeriesExclusiveMode(serie) {
     var hidden = this.hiddenSeries;
 
     if (hidden[serie.alias]) {
@@ -278,7 +287,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   toggleAxis(info) {
-    var override = _.find(this.panel.seriesOverrides, {alias: info.alias});
+    var override = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
@@ -313,9 +322,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.publishAppEvent('show-modal', {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,
-      modalClass: 'modal--narrow'
+      modalClass: 'modal--narrow',
     });
   }
 }
 
-export {GraphCtrl, GraphCtrl as PanelCtrl};
+export { GraphCtrl, GraphCtrl as PanelCtrl };

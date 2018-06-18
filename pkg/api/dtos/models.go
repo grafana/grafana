@@ -3,6 +3,7 @@ package dtos
 import (
 	"crypto/md5"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,20 +22,22 @@ type LoginCommand struct {
 }
 
 type CurrentUser struct {
-	IsSignedIn     bool         `json:"isSignedIn"`
-	Id             int64        `json:"id"`
-	Login          string       `json:"login"`
-	Email          string       `json:"email"`
-	Name           string       `json:"name"`
-	LightTheme     bool         `json:"lightTheme"`
-	OrgId          int64        `json:"orgId"`
-	OrgName        string       `json:"orgName"`
-	OrgRole        m.RoleType   `json:"orgRole"`
-	IsGrafanaAdmin bool         `json:"isGrafanaAdmin"`
-	GravatarUrl    string       `json:"gravatarUrl"`
-	Timezone       string       `json:"timezone"`
-	Locale         string       `json:"locale"`
-	HelpFlags1     m.HelpFlags1 `json:"helpFlags1"`
+	IsSignedIn                 bool         `json:"isSignedIn"`
+	Id                         int64        `json:"id"`
+	Login                      string       `json:"login"`
+	Email                      string       `json:"email"`
+	Name                       string       `json:"name"`
+	LightTheme                 bool         `json:"lightTheme"`
+	OrgCount                   int          `json:"orgCount"`
+	OrgId                      int64        `json:"orgId"`
+	OrgName                    string       `json:"orgName"`
+	OrgRole                    m.RoleType   `json:"orgRole"`
+	IsGrafanaAdmin             bool         `json:"isGrafanaAdmin"`
+	GravatarUrl                string       `json:"gravatarUrl"`
+	Timezone                   string       `json:"timezone"`
+	Locale                     string       `json:"locale"`
+	HelpFlags1                 m.HelpFlags1 `json:"helpFlags1"`
+	HasEditPermissionInFolders bool         `json:"hasEditPermissionInFolders"`
 }
 
 type MetricRequest struct {
@@ -48,6 +51,10 @@ type UserStars struct {
 }
 
 func GetGravatarUrl(text string) string {
+	if setting.DisableGravatar {
+		return setting.AppSubUrl + "/public/img/user_profile.png"
+	}
+
 	if text == "" {
 		return ""
 	}
@@ -55,4 +62,20 @@ func GetGravatarUrl(text string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(strings.ToLower(text)))
 	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
+}
+
+func GetGravatarUrlWithDefault(text string, defaultText string) string {
+	if text != "" {
+		return GetGravatarUrl(text)
+	}
+
+	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
+
+	if err != nil {
+		return ""
+	}
+
+	text = reg.ReplaceAllString(defaultText, "") + "@localhost"
+
+	return GetGravatarUrl(text)
 }

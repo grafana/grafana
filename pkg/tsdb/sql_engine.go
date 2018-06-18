@@ -2,7 +2,11 @@ package tsdb
 
 import (
 	"context"
+	"fmt"
 	"sync"
+	"time"
+
+	"github.com/grafana/grafana/pkg/components/null"
 
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
@@ -17,15 +21,15 @@ type SqlEngine interface {
 		ctx context.Context,
 		ds *models.DataSource,
 		query *TsdbQuery,
-		transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult) error,
-		transformToTable func(query *Query, rows *core.Rows, result *QueryResult) error,
+		transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
+		transformToTable func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
 	) (*Response, error)
 }
 
-// SqlMacroEngine interpolates macros into sql. It takes in the timeRange to be able to
-// generate queries that use from and to.
+// SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
+// timeRange to be able to generate queries that use from and to.
 type SqlMacroEngine interface {
-	Interpolate(timeRange *TimeRange, sql string) (string, error)
+	Interpolate(query *Query, timeRange *TimeRange, sql string) (string, error)
 }
 
 type DefaultSqlEngine struct {
@@ -50,18 +54,19 @@ func (e *DefaultSqlEngine) InitEngine(driverName string, dsInfo *models.DataSour
 	defer engineCache.Unlock()
 
 	if engine, present := engineCache.cache[dsInfo.Id]; present {
-		if version, _ := engineCache.versions[dsInfo.Id]; version == dsInfo.Version {
+		if version := engineCache.versions[dsInfo.Id]; version == dsInfo.Version {
 			e.XormEngine = engine
 			return nil
 		}
 	}
 
 	engine, err := xorm.NewEngine(driverName, cnnstr)
-	engine.SetMaxOpenConns(10)
-	engine.SetMaxIdleConns(10)
 	if err != nil {
 		return err
 	}
+
+	engine.SetMaxOpenConns(10)
+	engine.SetMaxIdleConns(10)
 
 	engineCache.cache[dsInfo.Id] = engine
 	e.XormEngine = engine
@@ -76,8 +81,8 @@ func (e *DefaultSqlEngine) Query(
 	ctx context.Context,
 	dsInfo *models.DataSource,
 	tsdbQuery *TsdbQuery,
-	transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult) error,
-	transformToTable func(query *Query, rows *core.Rows, result *QueryResult) error,
+	transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
+	transformToTable func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
 ) (*Response, error) {
 	result := &Response{
 		Results: make(map[string]*QueryResult),
@@ -96,7 +101,7 @@ func (e *DefaultSqlEngine) Query(
 		queryResult := &QueryResult{Meta: simplejson.New(), RefId: query.RefId}
 		result.Results[query.RefId] = queryResult
 
-		rawSql, err := e.MacroEngine.Interpolate(tsdbQuery.TimeRange, rawSql)
+		rawSql, err := e.MacroEngine.Interpolate(query, tsdbQuery.TimeRange, rawSql)
 		if err != nil {
 			queryResult.Error = err
 			continue
@@ -116,13 +121,13 @@ func (e *DefaultSqlEngine) Query(
 
 		switch format {
 		case "time_series":
-			err := transformToTimeSeries(query, rows, queryResult)
+			err := transformToTimeSeries(query, rows, queryResult, tsdbQuery)
 			if err != nil {
 				queryResult.Error = err
 				continue
 			}
 		case "table":
-			err := transformToTable(query, rows, queryResult)
+			err := transformToTable(query, rows, queryResult, tsdbQuery)
 			if err != nil {
 				queryResult.Error = err
 				continue
@@ -131,4 +136,161 @@ func (e *DefaultSqlEngine) Query(
 	}
 
 	return result, nil
+}
+
+// ConvertSqlTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
+// to make native datetime types and epoch dates work in annotation and table queries.
+func ConvertSqlTimeColumnToEpochMs(values RowValues, timeIndex int) {
+	if timeIndex >= 0 {
+		switch value := values[timeIndex].(type) {
+		case time.Time:
+			values[timeIndex] = float64(value.UnixNano()) / float64(time.Millisecond)
+		case *time.Time:
+			if value != nil {
+				values[timeIndex] = float64((*value).UnixNano()) / float64(time.Millisecond)
+			}
+		case int64:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *int64:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case uint64:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *uint64:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case int32:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *int32:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case uint32:
+			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))
+		case *uint32:
+			if value != nil {
+				values[timeIndex] = int64(EpochPrecisionToMs(float64(*value)))
+			}
+		case float64:
+			values[timeIndex] = EpochPrecisionToMs(value)
+		case *float64:
+			if value != nil {
+				values[timeIndex] = EpochPrecisionToMs(*value)
+			}
+		case float32:
+			values[timeIndex] = EpochPrecisionToMs(float64(value))
+		case *float32:
+			if value != nil {
+				values[timeIndex] = EpochPrecisionToMs(float64(*value))
+			}
+		}
+	}
+}
+
+// ConvertSqlValueColumnToFloat converts timeseries value column to float.
+func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (null.Float, error) {
+	var value null.Float
+
+	switch typedValue := columnValue.(type) {
+	case int:
+		value = null.FloatFrom(float64(typedValue))
+	case *int:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case int64:
+		value = null.FloatFrom(float64(typedValue))
+	case *int64:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case int32:
+		value = null.FloatFrom(float64(typedValue))
+	case *int32:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case int16:
+		value = null.FloatFrom(float64(typedValue))
+	case *int16:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case int8:
+		value = null.FloatFrom(float64(typedValue))
+	case *int8:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint64:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint64:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint32:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint32:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint16:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint16:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case uint8:
+		value = null.FloatFrom(float64(typedValue))
+	case *uint8:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case float64:
+		value = null.FloatFrom(typedValue)
+	case *float64:
+		value = null.FloatFromPtr(typedValue)
+	case float32:
+		value = null.FloatFrom(float64(typedValue))
+	case *float32:
+		if typedValue == nil {
+			value.Valid = false
+		} else {
+			value = null.FloatFrom(float64(*typedValue))
+		}
+	case nil:
+		value.Valid = false
+	default:
+		return null.NewFloat(0, false), fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", columnName, typedValue, typedValue)
+	}
+
+	return value, nil
 }

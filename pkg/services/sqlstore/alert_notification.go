@@ -23,12 +23,7 @@ func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
 		_, err := sess.Exec(sql, cmd.OrgId, cmd.Id)
-
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	})
 }
 
@@ -76,7 +71,7 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 	sql.WriteString(`)`)
 
 	results := make([]*m.AlertNotification, 0)
-	if err := x.Sql(sql.String(), params...).Find(&results); err != nil {
+	if err := x.SQL(sql.String(), params...).Find(&results); err != nil {
 		return err
 	}
 
@@ -165,7 +160,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) (err error) {
 		current := m.AlertNotification{}
 
-		if _, err = sess.Id(cmd.Id).Get(&current); err != nil {
+		if _, err = sess.ID(cmd.Id).Get(&current); err != nil {
 			return err
 		}
 
@@ -187,7 +182,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 
 		sess.UseBool("is_default")
 
-		if affected, err := sess.Id(cmd.Id).Update(current); err != nil {
+		if affected, err := sess.ID(cmd.Id).Update(current); err != nil {
 			return err
 		} else if affected == 0 {
 			return fmt.Errorf("Could not find alert notification")

@@ -1,19 +1,17 @@
-
 // Colours
-$progress-color-dark:       $panel-bg !default;
-$progress-color:            $panel-bg !default;
-$progress-color-light:      $panel-bg !default;
+$progress-color-dark: $panel-bg !default;
+$progress-color: $panel-bg !default;
+$progress-color-light: $panel-bg !default;
 $progress-color-grey-light: $body-bg !default;
-$progress-color-shadow:     $panel-border !default;
-$progress-color-grey:       $iconContainerBackground !default;
-$progress-color-grey-dark:  $iconContainerBackground !default;
+$progress-color-shadow: $panel-border !default;
+$progress-color-grey: $iconContainerBackground !default;
+$progress-color-grey-dark: $iconContainerBackground !default;
 
 // Sizing
-$marker-size:               60px !default;
-$marker-size-half:          ($marker-size / 2);
-$path-height:               2px !default;
-$path-position:             $marker-size-half - ($path-height / 2);
-
+$marker-size: 60px !default;
+$marker-size-half: ($marker-size / 2);
+$path-height: 2px !default;
+$path-position: $marker-size-half - ($path-height / 2);
 
 .dashlist-cta-close-btn {
   color: $text-color-weak;
@@ -35,7 +33,7 @@ $path-position:             $marker-size-half - ($path-height / 2);
 // Container element
 .progress-tracker {
   display: flex;
-  margin: 20px auto;
+  margin: 0 auto;
   padding: 0;
   list-style: none;
 }
@@ -52,9 +50,9 @@ $path-position:             $marker-size-half - ($path-height / 2);
   // For a flexbox bug in firefox that wont allow the text overflow on the text
   min-width: $marker-size;
 
-   &::after {
+  &::after {
     right: -50%;
-    content: '';
+    content: "";
     display: block;
     position: absolute;
     z-index: 1;
@@ -96,7 +94,7 @@ $path-position:             $marker-size-half - ($path-height / 2);
         -webkit-text-fill-color: transparent;
         background: $brand-gradient;
         -webkit-background-clip: text;
-        text-decoration:none;
+        text-decoration: none;
       }
     }
   }
@@ -154,17 +152,18 @@ $path-position:             $marker-size-half - ($path-height / 2);
 
 .progress-marker {
   color: $text-color-weak;
-  text-decoration:none;
+  text-decoration: none;
   font-size: 35px;
   vertical-align: sub;
 }
 
 a.progress-link {
   &:hover {
-    .progress-marker, .progress-text {
+    .progress-marker,
+    .progress-text {
       color: $link-hover-color;
     }
-  &:hover .progress-marker.completed {
+    &:hover .progress-marker.completed {
       color: $online;
     }
   }

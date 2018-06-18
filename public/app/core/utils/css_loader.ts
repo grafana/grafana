@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 var waitSeconds = 100;
 var head = document.getElementsByTagName('head')[0];
 
@@ -49,7 +47,9 @@ var loadCSS = function(url) {
     link.href = url;
 
     if (!isWebkit) {
-      link.onload = function() { _callback(undefined); };
+      link.onload = function() {
+        _callback(undefined);
+      };
     } else {
       webkitLoadCheck(link, _callback);
     }
@@ -67,7 +67,7 @@ export function fetch(load): any {
     return '';
   }
 
-  // dont reload styles loaded in the head
+  // don't reload styles loaded in the head
   for (var i = 0; i < linkHrefs.length; i++) {
     if (load.address === linkHrefs[i]) {
       return '';
@@ -75,4 +75,3 @@ export function fetch(load): any {
   }
   return loadCSS(load.address);
 }
-

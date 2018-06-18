@@ -24,6 +24,7 @@ import (
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,7 +35,7 @@ var (
 	slash     = []byte("/")
 )
 
-// stack returns a nicely formated stack frame, skipping skip frames
+// stack returns a nicely formatted stack frame, skipping skip frames
 func stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
 	// As we loop, we open files and read them. These variables record the currently
@@ -106,7 +107,7 @@ func Recovery() macaron.Handler {
 				panicLogger := log.Root
 				// try to get request logger
 				if ctx, ok := c.Data["ctx"]; ok {
-					ctxTyped := ctx.(*Context)
+					ctxTyped := ctx.(*m.ReqContext)
 					panicLogger = ctxTyped.Logger
 				}
 
@@ -115,31 +116,30 @@ func Recovery() macaron.Handler {
 				c.Data["Title"] = "Server Error"
 				c.Data["AppSubUrl"] = setting.AppSubUrl
 
-				if theErr, ok := err.(error); ok {
-					c.Data["Title"] = theErr.Error()
-				}
-
 				if setting.Env == setting.DEV {
+					if theErr, ok := err.(error); ok {
+						c.Data["Title"] = theErr.Error()
+					}
+
 					c.Data["ErrorMsg"] = string(stack)
 				}
 
-				c.HTML(500, "500")
+				ctx, ok := c.Data["ctx"].(*m.ReqContext)
 
-				// // Lookup the current responsewriter
-				// val := c.GetVal(inject.InterfaceOf((*http.ResponseWriter)(nil)))
-				// res := val.Interface().(http.ResponseWriter)
-				//
-				// // respond with panic message while in development mode
-				// var body []byte
-				// if setting.Env == setting.DEV {
-				// 	res.Header().Set("Content-Type", "text/html")
-				// 	body = []byte(fmt.Sprintf(panicHtml, err, err, stack))
-				// }
-				//
-				// res.WriteHeader(http.StatusInternalServerError)
-				// if nil != body {
-				// 	res.Write(body)
-				// }
+				if ok && ctx.IsApiRequest() {
+					resp := make(map[string]interface{})
+					resp["message"] = "Internal Server Error - Check the Grafana server logs for the detailed error message."
+
+					if c.Data["ErrorMsg"] != nil {
+						resp["error"] = fmt.Sprintf("%v - %v", c.Data["Title"], c.Data["ErrorMsg"])
+					} else {
+						resp["error"] = c.Data["Title"]
+					}
+
+					c.JSON(500, resp)
+				} else {
+					c.HTML(500, "error")
+				}
 			}
 		}()
 

@@ -25,12 +25,16 @@ enabled = true
 header_name = X-WEBAUTH-USER
 header_property = username
 auto_sign_up = true
+ldap_sync_ttl = 60
+whitelist =
 ```
 
 * **enabled**: this is to toggle the feature on or off
 * **header_name**: this is the HTTP header name that passes the username or email address of the authenticated user to Grafana. Grafana will trust what ever username is contained in this header and automatically log the user in.
 * **header_property**: this tells Grafana whether the value in the header_name is a username or an email address. (In Grafana you can log in using your account username or account email)
 * **auto_sign_up**: If set to true, Grafana will automatically create user accounts in the Grafana DB if one does not exist. If set to false, users who do not exist in the GrafanaDB won’t be able to log in, even though their username and password are valid.
+* **ldap_sync_ttl**: When both auth.proxy and auth.ldap are enabled, user's organisation and role are synchronised from ldap after the http proxy authentication. You can force ldap re-synchronisation after `ldap_sync_ttl` minutes.
+* **whitelist**: Comma separated list of trusted authentication proxies IP.
 
 With a fresh install of Grafana, using the above configuration for the authProxy feature, we can send a simple API call to list all users. The only user that will be present is the default “Admin” user that is added the first time Grafana starts up. As you can see all we need to do to authenticate the request is to provide the “X-WEBAUTH-USER” header.
 
@@ -104,7 +108,7 @@ In this example we use Apache as a reverseProxy in front of Grafana. Apache hand
 
     * The next part of the configuration is the tricky part. We use Apache’s rewrite engine to create our **X-WEBAUTH-USER header**, populated with the authenticated user.
 
-        * **RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER}, NS]**: This line is a little bit of magic. What it does, is for every request use the rewriteEngines look-ahead (LA-U) feature to determine what the REMOTE_USER variable would be set to after processing the request. Then assign the result to the variable PROXY_USER. This is neccessary as the REMOTE_USER variable is not available to the RequestHeader function.
+        * **RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER}, NS]**: This line is a little bit of magic. What it does, is for every request use the rewriteEngines look-ahead (LA-U) feature to determine what the REMOTE_USER variable would be set to after processing the request. Then assign the result to the variable PROXY_USER. This is necessary as the REMOTE_USER variable is not available to the RequestHeader function.
 
         * **RequestHeader set X-WEBAUTH-USER “%{PROXY_USER}e”**: With the authenticated username now stored in the PROXY_USER variable, we create a new HTTP request header that will be sent to our backend Grafana containing the username.
 
@@ -145,7 +149,7 @@ auto_sign_up = true
 
 ##### Grafana Container
 
-For this example, we use the offical Grafana docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/)
+For this example, we use the official Grafana docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/)
 
 * Create a file `grafana.ini` with the following contents
 
@@ -162,7 +166,7 @@ header_property = username
 auto_sign_up = true
 ```
 
-* Launch the Grafana container, using our custom grafana.ini to replace `/etc/grafana/grafana.ini`. We dont expose any ports for this container as it will only be connected to by our Apache container.
+* Launch the Grafana container, using our custom grafana.ini to replace `/etc/grafana/grafana.ini`. We don't expose any ports for this container as it will only be connected to by our Apache container.
 
 ```bash
 docker run -i -v $(pwd)/grafana.ini:/etc/grafana/grafana.ini --name grafana grafana/grafana
@@ -170,7 +174,7 @@ docker run -i -v $(pwd)/grafana.ini:/etc/grafana/grafana.ini --name grafana graf
 
 ### Apache Container
 
-For this example we use the offical Apache docker image available at [Docker Hub](https://hub.docker.com/_/httpd/)
+For this example we use the official Apache docker image available at [Docker Hub](https://hub.docker.com/_/httpd/)
 
 * Create a file `httpd.conf` with the following contents
 

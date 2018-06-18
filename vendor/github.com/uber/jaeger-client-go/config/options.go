@@ -1,22 +1,16 @@
 // Copyright (c) 2017 Uber Technologies, Inc.
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// http://www.apache.org/licenses/LICENSE-2.0
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package config
 
@@ -35,10 +29,14 @@ type Options struct {
 	metrics             metrics.Factory
 	logger              jaeger.Logger
 	reporter            jaeger.Reporter
+	sampler             jaeger.Sampler
 	contribObservers    []jaeger.ContribObserver
 	observers           []jaeger.Observer
+	gen128Bit           bool
 	zipkinSharedRPCSpan bool
 	tags                []opentracing.Tag
+	injectors           map[interface{}]jaeger.Injector
+	extractors          map[interface{}]jaeger.Extractor
 }
 
 // Metrics creates an Option that initializes Metrics in the tracer,
@@ -65,6 +63,13 @@ func Reporter(reporter jaeger.Reporter) Option {
 	}
 }
 
+// Sampler can be provided explicitly to override the configuration.
+func Sampler(sampler jaeger.Sampler) Option {
+	return func(c *Options) {
+		c.sampler = sampler
+	}
+}
+
 // Observer can be registered with the Tracer to receive notifications about new Spans.
 func Observer(observer jaeger.Observer) Option {
 	return func(c *Options) {
@@ -77,6 +82,13 @@ func Observer(observer jaeger.Observer) Option {
 func ContribObserver(observer jaeger.ContribObserver) Option {
 	return func(c *Options) {
 		c.contribObservers = append(c.contribObservers, observer)
+	}
+}
+
+// Gen128Bit specifies whether to generate 128bit trace IDs.
+func Gen128Bit(gen128Bit bool) Option {
+	return func(c *Options) {
+		c.gen128Bit = gen128Bit
 	}
 }
 
@@ -96,8 +108,25 @@ func Tag(key string, value interface{}) Option {
 	}
 }
 
+// Injector registers an Injector with the given format.
+func Injector(format interface{}, injector jaeger.Injector) Option {
+	return func(c *Options) {
+		c.injectors[format] = injector
+	}
+}
+
+// Extractor registers an Extractor with the given format.
+func Extractor(format interface{}, extractor jaeger.Extractor) Option {
+	return func(c *Options) {
+		c.extractors[format] = extractor
+	}
+}
+
 func applyOptions(options ...Option) Options {
-	opts := Options{}
+	opts := Options{
+		injectors:  make(map[interface{}]jaeger.Injector),
+		extractors: make(map[interface{}]jaeger.Extractor),
+	}
 	for _, option := range options {
 		option(&opts)
 	}

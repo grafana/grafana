@@ -18,7 +18,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,12 +25,9 @@ import (
 )
 
 var (
-	logger log.Logger   = log.New("data-proxy-log")
-	client *http.Client = &http.Client{
-		Timeout:   time.Second * 30,
-		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
-	}
-	tokenCache = map[int64]*jwtToken{}
+	logger     = log.New("data-proxy-log")
+	tokenCache = map[string]*jwtToken{}
+	client     = newHTTPClient()
 )
 
 type jwtToken struct {
@@ -42,22 +38,33 @@ type jwtToken struct {
 
 type DataSourceProxy struct {
 	ds        *m.DataSource
-	ctx       *middleware.Context
+	ctx       *m.ReqContext
 	targetUrl *url.URL
 	proxyPath string
 	route     *plugins.AppPluginRoute
 	plugin    *plugins.DataSourcePlugin
 }
 
-func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *middleware.Context, proxyPath string) *DataSourceProxy {
-	targetUrl, _ := url.Parse(ds.Url)
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
+	targetURL, _ := url.Parse(ds.Url)
 
 	return &DataSourceProxy{
 		ds:        ds,
 		plugin:    plugin,
 		ctx:       ctx,
 		proxyPath: proxyPath,
-		targetUrl: targetUrl,
+		targetUrl: targetURL,
+	}
+}
+
+func newHTTPClient() httpClient {
+	return &http.Client{
+		Timeout:   time.Second * 30,
+		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
 }
 
@@ -90,6 +97,9 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetTag("user_id", proxy.ctx.SignedInUser.UserId)
 	span.SetTag("org_id", proxy.ctx.SignedInUser.OrgId)
 
+	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
+	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
+
 	opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
@@ -97,6 +107,14 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
 	proxy.ctx.Resp.Header().Del("Set-Cookie")
+}
+
+func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
+	panelId := proxy.ctx.Req.Header.Get(headerName)
+	dashId, err := strconv.Atoi(panelId)
+	if err == nil {
+		span.SetTag(tagName, dashId)
+	}
 }
 
 func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
@@ -135,9 +153,24 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", dsAuth)
 		}
 
-		// clear cookie headers
+		// clear cookie header, except for whitelisted cookies
+		var keptCookies []*http.Cookie
+		if proxy.ds.JsonData != nil {
+			if keepCookies := proxy.ds.JsonData.Get("keepCookies"); keepCookies != nil {
+				keepCookieNames := keepCookies.MustStringArray()
+				for _, c := range req.Cookies() {
+					for _, v := range keepCookieNames {
+						if c.Name == v {
+							keptCookies = append(keptCookies, c)
+						}
+					}
+				}
+			}
+		}
 		req.Header.Del("Cookie")
-		req.Header.Del("Set-Cookie")
+		for _, c := range keptCookies {
+			req.AddCookie(c)
+		}
 
 		// clear X-Forwarded Host/Port/Proto headers
 		req.Header.Del("X-Forwarded-Host")
@@ -164,19 +197,19 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
-	if proxy.ds.Type == m.DS_INFLUXDB {
-		if proxy.ctx.Query("db") != proxy.ds.Database {
-			return errors.New("Datasource is not configured to allow this database")
-		}
-	}
-
 	if !checkWhiteList(proxy.ctx, proxy.targetUrl.Host) {
 		return errors.New("Target url is not a valid target")
 	}
 
 	if proxy.ds.Type == m.DS_PROMETHEUS {
-		if proxy.ctx.Req.Request.Method != http.MethodGet || !strings.HasPrefix(proxy.proxyPath, "api/") {
-			return errors.New("GET is only allowed on proxied Prometheus datasource")
+		if proxy.ctx.Req.Request.Method == "DELETE" {
+			return errors.New("Deletes not allowed on proxied Prometheus datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "PUT" {
+			return errors.New("Puts not allowed on proxied Prometheus datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range") {
+			return errors.New("Posts not allowed on proxied Prometheus datasource except on /query and /query_range")
 		}
 	}
 
@@ -240,7 +273,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"body", body)
 }
 
-func checkWhiteList(c *middleware.Context, host string) bool {
+func checkWhiteList(c *m.ReqContext, host string) bool {
 	if host != "" && len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[host]; !exists {
 			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
@@ -259,16 +292,16 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 		SecureJsonData: proxy.ds.SecureJsonData.Decrypt(),
 	}
 
-	routeUrl, err := url.Parse(proxy.route.Url)
+	routeURL, err := url.Parse(proxy.route.Url)
 	if err != nil {
 		logger.Error("Error parsing plugin route url")
 		return
 	}
 
-	req.URL.Scheme = routeUrl.Scheme
-	req.URL.Host = routeUrl.Host
-	req.Host = routeUrl.Host
-	req.URL.Path = util.JoinUrlFragments(routeUrl.Path, proxy.proxyPath)
+	req.URL.Scheme = routeURL.Scheme
+	req.URL.Host = routeURL.Host
+	req.Host = routeURL.Host
+	req.URL.Path = util.JoinUrlFragments(routeURL.Path, proxy.proxyPath)
 
 	if err := addHeaders(&req.Header, proxy.route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
@@ -286,7 +319,7 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 }
 
 func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
-	if cachedToken, found := tokenCache[proxy.ds.Id]; found {
+	if cachedToken, found := tokenCache[proxy.getAccessTokenCacheKey()]; found {
 		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
 			logger.Info("Using token from cache")
 			return cachedToken.AccessToken, nil
@@ -300,11 +333,11 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 
 	params := make(url.Values)
 	for key, value := range proxy.route.TokenAuth.Params {
-		if interpolatedParam, err := interpolateString(value, data); err != nil {
+		interpolatedParam, err := interpolateString(value, data)
+		if err != nil {
 			return "", err
-		} else {
-			params.Add(key, interpolatedParam)
 		}
+		params.Add(key, interpolatedParam)
 	}
 
 	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
@@ -325,22 +358,26 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 
 	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
 	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
-	tokenCache[proxy.ds.Id] = &token
+	tokenCache[proxy.getAccessTokenCacheKey()] = &token
 
 	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
 	return token.AccessToken, nil
 }
 
+func (proxy *DataSourceProxy) getAccessTokenCacheKey() string {
+	return fmt.Sprintf("%v_%v_%v", proxy.ds.Id, proxy.route.Path, proxy.route.Method)
+}
+
 func interpolateString(text string, data templateData) (string, error) {
 	t, err := template.New("content").Parse(text)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Could not parse template %s.", text))
+		return "", fmt.Errorf("could not parse template %s", text)
 	}
 
 	var contentBuf bytes.Buffer
 	err = t.Execute(&contentBuf, data)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Failed to execute template %s.", text))
+		return "", fmt.Errorf("failed to execute template %s", text)
 	}
 
 	return contentBuf.String(), nil

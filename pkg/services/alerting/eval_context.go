@@ -12,17 +12,19 @@ import (
 )
 
 type EvalContext struct {
-	Firing          bool
-	IsTestRun       bool
-	EvalMatches     []*EvalMatch
-	Logs            []*ResultLogEntry
-	Error           error
-	ConditionEvals  string
-	StartTime       time.Time
-	EndTime         time.Time
-	Rule            *Rule
-	log             log.Logger
-	dashboardSlug   string
+	Firing         bool
+	IsTestRun      bool
+	EvalMatches    []*EvalMatch
+	Logs           []*ResultLogEntry
+	Error          error
+	ConditionEvals string
+	StartTime      time.Time
+	EndTime        time.Time
+	Rule           *Rule
+	log            log.Logger
+
+	dashboardRef *m.DashboardRef
+
 	ImagePublicUrl  string
 	ImageOnDiskPath string
 	NoDataFound     bool
@@ -75,14 +77,6 @@ func (c *EvalContext) ShouldUpdateAlertState() bool {
 	return c.Rule.State != c.PrevAlertState
 }
 
-func (c *EvalContext) ShouldSendNotification() bool {
-	if (c.PrevAlertState == m.AlertStatePending) && (c.Rule.State == m.AlertStateOK) {
-		return false
-	}
-
-	return true
-}
-
 func (a *EvalContext) GetDurationMs() float64 {
 	return float64(a.EndTime.Nanosecond()-a.StartTime.Nanosecond()) / float64(1000000)
 }
@@ -91,29 +85,61 @@ func (c *EvalContext) GetNotificationTitle() string {
 	return "[" + c.GetStateModel().Text + "] " + c.Rule.Name
 }
 
-func (c *EvalContext) GetDashboardSlug() (string, error) {
-	if c.dashboardSlug != "" {
-		return c.dashboardSlug, nil
+func (c *EvalContext) GetDashboardUID() (*m.DashboardRef, error) {
+	if c.dashboardRef != nil {
+		return c.dashboardRef, nil
 	}
 
-	slugQuery := &m.GetDashboardSlugByIdQuery{Id: c.Rule.DashboardId}
-	if err := bus.Dispatch(slugQuery); err != nil {
-		return "", err
+	uidQuery := &m.GetDashboardRefByIdQuery{Id: c.Rule.DashboardId}
+	if err := bus.Dispatch(uidQuery); err != nil {
+		return nil, err
 	}
 
-	c.dashboardSlug = slugQuery.Result
-	return c.dashboardSlug, nil
+	c.dashboardRef = uidQuery.Result
+	return c.dashboardRef, nil
 }
+
+const urlFormat = "%s?fullscreen=true&edit=true&tab=alert&panelId=%d&orgId=%d"
 
 func (c *EvalContext) GetRuleUrl() (string, error) {
 	if c.IsTestRun {
 		return setting.AppUrl, nil
 	}
 
-	if slug, err := c.GetDashboardSlug(); err != nil {
+	ref, err := c.GetDashboardUID()
+	if err != nil {
 		return "", err
-	} else {
-		ruleUrl := fmt.Sprintf("%sdashboard/db/%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d", setting.AppUrl, slug, c.Rule.PanelId, c.Rule.OrgId)
-		return ruleUrl, nil
 	}
+	return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
+}
+
+func (c *EvalContext) GetNewState() m.AlertStateType {
+	if c.Error != nil {
+		c.log.Error("Alert Rule Result Error",
+			"ruleId", c.Rule.Id,
+			"name", c.Rule.Name,
+			"error", c.Error,
+			"changing state to", c.Rule.ExecutionErrorState.ToAlertState())
+
+		if c.Rule.ExecutionErrorState == m.ExecutionErrorKeepState {
+			return c.PrevAlertState
+		}
+		return c.Rule.ExecutionErrorState.ToAlertState()
+
+	} else if c.Firing {
+		return m.AlertStateAlerting
+
+	} else if c.NoDataFound {
+		c.log.Info("Alert Rule returned no data",
+			"ruleId", c.Rule.Id,
+			"name", c.Rule.Name,
+			"changing state to", c.Rule.NoDataState.ToAlertState())
+
+		if c.Rule.NoDataState == m.NoDataKeepState {
+			return c.PrevAlertState
+		}
+		return c.Rule.NoDataState.ToAlertState()
+	}
+
+	return m.AlertStateOK
 }

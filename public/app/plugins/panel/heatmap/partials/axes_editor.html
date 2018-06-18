@@ -9,25 +9,36 @@
            dropdown-typeahead-on-select="editor.setUnitFormat($subItem)">
       </div>
     </div>
-    <div class="gf-form">
-      <label class="gf-form-label width-8">Scale</label>
-      <div class="gf-form-select-wrapper width-12">
-        <select class="gf-form-input" ng-model="ctrl.panel.yAxis.logBase" ng-options="v as k for (k, v) in editor.logScales" ng-change="ctrl.refresh()"></select>
+    <div ng-if="ctrl.panel.dataFormat == 'timeseries'">
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Scale</label>
+        <div class="gf-form-select-wrapper width-12">
+          <select class="gf-form-input" ng-model="ctrl.panel.yAxis.logBase" ng-options="v as k for (k, v) in editor.logScales" ng-change="ctrl.refresh()"></select>
+        </div>
       </div>
-    </div>
-    <div class="gf-form">
-      <label class="gf-form-label width-8">Y-Min</label>
-      <input type="text" class="gf-form-input width-12" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.min" ng-change="ctrl.render()" ng-model-onblur>
-    </div>
-    <div class="gf-form">
-      <label class="gf-form-label width-8">Y-Max</label>
-      <input type="text" class="gf-form-input width-12" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.max" ng-change="ctrl.render()" ng-model-onblur>
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Y-Min</label>
+        <input type="text" class="gf-form-input width-12" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.min" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Y-Max</label>
+        <input type="text" class="gf-form-input width-12" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.max" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-8">Decimals</label>
       <input type="number" class="gf-form-input width-12" placeholder="auto" data-placement="right"
-                                                                             bs-tooltip="'Override automatic decimal precision for axis.'"
-                                                                             ng-model="ctrl.panel.yAxis.decimals" ng-change="ctrl.render()" ng-model-onblur>
+      bs-tooltip="'Override automatic decimal precision for axis.'"
+      ng-model="ctrl.panel.yAxis.decimals" ng-change="ctrl.render()" ng-model-onblur>
+    </div>
+    <div class="gf-form" ng-if="ctrl.panel.dataFormat == 'tsbuckets'">
+      <label class="gf-form-label width-8">Bucket bound</label>
+      <div class="gf-form-select-wrapper max-width-12">
+        <select class="gf-form-input"
+          ng-model="ctrl.panel.yBucketBound" ng-options="v as k for (k, v) in editor.yBucketBoundModes" ng-change="ctrl.render()"
+          data-placement="right" bs-tooltip="'Use series label as an upper or lower bucket bound.'">
+        </select>
+      </div>
     </div>
   </div>
 
@@ -82,7 +93,9 @@
     <div class="gf-form">
       <label class="gf-form-label width-5">Format</label>
       <div class="gf-form-select-wrapper max-width-15">
-        <select class="gf-form-input" ng-model="ctrl.panel.dataFormat" ng-options="v as k for (k, v) in editor.dataFormats" ng-change="ctrl.render()"></select>
+        <select class="gf-form-input" ng-model="ctrl.panel.dataFormat" ng-options="v as k for (k, v) in editor.dataFormats" ng-change="ctrl.render()"
+          data-placement="right" bs-tooltip="'Time series: create heatmap from regular time series. <br>Time series buckets: use histogram data returned from data source. Each series represents bucket which upper/lower bound is a series label.'">
+        </select>
       </div>
     </div>
   </div>

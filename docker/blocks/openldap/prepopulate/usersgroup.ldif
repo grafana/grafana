@@ -1,0 +1,5 @@
+dn: cn=users,dc=grafana,dc=org
+cn: users
+member: cn=ldapeditor,dc=grafana,dc=org
+objectClass: groupOfNames
+objectClass: top

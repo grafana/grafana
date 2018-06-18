@@ -1,4 +1,3 @@
-
 export default class TableModel {
   columns: any[];
   rows: any[];
@@ -44,5 +43,9 @@ export default class TableModel {
       this.columns.push(col);
       this.columnMap[col.text] = col;
     }
+  }
+
+  addRow(row) {
+    this.rows.push(row);
   }
 }

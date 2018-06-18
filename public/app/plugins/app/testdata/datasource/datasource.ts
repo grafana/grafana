@@ -25,29 +25,31 @@ class TestDataDatasource {
     });
 
     if (queries.length === 0) {
-      return this.$q.when({data: []});
+      return this.$q.when({ data: [] });
     }
 
-    return this.backendSrv.post('/api/tsdb/query', {
-      from: options.range.from.valueOf().toString(),
-      to: options.range.to.valueOf().toString(),
-      queries: queries,
-    }).then(res => {
-      var data = [];
+    return this.backendSrv
+      .post('/api/tsdb/query', {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: queries,
+      })
+      .then(res => {
+        var data = [];
 
-      if (res.results) {
-        _.forEach(res.results, queryRes => {
-          for (let series of queryRes.series) {
-            data.push({
-              target: series.name,
-              datapoints: series.points
-            });
-          }
-        });
-      }
+        if (res.results) {
+          _.forEach(res.results, queryRes => {
+            for (let series of queryRes.series) {
+              data.push({
+                target: series.name,
+                datapoints: series.points,
+              });
+            }
+          });
+        }
 
-      return {data: data};
-    });
+        return { data: data };
+      });
   }
 
   annotationQuery(options) {
@@ -58,7 +60,6 @@ class TestDataDatasource {
       type: options.type,
     });
   }
-
 }
 
-export {TestDataDatasource};
+export { TestDataDatasource };

@@ -1,7 +1,6 @@
-import {Lexer} from '../lexer';
+import { Lexer } from '../lexer';
 
 describe('when lexing graphite expression', function() {
-
   it('should tokenize metric expression', function() {
     var lexer = new Lexer('metric.test.*.asd.count');
     var tokens = lexer.tokenize();
@@ -51,7 +50,7 @@ describe('when lexing graphite expression', function() {
   });
 
   it('should tokenize metric expression with number segments', function() {
-    var lexer = new Lexer("metric.10.12_10.test");
+    var lexer = new Lexer('metric.10.12_10.test');
     var tokens = lexer.tokenize();
     expect(tokens[0].type).toBe('identifier');
     expect(tokens[2].type).toBe('identifier');
@@ -61,7 +60,7 @@ describe('when lexing graphite expression', function() {
   });
 
   it('should tokenize metric expression with segment that start with number', function() {
-    var lexer = new Lexer("metric.001-server");
+    var lexer = new Lexer('metric.001-server');
     var tokens = lexer.tokenize();
     expect(tokens[0].type).toBe('identifier');
     expect(tokens[2].type).toBe('identifier');
@@ -69,7 +68,7 @@ describe('when lexing graphite expression', function() {
   });
 
   it('should tokenize func call with numbered metric and number arg', function() {
-    var lexer = new Lexer("scale(metric.10, 15)");
+    var lexer = new Lexer('scale(metric.10, 15)');
     var tokens = lexer.tokenize();
     expect(tokens[0].type).toBe('identifier');
     expect(tokens[2].type).toBe('identifier');
@@ -80,7 +79,7 @@ describe('when lexing graphite expression', function() {
   });
 
   it('should tokenize metric with template parameter', function() {
-    var lexer = new Lexer("metric.[[server]].test");
+    var lexer = new Lexer('metric.[[server]].test');
     var tokens = lexer.tokenize();
     expect(tokens[2].type).toBe('identifier');
     expect(tokens[2].value).toBe('[[server]]');
@@ -88,7 +87,7 @@ describe('when lexing graphite expression', function() {
   });
 
   it('should tokenize metric with question mark', function() {
-    var lexer = new Lexer("metric.server_??.test");
+    var lexer = new Lexer('metric.server_??.test');
     var tokens = lexer.tokenize();
     expect(tokens[2].type).toBe('identifier');
     expect(tokens[2].value).toBe('server_??');
@@ -108,14 +107,14 @@ describe('when lexing graphite expression', function() {
   });
 
   it('should handle float parameters', function() {
-    var lexer = new Lexer("alias(metric, 0.002)");
+    var lexer = new Lexer('alias(metric, 0.002)');
     var tokens = lexer.tokenize();
     expect(tokens[4].type).toBe('number');
     expect(tokens[4].value).toBe('0.002');
   });
 
   it('should handle bool parameters', function() {
-    var lexer = new Lexer("alias(metric, true, false)");
+    var lexer = new Lexer('alias(metric, true, false)');
     var tokens = lexer.tokenize();
     expect(tokens[4].type).toBe('bool');
     expect(tokens[4].value).toBe('true');

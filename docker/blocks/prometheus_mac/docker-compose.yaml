@@ -1,0 +1,26 @@
+  prometheus:
+    build: blocks/prometheus_mac
+    ports:
+      - "9090:9090"
+
+  node_exporter:
+    image: prom/node-exporter
+    ports:
+      - "9100:9100"
+
+  fake-prometheus-data:
+    image: grafana/fake-data-gen
+    ports:
+      - "9091:9091"
+    environment:
+      FD_DATASOURCE: prom
+
+  alertmanager:
+    image: quay.io/prometheus/alertmanager
+    ports:
+      - "9093:9093"
+
+  prometheus-random-data:
+    build: blocks/prometheus_random_data
+    ports:
+      - "8081:8080"

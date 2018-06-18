@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,7 +20,6 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			}
 
 			err := GetAlertNotifications(cmd)
-			fmt.Printf("errror %v", err)
 			So(err, ShouldBeNil)
 			So(cmd.Result, ShouldBeNil)
 		})

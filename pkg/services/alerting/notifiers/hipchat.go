@@ -111,7 +111,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := ""
-	if evalContext.Rule.State != models.AlertStateOK { //dont add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
 

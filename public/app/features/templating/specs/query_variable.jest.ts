@@ -1,9 +1,7 @@
-import {QueryVariable} from '../query_variable';
+import { QueryVariable } from '../query_variable';
 
 describe('QueryVariable', () => {
-
   describe('when creating from model', () => {
-
     it('should set defaults', () => {
       var variable = new QueryVariable({}, null, null, null, null);
       expect(variable.datasource).toBe(null);
@@ -18,7 +16,7 @@ describe('QueryVariable', () => {
 
     it('get model should copy changes back to model', () => {
       var variable = new QueryVariable({}, null, null, null, null);
-      variable.options = [{text: 'test'}];
+      variable.options = [{ text: 'test' }];
       variable.datasource = 'google';
       variable.regex = 'asd';
       variable.sort = 50;
@@ -33,7 +31,7 @@ describe('QueryVariable', () => {
 
     it('if refresh != 0 then remove options in presisted mode', () => {
       var variable = new QueryVariable({}, null, null, null, null);
-      variable.options = [{text: 'test'}];
+      variable.options = [{ text: 'test' }];
       variable.refresh = 1;
 
       var model = variable.getSaveModel();
@@ -41,30 +39,37 @@ describe('QueryVariable', () => {
     });
   });
 
-  describe('can convert and sort metric names',() => {
-    var variable = new QueryVariable({}, null, null, null, null);
-    variable.sort = 3; // Numerical (asc)
+  describe('can convert and sort metric names', () => {
+    const variable = new QueryVariable({}, null, null, null, null);
+    let input;
 
-    describe('can sort a mixed array of metric variables', () => {
-      var input = [
-        {text: '0', value: '0'},
-        {text: '1', value: '1'},
-        {text: null, value: 3},
-        {text: undefined, value: 4},
-        {text: '5', value: null},
-        {text: '6', value: undefined},
-        {text: null, value: '7'},
-        {text: undefined, value: '8'},
-        {text: 9, value: null},
-        {text: 10, value: undefined},
-        {text: '', value: undefined},
-        {text: undefined, value: ''},
+    beforeEach(() => {
+      input = [
+        { text: '0', value: '0' },
+        { text: '1', value: '1' },
+        { text: null, value: 3 },
+        { text: undefined, value: 4 },
+        { text: '5', value: null },
+        { text: '6', value: undefined },
+        { text: null, value: '7' },
+        { text: undefined, value: '8' },
+        { text: 9, value: null },
+        { text: 10, value: undefined },
+        { text: '', value: undefined },
+        { text: undefined, value: '' },
       ];
+    });
 
-      var result = variable.metricNamesToVariableValues(input);
+    describe('can sort a mixed array of metric variables in numeric order', () => {
+      let result;
+
+      beforeEach(() => {
+        variable.sort = 3; // Numerical (asc)
+        result = variable.metricNamesToVariableValues(input);
+      });
+
       it('should return in same order', () => {
         var i = 0;
-
         expect(result.length).toBe(11);
         expect(result[i++].text).toBe('');
         expect(result[i++].text).toBe('0');
@@ -73,6 +78,27 @@ describe('QueryVariable', () => {
         expect(result[i++].text).toBe('4');
         expect(result[i++].text).toBe('5');
         expect(result[i++].text).toBe('6');
+      });
+    });
+
+    describe('can sort a mixed array of metric variables in alphabetical order', () => {
+      let result;
+
+      beforeEach(() => {
+        variable.sort = 5; // Alphabetical CI (asc)
+        result = variable.metricNamesToVariableValues(input);
+      });
+
+      it('should return in same order', () => {
+        var i = 0;
+        expect(result.length).toBe(11);
+        expect(result[i++].text).toBe('');
+        expect(result[i++].text).toBe('0');
+        expect(result[i++].text).toBe('1');
+        expect(result[i++].text).toBe('10');
+        expect(result[i++].text).toBe('3');
+        expect(result[i++].text).toBe('4');
+        expect(result[i++].text).toBe('5');
       });
     });
   });

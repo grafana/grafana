@@ -1,31 +1,95 @@
 .grafana-app {
-  display: block;
+  display: flex;
+  align-items: stretch;
+  position: absolute;
+  width: 100%;
   height: 100%;
+  top: 0;
+  left: 0;
 }
 
 .main-view {
-  // height: 100%; REMOVED FOR FOOTER TRW
+  position: relative;
+  flex-grow: 1;
+  background: $page-gradient;
 }
 
 .page-container {
-  background-color: $page-bg;
-  padding: ($spacer * 2) ($spacer * 4);
-  max-width: 1060px;
-  min-height: calc(100% - 54px);
-  padding-bottom: $spacer * 5;
-  background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%)
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: $spacer*2;
+  padding-right: $spacer*2;
+  max-width: 980px;
+  @include clearfix();
+}
+
+.page-full {
+  margin-left: $page-sidebar-margin;
+  padding-left: $spacer;
+  padding-right: $spacer;
+  @include clearfix();
+}
+
+.scroll-canvas {
+  position: absolute;
+  width: 100%;
+  overflow: auto;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+
+  &--dashboard {
+    height: calc(100% - 56px);
+  }
+}
+
+// fix for phantomjs
+.body--phantomjs {
+  .scroll-canvas {
+    overflow: hidden;
+  }
 }
 
 .page-body {
+  padding-top: $spacer*2;
+  min-height: 500px;
+}
+
+.page-heading {
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: $spacer * 0.7;
+}
+
+.page-action-bar {
+  margin-bottom: $spacer * 2;
+  display: flex;
+  align-items: flex-start;
+
+  > a,
+  > button {
+    margin-left: $spacer;
+  }
+}
+
+.page-action-bar--narrow {
+  margin-bottom: 0;
+}
+
+.page-action-bar__spacer {
+  width: $spacer * 2;
+  flex-grow: 1;
+}
+
+.sidebar-content {
+  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
+}
+
+.sidebar-container {
   @include media-breakpoint-up(md) {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
   }
-}
-
-.page-content-with-sidebar {
-  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
 }
 
 .page-sidebar {
@@ -35,42 +99,14 @@
   }
 }
 
-.page-header {
-  padding: $spacer 0 0 0;
-  margin-bottom: 2rem;
-  @include brand-bottom-border();
-  @include clearfix();
-
-  h1 {
-    flex-grow: 1;
-    display: inline-block;
-    margin-bottom: $spacer*1.5;
-  }
-
-  button, a {
-    float: right;
-    margin-left: $spacer;
-  }
+.page-sub-heading {
+  margin-bottom: $spacer;
 }
 
-.page-heading {
-  font-size: 1.25rem;
-  margin-top: 0;
-  margin-bottom: $spacer * 0.7;
-}
-
-.admin-page {
-  max-width: 800px;
-  margin-left: 10px;
-  h2 {
-    margin-left: 15px;
-    margin-bottom: 0px;
-    font-size: $font-size-lg;
-    color: $text-color;
-    i {
-      padding-right: 6px;
-    }
-  }
+.page-sub-heading-icon {
+  margin-left: $spacer;
+  vertical-align: 6px;
+  font-size: 13px;
 }
 
 .page-sidebar {

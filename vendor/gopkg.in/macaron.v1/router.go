@@ -96,7 +96,7 @@ func NewRouter() *Router {
 }
 
 // SetAutoHead sets the value who determines whether add HEAD method automatically
-// when GET method is added. Combo router will not be affected by this value.
+// when GET method is added.
 func (r *Router) SetAutoHead(v bool) {
 	r.autoHead = v
 }
@@ -118,7 +118,7 @@ func (r *Route) Name(name string) {
 	if len(name) == 0 {
 		panic("route name cannot be empty")
 	} else if r.router.namedRoutes[name] != nil {
-		panic("route with given name already exists")
+		panic("route with given name already exists: " + name)
 	}
 	r.router.namedRoutes[name] = r.leaf
 }
@@ -288,7 +288,14 @@ func (r *Router) SetHandlerWrapper(f func(Handler) Handler) {
 
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if t, ok := r.routers[req.Method]; ok {
-		h, p, ok := t.Match(req.URL.Path)
+		// Fast match for static routes
+		leaf := r.getLeaf(req.Method, req.URL.Path)
+		if leaf != nil {
+			leaf.handle(rw, req, nil)
+			return
+		}
+
+		h, p, ok := t.Match(req.URL.EscapedPath())
 		if ok {
 			if splat, ok := p["*0"]; ok {
 				p["*"] = splat // Easy name.
@@ -334,6 +341,9 @@ func (cr *ComboRouter) route(fn func(string, ...Handler) *Route, method string, 
 }
 
 func (cr *ComboRouter) Get(h ...Handler) *ComboRouter {
+	if cr.router.autoHead {
+		cr.Head(h...)
+	}
 	return cr.route(cr.router.Get, "GET", h...)
 }
 

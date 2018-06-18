@@ -11,6 +11,8 @@ type Router interface {
 	Get(pattern string, handlers ...macaron.Handler) *macaron.Route
 }
 
+// RouteRegister allows you to add routes and macaron.Handlers
+// that the web server should serve.
 type RouteRegister interface {
 	Get(string, ...macaron.Handler)
 	Post(string, ...macaron.Handler)
@@ -26,7 +28,8 @@ type RouteRegister interface {
 
 type RegisterNamedMiddleware func(name string) macaron.Handler
 
-func newRouteRegister(namedMiddleware ...RegisterNamedMiddleware) RouteRegister {
+// NewRouteRegister creates a new RouteRegister with all middlewares sent as params
+func NewRouteRegister(namedMiddleware ...RegisterNamedMiddleware) RouteRegister {
 	return &routeRegister{
 		prefix:          "",
 		routes:          []route{},
@@ -81,8 +84,6 @@ func (rr *routeRegister) Register(router Router) *macaron.Router {
 }
 
 func (rr *routeRegister) route(pattern, method string, handlers ...macaron.Handler) {
-	//inject tracing
-
 	h := make([]macaron.Handler, 0)
 	for _, fn := range rr.namedMiddleware {
 		h = append(h, fn(pattern))

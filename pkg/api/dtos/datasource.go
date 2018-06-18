@@ -26,6 +26,7 @@ type DataSource struct {
 	JsonData          *simplejson.Json `json:"jsonData,omitempty"`
 	SecureJsonFields  map[string]bool  `json:"secureJsonFields"`
 	Version           int              `json:"version"`
+	ReadOnly          bool             `json:"readOnly"`
 }
 
 type DataSourceListItemDTO struct {
@@ -42,6 +43,7 @@ type DataSourceListItemDTO struct {
 	BasicAuth   bool             `json:"basicAuth"`
 	IsDefault   bool             `json:"isDefault"`
 	JsonData    *simplejson.Json `json:"jsonData,omitempty"`
+	ReadOnly    bool             `json:"readOnly"`
 }
 
 type DataSourceList []DataSourceListItemDTO

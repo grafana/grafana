@@ -2,6 +2,7 @@ package influxdb
 
 import (
 	"testing"
+	"time"
 
 	"strings"
 
@@ -38,7 +39,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 				Measurement: "cpu",
 				Policy:      "policy",
 				GroupBy:     []*QueryPart{groupBy1, groupBy3},
-				Interval:    "10s",
+				Interval:    time.Second * 10,
 			}
 
 			rawQuery, err := query.Build(queryContext)
@@ -52,7 +53,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 				Measurement: "cpu",
 				GroupBy:     []*QueryPart{groupBy1, groupBy2, groupBy3},
 				Tags:        []*Tag{tag1, tag2},
-				Interval:    "5s",
+				Interval:    time.Second * 5,
 			}
 
 			rawQuery, err := query.Build(queryContext)
@@ -64,7 +65,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2, *mathPartDivideBy100}},
 				Measurement: "cpu",
-				Interval:    "5s",
+				Interval:    time.Second * 5,
 			}
 
 			rawQuery, err := query.Build(queryContext)
@@ -76,7 +77,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2, *mathPartDivideByIntervalMs}},
 				Measurement: "cpu",
-				Interval:    "5s",
+				Interval:    time.Second * 5,
 			}
 
 			rawQuery, err := query.Build(queryContext)
@@ -117,7 +118,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 				Measurement: "cpu",
 				Policy:      "policy",
 				GroupBy:     []*QueryPart{groupBy1, groupBy3},
-				Interval:    "10s",
+				Interval:    time.Second * 10,
 				RawQuery:    "Raw query",
 				UseRawQuery: true,
 			}
@@ -167,6 +168,12 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "=", Value: "value", Key: "key"}}}
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'value'`)
+		})
+
+		Convey("can escape backslashes when rendering string tags", func() {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: `C:\test\`, Key: "key"}}}
+
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'C:\\test\\'`)
 		})
 
 		Convey("can render regular measurement", func() {

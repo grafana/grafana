@@ -11,7 +11,7 @@ import (
 
 // WaitUntilBundleTaskComplete uses the Amazon EC2 API operation
 // DescribeBundleTasks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilBundleTaskComplete(input *DescribeBundleTasksInput) error {
 	return c.WaitUntilBundleTaskCompleteWithContext(aws.BackgroundContext(), input)
@@ -62,7 +62,7 @@ func (c *EC2) WaitUntilBundleTaskCompleteWithContext(ctx aws.Context, input *Des
 
 // WaitUntilConversionTaskCancelled uses the Amazon EC2 API operation
 // DescribeConversionTasks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilConversionTaskCancelled(input *DescribeConversionTasksInput) error {
 	return c.WaitUntilConversionTaskCancelledWithContext(aws.BackgroundContext(), input)
@@ -108,7 +108,7 @@ func (c *EC2) WaitUntilConversionTaskCancelledWithContext(ctx aws.Context, input
 
 // WaitUntilConversionTaskCompleted uses the Amazon EC2 API operation
 // DescribeConversionTasks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilConversionTaskCompleted(input *DescribeConversionTasksInput) error {
 	return c.WaitUntilConversionTaskCompletedWithContext(aws.BackgroundContext(), input)
@@ -164,7 +164,7 @@ func (c *EC2) WaitUntilConversionTaskCompletedWithContext(ctx aws.Context, input
 
 // WaitUntilConversionTaskDeleted uses the Amazon EC2 API operation
 // DescribeConversionTasks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilConversionTaskDeleted(input *DescribeConversionTasksInput) error {
 	return c.WaitUntilConversionTaskDeletedWithContext(aws.BackgroundContext(), input)
@@ -210,7 +210,7 @@ func (c *EC2) WaitUntilConversionTaskDeletedWithContext(ctx aws.Context, input *
 
 // WaitUntilCustomerGatewayAvailable uses the Amazon EC2 API operation
 // DescribeCustomerGateways to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilCustomerGatewayAvailable(input *DescribeCustomerGatewaysInput) error {
 	return c.WaitUntilCustomerGatewayAvailableWithContext(aws.BackgroundContext(), input)
@@ -266,7 +266,7 @@ func (c *EC2) WaitUntilCustomerGatewayAvailableWithContext(ctx aws.Context, inpu
 
 // WaitUntilExportTaskCancelled uses the Amazon EC2 API operation
 // DescribeExportTasks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilExportTaskCancelled(input *DescribeExportTasksInput) error {
 	return c.WaitUntilExportTaskCancelledWithContext(aws.BackgroundContext(), input)
@@ -312,7 +312,7 @@ func (c *EC2) WaitUntilExportTaskCancelledWithContext(ctx aws.Context, input *De
 
 // WaitUntilExportTaskCompleted uses the Amazon EC2 API operation
 // DescribeExportTasks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilExportTaskCompleted(input *DescribeExportTasksInput) error {
 	return c.WaitUntilExportTaskCompletedWithContext(aws.BackgroundContext(), input)
@@ -358,7 +358,7 @@ func (c *EC2) WaitUntilExportTaskCompletedWithContext(ctx aws.Context, input *De
 
 // WaitUntilImageAvailable uses the Amazon EC2 API operation
 // DescribeImages to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilImageAvailable(input *DescribeImagesInput) error {
 	return c.WaitUntilImageAvailableWithContext(aws.BackgroundContext(), input)
@@ -409,7 +409,7 @@ func (c *EC2) WaitUntilImageAvailableWithContext(ctx aws.Context, input *Describ
 
 // WaitUntilImageExists uses the Amazon EC2 API operation
 // DescribeImages to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilImageExists(input *DescribeImagesInput) error {
 	return c.WaitUntilImageExistsWithContext(aws.BackgroundContext(), input)
@@ -460,7 +460,7 @@ func (c *EC2) WaitUntilImageExistsWithContext(ctx aws.Context, input *DescribeIm
 
 // WaitUntilInstanceExists uses the Amazon EC2 API operation
 // DescribeInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilInstanceExists(input *DescribeInstancesInput) error {
 	return c.WaitUntilInstanceExistsWithContext(aws.BackgroundContext(), input)
@@ -511,7 +511,7 @@ func (c *EC2) WaitUntilInstanceExistsWithContext(ctx aws.Context, input *Describ
 
 // WaitUntilInstanceRunning uses the Amazon EC2 API operation
 // DescribeInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilInstanceRunning(input *DescribeInstancesInput) error {
 	return c.WaitUntilInstanceRunningWithContext(aws.BackgroundContext(), input)
@@ -577,7 +577,7 @@ func (c *EC2) WaitUntilInstanceRunningWithContext(ctx aws.Context, input *Descri
 
 // WaitUntilInstanceStatusOk uses the Amazon EC2 API operation
 // DescribeInstanceStatus to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilInstanceStatusOk(input *DescribeInstanceStatusInput) error {
 	return c.WaitUntilInstanceStatusOkWithContext(aws.BackgroundContext(), input)
@@ -628,7 +628,7 @@ func (c *EC2) WaitUntilInstanceStatusOkWithContext(ctx aws.Context, input *Descr
 
 // WaitUntilInstanceStopped uses the Amazon EC2 API operation
 // DescribeInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilInstanceStopped(input *DescribeInstancesInput) error {
 	return c.WaitUntilInstanceStoppedWithContext(aws.BackgroundContext(), input)
@@ -684,7 +684,7 @@ func (c *EC2) WaitUntilInstanceStoppedWithContext(ctx aws.Context, input *Descri
 
 // WaitUntilInstanceTerminated uses the Amazon EC2 API operation
 // DescribeInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilInstanceTerminated(input *DescribeInstancesInput) error {
 	return c.WaitUntilInstanceTerminatedWithContext(aws.BackgroundContext(), input)
@@ -740,7 +740,7 @@ func (c *EC2) WaitUntilInstanceTerminatedWithContext(ctx aws.Context, input *Des
 
 // WaitUntilKeyPairExists uses the Amazon EC2 API operation
 // DescribeKeyPairs to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilKeyPairExists(input *DescribeKeyPairsInput) error {
 	return c.WaitUntilKeyPairExistsWithContext(aws.BackgroundContext(), input)
@@ -791,7 +791,7 @@ func (c *EC2) WaitUntilKeyPairExistsWithContext(ctx aws.Context, input *Describe
 
 // WaitUntilNatGatewayAvailable uses the Amazon EC2 API operation
 // DescribeNatGateways to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilNatGatewayAvailable(input *DescribeNatGatewaysInput) error {
 	return c.WaitUntilNatGatewayAvailableWithContext(aws.BackgroundContext(), input)
@@ -857,7 +857,7 @@ func (c *EC2) WaitUntilNatGatewayAvailableWithContext(ctx aws.Context, input *De
 
 // WaitUntilNetworkInterfaceAvailable uses the Amazon EC2 API operation
 // DescribeNetworkInterfaces to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilNetworkInterfaceAvailable(input *DescribeNetworkInterfacesInput) error {
 	return c.WaitUntilNetworkInterfaceAvailableWithContext(aws.BackgroundContext(), input)
@@ -908,7 +908,7 @@ func (c *EC2) WaitUntilNetworkInterfaceAvailableWithContext(ctx aws.Context, inp
 
 // WaitUntilPasswordDataAvailable uses the Amazon EC2 API operation
 // GetPasswordData to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilPasswordDataAvailable(input *GetPasswordDataInput) error {
 	return c.WaitUntilPasswordDataAvailableWithContext(aws.BackgroundContext(), input)
@@ -954,7 +954,7 @@ func (c *EC2) WaitUntilPasswordDataAvailableWithContext(ctx aws.Context, input *
 
 // WaitUntilSnapshotCompleted uses the Amazon EC2 API operation
 // DescribeSnapshots to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilSnapshotCompleted(input *DescribeSnapshotsInput) error {
 	return c.WaitUntilSnapshotCompletedWithContext(aws.BackgroundContext(), input)
@@ -1000,7 +1000,7 @@ func (c *EC2) WaitUntilSnapshotCompletedWithContext(ctx aws.Context, input *Desc
 
 // WaitUntilSpotInstanceRequestFulfilled uses the Amazon EC2 API operation
 // DescribeSpotInstanceRequests to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilSpotInstanceRequestFulfilled(input *DescribeSpotInstanceRequestsInput) error {
 	return c.WaitUntilSpotInstanceRequestFulfilledWithContext(aws.BackgroundContext(), input)
@@ -1026,6 +1026,11 @@ func (c *EC2) WaitUntilSpotInstanceRequestFulfilledWithContext(ctx aws.Context, 
 				Expected: "fulfilled",
 			},
 			{
+				State:   request.SuccessWaiterState,
+				Matcher: request.PathAllWaiterMatch, Argument: "SpotInstanceRequests[].Status.Code",
+				Expected: "request-canceled-and-instance-running",
+			},
+			{
 				State:   request.FailureWaiterState,
 				Matcher: request.PathAnyWaiterMatch, Argument: "SpotInstanceRequests[].Status.Code",
 				Expected: "schedule-expired",
@@ -1044,6 +1049,11 @@ func (c *EC2) WaitUntilSpotInstanceRequestFulfilledWithContext(ctx aws.Context, 
 				State:   request.FailureWaiterState,
 				Matcher: request.PathAnyWaiterMatch, Argument: "SpotInstanceRequests[].Status.Code",
 				Expected: "system-error",
+			},
+			{
+				State:    request.RetryWaiterState,
+				Matcher:  request.ErrorWaiterMatch,
+				Expected: "InvalidSpotInstanceRequestID.NotFound",
 			},
 		},
 		Logger: c.Config.Logger,
@@ -1066,7 +1076,7 @@ func (c *EC2) WaitUntilSpotInstanceRequestFulfilledWithContext(ctx aws.Context, 
 
 // WaitUntilSubnetAvailable uses the Amazon EC2 API operation
 // DescribeSubnets to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilSubnetAvailable(input *DescribeSubnetsInput) error {
 	return c.WaitUntilSubnetAvailableWithContext(aws.BackgroundContext(), input)
@@ -1112,7 +1122,7 @@ func (c *EC2) WaitUntilSubnetAvailableWithContext(ctx aws.Context, input *Descri
 
 // WaitUntilSystemStatusOk uses the Amazon EC2 API operation
 // DescribeInstanceStatus to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilSystemStatusOk(input *DescribeInstanceStatusInput) error {
 	return c.WaitUntilSystemStatusOkWithContext(aws.BackgroundContext(), input)
@@ -1158,7 +1168,7 @@ func (c *EC2) WaitUntilSystemStatusOkWithContext(ctx aws.Context, input *Describ
 
 // WaitUntilVolumeAvailable uses the Amazon EC2 API operation
 // DescribeVolumes to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilVolumeAvailable(input *DescribeVolumesInput) error {
 	return c.WaitUntilVolumeAvailableWithContext(aws.BackgroundContext(), input)
@@ -1209,7 +1219,7 @@ func (c *EC2) WaitUntilVolumeAvailableWithContext(ctx aws.Context, input *Descri
 
 // WaitUntilVolumeDeleted uses the Amazon EC2 API operation
 // DescribeVolumes to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilVolumeDeleted(input *DescribeVolumesInput) error {
 	return c.WaitUntilVolumeDeletedWithContext(aws.BackgroundContext(), input)
@@ -1260,7 +1270,7 @@ func (c *EC2) WaitUntilVolumeDeletedWithContext(ctx aws.Context, input *Describe
 
 // WaitUntilVolumeInUse uses the Amazon EC2 API operation
 // DescribeVolumes to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilVolumeInUse(input *DescribeVolumesInput) error {
 	return c.WaitUntilVolumeInUseWithContext(aws.BackgroundContext(), input)
@@ -1311,7 +1321,7 @@ func (c *EC2) WaitUntilVolumeInUseWithContext(ctx aws.Context, input *DescribeVo
 
 // WaitUntilVpcAvailable uses the Amazon EC2 API operation
 // DescribeVpcs to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilVpcAvailable(input *DescribeVpcsInput) error {
 	return c.WaitUntilVpcAvailableWithContext(aws.BackgroundContext(), input)
@@ -1357,7 +1367,7 @@ func (c *EC2) WaitUntilVpcAvailableWithContext(ctx aws.Context, input *DescribeV
 
 // WaitUntilVpcExists uses the Amazon EC2 API operation
 // DescribeVpcs to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilVpcExists(input *DescribeVpcsInput) error {
 	return c.WaitUntilVpcExistsWithContext(aws.BackgroundContext(), input)
@@ -1408,7 +1418,7 @@ func (c *EC2) WaitUntilVpcExistsWithContext(ctx aws.Context, input *DescribeVpcs
 
 // WaitUntilVpcPeeringConnectionDeleted uses the Amazon EC2 API operation
 // DescribeVpcPeeringConnections to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilVpcPeeringConnectionDeleted(input *DescribeVpcPeeringConnectionsInput) error {
 	return c.WaitUntilVpcPeeringConnectionDeletedWithContext(aws.BackgroundContext(), input)
@@ -1459,7 +1469,7 @@ func (c *EC2) WaitUntilVpcPeeringConnectionDeletedWithContext(ctx aws.Context, i
 
 // WaitUntilVpcPeeringConnectionExists uses the Amazon EC2 API operation
 // DescribeVpcPeeringConnections to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilVpcPeeringConnectionExists(input *DescribeVpcPeeringConnectionsInput) error {
 	return c.WaitUntilVpcPeeringConnectionExistsWithContext(aws.BackgroundContext(), input)
@@ -1510,7 +1520,7 @@ func (c *EC2) WaitUntilVpcPeeringConnectionExistsWithContext(ctx aws.Context, in
 
 // WaitUntilVpnConnectionAvailable uses the Amazon EC2 API operation
 // DescribeVpnConnections to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilVpnConnectionAvailable(input *DescribeVpnConnectionsInput) error {
 	return c.WaitUntilVpnConnectionAvailableWithContext(aws.BackgroundContext(), input)
@@ -1566,7 +1576,7 @@ func (c *EC2) WaitUntilVpnConnectionAvailableWithContext(ctx aws.Context, input 
 
 // WaitUntilVpnConnectionDeleted uses the Amazon EC2 API operation
 // DescribeVpnConnections to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EC2) WaitUntilVpnConnectionDeleted(input *DescribeVpnConnectionsInput) error {
 	return c.WaitUntilVpnConnectionDeletedWithContext(aws.BackgroundContext(), input)

@@ -1,0 +1,10 @@
+dn: cn=ldapadmin,dc=grafana,dc=org
+mail: ldapadmin@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldapadmin
+cn: ldapadmin
+memberOf: cn=admins,dc=grafana,dc=org

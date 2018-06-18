@@ -1,0 +1,34 @@
+package rendering
+
+import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/grafana/grafana/pkg/models"
+)
+
+var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with &timeout url parameter")
+var ErrNoRenderer = errors.New("No renderer plugin found nor is an external render server configured")
+
+type Opts struct {
+	Width    int
+	Height   int
+	Timeout  time.Duration
+	OrgId    int64
+	UserId   int64
+	OrgRole  models.RoleType
+	Path     string
+	Encoding string
+	Timezone string
+}
+
+type RenderResult struct {
+	FilePath string
+}
+
+type renderFunc func(ctx context.Context, options Opts) (*RenderResult, error)
+
+type Service interface {
+	Render(ctx context.Context, opts Opts) (*RenderResult, error)
+}

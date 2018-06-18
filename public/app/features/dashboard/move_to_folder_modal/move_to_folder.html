@@ -1,0 +1,33 @@
+<div class="modal-body">
+  <div class="modal-header">
+    <h2 class="modal-header-title">
+			<i class="gicon gicon-folder-new"></i>
+      <span class="p-l-1">Choose Dashboard Folder</span>
+    </h2>
+
+    <a class="modal-header-close" ng-click="ctrl.dismiss();">
+      <i class="fa fa-remove"></i>
+    </a>
+  </div>
+
+  <form name="ctrl.saveForm" ng-submit="ctrl.save()" class="modal-content folder-modal" novalidate>
+    <p>Move the {{ctrl.dashboards.length}} selected dashboards to the following folder:</p>
+
+    <div class="p-t-2">
+      <div class="gf-form">
+          <folder-picker
+            on-load="ctrl.onFolderChange($folder)"
+            on-change="ctrl.onFolderChange($folder)"
+            enter-folder-creation="ctrl.onEnterFolderCreation()"
+            exit-folder-creation="ctrl.onExitFolderCreation()"
+            enable-create-new="true"
+            label-class="width-7">
+          </folder-picker>
+      </div>
+    </div>
+    <div class="gf-form-button-row text-center">
+      <button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid || !ctrl.isValidFolderSelection">Move</button>
+      <a class="btn-text" ng-click="ctrl.dismiss();">Cancel</a>
+    </div>
+  </form>
+</div>

@@ -26,9 +26,10 @@ import (
 	"strings"
 	"time"
 
+	"context"
+
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
-	"golang.org/x/net/context"
 
 	dto "github.com/prometheus/client_model/go"
 
@@ -54,7 +55,7 @@ const (
 	AbortOnError
 )
 
-var metricCategoryPrefix []string = []string{
+var metricCategoryPrefix = []string{
 	"proxy_",
 	"api_",
 	"page_",
@@ -65,7 +66,7 @@ var metricCategoryPrefix []string = []string{
 	"go_",
 	"process_"}
 
-var trimMetricPrefix []string = []string{"grafana_"}
+var trimMetricPrefix = []string{"grafana_"}
 
 // Config defines the Graphite bridge config.
 type Config struct {
@@ -294,11 +295,7 @@ func writeMetric(buf *bufio.Writer, m model.Metric, mf *dto.MetricFamily) error 
 		}
 	}
 
-	if err = addExtentionConventionForRollups(buf, mf, m); err != nil {
-		return err
-	}
-
-	return nil
+	return addExtentionConventionForRollups(buf, mf, m)
 }
 
 func addExtentionConventionForRollups(buf *bufio.Writer, mf *dto.MetricFamily, m model.Metric) error {

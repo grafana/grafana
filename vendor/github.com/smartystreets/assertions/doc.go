@@ -5,6 +5,8 @@
 // They can also be used in traditional Go test functions and even in
 // applications.
 //
+// https://smartystreets.com
+//
 // Many of the assertions lean heavily on work done by Aaron Jacobs in his excellent oglematchers library.
 // (https://github.com/jacobsa/oglematchers)
 // The ShouldResemble assertion leans heavily on work done by Daniel Jacques in his very helpful go-render library.
@@ -26,7 +28,7 @@ var serializer Serializer = new(noopSerializer)
 // are very helpful and can be rendered in a DIFF view. In that case, this function
 // will be called with a true value to enable the JSON serialization. By default,
 // the assertions in this package will not serializer a JSON result, making
-// standalone ussage more convenient.
+// standalone usage more convenient.
 func GoConveyMode(yes bool) {
 	if yes {
 		serializer = newSerializer()
@@ -82,6 +84,8 @@ func (this *Assertion) So(actual interface{}, assert assertion, expected ...inte
 //        log.Println(message)
 //   }
 //
+// For an alternative implementation of So (that provides more flexible return options)
+// see the `So` function in the package at github.com/smartystreets/assertions/assert.
 func So(actual interface{}, assert assertion, expected ...interface{}) (bool, string) {
 	if result := so(actual, assert, expected...); len(result) == 0 {
 		return true, result

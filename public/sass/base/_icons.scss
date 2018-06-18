@@ -1,0 +1,213 @@
+.gicon {
+  line-height: 1;
+  display: inline-block;
+  width: 1.1057142857em;
+  height: 1.1057142857em;
+  text-align: center;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.gicon--has-hover {
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.mini {
+  width: 0.8em;
+  height: 0.8em;
+}
+
+.gicon-add-annotation {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_annotation.svg');
+}
+
+.gicon-add-annotation-alt {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_annotation_alt.svg');
+}
+
+.gicon-add-datasources {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_data_sources.svg');
+}
+
+.gicon-add-user {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_user.svg');
+}
+
+.gicon-add-team {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_team.svg');
+}
+
+.gicon-add-panel {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_panel.svg');
+}
+
+.gicon-add-link {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_link.svg');
+}
+
+.gicon-add-variable {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_variable.svg');
+}
+
+.gicon-add-alert-notification-channel {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_notification_channel.svg');
+}
+
+.gicon-alert {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_alert.svg');
+}
+
+.gicon-alert-alt {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_alert_alt.svg');
+}
+
+.gicon-alert-rules {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_alert_rules.svg');
+}
+
+.gicon-alert-notification-channel {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_notification_channels.svg');
+}
+
+.gicon-annotation {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_annotation.svg');
+}
+
+.gicon-annotation-alt {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_annotation_alt.svg');
+}
+
+.gicon-apikeys {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_apikeys.svg');
+}
+
+.gicon-branding {
+  background-image: url('../img/grafana_icon.svg');
+}
+
+.gicon-cog {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_cog.svg');
+}
+
+.gicon-dashboard {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_dashboard.svg');
+}
+
+.gicon-dashboard-starred {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_dashboard_fav.svg');
+}
+
+.gicon-dashboard-list {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_dashboard_list.svg');
+}
+
+.gicon-dashboard-new {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_new_dashboard.svg');
+}
+
+.gicon-dashboard-import {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_import_dashboard.svg');
+}
+
+.gicon-datasources {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_data_sources.svg');
+}
+
+.gicon-editor {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_editor.svg');
+}
+
+.gicon-folder-new {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_folder.svg');
+}
+
+.gicon-home {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_home.svg');
+}
+
+.gicon-json {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_json.svg');
+}
+
+.gicon-link {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_link.svg');
+}
+
+.gicon-manage {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_sitemap.svg');
+}
+
+.gicon-org {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_org.svg');
+}
+
+.gicon-playlists {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_playlist.svg');
+}
+
+.gicon-plugins {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_plugins.svg');
+}
+
+.gicon-preferences {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_preferences.svg');
+}
+
+.gicon-question {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_question.svg');
+}
+
+.gicon-shield {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_shield.svg');
+}
+
+.gicon-snapshots {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_snapshots.svg');
+}
+
+.gicon-team {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_team.svg');
+}
+
+.gicon-user {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_user.svg');
+}
+
+.gicon-variable {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_variable.svg');
+}
+
+.gicon-viewer {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_viewer.svg');
+}
+
+.gicon-zoom-out {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_zoom_out.svg');
+}
+
+.sidemenu {
+  .gicon-dashboard {
+    background-image: url('../img/icons_dark_theme/icon_dashboard.svg');
+  }
+  .gicon-alert {
+    background-image: url('../img/icons_dark_theme/icon_alert.svg');
+  }
+  .gicon-cog {
+    background-image: url('../img/icons_dark_theme/icon_cog.svg');
+  }
+  .gicon-question {
+    background-image: url('../img/icons_dark_theme/icon_question.svg');
+  }
+}
+
+.fa--permissions-list {
+  min-width: 20px;
+  padding-right: 5px;
+}
