@@ -1739,3 +1739,4 @@ Thanks to everyone who contributed fixes and provided feedback :+1:
 # 1.0.0 (2014-01-19)
 
 First public release
+
