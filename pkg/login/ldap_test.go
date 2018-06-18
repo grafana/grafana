@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"crypto/tls"
 	"testing"
 
@@ -14,6 +15,18 @@ func TestLdapAuther(t *testing.T) {
 
 	Convey("When translating ldap user to grafana user", t, func() {
 
+		var user1 = &m.User{}
+
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.SyncOrgRolesCommand) error {
+			return nil
+		})
+
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpsertUserCommand) error {
+			cmd.Result = user1
+			cmd.Result.Login = "torkelo"
+			return nil
+		})
+
 		Convey("Given no ldap group map match", func() {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{{}},
@@ -22,8 +35,6 @@ func TestLdapAuther(t *testing.T) {
 
 			So(err, ShouldEqual, ErrInvalidCredentials)
 		})
-
-		var user1 = &m.User{}
 
 		ldapAutherScenario("Given wildcard group match", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{

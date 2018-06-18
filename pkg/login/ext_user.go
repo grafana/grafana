@@ -66,19 +66,20 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 		}
 	}
 
-	//return syncOrgRoles(cmd.Result, extUser)
-	err = bus.Dispatch(&m.SyncOrgRolesCommand{
-		User:         cmd.Result,
-		ExternalUser: extUser,
-	})
-	if err != nil {
-		return err
-	}
+	return syncOrgRoles(cmd.Result, extUser)
+	// err = bus.Dispatch(&m.SyncOrgRolesCommand{
+	// 	User:         cmd.Result,
+	// 	ExternalUser: extUser,
+	// })
 
-	return bus.Dispatch(&m.SyncTeamsCommand{
-		User:         cmd.Result,
-		ExternalUser: extUser,
-	})
+	// if err != nil {
+	// 	return err
+	// }
+
+	// return bus.Dispatch(&m.SyncTeamsCommand{
+	// 	User:         cmd.Result,
+	// 	ExternalUser: extUser,
+	// })
 }
 
 func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {

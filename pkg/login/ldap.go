@@ -195,6 +195,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		ExternalUser:  extUser,
 		SignupAllowed: setting.LdapAllowSignup,
 	}
+
 	err := bus.Dispatch(userQuery)
 	if err != nil {
 		return nil, err
