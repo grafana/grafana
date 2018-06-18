@@ -22,21 +22,30 @@ func newSession() *DBSession {
 	return &DBSession{Session: x.NewSession()}
 }
 
-func startSession(ctx context.Context) *DBSession {
+func startSession(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DBSession, error) {
 	value := ctx.Value(ContextSessionName)
 	var sess *DBSession
 	sess, ok := value.(*DBSession)
 
 	if !ok {
-		newSess := newSession()
-		return newSess
+		newSess := &DBSession{Session: engine.NewSession()}
+		if beginTran {
+			err := newSess.Begin()
+			if err != nil {
+				return nil, err
+			}
+		}
+		return newSess, nil
 	}
 
-	return sess
+	return sess, nil
 }
 
 func withDbSession(ctx context.Context, callback dbTransactionFunc) error {
-	sess := startSession(ctx)
+	sess, err := startSession(ctx, x, false)
+	if err != nil {
+		return err
+	}
 
 	return callback(sess)
 }
