@@ -77,7 +77,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private linkSrv) {
+  constructor($scope, $injector, private linkSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -159,8 +159,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   setTableColumnToSensibleDefault(tableData) {
-    if (this.tableColumnOptions.length === 1) {
-      this.panel.tableColumn = this.tableColumnOptions[0];
+    if (tableData.columns.length === 1) {
+      this.panel.tableColumn = tableData.columns[0].text;
     } else {
       this.panel.tableColumn = _.find(tableData.columns, col => {
         return col.type !== 'time';
@@ -308,7 +308,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         let formatFunc = kbn.valueFormats[this.panel.format];
         data.value = lastPoint[1];
         data.valueRounded = data.value;
-        data.valueFormatted = formatFunc(data.value, 0, 0);
+        data.valueFormatted = formatFunc(data.value, this.dashboard.isTimezoneUtc());
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
@@ -426,14 +426,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       var body = '<div class="singlestat-panel-value-container">';
 
       if (panel.prefix) {
-        body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, panel.prefix);
+        var prefix = applyColoringThresholds(data.value, panel.prefix);
+        body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, prefix);
       }
 
       var value = applyColoringThresholds(data.value, data.valueFormatted);
       body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
       if (panel.postfix) {
-        body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix);
+        var postfix = applyColoringThresholds(data.value, panel.postfix);
+        body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, postfix);
       }
 
       body += '</div>';
@@ -578,6 +580,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           lines: {
             show: true,
             fill: 1,
+            zero: false,
             lineWidth: 1,
             fillColor: panel.sparkline.fillColor,
           },
@@ -711,11 +714,13 @@ function getColorForValue(data, value) {
   if (!_.isFinite(value)) {
     return null;
   }
+
   for (var i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i - 1]) {
       return data.colorMap[i];
     }
   }
+
   return _.first(data.colorMap);
 }
 

@@ -10,9 +10,11 @@ import (
 
 func TestUploadToAzureBlob(t *testing.T) {
 	SkipConvey("[Integration test] for external_image_store.azure_blob", t, func() {
-		err := setting.NewConfigContext(&setting.CommandLineArgs{
+		cfg := setting.NewCfg()
+		err := cfg.Load(&setting.CommandLineArgs{
 			HomePath: "../../../",
 		})
+		So(err, ShouldBeNil)
 
 		uploader, _ := NewImageUploader()
 

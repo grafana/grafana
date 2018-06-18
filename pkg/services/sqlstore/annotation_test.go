@@ -10,12 +10,18 @@ import (
 )
 
 func TestSavingTags(t *testing.T) {
+	InitTestDB(t)
+
 	Convey("Testing annotation saving/loading", t, func() {
-		InitTestDB(t)
 
 		repo := SqlAnnotationRepo{}
 
 		Convey("Can save tags", func() {
+			Reset(func() {
+				_, err := x.Exec("DELETE FROM annotation_tag WHERE 1=1")
+				So(err, ShouldBeNil)
+			})
+
 			tagPairs := []*models.Tag{
 				{Key: "outage"},
 				{Key: "type", Value: "outage"},
@@ -31,12 +37,19 @@ func TestSavingTags(t *testing.T) {
 }
 
 func TestAnnotations(t *testing.T) {
-	Convey("Testing annotation saving/loading", t, func() {
-		InitTestDB(t)
+	InitTestDB(t)
 
+	Convey("Testing annotation saving/loading", t, func() {
 		repo := SqlAnnotationRepo{}
 
 		Convey("Can save annotation", func() {
+			Reset(func() {
+				_, err := x.Exec("DELETE FROM annotation WHERE 1=1")
+				So(err, ShouldBeNil)
+				_, err = x.Exec("DELETE FROM annotation_tag WHERE 1=1")
+				So(err, ShouldBeNil)
+			})
+
 			annotation := &annotations.Item{
 				OrgId:       1,
 				UserId:      1,
@@ -78,6 +91,12 @@ func TestAnnotations(t *testing.T) {
 
 				Convey("Can read tags", func() {
 					So(items[0].Tags, ShouldResemble, []string{"outage", "error", "type:outage", "server:server-1"})
+				})
+
+				Convey("Has created and updated values", func() {
+					So(items[0].Created, ShouldBeGreaterThan, 0)
+					So(items[0].Updated, ShouldBeGreaterThan, 0)
+					So(items[0].Updated, ShouldEqual, items[0].Created)
 				})
 			})
 
@@ -231,6 +250,10 @@ func TestAnnotations(t *testing.T) {
 					So(items[0].Tags, ShouldResemble, []string{"newtag1", "newtag2"})
 					So(items[0].Text, ShouldEqual, "something new")
 				})
+
+				Convey("Updated time has increased", func() {
+					So(items[0].Updated, ShouldBeGreaterThan, items[0].Created)
+				})
 			})
 
 			Convey("Can delete annotation", func() {
@@ -246,6 +269,7 @@ func TestAnnotations(t *testing.T) {
 				annotationId := items[0].Id
 
 				err = repo.Delete(&annotations.DeleteParams{Id: annotationId})
+				So(err, ShouldBeNil)
 
 				items, err = repo.Find(query)
 				So(err, ShouldBeNil)

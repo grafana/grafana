@@ -32,7 +32,7 @@
   .panel-alert-icon:before {
     content: '\e611';
     position: relative;
-    top: 1px;
+    top: 5px;
     left: -3px;
   }
 }
@@ -108,7 +108,8 @@
   justify-content: center;
   align-items: center;
   width: 40px;
-  padding: 0 28px 0 16px;
+  //margin-right: 8px;
+  padding: 0 4px 0 2px;
   .icon-gf,
   .fa {
     font-size: 200%;

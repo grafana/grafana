@@ -1,5 +1,6 @@
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from './dashboard_model';
+import locationUtil from 'app/core/utils/location_util';
 
 export class DashboardSrv {
   dash: any;
@@ -19,7 +20,10 @@ export class DashboardSrv {
     return this.dash;
   }
 
-  handleSaveDashboardError(clone, err) {
+  handleSaveDashboardError(clone, options, err) {
+    options = options || {};
+    options.overwrite = true;
+
     if (err.data && err.data.status === 'version-mismatch') {
       err.isHandled = true;
 
@@ -30,7 +34,7 @@ export class DashboardSrv {
         yesText: 'Save & Overwrite',
         icon: 'fa-warning',
         onConfirm: () => {
-          this.save(clone, { overwrite: true });
+          this.save(clone, options);
         },
       });
     }
@@ -40,12 +44,12 @@ export class DashboardSrv {
 
       this.$rootScope.appEvent('confirm-modal', {
         title: 'Conflict',
-        text: 'Dashboard with the same name exists.',
+        text: 'A dashboard with the same name in selected folder already exists.',
         text2: 'Would you still like to save this dashboard?',
         yesText: 'Save & Overwrite',
         icon: 'fa-warning',
         onConfirm: () => {
-          this.save(clone, { overwrite: true });
+          this.save(clone, options);
         },
       });
     }
@@ -73,8 +77,11 @@ export class DashboardSrv {
   postSave(clone, data) {
     this.dash.version = data.version;
 
-    if (data.url !== this.$location.path()) {
-      this.$location.url(data.url);
+    const newUrl = locationUtil.stripBaseFromUrl(data.url);
+    const currentPath = this.$location.path();
+
+    if (newUrl !== currentPath) {
+      this.$location.url(newUrl).replace();
     }
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);
@@ -85,17 +92,21 @@ export class DashboardSrv {
 
   save(clone, options) {
     options = options || {};
-    options.folderId = options.folderId || this.dash.meta.folderId || clone.folderId;
+    options.folderId = options.folderId >= 0 ? options.folderId : this.dash.meta.folderId || clone.folderId;
 
     return this.backendSrv
       .saveDashboard(clone, options)
       .then(this.postSave.bind(this, clone))
-      .catch(this.handleSaveDashboardError.bind(this, clone));
+      .catch(this.handleSaveDashboardError.bind(this, clone, options));
   }
 
-  saveDashboard(options, clone) {
+  saveDashboard(options?, clone?) {
     if (clone) {
       this.setCurrent(this.create(clone, this.dash.meta));
+    }
+
+    if (this.dash.meta.provisioned) {
+      return this.showDashboardProvisionedModal();
     }
 
     if (!this.dash.meta.canSave && options.makeEditable !== true) {
@@ -111,6 +122,16 @@ export class DashboardSrv {
     }
 
     return this.save(this.dash.getSaveModelClone(), options);
+  }
+
+  saveJSONDashboard(json: string) {
+    return this.save(JSON.parse(json), {});
+  }
+
+  showDashboardProvisionedModal() {
+    this.$rootScope.appEvent('show-modal', {
+      templateHtml: '<save-provisioned-dashboard-modal dismiss="dismiss()"></save-provisioned-dashboard-modal>',
+    });
   }
 
   showSaveAsModal() {

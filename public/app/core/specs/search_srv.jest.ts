@@ -190,7 +190,9 @@ describe('SearchSrv', () => {
             title: 'dash in folder1 1',
             type: 'dash-db',
             folderId: 1,
+            folderUid: 'uid',
             folderTitle: 'folder1',
+            folderUrl: '/dashboards/f/uid/folder1',
           },
         ])
       );
@@ -206,6 +208,11 @@ describe('SearchSrv', () => {
 
     it('should group results by folder', () => {
       expect(results).toHaveLength(2);
+      expect(results[0].id).toEqual(0);
+      expect(results[1].id).toEqual(1);
+      expect(results[1].uid).toEqual('uid');
+      expect(results[1].title).toEqual('folder1');
+      expect(results[1].url).toEqual('/dashboards/f/uid/folder1');
     });
   });
 

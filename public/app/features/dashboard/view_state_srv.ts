@@ -1,6 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import config from 'app/core/config';
+import { DashboardModel } from './dashboard_model';
 
 // represents the transient view state
 // like fullscreen panel & edit
@@ -8,7 +9,7 @@ export class DashboardViewState {
   state: any;
   panelScopes: any;
   $scope: any;
-  dashboard: any;
+  dashboard: DashboardModel;
   editStateChanged: any;
   fullscreenPanel: any;
   oldTimeRange: any;
@@ -37,7 +38,7 @@ export class DashboardViewState {
     });
 
     // this marks changes to location during this digest cycle as not to add history item
-    // dont want url changes like adding orgId to add browser history
+    // don't want url changes like adding orgId to add browser history
     $location.replace();
     this.update(this.getQueryStringState());
   }
@@ -89,6 +90,12 @@ export class DashboardViewState {
       }
     }
 
+    if ((this.state.fullscreen || this.dashboard.meta.soloMode) && this.state.panelId) {
+      // Trying to render panel in fullscreen when it's in the collapsed row causes an issue.
+      // So in this case expand collapsed row first.
+      this.toggleCollapsedPanelRow(this.state.panelId);
+    }
+
     // if no edit state cleanup tab parm
     if (!this.state.edit) {
       delete this.state.tab;
@@ -101,6 +108,19 @@ export class DashboardViewState {
     }
 
     this.syncState();
+  }
+
+  toggleCollapsedPanelRow(panelId) {
+    for (let panel of this.dashboard.panels) {
+      if (panel.collapsed) {
+        for (let rowPanel of panel.panels) {
+          if (rowPanel.id === panelId) {
+            this.dashboard.toggleRow(panel);
+            return;
+          }
+        }
+      }
+    }
   }
 
   syncState() {
@@ -176,9 +196,10 @@ export class DashboardViewState {
     this.oldTimeRange = ctrl.range;
     this.fullscreenPanel = panelScope;
 
+    // Firefox doesn't return scrollTop position properly if 'dash-scroll' is emitted after setViewMode()
+    this.$scope.appEvent('dash-scroll', { animate: false, pos: 0 });
     this.dashboard.setViewMode(ctrl.panel, true, ctrl.editMode);
     this.$scope.appEvent('panel-fullscreen-enter', { panelId: ctrl.panel.id });
-    this.$scope.appEvent('dash-scroll', { animate: false, pos: 0 });
   }
 
   registerPanel(panelScope) {

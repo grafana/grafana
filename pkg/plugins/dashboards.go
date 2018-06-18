@@ -14,8 +14,10 @@ type PluginDashboardInfoDTO struct {
 	Title            string `json:"title"`
 	Imported         bool   `json:"imported"`
 	ImportedUri      string `json:"importedUri"`
+	ImportedUrl      string `json:"importedUrl"`
 	Slug             string `json:"slug"`
 	DashboardId      int64  `json:"dashboardId"`
+	FolderId         int64  `json:"folderId"`
 	ImportedRevision int64  `json:"importedRevision"`
 	Revision         int64  `json:"revision"`
 	Description      string `json:"description"`
@@ -64,6 +66,7 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 				res.DashboardId = existingDash.Id
 				res.Imported = true
 				res.ImportedUri = "db/" + existingDash.Slug
+				res.ImportedUrl = existingDash.GetUrl()
 				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
 				existingMatches[existingDash.Id] = true
 			}

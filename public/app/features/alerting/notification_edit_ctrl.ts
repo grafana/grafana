@@ -43,6 +43,7 @@ export class AlertNotificationEditCtrl {
         return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {
           this.navModel.breadcrumbs.push({ text: result.name });
           this.navModel.node = { text: result.name };
+          result.settings = _.defaults(result.settings, this.defaults.settings);
           return result;
         });
       })
@@ -58,15 +59,29 @@ export class AlertNotificationEditCtrl {
     }
 
     if (this.model.id) {
-      this.backendSrv.put(`/api/alert-notifications/${this.model.id}`, this.model).then(res => {
-        this.model = res;
-        appEvents.emit('alert-success', ['Notification updated', '']);
-      });
+      this.backendSrv
+        .put(`/api/alert-notifications/${this.model.id}`, this.model)
+        .then(res => {
+          this.model = res;
+          appEvents.emit('alert-success', ['Notification updated', '']);
+        })
+        .catch(err => {
+          if (err.data && err.data.error) {
+            appEvents.emit('alert-error', [err.data.error]);
+          }
+        });
     } else {
-      this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
-        appEvents.emit('alert-success', ['Notification created', '']);
-        this.$location.path('alerting/notifications');
-      });
+      this.backendSrv
+        .post(`/api/alert-notifications`, this.model)
+        .then(res => {
+          appEvents.emit('alert-success', ['Notification created', '']);
+          this.$location.path('alerting/notifications');
+        })
+        .catch(err => {
+          if (err.data && err.data.error) {
+            appEvents.emit('alert-error', [err.data.error]);
+          }
+        });
     }
   }
 
@@ -75,7 +90,7 @@ export class AlertNotificationEditCtrl {
   }
 
   typeChanged() {
-    this.model.settings = {};
+    this.model.settings = _.defaults({}, this.defaults.settings);
     this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
   }
 

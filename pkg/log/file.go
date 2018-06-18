@@ -99,10 +99,7 @@ func (w *FileLogWriter) StartLogger() error {
 		return err
 	}
 	w.mw.SetFd(fd)
-	if err = w.initFd(); err != nil {
-		return err
-	}
-	return nil
+	return w.initFd()
 }
 
 func (w *FileLogWriter) docheck(size int) {

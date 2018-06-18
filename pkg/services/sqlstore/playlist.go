@@ -1,8 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -24,8 +22,9 @@ func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
 	}
 
 	_, err := x.Insert(&playlist)
-
-	fmt.Printf("%v", playlist.Id)
+	if err != nil {
+		return err
+	}
 
 	playlistItems := make([]m.PlaylistItem, 0)
 	for _, item := range cmd.Items {
@@ -65,7 +64,7 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 		Interval: playlist.Interval,
 	}
 
-	_, err := x.ID(cmd.Id).Cols("id", "name", "interval").Update(&playlist)
+	_, err := x.ID(cmd.Id).Cols("name", "interval").Update(&playlist)
 
 	if err != nil {
 		return err

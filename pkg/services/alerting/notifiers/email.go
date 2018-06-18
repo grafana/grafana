@@ -58,10 +58,6 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}, nil
 }
 
-func (this *EmailNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending alert notification to", "addresses", this.Addresses)
 

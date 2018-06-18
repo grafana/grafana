@@ -1,5 +1,5 @@
   mysql:
-    image: mysql:latest
+    image: mysql:5.6
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana
@@ -7,9 +7,6 @@
       MYSQL_PASSWORD: password
     ports:
       - "3306:3306"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all]
 
   fake-mysql-data:

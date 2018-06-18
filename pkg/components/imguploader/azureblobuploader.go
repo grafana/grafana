@@ -225,7 +225,7 @@ func (a *Auth) SignRequest(req *http.Request) {
 	)
 	decodedKey, _ := base64.StdEncoding.DecodeString(a.Key)
 
-	sha256 := hmac.New(sha256.New, []byte(decodedKey))
+	sha256 := hmac.New(sha256.New, decodedKey)
 	sha256.Write([]byte(strToSign))
 
 	signature := base64.StdEncoding.EncodeToString(sha256.Sum(nil))

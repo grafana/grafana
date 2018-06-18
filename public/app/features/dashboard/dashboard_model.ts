@@ -22,8 +22,10 @@ export class DashboardModel {
   editable: any;
   graphTooltip: any;
   time: any;
+  originalTime: any;
   timepicker: any;
   templating: any;
+  originalTemplating: any;
   annotations: any;
   refresh: any;
   snapshot: any;
@@ -68,8 +70,12 @@ export class DashboardModel {
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time || { from: 'now-6h', to: 'now' };
+    this.originalTime = _.cloneDeep(this.time);
     this.timepicker = data.timepicker || {};
     this.templating = this.ensureListExist(data.templating);
+    this.originalTemplating = _.map(this.templating.list, variable => {
+      return { name: variable.name, current: _.clone(variable.current) };
+    });
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;
     this.snapshot = data.snapshot;
@@ -129,8 +135,13 @@ export class DashboardModel {
     this.meta = meta;
   }
 
-  // cleans meta data and other non peristent state
-  getSaveModelClone() {
+  // cleans meta data and other non persistent state
+  getSaveModelClone(options?) {
+    let defaults = _.defaults(options || {}, {
+      saveVariables: false,
+      saveTimerange: false,
+    });
+
     // make clone
     var copy: any = {};
     for (var property in this) {
@@ -142,9 +153,22 @@ export class DashboardModel {
     }
 
     // get variable save models
+    //console.log(this.templating.list);
     copy.templating = {
       list: _.map(this.templating.list, variable => (variable.getSaveModel ? variable.getSaveModel() : variable)),
     };
+
+    if (!defaults.saveVariables && copy.templating.list.length === this.originalTemplating.length) {
+      for (let i = 0; i < copy.templating.list.length; i++) {
+        if (copy.templating.list[i].name === this.originalTemplating[i].name) {
+          copy.templating.list[i].current = this.originalTemplating[i].current;
+        }
+      }
+    }
+
+    if (!defaults.saveTimerange) {
+      copy.time = this.originalTime;
+    }
 
     // get panel save models
     copy.panels = _.chain(this.panels)
@@ -500,11 +524,12 @@ export class DashboardModel {
     if (!rowPanel.panels || rowPanel.panels.length === 0) {
       return 0;
     }
+    const rowYPos = rowPanel.gridPos.y;
     const positions = _.map(rowPanel.panels, 'gridPos');
     const maxPos = _.maxBy(positions, pos => {
       return pos.y + pos.h;
     });
-    return maxPos.h + 1;
+    return maxPos.y + maxPos.h - rowYPos;
   }
 
   removePanel(panel: PanelModel) {
@@ -521,6 +546,34 @@ export class DashboardModel {
     }
 
     this.removePanel(row);
+  }
+
+  expandRows() {
+    for (let i = 0; i < this.panels.length; i++) {
+      var panel = this.panels[i];
+
+      if (panel.type !== 'row') {
+        continue;
+      }
+
+      if (panel.collapsed) {
+        this.toggleRow(panel);
+      }
+    }
+  }
+
+  collapseRows() {
+    for (let i = 0; i < this.panels.length; i++) {
+      var panel = this.panels[i];
+
+      if (panel.type !== 'row') {
+        continue;
+      }
+
+      if (!panel.collapsed) {
+        this.toggleRow(panel);
+      }
+    }
   }
 
   setPanelFocus(id) {
@@ -577,7 +630,7 @@ export class DashboardModel {
     if (panel.gridPos.x + panel.gridPos.w * 2 <= GRID_COLUMN_COUNT) {
       newPanel.gridPos.x += panel.gridPos.w;
     } else {
-      // add bellow
+      // add below
       newPanel.gridPos.y += panel.gridPos.h;
     }
 
@@ -620,6 +673,7 @@ export class DashboardModel {
 
         for (let panel of row.panels) {
           // make sure y is adjusted (in case row moved while collapsed)
+          // console.log('yDiff', yDiff);
           panel.gridPos.y -= yDiff;
           // insert after row
           this.panels.splice(insertPos, 0, new PanelModel(panel));
@@ -628,7 +682,7 @@ export class DashboardModel {
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
         }
 
-        const pushDownAmount = yMax - row.gridPos.y;
+        const pushDownAmount = yMax - row.gridPos.y - 1;
 
         // push panels below down
         for (let panelIndex = insertPos; panelIndex < this.panels.length; panelIndex++) {

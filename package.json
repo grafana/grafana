@@ -4,7 +4,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "5.0.0-pre1",
+  "version": "5.2.0-pre1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -18,10 +18,12 @@
     "@types/react-dom": "^16.0.3",
     "angular-mocks": "^1.6.6",
     "autoprefixer": "^6.4.0",
-    "awesome-typescript-loader": "^3.2.3",
+    "awesome-typescript-loader": "^4.0.0",
+    "axios": "^0.17.1",
     "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.2",
+    "babel-plugin-syntax-dynamic-import": "^6.18.0",
     "babel-preset-es2015": "^6.24.1",
+    "clean-webpack-plugin": "^0.1.19",
     "css-loader": "^0.28.7",
     "enzyme": "^3.1.0",
     "enzyme-adapter-react-16": "^1.0.1",
@@ -31,7 +33,7 @@
     "expect.js": "~0.2.0",
     "expose-loader": "^0.7.3",
     "extract-text-webpack-plugin": "^3.0.0",
-    "file-loader": "^0.11.2",
+    "file-loader": "^1.1.11",
     "gaze": "^1.1.2",
     "glob": "~7.0.0",
     "grunt": "1.0.1",
@@ -53,11 +55,11 @@
     "grunt-usemin": "3.1.1",
     "grunt-webpack": "^3.0.2",
     "html-loader": "^0.5.1",
+    "html-webpack-harddisk-plugin": "^0.2.0",
     "html-webpack-plugin": "^2.30.1",
     "husky": "^0.14.3",
     "jest": "^22.0.4",
     "jshint-stylish": "~2.2.1",
-    "json-loader": "^0.5.7",
     "karma": "1.7.0",
     "karma-chrome-launcher": "~2.2.0",
     "karma-expect": "~1.1.3",
@@ -79,33 +81,37 @@
     "postcss-loader": "^2.0.6",
     "postcss-reporter": "^5.0.0",
     "prettier": "1.9.2",
+    "react-hot-loader": "^4.2.0",
     "react-test-renderer": "^16.0.0",
     "sass-lint": "^1.10.2",
-    "sass-loader": "^6.0.6",
+    "sass-loader": "^7.0.1",
     "sinon": "1.17.6",
+    "style-loader": "^0.21.0",
     "systemjs": "0.20.19",
     "systemjs-plugin-css": "^0.1.36",
     "ts-jest": "^22.0.0",
-    "ts-loader": "^3.2.0",
     "tslint": "^5.8.0",
     "tslint-loader": "^3.5.3",
     "typescript": "^2.6.2",
     "webpack": "^3.10.0",
     "webpack-bundle-analyzer": "^2.9.0",
     "webpack-cleanup-plugin": "^0.5.1",
+    "webpack-dev-server": "2.11.1",
     "webpack-merge": "^4.1.0",
     "zone.js": "^0.7.2"
   },
   "scripts": {
     "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
+    "start": "webpack-dev-server --progress --colors --config scripts/webpack/webpack.hot.js",
     "watch": "webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
     "build": "grunt build",
     "test": "grunt test",
     "test:coverage": "grunt test --coverage=true",
     "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
-    "karma": "node ./node_modules/grunt-cli/bin/grunt karma:dev",
-    "jest": "node ./node_modules/jest-cli/bin/jest.js --notify --watch",
-    "precommit": "lint-staged && node ./node_modules/grunt-cli/bin/grunt precommit"
+    "karma": "grunt karma:dev",
+    "jest": "jest --notify --watch",
+    "api-tests": "jest --notify --watch --config=tests/api/jest.js",
+    "precommit": "lint-staged && grunt precommit"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -116,7 +122,7 @@
       "prettier --write",
       "git add"
     ],
-    "*.go": [
+    "*pkg/**/*.go": [
       "gofmt -w -s",
       "git add"
     ]
@@ -128,12 +134,13 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "angular": "^1.6.6",
+    "angular": "1.6.6",
     "angular-bindonce": "^0.3.1",
     "angular-native-dragdrop": "^1.2.2",
-    "angular-route": "^1.6.6",
-    "angular-sanitize": "^1.6.6",
+    "angular-route": "1.6.6",
+    "angular-sanitize": "1.6.6",
     "babel-polyfill": "^6.26.0",
+    "baron": "^3.0.3",
     "brace": "^0.10.0",
     "classnames": "^2.2.5",
     "clipboard": "^1.7.1",
@@ -141,6 +148,7 @@
     "d3-scale-chromatic": "^1.1.1",
     "eventemitter3": "^2.0.3",
     "file-saver": "^1.3.3",
+    "immutable": "^3.8.2",
     "jquery": "^3.2.1",
     "lodash": "^4.17.4",
     "mobx": "^3.4.1",
@@ -148,11 +156,12 @@
     "mobx-state-tree": "^1.3.1",
     "moment": "^2.18.1",
     "mousetrap": "^1.6.0",
-    "perfect-scrollbar": "^1.2.0",
+    "mousetrap-global-bind": "^1.1.0",
+    "prismjs": "^1.6.0",
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
-    "react-grid-layout": "^0.16.2",
+    "react-grid-layout": "0.16.6",
     "react-highlight-words": "^0.10.0",
     "react-popper": "^0.7.5",
     "react-select": "^1.1.0",
@@ -161,8 +170,14 @@
     "remarkable": "^1.7.1",
     "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "^5.4.3",
+    "slate": "^0.33.4",
+    "slate-plain-serializer": "^0.5.10",
+    "slate-react": "^0.12.4",
     "tether": "^1.4.0",
-    "tether-drop": "https://github.com/torkelo/drop",
+    "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "^1.4.1"
+  },
+  "resolutions": {
+    "caniuse-db": "1.0.30000772"
   }
 }

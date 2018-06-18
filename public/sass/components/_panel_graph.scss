@@ -4,20 +4,26 @@
   height: 100%;
 
   &--legend-right {
-    flex-direction: row;
+    @include media-breakpoint-up(sm) {
+      flex-direction: row;
 
-    .graph-legend {
-      flex: 0 1 10px;
-      max-height: 100%;
-    }
+      .graph-legend {
+        flex: 0 1 10px;
+        max-height: 100%;
+      }
 
-    .graph-legend-series {
-      display: block;
-      padding-left: 0px;
-    }
+      .graph-legend-series {
+        display: block;
+        padding-left: 0px;
+      }
 
-    .graph-legend-table .graph-legend-series {
-      display: table-row;
+      .graph-legend-table {
+        width: auto;
+      }
+
+      .graph-legend-table .graph-legend-series {
+        display: table-row;
+      }
     }
   }
 }
@@ -43,16 +49,33 @@
 }
 
 .graph-legend {
+  display: flex;
   flex: 0 1 auto;
   max-height: 30%;
-  margin: 0 $spacer;
+  margin: 0;
   text-align: center;
   padding-top: 6px;
   position: relative;
 
+  // fix for Firefox (white stripe on the right of scrollbar)
+  width: calc(100% - 1px);
+
   .popover-content {
     padding: 0;
   }
+}
+
+.graph-legend-content {
+  position: relative;
+
+  // fix for Firefox (white stripe on the right of scrollbar)
+  width: calc(100% - 1px);
+}
+
+.graph-legend-scroll {
+  position: relative;
+  overflow: auto !important;
+  padding: 1px;
 }
 
 .graph-legend-icon {
@@ -70,19 +93,19 @@
   font-size: 85%;
   text-align: left;
   &.current::before {
-    content: "Current: ";
+    content: 'Current: ';
   }
   &.max::before {
-    content: "Max: ";
+    content: 'Max: ';
   }
   &.min::before {
-    content: "Min: ";
+    content: 'Min: ';
   }
   &.total::before {
-    content: "Total: ";
+    content: 'Total: ';
   }
   &.avg::before {
-    content: "Avg: ";
+    content: 'Avg: ';
   }
 }
 
@@ -106,14 +129,36 @@
   padding-left: 6px;
 }
 
+// fix for phantomjs
+.body--phantomjs {
+  .graph-panel--legend-right {
+    .graph-legend {
+      display: inline-block;
+    }
+
+    .graph-panel__chart {
+      display: flex;
+    }
+
+    .graph-legend-table {
+      display: table;
+
+      .graph-legend-scroll {
+        display: table;
+      }
+    }
+  }
+}
+
 .graph-legend-table {
   tbody {
     display: block;
+    position: relative;
     overflow-y: auto;
     overflow-x: hidden;
-    height: 100%;
     padding-bottom: 1px;
     padding-right: 5px;
+    padding-left: 5px;
   }
 
   .graph-legend-series {
@@ -124,7 +169,7 @@
       float: none;
 
       .graph-legend-alias::after {
-        content: "(right-y)";
+        content: '(right-y)';
         padding: 0 5px;
         color: $text-color-weak;
       }
@@ -175,7 +220,7 @@
     &.total,
     &.avg {
       &::before {
-        content: "";
+        content: '';
       }
     }
   }

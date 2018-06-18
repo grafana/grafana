@@ -1,7 +1,9 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -21,9 +23,9 @@ func TestAccountDataAccess(t *testing.T) {
 				ac1cmd := m.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 				ac2cmd := m.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
 
-				err := CreateUser(&ac1cmd)
+				err := CreateUser(context.Background(), &ac1cmd)
 				So(err, ShouldBeNil)
-				err = CreateUser(&ac2cmd)
+				err = CreateUser(context.Background(), &ac2cmd)
 				So(err, ShouldBeNil)
 
 				q1 := m.GetUserOrgListQuery{UserId: ac1cmd.Result.Id}
@@ -42,8 +44,8 @@ func TestAccountDataAccess(t *testing.T) {
 			ac1cmd := m.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := m.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
 
-			err := CreateUser(&ac1cmd)
-			err = CreateUser(&ac2cmd)
+			err := CreateUser(context.Background(), &ac1cmd)
+			err = CreateUser(context.Background(), &ac2cmd)
 			So(err, ShouldBeNil)
 
 			ac1 := ac1cmd.Result
@@ -123,8 +125,33 @@ func TestAccountDataAccess(t *testing.T) {
 					So(query.Result[0].Role, ShouldEqual, "Admin")
 				})
 
+				Convey("Can get organization users with query", func() {
+					query := m.GetOrgUsersQuery{
+						OrgId: ac1.OrgId,
+						Query: "ac1",
+					}
+					err := GetOrgUsers(&query)
+
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].Email, ShouldEqual, ac1.Email)
+				})
+
+				Convey("Can get organization users with query and limit", func() {
+					query := m.GetOrgUsersQuery{
+						OrgId: ac1.OrgId,
+						Query: "ac",
+						Limit: 1,
+					}
+					err := GetOrgUsers(&query)
+
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].Email, ShouldEqual, ac1.Email)
+				})
+
 				Convey("Can set using org", func() {
-					cmd := m.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.Id}
+					cmd := m.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.OrgId}
 					err := SetUsingOrg(&cmd)
 					So(err, ShouldBeNil)
 
@@ -133,12 +160,24 @@ func TestAccountDataAccess(t *testing.T) {
 						err := GetSignedInUser(&query)
 
 						So(err, ShouldBeNil)
-						So(query.Result.OrgId, ShouldEqual, ac1.Id)
+						So(query.Result.OrgId, ShouldEqual, ac1.OrgId)
 						So(query.Result.Email, ShouldEqual, "ac2@test.com")
 						So(query.Result.Name, ShouldEqual, "ac2 name")
 						So(query.Result.Login, ShouldEqual, "ac2")
 						So(query.Result.OrgName, ShouldEqual, "ac1@test.com")
 						So(query.Result.OrgRole, ShouldEqual, "Viewer")
+					})
+
+					Convey("Should set last org as current when removing user from current", func() {
+						remCmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id}
+						err := RemoveOrgUser(&remCmd)
+						So(err, ShouldBeNil)
+
+						query := m.GetSignedInUserQuery{UserId: ac2.Id}
+						err = GetSignedInUser(&query)
+
+						So(err, ShouldBeNil)
+						So(query.Result.OrgId, ShouldEqual, ac2.OrgId)
 					})
 				})
 
@@ -156,7 +195,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				Convey("Given an org user with dashboard permissions", func() {
 					ac3cmd := m.CreateUserCommand{Login: "ac3", Email: "ac3@test.com", Name: "ac3 name", IsAdmin: false}
-					err := CreateUser(&ac3cmd)
+					err := CreateUser(context.Background(), &ac3cmd)
 					So(err, ShouldBeNil)
 					ac3 := ac3cmd.Result
 
@@ -174,10 +213,13 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 3)
 
-					err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 1, OrgId: ac1.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
+					dash1 := insertTestDashboard("1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
+					dash2 := insertTestDashboard("2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
+
+					err = testHelperUpdateDashboardAcl(dash1.Id, m.DashboardAcl{DashboardId: dash1.Id, OrgId: ac1.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
 					So(err, ShouldBeNil)
 
-					err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 2, OrgId: ac3.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
+					err = testHelperUpdateDashboardAcl(dash2.Id, m.DashboardAcl{DashboardId: dash2.Id, OrgId: ac3.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
 					So(err, ShouldBeNil)
 
 					Convey("When org user is deleted", func() {
@@ -208,4 +250,14 @@ func TestAccountDataAccess(t *testing.T) {
 			})
 		})
 	})
+}
+
+func testHelperUpdateDashboardAcl(dashboardId int64, items ...m.DashboardAcl) error {
+	cmd := m.UpdateDashboardAclCommand{DashboardId: dashboardId}
+	for _, item := range items {
+		item.Created = time.Now()
+		item.Updated = time.Now()
+		cmd.Items = append(cmd.Items, &item)
+	}
+	return UpdateDashboardAcl(&cmd)
 }

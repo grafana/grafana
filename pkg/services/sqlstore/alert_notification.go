@@ -23,12 +23,7 @@ func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
 		_, err := sess.Exec(sql, cmd.OrgId, cmd.Id)
-
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	})
 }
 

@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/go-macaron/session"
+	ms "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
-	l "github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
@@ -71,7 +71,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(loginUserQuery *l.LoginUserQuery) error {
+			bus.AddHandler("test", func(loginUserQuery *m.LoginUserQuery) error {
 				return nil
 			})
 
@@ -130,8 +130,8 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario("UserId in session", func(sc *scenarioContext) {
 
-			sc.fakeReq("GET", "/").handler(func(c *Context) {
-				c.Session.Set(SESS_KEY_USERID, int64(12))
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
+				c.Session.Set(session.SESS_KEY_USERID, int64(12))
 			}).exec()
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
@@ -176,9 +176,15 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
+			setting.LdapEnabled = false
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+				return nil
+			})
+
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 12}
 				return nil
 			})
 
@@ -198,18 +204,18 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyAutoSignUp = true
+			setting.LdapEnabled = false
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				if query.UserId > 0 {
 					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
 					return nil
-				} else {
-					return m.ErrUserNotFound
 				}
+				return m.ErrUserNotFound
 			})
 
-			bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
-				cmd.Result = m.User{Id: 33}
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 33}
 				return nil
 			})
 
@@ -225,11 +231,11 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("When auth_proxy is enabled and request RemoteAddr is not trusted", func(sc *scenarioContext) {
+		middlewareScenario("When auth_proxy is enabled and IPv4 request RemoteAddr is not trusted", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 192.168.2.1"
+			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
@@ -238,6 +244,24 @@ func TestMiddlewareContext(t *testing.T) {
 
 			Convey("should return 407 status code", func() {
 				So(sc.resp.Code, ShouldEqual, 407)
+				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 192.168.3.1 is not from the authentication proxy")
+			})
+		})
+
+		middlewareScenario("When auth_proxy is enabled and IPv6 request RemoteAddr is not trusted", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.RemoteAddr = "[2001:23]:12345"
+			sc.exec()
+
+			Convey("should return 407 status code", func() {
+				So(sc.resp.Code, ShouldEqual, 407)
+				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 2001:23 is not from the authentication proxy")
 			})
 		})
 
@@ -245,16 +269,76 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 192.168.2.1"
+			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
 				return nil
 			})
 
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 33}
+				return nil
+			})
+
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.req.RemoteAddr = "192.168.2.1:12345"
+			sc.req.RemoteAddr = "[2001::23]:12345"
+			sc.exec()
+
+			Convey("Should init context with user info", func() {
+				So(sc.context.IsSignedIn, ShouldBeTrue)
+				So(sc.context.UserId, ShouldEqual, 33)
+				So(sc.context.OrgId, ShouldEqual, 4)
+			})
+		})
+
+		middlewareScenario("When auth_proxy is enabled and request has X-Forwarded-For that is not trusted", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
+
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
+				return nil
+			})
+
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 33}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add("X-Forwarded-For", "client-ip, 192.168.1.1, 192.168.1.2")
+			sc.exec()
+
+			Convey("should return 407 status code", func() {
+				So(sc.resp.Code, ShouldEqual, 407)
+				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 192.168.1.2 is not from the authentication proxy")
+			})
+		})
+
+		middlewareScenario("When auth_proxy is enabled and request has X-Forwarded-For that is trusted", func(sc *scenarioContext) {
+			setting.AuthProxyEnabled = true
+			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
+
+			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
+				return nil
+			})
+
+			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
+				cmd.Result = &m.User{Id: 33}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/")
+			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
+			sc.req.Header.Add("X-Forwarded-For", "client-ip, 192.168.1.2, 192.168.1.1")
 			sc.exec()
 
 			Convey("Should init context with user info", func() {
@@ -270,14 +354,19 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyHeaderProperty = "username"
 			setting.AuthProxyWhitelist = ""
 
+			bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
+				query.Result = &m.User{Id: 32}
+				return nil
+			})
+
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
 				return nil
 			})
 
 			// create session
-			sc.fakeReq("GET", "/").handler(func(c *Context) {
-				c.Session.Set(SESS_KEY_USERID, int64(33))
+			sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
+				c.Session.Set(session.SESS_KEY_USERID, int64(33))
 			}).exec()
 
 			oldSessionID := sc.context.Session.ID()
@@ -300,10 +389,16 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.LdapEnabled = true
 
 			called := false
-			syncGrafanaUserWithLdapUser = func(ctx *Context, query *m.GetSignedInUserQuery) error {
+			syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
 				called = true
+				query.User = &m.User{Id: 32}
 				return nil
 			}
+
+			bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
+				query.Result = &m.User{Id: 32}
+				return nil
+			})
 
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
@@ -336,12 +431,12 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 
 		sc.m.Use(GetContextHandler())
 		// mock out gc goroutine
-		startSessionGC = func() {}
-		sc.m.Use(Sessioner(&session.Options{}))
+		session.StartSessionGC = func() {}
+		sc.m.Use(Sessioner(&ms.Options{}, 0))
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())
 
-		sc.defaultHandler = func(c *Context) {
+		sc.defaultHandler = func(c *m.ReqContext) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
@@ -356,7 +451,7 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 
 type scenarioContext struct {
 	m              *macaron.Macaron
-	context        *Context
+	context        *m.ReqContext
 	resp           *httptest.ResponseRecorder
 	apiKey         string
 	authHeader     string
@@ -436,4 +531,4 @@ func (sc *scenarioContext) exec() {
 }
 
 type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *Context)
+type handlerFunc func(c *m.ReqContext)

@@ -9,33 +9,39 @@ describe('FolderSettings', () => {
   let page;
 
   beforeAll(() => {
-    backendSrv.getDashboardByUid.mockReturnValue(
+    backendSrv.getFolderByUid.mockReturnValue(
       Promise.resolve({
-        dashboard: {
-          id: 1,
-          title: 'Folder Name',
-        },
-        meta: {
-          url: '/dashboards/f/uid/folder-name',
-          canSave: true,
-        },
+        id: 1,
+        uid: 'uid',
+        title: 'Folder Name',
+        url: '/dashboards/f/uid/folder-name',
+        canSave: true,
+        version: 1,
       })
     );
 
     const store = RootStore.create(
-      {},
+      {
+        view: {
+          path: 'asd',
+          query: {},
+          routeParams: {
+            uid: 'uid-str',
+          },
+        },
+      },
       {
         backendSrv: backendSrv,
       }
     );
 
     wrapper = shallow(<FolderSettings backendSrv={backendSrv} {...store} />);
-    return wrapper
-      .dive()
+    page = wrapper.dive();
+    return page
       .instance()
       .loadStore()
       .then(() => {
-        page = wrapper.dive();
+        page.update();
       });
   });
 

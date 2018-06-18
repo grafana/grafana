@@ -6,12 +6,11 @@ import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
 import AddPermissions from 'app/core/components/Permissions/AddPermissions';
 import SlideDown from 'app/core/components/Animations/SlideDown';
+import { FolderInfo } from './FolderInfo';
 
 export interface IProps {
   dashboardId: number;
-  folderId: number;
-  folderTitle: string;
-  folderSlug: string;
+  folder?: FolderInfo;
   backendSrv: any;
 }
 @observer
@@ -28,8 +27,12 @@ class DashboardPermissions extends Component<IProps, any> {
     this.permissions.toggleAddPermissions();
   }
 
+  componentWillUnmount() {
+    this.permissions.hideAddPermissions();
+  }
+
   render() {
-    const { dashboardId, folderTitle, folderSlug, folderId, backendSrv } = this.props;
+    const { dashboardId, folder, backendSrv } = this.props;
 
     return (
       <div>
@@ -50,13 +53,13 @@ class DashboardPermissions extends Component<IProps, any> {
           </div>
         </div>
         <SlideDown in={this.permissions.isAddPermissionsVisible}>
-          <AddPermissions permissions={this.permissions} backendSrv={backendSrv} dashboardId={dashboardId} />
+          <AddPermissions permissions={this.permissions} backendSrv={backendSrv} />
         </SlideDown>
         <Permissions
           permissions={this.permissions}
           isFolder={false}
           dashboardId={dashboardId}
-          folderInfo={{ title: folderTitle, slug: folderSlug, id: folderId }}
+          folderInfo={folder}
           backendSrv={backendSrv}
         />
       </div>

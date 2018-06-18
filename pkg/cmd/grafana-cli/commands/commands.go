@@ -15,13 +15,16 @@ func runDbCommand(command func(commandLine CommandLine) error) func(context *cli
 	return func(context *cli.Context) {
 		cmd := &contextCommandLine{context}
 
-		setting.NewConfigContext(&setting.CommandLineArgs{
+		cfg := setting.NewCfg()
+		cfg.Load(&setting.CommandLineArgs{
 			Config:   cmd.String("config"),
 			HomePath: cmd.String("homepath"),
 			Args:     flag.Args(),
 		})
 
-		sqlstore.NewEngine()
+		engine := &sqlstore.SqlStore{}
+		engine.Cfg = cfg
+		engine.Init()
 
 		if err := command(cmd); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))

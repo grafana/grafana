@@ -72,6 +72,9 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 
 		var prefs m.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&prefs)
+		if err != nil {
+			return err
+		}
 
 		if !exists {
 			prefs = m.Preferences{
@@ -85,14 +88,13 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 			}
 			_, err = sess.Insert(&prefs)
 			return err
-		} else {
-			prefs.HomeDashboardId = cmd.HomeDashboardId
-			prefs.Timezone = cmd.Timezone
-			prefs.Theme = cmd.Theme
-			prefs.Updated = time.Now()
-			prefs.Version += 1
-			_, err := sess.Id(prefs.Id).AllCols().Update(&prefs)
-			return err
 		}
+		prefs.HomeDashboardId = cmd.HomeDashboardId
+		prefs.Timezone = cmd.Timezone
+		prefs.Theme = cmd.Theme
+		prefs.Updated = time.Now()
+		prefs.Version += 1
+		_, err = sess.Id(prefs.Id).AllCols().Update(&prefs)
+		return err
 	})
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
 type ResultHandler interface {
@@ -20,10 +21,10 @@ type DefaultResultHandler struct {
 	log      log.Logger
 }
 
-func NewResultHandler() *DefaultResultHandler {
+func NewResultHandler(renderService rendering.Service) *DefaultResultHandler {
 	return &DefaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: NewNotificationService(),
+		notifier: NewNotificationService(renderService),
 	}
 }
 
@@ -56,7 +57,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 
 		if err := bus.Dispatch(cmd); err != nil {
 			if err == m.ErrCannotChangeStateOnPausedAlert {
-				handler.log.Error("Cannot change state on alert thats pause", "error", err)
+				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err
 			}
 
@@ -77,7 +78,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			Text:        "",
 			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(evalContext.PrevAlertState),
-			Epoch:       time.Now().Unix(),
+			Epoch:       time.Now().UnixNano() / int64(time.Millisecond),
 			Data:        annotationData,
 		}
 

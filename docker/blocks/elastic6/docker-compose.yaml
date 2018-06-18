@@ -1,0 +1,15 @@
+# You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
+
+  elasticsearch6:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.4
+    command: elasticsearch
+    ports:
+      - "11200:9200"
+      - "11300:9300"
+
+  fake-elastic6-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: elasticsearch6
+      FD_PORT: 11200

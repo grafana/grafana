@@ -61,7 +61,7 @@ Content-Type: application/json
     "client_id":"some_id",
     "client_secret":"************",
     "enabled":"false",
-    "scopes":"user:email",
+    "scopes":"user:email,read:org",
     "team_ids":"",
     "token_url":"https://github.com/login/oauth/access_token"
   },

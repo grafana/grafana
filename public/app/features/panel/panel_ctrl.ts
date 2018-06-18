@@ -22,6 +22,7 @@ export class PanelCtrl {
   editorTabs: any;
   $scope: any;
   $injector: any;
+  $location: any;
   $timeout: any;
   fullscreen: boolean;
   inspector: any;
@@ -35,6 +36,7 @@ export class PanelCtrl {
 
   constructor($scope, $injector) {
     this.$injector = $injector;
+    this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
@@ -161,6 +163,9 @@ export class PanelCtrl {
       shortcut: 'p s',
     });
 
+    // Additional items from sub-class
+    menu.push(...this.getAdditionalMenuItems());
+
     let extendedMenu = this.getExtendedMenu();
     menu.push({
       text: 'More ...',
@@ -190,11 +195,12 @@ export class PanelCtrl {
         text: 'Duplicate',
         click: 'ctrl.duplicate()',
         role: 'Editor',
+        shortcut: 'p d',
       });
 
       menu.push({
-        text: 'Add to Panel List',
-        click: 'ctrl.addToPanelList()',
+        text: 'Copy',
+        click: 'ctrl.copyPanel()',
         role: 'Editor',
       });
     }
@@ -206,6 +212,11 @@ export class PanelCtrl {
 
     this.events.emit('init-panel-actions', menu);
     return menu;
+  }
+
+  // Override in sub-class to add items before extended menu
+  getAdditionalMenuItems() {
+    return [];
   }
 
   otherPanelInFullscreenMode() {
@@ -241,31 +252,10 @@ export class PanelCtrl {
     });
   }
 
-  removePanel(ask: boolean) {
-    // confirm deletion
-    if (ask !== false) {
-      var text2, confirmText;
-
-      if (this.panel.alert) {
-        text2 = 'Panel includes an alert rule, removing panel will also remove alert rule';
-        confirmText = 'YES';
-      }
-
-      appEvents.emit('confirm-modal', {
-        title: 'Remove Panel',
-        text: 'Are you sure you want to remove this panel?',
-        text2: text2,
-        icon: 'fa-trash',
-        confirmText: confirmText,
-        yesText: 'Remove',
-        onConfirm: () => {
-          this.removePanel(false);
-        },
-      });
-      return;
-    }
-
-    this.dashboard.removePanel(this.panel);
+  removePanel() {
+    this.publishAppEvent('panel-remove', {
+      panelId: this.panel.id,
+    });
   }
 
   editPanelJson() {
@@ -280,9 +270,9 @@ export class PanelCtrl {
     });
   }
 
-  addToPanelList() {
+  copyPanel() {
     store.set(LS_PANEL_COPY_KEY, JSON.stringify(this.panel.getSaveModel()));
-    appEvents.emit('alert-success', ['Panel temporarily added to panel list']);
+    appEvents.emit('alert-success', ['Panel copied. Open Add Panel to paste']);
   }
 
   replacePanel(newPanel, oldPanel) {
@@ -334,6 +324,7 @@ export class PanelCtrl {
     }
 
     var linkSrv = this.$injector.get('linkSrv');
+    var sanitize = this.$injector.get('$sanitize');
     var templateSrv = this.$injector.get('templateSrv');
     var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     var html = '<div class="markdown-html">';
@@ -356,7 +347,8 @@ export class PanelCtrl {
       html += '</ul>';
     }
 
-    return html + '</div>';
+    html += '</div>';
+    return sanitize(html);
   }
 
   openInspector() {

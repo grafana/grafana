@@ -146,7 +146,7 @@ export class JsonExplorer {
   }
 
   /*
-   * did we recieve a key argument?
+   * did we receive a key argument?
    * This means that the formatter was called as a sub formatter of a parent formatter
   */
   private get hasKey(): boolean {

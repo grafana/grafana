@@ -2,7 +2,7 @@ import { AdhocVariable } from '../adhoc_variable';
 
 describe('AdhocVariable', function() {
   describe('when serializing to url', function() {
-    it('should set return key value and op seperated by pipe', function() {
+    it('should set return key value and op separated by pipe', function() {
       var variable = new AdhocVariable({
         filters: [
           { key: 'key1', operator: '=', value: 'value1' },

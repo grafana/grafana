@@ -374,14 +374,14 @@ describe('DashboardModel', function() {
           {
             id: 2,
             type: 'row',
-            gridPos: { x: 0, y: 6, w: 24, h: 2 },
+            gridPos: { x: 0, y: 6, w: 24, h: 1 },
             collapsed: true,
             panels: [
-              { id: 3, type: 'graph', gridPos: { x: 0, y: 2, w: 12, h: 2 } },
-              { id: 4, type: 'graph', gridPos: { x: 12, y: 2, w: 12, h: 2 } },
+              { id: 3, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+              { id: 4, type: 'graph', gridPos: { x: 12, y: 7, w: 12, h: 2 } },
             ],
           },
-          { id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 1, h: 1 } },
+          { id: 5, type: 'row', gridPos: { x: 0, y: 7, w: 1, h: 1 } },
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
@@ -399,7 +399,7 @@ describe('DashboardModel', function() {
     it('should position them below row', function() {
       expect(dashboard.panels[2].gridPos).toMatchObject({
         x: 0,
-        y: 8,
+        y: 7,
         w: 12,
         h: 2,
       });
@@ -408,7 +408,7 @@ describe('DashboardModel', function() {
     it('should move panels below down', function() {
       expect(dashboard.panels[4].gridPos).toMatchObject({
         x: 0,
-        y: 10,
+        y: 9,
         w: 1,
         h: 1,
       });
@@ -432,6 +432,65 @@ describe('DashboardModel', function() {
       it('should only remove row', function() {
         expect(dashboard.panels.length).toBe(4);
       });
+    });
+  });
+
+  describe('save variables and timeline', () => {
+    let model;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              name: 'Server',
+              current: {
+                selected: true,
+                text: 'server_001',
+                value: 'server_001',
+              },
+            },
+          ],
+        },
+        time: {
+          from: 'now-6h',
+          to: 'now',
+        },
+      });
+      model.templating.list[0] = {
+        name: 'Server',
+        current: {
+          selected: true,
+          text: 'server_002',
+          value: 'server_002',
+        },
+      };
+      model.time = {
+        from: 'now-3h',
+        to: 'now',
+      };
+    });
+
+    it('should not save variables and timeline', () => {
+      let options = {
+        saveVariables: false,
+        saveTimerange: false,
+      };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.templating.list[0].current.text).toBe('server_001');
+      expect(saveModel.time.from).toBe('now-6h');
+    });
+
+    it('should save variables and timeline', () => {
+      let options = {
+        saveVariables: true,
+        saveTimerange: true,
+      };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.templating.list[0].current.text).toBe('server_002');
+      expect(saveModel.time.from).toBe('now-3h');
     });
   });
 });

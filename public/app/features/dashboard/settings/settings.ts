@@ -2,6 +2,7 @@ import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import { DashboardModel } from '../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
+import angular from 'angular';
 import config from 'app/core/config';
 
 export class SettingsCtrl {
@@ -14,9 +15,17 @@ export class SettingsCtrl {
   canSave: boolean;
   canDelete: boolean;
   sections: any[];
+  hasUnsavedFolderChange: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $rootScope, private backendSrv, private dashboardSrv) {
+  constructor(
+    private $scope,
+    private $route,
+    private $location,
+    private $rootScope,
+    private backendSrv,
+    private dashboardSrv
+  ) {
     // temp hack for annotations and variables editors
     // that rely on inherited scope
     $scope.dashboard = this.dashboard;
@@ -29,7 +38,7 @@ export class SettingsCtrl {
       });
     });
 
-    this.canSaveAs = contextSrv.isEditor;
+    this.canSaveAs = this.dashboard.meta.canEdit && contextSrv.hasEditPermissionInFolders;
     this.canSave = this.dashboard.meta.canSave;
     this.canDelete = this.dashboard.meta.canSave;
 
@@ -38,6 +47,7 @@ export class SettingsCtrl {
 
     this.$rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
     this.$rootScope.appEvent('dash-scroll', { animate: false, pos: 0 });
+    this.$rootScope.onAppEvent('dashboard-saved', this.onPostSave.bind(this), $scope);
   }
 
   buildSectionList() {
@@ -91,8 +101,8 @@ export class SettingsCtrl {
     }
 
     this.sections.push({
-      title: 'View JSON',
-      id: 'view_json',
+      title: 'JSON Model',
+      id: 'dashboard_json',
       icon: 'gicon gicon-json',
     });
 
@@ -109,7 +119,7 @@ export class SettingsCtrl {
     this.viewId = this.$location.search().editview;
 
     if (this.viewId) {
-      this.json = JSON.stringify(this.dashboard.getSaveModelClone(), null, 2);
+      this.json = angular.toJson(this.dashboard.getSaveModelClone(), true);
     }
 
     if (this.viewId === 'settings' && this.dashboard.meta.canMakeEditable) {
@@ -133,6 +143,16 @@ export class SettingsCtrl {
 
   saveDashboard() {
     this.dashboardSrv.saveDashboard();
+  }
+
+  saveDashboardJson() {
+    this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
+      this.$route.reload();
+    });
+  }
+
+  onPostSave() {
+    this.hasUnsavedFolderChange = false;
   }
 
   hideSettings() {
@@ -195,7 +215,15 @@ export class SettingsCtrl {
   onFolderChange(folder) {
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
-    this.dashboard.meta.folderSlug = folder.slug;
+    this.hasUnsavedFolderChange = true;
+  }
+
+  getFolder() {
+    return {
+      id: this.dashboard.meta.folderId,
+      title: this.dashboard.meta.folderTitle,
+      url: this.dashboard.meta.folderUrl,
+    };
   }
 }
 

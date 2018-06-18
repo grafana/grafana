@@ -37,14 +37,17 @@ export class ManageDashboardsCtrl {
   folderUid?: string;
 
   // if user can add new folders and/or add new dashboards
-  canSave: boolean;
+  canSave = false;
 
   // if user has editor role or higher
   isEditor: boolean;
 
+  hasEditPermissionInFolders: boolean;
+
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private searchSrv: SearchSrv, private contextSrv) {
     this.isEditor = this.contextSrv.isEditor;
+    this.hasEditPermissionInFolders = this.contextSrv.hasEditPermissionInFolders;
 
     this.query = {
       query: '',
@@ -78,8 +81,11 @@ export class ManageDashboardsCtrl {
           return;
         }
 
-        return this.backendSrv.getDashboardByUid(this.folderUid).then(dash => {
-          this.canSave = dash.meta.canSave;
+        return this.backendSrv.getFolderByUid(this.folderUid).then(folder => {
+          this.canSave = folder.canSave;
+          if (!this.canSave) {
+            this.hasEditPermissionInFolders = false;
+          }
         });
       });
   }
@@ -173,48 +179,13 @@ export class ManageDashboardsCtrl {
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
-        const foldersAndDashboards = data.folders.concat(data.dashboards);
-        this.deleteFoldersAndDashboards(foldersAndDashboards);
+        this.deleteFoldersAndDashboards(data.folders, data.dashboards);
       },
     });
   }
 
-  private deleteFoldersAndDashboards(uids) {
-    this.backendSrv.deleteDashboards(uids).then(result => {
-      const folders = _.filter(result, dash => dash.meta.isFolder);
-      const folderCount = folders.length;
-      const dashboards = _.filter(result, dash => !dash.meta.isFolder);
-      const dashCount = dashboards.length;
-
-      if (result.length > 0) {
-        let header;
-        let msg;
-
-        if (folderCount > 0 && dashCount > 0) {
-          header = `Folder${folderCount === 1 ? '' : 's'} And Dashboard${dashCount === 1 ? '' : 's'} Deleted`;
-          msg = `${folderCount} folder${folderCount === 1 ? '' : 's'} `;
-          msg += `and ${dashCount} dashboard${dashCount === 1 ? '' : 's'} has been deleted`;
-        } else if (folderCount > 0) {
-          header = `Folder${folderCount === 1 ? '' : 's'} Deleted`;
-
-          if (folderCount === 1) {
-            msg = `${folders[0].dashboard.title} has been deleted`;
-          } else {
-            msg = `${folderCount} folder${folderCount === 1 ? '' : 's'} has been deleted`;
-          }
-        } else if (dashCount > 0) {
-          header = `Dashboard${dashCount === 1 ? '' : 's'} Deleted`;
-
-          if (dashCount === 1) {
-            msg = `${dashboards[0].dashboard.title} has been deleted`;
-          } else {
-            msg = `${dashCount} dashboard${dashCount === 1 ? '' : 's'} has been deleted`;
-          }
-        }
-
-        appEvents.emit('alert-success', [header, msg]);
-      }
-
+  private deleteFoldersAndDashboards(folderUids, dashboardUids) {
+    this.backendSrv.deleteFoldersAndDashboards(folderUids, dashboardUids).then(() => {
       this.refreshList();
     });
   }
@@ -316,6 +287,16 @@ export class ManageDashboardsCtrl {
 
   createDashboardUrl() {
     let url = 'dashboard/new';
+
+    if (this.folderId) {
+      url += `?folderId=${this.folderId}`;
+    }
+
+    return url;
+  }
+
+  importDashboardUrl() {
+    let url = 'dashboard/import';
 
     if (this.folderId) {
       url += `?folderId=${this.folderId}`;

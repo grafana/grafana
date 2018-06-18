@@ -80,6 +80,11 @@ Path to where Grafana stores the sqlite3 database (if used), file based
 sessions (if used), and other data.  This path is usually specified via
 command line in the init.d script or the systemd service file.
 
+### temp_data_lifetime
+
+How long temporary images in `data` directory should be kept. Defaults to: `24h`. Supported modifiers: `h` (hours), 
+`m` (minutes), for example: `168h`, `30m`, `10h30m`. Use `0` to never clean up temporary files.
+
 ### logs
 
 Path to where Grafana will store logs. This path is usually specified via
@@ -92,8 +97,6 @@ file.
 Directory where grafana will automatically scan and look for plugins
 
 ### provisioning
-
-> This feature is available in 5.0+
 
 Folder that contains [provisioning](/administration/provisioning) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
 
@@ -234,7 +237,12 @@ The maximum number of connections in the idle connection pool.
 ### max_open_conn
 The maximum number of open connections to the database.
 
+### conn_max_lifetime
+
+Sets the maximum amount of time a connection may be reused. The default is 14400 (which means 14400 seconds or 4 hours). For MySQL, this setting should be shorter than the [`wait_timeout`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_wait_timeout) variable.
+
 ### log_queries
+
 Set to `true` to log the sql calls and execution times.
 
 <hr />
@@ -296,7 +304,7 @@ options are `Admin` and `Editor`. e.g. :
 
 `auto_assign_org_role = Viewer`
 
-### viewers can edit
+### viewers_can_edit
 
 Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
 Defaults to `false`.
@@ -354,7 +362,7 @@ enabled = true
 allow_sign_up = true
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-scopes = user:email
+scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
@@ -387,6 +395,7 @@ scopes = user:email,read:org
 team_ids = 150,300
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 ```
 
@@ -405,6 +414,7 @@ client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
 allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
@@ -414,25 +424,33 @@ allowed_organizations = github google
 
 ## [auth.google]
 
-You need to create a Google project. You can do this in the [Google
-Developer Console](https://console.developers.google.com/project).  When
-you create the project you will need to specify a callback URL. Specify
-this as callback:
+First, you need to create a Google OAuth Client:
 
-```bash
-http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/google
-```
+1. Go to https://console.developers.google.com/apis/credentials
 
-This callback URL must match the full HTTP address that you use in your
-browser to access Grafana, but with the prefix path of `/login/google`.
-When the Google project is created you will get a Client ID and a Client
-Secret. Specify these in the Grafana configuration file. For example:
+2. Click the 'Create Credentials' button, then click 'OAuth Client ID' in the
+menu that drops down
+
+3. Enter the following:
+
+   - Application Type: Web Application
+   - Name: Grafana
+   - Authorized Javascript Origins: https://grafana.mycompany.com
+   - Authorized Redirect URLs: https://grafana.mycompany.com/login/google
+
+   Replace https://grafana.mycompany.com with the URL of your Grafana instance.
+
+4. Click Create
+
+5. Copy the Client ID and Client Secret from the 'OAuth Client' modal
+
+Specify the Client ID and Secret in the Grafana configuration file. For example:
 
 ```bash
 [auth.google]
 enabled = true
-client_id = YOUR_GOOGLE_APP_CLIENT_ID
-client_secret = YOUR_GOOGLE_APP_CLIENT_SECRET
+client_id = CLIENT_ID
+client_secret = CLIENT_SECRET
 scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
 auth_url = https://accounts.google.com/o/oauth2/auth
 token_url = https://accounts.google.com/o/oauth2/token
@@ -475,7 +493,7 @@ Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.co
 
 First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
 
-Finaly set up the generic oauth module like this:
+Finally set up the generic oauth module like this:
 ```bash
 [auth.generic_oauth]
 name = Okta
@@ -652,6 +670,10 @@ Set to `true` to enable auto sign up of users who do not exist in Grafana DB. De
 
 Limit where auth proxy requests come from by configuring a list of IP addresses. This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 
+### headers
+
+Used to define additional headers for `Name`, `Email` and/or `Login`, for example if the user's name is sent in the X-WEBAUTH-NAME header and their email address in the X-WEBAUTH-EMAIL header, set `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL`.
+
 <hr>
 
 ## [session]
@@ -706,7 +728,7 @@ Analytics ID here. By default this feature is disabled.
 
 ## [dashboards]
 
-### versions_to_keep (introduced in v5.0)
+### versions_to_keep
 
 Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
 
@@ -795,11 +817,8 @@ Set root url to a Grafana instance where you want to publish external snapshots 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
 
-### remove expired snapshot
+### snapshot_remove_expired
 Enabled to automatically remove expired snapshots
-
-### remove snapshots after 90 days
-Time to live for snapshots.
 
 ## [external_image_storage]
 These options control how images should be made public so they can be shared on services like slack.
@@ -877,7 +896,5 @@ Container name where to store "Blob" images with random names. Creating the blob
 Defaults to true. Set to false to disable alerting engine and hide Alerting from UI.
 
 ### execute_alerts
-
-### execute_alerts = true
 
 Makes it possible to turn off alert rule execution.

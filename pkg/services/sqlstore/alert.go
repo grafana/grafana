@@ -10,6 +10,9 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
+// timeNow makes it possible to test usage of time
+var timeNow = time.Now
+
 func init() {
 	bus.AddHandler("sql", SaveAlerts)
 	bus.AddHandler("sql", HandleAlertsQuery)
@@ -61,52 +64,69 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 }
 
 func HandleAlertsQuery(query *m.GetAlertsQuery) error {
-	var sql bytes.Buffer
-	params := make([]interface{}, 0)
+	builder := SqlBuilder{}
 
-	sql.WriteString(`SELECT *
-						from alert
-						`)
+	builder.Write(`SELECT
+		alert.id,
+		alert.dashboard_id,
+		alert.panel_id,
+		alert.name,
+		alert.state,
+		alert.new_state_date,
+		alert.eval_date,
+		alert.execution_error,
+		dashboard.uid as dashboard_uid,
+		dashboard.slug as dashboard_slug
+		FROM alert
+		INNER JOIN dashboard on dashboard.id = alert.dashboard_id `)
 
-	sql.WriteString(`WHERE org_id = ?`)
-	params = append(params, query.OrgId)
+	builder.Write(`WHERE alert.org_id = ?`, query.OrgId)
 
-	if query.DashboardId != 0 {
-		sql.WriteString(` AND dashboard_id = ?`)
-		params = append(params, query.DashboardId)
+	if len(strings.TrimSpace(query.Query)) > 0 {
+		builder.Write(" AND alert.name "+dialect.LikeStr()+" ?", "%"+query.Query+"%")
+	}
+
+	if len(query.DashboardIDs) > 0 {
+		builder.sql.WriteString(` AND alert.dashboard_id IN (?` + strings.Repeat(",?", len(query.DashboardIDs)-1) + `) `)
+
+		for _, dbID := range query.DashboardIDs {
+			builder.AddParams(dbID)
+		}
 	}
 
 	if query.PanelId != 0 {
-		sql.WriteString(` AND panel_id = ?`)
-		params = append(params, query.PanelId)
+		builder.Write(` AND alert.panel_id = ?`, query.PanelId)
 	}
 
 	if len(query.State) > 0 && query.State[0] != "all" {
-		sql.WriteString(` AND (`)
+		builder.Write(` AND (`)
 		for i, v := range query.State {
 			if i > 0 {
-				sql.WriteString(" OR ")
+				builder.Write(" OR ")
 			}
 			if strings.HasPrefix(v, "not_") {
-				sql.WriteString("state <> ? ")
+				builder.Write("state <> ? ")
 				v = strings.TrimPrefix(v, "not_")
 			} else {
-				sql.WriteString("state = ? ")
+				builder.Write("state = ? ")
 			}
-			params = append(params, v)
+			builder.AddParams(v)
 		}
-		sql.WriteString(")")
+		builder.Write(")")
 	}
 
-	sql.WriteString(" ORDER BY name ASC")
+	if query.User.OrgRole != m.ROLE_ADMIN {
+		builder.writeDashboardPermissionFilter(query.User, m.PERMISSION_VIEW)
+	}
+
+	builder.Write(" ORDER BY name ASC")
 
 	if query.Limit != 0 {
-		sql.WriteString(" LIMIT ?")
-		params = append(params, query.Limit)
+		builder.Write(dialect.Limit(query.Limit))
 	}
 
-	alerts := make([]*m.Alert, 0)
-	if err := x.SQL(sql.String(), params...).Find(&alerts); err != nil {
+	alerts := make([]*m.AlertListItemDTO, 0)
+	if err := x.SQL(builder.GetSqlString(), builder.params...).Find(&alerts); err != nil {
 		return err
 	}
 
@@ -120,7 +140,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 	return nil
 }
 
-func DeleteAlertDefinition(dashboardId int64, sess *DBSession) error {
+func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	alerts := make([]*m.Alert, 0)
 	sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
@@ -138,7 +158,7 @@ func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 			return err
 		}
 
-		if err := upsertAlerts(existingAlerts, cmd, sess); err != nil {
+		if err := updateAlerts(existingAlerts, cmd, sess); err != nil {
 			return err
 		}
 
@@ -150,7 +170,7 @@ func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 	})
 }
 
-func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBSession) error {
+func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBSession) error {
 	for _, alert := range cmd.Alerts {
 		update := false
 		var alertToUpdate *m.Alert
@@ -166,7 +186,7 @@ func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 
 		if update {
 			if alertToUpdate.ContainsUpdates(alert) {
-				alert.Updated = time.Now()
+				alert.Updated = timeNow()
 				alert.State = alertToUpdate.State
 				sess.MustCols("message")
 				_, err := sess.Id(alert.Id).Update(alert)
@@ -177,10 +197,10 @@ func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 				sqlog.Debug("Alert updated", "name", alert.Name, "id", alert.Id)
 			}
 		} else {
-			alert.Updated = time.Now()
-			alert.Created = time.Now()
+			alert.Updated = timeNow()
+			alert.Created = timeNow()
 			alert.State = m.AlertStatePending
-			alert.NewStateDate = time.Now()
+			alert.NewStateDate = timeNow()
 
 			_, err := sess.Insert(alert)
 			if err != nil {
@@ -243,8 +263,8 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		}
 
 		alert.State = cmd.State
-		alert.StateChanges += 1
-		alert.NewStateDate = time.Now()
+		alert.StateChanges++
+		alert.NewStateDate = timeNow()
 		alert.EvalData = cmd.EvalData
 
 		if cmd.Error == "" {
@@ -267,11 +287,13 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 		var buffer bytes.Buffer
 		params := make([]interface{}, 0)
 
-		buffer.WriteString(`UPDATE alert SET state = ?`)
+		buffer.WriteString(`UPDATE alert SET state = ?, new_state_date = ?`)
 		if cmd.Paused {
 			params = append(params, string(m.AlertStatePaused))
+			params = append(params, timeNow())
 		} else {
 			params = append(params, string(m.AlertStatePending))
+			params = append(params, timeNow())
 		}
 
 		buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
@@ -297,7 +319,7 @@ func PauseAllAlerts(cmd *m.PauseAllAlertCommand) error {
 			newState = string(m.AlertStatePending)
 		}
 
-		res, err := sess.Exec(`UPDATE alert SET state = ?`, newState)
+		res, err := sess.Exec(`UPDATE alert SET state = ?, new_state_date = ?`, newState, timeNow())
 		if err != nil {
 			return err
 		}

@@ -31,7 +31,7 @@ class UserPicker extends Component<IProps, any> {
 
     this.debouncedSearch = debounce(this.search, 300, {
       leading: true,
-      trailing: false,
+      trailing: true,
     });
   }
 
@@ -39,10 +39,10 @@ class UserPicker extends Component<IProps, any> {
     const { toggleLoading, backendSrv } = this.props;
 
     toggleLoading(true);
-    return backendSrv.get(`/api/users/search?perpage=10&page=1&query=${query}`).then(result => {
-      const users = result.users.map(user => {
+    return backendSrv.get(`/api/org/users?query=${query}&limit=10`).then(result => {
+      const users = result.map(user => {
         return {
-          id: user.id,
+          id: user.userId,
           label: `${user.login} - ${user.email}`,
           avatarUrl: user.avatarUrl,
           login: user.login,

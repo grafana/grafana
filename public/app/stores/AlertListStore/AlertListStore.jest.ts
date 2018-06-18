@@ -14,7 +14,7 @@ function getRule(name, state, info) {
       .format(),
     evalData: {},
     executionError: '',
-    dashboardUri: 'db/mygool',
+    url: 'db/mygool',
     stateText: state,
     stateIcon: 'fa',
     stateClass: 'asd',

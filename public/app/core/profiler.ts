@@ -9,12 +9,14 @@ export class Profiler {
   digestCounter: any;
   $rootScope: any;
   scopeCount: any;
+  window: any;
 
   init(config, $rootScope) {
     this.enabled = config.buildInfo.env === 'development';
     this.timings = {};
     this.timings.appStart = { loadStart: new Date().getTime() };
     this.$rootScope = $rootScope;
+    this.window = window;
 
     if (!this.enabled) {
       return;
@@ -102,7 +104,10 @@ export class Profiler {
     // add render counter to root scope
     // used by phantomjs render.js to know when panel has rendered
     this.panelsRendered = (this.panelsRendered || 0) + 1;
-    this.$rootScope.panelsRendered = this.panelsRendered;
+
+    // this window variable is used by backend rendering tools to know
+    // all panels have completed rendering
+    this.window.panelsRendered = this.panelsRendered;
 
     if (this.enabled) {
       panelTimings.renderEnd = new Date().getTime();

@@ -66,7 +66,7 @@ func TestGrafanaLogin(t *testing.T) {
 }
 
 type grafanaLoginScenarioContext struct {
-	loginUserQuery         *LoginUserQuery
+	loginUserQuery         *m.LoginUserQuery
 	validatePasswordCalled bool
 }
 
@@ -77,7 +77,7 @@ func grafanaLoginScenario(desc string, fn grafanaLoginScenarioFunc) {
 		origValidatePassword := validatePassword
 
 		sc := &grafanaLoginScenarioContext{
-			loginUserQuery: &LoginUserQuery{
+			loginUserQuery: &m.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",

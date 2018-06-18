@@ -1,5 +1,5 @@
 export interface FolderInfo {
-  title: string;
   id: number;
-  slug: string;
+  title: string;
+  url: string;
 }

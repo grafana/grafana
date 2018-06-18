@@ -1,5 +1,6 @@
   postgrestest:
-    image: postgres:latest
+    build:
+      context: blocks/postgres_tests
     environment:
       POSTGRES_USER: grafanatest
       POSTGRES_PASSWORD: grafanatest

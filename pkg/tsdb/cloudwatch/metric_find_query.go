@@ -98,11 +98,13 @@ func init() {
 		"AWS/SES":              {"Bounce", "Complaint", "Delivery", "Reject", "Send"},
 		"AWS/SNS":              {"NumberOfMessagesPublished", "PublishSize", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed"},
 		"AWS/SQS":              {"NumberOfMessagesSent", "SentMessageSize", "NumberOfMessagesReceived", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "ApproximateAgeOfOldestMessage", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesVisible", "ApproximateNumberOfMessagesNotVisible"},
+		"AWS/States":           {"ExecutionTime", "ExecutionThrottled", "ExecutionsAborted", "ExecutionsFailed", "ExecutionsStarted", "ExecutionsSucceeded", "ExecutionsTimedOut", "ActivityRunTime", "ActivityScheduleTime", "ActivityTime", "ActivitiesFailed", "ActivitiesHeartbeatTimedOut", "ActivitiesScheduled", "ActivitiesScheduled", "ActivitiesSucceeded", "ActivitiesTimedOut", "LambdaFunctionRunTime", "LambdaFunctionScheduleTime", "LambdaFunctionTime", "LambdaFunctionsFailed", "LambdaFunctionsHeartbeatTimedOut", "LambdaFunctionsScheduled", "LambdaFunctionsStarted", "LambdaFunctionsSucceeded", "LambdaFunctionsTimedOut"},
 		"AWS/StorageGateway": {"CacheHitPercent", "CachePercentUsed", "CachePercentDirty", "CloudBytesDownloaded", "CloudDownloadLatency", "CloudBytesUploaded", "UploadBufferFree", "UploadBufferPercentUsed", "UploadBufferUsed", "QueuedWrites", "ReadBytes", "ReadTime", "TotalCacheSize", "WriteBytes", "WriteTime", "TimeSinceLastRecoveryPoint", "WorkingStorageFree", "WorkingStoragePercentUsed", "WorkingStorageUsed",
 			"CacheHitPercent", "CachePercentUsed", "CachePercentDirty", "ReadBytes", "ReadTime", "WriteBytes", "WriteTime", "QueuedWrites"},
 		"AWS/SWF": {"DecisionTaskScheduleToStartTime", "DecisionTaskStartToCloseTime", "DecisionTasksCompleted", "StartedDecisionTasksTimedOutOnClose", "WorkflowStartToCloseTime", "WorkflowsCanceled", "WorkflowsCompleted", "WorkflowsContinuedAsNew", "WorkflowsFailed", "WorkflowsTerminated", "WorkflowsTimedOut",
 			"ActivityTaskScheduleToCloseTime", "ActivityTaskScheduleToStartTime", "ActivityTaskStartToCloseTime", "ActivityTasksCanceled", "ActivityTasksCompleted", "ActivityTasksFailed", "ScheduledActivityTasksTimedOutOnClose", "ScheduledActivityTasksTimedOutOnStart", "StartedActivityTasksTimedOutOnClose", "StartedActivityTasksTimedOutOnHeartbeat"},
 		"AWS/VPN":        {"TunnelState", "TunnelDataIn", "TunnelDataOut"},
+		"Rekognition":    {"SuccessfulRequestCount", "ThrottledCount", "ResponseTime", "DetectedFaceCount", "DetectedLabelCount", "ServerErrorCount", "UserErrorCount"},
 		"WAF":            {"AllowedRequests", "BlockedRequests", "CountedRequests"},
 		"AWS/WorkSpaces": {"Available", "Unhealthy", "ConnectionAttempt", "ConnectionSuccess", "ConnectionFailure", "SessionLaunchTime", "InSessionLatency", "SessionDisconnect"},
 		"KMS":            {"SecondsUntilKeyMaterialExpiration"},
@@ -145,9 +147,11 @@ func init() {
 		"AWS/SES":              {},
 		"AWS/SNS":              {"Application", "Platform", "TopicName"},
 		"AWS/SQS":              {"QueueName"},
+		"AWS/States":           {"StateMachineArn", "ActivityArn", "LambdaFunctionArn"},
 		"AWS/StorageGateway":   {"GatewayId", "GatewayName", "VolumeId"},
 		"AWS/SWF":              {"Domain", "WorkflowTypeName", "WorkflowTypeVersion", "ActivityTypeName", "ActivityTypeVersion"},
 		"AWS/VPN":              {"VpnId", "TunnelIpAddress"},
+		"Rekognition":          {},
 		"WAF":                  {"Rule", "WebACL"},
 		"AWS/WorkSpaces":       {"DirectoryId", "WorkspaceId"},
 		"KMS":                  {"KeyId"},
@@ -171,25 +175,18 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 	switch subType {
 	case "regions":
 		data, err = e.handleGetRegions(ctx, parameters, queryContext)
-		break
 	case "namespaces":
 		data, err = e.handleGetNamespaces(ctx, parameters, queryContext)
-		break
 	case "metrics":
 		data, err = e.handleGetMetrics(ctx, parameters, queryContext)
-		break
 	case "dimension_keys":
 		data, err = e.handleGetDimensions(ctx, parameters, queryContext)
-		break
 	case "dimension_values":
 		data, err = e.handleGetDimensionValues(ctx, parameters, queryContext)
-		break
 	case "ebs_volume_ids":
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
-		break
 	case "ec2_instance_attribute":
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
-		break
 	}
 
 	transformToTable(data, queryResult)
@@ -225,17 +222,16 @@ func parseMultiSelectValue(input string) []string {
 			trimValues[i] = strings.TrimSpace(v)
 		}
 		return trimValues
-	} else {
-		return []string{trimmedInput}
 	}
+	return []string{trimmedInput}
 }
 
 // Whenever this list is updated, frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	regions := []string{
-		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "ca-central-1", "cn-north-1",
-		"eu-central-1", "eu-west-1", "eu-west-2", "sa-east-1", "us-east-1", "us-east-2", "us-gov-west-1", "us-west-1", "us-west-2",
+		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "ca-central-1", "cn-north-1", "cn-northwest-1",
+		"eu-central-1", "eu-west-1", "eu-west-2", "eu-west-3", "sa-east-1", "us-east-1", "us-east-2", "us-gov-west-1", "us-west-1", "us-west-2",
 	}
 
 	result := make([]suggestData, 0)
@@ -257,7 +253,7 @@ func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
 
-	sort.Sort(sort.StringSlice(keys))
+	sort.Strings(keys)
 
 	result := make([]suggestData, 0)
 	for _, key := range keys {
@@ -286,7 +282,7 @@ func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 			return nil, errors.New("Unable to call AWS API")
 		}
 	}
-	sort.Sort(sort.StringSlice(namespaceMetrics))
+	sort.Strings(namespaceMetrics)
 
 	result := make([]suggestData, 0)
 	for _, name := range namespaceMetrics {
@@ -315,7 +311,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 			return nil, errors.New("Unable to call AWS API")
 		}
 	}
-	sort.Sort(sort.StringSlice(dimensionValues))
+	sort.Strings(dimensionValues)
 
 	result := make([]suggestData, 0)
 	for _, name := range dimensionValues {
@@ -569,11 +565,7 @@ func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error)
 			}
 			return !lastPage
 		})
-	if err != nil {
-		return resp, err
-	}
-
-	return resp, nil
+	return resp, err
 }
 
 var metricsCacheLock sync.Mutex

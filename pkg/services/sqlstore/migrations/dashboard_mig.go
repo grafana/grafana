@@ -1,6 +1,8 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addDashboardMigration(mg *Migrator) {
 	var dashboardV1 = Table{
@@ -88,9 +90,7 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("drop table dashboard_v1", NewDropTableMigration("dashboard_v1"))
 
 	// change column type of dashboard.data
-	mg.AddMigration("alter dashboard.data to mediumtext v1", new(RawSqlMigration).
-		Sqlite("SELECT 0 WHERE 0;").
-		Postgres("SELECT 0;").
+	mg.AddMigration("alter dashboard.data to mediumtext v1", NewRawSqlMigration("").
 		Mysql("ALTER TABLE dashboard MODIFY data MEDIUMTEXT;"))
 
 	// add column to store updater of a dashboard
@@ -155,7 +155,7 @@ func addDashboardMigration(mg *Migrator) {
 		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
 	}))
 
-	mg.AddMigration("Update uid column values in dashboard", new(RawSqlMigration).
+	mg.AddMigration("Update uid column values in dashboard", NewRawSqlMigration("").
 		Sqlite("UPDATE dashboard SET uid=printf('%09d',id) WHERE uid IS NULL;").
 		Postgres("UPDATE dashboard SET uid=lpad('' || id,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE dashboard SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
@@ -166,5 +166,53 @@ func addDashboardMigration(mg *Migrator) {
 
 	mg.AddMigration("Remove unique index org_id_slug", NewDropIndexMigration(dashboardV2, &Index{
 		Cols: []string{"org_id", "slug"}, Type: UniqueIndex,
+	}))
+
+	mg.AddMigration("Update dashboard title length", NewTableCharsetMigration("dashboard", []*Column{
+		{Name: "title", Type: DB_NVarchar, Length: 189, Nullable: false},
+	}))
+
+	mg.AddMigration("Add unique index for dashboard_org_id_title_folder_id", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"org_id", "folder_id", "title"}, Type: UniqueIndex,
+	}))
+
+	dashboardExtrasTable := Table{
+		Name: "dashboard_provisioning",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "dashboard_id", Type: DB_BigInt, Nullable: true},
+			{Name: "name", Type: DB_NVarchar, Length: 150, Nullable: false},
+			{Name: "external_id", Type: DB_Text, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{},
+	}
+
+	mg.AddMigration("create dashboard_provisioning", NewAddTableMigration(dashboardExtrasTable))
+
+	dashboardExtrasTableV2 := Table{
+		Name: "dashboard_provisioning",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "dashboard_id", Type: DB_BigInt, Nullable: true},
+			{Name: "name", Type: DB_NVarchar, Length: 150, Nullable: false},
+			{Name: "external_id", Type: DB_Text, Nullable: false},
+			{Name: "updated", Type: DB_Int, Default: "0", Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"dashboard_id"}},
+			{Cols: []string{"dashboard_id", "name"}, Type: IndexType},
+		},
+	}
+
+	addTableReplaceMigrations(mg, dashboardExtrasTable, dashboardExtrasTableV2, 2, map[string]string{
+		"id":           "id",
+		"dashboard_id": "dashboard_id",
+		"name":         "name",
+		"external_id":  "external_id",
+	})
+
+	mg.AddMigration("Add check_sum column", NewAddColumnMigration(dashboardExtrasTableV2, &Column{
+		Name: "check_sum", Type: DB_NVarchar, Length: 32, Nullable: true,
 	}))
 }

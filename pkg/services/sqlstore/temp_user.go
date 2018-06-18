@@ -126,7 +126,7 @@ func GetTempUserByCode(query *m.GetTempUserByCodeQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrTempUserNotFound
 	}
 

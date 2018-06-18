@@ -90,7 +90,7 @@ Content-Type: application/json
 
 ## Get a single data source by Name
 
-`GET /api/datasources/:name`
+`GET /api/datasources/name/:name`
 
 **Example Request**:
 
@@ -188,8 +188,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "defaultRegion": "us-west-1"
   },
   "secureJsonData": {
-    "accessKey": "Ol4pIDpeKSA6XikgOl4p",
-    "secretKey": "dGVzdCBrZXkgYmxlYXNlIGRvbid0IHN0ZWFs"
+    "accessKey": "Ol4pIDpeKSA6XikgOl4p", //should not be encoded
+    "secretKey": "dGVzdCBrZXkgYmxlYXNlIGRvbid0IHN0ZWFs" //should be Base-64 encoded
   }
 }
 ```

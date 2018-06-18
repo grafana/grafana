@@ -21,145 +21,133 @@ func init() {
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardUIDById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
-	bus.AddHandler("sql", GetFoldersForSignedInUser)
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
 	bus.AddHandler("sql", GetDashboardsBySlug)
+	bus.AddHandler("sql", ValidateDashboardBeforeSave)
+	bus.AddHandler("sql", HasEditPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUid
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		dash := cmd.GetDashboardModel()
-
-		// try get existing dashboard
-		var existing m.Dashboard
-
-		if dash.Id != 0 {
-			dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
-			if err != nil {
-				return err
-			}
-			if !dashWithIdExists {
-				return m.ErrDashboardNotFound
-			}
-
-			// check for is someone else has written in between
-			if dash.Version != existing.Version {
-				if cmd.Overwrite {
-					dash.Version = existing.Version
-				} else {
-					return m.ErrDashboardVersionMismatch
-				}
-			}
-
-			// do not allow plugin dashboard updates without overwrite flag
-			if existing.PluginId != "" && cmd.Overwrite == false {
-				return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
-			}
-		} else if dash.Uid != "" {
-			var sameUid m.Dashboard
-			sameUidExists, err := sess.Where("org_id=? AND uid=?", dash.OrgId, dash.Uid).Get(&sameUid)
-			if err != nil {
-				return err
-			}
-
-			if sameUidExists {
-				// another dashboard with same uid
-				if dash.Id != sameUid.Id {
-					if cmd.Overwrite {
-						dash.Id = sameUid.Id
-						dash.Version = sameUid.Version
-					} else {
-						return m.ErrDashboardWithSameUIDExists
-					}
-				}
-			}
-		}
-
-		if dash.Uid == "" {
-			uid, err := generateNewDashboardUid(sess, dash.OrgId)
-			if err != nil {
-				return err
-			}
-			dash.Uid = uid
-			dash.Data.Set("uid", uid)
-		}
-
-		err := guaranteeDashboardNameIsUniqueInFolder(sess, dash)
-		if err != nil {
-			return err
-		}
-
-		err = setHasAcl(sess, dash)
-		if err != nil {
-			return err
-		}
-
-		parentVersion := dash.Version
-		affectedRows := int64(0)
-
-		if dash.Id == 0 {
-			dash.Version = 1
-			metrics.M_Api_Dashboard_Insert.Inc()
-			dash.Data.Set("version", dash.Version)
-			affectedRows, err = sess.Insert(dash)
-		} else {
-			dash.Version++
-			dash.Data.Set("version", dash.Version)
-
-			if !cmd.UpdatedAt.IsZero() {
-				dash.Updated = cmd.UpdatedAt
-			}
-
-			affectedRows, err = sess.MustCols("folder_id", "has_acl").ID(dash.Id).Update(dash)
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if affectedRows == 0 {
-			return m.ErrDashboardNotFound
-		}
-
-		dashVersion := &m.DashboardVersion{
-			DashboardId:   dash.Id,
-			ParentVersion: parentVersion,
-			RestoredFrom:  cmd.RestoredFrom,
-			Version:       dash.Version,
-			Created:       time.Now(),
-			CreatedBy:     dash.UpdatedBy,
-			Message:       cmd.Message,
-			Data:          dash.Data,
-		}
-
-		// insert version entry
-		if affectedRows, err = sess.Insert(dashVersion); err != nil {
-			return err
-		} else if affectedRows == 0 {
-			return m.ErrDashboardNotFound
-		}
-
-		// delete existing tags
-		_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
-		if err != nil {
-			return err
-		}
-
-		// insert new tags
-		tags := dash.GetTags()
-		if len(tags) > 0 {
-			for _, tag := range tags {
-				if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
-					return err
-				}
-			}
-		}
-		cmd.Result = dash
-
-		return err
+		return saveDashboard(sess, cmd)
 	})
+}
+
+func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
+	dash := cmd.GetDashboardModel()
+
+	userId := cmd.UserId
+
+	if userId == 0 {
+		userId = -1
+	}
+
+	if dash.Id > 0 {
+		var existing m.Dashboard
+		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
+		if err != nil {
+			return err
+		}
+		if !dashWithIdExists {
+			return m.ErrDashboardNotFound
+		}
+
+		// check for is someone else has written in between
+		if dash.Version != existing.Version {
+			if cmd.Overwrite {
+				dash.SetVersion(existing.Version)
+			} else {
+				return m.ErrDashboardVersionMismatch
+			}
+		}
+
+		// do not allow plugin dashboard updates without overwrite flag
+		if existing.PluginId != "" && !cmd.Overwrite {
+			return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
+		}
+	}
+
+	if dash.Uid == "" {
+		uid, err := generateNewDashboardUid(sess, dash.OrgId)
+		if err != nil {
+			return err
+		}
+		dash.SetUid(uid)
+	}
+
+	parentVersion := dash.Version
+	var affectedRows int64
+	var err error
+
+	if dash.Id == 0 {
+		dash.SetVersion(1)
+		dash.Created = time.Now()
+		dash.CreatedBy = userId
+		dash.Updated = time.Now()
+		dash.UpdatedBy = userId
+		metrics.M_Api_Dashboard_Insert.Inc()
+		affectedRows, err = sess.Insert(dash)
+	} else {
+		dash.SetVersion(dash.Version + 1)
+
+		if !cmd.UpdatedAt.IsZero() {
+			dash.Updated = cmd.UpdatedAt
+		} else {
+			dash.Updated = time.Now()
+		}
+
+		dash.UpdatedBy = userId
+
+		affectedRows, err = sess.MustCols("folder_id").ID(dash.Id).Update(dash)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if affectedRows == 0 {
+		return m.ErrDashboardNotFound
+	}
+
+	dashVersion := &m.DashboardVersion{
+		DashboardId:   dash.Id,
+		ParentVersion: parentVersion,
+		RestoredFrom:  cmd.RestoredFrom,
+		Version:       dash.Version,
+		Created:       time.Now(),
+		CreatedBy:     dash.UpdatedBy,
+		Message:       cmd.Message,
+		Data:          dash.Data,
+	}
+
+	// insert version entry
+	if affectedRows, err = sess.Insert(dashVersion); err != nil {
+		return err
+	} else if affectedRows == 0 {
+		return m.ErrDashboardNotFound
+	}
+
+	// delete existing tags
+	_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
+	if err != nil {
+		return err
+	}
+
+	// insert new tags
+	tags := dash.GetTags()
+	if len(tags) > 0 {
+		for _, tag := range tags {
+			if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
+				return err
+			}
+		}
+	}
+
+	cmd.Result = dash
+
+	return err
 }
 
 func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
@@ -179,60 +167,18 @@ func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
 	return "", m.ErrDashboardFailedGenerateUniqueUid
 }
 
-func guaranteeDashboardNameIsUniqueInFolder(sess *DBSession, dash *m.Dashboard) error {
-	var sameNameInFolder m.Dashboard
-	sameNameInFolderExist, err := sess.Where("org_id=? AND title=? AND folder_id = ? AND uid <> ?",
-		dash.OrgId, dash.Title, dash.FolderId, dash.Uid).
-		Get(&sameNameInFolder)
-
-	if err != nil {
-		return err
-	}
-
-	if sameNameInFolderExist {
-		return m.ErrDashboardWithSameNameInFolderExists
-	}
-
-	return nil
-}
-
-func setHasAcl(sess *DBSession, dash *m.Dashboard) error {
-	// check if parent has acl
-	if dash.FolderId > 0 {
-		var parent m.Dashboard
-		if hasParent, err := sess.Where("folder_id=?", dash.FolderId).Get(&parent); err != nil {
-			return err
-		} else if hasParent && parent.HasAcl {
-			dash.HasAcl = true
-		}
-	}
-
-	// check if dash has its own acl
-	if dash.Id > 0 {
-		if res, err := sess.Query("SELECT 1 from dashboard_acl WHERE dashboard_id =?", dash.Id); err != nil {
-			return err
-		} else {
-			if len(res) > 0 {
-				dash.HasAcl = true
-			}
-		}
-	}
-
-	return nil
-}
-
 func GetDashboard(query *m.GetDashboardQuery) error {
 	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
 	has, err := x.Get(&dashboard)
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrDashboardNotFound
 	}
 
-	dashboard.Data.Set("id", dashboard.Id)
-	dashboard.Data.Set("uid", dashboard.Uid)
+	dashboard.SetId(dashboard.Id)
+	dashboard.SetUid(dashboard.Uid)
 	query.Result = &dashboard
 	return nil
 }
@@ -245,6 +191,7 @@ type DashboardSearchProjection struct {
 	Term        string
 	IsFolder    bool
 	FolderId    int64
+	FolderUid   string
 	FolderSlug  string
 	FolderTitle string
 }
@@ -255,7 +202,7 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		limit = 1000
 	}
 
-	sb := NewSearchBuilder(query.SignedInUser, limit).
+	sb := NewSearchBuilder(query.SignedInUser, limit, query.Permission).
 		WithTags(query.Tags).
 		WithDashboardIdsIn(query.DashboardIds)
 
@@ -323,9 +270,13 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 				Url:         m.GetDashboardFolderUrl(item.IsFolder, item.Uid, item.Slug),
 				Type:        getHitType(item),
 				FolderId:    item.FolderId,
+				FolderUid:   item.FolderUid,
 				FolderTitle: item.FolderTitle,
-				FolderSlug:  item.FolderSlug,
 				Tags:        []string{},
+			}
+
+			if item.FolderId > 0 {
+				hit.FolderUrl = m.GetFolderUrl(item.FolderUid, item.FolderSlug)
 			}
 
 			query.Result = append(query.Result, hit)
@@ -352,61 +303,13 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 	return err
 }
 
-func GetFoldersForSignedInUser(query *m.GetFoldersForSignedInUserQuery) error {
-	query.Result = make([]*m.DashboardFolder, 0)
-	var err error
-
-	if query.SignedInUser.OrgRole == m.ROLE_ADMIN {
-		sql := `SELECT distinct d.id, d.title
-		FROM dashboard AS d WHERE d.is_folder = ?
-		ORDER BY d.title ASC`
-
-		err = x.Sql(sql, dialect.BooleanStr(true)).Find(&query.Result)
-	} else {
-		params := make([]interface{}, 0)
-		sql := `SELECT distinct d.id, d.title
-		FROM dashboard AS d
-			LEFT JOIN dashboard_acl AS da ON d.id = da.dashboard_id
-			LEFT JOIN team_member AS ugm ON ugm.team_id =  da.team_id
-			LEFT JOIN org_user ou ON ou.role = da.role AND ou.user_id = ?
-			LEFT JOIN org_user ouRole ON ouRole.role = 'Editor' AND ouRole.user_id = ? AND ouRole.org_id = ?`
-		params = append(params, query.SignedInUser.UserId)
-		params = append(params, query.SignedInUser.UserId)
-		params = append(params, query.OrgId)
-
-		sql += ` WHERE
-			d.org_id = ? AND
-			d.is_folder = ? AND
-			(
-				(d.has_acl = ? AND da.permission > 1 AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
-				OR (d.has_acl = ? AND ouRole.id IS NOT NULL)
-			)`
-		params = append(params, query.OrgId)
-		params = append(params, dialect.BooleanStr(true))
-		params = append(params, dialect.BooleanStr(true))
-		params = append(params, query.SignedInUser.UserId)
-		params = append(params, query.SignedInUser.UserId)
-		params = append(params, dialect.BooleanStr(false))
-
-		if len(query.Title) > 0 {
-			sql += " AND d.title " + dialect.LikeStr() + " ?"
-			params = append(params, "%"+query.Title+"%")
-		}
-
-		sql += ` ORDER BY d.title ASC`
-		err = x.Sql(sql, params...).Find(&query.Result)
-	}
-
-	return err
-}
-
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		dashboard := m.Dashboard{Id: cmd.Id, OrgId: cmd.OrgId}
 		has, err := sess.Get(&dashboard)
 		if err != nil {
 			return err
-		} else if has == false {
+		} else if !has {
 			return m.ErrDashboardNotFound
 		}
 
@@ -418,6 +321,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM dashboard_version WHERE dashboard_id = ?",
 			"DELETE FROM dashboard WHERE folder_id = ?",
 			"DELETE FROM annotation WHERE dashboard_id = ?",
+			"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
 		}
 
 		for _, sql := range deletes {
@@ -427,7 +331,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			}
 		}
 
-		if err := DeleteAlertDefinition(dashboard.Id, sess); err != nil {
+		if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {
 			return nil
 		}
 
@@ -444,12 +348,7 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 
 	err := x.In("id", query.DashboardIds).Find(&dashboards)
 	query.Result = dashboards
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // GetDashboardPermissionsForUser returns the maximum permission the specified user has for a dashboard(s)
@@ -513,9 +412,7 @@ func GetDashboardPermissionsForUser(query *m.GetDashboardPermissionsForUserQuery
 	params = append(params, query.UserId)
 	params = append(params, dialect.BooleanStr(false))
 
-	x.ShowSQL(true)
 	err := x.Sql(sql, params...).Find(&query.Result)
-	x.ShowSQL(false)
 
 	for _, p := range query.Result {
 		p.PermissionName = p.Permission.String()
@@ -530,12 +427,7 @@ func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {
 
 	err := x.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
 	query.Result = dashboards
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 type DashboardSlugDTO struct {
@@ -550,7 +442,7 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if exists == false {
+	} else if !exists {
 		return m.ErrDashboardNotFound
 	}
 
@@ -569,7 +461,7 @@ func GetDashboardsBySlug(query *m.GetDashboardsBySlugQuery) error {
 	return nil
 }
 
-func GetDashboardUIDById(query *m.GetDashboardUIDByIdQuery) error {
+func GetDashboardUIDById(query *m.GetDashboardRefByIdQuery) error {
 	var rawSql = `SELECT uid, slug from dashboard WHERE Id=?`
 
 	us := &m.DashboardRef{}
@@ -578,10 +470,172 @@ func GetDashboardUIDById(query *m.GetDashboardUIDByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if exists == false {
+	} else if !exists {
 		return m.ErrDashboardNotFound
 	}
 
 	query.Result = us
+	return nil
+}
+
+func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDashboardBeforeSaveCommand) (err error) {
+	dash := cmd.Dashboard
+
+	dashWithIdExists := false
+	var existingById m.Dashboard
+
+	if dash.Id > 0 {
+		dashWithIdExists, err = sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existingById)
+		if err != nil {
+			return err
+		}
+
+		if !dashWithIdExists {
+			return m.ErrDashboardNotFound
+		}
+
+		if dash.Uid == "" {
+			dash.SetUid(existingById.Uid)
+		}
+	}
+
+	dashWithUidExists := false
+	var existingByUid m.Dashboard
+
+	if dash.Uid != "" {
+		dashWithUidExists, err = sess.Where("org_id=? AND uid=?", dash.OrgId, dash.Uid).Get(&existingByUid)
+		if err != nil {
+			return err
+		}
+	}
+
+	if dash.FolderId > 0 {
+		var existingFolder m.Dashboard
+		folderExists, folderErr := sess.Where("org_id=? AND id=? AND is_folder=?", dash.OrgId, dash.FolderId, dialect.BooleanStr(true)).Get(&existingFolder)
+		if folderErr != nil {
+			return folderErr
+		}
+
+		if !folderExists {
+			return m.ErrDashboardFolderNotFound
+		}
+	}
+
+	if !dashWithIdExists && !dashWithUidExists {
+		return nil
+	}
+
+	if dashWithIdExists && dashWithUidExists && existingById.Id != existingByUid.Id {
+		return m.ErrDashboardWithSameUIDExists
+	}
+
+	existing := existingById
+
+	if !dashWithIdExists && dashWithUidExists {
+		dash.SetId(existingByUid.Id)
+		dash.SetUid(existingByUid.Uid)
+		existing = existingByUid
+
+		if !dash.IsFolder {
+			cmd.Result.IsParentFolderChanged = true
+		}
+	}
+
+	if (existing.IsFolder && !dash.IsFolder) ||
+		(!existing.IsFolder && dash.IsFolder) {
+		return m.ErrDashboardTypeMismatch
+	}
+
+	if !dash.IsFolder && dash.FolderId != existing.FolderId {
+		cmd.Result.IsParentFolderChanged = true
+	}
+
+	// check for is someone else has written in between
+	if dash.Version != existing.Version {
+		if cmd.Overwrite {
+			dash.SetVersion(existing.Version)
+		} else {
+			return m.ErrDashboardVersionMismatch
+		}
+	}
+
+	// do not allow plugin dashboard updates without overwrite flag
+	if existing.PluginId != "" && !cmd.Overwrite {
+		return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
+	}
+
+	return nil
+}
+
+func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *m.ValidateDashboardBeforeSaveCommand) error {
+	dash := cmd.Dashboard
+	var existing m.Dashboard
+
+	exists, err := sess.Where("org_id=? AND slug=? AND (is_folder=? OR folder_id=?)", dash.OrgId, dash.Slug, dialect.BooleanStr(true), dash.FolderId).Get(&existing)
+	if err != nil {
+		return err
+	}
+
+	if exists && dash.Id != existing.Id {
+		if existing.IsFolder && !dash.IsFolder {
+			return m.ErrDashboardWithSameNameAsFolder
+		}
+
+		if !existing.IsFolder && dash.IsFolder {
+			return m.ErrDashboardFolderWithSameNameAsDashboard
+		}
+
+		if !dash.IsFolder && (dash.FolderId != existing.FolderId || dash.Id == 0) {
+			cmd.Result.IsParentFolderChanged = true
+		}
+
+		if cmd.Overwrite {
+			dash.SetId(existing.Id)
+			dash.SetUid(existing.Uid)
+			dash.SetVersion(existing.Version)
+		} else {
+			return m.ErrDashboardWithSameNameInFolderExists
+		}
+	}
+
+	return nil
+}
+
+func ValidateDashboardBeforeSave(cmd *m.ValidateDashboardBeforeSaveCommand) (err error) {
+	cmd.Result = &m.ValidateDashboardBeforeSaveResult{}
+	return inTransaction(func(sess *DBSession) error {
+		if err = getExistingDashboardByIdOrUidForUpdate(sess, cmd); err != nil {
+			return err
+		}
+
+		if err = getExistingDashboardByTitleAndFolder(sess, cmd); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func HasEditPermissionInFolders(query *m.HasEditPermissionInFoldersQuery) error {
+	if query.SignedInUser.HasRole(m.ROLE_EDITOR) {
+		query.Result = true
+		return nil
+	}
+
+	builder := &SqlBuilder{}
+	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
+	builder.writeDashboardPermissionFilter(query.SignedInUser, m.PERMISSION_EDIT)
+
+	type folderCount struct {
+		Count int64
+	}
+
+	resp := make([]*folderCount, 0)
+	if err := x.Sql(builder.GetSqlString(), builder.params...).Find(&resp); err != nil {
+		return err
+	}
+
+	query.Result = len(resp) > 0 && resp[0].Count > 0
+
 	return nil
 }

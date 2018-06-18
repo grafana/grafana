@@ -1,9 +1,8 @@
-﻿import { types } from 'mobx-state-tree';
+import { types } from 'mobx-state-tree';
 
 export const PermissionsStoreItem = types
   .model('PermissionsStoreItem', {
     dashboardId: types.optional(types.number, -1),
-    id: types.maybe(types.number),
     permission: types.number,
     permissionName: types.maybe(types.string),
     role: types.maybe(types.string),
@@ -15,8 +14,9 @@ export const PermissionsStoreItem = types
     inherited: types.maybe(types.boolean),
     sortRank: types.maybe(types.number),
     icon: types.maybe(types.string),
-    nameHtml: types.maybe(types.string),
-    sortName: types.maybe(types.string),
+    name: types.maybe(types.string),
+    teamAvatarUrl: types.maybe(types.string),
+    userAvatarUrl: types.maybe(types.string),
   })
   .actions(self => ({
     updateRole: role => {

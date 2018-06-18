@@ -1,10 +1,11 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"testing"
+	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -14,10 +15,8 @@ import (
 )
 
 func TestDashboardDataAccess(t *testing.T) {
-	var x *xorm.Engine
-
 	Convey("Testing DB", t, func() {
-		x = InitTestDB(t)
+		InitTestDB(t)
 
 		Convey("Given saved dashboard", func() {
 			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
@@ -100,253 +99,14 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Should return error if no dashboard is updated", func() {
-				cmd := m.SaveDashboardCommand{
-					OrgId:     1,
-					Overwrite: true,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    float64(123412321),
-						"title": "Expect error",
-						"tags":  []interface{}{},
-					}),
-				}
-
-				err := SaveDashboard(&cmd)
-				So(err, ShouldNotBeNil)
-			})
-
-			Convey("Should not be able to overwrite dashboard in another org", func() {
-				query := m.GetDashboardQuery{Slug: "test-dash-23", OrgId: 1}
-				GetDashboard(&query)
-
-				cmd := m.SaveDashboardCommand{
-					OrgId:     2,
-					Overwrite: true,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    float64(query.Result.Id),
-						"title": "Expect error",
-						"tags":  []interface{}{},
-					}),
-				}
-
-				err := SaveDashboard(&cmd)
-				So(err, ShouldNotBeNil)
-			})
-
-			Convey("Should be able to search for dashboard folder", func() {
-				query := search.FindPersistedDashboardsQuery{
-					Title:        "1 test dash folder",
-					OrgId:        1,
-					SignedInUser: &m.SignedInUser{OrgId: 1},
-				}
-
-				err := SearchDashboards(&query)
-				So(err, ShouldBeNil)
-
-				So(len(query.Result), ShouldEqual, 1)
-				hit := query.Result[0]
-				So(hit.Type, ShouldEqual, search.DashHitFolder)
-				So(hit.Url, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
-			})
-
-			Convey("Should be able to search for a dashboard folder's children", func() {
-				query := search.FindPersistedDashboardsQuery{
-					OrgId:        1,
-					FolderIds:    []int64{savedFolder.Id},
-					SignedInUser: &m.SignedInUser{OrgId: 1},
-				}
-
-				err := SearchDashboards(&query)
-				So(err, ShouldBeNil)
-
-				So(len(query.Result), ShouldEqual, 2)
-				hit := query.Result[0]
-				So(hit.Id, ShouldEqual, savedDash.Id)
-				So(hit.Url, ShouldEqual, fmt.Sprintf("/d/%s/%s", savedDash.Uid, savedDash.Slug))
-			})
-
-			Convey("Should be able to search for dashboard by dashboard ids", func() {
-				Convey("should be able to find two dashboards by id", func() {
-					query := search.FindPersistedDashboardsQuery{
-						DashboardIds: []int64{2, 3},
-						SignedInUser: &m.SignedInUser{OrgId: 1},
-					}
-
-					err := SearchDashboards(&query)
-					So(err, ShouldBeNil)
-
-					So(len(query.Result), ShouldEqual, 2)
-
-					hit := query.Result[0]
-					So(len(hit.Tags), ShouldEqual, 2)
-
-					hit2 := query.Result[1]
-					So(len(hit2.Tags), ShouldEqual, 1)
-				})
-
-				Convey("DashboardIds that does not exists should not cause errors", func() {
-					query := search.FindPersistedDashboardsQuery{
-						DashboardIds: []int64{1000},
-						SignedInUser: &m.SignedInUser{OrgId: 1},
-					}
-
-					err := SearchDashboards(&query)
-					So(err, ShouldBeNil)
-					So(len(query.Result), ShouldEqual, 0)
-				})
-			})
-
-			Convey("Should be able to save dashboards with same name in different folders", func() {
-				firstSaveCmd := m.SaveDashboardCommand{
-					OrgId: 1,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    nil,
-						"title": "test dash folder and title",
-						"tags":  []interface{}{},
-						"uid":   "randomHash",
-					}),
-					FolderId: 3,
-				}
-
-				err := SaveDashboard(&firstSaveCmd)
-				So(err, ShouldBeNil)
-
-				secondSaveCmd := m.SaveDashboardCommand{
-					OrgId: 1,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    nil,
-						"title": "test dash folder and title",
-						"tags":  []interface{}{},
-						"uid":   "moreRandomHash",
-					}),
-					FolderId: 1,
-				}
-
-				err = SaveDashboard(&secondSaveCmd)
-				So(err, ShouldBeNil)
-			})
-
-			Convey("Should not be able to save dashboard with same name in the same folder", func() {
-				firstSaveCmd := m.SaveDashboardCommand{
-					OrgId: 1,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    nil,
-						"title": "test dash folder and title",
-						"tags":  []interface{}{},
-						"uid":   "randomHash",
-					}),
-					FolderId: 3,
-				}
-
-				err := SaveDashboard(&firstSaveCmd)
-				So(err, ShouldBeNil)
-
-				secondSaveCmd := m.SaveDashboardCommand{
-					OrgId: 1,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    nil,
-						"title": "test dash folder and title",
-						"tags":  []interface{}{},
-						"uid":   "moreRandomHash",
-					}),
-					FolderId: 3,
-				}
-
-				err = SaveDashboard(&secondSaveCmd)
-				So(err, ShouldEqual, m.ErrDashboardWithSameNameInFolderExists)
-			})
-
-			Convey("Should not be able to save dashboard with same uid", func() {
-				cmd := m.SaveDashboardCommand{
-					OrgId: 1,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    nil,
-						"title": "test dash 23",
-						"uid":   "dsfalkjngailuedt",
-					}),
-				}
-
-				err := SaveDashboard(&cmd)
-				So(err, ShouldBeNil)
-				err = SaveDashboard(&cmd)
-				So(err, ShouldNotBeNil)
-			})
-
-			Convey("Should be able to update dashboard with the same title and folder id", func() {
-				cmd := m.SaveDashboardCommand{
-					OrgId: 1,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"uid":   "randomHash",
-						"title": "folderId",
-						"style": "light",
-						"tags":  []interface{}{},
-					}),
-					FolderId: 2,
-				}
-
-				err := SaveDashboard(&cmd)
-				So(err, ShouldBeNil)
-				So(cmd.Result.FolderId, ShouldEqual, 2)
-
-				cmd = m.SaveDashboardCommand{
-					OrgId: 1,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":      cmd.Result.Id,
-						"uid":     "randomHash",
-						"title":   "folderId",
-						"style":   "dark",
-						"version": cmd.Result.Version,
-						"tags":    []interface{}{},
-					}),
-					FolderId: 2,
-				}
-
-				err = SaveDashboard(&cmd)
-				So(err, ShouldBeNil)
-			})
-
-			Convey("Should not be able to update using just uid", func() {
-				cmd := m.SaveDashboardCommand{
-					OrgId: 1,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"uid":     savedDash.Uid,
-						"title":   "folderId",
-						"version": savedDash.Version,
-						"tags":    []interface{}{},
-					}),
-					FolderId: savedDash.FolderId,
-				}
-
-				err := SaveDashboard(&cmd)
-				So(err, ShouldEqual, m.ErrDashboardWithSameUIDExists)
-			})
-
-			Convey("Should be able to update using just uid with overwrite", func() {
-				cmd := m.SaveDashboardCommand{
-					OrgId: 1,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"uid":     savedDash.Uid,
-						"title":   "folderId",
-						"version": savedDash.Version,
-						"tags":    []interface{}{},
-					}),
-					FolderId:  savedDash.FolderId,
-					Overwrite: true,
-				}
-
-				err := SaveDashboard(&cmd)
-				So(err, ShouldBeNil)
-			})
-
 			Convey("Should retry generation of uid once if it fails.", func() {
 				timesCalled := 0
 				generateNewUid = func() string {
 					timesCalled += 1
 					if timesCalled <= 2 {
 						return savedDash.Uid
-					} else {
-						return util.GenerateShortUid()
 					}
+					return util.GenerateShortUid()
 				}
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
@@ -362,16 +122,35 @@ func TestDashboardDataAccess(t *testing.T) {
 				generateNewUid = util.GenerateShortUid
 			})
 
-			Convey("Should be able to update dashboard and remove folderId", func() {
+			Convey("Should be able to create dashboard", func() {
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    1,
+						"title": "folderId",
+						"tags":  []interface{}{},
+					}),
+					UserId: 100,
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+				So(cmd.Result.CreatedBy, ShouldEqual, 100)
+				So(cmd.Result.Created.IsZero(), ShouldBeFalse)
+				So(cmd.Result.UpdatedBy, ShouldEqual, 100)
+				So(cmd.Result.Updated.IsZero(), ShouldBeFalse)
+			})
+
+			Convey("Should be able to update dashboard by id and remove folderId", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId: 1,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"id":    savedDash.Id,
 						"title": "folderId",
 						"tags":  []interface{}{},
 					}),
 					Overwrite: true,
 					FolderId:  2,
+					UserId:    100,
 				}
 
 				err := SaveDashboard(&cmd)
@@ -381,25 +160,30 @@ func TestDashboardDataAccess(t *testing.T) {
 				cmd = m.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    1,
+						"id":    savedDash.Id,
 						"title": "folderId",
 						"tags":  []interface{}{},
 					}),
 					FolderId:  0,
 					Overwrite: true,
+					UserId:    100,
 				}
 
 				err = SaveDashboard(&cmd)
 				So(err, ShouldBeNil)
 
 				query := m.GetDashboardQuery{
-					Slug:  cmd.Result.Slug,
+					Id:    savedDash.Id,
 					OrgId: 1,
 				}
 
 				err = GetDashboard(&query)
 				So(err, ShouldBeNil)
 				So(query.Result.FolderId, ShouldEqual, 0)
+				So(query.Result.CreatedBy, ShouldEqual, savedDash.CreatedBy)
+				So(query.Result.Created, ShouldEqual, savedDash.Created.Truncate(time.Second))
+				So(query.Result.UpdatedBy, ShouldEqual, 100)
+				So(query.Result.Updated.IsZero(), ShouldBeFalse)
 			})
 
 			Convey("Should be able to delete a dashboard folder and its children", func() {
@@ -419,6 +203,36 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 0)
 			})
 
+			Convey("Should return error if no dashboard is found for update when dashboard id is greater than zero", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId:     1,
+					Overwrite: true,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"id":    float64(123412321),
+						"title": "Expect error",
+						"tags":  []interface{}{},
+					}),
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldEqual, m.ErrDashboardNotFound)
+			})
+
+			Convey("Should not return error if no dashboard is found for update when dashboard id is zero", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId:     1,
+					Overwrite: true,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"id":    0,
+						"title": "New dash",
+						"tags":  []interface{}{},
+					}),
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+			})
+
 			Convey("Should be able to get dashboard tags", func() {
 				query := m.GetDashboardTagsQuery{OrgId: 1}
 
@@ -426,6 +240,63 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 2)
+			})
+
+			Convey("Should be able to search for dashboard folder", func() {
+				query := search.FindPersistedDashboardsQuery{
+					Title:        "1 test dash folder",
+					OrgId:        1,
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				hit := query.Result[0]
+				So(hit.Type, ShouldEqual, search.DashHitFolder)
+				So(hit.Url, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
+				So(hit.FolderTitle, ShouldEqual, "")
+			})
+
+			Convey("Should be able to search for a dashboard folder's children", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					FolderIds:    []int64{savedFolder.Id},
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 2)
+				hit := query.Result[0]
+				So(hit.Id, ShouldEqual, savedDash.Id)
+				So(hit.Url, ShouldEqual, fmt.Sprintf("/d/%s/%s", savedDash.Uid, savedDash.Slug))
+				So(hit.FolderId, ShouldEqual, savedFolder.Id)
+				So(hit.FolderUid, ShouldEqual, savedFolder.Uid)
+				So(hit.FolderTitle, ShouldEqual, savedFolder.Title)
+				So(hit.FolderUrl, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
+			})
+
+			Convey("Should be able to search for dashboard by dashboard ids", func() {
+				Convey("should be able to find two dashboards by id", func() {
+					query := search.FindPersistedDashboardsQuery{
+						DashboardIds: []int64{2, 3},
+						SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+					}
+
+					err := SearchDashboards(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 2)
+
+					hit := query.Result[0]
+					So(len(hit.Tags), ShouldEqual, 2)
+
+					hit2 := query.Result[1]
+					So(len(hit2.Tags), ShouldEqual, 1)
+				})
 			})
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
@@ -441,7 +312,10 @@ func TestDashboardDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to search for starred dashboards", func() {
-					query := search.FindPersistedDashboardsQuery{SignedInUser: &m.SignedInUser{UserId: 10, OrgId: 1}, IsStarred: true}
+					query := search.FindPersistedDashboardsQuery{
+						SignedInUser: &m.SignedInUser{UserId: 10, OrgId: 1, OrgRole: m.ROLE_EDITOR},
+						IsStarred:    true,
+					}
 					err := SearchDashboards(&query)
 
 					So(err, ShouldBeNil)
@@ -487,6 +361,9 @@ func insertTestDashboard(title string, orgId int64, folderId int64, isFolder boo
 	err := SaveDashboard(&cmd)
 	So(err, ShouldBeNil)
 
+	cmd.Result.Data.Set("id", cmd.Result.Id)
+	cmd.Result.Data.Set("uid", cmd.Result.Uid)
+
 	return cmd.Result
 }
 
@@ -513,7 +390,7 @@ func createUser(name string, role string, isAdmin bool) m.User {
 	setting.AutoAssignOrgRole = role
 
 	currentUserCmd := m.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	err := CreateUser(&currentUserCmd)
+	err := CreateUser(context.Background(), &currentUserCmd)
 	So(err, ShouldBeNil)
 
 	q1 := m.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
@@ -521,25 +398,6 @@ func createUser(name string, role string, isAdmin bool) m.User {
 	So(q1.Result[0].Role, ShouldEqual, role)
 
 	return currentUserCmd.Result
-}
-
-func updateTestDashboardWithAcl(dashId int64, userId int64, permissions m.PermissionType) int64 {
-	cmd := &m.SetDashboardAclCommand{
-		OrgId:       1,
-		UserId:      userId,
-		DashboardId: dashId,
-		Permission:  permissions,
-	}
-
-	err := SetDashboardAcl(cmd)
-	So(err, ShouldBeNil)
-
-	return cmd.Result.Id
-}
-
-func removeAcl(aclId int64) {
-	err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{AclId: aclId, OrgId: 1})
-	So(err, ShouldBeNil)
 }
 
 func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *m.Dashboard {

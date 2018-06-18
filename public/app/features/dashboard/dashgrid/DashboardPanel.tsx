@@ -67,10 +67,6 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
         <div className="panel-content">{PanelComponent && <PanelComponent />}</div>
       </div>
     );
-
-    // return (
-    //   <div ref={element => this.element = element} className="panel-height-helper" />
-    // );
   }
 }
 

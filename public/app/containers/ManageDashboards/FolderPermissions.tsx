@@ -1,4 +1,5 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
+import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
 import IContainerProps from 'app/containers/IContainerProps';
@@ -8,19 +9,28 @@ import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
 import AddPermissions from 'app/core/components/Permissions/AddPermissions';
 import SlideDown from 'app/core/components/Animations/SlideDown';
+
 @inject('nav', 'folder', 'view', 'permissions')
 @observer
 export class FolderPermissions extends Component<IContainerProps, any> {
   constructor(props) {
     super(props);
     this.handleAddPermission = this.handleAddPermission.bind(this);
+  }
+
+  componentDidMount() {
     this.loadStore();
+  }
+
+  componentWillUnmount() {
+    const { permissions } = this.props;
+    permissions.hideAddPermissions();
   }
 
   loadStore() {
     const { nav, folder, view } = this.props;
     return folder.load(view.routeParams.get('uid') as string).then(res => {
-      view.updatePathAndQuery(`${res.meta.url}/permissions`, {}, {});
+      view.updatePathAndQuery(`${res.url}/permissions`, {}, {});
       return nav.initFolderNav(toJS(folder.folder), 'manage-folder-permissions');
     });
   }
@@ -58,7 +68,7 @@ export class FolderPermissions extends Component<IContainerProps, any> {
             </button>
           </div>
           <SlideDown in={permissions.isAddPermissionsVisible}>
-            <AddPermissions permissions={permissions} backendSrv={backendSrv} dashboardId={dashboardId} />
+            <AddPermissions permissions={permissions} backendSrv={backendSrv} />
           </SlideDown>
           <Permissions permissions={permissions} isFolder={true} dashboardId={dashboardId} backendSrv={backendSrv} />
         </div>
@@ -66,3 +76,5 @@ export class FolderPermissions extends Component<IContainerProps, any> {
     );
   }
 }
+
+export default hot(module)(FolderPermissions);

@@ -175,7 +175,7 @@ export class ElasticResponse {
   }
 
   // This is quite complex
-  // neeed to recurise down the nested buckets to build series
+  // need to recurise down the nested buckets to build series
   processBuckets(aggs, target, seriesList, table, props, depth) {
     var bucket, aggDef, esAgg, aggId;
     var maxDepth = target.bucketAggs.length - 1;

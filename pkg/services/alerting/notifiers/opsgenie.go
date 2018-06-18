@@ -41,7 +41,7 @@ func init() {
 }
 
 var (
-	opsgenieAlertURL string = "https://api.opsgenie.com/v2/alerts"
+	opsgenieAlertURL = "https://api.opsgenie.com/v2/alerts"
 )
 
 func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
@@ -72,10 +72,6 @@ type OpsGenieNotifier struct {
 	log       log.Logger
 }
 
-func (this *OpsGenieNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
-
 func (this *OpsGenieNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	var err error
@@ -99,11 +95,16 @@ func (this *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) err
 		return err
 	}
 
+	customData := "Triggered metrics:\n\n"
+	for _, evt := range evalContext.EvalMatches {
+		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+	}
+
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("message", evalContext.Rule.Name)
 	bodyJSON.Set("source", "Grafana")
 	bodyJSON.Set("alias", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
-	bodyJSON.Set("description", fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleUrl, evalContext.Rule.Message))
+	bodyJSON.Set("description", fmt.Sprintf("%s - %s\n%s\n%s", evalContext.Rule.Name, ruleUrl, evalContext.Rule.Message, customData))
 
 	details := simplejson.New()
 	details.Set("url", ruleUrl)

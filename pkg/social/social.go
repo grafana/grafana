@@ -14,6 +14,7 @@ import (
 )
 
 type BasicUserInfo struct {
+	Id      string
 	Name    string
 	Email   string
 	Login   string
@@ -57,7 +58,7 @@ func NewOAuthService() {
 	allOauthes := []string{"github", "google", "generic_oauth", "grafananet", "grafana_com"}
 
 	for _, name := range allOauthes {
-		sec := setting.Cfg.Section("auth." + name)
+		sec := setting.Raw.Section("auth." + name)
 		info := &setting.OAuthInfo{
 			ClientId:       sec.Key("client_id").String(),
 			ClientSecret:   sec.Key("client_secret").String(),

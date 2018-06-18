@@ -150,9 +150,9 @@ export class SearchSrv {
         if (hit.folderId) {
           section = {
             id: hit.folderId,
-            uid: hit.uid,
+            uid: hit.folderUid,
             title: hit.folderTitle,
-            url: hit.url,
+            url: hit.folderUrl,
             items: [],
             icon: 'fa fa-folder-open',
             toggle: this.toggleFolder.bind(this),

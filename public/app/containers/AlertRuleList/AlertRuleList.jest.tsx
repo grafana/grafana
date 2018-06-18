@@ -23,7 +23,7 @@ describe('AlertRuleList', () => {
             .format(),
           evalData: {},
           executionError: '',
-          dashboardUri: 'd/ufkcofof/my-goal',
+          url: 'd/ufkcofof/my-goal',
           canEdit: true,
         },
       ])

@@ -90,7 +90,7 @@ func (c *EvalContext) GetDashboardUID() (*m.DashboardRef, error) {
 		return c.dashboardRef, nil
 	}
 
-	uidQuery := &m.GetDashboardUIDByIdQuery{Id: c.Rule.DashboardId}
+	uidQuery := &m.GetDashboardRefByIdQuery{Id: c.Rule.DashboardId}
 	if err := bus.Dispatch(uidQuery); err != nil {
 		return nil, err
 	}
@@ -106,9 +106,40 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 		return setting.AppUrl, nil
 	}
 
-	if ref, err := c.GetDashboardUID(); err != nil {
+	ref, err := c.GetDashboardUID()
+	if err != nil {
 		return "", err
-	} else {
-		return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
 	}
+	return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
+}
+
+func (c *EvalContext) GetNewState() m.AlertStateType {
+	if c.Error != nil {
+		c.log.Error("Alert Rule Result Error",
+			"ruleId", c.Rule.Id,
+			"name", c.Rule.Name,
+			"error", c.Error,
+			"changing state to", c.Rule.ExecutionErrorState.ToAlertState())
+
+		if c.Rule.ExecutionErrorState == m.ExecutionErrorKeepState {
+			return c.PrevAlertState
+		}
+		return c.Rule.ExecutionErrorState.ToAlertState()
+
+	} else if c.Firing {
+		return m.AlertStateAlerting
+
+	} else if c.NoDataFound {
+		c.log.Info("Alert Rule returned no data",
+			"ruleId", c.Rule.Id,
+			"name", c.Rule.Name,
+			"changing state to", c.Rule.NoDataState.ToAlertState())
+
+		if c.Rule.NoDataState == m.NoDataKeepState {
+			return c.PrevAlertState
+		}
+		return c.Rule.NoDataState.ToAlertState()
+	}
+
+	return m.AlertStateOK
 }

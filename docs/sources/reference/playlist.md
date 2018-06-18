@@ -16,7 +16,7 @@ Since Grafana automatically scales Dashboards to any resolution they're perfect 
 
 ## Creating a Playlist
 
-{{< docs-imagebox img="/img/docs/v3/playlist.png" max-width="25rem" class="docs-image--right">}}
+{{< docs-imagebox img="/img/docs/v50/playlist.png" max-width="25rem" class="docs-image--right">}}
 
 The Playlist feature can be accessed from Grafana's sidemenu, in the Dashboard submenu.
 
@@ -49,7 +49,7 @@ Click the back button to rewind to the previous Dashboard in the Playlist.
 In TV mode the top navbar, row & panel controls will all fade to transparent.
 
 This happens automatically after one minute of user inactivity but can also be toggled manually
-with the `d v` sequence shortcut. Any mouse movement or keyboard action will
+with the `d v` sequence shortcut, or by appending the parameter `?inactive` to the dashboard URL. Any mouse movement or keyboard action will
 restore navbar & controls.
 
 Another feature is the kiosk mode - in kiosk mode the navbar is completely hidden/removed from view. This can be enabled with the `d k`

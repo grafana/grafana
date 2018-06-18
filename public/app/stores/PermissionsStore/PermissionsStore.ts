@@ -1,8 +1,6 @@
 import { types, getEnv, flow } from 'mobx-state-tree';
 import { PermissionsStoreItem } from './PermissionsStoreItem';
 
-const duplicateError = 'This permission exists already.';
-
 export const permissionOptions = [
   { value: 1, label: 'View', description: 'Can view dashboards.' },
   { value: 2, label: 'Edit', description: 'Can add, edit and delete dashboards.' },
@@ -32,6 +30,8 @@ export const NewPermissionsItem = types
     ),
     userId: types.maybe(types.number),
     userLogin: types.maybe(types.string),
+    userAvatarUrl: types.maybe(types.string),
+    teamAvatarUrl: types.maybe(types.string),
     teamId: types.maybe(types.number),
     team: types.maybe(types.string),
     permission: types.optional(types.number, 1),
@@ -52,17 +52,19 @@ export const NewPermissionsItem = types
     },
   }))
   .actions(self => ({
-    setUser(userId: number, userLogin: string) {
+    setUser(userId: number, userLogin: string, userAvatarUrl: string) {
       self.userId = userId;
       self.userLogin = userLogin;
+      self.userAvatarUrl = userAvatarUrl;
       self.teamId = null;
       self.team = null;
     },
-    setTeam(teamId: number, team: string) {
+    setTeam(teamId: number, team: string, teamAvatarUrl: string) {
       self.userId = null;
       self.userLogin = null;
       self.teamId = teamId;
       self.team = team;
+      self.teamAvatarUrl = teamAvatarUrl;
     },
     setPermission(permission: number) {
       self.permission = permission;
@@ -75,7 +77,6 @@ export const PermissionsStore = types
     isFolder: types.maybe(types.boolean),
     dashboardId: types.maybe(types.number),
     items: types.optional(types.array(PermissionsStoreItem), []),
-    error: types.maybe(types.string),
     originalItems: types.optional(types.array(PermissionsStoreItem), []),
     newType: types.optional(types.string, defaultNewType),
     newItem: types.maybe(NewPermissionsItem),
@@ -88,7 +89,6 @@ export const PermissionsStore = types
         return isDuplicate(it, item);
       });
       if (dupe) {
-        self.error = duplicateError;
         return false;
       }
 
@@ -96,8 +96,7 @@ export const PermissionsStore = types
     },
   }))
   .actions(self => {
-    const resetNewType = () => {
-      self.error = null;
+    const resetNewTypeInternal = () => {
       self.newItem = NewPermissionsItem.create();
     };
 
@@ -108,15 +107,16 @@ export const PermissionsStore = types
         self.isFolder = isFolder;
         self.isInRoot = isInRoot;
         self.dashboardId = dashboardId;
-        const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`);
+        self.items.clear();
+
+        const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/permissions`);
         const items = prepareServerResponse(res, dashboardId, isFolder, isInRoot);
         self.items = items;
         self.originalItems = items;
         self.fetching = false;
-        self.error = null;
       }),
+
       addStoreItem: flow(function* addStoreItem() {
-        self.error = null;
         let item = {
           type: self.newItem.type,
           permission: self.newItem.permission,
@@ -125,16 +125,20 @@ export const PermissionsStore = types
           teamId: undefined,
           userLogin: undefined,
           userId: undefined,
+          userAvatarUrl: undefined,
+          teamAvatarUrl: undefined,
           role: undefined,
         };
         switch (self.newItem.type) {
           case aclTypeValues.GROUP.value:
             item.team = self.newItem.team;
             item.teamId = self.newItem.teamId;
+            item.teamAvatarUrl = self.newItem.teamAvatarUrl;
             break;
           case aclTypeValues.USER.value:
             item.userLogin = self.newItem.userLogin;
             item.userId = self.newItem.userId;
+            item.userAvatarUrl = self.newItem.userAvatarUrl;
             break;
           case aclTypeValues.VIEWER.value:
           case aclTypeValues.EDITOR.value:
@@ -144,52 +148,56 @@ export const PermissionsStore = types
             throw Error('Unknown type: ' + self.newItem.type);
         }
 
-        if (!self.isValid(item)) {
-          return undefined;
-        }
+        const updatedItems = self.items.peek();
+        const newItem = prepareItem(item, self.dashboardId, self.isFolder, self.isInRoot);
+        updatedItems.push(newItem);
 
-        self.items.push(prepareItem(item, self.dashboardId, self.isFolder, self.isInRoot));
-        resetNewType();
-        return updateItems(self);
+        try {
+          yield updateItems(self, updatedItems);
+          self.items.push(newItem);
+          let sortedItems = self.items.sort((a, b) => b.sortRank - a.sortRank || a.name.localeCompare(b.name));
+          self.items = sortedItems;
+          resetNewTypeInternal();
+        } catch {}
+        yield Promise.resolve();
       }),
+
       removeStoreItem: flow(function* removeStoreItem(idx: number) {
-        self.error = null;
         self.items.splice(idx, 1);
-        return updateItems(self);
+        yield updateItems(self, self.items.peek());
       }),
+
       updatePermissionOnIndex: flow(function* updatePermissionOnIndex(
         idx: number,
         permission: number,
         permissionName: string
       ) {
-        self.error = null;
         self.items[idx].updatePermission(permission, permissionName);
-        return updateItems(self);
+        yield updateItems(self, self.items.peek());
       }),
+
       setNewType(newType: string) {
         self.newItem = NewPermissionsItem.create({ type: newType });
       },
+
       resetNewType() {
-        resetNewType();
+        resetNewTypeInternal();
       },
+
       toggleAddPermissions() {
         self.isAddPermissionsVisible = !self.isAddPermissionsVisible;
       },
-      showAddPermissions() {
-        self.isAddPermissionsVisible = true;
-      },
+
       hideAddPermissions() {
         self.isAddPermissionsVisible = false;
       },
     };
   });
 
-const updateItems = self => {
-  self.error = null;
-
+const updateItems = (self, items) => {
   const backendSrv = getEnv(self).backendSrv;
   const updated = [];
-  for (let item of self.items) {
+  for (let item of items) {
     if (item.inherited) {
       continue;
     }
@@ -202,44 +210,32 @@ const updateItems = self => {
     });
   }
 
-  let res;
-  try {
-    res = backendSrv.post(`/api/dashboards/id/${self.dashboardId}/acl`, {
-      items: updated,
-    });
-  } catch (error) {
-    self.error = error;
-  }
-
-  return res;
-};
-
-const prepareServerResponse = (response, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
-  return response.map(item => {
-    return prepareItem(item, dashboardId, isFolder, isInRoot);
+  return backendSrv.post(`/api/dashboards/id/${self.dashboardId}/permissions`, {
+    items: updated,
   });
 };
 
-const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
-  item.inherited = !isFolder && !isInRoot && dashboardId !== item.dashboardId;
+const prepareServerResponse = (response, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
+  return response
+    .map(item => {
+      return prepareItem(item, dashboardId, isFolder, isInRoot);
+    })
+    .sort((a, b) => b.sortRank - a.sortRank || a.name.localeCompare(b.name));
+};
 
+const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
   item.sortRank = 0;
   if (item.userId > 0) {
-    item.icon = 'fa fa-fw fa-user';
-    item.nameHtml = item.userLogin;
-    item.sortName = item.userLogin;
+    item.name = item.userLogin;
     item.sortRank = 10;
   } else if (item.teamId > 0) {
-    item.icon = 'fa fa-fw fa-users';
-    item.nameHtml = item.team;
-    item.sortName = item.team;
+    item.name = item.team;
     item.sortRank = 20;
   } else if (item.role) {
     item.icon = 'fa fa-fw fa-street-view';
-    item.nameHtml = `Everyone with <span class="query-keyword">${item.role}</span> Role`;
-    item.sortName = item.role;
+    item.name = item.role;
     item.sortRank = 30;
-    if (item.role === 'Viewer') {
+    if (item.role === 'Editor') {
       item.sortRank += 1;
     }
   }

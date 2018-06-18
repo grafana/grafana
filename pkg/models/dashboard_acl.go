@@ -26,6 +26,8 @@ func (p PermissionType) String() string {
 var (
 	ErrDashboardAclInfoMissing           = errors.New("User id and team id cannot both be empty for a dashboard permission.")
 	ErrDashboardPermissionDashboardEmpty = errors.New("Dashboard Id must be greater than zero for a dashboard permission.")
+	ErrFolderAclInfoMissing              = errors.New("User id and team id cannot both be empty for a folder permission.")
+	ErrFolderPermissionFolderEmpty       = errors.New("Folder Id must be greater than zero for a folder permission.")
 )
 
 // Dashboard ACL model
@@ -44,9 +46,9 @@ type DashboardAcl struct {
 }
 
 type DashboardAclInfoDTO struct {
-	Id          int64 `json:"id"`
 	OrgId       int64 `json:"-"`
-	DashboardId int64 `json:"dashboardId"`
+	DashboardId int64 `json:"dashboardId,omitempty"`
+	FolderId    int64 `json:"folderId,omitempty"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -54,11 +56,41 @@ type DashboardAclInfoDTO struct {
 	UserId         int64          `json:"userId"`
 	UserLogin      string         `json:"userLogin"`
 	UserEmail      string         `json:"userEmail"`
+	UserAvatarUrl  string         `json:"userAvatarUrl"`
 	TeamId         int64          `json:"teamId"`
+	TeamEmail      string         `json:"teamEmail"`
+	TeamAvatarUrl  string         `json:"teamAvatarUrl"`
 	Team           string         `json:"team"`
 	Role           *RoleType      `json:"role,omitempty"`
 	Permission     PermissionType `json:"permission"`
 	PermissionName string         `json:"permissionName"`
+	Uid            string         `json:"uid"`
+	Title          string         `json:"title"`
+	Slug           string         `json:"slug"`
+	IsFolder       bool           `json:"isFolder"`
+	Url            string         `json:"url"`
+	Inherited      bool           `json:"inherited"`
+}
+
+func (dto *DashboardAclInfoDTO) hasSameRoleAs(other *DashboardAclInfoDTO) bool {
+	if dto.Role == nil || other.Role == nil {
+		return false
+	}
+
+	return dto.UserId <= 0 && dto.TeamId <= 0 && dto.UserId == other.UserId && dto.TeamId == other.TeamId && *dto.Role == *other.Role
+}
+
+func (dto *DashboardAclInfoDTO) hasSameUserAs(other *DashboardAclInfoDTO) bool {
+	return dto.UserId > 0 && dto.UserId == other.UserId
+}
+
+func (dto *DashboardAclInfoDTO) hasSameTeamAs(other *DashboardAclInfoDTO) bool {
+	return dto.TeamId > 0 && dto.TeamId == other.TeamId
+}
+
+// IsDuplicateOf returns true if other item has same role, same user or same team
+func (dto *DashboardAclInfoDTO) IsDuplicateOf(other *DashboardAclInfoDTO) bool {
+	return dto.hasSameRoleAs(other) || dto.hasSameUserAs(other) || dto.hasSameTeamAs(other)
 }
 
 //
@@ -68,21 +100,6 @@ type DashboardAclInfoDTO struct {
 type UpdateDashboardAclCommand struct {
 	DashboardId int64
 	Items       []*DashboardAcl
-}
-
-type SetDashboardAclCommand struct {
-	DashboardId int64
-	OrgId       int64
-	UserId      int64
-	TeamId      int64
-	Permission  PermissionType
-
-	Result DashboardAcl
-}
-
-type RemoveDashboardAclCommand struct {
-	AclId int64
-	OrgId int64
 }
 
 //

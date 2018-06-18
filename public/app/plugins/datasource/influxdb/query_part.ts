@@ -44,6 +44,28 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
   for (var i = 0; i < selectParts.length; i++) {
     var part = selectParts[i];
     if (part.def.category === categories.Aggregations) {
+      if (part.def.type === partModel.def.type) {
+        return;
+      }
+      // count distinct is allowed
+      if (part.def.type === 'count' && partModel.def.type === 'distinct') {
+        break;
+      }
+      // remove next aggregation if distinct was replaced
+      if (part.def.type === 'distinct') {
+        var morePartsAvailable = selectParts.length >= i + 2;
+        if (partModel.def.type !== 'count' && morePartsAvailable) {
+          var nextPart = selectParts[i + 1];
+          if (nextPart.def.category === categories.Aggregations) {
+            selectParts.splice(i + 1, 1);
+          }
+        } else if (partModel.def.type === 'count') {
+          if (!morePartsAvailable || selectParts[i + 1].def.type !== 'count') {
+            selectParts.splice(i + 1, 0, partModel);
+          }
+          return;
+        }
+      }
       selectParts[i] = partModel;
       return;
     }
@@ -434,4 +456,5 @@ export default {
   getCategories: function() {
     return categories;
   },
+  replaceAggregationAdd: replaceAggregationAddStrategy,
 };

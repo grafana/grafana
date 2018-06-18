@@ -1,25 +1,24 @@
-# Roadmap (2017-10-31)
+# Roadmap (2018-05-06)
 
 This roadmap is a tentative plan for the core development team. Things change constantly as PRs come in and priorities change. 
 But it will give you an idea of our current vision and plan. 
+  
+### Short term (1-2 months)
 
-### Short term (1-4 months)
-
- - Release Grafana v5
-  - Teams
-  - Dashboard folders
-  - Dashboard & folder permissions (assigned to users or groups)
-  - New Dashboard layout engine
-  - New sidemenu & nav UX
   - Elasticsearch alerting
-  - React migration foundation (core components) 
-  - Graphite 1.1 Tags Support
+  - Crossplatform builds
+  - Backend service refactorings
+  - Explore UI 
+  - First login registration view
+  
+### Mid term (2-4 months)
+  - Multi-Stat panel
+  - React Panels 
+  - Templating Query Editor UI Plugin hook
   
 ### Long term (4 - 8 months)
 
-- Backend plugins to support more Auth options, Alerting data sources & notifications
 - Alerting improvements (silence, per series tracking, etc)
-- Dashboard as configuration and other automation / provisioning improvements
 - Progress on React migration
 - Change visualization (panel type) on the fly. 
 - Multi stat panel (vertical version of singlestat with bars/graph mode with big number etc) 

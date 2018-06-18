@@ -22,23 +22,10 @@ import (
 )
 
 type OpenTsdbExecutor struct {
-	//*models.DataSource
-	//httpClient *http.Client
 }
 
 func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	/*
-		httpClient, err := datasource.GetHttpClient()
-
-		if err != nil {
-			return nil, err
-		}
-	*/
-
-	return &OpenTsdbExecutor{
-	//DataSource: datasource,
-	//httpClient: httpClient,
-	}, nil
+	return &OpenTsdbExecutor{}, nil
 }
 
 var (
@@ -96,6 +83,10 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 	u.Path = path.Join(u.Path, "api/query")
 
 	postData, err := json.Marshal(data)
+	if err != nil {
+		plog.Info("Failed marshalling data", "error", err)
+		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+	}
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(string(postData)))
 	if err != nil {

@@ -10,7 +10,7 @@ var template = `
     <ul class="dropdown-menu dropdown-menu--menu panel-menu" role="menu">
     </ul>
   </span>
-  <span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>
+  <span class="panel-time-info" ng-if="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>
 </span>`;
 
 function renderMenuItem(item, ctrl) {

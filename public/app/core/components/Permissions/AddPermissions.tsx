@@ -9,7 +9,6 @@ import { permissionOptions } from 'app/stores/PermissionsStore/PermissionsStore'
 export interface IProps {
   permissions: any;
   backendSrv: any;
-  dashboardId: any;
 }
 @observer
 class AddPermissions extends Component<IProps, any> {
@@ -31,12 +30,6 @@ class AddPermissions extends Component<IProps, any> {
     const { value } = evt.target;
     const { permissions } = this.props;
 
-    // if (value === 'Viewer' || value === 'Editor') {
-    // //   permissions.addStoreItem({ permission: 1, role: value, dashboardId: dashboardId }, dashboardId);
-    // //   this.resetNewType();
-    //   return;
-    // }
-
     permissions.setNewType(value);
   }
 
@@ -46,7 +39,7 @@ class AddPermissions extends Component<IProps, any> {
       permissions.newItem.setUser(null, null);
       return;
     }
-    return permissions.newItem.setUser(user.id, user.login);
+    return permissions.newItem.setUser(user.id, user.login, user.avatarUrl);
   }
 
   teamPicked(team: Team) {
@@ -55,7 +48,7 @@ class AddPermissions extends Component<IProps, any> {
       permissions.newItem.setTeam(null, null);
       return;
     }
-    return permissions.newItem.setTeam(team.id, team.name);
+    return permissions.newItem.setTeam(team.id, team.name, team.avatarUrl);
   }
 
   permissionPicked(permission: OptionWithDescription) {
@@ -142,14 +135,6 @@ class AddPermissions extends Component<IProps, any> {
             </div>
           </div>
         </form>
-        {permissions.error ? (
-          <div className="gf-form width-17">
-            <span ng-if="ctrl.error" className="text-error p-l-1">
-              <i className="fa fa-warning" />
-              {permissions.error}
-            </span>
-          </div>
-        ) : null}
       </div>
     );
   }

@@ -55,6 +55,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       values: [],
       buckets: null,
     },
+    yaxis: {
+      align: false,
+      alignLevel: null,
+    },
     // show/hide lines
     lines: true,
     // fill factor
@@ -231,7 +235,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   changeSeriesColor(series, color) {
-    series.color = color;
+    series.setColor(color);
     this.panel.aliasColors[series.alias] = series.color;
     this.render();
   }

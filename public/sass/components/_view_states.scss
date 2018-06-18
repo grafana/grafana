@@ -1,12 +1,17 @@
 .page-kiosk-mode {
-  dashnav {
+  .sidemenu,
+  .navbar {
     display: none;
+  }
+  .scroll-canvas--dashboard {
+    height: 100%;
   }
 }
 
 .playlist-active,
 .user-activity-low {
-  .react-resizable-handle .add-row-panel-hint,
+  .react-resizable-handle,
+  .add-row-panel-hint,
   .dash-row-menu-container,
   .navbar-button--refresh,
   .navbar-buttons--zoom,
@@ -29,6 +34,10 @@
     i {
       opacity: 0;
     }
+  }
+
+  .sidemenu {
+    display: none;
   }
 
   .gf-timepicker-nav-btn {
