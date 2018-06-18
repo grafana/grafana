@@ -3,6 +3,7 @@ package notifiers
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
