@@ -123,6 +123,9 @@ export class ShareSnapshotCtrl {
             enable: annotation.enable,
             iconColor: annotation.iconColor,
             snapshotData: annotation.snapshotData,
+            type: annotation.type,
+            builtIn: annotation.builtIn,
+            hide: annotation.hide,
           };
         })
         .value();
