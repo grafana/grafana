@@ -1,3 +1,7 @@
+# 5.3.0 (unreleased)
+
+* **Cleanup**: Make temp file time to live configurable [#11607](https://github.com/grafana/grafana/issues/11607), thx [@xapon](https://github.com/xapon)
+
 # 5.2.0 (unreleased)
 
 ### New Features
