@@ -50,8 +50,17 @@ const template = `
     </div>
 
     <div class="gf-form-button-row text-center">
-      <button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid">Save</button>
-      <a class="btn btn-link" ng-click="ctrl.dismiss();">Cancel</a>
+      <button
+        id="saveBtn"
+        type="submit"
+        class="btn btn-success"
+        ng-class="{'btn-success--processing': ctrl.isSaving}"
+        ng-disabled="ctrl.saveForm.$invalid || ctrl.isSaving"
+      >
+        <span ng-if="!ctrl.isSaving">Save</span>
+        <span ng-if="ctrl.isSaving === true">Saving...</span>
+      </button>
+      <button class="btn btn-inverse" ng-click="ctrl.dismiss();">Cancel</button>
     </div>
   </form>
 </div>
@@ -68,6 +77,7 @@ export class SaveDashboardModalCtrl {
   originalCurrent = [];
   max: number;
   saveForm: any;
+  isSaving: boolean;
   dismiss: () => void;
   timeChange = false;
   variableValueChange = false;
@@ -76,6 +86,7 @@ export class SaveDashboardModalCtrl {
   constructor(private dashboardSrv) {
     this.message = '';
     this.max = 64;
+    this.isSaving = false;
     this.templating = dashboardSrv.dash.templating.list;
 
     this.compareTemplating();
@@ -125,6 +136,8 @@ export class SaveDashboardModalCtrl {
 
     var dashboard = this.dashboardSrv.getCurrent();
     var saveModel = dashboard.getSaveModelClone(options);
+
+    this.isSaving = true;
 
     return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
   }

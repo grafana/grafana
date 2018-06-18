@@ -82,6 +82,20 @@
 
       <div class="gf-form-inline">
         <div class="gf-form gf-form--grow">
+          <folder-picker  label-class="width-15"
+                          initial-folder-id="ctrl.folderId"
+                          initial-title="ctrl.initialFolderTitle"
+                          on-change="ctrl.onFolderChange($folder)"
+                          on-load="ctrl.onFolderChange($folder)"
+                          enter-folder-creation="ctrl.onEnterFolderCreation()"
+                          exit-folder-creation="ctrl.onExitFolderCreation()"
+                          enable-create-new="true">
+          </folder-picker>
+        </div>
+      </div>
+
+      <div class="gf-form-inline">
+        <div class="gf-form gf-form--grow">
           <span class="gf-form-label width-15">
             Unique identifier (uid)
             <info-popover mode="right-normal">
@@ -132,10 +146,10 @@
     </div>
 
     <div class="gf-form-button-row">
-      <button type="button" class="btn btn-success width-12" ng-click="ctrl.saveDashboard()" ng-hide="ctrl.nameExists || ctrl.uidExists" ng-disabled="!ctrl.inputsValid">
+      <button type="button" class="btn btn-success width-12" ng-click="ctrl.saveDashboard()" ng-hide="ctrl.nameExists || ctrl.uidExists" ng-disabled="!ctrl.isValid()">
         <i class="fa fa-save"></i> Import
       </button>
-      <button type="button" class="btn btn-danger width-12" ng-click="ctrl.saveDashboard()" ng-show="ctrl.nameExists || ctrl.uidExists" ng-disabled="!ctrl.inputsValid">
+      <button type="button" class="btn btn-danger width-12" ng-click="ctrl.saveDashboard()" ng-show="ctrl.nameExists || ctrl.uidExists" ng-disabled="!ctrl.isValid()">
         <i class="fa fa-save"></i> Import (Overwrite)
       </button>
       <a class="btn btn-link" ng-click="ctrl.back()">Cancel</a>

@@ -129,7 +129,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/mattn/go-sqlite3"
-  version = "1.6.0"
+  version = "1.7.0"
 
 [[constraint]]
   name = "github.com/opentracing/opentracing-go"

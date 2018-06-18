@@ -499,6 +499,7 @@ kbn.valueFormats.watt = kbn.formatBuilders.decimalSIPrefix('W');
 kbn.valueFormats.kwatt = kbn.formatBuilders.decimalSIPrefix('W', 1);
 kbn.valueFormats.mwatt = kbn.formatBuilders.decimalSIPrefix('W', -1);
 kbn.valueFormats.kwattm = kbn.formatBuilders.decimalSIPrefix('W/Min', 1);
+kbn.valueFormats.Wm2 = kbn.formatBuilders.fixedUnit('W/m2');
 kbn.valueFormats.voltamp = kbn.formatBuilders.decimalSIPrefix('VA');
 kbn.valueFormats.kvoltamp = kbn.formatBuilders.decimalSIPrefix('VA', 1);
 kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
@@ -528,6 +529,7 @@ kbn.valueFormats.pressurebar = kbn.formatBuilders.decimalSIPrefix('bar');
 kbn.valueFormats.pressurembar = kbn.formatBuilders.decimalSIPrefix('bar', -1);
 kbn.valueFormats.pressurekbar = kbn.formatBuilders.decimalSIPrefix('bar', 1);
 kbn.valueFormats.pressurehpa = kbn.formatBuilders.fixedUnit('hPa');
+kbn.valueFormats.pressurekpa = kbn.formatBuilders.fixedUnit('kPa');
 kbn.valueFormats.pressurehg = kbn.formatBuilders.fixedUnit('"Hg');
 kbn.valueFormats.pressurepsi = kbn.formatBuilders.scaledUnits(1000, [' psi', ' ksi', ' Mpsi']);
 
@@ -579,6 +581,9 @@ kbn.valueFormats.flowgpm = kbn.formatBuilders.fixedUnit('gpm');
 kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
 kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
+kbn.valueFormats.litreh = kbn.formatBuilders.fixedUnit('l/h');
+kbn.valueFormats.flowlpm = kbn.formatBuilders.decimalSIPrefix('L');
+kbn.valueFormats.flowmlpm = kbn.formatBuilders.decimalSIPrefix('L', -1);
 
 // Angle
 kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
@@ -1014,6 +1019,7 @@ kbn.getUnitFormats = function() {
         { text: 'Watt (W)', value: 'watt' },
         { text: 'Kilowatt (kW)', value: 'kwatt' },
         { text: 'Milliwatt (mW)', value: 'mwatt' },
+        { text: 'Watt per square metre (W/m2)', value: 'Wm2' },
         { text: 'Volt-ampere (VA)', value: 'voltamp' },
         { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
         { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
@@ -1049,6 +1055,7 @@ kbn.getUnitFormats = function() {
         { text: 'Bars', value: 'pressurebar' },
         { text: 'Kilobars', value: 'pressurekbar' },
         { text: 'Hectopascals', value: 'pressurehpa' },
+        { text: 'Kilopascals', value: 'pressurekpa' },
         { text: 'Inches of mercury', value: 'pressurehg' },
         { text: 'PSI', value: 'pressurepsi' },
       ],
@@ -1069,6 +1076,9 @@ kbn.getUnitFormats = function() {
         { text: 'Cubic meters/sec (cms)', value: 'flowcms' },
         { text: 'Cubic feet/sec (cfs)', value: 'flowcfs' },
         { text: 'Cubic feet/min (cfm)', value: 'flowcfm' },
+        { text: 'Litre/hour', value: 'litreh' },
+        { text: 'Litre/min (l/min)', value: 'flowlpm' },
+        { text: 'milliLitre/min (mL/min)', value: 'flowmlpm' },
       ],
     },
     {
