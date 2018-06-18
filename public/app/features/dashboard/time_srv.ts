@@ -4,7 +4,7 @@ import coreModule from 'app/core/core_module';
 import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 
-class TimeSrv {
+export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: boolean;
@@ -231,4 +231,3 @@ class TimeSrv {
 }
 
 coreModule.service('timeSrv', TimeSrv);
-export { TimeSrv };

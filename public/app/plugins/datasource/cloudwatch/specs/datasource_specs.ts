@@ -2,6 +2,7 @@ import '../datasource';
 import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import CloudWatchDatasource from '../datasource';
+import 'app/features/dashboard/time_srv';
 
 describe('CloudWatchDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -13,6 +14,7 @@ describe('CloudWatchDatasource', function() {
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
+  beforeEach(ctx.createService('timeSrv'));
 
   beforeEach(
     angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
