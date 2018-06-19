@@ -13,11 +13,7 @@ describe('historySrv', function() {
     post: jest.fn(() => Promise.resolve({})),
   };
 
-  let q = {
-    when: jest.fn(() => Promise.resolve([])),
-  };
-
-  let historySrv = new HistorySrv(backendSrv, q);
+  let historySrv = new HistorySrv(backendSrv);
 
   const dash = new DashboardModel({ id: 1 });
   const emptyDash = new DashboardModel({});
@@ -26,7 +22,7 @@ describe('historySrv', function() {
   describe('getHistoryList', function() {
     it('should return a versions array for the given dashboard id', function() {
       backendSrv.get = jest.fn(() => Promise.resolve(versionsResponse));
-      historySrv = new HistorySrv(backendSrv, q);
+      historySrv = new HistorySrv(backendSrv);
 
       return historySrv.getHistoryList(dash, historyListOpts).then(function(versions) {
         expect(versions).toEqual(versionsResponse);
@@ -46,22 +42,20 @@ describe('historySrv', function() {
     });
   });
 
-  describe('restoreDashboard', function() {
+  describe('restoreDashboard', () => {
     it('should return a success response given valid parameters', function() {
       let version = 6;
       backendSrv.post = jest.fn(() => Promise.resolve(restoreResponse(version)));
-      historySrv = new HistorySrv(backendSrv, q);
+      historySrv = new HistorySrv(backendSrv);
       return historySrv.restoreDashboard(dash, version).then(function(response) {
         expect(response).toEqual(restoreResponse(version));
       });
     });
 
-    it('should return an empty object when not given an id', function() {
-      q.when = jest.fn(() => Promise.resolve({}));
-      historySrv = new HistorySrv(backendSrv, q);
-      return historySrv.restoreDashboard(emptyDash, 6).then(function(response) {
-        expect(response).toEqual({});
-      });
+    it('should return an empty object when not given an id', async () => {
+      historySrv = new HistorySrv(backendSrv);
+      let rsp = await historySrv.restoreDashboard(emptyDash, 6);
+      expect(rsp).toEqual({});
     });
   });
 });
