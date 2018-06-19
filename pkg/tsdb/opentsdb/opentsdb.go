@@ -126,9 +126,8 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 	}
 
 	for _, val := range data {
-		series := tsdb.TimeSeries{
-			Name: val.Metric,
-		}
+		series := tsdb.TimeSeries{}
+		series.Name = e.createSeriesLabel(query.Queries[0]["alias"].(string), val)
 
 		for timeString, value := range val.DataPoints {
 			timestamp, err := strconv.ParseFloat(timeString, 64)
@@ -144,6 +143,31 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 
 	queryResults["A"] = queryRes
 	return queryResults, nil
+}
+
+func (e *OpenTsdbExecutor) createSeriesLabel(alias string, res OpenTsdbResponse) string {
+
+	if alias == "" {
+		var label = res.Metric
+		if len(res.Tags) >= 1 {
+			var tags []string
+			for k, v := range res.Tags {
+				tags = append(tags, k+"="+v)
+			}
+			label += "{" + strings.Join(tags, ",") + "}"
+		}
+		return label
+	} else {
+		var label = alias
+		if len(res.Tags) >= 1 {
+			for k, v := range res.Tags {
+				label = strings.Replace(label, "[[tag_"+k+"]]", v, -1)
+				label = strings.Replace(label, "$tag_"+k, v, -1)
+			}
+		}
+		return label
+	}
+
 }
 
 func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{} {
@@ -204,6 +228,8 @@ func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{}
 	if filtersCheck && len(filters.MustArray()) > 0 {
 		metric["filters"] = filters.MustArray()
 	}
+
+	metric["alias"] = query.Model.Get("alias").MustString("")
 
 	return metric
 
