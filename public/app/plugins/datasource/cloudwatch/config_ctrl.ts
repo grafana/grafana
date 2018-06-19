@@ -1,17 +1,20 @@
 export class CloudWatchConfigCtrl {
   static templateUrl = 'partials/config.html';
   current: any;
+  $http: any;
 
   accessKeyExist = false;
   secretKeyExist = false;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope, $http) {
     this.current.jsonData.timeField = this.current.jsonData.timeField || '@timestamp';
     this.current.jsonData.authType = this.current.jsonData.authType || 'credentials';
 
     this.accessKeyExist = this.current.secureJsonFields.accessKey;
     this.secretKeyExist = this.current.secureJsonFields.secretKey;
+    this.$http = $http;
+    this.getRegions();
   }
 
   resetAccessKey() {
@@ -36,4 +39,23 @@ export class CloudWatchConfigCtrl {
     { name: 'Monthly', value: 'Monthly', example: '[logstash-]YYYY.MM' },
     { name: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
   ];
+
+  regions = [];
+
+  getRegions() {
+    this.$http.get('https://ip-ranges.amazonaws.com/ip-ranges.json').then(ip_ranges => {
+      let regions = {};
+      ip_ranges.data.prefixes
+        .map(p => {
+          return p.region;
+        })
+        .filter(r => {
+          return r !== 'GLOBAL';
+        })
+        .forEach(r => {
+          regions[r] = true;
+        });
+      this.regions = Object.keys(regions).sort();
+    });
+  }
 }

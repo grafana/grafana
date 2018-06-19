@@ -234,7 +234,7 @@ func parseMultiSelectValue(input string) []string {
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	regions := []string{
-		"cn-north-1", "cn-northwest-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
+		"cn-north-1", "cn-northwest-1", "us-gov-east-1", "us-gov-west-1", "us-isob-east-1", "us-iso-east-1",
 	}
 
 	err := e.ensureClientSession("us-east-1")
