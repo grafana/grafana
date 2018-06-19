@@ -110,6 +110,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
         return datasourceSrv.get(datasource).then(ds => {
           scope.datasource = ds;
+          console.log('scope', scope);
 
           return importPluginModule(ds.meta.module).then(dsModule => {
             return {

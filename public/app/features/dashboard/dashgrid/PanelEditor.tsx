@@ -1,6 +1,7 @@
 import React from 'react';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
+import { getAngularLoader, AngularComponent } from 'app/core/services/angular_loader';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -8,9 +9,38 @@ interface PanelEditorProps {
 }
 
 export class PanelEditor extends React.Component<PanelEditorProps, any> {
+  queryElement: any;
+  queryComp: AngularComponent;
+
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidMount() {
+    if (!this.queryElement) {
+      return;
+    }
+
+    let loader = getAngularLoader();
+    var template = '<plugin-component type="query-ctrl" />';
+    let scopeProps = {
+      ctrl: {
+        panel: this.props.panel,
+        dashboard: this.props.dashboard,
+        panelCtrl: {
+          panel: this.props.panel,
+          dashboard: this.props.dashboard,
+        },
+      },
+      target: {},
+    };
+
+    this.queryComp = loader.load(this.queryElement, scopeProps, template);
+  }
+
   render() {
     return (
-      <div className="tabbed-view tabbed-view--panel-edit">
+      <div className="tabbed-view tabbed-view--panel-edit-new">
         <div className="tabbed-view-header">
           <ul className="gf-tabs">
             <li className="gf-tabs-item">
@@ -26,7 +56,9 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
           </button>
         </div>
 
-        <div className="tabbed-view-body">testing</div>
+        <div className="tabbed-view-body">
+          <div ref={element => (this.queryElement = element)} className="panel-height-helper" />
+        </div>
       </div>
     );
   }

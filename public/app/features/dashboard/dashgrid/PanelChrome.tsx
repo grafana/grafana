@@ -32,7 +32,6 @@ export class PanelChrome extends React.Component<PanelChromeProps, any> {
     };
 
     let PanelComponent = this.props.component;
-    console.log('PanelChrome render');
 
     return (
       <div className="panel-height-helper">
@@ -42,9 +41,7 @@ export class PanelChrome extends React.Component<PanelChromeProps, any> {
             {<PanelComponent />}
           </div>
         </div>
-        <div>
-          {this.props.panel.isEditing && <PanelEditor panel={this.props.panel} dashboard={this.props.dashboard} />}
-        </div>
+        {this.props.panel.isEditing && <PanelEditor panel={this.props.panel} dashboard={this.props.dashboard} />}
       </div>
     );
   }
@@ -55,7 +52,7 @@ export class PanelChrome extends React.Component<PanelChromeProps, any> {
 
     if (panel.fullscreen) {
       var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.4);
+      var editHeight = Math.floor(docHeight * 0.3);
       var fullscreenHeight = Math.floor(docHeight * 0.8);
       height = panel.isEditing ? editHeight : fullscreenHeight;
     } else {

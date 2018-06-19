@@ -2,9 +2,8 @@ import React from 'react';
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { AttachedPanel } from './PanelLoader';
+import { getAngularLoader, AngularComponent } from 'app/core/services/angular_loader';
 import { DashboardRow } from './DashboardRow';
-import { PanelContainer } from './PanelContainer';
 import { AddPanelPanel } from './AddPanelPanel';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { PanelChrome } from './PanelChrome';
@@ -12,12 +11,11 @@ import { PanelChrome } from './PanelChrome';
 export interface DashboardPanelProps {
   panel: PanelModel;
   dashboard: DashboardModel;
-  panelContainer: PanelContainer;
 }
 
 export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
   element: any;
-  attachedPanel: AttachedPanel;
+  angularPanel: AngularComponent;
   pluginInfo: any;
   pluginExports: any;
   specialPanels = {};
@@ -55,17 +53,19 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
   componentDidUpdate() {
     // skip loading angular component if we have no element
     // or we have already loaded it
-    if (!this.element || this.attachedPanel) {
+    if (!this.element || this.angularPanel) {
       return;
     }
 
-    const loader = this.props.panelContainer.getPanelLoader();
-    this.attachedPanel = loader.load(this.element, this.props.panel, this.props.dashboard);
+    let loader = getAngularLoader();
+    var template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
+    let scopeProps = { panel: this.props.panel, dashboard: this.props.dashboard };
+    this.angularPanel = loader.load(this.element, scopeProps, template);
   }
 
   componentWillUnmount() {
-    if (this.attachedPanel) {
-      this.attachedPanel.destroy();
+    if (this.angularPanel) {
+      this.angularPanel.destroy();
     }
   }
 

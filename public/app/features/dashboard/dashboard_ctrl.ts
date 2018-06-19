@@ -1,11 +1,10 @@
 import config from 'app/core/config';
 
 import coreModule from 'app/core/core_module';
-import { PanelContainer } from './dashgrid/PanelContainer';
 import { DashboardModel } from './dashboard_model';
 import { PanelModel } from './panel_model';
 
-export class DashboardCtrl implements PanelContainer {
+export class DashboardCtrl {
   dashboard: DashboardModel;
   dashboardViewState: any;
   loadedFallbackDashboard: boolean;
@@ -22,8 +21,7 @@ export class DashboardCtrl implements PanelContainer {
     private dashboardSrv,
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
-    public playlistSrv,
-    private panelLoader
+    public playlistSrv
   ) {
     // temp hack due to way dashboards are loaded
     // can't use controllerAs on route yet
@@ -117,10 +115,6 @@ export class DashboardCtrl implements PanelContainer {
 
   getDashboard() {
     return this.dashboard;
-  }
-
-  getPanelLoader() {
-    return this.panelLoader;
   }
 
   timezoneChanged() {
