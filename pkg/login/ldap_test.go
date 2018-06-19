@@ -107,7 +107,6 @@ func TestLdapAuther(t *testing.T) {
 	})
 
 	Convey("When syncing ldap groups to grafana org roles", t, func() {
-
 		ldapAutherScenario("given no current user orgs", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
@@ -332,6 +331,10 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 		sc := &scenarioContext{}
 
 		bus.AddHandler("test", UpsertUser)
+
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.SyncTeamsCommand) error {
+			return nil
+		})
 
 		bus.AddHandler("test", func(cmd *m.GetUserByAuthInfoQuery) error {
 			sc.getUserByAuthInfoQuery = cmd

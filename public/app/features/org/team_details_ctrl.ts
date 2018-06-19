@@ -1,4 +1,5 @@
 import coreModule from 'app/core/core_module';
+import config from 'app/core/config';
 
 export default class TeamDetailsCtrl {
   team: Team;
@@ -6,6 +7,7 @@ export default class TeamDetailsCtrl {
   navModel: any;
   teamGroups: TeamGroup[] = [];
   newGroupId: string;
+  enterprise: boolean;
 
   /** @ngInject **/
   constructor(private $scope, private backendSrv, private $routeParams, navModelSrv) {
@@ -13,6 +15,7 @@ export default class TeamDetailsCtrl {
     this.userPicked = this.userPicked.bind(this);
     this.get = this.get.bind(this);
     this.newGroupId = '';
+    this.enterprise = config.enterprise;
     this.get();
   }
 
@@ -21,12 +24,16 @@ export default class TeamDetailsCtrl {
       this.backendSrv.get(`/api/teams/${this.$routeParams.id}`).then(result => {
         this.team = result;
       });
+
       this.backendSrv.get(`/api/teams/${this.$routeParams.id}/members`).then(result => {
         this.teamMembers = result;
       });
-      this.backendSrv.get(`/api/teams/${this.$routeParams.id}/groups`).then(result => {
-        this.teamGroups = result;
-      });
+
+      if (config.enterprise) {
+        this.backendSrv.get(`/team-groups/${this.$routeParams.id}/groups`).then(result => {
+          this.teamGroups = result;
+        });
+      }
     }
   }
 
@@ -65,13 +72,13 @@ export default class TeamDetailsCtrl {
   }
 
   addGroup() {
-    this.backendSrv.post(`/api/teams/${this.$routeParams.id}/groups`, { groupId: this.newGroupId }).then(() => {
+    this.backendSrv.post(`/team-groups/${this.$routeParams.id}/groups`, { groupId: this.newGroupId }).then(() => {
       this.get();
     });
   }
 
   removeGroup(group: TeamGroup) {
-    this.backendSrv.delete(`/api/teams/${this.$routeParams.id}/groups/${group.groupId}`).then(this.get);
+    this.backendSrv.delete(`/team-groups/${this.$routeParams.id}/groups/${group.groupId}`).then(this.get);
   }
 }
 

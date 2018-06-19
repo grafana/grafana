@@ -22,6 +22,7 @@ class Settings {
   disableUserSignUp: boolean;
   loginHint: any;
   loginError: any;
+  enterprise: boolean;
 
   constructor(options) {
     var defaults = {
