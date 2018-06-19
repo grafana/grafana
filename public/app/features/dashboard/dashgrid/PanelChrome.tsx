@@ -23,7 +23,7 @@ export class PanelChrome extends React.Component<PanelChromeProps, any> {
   }
 
   triggerForceUpdate() {
-    // this.forceUpdate();
+    this.forceUpdate();
   }
 
   render() {
