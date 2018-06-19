@@ -10,9 +10,7 @@ coreModule.directive('dashClass', function($timeout) {
         });
       });
 
-      $scope.onAppEvent('panel-fullscreen-exit', function() {
-        elem.toggleClass('panel-in-fullscreen', false);
-      });
+      elem.toggleClass('panel-in-fullscreen', $scope.ctrl.dashboard.meta.fullscreen === true);
 
       $scope.$watch('ctrl.playlistSrv.isPlaying', function(newValue) {
         elem.toggleClass('playlist-active', newValue === true);

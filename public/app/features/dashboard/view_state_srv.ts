@@ -33,10 +33,6 @@ export class DashboardViewState {
       self.update(payload);
     });
 
-    $scope.onAppEvent('panel-initialized', function(evt, payload) {
-      self.registerPanel(payload.scope);
-    });
-
     // this marks changes to location during this digest cycle as not to add history item
     // don't want url changes like adding orgId to add browser history
     $location.replace();
@@ -124,102 +120,62 @@ export class DashboardViewState {
   }
 
   syncState() {
-    if (this.panelScopes.length === 0) {
-      return;
-    }
-
     if (this.dashboard.meta.fullscreen) {
-      var panelScope = this.getPanelScope(this.state.panelId);
-      if (!panelScope) {
+      var panel = this.dashboard.getPanelById(this.state.panelId);
+
+      if (!panel) {
         return;
       }
 
       if (this.fullscreenPanel) {
         // if already fullscreen
-        if (this.fullscreenPanel === panelScope && this.editStateChanged === false) {
+        if (this.fullscreenPanel === panel && this.editStateChanged === false) {
           return;
         } else {
           this.leaveFullscreen(false);
         }
       }
 
-      if (!panelScope.ctrl.editModeInitiated) {
-        panelScope.ctrl.initEditMode();
-      }
-
-      if (!panelScope.ctrl.fullscreen) {
-        this.enterFullscreen(panelScope);
+      if (!panel.fullscreen) {
+        this.enterFullscreen(panel);
       }
     } else if (this.fullscreenPanel) {
       this.leaveFullscreen(true);
     }
   }
 
-  getPanelScope(id) {
-    return _.find(this.panelScopes, function(panelScope) {
-      return panelScope.ctrl.panel.id === id;
-    });
-  }
-
   leaveFullscreen(render) {
-    var self = this;
-    var ctrl = self.fullscreenPanel.ctrl;
+    var panel = this.fullscreenPanel;
 
-    ctrl.editMode = false;
-    ctrl.fullscreen = false;
-
-    this.dashboard.setViewMode(ctrl.panel, false, false);
-    this.$scope.appEvent('panel-fullscreen-exit', { panelId: ctrl.panel.id });
+    this.dashboard.setViewMode(panel, false, false);
     this.$scope.appEvent('dash-scroll', { restore: true });
 
     if (!render) {
       return false;
     }
 
-    this.$timeout(function() {
-      if (self.oldTimeRange !== ctrl.range) {
-        self.$rootScope.$broadcast('refresh');
+    this.$timeout(() => {
+      if (this.oldTimeRange !== this.dashboard.time) {
+        this.$rootScope.$broadcast('refresh');
       } else {
-        self.$rootScope.$broadcast('render');
+        this.$rootScope.$broadcast('render');
       }
-      delete self.fullscreenPanel;
+      delete this.fullscreenPanel;
     });
+
     return true;
   }
 
-  enterFullscreen(panelScope) {
-    var ctrl = panelScope.ctrl;
+  enterFullscreen(panel) {
+    const isEditing = this.state.edit && this.dashboard.meta.canEdit;
 
-    ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
-    ctrl.fullscreen = true;
-
-    this.oldTimeRange = ctrl.range;
-    this.fullscreenPanel = panelScope;
+    this.oldTimeRange = this.dashboard.time;
+    this.fullscreenPanel = panel;
 
     // Firefox doesn't return scrollTop position properly if 'dash-scroll' is emitted after setViewMode()
     this.$scope.appEvent('dash-scroll', { animate: false, pos: 0 });
-    this.dashboard.setViewMode(ctrl.panel, true, ctrl.editMode);
-    this.$scope.appEvent('panel-fullscreen-enter', { panelId: ctrl.panel.id });
-  }
-
-  registerPanel(panelScope) {
-    var self = this;
-    self.panelScopes.push(panelScope);
-
-    if (!self.dashboard.meta.soloMode) {
-      if (self.state.panelId === panelScope.ctrl.panel.id) {
-        if (self.state.edit) {
-          panelScope.ctrl.editPanel();
-        } else {
-          panelScope.ctrl.viewPanel();
-        }
-      }
-    }
-
-    var unbind = panelScope.$on('$destroy', function() {
-      self.panelScopes = _.without(self.panelScopes, panelScope);
-      unbind();
-    });
+    console.log('viewstatesrv.setViewMode');
+    this.dashboard.setViewMode(panel, true, isEditing);
   }
 }
 

@@ -77,13 +77,8 @@ describe('AddPanelPanel', () => {
 
     dashboardMock = { toggleRow: jest.fn() };
 
-    getPanelContainer = jest.fn().mockReturnValue({
-      getDashboard: jest.fn().mockReturnValue(dashboardMock),
-      getPanelLoader: jest.fn(),
-    });
-
     panel = new PanelModel({ collapsed: false });
-    wrapper = shallow(<AddPanelPanel panel={panel} getPanelContainer={getPanelContainer} />);
+    wrapper = shallow(<AddPanelPanel panel={panel} dashboard={dashboardMock} />);
   });
 
   it('should fetch all panels sorted with core plugins first', () => {

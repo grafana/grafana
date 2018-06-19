@@ -1,4 +1,5 @@
 import React from 'react';
+import $ from 'jquery';
 import config from 'app/core/config';
 import classNames from 'classnames';
 import { PanelModel } from '../panel_model';
@@ -7,6 +8,11 @@ import { AttachedPanel } from './PanelLoader';
 import { DashboardRow } from './DashboardRow';
 import { AddPanelPanel } from './AddPanelPanel';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
+import { store } from 'app/stores/store';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+
+const TITLE_HEIGHT = 27;
+const PANEL_BORDER = 2;
 
 export interface DashboardPanelProps {
   panel: PanelModel;
@@ -61,12 +67,39 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
       PanelComponent = this.pluginExports.PanelComponent;
     }
 
+    let panelContentStyle = {
+      height: this.getPanelHeight(),
+    };
+
     return (
-      <div className="panel-container">
-        <PanelHeader panel={this.props.panel} dashboard={this.props.dashboard} />
-        <div className="panel-content">{PanelComponent && <PanelComponent />}</div>
+      <div>
+        <div className="panel-container">
+          <PanelHeader panel={this.props.panel} dashboard={this.props.dashboard} />
+          <div className="panel-content" style={panelContentStyle}>
+            {PanelComponent && <PanelComponent />}
+          </div>
+        </div>
+        <div>
+          {this.props.panel.isEditing && <PanelEditor panel={this.props.panel} dashboard={this.props.dashboard} />}
+        </div>
       </div>
     );
+  }
+
+  getPanelHeight() {
+    const panel = this.props.panel;
+    let height = 0;
+
+    if (panel.fullscreen) {
+      var docHeight = $(window).height();
+      var editHeight = Math.floor(docHeight * 0.4);
+      var fullscreenHeight = Math.floor(docHeight * 0.8);
+      height = panel.isEditing ? editHeight : fullscreenHeight;
+    } else {
+      height = panel.gridPos.h * GRID_CELL_HEIGHT + (panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
+    }
+
+    return height - PANEL_BORDER + TITLE_HEIGHT;
   }
 }
 
@@ -77,7 +110,11 @@ interface PanelHeaderProps {
 
 export class PanelHeader extends React.Component<PanelHeaderProps, any> {
   onEditPanel = () => {
-    this.props.dashboard.setViewMode(this.props.panel, true, true);
+    store.view.updateQuery({
+      panelId: this.props.panel.id,
+      edit: true,
+      fullscreen: true,
+    });
   };
 
   render() {
@@ -120,6 +157,38 @@ export class PanelHeader extends React.Component<PanelHeaderProps, any> {
             </span>
           </span>
         </div>
+      </div>
+    );
+  }
+}
+
+interface PanelEditorProps {
+  panel: PanelModel;
+  dashboard: DashboardModel;
+}
+
+export class PanelEditor extends React.Component<PanelEditorProps, any> {
+  render() {
+    return (
+      <div className="tabbed-view tabbed-view--panel-edit">
+        <div className="tabbed-view-header">
+          <h3 className="tabbed-view-panel-title">{this.props.panel.type}</h3>
+
+          <ul className="gf-tabs">
+            <li className="gf-tabs-item">
+              <a className="gf-tabs-link active">Queries</a>
+            </li>
+            <li className="gf-tabs-item">
+              <a className="gf-tabs-link">Visualization</a>
+            </li>
+          </ul>
+
+          <button className="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
+            <i className="fa fa-remove" />
+          </button>
+        </div>
+
+        <div className="tabbed-view-body">testing</div>
       </div>
     );
   }

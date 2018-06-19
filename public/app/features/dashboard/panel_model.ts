@@ -13,6 +13,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   fullscreen: true,
   isEditing: true,
+  editModeInitiated: true,
 };
 
 export class PanelModel {
@@ -36,6 +37,7 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   events: Emitter;
+  editModeInitiated: boolean;
 
   constructor(model) {
     this.events = new Emitter();
@@ -89,6 +91,10 @@ export class PanelModel {
 
   resizeDone() {
     this.events.emit('panel-size-changed');
+  }
+
+  initEditMode() {
+    this.events.emit('panel-init-edit-mode');
   }
 
   destroy() {
