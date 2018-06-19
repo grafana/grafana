@@ -15,6 +15,7 @@ class Settings {
   disableLoginForm: boolean;
   defaultDatasource: string;
   alertingEnabled: boolean;
+  alertingOKEnabled: boolean;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   ldapEnabled: boolean;

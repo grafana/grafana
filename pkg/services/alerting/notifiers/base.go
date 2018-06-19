@@ -5,6 +5,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type NotifierBase struct {
@@ -38,6 +39,10 @@ func defaultShouldNotify(context *alerting.EvalContext) bool {
 	}
 	// Do not notify when we become OK for the first time.
 	if (context.PrevAlertState == m.AlertStatePending) && (context.Rule.State == m.AlertStateOK) {
+		return false
+	}
+	// Do not notify when state is OK if AlertingOK is set to false
+	if (context.Rule.State == m.AlertStateOK) && (setting.AlertingOKEnabled == false) {
 		return false
 	}
 	return true
