@@ -62,6 +62,27 @@ describe('given dashboard with repeated panels', () => {
           type: 'graph',
         },
         { id: 3, repeat: null, repeatPanelId: 2 },
+        {
+          id: 4,
+          collapsed: true,
+          panels: [
+            { id: 10, datasource: 'gfdb', type: 'table' },
+            { id: 11 },
+            {
+              id: 12,
+              datasource: '-- Mixed --',
+              targets: [{ datasource: 'other' }],
+            },
+            { id: 13, datasource: '$ds' },
+            {
+              id: 14,
+              repeat: 'apps',
+              datasource: 'gfdb',
+              type: 'heatmap',
+            },
+            { id: 15, repeat: null, repeatPanelId: 14 },
+          ],
+        },
       ],
     };
 
@@ -78,6 +99,18 @@ describe('given dashboard with repeated panels', () => {
       info: { version: '1.1.0' },
     };
 
+    config.panels['table'] = {
+      id: 'table',
+      name: 'Table',
+      info: { version: '1.1.1' },
+    };
+
+    config.panels['heatmap'] = {
+      id: 'heatmap',
+      name: 'Heatmap',
+      info: { version: '1.1.2' },
+    };
+
     dash = new DashboardModel(dash, {});
     var exporter = new DashboardExporter(datasourceSrvStub);
     exporter.makeExportable(dash).then(clean => {
@@ -88,6 +121,11 @@ describe('given dashboard with repeated panels', () => {
 
   it('should replace datasource refs', () => {
     var panel = exported.panels[0];
+    expect(panel.datasource).toBe('${DS_GFDB}');
+  });
+
+  it('should replace datasource refs in collapsed row', () => {
+    var panel = exported.panels[5].panels[0];
     expect(panel.datasource).toBe('${DS_GFDB}');
   });
 
@@ -126,11 +164,25 @@ describe('given dashboard with repeated panels', () => {
     expect(require).not.toBe(undefined);
   });
 
-  it('should add panel to required', () => {
+  it('should add graph panel to required', () => {
     var require = _.find(exported.__requires, { name: 'Graph' });
     expect(require.name).toBe('Graph');
     expect(require.id).toBe('graph');
     expect(require.version).toBe('1.1.0');
+  });
+
+  it('should add table panel to required', () => {
+    var require = _.find(exported.__requires, { name: 'Table' });
+    expect(require.name).toBe('Table');
+    expect(require.id).toBe('table');
+    expect(require.version).toBe('1.1.1');
+  });
+
+  it('should add heatmap panel to required', () => {
+    var require = _.find(exported.__requires, { name: 'Heatmap' });
+    expect(require.name).toBe('Heatmap');
+    expect(require.id).toBe('heatmap');
+    expect(require.version).toBe('1.1.2');
   });
 
   it('should add grafana version', () => {
