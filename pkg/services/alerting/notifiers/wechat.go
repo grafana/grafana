@@ -270,7 +270,7 @@ func (this *WeChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		content += "Error:\\n  " + evalContext.Error.Error() + "\\n\\n"
 	}
 
-	if evalContext.ImageOnDiskPath == "" {
+	if evalContext.ImageOnDiskPath == "" && evalContext.ImagePublicUrl != "" {
 		content += "ImageUrl:\\n  " + evalContext.ImagePublicUrl + "\\n"
 	}
 
