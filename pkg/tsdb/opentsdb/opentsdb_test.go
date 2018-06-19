@@ -28,7 +28,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 			metric := exec.buildMetric(query)
 
-			So(len(metric), ShouldEqual, 3)
+			So(len(metric), ShouldEqual, 4)
 			So(metric["metric"], ShouldEqual, "cpu.average.percent")
 			So(metric["aggregator"], ShouldEqual, "avg")
 			So(metric["downsample"], ShouldEqual, "1m-avg")
@@ -50,7 +50,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 			metric := exec.buildMetric(query)
 
-			So(len(metric), ShouldEqual, 2)
+			So(len(metric), ShouldEqual, 3)
 			So(metric["metric"], ShouldEqual, "cpu.average.percent")
 			So(metric["aggregator"], ShouldEqual, "avg")
 
@@ -71,7 +71,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 			metric := exec.buildMetric(query)
 
-			So(len(metric), ShouldEqual, 3)
+			So(len(metric), ShouldEqual, 4)
 			So(metric["metric"], ShouldEqual, "cpu.average.percent")
 			So(metric["aggregator"], ShouldEqual, "avg")
 			So(metric["downsample"], ShouldEqual, "5m-sum-null")
@@ -97,7 +97,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 			metric := exec.buildMetric(query)
 
-			So(len(metric), ShouldEqual, 3)
+			So(len(metric), ShouldEqual, 4)
 			So(metric["metric"], ShouldEqual, "cpu.average.percent")
 			So(metric["aggregator"], ShouldEqual, "avg")
 			So(metric["downsample"], ShouldEqual, nil)
@@ -126,7 +126,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 			metric := exec.buildMetric(query)
 
-			So(len(metric), ShouldEqual, 5)
+			So(len(metric), ShouldEqual, 6)
 			So(metric["metric"], ShouldEqual, "cpu.average.percent")
 			So(metric["aggregator"], ShouldEqual, "avg")
 			So(len(metric["tags"].(map[string]interface{})), ShouldEqual, 2)
@@ -158,7 +158,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 			metric := exec.buildMetric(query)
 
-			So(len(metric), ShouldEqual, 5)
+			So(len(metric), ShouldEqual, 6)
 			So(metric["metric"], ShouldEqual, "cpu.average.percent")
 			So(metric["aggregator"], ShouldEqual, "avg")
 			So(len(metric["tags"].(map[string]interface{})), ShouldEqual, 2)
