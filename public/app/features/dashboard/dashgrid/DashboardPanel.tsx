@@ -75,7 +75,6 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
     }
 
     if (!this.pluginExports) {
-      console.log('render null');
       return null;
     }
 

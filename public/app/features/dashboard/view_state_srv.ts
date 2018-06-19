@@ -174,7 +174,6 @@ export class DashboardViewState {
 
     // Firefox doesn't return scrollTop position properly if 'dash-scroll' is emitted after setViewMode()
     this.$scope.appEvent('dash-scroll', { animate: false, pos: 0 });
-    console.log('viewstatesrv.setViewMode');
     this.dashboard.setViewMode(panel, true, isEditing);
   }
 }

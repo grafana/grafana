@@ -12,8 +12,6 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     return (
       <div className="tabbed-view tabbed-view--panel-edit">
         <div className="tabbed-view-header">
-          <h3 className="tabbed-view-panel-title">{this.props.panel.type}</h3>
-
           <ul className="gf-tabs">
             <li className="gf-tabs-item">
               <a className="gf-tabs-link active">Queries</a>

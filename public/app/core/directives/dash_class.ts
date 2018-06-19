@@ -5,9 +5,7 @@ coreModule.directive('dashClass', function($timeout) {
   return {
     link: function($scope, elem) {
       $scope.ctrl.dashboard.events.on('view-mode-changed', function(panel) {
-        $timeout(() => {
-          elem.toggleClass('panel-in-fullscreen', panel.fullscreen === true);
-        });
+        elem.toggleClass('panel-in-fullscreen', panel.fullscreen === true);
       });
 
       elem.toggleClass('panel-in-fullscreen', $scope.ctrl.dashboard.meta.fullscreen === true);

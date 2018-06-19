@@ -23,7 +23,7 @@ export class PanelChrome extends React.Component<PanelChromeProps, any> {
   }
 
   triggerForceUpdate() {
-    this.forceUpdate();
+    // this.forceUpdate();
   }
 
   render() {
@@ -32,6 +32,7 @@ export class PanelChrome extends React.Component<PanelChromeProps, any> {
     };
 
     let PanelComponent = this.props.component;
+    console.log('PanelChrome render');
 
     return (
       <div className="panel-height-helper">

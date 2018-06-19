@@ -24,10 +24,8 @@ export class PanelCtrl {
   $injector: any;
   $location: any;
   $timeout: any;
-  fullscreen: boolean;
   inspector: any;
   editModeInitiated: boolean;
-  editMode: any;
   height: any;
   containerHeight: any;
   events: Emitter;
@@ -130,6 +128,7 @@ export class PanelCtrl {
         return { templateUrl: directiveFn };
       };
     }
+
     if (index) {
       this.editorTabs.splice(index, 0, editorTab);
     } else {
@@ -190,7 +189,7 @@ export class PanelCtrl {
 
   getExtendedMenu() {
     let menu = [];
-    if (!this.fullscreen && this.dashboard.meta.canEdit) {
+    if (!this.panel.fullscreen && this.dashboard.meta.canEdit) {
       menu.push({
         text: 'Duplicate',
         click: 'ctrl.duplicate()',
@@ -220,21 +219,26 @@ export class PanelCtrl {
   }
 
   otherPanelInFullscreenMode() {
-    return this.dashboard.meta.fullscreen && !this.fullscreen;
+    return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
   }
 
   calculatePanelHeight() {
-    if (this.fullscreen) {
+    if (this.panel.fullscreen) {
       var docHeight = $(window).height();
       var editHeight = Math.floor(docHeight * 0.4);
       var fullscreenHeight = Math.floor(docHeight * 0.8);
-      this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
+      this.containerHeight = this.panel.isEditing ? editHeight : fullscreenHeight;
     } else {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
 
     if (this.panel.soloMode) {
       this.containerHeight = $(window).height();
+    }
+
+    // hacky solution
+    if (this.panel.isEditing && !this.editModeInitiated) {
+      this.initEditMode();
     }
 
     this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
@@ -247,9 +251,6 @@ export class PanelCtrl {
 
   duplicate() {
     this.dashboard.duplicatePanel(this.panel);
-    this.$timeout(() => {
-      this.$scope.$root.$broadcast('render');
-    });
   }
 
   removePanel() {

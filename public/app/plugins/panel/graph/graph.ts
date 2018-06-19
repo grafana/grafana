@@ -197,6 +197,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       // Function for rendering panel
       function render_panel() {
         panelWidth = elem.width();
+        console.log('panelWidth', panelWidth);
+
         if (shouldAbortRender()) {
           return;
         }
