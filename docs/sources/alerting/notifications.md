@@ -130,6 +130,14 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 
+### WeChat
+
+[Instruction in Chinese](https://zhuanlan.zhihu.com/p/38225794)
+
+1. Create WeChat App, Get AgentID & Secret
+2. Get WeChat CorpID
+3. Create WeChat Notifier Channel
+
 ### All supported notifier
 
 Name | Type |Support images
@@ -148,6 +156,7 @@ Pushover | `pushover` | no
 Telegram | `telegram` | no
 Line | `line` | no
 Prometheus Alertmanager | `prometheus-alertmanager` | no
+WeChat | `wechat` | yes
 
 
 
