@@ -6,7 +6,7 @@ export class ReactTestPanel extends React.Component<any, any> {
   }
 
   render() {
-    return <h2>Panel content</h2>;
+    return <h2>I am a react panel, haha!</h2>;
   }
 }
 

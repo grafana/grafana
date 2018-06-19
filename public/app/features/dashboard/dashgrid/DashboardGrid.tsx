@@ -85,7 +85,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.dashboard.on('panel-added', this.triggerForceUpdate.bind(this));
     this.dashboard.on('panel-removed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('repeats-processed', this.triggerForceUpdate.bind(this));
-    this.dashboard.on('view-mode-changed', this.triggerForceUpdate.bind(this));
+    this.dashboard.on('view-mode-changed', this.onViewModeChanged.bind(this));
     this.dashboard.on('row-collapsed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('row-expanded', this.triggerForceUpdate.bind(this));
   }
@@ -142,6 +142,10 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     }
   }
 
+  onViewModeChanged(payload) {
+    this.setState({ animated: payload.fullscreen });
+  }
+
   updateGridPos(item, layout) {
     this.panelMap[item.i].updateGridPos(item);
 
@@ -165,9 +169,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
   componentDidMount() {
     setTimeout(() => {
-      this.setState(() => {
-        return { animated: true };
-      });
+      this.setState({ animated: true });
     });
   }
 
@@ -178,7 +180,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
       const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
       panelElements.push(
         <div key={panel.id.toString()} className={panelClasses}>
-          <DashboardPanel panel={panel} dashboard={this.dashboard} />
+          <DashboardPanel panel={panel} dashboard={this.dashboard} panelContainer={this.panelContainer} />
         </div>
       );
     }

@@ -7,7 +7,7 @@ var module = angular.module('grafana.directives');
 
 var panelTemplate = `
   <div class="panel-container">
-    <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.fullscreen}">
+    <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
       <span class="panel-info-corner">
         <i class="fa"></i>
         <span class="panel-info-corner-inner"></span>
@@ -25,7 +25,7 @@ var panelTemplate = `
     </div>
   </div>
 
-  <div class="panel-full-edit" ng-if="ctrl.editMode">
+  <div class="panel-full-edit" ng-if="ctrl.panel.isEditing">
     <div class="tabbed-view tabbed-view--panel-edit">
       <div class="tabbed-view-header">
         <h3 class="tabbed-view-panel-title">

@@ -82,13 +82,16 @@ export class PanelModel {
     this.gridPos.h = newPos.h;
 
     if (sizeChanged) {
-      console.log('PanelModel sizeChanged event and render events fired');
       this.events.emit('panel-size-changed');
     }
   }
 
   resizeDone() {
     this.events.emit('panel-size-changed');
+  }
+
+  initEditMode() {
+    this.events.emit('panel-init-edit-mode');
   }
 
   destroy() {
