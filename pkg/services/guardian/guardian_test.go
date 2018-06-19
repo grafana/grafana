@@ -28,7 +28,7 @@ func TestGuardianAdmin(t *testing.T) {
 	Convey("Guardian admin org role tests", t, func() {
 		orgRoleScenario("Given user has admin org role", t, m.ROLE_ADMIN, func(sc *scenarioContext) {
 			// dashboard has default permissions
-			sc.defaultPermissionScenario(USER, m.PERMISSION_ADMIN, FULL_ACCESS)
+			sc.defaultPermissionScenario(USER, FULL_ACCESS)
 
 			// dashboard has user with permission
 			sc.dashboardPermissionScenario(USER, m.PERMISSION_ADMIN, FULL_ACCESS)
@@ -76,6 +76,9 @@ func TestGuardianAdmin(t *testing.T) {
 func TestGuardianEditor(t *testing.T) {
 	Convey("Guardian editor org role tests", t, func() {
 		orgRoleScenario("Given user has editor org role", t, m.ROLE_EDITOR, func(sc *scenarioContext) {
+			// dashboard has default permissions
+			sc.defaultPermissionScenario(USER, EDITOR_ACCESS)
+
 			// dashboard has user with permission
 			sc.dashboardPermissionScenario(USER, m.PERMISSION_ADMIN, FULL_ACCESS)
 			sc.dashboardPermissionScenario(USER, m.PERMISSION_EDIT, EDITOR_ACCESS)
@@ -122,6 +125,9 @@ func TestGuardianEditor(t *testing.T) {
 func TestGuardianViewer(t *testing.T) {
 	Convey("Guardian viewer org role tests", t, func() {
 		orgRoleScenario("Given user has viewer org role", t, m.ROLE_VIEWER, func(sc *scenarioContext) {
+			// dashboard has default permissions
+			sc.defaultPermissionScenario(USER, VIEWER_ACCESS)
+
 			// dashboard has user with permission
 			sc.dashboardPermissionScenario(USER, m.PERMISSION_ADMIN, FULL_ACCESS)
 			sc.dashboardPermissionScenario(USER, m.PERMISSION_EDIT, EDITOR_ACCESS)
@@ -165,12 +171,12 @@ func TestGuardianViewer(t *testing.T) {
 
 		apiKeyScenario("Given api key with viewer role", t, m.ROLE_VIEWER, func(sc *scenarioContext) {
 			// dashboard has default permissions
-			sc.defaultPermissionScenario(VIEWER, m.PERMISSION_EDIT, VIEWER_ACCESS)
+			sc.defaultPermissionScenario(VIEWER, VIEWER_ACCESS)
 		})
 	})
 }
 
-func (sc *scenarioContext) defaultPermissionScenario(pt permissionType, permission m.PermissionType, flag permissionFlags) {
+func (sc *scenarioContext) defaultPermissionScenario(pt permissionType, flag permissionFlags) {
 	_, callerFile, callerLine, _ := runtime.Caller(1)
 	sc.callerFile = callerFile
 	sc.callerLine = callerLine
