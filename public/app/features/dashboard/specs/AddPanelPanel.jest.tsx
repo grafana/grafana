@@ -14,7 +14,7 @@ jest.mock('app/core/store', () => ({
 }));
 
 describe('AddPanelPanel', () => {
-  let wrapper, dashboardMock, getPanelContainer, panel;
+  let wrapper, dashboardMock, panel;
 
   beforeEach(() => {
     config.panels = [
