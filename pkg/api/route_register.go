@@ -14,15 +14,30 @@ type Router interface {
 // RouteRegister allows you to add routes and macaron.Handlers
 // that the web server should serve.
 type RouteRegister interface {
+	// Get adds a list of handlers to a given route with a GET HTTP verb
 	Get(string, ...macaron.Handler)
+
+	// Post adds a list of handlers to a given route with a POST HTTP verb
 	Post(string, ...macaron.Handler)
+
+	// Delete adds a list of handlers to a given route with a DELETE HTTP verb
 	Delete(string, ...macaron.Handler)
+
+	// Put adds a list of handlers to a given route with a PUT HTTP verb
 	Put(string, ...macaron.Handler)
+
+	// Patch adds a list of handlers to a given route with a PATCH HTTP verb
 	Patch(string, ...macaron.Handler)
+
+	// Any adds a list of handlers to a given route with any HTTP verb
 	Any(string, ...macaron.Handler)
 
+	// Group allows you to pass a function that can add multiple routes
+	// with a shared prefix route.
 	Group(string, func(RouteRegister), ...macaron.Handler)
 
+	// Register iterates over all routes added to the RouteRegister
+	// and add them to the `Router` pass as an parameter.
 	Register(Router) *macaron.Router
 }
 
