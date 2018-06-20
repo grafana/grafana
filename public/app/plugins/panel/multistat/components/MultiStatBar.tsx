@@ -32,10 +32,12 @@ export class MultiStatBar extends React.Component<IProps, any> {
       let width = (v - minVal) / delta * deltaWidth + minWidth;
       barWidths[i] = Math.max(minWidth, width);
     });
+    const barHeight = stats.length > 0 ? this.props.size.h / stats.length : 0;
 
     const statElements = stats.map((stat, index) => {
       const color = this.props.getColor(stat.value);
-      return <BarStat key={index} stat={stat} color={color} width={barWidths[index]} />;
+      const barSize = { w: barWidths[index], h: barHeight };
+      return <BarStat key={index} stat={stat} color={color} size={barSize} />;
     });
 
     return <div>{statElements}</div>;

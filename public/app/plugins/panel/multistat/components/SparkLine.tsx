@@ -2,7 +2,7 @@ import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import React from 'react';
 import { IStat, ISize } from '../types';
-import { getBGColor } from './shared';
+import { getBGColor } from './utils';
 
 export interface IProps {
   stat: IStat;

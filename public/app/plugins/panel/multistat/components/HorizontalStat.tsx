@@ -1,7 +1,7 @@
 import React from 'react';
 import { SparkLine } from './SparkLine';
 import { IStat, ISize } from '../types';
-import { getBGColor } from './shared';
+import { getBGColor } from './utils';
 
 export interface IProps {
   stat: IStat;

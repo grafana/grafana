@@ -1,25 +1,20 @@
 import React from 'react';
-import { getBGColor } from './shared';
-
-interface IStat {
-  alias?: string;
-  label?: string;
-  value: number;
-  valueRounded: number;
-  valueFormatted: string;
-  flotpairs: any[];
-  scopedVars?: any;
-}
+import { IStat, ISize } from '../types';
+import { getBGColor } from './utils';
 
 export interface IProps {
   stat: IStat;
-  width?: number;
+  size?: ISize;
   color?: string;
 }
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
 export class BarStat extends React.Component<IProps, any> {
+  labelElem: any;
+  valueElem: any;
+  barElem: any;
+
   constructor(props) {
     super(props);
   }
@@ -35,8 +30,13 @@ export class BarStat extends React.Component<IProps, any> {
       borderRightColor: valueColor,
     };
 
-    if (this.props.width) {
-      barStyle.width = this.props.width;
+    let barContainerStyle: React.CSSProperties = {};
+    if (this.props.size) {
+      const barHeight = this.props.size.h * 0.8;
+      barStyle.height = barHeight;
+      barContainerStyle.lineHeight = `${barHeight}px`;
+      barContainerStyle.width = this.props.size.w;
+      barContainerStyle.height = this.props.size.h;
     }
 
     const valueStyle: React.CSSProperties = {
@@ -44,11 +44,15 @@ export class BarStat extends React.Component<IProps, any> {
     };
 
     return (
-      <div className="multistat-bar" style={barStyle}>
-        <span className="bar-label">{stat.label}</span>
-        <span className="bar-value" style={valueStyle}>
-          {stat.valueFormatted}
-        </span>
+      <div className="multistat-bar-container" style={barContainerStyle}>
+        <div className="multistat-bar" style={barStyle} ref={el => (this.barElem = el)}>
+          <span className="bar-label" ref={el => (this.labelElem = el)}>
+            {stat.label}
+          </span>
+          <span className="bar-value" style={valueStyle} ref={el => (this.valueElem = el)}>
+            {stat.valueFormatted}
+          </span>
+        </div>
       </div>
     );
   }
