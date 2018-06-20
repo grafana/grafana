@@ -4,6 +4,8 @@
 
 # 5.2.0 (unreleased)
 
+# 5.2.0-beta2 (2018-06-20)
+
 ### New Features
 
 * **Dashboard**: Import dashboard to folder [#10796](https://github.com/grafana/grafana/issues/10796)
