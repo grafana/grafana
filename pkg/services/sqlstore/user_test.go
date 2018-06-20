@@ -96,33 +96,33 @@ func TestUserDataAccess(t *testing.T) {
 			})
 
 			Convey("when a user is an org member and has been assigned permissions", func() {
-				err = AddOrgUser(&m.AddOrgUserCommand{LoginOrEmail: users[0].Login, Role: m.ROLE_VIEWER, OrgId: users[0].OrgId})
+				err = AddOrgUser(&m.AddOrgUserCommand{LoginOrEmail: users[1].Login, Role: m.ROLE_VIEWER, OrgId: users[0].OrgId, UserId: users[1].Id})
 				So(err, ShouldBeNil)
 
-				testHelperUpdateDashboardAcl(1, m.DashboardAcl{DashboardId: 1, OrgId: users[0].OrgId, UserId: users[0].Id, Permission: m.PERMISSION_EDIT})
+				testHelperUpdateDashboardAcl(1, m.DashboardAcl{DashboardId: 1, OrgId: users[0].OrgId, UserId: users[1].Id, Permission: m.PERMISSION_EDIT})
 				So(err, ShouldBeNil)
 
-				err = SavePreferences(&m.SavePreferencesCommand{UserId: users[0].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark"})
+				err = SavePreferences(&m.SavePreferencesCommand{UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark"})
 				So(err, ShouldBeNil)
 
 				Convey("when the user is deleted", func() {
-					err = DeleteUser(&m.DeleteUserCommand{UserId: users[0].Id})
+					err = DeleteUser(&m.DeleteUserCommand{UserId: users[1].Id})
 					So(err, ShouldBeNil)
 
 					Convey("Should delete connected org users and permissions", func() {
-						query := &m.GetOrgUsersQuery{OrgId: 1}
+						query := &m.GetOrgUsersQuery{OrgId: users[0].OrgId}
 						err = GetOrgUsersForTest(query)
 						So(err, ShouldBeNil)
 
 						So(len(query.Result), ShouldEqual, 1)
 
-						permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: 1}
+						permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: users[0].OrgId}
 						err = GetDashboardAclInfoList(permQuery)
 						So(err, ShouldBeNil)
 
 						So(len(permQuery.Result), ShouldEqual, 0)
 
-						prefsQuery := &m.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[0].Id}
+						prefsQuery := &m.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
 						err = GetPreferences(prefsQuery)
 						So(err, ShouldBeNil)
 
