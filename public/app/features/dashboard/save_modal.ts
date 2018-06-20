@@ -1,5 +1,4 @@
 import coreModule from 'app/core/core_module';
-import _ from 'lodash';
 
 const template = `
 <div class="modal-body">
@@ -70,7 +69,6 @@ export class SaveDashboardModalCtrl {
   message: string;
   saveVariables = false;
   saveTimerange = false;
-  templating: any;
   time: any;
   originalTime: any;
   current = [];
@@ -87,40 +85,8 @@ export class SaveDashboardModalCtrl {
     this.message = '';
     this.max = 64;
     this.isSaving = false;
-    this.templating = dashboardSrv.dash.templating.list;
-
-    this.compareTemplating();
-    this.compareTime();
-  }
-
-  compareTime() {
-    if (_.isEqual(this.dashboardSrv.dash.time, this.dashboardSrv.dash.originalTime)) {
-      this.timeChange = false;
-    } else {
-      this.timeChange = true;
-    }
-  }
-
-  compareTemplating() {
-    //checks if variables has been added or removed, if so variables will be saved automatically
-    if (this.dashboardSrv.dash.originalTemplating.length !== this.dashboardSrv.dash.templating.list.length) {
-      return (this.variableValueChange = false);
-    }
-
-    //checks if variable value has changed
-    if (this.dashboardSrv.dash.templating.list.length > 0) {
-      for (let i = 0; i < this.dashboardSrv.dash.templating.list.length; i++) {
-        if (
-          this.dashboardSrv.dash.templating.list[i].current.text !==
-          this.dashboardSrv.dash.originalTemplating[i].current.text
-        ) {
-          return (this.variableValueChange = true);
-        }
-      }
-      return (this.variableValueChange = false);
-    } else {
-      return (this.variableValueChange = false);
-    }
+    this.timeChange = this.dashboardSrv.getCurrent().hasTimeChanged();
+    this.variableValueChange = this.dashboardSrv.getCurrent().hasVariableValuesChanged();
   }
 
   save() {
@@ -139,7 +105,19 @@ export class SaveDashboardModalCtrl {
 
     this.isSaving = true;
 
-    return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
+    return this.dashboardSrv.save(saveModel, options).then(this.postSave.bind(this, options));
+  }
+
+  postSave(options) {
+    if (options.saveVariables) {
+      this.dashboardSrv.getCurrent().resetOriginalVariables();
+    }
+
+    if (options.saveTimerange) {
+      this.dashboardSrv.getCurrent().resetOriginalTime();
+    }
+
+    this.dismiss();
   }
 }
 
