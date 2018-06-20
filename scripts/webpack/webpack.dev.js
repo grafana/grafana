@@ -65,7 +65,7 @@ module.exports = merge(common, {
   },
 
   plugins: [
-    new CleanWebpackPlugin('../public/build', { allowExternal: true }),
+    new CleanWebpackPlugin('../../public/build', { allowExternal: true }),
     extractSass,
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
