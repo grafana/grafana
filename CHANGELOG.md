@@ -4,6 +4,12 @@
 
 # 5.2.0 (unreleased)
 
+# 5.2.0-beta3 (2018-06-21)
+
+### Minor
+
+* **Build**: All rpm packages should be signed [#12359](https://github.com/grafana/grafana/issues/12359)
+
 # 5.2.0-beta2 (2018-06-20)
 
 ### New Features
