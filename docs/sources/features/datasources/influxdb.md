@@ -188,7 +188,7 @@ queries via the Dashboard menu / Annotations view.
 An example query:
 
 ```SQL
-SELECT title, description from events WHERE $timeFilter order asc
+SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
 
 For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
