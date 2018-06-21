@@ -135,6 +135,10 @@ describe('CloudWatchDatasource', function() {
               { text: 'i-23456789', value: 'i-23456789', selected: false },
               { text: 'i-34567890', value: 'i-34567890', selected: true },
             ],
+            current: {
+              text: 'i-34567890',
+              value: 'i-34567890',
+            },
           },
         ],
         replace: function(target, scopedVars) {
@@ -170,6 +174,53 @@ describe('CloudWatchDatasource', function() {
 
       var result = ctx.ds.expandTemplateVariable(targets, {}, templateSrv);
       expect(result[0].dimensions.InstanceId).to.be('i-34567890');
+    });
+
+    it('should generate the correct targets by expanding template variables from url', function() {
+      var templateSrv = {
+        variables: [
+          {
+            name: 'instance_id',
+            options: [
+              { text: 'i-23456789', value: 'i-23456789', selected: false },
+              { text: 'i-34567890', value: 'i-34567890', selected: false },
+            ],
+            current: 'i-45678901',
+          },
+        ],
+        replace: function(target, scopedVars) {
+          if (target === '$instance_id') {
+            return 'i-45678901';
+          } else {
+            return '';
+          }
+        },
+        getVariableName: function(e) {
+          return 'instance_id';
+        },
+        variableExists: function(e) {
+          return true;
+        },
+        containsVariable: function(str, variableName) {
+          return str.indexOf('$' + variableName) !== -1;
+        },
+      };
+
+      var targets = [
+        {
+          region: 'us-east-1',
+          namespace: 'AWS/EC2',
+          metricName: 'CPUUtilization',
+          dimensions: {
+            InstanceId: '$instance_id',
+          },
+          statistics: ['Average'],
+          period: 300,
+        },
+      ];
+
+      var result = ctx.ds.expandTemplateVariable(targets, {}, templateSrv);
+      expect(result[0].dimensions.InstanceId).to.be('i-45678901');
     });
   });
 
