@@ -113,7 +113,6 @@ export class HistoryListCtrl {
       .calculateDiff(options)
       .then(response => {
         this.delta[this.diff] = response;
-        console.log('SUCCESSS!!!');
       })
       .catch(() => {
         this.mode = 'list';
@@ -160,12 +159,10 @@ export class HistoryListCtrl {
     this.delta = { basic: '', json: '' };
     this.diff = 'basic';
     this.mode = 'list';
-    //console.log(this.revisions);
     this.revisions = _.map(this.revisions, rev => _.extend({}, rev, { checked: false }));
     this.canCompare = false;
     this.start = 0;
     this.isNewLatest = false;
-    //console.log(this.revisions);
   }
 
   resetFromSource() {
