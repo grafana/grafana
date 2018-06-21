@@ -1,0 +1,12 @@
+{
+  "AWS/ElastiCache": {
+    "dimensions": [],
+    "metrics": [
+      "CPUUtilization",
+      "FreeableMemory",
+      "NetworkBytesIn",
+      "NetworkBytesOut",
+      "SwapUsage"
+    ]
+  }
+}

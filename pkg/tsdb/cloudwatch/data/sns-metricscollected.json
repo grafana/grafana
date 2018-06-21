@@ -1,0 +1,19 @@
+{
+  "AWS/SNS": {
+    "dimensions": [
+      "Application",
+      "Application,Platform",
+      "Country",
+      "Platform",
+      "SMSType",
+      "TopicName"
+    ],
+    "metrics": [
+      "NumberOfMessagesPublished",
+      "NumberOfNotificationsDelivered",
+      "NumberOfNotificationsFailed",
+      "PublishSize",
+      "SMSSuccessRate"
+    ]
+  }
+}

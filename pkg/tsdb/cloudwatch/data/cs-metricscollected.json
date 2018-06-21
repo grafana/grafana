@@ -1,0 +1,14 @@
+{
+  "AWS/CloudSearch": {
+    "dimensions": [
+      "ClientId",
+      "DomainName"
+    ],
+    "metrics": [
+      "IndexUtilization",
+      "Partitions",
+      "SearchableDocuments",
+      "SuccessfulRequests"
+    ]
+  }
+}

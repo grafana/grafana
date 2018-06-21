@@ -1,0 +1,21 @@
+{
+  "AWS/WorkSpaces": {
+    "dimensions": [
+      "DirectoryId",
+      "WorkspaceId"
+    ],
+    "metrics": [
+      "Available1",
+      "ConnectionAttempt2",
+      "ConnectionFailure2",
+      "ConnectionSuccess2",
+      "InSessionLatency2",
+      "Maintenance4",
+      "SessionDisconnect2",
+      "SessionLaunchTime2",
+      "Stopped",
+      "Unhealthy1",
+      "UserConnected3"
+    ]
+  }
+}

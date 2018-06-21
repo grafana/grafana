@@ -1,0 +1,16 @@
+{
+  "AWS/SQS": {
+    "dimensions": [],
+    "metrics": [
+      "ApproximateAgeOfOldestMessage",
+      "ApproximateNumberOfMessagesDelayed",
+      "ApproximateNumberOfMessagesNotVisible",
+      "ApproximateNumberOfMessagesVisible",
+      "NumberOfEmptyReceives",
+      "NumberOfMessagesDeleted",
+      "NumberOfMessagesReceived",
+      "NumberOfMessagesSent",
+      "SentMessageSize"
+    ]
+  }
+}

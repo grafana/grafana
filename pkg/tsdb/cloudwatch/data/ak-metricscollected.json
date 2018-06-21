@@ -1,0 +1,30 @@
+{
+  "AWS/Kinesis": {
+    "dimensions": [
+      "ShardId",
+      "StreamName"
+    ],
+    "metrics": [
+      "GetRecords.Bytes",
+      "GetRecords.IteratorAge",
+      "GetRecords.IteratorAgeMilliseconds",
+      "GetRecords.Latency",
+      "GetRecords.Records",
+      "GetRecords.Success",
+      "IncomingBytes",
+      "IncomingRecords",
+      "IteratorAgeMilliseconds",
+      "OutgoingBytes",
+      "OutgoingRecords",
+      "PutRecord.Bytes",
+      "PutRecord.Latency",
+      "PutRecord.Success",
+      "PutRecords.Bytes",
+      "PutRecords.Latency",
+      "PutRecords.Records",
+      "PutRecords.Success",
+      "ReadProvisionedThroughputExceeded",
+      "WriteProvisionedThroughputExceeded"
+    ]
+  }
+}

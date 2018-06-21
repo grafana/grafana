@@ -1,0 +1,19 @@
+{
+  "AWS/SageMaker": {
+    "dimensions": [
+      "EndpointName",
+      "Host",
+      "VariantName"
+    ],
+    "metrics": [
+      "CPUUtilization",
+      "GPUUtilization",
+      "Invocation4XXErrors",
+      "Invocation5XXErrors",
+      "Invocations",
+      "InvocationsPerInstance",
+      "MemoryUtilizaton",
+      "ModelLatency"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "AWS/S3": {
+    "dimensions": [
+      "BucketName",
+      "FilterId",
+      "StorageType"
+    ],
+    "metrics": [
+      "4xxErrors",
+      "5xxErrors",
+      "AllRequests",
+      "BucketSizeBytes",
+      "BytesDownloaded",
+      "BytesUploaded",
+      "DeleteRequests",
+      "FirstByteLatency",
+      "GetRequests",
+      "HeadRequests",
+      "ListRequests",
+      "NumberOfObjects",
+      "PostRequests",
+      "PutRequests",
+      "SelectRequests",
+      "TotalRequestLatency"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "AWS/Redshift": {
+    "dimensions": [
+      "ClusterIdentifier",
+      "NodeID",
+      "latency",
+      "wmlid"
+    ],
+    "metrics": [
+      "CPUUtilization",
+      "DatabaseConnections",
+      "HealthStatus",
+      "MaintenanceMode",
+      "NetworkReceiveThroughput",
+      "NetworkTransmitThroughput",
+      "PercentageDiskSpaceUsed",
+      "QueriesCompletedPerSecond",
+      "QueryDuration",
+      "ReadIOPS",
+      "ReadLatency",
+      "ReadThroughput",
+      "WLMQueriesCompletedPerSecond",
+      "WLMQueryDuration",
+      "WriteIOPS",
+      "WriteLatency",
+      "WriteThroughput"
+    ]
+  }
+}

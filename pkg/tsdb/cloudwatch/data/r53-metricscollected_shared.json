@@ -1,0 +1,13 @@
+{
+  "AWS/Route53": {
+    "dimensions": [],
+    "metrics": [
+      "ChildHealthCheckHealthyCount",
+      "ConnectionTime",
+      "HealthCheckPercentageHealthy",
+      "HealthCheckStatus",
+      "SSLHandshakeTime",
+      "TimeToFirstByte"
+    ]
+  }
+}

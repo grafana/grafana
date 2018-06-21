@@ -1,0 +1,31 @@
+{
+  "AWS/Lex": {
+    "dimensions": [
+      "BotAlias",
+      "BotChannelName",
+      "BotName",
+      "BotVersion",
+      "InputMode",
+      "Operation",
+      "Source"
+    ],
+    "metrics": [
+      "BotChannelAuthErrors",
+      "BotChannelConfigurationErrors",
+      "BotChannelInboundThrottledEvents",
+      "BotChannelOutboundThrottledEvents",
+      "BotChannelRequestCount",
+      "BotChannelResponseCardErrors",
+      "BotChannelSystemErrors",
+      "MissedUtteranceCount",
+      "RuntimeInvalidLambdaResponses",
+      "RuntimeLambdaErrors",
+      "RuntimePollyErrors",
+      "RuntimeRequestCount",
+      "RuntimeSucessfulRequestLatency",
+      "RuntimeSystemErrors",
+      "RuntimeThrottledEvents",
+      "RuntimeUserErrors"
+    ]
+  }
+}

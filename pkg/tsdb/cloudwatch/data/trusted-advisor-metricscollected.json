@@ -1,0 +1,19 @@
+{
+  "AWS/TrustedAdvisor": {
+    "dimensions": [
+      "Category",
+      "CheckName",
+      "Region",
+      "ServiceLimit",
+      "ServiceName"
+    ],
+    "metrics": [
+      "GreenChecks",
+      "RedChecks",
+      "RedResources",
+      "ServiceLimitUsage",
+      "YellowChecks",
+      "YellowResources"
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "AWS/DynamoDB": {
+    "dimensions": [
+      "GlobalSecondaryIndexName",
+      "Operation",
+      "ReceivingRegion",
+      "StreamLabel",
+      "TableName"
+    ],
+    "metrics": [
+      "ConditionalCheckFailedRequests",
+      "ConsumedReadCapacityUnits",
+      "ConsumedWriteCapacityUnits",
+      "OnlineIndexConsumedWriteCapacity",
+      "OnlineIndexPercentageProgress",
+      "OnlineIndexThrottleEvents",
+      "PendingReplicationCount",
+      "ProvisionedReadCapacityUnits",
+      "ProvisionedWriteCapacityUnits",
+      "ReadThrottleEvents",
+      "ReplicationLatency",
+      "ReturnedBytes",
+      "ReturnedItemCount",
+      "ReturnedRecordsCount",
+      "SuccessfulRequestLatency",
+      "SystemErrors",
+      "ThrottledRequests",
+      "TimeToLiveDeletedItemCount",
+      "UserErrors",
+      "WriteThrottleEvents"
+    ]
+  }
+}

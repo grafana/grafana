@@ -1,0 +1,15 @@
+{
+  "AWS/AutoScaling": {
+    "dimensions": [],
+    "metrics": [
+      "GroupDesiredCapacity",
+      "GroupInServiceInstances",
+      "GroupMaxSize",
+      "GroupMinSize",
+      "GroupPendingInstances",
+      "GroupStandbyInstances",
+      "GroupTerminatingInstances",
+      "GroupTotalInstances"
+    ]
+  }
+}

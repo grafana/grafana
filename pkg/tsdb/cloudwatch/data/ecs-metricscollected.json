@@ -1,0 +1,14 @@
+{
+  "AWS/ECS": {
+    "dimensions": [
+      "ClusterName",
+      "ServiceName"
+    ],
+    "metrics": [
+      "CPUReservation",
+      "CPUUtilization",
+      "MemoryReservation",
+      "MemoryUtilization"
+    ]
+  }
+}

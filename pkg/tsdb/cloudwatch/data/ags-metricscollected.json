@@ -1,0 +1,61 @@
+{
+  "AWS/GameLift": {
+    "dimensions": [],
+    "metrics": [
+      "ActivatingGameSessions",
+      "ActiveGameSessions",
+      "ActiveInstances",
+      "ActiveServerProcesses",
+      "AvailableGameSessions",
+      "CurrentPlayerSessions",
+      "DesiredInstances",
+      "GameSessionInterruptions",
+      "HealthyServerProcesses",
+      "IdleInstances",
+      "InstanceInterruptions",
+      "MaxInstances",
+      "MinInstances",
+      "PercentAvailableGameSessions",
+      "PercentHealthyServerProcesses",
+      "PercentIdleInstances",
+      "PlayerSessionActivations",
+      "ServerProcessAbnormalTerminations",
+      "ServerProcessActivations",
+      "ServerProcessTerminations"
+    ]
+  },
+  "GameLift": {
+    "dimensions": [
+      "FleetId",
+      "FleetMetricsGroup",
+      "InstanceType",
+      "MatchmakingConfigurationName",
+      "MatchmakingConfigurationName-RuleName",
+      "OperatingSystem",
+      "QueueName"
+    ],
+    "metrics": [
+      "AverageWaitTime",
+      "CurrentTickets",
+      "MatchAcceptancesTimedOut",
+      "MatchesAccepted",
+      "MatchesCreated",
+      "MatchesPlaced",
+      "MatchesRejected",
+      "PlacementsCanceled",
+      "PlacementsStarted",
+      "PlacementsSucceeded",
+      "PlacementsTimedOut",
+      "PlayersStarted",
+      "QueueDepth",
+      "RuleEvaluationsFailed",
+      "RuleEvaluationsPassed",
+      "TicketsFailed",
+      "TicketsStarted",
+      "TicketsTimedOut",
+      "TimeToMatch",
+      "TimeToTicketCancel",
+      "TimeToTicketSuccess"
+    ]
+  }
+}

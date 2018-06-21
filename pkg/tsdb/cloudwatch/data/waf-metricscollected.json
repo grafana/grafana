@@ -1,0 +1,16 @@
+{
+  "WAF": {
+    "dimensions": [
+      "Region",
+      "Rule",
+      "RuleGroup",
+      "WebACL"
+    ],
+    "metrics": [
+      "AllowedRequests",
+      "BlockedRequests",
+      "CountedRequests",
+      "PassedRequests"
+    ]
+  }
+}

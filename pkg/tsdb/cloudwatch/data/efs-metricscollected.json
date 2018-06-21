@@ -1,0 +1,15 @@
+{
+  "AWS/EFS": {
+    "dimensions": [],
+    "metrics": [
+      "BurstCreditBalance",
+      "ClientConnections",
+      "DataReadIOBytes",
+      "DataWriteIOBytes",
+      "MetadataIOBytes",
+      "PercentIOLimit",
+      "PermittedThroughput",
+      "TotalIOBytes"
+    ]
+  }
+}

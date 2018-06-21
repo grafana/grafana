@@ -1,0 +1,23 @@
+{
+  "AWS/NATGateway": {
+    "dimensions": [
+      "NatGatewayId"
+    ],
+    "metrics": [
+      "ActiveConnectionCount",
+      "BytesInFromDestination",
+      "BytesInFromSource",
+      "BytesOutToDestination",
+      "BytesOutToSource",
+      "ConnectionAttemptCount",
+      "ConnectionEstablishedCount",
+      "ErrorPortAllocation",
+      "IdleTimeoutCount",
+      "PacketsDropCount",
+      "PacketsInFromDestination",
+      "PacketsInFromSource",
+      "PacketsOutToDestination",
+      "PacketsOutToSource"
+    ]
+  }
+}

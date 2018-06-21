@@ -1,0 +1,34 @@
+{
+  "AWS/EC2": {
+    "dimensions": [
+      "AutoScalingGroupName",
+      "ImageId",
+      "InstanceId",
+      "InstanceType"
+    ],
+    "metrics": [
+      "CPUCreditBalance",
+      "CPUCreditUsage",
+      "CPUSurplusCreditBalance",
+      "CPUSurplusCreditsCharged",
+      "CPUUtilization",
+      "DiskReadBytes",
+      "DiskReadOps",
+      "DiskWriteBytes",
+      "DiskWriteOps",
+      "EBSByteBalance%",
+      "EBSIOBalance%",
+      "EBSReadBytes",
+      "EBSReadOps",
+      "EBSWriteBytes",
+      "EBSWriteOps",
+      "NetworkIn",
+      "NetworkOut",
+      "NetworkPacketsIn",
+      "NetworkPacketsOut",
+      "StatusCheckFailed",
+      "StatusCheckFailed_Instance",
+      "StatusCheckFailed_System"
+    ]
+  }
+}

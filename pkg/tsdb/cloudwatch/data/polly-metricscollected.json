@@ -1,0 +1,14 @@
+{
+  "AWS/Polly": {
+    "dimensions": [
+      "Operation"
+    ],
+    "metrics": [
+      "2XXCount",
+      "4XXCount",
+      "5XXCount",
+      "RequestCharacters",
+      "ResponseLatency"
+    ]
+  }
+}

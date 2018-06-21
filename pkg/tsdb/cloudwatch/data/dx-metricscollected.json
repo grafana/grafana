@@ -1,0 +1,17 @@
+{
+  "AWS/DX": {
+    "dimensions": [
+      "ConnectionId"
+    ],
+    "metrics": [
+      "ConnectionBpsEgress",
+      "ConnectionBpsIngress",
+      "ConnectionCRCErrorCount",
+      "ConnectionLightLevelRx",
+      "ConnectionLightLevelTx",
+      "ConnectionPpsEgress",
+      "ConnectionPpsIngress",
+      "ConnectionState"
+    ]
+  }
+}

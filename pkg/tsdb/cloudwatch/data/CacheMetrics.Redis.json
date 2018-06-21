@@ -1,0 +1,28 @@
+{
+  "AWS/ElastiCache": {
+    "dimensions": [],
+    "metrics": [
+      "BytesUsedForCache",
+      "CacheHits",
+      "CacheMisses",
+      "CurrConnections",
+      "CurrItems",
+      "EngineCPUUtilization",
+      "Evictions",
+      "GetTypeCmds",
+      "HashBasedCmds",
+      "HyperLogLogBasedCmds",
+      "KeyBasedCmds",
+      "ListBasedCmds",
+      "NewConnections",
+      "Reclaimed",
+      "ReplicationBytes",
+      "ReplicationLag",
+      "SaveInProgress",
+      "SetBasedCmds",
+      "SetTypeCmds",
+      "SortedSetBasedCmds",
+      "StringBasedCmds"
+    ]
+  }
+}

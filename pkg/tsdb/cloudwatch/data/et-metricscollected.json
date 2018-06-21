@@ -1,0 +1,19 @@
+{
+  "AWS/ElasticTranscoder": {
+    "dimensions": [
+      "Operation",
+      "PipelineId"
+    ],
+    "metrics": [
+      "Billed Audio Output",
+      "Billed HD Output",
+      "Billed SD Output",
+      "Errors",
+      "Jobs Completed",
+      "Jobs Errored",
+      "Outputs per Job",
+      "Standby Time",
+      "Throttles"
+    ]
+  }
+}

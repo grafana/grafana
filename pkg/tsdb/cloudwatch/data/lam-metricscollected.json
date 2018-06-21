@@ -1,0 +1,21 @@
+{
+  "AWS/Lambda": {
+    "dimensions": [
+      "Alias",
+      "Executed Version",
+      "FunctionName",
+      "Resource",
+      "Version"
+    ],
+    "metrics": [
+      "ConcurrentExecutions",
+      "Dead Letter Error",
+      "Duration",
+      "Errors",
+      "Invocations",
+      "IteratorAge",
+      "Throttles",
+      "UnreservedConcurrentExecutions"
+    ]
+  }
+}

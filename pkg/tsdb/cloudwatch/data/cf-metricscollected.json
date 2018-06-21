@@ -1,0 +1,16 @@
+{
+  "AWS/CloudFront": {
+    "dimensions": [
+      "DistributionId",
+      "Region"
+    ],
+    "metrics": [
+      "4xxErrorRate",
+      "5xxErrorRate",
+      "BytesDownloaded",
+      "BytesUploaded",
+      "Requests",
+      "TotalErrorRate"
+    ]
+  }
+}

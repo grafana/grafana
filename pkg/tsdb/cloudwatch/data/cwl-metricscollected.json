@@ -1,0 +1,17 @@
+{
+  "AWS/Logs": {
+    "dimensions": [
+      "DestinationType",
+      "FilterName",
+      "LogGroupName"
+    ],
+    "metrics": [
+      "DeliveryErrors",
+      "DeliveryThrottling",
+      "ForwardedBytes",
+      "ForwardedLogEvents",
+      "IncomingBytes",
+      "IncomingLogEvents"
+    ]
+  }
+}

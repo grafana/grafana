@@ -1,0 +1,19 @@
+{
+  "AWS/ApiGateway": {
+    "dimensions": [
+      "ApiName",
+      "Method",
+      "Resource",
+      "Stage"
+    ],
+    "metrics": [
+      "4XXError",
+      "5XXError",
+      "CacheHitCount",
+      "CacheMissCount",
+      "Count",
+      "IntegrationLatency",
+      "Latency"
+    ]
+  }
+}

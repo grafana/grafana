@@ -1,0 +1,32 @@
+{
+  "AWS/StorageGateway": {
+    "dimensions": [
+      "GatewayId",
+      "GatewayName",
+      "VolumeId"
+    ],
+    "metrics": [
+      "CacheFree",
+      "CacheHitPercent",
+      "CachePercentDirty",
+      "CachePercentUsed",
+      "CacheUsed",
+      "CloudBytesDownloaded",
+      "CloudBytesUploaded",
+      "CloudDownloadLatency",
+      "QueuedWrites",
+      "ReadBytes",
+      "ReadTime",
+      "TimeSinceLastRecoveryPoint",
+      "TotalCacheSize",
+      "UploadBufferFree",
+      "UploadBufferPercentUsed",
+      "UploadBufferUsed",
+      "WorkingStorageFree",
+      "WorkingStoragePercentUsed",
+      "WorkingStorageUsed",
+      "WriteBytes",
+      "WriteTime"
+    ]
+  }
+}

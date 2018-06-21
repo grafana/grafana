@@ -1,0 +1,12 @@
+{
+  "AWS/ML": {
+    "dimensions": [
+      "MLModelId",
+      "RequestMode"
+    ],
+    "metrics": [
+      "PredictCount",
+      "PredictFailureCount"
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "AWS/Translate": {
+    "dimensions": [
+      "LanguagePair",
+      "Operation"
+    ],
+    "metrics": [
+      "CharacterCount",
+      "ResponseTime",
+      "ServerErrorCount",
+      "SuccessfulRequestCount",
+      "ThrottledCount",
+      "UserErrorCount"
+    ]
+  }
+}

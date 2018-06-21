@@ -1,0 +1,17 @@
+{
+  "AWS/SES": {
+    "dimensions": [],
+    "metrics": [
+      "Bounce",
+      "Click",
+      "Complaint",
+      "Delivery",
+      "Open",
+      "Reject",
+      "Rendering Failure",
+      "Reputation.BounceRate",
+      "Reputation.ComplaintRate",
+      "Send"
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "AWS/KinesisVideo": {
+    "dimensions": [
+      "StreamName"
+    ],
+    "metrics": [
+      "GetMedia.ConnectionErrors",
+      "GetMedia.MillisBehindNow",
+      "GetMedia.OutgoingBytes",
+      "GetMedia.OutgoingFragments",
+      "GetMedia.OutgoingFrames",
+      "GetMedia.Requests",
+      "GetMedia.Success",
+      "GetMediaForFragmentList.OutgoingBytes",
+      "GetMediaForFragmentList.OutgoingFragments",
+      "GetMediaForFragmentList.OutgoingFrames",
+      "GetMediaForFragmentList.Requests",
+      "GetMediaForFragmentList.Success",
+      "ListFragments.Latency",
+      "PutMedia.ActiveConnections",
+      "PutMedia.BufferingAckLatency",
+      "PutMedia.ConnectionErrors",
+      "PutMedia.ErrorAckCount",
+      "PutMedia.FragmentIngestionLatency",
+      "PutMedia.FragmentPersistLatency",
+      "PutMedia.IncomingBytes",
+      "PutMedia.IncomingFragments",
+      "PutMedia.IncomingFrames",
+      "PutMedia.Latency",
+      "PutMedia.PersistedAckLatency",
+      "PutMedia.ReceivedAckLatency",
+      "PutMedia.Requests",
+      "PutMedia.Success"
+    ]
+  }
+}

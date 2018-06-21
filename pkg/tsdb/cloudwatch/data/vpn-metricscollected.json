@@ -1,0 +1,13 @@
+{
+  "AWS/VPN": {
+    "dimensions": [
+      "TunnelIpAddress",
+      "VpnId"
+    ],
+    "metrics": [
+      "TunnelDataIn",
+      "TunnelDataOut",
+      "TunnelState"
+    ]
+  }
+}

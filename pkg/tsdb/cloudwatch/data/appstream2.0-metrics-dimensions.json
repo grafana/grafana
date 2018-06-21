@@ -1,0 +1,17 @@
+{
+  "AWS/AppStream": {
+    "dimensions": [
+      "Fleet"
+    ],
+    "metrics": [
+      "ActualCapacity",
+      "AvailableCapacity",
+      "CapacityUtilization",
+      "DesiredCapacity",
+      "InUseCapacity",
+      "InsufficientCapacityError",
+      "PendingCapacity",
+      "RunningCapacity"
+    ]
+  }
+}

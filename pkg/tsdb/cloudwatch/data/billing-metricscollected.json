@@ -1,0 +1,12 @@
+{
+  "AWS/Billing": {
+    "dimensions": [
+      "Currency",
+      "LinkedAccount",
+      "ServiceName"
+    ],
+    "metrics": [
+      "EstimatedCharges"
+    ]
+  }
+}

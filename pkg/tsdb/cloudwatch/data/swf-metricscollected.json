@@ -1,0 +1,41 @@
+{
+  "AWS/SWF": {
+    "dimensions": [
+      "APIName",
+      "ActivityTypeName",
+      "ActivityTypeVersion",
+      "DecisionName",
+      "Domain",
+      "TaskListName",
+      "WorkflowTypeName",
+      "WorkflowTypeVersion"
+    ],
+    "metrics": [
+      "ActivityTaskScheduleToCloseTime",
+      "ActivityTaskScheduleToStartTime",
+      "ActivityTaskStartToCloseTime",
+      "ActivityTasksCanceled",
+      "ActivityTasksCompleted",
+      "ActivityTasksFailed",
+      "ConsumedCapacity",
+      "DecisionTaskScheduleToStartTime",
+      "DecisionTaskStartToCloseTime",
+      "DecisionTasksCompleted",
+      "ProvisionedBucketSize",
+      "ProvisionedRefillRate",
+      "ScheduledActivityTasksTimedOutOnClose",
+      "ScheduledActivityTasksTimedOutOnStart",
+      "StartedActivityTasksTimedOutOnClose",
+      "StartedActivityTasksTimedOutOnHeartbeat",
+      "StartedDecisionTasksTimedOutOnClose",
+      "ThrottledEvents",
+      "WorkflowStartToCloseTime",
+      "WorkflowsCanceled",
+      "WorkflowsCompleted",
+      "WorkflowsContinuedAsNew",
+      "WorkflowsFailed",
+      "WorkflowsTerminated",
+      "WorkflowsTimedOut"
+    ]
+  }
+}

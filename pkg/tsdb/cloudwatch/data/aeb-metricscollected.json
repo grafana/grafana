@@ -1,0 +1,42 @@
+{
+  "AWS/ElasticBeanstalk": {
+    "dimensions": [
+      "EnvironmentName",
+      "InstanceId"
+    ],
+    "metrics": [
+      "ApplicationLatencyP10",
+      "ApplicationLatencyP50",
+      "ApplicationLatencyP75",
+      "ApplicationLatencyP85",
+      "ApplicationLatencyP90",
+      "ApplicationLatencyP95",
+      "ApplicationLatencyP99",
+      "ApplicationLatencyP99.9",
+      "ApplicationRequests2xx",
+      "ApplicationRequests3xx",
+      "ApplicationRequests4xx",
+      "ApplicationRequests5xx",
+      "ApplicationRequestsTotal",
+      "CPUIdle",
+      "CPUIowait",
+      "CPUIrq",
+      "CPUNice",
+      "CPUSoftirq",
+      "CPUSystem",
+      "CPUUser",
+      "EnvironmentHealth",
+      "InstanceHealth",
+      "InstancesDegraded",
+      "InstancesInfo",
+      "InstancesNoData",
+      "InstancesOk",
+      "InstancesPending",
+      "InstancesSevere",
+      "InstancesUnknown",
+      "InstancesWarning",
+      "LoadAverage1min",
+      "RootFilesystemUtil"
+    ]
+  }
+}

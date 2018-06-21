@@ -1,0 +1,15 @@
+{
+  "AWS/Events": {
+    "dimensions": [
+      "RuleName"
+    ],
+    "metrics": [
+      "DeadLetterInvocations",
+      "FailedInvocations",
+      "Invocations",
+      "MatchedEvents",
+      "ThrottledRules",
+      "TriggeredRules"
+    ]
+  }
+}

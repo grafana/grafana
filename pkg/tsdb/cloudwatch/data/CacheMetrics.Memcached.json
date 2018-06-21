@@ -1,0 +1,41 @@
+{
+  "AWS/ElastiCache": {
+    "dimensions": [],
+    "metrics": [
+      "BytesReadIntoMemcached",
+      "BytesUsedForCacheItems",
+      "BytesUsedForHash",
+      "BytesWrittenOutFromMemcached",
+      "CasBadval",
+      "CasHits",
+      "CasMisses",
+      "CmdConfigGet",
+      "CmdConfigSet",
+      "CmdFlush",
+      "CmdGet",
+      "CmdSet",
+      "CmdTouch",
+      "CurrConfig",
+      "CurrConnections",
+      "CurrItems",
+      "DecrHits",
+      "DecrMisses",
+      "DeleteHits",
+      "DeleteMisses",
+      "EvictedUnfetched",
+      "Evictions",
+      "ExpiredUnfetched",
+      "GetHits",
+      "GetMisses",
+      "IncrHits",
+      "IncrMisses",
+      "NewConnections",
+      "NewItems",
+      "Reclaimed",
+      "SlabsMoved",
+      "TouchHits",
+      "TouchMisses",
+      "UnusedMemory"
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "AWS/States": {
+    "dimensions": [
+      "ActivityArn",
+      "LambdaFunctionArn",
+      "StateMachineArn"
+    ],
+    "metrics": [
+      "ActivitiesFailed",
+      "ActivitiesHeartbeatTimedOut",
+      "ActivitiesScheduled",
+      "ActivitiesStarted",
+      "ActivitiesSucceeded",
+      "ActivitiesTimedOut",
+      "ActivityRunTime",
+      "ActivityScheduleTime",
+      "ActivityTime",
+      "ExecutionThrottled",
+      "ExecutionTime",
+      "ExecutionsAborted",
+      "ExecutionsFailed",
+      "ExecutionsStarted",
+      "ExecutionsSucceeded",
+      "ExecutionsTimedOut",
+      "LambdaFunctionRunTime",
+      "LambdaFunctionScheduleTime",
+      "LambdaFunctionTime",
+      "LambdaFunctionsFailed",
+      "LambdaFunctionsHeartbeatTimedOut",
+      "LambdaFunctionsScheduled",
+      "LambdaFunctionsStarted",
+      "LambdaFunctionsSucceeded",
+      "LambdaFunctionsTimedOut"
+    ]
+  }
+}

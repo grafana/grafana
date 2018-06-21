@@ -1,0 +1,24 @@
+{
+  "AWS/KinesisAnalytics": {
+    "dimensions": [
+      "Flow",
+      "Id"
+    ],
+    "metrics": [
+      "Bytes",
+      "InputProcessing.DroppedRecords",
+      "InputProcessing.Duration",
+      "InputProcessing.OkBytes",
+      "InputProcessing.OkRecords",
+      "InputProcessing.ProcessingFailedRecords",
+      "InputProcessing.Success",
+      "KPUs",
+      "LambdaDelivery.DeliveryFailedRecords",
+      "LambdaDelivery.Duration",
+      "LambdaDelivery.OkRecords",
+      "MillisBehindLatest",
+      "Records",
+      "Success"
+    ]
+  }
+}

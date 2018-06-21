@@ -1,0 +1,20 @@
+{
+  "AWS/EC2Spot": {
+    "dimensions": [
+      "AvailabilityZone",
+      "FleetRequestId",
+      "InstanceType"
+    ],
+    "metrics": [
+      "AvailableInstancePoolsCount",
+      "BidsSubmittedForCapacity",
+      "EligibleInstancePoolCount",
+      "FulfilledCapacity",
+      "MaxPercentCapacityAllocation",
+      "PendingCapacity",
+      "PercentCapacityAllocation",
+      "TargetCapacity",
+      "TerminatingCapacity"
+    ]
+  }
+}

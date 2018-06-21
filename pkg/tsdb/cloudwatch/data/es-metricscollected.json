@@ -1,0 +1,38 @@
+{
+  "AWS/ES": {
+    "dimensions": [
+      "ClientId",
+      "DomainName"
+    ],
+    "metrics": [
+      "AutomatedSnapshotFailure",
+      "CPUCreditBalance",
+      "CPUUtilization",
+      "ClusterIndexWritesBlocked",
+      "ClusterStatus.green",
+      "ClusterStatus.red",
+      "ClusterStatus.yellow",
+      "ClusterUsedSpace",
+      "DeletedDocuments",
+      "DiskQueueDepth",
+      "FreeStorageSpace",
+      "JVMMemoryPressure",
+      "KMSKeyError",
+      "KMSKeyInaccessible",
+      "KibanaHealthyNodes",
+      "MasterCPUCreditBalance",
+      "MasterCPUUtilization",
+      "MasterFreeStorageSpace",
+      "MasterJVMMemoryPressure",
+      "MasterReachableFromNode",
+      "Nodes",
+      "ReadIOPS",
+      "ReadLatency",
+      "ReadThroughput",
+      "SearchableDocuments",
+      "WriteIOPS",
+      "WriteLatency",
+      "WriteThroughput"
+    ]
+  }
+}

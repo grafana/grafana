@@ -1,0 +1,76 @@
+{
+  "AWS/ApplicationELB": {
+    "dimensions": [
+      "AvailabilityZone",
+      "LoadBalancer",
+      "TargetGroup"
+    ],
+    "metrics": [
+      "ActiveConnectionCount",
+      "ClientTLSNegotiationErrorCount",
+      "ConsumedLCUs",
+      "HTTPCode_ELB_4XX_Count",
+      "HTTPCode_ELB_5XX_Count",
+      "HTTPCode_Target_2XX_Count",
+      "HTTPCode_Target_3XX_Count",
+      "HTTPCode_Target_4XX_Count",
+      "HTTPCode_Target_5XX_Count",
+      "HealthyHostCount",
+      "IPv6ProcessedBytes",
+      "IPv6RequestCount",
+      "NewConnectionCount",
+      "ProcessedBytes",
+      "RejectedConnectionCount",
+      "RequestCount",
+      "RequestCountPerTarget",
+      "RuleEvaluations",
+      "TargetConnectionErrorCount",
+      "TargetResponseTime",
+      "TargetTLSNegotiationErrorCount",
+      "UnHealthyHostCount"
+    ]
+  },
+  "AWS/ELB": {
+    "dimensions": [
+      "AvailabilityZone",
+      "LoadBalancerName"
+    ],
+    "metrics": [
+      "BackendConnectionErrors",
+      "EstimatedALBActiveConnectionCount",
+      "EstimatedALBConsumedLCUs",
+      "EstimatedALBNewConnectionCount",
+      "EstimatedProcessedBytes",
+      "HTTPCode_Backend_2XX",
+      "HTTPCode_Backend_3XX",
+      "HTTPCode_Backend_4XX",
+      "HTTPCode_Backend_5XX",
+      "HTTPCode_ELB_4XX",
+      "HTTPCode_ELB_5XX",
+      "HealthyHostCount",
+      "Latency",
+      "RequestCount",
+      "SpilloverCount",
+      "SurgeQueueLength",
+      "UnHealthyHostCount"
+    ]
+  },
+  "AWS/NetworkELB": {
+    "dimensions": [
+      "AvailabilityZone",
+      "LoadBalancer",
+      "TargetGroup"
+    ],
+    "metrics": [
+      "ActiveFlowCount",
+      "ConsumedLCUs",
+      "HealthyHostCount",
+      "NewFlowCount",
+      "ProcessedBytes",
+      "TCP_Client_Reset_Count",
+      "TCP_ELB_Reset_Count",
+      "TCP_Target_Reset_Count",
+      "UnHealthyHostCount"
+    ]
+  }
+}

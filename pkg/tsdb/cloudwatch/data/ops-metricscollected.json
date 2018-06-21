@@ -1,0 +1,27 @@
+{
+  "AWS/OpsWorks": {
+    "dimensions": [
+      "InstanceId",
+      "LayerId",
+      "StackId"
+    ],
+    "metrics": [
+      "cpu_idle",
+      "cpu_nice",
+      "cpu_steal",
+      "cpu_system",
+      "cpu_user",
+      "cpu_waitio",
+      "load_1",
+      "load_15",
+      "load_5",
+      "memory_buffers",
+      "memory_cached",
+      "memory_free",
+      "memory_swap",
+      "memory_total",
+      "memory_used",
+      "procs"
+    ]
+  }
+}

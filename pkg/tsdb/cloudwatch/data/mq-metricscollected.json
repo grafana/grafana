@@ -1,0 +1,24 @@
+{
+  "AWS/AmazonMQ": {
+    "dimensions": [
+      "Broker",
+      "Topic or Queue"
+    ],
+    "metrics": [
+      "ConsumerCount",
+      "CpuUtilization",
+      "DequeueCount",
+      "DispatchCount",
+      "EnqueueCount",
+      "EnqueueTime",
+      "ExpiredCount",
+      "HeapUsage",
+      "MemoryUsage",
+      "NetworkIn",
+      "NetworkOut",
+      "ProducerCount",
+      "QueueSize",
+      "TotalMessageCount"
+    ]
+  }
+}
