@@ -2,8 +2,11 @@ package cloudwatch
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -155,6 +158,34 @@ func init() {
 		"WAF":                  {"Rule", "WebACL"},
 		"AWS/WorkSpaces":       {"DirectoryId", "WorkspaceId"},
 		"KMS":                  {"KeyId"},
+	}
+
+	files, err := filepath.Glob("pkg/tsdb/cloudwatch/data/*.json")
+	if err != nil {
+		panic(err)
+	}
+	for _, file := range files {
+		data, err := ioutil.ReadFile(file)
+		if err != nil {
+			panic(err)
+		}
+
+		var jsonData map[string]map[string][]string
+		if err := json.Unmarshal(data, &jsonData); err != nil {
+			continue
+		}
+
+		for namespace, v := range jsonData {
+			for t, vv := range v {
+				if t == "metrics" {
+					metricsMap[namespace] = append(metricsMap[namespace], vv...)
+					sort.Strings(metricsMap[namespace])
+				} else if t == "dimensions" {
+					dimensionsMap[namespace] = append(dimensionsMap[namespace], vv...)
+					sort.Strings(dimensionsMap[namespace])
+				}
+			}
+		}
 	}
 
 	customMetricsMetricsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
