@@ -389,11 +389,11 @@ export default class CloudWatchDatasource {
     var currentVariables = !_.isArray(variable.current.value)
       ? [variable.current]
       : variable.current.value.map(v => {
-        return {
-          text: v,
-          value: v,
-        };
-      });
+          return {
+            text: v,
+            value: v,
+          };
+        });
     let useSelectedVariables =
       selectedVariables.some(s => {
         return s.value === currentVariables[0].value;
@@ -404,8 +404,10 @@ export default class CloudWatchDatasource {
       scopedVar[variable.name] = v;
       t.refId = target.refId + '_' + v.value;
       t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
-      if (target.id) {
+      if (variable.multi && target.id) {
         t.id = target.id + window.btoa(v.value).replace(/=/g, '0'); // generate unique id
+      } else {
+        t.id = target.id;
       }
       return t;
     });
