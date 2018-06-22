@@ -112,6 +112,10 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 			continue
 		}
 
+		if query.Id == "" && query.Expression != "" {
+			return nil, fmt.Errorf("Invalid query: id should be set if using expression")
+		}
+
 		eg.Go(func() error {
 			queryRes, err := e.executeQuery(ectx, query, queryContext)
 			if err != nil {
