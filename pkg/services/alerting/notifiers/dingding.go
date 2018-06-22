@@ -57,11 +57,29 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 	message := evalContext.Rule.Message
 	picUrl := evalContext.ImagePublicUrl
 	title := evalContext.GetNotificationTitle()
+	
+	fields := ""
+	fieldLimitCount := 3
+	for index, evt := range evalContext.EvalMatches {
+		fields += fmt.Sprintf("%v\n",evt.Metric)
+		if index > fieldLimitCount {
+			break
+		}
+	}
 
+	if evalContext.Error != nil {
+		fields = append(fields, map[string]interface{}{
+			"title": "Error message",
+			"value": evalContext.Error.Error(),
+			"short": false,
+		})
+	}
+	
+	
 	bodyJSON, err := simplejson.NewJson([]byte(`{
 		"msgtype": "link",
 		"link": {
-			"text": "` + message + `",
+			"text": "` + message + `\n ` + fields + ` ",
 			"title": "` + title + `",
 			"picUrl": "` + picUrl + `",
 			"messageUrl": "` + messageUrl + `"
