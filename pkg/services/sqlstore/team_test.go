@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -22,7 +23,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					Name:  fmt.Sprint("user", i),
 					Login: fmt.Sprint("loginuser", i),
 				}
-				err := CreateUser(userCmd)
+				err := CreateUser(context.Background(), userCmd)
 				So(err, ShouldBeNil)
 				userIds = append(userIds, userCmd.Result.Id)
 			}
@@ -74,6 +75,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			Convey("Should be able to return all teams a user is member of", func() {
 				groupId := group2.Result.Id
 				err := AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[0]})
+				So(err, ShouldBeNil)
 
 				query := &m.GetTeamsByUserQuery{OrgId: testOrgId, UserId: userIds[0]}
 				err = GetTeamsByUser(query)
@@ -103,7 +105,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[2]})
 				So(err, ShouldBeNil)
 				err = testHelperUpdateDashboardAcl(1, m.DashboardAcl{DashboardId: 1, OrgId: testOrgId, Permission: m.PERMISSION_EDIT, TeamId: groupId})
-
+				So(err, ShouldBeNil)
 				err = DeleteTeam(&m.DeleteTeamCommand{OrgId: testOrgId, Id: groupId})
 				So(err, ShouldBeNil)
 

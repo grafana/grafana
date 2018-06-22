@@ -46,6 +46,31 @@ func loggedInUserScenarioWithRole(desc string, method string, url string, routeP
 	})
 }
 
+func anonymousUserScenario(desc string, method string, url string, routePattern string, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		sc := setupScenarioContext(url)
+		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+			sc.context = c
+			if sc.handlerFunc != nil {
+				return sc.handlerFunc(sc.context)
+			}
+
+			return nil
+		})
+
+		switch method {
+		case "GET":
+			sc.m.Get(routePattern, sc.defaultHandler)
+		case "DELETE":
+			sc.m.Delete(routePattern, sc.defaultHandler)
+		}
+
+		fn(sc)
+	})
+}
+
 func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
@@ -99,7 +124,7 @@ func setupScenarioContext(url string) *scenarioContext {
 	}))
 
 	sc.m.Use(middleware.GetContextHandler())
-	sc.m.Use(middleware.Sessioner(&session.Options{}))
+	sc.m.Use(middleware.Sessioner(&session.Options{}, 0))
 
 	return sc
 }

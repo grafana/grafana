@@ -26,7 +26,9 @@ export const ViewStore = types
     function updateQuery(query: any) {
       self.query.clear();
       for (let key of Object.keys(query)) {
-        self.query.set(key, query[key]);
+        if (query[key]) {
+          self.query.set(key, query[key]);
+        }
       }
     }
 
@@ -34,7 +36,9 @@ export const ViewStore = types
     function updateRouteParams(routeParams: any) {
       self.routeParams.clear();
       for (let key of Object.keys(routeParams)) {
-        self.routeParams.set(key, routeParams[key]);
+        if (routeParams[key]) {
+          self.routeParams.set(key, routeParams[key]);
+        }
       }
     }
 

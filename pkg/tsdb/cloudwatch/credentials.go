@@ -23,7 +23,7 @@ type cache struct {
 	expiration *time.Time
 }
 
-var awsCredentialCache map[string]cache = make(map[string]cache)
+var awsCredentialCache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
 func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {

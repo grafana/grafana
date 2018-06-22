@@ -24,6 +24,7 @@ func init() {
 	bus.AddHandler("sql", GetDashboardPermissionsForUser)
 	bus.AddHandler("sql", GetDashboardsBySlug)
 	bus.AddHandler("sql", ValidateDashboardBeforeSave)
+	bus.AddHandler("sql", HasEditPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUid
@@ -63,7 +64,7 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 		}
 
 		// do not allow plugin dashboard updates without overwrite flag
-		if existing.PluginId != "" && cmd.Overwrite == false {
+		if existing.PluginId != "" && !cmd.Overwrite {
 			return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
 		}
 	}
@@ -77,7 +78,7 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 	}
 
 	parentVersion := dash.Version
-	affectedRows := int64(0)
+	var affectedRows int64
 	var err error
 
 	if dash.Id == 0 {
@@ -172,7 +173,7 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrDashboardNotFound
 	}
 
@@ -308,7 +309,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 		has, err := sess.Get(&dashboard)
 		if err != nil {
 			return err
-		} else if has == false {
+		} else if !has {
 			return m.ErrDashboardNotFound
 		}
 
@@ -347,12 +348,7 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 
 	err := x.In("id", query.DashboardIds).Find(&dashboards)
 	query.Result = dashboards
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // GetDashboardPermissionsForUser returns the maximum permission the specified user has for a dashboard(s)
@@ -431,12 +427,7 @@ func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {
 
 	err := x.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
 	query.Result = dashboards
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 type DashboardSlugDTO struct {
@@ -451,7 +442,7 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if exists == false {
+	} else if !exists {
 		return m.ErrDashboardNotFound
 	}
 
@@ -479,7 +470,7 @@ func GetDashboardUIDById(query *m.GetDashboardRefByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if exists == false {
+	} else if !exists {
 		return m.ErrDashboardNotFound
 	}
 
@@ -544,11 +535,19 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 		dash.SetId(existingByUid.Id)
 		dash.SetUid(existingByUid.Uid)
 		existing = existingByUid
+
+		if !dash.IsFolder {
+			cmd.Result.IsParentFolderChanged = true
+		}
 	}
 
 	if (existing.IsFolder && !dash.IsFolder) ||
 		(!existing.IsFolder && dash.IsFolder) {
 		return m.ErrDashboardTypeMismatch
+	}
+
+	if !dash.IsFolder && dash.FolderId != existing.FolderId {
+		cmd.Result.IsParentFolderChanged = true
 	}
 
 	// check for is someone else has written in between
@@ -561,7 +560,7 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, cmd *m.ValidateDash
 	}
 
 	// do not allow plugin dashboard updates without overwrite flag
-	if existing.PluginId != "" && cmd.Overwrite == false {
+	if existing.PluginId != "" && !cmd.Overwrite {
 		return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
 	}
 
@@ -586,6 +585,10 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *m.ValidateDashbo
 			return m.ErrDashboardFolderWithSameNameAsDashboard
 		}
 
+		if !dash.IsFolder && (dash.FolderId != existing.FolderId || dash.Id == 0) {
+			cmd.Result.IsParentFolderChanged = true
+		}
+
 		if cmd.Overwrite {
 			dash.SetId(existing.Id)
 			dash.SetUid(existing.Uid)
@@ -599,6 +602,7 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *m.ValidateDashbo
 }
 
 func ValidateDashboardBeforeSave(cmd *m.ValidateDashboardBeforeSaveCommand) (err error) {
+	cmd.Result = &m.ValidateDashboardBeforeSaveResult{}
 	return inTransaction(func(sess *DBSession) error {
 		if err = getExistingDashboardByIdOrUidForUpdate(sess, cmd); err != nil {
 			return err
@@ -610,4 +614,28 @@ func ValidateDashboardBeforeSave(cmd *m.ValidateDashboardBeforeSaveCommand) (err
 
 		return nil
 	})
+}
+
+func HasEditPermissionInFolders(query *m.HasEditPermissionInFoldersQuery) error {
+	if query.SignedInUser.HasRole(m.ROLE_EDITOR) {
+		query.Result = true
+		return nil
+	}
+
+	builder := &SqlBuilder{}
+	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
+	builder.writeDashboardPermissionFilter(query.SignedInUser, m.PERMISSION_EDIT)
+
+	type folderCount struct {
+		Count int64
+	}
+
+	resp := make([]*folderCount, 0)
+	if err := x.Sql(builder.GetSqlString(), builder.params...).Find(&resp); err != nil {
+		return err
+	}
+
+	query.Result = len(resp) > 0 && resp[0].Count > 0
+
+	return nil
 }

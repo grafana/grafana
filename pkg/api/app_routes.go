@@ -55,11 +55,11 @@ func InitAppPluginRoutes(r *macaron.Macaron) {
 	}
 }
 
-func AppPluginRoute(route *plugins.AppPluginRoute, appId string) macaron.Handler {
+func AppPluginRoute(route *plugins.AppPluginRoute, appID string) macaron.Handler {
 	return func(c *m.ReqContext) {
 		path := c.Params("*")
 
-		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appId)
+		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID)
 		proxy.Transport = pluginProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req.Request)
 	}

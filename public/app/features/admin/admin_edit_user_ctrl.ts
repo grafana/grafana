@@ -75,6 +75,7 @@ export class AdminEditUserCtrl {
 
     $scope.removeOrgUser = function(orgUser) {
       backendSrv.delete('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id).then(function() {
+        $scope.getUser($scope.user_id);
         $scope.getUserOrgs($scope.user_id);
       });
     };
@@ -108,6 +109,7 @@ export class AdminEditUserCtrl {
       $scope.newOrg.loginOrEmail = $scope.user.login;
 
       backendSrv.post('/api/orgs/' + orgInfo.id + '/users/', $scope.newOrg).then(function() {
+        $scope.getUser($scope.user_id);
         $scope.getUserOrgs($scope.user_id);
       });
     };

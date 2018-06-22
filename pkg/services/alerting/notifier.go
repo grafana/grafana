@@ -3,14 +3,15 @@ package alerting
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
-	"github.com/grafana/grafana/pkg/components/renderer"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/services/rendering"
 
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -27,18 +28,16 @@ type NotificationService interface {
 	SendIfNeeded(context *EvalContext) error
 }
 
-func NewNotificationService() NotificationService {
-	return newNotificationService()
+func NewNotificationService(renderService rendering.Service) NotificationService {
+	return &notificationService{
+		log:           log.New("alerting.notifier"),
+		renderService: renderService,
+	}
 }
 
 type notificationService struct {
-	log log.Logger
-}
-
-func newNotificationService() *notificationService {
-	return &notificationService{
-		log: log.New("alerting.notifier"),
-	}
+	log           log.Logger
+	renderService rendering.Service
 }
 
 func (n *notificationService) SendIfNeeded(context *EvalContext) error {
@@ -79,26 +78,27 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 
-	renderOpts := &renderer.RenderOpts{
-		Width:          "800",
-		Height:         "400",
-		Timeout:        "30",
-		OrgId:          context.Rule.OrgId,
-		IsAlertContext: true,
+	renderOpts := rendering.Opts{
+		Width:   1000,
+		Height:  500,
+		Timeout: time.Second * 30,
+		OrgId:   context.Rule.OrgId,
+		OrgRole: m.ROLE_ADMIN,
 	}
 
-	if ref, err := context.GetDashboardUID(); err != nil {
+	ref, err := context.GetDashboardUID()
+	if err != nil {
 		return err
-	} else {
-		renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
 	}
 
-	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {
+	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
+
+	result, err := n.renderService.Render(context.Ctx, renderOpts)
+	if err != nil {
 		return err
-	} else {
-		context.ImageOnDiskPath = imagePath
 	}
 
+	context.ImageOnDiskPath = result.FilePath
 	context.ImagePublicUrl, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
 	if err != nil {
 		return err
@@ -117,12 +117,12 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 
 	var result []Notifier
 	for _, notification := range query.Result {
-		if not, err := n.createNotifierFor(notification); err != nil {
+		not, err := n.createNotifierFor(notification)
+		if err != nil {
 			return nil, err
-		} else {
-			if not.ShouldNotify(context) {
-				result = append(result, not)
-			}
+		}
+		if not.ShouldNotify(context) {
+			result = append(result, not)
 		}
 	}
 
@@ -140,7 +140,7 @@ func (n *notificationService) createNotifierFor(model *m.AlertNotification) (Not
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
 
-var notifierFactories map[string]*NotifierPlugin = make(map[string]*NotifierPlugin)
+var notifierFactories = make(map[string]*NotifierPlugin)
 
 func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin

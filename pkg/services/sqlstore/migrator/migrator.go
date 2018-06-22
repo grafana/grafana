@@ -31,7 +31,7 @@ func NewMigrator(engine *xorm.Engine) *Migrator {
 	mg.x = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
-	mg.dialect = NewDialect(mg.x.DriverName())
+	mg.dialect = NewDialect(mg.x)
 	return mg
 }
 
@@ -97,17 +97,15 @@ func (mg *Migrator) Start() error {
 		mg.Logger.Debug("Executing", "sql", sql)
 
 		err := mg.inTransaction(func(sess *xorm.Session) error {
-
-			if err := mg.exec(m, sess); err != nil {
+			err := mg.exec(m, sess)
+			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
 				sess.Insert(&record)
 				return err
-			} else {
-				record.Success = true
-				sess.Insert(&record)
 			}
-
+			record.Success = true
+			sess.Insert(&record)
 			return nil
 		})
 
@@ -125,9 +123,9 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	condition := m.GetCondition()
 	if condition != nil {
 		sql, args := condition.Sql(mg.dialect)
-		results, err := sess.Query(sql, args...)
+		results, err := sess.SQL(sql).Query(args...)
 		if err != nil || len(results) == 0 {
-			mg.Logger.Info("Skipping migration condition not fulfilled", "id", m.Id())
+			mg.Logger.Debug("Skipping migration condition not fulfilled", "id", m.Id())
 			return sess.Rollback()
 		}
 	}

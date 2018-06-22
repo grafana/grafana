@@ -53,7 +53,7 @@ describe('ElasticDatasource', function() {
     });
   });
 
-  describe('When issueing metric query with interval pattern', function() {
+  describe('When issuing metric query with interval pattern', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
@@ -98,7 +98,7 @@ describe('ElasticDatasource', function() {
     });
   });
 
-  describe('When issueing document query', function() {
+  describe('When issuing document query', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {

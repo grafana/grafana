@@ -12,15 +12,15 @@ func SendResetPasswordEmail(c *m.ReqContext, form dtos.SendResetPasswordEmailFor
 
 	if err := bus.Dispatch(&userQuery); err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
-		return ApiError(200, "Email sent", err)
+		return Error(200, "Email sent", err)
 	}
 
 	emailCmd := m.SendResetPasswordEmailCommand{User: userQuery.Result}
 	if err := bus.Dispatch(&emailCmd); err != nil {
-		return ApiError(500, "Failed to send email", err)
+		return Error(500, "Failed to send email", err)
 	}
 
-	return ApiSuccess("Email sent")
+	return Success("Email sent")
 }
 
 func ResetPassword(c *m.ReqContext, form dtos.ResetUserPasswordForm) Response {
@@ -28,13 +28,13 @@ func ResetPassword(c *m.ReqContext, form dtos.ResetUserPasswordForm) Response {
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrInvalidEmailCode {
-			return ApiError(400, "Invalid or expired reset password code", nil)
+			return Error(400, "Invalid or expired reset password code", nil)
 		}
-		return ApiError(500, "Unknown error validating email code", err)
+		return Error(500, "Unknown error validating email code", err)
 	}
 
 	if form.NewPassword != form.ConfirmPassword {
-		return ApiError(400, "Passwords do not match", nil)
+		return Error(400, "Passwords do not match", nil)
 	}
 
 	cmd := m.ChangeUserPasswordCommand{}
@@ -42,8 +42,8 @@ func ResetPassword(c *m.ReqContext, form dtos.ResetUserPasswordForm) Response {
 	cmd.NewPassword = util.EncodePassword(form.NewPassword, query.Result.Salt)
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to change user password", err)
+		return Error(500, "Failed to change user password", err)
 	}
 
-	return ApiSuccess("User password changed")
+	return Success("User password changed")
 }

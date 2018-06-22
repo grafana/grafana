@@ -3,20 +3,17 @@ package plugins
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
-	"runtime"
-	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-model/go/datasource"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana_plugin_model/go/datasource"
 	plugin "github.com/hashicorp/go-plugin"
 )
 
@@ -66,17 +63,7 @@ var handshakeConfig = plugin.HandshakeConfig{
 	MagicCookieValue: "datasource",
 }
 
-func composeBinaryName(executable, os, arch string) string {
-	var extension string
-	os = strings.ToLower(os)
-	if os == "windows" {
-		extension = ".exe"
-	}
-
-	return fmt.Sprintf("%s_%s_%s%s", executable, os, strings.ToLower(arch), extension)
-}
-
-func (p *DataSourcePlugin) initBackendPlugin(ctx context.Context, log log.Logger) error {
+func (p *DataSourcePlugin) startBackendPlugin(ctx context.Context, log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
 
 	err := p.spawnSubProcess()
@@ -88,7 +75,7 @@ func (p *DataSourcePlugin) initBackendPlugin(ctx context.Context, log log.Logger
 }
 
 func (p *DataSourcePlugin) spawnSubProcess() error {
-	cmd := composeBinaryName(p.Executable, runtime.GOOS, runtime.GOARCH)
+	cmd := ComposePluginStartCommmand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
 
 	p.client = plugin.NewClient(&plugin.ClientConfig{

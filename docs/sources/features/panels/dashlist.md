@@ -25,7 +25,7 @@ The dashboard list panel allows you to display dynamic links to other dashboards
 1. **Starred**: The starred dashboard selection displays starred dashboards in alphabetical order.
 2. **Recently Viewed**: The recently viewed dashboard selection displays recently viewed dashboards in alphabetical order.
 3. **Search**: The search dashboard selection displays dashboards by search query or tag(s).
-4. **Show Headings**: When show headings is ticked the choosen list selection(Starred, Recently Viewed, Search) is shown as a heading.
+4. **Show Headings**: When show headings is ticked the chosen list selection(Starred, Recently Viewed, Search) is shown as a heading.
 5. **Max Items**: Max items set the maximum of items in a list.
 6. **Query**: Here is where you enter your query you want to search by. Queries are case-insensitive, and partial values are accepted.
 7. **Tags**: Here is where you enter your tag(s) you want to search by. Note that existing tags will not appear as you type, and *are* case sensitive. To see a list of existing tags, you can always return to the dashboard, open the Dashboard Picker at the top and click `tags` link in the search bar.

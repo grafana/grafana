@@ -460,6 +460,11 @@ func errorf(s string, args ...interface{}) {
 	panic(fmt.Errorf("pq: %s", fmt.Sprintf(s, args...)))
 }
 
+// TODO(ainar-g) Rename to errorf after removing panics.
+func fmterrorf(s string, args ...interface{}) error {
+	return fmt.Errorf("pq: %s", fmt.Sprintf(s, args...))
+}
+
 func errRecoverNoErrBadConn(err *error) {
 	e := recover()
 	if e == nil {
@@ -488,7 +493,8 @@ func (c *conn) errRecover(err *error) {
 			*err = v
 		}
 	case *net.OpError:
-		*err = driver.ErrBadConn
+		c.bad = true
+		*err = v
 	case error:
 		if v == io.EOF || v.(error).Error() == "remote error: handshake failure" {
 			*err = driver.ErrBadConn

@@ -19,10 +19,10 @@ type templateData struct {
 	SecureJsonData map[string]string
 }
 
-func getHeaders(route *plugins.AppPluginRoute, orgId int64, appId string) (http.Header, error) {
+func getHeaders(route *plugins.AppPluginRoute, orgId int64, appID string) (http.Header, error) {
 	result := http.Header{}
 
-	query := m.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appId}
+	query := m.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
@@ -37,16 +37,16 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appId string) (http.
 	return result, err
 }
 
-func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appId string) *httputil.ReverseProxy {
-	targetUrl, _ := url.Parse(route.Url)
+func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string) *httputil.ReverseProxy {
+	targetURL, _ := url.Parse(route.Url)
 
 	director := func(req *http.Request) {
 
-		req.URL.Scheme = targetUrl.Scheme
-		req.URL.Host = targetUrl.Host
-		req.Host = targetUrl.Host
+		req.URL.Scheme = targetURL.Scheme
+		req.URL.Host = targetURL.Host
+		req.Host = targetURL.Host
 
-		req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
+		req.URL.Path = util.JoinUrlFragments(targetURL.Path, proxyPath)
 
 		// clear cookie headers
 		req.Header.Del("Cookie")
@@ -80,7 +80,7 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 		req.Header.Add("X-Grafana-Context", string(ctxJson))
 
 		if len(route.Headers) > 0 {
-			headers, err := getHeaders(route, ctx.OrgId, appId)
+			headers, err := getHeaders(route, ctx.OrgId, appID)
 			if err != nil {
 				ctx.JsonApiErr(500, "Could not generate plugin route header", err)
 				return

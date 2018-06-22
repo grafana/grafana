@@ -42,9 +42,12 @@ export class ManageDashboardsCtrl {
   // if user has editor role or higher
   isEditor: boolean;
 
+  hasEditPermissionInFolders: boolean;
+
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private searchSrv: SearchSrv, private contextSrv) {
     this.isEditor = this.contextSrv.isEditor;
+    this.hasEditPermissionInFolders = this.contextSrv.hasEditPermissionInFolders;
 
     this.query = {
       query: '',
@@ -80,6 +83,9 @@ export class ManageDashboardsCtrl {
 
         return this.backendSrv.getFolderByUid(this.folderUid).then(folder => {
           this.canSave = folder.canSave;
+          if (!this.canSave) {
+            this.hasEditPermissionInFolders = false;
+          }
         });
       });
   }
@@ -281,6 +287,16 @@ export class ManageDashboardsCtrl {
 
   createDashboardUrl() {
     let url = 'dashboard/new';
+
+    if (this.folderId) {
+      url += `?folderId=${this.folderId}`;
+    }
+
+    return url;
+  }
+
+  importDashboardUrl() {
+    let url = 'dashboard/import';
 
     if (this.folderId) {
       url += `?folderId=${this.folderId}`;

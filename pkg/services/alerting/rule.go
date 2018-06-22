@@ -55,8 +55,8 @@ func (e ValidationError) Error() string {
 }
 
 var (
-	ValueFormatRegex = regexp.MustCompile("^\\d+")
-	UnitFormatRegex  = regexp.MustCompile("\\w{1}$")
+	ValueFormatRegex = regexp.MustCompile(`^\d+`)
+	UnitFormatRegex  = regexp.MustCompile(`\w{1}$`)
 )
 
 var unitMultiplier = map[string]int{
@@ -103,25 +103,25 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
-		if id, err := jsonModel.Get("id").Int64(); err != nil {
+		id, err := jsonModel.Get("id").Int64()
+		if err != nil {
 			return nil, ValidationError{Reason: "Invalid notification schema", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
-		} else {
-			model.Notifications = append(model.Notifications, id)
 		}
+		model.Notifications = append(model.Notifications, id)
 	}
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
 		conditionModel := simplejson.NewFromAny(condition)
 		conditionType := conditionModel.Get("type").MustString()
-		if factory, exist := conditionFactories[conditionType]; !exist {
+		factory, exist := conditionFactories[conditionType]
+		if !exist {
 			return nil, ValidationError{Reason: "Unknown alert condition: " + conditionType, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
-		} else {
-			if queryCondition, err := factory(conditionModel, index); err != nil {
-				return nil, ValidationError{Err: err, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
-			} else {
-				model.Conditions = append(model.Conditions, queryCondition)
-			}
 		}
+		queryCondition, err := factory(conditionModel, index)
+		if err != nil {
+			return nil, ValidationError{Err: err, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+		}
+		model.Conditions = append(model.Conditions, queryCondition)
 	}
 
 	if len(model.Conditions) == 0 {
@@ -133,7 +133,7 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 
 type ConditionFactory func(model *simplejson.Json, index int) (Condition, error)
 
-var conditionFactories map[string]ConditionFactory = make(map[string]ConditionFactory)
+var conditionFactories = make(map[string]ConditionFactory)
 
 func RegisterCondition(typeName string, factory ConditionFactory) {
 	conditionFactories[typeName] = factory

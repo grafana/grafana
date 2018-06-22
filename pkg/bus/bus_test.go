@@ -1,24 +1,67 @@
 package bus
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
 )
 
-type TestQuery struct {
+type testQuery struct {
 	Id   int64
 	Resp string
+}
+
+func TestDispatchCtxCanUseNormalHandlers(t *testing.T) {
+	bus := New()
+
+	handlerWithCtxCallCount := 0
+	handlerCallCount := 0
+
+	handlerWithCtx := func(ctx context.Context, query *testQuery) error {
+		handlerWithCtxCallCount++
+		return nil
+	}
+
+	handler := func(query *testQuery) error {
+		handlerCallCount++
+		return nil
+	}
+
+	err := bus.DispatchCtx(context.Background(), &testQuery{})
+	if err != ErrHandlerNotFound {
+		t.Errorf("expected bus to return HandlerNotFound is no handler is registered")
+	}
+
+	bus.AddHandler(handler)
+
+	t.Run("when a normal handler is registered", func(t *testing.T) {
+		bus.Dispatch(&testQuery{})
+
+		if handlerCallCount != 1 {
+			t.Errorf("Expected normal handler to be called 1 time. was called %d", handlerCallCount)
+		}
+
+		t.Run("when a ctx handler is registered", func(t *testing.T) {
+			bus.AddHandlerCtx(handlerWithCtx)
+			bus.Dispatch(&testQuery{})
+
+			if handlerWithCtxCallCount != 1 {
+				t.Errorf("Expected ctx handler to be called 1 time. was called %d", handlerWithCtxCallCount)
+			}
+		})
+	})
+
 }
 
 func TestQueryHandlerReturnsError(t *testing.T) {
 	bus := New()
 
-	bus.AddHandler(func(query *TestQuery) error {
+	bus.AddHandler(func(query *testQuery) error {
 		return errors.New("handler error")
 	})
 
-	err := bus.Dispatch(&TestQuery{})
+	err := bus.Dispatch(&testQuery{})
 
 	if err == nil {
 		t.Fatal("Send query failed " + err.Error())
@@ -30,12 +73,12 @@ func TestQueryHandlerReturnsError(t *testing.T) {
 func TestQueryHandlerReturn(t *testing.T) {
 	bus := New()
 
-	bus.AddHandler(func(q *TestQuery) error {
+	bus.AddHandler(func(q *testQuery) error {
 		q.Resp = "hello from handler"
 		return nil
 	})
 
-	query := &TestQuery{}
+	query := &testQuery{}
 	err := bus.Dispatch(query)
 
 	if err != nil {
@@ -49,17 +92,17 @@ func TestEventListeners(t *testing.T) {
 	bus := New()
 	count := 0
 
-	bus.AddEventListener(func(query *TestQuery) error {
+	bus.AddEventListener(func(query *testQuery) error {
 		count += 1
 		return nil
 	})
 
-	bus.AddEventListener(func(query *TestQuery) error {
+	bus.AddEventListener(func(query *testQuery) error {
 		count += 10
 		return nil
 	})
 
-	err := bus.Publish(&TestQuery{})
+	err := bus.Publish(&testQuery{})
 
 	if err != nil {
 		t.Fatal("Publish event failed " + err.Error())

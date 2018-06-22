@@ -1,23 +1,20 @@
-# Roadmap (2018-02-22)
+# Roadmap (2018-05-06)
 
 This roadmap is a tentative plan for the core development team. Things change constantly as PRs come in and priorities change. 
 But it will give you an idea of our current vision and plan. 
-
+  
 ### Short term (1-2 months)
 
-- v5.1
-  - Crossplatform builds & build speed improvements
-  - Enterprise LDAP
-  - Provisioning workflow
+  - Elasticsearch alerting
+  - Crossplatform builds
+  - Backend service refactorings
+  - Explore UI 
   - First login registration view
-  - IFQL Initial support
   
 ### Mid term (2-4 months)
-
-- v5.2
-  - Azure monitor backend rewrite
-  - Elasticsearch alerting
-  - Backend plugins? (alert notifiers, auth)
+  - Multi-Stat panel
+  - React Panels 
+  - Templating Query Editor UI Plugin hook
   
 ### Long term (4 - 8 months)
 

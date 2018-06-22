@@ -25,12 +25,9 @@ import (
 )
 
 var (
-	logger log.Logger   = log.New("data-proxy-log")
-	client *http.Client = &http.Client{
-		Timeout:   time.Second * 30,
-		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
-	}
-	tokenCache = map[int64]*jwtToken{}
+	logger     = log.New("data-proxy-log")
+	tokenCache = map[string]*jwtToken{}
+	client     = newHTTPClient()
 )
 
 type jwtToken struct {
@@ -48,15 +45,26 @@ type DataSourceProxy struct {
 	plugin    *plugins.DataSourcePlugin
 }
 
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
-	targetUrl, _ := url.Parse(ds.Url)
+	targetURL, _ := url.Parse(ds.Url)
 
 	return &DataSourceProxy{
 		ds:        ds,
 		plugin:    plugin,
 		ctx:       ctx,
 		proxyPath: proxyPath,
-		targetUrl: targetUrl,
+		targetUrl: targetURL,
+	}
+}
+
+func newHTTPClient() httpClient {
+	return &http.Client{
+		Timeout:   time.Second * 30,
+		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
 }
 
@@ -89,6 +97,9 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetTag("user_id", proxy.ctx.SignedInUser.UserId)
 	span.SetTag("org_id", proxy.ctx.SignedInUser.OrgId)
 
+	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
+	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
+
 	opentracing.GlobalTracer().Inject(
 		span.Context(),
 		opentracing.HTTPHeaders,
@@ -96,6 +107,36 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
 	proxy.ctx.Resp.Header().Del("Set-Cookie")
+}
+
+func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
+	panelId := proxy.ctx.Req.Header.Get(headerName)
+	dashId, err := strconv.Atoi(panelId)
+	if err == nil {
+		span.SetTag(tagName, dashId)
+	}
+}
+
+func (proxy *DataSourceProxy) useCustomHeaders(req *http.Request) {
+	decryptSdj := proxy.ds.SecureJsonData.Decrypt()
+	index := 1
+	for {
+		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
+		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
+		if key := proxy.ds.JsonData.Get(headerNameSuffix).MustString(); key != "" {
+			if val, ok := decryptSdj[headerValueSuffix]; ok {
+				// remove if exists
+				if req.Header.Get(key) != "" {
+					req.Header.Del(key)
+				}
+				req.Header.Add(key, val)
+				logger.Debug("Using custom header ", "CustomHeaders", key)
+			}
+		} else {
+			break
+		}
+		index += 1
+	}
 }
 
 func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
@@ -125,6 +166,11 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
+		}
+
+		// Lookup and use custom headers
+		if proxy.ds.SecureJsonData != nil {
+			proxy.useCustomHeaders(req)
 		}
 
 		dsAuth := req.Header.Get("X-DS-Authorization")
@@ -178,12 +224,6 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
-	if proxy.ds.Type == m.DS_INFLUXDB {
-		if proxy.ctx.Query("db") != proxy.ds.Database {
-			return errors.New("Datasource is not configured to allow this database")
-		}
-	}
-
 	if !checkWhiteList(proxy.ctx, proxy.targetUrl.Host) {
 		return errors.New("Target url is not a valid target")
 	}
@@ -279,16 +319,16 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 		SecureJsonData: proxy.ds.SecureJsonData.Decrypt(),
 	}
 
-	routeUrl, err := url.Parse(proxy.route.Url)
+	routeURL, err := url.Parse(proxy.route.Url)
 	if err != nil {
 		logger.Error("Error parsing plugin route url")
 		return
 	}
 
-	req.URL.Scheme = routeUrl.Scheme
-	req.URL.Host = routeUrl.Host
-	req.Host = routeUrl.Host
-	req.URL.Path = util.JoinUrlFragments(routeUrl.Path, proxy.proxyPath)
+	req.URL.Scheme = routeURL.Scheme
+	req.URL.Host = routeURL.Host
+	req.Host = routeURL.Host
+	req.URL.Path = util.JoinUrlFragments(routeURL.Path, proxy.proxyPath)
 
 	if err := addHeaders(&req.Header, proxy.route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
@@ -306,7 +346,7 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 }
 
 func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
-	if cachedToken, found := tokenCache[proxy.ds.Id]; found {
+	if cachedToken, found := tokenCache[proxy.getAccessTokenCacheKey()]; found {
 		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
 			logger.Info("Using token from cache")
 			return cachedToken.AccessToken, nil
@@ -320,11 +360,11 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 
 	params := make(url.Values)
 	for key, value := range proxy.route.TokenAuth.Params {
-		if interpolatedParam, err := interpolateString(value, data); err != nil {
+		interpolatedParam, err := interpolateString(value, data)
+		if err != nil {
 			return "", err
-		} else {
-			params.Add(key, interpolatedParam)
 		}
+		params.Add(key, interpolatedParam)
 	}
 
 	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
@@ -345,22 +385,26 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 
 	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
 	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
-	tokenCache[proxy.ds.Id] = &token
+	tokenCache[proxy.getAccessTokenCacheKey()] = &token
 
 	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
 	return token.AccessToken, nil
 }
 
+func (proxy *DataSourceProxy) getAccessTokenCacheKey() string {
+	return fmt.Sprintf("%v_%v_%v", proxy.ds.Id, proxy.route.Path, proxy.route.Method)
+}
+
 func interpolateString(text string, data templateData) (string, error) {
 	t, err := template.New("content").Parse(text)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Could not parse template %s.", text))
+		return "", fmt.Errorf("could not parse template %s", text)
 	}
 
 	var contentBuf bytes.Buffer
 	err = t.Execute(&contentBuf, data)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Failed to execute template %s.", text))
+		return "", fmt.Errorf("failed to execute template %s", text)
 	}
 
 	return contentBuf.String(), nil

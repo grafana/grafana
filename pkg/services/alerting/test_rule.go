@@ -53,6 +53,7 @@ func testAlertRule(rule *Rule) *EvalContext {
 	context.IsTestRun = true
 
 	handler.Eval(context)
+	context.Rule.State = context.GetNewState()
 
 	return context
 }

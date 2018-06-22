@@ -46,6 +46,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
 					err := SearchDashboards(query)
+
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
 					So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)
@@ -220,7 +221,6 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 		})
 
 		Convey("Given two dashboard folders", func() {
-
 			folder1 := insertTestDashboard("1 test dash folder", 1, 0, true, "prod")
 			folder2 := insertTestDashboard("2 test dash folder", 1, 0, true, "prod")
 			insertTestDashboard("folder in another org", 2, 0, true, "prod")
@@ -262,6 +262,15 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					So(query.Result[0].Permission, ShouldEqual, m.PERMISSION_ADMIN)
 					So(query.Result[1].DashboardId, ShouldEqual, folder2.Id)
 					So(query.Result[1].Permission, ShouldEqual, m.PERMISSION_ADMIN)
+				})
+
+				Convey("should have edit permission in folders", func() {
+					query := &m.HasEditPermissionInFoldersQuery{
+						SignedInUser: &m.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: m.ROLE_ADMIN},
+					}
+					err := HasEditPermissionInFolders(query)
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeTrue)
 				})
 			})
 
@@ -309,6 +318,14 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					So(query.Result[0].Id, ShouldEqual, folder2.Id)
 				})
 
+				Convey("should have edit permission in folders", func() {
+					query := &m.HasEditPermissionInFoldersQuery{
+						SignedInUser: &m.SignedInUser{UserId: editorUser.Id, OrgId: 1, OrgRole: m.ROLE_EDITOR},
+					}
+					err := HasEditPermissionInFolders(query)
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeTrue)
+				})
 			})
 
 			Convey("Viewer users", func() {
@@ -351,6 +368,41 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 					So(len(query.Result), ShouldEqual, 1)
 					So(query.Result[0].Id, ShouldEqual, folder1.Id)
+				})
+
+				Convey("should not have edit permission in folders", func() {
+					query := &m.HasEditPermissionInFoldersQuery{
+						SignedInUser: &m.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: m.ROLE_VIEWER},
+					}
+					err := HasEditPermissionInFolders(query)
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeFalse)
+				})
+
+				Convey("and admin permission is given for user with org role viewer in one dashboard folder", func() {
+					testHelperUpdateDashboardAcl(folder1.Id, m.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: m.PERMISSION_ADMIN})
+
+					Convey("should have edit permission in folders", func() {
+						query := &m.HasEditPermissionInFoldersQuery{
+							SignedInUser: &m.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: m.ROLE_VIEWER},
+						}
+						err := HasEditPermissionInFolders(query)
+						So(err, ShouldBeNil)
+						So(query.Result, ShouldBeTrue)
+					})
+				})
+
+				Convey("and edit permission is given for user with org role viewer in one dashboard folder", func() {
+					testHelperUpdateDashboardAcl(folder1.Id, m.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: m.PERMISSION_EDIT})
+
+					Convey("should have edit permission in folders", func() {
+						query := &m.HasEditPermissionInFoldersQuery{
+							SignedInUser: &m.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: m.ROLE_VIEWER},
+						}
+						err := HasEditPermissionInFolders(query)
+						So(err, ShouldBeNil)
+						So(query.Result, ShouldBeTrue)
+					})
 				})
 			})
 		})

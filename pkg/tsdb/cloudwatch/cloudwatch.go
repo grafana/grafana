@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -71,15 +72,12 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	switch queryType {
 	case "metricFindQuery":
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
-		break
 	case "annotationQuery":
 		result, err = e.executeAnnotationQuery(ctx, queryContext)
-		break
 	case "timeSeriesQuery":
 		fallthrough
 	default:
 		result, err = e.executeTimeSeriesQuery(ctx, queryContext)
-		break
 	}
 
 	return result, err
@@ -145,6 +143,10 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simpl
 	endTime, err := queryContext.TimeRange.ParseTo()
 	if err != nil {
 		return nil, err
+	}
+
+	if endTime.Before(startTime) {
+		return nil, fmt.Errorf("Invalid time range: End time can't be before start time")
 	}
 
 	params := &cloudwatch.GetMetricStatisticsInput{
@@ -274,7 +276,7 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		}
 	}
 
-	period := 300
+	var period int
 	if regexp.MustCompile(`^\d+$`).Match([]byte(p)) {
 		period, err = strconv.Atoi(p)
 		if err != nil {

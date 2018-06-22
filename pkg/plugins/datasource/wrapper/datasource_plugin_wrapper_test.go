@@ -3,9 +3,9 @@ package wrapper
 import (
 	"testing"
 
+	"github.com/grafana/grafana-plugin-model/go/datasource"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana_plugin_model/go/datasource"
 )
 
 func TestMapTables(t *testing.T) {
@@ -74,7 +74,7 @@ func TestMappingRowValue(t *testing.T) {
 
 	boolRowValue, _ := dpw.mapRowValue(&datasource.RowValue{Kind: datasource.RowValue_TYPE_BOOL, BoolValue: true})
 	haveBool, ok := boolRowValue.(bool)
-	if !ok || haveBool != true {
+	if !ok || !haveBool {
 		t.Fatalf("Expected true, was %v", haveBool)
 	}
 

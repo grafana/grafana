@@ -53,11 +53,21 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       },
     };
 
+    this.addTracingHeaders(httpOptions, options);
+
     if (options.panelId) {
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;
     }
 
     return this.doGraphiteRequest(httpOptions).then(this.convertDataPointsToMs);
+  };
+
+  this.addTracingHeaders = function(httpOptions, options) {
+    var proxyMode = !this.url.match(/^http/);
+    if (proxyMode) {
+      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Panel-Id'] = options.panelId;
+    }
   };
 
   this.convertDataPointsToMs = function(result) {
@@ -318,7 +328,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
-        expr: _.map(expressions, expression => templateSrv.replace(expression)),
+        expr: _.map(expressions, expression => templateSrv.replace((expression || '').trim())),
       },
       // for cancellations
       requestId: options.requestId,
@@ -353,8 +363,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: _.map(expressions, expression => templateSrv.replace(expression)),
-        tag: templateSrv.replace(tag),
+        expr: _.map(expressions, expression => templateSrv.replace((expression || '').trim())),
+        tag: templateSrv.replace((tag || '').trim()),
       },
       // for cancellations
       requestId: options.requestId,
@@ -451,7 +461,13 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.testDatasource = function() {
-    return this.metricFindQuery('*').then(function() {
+    let query = {
+      panelId: 3,
+      rangeRaw: { from: 'now-1h', to: 'now' },
+      targets: [{ target: 'constantLine(100)' }],
+      maxDataPoints: 300,
+    };
+    return this.query(query).then(function() {
       return { status: 'success', message: 'Data source is working' };
     });
   };

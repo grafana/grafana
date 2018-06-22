@@ -15,48 +15,9 @@ type Column struct {
 }
 
 func (col *Column) String(d Dialect) string {
-	sql := d.QuoteStr() + col.Name + d.QuoteStr() + " "
-
-	sql += d.SqlType(col) + " "
-
-	if col.IsPrimaryKey {
-		sql += "PRIMARY KEY "
-		if col.IsAutoIncrement {
-			sql += d.AutoIncrStr() + " "
-		}
-	}
-
-	if d.ShowCreateNull() {
-		if col.Nullable {
-			sql += "NULL "
-		} else {
-			sql += "NOT NULL "
-		}
-	}
-
-	if col.Default != "" {
-		sql += "DEFAULT " + col.Default + " "
-	}
-
-	return sql
+	return d.ColString(col)
 }
 
 func (col *Column) StringNoPk(d Dialect) string {
-	sql := d.QuoteStr() + col.Name + d.QuoteStr() + " "
-
-	sql += d.SqlType(col) + " "
-
-	if d.ShowCreateNull() {
-		if col.Nullable {
-			sql += "NULL "
-		} else {
-			sql += "NOT NULL "
-		}
-	}
-
-	if col.Default != "" {
-		sql += "DEFAULT " + d.Default(col) + " "
-	}
-
-	return sql
+	return d.ColStringNoPk(col)
 }

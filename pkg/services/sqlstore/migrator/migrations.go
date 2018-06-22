@@ -1,7 +1,6 @@
 package migrator
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -25,37 +24,58 @@ func (m *MigrationBase) GetCondition() MigrationCondition {
 type RawSqlMigration struct {
 	MigrationBase
 
-	sqlite   string
-	mysql    string
-	postgres string
+	sql map[string]string
+}
+
+func NewRawSqlMigration(sql string) *RawSqlMigration {
+	m := &RawSqlMigration{}
+	if sql != "" {
+		m.Default(sql)
+	}
+	return m
 }
 
 func (m *RawSqlMigration) Sql(dialect Dialect) string {
-	switch dialect.DriverName() {
-	case MYSQL:
-		return m.mysql
-	case SQLITE:
-		return m.sqlite
-	case POSTGRES:
-		return m.postgres
+	if m.sql != nil {
+		if val := m.sql[dialect.DriverName()]; val != "" {
+			return val
+		}
+
+		if val := m.sql["default"]; val != "" {
+			return val
+		}
 	}
 
-	panic("db type not supported")
+	return dialect.NoOpSql()
+}
+
+func (m *RawSqlMigration) Set(dialect string, sql string) *RawSqlMigration {
+	if m.sql == nil {
+		m.sql = make(map[string]string)
+	}
+
+	m.sql[dialect] = sql
+	return m
+}
+
+func (m *RawSqlMigration) Default(sql string) *RawSqlMigration {
+	return m.Set("default", sql)
 }
 
 func (m *RawSqlMigration) Sqlite(sql string) *RawSqlMigration {
-	m.sqlite = sql
-	return m
+	return m.Set(SQLITE, sql)
 }
 
 func (m *RawSqlMigration) Mysql(sql string) *RawSqlMigration {
-	m.mysql = sql
-	return m
+	return m.Set(MYSQL, sql)
 }
 
 func (m *RawSqlMigration) Postgres(sql string) *RawSqlMigration {
-	m.postgres = sql
-	return m
+	return m.Set(POSTGRES, sql)
+}
+
+func (m *RawSqlMigration) Mssql(sql string) *RawSqlMigration {
+	return m.Set(MSSQL, sql)
 }
 
 type AddColumnMigration struct {
@@ -113,7 +133,7 @@ func NewDropIndexMigration(table Table, index *Index) *DropIndexMigration {
 
 func (m *DropIndexMigration) Sql(dialect Dialect) string {
 	if m.index.Name == "" {
-		m.index.Name = fmt.Sprintf("%s", strings.Join(m.index.Cols, "_"))
+		m.index.Name = strings.Join(m.index.Cols, "_")
 	}
 	return dialect.DropIndexSql(m.tableName, m.index)
 }
@@ -180,7 +200,7 @@ type CopyTableDataMigration struct {
 	targetTable string
 	sourceCols  []string
 	targetCols  []string
-	colMap      map[string]string
+	//colMap      map[string]string
 }
 
 func NewCopyTableDataMigration(targetTable string, sourceTable string, colMap map[string]string) *CopyTableDataMigration {

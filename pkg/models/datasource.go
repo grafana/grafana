@@ -19,6 +19,7 @@ const (
 	DS_PROMETHEUS    = "prometheus"
 	DS_POSTGRES      = "postgres"
 	DS_MYSQL         = "mysql"
+	DS_MSSQL         = "mssql"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
@@ -57,7 +58,7 @@ type DataSource struct {
 	Updated time.Time
 }
 
-var knownDatasourcePlugins map[string]bool = map[string]bool{
+var knownDatasourcePlugins = map[string]bool{
 	DS_ES:                       true,
 	DS_GRAPHITE:                 true,
 	DS_INFLUXDB:                 true,
@@ -68,6 +69,7 @@ var knownDatasourcePlugins map[string]bool = map[string]bool{
 	DS_OPENTSDB:                 true,
 	DS_POSTGRES:                 true,
 	DS_MYSQL:                    true,
+	DS_MSSQL:                    true,
 	"opennms":                   true,
 	"abhisant-druid-datasource": true,
 	"dalmatinerdb-datasource":   true,

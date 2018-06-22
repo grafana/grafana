@@ -83,7 +83,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private linkSrv) {
+  constructor($scope, $injector, private linkSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -128,7 +128,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   seriesHandler(seriesData) {
-    let series = new TimeSeries({
+    var series = new TimeSeries({
       datapoints: seriesData.datapoints || [],
       alias: seriesData.target,
     });
@@ -165,8 +165,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   setTableColumnToSensibleDefault(tableData) {
-    if (this.tableColumnOptions.length === 1) {
-      this.panel.tableColumn = this.tableColumnOptions[0];
+    if (tableData.columns.length === 1) {
+      this.panel.tableColumn = tableData.columns[0].text;
     } else {
       this.panel.tableColumn = _.find(tableData.columns, col => {
         return col.type !== 'time';
@@ -220,7 +220,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   invertColorOrder() {
-    let tmp = this.panel.colors[0];
+    var tmp = this.panel.colors[0];
     this.panel.colors[0] = this.panel.colors[2];
     this.panel.colors[2] = tmp;
     this.render();
@@ -248,10 +248,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return { decimals: this.panel.decimals, scaledDecimals: null };
     }
 
-    let delta = value / 2;
-    let dec = -Math.floor(Math.log(delta) / Math.LN10);
+    var delta = value / 2;
+    var dec = -Math.floor(Math.log(delta) / Math.LN10);
 
-    let magn = Math.pow(10, -dec),
+    var magn = Math.pow(10, -dec),
       norm = delta / magn, // norm is between 1.0 and 10.0
       size;
 
@@ -277,9 +277,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       dec = 0;
     }
 
-    let result: any = {};
+    var result: any = {};
     result.decimals = Math.max(0, dec);
     result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
+
     return result;
   }
 
@@ -287,7 +288,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     data.flotpairs = [];
 
     if (this.series.length > 1) {
-      let error: any = new Error();
+      var error: any = new Error();
       error.message = 'Multiple Series Error';
       error.data =
         'Metric query returns ' +
@@ -313,7 +314,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         let formatFunc = kbn.valueFormats[this.panel.format];
         data.value = lastPoint[1];
         data.valueRounded = data.value;
-        data.valueFormatted = formatFunc(data.value, 0, 0);
+        data.valueFormatted = formatFunc(data.value, this.dashboard.isTimezoneUtc());
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
@@ -324,9 +325,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
 
-      // Add $__name letiable for using in prefix or postfix
-      data.scopedlets = _.extend({}, this.panel.scopedlets);
-      data.scopedlets['__name'] = { value: this.series[0].label };
+      // Add $__name variable for using in prefix or postfix
+      data.scopedVars = _.extend({}, this.panel.scopedVars);
+      data.scopedVars['__name'] = { value: this.series[0].label };
     }
     this.setValueMapping(data);
   }
@@ -346,7 +347,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         }
 
         // value/number to text mapping
-        let value = parseFloat(map.value);
+        var value = parseFloat(map.value);
         if (value === data.valueRounded) {
           data.valueFormatted = map.text;
           return;
@@ -365,22 +366,22 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         }
 
         // value/number to range mapping
-        let from = parseFloat(map.from);
-        let to = parseFloat(map.to);
+        var from = parseFloat(map.from);
+        var to = parseFloat(map.to);
         if (to >= data.valueRounded && from <= data.valueRounded) {
           data.valueFormatted = map.text;
           return;
         }
       }
     }
-    //Check data value
+
     if (data.value === null || data.value === void 0) {
       data.valueFormatted = 'no value';
     }
   }
 
   removeValueMap(map) {
-    let index = _.indexOf(this.panel.valueMaps, map);
+    var index = _.indexOf(this.panel.valueMaps, map);
     this.panel.valueMaps.splice(index, 1);
     this.render();
   }
@@ -390,7 +391,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   removeRangeMap(rangeMap) {
-    let index = _.indexOf(this.panel.rangeMaps, rangeMap);
+    var index = _.indexOf(this.panel.rangeMaps, rangeMap);
     this.panel.rangeMaps.splice(index, 1);
     this.render();
   }
@@ -400,13 +401,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   link(scope, elem, attrs, ctrl) {
-    let $location = this.$location;
-    let linkSrv = this.linkSrv;
-    let $timeout = this.$timeout;
-    let panel = ctrl.panel;
-    let templateSrv = this.templateSrv;
-    let data, linkInfo;
-    let $panelContainer = elem.find('.panel-container');
+    var $location = this.$location;
+    var linkSrv = this.linkSrv;
+    var $timeout = this.$timeout;
+    var panel = ctrl.panel;
+    var templateSrv = this.templateSrv;
+    var data, linkInfo;
+    var $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
     function applyColoringThresholds(value, valueString) {
@@ -414,7 +415,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         return valueString;
       }
 
-      let color = getColorForValue(data, value);
+      var color = getColorForValue(data, value);
       if (color) {
         return '<span style="color:' + color + '">' + valueString + '</span>';
       }
@@ -423,23 +424,23 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getSpan(className, fontSize, value) {
-      value = templateSrv.replace(value, data.scopedlets);
+      value = templateSrv.replace(value, data.scopedVars);
       return '<span class="' + className + '" style="font-size:' + fontSize + '">' + value + '</span>';
     }
 
     function getBigValueHtml() {
-      let body = '<div class="singlestat-panel-value-container">';
+      var body = '<div class="singlestat-panel-value-container">';
 
       if (panel.prefix) {
-        let prefix = applyColoringThresholds(data.value, panel.prefix);
+        var prefix = applyColoringThresholds(data.value, panel.prefix);
         body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, prefix);
       }
 
-      let value = applyColoringThresholds(data.value, data.valueFormatted);
+      var value = applyColoringThresholds(data.value, data.valueFormatted);
       body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
       if (panel.postfix) {
-        let postfix = applyColoringThresholds(data.value, panel.postfix);
+        var postfix = applyColoringThresholds(data.value, panel.postfix);
         body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, postfix);
       }
 
@@ -449,27 +450,27 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getValueText() {
-      let result = panel.prefix ? templateSrv.replace(panel.prefix, data.scopedlets) : '';
+      var result = panel.prefix ? templateSrv.replace(panel.prefix, data.scopedVars) : '';
       result += data.valueFormatted;
-      result += panel.postfix ? templateSrv.replace(panel.postfix, data.scopedlets) : '';
+      result += panel.postfix ? templateSrv.replace(panel.postfix, data.scopedVars) : '';
 
       return result;
     }
 
     function addGauge() {
-      let width = elem.width();
-      let height = elem.height();
+      var width = elem.width();
+      var height = elem.height();
       // Allow to use a bit more space for wide gauges
-      let dimension = Math.min(width, height * 1.3);
+      var dimension = Math.min(width, height * 1.3);
 
       ctrl.invalidGaugeRange = false;
       if (panel.gauge.minValue > panel.gauge.maxValue) {
         ctrl.invalidGaugeRange = true;
         return;
       }
-      //circle-gauge-graph
-      let plotCanvas = $('<div></div>');
-      let plotCss = {
+
+      var plotCanvas = $('<div></div>');
+      var plotCss = {
         top: '10px',
         margin: 'auto',
         position: 'relative',
@@ -479,8 +480,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       plotCanvas.css(plotCss);
 
-      let thresholds = [];
-      for (let i = 0; i < data.thresholds.length; i++) {
+      var thresholds = [];
+      for (var i = 0; i < data.thresholds.length; i++) {
         thresholds.push({
           value: data.thresholds[i],
           color: data.colorMap[i],
@@ -491,17 +492,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         color: data.colorMap[data.colorMap.length - 1],
       });
 
-      let bgColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
+      var bgColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
 
-      let fontScale = parseInt(panel.valueFontSize) / 100;
-      let fontSize = Math.min(dimension / 5, 100) * fontScale;
+      var fontScale = parseInt(panel.valueFontSize) / 100;
+      var fontSize = Math.min(dimension / 5, 100) * fontScale;
       // Reduce gauge width if threshold labels enabled
-      let gaugeWidthReduceRatio = panel.gauge.thresholdLabels ? 1.5 : 1;
-      let gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
-      let thresholdMarkersWidth = gaugeWidth / 5;
-      let thresholdLabelFontSize = fontSize / 2.5;
+      var gaugeWidthReduceRatio = panel.gauge.thresholdLabels ? 1.5 : 1;
+      var gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
+      var thresholdMarkersWidth = gaugeWidth / 5;
+      var thresholdLabelFontSize = fontSize / 2.5;
 
-      let options = {
+      var options = {
         series: {
           gauges: {
             gauge: {
@@ -543,7 +544,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       elem.append(plotCanvas);
 
-      let plotSeries = {
+      var plotSeries = {
         data: [[0, data.valueRounded]],
       };
 
@@ -611,12 +612,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       plotCanvas.css(plotCss);
 
-      let options = {
+      var options = {
         legend: { show: false },
         series: {
           lines: {
             show: true,
             fill: 1,
+            zero: false,
             lineWidth: 1,
             fillColor: panel.sparkline.fillColor,
           },
@@ -633,7 +635,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       elem.append(plotCanvas);
 
-      let plotSeries = {
+      var plotSeries = {
         data: data.flotpairs,
         color: panel.sparkline.lineColor,
       };
@@ -653,10 +655,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       });
       data.colorMap = panel.colors;
 
-      let body = panel.gauge.show ? '' : getBigValueHtml();
+      var body = panel.gauge.show ? '' : getBigValueHtml();
 
       if (panel.colorBackground) {
-        let color = getColorForValue(data, data.value);
+        var color = getColorForValue(data, data.value);
         if (color) {
           $panelContainer.css('background-color', color);
           if (scope.fullscreen) {
@@ -683,7 +685,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       elem.toggleClass('pointer', panel.links.length > 0);
 
       if (panel.links.length > 0) {
-        linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0], data.scopedlets);
+        linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0], data.scopedVars);
       } else {
         linkInfo = null;
       }
@@ -691,7 +693,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function hookupDrilldownLinkTooltip() {
       // drilldown link tooltip
-      let drilldownTooltip = $('<div id="tooltip" class="">hello</div>"');
+      var drilldownTooltip = $('<div id="tooltip" class="">hello</div>"');
 
       elem.mouseleave(function() {
         if (panel.links.length === 0) {
@@ -750,11 +752,12 @@ function getColorForValue(data, value) {
   if (!_.isFinite(value)) {
     return null;
   }
-  for (let i = data.thresholds.length; i > 0; i--) {
+  for (var i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i - 1]) {
       return data.colorMap[i];
     }
   }
+
   return _.first(data.colorMap);
 }
 

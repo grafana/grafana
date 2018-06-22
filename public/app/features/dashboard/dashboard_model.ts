@@ -22,8 +22,10 @@ export class DashboardModel {
   editable: any;
   graphTooltip: any;
   time: any;
+  private originalTime: any;
   timepicker: any;
   templating: any;
+  private originalTemplating: any;
   annotations: any;
   refresh: any;
   snapshot: any;
@@ -48,6 +50,8 @@ export class DashboardModel {
     meta: true,
     panels: true, // needs special handling
     templating: true, // needs special handling
+    originalTime: true,
+    originalTemplating: true,
   };
 
   constructor(data, meta?) {
@@ -78,6 +82,9 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
+
+    this.resetOriginalVariables();
+    this.resetOriginalTime();
 
     this.initMeta(meta);
     this.updateSchema(data);
@@ -129,8 +136,13 @@ export class DashboardModel {
     this.meta = meta;
   }
 
-  // cleans meta data and other non peristent state
-  getSaveModelClone() {
+  // cleans meta data and other non persistent state
+  getSaveModelClone(options?) {
+    let defaults = _.defaults(options || {}, {
+      saveVariables: true,
+      saveTimerange: true,
+    });
+
     // make clone
     var copy: any = {};
     for (var property in this) {
@@ -145,6 +157,27 @@ export class DashboardModel {
     copy.templating = {
       list: _.map(this.templating.list, variable => (variable.getSaveModel ? variable.getSaveModel() : variable)),
     };
+
+    if (!defaults.saveVariables) {
+      for (let i = 0; i < copy.templating.list.length; i++) {
+        let current = copy.templating.list[i];
+        let original = _.find(this.originalTemplating, { name: current.name, type: current.type });
+
+        if (!original) {
+          continue;
+        }
+
+        if (current.type === 'adhoc') {
+          copy.templating.list[i].filters = original.filters;
+        } else {
+          copy.templating.list[i].current = original.current;
+        }
+      }
+    }
+
+    if (!defaults.saveTimerange) {
+      copy.time = this.originalTime;
+    }
 
     // get panel save models
     copy.panels = _.chain(this.panels)
@@ -606,7 +639,7 @@ export class DashboardModel {
     if (panel.gridPos.x + panel.gridPos.w * 2 <= GRID_COLUMN_COUNT) {
       newPanel.gridPos.x += panel.gridPos.w;
     } else {
-      // add bellow
+      // add below
       newPanel.gridPos.y += panel.gridPos.h;
     }
 
@@ -649,6 +682,7 @@ export class DashboardModel {
 
         for (let panel of row.panels) {
           // make sure y is adjusted (in case row moved while collapsed)
+          // console.log('yDiff', yDiff);
           panel.gridPos.y -= yDiff;
           // insert after row
           this.panels.splice(insertPos, 0, new PanelModel(panel));
@@ -657,7 +691,7 @@ export class DashboardModel {
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
         }
 
-        const pushDownAmount = yMax - row.gridPos.y;
+        const pushDownAmount = yMax - row.gridPos.y - 1;
 
         // push panels below down
         for (let panelIndex = insertPos; panelIndex < this.panels.length; panelIndex++) {
@@ -759,5 +793,41 @@ export class DashboardModel {
   private updateSchema(old) {
     let migrator = new DashboardMigrator(this);
     migrator.updateSchema(old);
+  }
+
+  resetOriginalTime() {
+    this.originalTime = _.cloneDeep(this.time);
+  }
+
+  hasTimeChanged() {
+    return !_.isEqual(this.time, this.originalTime);
+  }
+
+  resetOriginalVariables() {
+    this.originalTemplating = _.map(this.templating.list, variable => {
+      return {
+        name: variable.name,
+        type: variable.type,
+        current: _.cloneDeep(variable.current),
+        filters: _.cloneDeep(variable.filters),
+      };
+    });
+  }
+
+  hasVariableValuesChanged() {
+    if (this.templating.list.length !== this.originalTemplating.length) {
+      return false;
+    }
+
+    const updated = _.map(this.templating.list, variable => {
+      return {
+        name: variable.name,
+        type: variable.type,
+        current: _.cloneDeep(variable.current),
+        filters: _.cloneDeep(variable.filters),
+      };
+    });
+
+    return !_.isEqual(updated, this.originalTemplating);
   }
 }

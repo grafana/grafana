@@ -195,7 +195,31 @@ describe('when generating timeseries from influxdb response', function() {
 
       expect(table.type).toBe('table');
       expect(table.columns.length).toBe(5);
+      expect(table.columns[0].text).toEqual('Time');
       expect(table.rows[0]).toEqual([1431946625000, 'Africa', 'server2', 23, 10]);
+    });
+  });
+
+  describe('given table response from SHOW CARDINALITY', function() {
+    var options = {
+      alias: '',
+      series: [
+        {
+          name: 'cpu',
+          columns: ['count'],
+          values: [[37]],
+        },
+      ],
+    };
+
+    it('should return table', function() {
+      var series = new InfluxSeries(options);
+      var table = series.getTable();
+
+      expect(table.type).toBe('table');
+      expect(table.columns.length).toBe(1);
+      expect(table.columns[0].text).toEqual('count');
+      expect(table.rows[0]).toEqual([37]);
     });
   });
 
