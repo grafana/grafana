@@ -308,9 +308,6 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 			} else {
 				filter_replace = getLdapAttr(a.server.GroupSearchFilterUserAttribute, searchResult)
 			}
-			if a.server.GroupSearchFilterUserAttribute == "dn" {
-				filter_replace = searchResult.Entries[0].DN
-			}
 
 			filter := strings.Replace(a.server.GroupSearchFilter, "%s", ldap.EscapeFilter(filter_replace), -1)
 
@@ -334,11 +331,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 
 			if len(groupSearchResult.Entries) > 0 {
 				for i := range groupSearchResult.Entries {
-					if a.server.Attr.MemberOf == "dn" {
-						memberOf = append(memberOf, groupSearchResult.Entries[i].DN)
-					} else {
-						memberOf = append(memberOf, getLdapAttrN(a.server.Attr.MemberOf, groupSearchResult, i))
-					}
+					memberOf = append(memberOf, getLdapAttrN(a.server.Attr.MemberOf, groupSearchResult, i))
 				}
 				break
 			}
@@ -356,7 +349,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 }
 
 func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
-	if name == "DN" {
+	if name == "DN" || name == "dn" {
 		return result.Entries[n].DN
 	}
 	for _, attr := range result.Entries[n].Attributes {
