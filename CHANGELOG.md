@@ -6,6 +6,7 @@
 ### Minor
 
 * **Api**: Delete nonexistent datasource should return 404 [#12313](https://github.com/grafana/grafana/issues/12313), thx [@AustinWinstanley](https://github.com/AustinWinstanley)
+* **Dashboard**: Fix selecting current dashboard from search should not reload dashboard [#12248](https://github.com/grafana/grafana/issues/12248)
 
 # 5.2.0 (unreleased)
 
