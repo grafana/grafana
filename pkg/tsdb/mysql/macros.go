@@ -77,11 +77,12 @@ func (m *MySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= FROM_UNIXTIME(%d) AND %s <= FROM_UNIXTIME(%d)", args[0], m.TimeRange.GetFromAsSecondsEpoch(), args[0], m.TimeRange.GetToAsSecondsEpoch()), nil
+
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], time.Unix(m.TimeRange.GetFromAsSecondsEpoch(), 0), time.Unix(m.TimeRange.GetToAsSecondsEpoch(), 0)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("FROM_UNIXTIME(%d)", m.TimeRange.GetFromAsSecondsEpoch()), nil
+		return fmt.Sprintf("'%s'", time.Unix(m.TimeRange.GetFromAsSecondsEpoch(), 0)), nil
 	case "__timeTo":
-		return fmt.Sprintf("FROM_UNIXTIME(%d)", m.TimeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("'%s'", time.Unix(m.TimeRange.GetToAsSecondsEpoch(), 0)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
