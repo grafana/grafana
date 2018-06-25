@@ -349,7 +349,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 }
 
 func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
-	if name == "DN" || name == "dn" {
+	if strings.ToLower(name) == "dn" {
 		return result.Entries[n].DN
 	}
 	for _, attr := range result.Entries[n].Attributes {
