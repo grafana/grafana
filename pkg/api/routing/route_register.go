@@ -129,6 +129,12 @@ func (rr *routeRegister) route(pattern, method string, handlers ...macaron.Handl
 	h = append(h, rr.subfixHandlers...)
 	h = append(h, handlers...)
 
+	for _, r := range rr.routes {
+		if r.pattern == rr.prefix+pattern && r.method == method {
+			panic("cannot add duplicate route")
+		}
+	}
+
 	rr.routes = append(rr.routes, route{
 		method:   method,
 		pattern:  rr.prefix + pattern,

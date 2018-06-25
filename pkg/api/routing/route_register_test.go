@@ -193,6 +193,23 @@ func TestRouteGroupInserting(t *testing.T) {
 	}
 }
 
+func TestDuplicateRoutShouldPanic(t *testing.T) {
+	defer func() {
+		if recover() != "cannot add duplicate route" {
+			t.Errorf("Should cause panic if duplicate routes are added ")
+		}
+	}()
+
+	rr := NewRouteRegister(func(name string) macaron.Handler {
+		return emptyHandler(name)
+	})
+
+	rr.Get("/api", emptyHandler("1"))
+	rr.Get("/api", emptyHandler("1"))
+
+	fr := &fakeRouter{}
+	rr.Register(fr)
+}
 func TestNamedMiddlewareRouteRegister(t *testing.T) {
 	testTable := []route{
 		{method: "DELETE", pattern: "/admin", handlers: emptyHandlers(2)},
