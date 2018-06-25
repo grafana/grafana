@@ -18,6 +18,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   fontSizes: any[];
   unitFormats: any[];
   invalidGaugeRange: boolean;
+  isIncorrectSparklineMinValue: boolean;
+  isNotInRange: boolean;
+  isSparklineValuesEqual: boolean;
+  isFullHeight: boolean;
   panel: any;
   events: any;
   valueNameOptions: any[] = [
@@ -62,6 +66,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     colors: ['#299c46', 'rgba(237, 129, 40, 0.89)', '#d44a3a'],
     sparkline: {
       show: false,
+      minValue: 0,
+      maxValue: 0,
       full: false,
       lineColor: 'rgb(31, 120, 193)',
       fillColor: 'rgba(31, 118, 189, 0.18)',
@@ -545,31 +551,63 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       $.plot(plotCanvas, [plotSeries], options);
     }
 
-    function addSparkline() {
-      var width = elem.width() + 20;
+    function addSparkline(): boolean | void {
+      const width = elem.width() + 20;
+      const height = ctrl.height;
+      const plotCanvas = $('<div></div>');
+      const plotCss: any = {
+        position: 'absolute',
+        left: '-5px',
+        bottom: '0px',
+        width: `${width - 10}px`,
+      };
+      const maxData = Math.max(...data.flotpairs.map(pair => pair[1]));
+      const minData = Math.min(...data.flotpairs.map(pair => pair[1]));
+
+      ctrl.isNotInRange =
+        maxData < panel.sparkline.minValue &&
+        !ctrl.panel.sparkline.full &&
+        panel.sparkline.minValue < panel.sparkline.maxValue &&
+        panel.sparkline.maxValue !== panel.sparkline.minValue;
+
+      ctrl.isIncorrectSparklineMinValue =
+        ctrl.panel.sparkline.maxValue &&
+        panel.sparkline.minValue > panel.sparkline.maxValue &&
+        !ctrl.panel.sparkline.full &&
+        !ctrl.isNotInRange;
+
+      ctrl.isSparklineValuesEqual =
+        panel.sparkline.maxValue === panel.sparkline.minValue &&
+        !ctrl.panel.sparkline.full &&
+        panel.sparkline.minValue &&
+        panel.sparkline.maxValue &&
+        !ctrl.isNotInRange;
+
       if (width < 30) {
         // element has not gotten it's width yet
         // delay sparkline render
         setTimeout(addSparkline, 30);
-        return;
+        return false;
       }
 
-      var height = ctrl.height;
-      var plotCanvas = $('<div></div>');
-      var plotCss: any = {};
-      plotCss.position = 'absolute';
+      if (ctrl.isNotInRange || ctrl.isIncorrectSparklineMinValue || ctrl.isSparklineValuesEqual) {
+        return false;
+      }
 
       if (panel.sparkline.full) {
+        const dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
         plotCss.bottom = '5px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
-        var dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
-        plotCss.height = height - dynamicHeightMargin + 'px';
+        plotCss.height = `${height - dynamicHeightMargin}px`;
+        ctrl.panel.sparkline.minValue = 0;
+        ctrl.panel.sparkline.maxValue = 0;
+        ctrl.panel.sparkline.isFullHeight = false;
+      } else if (panel.sparkline.maxValue && minData > panel.sparkline.minValue) {
+        const customHeight = Math.round(
+          height * (maxData - panel.sparkline.minValue) / (panel.sparkline.maxValue - panel.sparkline.minValue)
+        );
+        plotCss.height = customHeight >= 1 ? `${customHeight}px` : '1px';
       } else {
-        plotCss.bottom = '0px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
-        plotCss.height = Math.floor(height * 0.25) + 'px';
+        plotCss.height = `${Math.floor(height * 0.25)}px`;
       }
 
       plotCanvas.css(plotCss);
@@ -714,7 +752,6 @@ function getColorForValue(data, value) {
   if (!_.isFinite(value)) {
     return null;
   }
-
   for (var i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i - 1]) {
       return data.colorMap[i];
