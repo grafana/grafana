@@ -37,7 +37,6 @@ func GetAnnotations(c *m.ReqContext) Response {
 		if item.Email != "" {
 			item.AvatarUrl = dtos.GetGravatarUrl(item.Email)
 		}
-		item.Time = item.Time
 	}
 
 	return JSON(200, items)
@@ -214,7 +213,8 @@ func DeleteAnnotations(c *m.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response 
 	repo := annotations.GetRepository()
 
 	err := repo.Delete(&annotations.DeleteParams{
-		AlertId:     cmd.PanelId,
+		Id:          cmd.AnnotationId,
+		RegionId:    cmd.RegionId,
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
 	})
