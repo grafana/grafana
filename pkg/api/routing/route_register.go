@@ -1,9 +1,10 @@
-package api
+package routing
 
 import (
 	"net/http"
+	"strings"
 
-	macaron "gopkg.in/macaron.v1"
+	"gopkg.in/macaron.v1"
 )
 
 type Router interface {
@@ -14,15 +15,33 @@ type Router interface {
 // RouteRegister allows you to add routes and macaron.Handlers
 // that the web server should serve.
 type RouteRegister interface {
+	// Get adds a list of handlers to a given route with a GET HTTP verb
 	Get(string, ...macaron.Handler)
+
+	// Post adds a list of handlers to a given route with a POST HTTP verb
 	Post(string, ...macaron.Handler)
+
+	// Delete adds a list of handlers to a given route with a DELETE HTTP verb
 	Delete(string, ...macaron.Handler)
+
+	// Put adds a list of handlers to a given route with a PUT HTTP verb
 	Put(string, ...macaron.Handler)
+
+	// Patch adds a list of handlers to a given route with a PATCH HTTP verb
 	Patch(string, ...macaron.Handler)
+
+	// Any adds a list of handlers to a given route with any HTTP verb
 	Any(string, ...macaron.Handler)
 
+	// Group allows you to pass a function that can add multiple routes
+	// with a shared prefix route.
 	Group(string, func(RouteRegister), ...macaron.Handler)
 
+	// Insert adds more routes to an existing Group.
+	Insert(string, func(RouteRegister), ...macaron.Handler)
+
+	// Register iterates over all routes added to the RouteRegister
+	// and add them to the `Router` pass as an parameter.
 	Register(Router) *macaron.Router
 }
 
@@ -50,6 +69,24 @@ type routeRegister struct {
 	namedMiddleware []RegisterNamedMiddleware
 	routes          []route
 	groups          []*routeRegister
+}
+
+func (rr *routeRegister) Insert(pattern string, fn func(RouteRegister), handlers ...macaron.Handler) {
+
+	//loop over all groups at current level
+	for _, g := range rr.groups {
+
+		// apply routes if the prefix matches the pattern
+		if g.prefix == pattern {
+			g.Group("", fn)
+			break
+		}
+
+		// go down one level if the prefix can be find in the pattern
+		if strings.HasPrefix(pattern, g.prefix) {
+			g.Insert(pattern, fn)
+		}
+	}
 }
 
 func (rr *routeRegister) Group(pattern string, fn func(rr RouteRegister), handlers ...macaron.Handler) {
@@ -91,6 +128,12 @@ func (rr *routeRegister) route(pattern, method string, handlers ...macaron.Handl
 
 	h = append(h, rr.subfixHandlers...)
 	h = append(h, handlers...)
+
+	for _, r := range rr.routes {
+		if r.pattern == rr.prefix+pattern && r.method == method {
+			panic("cannot add duplicate route")
+		}
+	}
 
 	rr.routes = append(rr.routes, route{
 		method:   method,
