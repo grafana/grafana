@@ -13,6 +13,7 @@
 ### Minor
 
 * **Plugins**: Handle errors correctly when loading datasource plugin [#12383](https://github.com/grafana/grafana/pull/12383) thx [@rozetko](https://github.com/rozetko)
+* **Render**: Enhance error message if phantomjs executable is not found [#11868](https://github.com/grafana/grafana/issues/11868)
 
 # 5.2.0-beta3 (2018-06-21)
 
