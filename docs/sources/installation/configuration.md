@@ -296,6 +296,12 @@ Set to `true` to automatically add new users to the main organization
 (id 1). When set to `false`, new users will automatically cause a new
 organization to be created for that new user.
 
+### auto_assign_org_id
+
+Set this value to automatically add new users to the provided org.
+This requires `auto_assign_org` to be set to `true`. Please make sure
+that this organization does already exists.
+
 ### auto_assign_org_role
 
 The role new users will be assigned for the main organization (if the
