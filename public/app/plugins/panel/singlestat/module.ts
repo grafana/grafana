@@ -562,6 +562,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         width: `${width - 10}px`,
       };
       const maxData = Math.max(...data.flotpairs.map(pair => pair[1]));
+      const minData = Math.min(...data.flotpairs.map(pair => pair[1]));
 
       ctrl.isNotInRange =
         maxData < panel.sparkline.minValue &&
@@ -600,12 +601,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ctrl.panel.sparkline.minValue = 0;
         ctrl.panel.sparkline.maxValue = 0;
         ctrl.panel.sparkline.isFullHeight = false;
-      } else if (panel.sparkline.maxValue && maxData > panel.sparkline.minValue) {
+      } else if (panel.sparkline.maxValue && minData > panel.sparkline.minValue) {
         const customHeight = Math.round(
           height * (maxData - panel.sparkline.minValue) / (panel.sparkline.maxValue - panel.sparkline.minValue)
         );
-        panel.sparkline.minValue = panel.sparkline.minValue || 0;
-        plotCss.height = `${customHeight}px`;
+        plotCss.height = customHeight >= 1 ? `${customHeight}px` : '1px';
       } else {
         plotCss.height = `${Math.floor(height * 0.25)}px`;
       }
