@@ -1,11 +1,11 @@
-package api
+package routing
 
 import (
 	"net/http"
 	"strconv"
 	"testing"
 
-	macaron "gopkg.in/macaron.v1"
+	"gopkg.in/macaron.v1"
 )
 
 type fakeRouter struct {
@@ -33,7 +33,7 @@ func (fr *fakeRouter) Get(pattern string, handlers ...macaron.Handler) *macaron.
 }
 
 func emptyHandlers(n int) []macaron.Handler {
-	res := []macaron.Handler{}
+	var res []macaron.Handler
 	for i := 1; n >= i; i++ {
 		res = append(res, emptyHandler(strconv.Itoa(i)))
 	}
@@ -118,6 +118,60 @@ func TestRouteGroupedRegister(t *testing.T) {
 	// Validation
 	if len(fr.route) != len(testTable) {
 		t.Errorf("want %v routes, got %v", len(testTable), len(fr.route))
+	}
+
+	for i := range testTable {
+		if testTable[i].method != fr.route[i].method {
+			t.Errorf("want %s got %v", testTable[i].method, fr.route[i].method)
+		}
+
+		if testTable[i].pattern != fr.route[i].pattern {
+			t.Errorf("want %s got %v", testTable[i].pattern, fr.route[i].pattern)
+		}
+
+		if len(testTable[i].handlers) != len(fr.route[i].handlers) {
+			t.Errorf("want %d handlers got %d handlers \ntestcase: %v\nroute: %v\n",
+				len(testTable[i].handlers),
+				len(fr.route[i].handlers),
+				testTable[i],
+				fr.route[i])
+		}
+	}
+}
+func TestRouteGroupInserting(t *testing.T) {
+	testTable := []route{
+		{method: http.MethodGet, pattern: "/api/", handlers: emptyHandlers(1)},
+		{method: http.MethodPost, pattern: "/api/group/endpoint", handlers: emptyHandlers(1)},
+
+		{method: http.MethodGet, pattern: "/api/group/inserted", handlers: emptyHandlers(1)},
+		{method: http.MethodDelete, pattern: "/api/inserted-endpoint", handlers: emptyHandlers(1)},
+	}
+
+	// Setup
+	rr := NewRouteRegister()
+
+	rr.Group("/api", func(api RouteRegister) {
+		api.Get("/", emptyHandler("1"))
+
+		api.Group("/group", func(group RouteRegister) {
+			group.Post("/endpoint", emptyHandler("1"))
+		})
+	})
+
+	rr.Insert("/api", func(api RouteRegister) {
+		api.Delete("/inserted-endpoint", emptyHandler("1"))
+	})
+
+	rr.Insert("/api/group", func(group RouteRegister) {
+		group.Get("/inserted", emptyHandler("1"))
+	})
+
+	fr := &fakeRouter{}
+	rr.Register(fr)
+
+	// Validation
+	if len(fr.route) != len(testTable) {
+		t.Fatalf("want %v routes, got %v", len(testTable), len(fr.route))
 	}
 
 	for i := range testTable {
