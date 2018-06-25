@@ -213,6 +213,7 @@ func DeleteAnnotations(c *m.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response 
 	repo := annotations.GetRepository()
 
 	err := repo.Delete(&annotations.DeleteParams{
+		OrgId:       c.OrgId,
 		Id:          cmd.AnnotationId,
 		RegionId:    cmd.RegionId,
 		DashboardId: cmd.DashboardId,
@@ -235,7 +236,8 @@ func DeleteAnnotationByID(c *m.ReqContext) Response {
 	}
 
 	err := repo.Delete(&annotations.DeleteParams{
-		Id: annotationID,
+		OrgId: c.OrgId,
+		Id:    annotationID,
 	})
 
 	if err != nil {
@@ -254,6 +256,7 @@ func DeleteAnnotationRegion(c *m.ReqContext) Response {
 	}
 
 	err := repo.Delete(&annotations.DeleteParams{
+		OrgId:    c.OrgId,
 		RegionId: regionID,
 	})
 
