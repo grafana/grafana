@@ -1,11 +1,11 @@
 import React from 'react';
 import { SparkLine } from './SparkLine';
-import { IStat, ISize } from '../types';
+import { SeriesStat, MultistatPanelSize } from '../types';
 import { getBGColor } from './utils';
 
 export interface IProps {
-  stat: IStat;
-  size?: ISize;
+  stat: SeriesStat;
+  size?: MultistatPanelSize;
   color?: string;
   options?: any;
 }

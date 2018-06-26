@@ -1,12 +1,12 @@
 // import _ from 'lodash';
 import React from 'react';
 import { HorizontalStat } from './HorizontalStat';
-import { ISize } from '../types';
+import { MultistatPanelSize } from '../types';
 
 export interface IProps {
   stats: any[];
   options: any;
-  size: ISize;
+  size: MultistatPanelSize;
   getColor: (v: number) => string;
 }
 

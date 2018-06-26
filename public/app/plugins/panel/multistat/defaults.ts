@@ -1,6 +1,6 @@
-import { Panel, Layout } from './types';
+import { MultistatPanelOptions, MultistatPanelLayout } from './types';
 
-const panelDefaults: Panel = {
+const panelDefaults: MultistatPanelOptions = {
   links: [],
   datasource: null,
   maxDataPoints: 100,
@@ -21,7 +21,7 @@ const panelDefaults: Panel = {
     lineColor: 'rgb(31, 120, 193)',
     fillColor: 'rgba(31, 118, 189, 0.18)',
   },
-  layout: Layout.Horizontal,
+  layout: MultistatPanelLayout.Horizontal,
 };
 
 const valueNameOptions = [

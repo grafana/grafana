@@ -1,12 +1,12 @@
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import React from 'react';
-import { IStat, ISize } from '../types';
+import { SeriesStat, MultistatPanelSize } from '../types';
 import { getBGColor } from './utils';
 
 export interface IProps {
-  stat: IStat;
-  size: ISize;
+  stat: SeriesStat;
+  size: MultistatPanelSize;
   options: any;
   color?: string;
 }
