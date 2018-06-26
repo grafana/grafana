@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +16,7 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", CreateUser)
+	//bus.AddHandler("sql", CreateUser)
 	bus.AddHandler("sql", GetUserById)
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
@@ -30,6 +31,7 @@ func init() {
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
+	bus.AddHandlerCtx("sql", CreateUser)
 }
 
 func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error) {
@@ -79,8 +81,8 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error
 	return org.Id, nil
 }
 
-func CreateUser(cmd *m.CreateUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func CreateUser(ctx context.Context, cmd *m.CreateUserCommand) error {
+	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		orgId, err := getOrgIdForNewUser(cmd, sess)
 		if err != nil {
 			return err
@@ -290,14 +292,18 @@ func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 	}
 
 	return inTransaction(func(sess *DBSession) error {
-		user := m.User{
-			Id:    cmd.UserId,
-			OrgId: cmd.OrgId,
-		}
-
-		_, err := sess.Id(cmd.UserId).Update(&user)
-		return err
+		return setUsingOrgInTransaction(sess, cmd.UserId, cmd.OrgId)
 	})
+}
+
+func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error {
+	user := m.User{
+		Id:    userID,
+		OrgId: orgID,
+	}
+
+	_, err := sess.Id(userID).Update(&user)
+	return err
 }
 
 func GetUserProfile(query *m.GetUserProfileQuery) error {

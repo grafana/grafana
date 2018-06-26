@@ -80,6 +80,11 @@ Path to where Grafana stores the sqlite3 database (if used), file based
 sessions (if used), and other data.  This path is usually specified via
 command line in the init.d script or the systemd service file.
 
+### temp_data_lifetime
+
+How long temporary images in `data` directory should be kept. Defaults to: `24h`. Supported modifiers: `h` (hours), 
+`m` (minutes), for example: `168h`, `30m`, `10h30m`. Use `0` to never clean up temporary files.
+
 ### logs
 
 Path to where Grafana will store logs. This path is usually specified via

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -22,10 +23,10 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
+	_ "github.com/lib/pq"
+	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -34,6 +35,8 @@ var (
 
 	sqlog log.Logger = log.New("sqlstore")
 )
+
+const ContextSessionName = "db-session"
 
 func init() {
 	registry.Register(&registry.Descriptor{
@@ -45,11 +48,70 @@ func init() {
 
 type SqlStore struct {
 	Cfg *setting.Cfg `inject:""`
+	Bus bus.Bus      `inject:""`
 
 	dbCfg           DatabaseConfig
 	engine          *xorm.Engine
 	log             log.Logger
 	skipEnsureAdmin bool
+}
+
+// NewSession returns a new DBSession
+func (ss *SqlStore) NewSession() *DBSession {
+	return &DBSession{Session: ss.engine.NewSession()}
+}
+
+// WithDbSession calls the callback with an session attached to the context.
+func (ss *SqlStore) WithDbSession(ctx context.Context, callback dbTransactionFunc) error {
+	sess, err := startSession(ctx, ss.engine, false)
+	if err != nil {
+		return err
+	}
+
+	return callback(sess)
+}
+
+// WithTransactionalDbSession calls the callback with an session within a transaction
+func (ss *SqlStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
+	return ss.inTransactionWithRetryCtx(ctx, callback, 0)
+}
+
+func (ss *SqlStore) inTransactionWithRetryCtx(ctx context.Context, callback dbTransactionFunc, retry int) error {
+	sess, err := startSession(ctx, ss.engine, true)
+	if err != nil {
+		return err
+	}
+
+	defer sess.Close()
+
+	err = callback(sess)
+
+	// special handling of database locked errors for sqlite, then we can retry 3 times
+	if sqlError, ok := err.(sqlite3.Error); ok && retry < 5 {
+		if sqlError.Code == sqlite3.ErrLocked {
+			sess.Rollback()
+			time.Sleep(time.Millisecond * time.Duration(10))
+			sqlog.Info("Database table locked, sleeping then retrying", "retry", retry)
+			return ss.inTransactionWithRetryCtx(ctx, callback, retry+1)
+		}
+	}
+
+	if err != nil {
+		sess.Rollback()
+		return err
+	} else if err = sess.Commit(); err != nil {
+		return err
+	}
+
+	if len(sess.events) > 0 {
+		for _, e := range sess.events {
+			if err = bus.Publish(e); err != nil {
+				log.Error(3, "Failed to publish event after commit", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (ss *SqlStore) Init() error {
@@ -77,6 +139,8 @@ func (ss *SqlStore) Init() error {
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
 
+	ss.Bus.SetTransactionManager(ss)
+
 	// ensure admin user
 	if ss.skipEnsureAdmin {
 		return nil
@@ -88,27 +152,33 @@ func (ss *SqlStore) Init() error {
 func (ss *SqlStore) ensureAdminUser() error {
 	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 
-	if err := bus.Dispatch(&systemUserCountQuery); err != nil {
-		return fmt.Errorf("Could not determine if admin user exists: %v", err)
-	}
+	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
 
-	if systemUserCountQuery.Result.Count > 0 {
+		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+		if err != nil {
+			return fmt.Errorf("Could not determine if admin user exists: %v", err)
+		}
+
+		if systemUserCountQuery.Result.Count > 0 {
+			return nil
+		}
+
+		cmd := m.CreateUserCommand{}
+		cmd.Login = setting.AdminUser
+		cmd.Email = setting.AdminUser + "@localhost"
+		cmd.Password = setting.AdminPassword
+		cmd.IsAdmin = true
+
+		if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+			return fmt.Errorf("Failed to create admin user: %v", err)
+		}
+
+		ss.log.Info("Created default admin", "user", setting.AdminUser)
+
 		return nil
-	}
+	})
 
-	cmd := m.CreateUserCommand{}
-	cmd.Login = setting.AdminUser
-	cmd.Email = setting.AdminUser + "@localhost"
-	cmd.Password = setting.AdminPassword
-	cmd.IsAdmin = true
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return fmt.Errorf("Failed to create admin user: %v", err)
-	}
-
-	ss.log.Info("Created default admin user: %v", setting.AdminUser)
-
-	return nil
+	return err
 }
 
 func (ss *SqlStore) buildConnectionString() (string, error) {
@@ -238,8 +308,10 @@ func (ss *SqlStore) readConfig() {
 }
 
 func InitTestDB(t *testing.T) *SqlStore {
+	t.Helper()
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true
+	sqlstore.Bus = bus.New()
 
 	dbType := migrator.SQLITE
 
