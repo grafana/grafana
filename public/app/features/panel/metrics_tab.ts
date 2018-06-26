@@ -1,5 +1,6 @@
 import { DashboardModel } from '../dashboard/dashboard_model';
 import Remarkable from 'remarkable';
+import coreModule from 'app/core/core_module';
 
 export class MetricsTabCtrl {
   dsName: string;
@@ -120,3 +121,5 @@ export function metricsTabDirective() {
     controller: MetricsTabCtrl,
   };
 }
+
+coreModule.directive('metricsTab', metricsTabDirective);

@@ -32,6 +32,7 @@ export class PanelModel {
   panels?: any;
   soloMode?: boolean;
   targets: any[];
+  datasource: string;
 
   // non persisted
   fullscreen: boolean;
@@ -46,13 +47,10 @@ export class PanelModel {
       this[property] = model[property];
     }
 
-    if (!this.gridPos) {
-      this.gridPos = { x: 0, y: 0, h: 3, w: 6 };
-    }
-
-    if (!this.targets) {
-      this.targets = [{}];
-    }
+    // defaults
+    this.gridPos = this.gridPos || { x: 0, y: 0, h: 3, w: 6 };
+    this.datasource = this.datasource || null;
+    this.targets = this.targets || [{}];
   }
 
   getSaveModel() {

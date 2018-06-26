@@ -22,7 +22,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     }
 
     let loader = getAngularLoader();
-    var template = '<plugin-component type="query-ctrl" />';
+    var template = '<metrics-tab />';
     let scopeProps = {
       ctrl: {
         panel: this.props.panel,
@@ -32,7 +32,6 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
           dashboard: this.props.dashboard,
         },
       },
-      target: {},
     };
 
     this.queryComp = loader.load(this.queryElement, scopeProps, template);
