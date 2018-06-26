@@ -3,18 +3,6 @@ import 'app/features/dashboard/view_state_srv';
 import config from 'app/core/config';
 import { DashboardViewState } from '../view_state_srv';
 
-jest.mock('app/core/config', () => {
-  return function() {
-    return {
-      bootData: {
-        user: {
-          orgId: 1,
-        },
-      },
-    };
-  };
-});
-
 describe('when updating view state', () => {
   let location = {
     replace: jest.fn(),
