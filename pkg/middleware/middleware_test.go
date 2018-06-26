@@ -82,7 +82,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 			setting.BasicAuthEnabled = true
 			authHeader := util.GetBasicAuthHeader("myUser", "myPass")
-			sc.fakeReq("GET", "/").withAuthoriziationHeader(authHeader).exec()
+			sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
 
 			Convey("Should init middleware context with user", func() {
 				So(sc.context.IsSignedIn, ShouldEqual, true)
@@ -125,6 +125,28 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("Should return api key invalid", func() {
 				So(sc.resp.Code, ShouldEqual, 401)
 				So(sc.respJson["message"], ShouldEqual, "Invalid API key")
+			})
+		})
+
+		middlewareScenario("Valid api key via Basic auth", func(sc *scenarioContext) {
+			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+
+			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
+				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
+				return nil
+			})
+
+			authHeader := util.GetBasicAuthHeader("api_key", "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9")
+			sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+
+			Convey("Should return 200", func() {
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			Convey("Should init middleware context", func() {
+				So(sc.context.IsSignedIn, ShouldEqual, true)
+				So(sc.context.OrgId, ShouldEqual, 12)
+				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
 			})
 		})
 
@@ -473,7 +495,7 @@ func (sc *scenarioContext) withInvalidApiKey() *scenarioContext {
 	return sc
 }
 
-func (sc *scenarioContext) withAuthoriziationHeader(authHeader string) *scenarioContext {
+func (sc *scenarioContext) withAuthorizationHeader(authHeader string) *scenarioContext {
 	sc.authHeader = authHeader
 	return sc
 }
