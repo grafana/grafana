@@ -30,7 +30,7 @@ export default class TeamDetailsCtrl {
       });
 
       if (config.enterprise) {
-        this.backendSrv.get(`/team-groups/${this.$routeParams.id}/groups`).then(result => {
+        this.backendSrv.get(`/api/teams/${this.$routeParams.id}/groups`).then(result => {
           this.teamGroups = result;
         });
       }
@@ -72,13 +72,13 @@ export default class TeamDetailsCtrl {
   }
 
   addGroup() {
-    this.backendSrv.post(`/team-groups/${this.$routeParams.id}/groups`, { groupId: this.newGroupId }).then(() => {
+    this.backendSrv.post(`/api/teams/${this.$routeParams.id}/groups`, { groupId: this.newGroupId }).then(() => {
       this.get();
     });
   }
 
   removeGroup(group: TeamGroup) {
-    this.backendSrv.delete(`/team-groups/${this.$routeParams.id}/groups/${group.groupId}`).then(this.get);
+    this.backendSrv.delete(`/api/teams/${this.$routeParams.id}/groups/${group.groupId}`).then(this.get);
   }
 }
 
