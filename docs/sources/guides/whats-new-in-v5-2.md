@@ -15,7 +15,7 @@ weight = -8
 Grafana v5.2 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
 * [Elasticsearch alerting]({{< relref "#elasticsearch-alerting" >}}) it's finally here!
-* [Cross platform build support]({{< relref "#cross-platform-build-support" >}}) enables native builds of Grafana for many more platforms!
+* [Native builds for ARM]({{< relref "#native-builds-for-armv" >}}) native builds of Grafana for many more platforms!
 * [Improved Docker image]({{< relref "#improved-docker-image" >}}) with support for docker secrets
 * [Security]({{< relref "#security" >}}) make your Grafana instance more secure
 * [Prometheus]({{< relref "#prometheus" >}}) with alignment enhancements
@@ -32,12 +32,14 @@ the most requested features by our community and now it's finally here. Please t
 
 <div class="clearfix"></div>
 
-## Cross platform build support
+## Native builds for ARM
 
-Grafana v5.2 brings an improved build pipeline with cross platform support. This enables native builds of Grafana for ARMv7 (x32), ARM64 (x64),
-MacOS/Darwin (x64) and Windows (x64) in both stable and nightly builds.
-
+Grafana v5.2 brings an improved build pipeline with cross platform support. This enables native builds of Grafana for ARMv7 (x32) and ARM64 (x64).
 We've been longing for native ARM build support for a long time. With the help from our amazing community this is now finally available.
+Please try it out and let us know what you think.
+
+Another great addition with the improved build pipeline is that binaries for MacOS/Darwin (x64) and Windows (x64) now automatically are built and
+published for both stable and nightly builds.
 
 ## Improved Docker image
 
