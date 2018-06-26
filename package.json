@@ -182,7 +182,7 @@
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "^1.4.1",
-    "uglifyjs-webpack-plugin": "^1.2.5"
+    "uglifyjs-webpack-plugin": "^1.2.7"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"
