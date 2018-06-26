@@ -16,6 +16,7 @@ type ImportDashboardCommand struct {
 	Path      string
 	Inputs    []ImportDashboardInput
 	Overwrite bool
+	FolderId  int64
 
 	OrgId    int64
 	User     *m.SignedInUser
@@ -70,7 +71,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		UserId:    cmd.User.UserId,
 		Overwrite: cmd.Overwrite,
 		PluginId:  cmd.PluginId,
-		FolderId:  dashboard.FolderId,
+		FolderId:  cmd.FolderId,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
@@ -91,6 +92,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		Title:            savedDash.Title,
 		Path:             cmd.Path,
 		Revision:         savedDash.Data.Get("revision").MustInt64(1),
+		FolderId:         savedDash.FolderId,
 		ImportedUri:      "db/" + savedDash.Slug,
 		ImportedUrl:      savedDash.GetUrl(),
 		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),

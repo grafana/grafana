@@ -13,6 +13,13 @@ $login-border: #8daac5;
   justify-content: center;
   background-image: url(../img/heatmap_bg_test.svg);
   background-size: cover;
+  color: #d8d9da;
+  & a {
+    color: #d8d9da !important;
+  }
+  & .btn-primary {
+    @include buttonBackground(#ff6600, #bc3e06);
+  }
 }
 
 input:-webkit-autofill,
@@ -25,8 +32,9 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px $black inset;
-  -webkit-text-fill-color: $gray-7 !important;
+  -webkit-box-shadow: 0 0 0px 1000px $black inset !important;
+  -webkit-text-fill-color: #fbfbfb !important;
+  box-shadow: 0 0 0px 1000px $black inset;
 }
 
 .login-form-group {
@@ -46,6 +54,8 @@ select:-webkit-autofill:focus {
   border: 1px solid $login-border;
   border-radius: 4px;
   opacity: 0.6;
+  background: $black;
+  color: #fbfbfb;
 
   &:focus {
     border: 1px solid $login-border;
@@ -59,6 +69,14 @@ select:-webkit-autofill:focus {
   justify-content: space-between;
   width: 100%;
   margin-top: 0.5rem;
+
+  &--right {
+    justify-content: flex-end;
+
+    & .btn {
+      margin-left: 1rem;
+    }
+  }
 }
 
 .login-button-forgot-password {
@@ -75,7 +93,9 @@ select:-webkit-autofill:focus {
   align-items: stretch;
   flex-direction: column;
   position: relative;
+  justify-content: center;
   z-index: 1;
+  height: 320px;
 }
 
 .login-branding {
@@ -93,11 +113,16 @@ select:-webkit-autofill:focus {
   }
 
   .icon-gf-grafana_wordmark {
-    color: $link-color;
+    color: darken($white, 11%);
     position: relative;
     font-size: 2rem;
     text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
   }
+}
+
+.login-outer-box {
+  display: flex;
+  overflow-y: hidden;
 }
 
 .login-inner-box {
@@ -109,6 +134,22 @@ select:-webkit-autofill:focus {
   justify-content: center;
   flex-grow: 1;
   max-width: 415px;
+  transform: tranlate(0px, 0px);
+  transition: 0.25s ease;
+
+  &.add {
+    transform: translate(0px, -320px);
+    &.hidden {
+      display: none;
+    }
+  }
+
+  &.remove {
+    transform: translate(0px, 320px);
+    &.hidden {
+      display: none;
+    }
+  }
 }
 
 .login-tab-header {
@@ -117,6 +158,13 @@ select:-webkit-autofill:focus {
   margin-bottom: 3rem;
 }
 
+.login-change-password-info {
+  padding-bottom: 1.5rem;
+
+  & h5 {
+    text-align: left;
+  }
+}
 .btn-signup {
   color: $white;
   border: 1px solid $login-border;

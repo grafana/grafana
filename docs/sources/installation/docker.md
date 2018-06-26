@@ -49,6 +49,11 @@ $ docker run \
   grafana/grafana:5.1.0
 ```
 
+## Running of the master branch
+
+For every successful commit we publish a Grafana container to [`grafana/grafana`](https://hub.docker.com/r/grafana/grafana/tags/) and [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags/). In `grafana/grafana` container we will always overwrite the `master` tag with the latest version. In `grafana/grafana-dev` we will include
+the git commit in the tag. If you run Grafana master in production we **strongly** recommend that you use the later since different machines might run different version of grafana if they pull the master tag at different times. 
+
 ## Installing Plugins for Grafana
 
 Pass the plugins you want installed to docker with the `GF_INSTALL_PLUGINS` environment variable as a comma separated list. This will pass each plugin name to `grafana-cli plugins install ${plugin}` and install them when Grafana starts.
@@ -129,6 +134,20 @@ ID=$(id -u) # saves your user id in the ID variable
 # starts grafana with your user id and using the data folder
 docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 grafana/grafana:5.1.0
 ```
+
+## Reading secrets from files (support for Docker Secrets)
+
+> Available in v5.2.0 and later
+
+It's possible to supply Grafana with configuration through files. This works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/) as the secrets by default gets mapped into `/run/secrets/<name of secret>` of the container.
+
+You can do this with any of the configuration options in conf/grafana.ini by setting `GF_<SectionName>_<KeyName>_FILE` to the path of the file holding the secret.
+
+Let's say you want to set the admin password this way.
+
+- Admin password secret: `/run/secrets/admin_password`
+- Environment variable: `GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/admin_password`
+
 
 ## Migration from a previous version of the docker container to 5.1 or later
 

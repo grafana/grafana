@@ -11,6 +11,7 @@ export function ControllerTestContext() {
   this.$element = {};
   this.$sanitize = {};
   this.annotationsSrv = {};
+  this.contextSrv = {};
   this.timeSrv = new TimeSrvStub();
   this.templateSrv = new TemplateSrvStub();
   this.datasourceSrv = {
@@ -27,6 +28,7 @@ export function ControllerTestContext() {
 
   this.providePhase = function(mocks) {
     return angularMocks.module(function($provide) {
+      $provide.value('contextSrv', self.contextSrv);
       $provide.value('datasourceSrv', self.datasourceSrv);
       $provide.value('annotationsSrv', self.annotationsSrv);
       $provide.value('timeSrv', self.timeSrv);

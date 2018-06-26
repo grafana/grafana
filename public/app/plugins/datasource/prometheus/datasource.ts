@@ -7,6 +7,15 @@ import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import { BackendSrv } from 'app/core/services/backend_srv';
 
+export function alignRange(start, end, step) {
+  const alignedEnd = Math.ceil(end / step) * step;
+  const alignedStart = Math.floor(start / step) * step;
+  return {
+    end: alignedEnd,
+    start: alignedStart,
+  };
+}
+
 export function prometheusRegularEscape(value) {
   return value.replace(/'/g, "\\\\'");
 }
@@ -109,15 +118,6 @@ export class PrometheusDatasource {
     return this.templateSrv.variableExists(target.expr);
   }
 
-  clampRange(start, end, step) {
-    const clampedEnd = Math.ceil(end / step) * step;
-    const clampedRange = Math.floor((end - start) / step) * step;
-    return {
-      end: clampedEnd,
-      start: clampedEnd - clampedRange,
-    };
-  }
-
   query(options) {
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
@@ -164,6 +164,7 @@ export class PrometheusDatasource {
           legendFormat: activeTargets[index].legendFormat,
           start: start,
           end: end,
+          query: queries[index].expr,
           responseListLength: responseList.length,
           responseIndex: index,
           refId: activeTargets[index].refId,
@@ -205,7 +206,7 @@ export class PrometheusDatasource {
     query.requestId = options.panelId + target.refId;
 
     // Align query interval with step
-    const adjusted = this.clampRange(start, end, query.step);
+    const adjusted = alignRange(start, end, query.step);
     query.start = adjusted.start;
     query.end = adjusted.end;
 

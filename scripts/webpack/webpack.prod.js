@@ -1,21 +1,22 @@
 'use strict';
 
 const merge = require('webpack-merge');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const common = require('./webpack.common.js');
 const webpack = require('webpack');
 const path = require('path');
 const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 
 module.exports = merge(common, {
+  mode: 'production',
   devtool: "source-map",
 
   entry: {
     dark: './public/sass/grafana.dark.scss',
     light: './public/sass/grafana.light.scss',
-    vendor: require('./dependencies'),
   },
 
   module: {
@@ -43,7 +44,7 @@ module.exports = merge(common, {
         },
       },
       require('./sass.rule.js')({
-        sourceMap: false, minimize: true, preserveUrl: false
+        sourceMap: false, minimize: false, preserveUrl: false
       })
     ]
   },
@@ -51,40 +52,33 @@ module.exports = merge(common, {
   optimization: {
     splitChunks: {
       cacheGroups: {
-        manifest: {
-          chunks: "initial",
-          test: "vendor",
+        commons: {
+          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           name: "vendor",
-          enforce: true
-        },
-        vendor: {
-          chunks: "initial",
-          test: "vendor",
-          name: "vendor",
-          enforce: true
+          chunks: "all"
         }
       }
-    }
+    },
+    minimizer: [
+      new UglifyJsPlugin({
+        cache: true,
+        parallel: true,
+        sourceMap: true
+      }),
+      new OptimizeCSSAssetsPlugin({})
+    ]
   },
 
   plugins: [
-    new ExtractTextPlugin({
-      filename: 'grafana.[name].css',
+    new MiniCssExtractPlugin({
+      filename: "grafana.[name].css"
     }),
     new ngAnnotatePlugin(),
-    new UglifyJSPlugin({
-      sourceMap: true,
-    }),
-    new webpack.DefinePlugin({
-      'process.env': {
-        'NODE_ENV': JSON.stringify('production')
-      }
-    }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index.template.html'),
       inject: 'body',
-      chunks: ['manifest', 'vendor', 'app'],
+      chunks: ['vendor', 'app'],
     }),
     function () {
       this.plugin("done", function (stats) {

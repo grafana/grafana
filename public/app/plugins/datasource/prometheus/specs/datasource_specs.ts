@@ -44,7 +44,7 @@ describe('PrometheusDatasource', function() {
     };
     // Interval alignment with step
     var urlExpected =
-      'proxied/api/v1/query_range?query=' + encodeURIComponent('test{job="testjob"}') + '&start=120&end=240&step=60';
+      'proxied/api/v1/query_range?query=' + encodeURIComponent('test{job="testjob"}') + '&start=60&end=240&step=60';
     var response = {
       status: 'success',
       data: {
@@ -181,7 +181,7 @@ describe('PrometheusDatasource', function() {
     var urlExpected =
       'proxied/api/v1/query_range?query=' +
       encodeURIComponent('ALERTS{alertstate="firing"}') +
-      '&start=120&end=180&step=60';
+      '&start=60&end=180&step=60';
     var options = {
       annotation: {
         expr: 'ALERTS{alertstate="firing"}',
@@ -348,7 +348,7 @@ describe('PrometheusDatasource', function() {
         interval: '5s',
       };
       // times get rounded up to interval
-      var urlExpected = 'proxied/api/v1/query_range?query=test&start=100&end=450&step=50';
+      var urlExpected = 'proxied/api/v1/query_range?query=test&start=50&end=450&step=50';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -384,8 +384,8 @@ describe('PrometheusDatasource', function() {
         ],
         interval: '10s',
       };
-      // times get rounded up to interval
-      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=200&end=500&step=100';
+      // times get aligned to interval
+      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=0&end=500&step=100';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -511,7 +511,7 @@ describe('PrometheusDatasource', function() {
         },
       };
       var urlExpected =
-        'proxied/api/v1/query_range?query=' + encodeURIComponent('rate(test[100s])') + '&start=200&end=500&step=100';
+        'proxied/api/v1/query_range?query=' + encodeURIComponent('rate(test[100s])') + '&start=0&end=500&step=100';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -539,7 +539,7 @@ describe('PrometheusDatasource', function() {
         },
       };
       var urlExpected =
-        'proxied/api/v1/query_range?query=' + encodeURIComponent('rate(test[50s])') + '&start=100&end=450&step=50';
+        'proxied/api/v1/query_range?query=' + encodeURIComponent('rate(test[50s])') + '&start=50&end=450&step=50';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -613,29 +613,6 @@ describe('PrometheusDatasource', function() {
       expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
     });
   });
-
-  describe('Step alignment of intervals', function() {
-    it('does not modify already aligned intervals with perfect step', function() {
-      const range = ctx.ds.clampRange(0, 3, 3);
-      expect(range.start).to.be(0);
-      expect(range.end).to.be(3);
-    });
-    it('does modify end-aligned intervals to reflect number of steps possible', function() {
-      const range = ctx.ds.clampRange(1, 6, 3);
-      expect(range.start).to.be(3);
-      expect(range.end).to.be(6);
-    });
-    it('does align intervals that are a multiple of steps', function() {
-      const range = ctx.ds.clampRange(1, 4, 3);
-      expect(range.start).to.be(3);
-      expect(range.end).to.be(6);
-    });
-    it('does align intervals that are not a multiple of steps', function() {
-      const range = ctx.ds.clampRange(1, 5, 3);
-      expect(range.start).to.be(3);
-      expect(range.end).to.be(6);
-    });
-  });
 });
 
 describe('PrometheusDatasource for POST', function() {
@@ -667,7 +644,7 @@ describe('PrometheusDatasource for POST', function() {
     var urlExpected = 'proxied/api/v1/query_range';
     var dataExpected = $.param({
       query: 'test{job="testjob"}',
-      start: 2 * 60,
+      start: 1 * 60,
       end: 3 * 60,
       step: 60,
     });

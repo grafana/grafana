@@ -1,8 +1,19 @@
 jest.mock('app/core/core', () => ({}));
+jest.mock('app/core/config', () => {
+  return {
+    exploreEnabled: true,
+    panels: {
+      test: {
+        id: 'test',
+        name: 'test',
+      },
+    },
+  };
+});
 
-import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
 import q from 'q';
 import { PanelModel } from 'app/features/dashboard/panel_model';
+import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
 
 describe('MetricsPanelCtrl', () => {
   let ctrl;
@@ -24,8 +35,9 @@ describe('MetricsPanelCtrl', () => {
       });
     });
 
-    describe('and has datasource set that supports explore', () => {
+    describe('and has datasource set that supports explore and user has powers', () => {
       beforeEach(() => {
+        ctrl.contextSrv = { isEditor: true };
         ctrl.datasource = { supportsExplore: true };
         additionalItems = ctrl.getAdditionalMenuItems();
       });
