@@ -15,7 +15,7 @@ weight = -8
 Grafana v5.2 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
 * [Elasticsearch alerting]({{< relref "#elasticsearch-alerting" >}}) it's finally here!
-* [Native builds for ARM]({{< relref "#native-builds-for-armv" >}}) native builds of Grafana for many more platforms!
+* [Native builds for ARM]({{< relref "#native-builds-for-arm" >}}) native builds of Grafana for many more platforms!
 * [Improved Docker image]({{< relref "#improved-docker-image" >}}) with support for docker secrets
 * [Security]({{< relref "#security" >}}) make your Grafana instance more secure
 * [Prometheus]({{< relref "#prometheus" >}}) with alignment enhancements
