@@ -2,8 +2,11 @@ package notifiers
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/bus"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
@@ -64,11 +67,46 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{
 			State: tc.newState,
 		})
+
 		evalContext.Rule.State = tc.prevState
 		if defaultShouldNotify(evalContext, true, 0, time.Now()) != tc.expected {
 			t.Errorf("failed %s. expected %+v to return %v", tc.name, tc, tc.expected)
 		}
 	}
+}
+
+func TestShouldNotifyWhenNoJournalingIsFound(t *testing.T) {
+	Convey("base notifier", t, func() {
+		bus.ClearBusHandlers()
+
+		notifier := NewNotifierBase(&m.AlertNotification{
+			Id:       1,
+			Name:     "name",
+			Type:     "email",
+			Settings: simplejson.New(),
+		})
+		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{})
+
+		Convey("should notify if no journaling is found", func() {
+			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetLatestNotificationQuery) error {
+				return m.ErrJournalingNotFound
+			})
+
+			if !notifier.ShouldNotify(evalContext) {
+				t.Errorf("should send notifications when ErrJournalingNotFound is returned")
+			}
+		})
+
+		Convey("should not notify query returns error", func() {
+			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetLatestNotificationQuery) error {
+				return errors.New("some kind of error unknown error")
+			})
+
+			if notifier.ShouldNotify(evalContext) {
+				t.Errorf("should not send notifications when query returns error")
+			}
+		})
+	})
 }
 
 func TestBaseNotifier(t *testing.T) {

@@ -74,13 +74,13 @@ func (n *NotifierBase) ShouldNotify(c *alerting.EvalContext) bool {
 	}
 
 	err := bus.DispatchCtx(c.Ctx, cmd)
+	if err == models.ErrJournalingNotFound {
+		return true
+	}
+
 	if err != nil {
 		n.log.Error("Could not determine last time alert notifier fired", "Alert name", c.Rule.Name, "Error", err)
 		return false
-	}
-
-	if err == models.ErrJournalingNotFound {
-		return true
 	}
 
 	if !cmd.Result.Success {
