@@ -1,6 +1,4 @@
-//import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import '../annotations_srv';
-import helpers from 'test/specs/helpers';
 import 'app/features/dashboard/time_srv';
 import { AnnotationsSrv } from '../annotations_srv';
 
@@ -14,13 +12,6 @@ describe('AnnotationsSrv', function() {
   let timeSrv;
 
   let annotationsSrv = new AnnotationsSrv($rootScope, $q, datasourceSrv, backendSrv, timeSrv);
-
-  // beforeEach(angularMocks.module('grafana.core'));
-  // beforeEach(angularMocks.module('grafana.services'));
-  // beforeEach(ctx.createService('timeSrv'));
-  // beforeEach(() => {
-  //   ctx.createService('annotationsSrv');
-  // });
 
   describe('When translating the query result', () => {
     const annotationSource = {
