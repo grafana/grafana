@@ -1,10 +1,19 @@
+import { PanelModel } from 'app/features/dashboard/panel_model';
+
+export interface SeriesData {
+  datapoints: any[];
+  target: string;
+}
+
+export type DataList = SeriesData[];
+
 export interface SeriesStat {
   alias?: string;
   label?: string;
-  value: number;
-  valueRounded: number;
-  valueFormatted: string;
-  flotpairs: any[];
+  value?: number;
+  valueRounded?: number;
+  valueFormatted?: string;
+  flotpairs?: any[];
   scopedVars?: any;
 }
 
@@ -30,13 +39,15 @@ export interface MultistatPanelOptions extends MetricPanelOptions {
   format?: any;
   mappingType?: any;
   nullPointMode?: any;
-  valueName?: any;
+  valueName?: string;
   thresholds?: any;
   colorBackground?: any;
   colorValue?: any;
   colors?: any;
   sparkline?: any;
 }
+
+export type MultistatPanelModel = PanelModel & MultistatPanelOptions;
 
 export enum MultistatPanelLayout {
   Horizontal = 'horizontal',
