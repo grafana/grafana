@@ -91,9 +91,6 @@ jobs:
       - image: circleci/node:8
     steps:
       - checkout
-      - run:
-          name: install yarn
-          command: 'sudo npm install -g yarn --quiet'
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
