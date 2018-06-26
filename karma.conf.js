@@ -19,8 +19,8 @@ module.exports = function(config) {
     },
 
     webpack: webpackTestConfig,
-    webpackServer: {
-      noInfo: true, // please don't spam the console when running in karma!
+    webpackMiddleware: {
+      stats: 'minimal',
     },
 
     // list of files to exclude
