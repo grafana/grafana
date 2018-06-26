@@ -10,6 +10,15 @@
       background: none;
     }
   }
+
+  &.tabbed-view--panel-edit-new {
+    padding: 10px 0 0 0;
+
+    .tabbed-view-header {
+      padding: 0px;
+      background: none;
+    }
+  }
 }
 
 .tabbed-view-header {

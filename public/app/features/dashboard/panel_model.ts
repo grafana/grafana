@@ -31,6 +31,7 @@ export class PanelModel {
   collapsed?: boolean;
   panels?: any;
   soloMode?: boolean;
+  targets: any[];
 
   // non persisted
   fullscreen: boolean;
@@ -47,6 +48,10 @@ export class PanelModel {
 
     if (!this.gridPos) {
       this.gridPos = { x: 0, y: 0, h: 3, w: 6 };
+    }
+
+    if (!this.targets) {
+      this.targets = [{}];
     }
   }
 

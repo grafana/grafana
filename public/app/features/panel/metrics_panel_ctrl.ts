@@ -45,10 +45,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
-    if (!this.panel.targets) {
-      this.panel.targets = [{}];
-    }
-
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));

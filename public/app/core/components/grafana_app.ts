@@ -10,6 +10,7 @@ import { createStore } from 'app/stores/store';
 import colors from 'app/core/utils/colors';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { AngularLoader, setAngularLoader } from 'app/core/services/angular_loader';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -22,8 +23,12 @@ export class GrafanaCtrl {
     contextSrv,
     bridgeSrv,
     backendSrv: BackendSrv,
+    angularLoader: AngularLoader,
     datasourceSrv: DatasourceSrv
   ) {
+    // make angular loader service available to react components
+    setAngularLoader(angularLoader);
+    // create store with env services
     createStore({ backendSrv, datasourceSrv });
 
     $scope.init = function() {
