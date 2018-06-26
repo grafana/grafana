@@ -435,8 +435,67 @@ describe('DashboardModel', function() {
     });
   });
 
-  describe('save variables and timeline', () => {
-    let model;
+  describe('Given model with time', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        time: {
+          from: 'now-6h',
+          to: 'now',
+        },
+      });
+      expect(model.hasTimeChanged()).toBeFalsy();
+      model.time = {
+        from: 'now-3h',
+        to: 'now-1h',
+      };
+    });
+
+    it('hasTimeChanged should be true', () => {
+      expect(model.hasTimeChanged()).toBeTruthy();
+    });
+
+    it('getSaveModelClone should return original time when saveTimerange=false', () => {
+      let options = { saveTimerange: false };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.time.from).toBe('now-6h');
+      expect(saveModel.time.to).toBe('now');
+    });
+
+    it('getSaveModelClone should return updated time when saveTimerange=true', () => {
+      let options = { saveTimerange: true };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.time.from).toBe('now-3h');
+      expect(saveModel.time.to).toBe('now-1h');
+    });
+
+    it('hasTimeChanged should be false when reset original time', () => {
+      model.resetOriginalTime();
+      expect(model.hasTimeChanged()).toBeFalsy();
+    });
+
+    it('getSaveModelClone should return original time when saveTimerange=false', () => {
+      let options = { saveTimerange: false };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.time.from).toBe('now-6h');
+      expect(saveModel.time.to).toBe('now');
+    });
+
+    it('getSaveModelClone should return updated time when saveTimerange=true', () => {
+      let options = { saveTimerange: true };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.time.from).toBe('now-3h');
+      expect(saveModel.time.to).toBe('now-1h');
+    });
+  });
+
+  describe('Given model with template variable of type query', () => {
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -444,6 +503,7 @@ describe('DashboardModel', function() {
           list: [
             {
               name: 'Server',
+              type: 'query',
               current: {
                 selected: true,
                 text: 'server_001',
@@ -452,45 +512,127 @@ describe('DashboardModel', function() {
             },
           ],
         },
-        time: {
-          from: 'now-6h',
-          to: 'now',
-        },
       });
-      model.templating.list[0] = {
-        name: 'Server',
+      expect(model.hasVariableValuesChanged()).toBeFalsy();
+    });
+
+    it('hasVariableValuesChanged should be false when adding a template variable', () => {
+      model.templating.list.push({
+        name: 'Server2',
+        type: 'query',
         current: {
           selected: true,
           text: 'server_002',
           value: 'server_002',
         },
-      };
-      model.time = {
-        from: 'now-3h',
-        to: 'now',
-      };
+      });
+      expect(model.hasVariableValuesChanged()).toBeFalsy();
     });
 
-    it('should not save variables and timeline', () => {
-      let options = {
-        saveVariables: false,
-        saveTimerange: false,
-      };
+    it('hasVariableValuesChanged should be false when removing existing template variable', () => {
+      model.templating.list = [];
+      expect(model.hasVariableValuesChanged()).toBeFalsy();
+    });
+
+    it('hasVariableValuesChanged should be true when changing value of template variable', () => {
+      model.templating.list[0].current.text = 'server_002';
+      expect(model.hasVariableValuesChanged()).toBeTruthy();
+    });
+
+    it('getSaveModelClone should return original variable when saveVariables=false', () => {
+      model.templating.list[0].current.text = 'server_002';
+
+      let options = { saveVariables: false };
       let saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_001');
-      expect(saveModel.time.from).toBe('now-6h');
     });
 
-    it('should save variables and timeline', () => {
-      let options = {
-        saveVariables: true,
-        saveTimerange: true,
-      };
+    it('getSaveModelClone should return updated variable when saveVariables=true', () => {
+      model.templating.list[0].current.text = 'server_002';
+
+      let options = { saveVariables: true };
       let saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_002');
-      expect(saveModel.time.from).toBe('now-3h');
+    });
+  });
+
+  describe('Given model with template variable of type adhoc', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              name: 'Filter',
+              type: 'adhoc',
+              filters: [
+                {
+                  key: '@hostname',
+                  operator: '=',
+                  value: 'server 20',
+                },
+              ],
+            },
+          ],
+        },
+      });
+      expect(model.hasVariableValuesChanged()).toBeFalsy();
+    });
+
+    it('hasVariableValuesChanged should be false when adding a template variable', () => {
+      model.templating.list.push({
+        name: 'Filter',
+        type: 'adhoc',
+        filters: [
+          {
+            key: '@hostname',
+            operator: '=',
+            value: 'server 1',
+          },
+        ],
+      });
+      expect(model.hasVariableValuesChanged()).toBeFalsy();
+    });
+
+    it('hasVariableValuesChanged should be false when removing existing template variable', () => {
+      model.templating.list = [];
+      expect(model.hasVariableValuesChanged()).toBeFalsy();
+    });
+
+    it('hasVariableValuesChanged should be true when changing value of filter', () => {
+      model.templating.list[0].filters[0].value = 'server 1';
+      expect(model.hasVariableValuesChanged()).toBeTruthy();
+    });
+
+    it('hasVariableValuesChanged should be true when adding an additional condition', () => {
+      model.templating.list[0].filters[0].condition = 'AND';
+      model.templating.list[0].filters[1] = {
+        key: '@metric',
+        operator: '=',
+        value: 'logins.count',
+      };
+      expect(model.hasVariableValuesChanged()).toBeTruthy();
+    });
+
+    it('getSaveModelClone should return original variable when saveVariables=false', () => {
+      model.templating.list[0].filters[0].value = 'server 1';
+
+      let options = { saveVariables: false };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.templating.list[0].filters[0].value).toBe('server 20');
+    });
+
+    it('getSaveModelClone should return updated variable when saveVariables=true', () => {
+      model.templating.list[0].filters[0].value = 'server 1';
+
+      let options = { saveVariables: true };
+      let saveModel = model.getSaveModelClone(options);
+
+      expect(saveModel.templating.list[0].filters[0].value).toBe('server 1');
     });
   });
 });

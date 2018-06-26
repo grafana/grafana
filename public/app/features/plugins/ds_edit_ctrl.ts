@@ -13,6 +13,7 @@ var defaults = {
   access: 'proxy',
   jsonData: {},
   secureJsonFields: {},
+  secureJsonData: {},
 };
 
 var datasourceCreated = false;
