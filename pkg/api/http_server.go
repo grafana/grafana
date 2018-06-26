@@ -33,7 +33,11 @@ import (
 )
 
 func init() {
-	registry.RegisterService(&HTTPServer{})
+	registry.Register(&registry.Descriptor{
+		Name:         "HTTPServer",
+		Instance:     &HTTPServer{},
+		InitPriority: registry.High,
+	})
 }
 
 type HTTPServer struct {
@@ -54,6 +58,10 @@ func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 	hs.cache = gocache.New(5*time.Minute, 10*time.Minute)
 
+	hs.streamManager = live.NewStreamManager()
+	hs.macaron = hs.newMacaron()
+	hs.registerRoutes()
+
 	return nil
 }
 
@@ -61,10 +69,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	var err error
 
 	hs.context = ctx
-	hs.streamManager = live.NewStreamManager()
-	hs.macaron = hs.newMacaron()
-	hs.registerRoutes()
-
+	hs.applyRoutes()
 	hs.streamManager.Run(ctx)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)

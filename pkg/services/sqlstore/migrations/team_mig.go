@@ -50,4 +50,26 @@ func addTeamMigrations(mg *Migrator) {
 	mg.AddMigration("Add column email to team table", NewAddColumnMigration(teamV1, &Column{
 		Name: "email", Type: DB_NVarchar, Nullable: true, Length: 190,
 	}))
+
+	teamGroupV1 := Table{
+		Name: "team_group",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: DB_BigInt},
+			{Name: "team_id", Type: DB_BigInt},
+			{Name: "group_id", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"org_id"}},
+			{Cols: []string{"org_id", "team_id", "group_id"}, Type: UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create team group table", NewAddTableMigration(teamGroupV1))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add index team_group.org_id", NewAddIndexMigration(teamGroupV1, teamGroupV1.Indices[0]))
+	mg.AddMigration("add unique index team_group.org_id_team_id_group_id", NewAddIndexMigration(teamGroupV1, teamGroupV1.Indices[1]))
 }

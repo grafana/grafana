@@ -19,6 +19,7 @@ type ExternalUserInfo struct {
 	Email      string
 	Login      string
 	Name       string
+	Groups     []string
 	OrgRoles   map[int64]RoleType
 }
 
@@ -69,4 +70,14 @@ type GetAuthInfoQuery struct {
 	AuthId     string
 
 	Result *UserAuth
+}
+
+type SyncOrgRolesCommand struct {
+	ExternalUser *ExternalUserInfo
+	User         *User
+}
+
+type SyncTeamsCommand struct {
+	ExternalUser *ExternalUserInfo
+	User         *User
 }

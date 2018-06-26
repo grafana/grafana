@@ -9,7 +9,14 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-// Register adds http routes
+func (hs *HTTPServer) applyRoutes() {
+	hs.RouteRegister.Register(hs.macaron)
+
+	InitAppPluginRoutes(hs.macaron)
+
+	hs.macaron.NotFound(NotFoundHandler)
+}
+
 func (hs *HTTPServer) registerRoutes() {
 	macaronR := hs.macaron
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
@@ -393,10 +400,4 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// streams
 	//r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
-
-	r.Register(macaronR)
-
-	InitAppPluginRoutes(macaronR)
-
-	macaronR.NotFound(NotFoundHandler)
 }
