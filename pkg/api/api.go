@@ -4,6 +4,7 @@ import (
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -117,10 +118,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/login/ping", quota("session"), LoginAPIPing)
 
 	// authed api
-	r.Group("/api", func(apiRoute RouteRegister) {
+	r.Group("/api", func(apiRoute routing.RouteRegister) {
 
 		// user (signed in)
-		apiRoute.Group("/user", func(userRoute RouteRegister) {
+		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
 			userRoute.Get("/", wrap(GetSignedInUser))
 			userRoute.Put("/", bind(m.UpdateUserCommand{}), wrap(UpdateSignedInUser))
 			userRoute.Post("/using/:id", wrap(UserSetUsingOrg))
@@ -140,7 +141,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// users (admin permission required)
-		apiRoute.Group("/users", func(usersRoute RouteRegister) {
+		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
 			usersRoute.Get("/", wrap(SearchUsers))
 			usersRoute.Get("/search", wrap(SearchUsersWithPaging))
 			usersRoute.Get("/:id", wrap(GetUserByID))
@@ -152,7 +153,7 @@ func (hs *HTTPServer) registerRoutes() {
 		}, reqGrafanaAdmin)
 
 		// team (admin permission required)
-		apiRoute.Group("/teams", func(teamsRoute RouteRegister) {
+		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
 			teamsRoute.Post("/", bind(m.CreateTeamCommand{}), wrap(CreateTeam))
 			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), wrap(UpdateTeam))
 			teamsRoute.Delete("/:teamId", wrap(DeleteTeamByID))
@@ -162,19 +163,19 @@ func (hs *HTTPServer) registerRoutes() {
 		}, reqOrgAdmin)
 
 		// team without requirement of user to be org admin
-		apiRoute.Group("/teams", func(teamsRoute RouteRegister) {
+		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
 			teamsRoute.Get("/:teamId", wrap(GetTeamByID))
 			teamsRoute.Get("/search", wrap(SearchTeams))
 		})
 
 		// org information available to all users.
-		apiRoute.Group("/org", func(orgRoute RouteRegister) {
+		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			orgRoute.Get("/", wrap(GetOrgCurrent))
 			orgRoute.Get("/quotas", wrap(GetOrgQuotas))
 		})
 
 		// current org
-		apiRoute.Group("/org", func(orgRoute RouteRegister) {
+		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			orgRoute.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddressCurrent))
 			orgRoute.Post("/users", quota("user"), bind(m.AddOrgUserCommand{}), wrap(AddOrgUserToCurrentOrg))
@@ -192,7 +193,7 @@ func (hs *HTTPServer) registerRoutes() {
 		}, reqOrgAdmin)
 
 		// current org without requirement of user to be org admin
-		apiRoute.Group("/org", func(orgRoute RouteRegister) {
+		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			orgRoute.Get("/users", wrap(GetOrgUsersForCurrentOrg))
 		})
 
@@ -203,7 +204,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/orgs", reqGrafanaAdmin, wrap(SearchOrgs))
 
 		// orgs (admin routes)
-		apiRoute.Group("/orgs/:orgId", func(orgsRoute RouteRegister) {
+		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
 			orgsRoute.Get("/", wrap(GetOrgByID))
 			orgsRoute.Put("/", bind(dtos.UpdateOrgForm{}), wrap(UpdateOrg))
 			orgsRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), wrap(UpdateOrgAddress))
@@ -217,24 +218,24 @@ func (hs *HTTPServer) registerRoutes() {
 		}, reqGrafanaAdmin)
 
 		// orgs (admin routes)
-		apiRoute.Group("/orgs/name/:name", func(orgsRoute RouteRegister) {
+		apiRoute.Group("/orgs/name/:name", func(orgsRoute routing.RouteRegister) {
 			orgsRoute.Get("/", wrap(GetOrgByName))
 		}, reqGrafanaAdmin)
 
 		// auth api keys
-		apiRoute.Group("/auth/keys", func(keysRoute RouteRegister) {
+		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
 			keysRoute.Get("/", wrap(GetAPIKeys))
 			keysRoute.Post("/", quota("api_key"), bind(m.AddApiKeyCommand{}), wrap(AddAPIKey))
 			keysRoute.Delete("/:id", wrap(DeleteAPIKey))
 		}, reqOrgAdmin)
 
 		// Preferences
-		apiRoute.Group("/preferences", func(prefRoute RouteRegister) {
+		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
 			prefRoute.Post("/set-home-dash", bind(m.SavePreferencesCommand{}), wrap(SetHomeDashboard))
 		})
 
 		// Data sources
-		apiRoute.Group("/datasources", func(datasourceRoute RouteRegister) {
+		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
 			datasourceRoute.Get("/", wrap(GetDataSources))
 			datasourceRoute.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), wrap(AddDataSource))
 			datasourceRoute.Put("/:id", bind(m.UpdateDataSourceCommand{}), wrap(UpdateDataSource))
@@ -250,7 +251,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins/:pluginId/settings", wrap(GetPluginSettingByID))
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", wrap(GetPluginMarkdown))
 
-		apiRoute.Group("/plugins", func(pluginRoute RouteRegister) {
+		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", wrap(GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
@@ -260,17 +261,17 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 
 		// Folders
-		apiRoute.Group("/folders", func(folderRoute RouteRegister) {
+		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
 			folderRoute.Get("/", wrap(GetFolders))
 			folderRoute.Get("/id/:id", wrap(GetFolderByID))
 			folderRoute.Post("/", bind(m.CreateFolderCommand{}), wrap(CreateFolder))
 
-			folderRoute.Group("/:uid", func(folderUidRoute RouteRegister) {
+			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 				folderUidRoute.Get("/", wrap(GetFolderByUID))
 				folderUidRoute.Put("/", bind(m.UpdateFolderCommand{}), wrap(UpdateFolder))
 				folderUidRoute.Delete("/", wrap(DeleteFolder))
 
-				folderUidRoute.Group("/permissions", func(folderPermissionRoute RouteRegister) {
+				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
 					folderPermissionRoute.Get("/", wrap(GetFolderPermissionList))
 					folderPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateFolderPermissions))
 				})
@@ -278,7 +279,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// Dashboard
-		apiRoute.Group("/dashboards", func(dashboardRoute RouteRegister) {
+		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", wrap(GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", wrap(DeleteDashboardByUID))
 
@@ -292,12 +293,12 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 
-			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute RouteRegister) {
+			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", wrap(GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
 				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
 
-				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute RouteRegister) {
+				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", wrap(GetDashboardPermissionList))
 					dashboardPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardPermissions))
 				})
@@ -305,12 +306,12 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// Dashboard snapshots
-		apiRoute.Group("/dashboard/snapshots", func(dashboardRoute RouteRegister) {
+		apiRoute.Group("/dashboard/snapshots", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/", wrap(SearchDashboardSnapshots))
 		})
 
 		// Playlist
-		apiRoute.Group("/playlists", func(playlistRoute RouteRegister) {
+		apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
 			playlistRoute.Get("/", wrap(SearchPlaylists))
 			playlistRoute.Get("/:id", ValidateOrgPlaylist, wrap(GetPlaylist))
 			playlistRoute.Get("/:id/items", ValidateOrgPlaylist, wrap(GetPlaylistItems))
@@ -329,7 +330,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, wrap(GenerateSQLTestData))
 		apiRoute.Get("/tsdb/testdata/random-walk", wrap(GetTestDataRandomWalk))
 
-		apiRoute.Group("/alerts", func(alertsRoute RouteRegister) {
+		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
 			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), wrap(PauseAlert))
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
@@ -340,7 +341,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/alert-notifications", wrap(GetAlertNotifications))
 		apiRoute.Get("/alert-notifiers", wrap(GetAlertNotifiers))
 
-		apiRoute.Group("/alert-notifications", func(alertNotifications RouteRegister) {
+		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
 			alertNotifications.Post("/test", bind(dtos.NotificationTestCommand{}), wrap(NotificationTest))
 			alertNotifications.Post("/", bind(m.CreateAlertNotificationCommand{}), wrap(CreateAlertNotification))
 			alertNotifications.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
@@ -351,7 +352,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/annotations", wrap(GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), wrap(DeleteAnnotations))
 
-		apiRoute.Group("/annotations", func(annotationsRoute RouteRegister) {
+		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
 			annotationsRoute.Post("/", bind(dtos.PostAnnotationsCmd{}), wrap(PostAnnotation))
 			annotationsRoute.Delete("/:annotationId", wrap(DeleteAnnotationByID))
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), wrap(UpdateAnnotation))
@@ -365,7 +366,7 @@ func (hs *HTTPServer) registerRoutes() {
 	}, reqSignedIn)
 
 	// admin api
-	r.Group("/api/admin", func(adminRoute RouteRegister) {
+	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", AdminGetSettings)
 		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
 		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)

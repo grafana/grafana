@@ -64,7 +64,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         }
         annotations = ctrl.annotations || [];
         buildFlotPairs(data);
-        updateLegendValues(data, panel);
+        const graphHeight = elem.height();
+        updateLegendValues(data, panel, graphHeight);
 
         ctrl.events.emit('render-legend');
       });

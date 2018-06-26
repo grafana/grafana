@@ -1,5 +1,3 @@
-import { getDataMinMax } from 'app/core/time_series2';
-
 /**
  * Calculate tick step.
  * Implementation from d3-array (ticks.js)
@@ -121,12 +119,10 @@ export function getFlotRange(panelMin, panelMax, datamin, datamax) {
  * Calculate tick decimals.
  * Implementation from Flot.
  */
-export function getFlotTickDecimals(data, axis) {
-  let { datamin, datamax } = getDataMinMax(data);
-  let { min, max } = getFlotRange(axis.min, axis.max, datamin, datamax);
-  let noTicks = 3;
-  let tickDecimals, maxDec;
-  let delta = (max - min) / noTicks;
+export function getFlotTickDecimals(datamin, datamax, axis, height) {
+  const { min, max } = getFlotRange(axis.min, axis.max, datamin, datamax);
+  const noTicks = 0.3 * Math.sqrt(height);
+  const delta = (max - min) / noTicks;
   let dec = -Math.floor(Math.log(delta) / Math.LN10);
 
   let magn = Math.pow(10, -dec);
@@ -139,19 +135,17 @@ export function getFlotTickDecimals(data, axis) {
   } else if (norm < 3) {
     size = 2;
     // special case for 2.5, requires an extra decimal
-    if (norm > 2.25 && (maxDec == null || dec + 1 <= maxDec)) {
+    if (norm > 2.25) {
       size = 2.5;
-      ++dec;
     }
   } else if (norm < 7.5) {
     size = 5;
   } else {
     size = 10;
   }
-
   size *= magn;
 
-  tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
+  const tickDecimals = Math.max(0, -Math.floor(Math.log(delta) / Math.LN10) + 1);
   // grafana addition
   const scaledDecimals = tickDecimals - Math.floor(Math.log(size) / Math.LN10);
   return { tickDecimals, scaledDecimals };
