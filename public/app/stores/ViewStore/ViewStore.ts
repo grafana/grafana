@@ -23,8 +23,10 @@ export const ViewStore = types
   }))
   .actions(self => {
     // querystring only
-    function updateQuery(query: any) {
-      self.query.clear();
+    function updateQuery(query: any, clear = true) {
+      if (clear) {
+        self.query.clear();
+      }
       for (let key of Object.keys(query)) {
         if (query[key]) {
           self.query.set(key, query[key]);

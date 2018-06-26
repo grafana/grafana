@@ -11,11 +11,14 @@ interface PanelHeaderProps {
 
 export class PanelHeader extends React.Component<PanelHeaderProps, any> {
   onEditPanel = () => {
-    store.view.updateQuery({
-      panelId: this.props.panel.id,
-      edit: true,
-      fullscreen: true,
-    });
+    store.view.updateQuery(
+      {
+        panelId: this.props.panel.id,
+        edit: true,
+        fullscreen: true,
+      },
+      false
+    );
   };
 
   render() {
