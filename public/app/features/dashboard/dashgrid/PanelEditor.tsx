@@ -11,9 +11,15 @@ interface PanelEditorProps {
 export class PanelEditor extends React.Component<PanelEditorProps, any> {
   queryElement: any;
   queryComp: AngularComponent;
+  tabs: any[];
 
   constructor(props) {
     super(props);
+
+    this.tabs = [
+      { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
+      { id: 'viz', text: 'Visualization', icon: 'fa fa-line-chart' },
+    ];
   }
 
   componentDidMount() {
@@ -36,6 +42,8 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
 
     this.queryComp = loader.load(this.queryElement, scopeProps, template);
   }
+
+  onChangeTab = tabName => {};
 
   render() {
     return (
