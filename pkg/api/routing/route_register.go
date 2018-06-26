@@ -42,7 +42,7 @@ type RouteRegister interface {
 
 	// Register iterates over all routes added to the RouteRegister
 	// and add them to the `Router` pass as an parameter.
-	Register(Router) *macaron.Router
+	Register(Router)
 }
 
 type RegisterNamedMiddleware func(name string) macaron.Handler
@@ -101,7 +101,7 @@ func (rr *routeRegister) Group(pattern string, fn func(rr RouteRegister), handle
 	rr.groups = append(rr.groups, group)
 }
 
-func (rr *routeRegister) Register(router Router) *macaron.Router {
+func (rr *routeRegister) Register(router Router) {
 	for _, r := range rr.routes {
 		// GET requests have to be added to macaron routing using Get()
 		// Otherwise HEAD requests will not be allowed.
@@ -116,8 +116,6 @@ func (rr *routeRegister) Register(router Router) *macaron.Router {
 	for _, g := range rr.groups {
 		g.Register(router)
 	}
-
-	return &macaron.Router{}
 }
 
 func (rr *routeRegister) route(pattern, method string, handlers ...macaron.Handler) {
