@@ -308,7 +308,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         let formatFunc = kbn.valueFormats[this.panel.format];
         data.value = lastPoint[1];
         data.valueRounded = data.value;
-        data.valueFormatted = formatFunc(data.value, 0, 0);
+        data.valueFormatted = formatFunc(data.value, this.dashboard.isTimezoneUtc());
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
@@ -580,6 +580,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           lines: {
             show: true,
             fill: 1,
+            zero: false,
             lineWidth: 1,
             fillColor: panel.sparkline.fillColor,
           },
@@ -713,11 +714,13 @@ function getColorForValue(data, value) {
   if (!_.isFinite(value)) {
     return null;
   }
+
   for (var i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i - 1]) {
       return data.colorMap[i];
     }
   }
+
   return _.first(data.colorMap);
 }
 

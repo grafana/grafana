@@ -7,6 +7,7 @@
 package unix
 
 //sys	EpollWait(epfd int, events []EpollEvent, msec int) (n int, err error) = SYS_EPOLL_PWAIT
+//sys	Fadvise(fd int, offset int64, length int64, advice int) (err error) = SYS_FADVISE64
 //sys	Fchown(fd int, uid int, gid int) (err error)
 //sys	Fstat(fd int, stat *Stat_t) (err error)
 //sys	Fstatat(fd int, path string, stat *Stat_t, flags int) (err error)
@@ -23,8 +24,11 @@ package unix
 //sys	Seek(fd int, offset int64, whence int) (off int64, err error) = SYS_LSEEK
 
 func Select(nfd int, r *FdSet, w *FdSet, e *FdSet, timeout *Timeval) (n int, err error) {
-	ts := Timespec{Sec: timeout.Sec, Nsec: timeout.Usec * 1000}
-	return Pselect(nfd, r, w, e, &ts, nil)
+	var ts *Timespec
+	if timeout != nil {
+		ts = &Timespec{Sec: timeout.Sec, Nsec: timeout.Usec * 1000}
+	}
+	return Pselect(nfd, r, w, e, ts, nil)
 }
 
 //sys	sendfile(outfd int, infd int, offset *int64, count int) (written int, err error)

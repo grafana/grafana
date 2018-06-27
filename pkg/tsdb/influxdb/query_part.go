@@ -31,6 +31,7 @@ func init() {
 	renders["mean"] = QueryDefinition{Renderer: functionRenderer}
 	renders["median"] = QueryDefinition{Renderer: functionRenderer}
 	renders["sum"] = QueryDefinition{Renderer: functionRenderer}
+	renders["mode"] = QueryDefinition{Renderer: functionRenderer}
 
 	renders["holt_winters"] = QueryDefinition{
 		Renderer: functionRenderer,

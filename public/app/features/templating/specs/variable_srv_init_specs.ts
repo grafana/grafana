@@ -179,4 +179,38 @@ describe('VariableSrv init', function() {
       expect(variable.options[2].selected).to.be(false);
     });
   });
+
+  describeInitScenario('when template variable is present in url multiple times using key/values', scenario => {
+    scenario.setup(() => {
+      scenario.variables = [
+        {
+          name: 'apps',
+          type: 'query',
+          multi: true,
+          current: { text: 'Val1', value: 'val1' },
+          options: [
+            { text: 'Val1', value: 'val1' },
+            { text: 'Val2', value: 'val2' },
+            { text: 'Val3', value: 'val3', selected: true },
+          ],
+        },
+      ];
+      scenario.urlParams['var-apps'] = ['val2', 'val1'];
+    });
+
+    it('should update current value', function() {
+      var variable = ctx.variableSrv.variables[0];
+      expect(variable.current.value.length).to.be(2);
+      expect(variable.current.value[0]).to.be('val2');
+      expect(variable.current.value[1]).to.be('val1');
+      expect(variable.current.text).to.be('Val2 + Val1');
+      expect(variable.options[0].selected).to.be(true);
+      expect(variable.options[1].selected).to.be(true);
+    });
+
+    it('should set options that are not in value to selected false', function() {
+      var variable = ctx.variableSrv.variables[0];
+      expect(variable.options[2].selected).to.be(false);
+    });
+  });
 });

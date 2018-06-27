@@ -374,23 +374,33 @@ export default class CloudWatchDatasource {
   getExpandedVariables(target, dimensionKey, variable, templateSrv) {
     /* if the all checkbox is marked we should add all values to the targets */
     var allSelected = _.find(variable.options, { selected: true, text: 'All' });
-    return _.chain(variable.options)
-      .filter(v => {
-        if (allSelected) {
-          return v.text !== 'All';
-        } else {
-          return v.selected;
-        }
-      })
-      .map(v => {
-        var t = angular.copy(target);
-        var scopedVar = {};
-        scopedVar[variable.name] = v;
-        t.refId = target.refId + '_' + v.value;
-        t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
-        return t;
-      })
-      .value();
+    var selectedVariables = _.filter(variable.options, v => {
+      if (allSelected) {
+        return v.text !== 'All';
+      } else {
+        return v.selected;
+      }
+    });
+    var currentVariables = !_.isArray(variable.current.value)
+      ? [variable.current]
+      : variable.current.value.map(v => {
+          return {
+            text: v,
+            value: v,
+          };
+        });
+    let useSelectedVariables =
+      selectedVariables.some(s => {
+        return s.value === currentVariables[0].value;
+      }) || currentVariables[0].value === '$__all';
+    return (useSelectedVariables ? selectedVariables : currentVariables).map(v => {
+      var t = angular.copy(target);
+      var scopedVar = {};
+      scopedVar[variable.name] = v;
+      t.refId = target.refId + '_' + v.value;
+      t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
+      return t;
+    });
   }
 
   expandTemplateVariable(targets, scopedVars, templateSrv) {

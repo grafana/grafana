@@ -601,7 +601,7 @@ func TestMySQL(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": `SELECT $__time(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values ORDER BY 1`,
+								"rawSql": `SELECT $__time(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values ORDER BY 1,2`,
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -615,8 +615,8 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Error, ShouldBeNil)
 
 				So(len(queryResult.Series), ShouldEqual, 2)
-				So(queryResult.Series[0].Name, ShouldEqual, "Metric B - value one")
-				So(queryResult.Series[1].Name, ShouldEqual, "Metric A - value one")
+				So(queryResult.Series[0].Name, ShouldEqual, "Metric A - value one")
+				So(queryResult.Series[1].Name, ShouldEqual, "Metric B - value one")
 			})
 
 			Convey("When doing a metric query grouping by time should return correct series", func() {

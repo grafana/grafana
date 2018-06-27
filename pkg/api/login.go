@@ -155,5 +155,9 @@ func Logout(c *m.ReqContext) {
 	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
 	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
 	c.Session.Destory(c.Context)
-	c.Redirect(setting.AppSubUrl + "/login")
+	if setting.SignoutRedirectUrl != "" {
+		c.Redirect(setting.SignoutRedirectUrl)
+	} else {
+		c.Redirect(setting.AppSubUrl + "/login")
+	}
 }

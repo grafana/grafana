@@ -123,11 +123,16 @@ export class ResultTransformer {
   }
 
   createMetricLabel(labelData, options) {
+    let label = '';
     if (_.isUndefined(options) || _.isEmpty(options.legendFormat)) {
-      return this.getOriginalMetricName(labelData);
+      label = this.getOriginalMetricName(labelData);
+    } else {
+      label = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labelData);
     }
-
-    return this.renderTemplate(this.templateSrv.replace(options.legendFormat), labelData) || '{}';
+    if (!label || label === '{}') {
+      label = options.query;
+    }
+    return label;
   }
 
   renderTemplate(aliasPattern, aliasData) {

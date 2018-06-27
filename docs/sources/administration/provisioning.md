@@ -76,7 +76,7 @@ Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://gith
 
 > This feature is available from v5.0
 
-It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `delete_datasources`. Grafana will delete datasources listed in `delete_datasources` before inserting/updating those in the `datasource` list.
+It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `deleteDatasources`. Grafana will delete datasources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
 
 ### Running Multiple Grafana Instances
 
@@ -94,7 +94,7 @@ deleteDatasources:
     orgId: 1
 
 # list of datasources to insert/update depending
-# whats available in the database
+# what's available in the database
 datasources:
   # <string, required> name of the datasource. Required
 - name: Graphite
@@ -154,7 +154,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert | boolean | *All* | Enable TLS authentication using CA cert |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
-| timeInterval | string | Elastic, Influxdb & Prometheus | Lowest interval/step value that should be used for this data source |
+| timeInterval | string | Elastic, InfluxDB & Prometheus | Lowest interval/step value that should be used for this data source |
 | esVersion | string | Elastic | Elasticsearch version as an number (2/5/56) |
 | timeField | string | Elastic | Which field that should be used as timestamp |
 | interval | string | Elastic | Index date time format |
@@ -162,9 +162,9 @@ Since not all datasources have the same configuration settings we only have the 
 | assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
 | customMetricsNamespaces | string | Cloudwatch | Namespaces of Custom Metrics |
-| tsdbVersion | string | OpenTsdb | Version |
-| tsdbResolution | string | OpenTsdb | Resolution |
-| sslmode | string | Postgre | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| tsdbVersion | string | OpenTSDB | Version |
+| tsdbResolution | string | OpenTSDB | Resolution |
+| sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
 
 #### Secure Json Data
 
@@ -177,8 +177,8 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsCACert | string | *All* |CA cert for out going requests |
 | tlsClientCert | string | *All* |TLS Client cert for outgoing requests |
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
-| password | string | Postgre | password |
-| user | string | Postgre | user |
+| password | string | PostgreSQL | password |
+| user | string | PostgreSQL | user |
 | accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
 
@@ -197,6 +197,7 @@ providers:
   folder: ''
   type: file
   disableDeletion: false
+  updateIntervalSeconds: 3 #how often Grafana will scan for changed dashboards
   options:
     path: /var/lib/grafana/dashboards
 ```
