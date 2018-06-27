@@ -84,8 +84,8 @@ func syncCheckUser(s *userSyncState) userSyncStateFn {
 func syncSignupUser(s *userSyncState) userSyncStateFn {
 	if !s.cmd.SignupAllowed {
 		s.log.Warn(
-			"Not allowing %s login, user not found in internal user database and allow signup = false",
-			s.cmd.ExternalUser.AuthModule)
+			"Not allowing login, user not found in internal user database and allow signup = false",
+			"auth_module", s.cmd.ExternalUser.AuthModule)
 
 		s.err = ErrInvalidCredentials
 		return nil
