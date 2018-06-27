@@ -80,6 +80,11 @@ Path to where Grafana stores the sqlite3 database (if used), file based
 sessions (if used), and other data.  This path is usually specified via
 command line in the init.d script or the systemd service file.
 
+### temp_data_lifetime
+
+How long temporary images in `data` directory should be kept. Defaults to: `24h`. Supported modifiers: `h` (hours), 
+`m` (minutes), for example: `168h`, `30m`, `10h30m`. Use `0` to never clean up temporary files.
+
 ### logs
 
 Path to where Grafana will store logs. This path is usually specified via
@@ -92,8 +97,6 @@ file.
 Directory where grafana will automatically scan and look for plugins
 
 ### provisioning
-
-> This feature is available in 5.0+
 
 Folder that contains [provisioning](/administration/provisioning) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
 
@@ -421,25 +424,33 @@ allowed_organizations = github google
 
 ## [auth.google]
 
-You need to create a Google project. You can do this in the [Google
-Developer Console](https://console.developers.google.com/project).  When
-you create the project you will need to specify a callback URL. Specify
-this as callback:
+First, you need to create a Google OAuth Client:
 
-```bash
-http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/google
-```
+1. Go to https://console.developers.google.com/apis/credentials
 
-This callback URL must match the full HTTP address that you use in your
-browser to access Grafana, but with the prefix path of `/login/google`.
-When the Google project is created you will get a Client ID and a Client
-Secret. Specify these in the Grafana configuration file. For example:
+2. Click the 'Create Credentials' button, then click 'OAuth Client ID' in the
+menu that drops down
+
+3. Enter the following:
+
+   - Application Type: Web Application
+   - Name: Grafana
+   - Authorized Javascript Origins: https://grafana.mycompany.com
+   - Authorized Redirect URLs: https://grafana.mycompany.com/login/google
+
+   Replace https://grafana.mycompany.com with the URL of your Grafana instance.
+
+4. Click Create
+
+5. Copy the Client ID and Client Secret from the 'OAuth Client' modal
+
+Specify the Client ID and Secret in the Grafana configuration file. For example:
 
 ```bash
 [auth.google]
 enabled = true
-client_id = YOUR_GOOGLE_APP_CLIENT_ID
-client_secret = YOUR_GOOGLE_APP_CLIENT_SECRET
+client_id = CLIENT_ID
+client_secret = CLIENT_SECRET
 scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
 auth_url = https://accounts.google.com/o/oauth2/auth
 token_url = https://accounts.google.com/o/oauth2/token
@@ -717,7 +728,7 @@ Analytics ID here. By default this feature is disabled.
 
 ## [dashboards]
 
-### versions_to_keep (introduced in v5.0)
+### versions_to_keep
 
 Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
 

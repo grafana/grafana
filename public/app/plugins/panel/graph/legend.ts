@@ -287,6 +287,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           destroyScrollbar();
           legendScrollbar = baron(scrollbarParams);
         }
+
+        // #11830 - compensates for Firefox scrollbar calculation error in the baron framework
+        scroller[0].style.marginRight = '-' + (scroller[0].offsetWidth - scroller[0].clientWidth) + 'px';
+
         legendScrollbar.scroll();
       }
 

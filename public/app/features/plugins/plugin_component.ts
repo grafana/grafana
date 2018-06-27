@@ -6,7 +6,6 @@ import coreModule from 'app/core/core_module';
 import { importPluginModule } from './plugin_loader';
 
 import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
-import { DashboardRowCtrl } from './row_ctrl';
 
 /** @ngInject **/
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
@@ -59,15 +58,6 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
   }
 
   function loadPanelComponentInfo(scope, attrs) {
-    if (scope.panel.type === 'row') {
-      return $q.when({
-        name: 'dashboard-row',
-        bindings: { dashboard: '=', panel: '=' },
-        attrs: { dashboard: 'ctrl.dashboard', panel: 'panel' },
-        Component: DashboardRowCtrl,
-      });
-    }
-
     var componentInfo: any = {
       name: 'panel-plugin-' + scope.panel.type,
       bindings: { dashboard: '=', panel: '=', row: '=' },
@@ -132,24 +122,6 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
                 datasource: 'datasource',
               },
               Component: dsModule.QueryCtrl,
-            };
-          });
-        });
-      }
-      // QueryOptionsCtrl
-      case 'query-options-ctrl': {
-        return datasourceSrv.get(scope.ctrl.panel.datasource).then(ds => {
-          return importPluginModule(ds.meta.module).then((dsModule): any => {
-            if (!dsModule.QueryOptionsCtrl) {
-              return { notFound: true };
-            }
-
-            return {
-              baseUrl: ds.meta.baseUrl,
-              name: 'query-options-ctrl-' + ds.meta.id,
-              bindings: { panelCtrl: '=' },
-              attrs: { 'panel-ctrl': 'ctrl.panelCtrl' },
-              Component: dsModule.QueryOptionsCtrl,
             };
           });
         });

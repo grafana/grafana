@@ -45,8 +45,5 @@ INSERT INTO dashboard_acl
 		(-1,-1, 2,'Editor','2017-06-20','2017-06-20')
 	`
 
-	mg.AddMigration("save default acl rules in dashboard_acl table", new(RawSqlMigration).
-		Sqlite(rawSQL).
-		Postgres(rawSQL).
-		Mysql(rawSQL))
+	mg.AddMigration("save default acl rules in dashboard_acl table", NewRawSqlMigration(rawSQL))
 }

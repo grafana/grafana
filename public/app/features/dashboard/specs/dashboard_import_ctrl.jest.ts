@@ -15,6 +15,7 @@ describe('DashboardImportCtrl', function() {
 
     backendSrv = {
       search: jest.fn().mockReturnValue(Promise.resolve([])),
+      getDashboardByUid: jest.fn().mockReturnValue(Promise.resolve([])),
       get: jest.fn(),
     };
 

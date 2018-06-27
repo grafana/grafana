@@ -22,7 +22,9 @@ func runDbCommand(command func(commandLine CommandLine) error) func(context *cli
 			Args:     flag.Args(),
 		})
 
-		sqlstore.NewEngine()
+		engine := &sqlstore.SqlStore{}
+		engine.Cfg = cfg
+		engine.Init()
 
 		if err := command(cmd); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))

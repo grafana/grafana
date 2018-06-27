@@ -11,3 +11,14 @@ After adding ldif files to `prepopulate`:
 1. Remove your current docker image: `docker rm docker_openldap_1`
 2. Build: `docker-compose build`
 3. `docker-compose up`
+
+## Enabling LDAP in Grafana
+
+The default `ldap.toml` file in `conf` has host set to `127.0.0.1` and port to set to 389 so all you need to do is enable it in the .ini file to get Grafana to use this block:
+
+```ini
+[auth.ldap]
+enabled = true
+config_file = conf/ldap.toml
+; allow_sign_up = true
+```

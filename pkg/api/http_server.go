@@ -11,6 +11,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,8 +44,10 @@ type HTTPServer struct {
 	cache         *gocache.Cache
 	httpSrv       *http.Server
 
-	RouteRegister RouteRegister `inject:""`
-	Bus           bus.Bus       `inject:""`
+	RouteRegister routing.RouteRegister `inject:""`
+	Bus           bus.Bus               `inject:""`
+	RenderService rendering.Service     `inject:""`
+	Cfg           *setting.Cfg          `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
@@ -174,11 +178,12 @@ func (hs *HTTPServer) newMacaron() *macaron.Macaron {
 		hs.mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
+	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, setting.StaticRootPath, "", "public")
 	hs.mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
 
 	if setting.ImageUploadProvider == "local" {
-		hs.mapStatic(m, setting.ImagesDir, "", "/public/img/attachments")
+		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
@@ -239,6 +244,12 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 	headers := func(c *macaron.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
+	}
+
+	if prefix == "public/build" {
+		headers = func(c *macaron.Context) {
+			c.Resp.Header().Set("Cache-Control", "public, max-age=31536000")
+		}
 	}
 
 	if setting.Env == setting.DEV {

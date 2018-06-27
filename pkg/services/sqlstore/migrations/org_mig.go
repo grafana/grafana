@@ -48,27 +48,6 @@ func addOrgMigrations(mg *Migrator) {
 	mg.AddMigration("create org_user table v1", NewAddTableMigration(orgUserV1))
 	addTableIndicesMigrations(mg, "v1", orgUserV1)
 
-	//-------  copy data from old table-------------------
-	mg.AddMigration("copy data account to org", NewCopyTableDataMigration("org", "account", map[string]string{
-		"id":      "id",
-		"version": "version",
-		"name":    "name",
-		"created": "created",
-		"updated": "updated",
-	}).IfTableExists("account"))
-
-	mg.AddMigration("copy data account_user to org_user", NewCopyTableDataMigration("org_user", "account_user", map[string]string{
-		"id":      "id",
-		"org_id":  "account_id",
-		"user_id": "user_id",
-		"role":    "role",
-		"created": "created",
-		"updated": "updated",
-	}).IfTableExists("account_user"))
-
-	mg.AddMigration("Drop old table account", NewDropTableMigration("account"))
-	mg.AddMigration("Drop old table account_user", NewDropTableMigration("account_user"))
-
 	mg.AddMigration("Update org table charset", NewTableCharsetMigration("org", []*Column{
 		{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
 		{Name: "address1", Type: DB_NVarchar, Length: 255, Nullable: true},
@@ -85,8 +64,5 @@ func addOrgMigrations(mg *Migrator) {
 	}))
 
 	const migrateReadOnlyViewersToViewers = `UPDATE org_user SET role = 'Viewer' WHERE role = 'Read Only Editor'`
-	mg.AddMigration("Migrate all Read Only Viewers to Viewers", new(RawSqlMigration).
-		Sqlite(migrateReadOnlyViewersToViewers).
-		Postgres(migrateReadOnlyViewersToViewers).
-		Mysql(migrateReadOnlyViewersToViewers))
+	mg.AddMigration("Migrate all Read Only Viewers to Viewers", NewRawSqlMigration(migrateReadOnlyViewersToViewers))
 }

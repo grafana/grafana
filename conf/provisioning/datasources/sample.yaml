@@ -40,11 +40,14 @@ apiVersion: 1
 #      graphiteVersion: "1.1"
 #      tlsAuth: true
 #      tlsAuthWithCACert: true
+#      httpHeaderName1: "Authorization"
 #   # <string> json object of data that will be encrypted.
 #   secureJsonData:
 #     tlsCACert: "..."
 #     tlsClientCert: "..."
 #     tlsClientKey: "..."
+#     # <openshift\kubernetes token example>
+#     httpHeaderValue1: "Bearer xf5yhfkpsnmgo"
 #   version: 1
 #   # <bool> allow users to edit datasources from the UI.
 #   editable: false

@@ -9,16 +9,18 @@ describe('graphiteDatasource', () => {
     backendSrv: {},
     $q: $q,
     templateSrv: new TemplateSrvStub(),
+    instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
   };
 
   beforeEach(function() {
-    ctx.instanceSettings = { url: [''], name: 'graphiteProd', jsonData: {} };
+    ctx.instanceSettings.url = '/api/datasources/proxy/1';
     ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When querying graphite with one target using query editor target spec', function() {
     let query = {
       panelId: 3,
+      dashboardId: 5,
       rangeRaw: { from: 'now-1h', to: 'now' },
       targets: [{ target: 'prod1.count' }, { target: 'prod2.count' }],
       maxDataPoints: 500,
@@ -40,8 +42,13 @@ describe('graphiteDatasource', () => {
       });
     });
 
+    it('X-Dashboard and X-Panel headers to be set!', () => {
+      expect(requestOptions.headers['X-Dashboard-Id']).toBe(5);
+      expect(requestOptions.headers['X-Panel-Id']).toBe(3);
+    });
+
     it('should generate the correct query', function() {
-      expect(requestOptions.url).toBe('/render');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
     });
 
     it('should set unique requestId', function() {
@@ -228,7 +235,7 @@ describe('graphiteDatasource', () => {
         results = data;
       });
 
-      expect(requestOptions.url).toBe('/tags/autoComplete/tags');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/tags/autoComplete/tags');
       expect(requestOptions.params.expr).toEqual([]);
       expect(results).not.toBe(null);
     });
@@ -238,7 +245,7 @@ describe('graphiteDatasource', () => {
         results = data;
       });
 
-      expect(requestOptions.url).toBe('/tags/autoComplete/tags');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/tags/autoComplete/tags');
       expect(requestOptions.params.expr).toEqual(['server=backend_01']);
       expect(results).not.toBe(null);
     });
@@ -248,7 +255,7 @@ describe('graphiteDatasource', () => {
         results = data;
       });
 
-      expect(requestOptions.url).toBe('/tags/autoComplete/tags');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/tags/autoComplete/tags');
       expect(requestOptions.params.expr).toEqual(['server=backend_01']);
       expect(results).not.toBe(null);
     });
@@ -258,7 +265,7 @@ describe('graphiteDatasource', () => {
         results = data;
       });
 
-      expect(requestOptions.url).toBe('/tags/autoComplete/values');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/tags/autoComplete/values');
       expect(requestOptions.params.tag).toBe('server');
       expect(requestOptions.params.expr).toEqual([]);
       expect(results).not.toBe(null);
@@ -269,7 +276,7 @@ describe('graphiteDatasource', () => {
         results = data;
       });
 
-      expect(requestOptions.url).toBe('/tags/autoComplete/values');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/tags/autoComplete/values');
       expect(requestOptions.params.tag).toBe('server');
       expect(requestOptions.params.expr).toEqual(['server=~backend*']);
       expect(results).not.toBe(null);
@@ -280,7 +287,7 @@ describe('graphiteDatasource', () => {
         results = data;
       });
 
-      expect(requestOptions.url).toBe('/tags/autoComplete/values');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/tags/autoComplete/values');
       expect(requestOptions.params.tag).toBe('server');
       expect(requestOptions.params.expr).toEqual([]);
       expect(results).not.toBe(null);
@@ -291,10 +298,46 @@ describe('graphiteDatasource', () => {
         results = data;
       });
 
-      expect(requestOptions.url).toBe('/tags/autoComplete/values');
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/tags/autoComplete/values');
       expect(requestOptions.params.tag).toBe('server');
       expect(requestOptions.params.expr).toEqual(['server=~backend*']);
       expect(results).not.toBe(null);
     });
   });
+});
+
+function accessScenario(name, url, fn) {
+  describe('access scenario ' + name, function() {
+    let ctx: any = {
+      backendSrv: {},
+      $q: $q,
+      templateSrv: new TemplateSrvStub(),
+      instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
+    };
+
+    let httpOptions = {
+      headers: {},
+    };
+
+    describe('when using proxy mode', () => {
+      let options = { dashboardId: 1, panelId: 2 };
+
+      it('tracing headers should be added', () => {
+        ctx.instanceSettings.url = url;
+        var ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+        ds.addTracingHeaders(httpOptions, options);
+        fn(httpOptions);
+      });
+    });
+  });
+}
+
+accessScenario('with proxy access', '/api/datasources/proxy/1', function(httpOptions) {
+  expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
+  expect(httpOptions.headers['X-Panel-Id']).toBe(2);
+});
+
+accessScenario('with direct access', 'http://localhost:8080', function(httpOptions) {
+  expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
+  expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
 });

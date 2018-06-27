@@ -50,15 +50,8 @@
 
       function checkIsReady() {
         var panelsRendered = page.evaluate(function() {
-          if (!window.angular) { return false; }
-          var body = window.angular.element(document.body);
-          if (!body.injector) { return false; }
-          if (!body.injector()) { return false; }
-
-          var rootScope = body.injector().get('$rootScope');
-          if (!rootScope) {return false;}
-          var panels = angular.element('div.panel:visible').length;
-          return rootScope.panelsRendered >= panels;
+          var panelCount = document.querySelectorAll('.panel').length;
+          return window.panelsRendered >= panelCount;
         });
 
         if (panelsRendered || totalWaitMs > timeoutMs) {
