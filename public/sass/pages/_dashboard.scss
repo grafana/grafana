@@ -181,7 +181,7 @@ div.flot-text {
     display: block;
     @include panel-corner-color(lighten($panel-bg, 4%));
     .fa {
-      left: -5px;
+      left: 4px;
     }
     .fa:before {
       content: '\f08e';

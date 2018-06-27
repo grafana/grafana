@@ -37,7 +37,6 @@ func GetAnnotations(c *m.ReqContext) Response {
 		if item.Email != "" {
 			item.AvatarUrl = dtos.GetGravatarUrl(item.Email)
 		}
-		item.Time = item.Time
 	}
 
 	return JSON(200, items)
@@ -214,7 +213,9 @@ func DeleteAnnotations(c *m.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response 
 	repo := annotations.GetRepository()
 
 	err := repo.Delete(&annotations.DeleteParams{
-		AlertId:     cmd.PanelId,
+		OrgId:       c.OrgId,
+		Id:          cmd.AnnotationId,
+		RegionId:    cmd.RegionId,
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
 	})
@@ -235,7 +236,8 @@ func DeleteAnnotationByID(c *m.ReqContext) Response {
 	}
 
 	err := repo.Delete(&annotations.DeleteParams{
-		Id: annotationID,
+		OrgId: c.OrgId,
+		Id:    annotationID,
 	})
 
 	if err != nil {
@@ -254,6 +256,7 @@ func DeleteAnnotationRegion(c *m.ReqContext) Response {
 	}
 
 	err := repo.Delete(&annotations.DeleteParams{
+		OrgId:    c.OrgId,
 		RegionId: regionID,
 	})
 
@@ -269,9 +272,9 @@ func canSaveByDashboardID(c *m.ReqContext, dashboardID int64) (bool, error) {
 		return false, nil
 	}
 
-	if dashboardID > 0 {
-		guardian := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
-		if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
+	if dashboardID != 0 {
+		guard := guardian.New(dashboardID, c.OrgId, c.SignedInUser)
+		if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
 			return false, err
 		}
 	}

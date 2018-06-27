@@ -11,6 +11,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -43,10 +44,10 @@ type HTTPServer struct {
 	cache         *gocache.Cache
 	httpSrv       *http.Server
 
-	RouteRegister RouteRegister     `inject:""`
-	Bus           bus.Bus           `inject:""`
-	RenderService rendering.Service `inject:""`
-	Cfg           *setting.Cfg      `inject:""`
+	RouteRegister routing.RouteRegister `inject:""`
+	Bus           bus.Bus               `inject:""`
+	RenderService rendering.Service     `inject:""`
+	Cfg           *setting.Cfg          `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

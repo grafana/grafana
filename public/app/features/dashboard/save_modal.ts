@@ -1,5 +1,4 @@
 import coreModule from 'app/core/core_module';
-import _ from 'lodash';
 
 const template = `
 <div class="modal-body">
@@ -50,8 +49,17 @@ const template = `
     </div>
 
     <div class="gf-form-button-row text-center">
-      <button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid">Save</button>
-      <a class="btn btn-link" ng-click="ctrl.dismiss();">Cancel</a>
+      <button
+        id="saveBtn"
+        type="submit"
+        class="btn btn-success"
+        ng-class="{'btn-success--processing': ctrl.isSaving}"
+        ng-disabled="ctrl.saveForm.$invalid || ctrl.isSaving"
+      >
+        <span ng-if="!ctrl.isSaving">Save</span>
+        <span ng-if="ctrl.isSaving === true">Saving...</span>
+      </button>
+      <button class="btn btn-inverse" ng-click="ctrl.dismiss();">Cancel</button>
     </div>
   </form>
 </div>
@@ -61,13 +69,13 @@ export class SaveDashboardModalCtrl {
   message: string;
   saveVariables = false;
   saveTimerange = false;
-  templating: any;
   time: any;
   originalTime: any;
   current = [];
   originalCurrent = [];
   max: number;
   saveForm: any;
+  isSaving: boolean;
   dismiss: () => void;
   timeChange = false;
   variableValueChange = false;
@@ -76,40 +84,9 @@ export class SaveDashboardModalCtrl {
   constructor(private dashboardSrv) {
     this.message = '';
     this.max = 64;
-    this.templating = dashboardSrv.dash.templating.list;
-
-    this.compareTemplating();
-    this.compareTime();
-  }
-
-  compareTime() {
-    if (_.isEqual(this.dashboardSrv.dash.time, this.dashboardSrv.dash.originalTime)) {
-      this.timeChange = false;
-    } else {
-      this.timeChange = true;
-    }
-  }
-
-  compareTemplating() {
-    //checks if variables has been added or removed, if so variables will be saved automatically
-    if (this.dashboardSrv.dash.originalTemplating.length !== this.dashboardSrv.dash.templating.list.length) {
-      return (this.variableValueChange = false);
-    }
-
-    //checks if variable value has changed
-    if (this.dashboardSrv.dash.templating.list.length > 0) {
-      for (let i = 0; i < this.dashboardSrv.dash.templating.list.length; i++) {
-        if (
-          this.dashboardSrv.dash.templating.list[i].current.text !==
-          this.dashboardSrv.dash.originalTemplating[i].current.text
-        ) {
-          return (this.variableValueChange = true);
-        }
-      }
-      return (this.variableValueChange = false);
-    } else {
-      return (this.variableValueChange = false);
-    }
+    this.isSaving = false;
+    this.timeChange = this.dashboardSrv.getCurrent().hasTimeChanged();
+    this.variableValueChange = this.dashboardSrv.getCurrent().hasVariableValuesChanged();
   }
 
   save() {
@@ -126,7 +103,21 @@ export class SaveDashboardModalCtrl {
     var dashboard = this.dashboardSrv.getCurrent();
     var saveModel = dashboard.getSaveModelClone(options);
 
-    return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
+    this.isSaving = true;
+
+    return this.dashboardSrv.save(saveModel, options).then(this.postSave.bind(this, options));
+  }
+
+  postSave(options) {
+    if (options.saveVariables) {
+      this.dashboardSrv.getCurrent().resetOriginalVariables();
+    }
+
+    if (options.saveTimerange) {
+      this.dashboardSrv.getCurrent().resetOriginalTime();
+    }
+
+    this.dismiss();
   }
 }
 

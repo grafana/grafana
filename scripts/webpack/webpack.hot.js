@@ -42,20 +42,23 @@ module.exports = merge(common, {
       {
         test: /\.tsx?$/,
         exclude: /node_modules/,
-        use: {
-          loader: 'awesome-typescript-loader',
+        use: [{
+          loader: 'babel-loader',
           options: {
-            useCache: true,
-            useBabel: true,
-            babelOptions: {
-              babelrc: false,
-              plugins: [
-                'syntax-dynamic-import',
-                'react-hot-loader/babel'
-              ]
-            }
+            cacheDirectory: true,
+            babelrc: false,
+            plugins: [
+              'syntax-dynamic-import',
+              'react-hot-loader/babel'
+            ]
+          }
+        },
+        {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true
           },
-        }
+        }],
       },
       {
         test: /\.scss$/,
