@@ -63,8 +63,7 @@ export class DashboardExporter {
       );
     };
 
-    // check up panel data sources
-    for (let panel of saveModel.panels) {
+    const processPanel = panel => {
       if (panel.datasource !== undefined) {
         templateizeDatasourceUsage(panel);
       }
@@ -85,6 +84,18 @@ export class DashboardExporter {
           name: panelDef.name,
           version: panelDef.info.version,
         };
+      }
+    };
+
+    // check up panel data sources
+    for (let panel of saveModel.panels) {
+      processPanel(panel);
+
+      // handle collapsed rows
+      if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
+        for (let rowPanel of panel.panels) {
+          processPanel(rowPanel);
+        }
       }
     }
 

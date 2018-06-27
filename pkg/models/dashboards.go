@@ -254,6 +254,7 @@ type DashboardProvisioning struct {
 	DashboardId int64
 	Name        string
 	ExternalId  string
+	CheckSum    string
 	Updated     int64
 }
 

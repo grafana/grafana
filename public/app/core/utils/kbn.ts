@@ -448,6 +448,7 @@ kbn.valueFormats.currencyISK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyNOK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencySEK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyCZK = kbn.formatBuilders.currency('czk');
+kbn.valueFormats.currencyCHF = kbn.formatBuilders.currency('CHF');
 
 // Data (Binary)
 kbn.valueFormats.bits = kbn.formatBuilders.binarySIPrefix('b');
@@ -498,6 +499,7 @@ kbn.valueFormats.watt = kbn.formatBuilders.decimalSIPrefix('W');
 kbn.valueFormats.kwatt = kbn.formatBuilders.decimalSIPrefix('W', 1);
 kbn.valueFormats.mwatt = kbn.formatBuilders.decimalSIPrefix('W', -1);
 kbn.valueFormats.kwattm = kbn.formatBuilders.decimalSIPrefix('W/Min', 1);
+kbn.valueFormats.Wm2 = kbn.formatBuilders.fixedUnit('W/m2');
 kbn.valueFormats.voltamp = kbn.formatBuilders.decimalSIPrefix('VA');
 kbn.valueFormats.kvoltamp = kbn.formatBuilders.decimalSIPrefix('VA', 1);
 kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
@@ -527,6 +529,7 @@ kbn.valueFormats.pressurebar = kbn.formatBuilders.decimalSIPrefix('bar');
 kbn.valueFormats.pressurembar = kbn.formatBuilders.decimalSIPrefix('bar', -1);
 kbn.valueFormats.pressurekbar = kbn.formatBuilders.decimalSIPrefix('bar', 1);
 kbn.valueFormats.pressurehpa = kbn.formatBuilders.fixedUnit('hPa');
+kbn.valueFormats.pressurekpa = kbn.formatBuilders.fixedUnit('kPa');
 kbn.valueFormats.pressurehg = kbn.formatBuilders.fixedUnit('"Hg');
 kbn.valueFormats.pressurepsi = kbn.formatBuilders.scaledUnits(1000, [' psi', ' ksi', ' Mpsi']);
 
@@ -578,6 +581,9 @@ kbn.valueFormats.flowgpm = kbn.formatBuilders.fixedUnit('gpm');
 kbn.valueFormats.flowcms = kbn.formatBuilders.fixedUnit('cms');
 kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
+kbn.valueFormats.litreh = kbn.formatBuilders.fixedUnit('l/h');
+kbn.valueFormats.flowlpm = kbn.formatBuilders.decimalSIPrefix('L');
+kbn.valueFormats.flowmlpm = kbn.formatBuilders.decimalSIPrefix('L', -1);
 
 // Angle
 kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
@@ -816,8 +822,8 @@ kbn.valueFormats.timeticks = function(size, decimals, scaledDecimals) {
   return kbn.valueFormats.s(size / 100, decimals, scaledDecimals);
 };
 
-kbn.valueFormats.dateTimeAsIso = function(epoch) {
-  var time = moment(epoch);
+kbn.valueFormats.dateTimeAsIso = function(epoch, isUtc) {
+  var time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
     return time.format('HH:mm:ss');
@@ -825,8 +831,8 @@ kbn.valueFormats.dateTimeAsIso = function(epoch) {
   return time.format('YYYY-MM-DD HH:mm:ss');
 };
 
-kbn.valueFormats.dateTimeAsUS = function(epoch) {
-  var time = moment(epoch);
+kbn.valueFormats.dateTimeAsUS = function(epoch, isUtc) {
+  var time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
     return time.format('h:mm:ss a');
@@ -834,8 +840,9 @@ kbn.valueFormats.dateTimeAsUS = function(epoch) {
   return time.format('MM/DD/YYYY h:mm:ss a');
 };
 
-kbn.valueFormats.dateTimeFromNow = function(epoch) {
-  return moment(epoch).fromNow();
+kbn.valueFormats.dateTimeFromNow = function(epoch, isUtc) {
+  var time = isUtc ? moment.utc(epoch) : moment(epoch);
+  return time.fromNow();
 };
 
 ///// FORMAT MENU /////
@@ -872,6 +879,7 @@ kbn.getUnitFormats = function() {
         { text: 'Norwegian Krone (kr)', value: 'currencyNOK' },
         { text: 'Swedish Krona (kr)', value: 'currencySEK' },
         { text: 'Czech koruna (czk)', value: 'currencyCZK' },
+        { text: 'Swiss franc (CHF)', value: 'currencyCHF' },
       ],
     },
     {
@@ -988,17 +996,17 @@ kbn.getUnitFormats = function() {
     {
       text: 'velocity',
       submenu: [
-        { text: 'm/s', value: 'velocityms' },
-        { text: 'km/h', value: 'velocitykmh' },
-        { text: 'mph', value: 'velocitymph' },
+        { text: 'metres/second (m/s)', value: 'velocityms' },
+        { text: 'kilometers/hour (km/h)', value: 'velocitykmh' },
+        { text: 'miles/hour (mph)', value: 'velocitymph' },
         { text: 'knot (kn)', value: 'velocityknot' },
       ],
     },
     {
       text: 'volume',
       submenu: [
-        { text: 'millilitre', value: 'mlitre' },
-        { text: 'litre', value: 'litre' },
+        { text: 'millilitre (mL)', value: 'mlitre' },
+        { text: 'litre (L)', value: 'litre' },
         { text: 'cubic metre', value: 'm3' },
         { text: 'Normal cubic metre', value: 'Nm3' },
         { text: 'cubic decimetre', value: 'dm3' },
@@ -1011,6 +1019,7 @@ kbn.getUnitFormats = function() {
         { text: 'Watt (W)', value: 'watt' },
         { text: 'Kilowatt (kW)', value: 'kwatt' },
         { text: 'Milliwatt (mW)', value: 'mwatt' },
+        { text: 'Watt per square metre (W/m2)', value: 'Wm2' },
         { text: 'Volt-ampere (VA)', value: 'voltamp' },
         { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
         { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
@@ -1046,6 +1055,7 @@ kbn.getUnitFormats = function() {
         { text: 'Bars', value: 'pressurebar' },
         { text: 'Kilobars', value: 'pressurekbar' },
         { text: 'Hectopascals', value: 'pressurehpa' },
+        { text: 'Kilopascals', value: 'pressurekpa' },
         { text: 'Inches of mercury', value: 'pressurehg' },
         { text: 'PSI', value: 'pressurepsi' },
       ],
@@ -1066,6 +1076,9 @@ kbn.getUnitFormats = function() {
         { text: 'Cubic meters/sec (cms)', value: 'flowcms' },
         { text: 'Cubic feet/sec (cfs)', value: 'flowcfs' },
         { text: 'Cubic feet/min (cfm)', value: 'flowcfm' },
+        { text: 'Litre/hour', value: 'litreh' },
+        { text: 'Litre/min (l/min)', value: 'flowlpm' },
+        { text: 'milliLitre/min (mL/min)', value: 'flowmlpm' },
       ],
     },
     {

@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-model/go/datasource"
 	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana_plugin_model/go/datasource"
 )
 
 func NewDatasourcePluginWrapper(log log.Logger, plugin datasource.DatasourcePlugin) *DatasourcePluginWrapper {
@@ -77,6 +78,14 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 		if r.Error != "" {
 			qr.Error = errors.New(r.Error)
 			qr.ErrorString = r.Error
+		}
+
+		if r.MetaJson != "" {
+			metaJson, err := simplejson.NewJson([]byte(r.MetaJson))
+			if err != nil {
+				tw.logger.Error("Error parsing JSON Meta field: " + err.Error())
+			}
+			qr.Meta = metaJson
 		}
 
 		for _, s := range r.GetSeries() {

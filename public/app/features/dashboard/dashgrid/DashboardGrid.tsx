@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactGridLayout from 'react-grid-layout-grafana';
+import ReactGridLayout from 'react-grid-layout';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel } from '../dashboard_model';

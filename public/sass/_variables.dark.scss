@@ -45,6 +45,10 @@ $brand-warning: $brand-primary;
 $brand-danger: $red;
 
 $query-blue: $blue;
+$query-red: $red;
+$query-green: $green;
+$query-purple: $purple;
+$query-orange: $orange;
 
 // Status colors
 // -------------------------
@@ -176,6 +180,9 @@ $btn-inverse-bg-hl: lighten($dark-3, 4%);
 $btn-inverse-text-color: $link-color;
 $btn-inverse-text-shadow: 0px 1px 0 rgba(0, 0, 0, 0.1);
 
+$btn-active-bg: $gray-4;
+$btn-active-text-color: $blue-dark;
+
 $btn-link-color: $gray-3;
 
 $iconContainerBackground: $black;
@@ -203,6 +210,11 @@ $input-invalid-border-color: lighten($red, 5%);
 // Search
 $search-shadow: 0 0 30px 0 $black;
 $search-filter-box-bg: $gray-blue;
+
+// Typeahead
+$typeahead-shadow: 0 5px 10px 0 $black;
+$typeahead-selected-bg: $dark-4;
+$typeahead-selected-color: $blue;
 
 // Dropdowns
 // -------------------------

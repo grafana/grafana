@@ -16,6 +16,7 @@ class Settings {
   defaultDatasource: string;
   alertingEnabled: boolean;
   authProxyEnabled: boolean;
+  exploreEnabled: boolean;
   ldapEnabled: boolean;
   oauth: any;
   disableUserSignUp: boolean;

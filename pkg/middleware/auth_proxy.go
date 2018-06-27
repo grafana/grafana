@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"net"
 	"net/mail"
 	"reflect"
 	"strings"
@@ -29,7 +28,7 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	}
 
 	// if auth proxy ip(s) defined, check if request comes from one of those
-	if err := checkAuthenticationProxy(ctx.Req.RemoteAddr, proxyHeaderValue); err != nil {
+	if err := checkAuthenticationProxy(ctx.RemoteAddr(), proxyHeaderValue); err != nil {
 		ctx.Handle(407, "Proxy authentication required", err)
 		return true
 	}
@@ -197,18 +196,23 @@ func checkAuthenticationProxy(remoteAddr string, proxyHeaderValue string) error 
 		return nil
 	}
 
-	proxies := strings.Split(setting.AuthProxyWhitelist, ",")
-	sourceIP, _, err := net.SplitHostPort(remoteAddr)
-	if err != nil {
-		return err
+	// Multiple ip addresses? Right-most IP address is the IP address of the most recent proxy
+	if strings.Contains(remoteAddr, ",") {
+		sourceIPs := strings.Split(remoteAddr, ",")
+		remoteAddr = strings.TrimSpace(sourceIPs[len(sourceIPs)-1])
 	}
+
+	remoteAddr = strings.TrimPrefix(remoteAddr, "[")
+	remoteAddr = strings.TrimSuffix(remoteAddr, "]")
+
+	proxies := strings.Split(setting.AuthProxyWhitelist, ",")
 
 	// Compare allowed IP addresses to actual address
 	for _, proxyIP := range proxies {
-		if sourceIP == strings.TrimSpace(proxyIP) {
+		if remoteAddr == strings.TrimSpace(proxyIP) {
 			return nil
 		}
 	}
 
-	return fmt.Errorf("Request for user (%s) from %s is not from the authentication proxy", proxyHeaderValue, sourceIP)
+	return fmt.Errorf("Request for user (%s) from %s is not from the authentication proxy", proxyHeaderValue, remoteAddr)
 }

@@ -36,19 +36,10 @@ func Register(b Builder) {
 }
 
 // Get returns the resolver builder registered with the given scheme.
-// If no builder is register with the scheme, the default scheme will
-// be used.
-// If the default scheme is not modified, "passthrough" will be the default
-// scheme, and the preinstalled dns resolver will be used.
-// If the default scheme is modified, and a resolver is registered with
-// the scheme, that resolver will be returned.
-// If the default scheme is modified, and no resolver is registered with
-// the scheme, nil will be returned.
+//
+// If no builder is register with the scheme, nil will be returned.
 func Get(scheme string) Builder {
 	if b, ok := m[scheme]; ok {
-		return b
-	}
-	if b, ok := m[defaultScheme]; ok {
 		return b
 	}
 	return nil
@@ -58,6 +49,11 @@ func Get(scheme string) Builder {
 // The default default scheme is "passthrough".
 func SetDefaultScheme(scheme string) {
 	defaultScheme = scheme
+}
+
+// GetDefaultScheme gets the default scheme that will be used.
+func GetDefaultScheme() string {
+	return defaultScheme
 }
 
 // AddressType indicates the address type returned by name resolution.
@@ -90,9 +86,6 @@ type Address struct {
 // BuildOption includes additional information for the builder to create
 // the resolver.
 type BuildOption struct {
-	// UserOptions can be used to pass configuration between DialOptions and the
-	// resolver.
-	UserOptions interface{}
 }
 
 // ClientConn contains the callbacks for resolver to notify any updates

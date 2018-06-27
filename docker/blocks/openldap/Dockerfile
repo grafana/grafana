@@ -1,3 +1,5 @@
+# Fork of https://github.com/dinkel/docker-openldap
+
 FROM debian:jessie
 
 LABEL maintainer="Christian Luginbühl <dinke@pimprecords.com>"

@@ -25,7 +25,7 @@ func TestMigrations(t *testing.T) {
 			x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 			So(err, ShouldBeNil)
 
-			sqlutil.CleanDB(x)
+			NewDialect(x).CleanDB()
 
 			_, err = x.SQL(sql).Get(&r)
 			So(err, ShouldNotBeNil)
@@ -39,7 +39,7 @@ func TestMigrations(t *testing.T) {
 			has, err := x.SQL(sql).Get(&r)
 			So(err, ShouldBeNil)
 			So(has, ShouldBeTrue)
-			expectedMigrations := mg.MigrationsCount() - 2 //we currently skip to migrations. We should rewrite skipped migrations to write in the log as well. until then we have to keep this
+			expectedMigrations := mg.MigrationsCount() //we currently skip to migrations. We should rewrite skipped migrations to write in the log as well. until then we have to keep this
 			So(r.Count, ShouldEqual, expectedMigrations)
 
 			mg = NewMigrator(x)

@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'test/lib/common';
 import { InfluxQueryBuilder } from '../query_builder';
 
 describe('InfluxQueryBuilder', function() {
