@@ -169,6 +169,13 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 
 	seenTeam := map[int64]bool{}
 	for _, group := range a.server.LdapGroupMappings {
+		// if configuration includes teams, automatically
+		// enable join/leave mechanism.
+		// in this case manual team assignments will
+		// not be possible for LDAP enabled accounts.
+		if group.TeamId > 0 {
+			extUser.HandleTeams = true
+		}
 
 		if ldapUser.isMemberOf(group.GroupDN) {
 			orgRole := extUser.OrgRoles[group.OrgId]

@@ -256,7 +256,12 @@ func syncUserOrgJoin(s *userSyncState) userSyncStateFn {
 
 // fsm: at this point, user still have access to all orgs, even to orgs user lost access to,
 // so, loading up information about team membership and proceed with team join phase.
+// if no teams configured in group mappings, skip whole join/leave phase.
 func syncUserTeamsStart(s *userSyncState) userSyncStateFn {
+	if !s.cmd.ExternalUser.HandleTeams {
+		return syncUserOrgLeave
+	}
+
 	for orgId := range s.updatedOrgs {
 		teamQuery := &m.GetTeamsByUserQuery{OrgId: orgId, UserId: s.user.Id}
 
@@ -329,7 +334,6 @@ func syncUserTeamLeave(s *userSyncState) userSyncStateFn {
 		}
 	}
 
-	// revoke team membership by configuration
 	for orgId, teamIdMap := range s.teams {
 		teamIdList, exists := s.cmd.ExternalUser.OrgTeams[orgId]
 		if !exists {
