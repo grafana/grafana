@@ -1,11 +1,11 @@
 import _ from 'lodash';
 import React from 'react';
 import { BarStat } from './BarStat';
-import { MultistatPanelSize } from '../types';
+import { MultistatPanelSize, MultistatPanelOptions } from '../types';
 
 export interface IProps {
   stats: any[];
-  options: any;
+  options: MultistatPanelOptions;
   size: MultistatPanelSize;
   getColor: (v: number) => string;
 }
@@ -37,7 +37,7 @@ export class MultiStatBar extends React.Component<IProps, any> {
     const statElements = stats.map((stat, index) => {
       const color = this.props.getColor(stat.value);
       const barSize = { w: barWidths[index], h: barHeight };
-      return <BarStat key={index} stat={stat} color={color} size={barSize} />;
+      return <BarStat key={index} stat={stat} color={color} size={barSize} options={this.props.options} />;
     });
 
     return <div>{statElements}</div>;

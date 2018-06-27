@@ -40,6 +40,9 @@ export interface MultistatPanelOptions extends MetricPanelOptions {
   mappingType?: any;
   nullPointMode?: any;
   valueName?: string;
+  prefixFontSize?: string;
+  valueFontSize?: string;
+  postfixFontSize?: string;
   thresholds?: any;
   colorBackground?: any;
   colorValue?: any;

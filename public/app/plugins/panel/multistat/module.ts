@@ -1,5 +1,5 @@
 import _ from 'lodash';
-// import kbn from 'app/core/utils/kbn';
+import kbn from 'app/core/utils/kbn';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import defaults from './defaults';
@@ -14,6 +14,10 @@ class MultiStatCtrl extends MetricsPanelCtrl {
   series: any[];
   data: any;
   tableColumnOptions: any;
+  fontSizes: any[];
+  unitFormats: any[];
+  valueNameOptions: any[] = defaults.valueNameOptions;
+  layoutOptions: any[] = defaults.layoutOptions;
 
   /** @ngInject */
   constructor($scope, $injector) {
@@ -24,7 +28,13 @@ class MultiStatCtrl extends MetricsPanelCtrl {
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
-    // this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+  }
+
+  onInitEditMode() {
+    this.fontSizes = ['20%', '30%', '50%', '70%', '80%', '100%', '110%', '120%', '150%', '170%', '200%'];
+    this.addEditorTab('Options', 'public/app/plugins/panel/multistat/options.html', 2);
+    this.unitFormats = kbn.getUnitFormats();
   }
 
   onDataReceived(dataList) {
@@ -67,6 +77,11 @@ class MultiStatCtrl extends MetricsPanelCtrl {
   }
 
   setValueMapping(data) {}
+
+  setUnitFormat(subItem) {
+    this.panel.format = subItem.value;
+    this.refresh();
+  }
 
   link(scope, elem, attrs, ctrl) {
     const multistatElem = elem.find('.multistat-panel');

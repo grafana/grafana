@@ -1,11 +1,12 @@
 import React from 'react';
-import { SeriesStat, MultistatPanelSize } from '../types';
+import { SeriesStat, MultistatPanelSize, MultistatPanelOptions } from '../types';
 import { getBGColor } from './utils';
 
 export interface IProps {
   stat: SeriesStat;
   size?: MultistatPanelSize;
   color?: string;
+  options?: MultistatPanelOptions;
 }
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
@@ -25,23 +26,22 @@ export class BarStat extends React.Component<IProps, any> {
     const valueColor = this.props.color || DEFAULT_COLOR;
     const bgColor = getBGColor(valueColor);
 
-    let barStyle: React.CSSProperties = {
-      background: bgColor,
-      borderRightColor: valueColor,
-    };
-
+    let valueStyle: React.CSSProperties = {};
+    let barStyle: React.CSSProperties = {};
     let barContainerStyle: React.CSSProperties = {};
     if (this.props.size) {
       const barHeight = this.props.size.h * 0.8;
+      barStyle.background = bgColor;
       barStyle.height = barHeight;
       barContainerStyle.lineHeight = `${barHeight}px`;
       barContainerStyle.width = this.props.size.w;
       barContainerStyle.height = this.props.size.h;
     }
 
-    const valueStyle: React.CSSProperties = {
-      color: valueColor,
-    };
+    if (this.props.options.colorValue) {
+      valueStyle.color = valueColor;
+      barStyle.borderRightColor = valueColor;
+    }
 
     return (
       <div className="multistat-bar-container" style={barContainerStyle}>

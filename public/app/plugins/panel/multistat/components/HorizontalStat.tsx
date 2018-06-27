@@ -1,13 +1,13 @@
 import React from 'react';
 import { SparkLine } from './SparkLine';
-import { SeriesStat, MultistatPanelSize } from '../types';
+import { SeriesStat, MultistatPanelSize, MultistatPanelOptions } from '../types';
 import { getBGColor } from './utils';
 
 export interface IProps {
   stat: SeriesStat;
   size?: MultistatPanelSize;
   color?: string;
-  options?: any;
+  options?: MultistatPanelOptions;
 }
 
 export class HorizontalStat extends React.Component<IProps, any> {
@@ -22,18 +22,24 @@ export class HorizontalStat extends React.Component<IProps, any> {
 
     let containerStyle: React.CSSProperties = {
       width: this.props.size.w,
-      background: bgColor,
     };
-    let valueStyle: React.CSSProperties = {
-      color: valueColor,
-    };
+    if (this.props.options.colorBackground) {
+      containerStyle.background = bgColor;
+    }
+
+    let valueStyle: React.CSSProperties = {};
+    if (this.props.options.colorValue) {
+      valueStyle.color = valueColor;
+    }
 
     return (
       <div className="singlestat-panel-value-container multistat-horizontal" style={containerStyle}>
         <span className="singlestat-panel-value multistat-value-container" style={valueStyle}>
           {stat.valueFormatted}
         </span>
-        <SparkLine stat={stat} options={this.props.options} color={valueColor} size={this.props.size} />
+        {this.props.options.sparkline.show && (
+          <SparkLine stat={stat} options={this.props.options} color={valueColor} size={this.props.size} />
+        )}
       </div>
     );
   }

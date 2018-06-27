@@ -11,6 +11,9 @@ const panelDefaults: MultistatPanelOptions = {
   mappingType: 1,
   nullPointMode: 'connected',
   valueName: 'avg',
+  prefixFontSize: '50%',
+  valueFontSize: '80%',
+  postfixFontSize: '50%',
   thresholds: '',
   colorBackground: false,
   colorValue: false,
@@ -38,9 +41,15 @@ const valueNameOptions = [
   { value: 'last_time', text: 'Time of last point' },
 ];
 
+const layoutOptions = [
+  { value: MultistatPanelLayout.Horizontal, text: 'Horizontal' },
+  { value: MultistatPanelLayout.Vertical, text: 'Vertical' },
+];
+
 const defaults = {
   panelDefaults,
   valueNameOptions,
+  layoutOptions,
 };
 
 export default defaults;
