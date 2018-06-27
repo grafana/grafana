@@ -132,7 +132,7 @@ export class ValueSelectDropdownCtrl {
     this.highlightIndex = (this.highlightIndex + direction) % this.search.options.length;
   }
 
-  selectValue(option, event, commitChange, excludeOthers) {
+  selectValue(option, event, commitChange?, excludeOthers?) {
     if (!option) {
       return;
     }
