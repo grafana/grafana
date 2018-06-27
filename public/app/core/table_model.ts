@@ -44,4 +44,8 @@ export default class TableModel {
       this.columnMap[col.text] = col;
     }
   }
+
+  addRow(row) {
+    this.rows.push(row);
+  }
 }

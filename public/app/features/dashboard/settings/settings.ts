@@ -2,6 +2,7 @@ import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import { DashboardModel } from '../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
+import angular from 'angular';
 import config from 'app/core/config';
 import './panels';
 
@@ -124,7 +125,7 @@ export class SettingsCtrl {
     this.viewId = this.$location.search().editview;
 
     if (this.viewId) {
-      this.json = JSON.stringify(this.dashboard.getSaveModelClone(), null, 2);
+      this.json = angular.toJson(this.dashboard.getSaveModelClone(), true);
     }
 
     if (this.viewId === 'settings' && this.dashboard.meta.canMakeEditable) {

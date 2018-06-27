@@ -83,7 +83,7 @@ func (g *dashboardGuardianImpl) checkAcl(permission m.PermissionType, acl []*m.D
 
 	for _, p := range acl {
 		// user match
-		if !g.user.IsAnonymous {
+		if !g.user.IsAnonymous && p.UserId > 0 {
 			if p.UserId == g.user.UserId && p.Permission >= permission {
 				return true, nil
 			}

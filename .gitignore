@@ -33,6 +33,7 @@ public/css/*.min.css
 *.tmp
 .DS_Store
 .vscode/
+.vs/
 
 /data/*
 /bin/*
@@ -66,3 +67,5 @@ debug.test
 /vendor/**/.editorconfig
 /vendor/**/appengine*
 *.orig
+
+/devenv/dashboards/bulk-testing/*.json

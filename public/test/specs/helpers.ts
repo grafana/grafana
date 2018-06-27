@@ -11,6 +11,7 @@ export function ControllerTestContext() {
   this.$element = {};
   this.$sanitize = {};
   this.annotationsSrv = {};
+  this.contextSrv = {};
   this.timeSrv = new TimeSrvStub();
   this.templateSrv = new TemplateSrvStub();
   this.datasourceSrv = {
@@ -23,9 +24,11 @@ export function ControllerTestContext() {
       };
     },
   };
+  this.isUtc = false;
 
   this.providePhase = function(mocks) {
     return angularMocks.module(function($provide) {
+      $provide.value('contextSrv', self.contextSrv);
       $provide.value('datasourceSrv', self.datasourceSrv);
       $provide.value('annotationsSrv', self.annotationsSrv);
       $provide.value('timeSrv', self.timeSrv);
@@ -46,6 +49,10 @@ export function ControllerTestContext() {
       self.$q = $q;
       self.panel = new PanelModel({ type: 'test' });
       self.dashboard = { meta: {} };
+      self.isUtc = false;
+      self.dashboard.isTimezoneUtc = function() {
+        return self.isUtc;
+      };
 
       $rootScope.appEvent = sinon.spy();
       $rootScope.onAppEvent = sinon.spy();
@@ -92,6 +99,10 @@ export function ControllerTestContext() {
         $scope: self.scope,
       });
     });
+  };
+
+  this.setIsUtc = function(isUtc = false) {
+    self.isUtc = isUtc;
   };
 }
 

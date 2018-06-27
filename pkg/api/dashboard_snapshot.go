@@ -91,11 +91,31 @@ func GetDashboardSnapshot(c *m.ReqContext) {
 	c.JSON(200, dto)
 }
 
-// GET /api/snapshots-delete/:key
+// GET /api/snapshots-delete/:deleteKey
+func DeleteDashboardSnapshotByDeleteKey(c *m.ReqContext) Response {
+	key := c.Params(":deleteKey")
+
+	query := &m.GetDashboardSnapshotQuery{DeleteKey: key}
+
+	err := bus.Dispatch(query)
+	if err != nil {
+		return Error(500, "Failed to get dashboard snapshot", err)
+	}
+
+	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
+
+	if err := bus.Dispatch(cmd); err != nil {
+		return Error(500, "Failed to delete dashboard snapshot", err)
+	}
+
+	return JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches."})
+}
+
+// DELETE /api/snapshots/:key
 func DeleteDashboardSnapshot(c *m.ReqContext) Response {
 	key := c.Params(":key")
 
-	query := &m.GetDashboardSnapshotQuery{DeleteKey: key}
+	query := &m.GetDashboardSnapshotQuery{Key: key}
 
 	err := bus.Dispatch(query)
 	if err != nil {
@@ -118,13 +138,13 @@ func DeleteDashboardSnapshot(c *m.ReqContext) Response {
 		return Error(403, "Access denied to this snapshot", nil)
 	}
 
-	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: key}
+	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
 
 	if err := bus.Dispatch(cmd); err != nil {
 		return Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
-	return JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from a CDN cache."})
+	return JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches."})
 }
 
 // GET /api/dashboard/snapshots
@@ -154,7 +174,6 @@ func SearchDashboardSnapshots(c *m.ReqContext) Response {
 			Id:          snapshot.Id,
 			Name:        snapshot.Name,
 			Key:         snapshot.Key,
-			DeleteKey:   snapshot.DeleteKey,
 			OrgId:       snapshot.OrgId,
 			UserId:      snapshot.UserId,
 			External:    snapshot.External,

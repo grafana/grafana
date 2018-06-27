@@ -50,7 +50,7 @@ class Portal extends React.Component {
   constructor(props) {
     super(props);
     this.node = document.createElement('div');
-    this.node.classList.add(`query-field-portal-${props.index}`);
+    this.node.classList.add('explore-typeahead', `explore-typeahead-${props.index}`);
     document.body.appendChild(this.node);
   }
 

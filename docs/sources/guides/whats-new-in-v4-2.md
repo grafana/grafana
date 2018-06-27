@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -1
 +++
 
-## Whats new in Grafana v4.2
+## What's new in Grafana v4.2
 
 Grafana v4.2 Beta is now [available for download](https://grafana.com/grafana/download/4.2.0).
 Just like the last release this one contains lots bug fixes and minor improvements.

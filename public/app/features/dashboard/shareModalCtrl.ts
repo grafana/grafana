@@ -1,6 +1,6 @@
 import angular from 'angular';
-import moment from 'moment';
 import config from 'app/core/config';
+import moment from 'moment';
 
 export class ShareModalCtrl {
   /** @ngInject */
@@ -86,9 +86,30 @@ export class ShareModalCtrl {
         config.appSubUrl + '/render/dashboard-solo/'
       );
       $scope.imageUrl = $scope.imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
-      $scope.imageUrl += '&width=1000';
-      $scope.imageUrl += '&height=500';
-      $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format('Z'));
+      $scope.imageUrl += '&width=1000&height=500' + $scope.getLocalTimeZone();
+    };
+
+    // This function will try to return the proper full name of the local timezone
+    // Chrome does not handle the timezone offset (but phantomjs does)
+    $scope.getLocalTimeZone = function() {
+      let utcOffset = '&tz=UTC' + encodeURIComponent(moment().format('Z'));
+
+      // Older browser does not the internationalization API
+      if (!(<any>window).Intl) {
+        return utcOffset;
+      }
+
+      const dateFormat = (<any>window).Intl.DateTimeFormat();
+      if (!dateFormat.resolvedOptions) {
+        return utcOffset;
+      }
+
+      const options = dateFormat.resolvedOptions();
+      if (!options.timeZone) {
+        return utcOffset;
+      }
+
+      return '&tz=' + encodeURIComponent(options.timeZone);
     };
 
     $scope.getShareUrl = function() {

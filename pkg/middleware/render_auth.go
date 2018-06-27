@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"sync"
+	"time"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -28,6 +29,7 @@ func initContextWithRenderAuth(ctx *m.ReqContext) bool {
 	ctx.IsSignedIn = true
 	ctx.SignedInUser = renderUser
 	ctx.IsRenderCall = true
+	ctx.LastSeenAt = time.Now()
 	return true
 }
 

@@ -395,6 +395,7 @@ export class ElasticDatasource {
     }
 
     if (query.find === 'terms') {
+      query.field = this.templateSrv.replace(query.field, {}, 'lucene');
       query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
       return this.getTerms(query);
     }
@@ -406,5 +407,66 @@ export class ElasticDatasource {
 
   getTagValues(options) {
     return this.getTerms({ field: options.key, query: '*' });
+  }
+
+  targetContainsTemplate(target) {
+    if (this.templateSrv.variableExists(target.query) || this.templateSrv.variableExists(target.alias)) {
+      return true;
+    }
+
+    for (let bucketAgg of target.bucketAggs) {
+      if (this.templateSrv.variableExists(bucketAgg.field) || this.objectContainsTemplate(bucketAgg.settings)) {
+        return true;
+      }
+    }
+
+    for (let metric of target.metrics) {
+      if (
+        this.templateSrv.variableExists(metric.field) ||
+        this.objectContainsTemplate(metric.settings) ||
+        this.objectContainsTemplate(metric.meta)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private isPrimitive(obj) {
+    if (obj === null || obj === undefined) {
+      return true;
+    }
+    if (['string', 'number', 'boolean'].some(type => type === typeof true)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private objectContainsTemplate(obj) {
+    if (!obj) {
+      return false;
+    }
+
+    for (let key of Object.keys(obj)) {
+      if (this.isPrimitive(obj[key])) {
+        if (this.templateSrv.variableExists(obj[key])) {
+          return true;
+        }
+      } else if (Array.isArray(obj[key])) {
+        for (let item of obj[key]) {
+          if (this.objectContainsTemplate(item)) {
+            return true;
+          }
+        }
+      } else {
+        if (this.objectContainsTemplate(obj[key])) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

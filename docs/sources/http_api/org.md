@@ -331,6 +331,27 @@ Content-Type: application/json
 {"message":"Organization updated"}
 ```
 
+## Delete Organisation
+
+`DELETE /api/orgs/:orgId`
+
+**Example Request**:
+
+```http
+DELETE /api/orgs/1 HTTP/1.1
+Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{"message":"Organization deleted"}
+```
+
 ## Get Users in Organisation
 
 `GET /api/orgs/:orgId/users`
@@ -380,6 +401,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "role":"Viewer"
 }
 ```
+Note: The api will only work when you pass the admin name and password
+to the request http url, like http://admin:admin@localhost:3000/api/orgs/1/users
 
 **Example Response**:
 

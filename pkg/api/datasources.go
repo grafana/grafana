@@ -103,6 +103,9 @@ func DeleteDataSourceByName(c *m.ReqContext) Response {
 
 	getCmd := &m.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
 	if err := bus.Dispatch(getCmd); err != nil {
+		if err == m.ErrDataSourceNotFound {
+			return Error(404, "Data source not found", nil)
+		}
 		return Error(500, "Failed to delete datasource", err)
 	}
 

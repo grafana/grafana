@@ -7,6 +7,7 @@ export class DashboardImportCtrl {
   jsonText: string;
   parseError: string;
   nameExists: boolean;
+  uidExists: boolean;
   dash: any;
   inputs: any[];
   inputsValid: boolean;
@@ -16,6 +17,13 @@ export class DashboardImportCtrl {
   titleTouched: boolean;
   hasNameValidationError: boolean;
   nameValidationError: any;
+  hasUidValidationError: boolean;
+  uidValidationError: any;
+  autoGenerateUid: boolean;
+  autoGenerateUidValue: string;
+  folderId: number;
+  initialFolderTitle: string;
+  isValidFolderSelection: boolean;
 
   /** @ngInject */
   constructor(private backendSrv, private validationSrv, navModelSrv, private $location, $routeParams) {
@@ -23,6 +31,11 @@ export class DashboardImportCtrl {
 
     this.step = 1;
     this.nameExists = false;
+    this.uidExists = false;
+    this.autoGenerateUid = true;
+    this.autoGenerateUidValue = 'auto-generated';
+    this.folderId = $routeParams.folderId ? Number($routeParams.folderId) || 0 : null;
+    this.initialFolderTitle = 'Select a folder';
 
     // check gnetId in url
     if ($routeParams.gnetId) {
@@ -61,6 +74,7 @@ export class DashboardImportCtrl {
 
     this.inputsValid = this.inputs.length === 0;
     this.titleChanged();
+    this.uidChanged(true);
   }
 
   setDatasourceOptions(input, inputModel) {
@@ -93,8 +107,9 @@ export class DashboardImportCtrl {
     this.nameExists = false;
 
     this.validationSrv
-      .validateNewDashboardName(0, this.dash.title)
+      .validateNewDashboardName(this.folderId, this.dash.title)
       .then(() => {
+        this.nameExists = false;
         this.hasNameValidationError = false;
       })
       .catch(err => {
@@ -105,6 +120,45 @@ export class DashboardImportCtrl {
         this.hasNameValidationError = true;
         this.nameValidationError = err.message;
       });
+  }
+
+  uidChanged(initial) {
+    this.uidExists = false;
+    this.hasUidValidationError = false;
+
+    if (initial === true && this.dash.uid) {
+      this.autoGenerateUidValue = 'value set';
+    }
+
+    this.backendSrv
+      .getDashboardByUid(this.dash.uid)
+      .then(res => {
+        this.uidExists = true;
+        this.hasUidValidationError = true;
+        this.uidValidationError = `Dashboard named '${res.dashboard.title}' in folder '${
+          res.meta.folderTitle
+        }' has the same uid`;
+      })
+      .catch(err => {
+        err.isHandled = true;
+      });
+  }
+
+  onFolderChange(folder) {
+    this.folderId = folder.id;
+    this.titleChanged();
+  }
+
+  onEnterFolderCreation() {
+    this.inputsValid = false;
+  }
+
+  onExitFolderCreation() {
+    this.inputValueChanged();
+  }
+
+  isValid() {
+    return this.inputsValid && this.folderId !== null;
   }
 
   saveDashboard() {
@@ -122,6 +176,7 @@ export class DashboardImportCtrl {
         dashboard: this.dash,
         overwrite: true,
         inputs: inputs,
+        folderId: this.folderId,
       })
       .then(res => {
         this.$location.url(res.importedUrl);
