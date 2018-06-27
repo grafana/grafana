@@ -14,10 +14,9 @@ const panelDefaults: MultistatPanelOptions = {
   prefixFontSize: '50%',
   valueFontSize: '80%',
   postfixFontSize: '50%',
-  thresholds: '',
+  thresholds: [],
   colorBackground: false,
   colorValue: false,
-  colors: ['#299c46', 'rgba(237, 129, 40, 0.89)', '#d44a3a'],
   sparkline: {
     show: false,
     full: false,

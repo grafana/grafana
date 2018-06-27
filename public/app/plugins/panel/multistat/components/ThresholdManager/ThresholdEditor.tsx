@@ -1,10 +1,23 @@
 import React from 'react';
-import { FormSwitch } from '../FormSwitch/FormSwitch';
-import { ColorPicker } from '../colorpicker/ColorPicker';
-import { SimpleSelect } from '../Select/SimpleSelect';
+// import { FormSwitch } from 'app/core/components/FormSwitch/FormSwitch';
+import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
+import { SimpleSelect } from 'app/core/components/Select/SimpleSelect';
+
+export interface ThresholdModel {
+  value: number | string;
+  mode?: ThresholdMode;
+  color?: string;
+}
+
+export enum ThresholdMode {
+  ok = 'ok',
+  warning = 'warning',
+  critical = 'critical',
+  custom = 'custom'
+}
 
 export interface IProps {
-  threshold: any;
+  threshold: ThresholdModel;
   multipleAxes?: boolean;
   index: number;
   onChange: (threshold: any, index: number) => any;
@@ -54,9 +67,7 @@ export class ThresholdEditor extends React.Component<IProps, any> {
   };
 
   render() {
-    const operatorOptions = ['gt', 'lt'];
-    const colorOptions = ['custom', 'critical', 'warning', 'ok'];
-    const yAxisOptions = ['left', 'right'];
+    const colorModeOptions = ['custom', 'critical', 'warning', 'ok'];
 
     return (
       <div className="gf-form-inline">
@@ -65,14 +76,6 @@ export class ThresholdEditor extends React.Component<IProps, any> {
         </div>
 
         <div className="gf-form">
-          <div className="gf-form-select-wrapper">
-            <SimpleSelect
-              className="gf-form-input"
-              value={this.props.threshold.op}
-              options={operatorOptions}
-              onChange={this.onPropertyChange.bind(this, 'op')}
-            />
-          </div>
           <input
             type="number"
             className="gf-form-input width-8"
@@ -83,70 +86,28 @@ export class ThresholdEditor extends React.Component<IProps, any> {
         </div>
 
         <div className="gf-form">
-          <label className="gf-form-label">Color</label>
+          <label className="gf-form-label">Color Mode</label>
           <div className="gf-form-select-wrapper">
             <SimpleSelect
               className="gf-form-input"
-              value={this.props.threshold.colorMode}
-              options={colorOptions}
-              onChange={this.onPropertyChange.bind(this, 'colorMode')}
+              value={this.props.threshold.mode}
+              options={colorModeOptions}
+              onChange={this.onPropertyChange.bind(this, 'mode')}
             />
           </div>
         </div>
 
-        <FormSwitch
-          switchClass="gf-form"
-          label="Fill"
-          checked={this.props.threshold.fill}
-          onChange={this.onPropertyChange.bind(this, 'fill')}
-        />
-
-        {this.props.threshold.fill &&
-          this.props.threshold.colorMode === 'custom' && (
+        {this.props.threshold.mode === ThresholdMode.custom && (
             <div className="gf-form">
-              <label className="gf-form-label">Fill color</label>
+              <label className="gf-form-label">Color</label>
               <span className="gf-form-label">
                 <ColorPicker
-                  color={this.props.threshold.fillColor}
-                  onChange={this.onPropertyChange.bind(this, 'fillColor')}
+                  color={this.props.threshold.color}
+                  onChange={this.onPropertyChange.bind(this, 'color')}
                 />
               </span>
             </div>
           )}
-
-        <FormSwitch
-          switchClass="gf-form"
-          label="Line"
-          checked={this.props.threshold.line}
-          onChange={this.onPropertyChange.bind(this, 'line')}
-        />
-
-        {this.props.threshold.line &&
-          this.props.threshold.colorMode === 'custom' && (
-            <div className="gf-form">
-              <label className="gf-form-label">Line color</label>
-              <span className="gf-form-label">
-                <ColorPicker
-                  color={this.props.threshold.lineColor}
-                  onChange={this.onPropertyChange.bind(this, 'lineColor')}
-                />
-              </span>
-            </div>
-          )}
-
-        {this.props.multipleAxes && (
-          <div className="gf-form">
-            <label className="gf-form-label">Y-Axis</label>
-            <div className="gf-form-select-wrapper">
-              <SimpleSelect
-                className="gf-form-input"
-                value={this.props.threshold.yaxis}
-                options={yAxisOptions}
-                onChange={this.onPropertyChange.bind(this, 'yaxis')}
-              />
-            </div>
-          </div>
-        )}
 
         <div className="gf-form">
           <label className="gf-form-label">

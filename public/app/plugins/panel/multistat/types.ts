@@ -1,4 +1,5 @@
 import { PanelModel } from 'app/features/dashboard/panel_model';
+import { ThresholdModel } from './components/ThresholdManager/ThresholdEditor';
 
 export interface SeriesData {
   datapoints: any[];
@@ -43,11 +44,10 @@ export interface MultistatPanelOptions extends MetricPanelOptions {
   prefixFontSize?: string;
   valueFontSize?: string;
   postfixFontSize?: string;
-  thresholds?: any;
   colorBackground?: any;
   colorValue?: any;
-  colors?: any;
   sparkline?: any;
+  thresholds?: ThresholdModel[];
 }
 
 export type MultistatPanelModel = PanelModel & MultistatPanelOptions;

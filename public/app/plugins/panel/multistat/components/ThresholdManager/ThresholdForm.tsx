@@ -1,4 +1,6 @@
+import _ from 'lodash';
 import React from 'react';
+import { ThresholdModel, ThresholdMode } from './ThresholdEditor';
 import { ThresholdEditor } from './ThresholdEditor';
 
 export interface IProps {
@@ -12,7 +14,8 @@ export class ThresholdForm extends React.Component<IProps, any> {
   }
 
   onChange = (threshold, index) => {
-    this.props.onChange(this.props.thresholds);
+    const newThresholds = this.sortThresholds(this.props.thresholds);
+    this.props.onChange(newThresholds);
   };
 
   onRemove = index => {
@@ -21,16 +24,17 @@ export class ThresholdForm extends React.Component<IProps, any> {
   };
 
   addThreshold = () => {
-    let newThresholds = this.props.thresholds.concat({
+    const newThreshold: ThresholdModel = {
       value: undefined,
-      colorMode: 'critical',
-      op: 'gt',
-      fill: true,
-      line: true,
-      yaxis: 'left',
-    });
+      mode: ThresholdMode.critical,
+    };
+    const newThresholds = this.props.thresholds.concat(newThreshold);
     this.props.onChange(newThresholds);
   };
+
+  sortThresholds(thresholds: ThresholdModel[]) {
+    return _.sortBy(thresholds, 'value');
+  }
 
   render() {
     const thresholdItems = this.props.thresholds.map((threshold, i) => (

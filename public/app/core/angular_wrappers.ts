@@ -7,6 +7,7 @@ import { SearchResult } from './components/search/SearchResult';
 import { TagFilter } from './components/TagFilter/TagFilter';
 import UserPicker from './components/Picker/UserPicker';
 import DashboardPermissions from './components/Permissions/DashboardPermissions';
+import { ThresholdForm } from 'app/plugins/panel/multistat/components/ThresholdManager/ThresholdForm';
 
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
@@ -21,4 +22,5 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('selectUserPicker', UserPicker, ['backendSrv', 'handlePicked']);
   react2AngularDirective('dashboardPermissions', DashboardPermissions, ['backendSrv', 'dashboardId', 'folder']);
+  react2AngularDirective('thresholdForm', ThresholdForm, ['thresholds', ['onChange', { watchDepth: 'reference' }]]);
 }

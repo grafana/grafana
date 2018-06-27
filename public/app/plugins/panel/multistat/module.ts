@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom';
 import defaults from './defaults';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { convertTSDataToMultistat, convertTableDataToMultistat } from './data_handler';
+// import { ThresholdEditor } from 'app/core/components/ThresholdManager/ThresholdEditor';
 import { MultiStat } from './components/MultiStat';
 
 class MultiStatCtrl extends MetricsPanelCtrl {
@@ -29,11 +30,14 @@ class MultiStatCtrl extends MetricsPanelCtrl {
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+
+    this.onThresholdChange = this.onThresholdChange.bind(this);
   }
 
   onInitEditMode() {
     this.fontSizes = ['20%', '30%', '50%', '70%', '80%', '100%', '110%', '120%', '150%', '170%', '200%'];
     this.addEditorTab('Options', 'public/app/plugins/panel/multistat/options.html', 2);
+    this.addEditorTab('Thresholds', 'public/app/plugins/panel/multistat/thresholds.html', 3);
     this.unitFormats = kbn.getUnitFormats();
   }
 
@@ -81,6 +85,11 @@ class MultiStatCtrl extends MetricsPanelCtrl {
   setUnitFormat(subItem) {
     this.panel.format = subItem.value;
     this.refresh();
+  }
+
+  onThresholdChange(newThresholds) {
+    this.panel.thresholds = newThresholds;
+    this.render();
   }
 
   link(scope, elem, attrs, ctrl) {
