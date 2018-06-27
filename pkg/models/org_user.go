@@ -28,15 +28,16 @@ func (r RoleType) IsValid() bool {
 }
 
 func (r RoleType) Includes(other RoleType) bool {
-	if r == ROLE_ADMIN {
+	switch r {
+	case ROLE_ADMIN:
 		return true
-	}
-
-	if r == ROLE_EDITOR {
+	case ROLE_EDITOR:
 		return other != ROLE_ADMIN
+	case ROLE_VIEWER:
+		return other != ROLE_EDITOR && other != ROLE_ADMIN
+	default:
+		return false
 	}
-
-	return false
 }
 
 func (r *RoleType) UnmarshalJSON(data []byte) error {

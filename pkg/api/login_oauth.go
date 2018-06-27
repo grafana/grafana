@@ -159,6 +159,7 @@ func OAuthLogin(ctx *m.ReqContext) {
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
 		OrgRoles:   map[int64]m.RoleType{},
+		OrgTeams:   map[int64][]int64{},
 	}
 
 	if userInfo.Role != "" {

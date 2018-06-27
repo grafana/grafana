@@ -164,23 +164,41 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		Login:      ldapUser.Username,
 		Email:      ldapUser.Email,
 		OrgRoles:   map[int64]m.RoleType{},
+		OrgTeams:   map[int64][]int64{},
 	}
 
-	for _, group := range a.server.LdapGroups {
-		// only use the first match for each org
-		if extUser.OrgRoles[group.OrgId] != "" {
-			continue
-		}
+	seenTeam := map[int64]bool{}
+	for _, group := range a.server.LdapGroupMappings {
 
 		if ldapUser.isMemberOf(group.GroupDN) {
-			extUser.OrgRoles[group.OrgId] = group.OrgRole
+			orgRole := extUser.OrgRoles[group.OrgId]
+
+			// if user belongs to multiple groups,
+			// find most powerful role granted to user
+			if group.OrgRole.Includes(orgRole) {
+				a.log.Debug("Ldap Auth: user belongs to org role",
+					"org", group.OrgId,
+					"role", group.OrgRole)
+				extUser.OrgRoles[group.OrgId] = group.OrgRole
+			}
+
+			// if teamId is defined, register team membership as well
+			// also, skip duplicate team ids
+			if group.TeamId > 0 && !seenTeam[group.TeamId] {
+				seenTeam[group.TeamId] = true
+
+				extUser.OrgTeams[group.OrgId] = append(
+					extUser.OrgTeams[group.OrgId],
+					group.TeamId,
+				)
+			}
 		}
 	}
 
 	// validate that the user has access
 	// if there are no ldap group mappings access is true
 	// otherwise a single group must match
-	if len(a.server.LdapGroups) > 0 && len(extUser.OrgRoles) < 1 {
+	if len(a.server.LdapGroupMappings) > 0 && len(extUser.OrgRoles) < 1 {
 		a.log.Info(
 			"Ldap Auth: user does not belong in any of the specified ldap groups",
 			"username", ldapUser.Username,

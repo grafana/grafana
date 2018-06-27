@@ -19,7 +19,8 @@ type ExternalUserInfo struct {
 	Email      string
 	Login      string
 	Name       string
-	OrgRoles   map[int64]RoleType
+	OrgRoles   map[int64]RoleType // { orgId: RoleType, .. }
+	OrgTeams   map[int64][]int64  // { orgId: [ teamId, teamId, ...], }
 }
 
 // ---------------------

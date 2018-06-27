@@ -1,7 +1,6 @@
 package login
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -32,7 +31,7 @@ type LdapServerConf struct {
 	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute"`
 	GroupSearchBaseDNs             []string `toml:"group_search_base_dns"`
 
-	LdapGroups []*LdapGroupToOrgRole `toml:"group_mappings"`
+	LdapGroupMappings []*LdapGroupToOrgRole `toml:"group_mappings"`
 }
 
 type LdapAttributeMap struct {
@@ -47,10 +46,11 @@ type LdapGroupToOrgRole struct {
 	GroupDN string     `toml:"group_dn"`
 	OrgId   int64      `toml:"org_id"`
 	OrgRole m.RoleType `toml:"org_role"`
+	TeamId  int64      `toml:"team_id"`
 }
 
 var LdapCfg LdapConfig
-var ldapLogger log.Logger = log.New("ldap")
+var ldapLogger = log.New("ldap")
 
 func loadLdapConfig() {
 	if !setting.LdapEnabled {
@@ -75,7 +75,7 @@ func loadLdapConfig() {
 		assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 
-		for _, groupMap := range server.LdapGroups {
+		for _, groupMap := range server.LdapGroupMappings {
 			if groupMap.OrgId == 0 {
 				groupMap.OrgId = 1
 			}
@@ -96,6 +96,7 @@ func assertNotEmptyCfg(val interface{}, propName string) {
 			os.Exit(1)
 		}
 	default:
-		fmt.Println("unknown")
+		ldapLogger.Crit("LDAP config file has unknown type option", "option", propName)
+		os.Exit(1)
 	}
 }
