@@ -48,6 +48,27 @@ func orgRoleScenario(desc string, t *testing.T, role m.RoleType, fn scenarioFunc
 	})
 }
 
+func apiKeyScenario(desc string, t *testing.T, role m.RoleType, fn scenarioFunc) {
+	user := &m.SignedInUser{
+		UserId:   0,
+		OrgId:    orgID,
+		OrgRole:  role,
+		ApiKeyId: 10,
+	}
+	guard := New(dashboardID, orgID, user)
+	sc := &scenarioContext{
+		t:                t,
+		orgRoleScenario:  desc,
+		givenUser:        user,
+		givenDashboardID: dashboardID,
+		g:                guard,
+	}
+
+	Convey(desc, func() {
+		fn(sc)
+	})
+}
+
 func permissionScenario(desc string, dashboardID int64, sc *scenarioContext, permissions []*m.DashboardAclInfoDTO, fn scenarioFunc) {
 	bus.ClearBusHandlers()
 

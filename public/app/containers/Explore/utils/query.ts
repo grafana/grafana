@@ -1,12 +1,7 @@
-export function buildQueryOptions({ format, interval, instant, now, queries }) {
-  const to = now;
-  const from = to - 1000 * 60 * 60 * 3;
+export function buildQueryOptions({ format, interval, instant, range, queries }) {
   return {
     interval,
-    range: {
-      from,
-      to,
-    },
+    range,
     targets: queries.map(expr => ({
       expr,
       format,

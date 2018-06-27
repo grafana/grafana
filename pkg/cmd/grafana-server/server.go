@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/facebookgo/inject"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
@@ -33,6 +34,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
+	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	_ "github.com/grafana/grafana/pkg/tracing"
@@ -60,8 +62,8 @@ type GrafanaServerImpl struct {
 	shutdownReason     string
 	shutdownInProgress bool
 
-	RouteRegister api.RouteRegister `inject:""`
-	HttpServer    *api.HTTPServer   `inject:""`
+	RouteRegister routing.RouteRegister `inject:""`
+	HttpServer    *api.HTTPServer       `inject:""`
 }
 
 func (g *GrafanaServerImpl) Run() error {
@@ -74,7 +76,7 @@ func (g *GrafanaServerImpl) Run() error {
 	serviceGraph := inject.Graph{}
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
 	serviceGraph.Provide(&inject.Object{Value: g.cfg})
-	serviceGraph.Provide(&inject.Object{Value: api.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
+	serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
 
 	// self registered services
 	services := registry.GetServices()

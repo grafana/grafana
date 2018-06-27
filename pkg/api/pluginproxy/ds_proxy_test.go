@@ -1,13 +1,18 @@
 package pluginproxy
 
 import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -96,6 +101,112 @@ func TestDSRouteRule(t *testing.T) {
 					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/admin")
 					err := proxy.validateRequest()
 					So(err, ShouldBeNil)
+				})
+			})
+		})
+
+		Convey("Plugin with multiple routes for token auth", func() {
+			plugin := &plugins.DataSourcePlugin{
+				Routes: []*plugins.AppPluginRoute{
+					{
+						Path: "pathwithtoken1",
+						Url:  "https://api.nr1.io/some/path",
+						TokenAuth: &plugins.JwtTokenAuth{
+							Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
+							Params: map[string]string{
+								"grant_type":    "client_credentials",
+								"client_id":     "{{.JsonData.clientId}}",
+								"client_secret": "{{.SecureJsonData.clientSecret}}",
+								"resource":      "https://api.nr1.io",
+							},
+						},
+					},
+					{
+						Path: "pathwithtoken2",
+						Url:  "https://api.nr2.io/some/path",
+						TokenAuth: &plugins.JwtTokenAuth{
+							Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
+							Params: map[string]string{
+								"grant_type":    "client_credentials",
+								"client_id":     "{{.JsonData.clientId}}",
+								"client_secret": "{{.SecureJsonData.clientSecret}}",
+								"resource":      "https://api.nr2.io",
+							},
+						},
+					},
+				},
+			}
+
+			setting.SecretKey = "password"
+			key, _ := util.Encrypt([]byte("123"), "password")
+
+			ds := &m.DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"clientId": "asd",
+					"tenantId": "mytenantId",
+				}),
+				SecureJsonData: map[string][]byte{
+					"clientSecret": key,
+				},
+			}
+
+			req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
+			ctx := &m.ReqContext{
+				Context: &macaron.Context{
+					Req: macaron.Request{Request: req},
+				},
+				SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_EDITOR},
+			}
+
+			Convey("When creating and caching access tokens", func() {
+				var authorizationHeaderCall1 string
+				var authorizationHeaderCall2 string
+
+				Convey("first call should add authorization header with access token", func() {
+					json, err := ioutil.ReadFile("./test-data/access-token-1.json")
+					So(err, ShouldBeNil)
+
+					client = newFakeHTTPClient(json)
+					proxy1 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
+					proxy1.route = plugin.Routes[0]
+					proxy1.applyRoute(req)
+
+					authorizationHeaderCall1 = req.Header.Get("Authorization")
+					So(req.URL.String(), ShouldEqual, "https://api.nr1.io/some/path")
+					So(authorizationHeaderCall1, ShouldStartWith, "Bearer eyJ0e")
+
+					Convey("second call to another route should add a different access token", func() {
+						json2, err := ioutil.ReadFile("./test-data/access-token-2.json")
+						So(err, ShouldBeNil)
+
+						req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
+						client = newFakeHTTPClient(json2)
+						proxy2 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken2")
+						proxy2.route = plugin.Routes[1]
+						proxy2.applyRoute(req)
+
+						authorizationHeaderCall2 = req.Header.Get("Authorization")
+
+						So(req.URL.String(), ShouldEqual, "https://api.nr2.io/some/path")
+						So(authorizationHeaderCall1, ShouldStartWith, "Bearer eyJ0e")
+						So(authorizationHeaderCall2, ShouldStartWith, "Bearer eyJ0e")
+						So(authorizationHeaderCall2, ShouldNotEqual, authorizationHeaderCall1)
+
+						Convey("third call to first route should add cached access token", func() {
+							req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
+
+							client = newFakeHTTPClient([]byte{})
+							proxy3 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
+							proxy3.route = plugin.Routes[0]
+							proxy3.applyRoute(req)
+
+							authorizationHeaderCall3 := req.Header.Get("Authorization")
+							So(req.URL.String(), ShouldEqual, "https://api.nr1.io/some/path")
+							So(authorizationHeaderCall1, ShouldStartWith, "Bearer eyJ0e")
+							So(authorizationHeaderCall3, ShouldStartWith, "Bearer eyJ0e")
+							So(authorizationHeaderCall3, ShouldEqual, authorizationHeaderCall1)
+						})
+					})
 				})
 			})
 		})
@@ -212,5 +323,60 @@ func TestDSRouteRule(t *testing.T) {
 			So(interpolated, ShouldEqual, "0asd+asd")
 		})
 
+		Convey("When proxying a data source with custom headers specified", func() {
+			plugin := &plugins.DataSourcePlugin{}
+
+			encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
+			ds := &m.DataSource{
+				Type: m.DS_PROMETHEUS,
+				Url:  "http://prometheus:9090",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"httpHeaderName1": "Authorization",
+				}),
+				SecureJsonData: map[string][]byte{
+					"httpHeaderValue1": encryptedData,
+				},
+			}
+
+			ctx := &m.ReqContext{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
+
+			requestURL, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestURL, Header: make(http.Header)}
+			proxy.getDirector()(&req)
+
+			if err != nil {
+				log.Fatal(4, err.Error())
+			}
+
+			Convey("Match header value after decryption", func() {
+				So(req.Header.Get("Authorization"), ShouldEqual, "Bearer xf5yhfkpsnmgo")
+			})
+		})
+
 	})
+}
+
+type httpClientStub struct {
+	fakeBody []byte
+}
+
+func (c *httpClientStub) Do(req *http.Request) (*http.Response, error) {
+	bodyJSON, _ := simplejson.NewJson(c.fakeBody)
+	_, passedTokenCacheTest := bodyJSON.CheckGet("expires_on")
+	So(passedTokenCacheTest, ShouldBeTrue)
+
+	bodyJSON.Set("expires_on", fmt.Sprint(time.Now().Add(time.Second*60).Unix()))
+	body, _ := bodyJSON.MarshalJSON()
+	resp := &http.Response{
+		Body: ioutil.NopCloser(bytes.NewReader(body)),
+	}
+
+	return resp, nil
+}
+
+func newFakeHTTPClient(fakeBody []byte) httpClient {
+	return &httpClientStub{
+		fakeBody: fakeBody,
+	}
 }

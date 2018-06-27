@@ -11,6 +11,11 @@ package unix
 import "syscall"
 
 const (
+	AAFS_MAGIC                           = 0x5a3c69f0
+	ADFS_SUPER_MAGIC                     = 0xadf5
+	AFFS_SUPER_MAGIC                     = 0xadff
+	AFS_FS_MAGIC                         = 0x6b414653
+	AFS_SUPER_MAGIC                      = 0x5346414f
 	AF_ALG                               = 0x26
 	AF_APPLETALK                         = 0x5
 	AF_ASH                               = 0x12
@@ -66,6 +71,7 @@ const (
 	ALG_SET_IV                           = 0x2
 	ALG_SET_KEY                          = 0x1
 	ALG_SET_OP                           = 0x3
+	ANON_INODE_FS_MAGIC                  = 0x9041934
 	ARPHRD_6LOWPAN                       = 0x339
 	ARPHRD_ADAPT                         = 0x108
 	ARPHRD_APPLETLK                      = 0x8
@@ -121,6 +127,7 @@ const (
 	ARPHRD_PPP                           = 0x200
 	ARPHRD_PRONET                        = 0x4
 	ARPHRD_RAWHDLC                       = 0x206
+	ARPHRD_RAWIP                         = 0x207
 	ARPHRD_ROSE                          = 0x10e
 	ARPHRD_RSRVD                         = 0x104
 	ARPHRD_SIT                           = 0x308
@@ -132,6 +139,7 @@ const (
 	ARPHRD_VOID                          = 0xffff
 	ARPHRD_VSOCKMON                      = 0x33a
 	ARPHRD_X25                           = 0x10f
+	AUTOFS_SUPER_MAGIC                   = 0x187
 	B0                                   = 0x0
 	B1000000                             = 0x1008
 	B110                                 = 0x3
@@ -163,6 +171,9 @@ const (
 	B75                                  = 0x2
 	B921600                              = 0x1007
 	B9600                                = 0xd
+	BALLOON_KVM_MAGIC                    = 0x13661366
+	BDEVFS_MAGIC                         = 0x62646576
+	BINFMTFS_MAGIC                       = 0x42494e4d
 	BLKBSZGET                            = 0x40081270
 	BLKBSZSET                            = 0x80081271
 	BLKFLSBUF                            = 0x20001261
@@ -187,6 +198,7 @@ const (
 	BPF_AND                              = 0x50
 	BPF_B                                = 0x10
 	BPF_DIV                              = 0x30
+	BPF_FS_MAGIC                         = 0xcafe4a11
 	BPF_H                                = 0x8
 	BPF_IMM                              = 0x0
 	BPF_IND                              = 0x40
@@ -228,6 +240,8 @@ const (
 	BS0                                  = 0x0
 	BS1                                  = 0x2000
 	BSDLY                                = 0x2000
+	BTRFS_SUPER_MAGIC                    = 0x9123683e
+	BTRFS_TEST_MAGIC                     = 0x73727279
 	CAN_BCM                              = 0x2
 	CAN_EFF_FLAG                         = 0x80000000
 	CAN_EFF_ID_BITS                      = 0x1d
@@ -251,6 +265,8 @@ const (
 	CBAUD                                = 0x100f
 	CBAUDEX                              = 0x1000
 	CFLUSH                               = 0xf
+	CGROUP2_SUPER_MAGIC                  = 0x63677270
+	CGROUP_SUPER_MAGIC                   = 0x27e0eb
 	CIBAUD                               = 0x100f0000
 	CLOCAL                               = 0x800
 	CLOCK_BOOTTIME                       = 0x7
@@ -293,10 +309,12 @@ const (
 	CLONE_VFORK                          = 0x4000
 	CLONE_VM                             = 0x100
 	CMSPAR                               = 0x40000000
+	CODA_SUPER_MAGIC                     = 0x73757245
 	CR0                                  = 0x0
 	CR1                                  = 0x200
 	CR2                                  = 0x400
 	CR3                                  = 0x600
+	CRAMFS_MAGIC                         = 0x28cd3d45
 	CRDLY                                = 0x600
 	CREAD                                = 0x80
 	CRTSCTS                              = 0x80000000
@@ -311,6 +329,9 @@ const (
 	CSTOP                                = 0x13
 	CSTOPB                               = 0x40
 	CSUSP                                = 0x1a
+	DAXFS_MAGIC                          = 0x64646178
+	DEBUGFS_MAGIC                        = 0x64626720
+	DEVPTS_SUPER_MAGIC                   = 0x1cd1
 	DT_BLK                               = 0x6
 	DT_CHR                               = 0x2
 	DT_DIR                               = 0x4
@@ -327,9 +348,12 @@ const (
 	ECHOKE                               = 0x800
 	ECHONL                               = 0x40
 	ECHOPRT                              = 0x400
+	ECRYPTFS_SUPER_MAGIC                 = 0xf15f
 	EFD_CLOEXEC                          = 0x80000
 	EFD_NONBLOCK                         = 0x80
 	EFD_SEMAPHORE                        = 0x1
+	EFIVARFS_MAGIC                       = 0xde5e81e4
+	EFS_SUPER_MAGIC                      = 0x414a53
 	ENCODING_DEFAULT                     = 0x0
 	ENCODING_FM_MARK                     = 0x3
 	ENCODING_FM_SPACE                    = 0x4
@@ -390,6 +414,8 @@ const (
 	ETH_P_DSA                            = 0x1b
 	ETH_P_ECONET                         = 0x18
 	ETH_P_EDSA                           = 0xdada
+	ETH_P_ERSPAN                         = 0x88be
+	ETH_P_ERSPAN2                        = 0x22eb
 	ETH_P_FCOE                           = 0x8906
 	ETH_P_FIP                            = 0x8914
 	ETH_P_HDLC                           = 0x19
@@ -398,6 +424,7 @@ const (
 	ETH_P_IEEE802154                     = 0xf6
 	ETH_P_IEEEPUP                        = 0xa00
 	ETH_P_IEEEPUPAT                      = 0xa01
+	ETH_P_IFE                            = 0xed3e
 	ETH_P_IP                             = 0x800
 	ETH_P_IPV6                           = 0x86dd
 	ETH_P_IPX                            = 0x8137
@@ -408,11 +435,13 @@ const (
 	ETH_P_LOOP                           = 0x60
 	ETH_P_LOOPBACK                       = 0x9000
 	ETH_P_MACSEC                         = 0x88e5
+	ETH_P_MAP                            = 0xf9
 	ETH_P_MOBITEX                        = 0x15
 	ETH_P_MPLS_MC                        = 0x8848
 	ETH_P_MPLS_UC                        = 0x8847
 	ETH_P_MVRP                           = 0x88f5
 	ETH_P_NCSI                           = 0x88f8
+	ETH_P_NSH                            = 0x894f
 	ETH_P_PAE                            = 0x888e
 	ETH_P_PAUSE                          = 0x8808
 	ETH_P_PHONET                         = 0xf5
@@ -440,9 +469,14 @@ const (
 	ETH_P_WCCP                           = 0x883e
 	ETH_P_X25                            = 0x805
 	ETH_P_XDSA                           = 0xf8
+	EXABYTE_ENABLE_NEST                  = 0xf0
+	EXT2_SUPER_MAGIC                     = 0xef53
+	EXT3_SUPER_MAGIC                     = 0xef53
+	EXT4_SUPER_MAGIC                     = 0xef53
 	EXTA                                 = 0xe
 	EXTB                                 = 0xf
 	EXTPROC                              = 0x10000
+	F2FS_SUPER_MAGIC                     = 0xf2f52010
 	FALLOC_FL_COLLAPSE_RANGE             = 0x8
 	FALLOC_FL_INSERT_RANGE               = 0x20
 	FALLOC_FL_KEEP_SIZE                  = 0x1
@@ -476,6 +510,8 @@ const (
 	FS_POLICY_FLAGS_PAD_8                = 0x1
 	FS_POLICY_FLAGS_PAD_MASK             = 0x3
 	FS_POLICY_FLAGS_VALID                = 0x3
+	FUTEXFS_SUPER_MAGIC                  = 0xbad1dea
+	F_ADD_SEALS                          = 0x409
 	F_DUPFD                              = 0x0
 	F_DUPFD_CLOEXEC                      = 0x406
 	F_EXLCK                              = 0x4
@@ -488,6 +524,9 @@ const (
 	F_GETOWN_EX                          = 0x10
 	F_GETPIPE_SZ                         = 0x408
 	F_GETSIG                             = 0xb
+	F_GET_FILE_RW_HINT                   = 0x40d
+	F_GET_RW_HINT                        = 0x40b
+	F_GET_SEALS                          = 0x40a
 	F_LOCK                               = 0x1
 	F_NOTIFY                             = 0x402
 	F_OFD_GETLK                          = 0x24
@@ -495,6 +534,10 @@ const (
 	F_OFD_SETLKW                         = 0x26
 	F_OK                                 = 0x0
 	F_RDLCK                              = 0x0
+	F_SEAL_GROW                          = 0x4
+	F_SEAL_SEAL                          = 0x1
+	F_SEAL_SHRINK                        = 0x2
+	F_SEAL_WRITE                         = 0x8
 	F_SETFD                              = 0x2
 	F_SETFL                              = 0x4
 	F_SETLEASE                           = 0x400
@@ -506,6 +549,8 @@ const (
 	F_SETOWN_EX                          = 0xf
 	F_SETPIPE_SZ                         = 0x407
 	F_SETSIG                             = 0xa
+	F_SET_FILE_RW_HINT                   = 0x40e
+	F_SET_RW_HINT                        = 0x40c
 	F_SHLCK                              = 0x8
 	F_TEST                               = 0x3
 	F_TLOCK                              = 0x2
@@ -527,6 +572,49 @@ const (
 	GENL_UNS_ADMIN_PERM                  = 0x10
 	GRND_NONBLOCK                        = 0x1
 	GRND_RANDOM                          = 0x2
+	HDIO_DRIVE_CMD                       = 0x31f
+	HDIO_DRIVE_CMD_AEB                   = 0x31e
+	HDIO_DRIVE_CMD_HDR_SIZE              = 0x4
+	HDIO_DRIVE_HOB_HDR_SIZE              = 0x8
+	HDIO_DRIVE_RESET                     = 0x31c
+	HDIO_DRIVE_TASK                      = 0x31e
+	HDIO_DRIVE_TASKFILE                  = 0x31d
+	HDIO_DRIVE_TASK_HDR_SIZE             = 0x8
+	HDIO_GETGEO                          = 0x301
+	HDIO_GET_32BIT                       = 0x309
+	HDIO_GET_ACOUSTIC                    = 0x30f
+	HDIO_GET_ADDRESS                     = 0x310
+	HDIO_GET_BUSSTATE                    = 0x31a
+	HDIO_GET_DMA                         = 0x30b
+	HDIO_GET_IDENTITY                    = 0x30d
+	HDIO_GET_KEEPSETTINGS                = 0x308
+	HDIO_GET_MULTCOUNT                   = 0x304
+	HDIO_GET_NICE                        = 0x30c
+	HDIO_GET_NOWERR                      = 0x30a
+	HDIO_GET_QDMA                        = 0x305
+	HDIO_GET_UNMASKINTR                  = 0x302
+	HDIO_GET_WCACHE                      = 0x30e
+	HDIO_OBSOLETE_IDENTITY               = 0x307
+	HDIO_SCAN_HWIF                       = 0x328
+	HDIO_SET_32BIT                       = 0x324
+	HDIO_SET_ACOUSTIC                    = 0x32c
+	HDIO_SET_ADDRESS                     = 0x32f
+	HDIO_SET_BUSSTATE                    = 0x32d
+	HDIO_SET_DMA                         = 0x326
+	HDIO_SET_KEEPSETTINGS                = 0x323
+	HDIO_SET_MULTCOUNT                   = 0x321
+	HDIO_SET_NICE                        = 0x329
+	HDIO_SET_NOWERR                      = 0x325
+	HDIO_SET_PIO_MODE                    = 0x327
+	HDIO_SET_QDMA                        = 0x32e
+	HDIO_SET_UNMASKINTR                  = 0x322
+	HDIO_SET_WCACHE                      = 0x32b
+	HDIO_SET_XFER                        = 0x306
+	HDIO_TRISTATE_HWIF                   = 0x31b
+	HDIO_UNREGISTER_HWIF                 = 0x32a
+	HOSTFS_SUPER_MAGIC                   = 0xc0ffee
+	HPFS_SUPER_MAGIC                     = 0xf995e849
+	HUGETLBFS_MAGIC                      = 0x958458f6
 	HUPCL                                = 0x400
 	IBSHIFT                              = 0x10
 	ICANON                               = 0x2
@@ -561,6 +649,8 @@ const (
 	IFF_MASTER                           = 0x400
 	IFF_MULTICAST                        = 0x1000
 	IFF_MULTI_QUEUE                      = 0x100
+	IFF_NAPI                             = 0x10
+	IFF_NAPI_FRAGS                       = 0x20
 	IFF_NOARP                            = 0x80
 	IFF_NOFILTER                         = 0x1000
 	IFF_NOTRAILERS                       = 0x20
@@ -775,12 +865,14 @@ const (
 	IP_UNICAST_IF                        = 0x32
 	IP_XFRM_POLICY                       = 0x11
 	ISIG                                 = 0x1
+	ISOFS_SUPER_MAGIC                    = 0x9660
 	ISTRIP                               = 0x20
 	IUCLC                                = 0x200
 	IUTF8                                = 0x4000
 	IXANY                                = 0x800
 	IXOFF                                = 0x1000
 	IXON                                 = 0x400
+	JFFS2_SUPER_MAGIC                    = 0x72b6
 	KEYCTL_ASSUME_AUTHORITY              = 0x10
 	KEYCTL_CHOWN                         = 0x4
 	KEYCTL_CLEAR                         = 0x7
@@ -845,6 +937,7 @@ const (
 	MADV_FREE                            = 0x8
 	MADV_HUGEPAGE                        = 0xe
 	MADV_HWPOISON                        = 0x64
+	MADV_KEEPONFORK                      = 0x13
 	MADV_MERGEABLE                       = 0xc
 	MADV_NOHUGEPAGE                      = 0xf
 	MADV_NORMAL                          = 0x0
@@ -853,6 +946,7 @@ const (
 	MADV_SEQUENTIAL                      = 0x2
 	MADV_UNMERGEABLE                     = 0xd
 	MADV_WILLNEED                        = 0x3
+	MADV_WIPEONFORK                      = 0x12
 	MAP_ANON                             = 0x800
 	MAP_ANONYMOUS                        = 0x800
 	MAP_DENYWRITE                        = 0x2000
@@ -875,9 +969,15 @@ const (
 	MCL_CURRENT                          = 0x1
 	MCL_FUTURE                           = 0x2
 	MCL_ONFAULT                          = 0x4
+	MINIX2_SUPER_MAGIC                   = 0x2468
+	MINIX2_SUPER_MAGIC2                  = 0x2478
+	MINIX3_SUPER_MAGIC                   = 0x4d5a
+	MINIX_SUPER_MAGIC                    = 0x137f
+	MINIX_SUPER_MAGIC2                   = 0x138f
 	MNT_DETACH                           = 0x2
 	MNT_EXPIRE                           = 0x4
 	MNT_FORCE                            = 0x1
+	MSDOS_SUPER_MAGIC                    = 0x4d44
 	MSG_BATCH                            = 0x40000
 	MSG_CMSG_CLOEXEC                     = 0x40000000
 	MSG_CONFIRM                          = 0x800
@@ -899,6 +999,7 @@ const (
 	MSG_TRYHARD                          = 0x4
 	MSG_WAITALL                          = 0x100
 	MSG_WAITFORONE                       = 0x10000
+	MSG_ZEROCOPY                         = 0x4000000
 	MS_ACTIVE                            = 0x40000000
 	MS_ASYNC                             = 0x1
 	MS_BIND                              = 0x1000
@@ -936,7 +1037,9 @@ const (
 	MS_SYNCHRONOUS                       = 0x10
 	MS_UNBINDABLE                        = 0x20000
 	MS_VERBOSE                           = 0x8000
+	MTD_INODE_FS_MAGIC                   = 0x11307854
 	NAME_MAX                             = 0xff
+	NCP_SUPER_MAGIC                      = 0x564c
 	NETLINK_ADD_MEMBERSHIP               = 0x1
 	NETLINK_AUDIT                        = 0x9
 	NETLINK_BROADCAST_ERROR              = 0x4
@@ -971,6 +1074,8 @@ const (
 	NETLINK_UNUSED                       = 0x1
 	NETLINK_USERSOCK                     = 0x2
 	NETLINK_XFRM                         = 0x6
+	NFS_SUPER_MAGIC                      = 0x6969
+	NILFS_SUPER_MAGIC                    = 0x3434
 	NL0                                  = 0x0
 	NL1                                  = 0x100
 	NLA_ALIGNTO                          = 0x4
@@ -998,10 +1103,13 @@ const (
 	NLM_F_EXCL                           = 0x200
 	NLM_F_MATCH                          = 0x200
 	NLM_F_MULTI                          = 0x2
+	NLM_F_NONREC                         = 0x100
 	NLM_F_REPLACE                        = 0x100
 	NLM_F_REQUEST                        = 0x1
 	NLM_F_ROOT                           = 0x100
 	NOFLSH                               = 0x80
+	NSFS_MAGIC                           = 0x6e736673
+	OCFS2_SUPER_MAGIC                    = 0x7461636f
 	OCRNL                                = 0x8
 	OFDEL                                = 0x80
 	OFILL                                = 0x40
@@ -1009,7 +1117,9 @@ const (
 	ONLCR                                = 0x4
 	ONLRET                               = 0x20
 	ONOCR                                = 0x10
+	OPENPROM_SUPER_MAGIC                 = 0x9fa1
 	OPOST                                = 0x1
+	OVERLAYFS_SUPER_MAGIC                = 0x794c7630
 	O_ACCMODE                            = 0x3
 	O_APPEND                             = 0x8
 	O_ASYNC                              = 0x1000
@@ -1096,14 +1206,17 @@ const (
 	PERF_EVENT_IOC_ID                    = 0x40082407
 	PERF_EVENT_IOC_PAUSE_OUTPUT          = 0x80042409
 	PERF_EVENT_IOC_PERIOD                = 0x80082404
+	PERF_EVENT_IOC_QUERY_BPF             = 0xc008240a
 	PERF_EVENT_IOC_REFRESH               = 0x20002402
 	PERF_EVENT_IOC_RESET                 = 0x20002403
 	PERF_EVENT_IOC_SET_BPF               = 0x80042408
 	PERF_EVENT_IOC_SET_FILTER            = 0x80082406
 	PERF_EVENT_IOC_SET_OUTPUT            = 0x20002405
+	PIPEFS_MAGIC                         = 0x50495045
 	PRIO_PGRP                            = 0x1
 	PRIO_PROCESS                         = 0x0
 	PRIO_USER                            = 0x2
+	PROC_SUPER_MAGIC                     = 0x9fa0
 	PROT_EXEC                            = 0x4
 	PROT_GROWSDOWN                       = 0x1000000
 	PROT_GROWSUP                         = 0x2000000
@@ -1196,6 +1309,11 @@ const (
 	PR_SET_TIMING                        = 0xe
 	PR_SET_TSC                           = 0x1a
 	PR_SET_UNALIGN                       = 0x6
+	PR_SVE_GET_VL                        = 0x33
+	PR_SVE_SET_VL                        = 0x32
+	PR_SVE_SET_VL_ONEXEC                 = 0x40000
+	PR_SVE_VL_INHERIT                    = 0x20000
+	PR_SVE_VL_LEN_MASK                   = 0xffff
 	PR_TASK_PERF_EVENTS_DISABLE          = 0x1f
 	PR_TASK_PERF_EVENTS_ENABLE           = 0x20
 	PR_TIMING_STATISTICAL                = 0x0
@@ -1204,6 +1322,7 @@ const (
 	PR_TSC_SIGSEGV                       = 0x2
 	PR_UNALIGN_NOPRINT                   = 0x1
 	PR_UNALIGN_SIGBUS                    = 0x2
+	PSTOREFS_MAGIC                       = 0x6165676c
 	PTRACE_ATTACH                        = 0x10
 	PTRACE_CONT                          = 0x7
 	PTRACE_DETACH                        = 0x11
@@ -1252,6 +1371,7 @@ const (
 	PTRACE_POKETEXT_3264                 = 0xc2
 	PTRACE_POKEUSR                       = 0x6
 	PTRACE_SECCOMP_GET_FILTER            = 0x420c
+	PTRACE_SECCOMP_GET_METADATA          = 0x420d
 	PTRACE_SEIZE                         = 0x4206
 	PTRACE_SETFPREGS                     = 0xf
 	PTRACE_SETOPTIONS                    = 0x4200
@@ -1264,6 +1384,11 @@ const (
 	PTRACE_SINGLESTEP                    = 0x9
 	PTRACE_SYSCALL                       = 0x18
 	PTRACE_TRACEME                       = 0x0
+	QNX4_SUPER_MAGIC                     = 0x2f
+	QNX6_SUPER_MAGIC                     = 0x68191122
+	RAMFS_MAGIC                          = 0x858458f6
+	RDTGROUP_SUPER_MAGIC                 = 0x7655821
+	REISERFS_SUPER_MAGIC                 = 0x52654973
 	RLIMIT_AS                            = 0x6
 	RLIMIT_CORE                          = 0x4
 	RLIMIT_CPU                           = 0x0
@@ -1284,6 +1409,7 @@ const (
 	RTAX_ADVMSS                          = 0x8
 	RTAX_CC_ALGO                         = 0x10
 	RTAX_CWND                            = 0x7
+	RTAX_FASTOPEN_NO_COOKIE              = 0x11
 	RTAX_FEATURES                        = 0xc
 	RTAX_FEATURE_ALLFRAG                 = 0x8
 	RTAX_FEATURE_ECN                     = 0x1
@@ -1294,7 +1420,7 @@ const (
 	RTAX_INITCWND                        = 0xb
 	RTAX_INITRWND                        = 0xe
 	RTAX_LOCK                            = 0x1
-	RTAX_MAX                             = 0x10
+	RTAX_MAX                             = 0x11
 	RTAX_MTU                             = 0x2
 	RTAX_QUICKACK                        = 0xf
 	RTAX_REORDERING                      = 0x9
@@ -1448,6 +1574,8 @@ const (
 	SECCOMP_MODE_DISABLED                = 0x0
 	SECCOMP_MODE_FILTER                  = 0x2
 	SECCOMP_MODE_STRICT                  = 0x1
+	SECURITYFS_MAGIC                     = 0x73636673
+	SELINUX_MAGIC                        = 0xf97cff8c
 	SHUT_RD                              = 0x0
 	SHUT_RDWR                            = 0x2
 	SHUT_WR                              = 0x1
@@ -1532,6 +1660,23 @@ const (
 	SIOCSPGRP                            = 0x80047308
 	SIOCSRARP                            = 0x8962
 	SIOCWANDEV                           = 0x894a
+	SMACK_MAGIC                          = 0x43415d53
+	SMART_AUTOSAVE                       = 0xd2
+	SMART_AUTO_OFFLINE                   = 0xdb
+	SMART_DISABLE                        = 0xd9
+	SMART_ENABLE                         = 0xd8
+	SMART_HCYL_PASS                      = 0xc2
+	SMART_IMMEDIATE_OFFLINE              = 0xd4
+	SMART_LCYL_PASS                      = 0x4f
+	SMART_READ_LOG_SECTOR                = 0xd5
+	SMART_READ_THRESHOLDS                = 0xd1
+	SMART_READ_VALUES                    = 0xd0
+	SMART_SAVE                           = 0xd3
+	SMART_STATUS                         = 0xda
+	SMART_WRITE_LOG_SECTOR               = 0xd6
+	SMART_WRITE_THRESHOLDS               = 0xd7
+	SMB_SUPER_MAGIC                      = 0x517b
+	SOCKFS_MAGIC                         = 0x534f434b
 	SOCK_CLOEXEC                         = 0x80000
 	SOCK_DCCP                            = 0x6
 	SOCK_DGRAM                           = 0x1
@@ -1568,6 +1713,7 @@ const (
 	SOL_SOCKET                           = 0xffff
 	SOL_TCP                              = 0x6
 	SOL_TIPC                             = 0x10f
+	SOL_TLS                              = 0x11a
 	SOL_X25                              = 0x106
 	SOMAXCONN                            = 0x80
 	SO_ACCEPTCONN                        = 0x1009
@@ -1637,10 +1783,13 @@ const (
 	SO_VM_SOCKETS_PEER_HOST_VM_ID        = 0x3
 	SO_VM_SOCKETS_TRUSTED                = 0x5
 	SO_WIFI_STATUS                       = 0x29
+	SO_ZEROCOPY                          = 0x3c
 	SPLICE_F_GIFT                        = 0x8
 	SPLICE_F_MORE                        = 0x4
 	SPLICE_F_MOVE                        = 0x1
 	SPLICE_F_NONBLOCK                    = 0x2
+	SQUASHFS_MAGIC                       = 0x73717368
+	STACK_END_MAGIC                      = 0x57ac6e9d
 	STATX_ALL                            = 0xfff
 	STATX_ATIME                          = 0x20
 	STATX_ATTR_APPEND                    = 0x20
@@ -1662,6 +1811,7 @@ const (
 	STATX_TYPE                           = 0x1
 	STATX_UID                            = 0x8
 	STATX__RESERVED                      = 0x80000000
+	SYSFS_MAGIC                          = 0x62656572
 	S_BLKSIZE                            = 0x200
 	S_IEXEC                              = 0x40
 	S_IFBLK                              = 0x6000
@@ -1732,6 +1882,8 @@ const (
 	TCP_MAXWIN                           = 0xffff
 	TCP_MAX_WINSHIFT                     = 0xe
 	TCP_MD5SIG                           = 0xe
+	TCP_MD5SIG_EXT                       = 0x20
+	TCP_MD5SIG_FLAG_PREFIX               = 0x1
 	TCP_MD5SIG_MAXKEYLEN                 = 0x50
 	TCP_MSS                              = 0x200
 	TCP_MSS_DEFAULT                      = 0x218
@@ -1752,6 +1904,7 @@ const (
 	TCP_THIN_DUPACK                      = 0x11
 	TCP_THIN_LINEAR_TIMEOUTS             = 0x10
 	TCP_TIMESTAMP                        = 0x18
+	TCP_ULP                              = 0x1f
 	TCP_USER_TIMEOUT                     = 0x12
 	TCP_WINDOW_CLAMP                     = 0xa
 	TCSAFLUSH                            = 0x5410
@@ -1841,7 +1994,27 @@ const (
 	TIOCSTI                              = 0x5472
 	TIOCSWINSZ                           = 0x80087467
 	TIOCVHANGUP                          = 0x5437
+	TMPFS_MAGIC                          = 0x1021994
 	TOSTOP                               = 0x8000
+	TPACKET_ALIGNMENT                    = 0x10
+	TPACKET_HDRLEN                       = 0x34
+	TP_STATUS_AVAILABLE                  = 0x0
+	TP_STATUS_BLK_TMO                    = 0x20
+	TP_STATUS_COPY                       = 0x2
+	TP_STATUS_CSUMNOTREADY               = 0x8
+	TP_STATUS_CSUM_VALID                 = 0x80
+	TP_STATUS_KERNEL                     = 0x0
+	TP_STATUS_LOSING                     = 0x4
+	TP_STATUS_SENDING                    = 0x2
+	TP_STATUS_SEND_REQUEST               = 0x1
+	TP_STATUS_TS_RAW_HARDWARE            = -0x80000000
+	TP_STATUS_TS_SOFTWARE                = 0x20000000
+	TP_STATUS_TS_SYS_HARDWARE            = 0x40000000
+	TP_STATUS_USER                       = 0x1
+	TP_STATUS_VLAN_TPID_VALID            = 0x40
+	TP_STATUS_VLAN_VALID                 = 0x10
+	TP_STATUS_WRONG_FORMAT               = 0x4
+	TRACEFS_MAGIC                        = 0x74726163
 	TS_COMM_LEN                          = 0x20
 	TUNATTACHFILTER                      = 0x801054d5
 	TUNDETACHFILTER                      = 0x801054d6
@@ -1853,6 +2026,7 @@ const (
 	TUNGETVNETHDRSZ                      = 0x400454d7
 	TUNGETVNETLE                         = 0x400454dd
 	TUNSETDEBUG                          = 0x800454c9
+	TUNSETFILTEREBPF                     = 0x400454e1
 	TUNSETGROUP                          = 0x800454ce
 	TUNSETIFF                            = 0x800454ca
 	TUNSETIFINDEX                        = 0x800454da
@@ -1863,13 +2037,17 @@ const (
 	TUNSETPERSIST                        = 0x800454cb
 	TUNSETQUEUE                          = 0x800454d9
 	TUNSETSNDBUF                         = 0x800454d4
+	TUNSETSTEERINGEBPF                   = 0x400454e0
 	TUNSETTXFILTER                       = 0x800454d1
 	TUNSETVNETBE                         = 0x800454de
 	TUNSETVNETHDRSZ                      = 0x800454d8
 	TUNSETVNETLE                         = 0x800454dc
+	UDF_SUPER_MAGIC                      = 0x15013346
 	UMOUNT_NOFOLLOW                      = 0x8
+	USBDEVICE_SUPER_MAGIC                = 0x9fa2
 	UTIME_NOW                            = 0x3fffffff
 	UTIME_OMIT                           = 0x3ffffffe
+	V9FS_MAGIC                           = 0x1021997
 	VDISCARD                             = 0xd
 	VEOF                                 = 0x10
 	VEOL                                 = 0x11
@@ -1912,6 +2090,86 @@ const (
 	WDIOC_SETPRETIMEOUT                  = 0xc0045708
 	WDIOC_SETTIMEOUT                     = 0xc0045706
 	WEXITED                              = 0x4
+	WIN_ACKMEDIACHANGE                   = 0xdb
+	WIN_CHECKPOWERMODE1                  = 0xe5
+	WIN_CHECKPOWERMODE2                  = 0x98
+	WIN_DEVICE_RESET                     = 0x8
+	WIN_DIAGNOSE                         = 0x90
+	WIN_DOORLOCK                         = 0xde
+	WIN_DOORUNLOCK                       = 0xdf
+	WIN_DOWNLOAD_MICROCODE               = 0x92
+	WIN_FLUSH_CACHE                      = 0xe7
+	WIN_FLUSH_CACHE_EXT                  = 0xea
+	WIN_FORMAT                           = 0x50
+	WIN_GETMEDIASTATUS                   = 0xda
+	WIN_IDENTIFY                         = 0xec
+	WIN_IDENTIFY_DMA                     = 0xee
+	WIN_IDLEIMMEDIATE                    = 0xe1
+	WIN_INIT                             = 0x60
+	WIN_MEDIAEJECT                       = 0xed
+	WIN_MULTREAD                         = 0xc4
+	WIN_MULTREAD_EXT                     = 0x29
+	WIN_MULTWRITE                        = 0xc5
+	WIN_MULTWRITE_EXT                    = 0x39
+	WIN_NOP                              = 0x0
+	WIN_PACKETCMD                        = 0xa0
+	WIN_PIDENTIFY                        = 0xa1
+	WIN_POSTBOOT                         = 0xdc
+	WIN_PREBOOT                          = 0xdd
+	WIN_QUEUED_SERVICE                   = 0xa2
+	WIN_READ                             = 0x20
+	WIN_READDMA                          = 0xc8
+	WIN_READDMA_EXT                      = 0x25
+	WIN_READDMA_ONCE                     = 0xc9
+	WIN_READDMA_QUEUED                   = 0xc7
+	WIN_READDMA_QUEUED_EXT               = 0x26
+	WIN_READ_BUFFER                      = 0xe4
+	WIN_READ_EXT                         = 0x24
+	WIN_READ_LONG                        = 0x22
+	WIN_READ_LONG_ONCE                   = 0x23
+	WIN_READ_NATIVE_MAX                  = 0xf8
+	WIN_READ_NATIVE_MAX_EXT              = 0x27
+	WIN_READ_ONCE                        = 0x21
+	WIN_RECAL                            = 0x10
+	WIN_RESTORE                          = 0x10
+	WIN_SECURITY_DISABLE                 = 0xf6
+	WIN_SECURITY_ERASE_PREPARE           = 0xf3
+	WIN_SECURITY_ERASE_UNIT              = 0xf4
+	WIN_SECURITY_FREEZE_LOCK             = 0xf5
+	WIN_SECURITY_SET_PASS                = 0xf1
+	WIN_SECURITY_UNLOCK                  = 0xf2
+	WIN_SEEK                             = 0x70
+	WIN_SETFEATURES                      = 0xef
+	WIN_SETIDLE1                         = 0xe3
+	WIN_SETIDLE2                         = 0x97
+	WIN_SETMULT                          = 0xc6
+	WIN_SET_MAX                          = 0xf9
+	WIN_SET_MAX_EXT                      = 0x37
+	WIN_SLEEPNOW1                        = 0xe6
+	WIN_SLEEPNOW2                        = 0x99
+	WIN_SMART                            = 0xb0
+	WIN_SPECIFY                          = 0x91
+	WIN_SRST                             = 0x8
+	WIN_STANDBY                          = 0xe2
+	WIN_STANDBY2                         = 0x96
+	WIN_STANDBYNOW1                      = 0xe0
+	WIN_STANDBYNOW2                      = 0x94
+	WIN_VERIFY                           = 0x40
+	WIN_VERIFY_EXT                       = 0x42
+	WIN_VERIFY_ONCE                      = 0x41
+	WIN_WRITE                            = 0x30
+	WIN_WRITEDMA                         = 0xca
+	WIN_WRITEDMA_EXT                     = 0x35
+	WIN_WRITEDMA_ONCE                    = 0xcb
+	WIN_WRITEDMA_QUEUED                  = 0xcc
+	WIN_WRITEDMA_QUEUED_EXT              = 0x36
+	WIN_WRITE_BUFFER                     = 0xe8
+	WIN_WRITE_EXT                        = 0x34
+	WIN_WRITE_LONG                       = 0x32
+	WIN_WRITE_LONG_ONCE                  = 0x33
+	WIN_WRITE_ONCE                       = 0x31
+	WIN_WRITE_SAME                       = 0xe9
+	WIN_WRITE_VERIFY                     = 0x3c
 	WNOHANG                              = 0x1
 	WNOTHREAD                            = 0x20000000
 	WNOWAIT                              = 0x1000000
@@ -1921,7 +2179,9 @@ const (
 	XATTR_CREATE                         = 0x1
 	XATTR_REPLACE                        = 0x2
 	XCASE                                = 0x4
+	XENFS_SUPER_MAGIC                    = 0xabba1974
 	XTABS                                = 0x1800
+	ZSMALLOC_MAGIC                       = 0x58295829
 )
 
 // Errors
@@ -2103,174 +2363,182 @@ const (
 )
 
 // Error table
-var errors = [...]string{
-	1:    "operation not permitted",
-	2:    "no such file or directory",
-	3:    "no such process",
-	4:    "interrupted system call",
-	5:    "input/output error",
-	6:    "no such device or address",
-	7:    "argument list too long",
-	8:    "exec format error",
-	9:    "bad file descriptor",
-	10:   "no child processes",
-	11:   "resource temporarily unavailable",
-	12:   "cannot allocate memory",
-	13:   "permission denied",
-	14:   "bad address",
-	15:   "block device required",
-	16:   "device or resource busy",
-	17:   "file exists",
-	18:   "invalid cross-device link",
-	19:   "no such device",
-	20:   "not a directory",
-	21:   "is a directory",
-	22:   "invalid argument",
-	23:   "too many open files in system",
-	24:   "too many open files",
-	25:   "inappropriate ioctl for device",
-	26:   "text file busy",
-	27:   "file too large",
-	28:   "no space left on device",
-	29:   "illegal seek",
-	30:   "read-only file system",
-	31:   "too many links",
-	32:   "broken pipe",
-	33:   "numerical argument out of domain",
-	34:   "numerical result out of range",
-	35:   "no message of desired type",
-	36:   "identifier removed",
-	37:   "channel number out of range",
-	38:   "level 2 not synchronized",
-	39:   "level 3 halted",
-	40:   "level 3 reset",
-	41:   "link number out of range",
-	42:   "protocol driver not attached",
-	43:   "no CSI structure available",
-	44:   "level 2 halted",
-	45:   "resource deadlock avoided",
-	46:   "no locks available",
-	50:   "invalid exchange",
-	51:   "invalid request descriptor",
-	52:   "exchange full",
-	53:   "no anode",
-	54:   "invalid request code",
-	55:   "invalid slot",
-	56:   "file locking deadlock error",
-	59:   "bad font file format",
-	60:   "device not a stream",
-	61:   "no data available",
-	62:   "timer expired",
-	63:   "out of streams resources",
-	64:   "machine is not on the network",
-	65:   "package not installed",
-	66:   "object is remote",
-	67:   "link has been severed",
-	68:   "advertise error",
-	69:   "srmount error",
-	70:   "communication error on send",
-	71:   "protocol error",
-	73:   "RFS specific error",
-	74:   "multihop attempted",
-	77:   "bad message",
-	78:   "file name too long",
-	79:   "value too large for defined data type",
-	80:   "name not unique on network",
-	81:   "file descriptor in bad state",
-	82:   "remote address changed",
-	83:   "can not access a needed shared library",
-	84:   "accessing a corrupted shared library",
-	85:   ".lib section in a.out corrupted",
-	86:   "attempting to link in too many shared libraries",
-	87:   "cannot exec a shared library directly",
-	88:   "invalid or incomplete multibyte or wide character",
-	89:   "function not implemented",
-	90:   "too many levels of symbolic links",
-	91:   "interrupted system call should be restarted",
-	92:   "streams pipe error",
-	93:   "directory not empty",
-	94:   "too many users",
-	95:   "socket operation on non-socket",
-	96:   "destination address required",
-	97:   "message too long",
-	98:   "protocol wrong type for socket",
-	99:   "protocol not available",
-	120:  "protocol not supported",
-	121:  "socket type not supported",
-	122:  "operation not supported",
-	123:  "protocol family not supported",
-	124:  "address family not supported by protocol",
-	125:  "address already in use",
-	126:  "cannot assign requested address",
-	127:  "network is down",
-	128:  "network is unreachable",
-	129:  "network dropped connection on reset",
-	130:  "software caused connection abort",
-	131:  "connection reset by peer",
-	132:  "no buffer space available",
-	133:  "transport endpoint is already connected",
-	134:  "transport endpoint is not connected",
-	135:  "structure needs cleaning",
-	137:  "not a XENIX named type file",
-	138:  "no XENIX semaphores available",
-	139:  "is a named type file",
-	140:  "remote I/O error",
-	141:  "unknown error 141",
-	142:  "unknown error 142",
-	143:  "cannot send after transport endpoint shutdown",
-	144:  "too many references: cannot splice",
-	145:  "connection timed out",
-	146:  "connection refused",
-	147:  "host is down",
-	148:  "no route to host",
-	149:  "operation already in progress",
-	150:  "operation now in progress",
-	151:  "stale file handle",
-	158:  "operation canceled",
-	159:  "no medium found",
-	160:  "wrong medium type",
-	161:  "required key not available",
-	162:  "key has expired",
-	163:  "key has been revoked",
-	164:  "key was rejected by service",
-	165:  "owner died",
-	166:  "state not recoverable",
-	167:  "operation not possible due to RF-kill",
-	168:  "memory page has hardware error",
-	1133: "disk quota exceeded",
+var errorList = [...]struct {
+	num  syscall.Errno
+	name string
+	desc string
+}{
+	{1, "EPERM", "operation not permitted"},
+	{2, "ENOENT", "no such file or directory"},
+	{3, "ESRCH", "no such process"},
+	{4, "EINTR", "interrupted system call"},
+	{5, "EIO", "input/output error"},
+	{6, "ENXIO", "no such device or address"},
+	{7, "E2BIG", "argument list too long"},
+	{8, "ENOEXEC", "exec format error"},
+	{9, "EBADF", "bad file descriptor"},
+	{10, "ECHILD", "no child processes"},
+	{11, "EAGAIN", "resource temporarily unavailable"},
+	{12, "ENOMEM", "cannot allocate memory"},
+	{13, "EACCES", "permission denied"},
+	{14, "EFAULT", "bad address"},
+	{15, "ENOTBLK", "block device required"},
+	{16, "EBUSY", "device or resource busy"},
+	{17, "EEXIST", "file exists"},
+	{18, "EXDEV", "invalid cross-device link"},
+	{19, "ENODEV", "no such device"},
+	{20, "ENOTDIR", "not a directory"},
+	{21, "EISDIR", "is a directory"},
+	{22, "EINVAL", "invalid argument"},
+	{23, "ENFILE", "too many open files in system"},
+	{24, "EMFILE", "too many open files"},
+	{25, "ENOTTY", "inappropriate ioctl for device"},
+	{26, "ETXTBSY", "text file busy"},
+	{27, "EFBIG", "file too large"},
+	{28, "ENOSPC", "no space left on device"},
+	{29, "ESPIPE", "illegal seek"},
+	{30, "EROFS", "read-only file system"},
+	{31, "EMLINK", "too many links"},
+	{32, "EPIPE", "broken pipe"},
+	{33, "EDOM", "numerical argument out of domain"},
+	{34, "ERANGE", "numerical result out of range"},
+	{35, "ENOMSG", "no message of desired type"},
+	{36, "EIDRM", "identifier removed"},
+	{37, "ECHRNG", "channel number out of range"},
+	{38, "EL2NSYNC", "level 2 not synchronized"},
+	{39, "EL3HLT", "level 3 halted"},
+	{40, "EL3RST", "level 3 reset"},
+	{41, "ELNRNG", "link number out of range"},
+	{42, "EUNATCH", "protocol driver not attached"},
+	{43, "ENOCSI", "no CSI structure available"},
+	{44, "EL2HLT", "level 2 halted"},
+	{45, "EDEADLK", "resource deadlock avoided"},
+	{46, "ENOLCK", "no locks available"},
+	{50, "EBADE", "invalid exchange"},
+	{51, "EBADR", "invalid request descriptor"},
+	{52, "EXFULL", "exchange full"},
+	{53, "ENOANO", "no anode"},
+	{54, "EBADRQC", "invalid request code"},
+	{55, "EBADSLT", "invalid slot"},
+	{56, "EDEADLOCK", "file locking deadlock error"},
+	{59, "EBFONT", "bad font file format"},
+	{60, "ENOSTR", "device not a stream"},
+	{61, "ENODATA", "no data available"},
+	{62, "ETIME", "timer expired"},
+	{63, "ENOSR", "out of streams resources"},
+	{64, "ENONET", "machine is not on the network"},
+	{65, "ENOPKG", "package not installed"},
+	{66, "EREMOTE", "object is remote"},
+	{67, "ENOLINK", "link has been severed"},
+	{68, "EADV", "advertise error"},
+	{69, "ESRMNT", "srmount error"},
+	{70, "ECOMM", "communication error on send"},
+	{71, "EPROTO", "protocol error"},
+	{73, "EDOTDOT", "RFS specific error"},
+	{74, "EMULTIHOP", "multihop attempted"},
+	{77, "EBADMSG", "bad message"},
+	{78, "ENAMETOOLONG", "file name too long"},
+	{79, "EOVERFLOW", "value too large for defined data type"},
+	{80, "ENOTUNIQ", "name not unique on network"},
+	{81, "EBADFD", "file descriptor in bad state"},
+	{82, "EREMCHG", "remote address changed"},
+	{83, "ELIBACC", "can not access a needed shared library"},
+	{84, "ELIBBAD", "accessing a corrupted shared library"},
+	{85, "ELIBSCN", ".lib section in a.out corrupted"},
+	{86, "ELIBMAX", "attempting to link in too many shared libraries"},
+	{87, "ELIBEXEC", "cannot exec a shared library directly"},
+	{88, "EILSEQ", "invalid or incomplete multibyte or wide character"},
+	{89, "ENOSYS", "function not implemented"},
+	{90, "ELOOP", "too many levels of symbolic links"},
+	{91, "ERESTART", "interrupted system call should be restarted"},
+	{92, "ESTRPIPE", "streams pipe error"},
+	{93, "ENOTEMPTY", "directory not empty"},
+	{94, "EUSERS", "too many users"},
+	{95, "ENOTSOCK", "socket operation on non-socket"},
+	{96, "EDESTADDRREQ", "destination address required"},
+	{97, "EMSGSIZE", "message too long"},
+	{98, "EPROTOTYPE", "protocol wrong type for socket"},
+	{99, "ENOPROTOOPT", "protocol not available"},
+	{120, "EPROTONOSUPPORT", "protocol not supported"},
+	{121, "ESOCKTNOSUPPORT", "socket type not supported"},
+	{122, "ENOTSUP", "operation not supported"},
+	{123, "EPFNOSUPPORT", "protocol family not supported"},
+	{124, "EAFNOSUPPORT", "address family not supported by protocol"},
+	{125, "EADDRINUSE", "address already in use"},
+	{126, "EADDRNOTAVAIL", "cannot assign requested address"},
+	{127, "ENETDOWN", "network is down"},
+	{128, "ENETUNREACH", "network is unreachable"},
+	{129, "ENETRESET", "network dropped connection on reset"},
+	{130, "ECONNABORTED", "software caused connection abort"},
+	{131, "ECONNRESET", "connection reset by peer"},
+	{132, "ENOBUFS", "no buffer space available"},
+	{133, "EISCONN", "transport endpoint is already connected"},
+	{134, "ENOTCONN", "transport endpoint is not connected"},
+	{135, "EUCLEAN", "structure needs cleaning"},
+	{137, "ENOTNAM", "not a XENIX named type file"},
+	{138, "ENAVAIL", "no XENIX semaphores available"},
+	{139, "EISNAM", "is a named type file"},
+	{140, "EREMOTEIO", "remote I/O error"},
+	{141, "EINIT", "unknown error 141"},
+	{142, "EREMDEV", "unknown error 142"},
+	{143, "ESHUTDOWN", "cannot send after transport endpoint shutdown"},
+	{144, "ETOOMANYREFS", "too many references: cannot splice"},
+	{145, "ETIMEDOUT", "connection timed out"},
+	{146, "ECONNREFUSED", "connection refused"},
+	{147, "EHOSTDOWN", "host is down"},
+	{148, "EHOSTUNREACH", "no route to host"},
+	{149, "EALREADY", "operation already in progress"},
+	{150, "EINPROGRESS", "operation now in progress"},
+	{151, "ESTALE", "stale file handle"},
+	{158, "ECANCELED", "operation canceled"},
+	{159, "ENOMEDIUM", "no medium found"},
+	{160, "EMEDIUMTYPE", "wrong medium type"},
+	{161, "ENOKEY", "required key not available"},
+	{162, "EKEYEXPIRED", "key has expired"},
+	{163, "EKEYREVOKED", "key has been revoked"},
+	{164, "EKEYREJECTED", "key was rejected by service"},
+	{165, "EOWNERDEAD", "owner died"},
+	{166, "ENOTRECOVERABLE", "state not recoverable"},
+	{167, "ERFKILL", "operation not possible due to RF-kill"},
+	{168, "EHWPOISON", "memory page has hardware error"},
+	{1133, "EDQUOT", "disk quota exceeded"},
 }
 
 // Signal table
-var signals = [...]string{
-	1:  "hangup",
-	2:  "interrupt",
-	3:  "quit",
-	4:  "illegal instruction",
-	5:  "trace/breakpoint trap",
-	6:  "aborted",
-	7:  "EMT trap",
-	8:  "floating point exception",
-	9:  "killed",
-	10: "bus error",
-	11: "segmentation fault",
-	12: "bad system call",
-	13: "broken pipe",
-	14: "alarm clock",
-	15: "terminated",
-	16: "user defined signal 1",
-	17: "user defined signal 2",
-	18: "child exited",
-	19: "power failure",
-	20: "window changed",
-	21: "urgent I/O condition",
-	22: "I/O possible",
-	23: "stopped (signal)",
-	24: "stopped",
-	25: "continued",
-	26: "stopped (tty input)",
-	27: "stopped (tty output)",
-	28: "virtual timer expired",
-	29: "profiling timer expired",
-	30: "CPU time limit exceeded",
-	31: "file size limit exceeded",
+var signalList = [...]struct {
+	num  syscall.Signal
+	name string
+	desc string
+}{
+	{1, "SIGHUP", "hangup"},
+	{2, "SIGINT", "interrupt"},
+	{3, "SIGQUIT", "quit"},
+	{4, "SIGILL", "illegal instruction"},
+	{5, "SIGTRAP", "trace/breakpoint trap"},
+	{6, "SIGABRT", "aborted"},
+	{7, "SIGEMT", "EMT trap"},
+	{8, "SIGFPE", "floating point exception"},
+	{9, "SIGKILL", "killed"},
+	{10, "SIGBUS", "bus error"},
+	{11, "SIGSEGV", "segmentation fault"},
+	{12, "SIGSYS", "bad system call"},
+	{13, "SIGPIPE", "broken pipe"},
+	{14, "SIGALRM", "alarm clock"},
+	{15, "SIGTERM", "terminated"},
+	{16, "SIGUSR1", "user defined signal 1"},
+	{17, "SIGUSR2", "user defined signal 2"},
+	{18, "SIGCHLD", "child exited"},
+	{19, "SIGPWR", "power failure"},
+	{20, "SIGWINCH", "window changed"},
+	{21, "SIGURG", "urgent I/O condition"},
+	{22, "SIGIO", "I/O possible"},
+	{23, "SIGSTOP", "stopped (signal)"},
+	{24, "SIGTSTP", "stopped"},
+	{25, "SIGCONT", "continued"},
+	{26, "SIGTTIN", "stopped (tty input)"},
+	{27, "SIGTTOU", "stopped (tty output)"},
+	{28, "SIGVTALRM", "virtual timer expired"},
+	{29, "SIGPROF", "profiling timer expired"},
+	{30, "SIGXCPU", "CPU time limit exceeded"},
+	{31, "SIGXFSZ", "file size limit exceeded"},
 }

@@ -113,28 +113,8 @@ describe('influxdb response parser', () => {
 
   describe('SHOW FIELD response', () => {
     var query = 'SHOW FIELD KEYS FROM "cpu"';
-    describe('response from 0.10.0', () => {
-      var response = {
-        results: [
-          {
-            series: [
-              {
-                name: 'measurements',
-                columns: ['name'],
-                values: [['cpu'], ['derivative'], ['logins.count'], ['logs'], ['payment.ended'], ['payment.started']],
-              },
-            ],
-          },
-        ],
-      };
 
-      var result = parser.parse(query, response);
-      it('should get two responses', () => {
-        expect(_.size(result)).toBe(6);
-      });
-    });
-
-    describe('response from 0.11.0', () => {
+    describe('response from pre-1.0', () => {
       var response = {
         results: [
           {
@@ -153,6 +133,29 @@ describe('influxdb response parser', () => {
 
       it('should get two responses', () => {
         expect(_.size(result)).toBe(1);
+      });
+    });
+
+    describe('response from 1.0', () => {
+      var response = {
+        results: [
+          {
+            series: [
+              {
+                name: 'cpu',
+                columns: ['fieldKey', 'fieldType'],
+                values: [['time', 'float']],
+              },
+            ],
+          },
+        ],
+      };
+
+      var result = parser.parse(query, response);
+
+      it('should return first column', () => {
+        expect(_.size(result)).toBe(1);
+        expect(result[0].text).toBe('time');
       });
     });
   });

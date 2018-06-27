@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+ - name: 'Bulk dashboards'
+   folder: 'Bulk dashboards'
+   type: file
+   options:
+     path: devenv/dashboards/bulk-testing
+

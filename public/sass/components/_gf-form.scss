@@ -384,6 +384,10 @@ $input-border: 1px solid $input-border-color;
   &--header {
     margin-bottom: $gf-form-margin;
   }
+
+  &--no-padding {
+    padding-left: 0;
+  }
 }
 
 select.gf-form-input ~ .gf-form-help-icon {

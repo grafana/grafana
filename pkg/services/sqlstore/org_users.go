@@ -20,7 +20,14 @@ func init() {
 func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
-		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgId, cmd.UserId); err != nil {
+		var user m.User
+		if exists, err := sess.Id(cmd.UserId).Get(&user); err != nil {
+			return err
+		} else if !exists {
+			return m.ErrUserNotFound
+		}
+
+		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgId, user.Id); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return m.ErrOrgUserAlreadyAdded
@@ -41,7 +48,26 @@ func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 		}
 
 		_, err := sess.Insert(&entity)
-		return err
+		if err != nil {
+			return err
+		}
+
+		var userOrgs []*m.UserOrgDTO
+		sess.Table("org_user")
+		sess.Join("INNER", "org", "org_user.org_id=org.id")
+		sess.Where("org_user.user_id=? AND org_user.org_id=?", user.Id, user.OrgId)
+		sess.Cols("org.name", "org_user.role", "org_user.org_id")
+		err = sess.Find(&userOrgs)
+
+		if err != nil {
+			return err
+		}
+
+		if len(userOrgs) == 0 {
+			return setUsingOrgInTransaction(sess, user.Id, cmd.OrgId)
+		}
+
+		return nil
 	})
 }
 
@@ -110,6 +136,14 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 
 func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		// check if user exists
+		var user m.User
+		if exists, err := sess.Id(cmd.UserId).Get(&user); err != nil {
+			return err
+		} else if !exists {
+			return m.ErrUserNotFound
+		}
+
 		deletes := []string{
 			"DELETE FROM org_user WHERE org_id=? and user_id=?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and user_id = ?",
@@ -118,6 +152,32 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 
 		for _, sql := range deletes {
 			_, err := sess.Exec(sql, cmd.OrgId, cmd.UserId)
+			if err != nil {
+				return err
+			}
+		}
+
+		var userOrgs []*m.UserOrgDTO
+		sess.Table("org_user")
+		sess.Join("INNER", "org", "org_user.org_id=org.id")
+		sess.Where("org_user.user_id=?", user.Id)
+		sess.Cols("org.name", "org_user.role", "org_user.org_id")
+		err := sess.Find(&userOrgs)
+
+		if err != nil {
+			return err
+		}
+
+		hasCurrentOrgSet := false
+		for _, userOrg := range userOrgs {
+			if user.OrgId == userOrg.OrgId {
+				hasCurrentOrgSet = true
+				break
+			}
+		}
+
+		if !hasCurrentOrgSet && len(userOrgs) > 0 {
+			err = setUsingOrgInTransaction(sess, user.Id, userOrgs[0].OrgId)
 			if err != nil {
 				return err
 			}
