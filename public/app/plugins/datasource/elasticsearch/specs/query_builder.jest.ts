@@ -296,7 +296,7 @@ describe('ElasticQueryBuilder', () => {
 
     expect(query.query.bool.must[0].query_string.query).toBe('value1');
     expect(query.query.bool.must[1].query_string.query).toBe('value2');
-    expect(query.query.bool.must_not[0].match_phrase['key2'].query).toBe('value2');
+    expect(query.query.bool.must_not[0].query_string.query).toBe('value2');
     expect(query.query.bool.filter[2].range['key3'].lt).toBe('value3');
     expect(query.query.bool.filter[3].range['key4'].gt).toBe('value4');
     expect(query.query.bool.filter[4].regexp['key5']).toBe('value5');
