@@ -14,6 +14,7 @@
 ### Minor
 
 * **UI**: Fix - Grafana footer overlapping page [#12430](https://github.com/grafana/grafana/issues/12430)
+* **Auth Proxy**: Revert of "Whitelist proxy IP address instead of client IP address" introduced in 5.2.0-beta2 [#12444](https://github.com/grafana/grafana/pull/12444)
 
 # 5.2.0-stable (2018-06-27)
 
