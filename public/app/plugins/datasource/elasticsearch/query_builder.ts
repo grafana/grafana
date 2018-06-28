@@ -153,7 +153,7 @@ export class ElasticQueryBuilder {
           if (!query.query.bool.must_not) {
             query.query.bool.must_not = [];
           }
-          query.query.bool.must.push({ query_string: { default_field: filter.key, query: filter.value } });
+          query.query.bool.must_not.push({ query_string: { default_field: filter.key, query: filter.value } });
           break;
         case '<':
           condition[filter.key] = { lt: filter.value };
