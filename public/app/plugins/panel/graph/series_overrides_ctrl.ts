@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import angular from 'angular';
 
+/** @ngInject */
 export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
-  /** @ngInject */
   $scope.overrideMenu = [];
   $scope.currentOverrides = [];
   $scope.override = $scope.override || {};
