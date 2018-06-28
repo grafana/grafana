@@ -165,9 +165,10 @@ will be set to `Admin`
 
 ### Team Membership
 If no `team_id` is specified in TOML configuration file, team management feature will be
-completely be disabled. If any `group_mappings` entry is configured  with `team_id`,
-automatic team management will take place.
+completely disabled. If any `group_mappings` entry is configured  with `team_id`,
+automatic team management will take place, but, **only for that particular organisation**. 
 
-That means, any manual team assignments will be reset each time user logs in.
+So, any manual team assignments for LDAP-enabled accounts within organisation with enabled 
+automatic team membership feature, changes will be reset each time user logs in.
 If you change the LDAP groups of user, the change will take effect the next time
 the user logs in.

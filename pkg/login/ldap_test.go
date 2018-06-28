@@ -247,6 +247,28 @@ func TestLdapAuther(t *testing.T) {
 			})
 		})
 
+		ldapAutherScenario("given teams configured in ldap for different org", func(sc *scenarioContext) {
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroupMappings: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=users", OrgRole: "Admin"},
+					{GroupDN: "cn=team2", OrgId: 2, TeamId: 2, OrgRole: "Viewer"},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_ADMIN}})
+			sc.userTeamsQueryReturns([]*m.Team{{Id: 1}})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{
+					"cn=users",
+				},
+			})
+
+			Convey("Shouldn't revoke team membership from user", func() {
+				So(err, ShouldBeNil)
+				So(sc.removeTeamUserCmd, ShouldBeNil)
+			})
+		})
+
 		ldapAutherScenario("given multiple matching ldap groups", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroupMappings: []*LdapGroupToOrgRole{

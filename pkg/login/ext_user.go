@@ -236,9 +236,12 @@ func syncUserOrgJoin(s *userSyncState) userSyncStateFn {
 			continue
 		}
 
+		// track new orgs, we don't have in database yet,
+		// but will be added.
+		s.updatedOrgs[orgId] = true
+
 		// add user org role
 		s.log.Debug("Adding user to org", "user", s.user, "orgId", orgId, "role", orgRole)
-		s.updatedOrgs[orgId] = true
 		cmd := &m.AddOrgUserCommand{
 			UserId: s.user.Id,
 			Role:   orgRole,
@@ -258,39 +261,71 @@ func syncUserOrgJoin(s *userSyncState) userSyncStateFn {
 // so, loading up information about team membership and proceed with team join phase.
 // if no teams configured in group mappings, skip whole join/leave phase.
 func syncUserTeamsStart(s *userSyncState) userSyncStateFn {
-	if !s.cmd.ExternalUser.HandleTeams {
-		return syncUserOrgLeave
-	}
+
+	updatedOrgsCount := 0 // keep track of orgs updated and configured to handle team membership
+	deletedOrgsCount := 0 // keep track of orgs deleted and configured to handle team membership
 
 	for orgId := range s.updatedOrgs {
-		teamQuery := &m.GetTeamsByUserQuery{OrgId: orgId, UserId: s.user.Id}
+		// if team handling is not enabled for org, skip whole part
+		if !s.cmd.ExternalUser.HandleTeams[orgId] {
+			continue
+		}
 
+		teamQuery := &m.GetTeamsByUserQuery{OrgId: orgId, UserId: s.user.Id}
 		err := bus.Dispatch(teamQuery)
 		if err != nil && err != m.ErrOrgNotFound {
 			s.err = err
 			return nil
 		}
 
+		updatedOrgsCount++
 		s.teams[orgId] = teamQueryToMap(teamQuery)
 	}
 
 	for orgId := range s.deletedOrgs {
-		teamQuery := &m.GetTeamsByUserQuery{OrgId: orgId, UserId: s.user.Id}
+		// if team handling is not enabled for org, skip whole part
+		if !s.cmd.ExternalUser.HandleTeams[orgId] {
+			continue
+		}
 
+		teamQuery := &m.GetTeamsByUserQuery{OrgId: orgId, UserId: s.user.Id}
 		err := bus.Dispatch(teamQuery)
 		if err != nil && err != m.ErrOrgNotFound {
 			s.err = err
 			return nil
 		}
+
+		deletedOrgsCount++
 		s.teams[orgId] = teamQueryToMap(teamQuery)
 	}
 
-	return syncUserTeamJoin
+	switch true {
+	case updatedOrgsCount > 0:
+		// some orgs updated/seen during match phase and requires team membership handling.
+		// proceed with join.
+		return syncUserTeamJoin
+
+	case deletedOrgsCount > 0:
+		// no updated orgs, but some of them are removed
+		// in ldap and team membership is configured for
+		// them. proceed with leave.
+		return syncUserTeamLeave
+
+	default:
+		// no team membership configured, skip join/leave code
+		// and proceed with org leave.
+		return syncUserOrgLeave
+	}
 }
 
 // fsm: join all teams within orgs user have access to.
 func syncUserTeamJoin(s *userSyncState) userSyncStateFn {
 	for orgId := range s.updatedOrgs {
+		if !s.cmd.ExternalUser.HandleTeams[orgId] {
+			// skip orgs with no team membership activated
+			continue
+		}
+
 		teamIdList, exists := s.cmd.ExternalUser.OrgTeams[orgId]
 		if !exists {
 			continue
@@ -303,7 +338,6 @@ func syncUserTeamJoin(s *userSyncState) userSyncStateFn {
 			}
 
 			s.log.Debug("Adding user to team", "user", s.user, "orgId", orgId, "teamId", teamId, "role")
-
 			cmd := &m.AddTeamMemberCommand{UserId: s.user.Id, OrgId: orgId, TeamId: teamId}
 			err := bus.Dispatch(cmd)
 			if err != nil && err != m.ErrTeamNotFound && err != m.ErrTeamMemberAlreadyAdded {
@@ -324,6 +358,11 @@ func syncUserTeamLeave(s *userSyncState) userSyncStateFn {
 
 	// revoke team membership by leaving orgs
 	for orgId := range s.deletedOrgs {
+		if !s.cmd.ExternalUser.HandleTeams[orgId] {
+			// skip orgs with no team membership activated
+			continue
+		}
+
 		teamIdMap, exists := s.teams[orgId]
 		if !exists {
 			continue

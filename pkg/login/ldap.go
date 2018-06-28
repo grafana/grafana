@@ -158,23 +158,24 @@ func (a *ldapAuther) SyncUser(query *m.LoginUserQuery) error {
 
 func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error) {
 	extUser := &m.ExternalUserInfo{
-		AuthModule: "ldap",
-		AuthId:     ldapUser.DN,
-		Name:       fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName),
-		Login:      ldapUser.Username,
-		Email:      ldapUser.Email,
-		OrgRoles:   map[int64]m.RoleType{},
-		OrgTeams:   map[int64][]int64{},
+		AuthModule:  "ldap",
+		AuthId:      ldapUser.DN,
+		Name:        fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName),
+		Login:       ldapUser.Username,
+		Email:       ldapUser.Email,
+		OrgRoles:    map[int64]m.RoleType{},
+		OrgTeams:    map[int64][]int64{},
+		HandleTeams: map[int64]bool{},
 	}
 
 	seenTeam := map[int64]bool{}
 	for _, group := range a.server.LdapGroupMappings {
 		// if configuration includes teams, automatically
-		// enable join/leave mechanism.
+		// enable join/leave mechanism per organisation basis.
 		// in this case manual team assignments will
 		// not be possible for LDAP enabled accounts.
 		if group.TeamId > 0 {
-			extUser.HandleTeams = true
+			extUser.HandleTeams[group.OrgId] = true
 		}
 
 		if ldapUser.isMemberOf(group.GroupDN) {
