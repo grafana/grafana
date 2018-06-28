@@ -93,7 +93,7 @@ export class ValueSelectDropdownCtrl {
       tagValuesPromise = this.$q.when(tag.values);
     }
 
-    tagValuesPromise.then(values => {
+    return tagValuesPromise.then(values => {
       tag.values = values;
       tag.valuesText = values.join(' + ');
       _.each(this.options, option => {

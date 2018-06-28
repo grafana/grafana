@@ -1,31 +1,12 @@
-//import { describe, beforeEach, it, expect, angularMocks, sinon } from 'test/lib/common';
 import 'app/core/directives/value_select_dropdown';
 import { ValueSelectDropdownCtrl } from '../directives/value_select_dropdown';
 import q from 'q';
 
 describe('SelectDropdownCtrl', () => {
-  //let scope;
-
   let tagValuesMap: any = {};
-  //let rootScope;
-  //   let q = {
-  //       when: jest.fn(() => Promise.resolve({}))
-  //   };
 
   ValueSelectDropdownCtrl.prototype.onUpdated = jest.fn();
   let ctrl;
-
-  //beforeEach(angularMocks.module('grafana.core'));
-  //   beforeEach(
-  //     angularMocks.inject(($ =>controller, $rootScope, $q, $httpBackend) {
-  //       rootScope = $rootScope;
-  //       q = $q;
-  //       scope = $rootScope.$new();
-  //       ctrl = $controller('ValueSelectDropdownCtrl', { $scope: scope });
-  //       ctrl.onUpdated = sinon.spy();
-  //       $httpBackend.when('GET', /\.html$/).respond('');
-  //     })
-  //   );
 
   describe('Given simple variable', () => {
     beforeEach(() => {
@@ -98,7 +79,6 @@ describe('SelectDropdownCtrl', () => {
     describe('When tag is selected', () => {
       beforeEach(async () => {
         await ctrl.selectTag(ctrl.tags[0]);
-        //rootScope.$digest();
         ctrl.commitChanges();
       });
 
@@ -119,7 +99,6 @@ describe('SelectDropdownCtrl', () => {
         beforeEach(() => {
           ctrl.show();
           ctrl.commitChanges();
-          //rootScope.$digest();
         });
 
         it('should still have selected tag', () => {
@@ -129,13 +108,7 @@ describe('SelectDropdownCtrl', () => {
 
       describe('and then unselected', () => {
         beforeEach(async () => {
-          // console.log(ctrl.options);
-          // console.log(ctrl.selectedTags);
-          ctrl.selectTag(ctrl.tags[0]);
-          //     console.log(ctrl.options);
-          //   console.log(ctrl.selectedTags);
-          //   console.log(ctrl.tags[0]);
-          //rootScope.$digest();
+          await ctrl.selectTag(ctrl.tags[0]);
         });
 
         it('should deselect tag', () => {
