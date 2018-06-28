@@ -33,10 +33,15 @@ export class HorizontalStat extends React.Component<IProps, any> {
     }
 
     return (
-      <div className="singlestat-panel-value-container multistat-horizontal" style={containerStyle}>
-        <span className="singlestat-panel-value multistat-value-container" style={valueStyle}>
-          {stat.valueFormatted}
-        </span>
+      <div className="multistat-horizontal" style={containerStyle}>
+        <div className="multistat-label-container">
+          <span className="multistat-label-horizontal">{stat.label}</span>
+        </div>
+        <div className="multistat-value-container">
+          <span className="singlestat-panel-value multistat-value" style={valueStyle}>
+            {stat.valueFormatted}
+          </span>
+        </div>
         {this.props.options.sparkline.show && (
           <SparkLine stat={stat} options={this.props.options} color={valueColor} size={this.props.size} />
         )}
