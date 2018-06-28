@@ -147,13 +147,13 @@ export class ElasticQueryBuilder {
           if (!query.query.bool.must) {
             query.query.bool.must = [];
           }
-          query.query.bool.must.push({ match_phrase: queryCondition });
+          query.query.bool.must.push({ query_string: { default_field:filter.key,query:filter.value} });
           break;
         case '!=':
           if (!query.query.bool.must_not) {
             query.query.bool.must_not = [];
           }
-          query.query.bool.must_not.push({ match_phrase: queryCondition });
+          query.query.bool.must.push({ query_string: { default_field:filter.key,query:filter.value} });
           break;
         case '<':
           condition[filter.key] = { lt: filter.value };
