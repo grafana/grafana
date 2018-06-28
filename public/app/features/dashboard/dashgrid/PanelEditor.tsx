@@ -19,8 +19,15 @@ interface PanelEditorTab {
 
 @observer
 export class PanelEditor extends React.Component<PanelEditorProps, any> {
+  tabs: PanelEditorTab[];
+
   constructor(props) {
     super(props);
+
+    this.tabs = [
+      { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
+      { id: 'viz', text: 'Visualization', icon: 'fa fa-line-chart' },
+    ];
   }
 
   renderQueriesTab() {
@@ -37,16 +44,12 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
 
   render() {
     const activeTab: string = store.view.query.get('tab') || 'queries';
-    const tabs: PanelEditorTab[] = [
-      { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
-      { id: 'viz', text: 'Visualization', icon: 'fa fa-line-chart' },
-    ];
 
     return (
       <div className="tabbed-view tabbed-view--panel-edit-new">
         <div className="tabbed-view-header">
           <ul className="gf-tabs">
-            {tabs.map(tab => {
+            {this.tabs.map(tab => {
               return <TabItem tab={tab} activeTab={activeTab} onClick={this.onChangeTab} key={tab.id} />;
             })}
           </ul>
