@@ -88,7 +88,7 @@ export class DatasourceSrv {
 
   getMetricSources(options) {
     var metricSources = [];
-
+    console.log(config.datasources);
     _.each(config.datasources, function(value, key) {
       if (value.meta && value.meta.metrics) {
         metricSources.push({ value: key, name: key, meta: value.meta });
@@ -102,8 +102,9 @@ export class DatasourceSrv {
     if (!options || !options.skipVariables) {
       this.addDataSourceVariables(metricSources);
     }
-
+    console.log(metricSources);
     metricSources.sort(function(a, b) {
+      console.log(`Comparing ${a.name} and ${b.name}`);
       // these two should always be at the bottom
       if (a.meta.id === 'mixed' || a.meta.id === 'grafana') {
         return 1;
