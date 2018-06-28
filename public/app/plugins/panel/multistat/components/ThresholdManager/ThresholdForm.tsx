@@ -3,18 +3,35 @@ import React from 'react';
 import { ThresholdModel, ThresholdMode } from './ThresholdEditor';
 import { ThresholdEditor } from './ThresholdEditor';
 
-export interface IProps {
+const defaultThreshold: ThresholdModel = {
+  value: null,
+  mode: ThresholdMode.critical,
+};
+
+interface IProps {
   thresholds: any[];
   onChange: (threshold: any) => any;
 }
 
-export class ThresholdForm extends React.Component<IProps, any> {
+interface IState {
+  focusedThresholdIndex: number;
+}
+
+export class ThresholdForm extends React.Component<IProps, IState> {
   constructor(props) {
     super(props);
+
+    this.state = {
+      focusedThresholdIndex: null,
+    };
   }
 
-  onChange = (threshold, index) => {
+  onChange = (threshold, index, valueChanged) => {
     const newThresholds = this.sortThresholds(this.props.thresholds);
+    const updatedPosition = newThresholds.indexOf(threshold);
+    this.setState({
+      focusedThresholdIndex: valueChanged && updatedPosition,
+    });
     this.props.onChange(newThresholds);
   };
 
@@ -24,27 +41,25 @@ export class ThresholdForm extends React.Component<IProps, any> {
   };
 
   addThreshold = () => {
-    const newThreshold: ThresholdModel = {
-      value: undefined,
-      mode: ThresholdMode.critical,
-    };
-    const newThresholds = this.props.thresholds.concat(newThreshold);
+    const newThresholds = this.props.thresholds.concat(defaultThreshold);
     this.props.onChange(newThresholds);
   };
 
-  sortThresholds(thresholds: ThresholdModel[]) {
-    return _.sortBy(thresholds, 'value');
+  sortThresholds(thresholds: ThresholdModel[]): ThresholdModel[] {
+    return _.sortBy(thresholds, (t: ThresholdModel) => {
+      return t.value !== null ? t.value : -Infinity;
+    });
   }
 
   render() {
-    const thresholdItems = this.props.thresholds.map((threshold, i) => (
+    const thresholdItems = this.props.thresholds.map((threshold: ThresholdModel, i) => (
       <ThresholdEditor
         index={i}
         key={i.toString()}
         threshold={threshold}
         onChange={this.onChange}
         onRemove={this.onRemove}
-        multipleAxes={false}
+        focused={this.state.focusedThresholdIndex === i}
       />
     ));
 

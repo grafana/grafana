@@ -4,7 +4,7 @@ import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { SimpleSelect } from 'app/core/components/Select/SimpleSelect';
 
 export interface ThresholdModel {
-  value: number | string;
+  value: number;
   mode?: ThresholdMode;
   color?: string;
 }
@@ -13,24 +13,31 @@ export enum ThresholdMode {
   ok = 'ok',
   warning = 'warning',
   critical = 'critical',
-  custom = 'custom'
+  custom = 'custom',
 }
 
-export interface IProps {
+interface IProps {
   threshold: ThresholdModel;
-  multipleAxes?: boolean;
   index: number;
-  onChange: (threshold: any, index: number) => any;
+  focused?: boolean;
+  onChange: (threshold: any, index: number, valueChanged?: boolean) => any;
   onRemove: (index: number) => any;
 }
 
-export class ThresholdEditor extends React.Component<IProps, any> {
+interface IState {
+  thresholdValue: string;
+}
+
+export class ThresholdEditor extends React.Component<IProps, IState> {
+  valueElem: any;
+
   constructor(props) {
     super(props);
 
     // thresholdValue should be defined for <input> component to be controlled
+    const initialStateValue = props.threshold.value !== null ? props.threshold.value : '';
     this.state = {
-      thresholdValue: toNumberOrEmptyString(props.threshold.value),
+      thresholdValue: initialStateValue,
     };
   }
 
@@ -38,22 +45,25 @@ export class ThresholdEditor extends React.Component<IProps, any> {
     // Update state from props before rendering in order to keep it synced
     // https://reactjs.org/docs/react-component.html#static-getderivedstatefromprops
     // https://reactjs.org/docs/react-component.html#unsafe_componentwillupdate
+    const newValue = nextProps.threshold.value;
+    const newStateValue = newValue !== null ? '' + newValue : '';
     return {
-      thresholdValue: toNumberOrEmptyString(nextProps.threshold.value),
+      thresholdValue: newStateValue,
     };
   }
 
-  onThresholdChange(threshold) {
-    this.props.onChange(threshold, this.props.index);
+  onThresholdChange(threshold, valueChanged?) {
+    this.props.onChange(threshold, this.props.index, valueChanged);
   }
 
   onInputChange = e => {
-    let newValue = toNumberOrEmptyString(e.target.value);
-    this.setState({ thresholdValue: newValue });
+    let newValue = toNumberOrNull(e.target.value);
+    let newStateValue = newValue !== null ? '' + newValue : '';
+    this.setState({ thresholdValue: newStateValue });
 
     let threshold = this.props.threshold;
-    threshold.value = newValue === '' ? undefined : newValue;
-    this.onThresholdChange(threshold);
+    threshold.value = newValue;
+    this.onThresholdChange(threshold, true);
   };
 
   onPropertyChange(propertyName, newValue) {
@@ -65,6 +75,12 @@ export class ThresholdEditor extends React.Component<IProps, any> {
   onRemove = () => {
     this.props.onRemove(this.props.index);
   };
+
+  componentDidUpdate() {
+    if (this.props.focused) {
+      this.valueElem.focus();
+    }
+  }
 
   render() {
     const colorModeOptions = ['custom', 'critical', 'warning', 'ok'];
@@ -82,6 +98,9 @@ export class ThresholdEditor extends React.Component<IProps, any> {
             placeholder="value"
             value={this.state.thresholdValue}
             onChange={this.onInputChange}
+            ref={elem => {
+              this.valueElem = elem;
+            }}
           />
         </div>
 
@@ -98,16 +117,13 @@ export class ThresholdEditor extends React.Component<IProps, any> {
         </div>
 
         {this.props.threshold.mode === ThresholdMode.custom && (
-            <div className="gf-form">
-              <label className="gf-form-label">Color</label>
-              <span className="gf-form-label">
-                <ColorPicker
-                  color={this.props.threshold.color}
-                  onChange={this.onPropertyChange.bind(this, 'color')}
-                />
-              </span>
-            </div>
-          )}
+          <div className="gf-form">
+            <label className="gf-form-label">Color</label>
+            <span className="gf-form-label">
+              <ColorPicker color={this.props.threshold.color} onChange={this.onPropertyChange.bind(this, 'color')} />
+            </span>
+          </div>
+        )}
 
         <div className="gf-form">
           <label className="gf-form-label">
@@ -121,7 +137,10 @@ export class ThresholdEditor extends React.Component<IProps, any> {
   }
 }
 
-function toNumberOrEmptyString(value: string): number | string {
-  let num = Number(value);
-  return isNaN(num) || value === '' ? '' : num;
+function toNumberOrNull(value: string): number {
+  if (value === '' || value === null) {
+    return null;
+  }
+  const num = Number(value);
+  return isNaN(num) ? null : num;
 }
