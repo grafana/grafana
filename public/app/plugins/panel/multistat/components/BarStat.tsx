@@ -7,6 +7,7 @@ export interface IProps {
   size?: MultistatPanelSize;
   color?: string;
   options?: MultistatPanelOptions;
+  valueOutOfBar?: boolean;
 }
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
@@ -33,8 +34,8 @@ export class BarStat extends React.Component<IProps, any> {
       const barHeight = this.props.size.h * 0.8;
       barStyle.background = bgColor;
       barStyle.height = barHeight;
+      barStyle.width = this.props.size.w;
       barContainerStyle.lineHeight = `${barHeight}px`;
-      barContainerStyle.width = this.props.size.w;
       barContainerStyle.height = this.props.size.h;
     }
 
@@ -49,10 +50,19 @@ export class BarStat extends React.Component<IProps, any> {
           <span className="bar-label" ref={el => (this.labelElem = el)}>
             {stat.label}
           </span>
-          <span className="bar-value" style={valueStyle} ref={el => (this.valueElem = el)}>
-            {stat.valueFormatted}
-          </span>
+          {!this.props.valueOutOfBar && (
+            <span className="bar-value" style={valueStyle} ref={el => (this.valueElem = el)}>
+              {stat.valueFormatted}
+            </span>
+          )}
         </div>
+        {this.props.valueOutOfBar && (
+          <div className="multistat-bar-value-container">
+            <span className="bar-value" style={valueStyle} ref={el => (this.valueElem = el)}>
+              {stat.valueFormatted}
+            </span>
+          </div>
+        )}
       </div>
     );
   }

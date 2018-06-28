@@ -36,6 +36,11 @@
 
 .multistat-bar-container {
   padding: 0rem 0.4rem;
+  display: flex;
+}
+
+.multistat-bar-value-container {
+  margin-left: 1rem;
 }
 
 .multistat-bar {

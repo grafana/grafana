@@ -15,6 +15,12 @@ export class MultiStatBar extends React.Component<IProps, any> {
     super(props);
   }
 
+  placeValuesOutOfBar(barWidths): boolean {
+    const minBarWidth = _.min(barWidths);
+    const valuesOutOfBar = minBarWidth < 120;
+    return valuesOutOfBar;
+  }
+
   render() {
     const stats = this.props.stats || [];
     let barWidths = _.map(stats, () => null);
@@ -33,11 +39,21 @@ export class MultiStatBar extends React.Component<IProps, any> {
       barWidths[i] = Math.max(minWidth, width);
     });
     const barHeight = stats.length > 0 ? this.props.size.h / stats.length : 0;
+    const valueOutOfBar = this.placeValuesOutOfBar(barWidths);
 
     const statElements = stats.map((stat, index) => {
       const color = this.props.getColor(stat.value);
       const barSize = { w: barWidths[index], h: barHeight };
-      return <BarStat key={index} stat={stat} color={color} size={barSize} options={this.props.options} />;
+      return (
+        <BarStat
+          key={index}
+          stat={stat}
+          color={color}
+          size={barSize}
+          valueOutOfBar={valueOutOfBar}
+          options={this.props.options}
+        />
+      );
     });
 
     return <div>{statElements}</div>;
