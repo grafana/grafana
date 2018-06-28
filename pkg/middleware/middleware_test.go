@@ -315,61 +315,6 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("When auth_proxy is enabled and request has X-Forwarded-For that is not trusted", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
-				return nil
-			})
-
-			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-				cmd.Result = &m.User{Id: 33}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.req.Header.Add("X-Forwarded-For", "client-ip, 192.168.1.1, 192.168.1.2")
-			sc.exec()
-
-			Convey("should return 407 status code", func() {
-				So(sc.resp.Code, ShouldEqual, 407)
-				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 192.168.1.2 is not from the authentication proxy")
-			})
-		})
-
-		middlewareScenario("When auth_proxy is enabled and request has X-Forwarded-For that is trusted", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
-				return nil
-			})
-
-			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-				cmd.Result = &m.User{Id: 33}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.req.Header.Add("X-Forwarded-For", "client-ip, 192.168.1.2, 192.168.1.1")
-			sc.exec()
-
-			Convey("Should init context with user info", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 33)
-				So(sc.context.OrgId, ShouldEqual, 4)
-			})
-		})
-
 		middlewareScenario("When session exists for previous user, create a new session", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
