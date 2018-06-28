@@ -81,6 +81,14 @@ group_dn = "cn=users,dc=grafana,dc=org"
 org_role = "Editor"
 
 [[servers.group_mappings]]
+group_dn = "cn=team-1,cn=teams,dc=grafana,dc=org"
+# Please check notes related to Team Membership feature below
+team_id = 1
+# Optional mappings
+# org_id = 1
+# org_role = "Viewer"
+
+[[servers.group_mappings]]
 # If you want to match all (or no ldap groups) then you can use wildcard
 group_dn = "*"
 org_role = "Viewer"
@@ -122,18 +130,45 @@ group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
 Also change set `member_of = "cn"` in the `[servers.attributes]` section.
 
 
-## LDAP to Grafana Org Role Sync
+## LDAP to Grafana Org Role and Team Membership Sync
 
 ### Mappings
-In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization
-and role.  These will be synced every time the user logs in, with LDAP being
-the authoritative source.  So, if you change a user's role in the Grafana Org.
+In `[[servers.group_mappings]]` you can map an LDAP groups to a Grafana organization,
+role and team. These will be synced every time the user logs in, with LDAP being
+the authoritative source. So, if you change a user's role in the Grafana Org.
 Users page, this change will be reset the next time the user logs in. If you
 change the LDAP groups of a user, the change will take effect the next
 time the user logs in.
 
 ### Priority
-The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the TOML config will be used.
+If you have LDAP users that fit multiple mappings, the less restrictive role mapping in the
+TOML config will be used.
+
+Example:
+```
+[[servers.group_mappings]]
+group_dn = "cn=org-editor"
+org_role = "Editor"
+
+[[servers.group_mappings]]
+group_dn = "cn=org-admin"
+org_role = "Admin"
+
+[[servers.group_mappings]]
+group_dn = "*"
+org_role = "Viewer"
+```
+
+So, if user belongs to `cn=org-editor` and `cn=org-admin` groups, `org_role`
+will be set to `Admin`
 
 
+### Team Membership
+If no `team_id` is specified in TOML configuration file, team management feature will be
+completely disabled. If any `group_mappings` entry is configured  with `team_id`,
+automatic team management will take place, but, **only for that particular organisation**. 
 
+So, any manual team assignments for LDAP-enabled accounts within organisation with enabled 
+automatic team membership feature, changes will be reset each time user logs in.
+If you change the LDAP groups of user, the change will take effect the next time
+the user logs in.

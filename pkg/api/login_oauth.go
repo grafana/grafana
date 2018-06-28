@@ -153,12 +153,14 @@ func OAuthLogin(ctx *m.ReqContext) {
 	}
 
 	extUser := &m.ExternalUserInfo{
-		AuthModule: "oauth_" + name,
-		AuthId:     userInfo.Id,
-		Name:       userInfo.Name,
-		Login:      userInfo.Login,
-		Email:      userInfo.Email,
-		OrgRoles:   map[int64]m.RoleType{},
+		AuthModule:  "oauth_" + name,
+		AuthId:      userInfo.Id,
+		Name:        userInfo.Name,
+		Login:       userInfo.Login,
+		Email:       userInfo.Email,
+		OrgRoles:    map[int64]m.RoleType{},
+		OrgTeams:    map[int64][]int64{},
+		HandleTeams: map[int64]bool{},
 	}
 
 	if userInfo.Role != "" {
