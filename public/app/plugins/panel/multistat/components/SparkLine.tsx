@@ -29,8 +29,11 @@ export class SparkLine extends React.Component<IProps, any> {
   componentDidUpdate(prevProps) {
     // console.log('componentDidUpdate');
     const width = this.props.size.w - 10;
-
     const height = this.props.size.h;
+    if (width <= 0 || height <= 0) {
+      return;
+    }
+
     let plotCss: any = {};
     plotCss.position = 'absolute';
 
