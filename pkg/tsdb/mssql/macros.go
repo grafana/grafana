@@ -83,11 +83,11 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 
-		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], time.Unix(m.TimeRange.GetFromAsSecondsEpoch(), 0), time.Unix(m.TimeRange.GetToAsSecondsEpoch(), 0)), nil
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("'%s'", time.Unix(m.TimeRange.GetFromAsSecondsEpoch(), 0)), nil
+		return fmt.Sprintf("'%s'", m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeTo":
-		return fmt.Sprintf("'%s'", time.Unix(m.TimeRange.GetToAsSecondsEpoch(), 0)), nil
+		return fmt.Sprintf("'%s'", m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
