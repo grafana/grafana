@@ -88,7 +88,7 @@ export class DatasourceSrv {
 
   getMetricSources(options) {
     var metricSources = [];
-    console.log(config.datasources);
+
     _.each(config.datasources, function(value, key) {
       if (value.meta && value.meta.metrics) {
         metricSources.push({ value: key, name: key, meta: value.meta });
@@ -102,7 +102,7 @@ export class DatasourceSrv {
     if (!options || !options.skipVariables) {
       this.addDataSourceVariables(metricSources);
     }
-    console.log(metricSources);
+
     metricSources.sort(function(a, b) {
       console.log(`Comparing ${a.name} and ${b.name}`);
       // these two should always be at the bottom
@@ -120,6 +120,13 @@ export class DatasourceSrv {
       }
       return 0;
     });
+
+    //at this point grafana and mixed are at the bottom, but depening on the .sort() implementation they can have switched places
+    if (metricSources[metricSources.length - 1].meta.id === 'grafana') {
+      let grafana = metricSources[metricSources.length - 1];
+      metricSources[metricSources.length - 1] = metricSources[metricSources.length - 2];
+      metricSources[metricSources.length - 2] = grafana;
+    }
 
     return metricSources;
   }

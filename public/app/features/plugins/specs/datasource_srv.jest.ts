@@ -49,7 +49,6 @@ describe('datasource_srv', function() {
       },
     };
     beforeEach(() => {
-      //console.log(unsortedDatasources);
       config.datasources = unsortedDatasources;
       metricSources = _datasourceSrv.getMetricSources({ skipVariables: true });
     });
