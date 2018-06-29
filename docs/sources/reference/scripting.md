@@ -23,10 +23,6 @@ If you open scripted.js you can see how it reads url parameters from ARGS variab
 ```javascript
 var seriesName = 'argName';
 
-if(!_.isUndefined(ARGS.rows)) {
-  rows = parseInt(ARGS.rows, 10);
-}
-
 if(!_.isUndefined(ARGS.name)) {
   seriesName = ARGS.name;
 }
