@@ -12,6 +12,7 @@ import (
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -320,6 +321,37 @@ func TestDSRouteRule(t *testing.T) {
 			interpolated, err := interpolateString("{{.SecureJsonData.Test}}", data)
 			So(err, ShouldBeNil)
 			So(interpolated, ShouldEqual, "0asd+asd")
+		})
+
+		Convey("When proxying a data source with custom headers specified", func() {
+			plugin := &plugins.DataSourcePlugin{}
+
+			encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
+			ds := &m.DataSource{
+				Type: m.DS_PROMETHEUS,
+				Url:  "http://prometheus:9090",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"httpHeaderName1": "Authorization",
+				}),
+				SecureJsonData: map[string][]byte{
+					"httpHeaderValue1": encryptedData,
+				},
+			}
+
+			ctx := &m.ReqContext{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
+
+			requestURL, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestURL, Header: make(http.Header)}
+			proxy.getDirector()(&req)
+
+			if err != nil {
+				log.Fatal(4, err.Error())
+			}
+
+			Convey("Match header value after decryption", func() {
+				So(req.Header.Get("Authorization"), ShouldEqual, "Bearer xf5yhfkpsnmgo")
+			})
 		})
 
 	})
