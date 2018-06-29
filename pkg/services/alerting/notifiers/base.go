@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -66,14 +67,14 @@ func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequ
 }
 
 // ShouldNotify checks this evaluation should send an alert notification
-func (n *NotifierBase) ShouldNotify(c *alerting.EvalContext) bool {
+func (n *NotifierBase) ShouldNotify(ctx context.Context, c *alerting.EvalContext) bool {
 	cmd := &models.GetLatestNotificationQuery{
 		OrgId:      c.Rule.OrgId,
 		AlertId:    c.Rule.Id,
 		NotifierId: n.Id,
 	}
 
-	err := bus.DispatchCtx(c.Ctx, cmd)
+	err := bus.DispatchCtx(ctx, cmd)
 	if err == models.ErrJournalingNotFound {
 		return true
 	}

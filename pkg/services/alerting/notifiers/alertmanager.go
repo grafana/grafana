@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -45,7 +46,7 @@ type AlertmanagerNotifier struct {
 	log log.Logger
 }
 
-func (this *AlertmanagerNotifier) ShouldNotify(evalContext *alerting.EvalContext) bool {
+func (this *AlertmanagerNotifier) ShouldNotify(ctx context.Context, evalContext *alerting.EvalContext) bool {
 	this.log.Debug("Should notify", "ruleId", evalContext.Rule.Id, "state", evalContext.Rule.State, "previousState", evalContext.PrevAlertState)
 
 	// Do not notify when we become OK for the first time.

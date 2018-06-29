@@ -72,7 +72,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 
 				// Verify that we can send the notification again
 				// but this time within the same transaction.
-				if !evalContext.IsTestRun && !not.ShouldNotify(evalContext) {
+				if !evalContext.IsTestRun && !not.ShouldNotify(context.Background(), evalContext) {
 					return nil
 				}
 
@@ -91,7 +91,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 					Success:    success,
 				}
 
-				return bus.DispatchCtx(evalContext.Ctx, cmd)
+				return bus.DispatchCtx(ctx, cmd)
 			})
 		})
 	}
@@ -149,7 +149,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 			return nil, err
 		}
 
-		if not.ShouldNotify(evalContext) {
+		if not.ShouldNotify(evalContext.Ctx, evalContext) {
 			result = append(result, not)
 		}
 	}

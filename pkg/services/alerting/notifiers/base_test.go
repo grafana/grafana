@@ -92,7 +92,7 @@ func TestShouldNotifyWhenNoJournalingIsFound(t *testing.T) {
 				return m.ErrJournalingNotFound
 			})
 
-			if !notifier.ShouldNotify(evalContext) {
+			if !notifier.ShouldNotify(context.Background(), evalContext) {
 				t.Errorf("should send notifications when ErrJournalingNotFound is returned")
 			}
 		})
@@ -102,7 +102,7 @@ func TestShouldNotifyWhenNoJournalingIsFound(t *testing.T) {
 				return errors.New("some kind of error unknown error")
 			})
 
-			if notifier.ShouldNotify(evalContext) {
+			if notifier.ShouldNotify(context.Background(), evalContext) {
 				t.Errorf("should not send notifications when query returns error")
 			}
 		})
