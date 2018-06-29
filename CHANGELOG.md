@@ -9,7 +9,7 @@
 * **Dashboard**: Fix selecting current dashboard from search should not reload dashboard [#12248](https://github.com/grafana/grafana/issues/12248)
 * **Singlestat**: Make colorization of prefix and postfix optional in singlestat [#11892](https://github.com/grafana/grafana/pull/11892), thx [@ApsOps](https://github.com/ApsOps)
 
-# 5.2.1 (unreleased)
+# 5.2.1 (2018-06-29)
 
 ### Minor
 
