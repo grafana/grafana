@@ -1,9 +1,8 @@
 $login-border: #8daac5;
 
 .login {
-  background-position: center;
   min-height: 85vh;
-  height: 80vh;
+  background-position: center;
   background-repeat: no-repeat;
   min-width: 100%;
   margin-left: 0;
@@ -95,7 +94,7 @@ select:-webkit-autofill:focus {
   position: relative;
   justify-content: center;
   z-index: 1;
-  height: 320px;
+  min-height: 320px;
 }
 
 .login-branding {
@@ -106,6 +105,7 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: center;
   flex-grow: 0;
+  padding-top: 2rem;
 
   .logo-icon {
     width: 70px;
@@ -127,7 +127,7 @@ select:-webkit-autofill:focus {
 
 .login-inner-box {
   text-align: center;
-  padding: 2rem 4rem;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -243,7 +243,7 @@ select:-webkit-autofill:focus {
   justify-content: space-between;
 
   .login-divider-line {
-    width: 110px;
+    width: 100px;
     height: 10px;
     border-bottom: 1px solid $login-border;
 
@@ -323,7 +323,10 @@ select:-webkit-autofill:focus {
     width: 35%;
     padding: 4rem 2rem;
     border-right: 1px solid $login-border;
-    justify-content: flex-start;
+
+    .logo-icon {
+      width: 80px;
+    }
   }
 
   .login-inner-box {
@@ -331,14 +334,18 @@ select:-webkit-autofill:focus {
     padding: 1rem 2rem;
   }
 
-  .login-branding {
-    .logo-icon {
-      width: 80px;
+  .login-divider {
+    .login-divider-line {
+      width: 110px;
     }
   }
 }
 
 @include media-breakpoint-up(md) {
+  .login {
+    min-height: 100vh;
+  }
+
   .login-content {
     flex: 1 0 100%;
   }
@@ -373,10 +380,6 @@ select:-webkit-autofill:focus {
 }
 
 @include media-breakpoint-up(lg) {
-  .login {
-    min-height: 100vh;
-  }
-
   .login-form-input {
     min-width: 300px;
   }

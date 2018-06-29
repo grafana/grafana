@@ -1,17 +1,17 @@
-import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import '../annotations_srv';
-import helpers from 'test/specs/helpers';
 import 'app/features/dashboard/time_srv';
+import { AnnotationsSrv } from '../annotations_srv';
 
 describe('AnnotationsSrv', function() {
-  var ctx = new helpers.ServiceTestContext();
+  let $rootScope = {
+    onAppEvent: jest.fn(),
+  };
+  let $q;
+  let datasourceSrv;
+  let backendSrv;
+  let timeSrv;
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.createService('timeSrv'));
-  beforeEach(() => {
-    ctx.createService('annotationsSrv');
-  });
+  let annotationsSrv = new AnnotationsSrv($rootScope, $q, datasourceSrv, backendSrv, timeSrv);
 
   describe('When translating the query result', () => {
     const annotationSource = {
@@ -30,11 +30,11 @@ describe('AnnotationsSrv', function() {
     let translatedAnnotations;
 
     beforeEach(() => {
-      translatedAnnotations = ctx.service.translateQueryResult(annotationSource, annotations);
+      translatedAnnotations = annotationsSrv.translateQueryResult(annotationSource, annotations);
     });
 
     it('should set defaults', () => {
-      expect(translatedAnnotations[0].source).to.eql(annotationSource);
+      expect(translatedAnnotations[0].source).toEqual(annotationSource);
     });
   });
 });

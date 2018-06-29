@@ -185,6 +185,8 @@ func (g *GrafanaServerImpl) Exit(reason error) {
 	}
 
 	g.log.Error("Server shutdown", "reason", reason)
+
+	log.Close()
 	os.Exit(code)
 }
 
