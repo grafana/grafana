@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/log"
@@ -61,42 +59,42 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 }
 
 func (n *notificationService) sendNotifications(evalContext *EvalContext, notifiers []Notifier) error {
-	g, _ := errgroup.WithContext(evalContext.Ctx)
-
 	for _, notifier := range notifiers {
-		not := notifier //avoid updating scope variable in go routine
+		not := notifier
 
-		g.Go(func() error {
-			return bus.InTransaction(evalContext.Ctx, func(ctx context.Context) error {
-				n.log.Debug("trying to send notification", "id", not.GetNotifierId())
+		err := bus.InTransaction(evalContext.Ctx, func(ctx context.Context) error {
+			n.log.Debug("trying to send notification", "id", not.GetNotifierId())
 
-				// Verify that we can send the notification again
-				// but this time within the same transaction.
-				if !evalContext.IsTestRun && !not.ShouldNotify(context.Background(), evalContext) {
-					return nil
-				}
+			// Verify that we can send the notification again
+			// but this time within the same transaction.
+			if !evalContext.IsTestRun && !not.ShouldNotify(context.Background(), evalContext) {
+				return nil
+			}
 
-				n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
-				metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
+			n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+			metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
 
-				//send notification
-				success := not.Notify(evalContext) == nil
+			//send notification
+			success := not.Notify(evalContext) == nil
 
-				//write result to db.
-				cmd := &m.RecordNotificationJournalCommand{
-					OrgId:      evalContext.Rule.OrgId,
-					AlertId:    evalContext.Rule.Id,
-					NotifierId: not.GetNotifierId(),
-					SentAt:     time.Now().Unix(),
-					Success:    success,
-				}
+			//write result to db.
+			cmd := &m.RecordNotificationJournalCommand{
+				OrgId:      evalContext.Rule.OrgId,
+				AlertId:    evalContext.Rule.Id,
+				NotifierId: not.GetNotifierId(),
+				SentAt:     time.Now().Unix(),
+				Success:    success,
+			}
 
-				return bus.DispatchCtx(ctx, cmd)
-			})
+			return bus.DispatchCtx(ctx, cmd)
 		})
+
+		if err != nil {
+			return err
+		}
 	}
 
-	return g.Wait()
+	return nil
 }
 
 func (n *notificationService) uploadImage(context *EvalContext) (err error) {
