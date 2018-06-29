@@ -1,4 +1,3 @@
-//import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -6,20 +5,6 @@ import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 describe('datasource_srv', function() {
   let _datasourceSrv = new DatasourceSrv({}, {}, {}, {});
   let metricSources;
-  //var templateSrv = {};
-
-  // beforeEach(angularMocks.module('grafana.core'));
-  // beforeEach(
-  //   angularMocks.module(function($provide) {
-  //     $provide.value('templateSrv', templateSrv);
-  //   })
-  // );
-  // beforeEach(angularMocks.module('grafana.services'));
-  // beforeEach(
-  //   angularMocks.inject(function(datasourceSrv) {
-  //     _datasourceSrv = datasourceSrv;
-  //   })
-  // );
 
   describe('when loading metric sources', () => {
     let unsortedDatasources = {
