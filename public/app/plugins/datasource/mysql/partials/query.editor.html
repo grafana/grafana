@@ -48,7 +48,7 @@ Table:
 Macros:
 - $__time(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
 - $__timeEpoch(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
-- $__timeFilter(column) -&gt;  UNIX_TIMESTAMP(time_date_time) &ge; 1492750877 AND UNIX_TIMESTAMP(time_date_time) &le; 1492750877
+- $__timeFilter(column) -&gt; column BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:01:17Z'
 - $__unixEpochFilter(column) -&gt;  time_unix_epoch &gt; 1492750877 AND time_unix_epoch &lt; 1492750877
 - $__timeGroup(column,'5m') -&gt; cast(cast(UNIX_TIMESTAMP(column)/(300) as signed)*300 as signed)
 
@@ -61,8 +61,8 @@ GROUP BY 1
 ORDER BY 1
 
 Or build your own conditionals using these macros which just return the values:
-- $__timeFrom() -&gt;  FROM_UNIXTIME(1492750877)
-- $__timeTo() -&gt;  FROM_UNIXTIME(1492750877)
+- $__timeFrom() -&gt;  '2017-04-21T05:01:17Z'
+- $__timeTo() -&gt;  '2017-04-21T05:01:17Z'
 - $__unixEpochFrom() -&gt;  1492750877
 - $__unixEpochTo() -&gt;  1492750877
 		</pre>
