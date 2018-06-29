@@ -72,11 +72,6 @@ type GetAuthInfoQuery struct {
 	Result *UserAuth
 }
 
-type SyncOrgRolesCommand struct {
-	ExternalUser *ExternalUserInfo
-	User         *User
-}
-
 type SyncTeamsCommand struct {
 	ExternalUser *ExternalUserInfo
 	User         *User

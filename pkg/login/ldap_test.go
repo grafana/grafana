@@ -17,10 +17,6 @@ func TestLdapAuther(t *testing.T) {
 
 		var user1 = &m.User{}
 
-		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.SyncOrgRolesCommand) error {
-			return nil
-		})
-
 		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpsertUserCommand) error {
 			cmd.Result = user1
 			cmd.Result.Login = "torkelo"
