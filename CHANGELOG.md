@@ -13,7 +13,7 @@
 
 ### Minor
 
-* **Auth Proxy**: Revert of "Whitelist proxy IP address instead of client IP address" introduced in 5.2.0-beta2 [#12444](https://github.com/grafana/grafana/pull/12444)
+* **Auth Proxy**: Important security fix for whitelist of IP address feature [#12444](https://github.com/grafana/grafana/pull/12444)
 * **UI**: Fix - Grafana footer overlapping page [#12430](https://github.com/grafana/grafana/issues/12430)
 * **Logging**: Errors should be reported before crashing [#12438](https://github.com/grafana/grafana/issues/12438)
 
