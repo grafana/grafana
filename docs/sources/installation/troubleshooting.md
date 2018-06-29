@@ -21,7 +21,7 @@ the data source response.
 
 To check this you should use Query Inspector (new in Grafana v4.5). The query Inspector shows query requests and responses.
 
-For more on the query insector read [this guide here](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630). For
+For more on the query inspector read [this guide here](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630). For
 older versions of Grafana read the [how troubleshoot metric query issue](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50/2) article.
 
 ## Logging

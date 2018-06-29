@@ -15,42 +15,49 @@ weight = 2
 
 Description | Download
 ------------ | -------------
-Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [5.1.4 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.4-1.x86_64.rpm)
-<!--
-Latest Beta for CentOS / Fedora / OpenSuse / Redhat Linux | [5.1.0-beta1 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.0-beta1.x86_64.rpm)
--->
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [x86-64](https://grafana.com/grafana/download?platform=linux)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [ARM64](https://grafana.com/grafana/download?platform=arm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [ARMv7](https://grafana.com/grafana/download?platform=arm)
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
-installation.
+Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
 ## Install Stable
 
 You can install Grafana using Yum directly.
 
 ```bash
+$ sudo yum install <rpm package url>
+```
+
+Example:
+
+```bash
 $ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.4-1.x86_64.rpm
 ```
 
-<!-- ## Install Beta
+Or install manually using `rpm`. First execute
 
 ```bash
-$ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.0-beta1.x86_64.rpm
-``` -->
+$ wget <rpm package url>
+```
 
-Or install manually using `rpm`.
-
-#### On CentOS / Fedora / Redhat:
+Example:
 
 ```bash
 $ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.4-1.x86_64.rpm
-$ sudo yum install initscripts fontconfig
-$ sudo rpm -Uvh grafana-5.1.4-1.x86_64.rpm
 ```
 
-#### On OpenSuse:
+### On CentOS / Fedora / Redhat:
 
 ```bash
-$ sudo rpm -i --nodeps grafana-5.1.4-1.x86_64.rpm
+$ sudo yum install initscripts fontconfig
+$ sudo rpm -Uvh <local rpm package>
+```
+
+### On OpenSuse:
+
+```bash
+$ sudo rpm -i --nodeps <local rpm package>
 ```
 
 ## Install via YUM Repository
