@@ -12,34 +12,34 @@ describe('Prometheus editor completer', function() {
 
   function getSessionStub(data) {
     return {
-      getTokenAt:jest.fn(()=> (data.currentToken)),
-      getTokens:jest.fn(()=> (data.tokens)),
-      getLine:jest.fn(()=> (data.line)),
+      getTokenAt: jest.fn(() => data.currentToken),
+      getTokens: jest.fn(() => data.tokens),
+      getLine: jest.fn(() => data.line),
     };
   }
 
   let editor = {};
 
-  let backendSrv = <BackendSrv>{}
-  let datasourceStub = new PrometheusDatasource({},{},backendSrv,{},{});
+  let backendSrv = <BackendSrv>{};
+  let datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
 
-  datasourceStub.performInstantQuery = jest.fn(() => Promise.resolve({
-            data: {
-              data: {
-                result: [
-                  {
-                    metric: {
-                      job: 'node',
-                      instance: 'localhost:9100',
-                    },
-                  },
-                ],
+  datasourceStub.performInstantQuery = jest.fn(() =>
+    Promise.resolve({
+      data: {
+        data: {
+          result: [
+            {
+              metric: {
+                job: 'node',
+                instance: 'localhost:9100',
               },
             },
-          })
-        );
+          ],
+        },
+      },
+    })
+  );
   datasourceStub.performSuggestQuery = jest.fn(() => Promise.resolve(['node_cpu']));
-
 
   let templateSrv = {
     variables: [
