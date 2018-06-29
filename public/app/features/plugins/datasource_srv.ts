@@ -104,6 +104,7 @@ export class DatasourceSrv {
     }
 
     metricSources.sort(function(a, b) {
+      console.log(`Comparing ${a.name} and ${b.name}`);
       // these two should always be at the bottom
       if (a.meta.id === 'mixed' || a.meta.id === 'grafana') {
         return 1;
