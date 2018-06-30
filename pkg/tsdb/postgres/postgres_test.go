@@ -249,11 +249,11 @@ func TestPostgres(t *testing.T) {
 					dt = dt.Add(5 * time.Minute)
 				}
 
-				// check for NULL values insert by fill
+				// check for NULL values inserted by fill
 				So(points[2][0].Valid, ShouldBeFalse)
 				So(points[3][0].Valid, ShouldBeFalse)
 
-				// adjust for 10 minute gap between first and second set of data
+				// adjust for 10 minute gap between first and second set of points
 				dt = dt.Add(10 * time.Minute)
 				for i := 4; i < 6; i++ {
 					aValue := points[i][0].Float64
@@ -263,7 +263,7 @@ func TestPostgres(t *testing.T) {
 					dt = dt.Add(5 * time.Minute)
 				}
 
-				// check for NULL values insert by fill
+				// check for NULL values inserted by fill
 				So(points[6][0].Valid, ShouldBeFalse)
 
 			})
