@@ -88,10 +88,11 @@ func main() {
 
 	err := server.Run()
 
+	code := server.Exit(err)
 	trace.Stop()
 	log.Close()
 
-	server.Exit(err)
+	os.Exit(code)
 }
 
 func listenToSystemSignals(server *GrafanaServerImpl) {

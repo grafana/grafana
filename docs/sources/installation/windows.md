@@ -12,16 +12,14 @@ weight = 3
 
 Description | Download
 ------------ | -------------
-Latest stable package for Windows | [grafana-5.1.4.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.1.4.windows-x64.zip)
-
-<!--
-Latest beta package for Windows | [grafana.5.1.0-beta1.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.0.0-beta5.windows-x64.zip)
--->
+Latest stable package for Windows | [x64](https://grafana.com/grafana/download?platform=windows)
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
 ## Configure
+
+**Important:** After you've downloaded the zip file and before extracting it, make sure to open properties for that file (right-click Properties) and check the `unblock` checkbox and `Ok`.
 
 The zip file contains a folder with the current Grafana version. Extract
 this folder to anywhere you want Grafana to run from.  Go into the
