@@ -32,7 +32,7 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
   // look for existing aggregation
   for (var i = 0; i < selectParts.length; i++) {
     var part = selectParts[i];
-    if (part.def.type === "aggregate") {
+    if (part.def.type === 'aggregate') {
       selectParts[i] = partModel;
       return;
     }
@@ -83,6 +83,15 @@ function addColumnStrategy(selectParts, partModel, query) {
   query.selectModels.push(parts);
 }
 
+function addExpressionStrategy(selectParts, partModel, query) {
+  // copy all parts
+  var parts = _.map(selectParts, function(part: any) {
+    return createPart({ type: part.def.type, params: _.clone(part.params) });
+  });
+
+  query.selectModels.push(parts);
+}
+
 register({
   type: 'column',
   style: 'label',
@@ -93,10 +102,24 @@ register({
 });
 
 register({
+  type: 'expression',
+  style: 'expression',
+  label: 'Expr:',
+  addStrategy: addExpressionStrategy,
+  params: [
+    { name: 'left', type: 'string', dynamicLookup: true },
+    { name: 'op', type: 'string', dynamicLookup: true },
+    { name: 'right', type: 'string', dynamicLookup: true },
+  ],
+  defaultParams: ['value', '=', 'value'],
+  renderer: columnRenderer,
+});
+
+register({
   type: 'aggregate',
   style: 'label',
   addStrategy: replaceAggregationAddStrategy,
-  params: [{name: 'name', type: 'string', dynamicLookup: true}],
+  params: [{ name: 'name', type: 'string', dynamicLookup: true }],
   defaultParams: ['avg'],
   renderer: aggregateRenderer,
 });
@@ -136,7 +159,7 @@ register({
       options: ['none', 'NULL', '0'],
     },
   ],
-  defaultParams: ['$__interval','none'],
+  defaultParams: ['$__interval', 'none'],
   renderer: functionRenderer,
 });
 

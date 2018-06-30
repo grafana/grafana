@@ -1,8 +1,8 @@
-import angular from 'angular';
 import _ from 'lodash';
 import { PostgresQueryBuilder } from './query_builder';
 import { QueryCtrl } from 'app/plugins/sdk';
 import PostgresQuery from './postgres_query';
+import sqlPart from './query_part';
 
 export interface QueryMeta {
   sql: string;
@@ -30,11 +30,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
   schemaSegment: any;
   tableSegment: any;
   whereSegments: any;
+  whereAdd: any;
   timeColumnSegment: any;
   metricColumnSegment: any;
   selectMenu: any;
   groupBySegment: any;
-  removeWhereFilterSegment: any;
 
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
@@ -55,12 +55,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
       }
     }
 
-    this.schemaSegment= uiSegmentSrv.newSegment(this.target.schema);
+    this.schemaSegment = uiSegmentSrv.newSegment(this.target.schema);
 
     if (!this.target.table) {
-      this.tableSegment = uiSegmentSrv.newSegment({value: 'select table',fake: true});
+      this.tableSegment = uiSegmentSrv.newSegment({ value: 'select table', fake: true });
     } else {
-      this.tableSegment= uiSegmentSrv.newSegment(this.target.table);
+      this.tableSegment = uiSegmentSrv.newSegment(this.target.table);
     }
 
     this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
@@ -68,23 +68,19 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     this.buildSelectMenu();
     this.buildWhereSegments();
+    this.whereAdd = this.uiSegmentSrv.newPlusButton();
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
 
-    this.removeWhereFilterSegment = uiSegmentSrv.newSegment({
-      fake: true,
-      value: '-- remove filter --',
-    });
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
-
   }
 
   buildSelectMenu() {
     this.selectMenu = [
-      {text: "aggregate", value: "aggregate"},
-      {text: "math", value: "math"},
-      {text: "alias", value: "alias"},
-      {text: "column", value: "column"},
+      { text: 'Aggregate', value: 'aggregate' },
+      { text: 'Math', value: 'math' },
+      { text: 'Alias', value: 'alias' },
+      { text: 'Column', value: 'column' },
     ];
   }
 
@@ -108,14 +104,14 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   getTimeColumnSegments() {
     return this.datasource
-      .metricFindQuery(this.queryBuilder.buildColumnQuery("time"))
+      .metricFindQuery(this.queryBuilder.buildColumnQuery('time'))
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));
   }
 
   getMetricColumnSegments() {
     return this.datasource
-      .metricFindQuery(this.queryBuilder.buildColumnQuery("metric"))
+      .metricFindQuery(this.queryBuilder.buildColumnQuery('metric'))
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));
   }
@@ -186,7 +182,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   addSelectPart(selectParts, cat, subitem) {
-    if ("submenu" in cat) {
+    if ('submenu' in cat) {
       this.queryModel.addSelectPart(selectParts, subitem.value);
     } else {
       this.queryModel.addSelectPart(selectParts, cat.value);
@@ -198,18 +194,17 @@ export class PostgresQueryCtrl extends QueryCtrl {
     switch (evt.name) {
       case 'get-param-options': {
         switch (part.def.type) {
-          case "aggregate":
+          case 'aggregate':
             return this.datasource
               .metricFindQuery(this.queryBuilder.buildAggregateQuery())
               .then(this.transformToSegments(false))
               .catch(this.handleQueryError.bind(this));
-          case "column":
+          case 'column':
             return this.datasource
-              .metricFindQuery(this.queryBuilder.buildColumnQuery("value"))
+              .metricFindQuery(this.queryBuilder.buildColumnQuery('value'))
               .then(this.transformToSegments(true))
               .catch(this.handleQueryError.bind(this));
         }
-
       }
       case 'part-param-changed': {
         this.panelCtrl.refresh();
@@ -251,125 +246,75 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   buildWhereSegments() {
     this.whereSegments = [];
-    for (let constraint of this.target.where) {
-
-      if (constraint.condition) {
-        this.whereSegments.push(this.uiSegmentSrv.newCondition(constraint.condition));
-      }
-      this.whereSegments.push(this.uiSegmentSrv.newKey(constraint.key));
-      this.whereSegments.push(this.uiSegmentSrv.newOperator(constraint.operator));
-      this.whereSegments.push(this.uiSegmentSrv.newKeyValue(constraint.value));
-    }
-
-    var count = this.whereSegments.length;
-    var lastSegment = this.whereSegments[Math.max(count - 1, 0)];
-
-    if (!lastSegment || lastSegment.type !== 'plus-button') {
-      this.whereSegments.push(this.uiSegmentSrv.newPlusButton());
-    }
+    this.whereSegments.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
+    //    for (let constraint of this.target.where) {
+    //
+    //      this.whereSegments.push(sqlPart.create({type: 'column',params: ['1']}));
+    //      if (constraint.condition) {
+    //        this.whereSegments.push(this.uiSegmentSrv.newCondition(constraint.condition));
+    //      }
+    //      this.whereSegments.push(this.uiSegmentSrv.newKey(constraint.key));
+    //      this.whereSegments.push(this.uiSegmentSrv.newOperator(constraint.operator));
+    //      this.whereSegments.push(this.uiSegmentSrv.newKeyValue(constraint.value));
+    //    }
   }
 
-  getWhereSegments(segment, index) {
-    var query, addTemplateVars;
-
-    if (segment.type === 'condition') {
-      return this.$q.when([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
-    }
-    if (segment.type === 'operator') {
-      var columnName = this.whereSegments[index - 1].value;
-      query = this.queryBuilder.buildDatatypeQuery(columnName);
-      return this.datasource.metricFindQuery(query)
-      .then(results => {
-        var datatype = results[0].text;
-        switch (datatype) {
-          case "text":
-          case "character":
-          case "character varying":
-            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '~', '~*','!~','!~*','IN']));
+  handleWherePartEvent(whereParts, part, evt, index) {
+    switch (evt.name) {
+      case 'get-param-options': {
+        switch (evt.param.name) {
+          case 'left':
+            return this.datasource
+              .metricFindQuery(this.queryBuilder.buildColumnQuery())
+              .then(this.transformToSegments(false))
+              .catch(this.handleQueryError.bind(this));
+          case 'right':
+            return this.datasource
+              .metricFindQuery(this.queryBuilder.buildValueQuery(part.params[0]))
+              .then(this.transformToSegments(true))
+              .catch(this.handleQueryError.bind(this));
+          case 'op':
+            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=', 'IN']));
           default:
-            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=']));
+            return Promise.resolve([]);
         }
-      })
-      .catch(this.handleQueryError.bind(this));
+      }
+      case 'part-param-changed': {
+        this.panelCtrl.refresh();
+        break;
+      }
+      case 'action': {
+        whereParts.splice(whereParts.indexOf(part), 1);
+        this.panelCtrl.refresh();
+        break;
+      }
+      case 'get-part-actions': {
+        return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
+      }
     }
-
-    if (segment.type === 'key' || segment.type === 'plus-button') {
-      query = this.queryBuilder.buildColumnQuery();
-
-      addTemplateVars = false;
-    } else if (segment.type === 'value') {
-      query = this.queryBuilder.buildValueQuery(this.whereSegments[index -2].value);
-      addTemplateVars = true;
-    }
-
-    return this.datasource
-      .metricFindQuery(query)
-      .then(this.transformToSegments(addTemplateVars))
-      .then(results => {
-        if (segment.type === 'key') {
-          results.splice(0, 0, angular.copy(this.removeWhereFilterSegment));
-        }
-        return results;
-      })
-      .catch(this.handleQueryError.bind(this));
   }
 
-  whereSegmentUpdated(segment, index) {
-    this.whereSegments[index] = segment;
+  getWhereOptions() {
+    var options = [];
+    options.push(this.uiSegmentSrv.newSegment({ type: 'function', value: '$__timeFilter' }));
+    options.push(this.uiSegmentSrv.newSegment({ type: 'function', value: '$__unixEpochFilter' }));
+    options.push(this.uiSegmentSrv.newSegment({ type: 'function', value: 'Expression' }));
+    return Promise.resolve(options);
+  }
 
-    // handle remove where condition
-    if (segment.value === this.removeWhereFilterSegment.value) {
-      this.whereSegments.splice(index, 3);
-      if (this.whereSegments.length === 0) {
-        this.whereSegments.push(this.uiSegmentSrv.newPlusButton());
-      } else if (this.whereSegments.length > 2) {
-        this.whereSegments.splice(Math.max(index - 1, 0), 1);
-        if (this.whereSegments[this.whereSegments.length - 1].type !== 'plus-button') {
-          this.whereSegments.push(this.uiSegmentSrv.newPlusButton());
-        }
+  whereAddAction(part, index) {
+    switch (this.whereAdd.type) {
+      case 'macro': {
+        this.whereSegments.push(
+          sqlPart.create({ type: 'function', name: this.whereAdd.value, params: ['value', '=', 'value'] })
+        );
       }
-    } else {
-      if (segment.type === 'plus-button') {
-        if (index > 2) {
-          this.whereSegments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
-        }
-        this.whereSegments.push(this.uiSegmentSrv.newOperator('='));
-        this.whereSegments.push(this.uiSegmentSrv.newFake('select value', 'value', 'query-segment-value'));
-        segment.type = 'key';
-        segment.cssClass = 'query-segment-key';
-      }
-
-      if (index + 1 === this.whereSegments.length) {
-        this.whereSegments.push(this.uiSegmentSrv.newPlusButton());
+      default: {
+        this.whereSegments.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
       }
     }
 
-    this.rebuildTargetWhereConditions();
-  }
-
-  rebuildTargetWhereConditions() {
-    var where = [];
-    var tagIndex = 0;
-
-    _.each(this.whereSegments, (segment2, index) => {
-      if (segment2.type === 'key') {
-        if (where.length === 0) {
-          where.push({});
-        }
-        where[tagIndex].key = segment2.value;
-      } else if (segment2.type === 'value') {
-        where[tagIndex].value = segment2.value;
-      } else if (segment2.type === 'template') {
-        where[tagIndex].value = segment2.value;
-      } else if (segment2.type === 'condition') {
-        where.push({ condition: segment2.value });
-        tagIndex += 1;
-      } else if (segment2.type === 'operator') {
-        where[tagIndex].operator = segment2.value;
-      }
-    });
-
-    this.target.where = where;
+    this.whereAdd = this.uiSegmentSrv.newPlusButton();
     this.panelCtrl.refresh();
   }
 
@@ -406,5 +351,4 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.error = err.message || 'Failed to issue metric query';
     return [];
   }
-
 }
