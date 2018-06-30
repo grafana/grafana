@@ -90,7 +90,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 		})
 
 		if err != nil {
-			return err
+			n.log.Error("failed to send notification", "id", not.GetNotifierId())
 		}
 	}
 
