@@ -256,7 +256,7 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Error, ShouldBeNil)
 
 				points := queryResult.Series[0].Points
-				// So(len(points), ShouldEqual, 7)
+				So(len(points), ShouldEqual, 7)
 
 				dt := fromStart
 
