@@ -175,7 +175,7 @@ func (g *GrafanaServerImpl) Shutdown(reason string) {
 	g.childRoutines.Wait()
 }
 
-func (g *GrafanaServerImpl) Exit(reason error) {
+func (g *GrafanaServerImpl) Exit(reason error) int {
 	// default exit code is 1
 	code := 1
 
@@ -185,9 +185,7 @@ func (g *GrafanaServerImpl) Exit(reason error) {
 	}
 
 	g.log.Error("Server shutdown", "reason", reason)
-
-	log.Close()
-	os.Exit(code)
+	return code
 }
 
 func (g *GrafanaServerImpl) writePIDFile() {

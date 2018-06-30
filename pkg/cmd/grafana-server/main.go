@@ -14,6 +14,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -87,7 +88,11 @@ func main() {
 
 	err := server.Run()
 
-	server.Exit(err)
+	code := server.Exit(err)
+	trace.Stop()
+	log.Close()
+
+	os.Exit(code)
 }
 
 func listenToSystemSignals(server *GrafanaServerImpl) {
