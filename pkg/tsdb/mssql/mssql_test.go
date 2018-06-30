@@ -25,7 +25,7 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	Convey("MSSQL", t, func() {
+	SkipConvey("MSSQL", t, func() {
 		x := InitMSSQLTestDB(t)
 
 		endpoint := &MssqlQueryEndpoint{
