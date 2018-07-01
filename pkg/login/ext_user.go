@@ -66,7 +66,21 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 		}
 	}
 
-	return syncOrgRoles(cmd.Result, extUser)
+	err = syncOrgRoles(cmd.Result, extUser)
+	if err != nil {
+		return err
+	}
+
+	err = bus.Dispatch(&m.SyncTeamsCommand{
+		User:         cmd.Result,
+		ExternalUser: extUser,
+	})
+
+	if err == bus.ErrHandlerNotFound {
+		return nil
+	}
+
+	return err
 }
 
 func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {
