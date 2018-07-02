@@ -310,3 +310,9 @@ func (a *PipelineAggregation) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(root)
 }
+
+type IndexMappingResponse struct {
+	StatusCode int
+	Error      map[string]interface{}
+	Mappings   map[string]interface{}
+}

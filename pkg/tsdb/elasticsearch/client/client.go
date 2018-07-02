@@ -37,6 +37,7 @@ type Client interface {
 	GetMinInterval(queryInterval string) (time.Duration, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
+	GetIndexMapping() (*IndexMappingResponse, error)
 }
 
 // NewClient creates a new elasticsearch client
@@ -67,12 +68,13 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb
 	switch version {
 	case 2, 5, 56, 60:
 		return &baseClientImpl{
-			ctx:       ctx,
-			ds:        ds,
-			version:   version,
-			timeField: timeField,
-			indices:   indices,
-			timeRange: timeRange,
+			ctx:          ctx,
+			ds:           ds,
+			version:      version,
+			timeField:    timeField,
+			indices:      indices,
+			timeRange:    timeRange,
+			indexPattern: ip,
 		}, nil
 	}
 
@@ -80,12 +82,13 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb
 }
 
 type baseClientImpl struct {
-	ctx       context.Context
-	ds        *models.DataSource
-	version   int
-	timeField string
-	indices   []string
-	timeRange *tsdb.TimeRange
+	ctx          context.Context
+	ds           *models.DataSource
+	version      int
+	timeField    string
+	indices      []string
+	timeRange    *tsdb.TimeRange
+	indexPattern indexPattern
 }
 
 func (c *baseClientImpl) GetVersion() int {
@@ -221,6 +224,55 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	msr.Status = res.StatusCode
 
 	return &msr, nil
+}
+
+func (c *baseClientImpl) GetIndexMapping() (*IndexMappingResponse, error) {
+	clientLog.Debug("Get index mapping")
+
+	var index string
+	var err error
+
+	if len(c.indices) > 0 {
+		index = c.indices[0]
+	} else {
+		index, err = c.indexPattern.GetIndexForToday()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	res, err := c.executeRequest(http.MethodGet, index+"/_mapping", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	clientLog.Debug("Received index mapping response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
+
+	start := time.Now()
+	clientLog.Debug("Decoding index mapping json response")
+
+	var objmap map[string]interface{}
+	defer res.Body.Close()
+	dec := json.NewDecoder(res.Body)
+	err = dec.Decode(&objmap)
+	if err != nil {
+		return nil, err
+	}
+
+	imr := IndexMappingResponse{
+		StatusCode: res.StatusCode,
+	}
+
+	if val, ok := objmap["error"]; ok {
+		imr.Error = val.(map[string]interface{})
+	} else {
+		imr.Mappings = objmap
+	}
+
+	elapsed := time.Now().Sub(start)
+	clientLog.Debug("Decoded index mapping json response", "took", elapsed)
+
+	return &imr, nil
 }
 
 func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {
