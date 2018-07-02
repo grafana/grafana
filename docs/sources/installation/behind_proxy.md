@@ -26,7 +26,7 @@ Otherwise Grafana will not behave correctly. See example below.
 ## Examples
 Here are some example configurations for running Grafana behind a reverse proxy.
 
-### Grafana configuration (ex http://foo.bar.com)
+### Grafana configuration (ex http://foo.bar)
 
 ```bash
 [server]
@@ -47,7 +47,7 @@ server {
 }
 ```
 
-### Examples with **sub path** (ex http://foo.bar.com/grafana)
+### Examples with **sub path** (ex http://foo.bar/grafana)
 
 #### Grafana configuration with sub path
 ```bash
