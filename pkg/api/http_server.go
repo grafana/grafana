@@ -69,6 +69,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	var err error
 
 	hs.context = ctx
+
 	hs.applyRoutes()
 	hs.streamManager.Run(ctx)
 
@@ -169,6 +170,26 @@ func (hs *HTTPServer) newMacaron() *macaron.Macaron {
 	macaron.Env = setting.Env
 	m := macaron.New()
 
+	// automatically set HEAD for every GET
+	m.SetAutoHead(true)
+
+	return m
+}
+
+func (hs *HTTPServer) applyRoutes() {
+	// start with middlewares & static routes
+	hs.addMiddlewaresAndStaticRoutes()
+	// then add view routes & api routes
+	hs.RouteRegister.Register(hs.macaron)
+	// then custom app proxy routes
+	hs.initAppPluginRoutes(hs.macaron)
+	// lastly not found route
+	hs.macaron.NotFound(NotFoundHandler)
+}
+
+func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
+	m := hs.macaron
+
 	m.Use(middleware.Logger())
 
 	if setting.EnableGzip {
@@ -180,7 +201,7 @@ func (hs *HTTPServer) newMacaron() *macaron.Macaron {
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
 		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
-		hs.mapStatic(m, route.Directory, "", pluginRoute)
+		hs.mapStatic(hs.macaron, route.Directory, "", pluginRoute)
 	}
 
 	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")
@@ -209,8 +230,6 @@ func (hs *HTTPServer) newMacaron() *macaron.Macaron {
 	}
 
 	m.Use(middleware.AddDefaultResponseHeaders())
-
-	return m
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
