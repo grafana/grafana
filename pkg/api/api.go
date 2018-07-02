@@ -9,16 +9,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func (hs *HTTPServer) applyRoutes() {
-	hs.RouteRegister.Register(hs.macaron)
-
-	InitAppPluginRoutes(hs.macaron)
-
-	hs.macaron.NotFound(NotFoundHandler)
-}
-
 func (hs *HTTPServer) registerRoutes() {
-	macaronR := hs.macaron
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
@@ -27,9 +18,6 @@ func (hs *HTTPServer) registerRoutes() {
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota
 	bind := binding.Bind
-
-	// automatically set HEAD for every GET
-	macaronR.SetAutoHead(true)
 
 	r := hs.RouteRegister
 
