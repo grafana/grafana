@@ -7,7 +7,7 @@ export default class TeamDetailsCtrl {
   navModel: any;
   teamGroups: TeamGroup[] = [];
   newGroupId: string;
-  enterprise: boolean;
+  isMappingsEnabled: boolean;
 
   /** @ngInject **/
   constructor(private $scope, private backendSrv, private $routeParams, navModelSrv) {
@@ -15,7 +15,7 @@ export default class TeamDetailsCtrl {
     this.userPicked = this.userPicked.bind(this);
     this.get = this.get.bind(this);
     this.newGroupId = '';
-    this.enterprise = config.enterprise;
+    this.isMappingsEnabled = config.buildInfo.isEnterprise;
     this.get();
   }
 
@@ -29,7 +29,7 @@ export default class TeamDetailsCtrl {
         this.teamMembers = result;
       });
 
-      if (config.enterprise) {
+      if (this.isMappingsEnabled) {
         this.backendSrv.get(`/api/teams/${this.$routeParams.id}/groups`).then(result => {
           this.teamGroups = result;
         });
