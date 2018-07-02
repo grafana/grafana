@@ -132,7 +132,6 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	}
 
 	jsonObj := map[string]interface{}{
-		"enterprise":              setting.Enterprise,
 		"defaultDatasource":       defaultDatasource,
 		"datasources":             datasources,
 		"panels":                  panels,
@@ -154,6 +153,7 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
+			"isEnterprise":  setting.IsEnterprise,
 		},
 	}
 

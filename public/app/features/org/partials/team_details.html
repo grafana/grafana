@@ -67,39 +67,39 @@
 
   </div>
 
-  <div class="gf-form-group" ng-if="ctrl.enterprise">
+  <div class="gf-form-group" ng-if="ctrl.isMappingsEnabled">
 
-    <h3 class="page-heading">Team Group Mapping</h3>
-    <form name="ctrl.addGroupForm" class="gf-form-group">
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Add group</span>
-        <input class="gf-form-input max-width-22" type="text" ng-model="ctrl.newGroupId">
-      </div>
-      <div class="gf-form-button-row">
-        <button type="submit" class="btn btn-success" ng-click="ctrl.addGroup()">Add</button>
-      </div>
-    </form>
+	<h3 class="page-heading">Mappings to external groups</h3>
+	<form name="ctrl.addGroupForm" class="gf-form-group">
+		<div class="gf-form">
+			<span class="gf-form-label width-10">Add group</span>
+			<input class="gf-form-input max-width-22" type="text" ng-model="ctrl.newGroupId">
+		</div>
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="ctrl.addGroup()">Add</button>
+		</div>
+	</form>
 
-    <table class="filter-table" ng-show="ctrl.teamGroups.length > 0">
-      <thead>
-        <tr>
-          <th>Group</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tr ng-repeat="group in ctrl.teamGroups">
-        <td>{{group.groupId}}</td>
-        <td style="width: 1%">
-          <a ng-click="ctrl.removeGroup(group)" class="btn btn-danger btn-mini">
-            <i class="fa fa-remove"></i>
-          </a>
-        </td>
-      </tr>
-    </table>
-    <div>
-      <em class="muted" ng-hide="ctrl.teamGroups.length > 0">
-        This team has no associated groups yet.
-      </em>
-    </div>
+	<table class="filter-table" ng-show="ctrl.teamGroups.length > 0">
+		<thead>
+			<tr>
+				<th>Group</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tr ng-repeat="group in ctrl.teamGroups">
+			<td>{{group.groupId}}</td>
+			<td style="width: 1%">
+				<a ng-click="ctrl.removeGroup(group)" class="btn btn-danger btn-mini">
+					<i class="fa fa-remove"></i>
+				</a>
+			</td>
+		</tr>
+	</table>
+	<div>
+		<em class="muted" ng-hide="ctrl.teamGroups.length > 0">
+			This team has no associated groups yet.
+		</em>
+	</div>
 
-  </div>
+	</div>

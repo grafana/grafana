@@ -76,6 +76,7 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		BuildCommit:             setting.BuildCommit,
 		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
 		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
+		AppName:                 setting.ApplicationName,
 	}
 
 	if setting.DisableGravatar {
