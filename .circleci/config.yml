@@ -160,7 +160,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build and package grafana
+          name: build, test and package grafana enterprise
           command: './scripts/build/build_enterprise.sh'
       - run:
           name: sign packages
@@ -168,6 +168,26 @@ jobs:
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
+      -run:
+          name: move enterprise packages into their own folder
+          command: 'mv dist enterprise-dist'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - enterprise-dist/grafana*
+
+  deploy-enterprise-master:
+    docker:
+      - image: circleci/python:2.7-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: install awscli
+          command: 'sudo pip install awscli'
+      - run:
+          name: deploy to s3
+          command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/master'
 
   deploy-master:
     docker:
@@ -247,6 +267,20 @@ workflows:
           filters:
            branches:
              only: master
+      - deploy-enterprise-master:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+            - build-enterprise
+          filters:
+           branches:
+             only: master
+
   release:
     jobs:
       - build-all:
