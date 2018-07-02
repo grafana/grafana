@@ -17,7 +17,7 @@ It should be straight forward to get Grafana up and running behind a reverse pro
 Links and redirects will not be rendered correctly unless you set the server.domain setting.
 ```bash
 [server]
-domain = foo.bar
+domain = foo.bar.com
 ```
 
 To use sub *path* ex `http://foo.bar/grafana` make sure to include `/grafana` in the end of root_url.
@@ -30,7 +30,7 @@ Here are some example configurations for running Grafana behind a reverse proxy.
 
 ```bash
 [server]
-domain = foo.bar
+domain = foo.bar.com
 ```
 
 ### Nginx configuration
@@ -52,7 +52,7 @@ server {
 #### Grafana configuration with sub path
 ```bash
 [server]
-domain = foo.bar
+domain = foo.bar.com
 root_url = %(protocol)s://%(domain)s/grafana/
 ```
 
