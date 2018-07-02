@@ -73,6 +73,7 @@ type SearchResponse struct {
 	Error        map[string]interface{} `json:"error"`
 	Aggregations map[string]interface{} `json:"aggregations"`
 	Hits         *SearchResponseHits    `json:"hits"`
+	StatusCode   int
 }
 
 // MultiSearchRequest represents a multi search request

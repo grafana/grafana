@@ -638,7 +638,6 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 
 func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, error) {
 	t.Helper()
-
 	msb := c.MultiSearch()
 	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
@@ -650,6 +649,401 @@ func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, erro
 	})
 	return msb.Build()
 }
+
+func createSearchForTest(c Client) (*SearchRequest, error) {
+	s := c.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
+		a.Interval = "$__interval"
+
+		ab.Metric("1", "avg", "@hostname", func(a *MetricAggregation) {
+			a.Settings["script"] = "$__interval_ms*@hostname"
+		})
+	})
+	return s.Build()
+}
+
+// 				c, err := NewClient(context.Background(), &ds, timeRange)
+// 				So(err, ShouldBeNil)
+// 				So(c, ShouldNotBeNil)
+
+// 				Convey("When executing search", func() {
+// 					s, err := createSearchForTest(c)
+// 					So(err, ShouldBeNil)
+// 					c.ExecuteSearch(s)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodPost)
+// 						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search?search_type=count&ignore_unavailable=true")
+
+// 						So(responseBuffer, ShouldNotBeNil)
+// 						bodyBytes := responseBuffer.Bytes()
+// 						jBody, err := simplejson.NewJson(bodyBytes)
+// 						So(err, ShouldBeNil)
+
+// 						Convey("and replace $__interval variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+// 						})
+
+// 						Convey("and replace $__interval_ms variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+// 						})
+// 					})
+// 				})
+
+// 				Convey("When executing multi search", func() {
+// 					ms, err := createMultisearchForTest(c)
+// 					So(err, ShouldBeNil)
+// 					handleResponse = createMultiSearchSuccessResponse
+// 					res, err := c.ExecuteMultisearch(ms)
+// 					So(err, ShouldBeNil)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodPost)
+// 						So(req.URL.Path, ShouldEqual, "/_msearch")
+
+// 						So(responseBuffer, ShouldNotBeNil)
+
+// 						headerBytes, err := responseBuffer.ReadBytes('\n')
+// 						So(err, ShouldBeNil)
+// 						bodyBytes := responseBuffer.Bytes()
+
+// 						jHeader, err := simplejson.NewJson(headerBytes)
+// 						So(err, ShouldBeNil)
+
+// 						jBody, err := simplejson.NewJson(bodyBytes)
+// 						So(err, ShouldBeNil)
+
+// 						So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
+// 						So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
+// 						So(jHeader.Get("search_type").MustString(), ShouldEqual, "count")
+// 						So(jHeader.Get("max_concurrent_shard_requests").MustInt(10), ShouldEqual, 10)
+
+// 						Convey("and replace $__interval variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+// 						})
+
+// 						Convey("and replace $__interval_ms variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+// 						})
+// 					})
+
+// 					Convey("Should parse successful response", func() {
+// 						So(res, ShouldNotBeNil)
+// 						So(res.StatusCode, ShouldEqual, 200)
+// 						So(res.Responses, ShouldHaveLength, 1)
+// 						So(res.Responses[0].Error, ShouldHaveLength, 0)
+// 						So(res.Responses[0].StatusCode, ShouldEqual, 200)
+// 						So(res.Responses[0].Hits.Total, ShouldEqual, 100)
+// 						So(res.Responses[0].Aggregations["aggstest"].(string), ShouldEqual, "aggstest")
+// 					})
+// 				})
+
+// 				Convey("When get index mapping (200 OK)", func() {
+// 					handleResponse = createIndexMappingFoundResponse
+// 					res, err := c.GetIndexMapping()
+// 					So(err, ShouldBeNil)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodGet)
+// 						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_mapping")
+// 					})
+
+// 					Convey("Should parse successful response", func() {
+// 						So(res, ShouldNotBeNil)
+// 						So(res.StatusCode, ShouldEqual, 200)
+// 						So(res.Error, ShouldHaveLength, 0)
+// 						So(res.Mappings["metrics-2018.05.15"].(string), ShouldEqual, "test")
+// 					})
+// 				})
+
+// 				Convey("When get index mapping (404 Not Found)", func() {
+// 					handleResponse = createIndexMappingNotFoundResponse
+// 					res, err := c.GetIndexMapping()
+// 					So(err, ShouldBeNil)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodGet)
+// 						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_mapping")
+// 					})
+
+// 					Convey("Should parse unsuccessful response", func() {
+// 						So(res, ShouldNotBeNil)
+// 						So(res.StatusCode, ShouldEqual, 404)
+// 						So(res.Mappings, ShouldHaveLength, 0)
+// 						So(res.Error["type"].(string), ShouldEqual, "index_not_found_exception")
+// 					})
+// 				})
+// 			})
+
+// 			Convey("and a v5.x client", func() {
+// 				ds := models.DataSource{
+// 					Database: "[metrics-]YYYY.MM.DD",
+// 					Url:      ts.URL,
+// 					JsonData: simplejson.NewFromAny(map[string]interface{}{
+// 						"esVersion":                  5,
+// 						"maxConcurrentShardRequests": 100,
+// 						"timeField":                  "@timestamp",
+// 						"interval":                   "Daily",
+// 					}),
+// 				}
+
+// 				c, err := NewClient(context.Background(), &ds, timeRange)
+// 				So(err, ShouldBeNil)
+// 				So(c, ShouldNotBeNil)
+
+// 				Convey("When executing search", func() {
+// 					s, err := createSearchForTest(c)
+// 					So(err, ShouldBeNil)
+// 					c.ExecuteSearch(s)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodPost)
+// 						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search?search_type=query_then_fetch&ignore_unavailable=true")
+
+// 						So(responseBuffer, ShouldNotBeNil)
+// 						bodyBytes := responseBuffer.Bytes()
+// 						jBody, err := simplejson.NewJson(bodyBytes)
+// 						So(err, ShouldBeNil)
+
+// 						Convey("and replace $__interval variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+// 						})
+
+// 						Convey("and replace $__interval_ms variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+// 						})
+// 					})
+// 				})
+
+// 				Convey("When executing multi search", func() {
+// 					ms, err := createMultisearchForTest(c)
+// 					So(err, ShouldBeNil)
+// 					handleResponse = createMultiSearchSuccessResponse
+// 					res, err := c.ExecuteMultisearch(ms)
+// 					So(err, ShouldBeNil)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodPost)
+// 						So(req.URL.Path, ShouldEqual, "/_msearch")
+
+// 						So(responseBuffer, ShouldNotBeNil)
+
+// 						headerBytes, err := responseBuffer.ReadBytes('\n')
+// 						So(err, ShouldBeNil)
+// 						bodyBytes := responseBuffer.Bytes()
+
+// 						jHeader, err := simplejson.NewJson(headerBytes)
+// 						So(err, ShouldBeNil)
+
+// 						jBody, err := simplejson.NewJson(bodyBytes)
+// 						So(err, ShouldBeNil)
+
+// 						So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
+// 						So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
+// 						So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
+// 						So(jHeader.Get("max_concurrent_shard_requests").MustInt(10), ShouldEqual, 10)
+
+// 						Convey("and replace $__interval variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+// 						})
+
+// 						Convey("and replace $__interval_ms variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+// 						})
+// 					})
+
+// 					Convey("Should parse successful response", func() {
+// 						So(res, ShouldNotBeNil)
+// 						So(res.StatusCode, ShouldEqual, 200)
+// 						So(res.Responses, ShouldHaveLength, 1)
+// 						So(res.Responses[0].Error, ShouldHaveLength, 0)
+// 						So(res.Responses[0].StatusCode, ShouldEqual, 200)
+// 						So(res.Responses[0].Hits.Total, ShouldEqual, 100)
+// 						So(res.Responses[0].Aggregations["aggstest"].(string), ShouldEqual, "aggstest")
+// 					})
+// 				})
+
+// 				Convey("When get index mapping (200 OK)", func() {
+// 					handleResponse = createIndexMappingFoundResponse
+// 					res, err := c.GetIndexMapping()
+// 					So(err, ShouldBeNil)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodGet)
+// 						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_mapping")
+// 					})
+
+// 					Convey("Should parse successful response", func() {
+// 						So(res, ShouldNotBeNil)
+// 						So(res.StatusCode, ShouldEqual, 200)
+// 						So(res.Error, ShouldHaveLength, 0)
+// 						So(res.Mappings["metrics-2018.05.15"].(string), ShouldEqual, "test")
+// 					})
+// 				})
+
+// 				Convey("When get index mapping (404 Not Found)", func() {
+// 					handleResponse = createIndexMappingNotFoundResponse
+// 					res, err := c.GetIndexMapping()
+// 					So(err, ShouldBeNil)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodGet)
+// 						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_mapping")
+// 					})
+
+// 					Convey("Should parse unsuccessful response", func() {
+// 						So(res, ShouldNotBeNil)
+// 						So(res.StatusCode, ShouldEqual, 404)
+// 						So(res.Mappings, ShouldHaveLength, 0)
+// 						So(res.Error["type"].(string), ShouldEqual, "index_not_found_exception")
+// 					})
+// 				})
+// 			})
+
+// 			Convey("and a v5.6 client", func() {
+// 				ds := models.DataSource{
+// 					Database: "[metrics-]YYYY.MM.DD",
+// 					Url:      ts.URL,
+// 					JsonData: simplejson.NewFromAny(map[string]interface{}{
+// 						"esVersion":                  56,
+// 						"maxConcurrentShardRequests": 100,
+// 						"timeField":                  "@timestamp",
+// 						"interval":                   "Daily",
+// 					}),
+// 				}
+
+// 				c, err := NewClient(context.Background(), &ds, timeRange)
+// 				So(err, ShouldBeNil)
+// 				So(c, ShouldNotBeNil)
+
+// 				Convey("When executing search", func() {
+// 					s, err := createSearchForTest(c)
+// 					So(err, ShouldBeNil)
+// 					c.ExecuteSearch(s)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodPost)
+// 						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search?search_type=query_then_fetch&max_concurrent_shard_requests=100&ignore_unavailable=true")
+
+// 						So(responseBuffer, ShouldNotBeNil)
+// 						bodyBytes := responseBuffer.Bytes()
+// 						jBody, err := simplejson.NewJson(bodyBytes)
+// 						So(err, ShouldBeNil)
+
+// 						Convey("and replace $__interval variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+// 						})
+
+// 						Convey("and replace $__interval_ms variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+// 						})
+// 					})
+// 				})
+
+// 				Convey("When executing multi search", func() {
+// 					ms, err := createMultisearchForTest(c)
+// 					So(err, ShouldBeNil)
+// 					handleResponse = createMultiSearchSuccessResponse
+// 					res, err := c.ExecuteMultisearch(ms)
+// 					So(err, ShouldBeNil)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodPost)
+// 						So(req.URL.Path, ShouldEqual, "/_msearch")
+
+// 						So(responseBuffer, ShouldNotBeNil)
+
+// 						headerBytes, err := responseBuffer.ReadBytes('\n')
+// 						So(err, ShouldBeNil)
+// 						bodyBytes := responseBuffer.Bytes()
+
+// 						jHeader, err := simplejson.NewJson(headerBytes)
+// 						So(err, ShouldBeNil)
+
+// 						jBody, err := simplejson.NewJson(bodyBytes)
+// 						So(err, ShouldBeNil)
+
+// 						So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
+// 						So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
+// 						So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
+// 						So(jHeader.Get("max_concurrent_shard_requests").MustInt(), ShouldEqual, 100)
+
+// 						Convey("and replace $__interval variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+// 						})
+
+// 						Convey("and replace $__interval_ms variable", func() {
+// 							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+// 						})
+// 					})
+
+// 					Convey("Should parse successful response", func() {
+// 						So(res, ShouldNotBeNil)
+// 						So(res.StatusCode, ShouldEqual, 200)
+// 						So(res.Responses, ShouldHaveLength, 1)
+// 						So(res.Responses[0].Error, ShouldHaveLength, 0)
+// 						So(res.Responses[0].StatusCode, ShouldEqual, 200)
+// 						So(res.Responses[0].Hits.Total, ShouldEqual, 100)
+// 						So(res.Responses[0].Aggregations["aggstest"].(string), ShouldEqual, "aggstest")
+// 					})
+// 				})
+
+// 				Convey("When get index mapping (200 OK)", func() {
+// 					handleResponse = createIndexMappingFoundResponse
+// 					res, err := c.GetIndexMapping()
+// 					So(err, ShouldBeNil)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodGet)
+// 						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_mapping")
+// 					})
+
+// 					Convey("Should parse successful response", func() {
+// 						So(res, ShouldNotBeNil)
+// 						So(res.StatusCode, ShouldEqual, 200)
+// 						So(res.Error, ShouldHaveLength, 0)
+// 						So(res.Mappings["metrics-2018.05.15"].(string), ShouldEqual, "test")
+// 					})
+// 				})
+
+// 				Convey("When get index mapping (404 Not Found)", func() {
+// 					handleResponse = createIndexMappingNotFoundResponse
+// 					res, err := c.GetIndexMapping()
+// 					So(err, ShouldBeNil)
+
+// 					Convey("Should send correct request and payload", func() {
+// 						So(req, ShouldNotBeNil)
+// 						So(req.Method, ShouldEqual, http.MethodGet)
+// 						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_mapping")
+// 					})
+
+// 					Convey("Should parse unsuccessful response", func() {
+// 						So(res, ShouldNotBeNil)
+// 						So(res.StatusCode, ShouldEqual, 404)
+// 						So(res.Mappings, ShouldHaveLength, 0)
+// 						So(res.Error["type"].(string), ShouldEqual, "index_not_found_exception")
+// 					})
+// 				})
+// 			})
+
+// 			Reset(func() {
+// 				newDatasourceHttpClient = currentNewDatasourceHttpClient
+// 				timeNowUtc = originalTimeNowUtc
+// 			})
+// 		})
+// 	})
+// }
 
 type scenarioContext struct {
 	client         Client
@@ -707,6 +1101,22 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 
 		fn(sc)
 	})
+}
+
+func createMultiSearchSuccessResponse(rw http.ResponseWriter) {
+	rw.WriteHeader(http.StatusOK)
+	io.WriteString(rw, `{
+		"responses": [
+			{
+				"hits": {
+					"total": 100
+				},
+				"aggregations": {
+					"aggstest": "aggstest"
+				}
+			}
+		]
+	}`)
 }
 
 func createIndexMappingFoundResponse(rw http.ResponseWriter) {
