@@ -46,5 +46,14 @@ describe('datasource_srv', function() {
       expect(metricSources[4].name).toBe('--Grafana--');
       expect(metricSources[5].name).toBe('--Mixed--');
     });
+
+    beforeEach(() => {
+      config.defaultDatasource = 'BBB';
+    });
+
+    it('should set default data source', () => {
+      expect(metricSources[2].name).toBe('default');
+      expect(metricSources[2].sort).toBe('BBB');
+    });
   });
 });
