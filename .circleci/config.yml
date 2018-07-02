@@ -168,7 +168,7 @@ jobs:
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
-      -run:
+      - run:
           name: move enterprise packages into their own folder
           command: 'mv dist enterprise-dist'
       - persist_to_workspace:
