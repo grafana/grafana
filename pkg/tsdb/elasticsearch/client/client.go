@@ -35,7 +35,9 @@ type Client interface {
 	GetVersion() int
 	GetTimeField() string
 	GetMinInterval(queryInterval string) (time.Duration, error)
+	ExecuteSearch(r *SearchRequest) (*SearchResponse, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
+	Search(interval tsdb.Interval) *SearchRequestBuilder
 	MultiSearch() *MultiSearchRequestBuilder
 	GetIndexMapping() (*IndexMappingResponse, error)
 }
@@ -140,10 +142,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 			return nil, err
 		}
 
-		body := string(reqBody)
-		body = strings.Replace(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10), -1)
-		body = strings.Replace(body, "$__interval", r.interval.Text, -1)
-
+		body := c.replaceVariables(reqBody, r.interval)
 		payload.WriteString(body + "\n")
 	}
 
@@ -196,6 +195,65 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*h
 	return ctxhttp.Do(c.ctx, httpClient, req)
 }
 
+func (c *baseClientImpl) ExecuteSearch(r *SearchRequest) (*SearchResponse, error) {
+	clientLog.Debug("Executing search")
+
+	uri := strings.Join(c.indices, ",") + "/_search"
+
+	if c.version == 2 {
+		uri += "?search_type=count"
+	} else {
+		uri += "?search_type=query_then_fetch"
+	}
+
+	if c.version >= 56 {
+		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
+		uri += "&max_concurrent_shard_requests=" + strconv.Itoa(maxConcurrentShardRequests)
+	}
+
+	uri += "&ignore_unavailable=true"
+
+	clientLog.Debug("Encoding search request to json")
+	start := time.Now()
+
+	payload := bytes.Buffer{}
+	reqBody, err := json.Marshal(r)
+	if err != nil {
+		return nil, err
+	}
+
+	body := c.replaceVariables(reqBody, r.Interval)
+	payload.WriteString(body)
+
+	elapsed := time.Now().Sub(start)
+	clientLog.Debug("Encoded search request to json", "took", elapsed)
+
+	res, err := c.executeRequest(http.MethodPost, uri, payload.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	clientLog.Debug("Received search response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
+
+	start = time.Now()
+	clientLog.Debug("Decoding search json response")
+
+	var sr SearchResponse
+	defer res.Body.Close()
+	dec := json.NewDecoder(res.Body)
+	err = dec.Decode(&sr)
+	if err != nil {
+		return nil, err
+	}
+
+	elapsed = time.Now().Sub(start)
+	clientLog.Debug("Decoded search json response", "took", elapsed)
+
+	sr.StatusCode = res.StatusCode
+
+	return &sr, nil
+}
+
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
 	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
 
@@ -221,7 +279,11 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	elapsed := time.Since(start)
 	clientLog.Debug("Decoded multisearch json response", "took", elapsed)
 
-	msr.Status = res.StatusCode
+	msr.StatusCode = res.StatusCode
+
+	for _, v := range msr.Responses {
+		v.StatusCode = res.StatusCode
+	}
 
 	return &msr, nil
 }
@@ -304,6 +366,17 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 	return multiRequests
 }
 
+func (c *baseClientImpl) Search(interval tsdb.Interval) *SearchRequestBuilder {
+	return NewSearchRequestBuilder(c.GetVersion(), interval)
+}
+
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
 	return NewMultiSearchRequestBuilder(c.GetVersion())
+}
+
+func (c *baseClientImpl) replaceVariables(payload []byte, interval tsdb.Interval) string {
+	body := string(payload)
+	body = strings.Replace(body, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10), -1)
+	body = strings.Replace(body, "$__interval", interval.Text, -1)
+	return body
 }

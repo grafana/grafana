@@ -151,10 +151,37 @@ func TestClient(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(c, ShouldNotBeNil)
 
+				Convey("When executing search", func() {
+					s, err := createSearchForTest(c)
+					So(err, ShouldBeNil)
+					c.ExecuteSearch(s)
+
+					Convey("Should send correct request and payload", func() {
+						So(req, ShouldNotBeNil)
+						So(req.Method, ShouldEqual, http.MethodPost)
+						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search?search_type=count&ignore_unavailable=true")
+
+						So(responseBuffer, ShouldNotBeNil)
+						bodyBytes := responseBuffer.Bytes()
+						jBody, err := simplejson.NewJson(bodyBytes)
+						So(err, ShouldBeNil)
+
+						Convey("and replace $__interval variable", func() {
+							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+						})
+
+						Convey("and replace $__interval_ms variable", func() {
+							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+						})
+					})
+				})
+
 				Convey("When executing multi search", func() {
 					ms, err := createMultisearchForTest(c)
 					So(err, ShouldBeNil)
-					c.ExecuteMultisearch(ms)
+					handleResponse = createMultiSearchSuccessResponse
+					res, err := c.ExecuteMultisearch(ms)
+					So(err, ShouldBeNil)
 
 					Convey("Should send correct request and payload", func() {
 						So(req, ShouldNotBeNil)
@@ -185,6 +212,16 @@ func TestClient(t *testing.T) {
 						Convey("and replace $__interval_ms variable", func() {
 							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
 						})
+					})
+
+					Convey("Should parse successful response", func() {
+						So(res, ShouldNotBeNil)
+						So(res.StatusCode, ShouldEqual, 200)
+						So(res.Responses, ShouldHaveLength, 1)
+						So(res.Responses[0].Error, ShouldHaveLength, 0)
+						So(res.Responses[0].StatusCode, ShouldEqual, 200)
+						So(res.Responses[0].Hits.Total, ShouldEqual, 100)
+						So(res.Responses[0].Aggregations["aggstest"].(string), ShouldEqual, "aggstest")
 					})
 				})
 
@@ -243,10 +280,37 @@ func TestClient(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(c, ShouldNotBeNil)
 
+				Convey("When executing search", func() {
+					s, err := createSearchForTest(c)
+					So(err, ShouldBeNil)
+					c.ExecuteSearch(s)
+
+					Convey("Should send correct request and payload", func() {
+						So(req, ShouldNotBeNil)
+						So(req.Method, ShouldEqual, http.MethodPost)
+						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search?search_type=query_then_fetch&ignore_unavailable=true")
+
+						So(responseBuffer, ShouldNotBeNil)
+						bodyBytes := responseBuffer.Bytes()
+						jBody, err := simplejson.NewJson(bodyBytes)
+						So(err, ShouldBeNil)
+
+						Convey("and replace $__interval variable", func() {
+							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+						})
+
+						Convey("and replace $__interval_ms variable", func() {
+							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+						})
+					})
+				})
+
 				Convey("When executing multi search", func() {
 					ms, err := createMultisearchForTest(c)
 					So(err, ShouldBeNil)
-					c.ExecuteMultisearch(ms)
+					handleResponse = createMultiSearchSuccessResponse
+					res, err := c.ExecuteMultisearch(ms)
+					So(err, ShouldBeNil)
 
 					Convey("Should send correct request and payload", func() {
 						So(req, ShouldNotBeNil)
@@ -277,6 +341,16 @@ func TestClient(t *testing.T) {
 						Convey("and replace $__interval_ms variable", func() {
 							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
 						})
+					})
+
+					Convey("Should parse successful response", func() {
+						So(res, ShouldNotBeNil)
+						So(res.StatusCode, ShouldEqual, 200)
+						So(res.Responses, ShouldHaveLength, 1)
+						So(res.Responses[0].Error, ShouldHaveLength, 0)
+						So(res.Responses[0].StatusCode, ShouldEqual, 200)
+						So(res.Responses[0].Hits.Total, ShouldEqual, 100)
+						So(res.Responses[0].Aggregations["aggstest"].(string), ShouldEqual, "aggstest")
 					})
 				})
 
@@ -335,10 +409,37 @@ func TestClient(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(c, ShouldNotBeNil)
 
+				Convey("When executing search", func() {
+					s, err := createSearchForTest(c)
+					So(err, ShouldBeNil)
+					c.ExecuteSearch(s)
+
+					Convey("Should send correct request and payload", func() {
+						So(req, ShouldNotBeNil)
+						So(req.Method, ShouldEqual, http.MethodPost)
+						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search?search_type=query_then_fetch&max_concurrent_shard_requests=100&ignore_unavailable=true")
+
+						So(responseBuffer, ShouldNotBeNil)
+						bodyBytes := responseBuffer.Bytes()
+						jBody, err := simplejson.NewJson(bodyBytes)
+						So(err, ShouldBeNil)
+
+						Convey("and replace $__interval variable", func() {
+							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
+						})
+
+						Convey("and replace $__interval_ms variable", func() {
+							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
+						})
+					})
+				})
+
 				Convey("When executing multi search", func() {
 					ms, err := createMultisearchForTest(c)
 					So(err, ShouldBeNil)
-					c.ExecuteMultisearch(ms)
+					handleResponse = createMultiSearchSuccessResponse
+					res, err := c.ExecuteMultisearch(ms)
+					So(err, ShouldBeNil)
 
 					Convey("Should send correct request and payload", func() {
 						So(req, ShouldNotBeNil)
@@ -369,6 +470,16 @@ func TestClient(t *testing.T) {
 						Convey("and replace $__interval_ms variable", func() {
 							So(jBody.GetPath("aggs", "2", "date_histogram", "interval").MustString(), ShouldEqual, "15s")
 						})
+					})
+
+					Convey("Should parse successful response", func() {
+						So(res, ShouldNotBeNil)
+						So(res.StatusCode, ShouldEqual, 200)
+						So(res.Responses, ShouldHaveLength, 1)
+						So(res.Responses[0].Error, ShouldHaveLength, 0)
+						So(res.Responses[0].StatusCode, ShouldEqual, 200)
+						So(res.Responses[0].Hits.Total, ShouldEqual, 100)
+						So(res.Responses[0].Aggregations["aggstest"].(string), ShouldEqual, "aggstest")
 					})
 				})
 
@@ -419,6 +530,18 @@ func TestClient(t *testing.T) {
 	})
 }
 
+func createSearchForTest(c Client) (*SearchRequest, error) {
+	s := c.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
+		a.Interval = "$__interval"
+
+		ab.Metric("1", "avg", "@hostname", func(a *MetricAggregation) {
+			a.Settings["script"] = "$__interval_ms*@hostname"
+		})
+	})
+	return s.Build()
+}
+
 func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
 	msb := c.MultiSearch()
 	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
@@ -430,6 +553,22 @@ func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
 		})
 	})
 	return msb.Build()
+}
+
+func createMultiSearchSuccessResponse(rw http.ResponseWriter) {
+	rw.WriteHeader(http.StatusOK)
+	io.WriteString(rw, `{
+		"responses": [
+			{
+				"hits": {
+					"total": 100
+				},
+				"aggregations": {
+					"aggstest": "aggstest"
+				}
+			}
+		]
+	}`)
 }
 
 func createIndexMappingFoundResponse(rw http.ResponseWriter) {

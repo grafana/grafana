@@ -50,6 +50,7 @@ type SearchResponse struct {
 	Error        map[string]interface{} `json:"error"`
 	Aggregations map[string]interface{} `json:"aggregations"`
 	Hits         *SearchResponseHits    `json:"hits"`
+	StatusCode   int
 }
 
 // func (r *Response) getErrMsg() string {
@@ -74,8 +75,8 @@ type MultiSearchRequest struct {
 
 // MultiSearchResponse represents a multi search response
 type MultiSearchResponse struct {
-	Status    int               `json:"status,omitempty"`
-	Responses []*SearchResponse `json:"responses"`
+	StatusCode int               `json:"status,omitempty"`
+	Responses  []*SearchResponse `json:"responses"`
 }
 
 // Query represents a query

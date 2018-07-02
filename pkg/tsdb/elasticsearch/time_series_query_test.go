@@ -618,12 +618,18 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 }
 
 type fakeClient struct {
-	version             int
-	timeField           string
-	multiSearchResponse *es.MultiSearchResponse
-	multiSearchError    error
-	builder             *es.MultiSearchRequestBuilder
-	multisearchRequests []*es.MultiSearchRequest
+	version                 int
+	timeField               string
+	multiSearchResponse     *es.MultiSearchResponse
+	multiSearchError        error
+	builder                 *es.MultiSearchRequestBuilder
+	multisearchRequests     []*es.MultiSearchRequest
+	searchBuilder           *es.SearchRequestBuilder
+	searchRequests          []*es.SearchRequest
+	searchResponse          *es.SearchResponse
+	searchError             error
+	getIndexMappingResponse *es.IndexMappingResponse
+	getIndexMappingError    error
 }
 
 func newFakeClient(version int) *fakeClient {
@@ -632,6 +638,8 @@ func newFakeClient(version int) *fakeClient {
 		timeField:           "@timestamp",
 		multisearchRequests: make([]*es.MultiSearchRequest, 0),
 		multiSearchResponse: &es.MultiSearchResponse{},
+		searchRequests:      make([]*es.SearchRequest, 0),
+		searchResponse:      &es.SearchResponse{},
 	}
 }
 
@@ -647,14 +655,28 @@ func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error)
 	return 15 * time.Second, nil
 }
 
+func (c *fakeClient) ExecuteSearch(r *es.SearchRequest) (*es.SearchResponse, error) {
+	c.searchRequests = append(c.searchRequests, r)
+	return c.searchResponse, c.searchError
+}
+
 func (c *fakeClient) ExecuteMultisearch(r *es.MultiSearchRequest) (*es.MultiSearchResponse, error) {
 	c.multisearchRequests = append(c.multisearchRequests, r)
 	return c.multiSearchResponse, c.multiSearchError
 }
 
+func (c *fakeClient) Search(interval tsdb.Interval) *es.SearchRequestBuilder {
+	c.searchBuilder = es.NewSearchRequestBuilder(c.version, interval)
+	return c.searchBuilder
+}
+
 func (c *fakeClient) MultiSearch() *es.MultiSearchRequestBuilder {
 	c.builder = es.NewMultiSearchRequestBuilder(c.version)
 	return c.builder
+}
+
+func (c *fakeClient) GetIndexMapping() (*es.IndexMappingResponse, error) {
+	return c.getIndexMappingResponse, c.getIndexMappingError
 }
 
 func newTsdbQuery(body string) (*tsdb.TsdbQuery, error) {
