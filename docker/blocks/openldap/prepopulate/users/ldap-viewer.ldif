@@ -1,9 +1,9 @@
-dn: cn=ldapviewer,dc=grafana,dc=org
-mail: ldapviewer@grafana.com
+dn: cn=ldap-viewer,ou=users,dc=grafana,dc=org
+mail: ldap-viewer@grafana.com
 userPassword: grafana
 objectClass: person
 objectClass: top
 objectClass: inetOrgPerson
 objectClass: organizationalPerson
-sn: ldapviewer
-cn: ldapviewer
+sn: ldap-viewer
+cn: ldap-viewer

@@ -1,0 +1,3 @@
+dn: ou=users,dc=grafana,dc=org
+objectclass: top
+objectclass: organizationalUnit

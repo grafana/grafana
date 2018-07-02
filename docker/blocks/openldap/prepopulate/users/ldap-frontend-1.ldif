@@ -1,0 +1,10 @@
+dn: cn=ldap-frontend-1,ou=users,dc=grafana,dc=org
+mail: ldap-frontend-1@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-frontend-1
+cn: ldap-frontend-1
+memberOf: cn=frontend,ou=groups,dc=grafana,dc=org

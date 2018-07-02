@@ -1,0 +1,5 @@
+dn: cn=frontend,ou=groups,dc=grafana,dc=org
+cn: frontend
+objectClass: groupOfNames
+objectClass: top
+member: cn=ldap-frontend-1,ou=users,dc=grafana,dc=org

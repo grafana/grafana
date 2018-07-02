@@ -43,6 +43,7 @@ fig.yml
 docker-compose.yml
 docker-compose.yaml
 /conf/provisioning/**/custom.yaml
+/conf/ldap_dev.toml
 profile.cov
 /grafana
 /local

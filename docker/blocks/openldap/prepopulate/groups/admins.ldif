@@ -1,0 +1,5 @@
+dn: cn=admins,ou=groups,dc=grafana,dc=org
+cn: admins
+objectClass: groupOfNames
+objectClass: top
+member: cn=ldap-admin,ou=users,dc=grafana,dc=org

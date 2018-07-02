@@ -80,7 +80,15 @@ EOF
         done
     fi
 
-    for file in `ls /etc/ldap/prepopulate/*.ldif`; do
+    for file in `ls /etc/ldap/prepopulate/units/*.ldif`; do
+        slapadd -F /etc/ldap/slapd.d -l "$file"
+    done
+
+    for file in `ls /etc/ldap/prepopulate/groups/*.ldif`; do
+        slapadd -F /etc/ldap/slapd.d -l "$file"
+    done
+
+    for file in `ls /etc/ldap/prepopulate/users/*.ldif`; do
         slapadd -F /etc/ldap/slapd.d -l "$file"
     done
 
