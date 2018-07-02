@@ -46,7 +46,7 @@ describe('InfluxDBQueryCtrl', () => {
   InfluxQueryCtrl.prototype.panelCtrl = {
     refresh: jest.fn(),
     panel: {
-      targets: InfluxQueryCtrl.prototype.target,
+      targets: [InfluxQueryCtrl.prototype.target],
     },
   };
   InfluxQueryCtrl.prototype.datasource = {
@@ -69,6 +69,7 @@ describe('InfluxDBQueryCtrl', () => {
       new uiSegmentSrv({ trustAsHtml: jest.fn() }, { highlightVariablesAsHtml: jest.fn() })
     );
   });
+
   describe('init', () => {
     it('should init tagSegments', () => {
       expect(influxQueryCtrl.tagSegments.length).toBe(1);
@@ -90,7 +91,6 @@ describe('InfluxDBQueryCtrl', () => {
     });
 
     it('should add tagSegments', () => {
-      console.log(influxQueryCtrl.tagSegments);
       expect(influxQueryCtrl.tagSegments.length).toBe(3);
     });
   });
