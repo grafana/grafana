@@ -17,13 +17,25 @@ func TestIndexPattern(t *testing.T) {
 			So(indices[0], ShouldEqual, "data-*")
 		})
 
+		indexPatternForTodayScenario(noInterval, "data-*", func(index string) {
+			So(index, ShouldEqual, "data-*")
+		})
+
 		indexPatternScenario(noInterval, "es-index-name", nil, func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "es-index-name")
 		})
+
+		indexPatternForTodayScenario(noInterval, "es-index-name", func(index string) {
+			So(index, ShouldEqual, "es-index-name")
+		})
 	})
 
 	Convey("Dynamic index patterns", t, func() {
+		originalTimeNowUtc := timeNowUtc
+		timeNowUtc = func() time.Time {
+			return time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+		}
 		from := fmt.Sprintf("%d", time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 		to := fmt.Sprintf("%d", time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 
@@ -37,6 +49,14 @@ func TestIndexPattern(t *testing.T) {
 			So(indices[0], ShouldEqual, "2018.05.15.17-data")
 		})
 
+		indexPatternForTodayScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", func(index string) {
+			So(index, ShouldEqual, "data-2018.05.15.17")
+		})
+
+		indexPatternForTodayScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", func(index string) {
+			So(index, ShouldEqual, "2018.05.15.17-data")
+		})
+
 		indexPatternScenario(intervalDaily, "[data-]YYYY.MM.DD", tsdb.NewTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018.05.15")
@@ -45,6 +65,14 @@ func TestIndexPattern(t *testing.T) {
 		indexPatternScenario(intervalDaily, "YYYY.MM.DD[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "2018.05.15-data")
+		})
+
+		indexPatternForTodayScenario(intervalDaily, "[data-]YYYY.MM.DD", func(index string) {
+			So(index, ShouldEqual, "data-2018.05.15")
+		})
+
+		indexPatternForTodayScenario(intervalDaily, "YYYY.MM.DD[-data]", func(index string) {
+			So(index, ShouldEqual, "2018.05.15-data")
 		})
 
 		indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", tsdb.NewTimeRange(from, to), func(indices []string) {
@@ -57,6 +85,14 @@ func TestIndexPattern(t *testing.T) {
 			So(indices[0], ShouldEqual, "2018.20-data")
 		})
 
+		indexPatternForTodayScenario(intervalWeekly, "[data-]GGGG.WW", func(index string) {
+			So(index, ShouldEqual, "data-2018.20")
+		})
+
+		indexPatternForTodayScenario(intervalWeekly, "GGGG.WW[-data]", func(index string) {
+			So(index, ShouldEqual, "2018.20-data")
+		})
+
 		indexPatternScenario(intervalMonthly, "[data-]YYYY.MM", tsdb.NewTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018.05")
@@ -65,6 +101,14 @@ func TestIndexPattern(t *testing.T) {
 		indexPatternScenario(intervalMonthly, "YYYY.MM[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "2018.05-data")
+		})
+
+		indexPatternForTodayScenario(intervalMonthly, "[data-]YYYY.MM", func(index string) {
+			So(index, ShouldEqual, "data-2018.05")
+		})
+
+		indexPatternForTodayScenario(intervalMonthly, "YYYY.MM[-data]", func(index string) {
+			So(index, ShouldEqual, "2018.05-data")
 		})
 
 		indexPatternScenario(intervalYearly, "[data-]YYYY", tsdb.NewTimeRange(from, to), func(indices []string) {
@@ -94,6 +138,18 @@ func TestIndexPattern(t *testing.T) {
 				So(indices, ShouldHaveLength, 1)
 				So(indices[0], ShouldEqual, "data-2018.03")
 			})
+		})
+
+		indexPatternForTodayScenario(intervalYearly, "[data-]YYYY", func(index string) {
+			So(index, ShouldEqual, "data-2018")
+		})
+
+		indexPatternForTodayScenario(intervalYearly, "YYYY[-data]", func(index string) {
+			So(index, ShouldEqual, "2018-data")
+		})
+
+		Reset(func() {
+			timeNowUtc = originalTimeNowUtc
 		})
 	})
 
@@ -284,5 +340,16 @@ func indexPatternScenario(interval string, pattern string, timeRange *tsdb.TimeR
 		indices, err := ip.GetIndices(timeRange)
 		So(err, ShouldBeNil)
 		fn(indices)
+	})
+}
+
+func indexPatternForTodayScenario(interval string, pattern string, fn func(index string)) {
+	Convey(fmt.Sprintf("Index pattern for today (interval=%s, index=%s", interval, pattern), func() {
+		ip, err := newIndexPattern(interval, pattern)
+		So(err, ShouldBeNil)
+		So(ip, ShouldNotBeNil)
+		index, err := ip.GetIndexForToday()
+		So(err, ShouldBeNil)
+		fn(index)
 	})
 }

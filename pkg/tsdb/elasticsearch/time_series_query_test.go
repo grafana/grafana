@@ -862,6 +862,12 @@ type fakeClient struct {
 	multiSearchError    error
 	builder             *es.MultiSearchRequestBuilder
 	multisearchRequests []*es.MultiSearchRequest
+	// searchBuilder           *es.SearchRequestBuilder
+	// searchRequests          []*es.SearchRequest
+	// searchResponse          *es.SearchResponse
+	// searchError             error
+	getIndexMappingResponse *es.IndexMappingResponse
+	getIndexMappingError    error
 }
 
 func newFakeClient(version int) *fakeClient {
@@ -870,6 +876,9 @@ func newFakeClient(version int) *fakeClient {
 		timeField:           "@timestamp",
 		multisearchRequests: make([]*es.MultiSearchRequest, 0),
 		multiSearchResponse: &es.MultiSearchResponse{},
+		// searchRequests:          make([]*es.SearchRequest, 0),
+		// searchResponse:          &es.SearchResponse{},
+		getIndexMappingResponse: &es.IndexMappingResponse{},
 	}
 }
 
@@ -895,6 +904,10 @@ func (c *fakeClient) ExecuteMultisearch(r *es.MultiSearchRequest) (*es.MultiSear
 func (c *fakeClient) MultiSearch() *es.MultiSearchRequestBuilder {
 	c.builder = es.NewMultiSearchRequestBuilder(c.version)
 	return c.builder
+}
+
+func (c *fakeClient) GetIndexMapping() (*es.IndexMappingResponse, error) {
+	return c.getIndexMappingResponse, c.getIndexMappingError
 }
 
 func newTsdbQuery(body string) (*tsdb.TsdbQuery, error) {
