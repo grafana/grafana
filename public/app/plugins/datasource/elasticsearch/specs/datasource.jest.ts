@@ -59,7 +59,7 @@ describe('ElasticDatasource', function() {
   describe('When issuing metric query with interval pattern', function() {
     var requestOptions, parts, header;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
         index: '[asd-]YYYY.MM.DD',
@@ -71,7 +71,7 @@ describe('ElasticDatasource', function() {
         return Promise.resolve({ data: { responses: [] } });
       });
 
-      await ctx.ds.query({
+      ctx.ds.query({
         range: {
           from: moment.utc([2015, 4, 30, 10]),
           to: moment.utc([2015, 5, 1, 10]),
