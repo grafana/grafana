@@ -1,15 +1,14 @@
 import _ from 'lodash';
-import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
 import angular from 'angular';
 import { ElasticDatasource } from '../datasource';
 import { TimeSrv } from 'app/features/dashboard/time_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import $q from 'q';
 
 describe('ElasticDatasource', function() {
-  //var ctx = new helpers.ServiceTestContext();
   let backendSrv = {
-    datasourceRequest: jest.fn()
+    datasourceRequest: jest.fn(),
   };
 
   let $rootScope = {
@@ -17,30 +16,21 @@ describe('ElasticDatasource', function() {
     appEvent: jest.fn(),
   };
 
-  let timeSrv = new TimeSrv($rootScope,jest.fn(),{},{},{});
+  let templateSrv = new TemplateSrv();
+
+  templateSrv.variables = [];
+
+  let timeSrv = new TimeSrv($rootScope, jest.fn(), {}, {}, {});
 
   let ctx = <any>{
     $rootScope,
     backendSrv,
-    $q
+    $q,
   };
-  // beforeEach(angularMocks.module('grafana.core'));
-  // beforeEach(angularMocks.module('grafana.services'));
-  // beforeEach(ctx.providePhase(['templateSrv', 'backendSrv', 'timeSrv']));
-
-  // beforeEach(
-  //   angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-  //     ctx.$q = $q;
-  //     ctx.$httpBackend = $httpBackend;
-  //     ctx.$rootScope = $rootScope;
-  //     ctx.$injector = $injector;
-  //     $httpBackend.when('GET', /\.html$/).respond('');
-  //   })
-  // );
 
   function createDatasource(instanceSettings) {
     instanceSettings.jsonData = instanceSettings.jsonData || {};
-    ctx.ds = new ElasticDatasource(instanceSettings, {}, backendSrv, { replace: jest.fn() }, timeSrv);
+    ctx.ds = new ElasticDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
   }
 
   describe('When testing datasource with index pattern', function() {
@@ -54,35 +44,34 @@ describe('ElasticDatasource', function() {
 
     it('should translate index pattern to current day', function() {
       var requestOptions;
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
         return Promise.resolve({ data: {} });
       });
 
       ctx.ds.testDatasource();
-      // ctx.$rootScope.$apply();
 
       var today = moment.utc().format('YYYY.MM.DD');
-      expect(requestOptions.url).to.be('http://es.com/asd-' + today + '/_mapping');
+      expect(requestOptions.url).toBe('http://es.com/asd-' + today + '/_mapping');
     });
   });
 
   describe('When issuing metric query with interval pattern', function() {
     var requestOptions, parts, header;
 
-    beforeEach(function() {
+    beforeEach(async () => {
       createDatasource({
         url: 'http://es.com',
         index: '[asd-]YYYY.MM.DD',
         jsonData: { interval: 'Daily', esVersion: '2' },
       });
 
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
         return Promise.resolve({ data: { responses: [] } });
       });
 
-      ctx.ds.query({
+      await ctx.ds.query({
         range: {
           from: moment.utc([2015, 4, 30, 10]),
           to: moment.utc([2015, 5, 1, 10]),
@@ -95,8 +84,6 @@ describe('ElasticDatasource', function() {
           },
         ],
       });
-
-      // ctx.$rootScope.$apply();
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
@@ -122,7 +109,7 @@ describe('ElasticDatasource', function() {
         jsonData: { esVersion: '2' },
       });
 
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
         return Promise.resolve({ data: { responses: [] } });
       });
@@ -141,7 +128,6 @@ describe('ElasticDatasource', function() {
         ],
       });
 
-      // ctx.$rootScope.$apply();
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
     });
@@ -157,10 +143,10 @@ describe('ElasticDatasource', function() {
   });
 
   describe('When getting fields', function() {
-    beforeEach(function() {
+    beforeEach(() => {
       createDatasource({ url: 'http://es.com', index: 'metricbeat' });
 
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({
           data: {
             metricbeat: {
@@ -204,7 +190,7 @@ describe('ElasticDatasource', function() {
             },
           },
         });
-      })
+      });
     });
 
     it('should return nested fields', function() {
@@ -226,7 +212,6 @@ describe('ElasticDatasource', function() {
             'system.process.name',
           ]);
         });
-      // ctx.$rootScope.$apply();
     });
 
     it('should return fields related to query type', function() {
@@ -251,8 +236,6 @@ describe('ElasticDatasource', function() {
           var fields = _.map(fieldObjects, 'text');
           expect(fields).toEqual(['@timestamp']);
         });
-
-      // ctx.$rootScope.$apply();
     });
   });
 
@@ -266,10 +249,10 @@ describe('ElasticDatasource', function() {
         jsonData: { esVersion: '5' },
       });
 
-      ctx.backendSrv.datasourceRequest = function(options) {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
-        return ctx.$q.when({ data: { responses: [] } });
-      };
+        return Promise.resolve({ data: { responses: [] } });
+      });
 
       ctx.ds.query({
         range: {
@@ -285,7 +268,6 @@ describe('ElasticDatasource', function() {
         ],
       });
 
-      // ctx.$rootScope.$apply();
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
     });
@@ -303,16 +285,16 @@ describe('ElasticDatasource', function() {
   describe('When issuing metricFind query on es5.x', function() {
     var requestOptions, parts, header, body, results;
 
-    beforeEach(function() {
+    beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
         index: 'test',
         jsonData: { esVersion: '5' },
       });
 
-      ctx.backendSrv.datasourceRequest = function(options) {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
-        return ctx.$q.when({
+        return Promise.resolve({
           data: {
             responses: [
               {
@@ -332,37 +314,35 @@ describe('ElasticDatasource', function() {
             ],
           },
         });
-      };
+      });
 
       ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then(res => {
         results = res;
       });
-
-      // ctx.$rootScope.$apply();
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
       body = angular.fromJson(parts[1]);
     });
 
-    it('should get results', function() {
+    it('should get results', () => {
       expect(results.length).toEqual(2);
     });
 
-    it('should use key or key_as_string', function() {
+    it('should use key or key_as_string', () => {
       expect(results[0].text).toEqual('test');
       expect(results[1].text).toEqual('test2_as_string');
     });
 
-    it('should not set search type to count', function() {
+    it('should not set search type to count', () => {
       expect(header.search_type).not.toEqual('count');
     });
 
-    it('should set size to 0', function() {
+    it('should set size to 0', () => {
       expect(body.size).toBe(0);
     });
 
-    it('should not set terms aggregation size to 0', function() {
+    it('should not set terms aggregation size to 0', () => {
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
     });
   });
