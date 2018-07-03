@@ -2,8 +2,8 @@ import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
 import { ElasticDatasource } from '../datasource';
-import { TimeSrv } from 'app/features/dashboard/time_srv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { jestTimeSrvStub } from 'test/specs/helpers';
+import { jestTemplateSrvStub } from 'test/specs/helpers';
 import $q from 'q';
 
 describe('ElasticDatasource', function() {
@@ -16,11 +16,9 @@ describe('ElasticDatasource', function() {
     appEvent: jest.fn(),
   };
 
-  let templateSrv = new TemplateSrv();
+  let templateSrv = new jestTemplateSrvStub();
 
-  templateSrv.variables = [];
-
-  let timeSrv = new TimeSrv($rootScope, jest.fn(), {}, {}, {});
+  let timeSrv = new jestTimeSrvStub();
 
   let ctx = <any>{
     $rootScope,

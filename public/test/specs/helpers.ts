@@ -195,13 +195,52 @@ export function TemplateSrvStub() {
   };
 }
 
+export function jestTemplateSrvStub() {
+  this.variables = [];
+  this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
+  this.data = {};
+  this.replace = jest.fn(text => _.template(text, this.templateSettings)(this.data));
+  this.init = jest.fn();
+  this.getAdhocFilters = jest.fn(() => []);
+  this.fillVariableValuesForUrl = jest.fn();
+  this.updateTemplateData = jest.fn();
+  this.variableExists = jest.fn(() => false);
+  this.variableInitialized = jest.fn();
+  this.highlightVariablesAsHtml = jest.fn(str => str);
+  this.setGrafanaVariable = jest.fn((name, value) => {
+    this.data[name] = value;
+  });
+}
+
+export function jestTimeSrvStub() {
+  this.init = jest.fn();
+  this.time = { from: 'now-1h', to: 'now' };
+  this.timeRange = jest.fn(parse => {
+    if (parse === false) {
+      return this.time;
+    }
+    return {
+      from: dateMath.parse(this.time.from, false),
+      to: dateMath.parse(this.time.to, true),
+    };
+  });
+
+  this.replace = jest.fn(target => target);
+
+  this.setTime = jest.fn(time => {
+    this.time = time;
+  });
+}
+
 var allDeps = {
-  ContextSrvStub: ContextSrvStub,
-  TemplateSrvStub: TemplateSrvStub,
-  TimeSrvStub: TimeSrvStub,
-  ControllerTestContext: ControllerTestContext,
-  ServiceTestContext: ServiceTestContext,
-  DashboardViewStateStub: DashboardViewStateStub,
+  ContextSrvStub,
+  TemplateSrvStub,
+  TimeSrvStub,
+  ControllerTestContext,
+  ServiceTestContext,
+  DashboardViewStateStub,
+  jestTimeSrvStub,
+  jestTemplateSrvStub,
 };
 
 // for legacy
