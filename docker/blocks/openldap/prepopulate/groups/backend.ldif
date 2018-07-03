@@ -1,5 +1,0 @@
-dn: cn=backend,ou=groups,dc=grafana,dc=org
-cn: backend
-objectClass: groupOfNames
-objectClass: top
-member: cn=ldap-editor,dc=grafana,dc=org

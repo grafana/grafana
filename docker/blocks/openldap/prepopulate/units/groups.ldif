@@ -1,3 +1,0 @@
-dn: ou=groups,dc=grafana,dc=org
-objectclass: top
-objectclass: organizationalUnit

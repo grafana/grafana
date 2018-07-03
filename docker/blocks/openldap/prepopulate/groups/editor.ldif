@@ -1,5 +1,0 @@
-dn: cn=editors,ou=groups,dc=grafana,dc=org
-cn: editors
-objectClass: groupOfNames
-objectClass: top
-member: cn=ldap-editor,ou=users,dc=grafana,dc=org
