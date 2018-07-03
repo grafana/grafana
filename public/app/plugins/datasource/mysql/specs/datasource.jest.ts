@@ -1,28 +1,18 @@
-import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
+//import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
-import helpers from 'test/specs/helpers';
+import { TemplateSrvStub } from 'test/specs/helpers';
 import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 
 describe('MySQLDatasource', function() {
-  var ctx = new helpers.ServiceTestContext();
-  var instanceSettings = { name: 'mysql' };
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['backendSrv']));
-
-  beforeEach(
-    angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-      ctx.$q = $q;
-      ctx.$httpBackend = $httpBackend;
-      ctx.$rootScope = $rootScope;
-      ctx.ds = $injector.instantiate(MysqlDatasource, {
-        instanceSettings: instanceSettings,
-      });
-      $httpBackend.when('GET', /\.html$/).respond('');
-    })
-  );
+  let instanceSettings = { name: 'mysql' };
+  let backendSrv = {};
+  let templateSrv = new TemplateSrvStub();
+  let ctx = <any>{
+    ds: new MysqlDatasource(instanceSettings, backendSrv, {}, templateSrv),
+    backendSrv
+  };
 
   describe('When performing annotationQuery', function() {
     let results;
@@ -59,26 +49,25 @@ describe('MySQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+        return Promise.resolve({ data: response, status: 200 });
+      });
       ctx.ds.annotationQuery(options).then(function(data) {
         results = data;
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should return annotation list', function() {
-      expect(results.length).to.be(3);
+      expect(results.length).toBe(3);
 
-      expect(results[0].text).to.be('some text');
-      expect(results[0].tags[0]).to.be('TagA');
-      expect(results[0].tags[1]).to.be('TagB');
+      expect(results[0].text).toBe('some text');
+      expect(results[0].tags[0]).toBe('TagA');
+      expect(results[0].tags[1]).toBe('TagB');
 
-      expect(results[1].tags[0]).to.be('TagB');
-      expect(results[1].tags[1]).to.be('TagC');
+      expect(results[1].tags[0]).toBe('TagB');
+      expect(results[1].tags[1]).toBe('TagC');
 
-      expect(results[2].tags.length).to.be(0);
+      expect(results[2].tags.length).toBe(0);
     });
   });
 
@@ -103,19 +92,18 @@ describe('MySQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+        return Promise.resolve({ data: response, status: 200 });
+      });
       ctx.ds.metricFindQuery(query).then(function(data) {
         results = data;
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should return list of all column values', function() {
-      expect(results.length).to.be(6);
-      expect(results[0].text).to.be('aTitle');
-      expect(results[5].text).to.be('some text3');
+      expect(results.length).toBe(6);
+      expect(results[0].text).toBe('aTitle');
+      expect(results[5].text).toBe('some text3');
     });
   });
 
@@ -140,21 +128,20 @@ describe('MySQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+        return Promise.resolve({ data: response, status: 200 });
+      });
       ctx.ds.metricFindQuery(query).then(function(data) {
         results = data;
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should return list of as text, value', function() {
-      expect(results.length).to.be(3);
-      expect(results[0].text).to.be('aTitle');
-      expect(results[0].value).to.be('value1');
-      expect(results[2].text).to.be('aTitle3');
-      expect(results[2].value).to.be('value3');
+      expect(results.length).toBe(3);
+      expect(results[0].text).toBe('aTitle');
+      expect(results[0].value).toBe('value1');
+      expect(results[2].text).toBe('aTitle3');
+      expect(results[2].value).toBe('value3');
     });
   });
 
@@ -179,19 +166,18 @@ describe('MySQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
-        return ctx.$q.when({ data: response, status: 200 });
-      };
+      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+        return Promise.resolve({ data: response, status: 200 });
+      });
       ctx.ds.metricFindQuery(query).then(function(data) {
         results = data;
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should return list of unique keys', function() {
-      expect(results.length).to.be(1);
-      expect(results[0].text).to.be('aTitle');
-      expect(results[0].value).to.be('same');
+      expect(results.length).toBe(1);
+      expect(results[0].text).toBe('aTitle');
+      expect(results[0].value).toBe('same');
     });
   });
 
@@ -202,33 +188,33 @@ describe('MySQLDatasource', function() {
 
     describe('and value is a string', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql('abc');
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual('abc');
       });
     });
 
     describe('and value is a number', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable(1000, ctx.variable)).to.eql(1000);
+        expect(ctx.ds.interpolateVariable(1000, ctx.variable)).toEqual(1000);
       });
     });
 
     describe('and value is an array of strings', () => {
       it('should return comma separated quoted values', () => {
-        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).to.eql("'a','b','c'");
+        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).toEqual("'a','b','c'");
       });
     });
 
     describe('and variable allows multi-value and value is a string', () => {
       it('should return a quoted value', () => {
         ctx.variable.multi = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql("'abc'");
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
     });
 
     describe('and variable allows all and value is a string', () => {
       it('should return a quoted value', () => {
         ctx.variable.includeAll = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql("'abc'");
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
     });
   });
