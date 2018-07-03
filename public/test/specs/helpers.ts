@@ -195,6 +195,24 @@ export function TemplateSrvStub() {
   };
 }
 
+export function jestTimeSrvStub() {
+  this.init = jest.fn();
+  this.time = { from: 'now-1h', to: 'now' };
+  this.timeRange = jest.fn(parse => {
+    if (parse === false) {
+      return this.time;
+    }
+    return {
+      from: dateMath.parse(this.time.from, false),
+      to: dateMath.parse(this.time.to, true),
+    };
+  });
+  this.replace = jest.fn(target => target);
+  this.setTime = jest.fn(time => {
+    this.time = time;
+  });
+}
+
 var allDeps = {
   ContextSrvStub,
   TemplateSrvStub,
