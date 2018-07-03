@@ -45,9 +45,10 @@ func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, e
 }
 
 var (
-	plog               log.Logger
-	standardStatistics map[string]bool
-	aliasFormat        *regexp.Regexp
+	plog                      log.Logger
+	standardStatistics        map[string]bool
+	aliasFormat               *regexp.Regexp
+	extendedStatisticsPattern *regexp.Regexp
 )
 
 func init() {
@@ -61,6 +62,7 @@ func init() {
 		"SampleCount": true,
 	}
 	aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	extendedStatisticsPattern = regexp.MustCompile(`p\d\{2}.\d{2}`)
 }
 
 func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -231,6 +233,9 @@ func parseStatistics(model *simplejson.Json) ([]string, []string, error) {
 			if _, isStandard := standardStatistics[ss]; isStandard {
 				statistics = append(statistics, ss)
 			} else {
+				if !extendedStatisticsPattern.MatchString(ss) {
+					return nil, nil, errors.New("invalid extended statistics")
+				}
 				extendedStatistics = append(extendedStatistics, ss)
 			}
 		} else {
