@@ -5,7 +5,6 @@ import CloudWatchDatasource from '../datasource';
 import 'app/features/dashboard/time_srv';
 
 describe('CloudWatchDatasource', function() {
-
   let instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
@@ -14,29 +13,12 @@ describe('CloudWatchDatasource', function() {
   let backendSrv = {};
   let ctx = <any>{
     backendSrv,
-    templateSrv
+    templateSrv,
   };
 
   beforeEach(() => {
     ctx.ds = new CloudWatchDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
   });
-  // beforeEach(angularMocks.module('grafana.core'));
-  // beforeEach(angularMocks.module('grafana.services'));
-  // beforeEach(angularMocks.module('grafana.controllers'));
-  // beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
-  // beforeEach(ctx.createService('timeSrv'));
-
-  // beforeEach(
-  //   angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-  //     ctx.$q = $q;
-  //     ctx.$httpBackend = $httpBackend;
-  //     ctx.$rootScope = $rootScope;
-  //     ctx.ds = $injector.instantiate(CloudWatchDatasource, {
-  //       instanceSettings: instanceSettings,
-  //     });
-  //     $httpBackend.when('GET', /\.html$/).respond('');
-  //   })
-  // );
 
   describe('When performing CloudWatch query', function() {
     var requestParams;
@@ -78,7 +60,7 @@ describe('CloudWatchDatasource', function() {
     };
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = await jest.fn((params) => {
+      ctx.backendSrv.datasourceRequest = await jest.fn(params => {
         requestParams = params.data;
         return Promise.resolve({ data: response });
       });
@@ -94,7 +76,6 @@ describe('CloudWatchDatasource', function() {
         expect(params.period).toBe(query.targets[0].period);
         done();
       });
-      //ctx.$rootScope.$apply();
     });
 
     it('should generate the correct query with interval variable', function(done) {
@@ -124,7 +105,6 @@ describe('CloudWatchDatasource', function() {
         expect(params.period).toBe('600');
         done();
       });
-      //ctx.$rootScope.$apply();
     });
 
     it('should return series list', function(done) {
@@ -133,7 +113,6 @@ describe('CloudWatchDatasource', function() {
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
-      //ctx.$rootScope.$apply();
     });
 
     it('should generate the correct targets by expanding template variables', function() {
@@ -249,7 +228,7 @@ describe('CloudWatchDatasource', function() {
 
     var requestParams;
     beforeEach(function() {
-      ctx.ds.performTimeSeriesQuery = jest.fn((request) => {
+      ctx.ds.performTimeSeriesQuery = jest.fn(request => {
         requestParams = request;
         return Promise.resolve({ data: {} });
       });
@@ -277,7 +256,6 @@ describe('CloudWatchDatasource', function() {
         expect(requestParams.queries[0].region).toBe(instanceSettings.jsonData.defaultRegion);
         done();
       });
-      //ctx.$rootScope.$apply();
     });
   });
 
@@ -321,7 +299,7 @@ describe('CloudWatchDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn((params) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(params => {
         return Promise.resolve({ data: response });
       });
     });
@@ -332,7 +310,6 @@ describe('CloudWatchDatasource', function() {
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
-      //ctx.$rootScope.$apply();
     });
   });
 
@@ -342,14 +319,13 @@ describe('CloudWatchDatasource', function() {
       scenario.setup = setupCallback => {
         beforeEach(() => {
           setupCallback();
-          ctx.backendSrv.datasourceRequest = jest.fn((args) => {
+          ctx.backendSrv.datasourceRequest = jest.fn(args => {
             scenario.request = args.data;
             return Promise.resolve({ data: scenario.requestResponse });
           });
           ctx.ds.metricFindQuery(query).then(args => {
             scenario.result = args;
           });
-          //ctx.$rootScope.$apply();
         });
       };
 
