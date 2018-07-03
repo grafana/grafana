@@ -37,6 +37,7 @@ export interface MetricPanelOptions extends BasePanelOptions {
 
 export interface MultistatPanelOptions extends MetricPanelOptions {
   layout?: MultistatPanelLayout;
+  viewMode?: MultistatPanelViewMode;
   format?: any;
   mappingType?: any;
   nullPointMode?: any;
@@ -55,4 +56,9 @@ export type MultistatPanelModel = PanelModel & MultistatPanelOptions;
 export enum MultistatPanelLayout {
   Horizontal = 'horizontal',
   Vertical = 'vertical',
+}
+
+export enum MultistatPanelViewMode {
+  Stats = 'stats',
+  Bars = 'bars',
 }

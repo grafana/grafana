@@ -1,6 +1,6 @@
 // import _ from 'lodash';
 import React from 'react';
-import { HorizontalStat } from './HorizontalStat';
+import { SingleStat } from './SingleStat';
 import { MultistatPanelSize } from '../types';
 
 export interface IProps {
@@ -23,7 +23,7 @@ export class MultiStatHorizontal extends React.Component<IProps, any> {
 
     const statElements = stats.map((stat, index) => {
       const color = this.props.getColor(stat.value);
-      return <HorizontalStat key={index} stat={stat} color={color} size={size} options={this.props.options} />;
+      return <SingleStat key={index} stat={stat} color={color} size={size} options={this.props.options} />;
     });
 
     return <div className="multistat-container">{statElements}</div>;

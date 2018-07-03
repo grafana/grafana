@@ -1,10 +1,11 @@
 import _ from 'lodash';
 import React from 'react';
-import { MultistatPanelSize, MultistatPanelOptions, MultistatPanelLayout } from '../types';
+import { MultistatPanelSize, MultistatPanelOptions, MultistatPanelViewMode } from '../types';
 import { ThresholdModel, ThresholdMode } from './ThresholdManager/ThresholdEditor';
-import { MultiStatBar } from './MultiStatBar';
-import { MultiStatHorizontal } from './MultiStatHorizontal';
+// import { MultiStatBar } from './MultiStatBar';
 import thresholdColors from './ThresholdManager/thresholdColors';
+import { MultiStatBar } from './MultiStatBar';
+import { MultiStatStats } from './MultiStatStats';
 
 // const MAX_BAR_LAYOUT_WIDTH = 500;
 
@@ -23,11 +24,12 @@ export class MultiStat extends React.Component<IProps, any> {
     const options = this.props.options;
     const thresholds = this.props.options.thresholds;
     const getColor = getColorFunc(thresholds);
+
     // const rootWidth = this.props.size.w;
-    if (options.layout === MultistatPanelLayout.Vertical) {
+    if (options.viewMode === MultistatPanelViewMode.Bars) {
       return <MultiStatBar {...this.props} getColor={getColor} />;
     } else {
-      return <MultiStatHorizontal {...this.props} getColor={getColor} />;
+      return <MultiStatStats {...this.props} getColor={getColor} />;
     }
   }
 }

@@ -15,8 +15,15 @@
 }
 
 .multistat-container {
-  display: flex;
   height: 100%;
+
+  &--horizontal {
+    display: flex;
+  }
+
+  &--vertical {
+    display: block;
+  }
 }
 
 .multistat-value-container {
@@ -27,6 +34,7 @@
 .multistat-value {
   padding: 10px;
   width: 100%;
+  vertical-align: top;
 }
 
 .multistat-label-horizontal {

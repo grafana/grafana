@@ -54,12 +54,16 @@
 
   <div class="section gf-form-group">
     <h5 class="section-heading">View</h5>
-    <div class="gf-form-inline">
-      <div class="gf-form">
-        <label class="gf-form-label width-6">Layout</label>
-        <div class="gf-form-select-wrapper width-8">
-          <select class="gf-form-input" ng-model="ctrl.panel.layout" ng-options="f.value as f.text for f in ctrl.layoutOptions" ng-change="ctrl.render()"></select>
-        </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Layout</label>
+      <div class="gf-form-select-wrapper width-8">
+        <select class="gf-form-input" ng-model="ctrl.panel.layout" ng-options="f.value as f.text for f in ctrl.layoutOptions" ng-change="ctrl.render()"></select>
+      </div>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Mode</label>
+      <div class="gf-form-select-wrapper width-8">
+        <select class="gf-form-input" ng-model="ctrl.panel.viewMode" ng-options="f.value as f.text for f in ctrl.viewModeOptions" ng-change="ctrl.render()"></select>
       </div>
     </div>
   </div>
@@ -72,7 +76,7 @@
     </div>
   </div>
 
-  <div class="section gf-form-group" ng-show="ctrl.panel.layout === 'horizontal'">
+  <div class="section gf-form-group" ng-show="ctrl.panel.viewMode === 'stats'">
     <h5 class="section-heading">Spark lines</h5>
     <gf-form-switch class="gf-form" label-class="width-9" label="Show" checked="ctrl.panel.sparkline.show" on-change="ctrl.render()"></gf-form-switch>
     <div ng-if="ctrl.panel.sparkline.show">
@@ -92,7 +96,7 @@
     </div>
   </div>
 
-  <div class="section gf-form-group" ng-show="ctrl.panel.layout === 'horizontal'">
+  <div class="section gf-form-group" ng-show="ctrl.panel.viewMode === 'stats'">
     <h5 class="section-heading">Gauge</h5>
     <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Show" checked="ctrl.panel.gauge.show" on-change="ctrl.render()"></gf-form-switch>
     <div ng-if="ctrl.panel.gauge.show">

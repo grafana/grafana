@@ -1,4 +1,4 @@
-import { MultistatPanelOptions, MultistatPanelLayout } from './types';
+import { MultistatPanelOptions, MultistatPanelLayout, MultistatPanelViewMode } from './types';
 
 const panelDefaults: MultistatPanelOptions = {
   links: [],
@@ -24,6 +24,7 @@ const panelDefaults: MultistatPanelOptions = {
     fillColor: 'rgba(31, 118, 189, 0.18)',
   },
   layout: MultistatPanelLayout.Horizontal,
+  viewMode: MultistatPanelViewMode.Stats,
 };
 
 const valueNameOptions = [
@@ -45,10 +46,16 @@ const layoutOptions = [
   { value: MultistatPanelLayout.Vertical, text: 'Vertical' },
 ];
 
+const viewModeOptions = [
+  { value: MultistatPanelViewMode.Stats, text: 'Stats' },
+  { value: MultistatPanelViewMode.Bars, text: 'Bars' },
+];
+
 const defaults = {
   panelDefaults,
   valueNameOptions,
   layoutOptions,
+  viewModeOptions,
 };
 
 export default defaults;

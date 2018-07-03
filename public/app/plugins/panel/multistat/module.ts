@@ -19,6 +19,7 @@ class MultiStatCtrl extends MetricsPanelCtrl {
   unitFormats: any[];
   valueNameOptions: any[] = defaults.valueNameOptions;
   layoutOptions: any[] = defaults.layoutOptions;
+  viewModeOptions: any[] = defaults.viewModeOptions;
 
   /** @ngInject */
   constructor($scope, $injector) {
