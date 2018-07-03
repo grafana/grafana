@@ -5,14 +5,16 @@ import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 
 describe('MySQLDatasource', function() {
-
   let instanceSettings = { name: 'mysql' };
   let backendSrv = {};
   let templateSrv = new TemplateSrvStub();
   let ctx = <any>{
-    ds: new MysqlDatasource(instanceSettings, backendSrv, {}, templateSrv),
-    backendSrv
+    backendSrv,
   };
+
+  beforeEach(() => {
+    ctx.ds = new MysqlDatasource(instanceSettings, backendSrv, {}, templateSrv);
+  });
 
   describe('When performing annotationQuery', function() {
     let results;
@@ -49,7 +51,7 @@ describe('MySQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
       ctx.ds.annotationQuery(options).then(function(data) {
@@ -92,7 +94,7 @@ describe('MySQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
       ctx.ds.metricFindQuery(query).then(function(data) {
@@ -128,7 +130,7 @@ describe('MySQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
       ctx.ds.metricFindQuery(query).then(function(data) {
@@ -166,7 +168,7 @@ describe('MySQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
       ctx.ds.metricFindQuery(query).then(function(data) {

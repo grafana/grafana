@@ -9,9 +9,12 @@ describe('PostgreSQLDatasource', function() {
   let backendSrv = {};
   let templateSrv = new TemplateSrvStub();
   let ctx = <any>{
-    ds: new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv),
-    backendSrv
+    backendSrv,
   };
+
+  beforeEach(() => {
+    ctx.ds = new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv);
+  });
 
   describe('When performing annotationQuery', function() {
     let results;
@@ -48,7 +51,7 @@ describe('PostgreSQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
       ctx.ds.annotationQuery(options).then(function(data) {
@@ -91,7 +94,7 @@ describe('PostgreSQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
       ctx.ds.metricFindQuery(query).then(function(data) {
@@ -127,7 +130,7 @@ describe('PostgreSQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
       ctx.ds.metricFindQuery(query).then(function(data) {
@@ -165,7 +168,7 @@ describe('PostgreSQLDatasource', function() {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
       ctx.ds.metricFindQuery(query).then(function(data) {
