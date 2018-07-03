@@ -2,31 +2,45 @@ import _ from 'lodash';
 import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
 import angular from 'angular';
-import helpers from 'test/specs/helpers';
 import { ElasticDatasource } from '../datasource';
+import { TimeSrv } from 'app/features/dashboard/time_srv';
+import $q from 'q';
 
 describe('ElasticDatasource', function() {
-  var ctx = new helpers.ServiceTestContext();
+  //var ctx = new helpers.ServiceTestContext();
+  let backendSrv = {
+    datasourceRequest: jest.fn()
+  };
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv', 'timeSrv']));
+  let $rootScope = {
+    $on: jest.fn(),
+    appEvent: jest.fn(),
+  };
 
-  beforeEach(
-    angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-      ctx.$q = $q;
-      ctx.$httpBackend = $httpBackend;
-      ctx.$rootScope = $rootScope;
-      ctx.$injector = $injector;
-      $httpBackend.when('GET', /\.html$/).respond('');
-    })
-  );
+  let timeSrv = new TimeSrv($rootScope,jest.fn(),{},{},{});
+
+  let ctx = <any>{
+    $rootScope,
+    backendSrv,
+    $q
+  };
+  // beforeEach(angularMocks.module('grafana.core'));
+  // beforeEach(angularMocks.module('grafana.services'));
+  // beforeEach(ctx.providePhase(['templateSrv', 'backendSrv', 'timeSrv']));
+
+  // beforeEach(
+  //   angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+  //     ctx.$q = $q;
+  //     ctx.$httpBackend = $httpBackend;
+  //     ctx.$rootScope = $rootScope;
+  //     ctx.$injector = $injector;
+  //     $httpBackend.when('GET', /\.html$/).respond('');
+  //   })
+  // );
 
   function createDatasource(instanceSettings) {
     instanceSettings.jsonData = instanceSettings.jsonData || {};
-    ctx.ds = ctx.$injector.instantiate(ElasticDatasource, {
-      instanceSettings: instanceSettings,
-    });
+    ctx.ds = new ElasticDatasource(instanceSettings, {}, backendSrv, { replace: jest.fn() }, timeSrv);
   }
 
   describe('When testing datasource with index pattern', function() {
@@ -40,13 +54,13 @@ describe('ElasticDatasource', function() {
 
     it('should translate index pattern to current day', function() {
       var requestOptions;
-      ctx.backendSrv.datasourceRequest = function(options) {
+      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
         requestOptions = options;
-        return ctx.$q.when({ data: {} });
-      };
+        return Promise.resolve({ data: {} });
+      });
 
       ctx.ds.testDatasource();
-      ctx.$rootScope.$apply();
+      // ctx.$rootScope.$apply();
 
       var today = moment.utc().format('YYYY.MM.DD');
       expect(requestOptions.url).to.be('http://es.com/asd-' + today + '/_mapping');
@@ -63,10 +77,10 @@ describe('ElasticDatasource', function() {
         jsonData: { interval: 'Daily', esVersion: '2' },
       });
 
-      ctx.backendSrv.datasourceRequest = function(options) {
+      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
         requestOptions = options;
-        return ctx.$q.when({ data: { responses: [] } });
-      };
+        return Promise.resolve({ data: { responses: [] } });
+      });
 
       ctx.ds.query({
         range: {
@@ -82,19 +96,19 @@ describe('ElasticDatasource', function() {
         ],
       });
 
-      ctx.$rootScope.$apply();
+      // ctx.$rootScope.$apply();
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
     });
 
     it('should translate index pattern to current day', function() {
-      expect(header.index).to.eql(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
+      expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
     });
 
     it('should json escape lucene query', function() {
       var body = angular.fromJson(parts[1]);
-      expect(body.query.bool.filter[1].query_string.query).to.be('escape\\:test');
+      expect(body.query.bool.filter[1].query_string.query).toBe('escape\\:test');
     });
   });
 
@@ -108,10 +122,10 @@ describe('ElasticDatasource', function() {
         jsonData: { esVersion: '2' },
       });
 
-      ctx.backendSrv.datasourceRequest = function(options) {
+      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
         requestOptions = options;
-        return ctx.$q.when({ data: { responses: [] } });
-      };
+        return Promise.resolve({ data: { responses: [] } });
+      });
 
       ctx.ds.query({
         range: {
@@ -127,18 +141,18 @@ describe('ElasticDatasource', function() {
         ],
       });
 
-      ctx.$rootScope.$apply();
+      // ctx.$rootScope.$apply();
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
     });
 
     it('should set search type to query_then_fetch', function() {
-      expect(header.search_type).to.eql('query_then_fetch');
+      expect(header.search_type).toEqual('query_then_fetch');
     });
 
     it('should set size', function() {
       var body = angular.fromJson(parts[1]);
-      expect(body.size).to.be(500);
+      expect(body.size).toBe(500);
     });
   });
 
@@ -146,8 +160,8 @@ describe('ElasticDatasource', function() {
     beforeEach(function() {
       createDatasource({ url: 'http://es.com', index: 'metricbeat' });
 
-      ctx.backendSrv.datasourceRequest = function(options) {
-        return ctx.$q.when({
+      ctx.backendSrv.datasourceRequest = jest.fn((options) => {
+        return Promise.resolve({
           data: {
             metricbeat: {
               mappings: {
@@ -190,7 +204,7 @@ describe('ElasticDatasource', function() {
             },
           },
         });
-      };
+      })
     });
 
     it('should return nested fields', function() {
@@ -201,7 +215,7 @@ describe('ElasticDatasource', function() {
         })
         .then(fieldObjects => {
           var fields = _.map(fieldObjects, 'text');
-          expect(fields).to.eql([
+          expect(fields).toEqual([
             '@timestamp',
             'beat.name.raw',
             'beat.name',
@@ -212,7 +226,7 @@ describe('ElasticDatasource', function() {
             'system.process.name',
           ]);
         });
-      ctx.$rootScope.$apply();
+      // ctx.$rootScope.$apply();
     });
 
     it('should return fields related to query type', function() {
@@ -224,7 +238,7 @@ describe('ElasticDatasource', function() {
         })
         .then(fieldObjects => {
           var fields = _.map(fieldObjects, 'text');
-          expect(fields).to.eql(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
+          expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
         });
 
       ctx.ds
@@ -235,10 +249,10 @@ describe('ElasticDatasource', function() {
         })
         .then(fieldObjects => {
           var fields = _.map(fieldObjects, 'text');
-          expect(fields).to.eql(['@timestamp']);
+          expect(fields).toEqual(['@timestamp']);
         });
 
-      ctx.$rootScope.$apply();
+      // ctx.$rootScope.$apply();
     });
   });
 
@@ -271,18 +285,18 @@ describe('ElasticDatasource', function() {
         ],
       });
 
-      ctx.$rootScope.$apply();
+      // ctx.$rootScope.$apply();
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
     });
 
     it('should not set search type to count', function() {
-      expect(header.search_type).to.not.eql('count');
+      expect(header.search_type).not.toEqual('count');
     });
 
     it('should set size to 0', function() {
       var body = angular.fromJson(parts[1]);
-      expect(body.size).to.be(0);
+      expect(body.size).toBe(0);
     });
   });
 
@@ -324,7 +338,7 @@ describe('ElasticDatasource', function() {
         results = res;
       });
 
-      ctx.$rootScope.$apply();
+      // ctx.$rootScope.$apply();
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
@@ -332,24 +346,24 @@ describe('ElasticDatasource', function() {
     });
 
     it('should get results', function() {
-      expect(results.length).to.eql(2);
+      expect(results.length).toEqual(2);
     });
 
     it('should use key or key_as_string', function() {
-      expect(results[0].text).to.eql('test');
-      expect(results[1].text).to.eql('test2_as_string');
+      expect(results[0].text).toEqual('test');
+      expect(results[1].text).toEqual('test2_as_string');
     });
 
     it('should not set search type to count', function() {
-      expect(header.search_type).to.not.eql('count');
+      expect(header.search_type).not.toEqual('count');
     });
 
     it('should set size to 0', function() {
-      expect(body.size).to.be(0);
+      expect(body.size).toBe(0);
     });
 
     it('should not set terms aggregation size to 0', function() {
-      expect(body['aggs']['1']['terms'].size).to.not.be(0);
+      expect(body['aggs']['1']['terms'].size).not.toBe(0);
     });
   });
 });
