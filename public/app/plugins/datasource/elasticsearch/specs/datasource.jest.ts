@@ -2,7 +2,8 @@ import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
 import { ElasticDatasource } from '../datasource';
-import { jestTimeSrvStub, TemplateSrvStub } from 'test/specs/helpers';
+
+import * as dateMath from 'app/core/utils/datemath';
 
 describe('ElasticDatasource', function() {
   let backendSrv = {
@@ -14,9 +15,23 @@ describe('ElasticDatasource', function() {
     appEvent: jest.fn(),
   };
 
-  let templateSrv = new TemplateSrvStub();
+  let templateSrv = {
+    replace: jest.fn(text => text),
+    getAdhocFilters: jest.fn(() => []),
+  };
 
-  let timeSrv = new jestTimeSrvStub();
+  let timeSrv = {
+    time: { from: 'now-1h', to: 'now' },
+    timeRange: jest.fn(parse => {
+      return {
+        from: dateMath.parse(this.time.from, false),
+        to: dateMath.parse(this.time.to, true),
+      };
+    }),
+    setTime: jest.fn(time => {
+      this.time = time;
+    }),
+  };
 
   let ctx = <any>{
     $rootScope,
