@@ -21,6 +21,15 @@ export class SingleStat extends React.Component<IProps, any> {
     const valueColor = this.props.color;
     const bgColor = getBGColor(valueColor, 0.1);
 
+    const showSparkline = this.props.options.sparkline && this.props.options.sparkline.show;
+    const sparklineWidth = this.props.size.w;
+    let sparklineHeight = Math.floor(this.props.size.h * 0.25);
+    sparklineHeight = showSparkline ? sparklineHeight : 0;
+    const sparklineSize = { w: sparklineWidth, h: sparklineHeight };
+
+    const widthRatio = this.props.size.w / (this.props.size.h - sparklineHeight);
+    const labelToTheLeft = widthRatio > 3;
+
     let containerStyle: React.CSSProperties = {};
     if (options.layout === MultistatPanelLayout.Vertical) {
       containerStyle.height = this.props.size.h;
@@ -32,7 +41,10 @@ export class SingleStat extends React.Component<IProps, any> {
       containerStyle.background = bgColor;
     }
 
-    const { labelFontSizePx, valueFontSize, valueFontSizePx } = getFontSize(this.props.size, this.props.options);
+    const { labelFontSize, labelFontSizePx, valueFontSize, valueFontSizePx } = getFontSize(
+      this.props.size,
+      this.props.options
+    );
     const labelStyle: React.CSSProperties = {
       fontSize: labelFontSizePx,
     };
@@ -46,15 +58,35 @@ export class SingleStat extends React.Component<IProps, any> {
     if (this.props.options.colorValue) {
       valueStyle.color = valueColor;
     }
-    const valueTopOffset = Math.ceil(valueFontSize * 0.6) + 'px';
+
+    const valueTopOffset = getTopOffset(
+      this.props.size.h,
+      sparklineHeight,
+      labelFontSize,
+      valueFontSize,
+      labelToTheLeft
+    );
+    const valueTopOffsetPx = valueTopOffset + 'px';
     const valueContainerStyle: React.CSSProperties = {
-      top: valueTopOffset,
+      top: valueTopOffsetPx,
     };
 
+    if (labelToTheLeft) {
+      const labelTopOffset = Math.floor(valueTopOffset + (valueFontSize - labelFontSize) / 2);
+      containerStyle.display = 'flex';
+      labelContainerStyle.flexGrow = 1;
+      valueContainerStyle.flexGrow = 2;
+      labelContainerStyle.position = 'relative';
+      labelContainerStyle.top = labelTopOffset;
+      labelContainerStyle.lineHeight = 'unset';
+      labelStyle.fontSize = labelFontSize * 1.5 + 'px';
+      labelStyle.verticalAlign = 'top';
+    }
+
     return (
-      <div className="multistat-horizontal" style={containerStyle}>
+      <div className="multistat-single" style={containerStyle}>
         <div className="multistat-label-container" style={labelContainerStyle}>
-          <span className="multistat-label-horizontal" style={labelStyle}>
+          <span className="multistat-label" style={labelStyle}>
             {stat.label}
           </span>
         </div>
@@ -64,7 +96,7 @@ export class SingleStat extends React.Component<IProps, any> {
           </span>
         </div>
         {this.props.options.sparkline.show && (
-          <SparkLine stat={stat} options={this.props.options} color={valueColor} size={this.props.size} />
+          <SparkLine stat={stat} options={this.props.options} color={valueColor} size={sparklineSize} />
         )}
       </div>
     );
@@ -84,4 +116,11 @@ function getFontSize(panelSize: MultistatPanelSize, options?) {
   const valueFontSizePx = valueFontSize + 'px';
 
   return { labelFontSize, valueFontSize, labelFontSizePx, valueFontSizePx };
+}
+
+function getTopOffset(height, sparklineHeight, labelFontSize, valueFontSize, labelToTheLeft?) {
+  if (labelToTheLeft) {
+    return (height - sparklineHeight - valueFontSize) / 2;
+  }
+  return (height - sparklineHeight - labelFontSize * 2 * 1.25 - valueFontSize) / 2;
 }

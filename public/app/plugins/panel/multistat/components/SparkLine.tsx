@@ -42,7 +42,7 @@ export class SparkLine extends React.Component<IProps, any> {
     plotCss.width = width - 10 + 'px';
     // const dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
     // plotCss.height = height - dynamicHeightMargin + 'px';
-    plotCss.height = Math.floor(height * 0.25) + 'px';
+    plotCss.height = height + 'px';
 
     const flotpairs = this.props.stat.flotpairs;
     const timeRange = {

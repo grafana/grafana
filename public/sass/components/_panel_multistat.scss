@@ -1,17 +1,6 @@
 .multistat-panel {
   position: relative;
   height: 100%;
-
-  .multistat-horizontal {
-    margin: 0.3rem;
-    display: block;
-    text-align: center;
-    line-height: 1;
-    position: relative;
-    z-index: 1;
-    font-size: 3em;
-    font-weight: 500;
-  }
 }
 
 .multistat-container {
@@ -26,20 +15,30 @@
   }
 }
 
-.multistat-value-container {
+.multistat-single {
+  margin: 0.3rem;
+  display: block;
+  text-align: center;
+  line-height: 1;
   position: relative;
-  top: 20%;
-}
+  z-index: 1;
+  font-size: 3em;
+  font-weight: 500;
 
-.multistat-value {
-  padding: 10px;
-  width: 100%;
-  vertical-align: top;
-}
+  .multistat-value-container {
+    position: relative;
+    top: 20%;
+  }
 
-.multistat-label-horizontal {
-  font-size: 0.4em;
-  font-weight: 300;
+  .multistat-value {
+    width: 100%;
+    vertical-align: top;
+  }
+
+  .multistat-label {
+    font-size: 0.4em;
+    font-weight: 300;
+  }
 }
 
 .multistat-bar-container {
