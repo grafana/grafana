@@ -210,11 +210,12 @@ func TestMSSQL(t *testing.T) {
 				So(queryResult.Error, ShouldBeNil)
 
 				points := queryResult.Series[0].Points
-				So(len(points), ShouldEqual, 6)
+				// without fill this should result in 4 buckets
+				So(len(points), ShouldEqual, 4)
 
 				dt := fromStart
 
-				for i := 0; i < 3; i++ {
+				for i := 0; i < 2; i++ {
 					aValue := points[i][0].Float64
 					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
 					So(aValue, ShouldEqual, 15)
@@ -222,9 +223,9 @@ func TestMSSQL(t *testing.T) {
 					dt = dt.Add(5 * time.Minute)
 				}
 
-				// adjust for 5 minute gap
-				dt = dt.Add(5 * time.Minute)
-				for i := 3; i < 6; i++ {
+				// adjust for 10 minute gap between first and second set of points
+				dt = dt.Add(10 * time.Minute)
+				for i := 2; i < 4; i++ {
 					aValue := points[i][0].Float64
 					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
 					So(aValue, ShouldEqual, 20)
@@ -260,7 +261,7 @@ func TestMSSQL(t *testing.T) {
 
 				dt := fromStart
 
-				for i := 0; i < 3; i++ {
+				for i := 0; i < 2; i++ {
 					aValue := points[i][0].Float64
 					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
 					So(aValue, ShouldEqual, 15)
@@ -268,17 +269,22 @@ func TestMSSQL(t *testing.T) {
 					dt = dt.Add(5 * time.Minute)
 				}
 
+				// check for NULL values inserted by fill
+				So(points[2][0].Valid, ShouldBeFalse)
 				So(points[3][0].Valid, ShouldBeFalse)
 
-				// adjust for 5 minute gap
-				dt = dt.Add(5 * time.Minute)
-				for i := 4; i < 7; i++ {
+				// adjust for 10 minute gap between first and second set of points
+				dt = dt.Add(10 * time.Minute)
+				for i := 4; i < 6; i++ {
 					aValue := points[i][0].Float64
 					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
 					So(aValue, ShouldEqual, 20)
 					So(aTime, ShouldEqual, dt)
 					dt = dt.Add(5 * time.Minute)
 				}
+
+				So(points[6][0].Valid, ShouldBeFalse)
+
 			})
 
 			Convey("When doing a metric query using timeGroup with float fill enabled", func() {

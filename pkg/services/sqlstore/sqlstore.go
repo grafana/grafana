@@ -132,6 +132,13 @@ func (ss *SqlStore) Init() error {
 	migrator := migrator.NewMigrator(x)
 	migrations.AddMigrations(migrator)
 
+	for _, descriptor := range registry.GetServices() {
+		sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
+		if ok {
+			sc.AddMigration(migrator)
+		}
+	}
+
 	if err := migrator.Start(); err != nil {
 		return fmt.Errorf("Migration failed err: %v", err)
 	}
