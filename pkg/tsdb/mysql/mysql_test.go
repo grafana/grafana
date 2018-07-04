@@ -132,8 +132,8 @@ func TestMySQL(t *testing.T) {
 				So(column[7].(float64), ShouldEqual, 1.11)
 				So(column[8].(float64), ShouldEqual, 2.22)
 				So(*column[9].(*float32), ShouldEqual, 3.33)
-				So(column[10].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now())
-				So(column[11].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now())
+				So(column[10].(time.Time), ShouldHappenWithin, 10*time.Second, time.Now())
+				So(column[11].(time.Time), ShouldHappenWithin, 10*time.Second, time.Now())
 				So(column[12].(string), ShouldEqual, "11:11:11")
 				So(column[13].(int64), ShouldEqual, 2018)
 				So(*column[14].(*[]byte), ShouldHaveSameTypeAs, []byte{1})
@@ -578,7 +578,7 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Error, ShouldBeNil)
 
 				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float64(float32(tInitial.Unix())))*1e3)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float32(tInitial.Unix()))*1e3)
 			})
 
 			Convey("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable) should return metric with time in milliseconds", func() {
@@ -600,7 +600,7 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Error, ShouldBeNil)
 
 				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float64(float32(tInitial.Unix())))*1e3)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float32(tInitial.Unix()))*1e3)
 			})
 
 			Convey("When doing a metric query grouping by time and select metric column should return correct series", func() {
@@ -817,7 +817,7 @@ func TestMySQL(t *testing.T) {
 				columns := queryResult.Tables[0].Rows[0]
 
 				//Should be in milliseconds
-				So(columns[0].(int64), ShouldEqual, int64(dt.Unix()*1000))
+				So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
 			})
 
 			Convey("When doing an annotation query with a time column in epoch millisecond format should return ms", func() {
