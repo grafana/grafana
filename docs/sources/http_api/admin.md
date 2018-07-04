@@ -37,7 +37,7 @@ Content-Type: application/json
 
 {
   "DEFAULT": {
-  "app_mode":"production"
+    "app_mode":"production"
   },
   "analytics": {
     "google_analytics_ua_id":"",
