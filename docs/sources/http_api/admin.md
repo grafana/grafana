@@ -36,11 +36,10 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-"DEFAULT":
-{
-  "app_mode":"production"},
-  "analytics":
-  {
+  "DEFAULT": {
+  "app_mode":"production"
+  },
+  "analytics": {
     "google_analytics_ua_id":"",
     "reporting_enabled":"false"
   },
