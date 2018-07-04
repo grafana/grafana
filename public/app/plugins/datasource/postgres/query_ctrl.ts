@@ -303,6 +303,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       }
     }
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
+    this.queryModel.updatePersistedParts();
     this.panelCtrl.refresh();
   }
 
