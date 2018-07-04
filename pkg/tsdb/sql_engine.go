@@ -65,8 +65,11 @@ func (e *DefaultSqlEngine) InitEngine(driverName string, dsInfo *models.DataSour
 		return err
 	}
 
-	engine.SetMaxOpenConns(10)
-	engine.SetMaxIdleConns(10)
+	max_open_conn := dsInfo.JsonData.Get("max_open_conn").MustInt(10)
+	max_idle_conn := dsInfo.JsonData.Get("max_idle_conn").MustInt(10)
+
+	engine.SetMaxOpenConns(max_open_conn)
+	engine.SetMaxIdleConns(max_idle_conn)
 
 	engineCache.cache[dsInfo.Id] = engine
 	e.XormEngine = engine
