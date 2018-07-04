@@ -22,7 +22,7 @@ describe('ElasticDatasource', function() {
 
   let timeSrv = {
     time: { from: 'now-1h', to: 'now' },
-    timeRange: jest.fn(parse => {
+    timeRange: jest.fn(() => {
       return {
         from: dateMath.parse(this.time.from, false),
         to: dateMath.parse(this.time.to, true),
