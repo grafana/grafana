@@ -18,6 +18,8 @@ import (
 
 	"github.com/go-macaron/session"
 
+	"time"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -48,7 +50,7 @@ var (
 	BuildVersion    string
 	BuildCommit     string
 	BuildStamp      int64
-	Enterprise      bool
+	IsEnterprise    bool
 	ApplicationName string
 
 	// Paths
@@ -195,6 +197,8 @@ type Cfg struct {
 	PhantomDir                       string
 	RendererUrl                      string
 	DisableBruteForceLoginProtection bool
+
+	TempDataLifetime time.Duration
 }
 
 type CommandLineArgs struct {
@@ -514,7 +518,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	Raw = cfg.Raw
 
 	ApplicationName = "Grafana"
-	if Enterprise {
+	if IsEnterprise {
 		ApplicationName += " Enterprise"
 	}
 
@@ -637,6 +641,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.RendererUrl = renderSec.Key("server_url").String()
 	cfg.ImagesDir = filepath.Join(DataPath, "png")
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
+	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
