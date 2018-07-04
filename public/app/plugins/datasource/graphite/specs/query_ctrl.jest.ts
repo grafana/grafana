@@ -6,48 +6,59 @@ import helpers from 'test/specs/helpers';
 import { GraphiteQueryCtrl } from '../query_ctrl';
 
 describe('GraphiteQueryCtrl', function() {
-  var ctx = new helpers.ControllerTestContext();
+  
+  let datasource = {
+    metricFindQuery: jest.fn(() => Promise.resolve([])),
+    getFuncDefs: jest.fn(() => Promise.resolve(gfunc.getFuncDefs('1.0'))),
+    getFuncDef: gfunc.getFuncDef,
+    waitForFuncDefsLoaded: jest.fn(() => Promise.resolve(null)),
+    createFuncInstance: gfunc.createFuncInstance,
+    
+  };
+  let ctx = {
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.controllers'));
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(
-    angularMocks.module(function($compileProvider) {
-      $compileProvider.preAssignBindingsEnabled(true);
-    })
-  );
+  };
 
-  beforeEach(ctx.providePhase());
-  beforeEach(
-    angularMocks.inject(($rootScope, $controller, $q) => {
-      ctx.$q = $q;
-      ctx.scope = $rootScope.$new();
-      ctx.target = { target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)' };
-      ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
-      ctx.datasource.getFuncDefs = sinon.stub().returns(ctx.$q.when(gfunc.getFuncDefs('1.0')));
-      ctx.datasource.getFuncDef = gfunc.getFuncDef;
-      ctx.datasource.waitForFuncDefsLoaded = sinon.stub().returns(ctx.$q.when(null));
-      ctx.datasource.createFuncInstance = gfunc.createFuncInstance;
-      ctx.panelCtrl = { panel: {} };
-      ctx.panelCtrl = {
-        panel: {
-          targets: [ctx.target],
-        },
-      };
-      ctx.panelCtrl.refresh = sinon.spy();
+  // beforeEach(angularMocks.module('grafana.core'));
+  // beforeEach(angularMocks.module('grafana.controllers'));
+  // beforeEach(angularMocks.module('grafana.services'));
+  // beforeEach(
+  //   angularMocks.module(function($compileProvider) {
+  //     $compileProvider.preAssignBindingsEnabled(true);
+  //   })
+  // );
 
-      ctx.ctrl = $controller(
-        GraphiteQueryCtrl,
-        { $scope: ctx.scope },
-        {
-          panelCtrl: ctx.panelCtrl,
-          datasource: ctx.datasource,
-          target: ctx.target,
-        }
-      );
-      ctx.scope.$digest();
-    })
-  );
+  //beforeEach(ctx.providePhase());
+  // beforeEach(
+  //   angularMocks.inject(($rootScope, $controller, $q) => {
+  //     ctx.$q = $q;
+  //     ctx.scope = $rootScope.$new();
+  //     ctx.target = { target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)' };
+  //     ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
+  //     ctx.datasource.getFuncDefs = sinon.stub().returns(ctx.$q.when(gfunc.getFuncDefs('1.0')));
+  //     ctx.datasource.getFuncDef = gfunc.getFuncDef;
+  //     ctx.datasource.waitForFuncDefsLoaded = sinon.stub().returns(ctx.$q.when(null));
+  //     ctx.datasource.createFuncInstance = gfunc.createFuncInstance;
+  //     ctx.panelCtrl = { panel: {} };
+  //     ctx.panelCtrl = {
+  //       panel: {
+  //         targets: [ctx.target],
+  //       },
+  //     };
+  //     ctx.panelCtrl.refresh = sinon.spy();
+
+  //     ctx.ctrl = $controller(
+  //       GraphiteQueryCtrl,
+  //       { $scope: ctx.scope },
+  //       {
+  //         panelCtrl: ctx.panelCtrl,
+  //         datasource: ctx.datasource,
+  //         target: ctx.target,
+  //       }
+  //     );
+  //     ctx.scope.$digest();
+  //   })
+  // );
 
   describe('init', function() {
     it('should validate metric key exists', function() {
