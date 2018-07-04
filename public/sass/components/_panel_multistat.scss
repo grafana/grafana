@@ -15,6 +15,16 @@
   }
 }
 
+.multistat-bars {
+  &--horizontal {
+    display: flex;
+  }
+
+  &--vertical {
+    display: block;
+  }
+}
+
 .multistat-single {
   margin: 0.3rem;
   display: block;
@@ -44,17 +54,52 @@
 .multistat-bar-container {
   padding: 0rem 0.4rem;
   display: flex;
-}
 
-.multistat-bar-value-container {
-  margin-left: 1rem;
+  &--horizontal {
+    display: block;
+    position: absolute;
+    bottom: 8px;
+
+    .multistat-bar {
+      border-top-style: solid;
+      border-top-width: 2px;
+    }
+
+    .bar-label {
+      position: absolute;
+
+      &--vertical {
+        writing-mode: vertical-lr;
+        transform: rotate(-180deg);
+      }
+    }
+
+    .value-container {
+      position: relative;
+      margin: 0px;
+      text-align: center;
+    }
+  }
+
+  &--vertical {
+    display: flex;
+
+    .multistat-bar {
+      border-right-style: solid;
+      border-right-width: 2px;
+    }
+
+    .value-container {
+      margin-left: 1rem;
+    }
+  }
 }
 
 .multistat-bar {
   padding: 0rem 0.4rem;
 
-  border-right-style: solid;
-  border-right-width: 2px;
+  // border-right-style: solid;
+  // border-right-width: 2px;
 
   .bar-label {
     padding-left: 0.5rem;
@@ -62,6 +107,6 @@
 
   .bar-value {
     float: right;
-    padding-right: 1rem;
+    padding: 0.5rem 1rem;
   }
 }

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { BarStat } from './BarStat';
-import { MultistatPanelSize, MultistatPanelOptions } from '../types';
+import { MultistatPanelSize, MultistatPanelOptions, MultistatPanelLayout } from '../types';
 
 export interface IProps {
   stats: any[];
@@ -15,35 +15,53 @@ export class MultiStatBar extends React.Component<IProps, any> {
     super(props);
   }
 
-  placeValuesOutOfBar(barWidths): boolean {
+  isValuesOutOfBar(barWidths): boolean {
+    const minLength = this.props.options.layout === 'vertical' ? 120 : 90;
     const minBarWidth = _.min(barWidths);
-    const valuesOutOfBar = minBarWidth < 120;
+    const valuesOutOfBar = minBarWidth < minLength;
     return valuesOutOfBar;
   }
 
   render() {
     const stats = this.props.stats || [];
-    let barWidths = _.map(stats, () => null);
-    // console.log(this.props);
+    const options = this.props.options;
+    let barLengths = _.map(stats, () => null);
 
-    const rootElemWidth = this.props.size.w;
+    let rootElemLength = options.layout === MultistatPanelLayout.Horizontal ? this.props.size.h : this.props.size.w;
     const values = _.map(stats, 'value');
     const maxVal = _.max(values);
     const minVal = _.min(values);
     const delta = maxVal - minVal;
-    const minWidth = rootElemWidth * 0.3;
-    const maxWidth = rootElemWidth * 0.9;
+    const minWidth = rootElemLength * 0.3;
+    const maxWidth = rootElemLength * 0.9;
     const deltaWidth = maxWidth - minWidth;
     _.forEach(values, (v, i) => {
       let width = (v - minVal) / delta * deltaWidth + minWidth;
-      barWidths[i] = Math.max(minWidth, width);
+      barLengths[i] = Math.max(minWidth, width);
     });
-    const barHeight = stats.length > 0 ? this.props.size.h / stats.length : 0;
-    const valueOutOfBar = this.placeValuesOutOfBar(barWidths);
+    const totalWidth = options.layout === MultistatPanelLayout.Horizontal ? this.props.size.w : this.props.size.h;
+    const barWidth = stats.length > 0 ? totalWidth / stats.length : 0;
+    const valueOutOfBar = this.isValuesOutOfBar(barLengths);
+
+    let direction: MultistatPanelLayout;
+    if (options.layout === MultistatPanelLayout.Vertical) {
+      direction = MultistatPanelLayout.Vertical;
+    } else {
+      direction = MultistatPanelLayout.Horizontal;
+    }
 
     const statElements = stats.map((stat, index) => {
       const color = this.props.getColor(stat.value);
-      const barSize = { w: barWidths[index], h: barHeight };
+      let barSize;
+      let barContainerStyle: React.CSSProperties = {};
+      if (direction === MultistatPanelLayout.Horizontal) {
+        barSize = { w: barWidth, h: barLengths[index] };
+        barContainerStyle.left = barWidth * index;
+      } else {
+        barSize = { w: barLengths[index], h: barWidth };
+      }
+      console.log(barSize);
+
       return (
         <BarStat
           key={index}
@@ -51,11 +69,16 @@ export class MultiStatBar extends React.Component<IProps, any> {
           color={color}
           size={barSize}
           valueOutOfBar={valueOutOfBar}
-          options={this.props.options}
+          direction={direction}
+          style={barContainerStyle}
+          options={options}
         />
       );
     });
 
-    return <div>{statElements}</div>;
+    const classSuffix = direction;
+    const className = `multistat-bars--${classSuffix}`;
+
+    return <div className={className}>{statElements}</div>;
   }
 }
