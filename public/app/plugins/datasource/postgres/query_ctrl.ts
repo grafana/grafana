@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { PostgresQueryBuilder } from './query_builder';
 import { QueryCtrl } from 'app/plugins/sdk';
 import PostgresQuery from './postgres_query';
-import sqlPart from './query_part';
+import sqlPart from './sql_part';
 
 export interface QueryMeta {
   sql: string;
@@ -29,7 +29,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
   showHelp: boolean;
   schemaSegment: any;
   tableSegment: any;
-  whereSegments: any;
   whereAdd: any;
   timeColumnSegment: any;
   metricColumnSegment: any;
@@ -245,18 +244,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   buildWhereSegments() {
-    this.whereSegments = [];
-    this.whereSegments.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
-    //    for (let constraint of this.target.where) {
-    //
-    //      this.whereSegments.push(sqlPart.create({type: 'column',params: ['1']}));
-    //      if (constraint.condition) {
-    //        this.whereSegments.push(this.uiSegmentSrv.newCondition(constraint.condition));
-    //      }
-    //      this.whereSegments.push(this.uiSegmentSrv.newKey(constraint.key));
-    //      this.whereSegments.push(this.uiSegmentSrv.newOperator(constraint.operator));
-    //      this.whereSegments.push(this.uiSegmentSrv.newKeyValue(constraint.value));
-    //    }
+    //    this.whereSegments = [];
+    //    this.whereSegments.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
   }
 
   handleWherePartEvent(whereParts, part, evt, index) {
@@ -276,7 +265,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
           case 'op':
             return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=', 'IN']));
           default:
-            return Promise.resolve([]);
+            return this.$q.when([]);
         }
       }
       case 'part-param-changed': {
@@ -284,7 +273,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         break;
       }
       case 'action': {
-        whereParts.splice(whereParts.indexOf(part), 1);
+        this.queryModel.removeWherePart(part, index);
         this.panelCtrl.refresh();
         break;
       }
@@ -299,21 +288,20 @@ export class PostgresQueryCtrl extends QueryCtrl {
     options.push(this.uiSegmentSrv.newSegment({ type: 'function', value: '$__timeFilter' }));
     options.push(this.uiSegmentSrv.newSegment({ type: 'function', value: '$__unixEpochFilter' }));
     options.push(this.uiSegmentSrv.newSegment({ type: 'function', value: 'Expression' }));
-    return Promise.resolve(options);
+    return this.$q.when(options);
   }
 
   whereAddAction(part, index) {
     switch (this.whereAdd.type) {
       case 'macro': {
-        this.whereSegments.push(
+        this.queryModel.whereParts.push(
           sqlPart.create({ type: 'function', name: this.whereAdd.value, params: ['value', '=', 'value'] })
         );
       }
       default: {
-        this.whereSegments.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
+        this.queryModel.whereParts.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
       }
     }
-
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
     this.panelCtrl.refresh();
   }

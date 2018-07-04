@@ -1,11 +1,12 @@
 import _ from 'lodash';
-import queryPart from './query_part';
+import sqlPart from './sql_part';
 
 export default class PostgresQuery {
   target: any;
   selectModels: any[];
   queryBuilder: any;
-  groupByParts: any;
+  groupByParts: any[];
+  whereParts: any[];
   templateSrv: any;
   scopedVars: any;
 
@@ -31,18 +32,19 @@ export default class PostgresQuery {
   }
 
   quoteIdentifier(value) {
-    return '"' + value.replace('"','""') + '"';
+    return '"' + value.replace('"', '""') + '"';
   }
 
   quoteLiteral(value) {
-    return "'" + value.replace("'","''") + "'";
+    return "'" + value.replace("'", "''") + "'";
   }
 
   updateProjection() {
     this.selectModels = _.map(this.target.select, function(parts: any) {
-      return _.map(parts, queryPart.create);
+      return _.map(parts, sqlPart.create);
     });
-    this.groupByParts = _.map(this.target.groupBy, queryPart.create);
+    this.whereParts = _.map(this.target.where, sqlPart.create);
+    this.groupByParts = _.map(this.target.groupBy, sqlPart.create);
   }
 
   updatePersistedParts() {
@@ -50,6 +52,9 @@ export default class PostgresQuery {
       return _.map(selectParts, function(part: any) {
         return { type: part.def.type, params: part.params };
       });
+    });
+    this.target.where = _.map(this.whereParts, function(part: any) {
+      return { type: part.def.type, params: part.params };
     });
   }
 
@@ -60,8 +65,8 @@ export default class PostgresQuery {
   addGroupBy(value) {
     var stringParts = value.match(/^(\w+)(\((.*)\))?$/);
     var typePart = stringParts[1];
-    var args = stringParts[3].split(",");
-    var partModel = queryPart.create({ type: typePart, params: args });
+    var args = stringParts[3].split(',');
+    var partModel = sqlPart.create({ type: typePart, params: args });
     var partCount = this.target.groupBy.length;
 
     if (partCount === 0) {
@@ -86,7 +91,7 @@ export default class PostgresQuery {
       // remove aggregations
       this.target.select = _.map(this.target.select, (s: any) => {
         return _.filter(s, (part: any) => {
-          if (part.type === "aggregate") {
+          if (part.type === 'aggregate') {
             return false;
           }
           return true;
@@ -118,25 +123,15 @@ export default class PostgresQuery {
     this.updatePersistedParts();
   }
 
-  addSelectPart(selectParts, type) {
-    var partModel = queryPart.create({ type: type });
-    partModel.def.addStrategy(selectParts, partModel, this);
-    this.updatePersistedParts();
+  removeWherePart(whereParts, part) {
+    var partIndex = _.indexOf(whereParts, part);
+    whereParts.splice(partIndex, 1);
   }
 
-  private renderWhereConstraint(constraint, index, interpolate) {
-    var str = '';
-    var operator = constraint.operator;
-    var value = constraint.value;
-    if (index > 0) {
-      str = (constraint.condition || 'AND') + ' ';
-    }
-
-    if (interpolate) {
-      value = this.templateSrv.replace(value, this.scopedVars);
-    }
-
-    return str + constraint.key + ' ' + operator + ' ' + value;
+  addSelectPart(selectParts, type) {
+    var partModel = sqlPart.create({ type: type });
+    partModel.def.addStrategy(selectParts, partModel, this);
+    this.updatePersistedParts();
   }
 
   interpolateQueryStr(value, variable, defaultFormatFn) {
@@ -170,8 +165,8 @@ export default class PostgresQuery {
 
     if (timeGroup) {
       var args;
-      if (timeGroup.params.length > 1 && timeGroup.params[1] !== "none") {
-        args = timeGroup.params.join(",");
+      if (timeGroup.params.length > 1 && timeGroup.params[1] !== 'none') {
+        args = timeGroup.params.join(',');
       } else {
         args = timeGroup.params[0];
       }
@@ -181,7 +176,7 @@ export default class PostgresQuery {
     }
 
     if (this.target.metricColumn !== 'None') {
-      query += "," + this.quoteIdentifier(this.target.metricColumn) + " AS metric";
+      query += ',' + this.quoteIdentifier(this.target.metricColumn) + ' AS metric';
     }
 
     var i, y;
@@ -198,7 +193,7 @@ export default class PostgresQuery {
 
     query += ' FROM ' + this.quoteIdentifier(target.schema) + '.' + this.quoteIdentifier(target.table) + ' WHERE ';
     var conditions = _.map(target.where, (tag, index) => {
-      return this.renderWhereConstraint(tag, index, false);
+      return tag.params.join(' ');
     });
 
     if (conditions.length > 0) {
@@ -222,8 +217,8 @@ export default class PostgresQuery {
 
     if (groupBySection.length) {
       query += ' GROUP BY ' + groupBySection;
-      if (this.target.metricColumn !== "None") {
-        query += ",2";
+      if (this.target.metricColumn !== 'None') {
+        query += ',2';
       }
     }
 
@@ -235,5 +230,4 @@ export default class PostgresQuery {
     }
     return query;
   }
-
 }
