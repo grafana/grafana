@@ -1,13 +1,14 @@
 import moment from 'moment';
 import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('PostgreSQLDatasource', function() {
   let instanceSettings = { name: 'postgresql' };
 
   let backendSrv = {};
-  let templateSrv = new TemplateSrvStub();
+  let templateSrv = {
+    replace: jest.fn(text => text),
+  };
   let ctx = <any>{
     backendSrv,
   };

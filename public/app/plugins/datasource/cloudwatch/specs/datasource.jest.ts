@@ -1,15 +1,24 @@
 import '../datasource';
-//import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
-import { TemplateSrvStub, jestTimeSrvStub } from 'test/specs/helpers';
+import { TemplateSrvStub } from 'test/specs/helpers';
 import CloudWatchDatasource from '../datasource';
 import 'app/features/dashboard/time_srv';
+import * as dateMath from 'app/core/utils/datemath';
 
 describe('CloudWatchDatasource', function() {
   let instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
   let templateSrv = new TemplateSrvStub();
-  let timeSrv = new jestTimeSrvStub();
+
+  let timeSrv = {
+    time: { from: 'now-1h', to: 'now' },
+    timeRange: jest.fn(() => {
+      return {
+        from: dateMath.parse(timeSrv.time.from, false),
+        to: dateMath.parse(timeSrv.time.to, true),
+      };
+    }),
+  };
   let backendSrv = {};
   let ctx = <any>{
     backendSrv,

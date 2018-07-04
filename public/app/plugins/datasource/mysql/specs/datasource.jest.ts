@@ -1,13 +1,14 @@
-//import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
-import { TemplateSrvStub } from 'test/specs/helpers';
 import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 
 describe('MySQLDatasource', function() {
   let instanceSettings = { name: 'mysql' };
   let backendSrv = {};
-  let templateSrv = new TemplateSrvStub();
+  let templateSrv = {
+    replace: jest.fn(text => text),
+  };
+
   let ctx = <any>{
     backendSrv,
   };
