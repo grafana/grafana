@@ -60,6 +60,11 @@ search_base_dns = ["dc=grafana,dc=org"]
 ## An array of the base DNs to search through for groups. Typically uses ou=groups
 # group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
 
+## If you'd like to use LDAP group mappings, but not for all groups (e.g. Admins only)
+## then this option will allow LDAP users which don't find any valid group mappings
+## to be created with the default org group.
+#allow_no_group = true
+
 # Specify names of the ldap attributes your ldap uses
 [servers.attributes]
 name = "givenName"
