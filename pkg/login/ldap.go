@@ -179,14 +179,18 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 	}
 
 	// validate that the user has access
-	// if there are no ldap group mappings access is true
-	// otherwise a single group must match
+	// if there are no ldap group mappings (or if AllowNoGroup is set)
+	// access is allowed. Otherwise a single group must match.
 	if len(a.server.LdapGroups) > 0 && len(extUser.OrgRoles) < 1 {
-		a.log.Info(
-			"Ldap Auth: user does not belong in any of the specified ldap groups",
-			"username", ldapUser.Username,
-			"groups", ldapUser.MemberOf)
-		return nil, ErrInvalidCredentials
+		if a.server.AllowNoGroup {
+			a.log.Info("Ldap Auth: allowing user without any ldap groups")
+		} else {
+			a.log.Info(
+				"Ldap Auth: user does not belong in any of the specified ldap groups",
+				"username", ldapUser.Username,
+				"groups", ldapUser.MemberOf)
+			return nil, ErrInvalidCredentials
+		}
 	}
 
 	// add/update user in grafana

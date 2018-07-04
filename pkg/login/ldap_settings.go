@@ -20,6 +20,7 @@ type LdapServerConf struct {
 	UseSSL        bool             `toml:"use_ssl"`
 	StartTLS      bool             `toml:"start_tls"`
 	SkipVerifySSL bool             `toml:"ssl_skip_verify"`
+	AllowNoGroup  bool             `toml:"allow_no_group"`
 	RootCACert    string           `toml:"root_ca_cert"`
 	BindDN        string           `toml:"bind_dn"`
 	BindPassword  string           `toml:"bind_password"`
