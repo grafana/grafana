@@ -564,16 +564,16 @@ kbn.valueFormats.velocitymph = kbn.formatBuilders.fixedUnit('mph');
 kbn.valueFormats.velocityknot = kbn.formatBuilders.fixedUnit('kn');
 
 // Acceleration
-kbn.valueFormats.accMS2 = kbn.formatBuilders.fixedUnit('m/sec²');
-kbn.valueFormats.accFS2 = kbn.formatBuilders.fixedUnit('f/sec²');
+kbn.valueFormats.accMS2 = kbn.formatBuilders.fixedUnit('m/s²');
+kbn.valueFormats.accFS2 = kbn.formatBuilders.fixedUnit('f/s²');
 kbn.valueFormats.accG = kbn.formatBuilders.fixedUnit('g');
 
 // Volume
 kbn.valueFormats.litre = kbn.formatBuilders.decimalSIPrefix('L');
 kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
-kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m3');
-kbn.valueFormats.Nm3 = kbn.formatBuilders.fixedUnit('Nm3');
-kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm3');
+kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m³');
+kbn.valueFormats.Nm3 = kbn.formatBuilders.fixedUnit('Nm³');
+kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm³');
 kbn.valueFormats.gallons = kbn.formatBuilders.fixedUnit('gal');
 
 // Flow
@@ -604,14 +604,14 @@ kbn.valueFormats.radsvh = kbn.formatBuilders.decimalSIPrefix('Sv/h');
 // Concentration
 kbn.valueFormats.ppm = kbn.formatBuilders.fixedUnit('ppm');
 kbn.valueFormats.conppb = kbn.formatBuilders.fixedUnit('ppb');
-kbn.valueFormats.conngm3 = kbn.formatBuilders.fixedUnit('ng/m3');
-kbn.valueFormats.conngNm3 = kbn.formatBuilders.fixedUnit('ng/Nm3');
-kbn.valueFormats.conμgm3 = kbn.formatBuilders.fixedUnit('μg/m3');
-kbn.valueFormats.conμgNm3 = kbn.formatBuilders.fixedUnit('μg/Nm3');
-kbn.valueFormats.conmgm3 = kbn.formatBuilders.fixedUnit('mg/m3');
-kbn.valueFormats.conmgNm3 = kbn.formatBuilders.fixedUnit('mg/Nm3');
-kbn.valueFormats.congm3 = kbn.formatBuilders.fixedUnit('g/m3');
-kbn.valueFormats.congNm3 = kbn.formatBuilders.fixedUnit('g/Nm3');
+kbn.valueFormats.conngm3 = kbn.formatBuilders.fixedUnit('ng/m³');
+kbn.valueFormats.conngNm3 = kbn.formatBuilders.fixedUnit('ng/Nm³');
+kbn.valueFormats.conμgm3 = kbn.formatBuilders.fixedUnit('μg/m³');
+kbn.valueFormats.conμgNm3 = kbn.formatBuilders.fixedUnit('μg/Nm³');
+kbn.valueFormats.conmgm3 = kbn.formatBuilders.fixedUnit('mg/m³');
+kbn.valueFormats.conmgNm3 = kbn.formatBuilders.fixedUnit('mg/Nm³');
+kbn.valueFormats.congm3 = kbn.formatBuilders.fixedUnit('g/m³');
+kbn.valueFormats.congNm3 = kbn.formatBuilders.fixedUnit('g/Nm³');
 
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -930,37 +930,37 @@ kbn.getUnitFormats = function() {
     {
       text: 'data rate',
       submenu: [
-        { text: 'packets/sec', value: 'pps' },
-        { text: 'bits/sec', value: 'bps' },
-        { text: 'bytes/sec', value: 'Bps' },
-        { text: 'kilobits/sec', value: 'Kbits' },
-        { text: 'kilobytes/sec', value: 'KBs' },
-        { text: 'megabits/sec', value: 'Mbits' },
-        { text: 'megabytes/sec', value: 'MBs' },
-        { text: 'gigabytes/sec', value: 'GBs' },
-        { text: 'gigabits/sec', value: 'Gbits' },
+        { text: 'packets/s', value: 'pps' },
+        { text: 'bits/s', value: 'bps' },
+        { text: 'bytes/s', value: 'Bps' },
+        { text: 'kilobits/s', value: 'Kbits' },
+        { text: 'kilobytes/s', value: 'KBs' },
+        { text: 'megabits/s', value: 'Mbits' },
+        { text: 'megabytes/s', value: 'MBs' },
+        { text: 'gigabytes/s', value: 'GBs' },
+        { text: 'gigabits/s', value: 'Gbits' },
       ],
     },
     {
       text: 'hash rate',
       submenu: [
-        { text: 'hashes/sec', value: 'Hs' },
-        { text: 'kilohashes/sec', value: 'KHs' },
-        { text: 'megahashes/sec', value: 'MHs' },
-        { text: 'gigahashes/sec', value: 'GHs' },
-        { text: 'terahashes/sec', value: 'THs' },
-        { text: 'petahashes/sec', value: 'PHs' },
-        { text: 'exahashes/sec', value: 'EHs' },
+        { text: 'hashes/s', value: 'Hs' },
+        { text: 'kilohashes/s', value: 'KHs' },
+        { text: 'megahashes/s', value: 'MHs' },
+        { text: 'gigahashes/s', value: 'GHs' },
+        { text: 'terahashes/s', value: 'THs' },
+        { text: 'petahashes/s', value: 'PHs' },
+        { text: 'exahashes/s', value: 'EHs' },
       ],
     },
     {
       text: 'throughput',
       submenu: [
         { text: 'ops/sec (ops)', value: 'ops' },
-        { text: 'requets/sec (rps)', value: 'reqps' },
-        { text: 'reads/sec (rps)', value: 'rps' },
-        { text: 'writes/sec (wps)', value: 'wps' },
-        { text: 'I/O ops/sec (iops)', value: 'iops' },
+        { text: 'requets/s (rps)', value: 'reqps' },
+        { text: 'reads/s (rps)', value: 'rps' },
+        { text: 'writes/s (wps)', value: 'wps' },
+        { text: 'I/O ops/s (iops)', value: 'iops' },
         { text: 'ops/min (opm)', value: 'opm' },
         { text: 'reads/min (rpm)', value: 'rpm' },
         { text: 'writes/min (wpm)', value: 'wpm' },
@@ -1073,8 +1073,8 @@ kbn.getUnitFormats = function() {
       text: 'flow',
       submenu: [
         { text: 'Gallons/min (gpm)', value: 'flowgpm' },
-        { text: 'Cubic meters/sec (cms)', value: 'flowcms' },
-        { text: 'Cubic feet/sec (cfs)', value: 'flowcfs' },
+        { text: 'Cubic meters/s (cms)', value: 'flowcms' },
+        { text: 'Cubic feet/s (cfs)', value: 'flowcfs' },
         { text: 'Cubic feet/min (cfm)', value: 'flowcfm' },
         { text: 'Litre/hour', value: 'litreh' },
         { text: 'Litre/min (l/min)', value: 'flowlpm' },
@@ -1092,8 +1092,8 @@ kbn.getUnitFormats = function() {
     {
       text: 'acceleration',
       submenu: [
-        { text: 'Meters/sec²', value: 'accMS2' },
-        { text: 'Feet/sec²', value: 'accFS2' },
+        { text: 'Meters/s²', value: 'accMS2' },
+        { text: 'Feet/s²', value: 'accFS2' },
         { text: 'G unit', value: 'accG' },
       ],
     },
@@ -1116,14 +1116,14 @@ kbn.getUnitFormats = function() {
       submenu: [
         { text: 'parts-per-million (ppm)', value: 'ppm' },
         { text: 'parts-per-billion (ppb)', value: 'conppb' },
-        { text: 'nanogram per cubic metre (ng/m3)', value: 'conngm3' },
-        { text: 'nanogram per normal cubic metre (ng/Nm3)', value: 'conngNm3' },
-        { text: 'microgram per cubic metre (μg/m3)', value: 'conμgm3' },
-        { text: 'microgram per normal cubic metre (μg/Nm3)', value: 'conμgNm3' },
-        { text: 'milligram per cubic metre (mg/m3)', value: 'conmgm3' },
-        { text: 'milligram per normal cubic metre (mg/Nm3)', value: 'conmgNm3' },
-        { text: 'gram per cubic metre (g/m3)', value: 'congm3' },
-        { text: 'gram per normal cubic metre (g/Nm3)', value: 'congNm3' },
+        { text: 'nanogram/cubic metre (ng/m³)', value: 'conngm3' },
+        { text: 'nanogram/normal cubic metre (ng/Nm³)', value: 'conngNm3' },
+        { text: 'microgram/cubic metre (μg/m³)', value: 'conμgm3' },
+        { text: 'microgram/normal cubic metre (μg/Nm³)', value: 'conμgNm3' },
+        { text: 'milligram/cubic metre (mg/m³)', value: 'conmgm3' },
+        { text: 'milligram/normal cubic metre (mg/Nm³)', value: 'conmgNm3' },
+        { text: 'gram/cubic metre (g/m³)', value: 'congm3' },
+        { text: 'gram/normal cubic metre (g/Nm³)', value: 'congNm3' },
       ],
     },
   ];
