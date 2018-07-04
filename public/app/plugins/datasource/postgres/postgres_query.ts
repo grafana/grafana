@@ -56,6 +56,9 @@ export default class PostgresQuery {
     this.target.where = _.map(this.whereParts, function(part: any) {
       return { type: part.def.type, params: part.params };
     });
+    this.target.groupBy = _.map(this.groupByParts, function(part: any) {
+      return { type: part.def.type, params: part.params };
+    });
   }
 
   hasGroupByTime() {
@@ -197,7 +200,7 @@ export default class PostgresQuery {
     });
 
     if (conditions.length > 0) {
-      query += '(' + conditions.join(' ') + ') AND ';
+      query += '(' + conditions.join(' AND ') + ') AND ';
     }
 
     query += '$__timeFilter(' + this.quoteIdentifier(target.timeColumn) + ')';

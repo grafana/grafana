@@ -21,14 +21,14 @@ export class SqlPartDef {
       this.label = this.type[0].toUpperCase() + this.type.substring(1) + ':';
     }
     this.style = options.style;
-    if (this.style === "function") {
-      this.wrapOpen = "(";
-      this.wrapClose = ")";
-      this.separator = ", ";
+    if (this.style === 'function') {
+      this.wrapOpen = '(';
+      this.wrapClose = ')';
+      this.separator = ', ';
     } else {
-      this.wrapOpen = " ";
-      this.wrapClose = " ";
-      this.separator = " ";
+      this.wrapOpen = ' ';
+      this.wrapClose = ' ';
+      this.separator = ' ';
     }
     this.params = options.params;
     this.defaultParams = options.defaultParams;
@@ -60,25 +60,9 @@ export class SqlPart {
     return this.def.renderer(this, innerExpr);
   }
 
-  hasMultipleParamsInString(strValue, index) {
-    if (strValue.indexOf(',') === -1) {
-      return false;
-    }
-
-    return this.def.params[index + 1] && this.def.params[index + 1].optional;
-  }
-
   updateParam(strValue, index) {
-    // handle optional parameters
-    // if string contains ',' and next param is optional, split and update both
-    if (this.hasMultipleParamsInString(strValue, index)) {
-      _.each(strValue.split(','), (partVal, idx) => {
-        this.updateParam(partVal.trim(), idx);
-      });
-      return;
-    }
-
     if (strValue === '' && this.def.params[index].optional) {
+      // XXX check if this is still required
       this.params.splice(index, 1);
     } else {
       this.params[index] = strValue;
@@ -132,4 +116,3 @@ export function suffixRenderer(part, innerExpr) {
 export function identityRenderer(part, innerExpr) {
   return part.params[0];
 }
-
