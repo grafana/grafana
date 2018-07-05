@@ -104,7 +104,10 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 
-	n.log.Info("uploaded", "url", context.ImagePublicUrl)
+	if context.ImagePublicUrl != "" {
+		n.log.Info("uploaded screenshot of alert to external image store", "url", context.ImagePublicUrl)
+	}
+
 	return nil
 }
 

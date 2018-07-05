@@ -91,10 +91,20 @@ export class DatasourceSrv {
 
     _.each(config.datasources, function(value, key) {
       if (value.meta && value.meta.metrics) {
-        metricSources.push({ value: key, name: key, meta: value.meta });
+        let metricSource = { value: key, name: key, meta: value.meta, sort: key };
+
+        //Make sure grafana and mixed are sorted at the bottom
+        if (value.meta.id === 'grafana') {
+          metricSource.sort = String.fromCharCode(253);
+        } else if (value.meta.id === 'mixed') {
+          metricSource.sort = String.fromCharCode(254);
+        }
+
+        metricSources.push(metricSource);
 
         if (key === config.defaultDatasource) {
-          metricSources.push({ value: null, name: 'default', meta: value.meta });
+          metricSource = { value: null, name: 'default', meta: value.meta, sort: key };
+          metricSources.push(metricSource);
         }
       }
     });
@@ -104,17 +114,10 @@ export class DatasourceSrv {
     }
 
     metricSources.sort(function(a, b) {
-      // these two should always be at the bottom
-      if (a.meta.id === 'mixed' || a.meta.id === 'grafana') {
+      if (a.sort.toLowerCase() > b.sort.toLowerCase()) {
         return 1;
       }
-      if (b.meta.id === 'mixed' || b.meta.id === 'grafana') {
-        return -1;
-      }
-      if (a.name.toLowerCase() > b.name.toLowerCase()) {
-        return 1;
-      }
-      if (a.name.toLowerCase() < b.name.toLowerCase()) {
+      if (a.sort.toLowerCase() < b.sort.toLowerCase()) {
         return -1;
       }
       return 0;
