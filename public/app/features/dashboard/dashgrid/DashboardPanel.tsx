@@ -5,24 +5,27 @@ import { DashboardModel } from '../dashboard_model';
 import { getAngularLoader, AngularComponent } from 'app/core/services/angular_loader';
 import { DashboardRow } from './DashboardRow';
 import { AddPanelPanel } from './AddPanelPanel';
-import { importPluginModule } from 'app/features/plugins/plugin_loader';
+import { importPluginModule, PluginExports } from 'app/features/plugins/plugin_loader';
 import { PanelChrome } from './PanelChrome';
 
-export interface DashboardPanelProps {
+export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
 }
 
-export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
+export interface State {
+  pluginExports: PluginExports;
+}
+
+export class DashboardPanel extends React.Component<Props, State> {
   element: any;
   angularPanel: AngularComponent;
   pluginInfo: any;
-  pluginExports: any;
   specialPanels = {};
 
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { pluginExports: null };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
     this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
@@ -32,8 +35,7 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
 
       // load panel plugin
       importPluginModule(this.pluginInfo.module).then(pluginExports => {
-        this.pluginExports = pluginExports;
-        this.forceUpdate();
+        this.setState({ pluginExports: pluginExports });
       });
     }
   }
@@ -70,18 +72,21 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
   }
 
   render() {
+    const { pluginExports } = this.state;
+
     if (this.isSpecial()) {
       return this.specialPanels[this.props.panel.type]();
     }
 
-    if (!this.pluginExports) {
+    if (!pluginExports) {
       return null;
     }
 
-    if (this.pluginExports.PanelComponent) {
+    if (pluginExports.PanelComponent) {
       return (
         <PanelChrome
-          component={this.pluginExports.PanelComponent}
+          key="asd"
+          component={pluginExports.PanelComponent}
           panel={this.props.panel}
           dashboard={this.props.dashboard}
         />

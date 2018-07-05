@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { ComponentClass } from 'react';
 import $ from 'jquery';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { PanelHeader } from './PanelHeader';
 import { PanelEditor } from './PanelEditor';
+import { DataPanel, PanelProps, DataPanelWrapper } from './DataPanel';
 
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
@@ -12,33 +13,46 @@ const PANEL_BORDER = 2;
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  component: any;
+  component: ComponentClass<PanelProps>;
 }
 
-export class PanelChrome extends React.Component<Props, any> {
+interface State {
+  height: number;
+}
+
+export class PanelChrome extends React.Component<Props, State> {
+  panelComponent: DataPanel;
+
   constructor(props) {
     super(props);
 
-    this.props.panel.events.on('panel-size-changed', this.triggerForceUpdate.bind(this));
-  }
-
-  triggerForceUpdate() {
-    this.forceUpdate();
-  }
-
-  render() {
-    let panelContentStyle = {
+    this.state = {
       height: this.getPanelHeight(),
     };
 
-    let PanelComponent = this.props.component;
+    this.panelComponent = DataPanelWrapper(this.props.component);
+    this.props.panel.events.on('panel-size-changed', this.onPanelSizeChanged);
+  }
+
+  onPanelSizeChanged = () => {
+    this.setState({
+      height: this.getPanelHeight(),
+    });
+  };
+
+  componentDidMount() {
+    console.log('panel chrome mounted');
+  }
+
+  render() {
+    let PanelComponent = this.panelComponent;
 
     return (
       <div className="panel-height-helper">
         <div className="panel-container">
           <PanelHeader panel={this.props.panel} dashboard={this.props.dashboard} />
-          <div className="panel-content" style={panelContentStyle}>
-            {<PanelComponent />}
+          <div className="panel-content" style={{ height: this.state.height }}>
+            {<PanelComponent type={'test'} queries={[]} isVisible={true} />}
           </div>
         </div>
         {this.props.panel.isEditing && <PanelEditor panel={this.props.panel} dashboard={this.props.dashboard} />}

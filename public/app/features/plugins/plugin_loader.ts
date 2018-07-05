@@ -138,11 +138,22 @@ const flotDeps = [
   'jquery.flot.stackpercent',
   'jquery.flot.events',
 ];
+
 for (let flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export function importPluginModule(path: string): Promise<any> {
+export interface PluginExports {
+  PanelCtrl?;
+  any;
+  PanelComponent?: any;
+  Datasource?: any;
+  QueryCtrl?: any;
+  ConfigCtrl?: any;
+  AnnotationsQueryCtrl?: any;
+}
+
+export function importPluginModule(path: string): Promise<PluginExports> {
   let builtIn = builtInPlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);
