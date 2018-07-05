@@ -31,6 +31,14 @@ export default class PostgresQuery {
     this.updateProjection();
   }
 
+  unquoteIdentifier(value) {
+    if (value[0] === '"') {
+      return value.substring(1, value.length - 1).replace('""', '"');
+    } else {
+      return value;
+    }
+  }
+
   quoteIdentifier(value) {
     return '"' + value.replace('"', '""') + '"';
   }

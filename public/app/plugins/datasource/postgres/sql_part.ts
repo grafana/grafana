@@ -25,7 +25,7 @@ function aggregateRenderer(part, innerExpr) {
 }
 
 function columnRenderer(part, innerExpr) {
-  return '"' + part.params[0] + '"';
+  return part.params[0];
 }
 
 function replaceAggregationAddStrategy(selectParts, partModel) {
