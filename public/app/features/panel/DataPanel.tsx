@@ -1,23 +1,79 @@
 import React, { Component, ComponentClass } from 'react';
 import _ from 'lodash';
 
-export interface Props {
+export interface OuterProps {
   type: string;
-  queries: Query[];
+  queries: any[];
+  isVisible: boolean;
+}
+
+export interface AddedProps {
+  data: any[];
 }
 
 interface State {
   isLoading: boolean;
-  timeSeries: TimeSeriesServerResponse[];
+  data: any[];
 }
 
-export interface OriginalProps {
-  data: TimeSeriesServerResponse[];
-  isLoading: boolean;
-}
+const DataPanel = (ComposedComponent: ComponentClass<AddedProps & OuterProps>) => {
+  class Wrapper extends Component<OuterProps, State> {
+    public static defaultProps = {
+      isVisible: true,
+    };
 
-const DataPanel = (ComposedComponent: ComponentClass<OriginalProps & Props>) => {
-  class Wrapper extends Component<Props, State> {}
+    constructor(props: OuterProps) {
+      super(props);
+
+      this.state = {
+        isLoading: false,
+        data: [],
+      };
+    }
+
+    public componentDidMount() {
+      this.issueQueries();
+    }
+
+    public issueQueries = () => {
+      const { queries, isVisible } = this.props;
+
+      if (!isVisible) {
+        return;
+      }
+
+      if (!queries.length) {
+        this.setState({ data: [{ message: 'no queries' }] });
+        return;
+      }
+
+      this.setState({ isLoading: true });
+    };
+
+    public render() {
+      const { data, isLoading } = this.state;
+
+      if (!data.length) {
+        return (
+          <div className="no-data">
+            <p>No Data</p>
+          </div>
+        );
+      }
+
+      if (isLoading) {
+        return (
+          <div className="loading">
+            <p>Loading</p>
+          </div>
+        );
+      }
+
+      return <ComposedComponent {...this.props} data={data} />;
+    }
+  }
 
   return Wrapper;
 };
+
+export default DataPanel;

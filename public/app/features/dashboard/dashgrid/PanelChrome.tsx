@@ -9,13 +9,13 @@ import { PanelEditor } from './PanelEditor';
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
 
-export interface PanelChromeProps {
+export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   component: any;
 }
 
-export class PanelChrome extends React.Component<PanelChromeProps, any> {
+export class PanelChrome extends React.Component<Props, any> {
   constructor(props) {
     super(props);
 
