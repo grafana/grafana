@@ -33,7 +33,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   timeColumnSegment: any;
   metricColumnSegment: any;
   selectMenu: any;
-  groupBySegment: any;
+  groupByAdd: any;
 
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
@@ -68,7 +68,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.buildSelectMenu();
     this.buildWhereSegments();
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
-    this.groupBySegment = this.uiSegmentSrv.newPlusButton();
+    this.groupByAdd = this.uiSegmentSrv.newPlusButton();
 
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
@@ -273,7 +273,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         break;
       }
       case 'action': {
-        this.queryModel.removeWherePart(part, index);
+        whereParts.splice(index, 1);
         this.panelCtrl.refresh();
         break;
       }
@@ -302,7 +302,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
         this.queryModel.whereParts.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
       }
     }
-    this.whereAdd = this.uiSegmentSrv.newPlusButton();
+
+    var plusButton = this.uiSegmentSrv.newPlusButton();
+    this.whereAdd.html = plusButton.html;
+    this.whereAdd.value = plusButton.value;
+
     this.queryModel.updatePersistedParts();
     this.panelCtrl.refresh();
   }
@@ -324,15 +328,15 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   groupByAction() {
-    switch (this.groupBySegment.value) {
+    switch (this.groupByAdd.value) {
       default: {
-        this.queryModel.addGroupBy(this.groupBySegment.value);
+        this.queryModel.addGroupBy(this.groupByAdd.type, this.groupByAdd.value);
       }
     }
 
     var plusButton = this.uiSegmentSrv.newPlusButton();
-    this.groupBySegment.value = plusButton.value;
-    this.groupBySegment.html = plusButton.html;
+    this.groupByAdd.html = plusButton.html;
+    this.groupByAdd.value = plusButton.value;
     this.panelCtrl.refresh();
   }
 

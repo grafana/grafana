@@ -65,25 +65,21 @@ export default class PostgresQuery {
     return _.find(this.target.groupBy, (g: any) => g.type === 'time');
   }
 
-  addGroupBy(value) {
-    var stringParts = value.match(/^(\w+)(\((.*)\))?$/);
-    var typePart = stringParts[1];
-    var args = stringParts[3].split(',');
-    var partModel = sqlPart.create({ type: typePart, params: args });
+  addGroupBy(partType, value) {
+    var partModel = sqlPart.create({ type: partType, params: [value] });
     var partCount = this.target.groupBy.length;
 
     if (partCount === 0) {
       this.target.groupBy.push(partModel.part);
-    } else if (typePart === 'time') {
+    } else if (partType === 'time') {
+      // put timeGroup at start
       this.target.groupBy.splice(0, 0, partModel.part);
-    } else if (typePart === 'column') {
-      if (this.target.groupBy[partCount - 1].type === 'fill') {
-        this.target.groupBy.splice(partCount - 1, 0, partModel.part);
-      } else {
-        this.target.groupBy.push(partModel.part);
-      }
     } else {
       this.target.groupBy.push(partModel.part);
+    }
+
+    if (partType === 'time') {
+      partModel.part.params = ['1m', 'none'];
     }
 
     this.updateProjection();
@@ -124,11 +120,6 @@ export default class PostgresQuery {
     }
 
     this.updatePersistedParts();
-  }
-
-  removeWherePart(whereParts, part) {
-    var partIndex = _.indexOf(whereParts, part);
-    whereParts.splice(partIndex, 1);
   }
 
   addSelectPart(selectParts, type) {
