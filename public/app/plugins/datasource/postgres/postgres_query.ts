@@ -164,13 +164,13 @@ export default class PostgresQuery {
       } else {
         args = timeGroup.params[0];
       }
-      query += '$__timeGroup(' + this.quoteIdentifier(target.timeColumn) + ',' + args + ')';
+      query += '$__timeGroup(' + target.timeColumn + ',' + args + ')';
     } else {
-      query += this.quoteIdentifier(target.timeColumn) + ' AS time';
+      query += target.timeColumn + ' AS "time"';
     }
 
     if (this.target.metricColumn !== 'None') {
-      query += ',' + this.quoteIdentifier(this.target.metricColumn) + ' AS metric';
+      query += ',' + this.target.metricColumn + ' AS metric';
     }
 
     var i, y;
@@ -185,7 +185,7 @@ export default class PostgresQuery {
       query += ', ' + selectText;
     }
 
-    query += ' FROM ' + this.quoteIdentifier(target.schema) + '.' + this.quoteIdentifier(target.table) + ' WHERE ';
+    query += ' FROM ' + target.schema + '.' + target.table + ' WHERE ';
     var conditions = _.map(target.where, (tag, index) => {
       return tag.params.join(' ');
     });
@@ -194,7 +194,7 @@ export default class PostgresQuery {
       query += '(' + conditions.join(' AND ') + ') AND ';
     }
 
-    query += '$__timeFilter(' + this.quoteIdentifier(target.timeColumn) + ')';
+    query += '$__timeFilter(' + target.timeColumn + ')';
 
     var groupBySection = '';
     for (i = 0; i < this.groupByParts.length; i++) {
