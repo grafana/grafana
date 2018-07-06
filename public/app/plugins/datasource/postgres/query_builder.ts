@@ -10,18 +10,19 @@ export class PostgresQueryBuilder {
 
   buildTableQuery() {
     var query = 'SELECT quote_ident(table_name) FROM information_schema.tables WHERE ';
-    query += 'table_schema = ' + this.quoteLiteral(this.target.schema);
+    query += 'table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
     return query;
   }
 
-  quoteLiteral(value) {
+  // quote identifier as literal to use in metadata queries
+  quoteIdentAsLiteral(value) {
     return this.queryModel.quoteLiteral(this.queryModel.unquoteIdentifier(value));
   }
 
   buildColumnQuery(type?: string) {
     var query = 'SELECT quote_ident(column_name) FROM information_schema.columns WHERE ';
-    query += 'table_schema = ' + this.quoteLiteral(this.target.schema);
-    query += ' AND table_name = ' + this.quoteLiteral(this.target.table);
+    query += 'table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
+    query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
 
     switch (type) {
       case 'time': {
@@ -51,9 +52,9 @@ export class PostgresQueryBuilder {
 
   buildDatatypeQuery(column: string) {
     var query = 'SELECT data_type FROM information_schema.columns WHERE ';
-    query += ' table_schema = ' + this.quoteLiteral(this.target.schema);
-    query += ' AND table_name = ' + this.quoteLiteral(this.target.table);
-    query += ' AND column_name = ' + this.quoteLiteral(column);
+    query += ' table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
+    query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
+    query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
     return query;
   }
 
