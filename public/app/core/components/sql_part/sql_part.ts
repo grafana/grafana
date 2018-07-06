@@ -42,7 +42,8 @@ export class SqlPart {
   part: any;
   def: SqlPartDef;
   params: any[];
-  text: string;
+  label: string;
+  name: string;
 
   constructor(part: any, def: any) {
     this.part = part;
@@ -51,37 +52,20 @@ export class SqlPart {
       throw { message: 'Could not find sql part ' + part.type };
     }
 
+    if (part.name) {
+      this.name = part.name;
+      this.label = def.label + ' ' + part.name;
+    } else {
+      this.name = '';
+      this.label = def.label;
+    }
+
     part.params = part.params || _.clone(this.def.defaultParams);
     this.params = part.params;
-    this.updateText();
   }
 
   render(innerExpr: string) {
     return this.def.renderer(this, innerExpr);
-  }
-
-  updateParam(strValue, index) {
-    if (strValue === '' && this.def.params[index].optional) {
-      // XXX check if this is still required
-      this.params.splice(index, 1);
-    } else {
-      this.params[index] = strValue;
-    }
-
-    this.part.params = this.params;
-    this.updateText();
-  }
-
-  updateText() {
-    if (this.params.length === 0) {
-      this.text = this.def.type + '()';
-      return;
-    }
-
-    var text = this.def.type + '(';
-    text += this.params.join(', ');
-    text += ')';
-    this.text = text;
   }
 }
 
