@@ -64,6 +64,17 @@ export class SqlPart {
     this.params = part.params;
   }
 
+  updateParam(strValue, index) {
+    // handle optional parameters
+    if (strValue === '' && this.def.params[index].optional) {
+      this.params.splice(index, 1);
+    } else {
+      this.params[index] = strValue;
+    }
+
+    this.part.params = this.params;
+  }
+
   render(innerExpr: string) {
     return this.def.renderer(this, innerExpr);
   }
