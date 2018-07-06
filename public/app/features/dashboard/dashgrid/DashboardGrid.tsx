@@ -139,7 +139,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   }
 
   onViewModeChanged(payload) {
-    this.setState({ animated: payload.fullscreen });
+    this.setState({ animated: !payload.fullscreen });
   }
 
   updateGridPos(item, layout) {

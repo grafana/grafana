@@ -5,6 +5,7 @@ import { store } from 'app/stores/store';
 import { observer } from 'mobx-react';
 import { QueriesTab } from './QueriesTab';
 import classNames from 'classnames';
+import { VizPicker } from './VizPicker';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -35,7 +36,16 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
   }
 
   renderVizTab() {
-    return <h2>Visualizations</h2>;
+    return (
+      <div className="viz-editor">
+        <div className="viz-editor-list">
+          <VizPicker />
+        </div>
+        <div className="viz-editor-options">
+          <h5 className="section-heading">Options</h5>
+        </div>
+      </div>
+    );
   }
 
   onChangeTab = (tab: PanelEditorTab) => {
