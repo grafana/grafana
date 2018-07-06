@@ -111,11 +111,6 @@ export default class PostgresQuery {
     this.updateProjection();
   }
 
-  removeSelect(index: number) {
-    this.target.select.splice(index, 1);
-    this.updateProjection();
-  }
-
   removeSelectPart(selectParts, part) {
     // if we remove the field remove the whole statement
     if (part.def.type === 'column') {
