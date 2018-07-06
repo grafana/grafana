@@ -116,6 +116,16 @@ register({
 });
 
 register({
+  type: 'macro',
+  style: 'function',
+  label: 'Macro:',
+  addStrategy: addExpressionStrategy,
+  params: [],
+  defaultParams: [],
+  renderer: columnRenderer,
+});
+
+register({
   type: 'aggregate',
   style: 'label',
   addStrategy: replaceAggregationAddStrategy,

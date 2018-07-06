@@ -287,18 +287,17 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   getWhereOptions() {
     var options = [];
-    options.push(this.uiSegmentSrv.newSegment({ type: 'function', value: '$__timeFilter' }));
-    options.push(this.uiSegmentSrv.newSegment({ type: 'function', value: '$__unixEpochFilter' }));
-    options.push(this.uiSegmentSrv.newSegment({ type: 'function', value: 'Expression' }));
+    options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__timeFilter' }));
+    options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__unixEpochFilter' }));
+    options.push(this.uiSegmentSrv.newSegment({ type: 'expression', value: 'Expression' }));
     return this.$q.when(options);
   }
 
   whereAddAction(part, index) {
     switch (this.whereAdd.type) {
       case 'macro': {
-        this.queryModel.whereParts.push(
-          sqlPart.create({ type: 'function', name: this.whereAdd.value, params: ['value', '=', 'value'] })
-        );
+        this.queryModel.whereParts.push(sqlPart.create({ type: 'macro', name: this.whereAdd.value, params: [] }));
+        break;
       }
       default: {
         this.queryModel.whereParts.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));

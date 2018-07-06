@@ -63,7 +63,7 @@ export default class PostgresQuery {
       });
     });
     this.target.where = _.map(this.whereParts, function(part: any) {
-      return { type: part.def.type, params: part.params };
+      return { type: part.def.type, name: part.name, params: part.params };
     });
     this.target.groupBy = _.map(this.groupByParts, function(part: any) {
       return { type: part.def.type, params: part.params };
@@ -196,14 +196,19 @@ export default class PostgresQuery {
 
     query += ' FROM ' + target.schema + '.' + target.table + ' WHERE ';
     var conditions = _.map(target.where, (tag, index) => {
-      return tag.params.join(' ');
+      switch (tag.type) {
+        case 'macro':
+          return tag.name + '(' + target.timeColumn + ')';
+          break;
+        case 'expression':
+          return tag.params.join(' ');
+          break;
+      }
     });
 
     if (conditions.length > 0) {
-      query += '(' + conditions.join(' AND ') + ') AND ';
+      query += conditions.join(' AND ');
     }
-
-    query += '$__timeFilter(' + target.timeColumn + ')';
 
     var groupBySection = '';
     for (i = 0; i < this.groupByParts.length; i++) {
