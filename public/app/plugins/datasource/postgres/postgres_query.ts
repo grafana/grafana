@@ -31,8 +31,9 @@ export default class PostgresQuery {
     this.updateProjection();
   }
 
+  // remove identifier quoting from identifier to use in metadata queries
   unquoteIdentifier(value) {
-    if (value[0] === '"') {
+    if (value[0] === '"' && value[value.length - 1] === '"') {
       return value.substring(1, value.length - 1).replace('""', '"');
     } else {
       return value;

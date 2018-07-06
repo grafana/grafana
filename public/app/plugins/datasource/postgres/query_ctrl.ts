@@ -273,7 +273,9 @@ export class PostgresQueryCtrl extends QueryCtrl {
         break;
       }
       case 'action': {
+        // remove element
         whereParts.splice(index, 1);
+        this.queryModel.updatePersistedParts();
         this.panelCtrl.refresh();
         break;
       }
