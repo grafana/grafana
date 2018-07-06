@@ -142,10 +142,12 @@ export class DatasourceSrv {
       var ds = config.datasources[first];
 
       if (ds) {
+        const key = `$${variable.name}`;
         list.push({
-          name: '$' + variable.name,
-          value: '$' + variable.name,
+          name: key,
+          value: key,
           meta: ds.meta,
+          sort: key,
         });
       }
     }
