@@ -194,7 +194,7 @@ export default class PostgresQuery {
       query += ', ' + selectText;
     }
 
-    query += ' FROM ' + target.schema + '.' + target.table + ' WHERE ';
+    query += ' FROM ' + target.schema + '.' + target.table;
     var conditions = _.map(target.where, (tag, index) => {
       switch (tag.type) {
         case 'macro':
@@ -207,7 +207,7 @@ export default class PostgresQuery {
     });
 
     if (conditions.length > 0) {
-      query += conditions.join(' AND ');
+      query += ' WHERE ' + conditions.join(' AND ');
     }
 
     var groupBySection = '';
