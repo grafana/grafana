@@ -149,7 +149,7 @@ export default class PostgresQuery {
   render(interpolate?) {
     var target = this.target;
 
-    if (target.rawQuery) {
+    if (target.rawQuery || !('rawQuery' in target)) {
       if (interpolate) {
         return this.templateSrv.replace(target.rawSql, this.scopedVars, this.interpolateQueryStr);
       } else {
