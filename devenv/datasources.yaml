@@ -1,38 +1,38 @@
 apiVersion: 1
 
 datasources:
-  - name: Graphite
+  - name: gdev-graphite
     type: graphite
     access: proxy
     url: http://localhost:8080
     jsonData:
       graphiteVersion: "1.1"
-  
-  - name: Prometheus
+
+  - name: gdev-prometheus
     type: prometheus
     access: proxy
     isDefault: true
     url: http://localhost:9090
-  
-  - name: InfluxDB
+
+  - name: gdev-influxdb
     type: influxdb
     access: proxy
     database: site
     user: grafana
     password: grafana
     url: http://localhost:8086
-    jsonData: 
+    jsonData:
       timeInterval: "15s"
 
-  - name: OpenTsdb
+  - name: gdev-opentsdb
     type: opentsdb
     access: proxy
     url: http://localhost:4242
-    jsonData: 
+    jsonData:
       tsdbResolution: 1
       tsdbVersion: 1
 
-  - name: Elastic
+  - name: gdev-elasticsearch-metrics
     type: elasticsearch
     access: proxy
     database: "[metrics-]YYYY.MM.DD"
@@ -40,22 +40,22 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-  
-  - name: MySQL
+
+  - name: gdev-mysql
     type: mysql
     url: localhost:3306
     database: grafana
     user: grafana
     password: password
 
-  - name: MSSQL
+  - name: gdev-mssql
     type: mssql
     url: localhost:1433
     database: grafana
     user: grafana
     password: "Password!"
 
-  - name: Postgres
+  - name: gdev-postgres
     type: postgres
     url: localhost:5432
     database: grafana
@@ -64,7 +64,7 @@ datasources:
     jsonData:
       sslmode: "disable"
 
-  - name: Cloudwatch
+  - name: gdev-cloudwatch
     type: cloudwatch
     editable: true
     jsonData:
