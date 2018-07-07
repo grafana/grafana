@@ -90,28 +90,28 @@ export class PostgresQueryCtrl extends QueryCtrl {
   getSchemaSegments() {
     return this.datasource
       .metricFindQuery(this.queryBuilder.buildSchemaQuery())
-      .then(this.transformToSegments(true))
+      .then(this.transformToSegments({}))
       .catch(this.handleQueryError.bind(this));
   }
 
   getTableSegments() {
     return this.datasource
       .metricFindQuery(this.queryBuilder.buildTableQuery())
-      .then(this.transformToSegments(true))
+      .then(this.transformToSegments({}))
       .catch(this.handleQueryError.bind(this));
   }
 
   getTimeColumnSegments() {
     return this.datasource
       .metricFindQuery(this.queryBuilder.buildColumnQuery('time'))
-      .then(this.transformToSegments(true))
+      .then(this.transformToSegments({}))
       .catch(this.handleQueryError.bind(this));
   }
 
   getMetricColumnSegments() {
     return this.datasource
       .metricFindQuery(this.queryBuilder.buildColumnQuery('metric'))
-      .then(this.transformToSegments(true))
+      .then(this.transformToSegments({}))
       .catch(this.handleQueryError.bind(this));
   }
 
@@ -155,7 +155,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
   }
 
-  transformToSegments(addTemplateVars) {
+  transformToSegments(config) {
     return results => {
       var segments = _.map(results, segment => {
         return this.uiSegmentSrv.newSegment({
@@ -164,12 +164,18 @@ export class PostgresQueryCtrl extends QueryCtrl {
         });
       });
 
-      if (addTemplateVars) {
+      if (config.addTemplateVars) {
         for (let variable of this.templateSrv.variables) {
+          var value;
+          value = '$' + variable.name;
+          if (config.templateQuoter && variable.multi === false) {
+            value = config.templateQuoter(value);
+          }
+
           segments.unshift(
             this.uiSegmentSrv.newSegment({
               type: 'template',
-              value: '$' + variable.name,
+              value: value,
               expandable: true,
             })
           );
@@ -196,12 +202,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
           case 'aggregate':
             return this.datasource
               .metricFindQuery(this.queryBuilder.buildAggregateQuery())
-              .then(this.transformToSegments(false))
+              .then(this.transformToSegments({}))
               .catch(this.handleQueryError.bind(this));
           case 'column':
             return this.datasource
               .metricFindQuery(this.queryBuilder.buildColumnQuery('value'))
-              .then(this.transformToSegments(true))
+              .then(this.transformToSegments({}))
               .catch(this.handleQueryError.bind(this));
         }
       }
@@ -225,7 +231,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       case 'get-param-options': {
         return this.datasource
           .metricFindQuery(this.queryBuilder.buildColumnQuery())
-          .then(this.transformToSegments(true))
+          .then(this.transformToSegments({}))
           .catch(this.handleQueryError.bind(this));
       }
       case 'part-param-changed': {
@@ -255,12 +261,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
           case 'left':
             return this.datasource
               .metricFindQuery(this.queryBuilder.buildColumnQuery())
-              .then(this.transformToSegments(false))
+              .then(this.transformToSegments({}))
               .catch(this.handleQueryError.bind(this));
           case 'right':
             return this.datasource
               .metricFindQuery(this.queryBuilder.buildValueQuery(part.params[0]))
-              .then(this.transformToSegments(true))
+              .then(this.transformToSegments({ addTemplateVars: true, templateQuoter: this.queryModel.quoteLiteral }))
               .catch(this.handleQueryError.bind(this));
           case 'op':
             return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=', 'IN']));
