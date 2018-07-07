@@ -38,10 +38,11 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
   renderVizTab() {
     return (
       <div className="viz-editor">
-        <div className="viz-editor-list">
+        <div className="viz-editor-col1">
+          <h5 className="section-heading">Visualization Type</h5>
           <VizPicker />
         </div>
-        <div className="viz-editor-options">
+        <div className="viz-editor-col2">
           <h5 className="section-heading">Options</h5>
         </div>
       </div>

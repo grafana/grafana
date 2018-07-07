@@ -1,0 +1,50 @@
+.viz-editor {
+  display: flex;
+}
+
+.viz-editor-col1 {
+  width: 150px;
+  background: $panel-bg;
+}
+
+.viz-editor-col2 {
+  flex-grow: 1;
+}
+
+.viz-picker {
+  padding: 3px 8px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  overflow: auto;
+  height: 100%;
+}
+
+.viz-picker__item {
+  background: $card-background;
+  box-shadow: $card-shadow;
+
+  border-radius: 3px;
+  padding: $spacer/3 $spacer;
+  width: 31%;
+  height: 60px;
+  text-align: center;
+  margin: $gf-form-margin;
+  cursor: pointer;
+
+  &.active,
+  &:hover {
+    background: $card-background-hover;
+  }
+}
+
+.viz-picker__item-name {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: $font-size-sm;
+}
+
+.viz-picker__item-img {
+  height: calc(100% - 15px);
+}

@@ -85,7 +85,6 @@ export class DashboardPanel extends React.Component<Props, State> {
     if (pluginExports.PanelComponent) {
       return (
         <PanelChrome
-          key="asd"
           component={pluginExports.PanelComponent}
           panel={this.props.panel}
           dashboard={this.props.dashboard}
