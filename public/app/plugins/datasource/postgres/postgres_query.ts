@@ -25,6 +25,11 @@ export default class PostgresQuery {
     target.where = target.where || [];
     target.select = target.select || [[{ type: 'column', params: ['value'] }]];
 
+    // handle pre query gui panels gracefully
+    if (!('rawQuery' in this.target)) {
+      target.rawQuery = true;
+    }
+
     // give interpolateQueryStr access to this
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
 
@@ -149,7 +154,7 @@ export default class PostgresQuery {
   render(interpolate?) {
     var target = this.target;
 
-    if (target.rawQuery || !('rawQuery' in target)) {
+    if (target.rawQuery) {
       if (interpolate) {
         return this.templateSrv.replace(target.rawSql, this.scopedVars, this.interpolateQueryStr);
       } else {
