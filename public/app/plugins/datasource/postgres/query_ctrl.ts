@@ -111,7 +111,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   getMetricColumnSegments() {
     return this.datasource
       .metricFindQuery(this.queryBuilder.buildColumnQuery('metric'))
-      .then(this.transformToSegments({}))
+      .then(this.transformToSegments({ addNone: true }))
       .catch(this.handleQueryError.bind(this));
   }
 
@@ -180,6 +180,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
             })
           );
         }
+      }
+
+      if (config.addNone) {
+        segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: 'None', expandable: true }));
       }
 
       return segments;
