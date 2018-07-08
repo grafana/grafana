@@ -83,7 +83,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     // Delay refresh until the panel is visible
-    if (this.panel.visible === false) {
+    if (this.panel.visible === false && !this.panel.fullscreen) {
       this.refreshWhenVisible = true;
       return;
     }
