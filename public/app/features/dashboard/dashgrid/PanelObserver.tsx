@@ -151,7 +151,7 @@ export class PanelObserverIntersection implements PanelObserver {
   constructor() {
     this.observer = new IntersectionObserver(this.callback.bind(this), {
       root: null, // the viewport
-      rootMargin: '200px', // buffer by 100
+      rootMargin: '200px', // buffer by 200
       threshold: 0, // any pixel
     });
   }
@@ -181,11 +181,21 @@ export class PanelObserverIntersection implements PanelObserver {
   //---------------------------------------------------------
 
   private callback(entries: IntersectionObserverEntry[]) {
+    // Fast scrolling can send multiple callbacks quickly
+    // !intersecting => intersecting => !intersecting in one callback.
+    let visible = new Map<PanelModel, boolean>();
     entries.forEach(entry => {
       const panel = entry.target['data-garfana-panel'];
       if (panel.visible !== entry.isIntersecting) {
-        panel.visible = entry.isIntersecting;
-        panel.events.emit(PANEL_VISIBILITY_CHANGED_EVENT, entry.isIntersecting);
+        visible.set(panel, entry.isIntersecting);
+      }
+    });
+
+    // Only emit events for values that have changed
+    visible.forEach((vis, panel) => {
+      if (panel.visible !== vis) {
+        panel.visible = vis;
+        panel.events.emit(PANEL_VISIBILITY_CHANGED_EVENT, panel.visible);
       }
     });
   }
