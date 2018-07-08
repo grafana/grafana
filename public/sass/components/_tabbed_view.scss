@@ -1,28 +1,16 @@
 .tabbed-view {
-  padding: $spacer*3;
   margin-bottom: $dashboard-padding;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 
-  &.tabbed-view--panel-edit {
-    padding: 0;
-
-    .tabbed-view-header {
-      padding: 0px 25px;
-      background: none;
-    }
-  }
-
-  &.tabbed-view--panel-edit-new {
+  &.tabbed-view--new {
     padding: 10px 0 0 0;
-
-    .tabbed-view-header {
-      padding: 0px;
-      background: none;
-    }
+    height: 100%;
   }
 }
 
 .tabbed-view-header {
-  background: $page-header-bg;
   box-shadow: $page-header-shadow;
   border-bottom: 1px solid $page-header-border-color;
   @include clearfix();
@@ -58,6 +46,7 @@
 
 .tabbed-view-body {
   padding: $spacer*2 $spacer;
+  height: 100%;
 
   &--small {
     min-height: 0px;

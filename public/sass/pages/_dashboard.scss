@@ -1,7 +1,8 @@
 .dashboard-container {
   padding: $dashboard-padding;
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .template-variable {
@@ -28,12 +29,17 @@ div.flot-text {
   height: 100%;
 }
 
+.panel-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .panel-container {
   background-color: $panel-bg;
   border: $panel-border;
   position: relative;
   border-radius: 3px;
-  height: 100%;
 
   &.panel-transparent {
     background-color: transparent;
@@ -233,5 +239,5 @@ div.flot-text {
 }
 
 .panel-full-edit {
-  margin: $dashboard-padding (-$dashboard-padding) 0 (-$dashboard-padding);
+  padding-top: $dashboard-padding;
 }

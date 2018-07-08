@@ -1,10 +1,12 @@
 .viz-editor {
   display: flex;
+  height: 100%;
 }
 
 .viz-editor-col1 {
-  width: 150px;
-  background: $panel-bg;
+  width: 240px;
+  height: 100%;
+  margin-right: 40px;
 }
 
 .viz-editor-col2 {
@@ -12,11 +14,15 @@
 }
 
 .viz-picker {
+  display: flex;
+  flex-direction: column;
+}
+
+.viz-picker-list {
   padding: 3px 8px;
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  overflow: auto;
+  flex-direction: column;
+  overflow: hidden;
   height: 100%;
 }
 
@@ -25,16 +31,28 @@
   box-shadow: $card-shadow;
 
   border-radius: 3px;
-  padding: $spacer/3 $spacer;
-  width: 31%;
+  padding: $spacer;
+  width: 100%;
   height: 60px;
   text-align: center;
   margin: $gf-form-margin;
   cursor: pointer;
+  display: flex;
 
-  &.active,
   &:hover {
     background: $card-background-hover;
+  }
+
+  &--selected {
+    border: 1px solid $orange;
+
+    .viz-picker__item-name {
+      color: $text-color;
+    }
+
+    .viz-picker__item-img {
+      filter: saturate(100%);
+    }
   }
 }
 
@@ -43,8 +61,15 @@
   overflow: hidden;
   white-space: nowrap;
   font-size: $font-size-sm;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  padding-left: $spacer;
+  font-size: $font-size-md;
+  color: $text-muted;
 }
 
 .viz-picker__item-img {
-  height: calc(100% - 15px);
+  height: 100%;
+  filter: saturate(30%);
 }

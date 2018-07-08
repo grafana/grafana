@@ -23,6 +23,9 @@ describe('AddPanelPanel', () => {
         hideFromList: false,
         name: 'Singlestat',
         sort: 2,
+        module: '',
+        baseUrl: '',
+        meta: {},
         info: {
           logos: {
             small: '',
@@ -34,6 +37,9 @@ describe('AddPanelPanel', () => {
         hideFromList: true,
         name: 'Hidden',
         sort: 100,
+        meta: {},
+        module: '',
+        baseUrl: '',
         info: {
           logos: {
             small: '',
@@ -45,6 +51,9 @@ describe('AddPanelPanel', () => {
         hideFromList: false,
         name: 'Graph',
         sort: 1,
+        meta: {},
+        module: '',
+        baseUrl: '',
         info: {
           logos: {
             small: '',
@@ -56,6 +65,9 @@ describe('AddPanelPanel', () => {
         hideFromList: false,
         name: 'Zabbix',
         sort: 100,
+        meta: {},
+        module: '',
+        baseUrl: '',
         info: {
           logos: {
             small: '',
@@ -67,6 +79,9 @@ describe('AddPanelPanel', () => {
         hideFromList: false,
         name: 'Piechart',
         sort: 100,
+        meta: {},
+        module: '',
+        baseUrl: '',
         info: {
           logos: {
             small: '',

@@ -26,7 +26,7 @@ var panelTemplate = `
   </div>
 
   <div class="panel-full-edit" ng-if="ctrl.panel.isEditing">
-    <div class="tabbed-view tabbed-view--panel-edit">
+    <div class="tabbed-view">
       <div class="tabbed-view-header">
         <h3 class="tabbed-view-panel-title">
           {{ctrl.pluginName}}

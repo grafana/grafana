@@ -95,7 +95,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
       PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
         PanelCtrl.templateUrl = null;
-        PanelCtrl.template = `<grafana-panel ctrl="ctrl" class="panel-height-helper">${template}</grafana-panel>`;
+        PanelCtrl.template = `<grafana-panel ctrl="ctrl" class="panel-editor-container">${template}</grafana-panel>`;
         return componentInfo;
       });
 

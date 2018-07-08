@@ -1,11 +1,12 @@
 import React from 'react';
+import classNames from 'classnames';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { store } from 'app/stores/store';
 import { observer } from 'mobx-react';
 import { QueriesTab } from './QueriesTab';
-import classNames from 'classnames';
-import { VizPicker } from './VizPicker';
+import { PanelPlugin } from 'app/core/config';
+import { VizTypePicker } from './VizTypePicker';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -39,15 +40,21 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     return (
       <div className="viz-editor">
         <div className="viz-editor-col1">
-          <h5 className="section-heading">Visualization Type</h5>
-          <VizPicker />
+          <VizTypePicker currentType={this.props.panel.type} onTypeChanged={this.onVizTypeChanged} />
         </div>
         <div className="viz-editor-col2">
-          <h5 className="section-heading">Options</h5>
+          <h5 className="page-heading">Options</h5>
         </div>
       </div>
     );
   }
+
+  onVizTypeChanged = (plugin: PanelPlugin) => {
+    this.props.panel.type = plugin.id;
+    this.forceUpdate();
+
+    console.log('panel type changed', plugin);
+  };
 
   onChangeTab = (tab: PanelEditorTab) => {
     store.view.updateQuery({ tab: tab.id }, false);
@@ -57,7 +64,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     const activeTab: string = store.view.query.get('tab') || 'queries';
 
     return (
-      <div className="tabbed-view tabbed-view--panel-edit-new">
+      <div className="tabbed-view tabbed-view--new">
         <div className="tabbed-view-header">
           <ul className="gf-tabs">
             {this.tabs.map(tab => {

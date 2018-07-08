@@ -48,7 +48,7 @@ export class PanelChrome extends React.Component<Props, State> {
     let PanelComponent = this.panelComponent;
 
     return (
-      <div className="panel-height-helper">
+      <div className="panel-editor-container">
         <div className="panel-container">
           <PanelHeader panel={this.props.panel} dashboard={this.props.dashboard} />
           <div className="panel-content" style={{ height: this.state.height }}>
@@ -73,6 +73,6 @@ export class PanelChrome extends React.Component<Props, State> {
       height = panel.gridPos.h * GRID_CELL_HEIGHT + (panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
 
-    return height - PANEL_BORDER + TITLE_HEIGHT;
+    return height - (PANEL_BORDER + TITLE_HEIGHT);
   }
 }
