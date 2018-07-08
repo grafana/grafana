@@ -4,7 +4,7 @@
 }
 
 .viz-editor-col1 {
-  width: 240px;
+  width: 210px;
   height: 100%;
   margin-right: 40px;
 }
@@ -16,14 +16,15 @@
 .viz-picker {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .viz-picker-list {
-  padding: 3px 8px;
+  padding-top: $spacer;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: 100%;
+  flex-grow: 1;
 }
 
 .viz-picker__item {
@@ -35,9 +36,10 @@
   width: 100%;
   height: 60px;
   text-align: center;
-  margin: $gf-form-margin;
+  margin-bottom: 6px;
   cursor: pointer;
   display: flex;
+  flex-shrink: 0;
 
   &:hover {
     background: $card-background-hover;
@@ -60,7 +62,7 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  font-size: $font-size-sm;
+  font-size: $font-size-h5;
   display: flex;
   flex-direction: column;
   align-self: center;

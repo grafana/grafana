@@ -52,8 +52,6 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
   onVizTypeChanged = (plugin: PanelPlugin) => {
     this.props.panel.type = plugin.id;
     this.forceUpdate();
-
-    console.log('panel type changed', plugin);
   };
 
   onChangeTab = (tab: PanelEditorTab) => {

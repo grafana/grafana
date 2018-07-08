@@ -53,8 +53,7 @@ export class DashboardPanel extends React.Component<Props, State> {
   }
 
   componentDidUpdate() {
-    // skip loading angular component if we have no element
-    // or we have already loaded it
+    // skip loading angular component if we have no element or we have already loaded it
     if (!this.element || this.angularPanel) {
       return;
     }

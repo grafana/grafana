@@ -1,5 +1,4 @@
 .tabbed-view {
-  margin-bottom: $dashboard-padding;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -45,8 +44,10 @@
 }
 
 .tabbed-view-body {
-  padding: $spacer*2 $spacer;
-  height: 100%;
+  padding: $spacer*2 $spacer $spacer $spacer;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 
   &--small {
     min-height: 0px;
