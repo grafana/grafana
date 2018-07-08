@@ -40,6 +40,7 @@
   cursor: pointer;
   display: flex;
   flex-shrink: 0;
+  border: 1px solid transparent;
 
   &:hover {
     background: $card-background-hover;
