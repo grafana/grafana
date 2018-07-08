@@ -82,11 +82,12 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= DATEADD(s, %d, '1970-01-01') AND %s <= DATEADD(s, %d, '1970-01-01')", args[0], m.TimeRange.GetFromAsSecondsEpoch(), args[0], m.TimeRange.GetToAsSecondsEpoch()), nil
+
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("DATEADD(second, %d, '1970-01-01')", m.TimeRange.GetFromAsSecondsEpoch()), nil
+		return fmt.Sprintf("'%s'", m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeTo":
-		return fmt.Sprintf("DATEADD(second, %d, '1970-01-01')", m.TimeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("'%s'", m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
@@ -108,7 +109,7 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 				m.Query.Model.Set("fillValue", floatVal)
 			}
 		}
-		return fmt.Sprintf("CAST(ROUND(DATEDIFF(second, '1970-01-01', %s)/%.1f, 0) as bigint)*%.0f", args[0], interval.Seconds(), interval.Seconds()), nil
+		return fmt.Sprintf("FLOOR(DATEDIFF(second, '1970-01-01', %s)/%.0f)*%.0f", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

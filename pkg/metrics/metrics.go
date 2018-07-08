@@ -334,6 +334,14 @@ func updateTotalStats() {
 
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
 
+func getEdition() string {
+	if setting.IsEnterprise {
+		return "enterprise"
+	} else {
+		return "oss"
+	}
+}
+
 func sendUsageStats() {
 	if !setting.ReportingEnabled {
 		return
@@ -349,6 +357,7 @@ func sendUsageStats() {
 		"metrics": metrics,
 		"os":      runtime.GOOS,
 		"arch":    runtime.GOARCH,
+		"edition": getEdition(),
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}

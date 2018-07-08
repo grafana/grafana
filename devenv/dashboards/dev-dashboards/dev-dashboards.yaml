@@ -1,9 +1,0 @@
-apiVersion: 1
-
-providers:
- - name: 'dev dashboards'
-   folder: 'dev dashboards'
-   type: file
-   options:
-     path: devenv/dashboards/dev-dashboards
-

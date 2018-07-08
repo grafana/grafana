@@ -36,11 +36,10 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-"DEFAULT":
-{
-  "app_mode":"production"},
-  "analytics":
-  {
+  "DEFAULT": {
+    "app_mode":"production"
+  },
+  "analytics": {
     "google_analytics_ua_id":"",
     "reporting_enabled":"false"
   },
@@ -195,15 +194,16 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-  "user_count":2,
-  "org_count":1,
-  "dashboard_count":4,
-  "db_snapshot_count":2,
-  "db_tag_count":6,
-  "data_source_count":1,
-  "playlist_count":1,
-  "starred_db_count":2,
-  "grafana_admin_count":2
+  "users":2,
+  "orgs":1,
+  "dashboards":4,
+  "snapshots":2,
+  "tags":6,
+  "datasources":1,
+  "playlists":1,
+  "stars":2,
+  "alerts":2,
+  "activeUsers":1
 }
 ```
 

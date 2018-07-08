@@ -28,15 +28,20 @@ export class ResultTransformer {
     }
   }
 
-  transformMetricData(md, options, start, end) {
+  transformMetricData(metricData, options, start, end) {
     let dps = [],
       metricLabel = null;
 
-    metricLabel = this.createMetricLabel(md.metric, options);
+    metricLabel = this.createMetricLabel(metricData.metric, options);
 
     const stepMs = parseInt(options.step) * 1000;
     let baseTimestamp = start * 1000;
-    for (let value of md.values) {
+
+    if (metricData.values === undefined) {
+      throw new Error('Prometheus heatmap error: data should be a time series');
+    }
+
+    for (let value of metricData.values) {
       let dp_value = parseFloat(value[1]);
       if (_.isNaN(dp_value)) {
         dp_value = null;
@@ -164,8 +169,13 @@ export class ResultTransformer {
     for (let i = seriesList.length - 1; i > 0; i--) {
       let topSeries = seriesList[i].datapoints;
       let bottomSeries = seriesList[i - 1].datapoints;
+      if (!topSeries || !bottomSeries) {
+        throw new Error('Prometheus heatmap transform error: data should be a time series');
+      }
+
       for (let j = 0; j < topSeries.length; j++) {
-        topSeries[j][0] -= bottomSeries[j][0];
+        const bottomPoint = bottomSeries[j] || [0];
+        topSeries[j][0] -= bottomPoint[0];
       }
     }
 

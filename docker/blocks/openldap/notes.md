@@ -1,6 +1,6 @@
 # Notes on OpenLdap Docker Block
 
-Any ldif files added to the prepopulate subdirectory will be automatically imported into the OpenLdap database. 
+Any ldif files added to the prepopulate subdirectory will be automatically imported into the OpenLdap database.
 
 The ldif files add three users, `ldapviewer`, `ldapeditor` and `ldapadmin`. Two groups, `admins` and `users`, are added that correspond with the group mappings in the default conf/ldap.toml. `ldapadmin` is a member of `admins` and `ldapeditor` is a member of `users`.
 
@@ -22,3 +22,27 @@ enabled = true
 config_file = conf/ldap.toml
 ; allow_sign_up = true
 ```
+
+Test groups & users
+
+admins
+  ldap-admin
+  ldap-torkel
+  ldap-daniel
+backend
+  ldap-carl
+  ldap-torkel
+  ldap-leo
+frontend
+  ldap-torkel
+  ldap-tobias
+  ldap-daniel
+editors
+  ldap-editors
+
+
+no groups
+  ldap-viewer
+
+
+

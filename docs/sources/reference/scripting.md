@@ -21,42 +21,32 @@ If you open scripted.js you can see how it reads url parameters from ARGS variab
 ## Example
 
 ```javascript
-var rows = 1;
 var seriesName = 'argName';
-
-if(!_.isUndefined(ARGS.rows)) {
-  rows = parseInt(ARGS.rows, 10);
-}
 
 if(!_.isUndefined(ARGS.name)) {
   seriesName = ARGS.name;
 }
 
-for (var i = 0; i < rows; i++) {
-
-  dashboard.rows.push({
-    title: 'Scripted Graph ' + i,
-    height: '300px',
-    panels: [
-      {
-        title: 'Events',
-        type: 'graph',
-        span: 12,
-        fill: 1,
-        linewidth: 2,
-        targets: [
-          {
-            'target': "randomWalk('" + seriesName + "')"
-          },
-          {
-            'target': "randomWalk('random walk2')"
-          }
-        ],
-      }
-    ]
-  });
-
-}
+dashboard.panels.push({
+  title: 'Events',
+  type: 'graph',
+  fill: 1,
+  linewidth: 2,
+  gridPos: {
+    h: 10,
+    w: 24,
+    x: 0,
+    y: 10,
+  },
+  targets: [
+    {
+      'target': "randomWalk('" + seriesName + "')"
+    },
+    {
+      'target': "randomWalk('random walk2')"
+    }
+  ]
+});
 
 return dashboard;
 ```

@@ -68,7 +68,7 @@ describe('PrometheusDatasource', () => {
       ctx.query = {
         range: { from: moment(1443454528000), to: moment(1443454528000) },
         targets: [{ expr: 'test{job="testjob"}', format: 'heatmap', legendFormat: '{{le}}' }],
-        interval: '60s',
+        interval: '1s',
       };
     });
 

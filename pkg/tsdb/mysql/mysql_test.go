@@ -132,8 +132,8 @@ func TestMySQL(t *testing.T) {
 				So(column[7].(float64), ShouldEqual, 1.11)
 				So(column[8].(float64), ShouldEqual, 2.22)
 				So(*column[9].(*float32), ShouldEqual, 3.33)
-				So(column[10].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now())
-				So(column[11].(time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now())
+				So(column[10].(time.Time), ShouldHappenWithin, 10*time.Second, time.Now())
+				So(column[11].(time.Time), ShouldHappenWithin, 10*time.Second, time.Now())
 				So(column[12].(string), ShouldEqual, "11:11:11")
 				So(column[13].(int64), ShouldEqual, 2018)
 				So(*column[14].(*[]byte), ShouldHaveSameTypeAs, []byte{1})
@@ -209,11 +209,12 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Error, ShouldBeNil)
 
 				points := queryResult.Series[0].Points
-				So(len(points), ShouldEqual, 6)
+				// without fill this should result in 4 buckets
+				So(len(points), ShouldEqual, 4)
 
 				dt := fromStart
 
-				for i := 0; i < 3; i++ {
+				for i := 0; i < 2; i++ {
 					aValue := points[i][0].Float64
 					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
 					So(aValue, ShouldEqual, 15)
@@ -221,9 +222,9 @@ func TestMySQL(t *testing.T) {
 					dt = dt.Add(5 * time.Minute)
 				}
 
-				// adjust for 5 minute gap
-				dt = dt.Add(5 * time.Minute)
-				for i := 3; i < 6; i++ {
+				// adjust for 10 minute gap between first and second set of points
+				dt = dt.Add(10 * time.Minute)
+				for i := 2; i < 4; i++ {
 					aValue := points[i][0].Float64
 					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
 					So(aValue, ShouldEqual, 20)
@@ -259,7 +260,7 @@ func TestMySQL(t *testing.T) {
 
 				dt := fromStart
 
-				for i := 0; i < 3; i++ {
+				for i := 0; i < 2; i++ {
 					aValue := points[i][0].Float64
 					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
 					So(aValue, ShouldEqual, 15)
@@ -267,17 +268,23 @@ func TestMySQL(t *testing.T) {
 					dt = dt.Add(5 * time.Minute)
 				}
 
+				// check for NULL values inserted by fill
+				So(points[2][0].Valid, ShouldBeFalse)
 				So(points[3][0].Valid, ShouldBeFalse)
 
-				// adjust for 5 minute gap
-				dt = dt.Add(5 * time.Minute)
-				for i := 4; i < 7; i++ {
+				// adjust for 10 minute gap between first and second set of points
+				dt = dt.Add(10 * time.Minute)
+				for i := 4; i < 6; i++ {
 					aValue := points[i][0].Float64
 					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
 					So(aValue, ShouldEqual, 20)
 					So(aTime, ShouldEqual, dt)
 					dt = dt.Add(5 * time.Minute)
 				}
+
+				// check for NULL values inserted by fill
+				So(points[6][0].Valid, ShouldBeFalse)
+
 			})
 
 			Convey("When doing a metric query using timeGroup with float fill enabled", func() {
@@ -571,7 +578,7 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Error, ShouldBeNil)
 
 				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float64(float32(tInitial.Unix())))*1e3)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float32(tInitial.Unix()))*1e3)
 			})
 
 			Convey("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable) should return metric with time in milliseconds", func() {
@@ -593,7 +600,7 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Error, ShouldBeNil)
 
 				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float64(float32(tInitial.Unix())))*1e3)
+				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float32(tInitial.Unix()))*1e3)
 			})
 
 			Convey("When doing a metric query grouping by time and select metric column should return correct series", func() {
@@ -810,7 +817,7 @@ func TestMySQL(t *testing.T) {
 				columns := queryResult.Tables[0].Rows[0]
 
 				//Should be in milliseconds
-				So(columns[0].(int64), ShouldEqual, int64(dt.Unix()*1000))
+				So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
 			})
 
 			Convey("When doing an annotation query with a time column in epoch millisecond format should return ms", func() {
