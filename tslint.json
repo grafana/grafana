@@ -2,7 +2,7 @@
   "rules": {
     "no-string-throw": true,
     "no-unused-expression": true,
-		"no-unused-variable": false,
+    "no-unused-variable": false,
     "no-use-before-declare": false,
     "no-duplicate-variable": true,
     "curly": true,
