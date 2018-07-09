@@ -15,7 +15,7 @@ var template = `
 
 /** @ngInject */
 export function sqlPartEditorDirective($compile, templateSrv) {
-  var paramTemplate = '<input type="text" class="hide input-mini"></input>';
+  var paramTemplate = '<input type="text" class="hide input-medium"></input>';
 
   return {
     restrict: 'E',
@@ -30,6 +30,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
       var partDef = part.def;
       var $paramsContainer = elem.find('.query-part-parameters');
       var debounceLookup = $scope.debounce;
+      var cancelBlur = null;
 
       $scope.partActions = [];
 
@@ -53,7 +54,23 @@ export function sqlPartEditorDirective($compile, templateSrv) {
         }
       }
 
-      function inputBlur(paramIndex) {
+      $scope.inputBlur = function(paramIndex) {
+        cancelBlur = setTimeout($scope.switchToLink, 200);
+      };
+
+      $scope.updater = function(value) {
+        if (value === part.params[paramIndex]) {
+          clearTimeout(cancelBlur);
+          $input.focus();
+        }
+        return value;
+        setTimeout(function() {
+          $scope.inputBlur.call($input[0], paramIndex);
+        }, 0);
+        return value;
+      };
+
+      $scope.switchToLink = function(paramIndex) {
         /*jshint validthis:true */
         var $input = $(this);
         var $link = $input.prev();
@@ -70,12 +87,12 @@ export function sqlPartEditorDirective($compile, templateSrv) {
 
         $input.hide();
         $link.show();
-      }
+      };
 
       function inputKeyPress(paramIndex, e) {
         /*jshint validthis:true */
         if (e.which === 13) {
-          inputBlur.call(this, paramIndex);
+          $scope.inputBlur.call(this, paramIndex);
         }
       }
 
@@ -105,6 +122,12 @@ export function sqlPartEditorDirective($compile, templateSrv) {
               var dynamicOptions = _.map(result, function(op) {
                 return op.value;
               });
+
+              // add current value to dropdown if its not in resultset
+              if (_.indexOf(dynamicOptions, part.params[paramIndex]) === -1) {
+                dynamicOptions.unshift(part.params[paramIndex]);
+              }
+
               callback(dynamicOptions);
             });
           });
@@ -116,12 +139,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           source: typeaheadSource,
           minLength: 0,
           items: 1000,
-          updater: function(value) {
-            setTimeout(function() {
-              inputBlur.call($input[0], paramIndex);
-            }, 0);
-            return value;
-          },
+          updater: $scope.updater,
         });
 
         var typeahead = $input.data('typeahead');
@@ -157,13 +175,13 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           }
 
           var paramValue = templateSrv.highlightVariablesAsHtml(part.params[index]);
-          var $paramLink = $('<a class="graphite-func-param-link pointer">' + paramValue + '</a>');
+          var $paramLink = $('<a class="">' + paramValue + '</a>');
           var $input = $(paramTemplate);
 
           $paramLink.appendTo($paramsContainer);
           $input.appendTo($paramsContainer);
 
-          $input.blur(_.partial(inputBlur, index));
+          $input.blur(_.partial($scope.inputBlur, index));
           $input.keyup(inputKeyDown);
           $input.keypress(_.partial(inputKeyPress, index));
           $paramLink.click(_.partial(clickFuncParam, index));
