@@ -115,4 +115,26 @@ export const NavStore = types
 
       self.main = NavItem.create(main);
     },
+
+    // initTeamPage(team: Team, tab: string) {
+    //   let main = {
+    //     img: team.avatarUrl,
+    //     id: 'team-' + team.id,
+    //     subTitle: 'The cool team',
+    //     url: '',
+    //     text: team.name,
+    //     breadcrumbs: [{ title: 'Data Sources', url: 'datasources' }],
+    //     children: [
+    //       {
+    //         active: tab === 'team-members',
+    //         icon: 'gicon gicon-team',
+    //         id: 'team-members',
+    //         text: 'Members',
+    //         url: `org/teams/${team.id}/members`,
+    //       },
+    //     ],
+    //   };
+    //
+    //   self.main = NavItem.create(main);
+    // },
   }));
