@@ -11,6 +11,8 @@ import { VizTypePicker } from './VizTypePicker';
 interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
+  panelType: string;
+  onTypeChanged: (newType: PanelPlugin) => void;
 }
 
 interface PanelEditorTab {
@@ -40,7 +42,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     return (
       <div className="viz-editor">
         <div className="viz-editor-col1">
-          <VizTypePicker currentType={this.props.panel.type} onTypeChanged={this.onVizTypeChanged} />
+          <VizTypePicker currentType={this.props.panel.type} onTypeChanged={this.props.onTypeChanged} />
         </div>
         <div className="viz-editor-col2">
           <h5 className="page-heading">Options</h5>
@@ -48,11 +50,6 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
       </div>
     );
   }
-
-  onVizTypeChanged = (plugin: PanelPlugin) => {
-    console.log('changing type to ', plugin.id);
-    this.props.panel.changeType(plugin.id);
-  };
 
   onChangeTab = (tab: PanelEditorTab) => {
     store.view.updateQuery({ tab: tab.id }, false);

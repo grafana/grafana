@@ -1,5 +1,4 @@
 import React, { ComponentClass } from 'react';
-import $ from 'jquery';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
 import { PanelHeader } from './PanelHeader';
@@ -13,21 +12,26 @@ export interface Props {
 
 interface State {}
 
+// cache DataPanel wrapper components
+const dataPanels: { [s: string]: DataPanel } = {};
+
 export class PanelChrome extends React.Component<Props, State> {
   panelComponent: DataPanel;
 
   constructor(props) {
     super(props);
-
-    this.panelComponent = DataPanelWrapper(this.props.component);
-  }
-
-  componentDidMount() {
-    console.log('panel chrome mounted');
   }
 
   render() {
-    let PanelComponent = this.panelComponent;
+    const { type } = this.props.panel;
+
+    let PanelComponent = dataPanels[type];
+
+    if (!PanelComponent) {
+      PanelComponent = dataPanels[type] = DataPanelWrapper(this.props.component);
+    }
+
+    console.log('PanelChrome render', PanelComponent);
 
     return (
       <div className="panel-container">

@@ -6,7 +6,7 @@ import { getAngularLoader, AngularComponent } from 'app/core/services/angular_lo
 import { DashboardRow } from './DashboardRow';
 import { AddPanelPanel } from './AddPanelPanel';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { PluginExports } from 'app/types/plugins';
+import { PluginExports, PanelPlugin } from 'app/types/plugins';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from './PanelEditor';
 
@@ -27,15 +27,13 @@ export class DashboardPanel extends React.Component<Props, State> {
 
   constructor(props) {
     super(props);
-    this.state = { pluginExports: null };
+
+    this.state = {
+      pluginExports: null,
+    };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
     this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
-    this.props.panel.events.on('panel-size-changed', this.triggerForceUpdate.bind(this));
-  }
-
-  triggerForceUpdate() {
-    this.forceUpdate();
   }
 
   isSpecial() {
@@ -50,6 +48,11 @@ export class DashboardPanel extends React.Component<Props, State> {
     return <AddPanelPanel panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
+  onPluginTypeChanged = (plugin: PanelPlugin) => {
+    this.props.panel.changeType(plugin.id);
+    this.loadPlugin();
+  };
+
   loadPlugin() {
     if (this.isSpecial()) {
       return;
@@ -63,6 +66,9 @@ export class DashboardPanel extends React.Component<Props, State> {
         this.setState({ pluginExports: this.pluginInfo.exports });
       } else {
         importPluginModule(this.pluginInfo.module).then(pluginExports => {
+          // cache plugin exports (saves a promise async cycle next time)
+          this.pluginInfo.exports = pluginExports;
+          // update panel state
           this.setState({ pluginExports: pluginExports });
         });
       }
@@ -74,6 +80,7 @@ export class DashboardPanel extends React.Component<Props, State> {
   }
 
   componentDidUpdate() {
+    console.log('componentDidUpdate');
     this.loadPlugin();
 
     // handle angular plugin loading
@@ -112,7 +119,12 @@ export class DashboardPanel extends React.Component<Props, State> {
         </div>
         {this.props.panel.isEditing && (
           <div className="panel-editor-container__editor">
-            <PanelEditor panel={this.props.panel} dashboard={this.props.dashboard} />
+            <PanelEditor
+              panel={this.props.panel}
+              panelType={this.props.panel.type}
+              dashboard={this.props.dashboard}
+              onTypeChanged={this.onPluginTypeChanged}
+            />
           </div>
         )}
       </div>
