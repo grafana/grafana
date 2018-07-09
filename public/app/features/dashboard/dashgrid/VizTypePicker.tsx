@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import config, { PanelPlugin } from 'app/core/config';
+import config from 'app/core/config';
+import { PanelPlugin } from 'app/types/plugins';
 import _ from 'lodash';
 
 interface Props {

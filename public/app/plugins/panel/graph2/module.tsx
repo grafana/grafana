@@ -14,7 +14,7 @@ export class ReactTestPanel extends PureComponent<PanelProps> {
       value = data[0].value;
     }
 
-    return <h2>Text Panel {value}</h2>;
+    return <h2>Graph Panel! {value}</h2>;
   }
 }
 

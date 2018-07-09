@@ -5,8 +5,10 @@ import { DashboardModel } from '../dashboard_model';
 import { getAngularLoader, AngularComponent } from 'app/core/services/angular_loader';
 import { DashboardRow } from './DashboardRow';
 import { AddPanelPanel } from './AddPanelPanel';
-import { importPluginModule, PluginExports } from 'app/features/plugins/plugin_loader';
+import { importPluginModule } from 'app/features/plugins/plugin_loader';
+import { PluginExports } from 'app/types/plugins';
 import { PanelChrome } from './PanelChrome';
+import { PanelEditor } from './PanelEditor';
 
 export interface Props {
   panel: PanelModel;
@@ -29,15 +31,11 @@ export class DashboardPanel extends React.Component<Props, State> {
 
     this.specialPanels['row'] = this.renderRow.bind(this);
     this.specialPanels['add-panel'] = this.renderAddPanel.bind(this);
+    this.props.panel.events.on('panel-size-changed', this.triggerForceUpdate.bind(this));
+  }
 
-    if (!this.isSpecial()) {
-      this.pluginInfo = config.panels[this.props.panel.type];
-
-      // load panel plugin
-      importPluginModule(this.pluginInfo.module).then(pluginExports => {
-        this.setState({ pluginExports: pluginExports });
-      });
-    }
+  triggerForceUpdate() {
+    this.forceUpdate();
   }
 
   isSpecial() {
@@ -52,8 +50,33 @@ export class DashboardPanel extends React.Component<Props, State> {
     return <AddPanelPanel panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
+  loadPlugin() {
+    if (this.isSpecial()) {
+      return;
+    }
+
+    // handle plugin loading & changing of plugin type
+    if (!this.pluginInfo || this.pluginInfo.id !== this.props.panel.type) {
+      this.pluginInfo = config.panels[this.props.panel.type];
+
+      if (this.pluginInfo.exports) {
+        this.setState({ pluginExports: this.pluginInfo.exports });
+      } else {
+        importPluginModule(this.pluginInfo.module).then(pluginExports => {
+          this.setState({ pluginExports: pluginExports });
+        });
+      }
+    }
+  }
+
+  componentDidMount() {
+    this.loadPlugin();
+  }
+
   componentDidUpdate() {
-    // skip loading angular component if we have no element or we have already loaded it
+    this.loadPlugin();
+
+    // handle angular plugin loading
     if (!this.element || this.angularPanel) {
       return;
     }
@@ -70,25 +93,43 @@ export class DashboardPanel extends React.Component<Props, State> {
     }
   }
 
-  render() {
+  renderReactPanel() {
     const { pluginExports } = this.state;
+    const containerClass = this.props.panel.isEditing ? 'panel-editor-container' : 'panel-height-helper';
+    const panelWrapperClass = this.props.panel.isEditing ? 'panel-editor-container__panel' : 'panel-height-helper';
 
+    // this might look strange with these classes that change when edit, but
+    // I want to try to keep markup (parents) for panel the same in edit mode to avoide unmount / new mount of panel
+    // plugin component
+    return (
+      <div className={containerClass}>
+        <div className={panelWrapperClass}>
+          <PanelChrome
+            component={pluginExports.PanelComponent}
+            panel={this.props.panel}
+            dashboard={this.props.dashboard}
+          />
+        </div>
+        {this.props.panel.isEditing && (
+          <div className="panel-editor-container__editor">
+            <PanelEditor panel={this.props.panel} dashboard={this.props.dashboard} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  render() {
     if (this.isSpecial()) {
       return this.specialPanels[this.props.panel.type]();
     }
 
-    if (!pluginExports) {
+    if (!this.state.pluginExports) {
       return null;
     }
 
-    if (pluginExports.PanelComponent) {
-      return (
-        <PanelChrome
-          component={pluginExports.PanelComponent}
-          panel={this.props.panel}
-          dashboard={this.props.dashboard}
-        />
-      );
+    if (this.state.pluginExports.PanelComponent) {
+      return this.renderReactPanel();
     }
 
     // legacy angular rendering

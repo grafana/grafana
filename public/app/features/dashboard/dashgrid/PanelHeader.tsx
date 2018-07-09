@@ -21,6 +21,16 @@ export class PanelHeader extends React.Component<PanelHeaderProps, any> {
     );
   };
 
+  onViewPanel = () => {
+    store.view.updateQuery(
+      {
+        panelId: this.props.panel.id,
+        fullscreen: true,
+      },
+      false
+    );
+  };
+
   render() {
     let isFullscreen = false;
     let isLoading = false;
@@ -52,7 +62,9 @@ export class PanelHeader extends React.Component<PanelHeaderProps, any> {
                   </a>
                 </li>
                 <li>
-                  <a href="asd">asd</a>
+                  <a onClick={this.onViewPanel}>
+                    <i className="fa fa-fw fa-eye" /> View
+                  </a>
                 </li>
               </ul>
             </span>

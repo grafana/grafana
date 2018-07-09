@@ -1,21 +1,11 @@
 import _ from 'lodash';
+import { PanelPlugin } from 'app/types/plugins';
 
 export interface BuildInfo {
   version: string;
   commit: string;
   isEnterprise: boolean;
   env: string;
-}
-
-export interface PanelPlugin {
-  id: string;
-  name: string;
-  meta: any;
-  hideFromList: boolean;
-  module: string;
-  baseUrl: string;
-  info: any;
-  sort: number;
 }
 
 export class Settings {

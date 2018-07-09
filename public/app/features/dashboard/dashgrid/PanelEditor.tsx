@@ -5,7 +5,7 @@ import { DashboardModel } from '../dashboard_model';
 import { store } from 'app/stores/store';
 import { observer } from 'mobx-react';
 import { QueriesTab } from './QueriesTab';
-import { PanelPlugin } from 'app/core/config';
+import { PanelPlugin } from 'app/types/plugins';
 import { VizTypePicker } from './VizTypePicker';
 
 interface PanelEditorProps {
@@ -50,8 +50,8 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
   }
 
   onVizTypeChanged = (plugin: PanelPlugin) => {
-    this.props.panel.type = plugin.id;
-    this.forceUpdate();
+    console.log('changing type to ', plugin.id);
+    this.props.panel.changeType(plugin.id);
   };
 
   onChangeTab = (tab: PanelEditorTab) => {

@@ -97,6 +97,11 @@ export class PanelModel {
     this.events.emit('panel-init-edit-mode');
   }
 
+  changeType(newType: string) {
+    this.type = newType;
+    this.events.emit('panel-size-changed');
+  }
+
   destroy() {
     this.events.removeAllListeners();
   }

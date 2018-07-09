@@ -35,11 +35,20 @@ div.flot-text {
   height: 100%;
 }
 
+.panel-editor-container__panel {
+  height: 35%;
+}
+
+.panel-editor-container__editor {
+  height: 65%;
+}
+
 .panel-container {
   background-color: $panel-bg;
   border: $panel-border;
   position: relative;
   border-radius: 3px;
+  height: 100%;
 
   &.panel-transparent {
     background-color: transparent;
