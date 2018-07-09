@@ -3,6 +3,8 @@ import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import IContainerProps from 'app/containers/IContainerProps';
+import { store } from 'app/store/configureStore';
+import { setNav } from 'app/store/nav/actions';
 
 @inject('nav', 'serverStats')
 @observer
@@ -13,6 +15,8 @@ export class ServerStats extends React.Component<IContainerProps, any> {
 
     nav.load('cfg', 'admin', 'server-stats');
     serverStats.load();
+
+    store.dispatch(setNav('new', { asd: 'tasd' }));
   }
 
   render() {
