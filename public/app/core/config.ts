@@ -7,9 +7,20 @@ export interface BuildInfo {
   env: string;
 }
 
+export interface PanelPlugin {
+  id: string;
+  name: string;
+  meta: any;
+  hideFromList: boolean;
+  module: string;
+  baseUrl: string;
+  info: any;
+  sort: number;
+}
+
 export class Settings {
   datasources: any;
-  panels: any;
+  panels: PanelPlugin[];
   appSubUrl: string;
   window_title_prefix: string;
   buildInfo: BuildInfo;

@@ -95,7 +95,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
       PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
         PanelCtrl.templateUrl = null;
-        PanelCtrl.template = `<grafana-panel ctrl="ctrl" class="panel-height-helper">${template}</grafana-panel>`;
+        PanelCtrl.template = `<grafana-panel ctrl="ctrl" class="panel-editor-container">${template}</grafana-panel>`;
         return componentInfo;
       });
 
@@ -110,7 +110,6 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
         return datasourceSrv.get(datasource).then(ds => {
           scope.datasource = ds;
-          console.log('scope', scope);
 
           return importPluginModule(ds.meta.module).then(dsModule => {
             return {
