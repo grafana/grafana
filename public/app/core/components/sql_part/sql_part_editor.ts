@@ -53,7 +53,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
         }
       }
 
-      function inputBlur(paramIndex) {
+      function switchToLink(paramIndex) {
         /*jshint validthis:true */
         var $input = $(this);
         var $link = $input.prev();
@@ -75,7 +75,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
       function inputKeyPress(paramIndex, e) {
         /*jshint validthis:true */
         if (e.which === 13) {
-          inputBlur.call(this, paramIndex);
+          switchToLink.call(this, paramIndex);
         }
       }
 
@@ -124,7 +124,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           items: 1000,
           updater: function(value) {
             setTimeout(function() {
-              inputBlur.call($input[0], paramIndex);
+              switchToLink.call($input[0], paramIndex);
             }, 0);
             return value;
           },
@@ -169,7 +169,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           $paramLink.appendTo($paramsContainer);
           $input.appendTo($paramsContainer);
 
-          $input.blur(_.partial(inputBlur, index));
+          $input.blur(_.partial(switchToLink, index));
           $input.keyup(inputKeyDown);
           $input.keypress(_.partial(inputKeyPress, index));
           $paramLink.click(_.partial(clickFuncParam, index));
