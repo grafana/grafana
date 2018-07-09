@@ -106,7 +106,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
                 return op.value;
               });
 
-              // add current value to dropdown if its not in dynamicOptions
+              // add current value to dropdown if it's not in dynamicOptions
               if (_.indexOf(dynamicOptions, part.params[paramIndex]) === -1) {
                 dynamicOptions.unshift(part.params[paramIndex]);
               }
