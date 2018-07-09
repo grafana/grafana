@@ -103,6 +103,10 @@ export class PrometheusDatasource {
   interpolateQueryExpr(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
+      if (typeof value === 'number') {
+        // $__interval_ms type is number, convert to string here
+        value = value.toString();
+      }
       return prometheusRegularEscape(value);
     }
 
