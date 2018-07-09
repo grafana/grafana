@@ -105,6 +105,12 @@ export function sqlPartEditorDirective($compile, templateSrv) {
               var dynamicOptions = _.map(result, function(op) {
                 return op.value;
               });
+
+              // add current value to dropdown if its not in dynamicOptions
+              if (_.indexOf(dynamicOptions, part.params[paramIndex]) === -1) {
+                dynamicOptions.unshift(part.params[paramIndex]);
+              }
+
               callback(dynamicOptions);
             });
           });
