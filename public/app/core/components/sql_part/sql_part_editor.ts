@@ -30,6 +30,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
       var partDef = part.def;
       var $paramsContainer = elem.find('.query-part-parameters');
       var debounceLookup = $scope.debounce;
+      var cancelBlur = null;
 
       $scope.partActions = [];
 
@@ -53,9 +54,14 @@ export function sqlPartEditorDirective($compile, templateSrv) {
         }
       }
 
-      function switchToLink(paramIndex) {
+      function inputBlur($input, paramIndex) {
+        cancelBlur = setTimeout(function() {
+          switchToLink.call(this, $input, paramIndex);
+        }, 200);
+      }
+
+      function switchToLink($input, paramIndex) {
         /*jshint validthis:true */
-        var $input = $(this);
         var $link = $input.prev();
         var newValue = $input.val();
 
@@ -123,9 +129,11 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           minLength: 0,
           items: 1000,
           updater: function(value) {
-            setTimeout(function() {
-              switchToLink.call($input[0], paramIndex);
-            }, 0);
+            if (value === part.params[paramIndex]) {
+              clearTimeout(cancelBlur);
+              $input.focus();
+              return value;
+            }
             return value;
           },
         });
@@ -169,7 +177,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           $paramLink.appendTo($paramsContainer);
           $input.appendTo($paramsContainer);
 
-          $input.blur(_.partial(switchToLink, index));
+          $input.blur(_.partial(inputBlur, $input, index));
           $input.keyup(inputKeyDown);
           $input.keypress(_.partial(inputKeyPress, index));
           $paramLink.click(_.partial(clickFuncParam, index));
