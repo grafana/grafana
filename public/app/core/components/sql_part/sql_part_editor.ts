@@ -56,7 +56,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
 
       function inputBlur($input, paramIndex) {
         cancelBlur = setTimeout(function() {
-          switchToLink.call(this, $input, paramIndex);
+          switchToLink($input, paramIndex);
         }, 200);
       }
 
@@ -81,7 +81,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
       function inputKeyPress(paramIndex, e) {
         /*jshint validthis:true */
         if (e.which === 13) {
-          switchToLink.call(this, paramIndex);
+          switchToLink($(this), paramIndex);
         }
       }
 
