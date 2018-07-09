@@ -31,8 +31,6 @@ class MultiStatCtrl extends MetricsPanelCtrl {
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-
-    this.onThresholdChange = this.onThresholdChange.bind(this);
   }
 
   onInitEditMode() {
@@ -88,10 +86,10 @@ class MultiStatCtrl extends MetricsPanelCtrl {
     this.refresh();
   }
 
-  onThresholdChange(newThresholds) {
+  onThresholdChange = newThresholds => {
     this.panel.thresholds = newThresholds;
     this.render();
-  }
+  };
 
   link(scope, elem, attrs, ctrl) {
     const multistatElem = elem.find('.multistat-panel');

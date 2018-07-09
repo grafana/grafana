@@ -72,6 +72,9 @@ export class ThresholdEditor extends React.Component<IProps, IState> {
     this.onThresholdChange(threshold);
   }
 
+  onModeChange = newValue => this.onPropertyChange('mode', newValue);
+  onColorChange = newValue => this.onPropertyChange('color', newValue);
+
   onRemove = () => {
     this.props.onRemove(this.props.index);
   };
@@ -111,7 +114,7 @@ export class ThresholdEditor extends React.Component<IProps, IState> {
               className="gf-form-input"
               value={this.props.threshold.mode}
               options={colorModeOptions}
-              onChange={this.onPropertyChange.bind(this, 'mode')}
+              onChange={this.onModeChange}
             />
           </div>
         </div>
@@ -120,7 +123,7 @@ export class ThresholdEditor extends React.Component<IProps, IState> {
           <div className="gf-form">
             <label className="gf-form-label">Color</label>
             <span className="gf-form-label">
-              <ColorPicker color={this.props.threshold.color} onChange={this.onPropertyChange.bind(this, 'color')} />
+              <ColorPicker color={this.props.threshold.color} onChange={this.onColorChange} />
             </span>
           </div>
         )}

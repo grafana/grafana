@@ -60,7 +60,6 @@ export class MultiStatBar extends React.Component<IProps, any> {
       } else {
         barSize = { w: barLengths[index], h: barWidth };
       }
-      console.log(barSize);
 
       return (
         <BarStat
