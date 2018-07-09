@@ -18,9 +18,10 @@ import (
 
 	"github.com/go-macaron/session"
 
+	"time"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
-	"time"
 )
 
 type Scheme string
@@ -49,7 +50,7 @@ var (
 	BuildVersion    string
 	BuildCommit     string
 	BuildStamp      int64
-	Enterprise      bool
+	IsEnterprise    bool
 	ApplicationName string
 
 	// Paths
@@ -517,7 +518,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	Raw = cfg.Raw
 
 	ApplicationName = "Grafana"
-	if Enterprise {
+	if IsEnterprise {
 		ApplicationName += " Enterprise"
 	}
 

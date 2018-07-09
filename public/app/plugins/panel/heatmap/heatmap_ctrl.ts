@@ -302,6 +302,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   seriesHandler(seriesData) {
+    if (seriesData.datapoints === undefined) {
+      throw new Error('Heatmap error: data should be a time series');
+    }
+
     let series = new TimeSeries({
       datapoints: seriesData.datapoints,
       alias: seriesData.target,

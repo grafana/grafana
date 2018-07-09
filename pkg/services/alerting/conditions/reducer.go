@@ -108,9 +108,9 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 				break
 			}
 		}
-		// get other points
+		// get the oldest point
 		points = points[0:i]
-		for i := len(points) - 1; i >= 0; i-- {
+		for i := 0; i < len(points); i++ {
 			if points[i][0].Valid {
 				allNull = false
 				value = first - points[i][0].Float64
@@ -131,9 +131,9 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 				break
 			}
 		}
-		// get other points
+		// get the oldest point
 		points = points[0:i]
-		for i := len(points) - 1; i >= 0; i-- {
+		for i := 0; i < len(points); i++ {
 			if points[i][0].Valid {
 				allNull = false
 				val := (first - points[i][0].Float64) / points[i][0].Float64 * 100
