@@ -11,6 +11,7 @@ export class IntervalVariable implements Variable {
   query: string;
   refresh: number;
   current: any;
+  skipUrlSync: boolean;
 
   defaults = {
     type: 'interval',
@@ -24,6 +25,7 @@ export class IntervalVariable implements Variable {
     auto: false,
     auto_min: '10s',
     auto_count: 30,
+    skipUrlSync: false,
   };
 
   /** @ngInject **/
