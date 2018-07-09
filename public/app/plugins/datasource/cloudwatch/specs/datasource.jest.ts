@@ -1,6 +1,5 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
-import 'app/features/dashboard/time_srv';
 import * as dateMath from 'app/core/utils/datemath';
 import _ from 'lodash';
 
@@ -10,19 +9,20 @@ describe('CloudWatchDatasource', function() {
   };
 
   let templateSrv = {
+    data: {},
     templateSettings: { interpolate: /\[\[([\s\S]+?)\]\]/g },
-    replace: jest.fn(text => _.template(text, templateSrv.templateSettings)(templateSrv.data)),
-    variableExists: jest.fn(() => false),
+    replace: text => _.template(text, templateSrv.templateSettings)(templateSrv.data),
+    variableExists: () => false,
   };
 
   let timeSrv = {
     time: { from: 'now-1h', to: 'now' },
-    timeRange: jest.fn(() => {
+    timeRange: () => {
       return {
         from: dateMath.parse(timeSrv.time.from, false),
         to: dateMath.parse(timeSrv.time.to, true),
       };
-    }),
+    },
   };
   let backendSrv = {};
   let ctx = <any>{
