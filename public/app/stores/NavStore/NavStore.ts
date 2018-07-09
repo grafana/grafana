@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { types, getEnv } from 'mobx-state-tree';
 import { NavItem } from './NavItem';
+import { ITeam } from '../TeamsStore/TeamsStore';
 
 export const NavStore = types
   .model('NavStore', {
@@ -116,25 +117,39 @@ export const NavStore = types
       self.main = NavItem.create(main);
     },
 
-    // initTeamPage(team: Team, tab: string) {
-    //   let main = {
-    //     img: team.avatarUrl,
-    //     id: 'team-' + team.id,
-    //     subTitle: 'The cool team',
-    //     url: '',
-    //     text: team.name,
-    //     breadcrumbs: [{ title: 'Data Sources', url: 'datasources' }],
-    //     children: [
-    //       {
-    //         active: tab === 'team-members',
-    //         icon: 'gicon gicon-team',
-    //         id: 'team-members',
-    //         text: 'Members',
-    //         url: `org/teams/${team.id}/members`,
-    //       },
-    //     ],
-    //   };
-    //
-    //   self.main = NavItem.create(main);
-    // },
+    initTeamPage(team: ITeam, tab: string) {
+      let main = {
+        img: team.avatarUrl,
+        id: 'team-' + team.id,
+        subTitle: 'The cool team',
+        url: '',
+        text: team.name,
+        breadcrumbs: [{ title: 'Teams', url: 'org/teams' }],
+        children: [
+          {
+            active: tab === 'team-members',
+            icon: 'gicon gicon-team',
+            id: 'team-members',
+            text: 'Members',
+            url: `org/teams/${team.id}/members`,
+          },
+          {
+            active: tab === 'team-sync',
+            icon: 'fa fa-fw fa-refresh',
+            id: 'team-settings',
+            text: 'External group sync',
+            url: `org/teams/${team.id}/groupsync`,
+          },
+          {
+            active: tab === 'team-settings',
+            icon: 'fa fa-fw fa-sliders',
+            id: 'team-settings',
+            text: 'Settings',
+            url: `org/teams/${team.id}/settings`,
+          },
+        ],
+      };
+
+      self.main = NavItem.create(main);
+    },
   }));

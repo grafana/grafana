@@ -5,7 +5,7 @@ import ServerStats from 'app/containers/ServerStats/ServerStats';
 import AlertRuleList from 'app/containers/AlertRuleList/AlertRuleList';
 import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
 import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions';
-// import TeamSettings from 'app/containers/Teams/TeamSettings';
+import TeamSettings from 'app/containers/Teams/TeamSettings';
 import TeamList from 'app/containers/Teams/TeamList';
 
 /** @ngInject **/
@@ -153,17 +153,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'CreateTeamCtrl',
       controllerAs: 'ctrl',
     })
-    // .when('/org/teams/edit/:id', {
-    //   template: '<react-container />',
-    //   resolve: {
-    //     roles: () => ['Editor', 'Admin'],
-    //     component: () => TeamSettings,
-    //   },
-    // })
     .when('/org/teams/edit/:id', {
-      templateUrl: 'public/app/features/org/partials/team_details.html',
-      controller: 'TeamDetailsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        roles: () => ['Editor', 'Admin'],
+        component: () => TeamSettings,
+      },
     })
     .when('/profile', {
       templateUrl: 'public/app/features/org/partials/profile.html',

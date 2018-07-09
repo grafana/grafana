@@ -13,29 +13,40 @@ export interface ITeam extends TeamType {}
 
 export const TeamsStore = types
   .model('TeamsStore', {
-    list: types.array(Team),
+    map: types.map(Team),
     search: types.optional(types.string, ''),
   })
   .views(self => ({
     get filteredTeams() {
+      let teams = this.map.values();
       let regex = new RegExp(self.search, 'i');
-      return self.list.filter(team => {
+      return teams.filter(team => {
         return regex.test(team.name);
       });
     },
   }))
   .actions(self => ({
-    load: flow(function* load() {
+    loadTeams: flow(function* load() {
       const backendSrv = getEnv(self).backendSrv;
       const rsp = yield backendSrv.get('/api/teams/search/', { perpage: 50, page: 1 });
-      self.list.clear();
+      self.map.clear();
 
       for (let team of rsp.teams) {
-        self.list.push(Team.create(team));
+        self.map.set(team.id.toString(), Team.create(team));
       }
     }),
 
     setSearchQuery(query: string) {
       self.search = query;
     },
+
+    loadById: flow(function* load(id: string) {
+      if (self.map.has(id)) {
+        return;
+      }
+
+      const backendSrv = getEnv(self).backendSrv;
+      const team = yield backendSrv.get(`/api/teams/${id}`);
+      self.map.set(id, Team.create(team));
+    }),
   }));

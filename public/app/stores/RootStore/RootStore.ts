@@ -30,7 +30,7 @@ export const RootStore = types.model({
   }),
   folder: types.optional(FolderStore, {}),
   teams: types.optional(TeamsStore, {
-    list: [],
+    map: {},
   }),
 });
 

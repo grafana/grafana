@@ -24,7 +24,7 @@ export class TeamList extends React.Component<Props, any> {
   }
 
   fetchTeams() {
-    this.props.teams.load();
+    this.props.teams.loadTeams();
   }
 
   deleteTeam(team: ITeam) {
