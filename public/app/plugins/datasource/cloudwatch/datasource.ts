@@ -38,6 +38,8 @@ export default class CloudWatchDatasource {
       item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
       item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+
+      // valid ExtendedStatistics is like p90.00, check the pattern
       let hasInvalidStatistics = item.statistics.some(s => {
         return s.indexOf('p') === 0 && !/p\d{2}\.\d{2}/.test(s);
       });
