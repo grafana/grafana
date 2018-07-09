@@ -86,6 +86,8 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			return errors.New("Annotation not found")
 		}
 
+		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
+
 		if item.Epoch != 0 {
 			existing.Epoch = item.Epoch
 		}
