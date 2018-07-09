@@ -1,14 +1,19 @@
 import '../datasource';
-import { TemplateSrvStub } from 'test/specs/helpers';
 import CloudWatchDatasource from '../datasource';
 import 'app/features/dashboard/time_srv';
 import * as dateMath from 'app/core/utils/datemath';
+import _ from 'lodash';
 
 describe('CloudWatchDatasource', function() {
   let instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
-  let templateSrv = new TemplateSrvStub();
+
+  let templateSrv = {
+    templateSettings: { interpolate: /\[\[([\s\S]+?)\]\]/g },
+    replace: jest.fn(text => _.template(text, templateSrv.templateSettings)(templateSrv.data)),
+    variableExists: jest.fn(() => false),
+  };
 
   let timeSrv = {
     time: { from: 'now-1h', to: 'now' },
@@ -68,8 +73,8 @@ describe('CloudWatchDatasource', function() {
       },
     };
 
-    beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = await jest.fn(params => {
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = jest.fn(params => {
         requestParams = params.data;
         return Promise.resolve({ data: response });
       });
@@ -122,103 +127,6 @@ describe('CloudWatchDatasource', function() {
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
-    });
-
-    it('should generate the correct targets by expanding template variables', function() {
-      var templateSrv = {
-        variables: [
-          {
-            name: 'instance_id',
-            options: [
-              { text: 'i-23456789', value: 'i-23456789', selected: false },
-              { text: 'i-34567890', value: 'i-34567890', selected: true },
-            ],
-            current: {
-              text: 'i-34567890',
-              value: 'i-34567890',
-            },
-          },
-        ],
-        replace: function(target, scopedVars) {
-          if (target === '$instance_id' && scopedVars['instance_id']['text'] === 'i-34567890') {
-            return 'i-34567890';
-          } else {
-            return '';
-          }
-        },
-        getVariableName: function(e) {
-          return 'instance_id';
-        },
-        variableExists: function(e) {
-          return true;
-        },
-        containsVariable: function(str, variableName) {
-          return str.indexOf('$' + variableName) !== -1;
-        },
-      };
-
-      var targets = [
-        {
-          region: 'us-east-1',
-          namespace: 'AWS/EC2',
-          metricName: 'CPUUtilization',
-          dimensions: {
-            InstanceId: '$instance_id',
-          },
-          statistics: ['Average'],
-          period: 300,
-        },
-      ];
-
-      var result = ctx.ds.expandTemplateVariable(targets, {}, templateSrv);
-      expect(result[0].dimensions.InstanceId).toBe('i-34567890');
-    });
-
-    it('should generate the correct targets by expanding template variables from url', function() {
-      var templateSrv = {
-        variables: [
-          {
-            name: 'instance_id',
-            options: [
-              { text: 'i-23456789', value: 'i-23456789', selected: false },
-              { text: 'i-34567890', value: 'i-34567890', selected: false },
-            ],
-            current: 'i-45678901',
-          },
-        ],
-        replace: function(target, scopedVars) {
-          if (target === '$instance_id') {
-            return 'i-45678901';
-          } else {
-            return '';
-          }
-        },
-        getVariableName: function(e) {
-          return 'instance_id';
-        },
-        variableExists: function(e) {
-          return true;
-        },
-        containsVariable: function(str, variableName) {
-          return str.indexOf('$' + variableName) !== -1;
-        },
-      };
-
-      var targets = [
-        {
-          region: 'us-east-1',
-          namespace: 'AWS/EC2',
-          metricName: 'CPUUtilization',
-          dimensions: {
-            InstanceId: '$instance_id',
-          },
-          statistics: ['Average'],
-          period: 300,
-        },
-      ];
-
-      var result = ctx.ds.expandTemplateVariable(targets, {}, templateSrv);
-      expect(result[0].dimensions.InstanceId).toBe('i-45678901');
     });
   });
 

@@ -404,6 +404,7 @@ export default class CloudWatchDatasource {
   }
 
   expandTemplateVariable(targets, scopedVars, templateSrv) {
+    // Datasource and template srv logic uber-complected. This should be cleaned up.
     return _.chain(targets)
       .map(target => {
         var dimensionKey = _.findKey(target.dimensions, v => {
