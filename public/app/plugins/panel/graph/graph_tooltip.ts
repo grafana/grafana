@@ -81,7 +81,7 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
         continue;
       }
 
-      if (!series.tooltip) {
+      if (series.hideTooltip) {
         results[0].push({ hidden: true, value: 0 });
         continue;
       }
