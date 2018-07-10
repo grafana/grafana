@@ -42,12 +42,13 @@ export class TeamGroupSync extends React.Component<Props, State> {
   };
 
   getHeaderTooltip() {
-    return `You can here specify external groups that can be used as source for
+    return `Here you specify external groups that can be used as sync sources for
     members of this team. For example an LDAP group or a GitHub team
    `;
   }
 
   render() {
+    const { isAdding } = this.state;
     const groups = this.props.team.groups.values();
 
     return (
@@ -58,34 +59,79 @@ export class TeamGroupSync extends React.Component<Props, State> {
             <i className="gicon gicon-question gicon--has-hover" />
           </Tooltip>
           <div className="page-action-bar__spacer" />
-          <button className="btn btn-success pull-right" onClick={this.onToggleAdding}>
-            <i className="fa fa-plus" /> Add group
-          </button>
+          {groups.length > 0 && (
+            <button className="btn btn-success pull-right" onClick={this.onToggleAdding}>
+              <i className="fa fa-plus" /> Add group
+            </button>
+          )}
         </div>
 
-        <SlideDown in={this.state.isAdding}>
+        <SlideDown in={isAdding}>
           <div className="cta-form">
             <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
               <i className="fa fa-close" />
             </button>
-            <h5>Add Team Member</h5>
-            <div className="gf-form-inline" />
+            <h5>Add External Group</h5>
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <div className="gf-form-select-wrapper">
+                  <select className="gf-form-input gf-size-auto" value={'ldap'}>
+                    <option key="ldap" value="ldap">
+                      LDAP Group
+                    </option>
+                  </select>
+                </div>
+                <input
+                  type="text"
+                  className="gf-form-input width-30"
+                  placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
+                />
+              </div>
+
+              <div className="gf-form">
+                <button className="btn btn-success gf-form-btn" type="submit">
+                  Add group
+                </button>
+                <button className="btn btn-secondary gf-form-btn" type="submit">
+                  Test
+                </button>
+              </div>
+            </div>
           </div>
         </SlideDown>
 
-        <div className="admin-list-table">
-          <table className="filter-table filter-table--hover form-inline">
-            <thead>
-              <tr>
-                <th />
-                <th>Name</th>
-                <th>Email</th>
-                <th style={{ width: '1%' }} />
-              </tr>
-            </thead>
-            <tbody>{groups.map(group => this.renderGroup(group))}</tbody>
-          </table>
-        </div>
+        {groups.length === 0 &&
+          !isAdding && (
+            <div className="empty-list-cta">
+              <div className="empty-list-cta__title">There are no external groups to sync with</div>
+              <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-xlarge btn-success">
+                <i className="gicon gicon-add-team" />
+                Add Group
+              </button>
+              <div className="empty-list-cta__pro-tip">
+                <i className="fa fa-rocket" /> Sync LDAP or OAuth groups with your Grafana teams.
+                <a className="text-link empty-list-cta__pro-tip-link" href="asd" target="_blank">
+                  Learn more
+                </a>
+              </div>
+            </div>
+          )}
+
+        {groups.length > 0 && (
+          <div className="admin-list-table">
+            <table className="filter-table filter-table--hover form-inline">
+              <thead>
+                <tr>
+                  <th />
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th style={{ width: '1%' }} />
+                </tr>
+              </thead>
+              <tbody>{groups.map(group => this.renderGroup(group))}</tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   }
