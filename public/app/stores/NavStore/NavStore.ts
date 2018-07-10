@@ -121,31 +121,31 @@ export const NavStore = types
       let main = {
         img: team.avatarUrl,
         id: 'team-' + team.id,
-        subTitle: 'The cool team',
+        subTitle: 'Manage members & settings',
         url: '',
         text: team.name,
         breadcrumbs: [{ title: 'Teams', url: 'org/teams' }],
         children: [
           {
-            active: tab === 'team-members',
+            active: tab === 'members',
             icon: 'gicon gicon-team',
             id: 'team-members',
             text: 'Members',
-            url: `org/teams/${team.id}/members`,
+            url: `org/teams/edit/${team.id}/members`,
           },
           {
-            active: tab === 'team-sync',
+            active: tab === 'groupsync',
             icon: 'fa fa-fw fa-refresh',
             id: 'team-settings',
             text: 'External group sync',
-            url: `org/teams/${team.id}/groupsync`,
+            url: `org/teams/edit/${team.id}/groupsync`,
           },
           {
-            active: tab === 'team-settings',
+            active: tab === 'settings',
             icon: 'fa fa-fw fa-sliders',
             id: 'team-settings',
             text: 'Settings',
-            url: `org/teams/${team.id}/settings`,
+            url: `org/teams/edit/${team.id}/settings`,
           },
         ],
       };

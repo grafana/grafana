@@ -1,12 +1,31 @@
 import { types, getEnv, flow } from 'mobx-state-tree';
 
-export const Team = types.model('Team', {
-  id: types.identifier(types.number),
-  name: types.string,
-  avatarUrl: types.string,
-  email: types.string,
-  memberCount: types.number,
-});
+export const Team = types
+  .model('Team', {
+    id: types.identifier(types.number),
+    name: types.string,
+    avatarUrl: types.string,
+    email: types.string,
+    memberCount: types.number,
+  })
+  .actions(self => ({
+    setName(name: string) {
+      self.name = name;
+    },
+
+    setEmail(email: string) {
+      self.email = email;
+    },
+
+    update: flow(function* load() {
+      const backendSrv = getEnv(self).backendSrv;
+
+      yield backendSrv.put(`/api/teams/${self.id}`, {
+        name: self.name,
+        email: self.email,
+      });
+    }),
+  }));
 
 type TeamType = typeof Team.Type;
 export interface ITeam extends TeamType {}

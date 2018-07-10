@@ -98,7 +98,7 @@ export class TeamList extends React.Component<Props, any> {
             <div className="page-action-bar__spacer" />
 
             <a className="btn btn-success" href="org/teams/new">
-              <i className="fa fa-plus" /> Add member
+              <i className="fa fa-plus" /> New team
             </a>
           </div>
 

@@ -1,97 +1,66 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import { inject, observer } from 'mobx-react';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { NavStore } from 'app/stores/NavStore/NavStore';
-import { TeamsStore, ITeam } from 'app/stores/TeamsStore/TeamsStore';
-import { ViewStore } from 'app/stores/ViewStore/ViewStore';
+import { observer } from 'mobx-react';
+import { ITeam } from 'app/stores/TeamsStore/TeamsStore';
+import { Label } from 'app/core/components/Forms/Forms';
 
 interface Props {
-  nav: typeof NavStore.Type;
-  teams: typeof TeamsStore.Type;
-  view: typeof ViewStore.Type;
+  team: ITeam;
 }
 
-@inject('nav', 'teams', 'view')
 @observer
 export class TeamSettings extends React.Component<Props, any> {
   constructor(props) {
     super(props);
-
-    this.props.nav.load('cfg', 'teams');
-    this.loadTeam();
   }
 
-  async loadTeam() {
-    const { view, teams, nav } = this.props;
-
-    await teams.loadById(view.routeParams.get('id'));
-
-    const currentTeam = this.getCurrentTeam();
-    nav.initTeamPage(currentTeam, 'team-members');
-  }
-
-  getCurrentTeam(): ITeam {
-    return this.props.teams.map.get(this.props.view.routeParams.get('id'));
-  }
-
-  onSearchQueryChange = evt => {
-    //this.props.teams.setSearchQuery(evt.target.value);
+  onChangeName = evt => {
+    this.props.team.setName(evt.target.value);
   };
 
-  renderMember() {
-    return <tr />;
-  }
+  onChangeEmail = evt => {
+    this.props.team.setEmail(evt.target.value);
+  };
+
+  onUpdate = evt => {
+    evt.preventDefault();
+    this.props.team.update();
+  };
 
   render() {
-    const { nav, teams } = this.props;
-    const currentTeam = this.getCurrentTeam();
-    const members = [];
-
-    if (!currentTeam) {
-      return null;
-    }
-
     return (
       <div>
-        <PageHeader model={nav as any} />
-        <div className="page-container page-body">
-          <div className="page-action-bar">
-            <div className="gf-form gf-form--grow">
-              <label className="gf-form--has-input-icon gf-form--grow">
-                <input
-                  type="text"
-                  className="gf-form-input"
-                  placeholder="Search members"
-                  value={teams.search}
-                  onChange={this.onSearchQueryChange}
-                />
-                <i className="gf-form-input-icon fa fa-search" />
-              </label>
-            </div>
-
-            <div className="page-action-bar__spacer" />
-
-            <a className="btn btn-success" href="org/teams/new">
-              <i className="fa fa-plus" /> Add a member
-            </a>
+        <h3 className="page-sub-heading">Team Settings</h3>
+        <form name="teamDetailsForm" className="gf-form-group">
+          <div className="gf-form max-width-30">
+            <Label>Name</Label>
+            <input
+              type="text"
+              required
+              value={this.props.team.name}
+              className="gf-form-input max-width-22"
+              onChange={this.onChangeName}
+            />
+          </div>
+          <div className="gf-form max-width-30">
+            <Label tooltip="This is optional and is primarily used to set the team profile avatar (via gravatar service)">
+              Email
+            </Label>
+            <input
+              type="email"
+              className="gf-form-input max-width-22"
+              value={this.props.team.email}
+              placeholder="team@email.com"
+              onChange={this.onChangeEmail}
+            />
           </div>
 
-          <div className="admin-list-table">
-            <table className="filter-table filter-table--hover form-inline">
-              <thead>
-                <tr>
-                  <th />
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Members</th>
-                  <th style={{ width: '1%' }} />
-                </tr>
-              </thead>
-              <tbody>{members.map(member => this.renderMember(member))}</tbody>
-            </table>
+          <div className="gf-form-button-row">
+            <button type="submit" className="btn btn-success" onClick={this.onUpdate}>
+              Update
+            </button>
           </div>
-        </div>
+        </form>
       </div>
     );
   }
