@@ -29,11 +29,11 @@ export function pageScrollbar() {
       scope.$on('$routeChangeSuccess', () => {
         lastPos = 0;
         elem[0].scrollTop = 0;
-        elem[0].focus();
+        elem[0].focus({ preventScroll: true });
       });
 
       elem[0].tabIndex = -1;
-      elem[0].focus();
+      elem[0].focus({ preventScroll: true });
     },
   };
 }
