@@ -52,6 +52,30 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
   selectParts.splice(1, 0, partModel);
 }
 
+function replaceSpecialAddStrategy(selectParts, partModel) {
+  var hasAlias = false;
+
+  // look for existing aggregation
+  for (var i = 0; i < selectParts.length; i++) {
+    var part = selectParts[i];
+    if (part.def.type === 'special') {
+      selectParts[i] = partModel;
+      return;
+    }
+    if (part.def.type === 'alias') {
+      hasAlias = true;
+    }
+  }
+
+  // add alias if none exists yet
+  if (!hasAlias) {
+    var aliasModel = createPart({ type: 'alias', params: [selectParts[0].params[0]] });
+    selectParts.push(aliasModel);
+  }
+
+  selectParts.splice(1, 0, partModel);
+}
+
 function addMathStrategy(selectParts, partModel) {
   var partCount = selectParts.length;
   if (partCount > 0) {
@@ -182,6 +206,21 @@ register({
   ],
   defaultParams: ['$__interval', 'none'],
   renderer: functionRenderer,
+});
+
+register({
+  type: 'special',
+  style: 'label',
+  params: [
+    {
+      name: 'function',
+      type: 'string',
+      options: ['increase', 'rate'],
+    },
+  ],
+  defaultParams: ['increase'],
+  addStrategy: replaceSpecialAddStrategy,
+  renderer: aggregateRenderer,
 });
 
 export default {

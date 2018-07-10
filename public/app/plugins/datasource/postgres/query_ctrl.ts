@@ -78,6 +78,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.selectMenu = [
       { text: 'Aggregate', value: 'aggregate' },
       { text: 'Math', value: 'math' },
+      //  { text: 'Special', value: 'special' },
       { text: 'Alias', value: 'alias' },
       { text: 'Column', value: 'column' },
     ];
