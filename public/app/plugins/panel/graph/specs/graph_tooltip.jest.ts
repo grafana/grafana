@@ -141,7 +141,7 @@ describeSharedTooltip('steppedLine false, stack true, individual false, series s
           points: [[10, 15], [12, 20]],
         },
         stack: true,
-        hideTooltip: true,
+        hideTooltip: false,
       },
       {
         data: [[10, 2], [12, 3]],
@@ -151,7 +151,7 @@ describeSharedTooltip('steppedLine false, stack true, individual false, series s
           points: [[10, 2], [12, 3]],
         },
         stack: false,
-        hideTooltip: true,
+        hideTooltip: false,
       },
     ];
     ctx.ctrl.panel.stack = true;
@@ -174,7 +174,7 @@ describeSharedTooltip('steppedLine false, stack true, individual true', function
           points: [[10, 15], [12, 20]],
         },
         stack: true,
-        hideTooltip: true,
+        hideTooltip: false,
       },
       {
         data: [[10, 2], [12, 3]],
@@ -184,7 +184,7 @@ describeSharedTooltip('steppedLine false, stack true, individual true', function
           points: [[10, 2], [12, 3]],
         },
         stack: false,
-        hideTooltip: true,
+        hideTooltip: false,
       },
     ];
     ctx.ctrl.panel.stack = true;
