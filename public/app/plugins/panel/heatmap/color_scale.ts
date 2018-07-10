@@ -3,7 +3,7 @@ import * as d3ScaleChromatic from 'd3-scale-chromatic';
 
 export function getColorScale(colorScheme: any, lightTheme: boolean, maxValue: number, minValue = 0): (d: any) => any {
   let colorInterpolator = d3ScaleChromatic[colorScheme.value];
-  let colorScaleInverted = colorScheme.invert === 'always' || (colorScheme.invert === 'dark' && !lightTheme);
+  let colorScaleInverted = colorScheme.invert === 'always' || colorScheme.invert === (lightTheme ? 'light' : 'dark');
 
   let start = colorScaleInverted ? maxValue : minValue;
   let end = colorScaleInverted ? minValue : maxValue;
