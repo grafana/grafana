@@ -101,6 +101,9 @@ export default class PostgresQuery {
       var selectParts = this.target.select[i];
       if (!selectParts.some(part => part.type === 'aggregate')) {
         selectParts.splice(1, 0, { type: 'aggregate', params: ['avg'] });
+        if (!selectParts.some(part => part.type === 'alias')) {
+          selectParts.push({ type: 'alias', params: [selectParts[0].params[0]] });
+        }
       }
     }
 
