@@ -85,6 +85,10 @@
     // icon hidden on smaller screens
     display: none;
   }
+
+  &--folder {
+    color: $text-color-weak;
+  }
 }
 
 .navbar-buttons {
