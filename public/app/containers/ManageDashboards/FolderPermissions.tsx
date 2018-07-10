@@ -68,7 +68,7 @@ export class FolderPermissions extends Component<IContainerProps, any> {
             </button>
           </div>
           <SlideDown in={permissions.isAddPermissionsVisible}>
-            <AddPermissions permissions={permissions} backendSrv={backendSrv} />
+            <AddPermissions permissions={permissions} />
           </SlideDown>
           <Permissions permissions={permissions} isFolder={true} dashboardId={dashboardId} backendSrv={backendSrv} />
         </div>
