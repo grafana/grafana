@@ -218,7 +218,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	elapsed := time.Now().Sub(start)
 	clientLog.Debug("Decoded multisearch json response", "took", elapsed)
 
-	msr.status = res.StatusCode
+	msr.Status = res.StatusCode
 
 	return &msr, nil
 }

@@ -88,6 +88,9 @@ jobs:
       - run:
           name: run linters
           command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+      - run:
+          name: run go vet 
+          command: 'go vet ./pkg/...'
 
   test-frontend:
     docker:
