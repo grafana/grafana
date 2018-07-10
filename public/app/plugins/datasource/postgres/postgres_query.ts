@@ -96,6 +96,14 @@ export default class PostgresQuery {
       partModel.part.params = ['1m', 'none'];
     }
 
+    // add aggregates when adding group by
+    for (let i = 0; i < this.target.select.length; i++) {
+      var selectParts = this.target.select[i];
+      if (!selectParts.some(part => part.type === 'aggregate')) {
+        selectParts.splice(1, 0, { type: 'aggregate', params: ['avg'] });
+      }
+    }
+
     this.updateProjection();
   }
 
