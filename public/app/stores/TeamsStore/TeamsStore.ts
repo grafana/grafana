@@ -1,5 +1,16 @@
 import { types, getEnv, flow } from 'mobx-state-tree';
 
+export const TeamMember = types.model('TeamMember', {
+  userId: types.identifier(types.number),
+  teamId: types.number,
+  avatarUrl: types.string,
+  email: types.string,
+  login: types.string,
+});
+
+type TeamMemberType = typeof TeamMember.Type;
+export interface ITeamMember extends TeamMemberType {}
+
 export const Team = types
   .model('Team', {
     id: types.identifier(types.number),
@@ -7,6 +18,7 @@ export const Team = types
     avatarUrl: types.string,
     email: types.string,
     memberCount: types.number,
+    members: types.optional(types.map(TeamMember), {}),
   })
   .actions(self => ({
     setName(name: string) {
@@ -24,6 +36,23 @@ export const Team = types
         name: self.name,
         email: self.email,
       });
+    }),
+
+    loadMembers: flow(function* load() {
+      const backendSrv = getEnv(self).backendSrv;
+      const rsp = yield backendSrv.get(`/api/teams/${self.id}/members`);
+      self.members.clear();
+
+      for (let member of rsp) {
+        self.members.set(member.userId.toString(), TeamMember.create(member));
+      }
+    }),
+
+    removeMember: flow(function* load(member: ITeamMember) {
+      const backendSrv = getEnv(self).backendSrv;
+      yield backendSrv.delete(`/api/teams/${self.id}/members/${member.userId}`);
+      // remove from store map
+      self.members.delete(member.userId.toString());
     }),
   }));
 
