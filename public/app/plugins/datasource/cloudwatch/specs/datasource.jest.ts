@@ -1,32 +1,38 @@
 import '../datasource';
-import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
-import helpers from 'test/specs/helpers';
 import CloudWatchDatasource from '../datasource';
-import 'app/features/dashboard/time_srv';
+import * as dateMath from 'app/core/utils/datemath';
+import _ from 'lodash';
 
 describe('CloudWatchDatasource', function() {
-  var ctx = new helpers.ServiceTestContext();
-  var instanceSettings = {
+  let instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(angularMocks.module('grafana.controllers'));
-  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
-  beforeEach(ctx.createService('timeSrv'));
+  let templateSrv = {
+    data: {},
+    templateSettings: { interpolate: /\[\[([\s\S]+?)\]\]/g },
+    replace: text => _.template(text, templateSrv.templateSettings)(templateSrv.data),
+    variableExists: () => false,
+  };
 
-  beforeEach(
-    angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-      ctx.$q = $q;
-      ctx.$httpBackend = $httpBackend;
-      ctx.$rootScope = $rootScope;
-      ctx.ds = $injector.instantiate(CloudWatchDatasource, {
-        instanceSettings: instanceSettings,
-      });
-      $httpBackend.when('GET', /\.html$/).respond('');
-    })
-  );
+  let timeSrv = {
+    time: { from: 'now-1h', to: 'now' },
+    timeRange: () => {
+      return {
+        from: dateMath.parse(timeSrv.time.from, false),
+        to: dateMath.parse(timeSrv.time.to, true),
+      };
+    },
+  };
+  let backendSrv = {};
+  let ctx = <any>{
+    backendSrv,
+    templateSrv,
+  };
+
+  beforeEach(() => {
+    ctx.ds = new CloudWatchDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
+  });
 
   describe('When performing CloudWatch query', function() {
     var requestParams;
@@ -67,24 +73,23 @@ describe('CloudWatchDatasource', function() {
       },
     };
 
-    beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(params) {
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = jest.fn(params => {
         requestParams = params.data;
-        return ctx.$q.when({ data: response });
-      };
+        return Promise.resolve({ data: response });
+      });
     });
 
     it('should generate the correct query', function(done) {
       ctx.ds.query(query).then(function() {
         var params = requestParams.queries[0];
-        expect(params.namespace).to.be(query.targets[0].namespace);
-        expect(params.metricName).to.be(query.targets[0].metricName);
-        expect(params.dimensions['InstanceId']).to.be('i-12345678');
-        expect(params.statistics).to.eql(query.targets[0].statistics);
-        expect(params.period).to.be(query.targets[0].period);
+        expect(params.namespace).toBe(query.targets[0].namespace);
+        expect(params.metricName).toBe(query.targets[0].metricName);
+        expect(params.dimensions['InstanceId']).toBe('i-12345678');
+        expect(params.statistics).toEqual(query.targets[0].statistics);
+        expect(params.period).toBe(query.targets[0].period);
         done();
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should generate the correct query with interval variable', function(done) {
@@ -111,116 +116,17 @@ describe('CloudWatchDatasource', function() {
 
       ctx.ds.query(query).then(function() {
         var params = requestParams.queries[0];
-        expect(params.period).to.be('600');
+        expect(params.period).toBe('600');
         done();
       });
-      ctx.$rootScope.$apply();
     });
 
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
-        expect(result.data[0].target).to.be(response.results.A.series[0].name);
-        expect(result.data[0].datapoints[0][0]).to.be(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].target).toBe(response.results.A.series[0].name);
+        expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
-      ctx.$rootScope.$apply();
-    });
-
-    it('should generate the correct targets by expanding template variables', function() {
-      var templateSrv = {
-        variables: [
-          {
-            name: 'instance_id',
-            options: [
-              { text: 'i-23456789', value: 'i-23456789', selected: false },
-              { text: 'i-34567890', value: 'i-34567890', selected: true },
-            ],
-            current: {
-              text: 'i-34567890',
-              value: 'i-34567890',
-            },
-          },
-        ],
-        replace: function(target, scopedVars) {
-          if (target === '$instance_id' && scopedVars['instance_id']['text'] === 'i-34567890') {
-            return 'i-34567890';
-          } else {
-            return '';
-          }
-        },
-        getVariableName: function(e) {
-          return 'instance_id';
-        },
-        variableExists: function(e) {
-          return true;
-        },
-        containsVariable: function(str, variableName) {
-          return str.indexOf('$' + variableName) !== -1;
-        },
-      };
-
-      var targets = [
-        {
-          region: 'us-east-1',
-          namespace: 'AWS/EC2',
-          metricName: 'CPUUtilization',
-          dimensions: {
-            InstanceId: '$instance_id',
-          },
-          statistics: ['Average'],
-          period: 300,
-        },
-      ];
-
-      var result = ctx.ds.expandTemplateVariable(targets, {}, templateSrv);
-      expect(result[0].dimensions.InstanceId).to.be('i-34567890');
-    });
-
-    it('should generate the correct targets by expanding template variables from url', function() {
-      var templateSrv = {
-        variables: [
-          {
-            name: 'instance_id',
-            options: [
-              { text: 'i-23456789', value: 'i-23456789', selected: false },
-              { text: 'i-34567890', value: 'i-34567890', selected: false },
-            ],
-            current: 'i-45678901',
-          },
-        ],
-        replace: function(target, scopedVars) {
-          if (target === '$instance_id') {
-            return 'i-45678901';
-          } else {
-            return '';
-          }
-        },
-        getVariableName: function(e) {
-          return 'instance_id';
-        },
-        variableExists: function(e) {
-          return true;
-        },
-        containsVariable: function(str, variableName) {
-          return str.indexOf('$' + variableName) !== -1;
-        },
-      };
-
-      var targets = [
-        {
-          region: 'us-east-1',
-          namespace: 'AWS/EC2',
-          metricName: 'CPUUtilization',
-          dimensions: {
-            InstanceId: '$instance_id',
-          },
-          statistics: ['Average'],
-          period: 300,
-        },
-      ];
-
-      var result = ctx.ds.expandTemplateVariable(targets, {}, templateSrv);
-      expect(result[0].dimensions.InstanceId).to.be('i-45678901');
     });
   });
 
@@ -228,21 +134,21 @@ describe('CloudWatchDatasource', function() {
     it('should return the datasource region if empty or "default"', function() {
       var defaultRegion = instanceSettings.jsonData.defaultRegion;
 
-      expect(ctx.ds.getActualRegion()).to.be(defaultRegion);
-      expect(ctx.ds.getActualRegion('')).to.be(defaultRegion);
-      expect(ctx.ds.getActualRegion('default')).to.be(defaultRegion);
+      expect(ctx.ds.getActualRegion()).toBe(defaultRegion);
+      expect(ctx.ds.getActualRegion('')).toBe(defaultRegion);
+      expect(ctx.ds.getActualRegion('default')).toBe(defaultRegion);
     });
 
     it('should return the specified region if specified', function() {
-      expect(ctx.ds.getActualRegion('some-fake-region-1')).to.be('some-fake-region-1');
+      expect(ctx.ds.getActualRegion('some-fake-region-1')).toBe('some-fake-region-1');
     });
 
     var requestParams;
     beforeEach(function() {
-      ctx.ds.performTimeSeriesQuery = function(request) {
+      ctx.ds.performTimeSeriesQuery = jest.fn(request => {
         requestParams = request;
-        return ctx.$q.when({ data: {} });
-      };
+        return Promise.resolve({ data: {} });
+      });
     });
 
     it('should query for the datasource region if empty or "default"', function(done) {
@@ -264,10 +170,9 @@ describe('CloudWatchDatasource', function() {
       };
 
       ctx.ds.query(query).then(function(result) {
-        expect(requestParams.queries[0].region).to.be(instanceSettings.jsonData.defaultRegion);
+        expect(requestParams.queries[0].region).toBe(instanceSettings.jsonData.defaultRegion);
         done();
       });
-      ctx.$rootScope.$apply();
     });
   });
 
@@ -311,18 +216,17 @@ describe('CloudWatchDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(params) {
-        return ctx.$q.when({ data: response });
-      };
+      ctx.backendSrv.datasourceRequest = jest.fn(params => {
+        return Promise.resolve({ data: response });
+      });
     });
 
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
-        expect(result.data[0].target).to.be(response.results.A.series[0].name);
-        expect(result.data[0].datapoints[0][0]).to.be(response.results.A.series[0].points[0][0]);
+        expect(result.data[0].target).toBe(response.results.A.series[0].name);
+        expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
       });
-      ctx.$rootScope.$apply();
     });
   });
 
@@ -332,14 +236,13 @@ describe('CloudWatchDatasource', function() {
       scenario.setup = setupCallback => {
         beforeEach(() => {
           setupCallback();
-          ctx.backendSrv.datasourceRequest = args => {
+          ctx.backendSrv.datasourceRequest = jest.fn(args => {
             scenario.request = args.data;
-            return ctx.$q.when({ data: scenario.requestResponse });
-          };
+            return Promise.resolve({ data: scenario.requestResponse });
+          });
           ctx.ds.metricFindQuery(query).then(args => {
             scenario.result = args;
           });
-          ctx.$rootScope.$apply();
         });
       };
 
@@ -359,9 +262,9 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should call __GetRegions and return result', () => {
-      expect(scenario.result[0].text).to.contain('us-east-1');
-      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).to.be('regions');
+      expect(scenario.result[0].text).toContain('us-east-1');
+      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).toBe('regions');
     });
   });
 
@@ -377,9 +280,9 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should call __GetNamespaces and return result', () => {
-      expect(scenario.result[0].text).to.contain('AWS/EC2');
-      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).to.be('namespaces');
+      expect(scenario.result[0].text).toContain('AWS/EC2');
+      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).toBe('namespaces');
     });
   });
 
@@ -395,9 +298,9 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should call __GetMetrics and return result', () => {
-      expect(scenario.result[0].text).to.be('CPUUtilization');
-      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).to.be('metrics');
+      expect(scenario.result[0].text).toBe('CPUUtilization');
+      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).toBe('metrics');
     });
   });
 
@@ -413,9 +316,9 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should call __GetDimensions and return result', () => {
-      expect(scenario.result[0].text).to.be('InstanceId');
-      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).to.be('dimension_keys');
+      expect(scenario.result[0].text).toBe('InstanceId');
+      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).toBe('dimension_keys');
     });
   });
 
@@ -431,9 +334,9 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should call __ListMetrics and return result', () => {
-      expect(scenario.result[0].text).to.contain('i-12345678');
-      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).to.be('dimension_values');
+      expect(scenario.result[0].text).toContain('i-12345678');
+      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).toBe('dimension_values');
     });
   });
 
@@ -449,9 +352,9 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should call __ListMetrics and return result', () => {
-      expect(scenario.result[0].text).to.contain('i-12345678');
-      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
-      expect(scenario.request.queries[0].subtype).to.be('dimension_values');
+      expect(scenario.result[0].text).toContain('i-12345678');
+      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).toBe('dimension_values');
     });
   });
 
@@ -544,7 +447,7 @@ describe('CloudWatchDatasource', function() {
       let now = new Date(options.range.from.valueOf() + t[2] * 1000);
       let expected = t[3];
       let actual = ctx.ds.getPeriod(target, options, now);
-      expect(actual).to.be(expected);
+      expect(actual).toBe(expected);
     }
   });
 });
