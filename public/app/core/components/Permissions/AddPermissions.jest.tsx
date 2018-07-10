@@ -1,8 +1,21 @@
-﻿import React from 'react';
+import React from 'react';
+import { shallow } from 'enzyme';
 import AddPermissions from './AddPermissions';
 import { RootStore } from 'app/stores/RootStore/RootStore';
 import { backendSrv } from 'test/mocks/common';
-import { shallow } from 'enzyme';
+
+jest.mock('app/core/services/backend_srv', () => ({
+  getBackendSrv: () => {
+    return {
+      get: () => {
+        return Promise.resolve([
+          { id: 2, dashboardId: 1, role: 'Viewer', permission: 1, permissionName: 'View' },
+          { id: 3, dashboardId: 1, role: 'Editor', permission: 1, permissionName: 'Edit' },
+        ]);
+      },
+    };
+  },
+}));
 
 describe('AddPermissions', () => {
   let wrapper;
@@ -10,14 +23,13 @@ describe('AddPermissions', () => {
   let instance;
 
   beforeAll(() => {
-    backendSrv.get.mockReturnValue(
+    backendSrv.post = jest.fn(() => Promise.resolve({}));
+    backendSrv.get = jest.fn(() =>
       Promise.resolve([
         { id: 2, dashboardId: 1, role: 'Viewer', permission: 1, permissionName: 'View' },
         { id: 3, dashboardId: 1, role: 'Editor', permission: 1, permissionName: 'Edit' },
       ])
     );
-
-    backendSrv.post = jest.fn(() => Promise.resolve({}));
 
     store = RootStore.create(
       {},
@@ -44,7 +56,7 @@ describe('AddPermissions', () => {
       };
 
       instance.typeChanged(evt);
-      instance.userPicked(userItem);
+      instance.onUserSelected(userItem);
 
       wrapper.update();
 

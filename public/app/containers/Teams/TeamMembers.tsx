@@ -3,15 +3,23 @@ import { hot } from 'react-hot-loader';
 import { observer } from 'mobx-react';
 import { ITeam, ITeamMember } from 'app/stores/TeamsStore/TeamsStore';
 import appEvents from 'app/core/app_events';
+import SlideDown from 'app/core/components/Animations/SlideDown';
+import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
 
 interface Props {
   team: ITeam;
 }
 
+interface State {
+  isAdding: boolean;
+  newTeamMember?: User;
+}
+
 @observer
-export class TeamMembers extends React.Component<Props, any> {
+export class TeamMembers extends React.Component<Props, State> {
   constructor(props) {
     super(props);
+    this.state = { isAdding: false, newTeamMember: null };
   }
 
   componentDidMount() {
@@ -19,7 +27,7 @@ export class TeamMembers extends React.Component<Props, any> {
   }
 
   onSearchQueryChange = evt => {
-    //this.props.teams.setSearchQuery(evt.target.value);
+    this.props.team.setSearchQuery(evt.target.value);
   };
 
   removeMember(member: ITeamMember) {
@@ -40,7 +48,7 @@ export class TeamMembers extends React.Component<Props, any> {
 
   renderMember(member: ITeamMember) {
     return (
-      <tr>
+      <tr key={member.userId}>
         <td className="width-4 text-center">
           <img className="filter-table__avatar" src={member.avatarUrl} />
         </td>
@@ -55,8 +63,23 @@ export class TeamMembers extends React.Component<Props, any> {
     );
   }
 
+  onToggleAdding = () => {
+    this.setState({ isAdding: !this.state.isAdding });
+  };
+
+  onUserSelected = (user: User) => {
+    this.setState({ newTeamMember: user });
+  };
+
+  onAddUserToTeam = () => {
+    this.props.team.addMember(this.state.newTeamMember.id);
+    this.props.team.loadMembers();
+    this.setState({ newTeamMember: null });
+  };
+
   render() {
     const members = this.props.team.members.values();
+    const { newTeamMember } = this.state;
 
     return (
       <div>
@@ -76,10 +99,32 @@ export class TeamMembers extends React.Component<Props, any> {
 
           <div className="page-action-bar__spacer" />
 
-          <a className="btn btn-success" href="org/teams/new">
+          <button className="btn btn-success pull-right" onClick={this.onToggleAdding}>
             <i className="fa fa-plus" /> Add a member
-          </a>
+          </button>
         </div>
+
+        <SlideDown in={this.state.isAdding}>
+          <div className="cta-form">
+            <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
+              <i className="fa fa-close" />
+            </button>
+            <h5>Add Team Member</h5>
+            <div className="gf-form-inline">
+              <UserPicker
+                onSelected={this.onUserSelected}
+                className="width-30"
+                value={newTeamMember && newTeamMember.id.toString()}
+              />
+
+              {this.state.newTeamMember && (
+                <button className="btn btn-success gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
+                  Add to team
+                </button>
+              )}
+            </div>
+          </div>
+        </SlideDown>
 
         <div className="admin-list-table">
           <table className="filter-table filter-table--hover form-inline">

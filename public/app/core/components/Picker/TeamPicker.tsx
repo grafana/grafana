@@ -1,4 +1,4 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
 import Select from 'react-select';
 import PickerOption from './PickerOption';
 import withPicker from './withPicker';
@@ -72,7 +72,7 @@ class TeamPicker extends Component<IProps, any> {
           onChange={handlePicked}
           className={`gf-form-input gf-form-input--form-dropdown ${className || ''}`}
           optionComponent={PickerOption}
-          placeholder="Choose"
+          placeholder="Select a team"
           value={value}
           autosize={true}
         />

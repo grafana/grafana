@@ -18,8 +18,18 @@ export const Team = types
     avatarUrl: types.string,
     email: types.string,
     memberCount: types.number,
+    search: types.optional(types.string, ''),
     members: types.optional(types.map(TeamMember), {}),
   })
+  .views(self => ({
+    get filteredMembers() {
+      let members = this.members.values();
+      let regex = new RegExp(self.search, 'i');
+      return members.filter(member => {
+        return regex.test(member.login) || regex.test(member.email);
+      });
+    },
+  }))
   .actions(self => ({
     setName(name: string) {
       self.name = name;
@@ -27,6 +37,10 @@ export const Team = types
 
     setEmail(email: string) {
       self.email = email;
+    },
+
+    setSearchQuery(query: string) {
+      self.search = query;
     },
 
     update: flow(function* load() {
@@ -53,6 +67,11 @@ export const Team = types
       yield backendSrv.delete(`/api/teams/${self.id}/members/${member.userId}`);
       // remove from store map
       self.members.delete(member.userId.toString());
+    }),
+
+    addMember: flow(function* load(userId: number) {
+      const backendSrv = getEnv(self).backendSrv;
+      yield backendSrv.post(`/api/teams/${self.id}/members`, { userId: userId });
     }),
   }));
 
