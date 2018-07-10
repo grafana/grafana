@@ -30,6 +30,7 @@ export class BarStat extends React.Component<IProps, any> {
     const bgColor = getBGColor(valueColor);
     const verticalDirection = this.props.direction === MultistatPanelLayout.Vertical;
 
+    let barWidth = 0;
     let valueContainerStyle: React.CSSProperties = {};
     let valueStyle: React.CSSProperties = {};
     let barLabelStyle: React.CSSProperties = {};
@@ -40,12 +41,12 @@ export class BarStat extends React.Component<IProps, any> {
       if (verticalDirection) {
         barContainerStyle.height = this.props.size.h;
         barContainerStyle.width = this.props.size.w;
-        const barWidth = this.props.size.h * 0.8;
+        barWidth = this.props.size.h * 0.8;
         barStyle.height = barWidth;
         barStyle.width = this.props.size.w;
         barContainerStyle.lineHeight = `${barWidth}px`;
       } else {
-        const barWidth = this.props.size.w * 0.8;
+        barWidth = this.props.size.w * 0.8;
         barStyle.width = barWidth;
         barStyle.height = this.props.size.h - 10;
         barContainerStyle.height = this.props.size.h - 10;
@@ -54,9 +55,14 @@ export class BarStat extends React.Component<IProps, any> {
         valueContainerStyle.bottom = this.props.size.h + valueOffset;
         barLabelStyle.bottom = 5;
         barLabelStyle.left = barWidth / 2 - 10;
-        // barLabelStyle.writingMode = 'vertical-rl';
-        // barLabelStyle.transform = 'rotate(-180deg)';
       }
+    }
+
+    const { labelFontSizePx, valueFontSizePx } = getFontSize(barWidth, verticalDirection);
+    barLabelStyle.fontSize = labelFontSizePx;
+    valueStyle.fontSize = valueFontSizePx;
+    if (this.props.valueOutOfBar) {
+      valueStyle.lineHeight = valueFontSizePx;
     }
 
     if (this.props.options.colorValue) {
@@ -92,4 +98,16 @@ export class BarStat extends React.Component<IProps, any> {
       </div>
     );
   }
+}
+
+function getFontSize(barWidth, verticalDirection = false) {
+  const barSize = barWidth;
+  let increaseRatio = verticalDirection ? 1.5 : 1;
+
+  const labelFontSize = Math.ceil(barSize / 5 * increaseRatio);
+  const valueFontSize = Math.ceil(barSize / 5 * increaseRatio);
+  const labelFontSizePx = labelFontSize + 'px';
+  const valueFontSizePx = valueFontSize + 'px';
+
+  return { labelFontSize, valueFontSize, labelFontSizePx, valueFontSizePx };
 }
