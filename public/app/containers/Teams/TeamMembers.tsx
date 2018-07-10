@@ -71,15 +71,16 @@ export class TeamMembers extends React.Component<Props, State> {
     this.setState({ newTeamMember: user });
   };
 
-  onAddUserToTeam = () => {
-    this.props.team.addMember(this.state.newTeamMember.id);
-    this.props.team.loadMembers();
+  onAddUserToTeam = async () => {
+    await this.props.team.addMember(this.state.newTeamMember.id);
+    await this.props.team.loadMembers();
     this.setState({ newTeamMember: null });
   };
 
   render() {
     const members = this.props.team.members.values();
     const { newTeamMember } = this.state;
+    const newTeamMemberValue = newTeamMember && newTeamMember.id.toString();
 
     return (
       <div>
@@ -111,11 +112,7 @@ export class TeamMembers extends React.Component<Props, State> {
             </button>
             <h5>Add Team Member</h5>
             <div className="gf-form-inline">
-              <UserPicker
-                onSelected={this.onUserSelected}
-                className="width-30"
-                value={newTeamMember && newTeamMember.id.toString()}
-              />
+              <UserPicker onSelected={this.onUserSelected} className="width-30" value={newTeamMemberValue} />
 
               {this.state.newTeamMember && (
                 <button className="btn btn-success gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
