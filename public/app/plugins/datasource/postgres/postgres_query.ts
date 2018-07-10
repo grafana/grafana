@@ -27,7 +27,13 @@ export default class PostgresQuery {
 
     // handle pre query gui panels gracefully
     if (!('rawQuery' in this.target)) {
-      target.rawQuery = true;
+      if ('rawSql' in target) {
+        // pre query gui panel
+        target.rawQuery = true;
+      } else {
+        // new panel
+        target.rawQuery = false;
+      }
     }
 
     // give interpolateQueryStr access to this
@@ -55,10 +61,10 @@ export default class PostgresQuery {
 
   updateProjection() {
     this.selectModels = _.map(this.target.select, function(parts: any) {
-      return _.map(parts, sqlPart.create);
+      return _.map(parts, sqlPart.create).filter(n => n);
     });
-    this.whereParts = _.map(this.target.where, sqlPart.create);
-    this.groupByParts = _.map(this.target.groupBy, sqlPart.create);
+    this.whereParts = _.map(this.target.where, sqlPart.create).filter(n => n);
+    this.groupByParts = _.map(this.target.groupBy, sqlPart.create).filter(n => n);
   }
 
   updatePersistedParts() {
