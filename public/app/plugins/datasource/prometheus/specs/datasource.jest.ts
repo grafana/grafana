@@ -201,4 +201,10 @@ describe('PrometheusDatasource', () => {
       expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
     });
   });
+
+  describe('interpolateQueryExpr', function() {
+    it('should return string if number passed', function() {
+      expect(ctx.ds.interpolateQueryExpr(100, {})).toEqual('100');
+    });
+  });
 });
