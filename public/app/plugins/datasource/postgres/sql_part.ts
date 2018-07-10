@@ -29,6 +29,8 @@ function columnRenderer(part, innerExpr) {
 }
 
 function replaceAggregationAddStrategy(selectParts, partModel) {
+  var hasAlias = false;
+
   // look for existing aggregation
   for (var i = 0; i < selectParts.length; i++) {
     var part = selectParts[i];
@@ -36,6 +38,15 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
       selectParts[i] = partModel;
       return;
     }
+    if (part.def.type === 'alias') {
+      hasAlias = true;
+    }
+  }
+
+  // add alias if none exists yet
+  if (!hasAlias) {
+    var aliasModel = createPart({ type: 'alias', params: [selectParts[0].params[0]] });
+    selectParts.push(aliasModel);
   }
 
   selectParts.splice(1, 0, partModel);
@@ -117,7 +128,7 @@ register({
 
 register({
   type: 'macro',
-  style: 'function',
+  style: 'label',
   label: 'Macro:',
   addStrategy: addExpressionStrategy,
   params: [],
