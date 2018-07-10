@@ -53,7 +53,7 @@ export class TeamGroupSync extends React.Component<Props, State> {
     return (
       <div>
         <div className="page-action-bar">
-          <h2 className="d-inline-block">External group sync</h2>
+          <h3 className="page-sub-heading">External group sync</h3>
           <Tooltip className="page-sub-heading-icon" placement="auto" content={this.getHeaderTooltip()}>
             <i className="gicon gicon-question gicon--has-hover" />
           </Tooltip>
