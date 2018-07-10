@@ -6,7 +6,7 @@ var index = [];
 function createPart(part): any {
   var def = index[part.type];
   if (!def) {
-    throw { message: 'Could not find query part ' + part.type };
+    return null;
   }
 
   return new SqlPart(part, def);
