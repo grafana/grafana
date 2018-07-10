@@ -11,6 +11,14 @@ export const TeamMember = types.model('TeamMember', {
 type TeamMemberType = typeof TeamMember.Type;
 export interface ITeamMember extends TeamMemberType {}
 
+export const TeamGroup = types.model('TeamGroup', {
+  groupId: types.identifier(types.string),
+  teamId: types.number,
+});
+
+type TeamGroupType = typeof TeamGroup.Type;
+export interface ITeamGroup extends TeamGroupType {}
+
 export const Team = types
   .model('Team', {
     id: types.identifier(types.number),
@@ -20,6 +28,7 @@ export const Team = types
     memberCount: types.number,
     search: types.optional(types.string, ''),
     members: types.optional(types.map(TeamMember), {}),
+    groups: types.optional(types.map(TeamGroup), {}),
   })
   .views(self => ({
     get filteredMembers() {
@@ -72,6 +81,16 @@ export const Team = types
     addMember: flow(function* load(userId: number) {
       const backendSrv = getEnv(self).backendSrv;
       yield backendSrv.post(`/api/teams/${self.id}/members`, { userId: userId });
+    }),
+
+    loadGroups: flow(function* load() {
+      const backendSrv = getEnv(self).backendSrv;
+      const rsp = yield backendSrv.get(`/api/teams/${self.id}/groups`);
+      self.groups.clear();
+
+      for (let group of rsp) {
+        self.groups.set(group.id.toString(), TeamGroup.create(group));
+      }
     }),
   }));
 

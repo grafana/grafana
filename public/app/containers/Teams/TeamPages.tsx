@@ -1,12 +1,15 @@
 import React from 'react';
+import _ from 'lodash';
 import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
+import config from 'app/core/config';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { NavStore } from 'app/stores/NavStore/NavStore';
 import { TeamsStore, ITeam } from 'app/stores/TeamsStore/TeamsStore';
 import { ViewStore } from 'app/stores/ViewStore/ViewStore';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
+import TeamGroupSync from './TeamGroupSync';
 
 interface Props {
   nav: typeof NavStore.Type;
@@ -24,14 +27,17 @@ export class TeamPages extends React.Component<Props, any> {
   }
 
   async loadTeam() {
-    const { view, teams, nav } = this.props;
+    const { teams, nav, view } = this.props;
 
     await teams.loadById(view.routeParams.get('id'));
 
-    const currentTeam = this.getCurrentTeam();
-    const currentPage = view.routeParams.get('page') || 'members';
+    nav.initTeamPage(this.getCurrentTeam(), this.getCurrentPage());
+  }
 
-    nav.initTeamPage(currentTeam, currentPage);
+  getCurrentPage() {
+    const pages = ['members', 'settings', 'groupsync'];
+    const currentPage = this.props.view.routeParams.get('page');
+    return _.includes(pages, currentPage) ? currentPage : pages[0];
   }
 
   getCurrentTeam(): ITeam {
@@ -39,9 +45,11 @@ export class TeamPages extends React.Component<Props, any> {
   }
 
   render() {
-    const { nav, view } = this.props;
+    const { nav } = this.props;
+
     const currentTeam = this.getCurrentTeam();
-    const currentPage = view.routeParams.get('page') || 'members';
+    const currentPage = this.getCurrentPage();
+    const isSyncEnabled = config.buildInfo.isEnterprise;
 
     if (!currentTeam || !nav.main) {
       return null;
@@ -53,6 +61,7 @@ export class TeamPages extends React.Component<Props, any> {
         <div className="page-container page-body">
           {currentPage === 'members' && <TeamMembers team={currentTeam} />}
           {currentPage === 'settings' && <TeamSettings team={currentTeam} />}
+          {currentPage === 'groupsync' && isSyncEnabled && <TeamGroupSync team={currentTeam} />}
         </div>
       </div>
     );
