@@ -3,7 +3,7 @@
 	<div>
 		<a class="navbar-page-btn" ng-click="ctrl.showSearch()">
 			<i class="gicon gicon-dashboard"></i>
-			{{ctrl.dashboard.title}}
+			<span ng-if="ctrl.dashboard.meta.folderId > 0" class="navbar-page-btn--folder">{{ctrl.dashboard.meta.folderTitle}} / </span>{{ctrl.dashboard.title}}
 			<i class="fa fa-caret-down"></i>
 		</a>
 	</div>
