@@ -56,7 +56,7 @@ System.config({
     css: 'vendor/plugin-css/css.js',
   },
   meta: {
-    'plugin*': {
+    '*': {
       esModule: true,
       authorization: true,
       loader: 'plugin-loader',
