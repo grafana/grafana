@@ -242,22 +242,10 @@ export default class PostgresQuery {
     return query;
   }
 
-  buildQuery(target) {
-    var query = 'SELECT ';
+  buildGroupByClause(target) {
+    let query = '';
+    let groupBySection = '';
 
-    query += this.buildTimeColumn(target);
-
-    if (this.target.metricColumn !== 'None') {
-      query += ',' + this.target.metricColumn + ' AS metric';
-    }
-
-    query += this.buildValueColumns(target);
-
-    query += ' FROM ' + target.schema + '.' + target.table;
-
-    query += this.buildWhereClause(target);
-
-    var groupBySection = '';
     for (let i = 0; i < this.groupByParts.length; i++) {
       var part = this.groupByParts[i];
       if (i > 0) {
@@ -271,11 +259,29 @@ export default class PostgresQuery {
     }
 
     if (groupBySection.length) {
-      query += ' GROUP BY ' + groupBySection;
+      query = ' GROUP BY ' + groupBySection;
       if (this.target.metricColumn !== 'None') {
         query += ',2';
       }
     }
+    return query;
+  }
+
+  buildQuery(target) {
+    let query = 'SELECT ';
+
+    query += this.buildTimeColumn(target);
+
+    if (this.target.metricColumn !== 'None') {
+      query += ',' + this.target.metricColumn + ' AS metric';
+    }
+
+    query += this.buildValueColumns(target);
+
+    query += ' FROM ' + target.schema + '.' + target.table;
+
+    query += this.buildWhereClause(target);
+    query += this.buildGroupByClause(target);
 
     query += ' ORDER BY 1';
 
