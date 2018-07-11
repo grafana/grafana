@@ -5,6 +5,7 @@ export interface PluginExports {
   QueryCtrl?: any;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
+  PanelOptions?: any;
 }
 
 export interface PanelPlugin {

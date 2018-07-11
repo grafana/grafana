@@ -18,4 +18,10 @@ export class ReactTestPanel extends PureComponent<PanelProps> {
   }
 }
 
-export { ReactTestPanel as PanelComponent };
+export class TextOptions extends PureComponent<any> {
+  render() {
+    return <p>Text2 Options component</p>;
+  }
+}
+
+export { ReactTestPanel as PanelComponent, TextOptions as PanelOptions };

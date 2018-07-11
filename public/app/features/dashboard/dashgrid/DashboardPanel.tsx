@@ -107,7 +107,6 @@ export class DashboardPanel extends React.Component<Props, State> {
 
     // this might look strange with these classes that change when edit, but
     // I want to try to keep markup (parents) for panel the same in edit mode to avoide unmount / new mount of panel
-    // plugin component
     return (
       <div className={containerClass}>
         <div className={panelWrapperClass}>
@@ -124,6 +123,7 @@ export class DashboardPanel extends React.Component<Props, State> {
               panelType={this.props.panel.type}
               dashboard={this.props.dashboard}
               onTypeChanged={this.onPluginTypeChanged}
+              pluginExports={pluginExports}
             />
           </div>
         )}

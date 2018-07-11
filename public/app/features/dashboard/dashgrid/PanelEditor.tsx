@@ -5,13 +5,14 @@ import { DashboardModel } from '../dashboard_model';
 import { store } from 'app/stores/store';
 import { observer } from 'mobx-react';
 import { QueriesTab } from './QueriesTab';
-import { PanelPlugin } from 'app/types/plugins';
+import { PanelPlugin, PluginExports } from 'app/types/plugins';
 import { VizTypePicker } from './VizTypePicker';
 
 interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   panelType: string;
+  pluginExports: PluginExports;
   onTypeChanged: (newType: PanelPlugin) => void;
 }
 
@@ -38,6 +39,17 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
     return <QueriesTab panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
+  renderPanelOptions() {
+    const { pluginExports } = this.props;
+
+    if (pluginExports.PanelOptions) {
+      const PanelOptions = pluginExports.PanelOptions;
+      return <PanelOptions />;
+    } else {
+      return <p>Visualization has no options</p>;
+    }
+  }
+
   renderVizTab() {
     return (
       <div className="viz-editor">
@@ -46,6 +58,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
         </div>
         <div className="viz-editor-col2">
           <h5 className="page-heading">Options</h5>
+          {this.renderPanelOptions()}
         </div>
       </div>
     );
