@@ -129,7 +129,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/quotas", Wrap(GetUserQuotas))
 			userRoute.Put("/helpflags/:id", Wrap(SetHelpFlag))
 			// For dev purpose
-			userRoute.Get("/helpflags/clear", Wrap(ClearHelpFlags))
+			userRoute.Delete("/helpflags/clear", Wrap(ClearHelpFlags))
 
 			userRoute.Get("/preferences", Wrap(GetUserPreferences))
 			userRoute.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), Wrap(UpdateUserPreferences))
