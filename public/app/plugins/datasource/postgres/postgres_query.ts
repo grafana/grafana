@@ -86,8 +86,8 @@ export default class PostgresQuery {
   }
 
   addGroupBy(partType, value) {
-    var partModel = sqlPart.create({ type: partType, params: [value] });
-    var partCount = this.target.groupBy.length;
+    let partModel = sqlPart.create({ type: partType, params: [value] });
+    let partCount = this.target.groupBy.length;
 
     if (partCount === 0) {
       this.target.groupBy.push(partModel.part);
@@ -137,11 +137,11 @@ export default class PostgresQuery {
     // if we remove the field remove the whole statement
     if (part.def.type === 'column') {
       if (this.selectModels.length > 1) {
-        var modelsIndex = _.indexOf(this.selectModels, selectParts);
+        let modelsIndex = _.indexOf(this.selectModels, selectParts);
         this.selectModels.splice(modelsIndex, 1);
       }
     } else {
-      var partIndex = _.indexOf(selectParts, part);
+      let partIndex = _.indexOf(selectParts, part);
       selectParts.splice(partIndex, 1);
     }
 
@@ -149,7 +149,7 @@ export default class PostgresQuery {
   }
 
   addSelectPart(selectParts, type) {
-    var partModel = sqlPart.create({ type: type });
+    let partModel = sqlPart.create({ type: type });
     partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
   }
@@ -164,7 +164,7 @@ export default class PostgresQuery {
       return this.quoteLiteral(value);
     }
 
-    var escapedValues = _.map(value, this.quoteLiteral);
+    let escapedValues = _.map(value, this.quoteLiteral);
     return '(' + escapedValues.join(',') + ')';
   }
 
@@ -193,7 +193,7 @@ export default class PostgresQuery {
     let query;
 
     if (timeGroup) {
-      var args;
+      let args;
       if (timeGroup.params.length > 1 && timeGroup.params[1] !== 'none') {
         args = timeGroup.params.join(',');
       } else {
@@ -220,22 +220,24 @@ export default class PostgresQuery {
   buildValueColumns(target) {
     let query = '';
     for (let i = 0; i < this.selectModels.length; i++) {
-      let parts = this.selectModels[i];
-      var selectText = '';
-      for (let y = 0; y < parts.length; y++) {
-        let part = parts[y];
-        selectText = part.render(selectText);
-      }
-
-      query += ', ' + selectText;
+      query += ', ' + this.buildValueColumn(target, this.selectModels[i]);
     }
 
     return query;
   }
 
+  buildValueColumn(target, column) {
+    let selectText = '';
+    for (let i = 0; i < column.length; i++) {
+      let part = column[i];
+      selectText = part.render(selectText);
+    }
+    return selectText;
+  }
+
   buildWhereClause(target) {
     let query = '';
-    var conditions = _.map(target.where, (tag, index) => {
+    let conditions = _.map(target.where, (tag, index) => {
       switch (tag.type) {
         case 'macro':
           return tag.name + '(' + target.timeColumn + ')';
@@ -258,7 +260,7 @@ export default class PostgresQuery {
     let groupBySection = '';
 
     for (let i = 0; i < this.groupByParts.length; i++) {
-      var part = this.groupByParts[i];
+      let part = this.groupByParts[i];
       if (i > 0) {
         groupBySection += ', ';
       }
