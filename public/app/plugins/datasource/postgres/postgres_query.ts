@@ -206,6 +206,22 @@ export default class PostgresQuery {
     return query;
   }
 
+  buildValueColumns(target) {
+    let query = '';
+    for (let i = 0; i < this.selectModels.length; i++) {
+      let parts = this.selectModels[i];
+      var selectText = '';
+      for (let y = 0; y < parts.length; y++) {
+        let part = parts[y];
+        selectText = part.render(selectText);
+      }
+
+      query += ', ' + selectText;
+    }
+
+    return query;
+  }
+
   buildQuery(target) {
     var query = 'SELECT ';
 
@@ -215,17 +231,7 @@ export default class PostgresQuery {
       query += ',' + this.target.metricColumn + ' AS metric';
     }
 
-    var i, y;
-    for (i = 0; i < this.selectModels.length; i++) {
-      let parts = this.selectModels[i];
-      var selectText = '';
-      for (y = 0; y < parts.length; y++) {
-        let part = parts[y];
-        selectText = part.render(selectText);
-      }
-
-      query += ', ' + selectText;
-    }
+    query += this.buildValueColumns(target);
 
     query += ' FROM ' + target.schema + '.' + target.table;
     var conditions = _.map(target.where, (tag, index) => {
@@ -244,7 +250,7 @@ export default class PostgresQuery {
     }
 
     var groupBySection = '';
-    for (i = 0; i < this.groupByParts.length; i++) {
+    for (let i = 0; i < this.groupByParts.length; i++) {
       var part = this.groupByParts[i];
       if (i > 0) {
         groupBySection += ', ';
