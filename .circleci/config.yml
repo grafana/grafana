@@ -88,6 +88,9 @@ jobs:
       - run:
           name: run linters
           command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+      - run:
+          name: run go vet 
+          command: 'go vet ./pkg/...'
 
   test-frontend:
     docker:
@@ -243,7 +246,7 @@ workflows:
   test-and-build:
     jobs:
       - build-all:
-          filters: *filter-not-release
+          filters: *filter-only-master
       - build-enterprise:
           filters: *filter-only-master
       - codespell:
@@ -267,9 +270,7 @@ workflows:
             - gometalinter
             - mysql-integration-test
             - postgres-integration-test
-          filters:
-           branches:
-             only: master
+          filters: *filter-only-master           
       - deploy-enterprise-master:
           requires:
             - build-all
