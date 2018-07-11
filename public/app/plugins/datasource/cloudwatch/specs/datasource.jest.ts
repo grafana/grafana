@@ -138,7 +138,7 @@ describe('CloudWatchDatasource', function() {
           },
         ],
       };
-      expect(ctx.ds.query.bind(ctx.ds, query)).to.throwException(/Invalid extended statistics/);
+      expect(ctx.ds.query.bind(ctx.ds, query)).toThrow(/Invalid extended statistics/);
     });
 
     it('should return series list', function(done) {
