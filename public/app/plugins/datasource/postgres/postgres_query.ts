@@ -169,7 +169,8 @@ export default class PostgresQuery {
   }
 
   render(interpolate?) {
-    var target = this.target;
+    let target = this.target;
+    let query;
 
     if (target.rawQuery) {
       if (interpolate) {
@@ -179,6 +180,14 @@ export default class PostgresQuery {
       }
     }
 
+    query = this.buildQuery(target);
+    if (interpolate) {
+      query = this.templateSrv.replace(query, this.scopedVars, this.interpolateQueryStr);
+    }
+    return query;
+  }
+
+  buildQuery(target) {
     var query = 'SELECT ';
 
     var timeGroup = this.hasGroupByTime();
@@ -250,9 +259,6 @@ export default class PostgresQuery {
     query += ' ORDER BY 1';
 
     this.target.rawSql = query;
-    if (interpolate) {
-      query = this.templateSrv.replace(query, this.scopedVars, this.interpolateQueryStr);
-    }
     return query;
   }
 }
