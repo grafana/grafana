@@ -21,7 +21,6 @@ interface Props {
 @observer
 export class TeamPages extends React.Component<Props, any> {
   isSyncEnabled: boolean;
-  currentTeam: ITeam;
   currentPage: string;
 
   constructor(props) {
@@ -38,8 +37,12 @@ export class TeamPages extends React.Component<Props, any> {
 
     await teams.loadById(view.routeParams.get('id'));
 
-    this.currentTeam = teams.map.get(view.routeParams.get('id'));
-    nav.initTeamPage(this.currentTeam, this.currentPage, this.isSyncEnabled);
+    nav.initTeamPage(this.getCurrentTeam(), this.currentPage, this.isSyncEnabled);
+  }
+
+  getCurrentTeam(): ITeam {
+    const { teams, view } = this.props;
+    return teams.map.get(view.routeParams.get('id'));
   }
 
   getCurrentPage() {
@@ -50,19 +53,22 @@ export class TeamPages extends React.Component<Props, any> {
 
   render() {
     const { nav } = this.props;
+    const currentTeam = this.getCurrentTeam();
 
-    if (!nav.main || !this.currentTeam) {
+    if (!nav.main) {
       return null;
     }
 
     return (
       <div>
         <PageHeader model={nav as any} />
-        <div className="page-container page-body">
-          {this.currentPage === 'members' && <TeamMembers team={this.currentTeam} />}
-          {this.currentPage === 'settings' && <TeamSettings team={this.currentTeam} />}
-          {this.currentPage === 'groupsync' && this.isSyncEnabled && <TeamGroupSync team={this.currentTeam} />}
-        </div>
+        {currentTeam && (
+          <div className="page-container page-body">
+            {this.currentPage === 'members' && <TeamMembers team={currentTeam} />}
+            {this.currentPage === 'settings' && <TeamSettings team={currentTeam} />}
+            {this.currentPage === 'groupsync' && this.isSyncEnabled && <TeamGroupSync team={currentTeam} />}
+          </div>
+        )}
       </div>
     );
   }
