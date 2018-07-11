@@ -184,6 +184,7 @@ export default class PostgresQuery {
     if (interpolate) {
       query = this.templateSrv.replace(query, this.scopedVars, this.interpolateQueryStr);
     }
+    this.target.rawSql = query;
     return query;
   }
 
@@ -201,6 +202,16 @@ export default class PostgresQuery {
       query = '$__timeGroup(' + target.timeColumn + ',' + args + ')';
     } else {
       query = target.timeColumn + ' AS "time"';
+    }
+
+    return query;
+  }
+
+  buildMetricColumn(target) {
+    let query = '';
+
+    if (this.target.metricColumn !== 'None') {
+      query += ',' + this.target.metricColumn + ' AS metric';
     }
 
     return query;
@@ -271,11 +282,7 @@ export default class PostgresQuery {
     let query = 'SELECT ';
 
     query += this.buildTimeColumn(target);
-
-    if (this.target.metricColumn !== 'None') {
-      query += ',' + this.target.metricColumn + ' AS metric';
-    }
-
+    query += this.buildMetricColumn(target);
     query += this.buildValueColumns(target);
 
     query += ' FROM ' + target.schema + '.' + target.table;
@@ -285,7 +292,6 @@ export default class PostgresQuery {
 
     query += ' ORDER BY 1';
 
-    this.target.rawSql = query;
     return query;
   }
 }
