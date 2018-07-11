@@ -20,8 +20,15 @@ interface Props {
 @inject('nav', 'teams', 'view')
 @observer
 export class TeamPages extends React.Component<Props, any> {
+  isSyncEnabled: boolean;
+  currentTeam: ITeam;
+  currentPage: string;
+
   constructor(props) {
     super(props);
+
+    this.isSyncEnabled = config.buildInfo.isEnterprise;
+    this.currentPage = this.getCurrentPage();
 
     this.loadTeam();
   }
@@ -31,7 +38,8 @@ export class TeamPages extends React.Component<Props, any> {
 
     await teams.loadById(view.routeParams.get('id'));
 
-    nav.initTeamPage(this.getCurrentTeam(), this.getCurrentPage());
+    this.currentTeam = teams.map.get(view.routeParams.get('id'));
+    nav.initTeamPage(this.currentTeam, this.currentPage, this.isSyncEnabled);
   }
 
   getCurrentPage() {
@@ -40,18 +48,10 @@ export class TeamPages extends React.Component<Props, any> {
     return _.includes(pages, currentPage) ? currentPage : pages[0];
   }
 
-  getCurrentTeam(): ITeam {
-    return this.props.teams.map.get(this.props.view.routeParams.get('id'));
-  }
-
   render() {
     const { nav } = this.props;
 
-    const currentTeam = this.getCurrentTeam();
-    const currentPage = this.getCurrentPage();
-    const isSyncEnabled = config.buildInfo.isEnterprise;
-
-    if (!currentTeam || !nav.main) {
+    if (!nav.main || !this.currentTeam) {
       return null;
     }
 
@@ -59,9 +59,9 @@ export class TeamPages extends React.Component<Props, any> {
       <div>
         <PageHeader model={nav as any} />
         <div className="page-container page-body">
-          {currentPage === 'members' && <TeamMembers team={currentTeam} />}
-          {currentPage === 'settings' && <TeamSettings team={currentTeam} />}
-          {currentPage === 'groupsync' && isSyncEnabled && <TeamGroupSync team={currentTeam} />}
+          {this.currentPage === 'members' && <TeamMembers team={this.currentTeam} />}
+          {this.currentPage === 'settings' && <TeamSettings team={this.currentTeam} />}
+          {this.currentPage === 'groupsync' && this.isSyncEnabled && <TeamGroupSync team={this.currentTeam} />}
         </div>
       </div>
     );

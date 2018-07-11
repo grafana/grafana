@@ -11,13 +11,16 @@ interface Props {
 
 interface State {
   isAdding: boolean;
+  newGroupId?: string;
 }
+
+const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;
 
 @observer
 export class TeamGroupSync extends React.Component<Props, State> {
   constructor(props) {
     super(props);
-    this.state = { isAdding: false };
+    this.state = { isAdding: false, newGroupId: '' };
   }
 
   componentDidMount() {
@@ -29,7 +32,7 @@ export class TeamGroupSync extends React.Component<Props, State> {
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
-          <a className="btn btn-danger btn-mini">
+          <a className="btn btn-danger btn-mini" onClick={() => this.onRemoveGroup(group)}>
             <i className="fa fa-remove" />
           </a>
         </td>
@@ -41,21 +44,32 @@ export class TeamGroupSync extends React.Component<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  getHeaderTooltip() {
-    return `Here you specify external groups that can be used as sync sources for
-    members of this team. For example an LDAP group or a GitHub team
-   `;
+  onNewGroupIdChanged = evt => {
+    this.setState({ newGroupId: evt.target.value });
+  };
+
+  onAddGroup = () => {
+    this.props.team.addGroup(this.state.newGroupId);
+    this.setState({ isAdding: false, newGroupId: '' });
+  };
+
+  onRemoveGroup = (group: ITeamGroup) => {
+    this.props.team.removeGroup(group.groupId);
+  };
+
+  isNewGroupValid() {
+    return this.state.newGroupId.length > 1;
   }
 
   render() {
-    const { isAdding } = this.state;
+    const { isAdding, newGroupId } = this.state;
     const groups = this.props.team.groups.values();
 
     return (
       <div>
         <div className="page-action-bar">
           <h3 className="page-sub-heading">External group sync</h3>
-          <Tooltip className="page-sub-heading-icon" placement="auto" content={this.getHeaderTooltip()}>
+          <Tooltip className="page-sub-heading-icon" placement="auto" content={headerTooltip}>
             <i className="gicon gicon-question gicon--has-hover" />
           </Tooltip>
           <div className="page-action-bar__spacer" />
@@ -74,26 +88,23 @@ export class TeamGroupSync extends React.Component<Props, State> {
             <h5>Add External Group</h5>
             <div className="gf-form-inline">
               <div className="gf-form">
-                <div className="gf-form-select-wrapper">
-                  <select className="gf-form-input gf-size-auto" value={'ldap'}>
-                    <option key="ldap" value="ldap">
-                      LDAP Group
-                    </option>
-                  </select>
-                </div>
                 <input
                   type="text"
                   className="gf-form-input width-30"
+                  value={newGroupId}
+                  onChange={this.onNewGroupIdChanged}
                   placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
                 />
               </div>
 
               <div className="gf-form">
-                <button className="btn btn-success gf-form-btn" type="submit">
+                <button
+                  className="btn btn-success gf-form-btn"
+                  onClick={this.onAddGroup}
+                  type="submit"
+                  disabled={!this.isNewGroupValid()}
+                >
                   Add group
-                </button>
-                <button className="btn btn-secondary gf-form-btn" type="submit">
-                  Test
                 </button>
               </div>
             </div>
@@ -109,7 +120,7 @@ export class TeamGroupSync extends React.Component<Props, State> {
                 Add Group
               </button>
               <div className="empty-list-cta__pro-tip">
-                <i className="fa fa-rocket" /> Sync LDAP or OAuth groups with your Grafana teams.
+                <i className="fa fa-rocket" /> {headerTooltip}
                 <a className="text-link empty-list-cta__pro-tip-link" href="asd" target="_blank">
                   Learn more
                 </a>
@@ -122,9 +133,7 @@ export class TeamGroupSync extends React.Component<Props, State> {
             <table className="filter-table filter-table--hover form-inline">
               <thead>
                 <tr>
-                  <th />
-                  <th>Name</th>
-                  <th>Email</th>
+                  <th>External Group ID</th>
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>

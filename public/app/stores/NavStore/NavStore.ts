@@ -117,7 +117,7 @@ export const NavStore = types
       self.main = NavItem.create(main);
     },
 
-    initTeamPage(team: ITeam, tab: string) {
+    initTeamPage(team: ITeam, tab: string, isSyncEnabled: boolean) {
       let main = {
         img: team.avatarUrl,
         id: 'team-' + team.id,
@@ -134,13 +134,6 @@ export const NavStore = types
             url: `org/teams/edit/${team.id}/members`,
           },
           {
-            active: tab === 'groupsync',
-            icon: 'fa fa-fw fa-refresh',
-            id: 'team-settings',
-            text: 'External group sync',
-            url: `org/teams/edit/${team.id}/groupsync`,
-          },
-          {
             active: tab === 'settings',
             icon: 'fa fa-fw fa-sliders',
             id: 'team-settings',
@@ -149,6 +142,16 @@ export const NavStore = types
           },
         ],
       };
+
+      if (isSyncEnabled) {
+        main.children.splice(1, 0, {
+          active: tab === 'groupsync',
+          icon: 'fa fa-fw fa-refresh',
+          id: 'team-settings',
+          text: 'External group sync',
+          url: `org/teams/edit/${team.id}/groupsync`,
+        });
+      }
 
       self.main = NavItem.create(main);
     },

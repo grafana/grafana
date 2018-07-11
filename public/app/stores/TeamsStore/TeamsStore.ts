@@ -89,8 +89,26 @@ export const Team = types
       self.groups.clear();
 
       for (let group of rsp) {
-        self.groups.set(group.id.toString(), TeamGroup.create(group));
+        self.groups.set(group.groupId, TeamGroup.create(group));
       }
+    }),
+
+    addGroup: flow(function* load(groupId: string) {
+      const backendSrv = getEnv(self).backendSrv;
+      yield backendSrv.post(`/api/teams/${self.id}/groups`, { groupId: groupId });
+      self.groups.set(
+        groupId,
+        TeamGroup.create({
+          teamId: self.id,
+          groupId: groupId,
+        })
+      );
+    }),
+
+    removeGroup: flow(function* load(groupId: string) {
+      const backendSrv = getEnv(self).backendSrv;
+      yield backendSrv.delete(`/api/teams/${self.id}/groups/${groupId}`);
+      self.groups.delete(groupId);
     }),
   }));
 

@@ -78,8 +78,8 @@ export class TeamMembers extends React.Component<Props, State> {
   };
 
   render() {
+    const { newTeamMember, isAdding } = this.state;
     const members = this.props.team.members.values();
-    const { newTeamMember } = this.state;
     const newTeamMemberValue = newTeamMember && newTeamMember.id.toString();
 
     return (
@@ -100,12 +100,12 @@ export class TeamMembers extends React.Component<Props, State> {
 
           <div className="page-action-bar__spacer" />
 
-          <button className="btn btn-success pull-right" onClick={this.onToggleAdding}>
+          <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
             <i className="fa fa-plus" /> Add a member
           </button>
         </div>
 
-        <SlideDown in={this.state.isAdding}>
+        <SlideDown in={isAdding}>
           <div className="cta-form">
             <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
               <i className="fa fa-close" />
