@@ -121,6 +121,26 @@ describe('CloudWatchDatasource', function() {
       });
     });
 
+    it('should cancel query for invalid extended statistics', function () {
+      var query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            region: 'us-east-1',
+            namespace: 'AWS/EC2',
+            metricName: 'CPUUtilization',
+            dimensions: {
+              InstanceId: 'i-12345678',
+            },
+            statistics: ['pNN.NN'],
+            period: '60s',
+          },
+        ],
+      };
+      expect(ctx.ds.query.bind(ctx.ds, query)).toThrow(/Invalid extended statistics/);
+    });
+
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
         expect(result.data[0].target).toBe(response.results.A.series[0].name);
