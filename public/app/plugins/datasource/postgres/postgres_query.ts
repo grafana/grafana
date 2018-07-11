@@ -187,10 +187,9 @@ export default class PostgresQuery {
     return query;
   }
 
-  buildQuery(target) {
-    var query = 'SELECT ';
-
-    var timeGroup = this.hasGroupByTime();
+  buildTimeColumn(target) {
+    let timeGroup = this.hasGroupByTime();
+    let query;
 
     if (timeGroup) {
       var args;
@@ -199,10 +198,18 @@ export default class PostgresQuery {
       } else {
         args = timeGroup.params[0];
       }
-      query += '$__timeGroup(' + target.timeColumn + ',' + args + ')';
+      query = '$__timeGroup(' + target.timeColumn + ',' + args + ')';
     } else {
-      query += target.timeColumn + ' AS "time"';
+      query = target.timeColumn + ' AS "time"';
     }
+
+    return query;
+  }
+
+  buildQuery(target) {
+    var query = 'SELECT ';
+
+    query += this.buildTimeColumn(target);
 
     if (this.target.metricColumn !== 'None') {
       query += ',' + this.target.metricColumn + ' AS metric';
