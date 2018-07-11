@@ -222,18 +222,8 @@ export default class PostgresQuery {
     return query;
   }
 
-  buildQuery(target) {
-    var query = 'SELECT ';
-
-    query += this.buildTimeColumn(target);
-
-    if (this.target.metricColumn !== 'None') {
-      query += ',' + this.target.metricColumn + ' AS metric';
-    }
-
-    query += this.buildValueColumns(target);
-
-    query += ' FROM ' + target.schema + '.' + target.table;
+  buildWhereClause(target) {
+    let query = '';
     var conditions = _.map(target.where, (tag, index) => {
       switch (tag.type) {
         case 'macro':
@@ -246,8 +236,26 @@ export default class PostgresQuery {
     });
 
     if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
+      query = ' WHERE ' + conditions.join(' AND ');
     }
+
+    return query;
+  }
+
+  buildQuery(target) {
+    var query = 'SELECT ';
+
+    query += this.buildTimeColumn(target);
+
+    if (this.target.metricColumn !== 'None') {
+      query += ',' + this.target.metricColumn + ' AS metric';
+    }
+
+    query += this.buildValueColumns(target);
+
+    query += ' FROM ' + target.schema + '.' + target.table;
+
+    query += this.buildWhereClause(target);
 
     var groupBySection = '';
     for (let i = 0; i < this.groupByParts.length; i++) {
