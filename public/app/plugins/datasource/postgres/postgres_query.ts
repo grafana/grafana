@@ -204,14 +204,14 @@ export default class PostgresQuery {
       query = target.timeColumn + ' AS "time"';
     }
 
-    return query;
+    return '\n  ' + query;
   }
 
   buildMetricColumn(target) {
     let query = '';
 
     if (this.target.metricColumn !== 'None') {
-      query += ',' + this.target.metricColumn + ' AS metric';
+      query += ',\n  ' + this.target.metricColumn + ' AS metric';
     }
 
     return query;
@@ -220,7 +220,7 @@ export default class PostgresQuery {
   buildValueColumns(target) {
     let query = '';
     for (let i = 0; i < target.select.length; i++) {
-      query += ', ' + this.buildValueColumn(target, target.select[i]);
+      query += ',\n  ' + this.buildValueColumn(target, target.select[i]);
     }
 
     return query;
@@ -279,7 +279,7 @@ export default class PostgresQuery {
     });
 
     if (conditions.length > 0) {
-      query = ' WHERE ' + conditions.join(' AND ');
+      query = '\nWHERE\n  ' + conditions.join(' AND\n  ');
     }
 
     return query;
@@ -302,7 +302,7 @@ export default class PostgresQuery {
     }
 
     if (groupBySection.length) {
-      query = ' GROUP BY ' + groupBySection;
+      query = '\nGROUP BY ' + groupBySection;
       if (this.target.metricColumn !== 'None') {
         query += ',2';
       }
@@ -317,12 +317,12 @@ export default class PostgresQuery {
     query += this.buildMetricColumn(target);
     query += this.buildValueColumns(target);
 
-    query += ' FROM ' + target.schema + '.' + target.table;
+    query += '\nFROM ' + target.schema + '.' + target.table;
 
     query += this.buildWhereClause(target);
     query += this.buildGroupByClause(target);
 
-    query += ' ORDER BY 1';
+    query += '\nORDER BY 1';
 
     return query;
   }
