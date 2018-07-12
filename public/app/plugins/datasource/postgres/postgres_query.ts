@@ -240,7 +240,7 @@ export default class PostgresQuery {
     let special = _.find(column, (g: any) => g.type === 'special');
     if (special) {
       let over = '';
-      if (target.metricColumn) {
+      if (target.metricColumn !== 'None') {
         over = 'PARTITION BY ' + target.metricColumn;
       }
       switch (special.params[0]) {
@@ -249,7 +249,9 @@ export default class PostgresQuery {
           break;
         case 'rate':
           let timeColumn = target.timeColumn;
-          query = '(' + query + ' - lag(' + query + ') OVER (' + over + '))';
+          let curr = query;
+          let prev = 'lag(' + curr + ') OVER (' + over + ')';
+          query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
           query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
           break;
       }
