@@ -2,6 +2,8 @@ import { PanelModel } from '../panel_model';
 
 import _ from 'lodash';
 
+import 'intersection-observer';
+
 export const PANEL_VISIBILITY_CHANGED_EVENT = 'panel-visibility-changed';
 
 export interface PanelObserver {

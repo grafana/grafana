@@ -153,6 +153,7 @@
     "eventemitter3": "^2.0.3",
     "file-saver": "^1.3.3",
     "immutable": "^3.8.2",
+    "intersection-observer": "^0.5.0",
     "jquery": "^3.2.1",
     "lodash": "^4.17.10",
     "mini-css-extract-plugin": "^0.4.0",
