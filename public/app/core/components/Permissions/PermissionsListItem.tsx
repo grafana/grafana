@@ -68,7 +68,7 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
         <div className="gf-form">
           <DescriptionPicker
             optionsWithDesc={permissionOptions}
-            handlePicked={handleChangePermission}
+            onSelected={handleChangePermission}
             value={item.permission}
             disabled={item.inherited}
             className={'gf-form-input--form-dropdown-right'}

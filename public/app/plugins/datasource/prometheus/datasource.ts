@@ -196,7 +196,7 @@ export class PrometheusDatasource {
       interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
-        __interval_ms: { text: interval * 1000, value: interval * 1000 },
+        __interval_ms: { text: String(interval * 1000), value: String(interval * 1000) },
       });
     }
     query.step = interval;

@@ -1,16 +1,17 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
 import Select from 'react-select';
 import PickerOption from './PickerOption';
-import withPicker from './withPicker';
 import { debounce } from 'lodash';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
-export interface IProps {
-  backendSrv: any;
-  isLoading: boolean;
-  toggleLoading: any;
-  handlePicked: (user) => void;
+export interface Props {
+  onSelected: (team: Team) => void;
   value?: string;
   className?: string;
+}
+
+export interface State {
+  isLoading;
 }
 
 export interface Team {
@@ -20,13 +21,12 @@ export interface Team {
   avatarUrl: string;
 }
 
-class TeamPicker extends Component<IProps, any> {
+export class TeamPicker extends Component<Props, State> {
   debouncedSearch: any;
-  backendSrv: any;
 
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { isLoading: false };
     this.search = this.search.bind(this);
 
     this.debouncedSearch = debounce(this.search, 300, {
@@ -36,9 +36,9 @@ class TeamPicker extends Component<IProps, any> {
   }
 
   search(query?: string) {
-    const { toggleLoading, backendSrv } = this.props;
+    const backendSrv = getBackendSrv();
+    this.setState({ isLoading: true });
 
-    toggleLoading(true);
     return backendSrv.get(`/api/teams/search?perpage=10&page=1&query=${query}`).then(result => {
       const teams = result.teams.map(team => {
         return {
@@ -49,18 +49,18 @@ class TeamPicker extends Component<IProps, any> {
         };
       });
 
-      toggleLoading(false);
+      this.setState({ isLoading: false });
       return { options: teams };
     });
   }
 
   render() {
-    const AsyncComponent = this.state.creatable ? Select.AsyncCreatable : Select.Async;
-    const { isLoading, handlePicked, value, className } = this.props;
+    const { onSelected, value, className } = this.props;
+    const { isLoading } = this.state;
 
     return (
       <div className="user-picker">
-        <AsyncComponent
+        <Select.Async
           valueKey="id"
           multi={false}
           labelKey="label"
@@ -69,10 +69,10 @@ class TeamPicker extends Component<IProps, any> {
           loadOptions={this.debouncedSearch}
           loadingPlaceholder="Loading..."
           noResultsText="No teams found"
-          onChange={handlePicked}
+          onChange={onSelected}
           className={`gf-form-input gf-form-input--form-dropdown ${className || ''}`}
           optionComponent={PickerOption}
-          placeholder="Choose"
+          placeholder="Select a team"
           value={value}
           autosize={true}
         />
@@ -80,5 +80,3 @@ class TeamPicker extends Component<IProps, any> {
     );
   }
 }
-
-export default withPicker(TeamPicker);

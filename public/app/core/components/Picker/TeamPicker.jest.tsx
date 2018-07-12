@@ -1,19 +1,23 @@
-﻿import React from 'react';
+import React from 'react';
 import renderer from 'react-test-renderer';
-import TeamPicker from './TeamPicker';
+import { TeamPicker } from './TeamPicker';
 
-const model = {
-  backendSrv: {
-    get: () => {
-      return new Promise((resolve, reject) => {});
-    },
+jest.mock('app/core/services/backend_srv', () => ({
+  getBackendSrv: () => {
+    return {
+      get: () => {
+        return Promise.resolve([]);
+      },
+    };
   },
-  handlePicked: () => {},
-};
+}));
 
 describe('TeamPicker', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<TeamPicker {...model} />).toJSON();
+    const props = {
+      onSelected: () => {},
+    };
+    const tree = renderer.create(<TeamPicker {...props} />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });
