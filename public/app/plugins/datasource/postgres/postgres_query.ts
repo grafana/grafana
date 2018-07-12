@@ -245,7 +245,7 @@ export default class PostgresQuery {
       }
       switch (special.params[0]) {
         case 'increase':
-          query = query + ' - lag(' + query + ') OVER ()';
+          query = query + ' - lag(' + query + ') OVER (' + over + ')';
           break;
         case 'rate':
           let timeColumn = target.timeColumn;
