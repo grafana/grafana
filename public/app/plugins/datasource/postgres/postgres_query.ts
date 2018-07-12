@@ -219,20 +219,48 @@ export default class PostgresQuery {
 
   buildValueColumns(target) {
     let query = '';
-    for (let i = 0; i < this.selectModels.length; i++) {
-      query += ', ' + this.buildValueColumn(target, this.selectModels[i]);
+    for (let i = 0; i < target.select.length; i++) {
+      query += ', ' + this.buildValueColumn(target, target.select[i]);
     }
 
     return query;
   }
 
   buildValueColumn(target, column) {
-    let selectText = '';
-    for (let i = 0; i < column.length; i++) {
-      let part = column[i];
-      selectText = part.render(selectText);
+    let query = '';
+
+    let columnName = _.find(column, (g: any) => g.type === 'column');
+    query = columnName.params[0];
+
+    let aggregate = _.find(column, (g: any) => g.type === 'aggregate');
+    if (aggregate) {
+      query = aggregate.params[0] + '(' + query + ')';
     }
-    return selectText;
+
+    let special = _.find(column, (g: any) => g.type === 'special');
+    if (special) {
+      let over = '';
+      if (target.metricColumn) {
+        over = 'PARTITION BY ' + target.metricColumn;
+      }
+      switch (special.params[0]) {
+        case 'increase':
+          query = query + ' - lag(' + query + ') OVER ()';
+          break;
+        case 'rate':
+          let timeColumn = target.timeColumn;
+          query = '(' + query + ' - lag(' + query + ') OVER (' + over + '))';
+          query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
+          break;
+      }
+    }
+
+    let alias = _.find(column, (g: any) => g.type === 'alias');
+    if (alias) {
+      query += ' AS ' + this.quoteIdentifier(alias.params[0]);
+    }
+
+    return query;
   }
 
   buildWhereClause(target) {
