@@ -5,7 +5,7 @@ import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel } from '../dashboard_model';
 import { PanelContainer } from './PanelContainer';
 import { PanelModel } from '../panel_model';
-import { PanelObserver, PanelObserverScroll, PanelObserverIntersection } from './PanelObserver';
+import { PanelObserver, PanelObserverIntersection } from './PanelObserver';
 import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 
@@ -81,7 +81,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onWidthChange = this.onWidthChange.bind(this);
 
     this.state = { animated: false };
-    this.observer = new PanelObserverScroll();
     this.observer = new PanelObserverIntersection();
 
     // subscribe to dashboard events
