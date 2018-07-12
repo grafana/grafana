@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { types, getEnv } from 'mobx-state-tree';
 import { NavItem } from './NavItem';
+import { ITeam } from '../TeamsStore/TeamsStore';
 
 export const NavStore = types
   .model('NavStore', {
@@ -110,6 +111,45 @@ export const NavStore = types
           id: 'datasource-dashboards',
           text: 'Dashboards',
           url: `datasources/edit/${ds.id}/dashboards`,
+        });
+      }
+
+      self.main = NavItem.create(main);
+    },
+
+    initTeamPage(team: ITeam, tab: string, isSyncEnabled: boolean) {
+      let main = {
+        img: team.avatarUrl,
+        id: 'team-' + team.id,
+        subTitle: 'Manage members & settings',
+        url: '',
+        text: team.name,
+        breadcrumbs: [{ title: 'Teams', url: 'org/teams' }],
+        children: [
+          {
+            active: tab === 'members',
+            icon: 'gicon gicon-team',
+            id: 'team-members',
+            text: 'Members',
+            url: `org/teams/edit/${team.id}/members`,
+          },
+          {
+            active: tab === 'settings',
+            icon: 'fa fa-fw fa-sliders',
+            id: 'team-settings',
+            text: 'Settings',
+            url: `org/teams/edit/${team.id}/settings`,
+          },
+        ],
+      };
+
+      if (isSyncEnabled) {
+        main.children.splice(1, 0, {
+          active: tab === 'groupsync',
+          icon: 'fa fa-fw fa-refresh',
+          id: 'team-settings',
+          text: 'External group sync',
+          url: `org/teams/edit/${team.id}/groupsync`,
         });
       }
 

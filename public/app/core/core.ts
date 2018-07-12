@@ -44,8 +44,6 @@ import { KeybindingSrv } from './services/keybindingSrv';
 import { helpModal } from './components/help/help';
 import { JsonExplorer } from './components/json_explorer/json_explorer';
 import { NavModelSrv, NavModel } from './nav_model_srv';
-import { userPicker } from './components/user_picker';
-import { teamPicker } from './components/team_picker';
 import { geminiScrollbar } from './components/scroll/scroll';
 import { pageScrollbar } from './components/scroll/page_scroll';
 import { gfPageDirective } from './components/gf_page';
@@ -83,8 +81,6 @@ export {
   JsonExplorer,
   NavModelSrv,
   NavModel,
-  userPicker,
-  teamPicker,
   geminiScrollbar,
   pageScrollbar,
   gfPageDirective,

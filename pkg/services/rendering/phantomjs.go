@@ -58,7 +58,9 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 		cmdArgs = append([]string{fmt.Sprintf("--output-encoding=%s", opts.Encoding)}, cmdArgs...)
 	}
 
-	commandCtx, _ := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	commandCtx, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
+	defer cancel()
+
 	cmd := exec.CommandContext(commandCtx, binPath, cmdArgs...)
 	cmd.Stderr = cmd.Stdout
 
