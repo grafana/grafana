@@ -29,10 +29,12 @@ export function pageScrollbar() {
       scope.$on('$routeChangeSuccess', () => {
         lastPos = 0;
         elem[0].scrollTop = 0;
+        // Focus page to enable scrolling by keyboard
         elem[0].focus({ preventScroll: true });
       });
 
       elem[0].tabIndex = -1;
+      // Focus page to enable scrolling by keyboard
       elem[0].focus({ preventScroll: true });
     },
   };
