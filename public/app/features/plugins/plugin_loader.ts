@@ -5,6 +5,7 @@ import kbn from 'app/core/utils/kbn';
 import moment from 'moment';
 import angular from 'angular';
 import jquery from 'jquery';
+import immutable from 'immutable';
 
 // Experimental module exports
 import prismjs from 'prismjs';
@@ -74,6 +75,7 @@ exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
 exposeToPlugin('angular', angular);
+exposeToPlugin('immutable', immutable);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
