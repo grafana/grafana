@@ -299,7 +299,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   getWhereOptions() {
     var options = [];
     options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__timeFilter' }));
-    options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__unixEpochFilter' }));
+    // options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__unixEpochFilter' }));
     options.push(this.uiSegmentSrv.newSegment({ type: 'expression', value: 'Expression' }));
     return this.$q.when(options);
   }

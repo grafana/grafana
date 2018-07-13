@@ -204,17 +204,15 @@ export default class PostgresQuery {
       query = target.timeColumn + ' AS "time"';
     }
 
-    return '\n  ' + query;
+    return query;
   }
 
   buildMetricColumn(target) {
-    let query = '';
-
-    if (this.target.metricColumn !== 'None') {
-      query += ',\n  ' + this.target.metricColumn + ' AS metric';
+    if (target.metricColumn !== 'None') {
+      return target.metricColumn + ' AS metric';
     }
 
-    return query;
+    return '';
   }
 
   buildValueColumns(target) {
@@ -289,21 +287,21 @@ export default class PostgresQuery {
     let query = '';
     let groupBySection = '';
 
-    for (let i = 0; i < this.groupByParts.length; i++) {
-      let part = this.groupByParts[i];
+    for (let i = 0; i < target.groupBy.length; i++) {
+      let part = target.groupBy[i];
       if (i > 0) {
         groupBySection += ', ';
       }
-      if (part.def.type === 'time') {
+      if (part.type === 'time') {
         groupBySection += '1';
       } else {
-        groupBySection += part.render('');
+        groupBySection += part.params[0];
       }
     }
 
     if (groupBySection.length) {
       query = '\nGROUP BY ' + groupBySection;
-      if (this.target.metricColumn !== 'None') {
+      if (target.metricColumn !== 'None') {
         query += ',2';
       }
     }
@@ -311,10 +309,12 @@ export default class PostgresQuery {
   }
 
   buildQuery(target) {
-    let query = 'SELECT ';
+    let query = 'SELECT';
 
-    query += this.buildTimeColumn(target);
-    query += this.buildMetricColumn(target);
+    query += '\n  ' + this.buildTimeColumn(target);
+    if (target.metricColumn !== 'None') {
+      query += '\n  ' + this.buildMetricColumn(target);
+    }
     query += this.buildValueColumns(target);
 
     query += '\nFROM ' + target.schema + '.' + target.table;
