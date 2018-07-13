@@ -7,7 +7,7 @@ export class DatasourceSrv {
   datasources: any;
 
   /** @ngInject */
-  constructor(private $q, private $injector, private $rootScope, private templateSrv) {
+  constructor(private $injector, private $rootScope, private templateSrv) {
     this.init();
   }
 
@@ -27,27 +27,25 @@ export class DatasourceSrv {
     }
 
     if (this.datasources[name]) {
-      return this.$q.when(this.datasources[name]);
+      return Promise.resolve(this.datasources[name]);
     }
 
     return this.loadDatasource(name);
   }
 
   loadDatasource(name) {
-    var dsConfig = config.datasources[name];
+    const dsConfig = config.datasources[name];
     if (!dsConfig) {
-      return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
+      return Promise.reject({ message: 'Datasource named ' + name + ' was not found' });
     }
 
-    var deferred = this.$q.defer();
-    var pluginDef = dsConfig.meta;
+    const pluginDef = dsConfig.meta;
 
-    importPluginModule(pluginDef.module)
+    return importPluginModule(pluginDef.module)
       .then(plugin => {
         // check if its in cache now
         if (this.datasources[name]) {
-          deferred.resolve(this.datasources[name]);
-          return;
+          return this.datasources[name];
         }
 
         // plugin module needs to export a constructor function named Datasource
@@ -55,17 +53,15 @@ export class DatasourceSrv {
           throw new Error('Plugin module is missing Datasource constructor');
         }
 
-        var instance = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
+        const instance = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
         instance.meta = pluginDef;
         instance.name = name;
         this.datasources[name] = instance;
-        deferred.resolve(instance);
+        return instance;
       })
       .catch(err => {
         this.$rootScope.appEvent('alert-error', [dsConfig.name + ' plugin failed', err.toString()]);
       });
-
-    return deferred.promise;
   }
 
   getAll() {
@@ -73,7 +69,7 @@ export class DatasourceSrv {
   }
 
   getAnnotationSources() {
-    var sources = [];
+    const sources = [];
 
     this.addDataSourceVariables(sources);
 
@@ -84,6 +80,14 @@ export class DatasourceSrv {
     });
 
     return sources;
+  }
+
+  getExploreSources() {
+    const { datasources } = config;
+    const es = Object.keys(datasources)
+      .map(name => datasources[name])
+      .filter(ds => ds.meta && ds.meta.explore);
+    return _.sortBy(es, ['name']);
   }
 
   getMetricSources(options) {
@@ -155,3 +159,4 @@ export class DatasourceSrv {
 }
 
 coreModule.service('datasourceSrv', DatasourceSrv);
+export default DatasourceSrv;

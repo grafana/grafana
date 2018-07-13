@@ -1,16 +1,17 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
+import Select from 'react-select';
+
 import colors from 'app/core/utils/colors';
 import TimeSeries from 'app/core/time_series2';
+import { decodePathComponent } from 'app/core/utils/location_util';
 
 import ElapsedTime from './ElapsedTime';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Table from './Table';
 import TimePicker, { DEFAULT_RANGE } from './TimePicker';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { buildQueryOptions, ensureQueries, generateQueryKey, hasQuery } from './utils/query';
-import { decodePathComponent } from 'app/core/utils/location_util';
 
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
@@ -46,7 +47,8 @@ function parseInitialState(initial) {
 interface IExploreState {
   datasource: any;
   datasourceError: any;
-  datasourceLoading: any;
+  datasourceLoading: boolean | null;
+  datasourceMissing: boolean;
   graphResult: any;
   latency: number;
   loading: any;
@@ -61,15 +63,14 @@ interface IExploreState {
 
 // @observer
 export class Explore extends React.Component<any, IExploreState> {
-  datasourceSrv: DatasourceSrv;
-
   constructor(props) {
     super(props);
     const { range, queries } = parseInitialState(props.routeParams.initial);
     this.state = {
       datasource: null,
       datasourceError: null,
-      datasourceLoading: true,
+      datasourceLoading: null,
+      datasourceMissing: false,
       graphResult: null,
       latency: 0,
       loading: false,
@@ -85,17 +86,41 @@ export class Explore extends React.Component<any, IExploreState> {
   }
 
   async componentDidMount() {
-    const datasource = await this.props.datasourceSrv.get();
-    const testResult = await datasource.testDatasource();
-    if (testResult.status === 'success') {
-      this.setState({ datasource, datasourceError: null, datasourceLoading: false }, () => this.handleSubmit());
+    const { datasourceSrv } = this.props;
+    if (!datasourceSrv) {
+      throw new Error('No datasource service passed as props.');
+    }
+    const datasources = datasourceSrv.getExploreSources();
+    if (datasources.length > 0) {
+      this.setState({ datasourceLoading: true });
+      // Try default datasource, otherwise get first
+      let datasource = await datasourceSrv.get();
+      if (!datasource.meta.explore) {
+        datasource = await datasourceSrv.get(datasources[0].name);
+      }
+      this.setDatasource(datasource);
     } else {
-      this.setState({ datasource: null, datasourceError: testResult.message, datasourceLoading: false });
+      this.setState({ datasourceMissing: true });
     }
   }
 
   componentDidCatch(error) {
+    this.setState({ datasourceError: error });
     console.error(error);
+  }
+
+  async setDatasource(datasource) {
+    try {
+      const testResult = await datasource.testDatasource();
+      if (testResult.status === 'success') {
+        this.setState({ datasource, datasourceError: null, datasourceLoading: false }, () => this.handleSubmit());
+      } else {
+        this.setState({ datasource: datasource, datasourceError: testResult.message, datasourceLoading: false });
+      }
+    } catch (error) {
+      const message = (error && error.statusText) || error;
+      this.setState({ datasource: datasource, datasourceError: message, datasourceLoading: false });
+    }
   }
 
   handleAddQueryRow = index => {
@@ -106,6 +131,18 @@ export class Explore extends React.Component<any, IExploreState> {
       ...queries.slice(index + 1),
     ];
     this.setState({ queries: nextQueries });
+  };
+
+  handleChangeDatasource = async option => {
+    this.setState({
+      datasource: null,
+      datasourceError: null,
+      datasourceLoading: true,
+      graphResult: null,
+      tableResult: null,
+    });
+    const datasource = await this.props.datasourceSrv.get(option.value);
+    this.setDatasource(datasource);
   };
 
   handleChangeQuery = (query, index) => {
@@ -226,11 +263,12 @@ export class Explore extends React.Component<any, IExploreState> {
   };
 
   render() {
-    const { position, split } = this.props;
+    const { datasourceSrv, position, split } = this.props;
     const {
       datasource,
       datasourceError,
       datasourceLoading,
+      datasourceMissing,
       graphResult,
       latency,
       loading,
@@ -247,6 +285,12 @@ export class Explore extends React.Component<any, IExploreState> {
     const graphButtonActive = showingBoth || showingGraph ? 'active' : '';
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     const exploreClass = split ? 'explore explore-split' : 'explore';
+    const datasources = datasourceSrv.getExploreSources().map(ds => ({
+      value: ds.name,
+      label: ds.name,
+    }));
+    const selectedDatasource = datasource ? datasource.name : undefined;
+
     return (
       <div className={exploreClass}>
         <div className="navbar">
@@ -264,6 +308,18 @@ export class Explore extends React.Component<any, IExploreState> {
               </button>
             </div>
           )}
+          {!datasourceMissing ? (
+            <div className="navbar-buttons">
+              <Select
+                className="datasource-picker"
+                clearable={false}
+                onChange={this.handleChangeDatasource}
+                options={datasources}
+                placeholder="Loading datasources..."
+                value={selectedDatasource}
+              />
+            </div>
+          ) : null}
           <div className="navbar__spacer" />
           {position === 'left' && !split ? (
             <div className="navbar-buttons">
@@ -291,13 +347,15 @@ export class Explore extends React.Component<any, IExploreState> {
 
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
 
-        {datasourceError ? (
-          <div className="explore-container" title={datasourceError}>
-            Error connecting to datasource.
-          </div>
+        {datasourceMissing ? (
+          <div className="explore-container">Please add a datasource that supports Explore (e.g., Prometheus).</div>
         ) : null}
 
-        {datasource ? (
+        {datasourceError ? (
+          <div className="explore-container">Error connecting to datasource. [{datasourceError}]</div>
+        ) : null}
+
+        {datasource && !datasourceError ? (
           <div className="explore-container">
             <QueryRows
               queries={queries}
