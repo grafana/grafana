@@ -9,12 +9,23 @@ describe('PostgreSQLDatasource', function() {
   let templateSrv = {
     replace: jest.fn(text => text),
   };
+  const raw = {
+    from: moment.utc('2018-04-25 10:00'),
+    to: moment.utc('2018-04-25 11:00'),
+  };
   let ctx = <any>{
     backendSrv,
+    timeSrvMock: {
+      timeRange: () => ({
+        from: raw.from,
+        to: raw.to,
+        raw: raw,
+      }),
+    },
   };
 
   beforeEach(() => {
-    ctx.ds = new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv);
+    ctx.ds = new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv, ctx.timeSrvMock);
   });
 
   describe('When performing annotationQuery', function() {
