@@ -90,14 +90,7 @@ $headings-color: $text-color;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
-$blockquote-small-color: $gray-2 !default;
-$blockquote-border-color: $gray-3 !default;
-
 $hr-border-color: $dark-3 !default;
-
-// Components
-$component-active-color: $white !default;
-$component-active-bg: $brand-primary !default;
 
 // Panel
 // -------------------------
@@ -105,10 +98,7 @@ $component-active-bg: $brand-primary !default;
 $panel-bg: $white;
 $panel-border-color: $gray-5;
 $panel-border: solid 1px $panel-border-color;
-$panel-drop-zone-bg: repeating-linear-gradient(-128deg, $body-bg, $body-bg 10px, $gray-6 10px, $gray-6 20px);
 $panel-header-hover-bg: $gray-6;
-$panel-header-menu-hover-bg: $gray-4;
-$panel-edit-shadow: 0 0 30px 20px $black;
 
 // Page header
 $page-header-bg: linear-gradient(90deg, $white, $gray-7);
@@ -201,7 +191,6 @@ $input-box-shadow-focus: $blue !default;
 $input-color-placeholder: $gray-4 !default;
 $input-label-bg: $gray-5;
 $input-label-border-color: $gray-5;
-$input-invalid-border-color: lighten($red, 5%);
 
 // Sidemenu
 // -------------------------
@@ -215,15 +204,10 @@ $side-menu-link-color: $gray-6;
 // -------------------------
 $menu-dropdown-bg: $gray-7;
 $menu-dropdown-hover-bg: $gray-6;
-$menu-dropdown-border-color: $gray-4;
 $menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
 
 // Breadcrumb
 // -------------------------
-$page-nav-bg: $gray-5;
-$page-nav-shadow: 5px 5px 20px -5px $gray-4;
-$page-nav-breadcrumb-color: $black;
-$breadcrumb-hover-hl: #d9dadd;
 
 // Tabs
 // -------------------------
@@ -245,7 +229,6 @@ $dropdownBorder: $gray-4;
 $dropdownDividerTop: $gray-6;
 $dropdownDividerBottom: $white;
 $dropdownDivider: $dropdownDividerTop;
-$dropdownTitle: $gray-3;
 
 $dropdownLinkColor: $dark-3;
 $dropdownLinkColorHover: $link-color;
@@ -271,24 +254,16 @@ $horizontalComponentOffset: 180px;
 
 // Wells
 // -------------------------
-$wellBackground: $gray-3;
 
 // Navbar
 // -------------------------
 
 $navbarHeight: 52px;
-$navbarBackgroundHighlight: $white;
 $navbarBackground: $white;
 $navbarBorder: 1px solid $gray-4;
 $navbarShadow: 0 0 3px #c1c1c1;
 
-$navbarText: #444;
 $navbarLinkColor: #444;
-$navbarLinkColorHover: #000;
-$navbarLinkColorActive: #333;
-$navbarLinkBackgroundHover: transparent;
-$navbarLinkBackgroundActive: darken($navbarBackground, 6.5%);
-$navbarDropdownShadow: inset 0px 4px 7px -4px darken($body-bg, 20%);
 
 $navbarBrandColor: $navbarLinkColor;
 
@@ -299,9 +274,6 @@ $navbar-button-border: $gray-4;
 
 // Pagination
 // -------------------------
-$paginationBackground: $gray-2;
-$paginationBorder: transparent;
-$paginationActiveBackground: $blue;
 
 // Form states and alerts
 // -------------------------
@@ -346,8 +318,6 @@ $footer-link-color: $gray-3;
 $footer-link-hover: $dark-5;
 
 // collapse box
-$collapse-box-body-border: $gray-4;
-$collapse-box-body-error-border: $red;
 
 // json explorer
 $json-explorer-default-color: black;
@@ -359,7 +329,6 @@ $json-explorer-undefined-color: rgb(202, 11, 105);
 $json-explorer-function-color: #ff20ed;
 $json-explorer-rotate-time: 100ms;
 $json-explorer-toggler-opacity: 0.6;
-$json-explorer-toggler-color: #45376f;
 $json-explorer-bracket-color: blue;
 $json-explorer-key-color: #00008b;
 $json-explorer-url-color: blue;
