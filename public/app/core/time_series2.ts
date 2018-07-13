@@ -108,7 +108,6 @@ export default class TimeSeries {
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
     this.legend = true;
-    this.hideTooltip = false;
     this.unit = opts.unit;
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
