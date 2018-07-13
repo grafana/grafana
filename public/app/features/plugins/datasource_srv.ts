@@ -7,7 +7,7 @@ export class DatasourceSrv {
   datasources: any;
 
   /** @ngInject */
-  constructor(private $injector, private $rootScope, private templateSrv) {
+  constructor(private $q, private $injector, private $rootScope, private templateSrv) {
     this.init();
   }
 
@@ -27,7 +27,7 @@ export class DatasourceSrv {
     }
 
     if (this.datasources[name]) {
-      return Promise.resolve(this.datasources[name]);
+      return this.$q.when(this.datasources[name]);
     }
 
     return this.loadDatasource(name);
@@ -36,16 +36,18 @@ export class DatasourceSrv {
   loadDatasource(name) {
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
-      return Promise.reject({ message: 'Datasource named ' + name + ' was not found' });
+      return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
     }
 
+    const deferred = this.$q.defer();
     const pluginDef = dsConfig.meta;
 
-    return importPluginModule(pluginDef.module)
+    importPluginModule(pluginDef.module)
       .then(plugin => {
         // check if its in cache now
         if (this.datasources[name]) {
-          return this.datasources[name];
+          deferred.resolve(this.datasources[name]);
+          return;
         }
 
         // plugin module needs to export a constructor function named Datasource
@@ -57,11 +59,13 @@ export class DatasourceSrv {
         instance.meta = pluginDef;
         instance.name = name;
         this.datasources[name] = instance;
-        return instance;
+        deferred.resolve(instance);
       })
       .catch(err => {
         this.$rootScope.appEvent('alert-error', [dsConfig.name + ' plugin failed', err.toString()]);
       });
+
+    return deferred.promise;
   }
 
   getAll() {
