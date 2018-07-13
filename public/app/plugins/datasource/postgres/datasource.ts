@@ -8,7 +8,7 @@ export class PostgresDatasource {
   responseParser: ResponseParser;
 
   /** @ngInject **/
-  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
+  constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
@@ -106,16 +106,12 @@ export class PostgresDatasource {
       format: 'table',
     };
 
-    var data = {
+    let range = this.timeSrv.timeRange();
+    let data = {
       queries: [interpolatedQuery],
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
     };
-
-    if (optionalOptions && optionalOptions.range && optionalOptions.range.from) {
-      data['from'] = optionalOptions.range.from.valueOf().toString();
-    }
-    if (optionalOptions && optionalOptions.range && optionalOptions.range.to) {
-      data['to'] = optionalOptions.range.to.valueOf().toString();
-    }
 
     return this.backendSrv
       .datasourceRequest({

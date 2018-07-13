@@ -46,6 +46,7 @@ export class PostgresQueryBuilder {
   buildValueQuery(column: string) {
     var query = 'SELECT DISTINCT quote_literal(' + column + ')';
     query += ' FROM ' + this.target.schema + '.' + this.target.table;
+    query += ' WHERE $__timeFilter(' + this.target.timeColumn + ')';
     query += ' ORDER BY 1 LIMIT 100';
     return query;
   }
