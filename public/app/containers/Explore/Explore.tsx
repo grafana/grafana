@@ -35,6 +35,7 @@ function parseInitialState(initial) {
   try {
     const parsed = JSON.parse(decodePathComponent(initial));
     return {
+      datasource: parsed.datasource,
       queries: parsed.queries.map(q => q.query),
       range: parsed.range,
     };
@@ -50,6 +51,7 @@ interface IExploreState {
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   graphResult: any;
+  initialDatasource?: string;
   latency: number;
   loading: any;
   queries: any;
@@ -65,13 +67,14 @@ interface IExploreState {
 export class Explore extends React.Component<any, IExploreState> {
   constructor(props) {
     super(props);
-    const { range, queries } = parseInitialState(props.routeParams.initial);
+    const { datasource, queries, range } = parseInitialState(props.routeParams.initial);
     this.state = {
       datasource: null,
       datasourceError: null,
       datasourceLoading: null,
       datasourceMissing: false,
       graphResult: null,
+      initialDatasource: datasource,
       latency: 0,
       loading: false,
       queries: ensureQueries(queries),
@@ -87,14 +90,20 @@ export class Explore extends React.Component<any, IExploreState> {
 
   async componentDidMount() {
     const { datasourceSrv } = this.props;
+    const { initialDatasource } = this.state;
     if (!datasourceSrv) {
       throw new Error('No datasource service passed as props.');
     }
     const datasources = datasourceSrv.getExploreSources();
     if (datasources.length > 0) {
       this.setState({ datasourceLoading: true });
-      // Try default datasource, otherwise get first
-      let datasource = await datasourceSrv.get();
+      // Priority: datasource in url, default datasource, first explore datasource
+      let datasource;
+      if (initialDatasource) {
+        datasource = await datasourceSrv.get(initialDatasource);
+      } else {
+        datasource = await datasourceSrv.get();
+      }
       if (!datasource.meta.explore) {
         datasource = await datasourceSrv.get(datasources[0].name);
       }
