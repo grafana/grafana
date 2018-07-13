@@ -187,6 +187,11 @@ export default class InfluxDatasource {
       return this.$q.when({ results: [] });
     }
 
+    if (options && options.range) {
+      var timeFilter = this.getTimeFilter({ rangeRaw: options.range });
+      query = query.replace('$timeFilter', timeFilter);
+    }
+
     return this._influxRequest('GET', '/query', { q: query, epoch: 'ms' }, options);
   }
 
