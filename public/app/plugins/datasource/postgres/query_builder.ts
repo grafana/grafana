@@ -2,14 +2,14 @@ export class PostgresQueryBuilder {
   constructor(private target, private queryModel) {}
 
   buildSchemaQuery() {
-    var query = 'SELECT quote_ident(schema_name) FROM information_schema.schemata WHERE';
+    let query = 'SELECT quote_ident(schema_name) FROM information_schema.schemata WHERE';
     query += " schema_name NOT LIKE 'pg_%' AND schema_name NOT LIKE '\\_%' AND schema_name <> 'information_schema';";
 
     return query;
   }
 
   buildTableQuery() {
-    var query = 'SELECT quote_ident(table_name) FROM information_schema.tables WHERE ';
+    let query = 'SELECT quote_ident(table_name) FROM information_schema.tables WHERE ';
     query += 'table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
     return query;
   }
@@ -20,7 +20,7 @@ export class PostgresQueryBuilder {
   }
 
   buildColumnQuery(type?: string) {
-    var query = 'SELECT quote_ident(column_name) FROM information_schema.columns WHERE ';
+    let query = 'SELECT quote_ident(column_name) FROM information_schema.columns WHERE ';
     query += 'table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
     query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
 
@@ -31,7 +31,7 @@ export class PostgresQueryBuilder {
         break;
       }
       case 'metric': {
-        query += " AND data_type IN ('text','char','varchar')";
+        query += " AND data_type IN ('text','char','varchar','integer','bigint')";
         break;
       }
       case 'value': {
@@ -44,7 +44,7 @@ export class PostgresQueryBuilder {
   }
 
   buildValueQuery(column: string) {
-    var query = 'SELECT DISTINCT quote_literal(' + column + ')';
+    let query = 'SELECT DISTINCT quote_literal(' + column + ')';
     query += ' FROM ' + this.target.schema + '.' + this.target.table;
     query += ' WHERE $__timeFilter(' + this.target.timeColumn + ')';
     query += ' ORDER BY 1 LIMIT 100';
@@ -52,7 +52,7 @@ export class PostgresQueryBuilder {
   }
 
   buildDatatypeQuery(column: string) {
-    var query = 'SELECT data_type FROM information_schema.columns WHERE ';
+    let query = 'SELECT data_type FROM information_schema.columns WHERE ';
     query += ' table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
     query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
@@ -60,10 +60,10 @@ export class PostgresQueryBuilder {
   }
 
   buildAggregateQuery() {
-    var query = 'SELECT DISTINCT proname FROM pg_aggregate ';
+    let query = 'SELECT DISTINCT proname FROM pg_aggregate ';
     query += 'INNER JOIN pg_proc ON pg_aggregate.aggfnoid = pg_proc.oid ';
     query += 'INNER JOIN pg_type ON pg_type.oid=pg_proc.prorettype ';
-    query += "WHERE pronargs=1 AND typname IN ('int8','float8') AND aggkind='n' ORDER BY 1";
+    query += "WHERE pronargs=1 AND typname IN ('float8') AND aggkind='n' ORDER BY 1";
     return query;
   }
 }
