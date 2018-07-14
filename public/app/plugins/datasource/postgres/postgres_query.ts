@@ -86,42 +86,41 @@ export default class PostgresQuery {
   }
 
   addGroupBy(partType, value) {
-    let partModel = sqlPart.create({ type: partType, params: [value] });
-    let partCount = this.target.groupBy.length;
-
-    if (partCount === 0) {
-      this.target.groupBy.push(partModel.part);
-    } else if (partType === 'time') {
-      // put timeGroup at start
-      this.target.groupBy.splice(0, 0, partModel.part);
-    } else {
-      this.target.groupBy.push(partModel.part);
+    let params = [value];
+    if (partType === 'time') {
+      params = ['1m', 'none'];
     }
+    let partModel = sqlPart.create({ type: partType, params: params });
 
     if (partType === 'time') {
-      partModel.part.params = ['1m', 'none'];
+      // put timeGroup at start
+      this.groupByParts.splice(0, 0, partModel);
+    } else {
+      this.groupByParts(partModel);
     }
 
     // add aggregates when adding group by
-    for (let i = 0; i < this.target.select.length; i++) {
-      var selectParts = this.target.select[i];
-      if (!selectParts.some(part => part.type === 'aggregate')) {
-        selectParts.splice(1, 0, { type: 'aggregate', params: ['avg'] });
-        if (!selectParts.some(part => part.type === 'alias')) {
-          selectParts.push({ type: 'alias', params: [selectParts[0].params[0]] });
+    for (let i = 0; i < this.selectModels.length; i++) {
+      var selectParts = this.selectModels[i];
+      if (!selectParts.some(part => part.def.type === 'aggregate')) {
+        let aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
+        selectParts.splice(1, 0, aggregate);
+        if (!selectParts.some(part => part.def.type === 'alias')) {
+          let alias = sqlPart.create({ type: 'alias', params: [selectParts[0].part.params[0]] });
+          selectParts.push(alias);
         }
       }
     }
 
-    this.updateProjection();
+    this.updatePersistedParts();
   }
 
   removeGroupByPart(part, index) {
     if (part.def.type === 'time') {
       // remove aggregations
-      this.target.select = _.map(this.target.select, (s: any) => {
+      this.selectModels = _.map(this.selectModels, (s: any) => {
         return _.filter(s, (part: any) => {
-          if (part.type === 'aggregate') {
+          if (part.def.type === 'aggregate') {
             return false;
           }
           return true;
@@ -129,8 +128,8 @@ export default class PostgresQuery {
       });
     }
 
-    this.target.groupBy.splice(index, 1);
-    this.updateProjection();
+    this.groupByParts.splice(index, 1);
+    this.updatePersistedParts();
   }
 
   removeSelectPart(selectParts, part) {
