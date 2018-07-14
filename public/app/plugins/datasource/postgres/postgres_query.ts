@@ -1,12 +1,8 @@
 import _ from 'lodash';
-import sqlPart from './sql_part';
 
 export default class PostgresQuery {
   target: any;
-  selectModels: any[];
   queryBuilder: any;
-  groupByParts: any[];
-  whereParts: any[];
   templateSrv: any;
   scopedVars: any;
 
@@ -38,8 +34,6 @@ export default class PostgresQuery {
 
     // give interpolateQueryStr access to this
     this.interpolateQueryStr = this.interpolateQueryStr.bind(this);
-
-    this.updateProjection();
   }
 
   // remove identifier quoting from identifier to use in metadata queries
@@ -59,98 +53,8 @@ export default class PostgresQuery {
     return "'" + value.replace("'", "''") + "'";
   }
 
-  updateProjection() {
-    this.selectModels = _.map(this.target.select, function(parts: any) {
-      return _.map(parts, sqlPart.create).filter(n => n);
-    });
-    this.whereParts = _.map(this.target.where, sqlPart.create).filter(n => n);
-    this.groupByParts = _.map(this.target.groupBy, sqlPart.create).filter(n => n);
-  }
-
-  updatePersistedParts() {
-    this.target.select = _.map(this.selectModels, function(selectParts) {
-      return _.map(selectParts, function(part: any) {
-        return { type: part.def.type, params: part.params };
-      });
-    });
-    this.target.where = _.map(this.whereParts, function(part: any) {
-      return { type: part.def.type, name: part.name, params: part.params };
-    });
-    this.target.groupBy = _.map(this.groupByParts, function(part: any) {
-      return { type: part.def.type, params: part.params };
-    });
-  }
-
   hasGroupByTime() {
     return _.find(this.target.groupBy, (g: any) => g.type === 'time');
-  }
-
-  addGroupBy(partType, value) {
-    let params = [value];
-    if (partType === 'time') {
-      params = ['1m', 'none'];
-    }
-    let partModel = sqlPart.create({ type: partType, params: params });
-
-    if (partType === 'time') {
-      // put timeGroup at start
-      this.groupByParts.splice(0, 0, partModel);
-    } else {
-      this.groupByParts(partModel);
-    }
-
-    // add aggregates when adding group by
-    for (let i = 0; i < this.selectModels.length; i++) {
-      var selectParts = this.selectModels[i];
-      if (!selectParts.some(part => part.def.type === 'aggregate')) {
-        let aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
-        selectParts.splice(1, 0, aggregate);
-        if (!selectParts.some(part => part.def.type === 'alias')) {
-          let alias = sqlPart.create({ type: 'alias', params: [selectParts[0].part.params[0]] });
-          selectParts.push(alias);
-        }
-      }
-    }
-
-    this.updatePersistedParts();
-  }
-
-  removeGroupByPart(part, index) {
-    if (part.def.type === 'time') {
-      // remove aggregations
-      this.selectModels = _.map(this.selectModels, (s: any) => {
-        return _.filter(s, (part: any) => {
-          if (part.def.type === 'aggregate') {
-            return false;
-          }
-          return true;
-        });
-      });
-    }
-
-    this.groupByParts.splice(index, 1);
-    this.updatePersistedParts();
-  }
-
-  removeSelectPart(selectParts, part) {
-    // if we remove the field remove the whole statement
-    if (part.def.type === 'column') {
-      if (this.selectModels.length > 1) {
-        let modelsIndex = _.indexOf(this.selectModels, selectParts);
-        this.selectModels.splice(modelsIndex, 1);
-      }
-    } else {
-      let partIndex = _.indexOf(selectParts, part);
-      selectParts.splice(partIndex, 1);
-    }
-
-    this.updatePersistedParts();
-  }
-
-  addSelectPart(selectParts, type) {
-    let partModel = sqlPart.create({ type: type });
-    partModel.def.addStrategy(selectParts, partModel, this);
-    this.updatePersistedParts();
   }
 
   interpolateQueryStr(value, variable, defaultFormatFn) {

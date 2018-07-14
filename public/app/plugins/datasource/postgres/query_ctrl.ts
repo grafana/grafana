@@ -33,6 +33,9 @@ export class PostgresQueryCtrl extends QueryCtrl {
   timeColumnSegment: any;
   metricColumnSegment: any;
   selectMenu: any;
+  selectModels: any[];
+  groupByParts: any[];
+  whereParts: any[];
   groupByAdd: any;
 
   /** @ngInject **/
@@ -41,6 +44,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.target = this.target;
     this.queryModel = new PostgresQuery(this.target, templateSrv, this.panel.scopedVars);
     this.queryBuilder = new PostgresQueryBuilder(this.target, this.queryModel);
+    this.updateProjection();
 
     this.formats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
 
@@ -66,7 +70,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.metricColumnSegment = uiSegmentSrv.newSegment(this.target.metricColumn);
 
     this.buildSelectMenu();
-    this.buildWhereSegments();
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
     this.groupByAdd = this.uiSegmentSrv.newPlusButton();
 
@@ -74,10 +77,31 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
   }
 
+  updateProjection() {
+    this.selectModels = _.map(this.target.select, function(parts: any) {
+      return _.map(parts, sqlPart.create).filter(n => n);
+    });
+    this.whereParts = _.map(this.target.where, sqlPart.create).filter(n => n);
+    this.groupByParts = _.map(this.target.groupBy, sqlPart.create).filter(n => n);
+  }
+
+  updatePersistedParts() {
+    this.target.select = _.map(this.selectModels, function(selectParts) {
+      return _.map(selectParts, function(part: any) {
+        return { type: part.def.type, params: part.params };
+      });
+    });
+    this.target.where = _.map(this.whereParts, function(part: any) {
+      return { type: part.def.type, name: part.name, params: part.params };
+    });
+    this.target.groupBy = _.map(this.groupByParts, function(part: any) {
+      return { type: part.def.type, params: part.params };
+    });
+  }
+
   buildSelectMenu() {
     this.selectMenu = [
       { text: 'Aggregate', value: 'aggregate' },
-      { text: 'Math', value: 'math' },
       { text: 'Special', value: 'special' },
       { text: 'Alias', value: 'alias' },
       { text: 'Column', value: 'column' },
@@ -88,12 +112,23 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.target.rawQuery = !this.target.rawQuery;
   }
 
+  resetPlusButton(button) {}
+
+  // schema functions
+
   getSchemaSegments() {
     return this.datasource
       .metricFindQuery(this.queryBuilder.buildSchemaQuery())
       .then(this.transformToSegments({}))
       .catch(this.handleQueryError.bind(this));
   }
+
+  schemaChanged() {
+    this.target.schema = this.schemaSegment.value;
+    this.panelCtrl.refresh();
+  }
+
+  // table functions
 
   getTableSegments() {
     return this.datasource
@@ -118,11 +153,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   tableChanged() {
     this.target.table = this.tableSegment.value;
-    this.panelCtrl.refresh();
-  }
-
-  schemaChanged() {
-    this.target.schema = this.schemaSegment.value;
     this.panelCtrl.refresh();
   }
 
@@ -193,11 +223,32 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   addSelectPart(selectParts, cat, subitem) {
     if ('submenu' in cat) {
-      this.queryModel.addSelectPart(selectParts, subitem.value);
+      this.addSelectPart2(selectParts, subitem.value);
     } else {
-      this.queryModel.addSelectPart(selectParts, cat.value);
+      this.addSelectPart2(selectParts, cat.value);
     }
     this.panelCtrl.refresh();
+  }
+
+  removeSelectPart(selectParts, part) {
+    // if we remove the field remove the whole statement
+    if (part.def.type === 'column') {
+      if (this.selectModels.length > 1) {
+        let modelsIndex = _.indexOf(this.selectModels, selectParts);
+        this.selectModels.splice(modelsIndex, 1);
+      }
+    } else {
+      let partIndex = _.indexOf(selectParts, part);
+      selectParts.splice(partIndex, 1);
+    }
+
+    this.updatePersistedParts();
+  }
+
+  addSelectPart2(selectParts, type) {
+    let partModel = sqlPart.create({ type: type });
+    partModel.def.addStrategy(selectParts, partModel, this);
+    this.updatePersistedParts();
   }
 
   handleSelectPartEvent(selectParts, part, evt) {
@@ -221,7 +272,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         break;
       }
       case 'action': {
-        this.queryModel.removeSelectPart(selectParts, part);
+        this.removeSelectPart(selectParts, part);
         this.panelCtrl.refresh();
         break;
       }
@@ -244,7 +295,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         break;
       }
       case 'action': {
-        this.queryModel.removeGroupByPart(part, index);
+        this.removeGroupBy(part, index);
         this.panelCtrl.refresh();
         break;
       }
@@ -252,6 +303,53 @@ export class PostgresQueryCtrl extends QueryCtrl {
         return this.$q.when([{ text: 'Remove', value: 'remove-part' }]);
       }
     }
+  }
+
+  addGroupBy(partType, value) {
+    let params = [value];
+    if (partType === 'time') {
+      params = ['1m', 'none'];
+    }
+    let partModel = sqlPart.create({ type: partType, params: params });
+
+    if (partType === 'time') {
+      // put timeGroup at start
+      this.groupByParts.splice(0, 0, partModel);
+    } else {
+      this.groupByParts.push(partModel);
+    }
+
+    // add aggregates when adding group by
+    for (let i = 0; i < this.selectModels.length; i++) {
+      var selectParts = this.selectModels[i];
+      if (!selectParts.some(part => part.def.type === 'aggregate')) {
+        let aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
+        selectParts.splice(1, 0, aggregate);
+        if (!selectParts.some(part => part.def.type === 'alias')) {
+          let alias = sqlPart.create({ type: 'alias', params: [selectParts[0].part.params[0]] });
+          selectParts.push(alias);
+        }
+      }
+    }
+
+    this.updatePersistedParts();
+  }
+
+  removeGroupBy(part, index) {
+    if (part.def.type === 'time') {
+      // remove aggregations
+      this.selectModels = _.map(this.selectModels, (s: any) => {
+        return _.filter(s, (part: any) => {
+          if (part.def.type === 'aggregate') {
+            return false;
+          }
+          return true;
+        });
+      });
+    }
+
+    this.groupByParts.splice(index, 1);
+    this.updatePersistedParts();
   }
 
   buildWhereSegments() {
@@ -286,7 +384,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       case 'action': {
         // remove element
         whereParts.splice(index, 1);
-        this.queryModel.updatePersistedParts();
+        this.updatePersistedParts();
         this.panelCtrl.refresh();
         break;
       }
@@ -307,11 +405,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
   whereAddAction(part, index) {
     switch (this.whereAdd.type) {
       case 'macro': {
-        this.queryModel.whereParts.push(sqlPart.create({ type: 'macro', name: this.whereAdd.value, params: [] }));
+        this.whereParts.push(sqlPart.create({ type: 'macro', name: this.whereAdd.value, params: [] }));
         break;
       }
       default: {
-        this.queryModel.whereParts.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
+        this.whereParts.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
       }
     }
 
@@ -319,7 +417,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.whereAdd.html = plusButton.html;
     this.whereAdd.value = plusButton.value;
 
-    this.queryModel.updatePersistedParts();
+    this.updatePersistedParts();
     this.panelCtrl.refresh();
   }
 
@@ -342,7 +440,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   groupByAction() {
     switch (this.groupByAdd.value) {
       default: {
-        this.queryModel.addGroupBy(this.groupByAdd.type, this.groupByAdd.value);
+        this.addGroupBy(this.groupByAdd.type, this.groupByAdd.value);
       }
     }
 
