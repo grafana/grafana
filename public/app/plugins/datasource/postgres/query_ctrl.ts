@@ -112,9 +112,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.target.rawQuery = !this.target.rawQuery;
   }
 
-  resetPlusButton(button) {}
-
-  // schema functions
+  resetPlusButton(button) {
+    let plusButton = this.uiSegmentSrv.newPlusButton();
+    button.html = plusButton.html;
+    button.value = plusButton.value;
+  }
 
   getSchemaSegments() {
     return this.datasource
@@ -128,13 +130,16 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  // table functions
-
   getTableSegments() {
     return this.datasource
       .metricFindQuery(this.queryBuilder.buildTableQuery())
       .then(this.transformToSegments({}))
       .catch(this.handleQueryError.bind(this));
+  }
+
+  tableChanged() {
+    this.target.table = this.tableSegment.value;
+    this.panelCtrl.refresh();
   }
 
   getTimeColumnSegments() {
@@ -144,21 +149,16 @@ export class PostgresQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryError.bind(this));
   }
 
+  timeColumnChanged() {
+    this.target.timeColumn = this.timeColumnSegment.value;
+    this.panelCtrl.refresh();
+  }
+
   getMetricColumnSegments() {
     return this.datasource
       .metricFindQuery(this.queryBuilder.buildColumnQuery('metric'))
       .then(this.transformToSegments({ addNone: true }))
       .catch(this.handleQueryError.bind(this));
-  }
-
-  tableChanged() {
-    this.target.table = this.tableSegment.value;
-    this.panelCtrl.refresh();
-  }
-
-  timeColumnChanged() {
-    this.target.timeColumn = this.timeColumnSegment.value;
-    this.panelCtrl.refresh();
   }
 
   metricColumnChanged() {
@@ -188,7 +188,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   transformToSegments(config) {
     return results => {
-      var segments = _.map(results, segment => {
+      let segments = _.map(results, segment => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
           expandable: segment.expandable,
@@ -197,7 +197,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
       if (config.addTemplateVars) {
         for (let variable of this.templateSrv.variables) {
-          var value;
+          let value;
           value = '$' + variable.name;
           if (config.templateQuoter && variable.multi === false) {
             value = config.templateQuoter(value);
@@ -222,17 +222,15 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   addSelectPart(selectParts, cat, subitem) {
-    if ('submenu' in cat) {
-      this.addSelectPart2(selectParts, subitem.value);
-    } else {
-      this.addSelectPart2(selectParts, cat.value);
-    }
+    let partModel = sqlPart.create({ type: cat.value });
+    partModel.def.addStrategy(selectParts, partModel, this);
+    this.updatePersistedParts();
     this.panelCtrl.refresh();
   }
 
   removeSelectPart(selectParts, part) {
-    // if we remove the field remove the whole statement
     if (part.def.type === 'column') {
+      // remove all parts of column unless its last column
       if (this.selectModels.length > 1) {
         let modelsIndex = _.indexOf(this.selectModels, selectParts);
         this.selectModels.splice(modelsIndex, 1);
@@ -242,12 +240,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
       selectParts.splice(partIndex, 1);
     }
 
-    this.updatePersistedParts();
-  }
-
-  addSelectPart2(selectParts, type) {
-    let partModel = sqlPart.create({ type: type });
-    partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
   }
 
@@ -320,8 +312,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
 
     // add aggregates when adding group by
-    for (let i = 0; i < this.selectModels.length; i++) {
-      var selectParts = this.selectModels[i];
+    for (let selectParts of this.selectModels) {
       if (!selectParts.some(part => part.def.type === 'aggregate')) {
         let aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
         selectParts.splice(1, 0, aggregate);
@@ -350,11 +341,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     this.groupByParts.splice(index, 1);
     this.updatePersistedParts();
-  }
-
-  buildWhereSegments() {
-    //    this.whereSegments = [];
-    //    this.whereSegments.push(sqlPart.create({ type: 'expression', params: ['value', '=', 'value'] }));
   }
 
   handleWherePartEvent(whereParts, part, evt, index) {
@@ -413,11 +399,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
       }
     }
 
-    var plusButton = this.uiSegmentSrv.newPlusButton();
-    this.whereAdd.html = plusButton.html;
-    this.whereAdd.value = plusButton.value;
-
     this.updatePersistedParts();
+    this.resetPlusButton(this.whereAdd);
     this.panelCtrl.refresh();
   }
 
@@ -444,9 +427,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       }
     }
 
-    var plusButton = this.uiSegmentSrv.newPlusButton();
-    this.groupByAdd.html = plusButton.html;
-    this.groupByAdd.value = plusButton.value;
+    this.resetPlusButton(this.groupByAdd);
     this.panelCtrl.refresh();
   }
 
