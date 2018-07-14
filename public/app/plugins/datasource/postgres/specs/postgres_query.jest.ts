@@ -1,6 +1,10 @@
 import PostgresQuery from '../postgres_query';
 
 describe('PostgresQuery', function() {
+  let templateSrv = {
+    replace: jest.fn(text => text),
+  };
+
   describe('When initializing', function() {
     it('should not be in SQL mode', function() {
       let query = new PostgresQuery({}, templateSrv);
