@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { SqlPartDef, SqlPart } from 'app/core/components/sql_part/sql_part';
 
 var index = [];
