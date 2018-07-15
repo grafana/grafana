@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { PostgresQueryBuilder } from './query_builder';
 import { QueryCtrl } from 'app/plugins/sdk';
+import { SqlPart } from 'app/core/components/sql_part/sql_part';
 import PostgresQuery from './postgres_query';
 import sqlPart from './sql_part';
 
@@ -32,10 +33,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
   whereAdd: any;
   timeColumnSegment: any;
   metricColumnSegment: any;
-  selectMenu: any;
-  selectModels: any[];
-  groupByParts: any[];
-  whereParts: any[];
+  selectMenu: any[];
+  selectModels: SqlPart[][];
+  groupByParts: SqlPart[][];
+  whereParts: SqlPart[][];
   groupByAdd: any;
 
   /** @ngInject **/

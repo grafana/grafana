@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { SqlPartDef, SqlPart, functionRenderer, suffixRenderer } from 'app/core/components/sql_part/sql_part';
+import { SqlPartDef, SqlPart } from 'app/core/components/sql_part/sql_part';
 
 var index = [];
 
@@ -14,18 +14,6 @@ function createPart(part): any {
 
 function register(options: any) {
   index[options.type] = new SqlPartDef(options);
-}
-
-function aliasRenderer(part, innerExpr) {
-  return innerExpr + ' AS ' + '"' + part.params[0] + '"';
-}
-
-function aggregateRenderer(part, innerExpr) {
-  return part.params[0] + '(' + innerExpr + ')';
-}
-
-function columnRenderer(part, innerExpr) {
-  return part.params[0];
 }
 
 function replaceAggregationAddStrategy(selectParts, partModel) {
@@ -133,7 +121,6 @@ register({
   addStrategy: addColumnStrategy,
   params: [{ type: 'column', dynamicLookup: true }],
   defaultParams: ['value'],
-  renderer: columnRenderer,
 });
 
 register({
@@ -147,7 +134,6 @@ register({
     { name: 'right', type: 'string', dynamicLookup: true },
   ],
   defaultParams: ['value', '=', 'value'],
-  renderer: columnRenderer,
 });
 
 register({
@@ -157,7 +143,6 @@ register({
   addStrategy: addExpressionStrategy,
   params: [],
   defaultParams: [],
-  renderer: columnRenderer,
 });
 
 register({
@@ -166,7 +151,6 @@ register({
   addStrategy: replaceAggregationAddStrategy,
   params: [{ name: 'name', type: 'string', dynamicLookup: true }],
   defaultParams: ['avg'],
-  renderer: aggregateRenderer,
 });
 
 register({
@@ -175,7 +159,6 @@ register({
   addStrategy: addMathStrategy,
   params: [{ name: 'expr', type: 'string' }],
   defaultParams: [' / 100'],
-  renderer: suffixRenderer,
 });
 
 register({
@@ -184,8 +167,6 @@ register({
   addStrategy: addAliasStrategy,
   params: [{ name: 'name', type: 'string', quote: 'double' }],
   defaultParams: ['alias'],
-  renderMode: 'suffix',
-  renderer: aliasRenderer,
 });
 
 register({
@@ -205,7 +186,6 @@ register({
     },
   ],
   defaultParams: ['$__interval', 'none'],
-  renderer: functionRenderer,
 });
 
 register({
@@ -220,7 +200,6 @@ register({
   ],
   defaultParams: ['increase'],
   addStrategy: replaceSpecialAddStrategy,
-  renderer: aggregateRenderer,
 });
 
 export default {

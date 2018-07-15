@@ -9,7 +9,6 @@ export class SqlPartDef {
   wrapOpen: string;
   wrapClose: string;
   separator: string;
-  renderer: any;
   category: any;
   addStrategy: any;
 
@@ -32,7 +31,6 @@ export class SqlPartDef {
     }
     this.params = options.params;
     this.defaultParams = options.defaultParams;
-    this.renderer = options.renderer;
     this.category = options.category;
     this.addStrategy = options.addStrategy;
   }
@@ -74,40 +72,4 @@ export class SqlPart {
 
     this.part.params = this.params;
   }
-
-  render(innerExpr: string) {
-    return this.def.renderer(this, innerExpr);
-  }
-}
-
-export function functionRenderer(part, innerExpr) {
-  var str = part.def.type + '(';
-  var parameters = _.map(part.params, (value, index) => {
-    var paramType = part.def.params[index];
-    if (paramType.type === 'time') {
-      if (value === 'auto') {
-        value = '$__interval';
-      }
-    }
-    if (paramType.quote === 'single') {
-      return "'" + value + "'";
-    } else if (paramType.quote === 'double') {
-      return '"' + value + '"';
-    }
-
-    return value;
-  });
-
-  if (innerExpr) {
-    parameters.unshift(innerExpr);
-  }
-  return str + parameters.join(', ') + ')';
-}
-
-export function suffixRenderer(part, innerExpr) {
-  return innerExpr + ' ' + part.params[0];
-}
-
-export function identityRenderer(part, innerExpr) {
-  return part.params[0];
 }
