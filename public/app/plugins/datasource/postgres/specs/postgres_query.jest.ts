@@ -103,5 +103,9 @@ describe('PostgresQuery', function() {
     let query = new PostgresQuery(target, templateSrv);
 
     expect(query.buildQuery()).toBe(result);
+
+    query.target.metricColumn = 'm';
+    result = 'SELECT\n  t AS "time",\n  m AS metric,\n  value\nFROM public.table\nORDER BY 1';
+    expect(query.buildQuery()).toBe(result);
   });
 });

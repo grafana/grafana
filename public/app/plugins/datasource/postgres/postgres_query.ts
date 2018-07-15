@@ -220,7 +220,7 @@ export default class PostgresQuery {
 
     query += '\n  ' + this.buildTimeColumn();
     if (this.hasMetricColumn()) {
-      query += '\n  ' + this.buildMetricColumn();
+      query += ',\n  ' + this.buildMetricColumn();
     }
     query += this.buildValueColumns();
 
