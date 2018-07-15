@@ -77,22 +77,16 @@ export default class PostgresQuery {
 
   render(interpolate?) {
     let target = this.target;
-    let query;
 
-    if (target.rawQuery) {
-      if (interpolate) {
-        return this.templateSrv.replace(target.rawSql, this.scopedVars, this.interpolateQueryStr);
-      } else {
-        return target.rawSql;
-      }
+    if (!target.rawQuery) {
+      target.rawSql = this.buildQuery();
     }
 
-    query = this.buildQuery();
     if (interpolate) {
-      query = this.templateSrv.replace(query, this.scopedVars, this.interpolateQueryStr);
+      return this.templateSrv.replace(target.rawSql, this.scopedVars, this.interpolateQueryStr);
+    } else {
+      return target.rawSql;
     }
-    this.target.rawSql = query;
-    return query;
   }
 
   buildTimeColumn() {
