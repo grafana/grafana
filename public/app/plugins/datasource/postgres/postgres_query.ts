@@ -17,7 +17,7 @@ export default class PostgresQuery {
     target.metricColumn = target.metricColumn || 'none';
 
     target.groupBy = target.groupBy || [];
-    target.where = target.where || [{ type: 'macro', params: ['$__timeFilter'] }];
+    target.where = target.where || [{ type: 'macro', name: '$__timeFilter', params: [] }];
     target.select = target.select || [[{ type: 'column', params: ['value'] }]];
 
     // handle pre query gui panels gracefully

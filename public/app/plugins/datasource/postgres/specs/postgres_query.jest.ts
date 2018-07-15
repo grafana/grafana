@@ -98,6 +98,7 @@ describe('PostgresQuery', function() {
       schema: 'public',
       table: 'table',
       select: [[{ type: 'column', params: ['value'] }]],
+      where: [],
     };
     let result = 'SELECT\n  t AS "time",\n  value\nFROM public.table\nORDER BY 1';
     let query = new PostgresQuery(target, templateSrv);
