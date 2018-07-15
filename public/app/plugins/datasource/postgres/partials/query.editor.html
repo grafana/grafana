@@ -19,7 +19,10 @@
         <label class="gf-form-label query-keyword width-7">Time column</label>
         <metric-segment segment="ctrl.timeColumnSegment" get-options="ctrl.getTimeColumnSegments()" on-change="ctrl.timeColumnChanged()"></metric-segment>
 
-        <label class="gf-form-label query-keyword width-8">Metric column</label>
+        <label class="gf-form-label query-keyword width-9">
+          Metric column
+          <info-popover mode="right-normal">Column to be used as metric name for the value column.</info-popover>
+        </label>
         <metric-segment segment="ctrl.metricColumnSegment" get-options="ctrl.getMetricColumnSegments()" on-change="ctrl.metricColumnChanged()"></metric-segment>
       </div>
 
