@@ -81,4 +81,42 @@
 
 	</div>
 
+	<!-- Y-Axis Label Mapping -->
+	<div class="section gf-form-group" ng-repeat="yaxis in ctrl.panel.yaxes">
+		<!-- header -->
+		<h5 class="section-heading" ng-show="$index === 0">Left Y Label Mapping</h5>
+		<h5 class="section-heading" ng-show="$index === 1">Right Y Label Mapping</h5>
+		<!-- Mapped Label Only -->
+		<gf-form-switch class="gf-form" ng-if="ctrl.hasYaxisLabelMapping($index)" label="Mapped Label Only" label-class="width-10" checked="yaxis.mappedLabelOnly" on-change="ctrl.render()"></gf-form-switch>
+		<!-- Mapping Entries -->
+		<div class="gf-form-inline" ng-repeat="yaxisLabelMapping in ctrl.getYaxisLabelMappings($index)">
+			<!-- key -->
+			<div class="gf-form">
+				<input type="number" class="gf-form-input width-8" placeholder="value" empty-to-null ng-model="yaxisLabelMapping.value" ng-change="ctrl.render()" ng-model-onblur>
+			</div>
+			<!-- value -->
+			<div class="gf-form">
+				<span class="gf-form-label">
+					<i class="fa fa-arrow-right"></i>
+				</span>
+				<input type="string" class="gf-form-input width-8" placeholder="label" empty-to-null ng-model="yaxisLabelMapping.label" ng-change="ctrl.render()" ng-model-onblur>
+			</div>
+			<!-- Remove Mapping Button -->
+			<div class="gf-form">
+				<label class="gf-form-label">
+					<a class="pointer" ng-click="ctrl.removeYaxisLabelMapping($parent.$index, $index)">
+						<i class="fa fa-trash"></i>
+					</a>
+				</label>
+			</div>
+		</div>
+		<!-- Add Mapping Button -->
+		<div class="gf-form-inline">
+			<div class="gf-form-button-row">
+				<button class="btn btn-inverse" ng-click="ctrl.addYaxisLabelMapping($index)">
+					<i class="fa fa-plus"></i>&nbsp;Add Mapping
+				</button>
+			</div>
+		</div>
+	</div>
 </div>
