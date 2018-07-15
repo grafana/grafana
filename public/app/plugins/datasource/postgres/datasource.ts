@@ -27,17 +27,17 @@ export class PostgresDatasource {
       return value;
     }
 
-    var quotedValues = _.map(value, function(val) {
+    let quotedValues = _.map(value, function(val) {
       return "'" + val + "'";
     });
     return quotedValues.join(',');
   }
 
   query(options) {
-    var queries = _.filter(options.targets, target => {
+    let queries = _.filter(options.targets, target => {
       return target.hide !== true;
     }).map(target => {
-      var queryModel = new PostgresQuery(target, this.templateSrv, options.scopedVars);
+      let queryModel = new PostgresQuery(target, this.templateSrv, options.scopedVars);
 
       return {
         refId: target.refId,

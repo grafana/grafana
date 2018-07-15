@@ -154,6 +154,10 @@ export default class PostgresQuery {
           break;
         case 'rate':
           let timeColumn = this.target.timeColumn;
+          if (aggregate) {
+            timeColumn = 'min(' + timeColumn + ')';
+          }
+
           let curr = query;
           let prev = 'lag(' + curr + ') OVER (' + over + ')';
           query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
