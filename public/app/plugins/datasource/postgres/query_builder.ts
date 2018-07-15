@@ -1,6 +1,11 @@
 export class PostgresQueryBuilder {
   constructor(private target, private queryModel) {}
 
+  // quote identifier as literal to use in metadata queries
+  quoteIdentAsLiteral(value) {
+    return this.queryModel.quoteLiteral(this.queryModel.unquoteIdentifier(value));
+  }
+
   buildSchemaQuery() {
     let query = 'SELECT quote_ident(schema_name) FROM information_schema.schemata WHERE';
     query += " schema_name NOT LIKE 'pg_%' AND schema_name NOT LIKE '\\_%' AND schema_name <> 'information_schema';";
@@ -12,11 +17,6 @@ export class PostgresQueryBuilder {
     let query = 'SELECT quote_ident(table_name) FROM information_schema.tables WHERE ';
     query += 'table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
     return query;
-  }
-
-  // quote identifier as literal to use in metadata queries
-  quoteIdentAsLiteral(value) {
-    return this.queryModel.quoteLiteral(this.queryModel.unquoteIdentifier(value));
   }
 
   buildColumnQuery(type?: string) {
@@ -31,11 +31,16 @@ export class PostgresQueryBuilder {
         break;
       }
       case 'metric': {
-        query += " AND data_type IN ('text','char','varchar','integer','bigint')";
+        query += " AND data_type IN ('text','char','varchar')";
         break;
       }
       case 'value': {
         query += " AND data_type IN ('bigint','integer','double precision','real')";
+        query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
+        break;
+      }
+      case 'groupby': {
+        query += " AND data_type IN ('text','char','varchar')";
         break;
       }
     }

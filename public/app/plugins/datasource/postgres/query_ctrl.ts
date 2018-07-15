@@ -442,7 +442,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   getGroupByOptions() {
     return this.datasource
-      .metricFindQuery(this.queryBuilder.buildColumnQuery())
+      .metricFindQuery(this.queryBuilder.buildColumnQuery('groupby'))
       .then(tags => {
         var options = [];
         if (!this.queryModel.hasGroupByTime()) {
