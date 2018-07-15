@@ -2,7 +2,6 @@ import _ from 'lodash';
 
 export default class PostgresQuery {
   target: any;
-  queryBuilder: any;
   templateSrv: any;
   scopedVars: any;
 

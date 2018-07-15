@@ -1,4 +1,4 @@
-export class PostgresQueryBuilder {
+export class PostgresMetaQuery {
   constructor(private target, private queryModel) {}
 
   // quote identifier as literal to use in metadata queries

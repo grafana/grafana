@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { PostgresQueryBuilder } from './query_builder';
+import { PostgresMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { SqlPart } from 'app/core/components/sql_part/sql_part';
 import PostgresQuery from './postgres_query';
@@ -24,7 +24,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   showLastQuerySQL: boolean;
   formats: any[];
   queryModel: PostgresQuery;
-  queryBuilder: PostgresQueryBuilder;
+  metaBuilder: PostgresMetaQuery;
   lastQueryMeta: QueryMeta;
   lastQueryError: string;
   showHelp: boolean;
@@ -44,7 +44,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     super($scope, $injector);
     this.target = this.target;
     this.queryModel = new PostgresQuery(this.target, templateSrv, this.panel.scopedVars);
-    this.queryBuilder = new PostgresQueryBuilder(this.target, this.queryModel);
+    this.metaBuilder = new PostgresMetaQuery(this.target, this.queryModel);
     this.updateProjection();
 
     this.formats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
@@ -121,7 +121,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   getSchemaSegments() {
     return this.datasource
-      .metricFindQuery(this.queryBuilder.buildSchemaQuery())
+      .metricFindQuery(this.metaBuilder.buildSchemaQuery())
       .then(this.transformToSegments({}))
       .catch(this.handleQueryError.bind(this));
   }
@@ -133,7 +133,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   getTableSegments() {
     return this.datasource
-      .metricFindQuery(this.queryBuilder.buildTableQuery())
+      .metricFindQuery(this.metaBuilder.buildTableQuery())
       .then(this.transformToSegments({}))
       .catch(this.handleQueryError.bind(this));
   }
@@ -145,7 +145,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   getTimeColumnSegments() {
     return this.datasource
-      .metricFindQuery(this.queryBuilder.buildColumnQuery('time'))
+      .metricFindQuery(this.metaBuilder.buildColumnQuery('time'))
       .then(this.transformToSegments({}))
       .catch(this.handleQueryError.bind(this));
   }
@@ -157,7 +157,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   getMetricColumnSegments() {
     return this.datasource
-      .metricFindQuery(this.queryBuilder.buildColumnQuery('metric'))
+      .metricFindQuery(this.metaBuilder.buildColumnQuery('metric'))
       .then(this.transformToSegments({ addNone: true }))
       .catch(this.handleQueryError.bind(this));
   }
@@ -285,12 +285,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
         switch (part.def.type) {
           case 'aggregate':
             return this.datasource
-              .metricFindQuery(this.queryBuilder.buildAggregateQuery())
+              .metricFindQuery(this.metaBuilder.buildAggregateQuery())
               .then(this.transformToSegments({}))
               .catch(this.handleQueryError.bind(this));
           case 'column':
             return this.datasource
-              .metricFindQuery(this.queryBuilder.buildColumnQuery('value'))
+              .metricFindQuery(this.metaBuilder.buildColumnQuery('value'))
               .then(this.transformToSegments({}))
               .catch(this.handleQueryError.bind(this));
         }
@@ -314,7 +314,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     switch (evt.name) {
       case 'get-param-options': {
         return this.datasource
-          .metricFindQuery(this.queryBuilder.buildColumnQuery())
+          .metricFindQuery(this.metaBuilder.buildColumnQuery())
           .then(this.transformToSegments({}))
           .catch(this.handleQueryError.bind(this));
       }
@@ -385,16 +385,16 @@ export class PostgresQueryCtrl extends QueryCtrl {
         switch (evt.param.name) {
           case 'left':
             return this.datasource
-              .metricFindQuery(this.queryBuilder.buildColumnQuery())
+              .metricFindQuery(this.metaBuilder.buildColumnQuery())
               .then(this.transformToSegments({}))
               .catch(this.handleQueryError.bind(this));
           case 'right':
             return this.datasource
-              .metricFindQuery(this.queryBuilder.buildValueQuery(part.params[0]))
+              .metricFindQuery(this.metaBuilder.buildValueQuery(part.params[0]))
               .then(this.transformToSegments({ addTemplateVars: true, templateQuoter: this.queryModel.quoteLiteral }))
               .catch(this.handleQueryError.bind(this));
           case 'op':
-            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=', 'IN']));
+            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=', 'IN', 'NOT IN']));
           default:
             return this.$q.when([]);
         }
@@ -442,7 +442,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   getGroupByOptions() {
     return this.datasource
-      .metricFindQuery(this.queryBuilder.buildColumnQuery('groupby'))
+      .metricFindQuery(this.metaBuilder.buildColumnQuery('groupby'))
       .then(tags => {
         var options = [];
         if (!this.queryModel.hasGroupByTime()) {
