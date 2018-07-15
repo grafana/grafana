@@ -6,6 +6,53 @@ export class PostgresMetaQuery {
     return this.queryModel.quoteLiteral(this.queryModel.unquoteIdentifier(value));
   }
 
+  findMetricTable() {
+    // query that returns first table found that has a timestamptz column and a float column
+    let query = `
+SELECT
+	table_schema,
+	table_name,
+	( SELECT
+	    column_name
+	  FROM information_schema.columns c
+    WHERE
+      c.table_schema = t.table_schema AND
+      c.table_name = t.table_name AND
+      udt_name IN ('timestamptz','timestamp')
+    ORDER BY ordinal_position LIMIT 1
+  ) AS time_column,
+  ( SELECT
+      column_name
+    FROM information_schema.columns c
+    WHERE
+      c.table_schema = t.table_schema AND
+      c.table_name = t.table_name AND
+      udt_name='float8'
+    ORDER BY ordinal_position LIMIT 1
+  ) AS value_column
+FROM information_schema.tables t
+WHERE
+  table_schema !~* '^_|^pg_|information_schema' AND
+  EXISTS
+  ( SELECT 1
+    FROM information_schema.columns c
+    WHERE
+      c.table_schema = t.table_schema AND
+      c.table_name = t.table_name AND
+      udt_name IN ('timestamptz','timestamp')
+  )
+  ( SELECT 1
+    FROM information_schema.columns c
+    WHERE
+      c.table_schema = t.table_schema AND
+      c.table_name = t.table_name AND
+      udt_name='float8'
+  )
+LIMIT 1
+;`;
+    return query;
+  }
+
   buildSchemaQuery() {
     let query = 'SELECT quote_ident(schema_name) FROM information_schema.schemata WHERE';
     query += " schema_name NOT LIKE 'pg_%' AND schema_name NOT LIKE '\\_%' AND schema_name <> 'information_schema';";
