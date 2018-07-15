@@ -9,8 +9,6 @@ export class SqlPartDef {
   wrapOpen: string;
   wrapClose: string;
   separator: string;
-  category: any;
-  addStrategy: any;
 
   constructor(options: any) {
     this.type = options.type;
@@ -31,8 +29,6 @@ export class SqlPartDef {
     }
     this.params = options.params;
     this.defaultParams = options.defaultParams;
-    this.category = options.category;
-    this.addStrategy = options.addStrategy;
   }
 }
 

@@ -222,9 +222,44 @@ export class PostgresQueryCtrl extends QueryCtrl {
     };
   }
 
-  addSelectPart(selectParts, cat, subitem) {
-    let partModel = sqlPart.create({ type: cat.value });
-    partModel.def.addStrategy(selectParts, partModel, this);
+  addSelectPart(selectParts, item) {
+    let partModel = sqlPart.create({ type: item.value });
+    let addAlias = false;
+
+    switch (item.value) {
+      case 'column':
+        let parts = _.map(selectParts, function(part: any) {
+          return sqlPart.create({ type: part.def.type, params: _.clone(part.params) });
+        });
+        this.selectModels.push(parts);
+        break;
+      case 'aggregate':
+      case 'special':
+        let index = _.findIndex(selectParts, (p: any) => p.def.type === item.value);
+        if (index !== -1) {
+          selectParts[index] = partModel;
+        } else {
+          selectParts.splice(1, 0, partModel);
+        }
+        if (!_.find(selectParts, (p: any) => p.def.type === 'alias')) {
+          addAlias = true;
+        }
+        break;
+      case 'alias':
+        addAlias = true;
+        break;
+    }
+
+    if (addAlias) {
+      // set initial alias name to column name
+      partModel = sqlPart.create({ type: 'alias', params: [selectParts[0].params[0]] });
+      if (selectParts[selectParts.length - 1].def.type === 'alias') {
+        selectParts[selectParts.length - 1] = partModel;
+      } else {
+        selectParts.push(partModel);
+      }
+    }
+
     this.updatePersistedParts();
     this.panelCtrl.refresh();
   }
