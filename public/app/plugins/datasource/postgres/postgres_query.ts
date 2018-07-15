@@ -15,7 +15,7 @@ export default class PostgresQuery {
     target.schema = target.schema || 'public';
     target.format = target.format || 'time_series';
     target.timeColumn = target.timeColumn || 'time';
-    target.metricColumn = target.metricColumn || 'None';
+    target.metricColumn = target.metricColumn || 'none';
 
     target.groupBy = target.groupBy || [];
     target.where = target.where || [];
@@ -57,6 +57,10 @@ export default class PostgresQuery {
     return _.find(this.target.groupBy, (g: any) => g.type === 'time');
   }
 
+  hasMetricColumn() {
+    return this.target.metricColumn !== 'none';
+  }
+
   interpolateQueryStr(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
@@ -83,7 +87,7 @@ export default class PostgresQuery {
       }
     }
 
-    query = this.buildQuery(target);
+    query = this.buildQuery();
     if (interpolate) {
       query = this.templateSrv.replace(query, this.scopedVars, this.interpolateQueryStr);
     }
@@ -91,7 +95,7 @@ export default class PostgresQuery {
     return query;
   }
 
-  buildTimeColumn(target) {
+  buildTimeColumn() {
     let timeGroup = this.hasGroupByTime();
     let query;
 
@@ -102,32 +106,32 @@ export default class PostgresQuery {
       } else {
         args = timeGroup.params[0];
       }
-      query = '$__timeGroup(' + target.timeColumn + ',' + args + ')';
+      query = '$__timeGroup(' + this.target.timeColumn + ',' + args + ')';
     } else {
-      query = target.timeColumn + ' AS "time"';
+      query = this.target.timeColumn + ' AS "time"';
     }
 
     return query;
   }
 
-  buildMetricColumn(target) {
-    if (target.metricColumn !== 'None') {
-      return target.metricColumn + ' AS metric';
+  buildMetricColumn() {
+    if (this.hasMetricColumn()) {
+      return this.target.metricColumn + ' AS metric';
     }
 
     return '';
   }
 
-  buildValueColumns(target) {
+  buildValueColumns() {
     let query = '';
-    for (let i = 0; i < target.select.length; i++) {
-      query += ',\n  ' + this.buildValueColumn(target, target.select[i]);
+    for (let column of this.target.select) {
+      query += ',\n  ' + this.buildValueColumn(column);
     }
 
     return query;
   }
 
-  buildValueColumn(target, column) {
+  buildValueColumn(column) {
     let query = '';
 
     let columnName = _.find(column, (g: any) => g.type === 'column');
@@ -141,15 +145,15 @@ export default class PostgresQuery {
     let special = _.find(column, (g: any) => g.type === 'special');
     if (special) {
       let over = '';
-      if (target.metricColumn !== 'None') {
-        over = 'PARTITION BY ' + target.metricColumn;
+      if (this.hasMetricColumn()) {
+        over = 'PARTITION BY ' + this.target.metricColumn;
       }
       switch (special.params[0]) {
         case 'increase':
           query = query + ' - lag(' + query + ') OVER (' + over + ')';
           break;
         case 'rate':
-          let timeColumn = target.timeColumn;
+          let timeColumn = this.target.timeColumn;
           let curr = query;
           let prev = 'lag(' + curr + ') OVER (' + over + ')';
           query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
@@ -166,12 +170,12 @@ export default class PostgresQuery {
     return query;
   }
 
-  buildWhereClause(target) {
+  buildWhereClause() {
     let query = '';
-    let conditions = _.map(target.where, (tag, index) => {
+    let conditions = _.map(this.target.where, (tag, index) => {
       switch (tag.type) {
         case 'macro':
-          return tag.name + '(' + target.timeColumn + ')';
+          return tag.name + '(' + this.target.timeColumn + ')';
           break;
         case 'expression':
           return tag.params.join(' ');
@@ -186,12 +190,12 @@ export default class PostgresQuery {
     return query;
   }
 
-  buildGroupByClause(target) {
+  buildGroupByClause() {
     let query = '';
     let groupBySection = '';
 
-    for (let i = 0; i < target.groupBy.length; i++) {
-      let part = target.groupBy[i];
+    for (let i = 0; i < this.target.groupBy.length; i++) {
+      let part = this.target.groupBy[i];
       if (i > 0) {
         groupBySection += ', ';
       }
@@ -204,26 +208,26 @@ export default class PostgresQuery {
 
     if (groupBySection.length) {
       query = '\nGROUP BY ' + groupBySection;
-      if (target.metricColumn !== 'None') {
+      if (this.hasMetricColumn()) {
         query += ',2';
       }
     }
     return query;
   }
 
-  buildQuery(target) {
+  buildQuery() {
     let query = 'SELECT';
 
-    query += '\n  ' + this.buildTimeColumn(target);
-    if (target.metricColumn !== 'None') {
-      query += '\n  ' + this.buildMetricColumn(target);
+    query += '\n  ' + this.buildTimeColumn();
+    if (this.hasMetricColumn()) {
+      query += '\n  ' + this.buildMetricColumn();
     }
-    query += this.buildValueColumns(target);
+    query += this.buildValueColumns();
 
-    query += '\nFROM ' + target.schema + '.' + target.table;
+    query += '\nFROM ' + this.target.schema + '.' + this.target.table;
 
-    query += this.buildWhereClause(target);
-    query += this.buildGroupByClause(target);
+    query += this.buildWhereClause();
+    query += this.buildGroupByClause();
 
     query += '\nORDER BY 1';
 

@@ -214,7 +214,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       }
 
       if (config.addNone) {
-        segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: 'None', expandable: true }));
+        segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: 'none', expandable: true }));
       }
 
       return segments;
