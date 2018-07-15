@@ -17,7 +17,7 @@ export default class PostgresQuery {
     target.metricColumn = target.metricColumn || 'none';
 
     target.groupBy = target.groupBy || [];
-    target.where = target.where || [];
+    target.where = target.where || [{ type: 'macro', params: ['$__timeFilter'] }];
     target.select = target.select || [[{ type: 'column', params: ['value'] }]];
 
     // handle pre query gui panels gracefully
@@ -76,6 +76,10 @@ export default class PostgresQuery {
 
   render(interpolate?) {
     let target = this.target;
+
+    if (!('table' in this.target)) {
+      return '';
+    }
 
     if (!target.rawQuery) {
       target.rawSql = this.buildQuery();
