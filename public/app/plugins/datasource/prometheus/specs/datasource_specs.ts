@@ -452,7 +452,7 @@ describe('PrometheusDatasource', function() {
         interval: '10s',
         scopedVars: {
           __interval: { text: '10s', value: '10s' },
-          __interval_ms: { text: String(10 * 1000), value: String(10 * 1000) },
+          __interval_ms: { text: 10 * 1000, value: 10 * 1000 },
         },
       };
       var urlExpected =
@@ -463,8 +463,8 @@ describe('PrometheusDatasource', function() {
 
       expect(query.scopedVars.__interval.text).to.be('10s');
       expect(query.scopedVars.__interval.value).to.be('10s');
-      expect(query.scopedVars.__interval_ms.text).to.be(String(10 * 1000));
-      expect(query.scopedVars.__interval_ms.value).to.be(String(10 * 1000));
+      expect(query.scopedVars.__interval_ms.text).to.be(10 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(10 * 1000);
     });
     it('should be min interval when it is greater than auto interval', function() {
       var query = {
@@ -479,7 +479,7 @@ describe('PrometheusDatasource', function() {
         interval: '5s',
         scopedVars: {
           __interval: { text: '5s', value: '5s' },
-          __interval_ms: { text: String(5 * 1000), value: String(5 * 1000) },
+          __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
         },
       };
       var urlExpected =
@@ -490,8 +490,8 @@ describe('PrometheusDatasource', function() {
 
       expect(query.scopedVars.__interval.text).to.be('5s');
       expect(query.scopedVars.__interval.value).to.be('5s');
-      expect(query.scopedVars.__interval_ms.text).to.be(String(5 * 1000));
-      expect(query.scopedVars.__interval_ms.value).to.be(String(5 * 1000));
+      expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
     });
     it('should account for intervalFactor', function() {
       var query = {
@@ -507,7 +507,7 @@ describe('PrometheusDatasource', function() {
         interval: '10s',
         scopedVars: {
           __interval: { text: '10s', value: '10s' },
-          __interval_ms: { text: String(10 * 1000), value: String(10 * 1000) },
+          __interval_ms: { text: 10 * 1000, value: 10 * 1000 },
         },
       };
       var urlExpected =
@@ -518,8 +518,8 @@ describe('PrometheusDatasource', function() {
 
       expect(query.scopedVars.__interval.text).to.be('10s');
       expect(query.scopedVars.__interval.value).to.be('10s');
-      expect(query.scopedVars.__interval_ms.text).to.be(String(10 * 1000));
-      expect(query.scopedVars.__interval_ms.value).to.be(String(10 * 1000));
+      expect(query.scopedVars.__interval_ms.text).to.be(10 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(10 * 1000);
     });
     it('should be interval * intervalFactor when greater than min interval', function() {
       var query = {
@@ -535,7 +535,7 @@ describe('PrometheusDatasource', function() {
         interval: '5s',
         scopedVars: {
           __interval: { text: '5s', value: '5s' },
-          __interval_ms: { text: String(5 * 1000), value: String(5 * 1000) },
+          __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
         },
       };
       var urlExpected =
@@ -546,8 +546,8 @@ describe('PrometheusDatasource', function() {
 
       expect(query.scopedVars.__interval.text).to.be('5s');
       expect(query.scopedVars.__interval.value).to.be('5s');
-      expect(query.scopedVars.__interval_ms.text).to.be(String(5 * 1000));
-      expect(query.scopedVars.__interval_ms.value).to.be(String(5 * 1000));
+      expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
     });
     it('should be min interval when greater than interval * intervalFactor', function() {
       var query = {
@@ -563,7 +563,7 @@ describe('PrometheusDatasource', function() {
         interval: '5s',
         scopedVars: {
           __interval: { text: '5s', value: '5s' },
-          __interval_ms: { text: String(5 * 1000), value: String(5 * 1000) },
+          __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
         },
       };
       var urlExpected =
@@ -574,8 +574,8 @@ describe('PrometheusDatasource', function() {
 
       expect(query.scopedVars.__interval.text).to.be('5s');
       expect(query.scopedVars.__interval.value).to.be('5s');
-      expect(query.scopedVars.__interval_ms.text).to.be(String(5 * 1000));
-      expect(query.scopedVars.__interval_ms.value).to.be(String(5 * 1000));
+      expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
     });
     it('should be determined by the 11000 data points limit, accounting for intervalFactor', function() {
       var query = {
@@ -590,7 +590,7 @@ describe('PrometheusDatasource', function() {
         interval: '5s',
         scopedVars: {
           __interval: { text: '5s', value: '5s' },
-          __interval_ms: { text: String(5 * 1000), value: String(5 * 1000) },
+          __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
         },
       };
       var end = 7 * 24 * 60 * 60;
@@ -609,8 +609,8 @@ describe('PrometheusDatasource', function() {
 
       expect(query.scopedVars.__interval.text).to.be('5s');
       expect(query.scopedVars.__interval.value).to.be('5s');
-      expect(query.scopedVars.__interval_ms.text).to.be(String(5 * 1000));
-      expect(query.scopedVars.__interval_ms.value).to.be(String(5 * 1000));
+      expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
     });
   });
 });
