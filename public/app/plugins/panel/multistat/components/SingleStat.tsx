@@ -3,9 +3,11 @@ import { SparkLine } from './SparkLine';
 import { SeriesStat, MultistatPanelSize, MultistatPanelOptions, MultistatPanelLayout } from '../types';
 import { getBGColor } from './utils';
 
+const DEFAULT_COLOR = 'rgb(31, 120, 193)';
+
 export interface IProps {
   stat: SeriesStat;
-  size?: MultistatPanelSize;
+  size: MultistatPanelSize;
   color?: string;
   options?: MultistatPanelOptions;
 }
@@ -14,6 +16,11 @@ export class SingleStat extends React.Component<IProps, any> {
   constructor(props) {
     super(props);
   }
+
+  static defaultProps: Partial<IProps> = {
+    color: DEFAULT_COLOR,
+    options: {}
+  };
 
   render() {
     const stat = this.props.stat;
@@ -96,7 +103,12 @@ export class SingleStat extends React.Component<IProps, any> {
           </span>
         </div>
         {this.props.options.sparkline.show && (
-          <SparkLine stat={stat} options={this.props.options} color={valueColor} size={sparklineSize} />
+          <SparkLine
+            stat={stat}
+            options={this.props.options}
+            color={valueColor}
+            size={sparklineSize}
+          />
         )}
       </div>
     );

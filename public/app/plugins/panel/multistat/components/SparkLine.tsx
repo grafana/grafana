@@ -21,13 +21,11 @@ export class SparkLine extends React.Component<IProps, any> {
   }
 
   componentDidMount() {
-    // console.log('componentDidMount');
     this.$elem = $(this.elem);
     this.forceUpdate();
   }
 
   componentDidUpdate(prevProps) {
-    // console.log('componentDidUpdate');
     const width = this.props.size.w - 10;
     const height = this.props.size.h;
     if (width <= 0 || height <= 0) {
@@ -91,7 +89,6 @@ export class SparkLine extends React.Component<IProps, any> {
   }
 
   render() {
-    // console.log('render');
     return <div ref={elem => (this.elem = elem)} />;
   }
 }

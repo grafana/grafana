@@ -47,7 +47,9 @@ export interface MultistatPanelOptions extends MetricPanelOptions {
   postfixFontSize?: string;
   colorBackground?: any;
   colorValue?: any;
-  sparkline?: any;
+  sparkline?: {
+    show?: boolean
+  };
   thresholds?: ThresholdModel[];
 }
 

@@ -81,7 +81,7 @@
     <gf-form-switch class="gf-form" label-class="width-9" label="Show" checked="ctrl.panel.sparkline.show" on-change="ctrl.render()"></gf-form-switch>
     <div ng-if="ctrl.panel.sparkline.show">
       <gf-form-switch class="gf-form" label-class="width-9" label="Full height" checked="ctrl.panel.sparkline.full" on-change="ctrl.render()"></gf-form-switch>
-      <div class="gf-form">
+      <!-- <div class="gf-form">
         <label class="gf-form-label width-9">Line Color</label>
         <span class="gf-form-label">
           <color-picker color="ctrl.panel.sparkline.lineColor" onChange="ctrl.onSparklineColorChange"></color-picker>
@@ -92,11 +92,11 @@
         <span class="gf-form-label">
           <color-picker color="ctrl.panel.sparkline.fillColor" onChange="ctrl.onSparklineFillChange"></color-picker>
         </span>
-      </div>
+      </div> -->
     </div>
   </div>
 
-  <div class="section gf-form-group" ng-show="ctrl.panel.viewMode === 'stats'">
+  <!-- <div class="section gf-form-group" ng-show="ctrl.panel.viewMode === 'stats'">
     <h5 class="section-heading">Gauge</h5>
     <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Show" checked="ctrl.panel.gauge.show" on-change="ctrl.render()"></gf-form-switch>
     <div ng-if="ctrl.panel.gauge.show">
@@ -115,5 +115,5 @@
       <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Threshold labels" checked="ctrl.panel.gauge.thresholdLabels" on-change="ctrl.render()"></gf-form-switch>
       <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Threshold markers" checked="ctrl.panel.gauge.thresholdMarkers" on-change="ctrl.render()"></gf-form-switch>
     </div>
-  </div>
+  </div> -->
 </div>

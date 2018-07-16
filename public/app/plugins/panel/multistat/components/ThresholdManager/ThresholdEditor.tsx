@@ -1,5 +1,4 @@
 import React from 'react';
-// import { FormSwitch } from 'app/core/components/FormSwitch/FormSwitch';
 import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { SimpleSelect } from 'app/core/components/Select/SimpleSelect';
 
@@ -31,15 +30,9 @@ interface IState {
 export class ThresholdEditor extends React.Component<IProps, IState> {
   valueElem: any;
 
-  constructor(props) {
-    super(props);
-
-    // thresholdValue should be defined for <input> component to be controlled
-    const initialStateValue = props.threshold.value !== null ? props.threshold.value : '';
-    this.state = {
-      thresholdValue: initialStateValue,
-    };
-  }
+  static defaultProps: Partial<IProps> = {
+    focused: false
+  };
 
   static getDerivedStateFromProps(nextProps, prevState) {
     // Update state from props before rendering in order to keep it synced
@@ -50,6 +43,22 @@ export class ThresholdEditor extends React.Component<IProps, IState> {
     return {
       thresholdValue: newStateValue,
     };
+  }
+
+  constructor(props) {
+    super(props);
+
+    // thresholdValue should be defined for <input> component to be controlled
+    const initialStateValue = props.threshold.value !== null ? props.threshold.value : '';
+    this.state = {
+      thresholdValue: initialStateValue,
+    };
+  }
+
+  componentDidUpdate() {
+    if (this.props.focused) {
+      this.valueElem.focus();
+    }
   }
 
   onThresholdChange(threshold, valueChanged?) {
@@ -79,12 +88,6 @@ export class ThresholdEditor extends React.Component<IProps, IState> {
     this.props.onRemove(this.props.index);
   };
 
-  componentDidUpdate() {
-    if (this.props.focused) {
-      this.valueElem.focus();
-    }
-  }
-
   render() {
     const colorModeOptions = ['custom', 'critical', 'warning', 'ok'];
 
@@ -101,9 +104,7 @@ export class ThresholdEditor extends React.Component<IProps, IState> {
             placeholder="value"
             value={this.state.thresholdValue}
             onChange={this.onInputChange}
-            ref={elem => {
-              this.valueElem = elem;
-            }}
+            ref={elem => (this.valueElem = elem)}
           />
         </div>
 
