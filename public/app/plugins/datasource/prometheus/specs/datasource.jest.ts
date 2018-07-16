@@ -166,6 +166,9 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('Prometheus regular escaping', function() {
+    it('should not escape non-string', function() {
+      expect(prometheusRegularEscape(12)).toEqual(12);
+    });
     it('should not escape simple string', function() {
       expect(prometheusRegularEscape('cryptodepression')).toEqual('cryptodepression');
     });
