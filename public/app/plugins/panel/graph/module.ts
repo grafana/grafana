@@ -38,6 +38,8 @@ class GraphCtrl extends MetricsPanelCtrl {
         min: null,
         max: null,
         format: 'short',
+        labelMappings: [],
+        mappedLabelOnly: false,
       },
       {
         label: null,
@@ -46,6 +48,8 @@ class GraphCtrl extends MetricsPanelCtrl {
         min: null,
         max: null,
         format: 'short',
+        labelMappings: [],
+        mappedLabelOnly: false,
       },
     ],
     xaxis: {

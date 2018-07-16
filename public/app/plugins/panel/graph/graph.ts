@@ -517,10 +517,20 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           options.yaxes.push(secondY);
 
           applyLogScale(options.yaxes[1], data);
-          configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? 'percent' : panel.yaxes[1].format);
+          configureAxisMode(
+            options.yaxes[1],
+            panel.percentage && panel.stack ? 'percent' : panel.yaxes[1].format,
+            panel.yaxes[1].labelMappings,
+            panel.yaxes[1].mappedLabelOnly
+          );
         }
         applyLogScale(options.yaxes[0], data);
-        configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? 'percent' : panel.yaxes[0].format);
+        configureAxisMode(
+          options.yaxes[0],
+          panel.percentage && panel.stack ? 'percent' : panel.yaxes[0].format,
+          panel.yaxes[0].labelMappings,
+          panel.yaxes[0].mappedLabelOnly
+        );
       }
 
       function parseNumber(value: any) {
@@ -634,13 +644,30 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         return ticks;
       }
 
-      function configureAxisMode(axis, format) {
+      function configureAxisMode(axis, format, labelMappings = [], mappedLabelOnly = false) {
         axis.tickFormatter = function(val, axis) {
           if (!kbn.valueFormats[format]) {
             throw new Error(`Unit '${format}' is not supported`);
           }
-          return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
+
+          const mappedLabel = getMappedAxisLabel(val, labelMappings);
+          if (mappedLabel) {
+            return mappedLabel;
+          }
+
+          return mappedLabelOnly ? '' : kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
         };
+      }
+
+      function getMappedAxisLabel(val, labelMappings) {
+        for (let i = 0; i < labelMappings.length; i++) {
+          const from = labelMappings[i].value;
+          const to = labelMappings[i].label;
+          if (val === from && to) {
+            return to;
+          }
+        }
+        return null;
       }
 
       function time_format(ticks, min, max) {

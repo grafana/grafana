@@ -36,12 +36,16 @@ describe('grafanaGraph', function() {
                     max: null,
                     format: 'short',
                     logBase: 1,
+                    labelMappings: [],
+                    mappedLabelOnly: false,
                   },
                   {
                     min: null,
                     max: null,
                     format: 'short',
                     logBase: 1,
+                    labelMappings: [],
+                    mappedLabelOnly: false,
                   },
                 ],
                 thresholds: [],
@@ -449,6 +453,56 @@ describe('grafanaGraph', function() {
     it('should calculate correct histogram', function() {
       expect(ctx.plotData[0].data[0][0]).to.be(100);
       expect(ctx.plotData[0].data[0][1]).to.be(2);
+    });
+  });
+
+  graphScenario('y-axis label mapping', function(ctx) {
+    ctx.setup(function(ctrl, data) {
+      ctrl.panel.yaxes[0].labelMappings = [{ value: 0, label: 'Bronze' }, { value: 1, label: 'Silver' }];
+      ctrl.panel.yaxes[1].labelMappings = [{ value: 2, label: 'Gold' }, { value: 3, label: 'Plutinum' }];
+      data[0] = new TimeSeries({
+        datapoints: [],
+        alias: 'series1',
+      });
+      data[0].yaxis = 1;
+      data[1] = new TimeSeries({
+        datapoints: [],
+        alias: 'series2',
+      });
+      data[1].yaxis = 2;
+    });
+
+    it('should show correct value for axis0', function() {
+      var axis = ctx.plotOptions.yaxes[0];
+      expect(axis.tickFormatter(0, axis)).to.be('Bronze');
+      expect(axis.tickFormatter(1, axis)).to.be('Silver');
+      expect(axis.tickFormatter(2, axis)).to.be('2');
+    });
+
+    it('should show correct value for axis1', function() {
+      var axis = ctx.plotOptions.yaxes[1];
+      expect(axis.tickFormatter(1, axis)).to.be('1');
+      expect(axis.tickFormatter(2, axis)).to.be('Gold');
+      expect(axis.tickFormatter(3, axis)).to.be('Plutinum');
+    });
+  });
+
+  graphScenario('when mapped label only option specified', function(ctx) {
+    ctx.setup(function(ctrl, data) {
+      ctrl.panel.yaxes[0].labelMappings = [{ value: 0, label: 'Bronze' }, { value: 1, label: 'Silver' }];
+      ctrl.panel.yaxes[0].mappedLabelOnly = true;
+      data[0] = new TimeSeries({
+        datapoints: [],
+        alias: 'series1',
+      });
+      data[0].yaxis = 1;
+    });
+
+    it('should show correct value with mapped only option ', function() {
+      var axis = ctx.plotOptions.yaxes[0];
+      expect(axis.tickFormatter(0, axis)).to.be('Bronze');
+      expect(axis.tickFormatter(1, axis)).to.be('Silver');
+      expect(axis.tickFormatter(2, axis)).to.be('');
     });
   });
 });

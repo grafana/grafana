@@ -74,6 +74,38 @@ export class AxesEditorCtrl {
 
     return this.$q.when(items);
   }
+
+  addYaxisLabelMapping(axisIndex) {
+    this.getYaxisLabelMappings(axisIndex).push({
+      value: undefined,
+      label: undefined,
+    });
+    this.panelCtrl.render();
+  }
+
+  removeYaxisLabelMapping(axisIndex, mappingIndex) {
+    this.getYaxisLabelMappings(axisIndex).splice(mappingIndex, 1);
+    if (!this.hasYaxisLabelMapping(axisIndex)) {
+      this.getYaxis(axisIndex).mappedLabelOnly = false;
+    }
+    this.panelCtrl.render();
+  }
+
+  hasYaxisLabelMapping(index) {
+    return this.getYaxisLabelMappings(index).length > 0;
+  }
+
+  getYaxisLabelMappings(index) {
+    const yaxis = this.panel.yaxes[index];
+    if (!yaxis.labelMappings) {
+      yaxis.labelMappings = [];
+    }
+    return yaxis.labelMappings;
+  }
+
+  getYaxis(index) {
+    return this.panel.yaxes[index];
+  }
 }
 
 /** @ngInject **/
