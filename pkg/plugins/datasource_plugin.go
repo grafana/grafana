@@ -22,6 +22,7 @@ type DataSourcePlugin struct {
 	Annotations  bool              `json:"annotations"`
 	Metrics      bool              `json:"metrics"`
 	Alerting     bool              `json:"alerting"`
+	Explore      bool              `json:"explore"`
 	QueryOptions map[string]bool   `json:"queryOptions,omitempty"`
 	BuiltIn      bool              `json:"builtIn,omitempty"`
 	Mixed        bool              `json:"mixed,omitempty"`

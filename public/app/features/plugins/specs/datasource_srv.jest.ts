@@ -17,9 +17,35 @@ const templateSrv = {
 
 describe('datasource_srv', function() {
   let _datasourceSrv = new DatasourceSrv({}, {}, {}, templateSrv);
-  let metricSources;
+
+  describe('when loading explore sources', () => {
+    beforeEach(() => {
+      config.datasources = {
+        explore1: {
+          name: 'explore1',
+          meta: { explore: true, metrics: true },
+        },
+        explore2: {
+          name: 'explore2',
+          meta: { explore: true, metrics: false },
+        },
+        nonExplore: {
+          name: 'nonExplore',
+          meta: { explore: false, metrics: true },
+        },
+      };
+    });
+
+    it('should return list of explore sources', () => {
+      const exploreSources = _datasourceSrv.getExploreSources();
+      expect(exploreSources.length).toBe(2);
+      expect(exploreSources[0].name).toBe('explore1');
+      expect(exploreSources[1].name).toBe('explore2');
+    });
+  });
 
   describe('when loading metric sources', () => {
+    let metricSources;
     let unsortedDatasources = {
       mmm: {
         type: 'test-db',
