@@ -62,6 +62,10 @@ div.flot-text {
       opacity: 1;
     }
   }
+
+  &--is-editing {
+    height: auto;
+  }
 }
 
 .panel-content {
