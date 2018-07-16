@@ -357,6 +357,7 @@ export class PrometheusDatasource {
       state = {
         ...state,
         queries,
+        datasource: this.name,
       };
     }
     return state;
