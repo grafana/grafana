@@ -14,6 +14,9 @@ datasources:
     isDefault: true
     url: http://localhost:9090
 
+  - name: gdev-testdata
+    type: testdata
+
   - name: gdev-influxdb
     type: influxdb
     access: proxy

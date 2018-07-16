@@ -1,6 +1,6 @@
 {
   "revision": 2,
-  "title": "TestData - Alerts",
+  "title": "Alerting with TestData",
   "tags": [
     "grafana-test"
   ],
@@ -48,7 +48,7 @@
           },
           "aliasColors": {},
           "bars": false,
-          "datasource": "Grafana TestData",
+          "datasource": "gdev-testdata",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -161,7 +161,7 @@
           },
           "aliasColors": {},
           "bars": false,
-          "datasource": "Grafana TestData",
+          "datasource": "gdev-testdata",
           "editable": true,
           "error": false,
           "fill": 1,
