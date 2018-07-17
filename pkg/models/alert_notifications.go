@@ -1,13 +1,19 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
+var (
+	ErrAlertNotificationFailedGenerateUniqueUid = errors.New("Failed to generate unique alert notification id")
+)
+
 type AlertNotification struct {
 	Id        int64            `json:"id"`
+	Uid       string           `json:"uid"`
 	OrgId     int64            `json:"-"`
 	Name      string           `json:"name"`
 	Type      string           `json:"type"`
@@ -18,6 +24,7 @@ type AlertNotification struct {
 }
 
 type CreateAlertNotificationCommand struct {
+	Uid       string           `json:"uid"`
 	Name      string           `json:"name"  binding:"Required"`
 	Type      string           `json:"type"  binding:"Required"`
 	IsDefault bool             `json:"isDefault"`
@@ -49,8 +56,16 @@ type DeleteAlertNotificationByNameCommand struct {
 }
 
 type GetAlertNotificationsQuery struct {
+	Uid   string
 	Name  string
 	Id    int64
+	OrgId int64
+
+	Result *AlertNotification
+}
+
+type GetAlertNotificationByUidQuery struct {
+	Uid   string
 	OrgId int64
 
 	Result *AlertNotification

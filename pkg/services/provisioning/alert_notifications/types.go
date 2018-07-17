@@ -18,6 +18,7 @@ type deleteNotificationConfig struct {
 type notificationFromConfig struct {
 	OrgId int64 `json:"org_id" yaml:"org_id"`
 
+	Uid       string                 `json:"uid"`
 	Name      string                 `json:"name" yaml:"name"`
 	Type      string                 `json:"type" yaml:"type"`
 	IsDefault bool                   `json:"is_default" yaml:"is_default"`
@@ -33,6 +34,7 @@ func (cfg *notificationsAsConfig) mapToNotificationFromConfig() *notificationsAs
 
 	for _, notification := range cfg.Notifications {
 		r.Notifications = append(r.Notifications, &notificationFromConfig{
+			Uid:       notification.Uid,
 			OrgId:     notification.OrgId,
 			Name:      notification.Name,
 			Type:      notification.Type,
@@ -60,6 +62,7 @@ func createInsertCommand(notification *notificationFromConfig) *models.CreateAle
 	}
 
 	return &models.CreateAlertNotificationCommand{
+		Uid:       notification.Uid,
 		Name:      notification.Name,
 		Type:      notification.Type,
 		IsDefault: notification.IsDefault,

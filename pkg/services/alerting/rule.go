@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	m "github.com/grafana/grafana/pkg/models"
@@ -103,11 +104,47 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
+
+		foundIdentifier := false
+		identifier := int64(0)
+
+		// If `id` is provided, use that
 		id, err := jsonModel.Get("id").Int64()
-		if err != nil {
-			return nil, ValidationError{Reason: "Invalid notification schema", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+		if err == nil {
+			fmt.Printf("ID is %v\n", id)
+			identifier = id
+			foundIdentifier = true
 		}
-		model.Notifications = append(model.Notifications, id)
+
+		// If `uid` is provided, get the corresponding `id` from database
+		uid, err := jsonModel.Get("uid").String()
+		if err == nil {
+			fmt.Printf("UID is %v\n", uid)
+			if foundIdentifier {
+				return nil, ValidationError{Reason: "Invalid notification schema: duplicate notification identifiers", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			}
+
+			// Query corresponding `id`
+			cmd := &m.GetAlertNotificationsQuery{OrgId: ruleDef.OrgId, Uid: uid}
+			err := bus.Dispatch(cmd)
+			if err != nil {
+				return nil, ValidationError{Reason: "Cannot lookup notification", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			}
+
+			if cmd.Result != nil {
+				return nil, ValidationError{Reason: "Unknown notification UID", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			}
+
+			identifier = cmd.Result.Id
+			foundIdentifier = true
+		}
+
+		if !foundIdentifier {
+			return nil, ValidationError{Reason: "Invalid notification schema: either `id` or `uid` must be provided", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+		}
+
+		model.Notifications = append(model.Notifications, identifier)
+		fmt.Printf("model is %+v\n", model)
 	}
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {

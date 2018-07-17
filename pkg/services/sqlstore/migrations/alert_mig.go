@@ -82,4 +82,21 @@ func addAlertMigrations(mg *Migrator) {
 		{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
 		{Name: "settings", Type: DB_Text, Nullable: false},
 	}))
+
+	mg.AddMigration("Add column uid in alert_notification", NewAddColumnMigration(alert_notification, &Column{
+		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
+
+	mg.AddMigration("Update uid column values in alert_notification", new(RawSqlMigration).
+		Sqlite("UPDATE alert_notification SET uid=printf('%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE alert_notification SET uid=lpad('' || id,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE alert_notification SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
+
+	mg.AddMigration("Add unique index dashboard_org_id_uid", NewAddIndexMigration(alert_notification, &Index{
+		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
+	}))
+
+	mg.AddMigration("Remove unique index org_id_name", NewDropIndexMigration(alert_notification, &Index{
+		Cols: []string{"org_id", "name"}, Type: UniqueIndex,
+	}))
 }

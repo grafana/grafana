@@ -2,6 +2,7 @@ alert_notifications:
   - name: notification-channel-1
     type: slack
     org_id: 2
+    uid: slack-notif-1
     is_default: true
     settings:
       recipient: "XXX"

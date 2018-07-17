@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -107,7 +108,7 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 	sql.WriteString(` WHERE alert_notification.org_id = ?`)
 	params = append(params, query.OrgId)
 
-	if query.Name != "" || query.Id != 0 {
+	if query.Name != "" || query.Id != 0 || query.Uid != "" {
 		if query.Name != "" {
 			sql.WriteString(` AND alert_notification.name = ?`)
 			params = append(params, query.Name)
@@ -116,6 +117,11 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 		if query.Id != 0 {
 			sql.WriteString(` AND alert_notification.id = ?`)
 			params = append(params, query.Id)
+		}
+
+		if query.Uid != "" {
+			sql.WriteString(` AND alert_notification.uid = ?`)
+			params = append(params, query.Uid)
 		}
 	}
 
@@ -133,8 +139,26 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 	return nil
 }
 
+func generateNewAlertNotificationUid(sess *DBSession, orgId int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := util.GenerateShortUid()
+
+		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&m.AlertNotification{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
+	}
+
+	return "", m.ErrAlertNotificationFailedGenerateUniqueUid
+}
+
 func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		fmt.Printf("Adding: %+v\n\n", cmd)
 		existingQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
 		err := getAlertNotificationInternal(existingQuery, sess)
 
@@ -148,6 +172,7 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 
 		alertNotification := &m.AlertNotification{
 			OrgId:     cmd.OrgId,
+			Uid:       cmd.Uid,
 			Name:      cmd.Name,
 			Type:      cmd.Type,
 			Settings:  cmd.Settings,
@@ -155,6 +180,18 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 			Updated:   time.Now(),
 			IsDefault: cmd.IsDefault,
 		}
+
+		// If no UID has been provided, generate a random UID.
+		if alertNotification.Uid == "" {
+			uid, err := generateNewAlertNotificationUid(sess, cmd.OrgId)
+			if err != nil {
+				return err
+			}
+
+			alertNotification.Uid = uid
+		}
+
+		fmt.Printf("%+v\n\n", alertNotification)
 
 		if _, err = sess.Insert(alertNotification); err != nil {
 			return err
