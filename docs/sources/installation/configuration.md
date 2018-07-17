@@ -863,7 +863,7 @@ Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 Url to where Grafana will send PUT request with images
 
 ### public_url
-Optional parameter. Url to send to users in notifications, directly appended with the resulting uploaded file name.
+Optional parameter. Url to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the url, leaving any query string unchanged.
 
 ### username
 basic auth username
