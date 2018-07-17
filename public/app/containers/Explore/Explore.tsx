@@ -33,18 +33,20 @@ function makeTimeSeriesList(dataList, options) {
   });
 }
 
-function parseInitialState(initial) {
-  try {
-    const parsed = JSON.parse(decodePathComponent(initial));
-    return {
-      datasource: parsed.datasource,
-      queries: parsed.queries.map(q => q.query),
-      range: parsed.range,
-    };
-  } catch (e) {
-    console.error(e);
-    return { queries: [], range: DEFAULT_RANGE };
+function parseInitialState(initial: string | undefined) {
+  if (initial) {
+    try {
+      const parsed = JSON.parse(decodePathComponent(initial));
+      return {
+        datasource: parsed.datasource,
+        queries: parsed.queries.map(q => q.query),
+        range: parsed.range,
+      };
+    } catch (e) {
+      console.error(e);
+    }
   }
+  return { datasource: null, queries: [], range: DEFAULT_RANGE };
 }
 
 interface IExploreState {
