@@ -68,6 +68,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   panelContainer: PanelContainer;
   dashboard: DashboardModel;
   panelMap: { [id: string]: PanelModel };
+  panelLoader: any;
+  datasourceSrv: any;
 
   constructor(props) {
     super(props);
@@ -80,6 +82,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
     this.state = { animated: false };
 
+    this.panelLoader = this.panelContainer.getPanelLoader();
+
     // subscribe to dashboard events
     this.dashboard = this.panelContainer.getDashboard();
     this.dashboard.on('panel-added', this.triggerForceUpdate.bind(this));
@@ -88,6 +92,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.dashboard.on('view-mode-changed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('row-collapsed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('row-expanded', this.triggerForceUpdate.bind(this));
+    this.dashboard.on('panel-suppress', this.triggerForceUpdate.bind(this));
   }
 
   buildLayout() {
@@ -103,12 +108,16 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         continue;
       }
 
-      let panelPos: any = {
+      let panelPos: any = {};
+
+      panelPos = {
         i: stringId,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
         w: panel.gridPos.w,
         h: panel.gridPos.h,
+        minW: 0,
+        minH: 0,
       };
 
       if (panel.type === 'row') {
@@ -175,7 +184,19 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     const panelElements = [];
 
     for (let panel of this.dashboard.panels) {
-      const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
+      if (panel['suppress'] && !this.dashboard.showSuppressed) {
+        panel.updateGridPos({ x: 0, y: 0, h: 0, w: 0 });
+      } else {
+        if (panel.gridPos.h === 0 || panel.gridPos.w === 0) {
+          panel.updateGridPos(panel.savedGridPos);
+        }
+      }
+
+      const panelClasses = classNames({
+        panel: true,
+        'panel--fullscreen': panel.fullscreen,
+        'ng-hide': panel['suppress'],
+      });
       panelElements.push(
         <div key={panel.id.toString()} className={panelClasses}>
           <DashboardPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />

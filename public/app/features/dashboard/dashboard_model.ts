@@ -21,6 +21,7 @@ export class DashboardModel {
   timezone: any;
   editable: any;
   graphTooltip: any;
+  showSuppressed: any;
   time: any;
   private originalTime: any;
   timepicker: any;
@@ -71,6 +72,7 @@ export class DashboardModel {
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
+    this.showSuppressed = data.showSuppressed || false;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
     this.templating = this.ensureListExist(data.templating);
@@ -555,6 +557,10 @@ export class DashboardModel {
     }
 
     this.removePanel(row);
+  }
+
+  suppressPanel(panel: PanelModel) {
+    this.events.emit('panel-suppress', panel);
   }
 
   expandRows() {

@@ -18,6 +18,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
 export class PanelModel {
   id: number;
   gridPos: GridPos;
+  savedGridPos: GridPos;
   type: string;
   title: string;
   alert?: any;
@@ -47,6 +48,9 @@ export class PanelModel {
 
     if (!this.gridPos) {
       this.gridPos = { x: 0, y: 0, h: 3, w: 6 };
+    }
+    if (!(this.gridPos.w === 0) && !(this.gridPos.h === 0)) {
+      this.savedGridPos = { x: this.gridPos.x, y: this.gridPos.y, h: this.gridPos.h, w: this.gridPos.w };
     }
   }
 
@@ -80,6 +84,10 @@ export class PanelModel {
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
+
+    if (!(this.gridPos.w === 0) && !(this.gridPos.h === 0)) {
+      this.savedGridPos = { x: this.gridPos.x, y: this.gridPos.y, h: this.gridPos.h, w: this.gridPos.w };
+    }
 
     if (sizeChanged) {
       console.log('PanelModel sizeChanged event and render events fired');

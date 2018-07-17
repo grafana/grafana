@@ -42,6 +42,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
+    this.panel.suppress = false;
     this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
@@ -261,6 +262,15 @@ class MetricsPanelCtrl extends PanelCtrl {
       result = { data: [] };
     }
 
+    if (this.fullscreen) {
+      this.panel.suppress = false;
+    }
+    if (this.panel.suppressEmpty && result.data.length === 0 && !this.dashboard.showSuppressed) {
+      this.panel.suppress = true;
+    } else {
+      this.panel.suppress = false;
+    }
+    this.dashboard.suppressPanel(this.panel);
     this.events.emit('data-received', result.data);
   }
 
