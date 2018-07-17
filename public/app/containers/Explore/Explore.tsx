@@ -67,7 +67,7 @@ interface IExploreState {
 export class Explore extends React.Component<any, IExploreState> {
   constructor(props) {
     super(props);
-    const { datasource, queries, range } = parseInitialState(props.routeParams.initial);
+    const { datasource, queries, range } = parseInitialState(props.routeParams.state);
     this.state = {
       datasource: null,
       datasourceError: null,

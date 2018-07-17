@@ -191,7 +191,7 @@ export class KeybindingSrv {
               range,
             };
             const exploreState = encodePathComponent(JSON.stringify(state));
-            this.$location.url(`/explore/${exploreState}`);
+            this.$location.url(`/explore?state=${exploreState}`);
           }
         }
       });

@@ -73,8 +73,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, Index)
 	r.Get("/dashboards/*", reqSignedIn, Index)
 
-	r.Get("/explore/", reqEditorRole, Index)
-	r.Get("/explore/*", reqEditorRole, Index)
+	r.Get("/explore", reqEditorRole, Index)
 
 	r.Get("/playlists/", reqSignedIn, Index)
 	r.Get("/playlists/*", reqSignedIn, Index)
