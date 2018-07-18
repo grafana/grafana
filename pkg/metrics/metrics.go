@@ -50,6 +50,9 @@ var (
 	M_DataSource_ProxyReq_Timer prometheus.Summary
 	M_Alerting_Execution_Time   prometheus.Summary
 
+	// Webhook
+	M_Webhook_Execution_Time *prometheus.SummaryVec
+
 	// StatTotals
 	M_Alerting_Active_Alerts prometheus.Gauge
 	M_StatTotal_Dashboards   prometheus.Gauge
@@ -236,6 +239,15 @@ func init() {
 		Namespace: exporterName,
 	})
 
+	M_Webhook_Execution_Time = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:      "webhook_execution_time_milliseconds",
+			Help:      "summary of webhook request duration",
+			Namespace: exporterName,
+		},
+		[]string{"type", "statuscode"},
+	)
+
 	M_Alerting_Active_Alerts = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "alerting_active_alerts",
 		Help:      "amount of active alerts",
@@ -295,6 +307,7 @@ func initMetricVars() {
 		M_Api_Dashboard_Search,
 		M_DataSource_ProxyReq_Timer,
 		M_Alerting_Execution_Time,
+		M_Webhook_Execution_Time,
 		M_Api_Admin_User_Create,
 		M_Api_Login_Post,
 		M_Api_Login_OAuth,
@@ -437,4 +450,25 @@ func sendUsageStats() {
 
 	client := http.Client{Timeout: 5 * time.Second}
 	go client.Post(usageStatsURL, "application/json", data)
+}
+
+func NewSummaryTimer(summaryVec *prometheus.SummaryVec, status *int, labels ...string) *prometheus.Timer {
+	return prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		if *status == 0 {
+			return
+		}
+		switch {
+		case *status >= 500:
+			labels = append(labels, "5xx")
+		case *status >= 400:
+			labels = append(labels, "4xx")
+		case *status >= 300:
+			labels = append(labels, "3xx")
+		case *status >= 200:
+			labels = append(labels, "2xx")
+		default:
+			labels = append(labels, "1xx")
+		}
+		summaryVec.WithLabelValues(labels...).Observe(v)
+	}))
 }

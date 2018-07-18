@@ -89,3 +89,13 @@ type UserUpdated struct {
 	Login     string    `json:"login"`
 	Email     string    `json:"email"`
 }
+
+type AnnotationCreated struct {
+	Timestamp time.Time `json:"timestamp"`
+	Body      string    `json:"body"`
+}
+
+type AnnotationUpdated struct {
+	Timestamp time.Time `json:"timestamp"`
+	Body      string    `json:"body"`
+}

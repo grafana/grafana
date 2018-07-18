@@ -193,6 +193,9 @@ type Cfg struct {
 	// SMTP email settings
 	Smtp SmtpSettings
 
+	// Webhook settings
+	Webhook WebhookSettings
+
 	// Rendering
 	ImagesDir                        string
 	PhantomDir                       string
@@ -665,6 +668,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
+	cfg.readWebhookSettings()
 	cfg.readQuotaSettings()
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {

@@ -26,6 +26,7 @@ type SendWebhookSync struct {
 	HttpMethod  string
 	HttpHeader  map[string]string
 	ContentType string
+	Type        string
 }
 
 type SendResetPasswordEmailCommand struct {
