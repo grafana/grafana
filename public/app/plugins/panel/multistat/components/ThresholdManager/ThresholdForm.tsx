@@ -8,16 +8,16 @@ const defaultThreshold: ThresholdModel = {
   mode: ThresholdMode.critical,
 };
 
-interface IProps {
+interface Props {
   thresholds: any[];
   onChange: (threshold: any) => any;
 }
 
-interface IState {
+interface State {
   focusedThresholdIndex: number;
 }
 
-export class ThresholdForm extends React.Component<IProps, IState> {
+export class ThresholdForm extends React.Component<Props, State> {
   constructor(props) {
     super(props);
 

@@ -4,14 +4,14 @@ import React from 'react';
 import { SeriesStat, MultistatPanelSize } from '../types';
 import { getBGColor } from './utils';
 
-export interface IProps {
+export interface Props {
   stat: SeriesStat;
   size: MultistatPanelSize;
   options: any;
   color?: string;
 }
 
-export class SparkLine extends React.Component<IProps, any> {
+export class SparkLine extends React.Component<Props> {
   elem: any;
   $elem: any;
   plot: any;

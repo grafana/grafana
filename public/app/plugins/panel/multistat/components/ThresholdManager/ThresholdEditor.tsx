@@ -15,7 +15,7 @@ export enum ThresholdMode {
   custom = 'custom',
 }
 
-interface IProps {
+interface Props {
   threshold: ThresholdModel;
   index: number;
   focused?: boolean;
@@ -23,15 +23,15 @@ interface IProps {
   onRemove: (index: number) => any;
 }
 
-interface IState {
+interface State {
   thresholdValue: string;
 }
 
-export class ThresholdEditor extends React.Component<IProps, IState> {
+export class ThresholdEditor extends React.Component<Props, State> {
   valueElem: any;
 
-  static defaultProps: Partial<IProps> = {
-    focused: false
+  static defaultProps: Partial<Props> = {
+    focused: false,
   };
 
   static getDerivedStateFromProps(nextProps, prevState) {

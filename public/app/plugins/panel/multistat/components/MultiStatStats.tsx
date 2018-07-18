@@ -2,14 +2,14 @@ import React from 'react';
 import { SingleStat } from './SingleStat';
 import { MultistatPanelSize, MultistatPanelOptions, MultistatPanelLayout } from '../types';
 
-export interface IProps {
+export interface Props {
   stats: any[];
   options: MultistatPanelOptions;
   size: MultistatPanelSize;
   getColor: (v: number) => string;
 }
 
-export function MultiStatStats(props: IProps) {
+export function MultiStatStats(props: Props) {
   const stats = props.stats;
   let size;
   let classSuffix;
@@ -28,15 +28,7 @@ export function MultiStatStats(props: IProps) {
 
   const statElements = stats.map((stat, index) => {
     const color = props.getColor(stat.value);
-    return (
-      <SingleStat
-        key={index}
-        stat={stat}
-        color={color}
-        size={size}
-        options={props.options}
-      />
-    );
+    return <SingleStat key={index} stat={stat} color={color} size={size} options={props.options} />;
   });
 
   const className = `multistat-container multistat-container--${classSuffix}`;

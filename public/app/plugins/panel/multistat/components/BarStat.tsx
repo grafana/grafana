@@ -4,7 +4,7 @@ import { getBGColor } from './utils';
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
-export interface IProps {
+export interface Props {
   stat: SeriesStat;
   size: MultistatPanelSize;
   color?: string;
@@ -14,16 +14,16 @@ export interface IProps {
   style?: React.CSSProperties;
 }
 
-export class BarStat extends React.Component<IProps, any> {
+export class BarStat extends React.Component<Props> {
   labelElem: any;
   valueElem: any;
   barElem: any;
 
-  static defaultProps: Partial<IProps> = {
+  static defaultProps: Partial<Props> = {
     color: DEFAULT_COLOR,
     options: {},
     valueOutOfBar: false,
-    style: {}
+    style: {},
   };
 
   constructor(props) {

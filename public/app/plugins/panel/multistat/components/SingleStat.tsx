@@ -5,21 +5,21 @@ import { getBGColor } from './utils';
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
-export interface IProps {
+export interface Props {
   stat: SeriesStat;
   size: MultistatPanelSize;
   color?: string;
   options?: MultistatPanelOptions;
 }
 
-export class SingleStat extends React.Component<IProps, any> {
+export class SingleStat extends React.Component<Props> {
   constructor(props) {
     super(props);
   }
 
-  static defaultProps: Partial<IProps> = {
+  static defaultProps: Partial<Props> = {
     color: DEFAULT_COLOR,
-    options: {}
+    options: {},
   };
 
   render() {
@@ -103,12 +103,7 @@ export class SingleStat extends React.Component<IProps, any> {
           </span>
         </div>
         {this.props.options.sparkline.show && (
-          <SparkLine
-            stat={stat}
-            options={this.props.options}
-            color={valueColor}
-            size={sparklineSize}
-          />
+          <SparkLine stat={stat} options={this.props.options} color={valueColor} size={sparklineSize} />
         )}
       </div>
     );

@@ -6,13 +6,13 @@ import { ThresholdModel, ThresholdMode } from './ThresholdManager/ThresholdEdito
 import { MultiStatBar } from './MultiStatBar';
 import { MultiStatStats } from './MultiStatStats';
 
-export interface IProps {
+export interface Props {
   stats: any[];
   options: MultistatPanelOptions;
   size: MultistatPanelSize;
 }
 
-export function MultiStat(props: IProps) {
+export function MultiStat(props: Props) {
   const options = props.options;
   const thresholds = props.options.thresholds;
   const getColor = getColorFunc(thresholds);

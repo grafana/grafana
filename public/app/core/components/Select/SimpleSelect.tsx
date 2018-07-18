@@ -1,39 +1,29 @@
 import React from 'react';
 
-export interface IProps {
-  value: any;
-  options: any[];
+export interface Props {
+  value: string;
+  options: string[];
   className?: string;
-  onChange: (value: any) => any;
+  onChange: (value: string) => any;
 }
 
-export class SimpleSelect extends React.Component<IProps, any> {
-  constructor(props) {
-    super(props);
-
-    this.onChange = this.onChange.bind(this);
-  }
-
-  onChange(e) {
+export function SimpleSelect(props: Props) {
+  function onChange(e) {
     const newValue = e.target.value;
-    this.props.onChange(newValue);
+    props.onChange(newValue);
   }
 
-  render() {
-    const selectClassName = this.props.className;
-    const value = this.props.value;
+  const selectClassName = props.className;
+  const value = props.value;
+  const options = props.options;
 
-    const options = this.props.options;
-    const optionsItems = options.map((option, index) => (
-      <option value={option} key={index.toString()}>
-        {option}
-      </option>
-    ));
-
-    return (
-      <select className={selectClassName} value={value} onChange={this.onChange}>
-        {optionsItems}
-      </select>
-    );
-  }
+  return (
+    <select className={selectClassName} value={value} onChange={onChange}>
+      {options.map((option, index) => (
+        <option value={option} key={index.toString()}>
+          {option}
+        </option>
+      ))}
+    </select>
+  );
 }
