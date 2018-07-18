@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -33,6 +34,16 @@ var netTransport = &http.Transport{
 var netClient = &http.Client{
 	Timeout:   time.Second * 60,
 	Transport: netTransport,
+}
+
+func (u *WebdavUploader) PublicURL(filename string) string {
+	if strings.Contains(u.public_url, "${file}") {
+		return strings.Replace(u.public_url, "${file}", filename, -1)
+	} else {
+		publicURL, _ := url.Parse(u.public_url)
+		publicURL.Path = path.Join(publicURL.Path, filename)
+		return publicURL.String()
+	}
 }
 
 func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) {
@@ -65,9 +76,7 @@ func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) 
 	}
 
 	if u.public_url != "" {
-		publicURL, _ := url.Parse(u.public_url)
-		publicURL.Path = path.Join(publicURL.Path, filename)
-		return publicURL.String(), nil
+		return u.PublicURL(filename), nil
 	}
 
 	return url.String(), nil

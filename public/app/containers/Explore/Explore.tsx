@@ -2,16 +2,18 @@ import React from 'react';
 import { hot } from 'react-hot-loader';
 import Select from 'react-select';
 
+import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
 import TimeSeries from 'app/core/time_series2';
 import { decodePathComponent } from 'app/core/utils/location_util';
+import { parse as parseDate } from 'app/core/utils/datemath';
 
 import ElapsedTime from './ElapsedTime';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
 import Table from './Table';
 import TimePicker, { DEFAULT_RANGE } from './TimePicker';
-import { buildQueryOptions, ensureQueries, generateQueryKey, hasQuery } from './utils/query';
+import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
 
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
@@ -31,18 +33,20 @@ function makeTimeSeriesList(dataList, options) {
   });
 }
 
-function parseInitialState(initial) {
-  try {
-    const parsed = JSON.parse(decodePathComponent(initial));
-    return {
-      datasource: parsed.datasource,
-      queries: parsed.queries.map(q => q.query),
-      range: parsed.range,
-    };
-  } catch (e) {
-    console.error(e);
-    return { queries: [], range: DEFAULT_RANGE };
+function parseInitialState(initial: string | undefined) {
+  if (initial) {
+    try {
+      const parsed = JSON.parse(decodePathComponent(initial));
+      return {
+        datasource: parsed.datasource,
+        queries: parsed.queries.map(q => q.query),
+        range: parsed.range,
+      };
+    } catch (e) {
+      console.error(e);
+    }
   }
+  return { datasource: null, queries: [], range: DEFAULT_RANGE };
 }
 
 interface IExploreState {
@@ -63,11 +67,12 @@ interface IExploreState {
   tableResult: any;
 }
 
-// @observer
 export class Explore extends React.Component<any, IExploreState> {
+  el: any;
+
   constructor(props) {
     super(props);
-    const { datasource, queries, range } = parseInitialState(props.routeParams.initial);
+    const { datasource, queries, range } = parseInitialState(props.routeParams.state);
     this.state = {
       datasource: null,
       datasourceError: null,
@@ -131,6 +136,10 @@ export class Explore extends React.Component<any, IExploreState> {
       this.setState({ datasource: datasource, datasourceError: message, datasourceLoading: false });
     }
   }
+
+  getRef = el => {
+    this.el = el;
+  };
 
   handleAddQueryRow = index => {
     const { queries } = this.state;
@@ -214,20 +223,33 @@ export class Explore extends React.Component<any, IExploreState> {
     }
   };
 
-  async runGraphQuery() {
+  buildQueryOptions(targetOptions: { format: string; instant: boolean }) {
     const { datasource, queries, range } = this.state;
+    const resolution = this.el.offsetWidth;
+    const absoluteRange = {
+      from: parseDate(range.from, false),
+      to: parseDate(range.to, true),
+    };
+    const { interval } = kbn.calculateInterval(absoluteRange, resolution, datasource.interval);
+    const targets = queries.map(q => ({
+      ...targetOptions,
+      expr: q.query,
+    }));
+    return {
+      interval,
+      range,
+      targets,
+    };
+  }
+
+  async runGraphQuery() {
+    const { datasource, queries } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
     this.setState({ latency: 0, loading: true, graphResult: null, queryError: null });
     const now = Date.now();
-    const options = buildQueryOptions({
-      format: 'time_series',
-      interval: datasource.interval,
-      instant: false,
-      range,
-      queries: queries.map(q => q.query),
-    });
+    const options = this.buildQueryOptions({ format: 'time_series', instant: false });
     try {
       const res = await datasource.query(options);
       const result = makeTimeSeriesList(res.data, options);
@@ -241,18 +263,15 @@ export class Explore extends React.Component<any, IExploreState> {
   }
 
   async runTableQuery() {
-    const { datasource, queries, range } = this.state;
+    const { datasource, queries } = this.state;
     if (!hasQuery(queries)) {
       return;
     }
     this.setState({ latency: 0, loading: true, queryError: null, tableResult: null });
     const now = Date.now();
-    const options = buildQueryOptions({
+    const options = this.buildQueryOptions({
       format: 'table',
-      interval: datasource.interval,
       instant: true,
-      range,
-      queries: queries.map(q => q.query),
     });
     try {
       const res = await datasource.query(options);
@@ -301,7 +320,7 @@ export class Explore extends React.Component<any, IExploreState> {
     const selectedDatasource = datasource ? datasource.name : undefined;
 
     return (
-      <div className={exploreClass}>
+      <div className={exploreClass} ref={this.getRef}>
         <div className="navbar">
           {position === 'left' ? (
             <div>
