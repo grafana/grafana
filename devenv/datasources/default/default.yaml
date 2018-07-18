@@ -60,7 +60,8 @@ datasources:
     url: localhost:5432
     database: grafana
     user: grafana
-    password: password
+    secureJsonData:
+      password: password
     jsonData:
       sslmode: "disable"
 
@@ -70,4 +71,5 @@ datasources:
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
+
 
