@@ -17,11 +17,17 @@ export function alignRange(start, end, step) {
 }
 
 export function prometheusRegularEscape(value) {
-  return value.replace(/'/g, "\\\\'");
+  if (typeof value === 'string') {
+    return value.replace(/'/g, "\\\\'");
+  }
+  return value;
 }
 
 export function prometheusSpecialRegexEscape(value) {
-  return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
+  if (typeof value === 'string') {
+    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
+  }
+  return value;
 }
 
 export class PrometheusDatasource {
@@ -196,7 +202,7 @@ export class PrometheusDatasource {
       interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
-        __interval_ms: { text: String(interval * 1000), value: String(interval * 1000) },
+        __interval_ms: { text: interval * 1000, value: interval * 1000 },
       });
     }
     query.step = interval;
