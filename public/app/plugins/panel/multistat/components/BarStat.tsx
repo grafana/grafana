@@ -1,15 +1,14 @@
 import React from 'react';
-import { SeriesStat, MultistatPanelSize, MultistatPanelOptions, MultistatPanelLayout } from '../types';
 import { getBGColor } from './utils';
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
 export interface Props {
-  stat: SeriesStat;
-  size: MultistatPanelSize;
+  stat: Panel.SeriesStat;
+  size: MultiStat.PanelSize;
   color?: string;
-  direction?: MultistatPanelLayout;
-  options?: MultistatPanelOptions;
+  direction?: MultiStat.PanelLayout;
+  options?: MultiStat.PanelOptions;
   valueOutOfBar?: boolean;
   style?: React.CSSProperties;
 }
@@ -34,7 +33,7 @@ export class BarStat extends React.Component<Props> {
     const stat = this.props.stat;
     const valueColor = this.props.color || DEFAULT_COLOR;
     const bgColor = getBGColor(valueColor);
-    const verticalDirection = this.props.direction === MultistatPanelLayout.Vertical;
+    const verticalDirection = this.props.direction === 'vertical';
 
     let barWidth = 0;
     let valueContainerStyle: React.CSSProperties = {};

@@ -1,21 +1,26 @@
-import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
-import { getDecimalsForValue } from 'app/core/utils/ticks';
-import TimeSeries from 'app/core/time_series2';
-// import TableModel from 'app/core/table_model';
-import { SeriesData, SeriesStat, MultistatPanelModel } from './types';
+/// <reference path="../../../types/panel.ts" />
+/// <reference path="./types.ts" />
 
-export function convertTSDataToMultistat(dataList: SeriesData[], panel) {
+import _ from 'lodash';
+import kbn from '../../../core/utils/kbn';
+import { getDecimalsForValue } from '../../../core/utils/ticks';
+import TimeSeries from '../../../core/time_series2';
+// import TableModel from 'app/core/table_model';
+import { PanelModel } from '../../../features/dashboard/panel_model';
+
+type MultistatPanelModel = PanelModel & MultiStat.PanelOptions;
+
+export function convertTSDataToMultistat(dataList: Panel.SeriesData[], panel) {
   const series = dataList.map(s => handleSeries(s, panel));
   return convertTimeSeriesToMultistatData(series, panel);
 }
 
-export function convertTableDataToMultistat(dataList: SeriesData[], panel) {
+export function convertTableDataToMultistat(dataList: Panel.SeriesData[], panel) {
   const tables = dataList.map(s => handleTable(s, panel));
   return convertTableToMultistatData(tables, panel);
 }
 
-export function handleSeries(seriesData: SeriesData, panel): TimeSeries {
+export function handleSeries(seriesData: Panel.SeriesData, panel): TimeSeries {
   var series = new TimeSeries({
     datapoints: seriesData.datapoints || [],
     alias: seriesData.target,
@@ -25,8 +30,8 @@ export function handleSeries(seriesData: SeriesData, panel): TimeSeries {
   return series;
 }
 
-export function convertTimeSeriesToMultistatData(series: TimeSeries[], panel: MultistatPanelModel): SeriesStat[] {
-  let panelData: SeriesStat[] = [];
+export function convertTimeSeriesToMultistatData(series: TimeSeries[], panel: MultistatPanelModel): Panel.SeriesStat[] {
+  let panelData: Panel.SeriesStat[] = [];
 
   for (let ts of series) {
     let seriesStat = convertToSeriesStat(ts, panel);
@@ -37,8 +42,8 @@ export function convertTimeSeriesToMultistatData(series: TimeSeries[], panel: Mu
   return panelData;
 }
 
-export function convertToSeriesStat(ts: TimeSeries, panel: MultistatPanelModel): SeriesStat {
-  let seriesStat: SeriesStat = {
+export function convertToSeriesStat(ts: TimeSeries, panel: MultistatPanelModel): Panel.SeriesStat {
+  let seriesStat: Panel.SeriesStat = {
     flotpairs: [],
     label: ts.label,
     alias: ts.alias,
@@ -100,7 +105,7 @@ export function handleTable(tableData, panel) {
 }
 
 export function convertTableToMultistatData(tables, panel: MultistatPanelModel) {
-  let panelData: SeriesStat[] = [];
+  let panelData: Panel.SeriesStat[] = [];
 
   if (!tables || tables.length === 0) {
     return [];

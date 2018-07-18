@@ -1,6 +1,4 @@
-import { MultistatPanelOptions, MultistatPanelLayout, MultistatPanelViewMode } from './types';
-
-const panelDefaults: MultistatPanelOptions = {
+const panelDefaults: MultiStat.PanelOptions = {
   links: [],
   datasource: null,
   maxDataPoints: 100,
@@ -21,8 +19,8 @@ const panelDefaults: MultistatPanelOptions = {
     // lineColor: 'rgb(31, 120, 193)',
     // fillColor: 'rgba(31, 118, 189, 0.18)',
   },
-  layout: MultistatPanelLayout.Horizontal,
-  viewMode: MultistatPanelViewMode.Stats,
+  layout: 'horizontal',
+  viewMode: 'stats',
 };
 
 const valueNameOptions = [
@@ -39,15 +37,9 @@ const valueNameOptions = [
   { value: 'last_time', text: 'Time of last point' },
 ];
 
-const layoutOptions = [
-  { value: MultistatPanelLayout.Horizontal, text: 'Horizontal' },
-  { value: MultistatPanelLayout.Vertical, text: 'Vertical' },
-];
+const layoutOptions = [{ value: 'horizontal', text: 'Horizontal' }, { value: 'vertical', text: 'Vertical' }];
 
-const viewModeOptions = [
-  { value: MultistatPanelViewMode.Stats, text: 'Stats' },
-  { value: MultistatPanelViewMode.Bars, text: 'Bars' },
-];
+const viewModeOptions = [{ value: 'stats', text: 'Stats' }, { value: 'bars', text: 'Bars' }];
 
 const defaults = {
   panelDefaults,

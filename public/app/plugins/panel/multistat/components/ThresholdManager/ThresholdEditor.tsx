@@ -2,21 +2,8 @@ import React from 'react';
 import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { SimpleSelect } from 'app/core/components/Select/SimpleSelect';
 
-export interface ThresholdModel {
-  value: number;
-  mode?: ThresholdMode;
-  color?: string;
-}
-
-export enum ThresholdMode {
-  ok = 'ok',
-  warning = 'warning',
-  critical = 'critical',
-  custom = 'custom',
-}
-
 interface Props {
-  threshold: ThresholdModel;
+  threshold: MultiStat.ThresholdModel;
   index: number;
   focused?: boolean;
   onChange: (threshold: any, index: number, valueChanged?: boolean) => any;
@@ -120,7 +107,7 @@ export class ThresholdEditor extends React.Component<Props, State> {
           </div>
         </div>
 
-        {this.props.threshold.mode === ThresholdMode.custom && (
+        {this.props.threshold.mode === 'custom' && (
           <div className="gf-form">
             <label className="gf-form-label">Color</label>
             <span className="gf-form-label">

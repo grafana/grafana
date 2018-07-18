@@ -1,12 +1,11 @@
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
+import kbn from '../../../core/utils/kbn';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import defaults from './defaults';
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { MetricsPanelCtrl } from '../../sdk';
 import { convertTSDataToMultistat, convertTableDataToMultistat } from './data_handler';
-// import { ThresholdEditor } from 'app/core/components/ThresholdManager/ThresholdEditor';
-import { MultiStat } from './components/MultiStat';
+import { MultiStatPanel } from './components/MultiStat';
 
 class MultiStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -111,7 +110,7 @@ class MultiStatCtrl extends MetricsPanelCtrl {
         options: ctrl.panel,
         size: scope.size,
       };
-      const multistatReactElem = React.createElement(MultiStat, multistatProps);
+      const multistatReactElem = React.createElement(MultiStatPanel, multistatProps);
       ReactDOM.render(multistatReactElem, multistatElem[0]);
     }
 

@@ -1,11 +1,10 @@
 import _ from 'lodash';
 import React from 'react';
-import { ThresholdModel, ThresholdMode } from './ThresholdEditor';
 import { ThresholdEditor } from './ThresholdEditor';
 
-const defaultThreshold: ThresholdModel = {
+const defaultThreshold: MultiStat.ThresholdModel = {
   value: null,
-  mode: ThresholdMode.critical,
+  mode: 'critical',
 };
 
 interface Props {
@@ -45,14 +44,14 @@ export class ThresholdForm extends React.Component<Props, State> {
     this.props.onChange(newThresholds);
   };
 
-  sortThresholds(thresholds: ThresholdModel[]): ThresholdModel[] {
-    return _.sortBy(thresholds, (t: ThresholdModel) => {
+  sortThresholds(thresholds: MultiStat.ThresholdModel[]): MultiStat.ThresholdModel[] {
+    return _.sortBy(thresholds, (t: MultiStat.ThresholdModel) => {
       return t.value !== null ? t.value : -Infinity;
     });
   }
 
   render() {
-    const thresholdItems = this.props.thresholds.map((threshold: ThresholdModel, i) => (
+    const thresholdItems = this.props.thresholds.map((threshold: MultiStat.ThresholdModel, i) => (
       <ThresholdEditor
         index={i}
         key={i.toString()}

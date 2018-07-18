@@ -1,66 +1,41 @@
-import { PanelModel } from 'app/features/dashboard/panel_model';
-import { ThresholdModel } from './components/ThresholdManager/ThresholdEditor';
+namespace MultiStat {
+  export interface PanelOptions extends Panel.MetricPanelOptions {
+    layout?: PanelLayout;
+    viewMode?: PanelViewMode;
+    format?: string;
+    nullPointMode?: any;
+    valueName?: string;
+    prefixFontSize?: string;
+    valueFontSize?: string;
+    postfixFontSize?: string;
+    colorBackground?: any;
+    colorValue?: any;
+    sparkline?: {
+      show?: boolean;
+    };
+    thresholds?: ThresholdModel[];
+  }
 
-export interface SeriesData {
-  datapoints: any[];
-  target: string;
-}
+  export interface PanelSize {
+    w: number;
+    h: number;
+  }
 
-export type DataList = SeriesData[];
+  // Prefer to use union for typing, because enum requires explicit import, otherwise, you get runtime error.
+  //
+  // export enum PanelLayout {
+  //   Horizontal = 'horizontal',
+  //   Vertical = 'vertical',
+  // }
+  export type PanelLayout = 'horizontal' | 'vertical';
 
-export interface SeriesStat {
-  alias?: string;
-  label?: string;
-  value?: number;
-  valueRounded?: number;
-  valueFormatted?: string;
-  flotpairs?: any[];
-  scopedVars?: any;
-}
+  export type PanelViewMode = 'stats' | 'bars';
 
-export interface MultistatPanelSize {
-  w: number;
-  h: number;
-}
+  export interface ThresholdModel {
+    value: number;
+    mode?: ThresholdMode;
+    color?: string;
+  }
 
-export interface BasePanelOptions {
-  links?: any[];
-}
-
-export interface MetricPanelOptions extends BasePanelOptions {
-  datasource?: any;
-  maxDataPoints?: number;
-  interval?: any;
-  targets?: any[];
-  cacheTimeout?: any;
-}
-
-export interface MultistatPanelOptions extends MetricPanelOptions {
-  layout?: MultistatPanelLayout;
-  viewMode?: MultistatPanelViewMode;
-  format?: any;
-  mappingType?: any;
-  nullPointMode?: any;
-  valueName?: string;
-  prefixFontSize?: string;
-  valueFontSize?: string;
-  postfixFontSize?: string;
-  colorBackground?: any;
-  colorValue?: any;
-  sparkline?: {
-    show?: boolean
-  };
-  thresholds?: ThresholdModel[];
-}
-
-export type MultistatPanelModel = PanelModel & MultistatPanelOptions;
-
-export enum MultistatPanelLayout {
-  Horizontal = 'horizontal',
-  Vertical = 'vertical',
-}
-
-export enum MultistatPanelViewMode {
-  Stats = 'stats',
-  Bars = 'bars',
+  export type ThresholdMode = 'ok' | 'warning' | 'critical' | 'custom';
 }

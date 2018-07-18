@@ -1,15 +1,14 @@
 import React from 'react';
 import { SparkLine } from './SparkLine';
-import { SeriesStat, MultistatPanelSize, MultistatPanelOptions, MultistatPanelLayout } from '../types';
 import { getBGColor } from './utils';
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
 export interface Props {
-  stat: SeriesStat;
-  size: MultistatPanelSize;
+  stat: Panel.SeriesStat;
+  size: MultiStat.PanelSize;
   color?: string;
-  options?: MultistatPanelOptions;
+  options?: MultiStat.PanelOptions;
 }
 
 export class SingleStat extends React.Component<Props> {
@@ -38,7 +37,7 @@ export class SingleStat extends React.Component<Props> {
     const labelToTheLeft = widthRatio > 3;
 
     let containerStyle: React.CSSProperties = {};
-    if (options.layout === MultistatPanelLayout.Vertical) {
+    if (options.layout === 'vertical') {
       containerStyle.height = this.props.size.h;
     } else {
       containerStyle.width = this.props.size.w;
@@ -110,7 +109,7 @@ export class SingleStat extends React.Component<Props> {
   }
 }
 
-function getFontSize(panelSize: MultistatPanelSize, options?) {
+function getFontSize(panelSize: MultiStat.PanelSize, options?) {
   const size = Math.min(panelSize.h, panelSize.w * 0.75);
   let increaseRatio = 1;
   if (!(options && options.sparkline && options.sparkline.show)) {

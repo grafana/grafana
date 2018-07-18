@@ -1,11 +1,10 @@
 import React from 'react';
 import { SingleStat } from './SingleStat';
-import { MultistatPanelSize, MultistatPanelOptions, MultistatPanelLayout } from '../types';
 
 export interface Props {
   stats: any[];
-  options: MultistatPanelOptions;
-  size: MultistatPanelSize;
+  options: MultiStat.PanelOptions;
+  size: MultiStat.PanelSize;
   getColor: (v: number) => string;
 }
 
@@ -14,7 +13,7 @@ export function MultiStatStats(props: Props) {
   let size;
   let classSuffix;
 
-  if (props.options.layout === MultistatPanelLayout.Vertical) {
+  if (props.options.layout === 'vertical') {
     classSuffix = 'vertical';
     const rootElemHeight = props.size.h - 30;
     const statHeight = stats.length > 0 ? rootElemHeight / stats.length : 0;
