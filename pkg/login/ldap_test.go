@@ -98,6 +98,10 @@ func TestLdapAuther(t *testing.T) {
 				So(result.Login, ShouldEqual, "torkelo")
 			})
 
+			Convey("Should set isGrafanaAdmin to false by default", func() {
+				So(result.IsAdmin, ShouldBeFalse)
+			})
+
 		})
 
 	})
@@ -223,8 +227,32 @@ func TestLdapAuther(t *testing.T) {
 				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
 				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
+
+			Convey("Should not update permissions unless specified", func() {
+				So(err, ShouldBeNil)
+				So(sc.updateUserPermissionsCmd, ShouldBeNil)
+			})
 		})
 
+		ldapAutherScenario("given ldap groups with grafana_admin=true", func(sc *scenarioContext) {
+			trueVal := true
+
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin", IsGrafanaAdmin: &trueVal},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{"cn=admins"},
+			})
+
+			Convey("Should create user with admin set to true", func() {
+				So(err, ShouldBeNil)
+				So(sc.updateUserPermissionsCmd.IsGrafanaAdmin, ShouldBeTrue)
+			})
+		})
 	})
 
 	Convey("When calling SyncUser", t, func() {
@@ -332,6 +360,11 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 			return nil
 		})
 
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpdateUserPermissionsCommand) error {
+			sc.updateUserPermissionsCmd = cmd
+			return nil
+		})
+
 		bus.AddHandler("test", func(cmd *m.GetUserByAuthInfoQuery) error {
 			sc.getUserByAuthInfoQuery = cmd
 			sc.getUserByAuthInfoQuery.Result = &m.User{Login: cmd.Login}
@@ -379,14 +412,15 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 }
 
 type scenarioContext struct {
-	getUserByAuthInfoQuery *m.GetUserByAuthInfoQuery
-	getUserOrgListQuery    *m.GetUserOrgListQuery
-	createUserCmd          *m.CreateUserCommand
-	addOrgUserCmd          *m.AddOrgUserCommand
-	updateOrgUserCmd       *m.UpdateOrgUserCommand
-	removeOrgUserCmd       *m.RemoveOrgUserCommand
-	updateUserCmd          *m.UpdateUserCommand
-	setUsingOrgCmd         *m.SetUsingOrgCommand
+	getUserByAuthInfoQuery   *m.GetUserByAuthInfoQuery
+	getUserOrgListQuery      *m.GetUserOrgListQuery
+	createUserCmd            *m.CreateUserCommand
+	addOrgUserCmd            *m.AddOrgUserCommand
+	updateOrgUserCmd         *m.UpdateOrgUserCommand
+	removeOrgUserCmd         *m.RemoveOrgUserCommand
+	updateUserCmd            *m.UpdateUserCommand
+	setUsingOrgCmd           *m.SetUsingOrgCommand
+	updateUserPermissionsCmd *m.UpdateUserPermissionsCommand
 }
 
 func (sc *scenarioContext) userQueryReturns(user *m.User) {

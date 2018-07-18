@@ -175,6 +175,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 
 		if ldapUser.isMemberOf(group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
+			extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 		}
 	}
 
@@ -190,18 +191,18 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 	}
 
 	// add/update user in grafana
-	userQuery := &m.UpsertUserCommand{
+	upsertUserCmd := &m.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: setting.LdapAllowSignup,
 	}
 
-	err := bus.Dispatch(userQuery)
+	err := bus.Dispatch(upsertUserCmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return userQuery.Result, nil
+	return upsertUserCmd.Result, nil
 }
 
 func (a *ldapAuther) serverBind() error {
