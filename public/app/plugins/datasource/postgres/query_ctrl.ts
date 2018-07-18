@@ -234,6 +234,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
         this.selectModels.push(parts);
         break;
       case 'aggregate':
+        // add group by if no group by yet
+        if (this.target.groupBy.length === 0) {
+          this.addGroupBy('time', '1m');
+        }
       case 'special':
         let index = _.findIndex(selectParts, (p: any) => p.def.type === item.value);
         if (index !== -1) {
