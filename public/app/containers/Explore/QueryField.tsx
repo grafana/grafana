@@ -17,6 +17,7 @@ import { processLabels, RATE_RANGES, cleanText } from './utils/prometheus';
 import Typeahead from './Typeahead';
 
 const EMPTY_METRIC = '';
+const METRIC_MARK = 'metric';
 export const TYPEAHEAD_DEBOUNCE = 300;
 
 function flattenSuggestions(s) {
@@ -135,7 +136,7 @@ class QueryField extends React.Component<any, any> {
     if (!this.state.metrics) {
       return;
     }
-    setPrismTokens(this.props.prismLanguage, 'metrics', this.state.metrics);
+    setPrismTokens(this.props.prismLanguage, METRIC_MARK, this.state.metrics);
 
     // Trigger re-render
     window.requestAnimationFrame(() => {
@@ -184,7 +185,7 @@ class QueryField extends React.Component<any, any> {
       let typeaheadContext = null;
 
       // Take first metric as lucky guess
-      const metricNode = editorNode.querySelector('.metric');
+      const metricNode = editorNode.querySelector(`.${METRIC_MARK}`);
 
       if (wrapperClasses.contains('context-range')) {
         // Rate ranges
