@@ -74,7 +74,7 @@ email =  "email"
 [[servers.group_mappings]]
 group_dn = "cn=admins,dc=grafana,dc=org"
 org_role = "Admin"
-# To make user a instance admin  (Grafana Admin) uncomment line below
+# To make user an instance admin  (Grafana Admin) uncomment line below
 # grafana_admin = true
 # The Grafana organization database id, optional, if left out the default org (id 1) will be used.  Setting this allows for multiple group_dn's to be assigned to the same org_role provided the org_id differs
 # org_id = 1
