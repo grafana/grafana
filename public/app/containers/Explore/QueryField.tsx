@@ -1,106 +1,111 @@
+import _ from 'lodash';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Value } from 'slate';
+import { Block, Change, Document, Text, Value } from 'slate';
 import { Editor } from 'slate-react';
 import Plain from 'slate-plain-serializer';
 
-// dom also includes Element polyfills
-import { getNextCharacter, getPreviousCousin } from './utils/dom';
 import BracesPlugin from './slate-plugins/braces';
 import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
-import PluginPrism, { setPrismTokens } from './slate-plugins/prism/index';
-import RunnerPlugin from './slate-plugins/runner';
-import debounce from './utils/debounce';
-import { processLabels, RATE_RANGES, cleanText } from './utils/prometheus';
 
 import Typeahead from './Typeahead';
 
-const EMPTY_METRIC = '';
-const METRIC_MARK = 'metric';
 export const TYPEAHEAD_DEBOUNCE = 300;
 
-function flattenSuggestions(s) {
+function flattenSuggestions(s: any[]): any[] {
   return s ? s.reduce((acc, g) => acc.concat(g.items), []) : [];
 }
 
-export const getInitialValue = query =>
-  Value.fromJSON({
-    document: {
-      nodes: [
-        {
-          object: 'block',
-          type: 'paragraph',
-          nodes: [
-            {
-              object: 'text',
-              leaves: [
-                {
-                  text: query,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
+export const makeFragment = (text: string): Document => {
+  const lines = text.split('\n').map(line =>
+    Block.create({
+      type: 'paragraph',
+      nodes: [Text.create(line)],
+    })
+  );
+
+  const fragment = Document.create({
+    nodes: lines,
   });
+  return fragment;
+};
 
-class Portal extends React.Component<any, any> {
-  node: any;
+export const getInitialValue = (value: string): Value => Value.create({ document: makeFragment(value) });
 
-  constructor(props) {
-    super(props);
-    const { index = 0, prefix = 'query' } = props;
-    this.node = document.createElement('div');
-    this.node.classList.add(`slate-typeahead`, `slate-typeahead-${prefix}-${index}`);
-    document.body.appendChild(this.node);
-  }
-
-  componentWillUnmount() {
-    document.body.removeChild(this.node);
-  }
-
-  render() {
-    return ReactDOM.createPortal(this.props.children, this.node);
-  }
+export interface Suggestion {
+  display?: string;
+  text: string;
+  deleteBackwards?: number;
 }
 
-class QueryField extends React.Component<any, any> {
-  menuEl: any;
-  plugins: any;
+export interface SuggestionGroup {
+  label: string;
+  items: Suggestion[];
+  prefixMatch?: boolean;
+  skipFilter?: boolean;
+}
+
+interface TypeaheadFieldProps {
+  additionalPlugins: any[];
+  cleanText: (text: string) => string;
+  initialValue: string | null;
+  onBlur?: () => void;
+  onFocus?: () => void;
+  onTypeahead?: (typeahead: TypeaheadInput) => TypeaheadOutput;
+  onValueChanged?: (value: Value) => void;
+  onWillApplySuggestion?: (suggestion: string, state: TypeaheadFieldState) => string;
+  placeholder?: string;
+  portalPrefix?: string;
+}
+
+export interface TypeaheadFieldState {
+  suggestions: SuggestionGroup[];
+  typeaheadContext: string | null;
+  typeaheadIndex: number;
+  typeaheadPrefix: string;
+  typeaheadText: string;
+  value: Value;
+}
+
+export interface TypeaheadInput {
+  selection: Selection;
+  editorNode: Element;
+  wrapperNode: Element;
+  offset: number;
+  text: string;
+}
+
+export interface TypeaheadOutput {
+  context?: string;
+  prefix: string;
+  refresher?: Promise<{}>;
+  suggestions: SuggestionGroup[];
+}
+
+class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldState> {
+  menuEl: HTMLElement | null;
+  plugins: any[];
   resetTimer: any;
 
   constructor(props, context) {
     super(props, context);
 
-    const { prismDefinition = {}, prismLanguage = 'promql' } = props;
-
-    this.plugins = [
-      BracesPlugin(),
-      ClearPlugin(),
-      RunnerPlugin({ handler: props.onPressEnter }),
-      NewlinePlugin(),
-      PluginPrism({ definition: prismDefinition, language: prismLanguage }),
-    ];
+    // Base plugins
+    this.plugins = [BracesPlugin(), ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins];
 
     this.state = {
-      labelKeys: {},
-      labelValues: {},
-      metrics: props.metrics || [],
       suggestions: [],
+      typeaheadContext: null,
       typeaheadIndex: 0,
       typeaheadPrefix: '',
-      value: getInitialValue(props.initialQuery || ''),
+      typeaheadText: '',
+      value: getInitialValue(props.initialValue || ''),
     };
   }
 
   componentDidMount() {
     this.updateMenu();
-
-    if (this.props.metrics === undefined) {
-      this.fetchMetricNames();
-    }
   }
 
   componentWillUnmount() {
@@ -112,12 +117,9 @@ class QueryField extends React.Component<any, any> {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.metrics && nextProps.metrics !== this.props.metrics) {
-      this.setState({ metrics: nextProps.metrics }, this.onMetricsReceived);
-    }
-    // initialQuery is null in case the user typed
-    if (nextProps.initialQuery !== null && nextProps.initialQuery !== this.props.initialQuery) {
-      this.setState({ value: getInitialValue(nextProps.initialQuery) });
+    // initialValue is null in case the user typed
+    if (nextProps.initialValue !== null && nextProps.initialValue !== this.props.initialValue) {
+      this.setState({ value: getInitialValue(nextProps.initialValue) });
     }
   }
 
@@ -125,48 +127,26 @@ class QueryField extends React.Component<any, any> {
     const changed = value.document !== this.state.value.document;
     this.setState({ value }, () => {
       if (changed) {
-        this.handleChangeQuery();
+        this.handleChangeValue();
       }
     });
 
     window.requestAnimationFrame(this.handleTypeahead);
   };
 
-  onMetricsReceived = () => {
-    if (!this.state.metrics) {
-      return;
-    }
-    setPrismTokens(this.props.prismLanguage, METRIC_MARK, this.state.metrics);
-
-    // Trigger re-render
-    window.requestAnimationFrame(() => {
-      // Bogus edit to trigger highlighting
-      const change = this.state.value
-        .change()
-        .insertText(' ')
-        .deleteBackward(1);
-      this.onChange(change);
-    });
-  };
-
-  request = url => {
-    if (this.props.request) {
-      return this.props.request(url);
-    }
-    return fetch(url);
-  };
-
-  handleChangeQuery = () => {
+  handleChangeValue = () => {
     // Send text change to parent
-    const { onQueryChange } = this.props;
-    if (onQueryChange) {
-      onQueryChange(Plain.serialize(this.state.value));
+    const { onValueChanged } = this.props;
+    if (onValueChanged) {
+      onValueChanged(Plain.serialize(this.state.value));
     }
   };
 
-  handleTypeahead = debounce(() => {
+  handleTypeahead = _.debounce(async () => {
     const selection = window.getSelection();
-    if (selection.anchorNode) {
+    const { onTypeahead } = this.props;
+
+    if (onTypeahead && selection.anchorNode) {
       const wrapperNode = selection.anchorNode.parentElement;
       const editorNode = wrapperNode.closest('.slate-query-field');
       if (!editorNode || this.state.value.isBlurred) {
@@ -175,164 +155,79 @@ class QueryField extends React.Component<any, any> {
       }
 
       const range = selection.getRangeAt(0);
-      const text = selection.anchorNode.textContent;
       const offset = range.startOffset;
-      const prefix = cleanText(text.substr(0, offset));
+      const text = selection.anchorNode.textContent;
 
-      // Determine candidates by context
-      const suggestionGroups = [];
-      const wrapperClasses = wrapperNode.classList;
-      let typeaheadContext = null;
+      const { suggestions, prefix, context, refresher } = onTypeahead({
+        selection,
+        editorNode,
+        wrapperNode,
+        offset,
+        text,
+      });
 
-      // Take first metric as lucky guess
-      const metricNode = editorNode.querySelector(`.${METRIC_MARK}`);
-
-      if (wrapperClasses.contains('context-range')) {
-        // Rate ranges
-        typeaheadContext = 'context-range';
-        suggestionGroups.push({
-          label: 'Range vector',
-          items: [...RATE_RANGES],
-        });
-      } else if (wrapperClasses.contains('context-labels') && metricNode) {
-        const metric = metricNode.textContent;
-        const labelKeys = this.state.labelKeys[metric];
-        if (labelKeys) {
-          if ((text && text.startsWith('=')) || wrapperClasses.contains('attr-value')) {
-            // Label values
-            const labelKeyNode = getPreviousCousin(wrapperNode, '.attr-name');
-            if (labelKeyNode) {
-              const labelKey = labelKeyNode.textContent;
-              const labelValues = this.state.labelValues[metric][labelKey];
-              typeaheadContext = 'context-label-values';
-              suggestionGroups.push({
-                label: 'Label values',
-                items: labelValues,
-              });
-            }
+      const filteredSuggestions = suggestions.map(group => {
+        if (group.items && prefix && !group.skipFilter) {
+          group.items = group.items.filter(c => c.text.length >= prefix.length);
+          if (group.prefixMatch) {
+            group.items = group.items.filter(c => c.text.indexOf(prefix) === 0);
           } else {
-            // Label keys
-            typeaheadContext = 'context-labels';
-            suggestionGroups.push({ label: 'Labels', items: labelKeys });
+            group.items = group.items.filter(c => c.text.indexOf(prefix) > -1);
           }
-        } else {
-          this.fetchMetricLabels(metric);
-        }
-      } else if (wrapperClasses.contains('context-labels') && !metricNode) {
-        // Empty name queries
-        const defaultKeys = ['job', 'instance'];
-        // Munge all keys that we have seen together
-        const labelKeys = Object.keys(this.state.labelKeys).reduce((acc, metric) => {
-          return acc.concat(this.state.labelKeys[metric].filter(key => acc.indexOf(key) === -1));
-        }, defaultKeys);
-        if ((text && text.startsWith('=')) || wrapperClasses.contains('attr-value')) {
-          // Label values
-          const labelKeyNode = getPreviousCousin(wrapperNode, '.attr-name');
-          if (labelKeyNode) {
-            const labelKey = labelKeyNode.textContent;
-            if (this.state.labelValues[EMPTY_METRIC]) {
-              const labelValues = this.state.labelValues[EMPTY_METRIC][labelKey];
-              typeaheadContext = 'context-label-values';
-              suggestionGroups.push({
-                label: 'Label values',
-                items: labelValues,
-              });
-            } else {
-              // Can only query label values for now (API to query keys is under development)
-              this.fetchLabelValues(labelKey);
-            }
-          }
-        } else {
-          // Label keys
-          typeaheadContext = 'context-labels';
-          suggestionGroups.push({ label: 'Labels', items: labelKeys });
-        }
-      } else if (metricNode && wrapperClasses.contains('context-aggregation')) {
-        typeaheadContext = 'context-aggregation';
-        const metric = metricNode.textContent;
-        const labelKeys = this.state.labelKeys[metric];
-        if (labelKeys) {
-          suggestionGroups.push({ label: 'Labels', items: labelKeys });
-        } else {
-          this.fetchMetricLabels(metric);
-        }
-      } else if (
-        (this.state.metrics && ((prefix && !wrapperClasses.contains('token')) || text.match(/[+\-*/^%]/))) ||
-        wrapperClasses.contains('context-function')
-      ) {
-        // Need prefix for metrics
-        typeaheadContext = 'context-metrics';
-        suggestionGroups.push({
-          label: 'Metrics',
-          items: this.state.metrics,
-        });
-      }
-
-      let results = 0;
-      const filteredSuggestions = suggestionGroups.map(group => {
-        if (group.items) {
-          group.items = group.items.filter(c => c.length !== prefix.length && c.indexOf(prefix) > -1);
-          results += group.items.length;
         }
         return group;
       });
 
-      console.log('handleTypeahead', selection.anchorNode, wrapperClasses, text, offset, prefix, typeaheadContext);
-
-      this.setState({
-        typeaheadPrefix: prefix,
-        typeaheadContext,
-        typeaheadText: text,
-        suggestions: results > 0 ? filteredSuggestions : [],
-      });
+      this.setState(
+        {
+          suggestions: filteredSuggestions,
+          typeaheadPrefix: prefix,
+          typeaheadContext: context,
+          typeaheadText: text,
+        },
+        () => {
+          if (refresher) {
+            refresher.then(this.handleTypeahead);
+          }
+        }
+      );
     }
   }, TYPEAHEAD_DEBOUNCE);
 
-  applyTypeahead(change, suggestion) {
-    const { typeaheadPrefix, typeaheadContext, typeaheadText } = this.state;
+  applyTypeahead(change: Change, suggestion: Suggestion): Change {
+    const { cleanText, onWillApplySuggestion } = this.props;
+    const { typeaheadPrefix, typeaheadText } = this.state;
+    let suggestionText = suggestion.display || suggestion.text;
 
-    // Modify suggestion based on context
-    switch (typeaheadContext) {
-      case 'context-labels': {
-        const nextChar = getNextCharacter();
-        if (!nextChar || nextChar === '}' || nextChar === ',') {
-          suggestion += '=';
-        }
-        break;
-      }
-
-      case 'context-label-values': {
-        // Always add quotes and remove existing ones instead
-        if (!(typeaheadText.startsWith('="') || typeaheadText.startsWith('"'))) {
-          suggestion = `"${suggestion}`;
-        }
-        if (getNextCharacter() !== '"') {
-          suggestion = `${suggestion}"`;
-        }
-        break;
-      }
-
-      default:
+    if (onWillApplySuggestion) {
+      suggestionText = onWillApplySuggestion(suggestionText, { ...this.state });
     }
 
     this.resetTypeahead();
 
     // Remove the current, incomplete text and replace it with the selected suggestion
-    let backward = typeaheadPrefix.length;
+    const backward = suggestion.deleteBackwards || typeaheadPrefix.length;
     const text = cleanText(typeaheadText);
     const suffixLength = text.length - typeaheadPrefix.length;
     const offset = typeaheadText.indexOf(typeaheadPrefix);
-    const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestion === typeaheadText);
+    const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
     const forward = midWord ? suffixLength + offset : 0;
 
-    return (
-      change
-        // TODO this line breaks if cursor was moved left and length is longer than whole prefix
+    // If new-lines, apply suggestion as block
+    if (suggestionText.match(/\n/)) {
+      const fragment = makeFragment(suggestionText);
+      return change
         .deleteBackward(backward)
         .deleteForward(forward)
-        .insertText(suggestion)
-        .focus()
-    );
+        .insertFragment(fragment)
+        .focus();
+    }
+
+    return change
+      .deleteBackward(backward)
+      .deleteForward(forward)
+      .insertText(suggestionText)
+      .focus();
   }
 
   onKeyDown = (event, change) => {
@@ -413,73 +308,6 @@ class QueryField extends React.Component<any, any> {
     });
   };
 
-  async fetchLabelValues(key) {
-    const url = `/api/v1/label/${key}/values`;
-    try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      const pairs = this.state.labelValues[EMPTY_METRIC];
-      const values = {
-        ...pairs,
-        [key]: body.data,
-      };
-      // const labelKeys = {
-      //   ...this.state.labelKeys,
-      //   [EMPTY_METRIC]: keys,
-      // };
-      const labelValues = {
-        ...this.state.labelValues,
-        [EMPTY_METRIC]: values,
-      };
-      this.setState({ labelValues }, this.handleTypeahead);
-    } catch (e) {
-      if (this.props.onRequestError) {
-        this.props.onRequestError(e);
-      } else {
-        console.error(e);
-      }
-    }
-  }
-
-  async fetchMetricLabels(name) {
-    const url = `/api/v1/series?match[]=${name}`;
-    try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      const { keys, values } = processLabels(body.data);
-      const labelKeys = {
-        ...this.state.labelKeys,
-        [name]: keys,
-      };
-      const labelValues = {
-        ...this.state.labelValues,
-        [name]: values,
-      };
-      this.setState({ labelKeys, labelValues }, this.handleTypeahead);
-    } catch (e) {
-      if (this.props.onRequestError) {
-        this.props.onRequestError(e);
-      } else {
-        console.error(e);
-      }
-    }
-  }
-
-  async fetchMetricNames() {
-    const url = '/api/v1/label/__name__/values';
-    try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      this.setState({ metrics: body.data }, this.onMetricsReceived);
-    } catch (error) {
-      if (this.props.onRequestError) {
-        this.props.onRequestError(error);
-      } else {
-        console.error(error);
-      }
-    }
-  }
-
   handleBlur = () => {
     const { onBlur } = this.props;
     // If we dont wait here, menu clicks wont work because the menu
@@ -530,7 +358,7 @@ class QueryField extends React.Component<any, any> {
 
       // Write DOM
       requestAnimationFrame(() => {
-        menu.style.opacity = 1;
+        menu.style.opacity = '1';
         menu.style.top = `${rect.top + scrollY + rect.height + 4}px`;
         menu.style.left = `${rect.left + scrollX - 2}px`;
       });
@@ -587,6 +415,26 @@ class QueryField extends React.Component<any, any> {
         />
       </div>
     );
+  }
+}
+
+class Portal extends React.Component<{ index?: number; prefix: string }, {}> {
+  node: HTMLElement;
+
+  constructor(props) {
+    super(props);
+    const { index = 0, prefix = 'query' } = props;
+    this.node = document.createElement('div');
+    this.node.classList.add(`slate-typeahead`, `slate-typeahead-${prefix}-${index}`);
+    document.body.appendChild(this.node);
+  }
+
+  componentWillUnmount() {
+    document.body.removeChild(this.node);
+  }
+
+  render() {
+    return ReactDOM.createPortal(this.props.children, this.node);
   }
 }
 
