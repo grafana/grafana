@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React from 'react';
 
 // dom also includes Element polyfills
@@ -15,7 +16,10 @@ const PRISM_LANGUAGE = 'promql';
 
 const wrapText = text => ({ text });
 
-function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: TypeaheadFieldState): string {
+export function willApplySuggestion(
+  suggestion: string,
+  { typeaheadContext, typeaheadText }: TypeaheadFieldState
+): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
     case 'context-labels': {
@@ -54,8 +58,8 @@ class PromQueryField extends React.Component<any, any> {
     ];
 
     this.state = {
-      labelKeys: {},
-      labelValues: {},
+      labelKeys: props.labelKeys || {},
+      labelValues: props.labelValues || {},
       metrics: props.metrics || [],
     };
   }
@@ -66,25 +70,11 @@ class PromQueryField extends React.Component<any, any> {
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.metrics && nextProps.metrics !== this.props.metrics) {
-      this.setState({ metrics: nextProps.metrics }, this.onMetricsReceived);
+      this.setState({ metrics: nextProps.metrics }, this.onReceiveMetrics);
     }
   }
 
-  onMetricsReceived = () => {
-    if (!this.state.metrics) {
-      return;
-    }
-    setPrismTokens(PRISM_LANGUAGE, METRIC_MARK, this.state.metrics);
-  };
-
-  request = url => {
-    if (this.props.request) {
-      return this.props.request(url);
-    }
-    return fetch(url);
-  };
-
-  handleChangeQuery = value => {
+  onChangeQuery = value => {
     // Send text change to parent
     const { onQueryChange } = this.props;
     if (onQueryChange) {
@@ -92,36 +82,58 @@ class PromQueryField extends React.Component<any, any> {
     }
   };
 
-  handleTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
-    const { editorNode, offset, selection, text, wrapperNode } = typeahead;
+  onReceiveMetrics = () => {
+    if (!this.state.metrics) {
+      return;
+    }
+    setPrismTokens(PRISM_LANGUAGE, METRIC_MARK, this.state.metrics);
+  };
 
-    const prefix = cleanText(text.substr(0, offset));
+  onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
+    const { editorNode, offset, text, wrapperNode } = typeahead;
 
-    // Determine candidates by context
-    const suggestions: SuggestionGroup[] = [];
-    const wrapperClasses = wrapperNode.classList;
-    let context: string | null = null;
-    let refresher: Promise<any>;
-
+    // Get DOM-dependent context
+    const wrapperClasses = Array.from(wrapperNode.classList);
     // Take first metric as lucky guess
     const metricNode = editorNode.querySelector(`.${METRIC_MARK}`);
+    const metric = metricNode && metricNode.textContent;
+    const labelKeyNode = getPreviousCousin(wrapperNode, '.attr-name');
+    const labelKey = labelKeyNode && labelKeyNode.textContent;
 
-    if (wrapperClasses.contains('context-range')) {
+    const result = this.getTypeahead(text, offset, wrapperClasses, metric, labelKey);
+
+    console.log('handleTypeahead', wrapperClasses, text, offset, result.prefix, result.context);
+
+    return result;
+  };
+
+  // Keep this DOM-free for testing
+  getTypeahead(
+    text: string,
+    offset: number,
+    wrapperClasses: string[],
+    metric?: string,
+    labelKey?: string
+  ): TypeaheadOutput {
+    // Determine candidates by context
+    let context: string | null = null;
+    let refresher: Promise<any> = null;
+    const suggestions: SuggestionGroup[] = [];
+    const prefix = cleanText(text.substr(0, offset));
+
+    if (_.includes(wrapperClasses, 'context-range')) {
       // Rate ranges
       context = 'context-range';
       suggestions.push({
         label: 'Range vector',
         items: [...RATE_RANGES].map(wrapText),
       });
-    } else if (wrapperClasses.contains('context-labels') && metricNode) {
-      const metric = metricNode.textContent;
+    } else if (_.includes(wrapperClasses, 'context-labels') && metric) {
       const labelKeys = this.state.labelKeys[metric];
       if (labelKeys) {
-        if ((text && text.startsWith('=')) || wrapperClasses.contains('attr-value')) {
+        if ((text && text.startsWith('=')) || _.includes(wrapperClasses, 'attr-value')) {
           // Label values
-          const labelKeyNode = getPreviousCousin(wrapperNode, '.attr-name');
-          if (labelKeyNode) {
-            const labelKey = labelKeyNode.textContent;
+          if (labelKey) {
             const labelValues = this.state.labelValues[metric][labelKey];
             context = 'context-label-values';
             suggestions.push({
@@ -137,18 +149,16 @@ class PromQueryField extends React.Component<any, any> {
       } else {
         refresher = this.fetchMetricLabels(metric);
       }
-    } else if (wrapperClasses.contains('context-labels') && !metricNode) {
+    } else if (_.includes(wrapperClasses, 'context-labels') && !metric) {
       // Empty name queries
       const defaultKeys = ['job', 'instance'];
       // Munge all keys that we have seen together
       const labelKeys = Object.keys(this.state.labelKeys).reduce((acc, metric) => {
         return acc.concat(this.state.labelKeys[metric].filter(key => acc.indexOf(key) === -1));
       }, defaultKeys);
-      if ((text && text.startsWith('=')) || wrapperClasses.contains('attr-value')) {
+      if ((text && text.startsWith('=')) || _.includes(wrapperClasses, 'attr-value')) {
         // Label values
-        const labelKeyNode = getPreviousCousin(wrapperNode, '.attr-name');
-        if (labelKeyNode) {
-          const labelKey = labelKeyNode.textContent;
+        if (labelKey) {
           if (this.state.labelValues[EMPTY_METRIC]) {
             const labelValues = this.state.labelValues[EMPTY_METRIC][labelKey];
             context = 'context-label-values';
@@ -166,9 +176,8 @@ class PromQueryField extends React.Component<any, any> {
         context = 'context-labels';
         suggestions.push({ label: 'Labels', items: labelKeys.map(wrapText) });
       }
-    } else if (metricNode && wrapperClasses.contains('context-aggregation')) {
+    } else if (metric && _.includes(wrapperClasses, 'context-aggregation')) {
       context = 'context-aggregation';
-      const metric = metricNode.textContent;
       const labelKeys = this.state.labelKeys[metric];
       if (labelKeys) {
         suggestions.push({ label: 'Labels', items: labelKeys.map(wrapText) });
@@ -176,8 +185,8 @@ class PromQueryField extends React.Component<any, any> {
         refresher = this.fetchMetricLabels(metric);
       }
     } else if (
-      (this.state.metrics && ((prefix && !wrapperClasses.contains('token')) || text.match(/[+\-*/^%]/))) ||
-      wrapperClasses.contains('context-function')
+      (this.state.metrics && ((prefix && !_.includes(wrapperClasses, 'token')) || text.match(/[+\-*/^%]/))) ||
+      _.includes(wrapperClasses, 'context-function')
     ) {
       // Need prefix for metrics
       context = 'context-metrics';
@@ -187,14 +196,19 @@ class PromQueryField extends React.Component<any, any> {
       });
     }
 
-    console.log('handleTypeahead', selection.anchorNode, wrapperClasses, text, offset, prefix, context);
-
     return {
       context,
       prefix,
       refresher,
       suggestions,
     };
+  }
+
+  request = url => {
+    if (this.props.request) {
+      return this.props.request(url);
+    }
+    return fetch(url);
   };
 
   async fetchLabelValues(key) {
@@ -254,7 +268,7 @@ class PromQueryField extends React.Component<any, any> {
     try {
       const res = await this.request(url);
       const body = await (res.data || res.json());
-      this.setState({ metrics: body.data }, this.onMetricsReceived);
+      this.setState({ metrics: body.data }, this.onReceiveMetrics);
     } catch (error) {
       if (this.props.onRequestError) {
         this.props.onRequestError(error);
@@ -270,9 +284,9 @@ class PromQueryField extends React.Component<any, any> {
         additionalPlugins={this.plugins}
         cleanText={cleanText}
         initialValue={this.props.initialQuery}
-        onTypeahead={this.handleTypeahead}
+        onTypeahead={this.onTypeahead}
         onWillApplySuggestion={willApplySuggestion}
-        onValueChanged={this.handleChangeQuery}
+        onValueChanged={this.onChangeQuery}
         placeholder="Enter a PromQL query"
       />
     );
