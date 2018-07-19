@@ -169,6 +169,8 @@ export class DashLinksContainerCtrl {
 
     updateDashLinks();
     $rootScope.onAppEvent('dash-links-updated', updateDashLinks, $scope);
+    $rootScope.onAppEvent('time-range-changed', updateDashLinks, $scope);
+    $rootScope.onAppEvent('template-variable-value-updated', updateDashLinks, $scope);
   }
 }
 
