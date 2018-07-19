@@ -3,13 +3,13 @@ namespace Panel.MultiStat {
     layout?: PanelLayout;
     viewMode?: PanelViewMode;
     format?: string;
-    nullPointMode?: any;
+    nullPointMode?: Panel.NullPointMode;
     valueName?: string;
     prefixFontSize?: string;
     valueFontSize?: string;
     postfixFontSize?: string;
-    colorBackground?: any;
-    colorValue?: any;
+    colorBackground?: boolean;
+    colorValue?: boolean;
     sparkline?: {
       show?: boolean;
     };

@@ -7,17 +7,17 @@ import { PanelModel } from '../../../features/dashboard/panel_model';
 
 type MultistatPanelModel = PanelModel & Panel.MultiStat.PanelOptions;
 
-export function convertTSDataToMultistat(dataList: Panel.SeriesData[], panel) {
+export function convertTSDataToMultistat(dataList: Series.SeriesData[], panel) {
   const series = dataList.map(s => handleSeries(s, panel));
   return convertTimeSeriesToMultistatData(series, panel);
 }
 
-export function convertTableDataToMultistat(dataList: Panel.SeriesData[], panel) {
+export function convertTableDataToMultistat(dataList: Series.SeriesData[], panel) {
   const tables = dataList.map(s => handleTable(s, panel));
   return convertTableToMultistatData(tables, panel);
 }
 
-export function handleSeries(seriesData: Panel.SeriesData, panel): TimeSeries {
+export function handleSeries(seriesData: Series.SeriesData, panel): TimeSeries {
   var series = new TimeSeries({
     datapoints: seriesData.datapoints || [],
     alias: seriesData.target,
@@ -27,8 +27,11 @@ export function handleSeries(seriesData: Panel.SeriesData, panel): TimeSeries {
   return series;
 }
 
-export function convertTimeSeriesToMultistatData(series: TimeSeries[], panel: MultistatPanelModel): Panel.SeriesStat[] {
-  let panelData: Panel.SeriesStat[] = [];
+export function convertTimeSeriesToMultistatData(
+  series: TimeSeries[],
+  panel: MultistatPanelModel
+): Series.SeriesStat[] {
+  let panelData: Series.SeriesStat[] = [];
 
   for (let ts of series) {
     let seriesStat = convertToSeriesStat(ts, panel);
@@ -39,8 +42,8 @@ export function convertTimeSeriesToMultistatData(series: TimeSeries[], panel: Mu
   return panelData;
 }
 
-export function convertToSeriesStat(ts: TimeSeries, panel: MultistatPanelModel): Panel.SeriesStat {
-  let seriesStat: Panel.SeriesStat = {
+export function convertToSeriesStat(ts: TimeSeries, panel: MultistatPanelModel): Series.SeriesStat {
+  let seriesStat: Series.SeriesStat = {
     flotpairs: [],
     label: ts.label,
     alias: ts.alias,
@@ -102,7 +105,7 @@ export function handleTable(tableData, panel) {
 }
 
 export function convertTableToMultistatData(tables, panel: MultistatPanelModel) {
-  let panelData: Panel.SeriesStat[] = [];
+  let panelData: Series.SeriesStat[] = [];
 
   if (!tables || tables.length === 0) {
     return [];

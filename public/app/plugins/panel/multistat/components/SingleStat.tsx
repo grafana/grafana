@@ -5,7 +5,7 @@ import { getBGColor } from './utils';
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
 export interface Props {
-  stat: Panel.SeriesStat;
+  stat: Series.SeriesStat;
   size: Panel.MultiStat.PanelSize;
   color?: string;
   options?: Panel.MultiStat.PanelOptions;

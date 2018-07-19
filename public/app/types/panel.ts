@@ -4,27 +4,12 @@ namespace Panel {
   }
 
   export interface MetricPanelOptions extends PanelOptions {
-    datasource?: any;
+    datasource?: string;
     maxDataPoints?: number;
-    interval?: any;
+    interval?: string;
     targets?: any[];
-    cacheTimeout?: any;
+    cacheTimeout?: string;
   }
 
-  export interface SeriesData {
-    datapoints: any[];
-    target: string;
-  }
-
-  export type DataList = SeriesData[];
-
-  export interface SeriesStat {
-    alias?: string;
-    label?: string;
-    value?: number;
-    valueRounded?: number;
-    valueFormatted?: string;
-    flotpairs?: any[];
-    scopedVars?: any;
-  }
+  export type NullPointMode = Series.NullPointMode;
 }

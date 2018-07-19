@@ -4,7 +4,7 @@ import React from 'react';
 import { getBGColor } from './utils';
 
 export interface Props {
-  stat: Panel.SeriesStat;
+  stat: Series.SeriesStat;
   size: Panel.MultiStat.PanelSize;
   options: any;
   color?: string;
