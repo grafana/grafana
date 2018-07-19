@@ -151,13 +151,13 @@ export function getFlotTickDecimals(datamin, datamax, axis, height) {
   return { tickDecimals, scaledDecimals };
 }
 
-export function getDecimalsForValue(value) {
-  var delta = value / 2;
-  var dec = -Math.floor(Math.log(delta) / Math.LN10);
+export function getDecimalsForValue(value: number): { decimals: number; scaledDecimals: number } {
+  const delta = value / 2;
+  let dec = -Math.floor(Math.log(delta) / Math.LN10);
 
-  var magn = Math.pow(10, -dec),
-    norm = delta / magn, // norm is between 1.0 and 10.0
-    size;
+  const magn = Math.pow(10, -dec);
+  const norm = delta / magn; // norm is between 1.0 and 10.0
+  let size;
 
   if (norm < 1.5) {
     size = 1;
@@ -181,11 +181,10 @@ export function getDecimalsForValue(value) {
     dec = 0;
   }
 
-  var result: any = {};
-  result.decimals = Math.max(0, dec);
-  result.scaledDecimals = result.decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
+  const decimals = Math.max(0, dec);
+  const scaledDecimals = decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
 
-  return result;
+  return { decimals, scaledDecimals };
 }
 
 /**
