@@ -221,21 +221,13 @@ class PromQueryField extends React.Component<any, any> {
         ...pairs,
         [key]: body.data,
       };
-      // const labelKeys = {
-      //   ...this.state.labelKeys,
-      //   [EMPTY_METRIC]: keys,
-      // };
       const labelValues = {
         ...this.state.labelValues,
         [EMPTY_METRIC]: values,
       };
       this.setState({ labelValues });
     } catch (e) {
-      if (this.props.onRequestError) {
-        this.props.onRequestError(e);
-      } else {
-        console.error(e);
-      }
+      console.error(e);
     }
   }
 
@@ -255,11 +247,7 @@ class PromQueryField extends React.Component<any, any> {
       };
       this.setState({ labelKeys, labelValues });
     } catch (e) {
-      if (this.props.onRequestError) {
-        this.props.onRequestError(e);
-      } else {
-        console.error(e);
-      }
+      console.error(e);
     }
   }
 
