@@ -40,7 +40,8 @@ export class ThresholdForm extends React.Component<Props, State> {
   };
 
   addThreshold = () => {
-    const newThresholds = this.props.thresholds.concat(defaultThreshold);
+    const newThreshold = Object.assign({}, defaultThreshold);
+    const newThresholds = this.props.thresholds.concat(newThreshold);
     this.props.onChange(newThresholds);
   };
 
@@ -53,8 +54,8 @@ export class ThresholdForm extends React.Component<Props, State> {
   render() {
     const thresholdItems = this.props.thresholds.map((threshold: Panel.MultiStat.ThresholdModel, i) => (
       <ThresholdEditor
-        index={i}
         key={i.toString()}
+        index={i}
         threshold={threshold}
         onChange={this.onChange}
         onRemove={this.onRemove}
