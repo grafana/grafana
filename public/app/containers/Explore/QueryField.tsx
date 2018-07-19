@@ -189,7 +189,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
         },
         () => {
           if (refresher) {
-            refresher.then(this.handleTypeahead);
+            refresher.then(this.handleTypeahead).catch(e => console.error(e));
           }
         }
       );
