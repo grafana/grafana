@@ -47,7 +47,7 @@ export interface SuggestionGroup {
 }
 
 interface TypeaheadFieldProps {
-  additionalPlugins: any[];
+  additionalPlugins?: any[];
   cleanText: (text: string) => string;
   initialValue: string | null;
   onBlur?: () => void;
@@ -69,7 +69,7 @@ export interface TypeaheadFieldState {
 }
 
 export interface TypeaheadInput {
-  selection: Selection;
+  selection?: Selection;
   editorNode: Element;
   wrapperNode: Element;
   offset: number;
@@ -131,7 +131,9 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
       }
     });
 
-    window.requestAnimationFrame(this.handleTypeahead);
+    if (changed) {
+      window.requestAnimationFrame(this.handleTypeahead);
+    }
   };
 
   handleChangeValue = () => {
