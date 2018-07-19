@@ -6,11 +6,11 @@ import { MultiStatStats } from './MultiStatStats';
 
 export interface Props {
   stats: any[];
-  options: MultiStat.PanelOptions;
-  size: MultiStat.PanelSize;
+  options: Panel.MultiStat.PanelOptions;
+  size: Panel.MultiStat.PanelSize;
 }
 
-export function MultiStatPanel(props: Props) {
+export function MultiStat(props: Props) {
   const options = props.options;
   const thresholds = props.options.thresholds;
   const getColor = getColorFunc(thresholds);
@@ -22,7 +22,7 @@ export function MultiStatPanel(props: Props) {
   }
 }
 
-function getColorForValue(value: number, thresholds: MultiStat.ThresholdModel[]): string {
+function getColorForValue(value: number, thresholds: Panel.MultiStat.ThresholdModel[]): string {
   if (!_.isFinite(value)) {
     return null;
   }
@@ -39,6 +39,6 @@ function getColorForValue(value: number, thresholds: MultiStat.ThresholdModel[])
   return null;
 }
 
-function getColorFunc(thresholds: MultiStat.ThresholdModel[]): (v: number) => string {
+function getColorFunc(thresholds: Panel.MultiStat.ThresholdModel[]): (v: number) => string {
   return value => getColorForValue(value, thresholds);
 }

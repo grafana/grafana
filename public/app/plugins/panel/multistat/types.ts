@@ -1,4 +1,4 @@
-namespace MultiStat {
+namespace Panel.MultiStat {
   export interface PanelOptions extends Panel.MetricPanelOptions {
     layout?: PanelLayout;
     viewMode?: PanelViewMode;
@@ -21,7 +21,7 @@ namespace MultiStat {
     h: number;
   }
 
-  // Prefer to use union for typing, because enum requires explicit import, otherwise, you get runtime error.
+  // Prefer to use union for typing, because enum requires explicit import, otherwise, you'll get runtime error.
   //
   // export enum PanelLayout {
   //   Horizontal = 'horizontal',

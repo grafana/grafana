@@ -4,8 +4,8 @@ import { BarStat } from './BarStat';
 
 export interface Props {
   stats: any[];
-  options: MultiStat.PanelOptions;
-  size: MultiStat.PanelSize;
+  options: Panel.MultiStat.PanelOptions;
+  size: Panel.MultiStat.PanelSize;
   getColor: (v: number) => string;
 }
 
@@ -37,7 +37,7 @@ export function MultiStatBar(props: Props) {
   const barWidth = stats.length > 0 ? totalWidth / stats.length : 0;
   const valueOutOfBar = isValuesOutOfBar(barLengths);
 
-  let direction: MultiStat.PanelLayout;
+  let direction: Panel.MultiStat.PanelLayout;
   if (options.layout === 'vertical') {
     direction = 'vertical';
   } else {

@@ -6,9 +6,9 @@ const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
 export interface Props {
   stat: Panel.SeriesStat;
-  size: MultiStat.PanelSize;
+  size: Panel.MultiStat.PanelSize;
   color?: string;
-  options?: MultiStat.PanelOptions;
+  options?: Panel.MultiStat.PanelOptions;
 }
 
 export class SingleStat extends React.Component<Props> {
@@ -109,7 +109,7 @@ export class SingleStat extends React.Component<Props> {
   }
 }
 
-function getFontSize(panelSize: MultiStat.PanelSize, options?) {
+function getFontSize(panelSize: Panel.MultiStat.PanelSize, options?) {
   const size = Math.min(panelSize.h, panelSize.w * 0.75);
   let increaseRatio = 1;
   if (!(options && options.sparkline && options.sparkline.show)) {

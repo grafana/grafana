@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 import defaults from './defaults';
 import { MetricsPanelCtrl } from '../../sdk';
 import { convertTSDataToMultistat, convertTableDataToMultistat } from './data_handler';
-import { MultiStatPanel } from './components/MultiStat';
+import { MultiStat } from './components/MultiStat';
 
 class MultiStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -110,7 +110,7 @@ class MultiStatCtrl extends MetricsPanelCtrl {
         options: ctrl.panel,
         size: scope.size,
       };
-      const multistatReactElem = React.createElement(MultiStatPanel, multistatProps);
+      const multistatReactElem = React.createElement(MultiStat, multistatProps);
       ReactDOM.render(multistatReactElem, multistatElem[0]);
     }
 

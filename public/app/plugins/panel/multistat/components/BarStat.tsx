@@ -5,10 +5,10 @@ const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
 export interface Props {
   stat: Panel.SeriesStat;
-  size: MultiStat.PanelSize;
+  size: Panel.MultiStat.PanelSize;
   color?: string;
-  direction?: MultiStat.PanelLayout;
-  options?: MultiStat.PanelOptions;
+  direction?: Panel.MultiStat.PanelLayout;
+  options?: Panel.MultiStat.PanelOptions;
   valueOutOfBar?: boolean;
   style?: React.CSSProperties;
 }

@@ -1,6 +1,3 @@
-/// <reference path="../../../../types/panel.ts" />
-/// <reference path="../types.ts" />
-
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import React from 'react';
@@ -8,7 +5,7 @@ import { getBGColor } from './utils';
 
 export interface Props {
   stat: Panel.SeriesStat;
-  size: MultiStat.PanelSize;
+  size: Panel.MultiStat.PanelSize;
   options: any;
   color?: string;
 }

@@ -3,8 +3,8 @@ import { SingleStat } from './SingleStat';
 
 export interface Props {
   stats: any[];
-  options: MultiStat.PanelOptions;
-  size: MultiStat.PanelSize;
+  options: Panel.MultiStat.PanelOptions;
+  size: Panel.MultiStat.PanelSize;
   getColor: (v: number) => string;
 }
 

@@ -1,4 +1,4 @@
-const panelDefaults: MultiStat.PanelOptions = {
+const panelDefaults: Panel.MultiStat.PanelOptions = {
   links: [],
   datasource: null,
   maxDataPoints: 100,

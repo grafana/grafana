@@ -3,10 +3,10 @@ import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { SimpleSelect } from 'app/core/components/Select/SimpleSelect';
 
 interface Props {
-  threshold: MultiStat.ThresholdModel;
+  threshold: Panel.MultiStat.ThresholdModel;
   index: number;
   focused?: boolean;
-  onChange: (threshold: any, index: number, valueChanged?: boolean) => any;
+  onChange: (threshold: Panel.MultiStat.ThresholdModel, index: number, valueChanged?: boolean) => any;
   onRemove: (index: number) => any;
 }
 
