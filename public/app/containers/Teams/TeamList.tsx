@@ -5,7 +5,6 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { NavStore } from 'app/stores/NavStore/NavStore';
 import { TeamsStore, ITeam } from 'app/stores/TeamsStore/TeamsStore';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import appEvents from 'app/core/app_events';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 
 interface Props {
