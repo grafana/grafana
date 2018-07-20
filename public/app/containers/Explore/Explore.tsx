@@ -11,6 +11,7 @@ import { parse as parseDate } from 'app/core/utils/datemath';
 import ElapsedTime from './ElapsedTime';
 import QueryRows from './QueryRows';
 import Graph from './Graph';
+import Logs from './Logs';
 import Table from './Table';
 import TimePicker, { DEFAULT_RANGE } from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
@@ -58,12 +59,17 @@ interface IExploreState {
   initialDatasource?: string;
   latency: number;
   loading: any;
+  logsResult: any;
   queries: any;
   queryError: any;
   range: any;
   requestOptions: any;
   showingGraph: boolean;
+  showingLogs: boolean;
   showingTable: boolean;
+  supportsGraph: boolean | null;
+  supportsLogs: boolean | null;
+  supportsTable: boolean | null;
   tableResult: any;
 }
 
@@ -82,12 +88,17 @@ export class Explore extends React.Component<any, IExploreState> {
       initialDatasource: datasource,
       latency: 0,
       loading: false,
+      logsResult: null,
       queries: ensureQueries(queries),
       queryError: null,
       range: range || { ...DEFAULT_RANGE },
       requestOptions: null,
       showingGraph: true,
+      showingLogs: true,
       showingTable: true,
+      supportsGraph: null,
+      supportsLogs: null,
+      supportsTable: null,
       tableResult: null,
       ...props.initialState,
     };
@@ -124,17 +135,29 @@ export class Explore extends React.Component<any, IExploreState> {
   }
 
   async setDatasource(datasource) {
+    const supportsGraph = datasource.meta.metrics;
+    const supportsLogs = datasource.meta.logs;
+    const supportsTable = datasource.meta.metrics;
+    let datasourceError = null;
+
     try {
       const testResult = await datasource.testDatasource();
-      if (testResult.status === 'success') {
-        this.setState({ datasource, datasourceError: null, datasourceLoading: false }, () => this.handleSubmit());
-      } else {
-        this.setState({ datasource: datasource, datasourceError: testResult.message, datasourceLoading: false });
-      }
+      datasourceError = testResult.status === 'success' ? null : testResult.message;
     } catch (error) {
-      const message = (error && error.statusText) || error;
-      this.setState({ datasource: datasource, datasourceError: message, datasourceLoading: false });
+      datasourceError = (error && error.statusText) || error;
     }
+
+    this.setState(
+      {
+        datasource,
+        datasourceError,
+        supportsGraph,
+        supportsLogs,
+        supportsTable,
+        datasourceLoading: false,
+      },
+      () => datasourceError === null && this.handleSubmit()
+    );
   }
 
   getRef = el => {
@@ -157,6 +180,7 @@ export class Explore extends React.Component<any, IExploreState> {
       datasourceError: null,
       datasourceLoading: true,
       graphResult: null,
+      logsResult: null,
       tableResult: null,
     });
     const datasource = await this.props.datasourceSrv.get(option.value);
@@ -193,6 +217,10 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setState(state => ({ showingGraph: !state.showingGraph }));
   };
 
+  handleClickLogsButton = () => {
+    this.setState(state => ({ showingLogs: !state.showingLogs }));
+  };
+
   handleClickSplit = () => {
     const { onChangeSplit } = this.props;
     if (onChangeSplit) {
@@ -214,16 +242,19 @@ export class Explore extends React.Component<any, IExploreState> {
   };
 
   handleSubmit = () => {
-    const { showingGraph, showingTable } = this.state;
-    if (showingTable) {
+    const { showingLogs, showingGraph, showingTable, supportsGraph, supportsLogs, supportsTable } = this.state;
+    if (showingTable && supportsTable) {
       this.runTableQuery();
     }
-    if (showingGraph) {
+    if (showingGraph && supportsGraph) {
       this.runGraphQuery();
+    }
+    if (showingLogs && supportsLogs) {
+      this.runLogsQuery();
     }
   };
 
-  buildQueryOptions(targetOptions: { format: string; instant: boolean }) {
+  buildQueryOptions(targetOptions: { format: string; instant?: boolean }) {
     const { datasource, queries, range } = this.state;
     const resolution = this.el.offsetWidth;
     const absoluteRange = {
@@ -285,6 +316,29 @@ export class Explore extends React.Component<any, IExploreState> {
     }
   }
 
+  async runLogsQuery() {
+    const { datasource, queries } = this.state;
+    if (!hasQuery(queries)) {
+      return;
+    }
+    this.setState({ latency: 0, loading: true, queryError: null, logsResult: null });
+    const now = Date.now();
+    const options = this.buildQueryOptions({
+      format: 'logs',
+    });
+
+    try {
+      const res = await datasource.query(options);
+      const logsData = res.data;
+      const latency = Date.now() - now;
+      this.setState({ latency, loading: false, logsResult: logsData, requestOptions: options });
+    } catch (response) {
+      console.error(response);
+      const queryError = response.data ? response.data.error : response;
+      this.setState({ loading: false, queryError });
+    }
+  }
+
   request = url => {
     const { datasource } = this.state;
     return datasource.metadataRequest(url);
@@ -300,17 +354,23 @@ export class Explore extends React.Component<any, IExploreState> {
       graphResult,
       latency,
       loading,
+      logsResult,
       queries,
       queryError,
       range,
       requestOptions,
       showingGraph,
+      showingLogs,
       showingTable,
+      supportsGraph,
+      supportsLogs,
+      supportsTable,
       tableResult,
     } = this.state;
     const showingBoth = showingGraph && showingTable;
     const graphHeight = showingBoth ? '200px' : '400px';
     const graphButtonActive = showingBoth || showingGraph ? 'active' : '';
+    const logsButtonActive = showingLogs ? 'active' : '';
     const tableButtonActive = showingBoth || showingTable ? 'active' : '';
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const datasources = datasourceSrv.getExploreSources().map(ds => ({
@@ -357,12 +417,21 @@ export class Explore extends React.Component<any, IExploreState> {
             </div>
           ) : null}
           <div className="navbar-buttons">
-            <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.handleClickGraphButton}>
-              Graph
-            </button>
-            <button className={`btn navbar-button ${tableButtonActive}`} onClick={this.handleClickTableButton}>
-              Table
-            </button>
+            {supportsGraph ? (
+              <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.handleClickGraphButton}>
+                Graph
+              </button>
+            ) : null}
+            {supportsTable ? (
+              <button className={`btn navbar-button ${tableButtonActive}`} onClick={this.handleClickTableButton}>
+                Table
+              </button>
+            ) : null}
+            {supportsLogs ? (
+              <button className={`btn navbar-button ${logsButtonActive}`} onClick={this.handleClickLogsButton}>
+                Logs
+              </button>
+            ) : null}
           </div>
           <TimePicker range={range} onChangeTime={this.handleChangeTime} />
           <div className="navbar-buttons relative">
@@ -395,7 +464,7 @@ export class Explore extends React.Component<any, IExploreState> {
             />
             {queryError ? <div className="text-warning m-a-2">{queryError}</div> : null}
             <main className="m-t-2">
-              {showingGraph ? (
+              {supportsGraph && showingGraph ? (
                 <Graph
                   data={graphResult}
                   id={`explore-graph-${position}`}
@@ -404,7 +473,8 @@ export class Explore extends React.Component<any, IExploreState> {
                   split={split}
                 />
               ) : null}
-              {showingTable ? <Table data={tableResult} className="m-t-3" /> : null}
+              {supportsTable && showingTable ? <Table data={tableResult} className="m-t-3" /> : null}
+              {supportsLogs && showingLogs ? <Logs data={logsResult} /> : null}
             </main>
           </div>
         ) : null}

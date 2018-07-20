@@ -417,6 +417,7 @@ class QueryField extends React.Component<any, any> {
     const url = `/api/v1/label/${key}/values`;
     try {
       const res = await this.request(url);
+      console.log(res);
       const body = await (res.data || res.json());
       const pairs = this.state.labelValues[EMPTY_METRIC];
       const values = {
