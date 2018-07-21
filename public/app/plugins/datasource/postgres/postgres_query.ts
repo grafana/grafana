@@ -77,7 +77,8 @@ export default class PostgresQuery {
   render(interpolate?) {
     let target = this.target;
 
-    if (!('table' in this.target)) {
+    // new query with no table set yet
+    if (!this.target.rawQuery && !('table' in this.target)) {
       return '';
     }
 

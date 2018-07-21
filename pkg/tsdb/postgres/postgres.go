@@ -170,6 +170,8 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 	rowCount := 0
 	timeIndex := -1
 	metricIndex := -1
+	metricPrefix := false
+	metricPrefixValue := ""
 
 	// check columns of resultset: a column named time is mandatory
 	// the first text column is treated as metric name unless a column named metric is present
@@ -179,6 +181,10 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 			timeIndex = i
 		case "metric":
 			metricIndex = i
+			// use metric column as prefix with multiple value columns
+			if len(columnNames) > 3 {
+				metricPrefix = true
+			}
 		default:
 			if metricIndex == -1 {
 				switch columnTypes[i].DatabaseTypeName() {
@@ -234,7 +240,11 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 
 		if metricIndex >= 0 {
 			if columnValue, ok := values[metricIndex].(string); ok {
-				metric = columnValue
+				if metricPrefix {
+					metricPrefixValue = columnValue
+				} else {
+					metric = columnValue
+				}
 			} else {
 				return fmt.Errorf("Column metric must be of type char,varchar or text, got: %T %v", values[metricIndex], values[metricIndex])
 			}
@@ -251,6 +261,8 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 
 			if metricIndex == -1 {
 				metric = col
+			} else if metricPrefix {
+				metric = metricPrefixValue + " " + col
 			}
 
 			series, exist := pointsBySeries[metric]
