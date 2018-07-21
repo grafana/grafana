@@ -132,7 +132,7 @@ export class DataSourceEditCtrl {
       this.backendSrv
         .withNoBackendCache(() => {
           return datasource
-            .testDatasource()
+            .testDatasource(this)
             .then(result => {
               this.testing.message = result.message;
               this.testing.status = result.status;

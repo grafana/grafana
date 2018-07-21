@@ -123,27 +123,27 @@ export class PostgresDatasource {
       .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
   }
 
-  testDatasource() {
-    return this.backendSrv
-      .datasourceRequest({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          from: '5m',
-          to: 'now',
-          queries: [
-            {
-              refId: 'A',
-              intervalMs: 1,
-              maxDataPoints: 1,
-              datasourceId: this.id,
-              rawSql: 'SELECT 1',
-              format: 'table',
-            },
-          ],
-        },
-      })
+  testDatasource(control) {
+    return this.metricFindQuery('SELECT 1', {})
       .then(res => {
+        if (control.current.jsonData.timescaledb === 'auto') {
+          return this.metricFindQuery("SELECT 1 FROM pg_extension WHERE extname='timescaledb'", {})
+            .then(res => {
+              if (res.length === 1) {
+                control.current.jsonData.timescaledb = 'enabled';
+                return this.backendSrv.put('/api/datasources/' + this.id, control.current).then(settings => {
+                  control.current = settings.datasource;
+                  control.updateFrontendSettings();
+                  return { status: 'success', message: 'Database Connection OK, TimescaleDB found' };
+                });
+              }
+              throw new Error('timescaledb not found');
+            })
+            .catch(err => {
+              // query errored out or empty so timescaledb is not available
+              return { status: 'success', message: 'Database Connection OK' };
+            });
+        }
         return { status: 'success', message: 'Database Connection OK' };
       })
       .catch(err => {

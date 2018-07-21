@@ -38,6 +38,20 @@
 	</div>
 </div>
 
+<h3 class="page-heading">PostgreSQL details</h3>
+
+<div class="gf-form-group">
+	<div class="gf-form">
+		<label class="gf-form-label width-7">TimescaleDB</label>
+		<div class="gf-form-select-wrapper max-width-8 gf-form-select-wrapper--has-help-icon">
+			<select class="gf-form-input" ng-model="ctrl.current.jsonData.timescaledb" ng-options="mode for mode in ['auto', 'enabled', 'disabled']" ng-init="ctrl.current.jsonData.timescaledb=ctrl.current.jsonData.timescaledb || 'auto'"></select>
+			<info-popover mode="right-absolute">
+				This option determines whether TimescaleDB features will be used.
+			</info-popover>
+		</div>
+	</div>
+</div>
+
 <div class="gf-form-group">
 	<div class="grafana-info-box">
 		<h5>User Permission</h5>

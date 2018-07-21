@@ -130,13 +130,19 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 				m.query.Model.Set("fillValue", floatVal)
 			}
 		}
-		return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+
+		if m.query.DataSource.JsonData.Get("timescaledb").MustString("auto") == "enabled" {
+			return fmt.Sprintf("time_bucket('%vs',%s) AS time", interval.Seconds(), args[0]), nil
+		} else {
+			return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v AS time", args[0], interval.Seconds(), interval.Seconds()), nil
+		}
 	case "__timeGroupAlias":
 		tg, err := m.evaluateMacro("__timeGroup", args)
 		if err == nil {
 			return tg + " AS \"time\"", err
 		}
 		return "", err
+
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
