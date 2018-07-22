@@ -55,7 +55,7 @@ LIMIT 1
 
   buildSchemaQuery() {
     let query = 'SELECT quote_ident(schema_name) FROM information_schema.schemata WHERE';
-    query += " schema_name NOT LIKE 'pg_%' AND schema_name NOT LIKE '\\_%' AND schema_name <> 'information_schema';";
+    query += " schema_name !~* '^pg_|^_|information_schema' ORDER BY schema_name";
 
     return query;
   }
@@ -63,6 +63,7 @@ LIMIT 1
   buildTableQuery() {
     let query = 'SELECT quote_ident(table_name) FROM information_schema.tables WHERE ';
     query += 'table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
+    query += ' ORDER BY table_name';
     return query;
   }
 
@@ -91,6 +92,8 @@ LIMIT 1
         break;
       }
     }
+
+    query += ' ORDER BY column_name';
 
     return query;
   }
