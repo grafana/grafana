@@ -136,15 +136,23 @@ export default class PostgresQuery {
     query = columnName.params[0];
 
     let aggregate = _.find(column, (g: any) => g.type === 'aggregate');
+    let special = _.find(column, (g: any) => g.type === 'special');
+
     if (aggregate) {
-      query = aggregate.params[0] + '(' + query + ')';
+      if (special) {
+        query = aggregate.params[0] + '(' + query + ' ORDER BY ' + this.target.timeColumn + ')';
+      } else {
+        query = aggregate.params[0] + '(' + query + ')';
+      }
     }
 
-    let special = _.find(column, (g: any) => g.type === 'special');
     if (special) {
       let over = '';
       if (this.hasMetricColumn()) {
         over = 'PARTITION BY ' + this.target.metricColumn;
+      }
+      if (!aggregate) {
+        over += 'ORDER BY ' + this.target.timeColumn;
       }
       switch (special.params[0]) {
         case 'increase':

@@ -63,7 +63,7 @@ describe('PostgresQuery', function() {
       { type: 'alias', params: ['a'] },
       { type: 'special', params: ['increase'] },
     ];
-    expect(query.buildValueColumn(column)).toBe('v - lag(v) OVER () AS "a"');
+    expect(query.buildValueColumn(column)).toBe('v - lag(v) OVER (ORDER BY time) AS "a"');
   });
 
   describe('When generating WHERE clause', function() {
