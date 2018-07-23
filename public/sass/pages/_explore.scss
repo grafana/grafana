@@ -97,3 +97,40 @@
 .query-row-tools {
   width: 4rem;
 }
+
+.explore {
+  .logs {
+    .logs-entries {
+      display: grid;
+      grid-column-gap: 1rem;
+      grid-row-gap: 0.1rem;
+      grid-template-columns: 4px minmax(100px, max-content) 1fr;
+      font-family: $font-family-monospace;
+    }
+
+    .logs-row-match-highlight {
+      background-color: lighten($blue, 20%);
+    }
+
+    .logs-row-level {
+      background-color: transparent;
+      margin: 6px 0;
+      border-radius: 2px;
+      opacity: 0.8;
+    }
+
+    .logs-row-level-crit,
+    .logs-row-level-error,
+    .logs-row-level-err {
+      background-color: $red;
+    }
+
+    .logs-row-level-warn {
+      background-color: $orange;
+    }
+
+    .logs-row-level-info {
+      background-color: $green;
+    }
+  }
+}
