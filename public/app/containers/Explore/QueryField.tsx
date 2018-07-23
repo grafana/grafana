@@ -34,15 +34,68 @@ export const makeFragment = (text: string): Document => {
 export const getInitialValue = (value: string): Value => Value.create({ document: makeFragment(value) });
 
 export interface Suggestion {
-  display?: string;
-  text: string;
+  /**
+   * The label of this completion item. By default
+   * this is also the text that is inserted when selecting
+   * this completion.
+   */
+  label: string;
+  /**
+   * The kind of this completion item. Based on the kind
+   * an icon is chosen by the editor.
+   */
+  kind?: string;
+  /**
+   * A human-readable string with additional information
+   * about this item, like type or symbol information.
+   */
+  detail?: string;
+  /**
+   * A human-readable string, can be Markdown, that represents a doc-comment.
+   */
+  documentation?: string;
+  /**
+   * A string that should be used when comparing this item
+   * with other items. When `falsy` the `label` is used.
+   */
+  sortText?: string;
+  /**
+   * A string that should be used when filtering a set of
+   * completion items. When `falsy` the `label` is used.
+   */
+  filterText?: string;
+  /**
+   * A string or snippet that should be inserted in a document when selecting
+   * this completion. When `falsy` the `label` is used.
+   */
+  insertText?: string;
+  /**
+   * Delete number of characters before the caret position,
+   * by default the letters from the beginning of the word.
+   */
   deleteBackwards?: number;
+  /**
+   * Number of steps to move after the insertion, can be negative.
+   */
+  move?: number;
 }
 
 export interface SuggestionGroup {
+  /**
+   * Label that will be displayed for all entries of this group.
+   */
   label: string;
+  /**
+   * List of suggestions of this group.
+   */
   items: Suggestion[];
+  /**
+   * If true, match only by prefix (and not mid-word).
+   */
   prefixMatch?: boolean;
+  /**
+   * If true, do not filter items in this group based on the search.
+   */
   skipFilter?: boolean;
 }
 
@@ -168,17 +221,28 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
         text,
       });
 
-      const filteredSuggestions = suggestions.map(group => {
-        if (group.items && prefix && !group.skipFilter) {
-          group.items = group.items.filter(c => c.text.length >= prefix.length);
-          if (group.prefixMatch) {
-            group.items = group.items.filter(c => c.text.indexOf(prefix) === 0);
-          } else {
-            group.items = group.items.filter(c => c.text.indexOf(prefix) > -1);
+      const filteredSuggestions = suggestions
+        .map(group => {
+          if (group.items) {
+            if (prefix) {
+              // Filter groups based on prefix
+              if (!group.skipFilter) {
+                group.items = group.items.filter(c => (c.filterText || c.label).length >= prefix.length);
+                if (group.prefixMatch) {
+                  group.items = group.items.filter(c => (c.filterText || c.label).indexOf(prefix) === 0);
+                } else {
+                  group.items = group.items.filter(c => (c.filterText || c.label).indexOf(prefix) > -1);
+                }
+              }
+              // Filter out the already typed value (prefix) unless it inserts custom text
+              group.items = group.items.filter(c => c.insertText || (c.filterText || c.label) !== prefix);
+            }
+
+            group.items = _.sortBy(group.items, item => item.sortText || item.label);
           }
-        }
-        return group;
-      });
+          return group;
+        })
+        .filter(group => group.items && group.items.length > 0); // Filter out empty groups
 
       this.setState(
         {
@@ -199,7 +263,8 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
   applyTypeahead(change: Change, suggestion: Suggestion): Change {
     const { cleanText, onWillApplySuggestion } = this.props;
     const { typeaheadPrefix, typeaheadText } = this.state;
-    let suggestionText = suggestion.display || suggestion.text;
+    let suggestionText = suggestion.insertText || suggestion.label;
+    const move = suggestion.move || 0;
 
     if (onWillApplySuggestion) {
       suggestionText = onWillApplySuggestion(suggestionText, { ...this.state });
@@ -229,6 +294,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
       .deleteBackward(backward)
       .deleteForward(forward)
       .insertText(suggestionText)
+      .move(move)
       .focus();
   }
 
@@ -327,7 +393,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
     }
   };
 
-  handleClickMenu = item => {
+  onClickMenu = (item: Suggestion) => {
     // Manually triggering change
     const change = this.applyTypeahead(this.state.value.change(), item);
     this.onChange(change);
@@ -383,17 +449,16 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
     let selectedIndex = Math.max(this.state.typeaheadIndex, 0);
     const flattenedSuggestions = flattenSuggestions(suggestions);
     selectedIndex = selectedIndex % flattenedSuggestions.length || 0;
-    const selectedKeys = (flattenedSuggestions.length > 0 ? [flattenedSuggestions[selectedIndex]] : []).map(
-      i => (typeof i === 'object' ? i.text : i)
-    );
+    const selectedItem: Suggestion | null =
+      flattenedSuggestions.length > 0 ? flattenedSuggestions[selectedIndex] : null;
 
     // Create typeahead in DOM root so we can later position it absolutely
     return (
       <Portal prefix={portalPrefix}>
         <Typeahead
           menuRef={this.menuRef}
-          selectedItems={selectedKeys}
-          onClickItem={this.handleClickMenu}
+          selectedItem={selectedItem}
+          onClickItem={this.onClickMenu}
           groupedItems={suggestions}
         />
       </Portal>

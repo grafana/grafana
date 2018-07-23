@@ -4,17 +4,27 @@ import React from 'react';
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from './utils/dom';
 import PluginPrism, { setPrismTokens } from './slate-plugins/prism/index';
-import PrismPromql from './slate-plugins/prism/promql';
+import PrismPromql, { FUNCTIONS } from './slate-plugins/prism/promql';
 import RunnerPlugin from './slate-plugins/runner';
 import { processLabels, RATE_RANGES, cleanText } from './utils/prometheus';
 
-import TypeaheadField, { SuggestionGroup, TypeaheadInput, TypeaheadFieldState, TypeaheadOutput } from './QueryField';
+import TypeaheadField, {
+  Suggestion,
+  SuggestionGroup,
+  TypeaheadInput,
+  TypeaheadFieldState,
+  TypeaheadOutput,
+} from './QueryField';
 
 const EMPTY_METRIC = '';
 const METRIC_MARK = 'metric';
 const PRISM_LANGUAGE = 'promql';
 
-const wrapText = text => ({ text });
+export const wrapLabel = label => ({ label });
+export const setFunctionMove = (suggestion: Suggestion): Suggestion => {
+  suggestion.move = -1;
+  return suggestion;
+};
 
 export function willApplySuggestion(
   suggestion: string,
@@ -126,7 +136,7 @@ class PromQueryField extends React.Component<any, any> {
       context = 'context-range';
       suggestions.push({
         label: 'Range vector',
-        items: [...RATE_RANGES].map(wrapText),
+        items: [...RATE_RANGES].map(wrapLabel),
       });
     } else if (_.includes(wrapperClasses, 'context-labels') && metric) {
       const labelKeys = this.state.labelKeys[metric];
@@ -138,13 +148,13 @@ class PromQueryField extends React.Component<any, any> {
             context = 'context-label-values';
             suggestions.push({
               label: 'Label values',
-              items: labelValues.map(wrapText),
+              items: labelValues.map(wrapLabel),
             });
           }
         } else {
           // Label keys
           context = 'context-labels';
-          suggestions.push({ label: 'Labels', items: labelKeys.map(wrapText) });
+          suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
         }
       } else {
         refresher = this.fetchMetricLabels(metric);
@@ -164,7 +174,7 @@ class PromQueryField extends React.Component<any, any> {
             context = 'context-label-values';
             suggestions.push({
               label: 'Label values',
-              items: labelValues.map(wrapText),
+              items: labelValues.map(wrapLabel),
             });
           } else {
             // Can only query label values for now (API to query keys is under development)
@@ -174,26 +184,35 @@ class PromQueryField extends React.Component<any, any> {
       } else {
         // Label keys
         context = 'context-labels';
-        suggestions.push({ label: 'Labels', items: labelKeys.map(wrapText) });
+        suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
       }
     } else if (metric && _.includes(wrapperClasses, 'context-aggregation')) {
       context = 'context-aggregation';
       const labelKeys = this.state.labelKeys[metric];
       if (labelKeys) {
-        suggestions.push({ label: 'Labels', items: labelKeys.map(wrapText) });
+        suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
       } else {
         refresher = this.fetchMetricLabels(metric);
       }
     } else if (
-      (this.state.metrics && ((prefix && !_.includes(wrapperClasses, 'token')) || text.match(/[+\-*/^%]/))) ||
-      _.includes(wrapperClasses, 'context-function')
+      // Non-empty but not inside known token unless it's a metric
+      (prefix && !_.includes(wrapperClasses, 'token')) ||
+      prefix === metric ||
+      (prefix === '' && !text.match(/^[)\s]+$/)) || // Empty context or after ')'
+      text.match(/[+\-*/^%]/) // After binary operator
     ) {
-      // Need prefix for metrics
-      context = 'context-metrics';
       suggestions.push({
-        label: 'Metrics',
-        items: this.state.metrics.map(wrapText),
+        prefixMatch: true,
+        label: 'Functions',
+        items: FUNCTIONS.map(setFunctionMove),
       });
+
+      if (this.state.metrics) {
+        suggestions.push({
+          label: 'Metrics',
+          items: this.state.metrics.map(wrapLabel),
+        });
+      }
     }
 
     return {
