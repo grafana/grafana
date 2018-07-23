@@ -152,7 +152,7 @@ export default class PostgresQuery {
         over = 'PARTITION BY ' + this.target.metricColumn;
       }
       if (!aggregate) {
-        over += 'ORDER BY ' + this.target.timeColumn;
+        over += ' ORDER BY ' + this.target.timeColumn;
       }
       switch (special.params[0]) {
         case 'increase':
