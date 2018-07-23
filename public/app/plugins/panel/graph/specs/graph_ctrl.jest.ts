@@ -1,25 +1,41 @@
-// import { describe, beforeEach, it, expect, angularMocks } from '../../../../../test/lib/common';
-
 import moment from 'moment';
 import { GraphCtrl } from '../module';
 
+jest.mock('../graph', () => ({}));
+
 describe('GraphCtrl', function() {
+  let injector = {
+    get: () => {
+      return {
+        timeRange: () => {
+          return {
+            from: '',
+            to: '',
+          };
+        },
+      };
+    },
+  };
+
+  let scope = {
+    $on: function() {},
+  };
+
+  GraphCtrl.prototype.panel = {
+    events: {
+      on: function() {},
+    },
+    gridPos: {
+      w: 100,
+    },
+  };
+
   let ctx = <any>{};
 
   beforeEach(() => {
-    ctx.ctrl = new GraphCtrl({}, {}, {});
+    ctx.ctrl = new GraphCtrl(scope, injector, {});
   });
 
-  //   beforeEach(angularMocks.module('grafana.services'));
-  //   beforeEach(angularMocks.module('grafana.controllers'));
-  //   beforeEach(
-  //     angularMocks.module(function($compileProvider) {
-  //       $compileProvider.preAssignBindingsEnabled(true);
-  //     })
-  //   );
-
-  //   beforeEach(ctx.providePhase());
-  //   beforeEach(ctx.createPanelController(GraphCtrl));
   beforeEach(() => {
     ctx.ctrl.annotationsPromise = Promise.resolve({});
     ctx.ctrl.updateTimeRange();
