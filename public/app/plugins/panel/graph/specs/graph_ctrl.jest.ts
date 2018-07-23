@@ -3,7 +3,7 @@ import { GraphCtrl } from '../module';
 
 jest.mock('../graph', () => ({}));
 
-describe('GraphCtrl', function() {
+describe('GraphCtrl', () => {
   let injector = {
     get: () => {
       return {
@@ -34,15 +34,12 @@ describe('GraphCtrl', function() {
 
   beforeEach(() => {
     ctx.ctrl = new GraphCtrl(scope, injector, {});
-  });
-
-  beforeEach(() => {
     ctx.ctrl.annotationsPromise = Promise.resolve({});
     ctx.ctrl.updateTimeRange();
   });
 
-  describe('when time series are outside range', function() {
-    beforeEach(function() {
+  describe('when time series are outside range', () => {
+    beforeEach(() => {
       var data = [
         {
           target: 'test.cpu1',
@@ -54,13 +51,13 @@ describe('GraphCtrl', function() {
       ctx.ctrl.onDataReceived(data);
     });
 
-    it('should set datapointsOutside', function() {
+    it('should set datapointsOutside', () => {
       expect(ctx.ctrl.dataWarning.title).toBe('Data points outside time range');
     });
   });
 
-  describe('when time series are inside range', function() {
-    beforeEach(function() {
+  describe('when time series are inside range', () => {
+    beforeEach(() => {
       var range = {
         from: moment()
           .subtract(1, 'days')
@@ -79,18 +76,18 @@ describe('GraphCtrl', function() {
       ctx.ctrl.onDataReceived(data);
     });
 
-    it('should set datapointsOutside', function() {
+    it('should set datapointsOutside', () => {
       expect(ctx.ctrl.dataWarning).toBe(null);
     });
   });
 
-  describe('datapointsCount given 2 series', function() {
-    beforeEach(function() {
+  describe('datapointsCount given 2 series', () => {
+    beforeEach(() => {
       var data = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
       ctx.ctrl.onDataReceived(data);
     });
 
-    it('should set datapointsCount warning', function() {
+    it('should set datapointsCount warning', () => {
       expect(ctx.ctrl.dataWarning.title).toBe('No data points');
     });
   });
