@@ -1,7 +1,7 @@
 {
   "type": "datasource",
-  "name": "Grafana TestDataDB",
-  "id": "grafana-testdata-datasource",
+  "name": "TestData DB",
+  "id": "testdata",
 
   "metrics": true,
   "alerting": true,
@@ -13,8 +13,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "",
-      "large": ""
+      "small": "../../../../img/grafana_icon.svg",
+      "large": "../../../../img/grafana_icon.svg"
     }
   }
 }

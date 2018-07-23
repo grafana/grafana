@@ -112,7 +112,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'FolderDashboardsCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/explore/:initial?', {
+    .when('/explore', {
       template: '<react-container />',
       resolve: {
         roles: () => ['Editor', 'Admin'],

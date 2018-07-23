@@ -238,7 +238,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     // and add built in variables interval and interval_ms
     var scopedVars = Object.assign({}, this.panel.scopedVars, {
       __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: String(this.intervalMs), value: String(this.intervalMs) },
+      __interval_ms: { text: this.intervalMs, value: this.intervalMs },
     });
 
     var metricsQuery = {
@@ -348,7 +348,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       range,
     };
     const exploreState = encodePathComponent(JSON.stringify(state));
-    this.$location.url(`/explore/${exploreState}`);
+    this.$location.url(`/explore?state=${exploreState}`);
   }
 
   addQuery(target) {
