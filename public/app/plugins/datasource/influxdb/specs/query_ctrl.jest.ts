@@ -16,8 +16,9 @@ describe('InfluxDBQueryCtrl', function() {
   };
 
   InfluxQueryCtrl.prototype.panelCtrl = {
+    target: { target: {} },
     panel: {
-      targets: [{}],
+      targets: [this.target],
     },
   };
 
