@@ -18,12 +18,12 @@ describe('GraphCtrl', function() {
   };
 
   let scope = {
-    $on: function() {},
+    $on: () => {},
   };
 
   GraphCtrl.prototype.panel = {
     events: {
-      on: function() {},
+      on: () => {},
     },
     gridPos: {
       w: 100,
