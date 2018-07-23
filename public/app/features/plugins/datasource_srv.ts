@@ -34,13 +34,13 @@ export class DatasourceSrv {
   }
 
   loadDatasource(name) {
-    var dsConfig = config.datasources[name];
+    const dsConfig = config.datasources[name];
     if (!dsConfig) {
       return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
     }
 
-    var deferred = this.$q.defer();
-    var pluginDef = dsConfig.meta;
+    const deferred = this.$q.defer();
+    const pluginDef = dsConfig.meta;
 
     importPluginModule(pluginDef.module)
       .then(plugin => {
@@ -55,7 +55,7 @@ export class DatasourceSrv {
           throw new Error('Plugin module is missing Datasource constructor');
         }
 
-        var instance = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
+        const instance = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
         instance.meta = pluginDef;
         instance.name = name;
         this.datasources[name] = instance;
@@ -73,7 +73,7 @@ export class DatasourceSrv {
   }
 
   getAnnotationSources() {
-    var sources = [];
+    const sources = [];
 
     this.addDataSourceVariables(sources);
 
@@ -84,6 +84,14 @@ export class DatasourceSrv {
     });
 
     return sources;
+  }
+
+  getExploreSources() {
+    const { datasources } = config;
+    const es = Object.keys(datasources)
+      .map(name => datasources[name])
+      .filter(ds => ds.meta && ds.meta.explore);
+    return _.sortBy(es, ['name']);
   }
 
   getMetricSources(options) {
@@ -155,3 +163,4 @@ export class DatasourceSrv {
 }
 
 coreModule.service('datasourceSrv', DatasourceSrv);
+export default DatasourceSrv;
