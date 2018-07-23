@@ -2,6 +2,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import q from 'q';
 import { alignRange, PrometheusDatasource, prometheusSpecialRegexEscape, prometheusRegularEscape } from '../datasource';
+jest.mock('../metric_find_query');
 
 describe('PrometheusDatasource', () => {
   let ctx: any = {};
@@ -18,7 +19,14 @@ describe('PrometheusDatasource', () => {
   ctx.templateSrvMock = {
     replace: a => a,
   };
-  ctx.timeSrvMock = {};
+  ctx.timeSrvMock = {
+    timeRange: () => {
+      return {
+        from: moment(1531468681),
+        to: moment(1531489712),
+      };
+    },
+  };
 
   beforeEach(() => {
     ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
@@ -202,6 +210,39 @@ describe('PrometheusDatasource', () => {
     });
     it('should escape multiple special characters', function() {
       expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
+    });
+  });
+
+  describe('metricFindQuery', () => {
+    beforeEach(() => {
+      let query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';
+      ctx.templateSrvMock.replace = jest.fn();
+      ctx.timeSrvMock.timeRange = () => {
+        return {
+          from: moment(1531468681),
+          to: moment(1531489712),
+        };
+      };
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
+      ctx.ds.metricFindQuery(query);
+    });
+
+    it('should call templateSrv.replace with scopedVars', () => {
+      expect(ctx.templateSrvMock.replace.mock.calls[0][1]).toBeDefined();
+    });
+
+    it('should have the correct range and range_ms', () => {
+      let range = ctx.templateSrvMock.replace.mock.calls[0][1].__range;
+      let rangeMs = ctx.templateSrvMock.replace.mock.calls[0][1].__range_ms;
+      expect(range).toEqual({ text: '21s', value: '21s' });
+      expect(rangeMs).toEqual({ text: 21031, value: 21031 });
+    });
+
+    it('should pass the default interval value', () => {
+      let interval = ctx.templateSrvMock.replace.mock.calls[0][1].__interval;
+      let intervalMs = ctx.templateSrvMock.replace.mock.calls[0][1].__interval_ms;
+      expect(interval).toEqual({ text: '15s', value: '15s' });
+      expect(intervalMs).toEqual({ text: 15000, value: 15000 });
     });
   });
 });

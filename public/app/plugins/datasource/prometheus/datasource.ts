@@ -196,13 +196,14 @@ export class PrometheusDatasource {
     var intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     var adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    var scopedVars = options.scopedVars;
+    var scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
+        ...this.getRangeScopedVars(),
       });
     }
     query.step = interval;
@@ -285,9 +286,24 @@ export class PrometheusDatasource {
       return this.$q.when([]);
     }
 
-    let interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
+    let scopedVars = {
+      __interval: { text: this.interval, value: this.interval },
+      __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
+      ...this.getRangeScopedVars(),
+    };
+    let interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     var metricFindQuery = new PrometheusMetricFindQuery(this, interpolated, this.timeSrv);
     return metricFindQuery.process();
+  }
+
+  getRangeScopedVars() {
+    let range = this.timeSrv.timeRange();
+    let msRange = range.to.diff(range.from);
+    let regularRange = kbn.secondsToHms(msRange / 1000);
+    return {
+      __range_ms: { text: msRange, value: msRange },
+      __range: { text: regularRange, value: regularRange },
+    };
   }
 
   annotationQuery(options) {
