@@ -1,17 +1,139 @@
-# 5.2.0 (unreleased)
+# 5.3.0 (unreleased)
+
+* **Dataproxy**: Pass configured/auth headers to a Datasource [#10971](https://github.com/grafana/grafana/issues/10971), thx [@mrsiano](https://github.com/mrsiano)
+* **Cleanup**: Make temp file time to live configurable [#11607](https://github.com/grafana/grafana/issues/11607), thx [@xapon](https://github.com/xapon)
+* **LDAP**: Define Grafana Admin permission in ldap group mappings [#2469](https://github.com/grafana/grafana/issues/2496), PR [#12622](https://github.com/grafana/grafana/issues/12622)
+* **Cloudwatch**: CloudWatch GetMetricData support [#11487](https://github.com/grafana/grafana/issues/11487), thx [@mtanda](https://github.com/mtanda)
 
 ### Minor
 
+* **Api**: Delete nonexistent datasource should return 404 [#12313](https://github.com/grafana/grafana/issues/12313), thx [@AustinWinstanley](https://github.com/AustinWinstanley)
+* **Dashboard**: Fix selecting current dashboard from search should not reload dashboard [#12248](https://github.com/grafana/grafana/issues/12248)
+* **Singlestat**: Make colorization of prefix and postfix optional in singlestat [#11892](https://github.com/grafana/grafana/pull/11892), thx [@ApsOps](https://github.com/ApsOps)
+* **Table**: Make table sorting stable when null values exist [#12362](https://github.com/grafana/grafana/pull/12362), thx [@bz2](https://github.com/bz2)
+* **Prometheus**: Fix graph panel bar width issue in aligned prometheus queries [#12379](https://github.com/grafana/grafana/issues/12379)
+* **Prometheus**: Heatmap - fix unhandled error when some points are missing [#12484](https://github.com/grafana/grafana/issues/12484)
+* **Variables**: Skip unneeded extra query request when de-selecting variable values used for repeated panels [#8186](https://github.com/grafana/grafana/issues/8186), thx [@mtanda](https://github.com/mtanda)
+* **Postgres/MySQL/MSSQL**: Use floor rounding in $__timeGroup macro function [#12460](https://github.com/grafana/grafana/issues/12460), thx [@svenklemm](https://github.com/svenklemm)
+* **MySQL/MSSQL**: Use datetime format instead of epoch for $__timeFilter, $__timeFrom and $__timeTo macros [#11618](https://github.com/grafana/grafana/issues/11618) [#11619](https://github.com/grafana/grafana/issues/11619), thx [@AustinWinstanley](https://github.com/AustinWinstanley)
+* **Github OAuth**: Allow changes of user info at Github to be synched to Grafana when signing in [#11818](https://github.com/grafana/grafana/issues/11818), thx [@rwaweber](https://github.com/rwaweber)
+* **Alerting**: Fix diff and percent_diff reducers [#11563](https://github.com/grafana/grafana/issues/11563), thx [@jessetane](https://github.com/jessetane)
+
+# 5.2.2 (unreleased)
+
+### Minor
+
+* **Prometheus**: Fix graph panel bar width issue in aligned prometheus queries [#12379](https://github.com/grafana/grafana/issues/12379)
+* **Dashboard**: Dashboard links not updated when changing variables [#12506](https://github.com/grafana/grafana/issues/12506)
+
+# 5.2.1 (2018-06-29)
+
+### Minor
+
+* **Auth Proxy**: Important security fix for whitelist of IP address feature [#12444](https://github.com/grafana/grafana/pull/12444)
+* **UI**: Fix - Grafana footer overlapping page [#12430](https://github.com/grafana/grafana/issues/12430)
+* **Logging**: Errors should be reported before crashing [#12438](https://github.com/grafana/grafana/issues/12438)
+
+# 5.2.0-stable (2018-06-27)
+
+### Minor
+
+* **Plugins**: Handle errors correctly when loading datasource plugin [#12383](https://github.com/grafana/grafana/pull/12383) thx [@rozetko](https://github.com/rozetko)
+* **Render**: Enhance error message if phantomjs executable is not found [#11868](https://github.com/grafana/grafana/issues/11868)
+* **Dashboard**: Set correct text in drop down when variable is present in url [#11968](https://github.com/grafana/grafana/issues/11968)
+
+### 5.2.0-beta3 fixes
+
+* **LDAP**: Handle "dn" ldap attribute more gracefully [#12385](https://github.com/grafana/grafana/pull/12385), reverts [#10970](https://github.com/grafana/grafana/pull/10970)
+
+# 5.2.0-beta3 (2018-06-21)
+
+### Minor
+
+* **Build**: All rpm packages should be signed [#12359](https://github.com/grafana/grafana/issues/12359)
+
+# 5.2.0-beta2 (2018-06-20)
+
+### New Features
+
+* **Dashboard**: Import dashboard to folder [#10796](https://github.com/grafana/grafana/issues/10796)
+
+### Minor
+
+* **Permissions**: Important security fix for API keys with viewer role [#12343](https://github.com/grafana/grafana/issues/12343)
+* **Dashboard**: Fix so panel titles doesn't wrap [#11074](https://github.com/grafana/grafana/issues/11074)
+* **Dashboard**: Prevent double-click when saving dashboard [#11963](https://github.com/grafana/grafana/issues/11963)
+* **Dashboard**: AutoFocus the add-panel search filter [#12189](https://github.com/grafana/grafana/pull/12189) thx [@ryantxu](https://github.com/ryantxu)
+* **Units**: W/m2 (energy), l/h (flow) and kPa (pressure) [#11233](https://github.com/grafana/grafana/pull/11233), thx [@flopp999](https://github.com/flopp999)
+* **Units**: Litre/min (flow) and milliLitre/min (flow) [#12282](https://github.com/grafana/grafana/pull/12282), thx [@flopp999](https://github.com/flopp999)
+* **Alerting**: Fix mobile notifications for Microsoft Teams alert notifier [#11484](https://github.com/grafana/grafana/pull/11484), thx [@manacker](https://github.com/manacker)
+* **Influxdb**: Add support for mode function [#12286](https://github.com/grafana/grafana/issues/12286)
+* **Cloudwatch**: Fixes panic caused by bad timerange settings [#12199](https://github.com/grafana/grafana/issues/12199)
+* **Auth Proxy**: Whitelist proxy IP address instead of client IP address [#10707](https://github.com/grafana/grafana/issues/10707)
+* **User Management**: Make sure that a user always has a current org assigned [#11076](https://github.com/grafana/grafana/issues/11076)
+* **Snapshots**: Fix: annotations not properly extracted leading to incorrect rendering of annotations [#12278](https://github.com/grafana/grafana/issues/12278)
+* **LDAP**: Allow use of DN in group_search_filter_user_attribute and member_of [#3132](https://github.com/grafana/grafana/issues/3132), thx [@mmolnar](https://github.com/mmolnar)
+* **Graph**: Fix legend decimals precision calculation [#11792](https://github.com/grafana/grafana/issues/11792)
+* **Dashboard**: Make sure to process panels in collapsed rows when exporting dashboard [#12256](https://github.com/grafana/grafana/issues/12256)
+
+### 5.2.0-beta1 fixes
+
+* **Dashboard**: Dashboard link doesn't work when "As dropdown" option is checked [#12315](https://github.com/grafana/grafana/issues/12315)
+* **Dashboard**: Fix regressions after save modal changes, including adhoc template issues [#12240](https://github.com/grafana/grafana/issues/12240)
+* **Docker**: Config keys ending with _FILE are not respected [#170](https://github.com/grafana/grafana-docker/issues/170)
+
+# 5.2.0-beta1 (2018-06-05)
+
+### New Features
+
+* **Elasticsearch**: Alerting support [#5893](https://github.com/grafana/grafana/issues/5893), thx [@WPH95](https://github.com/WPH95)
+* **Build**: Crosscompile and packages Grafana on arm, windows, linux and darwin [#11920](https://github.com/grafana/grafana/pull/11920), thx [@fg2it](https://github.com/fg2it)
+* **Login**: Change admin password after first login [#11882](https://github.com/grafana/grafana/issues/11882)
+* **Alert list panel**: Updated to support filtering alerts by name, dashboard title, folder, tags [#11500](https://github.com/grafana/grafana/issues/11500), [#8168](https://github.com/grafana/grafana/issues/8168), [#6541](https://github.com/grafana/grafana/issues/6541)
+
+### Minor
+
+* **Dashboard**: Modified time range and variables are now not saved by default [#10748](https://github.com/grafana/grafana/issues/10748), [#8805](https://github.com/grafana/grafana/issues/8805)
 * **Graph**: Show invisible highest value bucket in histogram [#11498](https://github.com/grafana/grafana/issues/11498)
 * **Dashboard**: Enable "Save As..." if user has edit permission [#11625](https://github.com/grafana/grafana/issues/11625)
+* **Prometheus**: Query dates are now step-aligned [#10434](https://github.com/grafana/grafana/pull/10434)
 * **Prometheus**: Table columns order now changes when rearrange queries [#11690](https://github.com/grafana/grafana/issues/11690), thx [@mtanda](https://github.com/mtanda)
 * **Variables**: Fix variable interpolation when using multiple formatting types [#11800](https://github.com/grafana/grafana/issues/11800), thx [@svenklemm](https://github.com/svenklemm)
 * **Dashboard**: Fix date selector styling for dark/light theme in time picker control [#11616](https://github.com/grafana/grafana/issues/11616)
 * **Discord**: Alert notification channel type for Discord, [#7964](https://github.com/grafana/grafana/issues/7964) thx [@jereksel](https://github.com/jereksel),
 * **InfluxDB**: Support SELECT queries in templating query, [#5013](https://github.com/grafana/grafana/issues/5013)
+* **InfluxDB**: Support count distinct aggregation [#11645](https://github.com/grafana/grafana/issues/11645), thx [@kichristensen](https://github.com/kichristensen)
 * **Dashboard**: JSON Model under dashboard settings can now be updated & changes saved, [#1429](https://github.com/grafana/grafana/issues/1429), thx [@jereksel](https://github.com/jereksel)
 * **Security**: Fix XSS vulnerabilities in dashboard links [#11813](https://github.com/grafana/grafana/pull/11813)
 * **Singlestat**: Fix "time of last point" shows local time when dashboard timezone set to UTC [#10338](https://github.com/grafana/grafana/issues/10338)
+* **Prometheus**: Add support for passing timeout parameter to Prometheus [#11788](https://github.com/grafana/grafana/pull/11788), thx [@mtanda](https://github.com/mtanda)
+* **Login**: Add optional option sign out url for generic oauth [#9847](https://github.com/grafana/grafana/issues/9847), thx [@roidelapluie](https://github.com/roidelapluie)
+* **Login**: Use proxy server from environment variable if available [#9703](https://github.com/grafana/grafana/issues/9703), thx [@iyeonok](https://github.com/iyeonok)
+* **Invite users**: Friendlier error message when smtp is not configured [#12087](https://github.com/grafana/grafana/issues/12087), thx [@thurt](https://github.com/thurt)
+* **Graphite**: Don't send distributed tracing headers when using direct/browser access mode [#11494](https://github.com/grafana/grafana/issues/11494)
+* **Sidenav**: Show create dashboard link for viewers if at least editor in one folder [#11858](https://github.com/grafana/grafana/issues/11858)
+* **SQL**: Second epochs are now correctly converted to ms. [#12085](https://github.com/grafana/grafana/pull/12085)
+* **Singlestat**: Fix singlestat threshold tooltip [#11971](https://github.com/grafana/grafana/issues/11971)
+* **Dashboard**: Hide grid controls in fullscreen/low-activity views [#11771](https://github.com/grafana/grafana/issues/11771)
+* **Dashboard**: Validate uid when importing dashboards [#11515](https://github.com/grafana/grafana/issues/11515)
+* **Docker**: Support for env variables ending with _FILE [grafana-docker #166](https://github.com/grafana/grafana-docker/pull/166), thx [@efrecon](https://github.com/efrecon)
+* **Alert list panel**: Show alerts for user with viewer role [#11167](https://github.com/grafana/grafana/issues/11167)
+* **Provisioning**: Verify checksum of dashboards before updating to reduce load on database [#11670](https://github.com/grafana/grafana/issues/11670)
+* **Provisioning**: Support symlinked files in dashboard provisioning config files [#11958](https://github.com/grafana/grafana/issues/11958)
+* **Dashboard list panel**: Search dashboards by folder [#11525](https://github.com/grafana/grafana/issues/11525)
+* **Sidenav**: Always show server admin link in sidenav if grafana admin [#11657](https://github.com/grafana/grafana/issues/11657)
+
+# 5.1.5 (2018-06-27)
+
+* **Docker**: Config keys ending with _FILE are not respected [#170](https://github.com/grafana/grafana-docker/issues/170)
+
+# 5.1.4 (2018-06-19)
+
+* **Permissions**: Important security fix for API keys with viewer role [#12343](https://github.com/grafana/grafana/issues/12343)
+
+# 5.1.3 (2018-05-16)
+
+* **Scroll**: Graph panel / legend texts shifts on the left each time we move scrollbar on firefox [#11830](https://github.com/grafana/grafana/issues/11830)
 
 # 5.1.2 (2018-05-09)
 
@@ -1232,7 +1354,7 @@ Grafana 2.x is fundamentally different from 1.x; it now ships with an integrated
 **New features**
 - [Issue #1623](https://github.com/grafana/grafana/issues/1623). Share Dashboard: Dashboard snapshot sharing (dash and data snapshot), save to local or save to public snapshot dashboard snapshots.raintank.io site
 - [Issue #1622](https://github.com/grafana/grafana/issues/1622). Share Panel: The share modal now has an embed option, gives you an iframe that you can use to embedd a single graph on another web site
-- [Issue #718](https://github.com/grafana/grafana/issues/718).   Dashboard: When saving a dashboard and another user has made changes in between the user is promted with a warning if he really wants to overwrite the other's changes
+- [Issue #718](https://github.com/grafana/grafana/issues/718).   Dashboard: When saving a dashboard and another user has made changes in between the user is prompted with a warning if he really wants to overwrite the other's changes
 - [Issue #1331](https://github.com/grafana/grafana/issues/1331). Graph & Singlestat: New axis/unit format selector and more units (kbytes, Joule, Watt, eV), and new design for graph axis & grid tab and single stat options tab views
 - [Issue #1241](https://github.com/grafana/grafana/issues/1242). Timepicker: New option in timepicker (under dashboard settings), to change ``now`` to be for example ``now-1m``, useful when you want to ignore last minute because it contains incomplete data
 - [Issue #171](https://github.com/grafana/grafana/issues/171).   Panel: Different time periods, panels can override dashboard relative time and/or add a time shift
@@ -1690,3 +1812,4 @@ Thanks to everyone who contributed fixes and provided feedback :+1:
 # 1.0.0 (2014-01-19)
 
 First public release
+

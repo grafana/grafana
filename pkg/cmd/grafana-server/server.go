@@ -8,22 +8,20 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"time"
 
 	"github.com/facebookgo/inject"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/social"
@@ -36,7 +34,9 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
+	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
+	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	_ "github.com/grafana/grafana/pkg/tracing"
 )
 
@@ -62,17 +62,13 @@ type GrafanaServerImpl struct {
 	shutdownReason     string
 	shutdownInProgress bool
 
-	RouteRegister api.RouteRegister `inject:""`
-	HttpServer    *api.HTTPServer   `inject:""`
+	RouteRegister routing.RouteRegister `inject:""`
+	HttpServer    *api.HTTPServer       `inject:""`
 }
 
 func (g *GrafanaServerImpl) Run() error {
 	g.loadConfiguration()
 	g.writePIDFile()
-
-	// initSql
-	sqlstore.NewEngine() // TODO: this should return an error
-	sqlstore.EnsureAdminUser()
 
 	login.Init()
 	social.NewOAuthService()
@@ -80,15 +76,14 @@ func (g *GrafanaServerImpl) Run() error {
 	serviceGraph := inject.Graph{}
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
 	serviceGraph.Provide(&inject.Object{Value: g.cfg})
-	serviceGraph.Provide(&inject.Object{Value: dashboards.NewProvisioningService()})
-	serviceGraph.Provide(&inject.Object{Value: api.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
+	serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
 
 	// self registered services
 	services := registry.GetServices()
 
 	// Add all services to dependency graph
 	for _, service := range services {
-		serviceGraph.Provide(&inject.Object{Value: service})
+		serviceGraph.Provide(&inject.Object{Value: service.Instance})
 	}
 
 	serviceGraph.Provide(&inject.Object{Value: g})
@@ -100,25 +95,27 @@ func (g *GrafanaServerImpl) Run() error {
 
 	// Init & start services
 	for _, service := range services {
-		if registry.IsDisabled(service) {
+		if registry.IsDisabled(service.Instance) {
 			continue
 		}
 
-		g.log.Info("Initializing " + reflect.TypeOf(service).Elem().Name())
+		g.log.Info("Initializing " + service.Name)
 
-		if err := service.Init(); err != nil {
+		if err := service.Instance.Init(); err != nil {
 			return fmt.Errorf("Service init failed: %v", err)
 		}
 	}
 
 	// Start background services
-	for index := range services {
-		service, ok := services[index].(registry.BackgroundService)
+	for _, srv := range services {
+		// variable needed for accessing loop variable in function callback
+		descriptor := srv
+		service, ok := srv.Instance.(registry.BackgroundService)
 		if !ok {
 			continue
 		}
 
-		if registry.IsDisabled(services[index]) {
+		if registry.IsDisabled(descriptor.Instance) {
 			continue
 		}
 
@@ -133,9 +130,9 @@ func (g *GrafanaServerImpl) Run() error {
 
 			// If error is not canceled then the service crashed
 			if err != context.Canceled && err != nil {
-				g.log.Error("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)
+				g.log.Error("Stopped "+descriptor.Name, "reason", err)
 			} else {
-				g.log.Info("Stopped "+reflect.TypeOf(service).Elem().Name(), "reason", err)
+				g.log.Info("Stopped "+descriptor.Name, "reason", err)
 			}
 
 			// Mark that we are in shutdown mode
@@ -178,7 +175,7 @@ func (g *GrafanaServerImpl) Shutdown(reason string) {
 	g.childRoutines.Wait()
 }
 
-func (g *GrafanaServerImpl) Exit(reason error) {
+func (g *GrafanaServerImpl) Exit(reason error) int {
 	// default exit code is 1
 	code := 1
 
@@ -188,7 +185,7 @@ func (g *GrafanaServerImpl) Exit(reason error) {
 	}
 
 	g.log.Error("Server shutdown", "reason", reason)
-	os.Exit(code)
+	return code
 }
 
 func (g *GrafanaServerImpl) writePIDFile() {

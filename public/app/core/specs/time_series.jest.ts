@@ -1,4 +1,5 @@
 import TimeSeries from 'app/core/time_series2';
+import { updateLegendValues } from 'app/core/time_series2';
 
 describe('TimeSeries', function() {
   var points, series;
@@ -117,6 +118,20 @@ describe('TimeSeries', function() {
       });
       series.getFlotPairs('null');
       expect(series.stats.avg).toBe(null);
+    });
+
+    it('calculates timeStep', function() {
+      series = new TimeSeries({
+        datapoints: [[null, 1], [null, 2], [null, 3]],
+      });
+      series.getFlotPairs('null');
+      expect(series.stats.timeStep).toBe(1);
+
+      series = new TimeSeries({
+        datapoints: [[0, 1530529290], [0, 1530529305], [0, 1530529320]],
+      });
+      series.getFlotPairs('null');
+      expect(series.stats.timeStep).toBe(15);
     });
   });
 
@@ -309,6 +324,57 @@ describe('TimeSeries', function() {
       expect(series.formatValue(NaN)).toBe('');
       expect(series.formatValue(Infinity)).toBe('');
       expect(series.formatValue(-Infinity)).toBe('');
+    });
+  });
+
+  describe('legend decimals', function() {
+    let series, panel;
+    let height = 200;
+    beforeEach(function() {
+      testData = {
+        alias: 'test',
+        datapoints: [[1, 2], [0, 3], [10, 4], [8, 5]],
+      };
+      series = new TimeSeries(testData);
+      series.getFlotPairs();
+      panel = {
+        decimals: null,
+        yaxes: [
+          {
+            decimals: null,
+          },
+        ],
+      };
+    });
+
+    it('should set decimals based on Y axis (expect calculated decimals = 1)', function() {
+      let data = [series];
+      // Expect ticks with this data will have decimals = 1
+      updateLegendValues(data, panel, height);
+      expect(data[0].decimals).toBe(2);
+    });
+
+    it('should set decimals based on Y axis to 0 if calculated decimals = 0)', function() {
+      testData.datapoints = [[10, 2], [0, 3], [100, 4], [80, 5]];
+      series = new TimeSeries(testData);
+      series.getFlotPairs();
+      let data = [series];
+      updateLegendValues(data, panel, height);
+      expect(data[0].decimals).toBe(0);
+    });
+
+    it('should set decimals to Y axis decimals + 1', function() {
+      panel.yaxes[0].decimals = 2;
+      let data = [series];
+      updateLegendValues(data, panel, height);
+      expect(data[0].decimals).toBe(3);
+    });
+
+    it('should set decimals to legend decimals value if it was set explicitly', function() {
+      panel.decimals = 3;
+      let data = [series];
+      updateLegendValues(data, panel, height);
+      expect(data[0].decimals).toBe(3);
     });
   });
 });

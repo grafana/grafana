@@ -44,6 +44,7 @@ var (
 	M_Alerting_Notification_Sent         *prometheus.CounterVec
 	M_Aws_CloudWatch_GetMetricStatistics prometheus.Counter
 	M_Aws_CloudWatch_ListMetrics         prometheus.Counter
+	M_Aws_CloudWatch_GetMetricData       prometheus.Counter
 	M_DB_DataSource_QueryById            prometheus.Counter
 
 	// Timers
@@ -218,6 +219,12 @@ func init() {
 		Namespace: exporterName,
 	})
 
+	M_Aws_CloudWatch_GetMetricData = prometheus.NewCounter(prometheus.CounterOpts{
+		Name:      "aws_cloudwatch_get_metric_data_total",
+		Help:      "counter for getting metric data time series from aws",
+		Namespace: exporterName,
+	})
+
 	M_DB_DataSource_QueryById = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "db_datasource_query_by_id_total",
 		Help:      "counter for getting datasource by id",
@@ -307,6 +314,7 @@ func initMetricVars() {
 		M_Alerting_Notification_Sent,
 		M_Aws_CloudWatch_GetMetricStatistics,
 		M_Aws_CloudWatch_ListMetrics,
+		M_Aws_CloudWatch_GetMetricData,
 		M_DB_DataSource_QueryById,
 		M_Alerting_Active_Alerts,
 		M_StatTotal_Dashboards,
@@ -332,6 +340,16 @@ func updateTotalStats() {
 	M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
 }
 
+var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
+
+func getEdition() string {
+	if setting.IsEnterprise {
+		return "enterprise"
+	} else {
+		return "oss"
+	}
+}
+
 func sendUsageStats() {
 	if !setting.ReportingEnabled {
 		return
@@ -347,6 +365,7 @@ func sendUsageStats() {
 		"metrics": metrics,
 		"os":      runtime.GOOS,
 		"arch":    runtime.GOARCH,
+		"edition": getEdition(),
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
@@ -366,6 +385,12 @@ func sendUsageStats() {
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
 	metrics["stats.stars.count"] = statsQuery.Result.Stars
+	metrics["stats.folders.count"] = statsQuery.Result.Folders
+	metrics["stats.dashboard_permissions.count"] = statsQuery.Result.DashboardPermissions
+	metrics["stats.folder_permissions.count"] = statsQuery.Result.FolderPermissions
+	metrics["stats.provisioned_dashboards.count"] = statsQuery.Result.ProvisionedDashboards
+	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
+	metrics["stats.teams.count"] = statsQuery.Result.Teams
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {
@@ -386,9 +411,38 @@ func sendUsageStats() {
 	}
 	metrics["stats.ds.other.count"] = dsOtherCount
 
+	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
+	if err := bus.Dispatch(&dsAccessStats); err != nil {
+		metricsLogger.Error("Failed to get datasource access stats", "error", err)
+		return
+	}
+
+	// send access counters for each data source
+	// but ignore any custom data sources
+	// as sending that name could be sensitive information
+	dsAccessOtherCount := make(map[string]int64)
+	for _, dsAccessStat := range dsAccessStats.Result {
+		if dsAccessStat.Access == "" {
+			continue
+		}
+
+		access := strings.ToLower(dsAccessStat.Access)
+
+		if models.IsKnownDataSourcePlugin(dsAccessStat.Type) {
+			metrics["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
+		} else {
+			old := dsAccessOtherCount[access]
+			dsAccessOtherCount[access] = old + dsAccessStat.Count
+		}
+	}
+
+	for access, count := range dsAccessOtherCount {
+		metrics["stats.ds_access.other."+access+".count"] = count
+	}
+
 	out, _ := json.MarshalIndent(report, "", " ")
 	data := bytes.NewBuffer(out)
 
 	client := http.Client{Timeout: 5 * time.Second}
-	go client.Post("https://stats.grafana.org/grafana-usage-report", "application/json", data)
+	go client.Post(usageStatsURL, "application/json", data)
 }

@@ -1,6 +1,59 @@
+aliases:
+  # Workflow filters
+  - &filter-only-release
+    branches:
+      ignore: /.*/
+    tags:
+      only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+  - &filter-not-release
+    tags:
+      ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+  - &filter-only-master
+    branches:
+      only: master
+
 version: 2
 
 jobs:
+  mysql-integration-test:
+    docker:
+      - image: circleci/golang:1.10
+      - image: circleci/mysql:5.6-ram
+        environment:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: grafana_tests
+          MYSQL_USER: grafana
+          MYSQL_PASSWORD: password
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+        - checkout
+        - run: sudo apt update
+        - run: sudo apt install -y mysql-client
+        - run: dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
+        - run: cat docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
+        - run:
+            name: mysql integration tests
+            command: 'GRAFANA_TEST_DB=mysql go test ./pkg/services/sqlstore/... ./pkg/tsdb/mysql/... '
+
+  postgres-integration-test:
+    docker:
+      - image: circleci/golang:1.10
+      - image: circleci/postgres:9.3-ram
+        environment:
+          POSTGRES_USER: grafanatest
+          POSTGRES_PASSWORD: grafanatest
+          POSTGRES_DB: grafanatest
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+        - checkout
+        - run: sudo apt update
+        - run: sudo apt install -y postgresql-client
+        - run: dockerize -wait tcp://127.0.0.1:5432 -timeout 120s
+        - run: 'PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f docker/blocks/postgres_tests/setup.sql'
+        - run:
+            name: postgres integration tests
+            command: 'GRAFANA_TEST_DB=postgres go test ./pkg/services/sqlstore/... ./pkg/tsdb/postgres/...'
+
   codespell:
     docker:
       - image: circleci/python
@@ -35,18 +88,17 @@ jobs:
       - run:
           name: run linters
           command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+      - run:
+          name: run go vet 
+          command: 'go vet ./pkg/...'
 
   test-frontend:
     docker:
-      - image: circleci/node:6.11.4
+      - image: circleci/node:8
     steps:
       - checkout
-      - run:
-          name: install yarn
-          command: 'sudo npm install -g yarn --quiet'
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
-      # Could we skip this step if the cache has been restored? `[ -d node_modules ] || yarn install ...` should be able to apply to build step as well
       - run:
           name: yarn install
           command: 'yarn install --pure-lockfile --no-progress'
@@ -68,15 +120,27 @@ jobs:
           name: build backend and run go tests
           command: './scripts/circle-test-backend.sh'
 
-  build:
+  build-all:
     docker:
-     - image: grafana/build-container:v0.1
+     - image: grafana/build-container:1.0.0
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - restore_cache:
+          key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+      - run:
+          name: download phantomjs binaries
+          command: './scripts/build/download-phantomjs.sh'
+      - save_cache:
+          key: phantomjs-binaries-{{ checksum "scripts/build/download-phantomjs.sh" }}
+          paths:
+            - /tmp/phantomjs
+      - run:
           name: build and package grafana
-          command: './scripts/build/build.sh'
+          command: './scripts/build/build-all.sh'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
@@ -92,6 +156,8 @@ jobs:
             - dist/grafana*
             - scripts/*.sh
             - scripts/publish
+      - store_artifacts:
+          path: dist
 
   build-enterprise:
     docker:
@@ -100,7 +166,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build and package grafana
+          name: build, test and package grafana enterprise
           command: './scripts/build/build_enterprise.sh'
       - run:
           name: sign packages
@@ -108,6 +174,26 @@ jobs:
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
+      - run:
+          name: move enterprise packages into their own folder
+          command: 'mv dist enterprise-dist'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - enterprise-dist/grafana-enterprise*
+
+  deploy-enterprise-master:
+    docker:
+      - image: circleci/python:2.7-stretch
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: install awscli
+          command: 'sudo pip install awscli'
+      - run:
+          name: deploy to s3
+          command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/master'
 
   deploy-master:
     docker:
@@ -120,16 +206,21 @@ jobs:
           command: 'sudo pip install awscli'
       - run:
           name: deploy to s3
-          command: 'aws s3 sync ./dist s3://$BUCKET_NAME/master'
+          command: |
+            # Also
+            cp dist/grafana-latest.linux-x64.tar.gz dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
+            aws s3 sync ./dist s3://$BUCKET_NAME/master
       - run:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
       - run:
           name: Trigger Docker build
-          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}'
+          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN} master-$(echo "${CIRCLE_SHA1}" | cut -b1-7)'
       - run:
           name: Publish to Grafana.com
-          command: './scripts/publish -apiKey ${GRAFANA_COM_API_KEY}'
+          command: |
+            rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
+            ./scripts/publish -apiKey ${GRAFANA_COM_API_KEY}
 
   deploy-release:
     docker:
@@ -154,45 +245,67 @@ workflows:
   version: 2
   test-and-build:
     jobs:
+      - build-all:
+          filters: *filter-only-master
+      - build-enterprise:
+          filters: *filter-only-master
       - codespell:
-          filters:
-            tags:
-              only: /.*/
+          filters: *filter-not-release
       - gometalinter:
-          filters:
-            tags:
-              only: /.*/
-      - build:
-          filters:
-            tags:
-              only: /.*/
+          filters: *filter-not-release
       - test-frontend:
-          filters:
-            tags:
-              only: /.*/
+          filters: *filter-not-release
       - test-backend:
-          filters:
-            tags:
-              only: /.*/
+          filters: *filter-not-release
+      - mysql-integration-test:
+          filters: *filter-not-release
+      - postgres-integration-test:
+          filters: *filter-not-release
       - deploy-master:
           requires:
+            - build-all
             - test-backend
             - test-frontend
-            - build
-          filters:
-            branches:
-              only: master
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master           
+      - deploy-enterprise-master:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+            - build-enterprise
+          filters: *filter-only-master
+
+  release:
+    jobs:
+      - build-all:
+          filters: *filter-only-release
+      - codespell:
+          filters: *filter-only-release
+      - gometalinter:
+          filters: *filter-only-release
+      - test-frontend:
+          filters: *filter-only-release
+      - test-backend:
+          filters: *filter-only-release
+      - mysql-integration-test:
+          filters: *filter-only-release
+      - postgres-integration-test:
+          filters: *filter-only-release
       - deploy-release:
           requires:
+            - build-all
             - test-backend
             - test-frontend
-            - build
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
-      # - build-enterprise:
-      #     filters:
-      #       tags:
-      #         only: /.*/
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release

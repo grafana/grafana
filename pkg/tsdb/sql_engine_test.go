@@ -12,14 +12,17 @@ import (
 func TestSqlEngine(t *testing.T) {
 	Convey("SqlEngine", t, func() {
 		dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
+		earlyDt := time.Date(1970, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 
 		Convey("Given row values with time.Time as time columns", func() {
 			var nilPointer *time.Time
 
-			fixtures := make([]interface{}, 3)
+			fixtures := make([]interface{}, 5)
 			fixtures[0] = dt
 			fixtures[1] = &dt
-			fixtures[2] = nilPointer
+			fixtures[2] = earlyDt
+			fixtures[3] = &earlyDt
+			fixtures[4] = nilPointer
 
 			for i := range fixtures {
 				ConvertSqlTimeColumnToEpochMs(fixtures, i)
@@ -27,9 +30,13 @@ func TestSqlEngine(t *testing.T) {
 
 			Convey("When converting them should return epoch time with millisecond precision ", func() {
 				expected := float64(dt.UnixNano()) / float64(time.Millisecond)
+				expectedEarly := float64(earlyDt.UnixNano()) / float64(time.Millisecond)
+
 				So(fixtures[0].(float64), ShouldEqual, expected)
 				So(fixtures[1].(float64), ShouldEqual, expected)
-				So(fixtures[2], ShouldBeNil)
+				So(fixtures[2].(float64), ShouldEqual, expectedEarly)
+				So(fixtures[3].(float64), ShouldEqual, expectedEarly)
+				So(fixtures[4], ShouldBeNil)
 			})
 		})
 

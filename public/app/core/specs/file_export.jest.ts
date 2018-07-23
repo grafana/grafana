@@ -63,7 +63,6 @@ describe('file_export', () => {
   });
 
   describe('when exporting table data to csv', () => {
-
     it('should properly escape special characters and quote all string values', () => {
       const inputTable = {
         columns: [
@@ -104,13 +103,11 @@ describe('file_export', () => {
 
     it('should decode HTML encoded characters', function() {
       const inputTable = {
-        columns: [
-          { text: 'string_value' },
-        ],
+        columns: [{ text: 'string_value' }],
         rows: [
           ['&quot;&amp;&auml;'],
           ['<strong>&quot;some html&quot;</strong>'],
-          ['<a href="http://something/index.html">some text</a>']
+          ['<a href="http://something/index.html">some text</a>'],
         ],
       };
 

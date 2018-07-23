@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 
+import promql from './slate-plugins/prism/promql';
 import QueryField from './QueryField';
 
 class QueryRow extends PureComponent<any, any> {
@@ -48,18 +49,22 @@ class QueryRow extends PureComponent<any, any> {
     return (
       <div className="query-row">
         <div className="query-row-tools">
-          <button className="btn btn-small btn-inverse" onClick={this.handleClickAddButton}>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickAddButton}>
             <i className="fa fa-plus" />
           </button>
-          <button className="btn btn-small btn-inverse" onClick={this.handleClickRemoveButton}>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickRemoveButton}>
             <i className="fa fa-minus" />
           </button>
         </div>
-        <div className="query-field-wrapper">
+        <div className="slate-query-field-wrapper">
           <QueryField
             initialQuery={edited ? null : query}
+            portalPrefix="explore"
             onPressEnter={this.handlePressEnter}
             onQueryChange={this.handleChangeQuery}
+            placeholder="Enter a PromQL query"
+            prismLanguage="promql"
+            prismDefinition={promql}
             request={request}
           />
         </div>

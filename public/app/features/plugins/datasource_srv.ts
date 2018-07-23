@@ -7,7 +7,7 @@ export class DatasourceSrv {
   datasources: any;
 
   /** @ngInject */
-  constructor(private $q, private $injector, $rootScope, private templateSrv) {
+  constructor(private $q, private $injector, private $rootScope, private templateSrv) {
     this.init();
   }
 
@@ -34,13 +34,13 @@ export class DatasourceSrv {
   }
 
   loadDatasource(name) {
-    var dsConfig = config.datasources[name];
+    const dsConfig = config.datasources[name];
     if (!dsConfig) {
       return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
     }
 
-    var deferred = this.$q.defer();
-    var pluginDef = dsConfig.meta;
+    const deferred = this.$q.defer();
+    const pluginDef = dsConfig.meta;
 
     importPluginModule(pluginDef.module)
       .then(plugin => {
@@ -55,13 +55,13 @@ export class DatasourceSrv {
           throw new Error('Plugin module is missing Datasource constructor');
         }
 
-        var instance = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
+        const instance = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
         instance.meta = pluginDef;
         instance.name = name;
         this.datasources[name] = instance;
         deferred.resolve(instance);
       })
-      .catch(function(err) {
+      .catch(err => {
         this.$rootScope.appEvent('alert-error', [dsConfig.name + ' plugin failed', err.toString()]);
       });
 
@@ -73,7 +73,7 @@ export class DatasourceSrv {
   }
 
   getAnnotationSources() {
-    var sources = [];
+    const sources = [];
 
     this.addDataSourceVariables(sources);
 
@@ -86,15 +86,33 @@ export class DatasourceSrv {
     return sources;
   }
 
+  getExploreSources() {
+    const { datasources } = config;
+    const es = Object.keys(datasources)
+      .map(name => datasources[name])
+      .filter(ds => ds.meta && ds.meta.explore);
+    return _.sortBy(es, ['name']);
+  }
+
   getMetricSources(options) {
     var metricSources = [];
 
     _.each(config.datasources, function(value, key) {
       if (value.meta && value.meta.metrics) {
-        metricSources.push({ value: key, name: key, meta: value.meta });
+        let metricSource = { value: key, name: key, meta: value.meta, sort: key };
+
+        //Make sure grafana and mixed are sorted at the bottom
+        if (value.meta.id === 'grafana') {
+          metricSource.sort = String.fromCharCode(253);
+        } else if (value.meta.id === 'mixed') {
+          metricSource.sort = String.fromCharCode(254);
+        }
+
+        metricSources.push(metricSource);
 
         if (key === config.defaultDatasource) {
-          metricSources.push({ value: null, name: 'default', meta: value.meta });
+          metricSource = { value: null, name: 'default', meta: value.meta, sort: key };
+          metricSources.push(metricSource);
         }
       }
     });
@@ -104,17 +122,10 @@ export class DatasourceSrv {
     }
 
     metricSources.sort(function(a, b) {
-      // these two should always be at the bottom
-      if (a.meta.id === 'mixed' || a.meta.id === 'grafana') {
+      if (a.sort.toLowerCase() > b.sort.toLowerCase()) {
         return 1;
       }
-      if (b.meta.id === 'mixed' || b.meta.id === 'grafana') {
-        return -1;
-      }
-      if (a.name.toLowerCase() > b.name.toLowerCase()) {
-        return 1;
-      }
-      if (a.name.toLowerCase() < b.name.toLowerCase()) {
+      if (a.sort.toLowerCase() < b.sort.toLowerCase()) {
         return -1;
       }
       return 0;
@@ -139,10 +150,12 @@ export class DatasourceSrv {
       var ds = config.datasources[first];
 
       if (ds) {
+        const key = `$${variable.name}`;
         list.push({
-          name: '$' + variable.name,
-          value: '$' + variable.name,
+          name: key,
+          value: key,
           meta: ds.meta,
+          sort: key,
         });
       }
     }
@@ -150,3 +163,4 @@ export class DatasourceSrv {
 }
 
 coreModule.service('datasourceSrv', DatasourceSrv);
+export default DatasourceSrv;

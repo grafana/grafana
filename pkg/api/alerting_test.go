@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/search"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -30,7 +31,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 		})
 
 		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
-			query.Result = []*m.Team{}
+			query.Result = []*m.TeamDTO{}
 			return nil
 		})
 
@@ -64,6 +65,60 @@ func TestAlertingApiEndpoint(t *testing.T) {
 				})
 			})
 		})
+
+		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1", "/api/alerts", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			var searchQuery *search.Query
+			bus.AddHandler("test", func(query *search.Query) error {
+				searchQuery = query
+				return nil
+			})
+
+			var getAlertsQuery *m.GetAlertsQuery
+			bus.AddHandler("test", func(query *m.GetAlertsQuery) error {
+				getAlertsQuery = query
+				return nil
+			})
+
+			sc.handlerFunc = GetAlerts
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			So(searchQuery, ShouldBeNil)
+			So(getAlertsQuery, ShouldNotBeNil)
+		})
+
+		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery", "/api/alerts", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			var searchQuery *search.Query
+			bus.AddHandler("test", func(query *search.Query) error {
+				searchQuery = query
+				query.Result = search.HitList{
+					&search.Hit{Id: 1},
+					&search.Hit{Id: 2},
+				}
+				return nil
+			})
+
+			var getAlertsQuery *m.GetAlertsQuery
+			bus.AddHandler("test", func(query *m.GetAlertsQuery) error {
+				getAlertsQuery = query
+				return nil
+			})
+
+			sc.handlerFunc = GetAlerts
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			So(searchQuery, ShouldNotBeNil)
+			So(searchQuery.DashboardIds[0], ShouldEqual, 1)
+			So(searchQuery.DashboardIds[1], ShouldEqual, 2)
+			So(searchQuery.FolderIds[0], ShouldEqual, 3)
+			So(searchQuery.Tags[0], ShouldEqual, "abc")
+			So(searchQuery.Title, ShouldEqual, "dbQuery")
+
+			So(getAlertsQuery, ShouldNotBeNil)
+			So(getAlertsQuery.DashboardIDs[0], ShouldEqual, 1)
+			So(getAlertsQuery.DashboardIDs[1], ShouldEqual, 2)
+			So(getAlertsQuery.Limit, ShouldEqual, 5)
+			So(getAlertsQuery.Query, ShouldEqual, "alertQuery")
+		})
 	})
 }
 
@@ -80,7 +135,7 @@ func postAlertScenario(desc string, url string, routePattern string, role m.Role
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID

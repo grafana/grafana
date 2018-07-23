@@ -11,7 +11,7 @@ weight = 1
 # Variables
 
 Variables allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
-and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
+and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
 {{< docs-imagebox img="/img/docs/v50/variables_dashboard.png" >}}

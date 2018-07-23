@@ -39,7 +39,7 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		teamResp := []*m.Team{}
+		teamResp := []*m.TeamDTO{}
 		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
 			query.Result = teamResp
 			return nil
@@ -47,11 +47,26 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 
 		Convey("When user has editor role and is not in the ACL", func() {
 			Convey("Should not be able to delete snapshot", func() {
-				loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/snapshots-delete/12345", "/api/snapshots-delete/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteDashboardSnapshot
-					sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 					So(sc.resp.Code, ShouldEqual, 403)
+				})
+			})
+		})
+
+		Convey("When user is anonymous", func() {
+			Convey("Should be able to delete snapshot by deleteKey", func() {
+				anonymousUserScenario("When calling GET on", "GET", "/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", func(sc *scenarioContext) {
+					sc.handlerFunc = DeleteDashboardSnapshotByDeleteKey
+					sc.fakeReqWithParams("GET", sc.url, map[string]string{"deleteKey": "12345"}).exec()
+
+					So(sc.resp.Code, ShouldEqual, 200)
+					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+					So(err, ShouldBeNil)
+
+					So(respJSON.Get("message").MustString(), ShouldStartWith, "Snapshot deleted")
 				})
 			})
 		})
@@ -63,9 +78,9 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 			}
 
 			Convey("Should be able to delete a snapshot", func() {
-				loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/snapshots-delete/12345", "/api/snapshots-delete/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteDashboardSnapshot
-					sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 					So(sc.resp.Code, ShouldEqual, 200)
 					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
@@ -81,9 +96,9 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 			mockSnapshotResult.UserId = TestUserID
 
 			Convey("Should be able to delete a snapshot", func() {
-				loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/snapshots-delete/12345", "/api/snapshots-delete/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", m.ROLE_EDITOR, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteDashboardSnapshot
-					sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 					So(sc.resp.Code, ShouldEqual, 200)
 					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())

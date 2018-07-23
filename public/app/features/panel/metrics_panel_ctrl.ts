@@ -1,9 +1,9 @@
-import config from 'app/core/config';
 import $ from 'jquery';
 import _ from 'lodash';
+
+import config from 'app/core/config';
 import kbn from 'app/core/utils/kbn';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
-
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 import { encodePathComponent } from 'app/core/utils/location_util';
@@ -16,6 +16,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   datasourceName: any;
   $q: any;
   $timeout: any;
+  contextSrv: any;
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
@@ -37,6 +38,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     // make metrics tab the default
     this.editorTabIndex = 1;
     this.$q = $injector.get('$q');
+    this.contextSrv = $injector.get('contextSrv');
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
@@ -312,7 +314,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   getAdditionalMenuItems() {
     const items = [];
-    if (this.datasource.supportsExplore) {
+    if (config.exploreEnabled && this.contextSrv.isEditor && this.datasource && this.datasource.supportsExplore) {
       items.push({
         text: 'Explore',
         click: 'ctrl.explore();',
@@ -324,8 +326,13 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   explore() {
-    const exploreState = encodePathComponent(JSON.stringify(this.datasource.getExploreState(this.panel)));
-    this.$location.url(`/explore/${exploreState}`);
+    const range = this.timeSrv.timeRangeForUrl();
+    const state = {
+      ...this.datasource.getExploreState(this.panel),
+      range,
+    };
+    const exploreState = encodePathComponent(JSON.stringify(state));
+    this.$location.url(`/explore?state=${exploreState}`);
   }
 
   addQuery(target) {

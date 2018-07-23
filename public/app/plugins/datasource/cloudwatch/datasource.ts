@@ -30,7 +30,9 @@ export default class CloudWatchDatasource {
 
     var queries = _.filter(options.targets, item => {
       return (
-        item.hide !== true && !!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)
+        (item.id !== '' || item.hide !== true) &&
+        ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
+          item.expression.length > 0)
       );
     }).map(item => {
       item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
@@ -38,6 +40,17 @@ export default class CloudWatchDatasource {
       item.metricName = this.templateSrv.replace(item.metricName, options.scopedVars);
       item.dimensions = this.convertDimensionFormat(item.dimensions, options.scopedVars);
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+      item.id = this.templateSrv.replace(item.id, options.scopedVars);
+      item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+      item.returnData = typeof item.hide === 'undefined' ? true : !item.hide;
+
+      // valid ExtendedStatistics is like p90.00, check the pattern
+      let hasInvalidStatistics = item.statistics.some(s => {
+        return s.indexOf('p') === 0 && !/p\d{2}\.\d{2}/.test(s);
+      });
+      if (hasInvalidStatistics) {
+        throw { message: 'Invalid extended statistics' };
+      }
 
       return _.extend(
         {
@@ -374,26 +387,42 @@ export default class CloudWatchDatasource {
   getExpandedVariables(target, dimensionKey, variable, templateSrv) {
     /* if the all checkbox is marked we should add all values to the targets */
     var allSelected = _.find(variable.options, { selected: true, text: 'All' });
-    return _.chain(variable.options)
-      .filter(v => {
-        if (allSelected) {
-          return v.text !== 'All';
-        } else {
-          return v.selected;
-        }
-      })
-      .map(v => {
-        var t = angular.copy(target);
-        var scopedVar = {};
-        scopedVar[variable.name] = v;
-        t.refId = target.refId + '_' + v.value;
-        t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
-        return t;
-      })
-      .value();
+    var selectedVariables = _.filter(variable.options, v => {
+      if (allSelected) {
+        return v.text !== 'All';
+      } else {
+        return v.selected;
+      }
+    });
+    var currentVariables = !_.isArray(variable.current.value)
+      ? [variable.current]
+      : variable.current.value.map(v => {
+          return {
+            text: v,
+            value: v,
+          };
+        });
+    let useSelectedVariables =
+      selectedVariables.some(s => {
+        return s.value === currentVariables[0].value;
+      }) || currentVariables[0].value === '$__all';
+    return (useSelectedVariables ? selectedVariables : currentVariables).map(v => {
+      var t = angular.copy(target);
+      var scopedVar = {};
+      scopedVar[variable.name] = v;
+      t.refId = target.refId + '_' + v.value;
+      t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
+      if (variable.multi && target.id) {
+        t.id = target.id + window.btoa(v.value).replace(/=/g, '0'); // generate unique id
+      } else {
+        t.id = target.id;
+      }
+      return t;
+    });
   }
 
   expandTemplateVariable(targets, scopedVars, templateSrv) {
+    // Datasource and template srv logic uber-complected. This should be cleaned up.
     return _.chain(targets)
       .map(target => {
         var dimensionKey = _.findKey(target.dimensions, v => {

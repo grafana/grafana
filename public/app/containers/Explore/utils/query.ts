@@ -1,20 +1,3 @@
-export function buildQueryOptions({ format, interval, instant, now, queries }) {
-  const to = now;
-  const from = to - 1000 * 60 * 60 * 3;
-  return {
-    interval,
-    range: {
-      from,
-      to,
-    },
-    targets: queries.map(expr => ({
-      expr,
-      format,
-      instant,
-    })),
-  };
-}
-
 export function generateQueryKey(index = 0) {
   return `Q-${Date.now()}-${Math.random()}-${index}`;
 }

@@ -75,7 +75,7 @@ export class TemplateSrv {
       return luceneEscape(value);
     }
     if (value instanceof Array && value.length === 0) {
-        return '__empty__';
+      return '__empty__';
     }
     var quotedValues = _.map(value, function(val) {
       return '"' + luceneEscape(val) + '"';
@@ -250,8 +250,14 @@ export class TemplateSrv {
   fillVariableValuesForUrl(params, scopedVars) {
     _.each(this.variables, function(variable) {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
+        if (scopedVars[variable.name].skipUrlSync) {
+          return;
+        }
         params['var-' + variable.name] = scopedVars[variable.name].value;
       } else {
+        if (variable.skipUrlSync) {
+          return;
+        }
         params['var-' + variable.name] = variable.getValueForUrl();
       }
     });

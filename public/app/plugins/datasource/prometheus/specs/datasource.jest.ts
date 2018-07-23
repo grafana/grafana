@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 import q from 'q';
-import { PrometheusDatasource, prometheusSpecialRegexEscape, prometheusRegularEscape } from '../datasource';
+import { alignRange, PrometheusDatasource, prometheusSpecialRegexEscape, prometheusRegularEscape } from '../datasource';
 
 describe('PrometheusDatasource', () => {
   let ctx: any = {};
@@ -68,7 +68,7 @@ describe('PrometheusDatasource', () => {
       ctx.query = {
         range: { from: moment(1443454528000), to: moment(1443454528000) },
         targets: [{ expr: 'test{job="testjob"}', format: 'heatmap', legendFormat: '{{le}}' }],
-        interval: '60s',
+        interval: '1s',
       };
     });
 
@@ -142,7 +142,33 @@ describe('PrometheusDatasource', () => {
     });
   });
 
+  describe('alignRange', function() {
+    it('does not modify already aligned intervals with perfect step', function() {
+      const range = alignRange(0, 3, 3);
+      expect(range.start).toEqual(0);
+      expect(range.end).toEqual(3);
+    });
+    it('does modify end-aligned intervals to reflect number of steps possible', function() {
+      const range = alignRange(1, 6, 3);
+      expect(range.start).toEqual(0);
+      expect(range.end).toEqual(6);
+    });
+    it('does align intervals that are a multiple of steps', function() {
+      const range = alignRange(1, 4, 3);
+      expect(range.start).toEqual(0);
+      expect(range.end).toEqual(6);
+    });
+    it('does align intervals that are not a multiple of steps', function() {
+      const range = alignRange(1, 5, 3);
+      expect(range.start).toEqual(0);
+      expect(range.end).toEqual(6);
+    });
+  });
+
   describe('Prometheus regular escaping', function() {
+    it('should not escape non-string', function() {
+      expect(prometheusRegularEscape(12)).toEqual(12);
+    });
     it('should not escape simple string', function() {
       expect(prometheusRegularEscape('cryptodepression')).toEqual('cryptodepression');
     });

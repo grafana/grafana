@@ -15,12 +15,9 @@ export class SnapshotsCtrl {
 
   removeSnapshotConfirmed(snapshot) {
     _.remove(this.snapshots, { key: snapshot.key });
-    this.backendSrv.get('/api/snapshots-delete/' + snapshot.deleteKey).then(
+    this.backendSrv.delete('/api/snapshots/' + snapshot.key).then(
+      () => {},
       () => {
-        this.$rootScope.appEvent('alert-success', ['Snapshot deleted', '']);
-      },
-      () => {
-        this.$rootScope.appEvent('alert-error', ['Unable to delete snapshot', '']);
         this.snapshots.push(snapshot);
       }
     );

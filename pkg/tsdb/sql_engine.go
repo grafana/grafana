@@ -68,6 +68,7 @@ func (e *DefaultSqlEngine) InitEngine(driverName string, dsInfo *models.DataSour
 	engine.SetMaxOpenConns(10)
 	engine.SetMaxIdleConns(10)
 
+	engineCache.versions[dsInfo.Id] = dsInfo.Version
 	engineCache.cache[dsInfo.Id] = engine
 	e.XormEngine = engine
 
@@ -144,10 +145,10 @@ func ConvertSqlTimeColumnToEpochMs(values RowValues, timeIndex int) {
 	if timeIndex >= 0 {
 		switch value := values[timeIndex].(type) {
 		case time.Time:
-			values[timeIndex] = EpochPrecisionToMs(float64(value.UnixNano()))
+			values[timeIndex] = float64(value.UnixNano()) / float64(time.Millisecond)
 		case *time.Time:
 			if value != nil {
-				values[timeIndex] = EpochPrecisionToMs(float64((*value).UnixNano()))
+				values[timeIndex] = float64((*value).UnixNano()) / float64(time.Millisecond)
 			}
 		case int64:
 			values[timeIndex] = int64(EpochPrecisionToMs(float64(value)))

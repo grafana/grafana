@@ -194,7 +194,7 @@ func updateDashboardPermissionScenario(desc string, url string, routePattern str
 
 		sc := setupScenarioContext(url)
 
-		sc.defaultHandler = wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.OrgId = TestOrgID
 			sc.context.UserId = TestUserID

@@ -163,6 +163,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		Name:       fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName),
 		Login:      ldapUser.Username,
 		Email:      ldapUser.Email,
+		Groups:     ldapUser.MemberOf,
 		OrgRoles:   map[int64]m.RoleType{},
 	}
 
@@ -174,6 +175,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 
 		if ldapUser.isMemberOf(group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
+			extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 		}
 	}
 
@@ -189,17 +191,18 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 	}
 
 	// add/update user in grafana
-	userQuery := &m.UpsertUserCommand{
+	upsertUserCmd := &m.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: setting.LdapAllowSignup,
 	}
-	err := bus.Dispatch(userQuery)
+
+	err := bus.Dispatch(upsertUserCmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return userQuery.Result, nil
+	return upsertUserCmd.Result, nil
 }
 
 func (a *ldapAuther) serverBind() error {
@@ -308,6 +311,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 			} else {
 				filter_replace = getLdapAttr(a.server.GroupSearchFilterUserAttribute, searchResult)
 			}
+
 			filter := strings.Replace(a.server.GroupSearchFilter, "%s", ldap.EscapeFilter(filter_replace), -1)
 
 			a.log.Info("Searching for user's groups", "filter", filter)
@@ -348,7 +352,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 }
 
 func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
-	if name == "DN" {
+	if strings.ToLower(name) == "dn" {
 		return result.Entries[n].DN
 	}
 	for _, attr := range result.Entries[n].Attributes {

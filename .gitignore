@@ -33,6 +33,7 @@ public/css/*.min.css
 *.tmp
 .DS_Store
 .vscode/
+.vs/
 
 /data/*
 /bin/*
@@ -42,6 +43,8 @@ fig.yml
 docker-compose.yml
 docker-compose.yaml
 /conf/provisioning/**/custom.yaml
+/conf/provisioning/**/dev.yaml
+/conf/ldap_dev.toml
 profile.cov
 /grafana
 /local
@@ -66,3 +69,5 @@ debug.test
 /vendor/**/.editorconfig
 /vendor/**/appengine*
 *.orig
+
+/devenv/dashboards/bulk-testing/*.json

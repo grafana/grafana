@@ -174,6 +174,7 @@ func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Respon
 		Path:      apiCmd.Path,
 		Inputs:    apiCmd.Inputs,
 		Overwrite: apiCmd.Overwrite,
+		FolderId:  apiCmd.FolderId,
 		Dashboard: apiCmd.Dashboard,
 	}
 

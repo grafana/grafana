@@ -1,12 +1,11 @@
 package client
 
 import (
-	"math/rand"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/internal/sdkrand"
 )
 
 // DefaultRetryer implements basic retry logic using exponential backoff for
@@ -31,8 +30,6 @@ func (d DefaultRetryer) MaxRetries() int {
 	return d.NumMaxRetries
 }
 
-var seededRand = rand.New(&lockedSource{src: rand.NewSource(time.Now().UnixNano())})
-
 // RetryRules returns the delay duration before retrying this request again
 func (d DefaultRetryer) RetryRules(r *request.Request) time.Duration {
 	// Set the upper limit of delay in retrying at ~five minutes
@@ -53,7 +50,7 @@ func (d DefaultRetryer) RetryRules(r *request.Request) time.Duration {
 		retryCount = 13
 	}
 
-	delay := (1 << uint(retryCount)) * (seededRand.Intn(minTime) + minTime)
+	delay := (1 << uint(retryCount)) * (sdkrand.SeededRand.Intn(minTime) + minTime)
 	return time.Duration(delay) * time.Millisecond
 }
 
@@ -65,7 +62,7 @@ func (d DefaultRetryer) ShouldRetry(r *request.Request) bool {
 		return *r.Retryable
 	}
 
-	if r.HTTPResponse.StatusCode >= 500 {
+	if r.HTTPResponse.StatusCode >= 500 && r.HTTPResponse.StatusCode != 501 {
 		return true
 	}
 	return r.IsErrorRetryable() || d.shouldThrottle(r)
@@ -116,23 +113,4 @@ func canUseRetryAfterHeader(r *request.Request) bool {
 	}
 
 	return true
-}
-
-// lockedSource is a thread-safe implementation of rand.Source
-type lockedSource struct {
-	lk  sync.Mutex
-	src rand.Source
-}
-
-func (r *lockedSource) Int63() (n int64) {
-	r.lk.Lock()
-	n = r.src.Int63()
-	r.lk.Unlock()
-	return
-}
-
-func (r *lockedSource) Seed(seed int64) {
-	r.lk.Lock()
-	r.src.Seed(seed)
-	r.lk.Unlock()
 }
