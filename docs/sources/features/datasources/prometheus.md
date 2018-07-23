@@ -75,6 +75,9 @@ Name | Description
 
 For details of *metric names*, *label names* and *label values* are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
+
+It is possible to use some global template variables in Prometheus query template variables; `$__interval`, `$__interval_ms`, `$__range` and `$__range_ms`, where `$__range` is the dashboard's current time range and `$__range_ms` is the current range in milliseconds.
+
 ### Using variables in queries
 
 There are two syntaxes:
