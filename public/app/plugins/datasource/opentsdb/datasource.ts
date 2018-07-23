@@ -419,26 +419,40 @@ export default class OpenTsDatasource {
   }
 
   parseTarget(target, scopedVars) {
-    var metricNames = this.explodeMetricNames(target.metric, scopedVars);
+    var metricNames, metricAliases;
 
-    if (metricNames.length <= 1) {
-      // Short-circuit if we only have one metric
-      return [target];
+    // Expand metric names
+    metricNames = this.expandTemplatedVar(target.metric, scopedVars);
+
+    if (metricNames.length === 0) {
+      // Short-circuit
+      return [];
+    }
+
+    // Expand aliases
+    if (target.alias) {
+      metricAliases = this.expandTemplatedVar(target.alias, scopedVars);
     }
 
     return _.map(
       metricNames,
-      function (metric) {
+      function (metric, index) {
         const t = _.clone(target);
         t.metric = metric;
+
+        if (metricAliases && metricAliases.length > 1) {
+          // Tags (and single value templated metrics) will be handled on response
+          t.alias = metricAliases[index];
+        }
+
         return t;
       });
   }
 
-  explodeMetricNames(metric, scopedVars) {
+  expandTemplatedVar(templatedVar, scopedVars) {
     // Parse into a glob (and expand it afterwards) so we can reuse templateSrv without having to refactor the entire
     // templating logic.
-    var glob = this.templateSrv.replace(metric, scopedVars, 'glob');
+    var glob = this.templateSrv.replace(templatedVar, scopedVars, 'glob');
 
     return expand(glob);
   }
