@@ -15,7 +15,7 @@ type timeSeriesQuery struct {
 	intervalCalculator tsdb.IntervalCalculator
 }
 
-var newTimeSeriesQuery = func(client es.Client, tsdbQuery *tsdb.TsdbQuery, intervalCalculator tsdb.IntervalCalculator) *timeSeriesQuery {
+var newTimeSeriesQuery = func(client es.Client, tsdbQuery *tsdb.TsdbQuery, intervalCalculator tsdb.IntervalCalculator) queryEndpoint {
 	return &timeSeriesQuery{
 		client:             client,
 		tsdbQuery:          tsdbQuery,
@@ -163,8 +163,8 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		return nil, err
 	}
 
-	rp := newResponseParser(res.Responses, queries)
-	return rp.getTimeSeries()
+	rt := newTimeSeriesQueryResponseTransformer(res.Responses, queries)
+	return rt.transform()
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string) es.AggBuilder {

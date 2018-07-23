@@ -44,9 +44,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -92,9 +92,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -155,9 +155,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -224,9 +224,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -296,9 +296,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -377,9 +377,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -469,9 +469,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -523,9 +523,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -588,9 +588,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -657,9 +657,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -710,9 +710,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -763,9 +763,9 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -894,9 +894,9 @@ func TestResponseParser(t *testing.T) {
 		//       }
 		//     ]
 		// 	}`
-		// 	rp, err := newResponseParserForTest(targets, response)
+		// 	rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 		// 	So(err, ShouldBeNil)
-		// 	result, err := rp.getTimeSeries()
+		// 	result, err := rp.transform()
 		// 	So(err, ShouldBeNil)
 		// 	So(result.Results, ShouldHaveLength, 1)
 
@@ -920,7 +920,7 @@ func TestResponseParser(t *testing.T) {
 	})
 }
 
-func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
+func newTimeSeriesQueryResponseTransformerForTest(tsdbQueries map[string]string, responseBody string) (*timeSeriesQueryResponseTransformer, error) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
@@ -954,5 +954,5 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 		return nil, err
 	}
 
-	return newResponseParser(response.Responses, queries), nil
+	return newTimeSeriesQueryResponseTransformer(response.Responses, queries), nil
 }
