@@ -19,8 +19,8 @@ describe('InfluxDataSource', () => {
     let query = 'SELECT max(value) FROM measurement WHERE $timeFilter';
     let queryOptions: any = {
       range: {
-        from: '2018-01-01 00:00:00',
-        to: '2018-01-02 00:00:00',
+        from: '2018-01-01T00:00:00Z',
+        to: '2018-01-02T00:00:00Z',
       },
     };
     let requestQuery;
@@ -47,7 +47,7 @@ describe('InfluxDataSource', () => {
     });
 
     it('should replace $timefilter', () => {
-      expect(requestQuery).toMatch('time >= 1514761200000ms and time <= 1514847600000ms');
+      expect(requestQuery).toMatch('time >= 1514764800000ms and time <= 1514851200000ms');
     });
   });
 });
