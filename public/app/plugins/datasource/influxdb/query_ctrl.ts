@@ -338,7 +338,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         this.tagSegments.push(this.uiSegmentSrv.newPlusButton());
       }
     }
-    console.log(this.tagSegments);
+
     this.rebuildTargetTagConditions();
   }
 

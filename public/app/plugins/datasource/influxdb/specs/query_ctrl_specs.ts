@@ -57,13 +57,11 @@ describe('InfluxDBQueryCtrl', function() {
     });
 
     it('should update tag key', function() {
-      console.log(ctx.ctrl.target.tags);
       expect(ctx.ctrl.target.tags[0].key).to.be('asd');
       expect(ctx.ctrl.tagSegments[0].type).to.be('key');
     });
 
     it('should add tagSegments', function() {
-      console.log(ctx.ctrl.tagSegments);
       expect(ctx.ctrl.tagSegments.length).to.be(3);
     });
   });
