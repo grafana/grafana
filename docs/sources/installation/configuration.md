@@ -15,6 +15,8 @@ weight = 1
 The Grafana back-end has a number of configuration options that can be
 specified in a `.ini` configuration file or specified using environment variables.
 
+> **Note.** Grafana needs to be restarted for any configuration changes to take effect.
+
 ## Comments In .ini Files
 
 Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
