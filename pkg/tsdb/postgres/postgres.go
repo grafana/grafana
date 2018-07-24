@@ -53,10 +53,12 @@ func generateConnectionString(datasource *models.DataSource) string {
 	}
 
 	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
-	u := &url.URL{Scheme: "postgres",
-		User: url.UserPassword(datasource.User, password),
-		Host: datasource.Url, Path: datasource.Database,
-		RawQuery: "sslmode=" + url.QueryEscape(sslmode)}
+	u := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(datasource.User, password),
+		Host:   datasource.Url, Path: datasource.Database,
+		RawQuery: "sslmode=" + url.QueryEscape(sslmode),
+	}
 
 	return u.String()
 }
