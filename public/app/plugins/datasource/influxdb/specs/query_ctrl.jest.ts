@@ -1,7 +1,5 @@
 import '../query_ctrl';
 import { uiSegmentSrv } from 'app/core/services/segment_srv';
-// import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
-// import helpers from 'test/specs/helpers';
 import { InfluxQueryCtrl } from '../query_ctrl';
 
 describe('InfluxDBQueryCtrl', () => {
