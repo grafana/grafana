@@ -14,8 +14,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestResponseParser(t *testing.T) {
-	Convey("Elasticsearch response parser test", t, func() {
+func TestTimeSeriesResponseTransformer(t *testing.T) {
+	Convey("Time series response transformer test", t, func() {
 		Convey("Simple query and count", func() {
 			targets := map[string]string{
 				"A": `{
@@ -994,7 +994,169 @@ func TestResponseParser(t *testing.T) {
 	})
 }
 
-func newTimeSeriesQueryResponseTransformerForTest(tsdbQueries map[string]string, responseBody string) (*timeSeriesQueryResponseTransformer, error) {
+func TestFieldsResponseTransformer(t *testing.T) {
+	Convey("Given response", t, func() {
+		response := `{
+			"metricbeat": {
+				"mappings": {
+					"metricsets": {
+						"_all": {},
+						"properties": {
+							"@timestamp": { "type": "date", "format": "epoch_millis" },
+							"beat": {
+								"properties": {
+									"name": {
+										"fields": { "raw": { "type": "keyword" } },
+										"type": "string"
+									},
+									"hostname": { "type": "string" }
+								}
+							},
+							"system": {
+								"properties": {
+									"cpu": {
+										"properties": {
+											"system": { "type": "float" },
+											"user": { "type": "float" }
+										}
+									},
+									"process": {
+										"properties": {
+											"cpu": {
+												"properties": {
+													"total": { "type": "float" }
+												}
+											},
+											"name": { "type": "string" }
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}`
+
+		Convey("Should return all nested fields without field type filter", func() {
+			rp, err := newFieldsQueryResponseTransformerForTest(response, "", "A")
+			So(err, ShouldBeNil)
+			result, err := rp.transform()
+			So(err, ShouldBeNil)
+			So(result.Results, ShouldHaveLength, 1)
+
+			queryRes := result.Results["A"]
+			So(queryRes, ShouldNotBeNil)
+			So(queryRes.Tables, ShouldHaveLength, 1)
+
+			cols := queryRes.Tables[0].Columns
+			So(cols, ShouldHaveLength, 2)
+			So(cols[0].Text, ShouldEqual, "name")
+			So(cols[1].Text, ShouldEqual, "type")
+
+			rows := queryRes.Tables[0].Rows
+			So(rows, ShouldHaveLength, 8)
+			So(rows[0][0], ShouldEqual, "@timestamp")
+			So(rows[0][1], ShouldEqual, "date")
+			So(rows[1][0], ShouldEqual, "beat.hostname")
+			So(rows[1][1], ShouldEqual, "string")
+			So(rows[2][0], ShouldEqual, "beat.name")
+			So(rows[2][1], ShouldEqual, "string")
+			So(rows[3][0], ShouldEqual, "beat.name.raw")
+			So(rows[3][1], ShouldEqual, "keyword")
+			So(rows[4][0], ShouldEqual, "system.cpu.system")
+			So(rows[4][1], ShouldEqual, "number")
+			So(rows[5][0], ShouldEqual, "system.cpu.user")
+			So(rows[5][1], ShouldEqual, "number")
+			So(rows[6][0], ShouldEqual, "system.process.cpu.total")
+			So(rows[6][1], ShouldEqual, "number")
+			So(rows[7][0], ShouldEqual, "system.process.name")
+			So(rows[7][1], ShouldEqual, "string")
+		})
+
+		Convey("Should return all nested fields with field type number", func() {
+			rp, err := newFieldsQueryResponseTransformerForTest(response, "number", "A")
+			So(err, ShouldBeNil)
+			result, err := rp.transform()
+			So(err, ShouldBeNil)
+			So(result.Results, ShouldHaveLength, 1)
+
+			queryRes := result.Results["A"]
+			So(queryRes, ShouldNotBeNil)
+			So(queryRes.Tables, ShouldHaveLength, 1)
+
+			rows := queryRes.Tables[0].Rows
+			So(rows, ShouldHaveLength, 3)
+			So(rows[0][0], ShouldEqual, "system.cpu.system")
+			So(rows[1][0], ShouldEqual, "system.cpu.user")
+			So(rows[2][0], ShouldEqual, "system.process.cpu.total")
+		})
+
+		Convey("Should return all nested fields with field type date", func() {
+			rp, err := newFieldsQueryResponseTransformerForTest(response, "date", "A")
+			So(err, ShouldBeNil)
+			result, err := rp.transform()
+			So(err, ShouldBeNil)
+			So(result.Results, ShouldHaveLength, 1)
+
+			queryRes := result.Results["A"]
+			So(queryRes, ShouldNotBeNil)
+			So(queryRes.Tables, ShouldHaveLength, 1)
+
+			rows := queryRes.Tables[0].Rows
+			So(rows, ShouldHaveLength, 1)
+			So(rows[0][0], ShouldEqual, "@timestamp")
+		})
+	})
+}
+
+func TestTermsResponseTransformer(t *testing.T) {
+	Convey("Given response", t, func() {
+		response := `{
+			"aggregations": {
+				"1": {
+					"buckets": [
+						{
+							"doc_count": 1,
+							"key": "test"
+						},
+						{
+							"doc_count": 2,
+							"key": "test2",
+							"key_as_string": "test2_as_string"
+						}
+					]
+				}
+			}
+		}`
+
+		Convey("Should return all nested fields without field type filter", func() {
+			rp, err := newTermsQueryResponseTransformerForTest(response, "1", "A")
+			So(err, ShouldBeNil)
+			result, err := rp.transform()
+			So(err, ShouldBeNil)
+			So(result.Results, ShouldHaveLength, 1)
+
+			queryRes := result.Results["A"]
+			So(queryRes, ShouldNotBeNil)
+			So(queryRes.Tables, ShouldHaveLength, 1)
+
+			cols := queryRes.Tables[0].Columns
+			So(cols, ShouldHaveLength, 2)
+			So(cols[0].Text, ShouldEqual, "term")
+			So(cols[1].Text, ShouldEqual, "doc_count")
+
+			rows := queryRes.Tables[0].Rows
+			So(rows, ShouldHaveLength, 2)
+			So(rows[0][0], ShouldEqual, "test")
+			So(rows[0][1].(null.Float).Float64, ShouldEqual, 1)
+			So(rows[1][0], ShouldEqual, "test2_as_string")
+			So(rows[1][1].(null.Float).Float64, ShouldEqual, 2)
+		})
+	})
+}
+
+func newTimeSeriesQueryResponseTransformerForTest(tsdbQueries map[string]string, responseBody string) (responseTransformer, error) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
@@ -1029,4 +1191,32 @@ func newTimeSeriesQueryResponseTransformerForTest(tsdbQueries map[string]string,
 	}
 
 	return newTimeSeriesQueryResponseTransformer(response.Responses, queries, response.DebugInfo), nil
+}
+
+func newFieldsQueryResponseTransformerForTest(responseBody, fieldTypeFilter, refID string) (responseTransformer, error) {
+	var objmap map[string]interface{}
+	err := json.Unmarshal([]byte(responseBody), &objmap)
+	if err != nil {
+		return nil, err
+	}
+
+	response := es.IndexMappingResponse{}
+
+	if val, ok := objmap["error"]; ok {
+		response.Error = val.(map[string]interface{})
+	} else {
+		response.Mappings = objmap
+	}
+
+	return newFieldsQueryResponseTransformer(&response, fieldTypeFilter, refID), nil
+}
+
+func newTermsQueryResponseTransformerForTest(responseBody, termsAggID, refID string) (responseTransformer, error) {
+	var response es.SearchResponse
+	err := json.Unmarshal([]byte(responseBody), &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return newTermsQueryResponseTransformer(&response, termsAggID, refID), nil
 }

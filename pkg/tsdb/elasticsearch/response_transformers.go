@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -25,6 +26,10 @@ const (
 	termsType       = "terms"
 	geohashGridType = "geohash_grid"
 )
+
+type responseTransformer interface {
+	transform() (*tsdb.Response, error)
+}
 
 type timeSeriesQueryResponseTransformer struct {
 	Responses []*es.SearchResponse
@@ -57,7 +62,7 @@ func (rp *timeSeriesQueryResponseTransformer) transform() (*tsdb.Response, error
 		}
 
 		if res.Error != nil {
-			result.Results[target.RefID] = getErrorFromElasticResponse(res)
+			result.Results[target.RefID] = getErrorFromElasticResponse(res.Error)
 			result.Results[target.RefID].Meta = debugInfo
 			continue
 		}
@@ -536,6 +541,191 @@ func (rp *timeSeriesQueryResponseTransformer) getMetricName(metric string) strin
 	return metric
 }
 
+var fieldTypeMap = map[string]string{
+	"float":        "number",
+	"double":       "number",
+	"integer":      "number",
+	"long":         "number",
+	"date":         "date",
+	"string":       "string",
+	"text":         "string",
+	"scaled_float": "number",
+	"nested":       "nested",
+}
+
+type fieldsQueryResponseTransformer struct {
+	Response        *es.IndexMappingResponse
+	FieldTypeFilter string
+	RefID           string
+}
+
+var newFieldsQueryResponseTransformer = func(response *es.IndexMappingResponse, fieldTypeFilter, refID string) responseTransformer {
+	return &fieldsQueryResponseTransformer{
+		Response:        response,
+		FieldTypeFilter: fieldTypeFilter,
+		RefID:           refID,
+	}
+}
+
+func (t *fieldsQueryResponseTransformer) transform() (*tsdb.Response, error) {
+	res := t.Response
+
+	if res.Error != nil {
+		return &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				t.RefID: getErrorFromElasticResponse(res.Error),
+			},
+		}, nil
+	}
+
+	fields := map[string]string{}
+
+	walkFunc := func(node simplejson.JsonNode, path []string, err error) error {
+		switch nt := node.(type) {
+		case simplejson.JsonObjectProperty:
+			if strings.HasPrefix(nt.Key, "_") {
+				return simplejson.SkipNode
+			}
+		case simplejson.JsonValue:
+			lastElm := path[len(path)-1]
+			if lastElm != "type" {
+				return nil
+			}
+
+			fieldType, ok := nt.Value.(string)
+			if !ok {
+				return nil
+			}
+
+			if t.FieldTypeFilter == "" || t.FieldTypeFilter == fieldType || t.FieldTypeFilter == fieldTypeMap[fieldType] {
+				path = path[:len(path)-1]
+				fieldNameParts := []string{}
+				for _, p := range path {
+					if p != "properties" && p != "fields" {
+						fieldNameParts = append(fieldNameParts, p)
+					}
+				}
+
+				mappedFieldType, ok := fieldTypeMap[fieldType]
+				if !ok {
+					mappedFieldType = fieldType
+				}
+
+				fields[strings.Join(fieldNameParts, ".")] = mappedFieldType
+			}
+		}
+
+		return nil
+	}
+
+	for indexName := range res.Mappings {
+		index := simplejson.NewFromAny(res.Mappings[indexName])
+		typeNames := index.Get("mappings").MustMap()
+
+		for _, v := range typeNames {
+			simplejson.Walk(simplejson.NewFromAny(v), walkFunc)
+		}
+	}
+
+	table := tsdb.Table{
+		Columns: make([]tsdb.TableColumn, 0),
+		Rows:    make([]tsdb.RowValues, 0),
+	}
+
+	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "name"})
+	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "type"})
+
+	fieldNames := []string{}
+	for fieldName := range fields {
+		fieldNames = append(fieldNames, fieldName)
+	}
+	sort.Strings(fieldNames)
+
+	for _, fieldName := range fieldNames {
+		table.Rows = append(table.Rows, tsdb.RowValues{fieldName, fields[fieldName]})
+	}
+
+	result := tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			t.RefID: {
+				RefId:  t.RefID,
+				Tables: []*tsdb.Table{&table},
+			},
+		},
+	}
+
+	return &result, nil
+}
+
+type termsQueryResponseTransformer struct {
+	Response   *es.SearchResponse
+	TermsAggID string
+	RefID      string
+}
+
+var newTermsQueryResponseTransformer = func(response *es.SearchResponse, termsAggID, refID string) responseTransformer {
+	return &termsQueryResponseTransformer{
+		Response:   response,
+		TermsAggID: termsAggID,
+		RefID:      refID,
+	}
+}
+
+func (rp *termsQueryResponseTransformer) transform() (*tsdb.Response, error) {
+	res := rp.Response
+
+	if res.Error != nil {
+		return &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				rp.RefID: getErrorFromElasticResponse(res.Error),
+			},
+		}, nil
+	}
+
+	termsAgg, ok := res.Aggregations[rp.TermsAggID]
+	if !ok {
+		return nil, fmt.Errorf("terms aggregation with id 1 not found in response")
+	}
+
+	table := tsdb.Table{
+		Columns: make([]tsdb.TableColumn, 0),
+		Rows:    make([]tsdb.RowValues, 0),
+	}
+
+	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "term"})
+	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "doc_count"})
+
+	agg := simplejson.NewFromAny(termsAgg)
+	for _, v := range agg.Get("buckets").MustArray() {
+		bucket := simplejson.NewFromAny(v)
+		term := ""
+		docCount := castToNullFloat(bucket.Get("doc_count"))
+
+		if key, err := bucket.Get("key").String(); err == nil {
+			term = key
+		} else if key, err := bucket.Get("key").Int64(); err == nil {
+			term = strconv.FormatInt(key, 10)
+		}
+
+		if key, err := bucket.Get("key_as_string").String(); err == nil {
+			term = key
+		}
+
+		table.Rows = append(table.Rows, tsdb.RowValues{term, docCount})
+	}
+
+	result := tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			rp.RefID: {
+				RefId:  rp.RefID,
+				Tables: []*tsdb.Table{&table},
+			},
+		},
+	}
+
+	return &result, nil
+}
+
 func castToNullFloat(j *simplejson.Json) null.Float {
 	f, err := j.Float64()
 	if err == nil {
@@ -564,9 +754,9 @@ func findAgg(target *Query, aggID string) (*BucketAgg, error) {
 	return nil, errors.New("can't found aggDef, aggID:" + aggID)
 }
 
-func getErrorFromElasticResponse(response *es.SearchResponse) *tsdb.QueryResult {
+func getErrorFromElasticResponse(err map[string]interface{}) *tsdb.QueryResult {
 	result := tsdb.NewQueryResult()
-	json := simplejson.NewFromAny(response.Error)
+	json := simplejson.NewFromAny(err)
 	reason := json.Get("reason").MustString()
 	rootCauseReason := json.Get("root_cause").GetIndex(0).Get("reason").MustString()
 
