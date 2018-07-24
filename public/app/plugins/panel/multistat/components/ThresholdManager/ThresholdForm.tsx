@@ -1,15 +1,16 @@
 import _ from 'lodash';
 import React from 'react';
+import * as MultiStatPanel from '../../types';
 import { ThresholdEditor } from './ThresholdEditor';
 
-const defaultThreshold: Panel.MultiStat.ThresholdModel = {
+const defaultThreshold: MultiStatPanel.ThresholdModel = {
   value: null,
   mode: 'critical',
 };
 
 interface Props {
-  thresholds: Panel.MultiStat.ThresholdModel[];
-  onChange: (t: Panel.MultiStat.ThresholdModel[]) => any;
+  thresholds: MultiStatPanel.ThresholdModel[];
+  onChange: (t: MultiStatPanel.ThresholdModel[]) => any;
 }
 
 interface State {
@@ -45,14 +46,14 @@ export class ThresholdForm extends React.Component<Props, State> {
     this.props.onChange(newThresholds);
   };
 
-  sortThresholds(thresholds: Panel.MultiStat.ThresholdModel[]): Panel.MultiStat.ThresholdModel[] {
-    return _.sortBy(thresholds, (t: Panel.MultiStat.ThresholdModel) => {
+  sortThresholds(thresholds: MultiStatPanel.ThresholdModel[]): MultiStatPanel.ThresholdModel[] {
+    return _.sortBy(thresholds, (t: MultiStatPanel.ThresholdModel) => {
       return t.value !== null ? t.value : -Infinity;
     });
   }
 
   render() {
-    const thresholdItems = this.props.thresholds.map((threshold: Panel.MultiStat.ThresholdModel, i) => (
+    const thresholdItems = this.props.thresholds.map((threshold: MultiStatPanel.ThresholdModel, i) => (
       <ThresholdEditor
         key={i.toString()}
         index={i}

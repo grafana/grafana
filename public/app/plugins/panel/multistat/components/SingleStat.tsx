@@ -1,4 +1,6 @@
 import React from 'react';
+import * as Series from 'app/types/series';
+import * as MultiStatPanel from '../types';
 import { SparkLine } from './SparkLine';
 import { getBGColor } from './utils';
 
@@ -6,9 +8,9 @@ const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
 export interface Props {
   stat: Series.SeriesStat;
-  size: Panel.MultiStat.PanelSize;
+  size: MultiStatPanel.PanelSize;
   color?: string;
-  options?: Panel.MultiStat.PanelOptions;
+  options?: MultiStatPanel.PanelOptions;
 }
 
 export class SingleStat extends React.Component<Props> {
@@ -109,7 +111,7 @@ export class SingleStat extends React.Component<Props> {
   }
 }
 
-function getFontSize(panelSize: Panel.MultiStat.PanelSize, options?) {
+function getFontSize(panelSize: MultiStatPanel.PanelSize, options?) {
   const size = Math.min(panelSize.h, panelSize.w * 0.75);
   let increaseRatio = 1;
   if (!(options && options.sparkline && options.sparkline.show)) {

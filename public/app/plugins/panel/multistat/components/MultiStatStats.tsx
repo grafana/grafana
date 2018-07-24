@@ -1,10 +1,11 @@
 import React from 'react';
+import * as MultiStatPanel from '../types';
 import { SingleStat } from './SingleStat';
 
 export interface Props {
   stats: any[];
-  options: Panel.MultiStat.PanelOptions;
-  size: Panel.MultiStat.PanelSize;
+  options: MultiStatPanel.PanelOptions;
+  size: MultiStatPanel.PanelSize;
   getColor: (v: number) => string;
 }
 

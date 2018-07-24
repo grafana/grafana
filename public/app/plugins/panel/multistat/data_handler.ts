@@ -1,11 +1,13 @@
 import _ from 'lodash';
-import kbn from '../../../core/utils/kbn';
-import { getDecimalsForValue } from '../../../core/utils/ticks';
-import TimeSeries from '../../../core/time_series2';
+import kbn from 'app/core/utils/kbn';
+import * as Series from 'app/types/series';
+import * as MultiStatPanel from './types';
+import { PanelModel } from 'app/features/dashboard/panel_model';
+import TimeSeries from 'app/core/time_series2';
+import { getDecimalsForValue } from 'app/core/utils/ticks';
 // import TableModel from 'app/core/table_model';
-import { PanelModel } from '../../../features/dashboard/panel_model';
 
-type MultistatPanelModel = PanelModel & Panel.MultiStat.PanelOptions;
+type MultistatPanelModel = PanelModel & MultiStatPanel.PanelOptions;
 
 export function convertTSDataToMultistat(dataList: Series.SeriesData[], panel) {
   const series = dataList.map(s => handleSeries(s, panel));

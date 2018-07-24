@@ -1,13 +1,14 @@
 import _ from 'lodash';
 import React from 'react';
+import * as MultiStatPanel from '../types';
 import thresholdColors from './ThresholdManager/thresholdColors';
 import { MultiStatBar } from './MultiStatBar';
 import { MultiStatStats } from './MultiStatStats';
 
 export interface Props {
   stats: any[];
-  options: Panel.MultiStat.PanelOptions;
-  size: Panel.MultiStat.PanelSize;
+  options: MultiStatPanel.PanelOptions;
+  size: MultiStatPanel.PanelSize;
 }
 
 export function MultiStat(props: Props) {
@@ -22,7 +23,7 @@ export function MultiStat(props: Props) {
   }
 }
 
-function getColorForValue(value: number, thresholds: Panel.MultiStat.ThresholdModel[]): string {
+function getColorForValue(value: number, thresholds: MultiStatPanel.ThresholdModel[]): string {
   if (!_.isFinite(value)) {
     return null;
   }
@@ -39,6 +40,6 @@ function getColorForValue(value: number, thresholds: Panel.MultiStat.ThresholdMo
   return null;
 }
 
-function getColorFunc(thresholds: Panel.MultiStat.ThresholdModel[]): (v: number) => string {
+function getColorFunc(thresholds: MultiStatPanel.ThresholdModel[]): (v: number) => string {
   return value => getColorForValue(value, thresholds);
 }

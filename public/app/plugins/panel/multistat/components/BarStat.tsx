@@ -1,14 +1,16 @@
 import React from 'react';
+import * as Series from 'app/types/series';
+import * as MultiStatPanel from '../types';
 import { getBGColor } from './utils';
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
 export interface Props {
   stat: Series.SeriesStat;
-  size: Panel.MultiStat.PanelSize;
+  size: MultiStatPanel.PanelSize;
   color?: string;
-  direction?: Panel.MultiStat.PanelLayout;
-  options?: Panel.MultiStat.PanelOptions;
+  direction?: MultiStatPanel.PanelLayout;
+  options?: MultiStatPanel.PanelOptions;
   valueOutOfBar?: boolean;
   style?: React.CSSProperties;
 }

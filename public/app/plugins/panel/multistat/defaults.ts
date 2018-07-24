@@ -1,4 +1,6 @@
-const panelDefaults: Panel.MultiStat.PanelOptions = {
+import * as MultiStatPanel from './types';
+
+const panelDefaults: MultiStatPanel.PanelOptions = {
   links: [],
   datasource: null,
   maxDataPoints: 100,

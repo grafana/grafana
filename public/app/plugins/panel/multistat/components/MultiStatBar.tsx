@@ -1,11 +1,12 @@
 import _ from 'lodash';
 import React from 'react';
+import * as MultiStatPanel from '../types';
 import { BarStat } from './BarStat';
 
 export interface Props {
   stats: any[];
-  options: Panel.MultiStat.PanelOptions;
-  size: Panel.MultiStat.PanelSize;
+  options: MultiStatPanel.PanelOptions;
+  size: MultiStatPanel.PanelSize;
   getColor: (v: number) => string;
 }
 
@@ -37,7 +38,7 @@ export function MultiStatBar(props: Props) {
   const barWidth = stats.length > 0 ? totalWidth / stats.length : 0;
   const valueOutOfBar = isValuesOutOfBar(barLengths);
 
-  let direction: Panel.MultiStat.PanelLayout;
+  let direction: MultiStatPanel.PanelLayout;
   if (options.layout === 'vertical') {
     direction = 'vertical';
   } else {

@@ -1,12 +1,13 @@
 import React from 'react';
+import * as MultiStatPanel from '../../types';
 import { ColorPicker } from 'app/core/components/colorpicker/ColorPicker';
 import { SimpleSelect } from 'app/core/components/Select/SimpleSelect';
 
 interface Props {
-  threshold: Panel.MultiStat.ThresholdModel;
+  threshold: MultiStatPanel.ThresholdModel;
   index: number;
   focused?: boolean;
-  onChange: (threshold: Panel.MultiStat.ThresholdModel, index: number, valueChanged?: boolean) => any;
+  onChange: (threshold: MultiStatPanel.ThresholdModel, index: number, valueChanged?: boolean) => any;
   onRemove: (index: number) => any;
 }
 

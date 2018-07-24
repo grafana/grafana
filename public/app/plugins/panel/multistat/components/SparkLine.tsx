@@ -1,11 +1,13 @@
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import React from 'react';
+import * as Series from 'app/types/series';
+import * as MultiStatPanel from '../types';
 import { getBGColor } from './utils';
 
 export interface Props {
   stat: Series.SeriesStat;
-  size: Panel.MultiStat.PanelSize;
+  size: MultiStatPanel.PanelSize;
   options: any;
   color?: string;
 }
