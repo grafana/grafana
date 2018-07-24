@@ -187,11 +187,14 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setDatasource(datasource);
   };
 
-  handleChangeQuery = (query, index) => {
+  handleChangeQuery = (value, index) => {
     const { queries } = this.state;
+    const prevQuery = queries[index];
+    const edited = prevQuery.query !== value;
     const nextQuery = {
       ...queries[index],
-      query,
+      edited,
+      query: value,
     };
     const nextQueries = [...queries];
     nextQueries[index] = nextQuery;
@@ -251,6 +254,18 @@ export class Explore extends React.Component<any, IExploreState> {
     }
     if (showingLogs && supportsLogs) {
       this.runLogsQuery();
+    }
+  };
+
+  onClickTableCell = (columnKey: string, rowValue: string) => {
+    const { datasource, queries } = this.state;
+    if (datasource && datasource.modifyQuery) {
+      const nextQueries = queries.map(q => ({
+        ...q,
+        edited: false,
+        query: datasource.modifyQuery(q.query, { addFilter: { key: columnKey, value: rowValue } }),
+      }));
+      this.setState({ queries: nextQueries }, () => this.handleSubmit());
     }
   };
 
@@ -390,12 +405,12 @@ export class Explore extends React.Component<any, IExploreState> {
               </a>
             </div>
           ) : (
-            <div className="navbar-buttons explore-first-button">
-              <button className="btn navbar-button" onClick={this.handleClickCloseSplit}>
-                Close Split
+              <div className="navbar-buttons explore-first-button">
+                <button className="btn navbar-button" onClick={this.handleClickCloseSplit}>
+                  Close Split
               </button>
-            </div>
-          )}
+              </div>
+            )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
@@ -473,7 +488,7 @@ export class Explore extends React.Component<any, IExploreState> {
                   split={split}
                 />
               ) : null}
-              {supportsTable && showingTable ? <Table data={tableResult} className="m-t-3" /> : null}
+              {supportsTable && showingTable ? <Table data={tableResult} onClickCell={this.onClickTableCell} className="m-t-3" /> : null}
               {supportsLogs && showingLogs ? <Logs data={logsResult} /> : null}
             </main>
           </div>

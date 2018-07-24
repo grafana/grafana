@@ -3,19 +3,8 @@ import React, { PureComponent } from 'react';
 import QueryField from './PromQueryField';
 
 class QueryRow extends PureComponent<any, any> {
-  constructor(props) {
-    super(props);
-    this.state = {
-      edited: false,
-      query: props.query || '',
-    };
-  }
-
   handleChangeQuery = value => {
     const { index, onChangeQuery } = this.props;
-    const { query } = this.state;
-    const edited = query !== value;
-    this.setState({ edited, query: value });
     if (onChangeQuery) {
       onChangeQuery(value, index);
     }
@@ -43,8 +32,7 @@ class QueryRow extends PureComponent<any, any> {
   };
 
   render() {
-    const { request } = this.props;
-    const { edited, query } = this.state;
+    const { request, query, edited } = this.props;
     return (
       <div className="query-row">
         <div className="query-row-tools">
@@ -74,7 +62,9 @@ export default class QueryRows extends PureComponent<any, any> {
     const { className = '', queries, ...handlers } = this.props;
     return (
       <div className={className}>
-        {queries.map((q, index) => <QueryRow key={q.key} index={index} query={q.query} {...handlers} />)}
+        {queries.map((q, index) => (
+          <QueryRow key={q.key} index={index} query={q.query} edited={q.edited} {...handlers} />
+        ))}
       </div>
     );
   }

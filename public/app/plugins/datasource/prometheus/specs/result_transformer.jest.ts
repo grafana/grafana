@@ -39,7 +39,7 @@ describe('Prometheus Result Transformer', () => {
         [1443454528000, 'test', '', 'testjob', 3846],
         [1443454529000, 'test', 'localhost:8080', 'otherjob', 3847],
       ]);
-      expect(table.columns).toEqual([
+      expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
         { text: '__name__' },
         { text: 'instance' },
@@ -51,7 +51,7 @@ describe('Prometheus Result Transformer', () => {
     it('should column title include refId if response count is more than 2', () => {
       var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result, 2, 'B');
       expect(table.type).toBe('table');
-      expect(table.columns).toEqual([
+      expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
         { text: '__name__' },
         { text: 'instance' },
@@ -79,7 +79,7 @@ describe('Prometheus Result Transformer', () => {
       var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result);
       expect(table.type).toBe('table');
       expect(table.rows).toEqual([[1443454528000, 'test', 'testjob', 3846]]);
-      expect(table.columns).toEqual([
+      expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
         { text: '__name__' },
         { text: 'job' },
