@@ -1,6 +1,3 @@
-//import { describe, it, sinon, expect } from 'test/lib/common';
-//import helpers from 'test/specs/helpers';
-
 import { PromCompleter } from '../completer';
 import { PrometheusDatasource } from '../datasource';
 import { BackendSrv } from 'app/core/services/backend_srv';
