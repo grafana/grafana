@@ -53,21 +53,6 @@ type SearchResponse struct {
 	StatusCode   int
 }
 
-// func (r *Response) getErrMsg() string {
-// 	var msg bytes.Buffer
-// 	errJson := simplejson.NewFromAny(r.Err)
-// 	errType, err := errJson.Get("type").String()
-// 	if err == nil {
-// 		msg.WriteString(fmt.Sprintf("type:%s", errType))
-// 	}
-
-// 	reason, err := errJson.Get("type").String()
-// 	if err == nil {
-// 		msg.WriteString(fmt.Sprintf("reason:%s", reason))
-// 	}
-// 	return msg.String()
-// }
-
 // MultiSearchRequest represents a multi search request
 type MultiSearchRequest struct {
 	Requests []*SearchRequest

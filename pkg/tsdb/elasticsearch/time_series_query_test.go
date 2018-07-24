@@ -634,12 +634,13 @@ type fakeClient struct {
 
 func newFakeClient(version int) *fakeClient {
 	return &fakeClient{
-		version:             version,
-		timeField:           "@timestamp",
-		multisearchRequests: make([]*es.MultiSearchRequest, 0),
-		multiSearchResponse: &es.MultiSearchResponse{},
-		searchRequests:      make([]*es.SearchRequest, 0),
-		searchResponse:      &es.SearchResponse{},
+		version:                 version,
+		timeField:               "@timestamp",
+		multisearchRequests:     make([]*es.MultiSearchRequest, 0),
+		multiSearchResponse:     &es.MultiSearchResponse{},
+		searchRequests:          make([]*es.SearchRequest, 0),
+		searchResponse:          &es.SearchResponse{},
+		getIndexMappingResponse: &es.IndexMappingResponse{},
 	}
 }
 
