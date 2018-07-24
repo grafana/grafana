@@ -2,6 +2,7 @@ package simplejson
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -245,4 +246,60 @@ func TestPathWillOverwriteExisting(t *testing.T) {
 	s, err := js.GetPath("this", "a", "foo").String()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "bar", s)
+}
+
+func TestWalk(t *testing.T) {
+	js, err := NewJson([]byte(`{
+		"test": {
+			"string_array": ["asdf", "ghjk", "zxcv"],
+			"string_array_null": ["abc", null, "efg"],
+			"array": [1, "2", 3],
+			"arraywithsubs": [{"subkeyone": 1}, {"subkeytwo": 2, "subkeythree": 3}],
+			"int": 10,
+			"float": 5.150,
+			"string": "simplejson",
+			"bool": true,
+			"sub_obj": {"a": 1}
+		}
+	}`))
+
+	assert.NotEqual(t, nil, js)
+	assert.Equal(t, nil, err)
+
+	values := map[string]interface{}{}
+	err = Walk(js, func(node JsonNode, searchPath []string, err error) error {
+		switch nt := node.(type) {
+		case JsonValue:
+			values[strings.Join(searchPath, ".")] = nt.Value
+		}
+
+		return nil
+	})
+	assert.Equal(t, nil, err)
+
+	assert.Equal(t, "asdf", values["test.string_array.0"].(string))
+	assert.Equal(t, "ghjk", values["test.string_array.1"].(string))
+	assert.Equal(t, "zxcv", values["test.string_array.2"].(string))
+	assert.Equal(t, "abc", values["test.string_array_null.0"])
+	assert.Equal(t, nil, values["test.string_array_null.1"])
+	assert.Equal(t, "efg", values["test.string_array_null.2"])
+	intVal, _ := values["test.array.0"].(json.Number).Int64()
+	assert.Equal(t, int64(1), intVal)
+	assert.Equal(t, "2", values["test.array.1"].(string))
+	intVal, _ = values["test.array.2"].(json.Number).Int64()
+	assert.Equal(t, int64(3), intVal)
+	intVal, _ = values["test.arraywithsubs.0.subkeyone"].(json.Number).Int64()
+	assert.Equal(t, int64(1), intVal)
+	intVal, _ = values["test.arraywithsubs.1.subkeytwo"].(json.Number).Int64()
+	assert.Equal(t, int64(2), intVal)
+	intVal, _ = values["test.arraywithsubs.1.subkeythree"].(json.Number).Int64()
+	assert.Equal(t, int64(3), intVal)
+	intVal, _ = values["test.int"].(json.Number).Int64()
+	assert.Equal(t, int64(10), intVal)
+	floatVal, _ := values["test.float"].(json.Number).Float64()
+	assert.Equal(t, float64(5.150), floatVal)
+	assert.Equal(t, "simplejson", values["test.string"].(string))
+	assert.Equal(t, true, values["test.bool"].(bool))
+	intVal, _ = values["test.sub_obj.a"].(json.Number).Int64()
+	assert.Equal(t, int64(1), intVal)
 }

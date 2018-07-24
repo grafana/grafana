@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"strconv"
 )
 
 // returns the current implementation version
@@ -481,4 +482,123 @@ func (j *Json) MustUint64(args ...uint64) uint64 {
 	}
 
 	return def
+}
+
+// SkipNode is used as a return value from WalkFuncs to indicate that the node in the call is to be skipped. It is not returned as an error by any function.
+var SkipNode = errors.New("skip this node")
+
+// JsonNode base interface for nodes that can be visited in a json document
+type JsonNode interface{}
+
+// JsonObject an object in a json document
+type JsonObject struct {
+	JsonNode
+	Value map[string]interface{}
+}
+
+// JsonObjectProperty an object property in a json document
+type JsonObjectProperty struct {
+	JsonNode
+	Key   string
+	Value interface{}
+}
+
+// JsonArray an array in a json document
+type JsonArray struct {
+	JsonNode
+	Value []interface{}
+}
+
+// JsonArrayElement an array element in a json document
+type JsonArrayElement struct {
+	JsonNode
+	Index int
+	Value interface{}
+}
+
+// JsonValue a value (string, bool, json.Number) in a json document
+type JsonValue struct {
+	JsonNode
+	Value interface{}
+}
+
+// WalkFunc is the type of the function called for each json node visited by Walk
+type WalkFunc func(node JsonNode, searchPath []string, err error) error
+
+func walk(node interface{}, searchPath []string, walkFn WalkFunc) error {
+	switch t := node.(type) {
+	case map[string]interface{}:
+		if len(t) == 0 {
+			return nil
+		}
+
+		obj := JsonObject{
+			Value: t,
+		}
+
+		if err := walkFn(obj, searchPath, nil); err != nil {
+			return err
+		}
+
+		for key, value := range t {
+			prop := JsonObjectProperty{
+				Key:   key,
+				Value: value,
+			}
+			if err := walkFn(prop, searchPath, nil); err != nil && err != SkipNode {
+				return err
+			} else if err == SkipNode {
+				continue
+			}
+
+			nextSearchPath := searchPath
+			nextSearchPath = append(nextSearchPath, key)
+			if err := walk(value, nextSearchPath, walkFn); err != nil {
+				return err
+			}
+		}
+	case []interface{}:
+		arr := JsonArray{
+			Value: t,
+		}
+
+		if err := walkFn(arr, searchPath, nil); err != nil {
+			return err
+		}
+
+		for index, value := range t {
+			elm := JsonArrayElement{
+				Index: index,
+				Value: value,
+			}
+			if err := walkFn(elm, searchPath, nil); err != nil && err != SkipNode {
+				return err
+			} else if err == SkipNode {
+				continue
+			}
+
+			nextSearchPath := searchPath
+			nextSearchPath = append(nextSearchPath, strconv.Itoa(index))
+			if err := walk(value, nextSearchPath, walkFn); err != nil {
+				return err
+			}
+		}
+	default:
+		subNode := JsonValue{
+			Value: t,
+		}
+
+		if err := walkFn(subNode, searchPath, nil); err != nil && err != SkipNode {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Walk walks the json document, calling walkFn for each node in the document
+func Walk(json *Json, walkFn WalkFunc) error {
+	walk(json.data, []string{}, walkFn)
+
+	return nil
 }
