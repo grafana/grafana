@@ -1,47 +1,42 @@
-import { describe, it, sinon, expect } from 'test/lib/common';
-import helpers from 'test/specs/helpers';
-
 import { PromCompleter } from '../completer';
 import { PrometheusDatasource } from '../datasource';
+import { BackendSrv } from 'app/core/services/backend_srv';
+jest.mock('../datasource');
+jest.mock('app/core/services/backend_srv');
 
 describe('Prometheus editor completer', function() {
-  var ctx = new helpers.ServiceTestContext();
-  beforeEach(ctx.providePhase(['templateSrv']));
+  //beforeEach(ctx.providePhase(['templateSrv']));
 
   function getSessionStub(data) {
     return {
-      getTokenAt: sinon.stub().returns(data.currentToken),
-      getTokens: sinon.stub().returns(data.tokens),
-      getLine: sinon.stub().returns(data.line),
+      getTokenAt: jest.fn(() => data.currentToken),
+      getTokens: jest.fn(() => data.tokens),
+      getLine: jest.fn(() => data.line),
     };
   }
 
   let editor = {};
-  let datasourceStub = <PrometheusDatasource>{
-    performInstantQuery: sinon
-      .stub()
-      .withArgs({ expr: '{__name__="node_cpu"' })
-      .returns(
-        Promise.resolve({
-          data: {
-            data: {
-              result: [
-                {
-                  metric: {
-                    job: 'node',
-                    instance: 'localhost:9100',
-                  },
-                },
-              ],
+
+  let backendSrv = <BackendSrv>{};
+  let datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
+
+  datasourceStub.performInstantQuery = jest.fn(() =>
+    Promise.resolve({
+      data: {
+        data: {
+          result: [
+            {
+              metric: {
+                job: 'node',
+                instance: 'localhost:9100',
+              },
             },
-          },
-        })
-      ),
-    performSuggestQuery: sinon
-      .stub()
-      .withArgs('node', true)
-      .returns(Promise.resolve(['node_cpu'])),
-  };
+          ],
+        },
+      },
+    })
+  );
+  datasourceStub.performSuggestQuery = jest.fn(() => Promise.resolve(['node_cpu']));
 
   let templateSrv = {
     variables: [
@@ -62,9 +57,9 @@ describe('Prometheus editor completer', function() {
       });
 
       return completer.getCompletions(editor, session, { row: 0, column: 10 }, '[', (s, res) => {
-        expect(res[0].caption).to.eql('$__interval');
-        expect(res[0].value).to.eql('[$__interval');
-        expect(res[0].meta).to.eql('range vector');
+        expect(res[0].caption).toEqual('$__interval');
+        expect(res[0].value).toEqual('[$__interval');
+        expect(res[0].meta).toEqual('range vector');
       });
     });
   });
@@ -93,7 +88,7 @@ describe('Prometheus editor completer', function() {
       });
 
       return completer.getCompletions(editor, session, { row: 0, column: 10 }, 'j', (s, res) => {
-        expect(res[0].meta).to.eql('label name');
+        expect(res[0].meta).toEqual('label name');
       });
     });
   });
@@ -125,7 +120,7 @@ describe('Prometheus editor completer', function() {
       });
 
       return completer.getCompletions(editor, session, { row: 0, column: 23 }, 'j', (s, res) => {
-        expect(res[0].meta).to.eql('label name');
+        expect(res[0].meta).toEqual('label name');
       });
     });
   });
@@ -156,7 +151,7 @@ describe('Prometheus editor completer', function() {
       });
 
       return completer.getCompletions(editor, session, { row: 0, column: 15 }, 'n', (s, res) => {
-        expect(res[0].meta).to.eql('label value');
+        expect(res[0].meta).toEqual('label value');
       });
     });
   });
@@ -192,7 +187,7 @@ describe('Prometheus editor completer', function() {
       });
 
       return completer.getCompletions(editor, session, { row: 0, column: 23 }, 'm', (s, res) => {
-        expect(res[0].meta).to.eql('label name');
+        expect(res[0].meta).toEqual('label name');
       });
     });
   });
