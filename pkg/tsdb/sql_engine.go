@@ -229,6 +229,8 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 	rowCount := 0
 	timeIndex := -1
 	metricIndex := -1
+	metricPrefix := false
+	var metricPrefixValue string
 
 	// check columns of resultset: a column named time is mandatory
 	// the first text column is treated as metric name unless a column named metric is present
@@ -254,6 +256,11 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 				}
 			}
 		}
+	}
+
+	// use metric column as prefix with multiple value columns
+	if metricIndex != -1 && len(columnNames) > 3 {
+		metricPrefix = true
 	}
 
 	if timeIndex == -1 {
@@ -301,7 +308,11 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 
 		if metricIndex >= 0 {
 			if columnValue, ok := values[metricIndex].(string); ok {
-				metric = columnValue
+				if metricPrefix {
+					metricPrefixValue = columnValue
+				} else {
+					metric = columnValue
+				}
 			} else {
 				return fmt.Errorf("Column metric must be of type %s. metric column name: %s type: %s but datatype is %T", strings.Join(e.metricColumnTypes, ", "), columnNames[metricIndex], columnTypes[metricIndex].DatabaseTypeName(), values[metricIndex])
 			}
@@ -318,6 +329,8 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 
 			if metricIndex == -1 {
 				metric = col
+			} else if metricPrefix {
+				metric = metricPrefixValue + " " + col
 			}
 
 			series, exist := pointsBySeries[metric]
