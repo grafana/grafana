@@ -42,6 +42,9 @@ class MultiStatCtrl extends MetricsPanelCtrl {
   onDataReceived(dataList) {
     if (dataList.length > 0 && dataList[0].type === 'table') {
       this.dataType = 'table';
+      if (dataList[0].rows && !dataList[0].rows.length) {
+        return this.onDataError('No data');
+      }
       this.setTableColumnToSensibleDefault(dataList[0]);
       this.data = convertTableDataToMultistat(dataList, this.panel);
     } else {
@@ -65,16 +68,19 @@ class MultiStatCtrl extends MetricsPanelCtrl {
     });
 
     this.tableColumnOptions = columnNames;
-    if (_.find(tableData.columns, ['text', this.panel.tableColumn])) {
+    if (
+      _.find(tableData.columns, ['text', this.panel.tableColumnValue]) &&
+      _.find(tableData.columns, ['text', this.panel.tableColumnLabel])
+    ) {
       return;
     }
 
     if (tableData.columns.length === 1) {
-      this.panel.tableColumn = tableData.columns[0].text;
+      this.panel.tableColumnValue = tableData.columns[0].text;
     } else {
-      this.panel.tableColumn = _.find(tableData.columns, col => {
-        return col.type !== 'time';
-      }).text;
+      const notTimeColumns = _.filter(tableData.columns, col => col.type !== 'time');
+      this.panel.tableColumnValue = _.last(notTimeColumns).text;
+      this.panel.tableColumnLabel = _.first(notTimeColumns).text;
     }
   }
 

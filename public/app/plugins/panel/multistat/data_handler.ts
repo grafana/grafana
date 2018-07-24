@@ -9,6 +9,8 @@ import { getDecimalsForValue } from 'app/core/utils/ticks';
 
 type MultistatPanelModel = PanelModel & MultiStatPanel.PanelOptions;
 
+const REASONABLE_ROW_NUMBER = 20;
+
 export function convertTSDataToMultistat(dataList: Series.SeriesData[], panel) {
   const series = dataList.map(s => handleSeries(s, panel));
   return convertTimeSeriesToMultistatData(series, panel);
@@ -114,39 +116,50 @@ export function convertTableToMultistatData(tables, panel: MultistatPanelModel) 
   }
 
   for (const table of tables) {
-    let tableStat = convertToTableStat(table, panel);
-    // this.setValueMapping(seriesStat);
-    panelData.push(tableStat);
+    let tableStats = convertToTableStat(table, panel);
+    tableStats = _.sortBy(tableStats, s => s.label);
+    // this.setValueMapping(tableStats);
+    panelData.push(...tableStats);
   }
 
   return panelData;
 }
 
 export function convertToTableStat(table, panel) {
-  let tableStat: any = [];
+  let tableStats: any = [];
 
-  if (table.length === 0 || table[0][panel.tableColumn] === undefined) {
+  if (table.length === 0 || table[0][panel.tableColumnValue] === undefined) {
     return;
   }
 
-  const datapoint = table[0];
-  tableStat.value = datapoint[panel.tableColumn];
+  if (table.length > REASONABLE_ROW_NUMBER) {
+    throw new Error(`Too many rows in the table (expected ${REASONABLE_ROW_NUMBER} or less, got ${table.length})
+      returned by the query. Try to limit it and try again.
+    `);
+  }
 
-  if (_.isString(tableStat.value)) {
-    tableStat.valueFormatted = _.escape(tableStat.value);
-    tableStat.value = 0;
-    tableStat.valueRounded = 0;
-  } else {
-    const decimalInfo = getDecimalsForValue(tableStat.value);
-    const formatFunc = kbn.valueFormats[panel.format];
-    tableStat.valueFormatted = formatFunc(
-      datapoint[panel.tableColumn],
-      decimalInfo.decimals,
-      decimalInfo.scaledDecimals
-    );
-    tableStat.valueRounded = kbn.roundValue(tableStat.value, panel.decimals || 0);
+  for (const row of table) {
+    let tableStat: any = {};
+    tableStat.value = row[panel.tableColumnValue];
+    tableStat.label = tableStat.alias = row[panel.tableColumnLabel];
+
+    if (_.isString(tableStat.value)) {
+      tableStat.valueFormatted = _.escape(tableStat.value);
+      tableStat.value = 0;
+      tableStat.valueRounded = 0;
+    } else {
+      const decimalInfo = getDecimalsForValue(tableStat.value);
+      const formatFunc = kbn.valueFormats[panel.format];
+      tableStat.valueFormatted = formatFunc(
+        row[panel.tableColumnValue],
+        decimalInfo.decimals,
+        decimalInfo.scaledDecimals
+      );
+      tableStat.valueRounded = kbn.roundValue(tableStat.value, panel.decimals || 0);
+    }
+    tableStats.push(tableStat);
   }
 
   // this.setValueMapping(data);
-  return tableStat;
+  return tableStats;
 }

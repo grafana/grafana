@@ -87,6 +87,7 @@
 
   &--vertical {
     display: flex;
+    width: 100%;
 
     .multistat-bar {
       border-right-style: solid;
@@ -108,5 +109,14 @@
 .multistat-bar {
   .bar-label {
     padding-left: 0.5rem;
+    font-size: 1vw;
+  }
+
+  .bar-value {
+    font-size: 1vw;
+  }
+
+  .value-container {
+    font-size: 1vw;
   }
 }

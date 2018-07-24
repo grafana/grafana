@@ -29,7 +29,8 @@ export class SparkLine extends React.Component<Props> {
   componentDidUpdate(prevProps) {
     const width = this.props.size.w - 10;
     const height = this.props.size.h;
-    if (width <= 0 || height <= 0) {
+    if (width <= 0 || height <= 0 || !this.props.stat.flotpairs) {
+      this.$elem.empty();
       return;
     }
 

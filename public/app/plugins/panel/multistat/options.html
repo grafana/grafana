@@ -2,17 +2,26 @@
   <div class="section gf-form-group">
     <h5 class="section-heading">Value</h5>
 
+    <div class="gf-form-inline" ng-show="ctrl.dataType === 'table'">
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Label Column</label>
+        <div class="gf-form-select-wrapper width-12">
+          <select class="gf-form-input" ng-model="ctrl.panel.tableColumnLabel" ng-options="f for f in ctrl.tableColumnOptions" ng-change="ctrl.refresh()"></select>
+        </div>
+      </div>
+    </div>
+
     <div class="gf-form-inline">
       <div class="gf-form" ng-show="ctrl.dataType === 'timeseries'">
-        <label class="gf-form-label width-6">Stat</label>
+        <label class="gf-form-label width-8">Stat</label>
         <div class="gf-form-select-wrapper width-12">
           <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f.value as f.text for f in ctrl.valueNameOptions" ng-change="ctrl.refresh()"></select>
         </div>
       </div>
       <div class="gf-form" ng-show="ctrl.dataType === 'table'">
-        <label class="gf-form-label width-6">Column</label>
+        <label class="gf-form-label width-8">Value Column</label>
         <div class="gf-form-select-wrapper width-12">
-          <select class="gf-form-input" ng-model="ctrl.panel.tableColumn" ng-options="f for f in ctrl.tableColumnOptions" ng-change="ctrl.refresh()"></select>
+          <select class="gf-form-input" ng-model="ctrl.panel.tableColumnValue" ng-options="f for f in ctrl.tableColumnOptions" ng-change="ctrl.refresh()"></select>
         </div>
       </div>
       <div class="gf-form">
@@ -25,7 +34,7 @@
 
     <div class="gf-form-inline">
       <div class="gf-form">
-        <label class="gf-form-label width-6">Prefix</label>
+        <label class="gf-form-label width-8">Prefix</label>
         <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.prefix" ng-change="ctrl.render()" ng-model-onblur>
         <label class="gf-form-label width-6">Font size</label>
         <div class="gf-form-select-wrapper">
@@ -35,7 +44,7 @@
     </div>
 
     <div class="gf-form">
-      <label class="gf-form-label width-6">Postfix</label>
+      <label class="gf-form-label width-8">Postfix</label>
       <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
       <label class="gf-form-label width-6">Font size</label>
       <div class="gf-form-select-wrapper">
@@ -43,11 +52,11 @@
       </div>
     </div>
     <div class="gf-form">
-      <label class="gf-form-label width-6">Unit</label>
+      <label class="gf-form-label width-8">Unit</label>
       <div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
     </div>
     <div class="gf-form">
-      <label class="gf-form-label width-6">Decimals</label>
+      <label class="gf-form-label width-8">Decimals</label>
       <input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
     </div>
   </div>
