@@ -1,73 +1,31 @@
 import '../query_ctrl';
-import 'app/core/services/segment_srv';
+import { uiSegmentSrv } from 'app/core/services/segment_srv';
 // import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
 // import helpers from 'test/specs/helpers';
 import { InfluxQueryCtrl } from '../query_ctrl';
 
 describe('InfluxDBQueryCtrl', () => {
-  let uiSegmentSrv = {
-    newPlusButton: () => {},
-    newKey: key => key,
-    newKeyValue: key => key,
-    newSegment: seg => seg,
-    newSelectMeasurement: () => {
-      return { value: 'select measurement' };
-    },
-    newOperator: op => op,
-    newFake: () => {},
-  };
+  let ctx = <any>{};
 
-  let ctx = <any>{
-    dataSource: {},
-  };
-
-  //   beforeEach(angularMocks.module('grafana.core'));
-  //   beforeEach(angularMocks.module('grafana.controllers'));
-  //   beforeEach(angularMocks.module('grafana.services'));
-  //   beforeEach(
-  //     angularMocks.module(($ =>compileProvider) {
-  //       $compileProvider.preAssignBindingsEnabled(true);
-  //     })
-  //   );
-  //   beforeEach(ctx.providePhase());
-
-  //   beforeEach(
-  //     angularMocks.inject(($rootScope, $controller, $q) => {
-  //       ctx.$q = $q;
-  //       ctx.scope = $rootScope.$new();
-  //       ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
-  //       ctx.target = { target: {} };
-  //       ctx.panelCtrl = {
-  //         panel: {
-  //           targets: [ctx.target],
-  //         },
-  //       };
-  //       ctx.panelCtrl.refresh = sinon.spy();
-  //       ctx.ctrl = $controller(
-  //         InfluxQueryCtrl,
-  //         { $scope: ctx.scope },
-  //         {
-  //           panelCtrl: ctx.panelCtrl,
-  //           target: ctx.target,
-  //           datasource: ctx.datasource,
-  //         }
-  //       );
-  //     })
-  //   );
-
-  beforeEach(async () => {
+  beforeEach(() => {
     InfluxQueryCtrl.prototype.datasource = {
-      metricFindQuery: jest.fn(() => Promise.resolve([])),
+      metricFindQuery: () => Promise.resolve([]),
     };
+    InfluxQueryCtrl.prototype.target = { target: {} };
     InfluxQueryCtrl.prototype.panelCtrl = {
       panel: {
-        targets: [InfluxQueryCtrl.target],
+        targets: [InfluxQueryCtrl.prototype.target],
       },
+      refresh: () => {},
     };
 
-    InfluxQueryCtrl.prototype.target = { target: {} };
-    console.log('creating new instance');
-    ctx.ctrl = await new InfluxQueryCtrl({}, {}, {}, {}, uiSegmentSrv);
+    ctx.ctrl = new InfluxQueryCtrl(
+      {},
+      {},
+      {},
+      {},
+      new uiSegmentSrv({ trustAsHtml: html => html }, { highlightVariablesAsHtml: () => {} })
+    );
   });
 
   describe('init', () => {
