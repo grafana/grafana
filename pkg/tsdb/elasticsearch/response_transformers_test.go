@@ -831,9 +831,9 @@ func TestTimeSeriesResponseTransformer(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
 			So(err, ShouldBeNil)
-			result, err := rp.getTimeSeries()
+			result, err := rp.transform()
 			So(err, ShouldBeNil)
 			So(result.Results, ShouldHaveLength, 1)
 
@@ -865,58 +865,68 @@ func TestTimeSeriesResponseTransformer(t *testing.T) {
 			So(seriesThree.Points[1][1].Float64, ShouldEqual, 2000)
 		})
 
-		// Convey("Raw documents query", func() {
-		// 	targets := map[string]string{
-		// 		"A": `{
-		// 			"timeField": "@timestamp",
-		// 			"metrics": [{ "type": "raw_document", "id": "1" }]
-		// 		}`,
-		// 	}
-		// 	response := `{
-		//     "responses": [
-		//       {
-		//         "hits": {
-		//           "total": 100,
-		//           "hits": [
-		//             {
-		//               "_id": "1",
-		//               "_type": "type",
-		//               "_index": "index",
-		//               "_source": { "sourceProp": "asd" },
-		//               "fields": { "fieldProp": "field" }
-		//             },
-		//             {
-		//               "_source": { "sourceProp": "asd2" },
-		//               "fields": { "fieldProp": "field2" }
-		//             }
-		//           ]
-		//         }
-		//       }
-		//     ]
-		// 	}`
-		// 	rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
-		// 	So(err, ShouldBeNil)
-		// 	result, err := rp.transform()
-		// 	So(err, ShouldBeNil)
-		// 	So(result.Results, ShouldHaveLength, 1)
+		Convey("Raw documents query", func() {
+			targets := map[string]string{
+				"A": `{
+					"timeField": "@timestamp",
+					"metrics": [{ "type": "raw_document", "id": "1" }]
+				}`,
+			}
+			response := `{
+		    "responses": [
+		      {
+		        "hits": {
+		          "total": 100,
+		          "hits": [
+		            {
+		              "_id": "1",
+		              "_type": "type",
+		              "_index": "index",
+		              "_source": { "sourceProp": "asd" },
+		              "fields": { "fieldProp": "field" }
+		            },
+		            {
+		              "_source": { "sourceProp": "asd2" },
+		              "fields": { "fieldProp": "field2" }
+		            }
+		          ]
+		        }
+		      }
+		    ]
+			}`
+			rp, err := newTimeSeriesQueryResponseTransformerForTest(targets, response)
+			So(err, ShouldBeNil)
+			result, err := rp.transform()
+			So(err, ShouldBeNil)
+			So(result.Results, ShouldHaveLength, 1)
 
-		// 	queryRes := result.Results["A"]
-		// 	So(queryRes, ShouldNotBeNil)
-		// 	So(queryRes.Tables, ShouldHaveLength, 1)
+			queryRes := result.Results["A"]
+			So(queryRes, ShouldNotBeNil)
+			So(queryRes.Tables, ShouldHaveLength, 1)
 
-		// 	rows := queryRes.Tables[0].Rows
-		// 	So(rows, ShouldHaveLength, 1)
-		// 	cols := queryRes.Tables[0].Columns
-		// 	So(cols, ShouldHaveLength, 3)
+			rows := queryRes.Tables[0].Rows
+			So(rows, ShouldHaveLength, 1)
+			cols := queryRes.Tables[0].Columns
+			So(cols, ShouldHaveLength, 2)
 
-		// 	So(cols[0].Text, ShouldEqual, "host")
-		// 	So(cols[1].Text, ShouldEqual, "Average test")
-		// 	So(cols[2].Text, ShouldEqual, "Average test2")
+			So(cols[0].Text, ShouldEqual, "hits")
+			So(cols[1].Text, ShouldEqual, "total")
 
-		// 	So(rows[0][0].(string), ShouldEqual, "server-1")
-		// 	So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-		// 	So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
-		// })
+			So(rows[0][1].(int64), ShouldEqual, 100)
+			hits, ok := rows[0][0].([]interface{})
+			So(ok, ShouldBeTrue)
+			So(hits, ShouldHaveLength, 2)
+			jHits := simplejson.NewFromAny(hits)
+			hitOne := jHits.GetIndex(0)
+			So(hitOne.Get("_id").MustString(), ShouldEqual, "1")
+			So(hitOne.Get("_type").MustString(), ShouldEqual, "type")
+			So(hitOne.Get("_index").MustString(), ShouldEqual, "index")
+			So(hitOne.Get("sourceProp").MustString(), ShouldEqual, "asd")
+			So(hitOne.Get("fieldProp").MustString(), ShouldEqual, "field")
+			hitTwo := jHits.GetIndex(1)
+			So(hitTwo.Get("sourceProp").MustString(), ShouldEqual, "asd2")
+			So(hitTwo.Get("fieldProp").MustString(), ShouldEqual, "field2")
+		})
 	})
 }
 
