@@ -5,8 +5,6 @@ jest.mock('../datasource');
 jest.mock('app/core/services/backend_srv');
 
 describe('Prometheus editor completer', function() {
-  //beforeEach(ctx.providePhase(['templateSrv']));
-
   function getSessionStub(data) {
     return {
       getTokenAt: jest.fn(() => data.currentToken),
