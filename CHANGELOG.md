@@ -29,6 +29,7 @@
 * **Prometheus**: Fix graph panel bar width issue in aligned prometheus queries [#12379](https://github.com/grafana/grafana/issues/12379)
 * **Dashboard**: Dashboard links not updated when changing variables [#12506](https://github.com/grafana/grafana/issues/12506)
 * **Postgres/MySQL/MSSQL**: Fix connection leak [#12636](https://github.com/grafana/grafana/issues/12636) [#9827](https://github.com/grafana/grafana/issues/9827)
+* **Plugins**: Fix loading of external plugins [#12551](https://github.com/grafana/grafana/issues/12551)
 * **Dashboard**: Remove unwanted scrollbars in embedded panels [#12589](https://github.com/grafana/grafana/issues/12589)
 * **Prometheus**: Prevent error using $__interval_ms in query [#12533](https://github.com/grafana/grafana/pull/12533)
 
