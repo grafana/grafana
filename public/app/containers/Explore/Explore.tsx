@@ -163,11 +163,14 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setDatasource(datasource);
   };
 
-  handleChangeQuery = (query, index) => {
+  handleChangeQuery = (value, index) => {
     const { queries } = this.state;
+    const prevQuery = queries[index];
+    const edited = prevQuery.query !== value;
     const nextQuery = {
       ...queries[index],
-      query,
+      edited,
+      query: value,
     };
     const nextQueries = [...queries];
     nextQueries[index] = nextQuery;
@@ -220,6 +223,18 @@ export class Explore extends React.Component<any, IExploreState> {
     }
     if (showingGraph) {
       this.runGraphQuery();
+    }
+  };
+
+  onClickTableCell = (columnKey: string, rowValue: string) => {
+    const { datasource, queries } = this.state;
+    if (datasource && datasource.modifyQuery) {
+      const nextQueries = queries.map(q => ({
+        ...q,
+        edited: false,
+        query: datasource.modifyQuery(q.query, { addFilter: { key: columnKey, value: rowValue } }),
+      }));
+      this.setState({ queries: nextQueries }, () => this.handleSubmit());
     }
   };
 
@@ -404,7 +419,7 @@ export class Explore extends React.Component<any, IExploreState> {
                   split={split}
                 />
               ) : null}
-              {showingTable ? <Table data={tableResult} className="m-t-3" /> : null}
+              {showingTable ? <Table data={tableResult} onClickCell={this.onClickTableCell} className="m-t-3" /> : null}
             </main>
           </div>
         ) : null}

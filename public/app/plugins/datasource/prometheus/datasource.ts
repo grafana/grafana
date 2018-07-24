@@ -16,6 +16,44 @@ export function alignRange(start, end, step) {
   };
 }
 
+// addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
+export function addLabelToQuery(query: string, key: string, value: string): string {
+  const selectorRegexp = /{([^{]*)}/g;
+  if (!key || !value) {
+    throw new Error('Need label to add to query.');
+  }
+  // Simple case when no selectors are present
+  if (!query.match(selectorRegexp)) {
+    return query.replace(/(\w+)\b(?!\()/g, '$1' + `{${key}="${value}"}`);
+  }
+  // Adding label to existing selectors
+  let match;
+  const parts = [];
+  let lastIndex = 0;
+  let suffix = '';
+  while ((match = selectorRegexp.exec(query))) {
+    const prefix = query.slice(lastIndex, match.index);
+    const selectorParts = match[1].split(',');
+    const labels = selectorParts.reduce((acc, label) => {
+      const labelParts = label.split('=');
+      if (labelParts.length === 2) {
+        acc[labelParts[0]] = labelParts[1];
+      }
+      return acc;
+    }, {});
+    labels[key] = `"${value}"`;
+    const selector = Object.keys(labels)
+      .sort()
+      .map(key => `${key}=${labels[key]}`)
+      .join(',');
+    lastIndex = match.index + selector.length - match[0].length;
+    suffix = query.slice(match.index + match[0].length);
+    parts.push(prefix, '{', selector, '}');
+  }
+  parts.push(suffix);
+  return parts.join('');
+}
+
 export function prometheusRegularEscape(value) {
   return value.replace(/'/g, "\\\\'");
 }
@@ -361,6 +399,14 @@ export class PrometheusDatasource {
       };
     }
     return state;
+  }
+
+  modifyQuery(query: string, options: any): string {
+    const { addFilter } = options;
+    if (addFilter) {
+      return addLabelToQuery(query, addFilter.key, addFilter.value);
+    }
+    return query;
   }
 
   getPrometheusTime(date, roundUp) {
