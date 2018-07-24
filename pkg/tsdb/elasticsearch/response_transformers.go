@@ -74,20 +74,77 @@ func (rp *timeSeriesQueryResponseTransformer) transform() (*tsdb.Response, error
 			Columns: make([]tsdb.TableColumn, 0),
 			Rows:    make([]tsdb.RowValues, 0),
 		}
-		err := rp.processBuckets(res.Aggregations, target, &queryRes.Series, &table, props, 0)
-		if err != nil {
-			return nil, err
-		}
-		rp.nameSeries(&queryRes.Series, target)
-		rp.trimDatapoints(&queryRes.Series, target)
 
-		if len(table.Rows) > 0 {
+		if res.Hits != nil && len(res.Hits.Hits) > 0 {
+			err := rp.processHits(res.Hits, &table)
+			if err != nil {
+				return nil, err
+			}
 			queryRes.Tables = append(queryRes.Tables, &table)
+		}
+
+		if res.Aggregations != nil && len(res.Aggregations) > 0 {
+			err := rp.processBuckets(res.Aggregations, target, &queryRes.Series, &table, props, 0)
+			if err != nil {
+				return nil, err
+			}
+			rp.nameSeries(&queryRes.Series, target)
+			rp.trimDatapoints(&queryRes.Series, target)
+
+			if len(table.Rows) > 0 {
+				queryRes.Tables = append(queryRes.Tables, &table)
+			}
 		}
 
 		result.Results[target.RefID] = queryRes
 	}
 	return result, nil
+}
+
+func (rp *timeSeriesQueryResponseTransformer) processHits(hits *es.SearchResponseHits, table *tsdb.Table) error {
+	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "hits"})
+	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "total"})
+
+	docs := []interface{}{}
+
+	for _, v := range hits.Hits {
+		hit := simplejson.NewFromAny(v)
+		doc := map[string]interface{}{}
+
+		doc["_id"] = hit.Get("_id").Interface()
+		doc["_type"] = hit.Get("_type").Interface()
+		doc["_index"] = hit.Get("_index").Interface()
+
+		if sourceProp, ok := hit.CheckGet("_source"); ok {
+			propNames := []string{}
+			props := sourceProp.MustMap()
+			for prop := range props {
+				propNames = append(propNames, prop)
+			}
+			sort.Strings(propNames)
+			for _, propName := range propNames {
+				doc[propName] = props[propName]
+			}
+		}
+
+		if fieldsProp, ok := hit.CheckGet("fields"); ok {
+			propNames := []string{}
+			props := fieldsProp.MustMap()
+			for prop := range props {
+				propNames = append(propNames, prop)
+			}
+			sort.Strings(propNames)
+			for _, propName := range propNames {
+				doc[propName] = props[propName]
+			}
+		}
+
+		docs = append(docs, doc)
+	}
+
+	table.Rows = append(table.Rows, tsdb.RowValues{docs, hits.Total})
+
+	return nil
 }
 
 func (rp *timeSeriesQueryResponseTransformer) processBuckets(aggs map[string]interface{}, target *Query, series *tsdb.TimeSeriesSlice, table *tsdb.Table, props map[string]string, depth int) error {
