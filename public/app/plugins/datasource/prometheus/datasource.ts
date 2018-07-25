@@ -162,8 +162,8 @@ export class PrometheusDatasource {
           format: activeTargets[index].format,
           step: queries[index].step,
           legendFormat: activeTargets[index].legendFormat,
-          start: start,
-          end: end,
+          start: queries[index].start,
+          end: queries[index].end,
           query: queries[index].expr,
           responseListLength: responseList.length,
           responseIndex: index,
@@ -196,7 +196,7 @@ export class PrometheusDatasource {
       interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
-        __interval_ms: { text: interval * 1000, value: interval * 1000 },
+        __interval_ms: { text: String(interval * 1000), value: String(interval * 1000) },
       });
     }
     query.step = interval;

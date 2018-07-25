@@ -119,6 +119,20 @@ describe('TimeSeries', function() {
       series.getFlotPairs('null');
       expect(series.stats.avg).toBe(null);
     });
+
+    it('calculates timeStep', function() {
+      series = new TimeSeries({
+        datapoints: [[null, 1], [null, 2], [null, 3]],
+      });
+      series.getFlotPairs('null');
+      expect(series.stats.timeStep).toBe(1);
+
+      series = new TimeSeries({
+        datapoints: [[0, 1530529290], [0, 1530529305], [0, 1530529320]],
+      });
+      series.getFlotPairs('null');
+      expect(series.stats.timeStep).toBe(15);
+    });
   });
 
   describe('When checking if ms resolution is needed', function() {
