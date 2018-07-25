@@ -33,6 +33,7 @@
 * **Plugins**: Fix loading of external plugins [#12551](https://github.com/grafana/grafana/issues/12551)
 * **Dashboard**: Remove unwanted scrollbars in embedded panels [#12589](https://github.com/grafana/grafana/issues/12589)
 * **Prometheus**: Prevent error using $__interval_ms in query [#12533](https://github.com/grafana/grafana/pull/12533)
+* **Table**: Adjust header contrast for the light theme [#12668](https://github.com/grafana/grafana/issues/12668)
 
 # 5.2.1 (2018-06-29)
 
