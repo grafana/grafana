@@ -9,35 +9,36 @@ type queryEndpoint interface {
 	execute() (*tsdb.Response, error)
 }
 
-// Query represents the time series query model of the datasource
-type Query struct {
-	TimeField  string       `json:"timeField"`
-	RawQuery   string       `json:"query"`
-	BucketAggs []*BucketAgg `json:"bucketAggs"`
-	Metrics    []*MetricAgg `json:"metrics"`
-	Alias      string       `json:"alias"`
-	Interval   string
-	RefID      string
+type responseTransformer interface {
+	transform() (*tsdb.Response, error)
 }
 
-// BucketAgg represents a bucket aggregation of the time series query model of the datasource
-type BucketAgg struct {
-	Field    string           `json:"field"`
-	ID       string           `json:"id"`
-	Settings *simplejson.Json `json:"settings"`
-	Type     string           `jsons:"type"`
+type timeSeriesQueryModel struct {
+	timeField   string
+	queryString string
+	bucketAggs  []*bucketAggregation
+	metrics     []*metricAggregation
+	alias       string
+	interval    string
+	refID       string
 }
 
-// MetricAgg represents a metric aggregation of the time series query model of the datasource
-type MetricAgg struct {
-	Field             string            `json:"field"`
-	Hide              bool              `json:"hide"`
-	ID                string            `json:"id"`
-	PipelineAggregate string            `json:"pipelineAgg"`
-	PipelineVariables map[string]string `json:"pipelineVariables"`
-	Settings          *simplejson.Json  `json:"settings"`
-	Meta              *simplejson.Json  `json:"meta"`
-	Type              string            `json:"type"`
+type bucketAggregation struct {
+	field    string
+	id       string
+	settings *simplejson.Json
+	aggType  string
+}
+
+type metricAggregation struct {
+	field             string
+	hide              bool
+	id                string
+	pipelineAggregate string
+	pipelineVariables map[string]string `json:"pipelineVariables"`
+	settings          *simplejson.Json
+	meta              *simplejson.Json
+	aggType           string
 }
 
 var metricAggType = map[string]string{

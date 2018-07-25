@@ -27,17 +27,13 @@ const (
 	geohashGridType = "geohash_grid"
 )
 
-type responseTransformer interface {
-	transform() (*tsdb.Response, error)
-}
-
 type timeSeriesQueryResponseTransformer struct {
 	Responses []*es.SearchResponse
-	Targets   []*Query
+	Targets   []*timeSeriesQueryModel
 	DebugInfo *es.SearchDebugInfo
 }
 
-var newTimeSeriesQueryResponseTransformer = func(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *timeSeriesQueryResponseTransformer {
+var newTimeSeriesQueryResponseTransformer = func(responses []*es.SearchResponse, targets []*timeSeriesQueryModel, debugInfo *es.SearchDebugInfo) responseTransformer {
 	return &timeSeriesQueryResponseTransformer{
 		Responses: responses,
 		Targets:   targets,
@@ -62,8 +58,8 @@ func (rp *timeSeriesQueryResponseTransformer) transform() (*tsdb.Response, error
 		}
 
 		if res.Error != nil {
-			result.Results[target.RefID] = getErrorFromElasticResponse(res.Error)
-			result.Results[target.RefID].Meta = debugInfo
+			result.Results[target.refID] = getErrorFromElasticResponse(res.Error)
+			result.Results[target.refID].Meta = debugInfo
 			continue
 		}
 
@@ -96,7 +92,7 @@ func (rp *timeSeriesQueryResponseTransformer) transform() (*tsdb.Response, error
 			}
 		}
 
-		result.Results[target.RefID] = queryRes
+		result.Results[target.refID] = queryRes
 	}
 	return result, nil
 }
@@ -147,9 +143,9 @@ func (rp *timeSeriesQueryResponseTransformer) processHits(hits *es.SearchRespons
 	return nil
 }
 
-func (rp *timeSeriesQueryResponseTransformer) processBuckets(aggs map[string]interface{}, target *Query, series *tsdb.TimeSeriesSlice, table *tsdb.Table, props map[string]string, depth int) error {
+func (rp *timeSeriesQueryResponseTransformer) processBuckets(aggs map[string]interface{}, target *timeSeriesQueryModel, series *tsdb.TimeSeriesSlice, table *tsdb.Table, props map[string]string, depth int) error {
 	var err error
-	maxDepth := len(target.BucketAggs) - 1
+	maxDepth := len(target.bucketAggs) - 1
 
 	aggIDs := make([]string, 0)
 	for k := range aggs {
@@ -165,7 +161,7 @@ func (rp *timeSeriesQueryResponseTransformer) processBuckets(aggs map[string]int
 		}
 
 		if depth == maxDepth {
-			if aggDef.Type == dateHistType {
+			if aggDef.aggType == dateHistType {
 				err = rp.processMetrics(esAgg, target, series, props)
 			} else {
 				err = rp.processAggregationDocs(esAgg, aggDef, target, table, props)
@@ -183,13 +179,13 @@ func (rp *timeSeriesQueryResponseTransformer) processBuckets(aggs map[string]int
 				}
 
 				if key, err := bucket.Get("key").String(); err == nil {
-					newProps[aggDef.Field] = key
+					newProps[aggDef.field] = key
 				} else if key, err := bucket.Get("key").Int64(); err == nil {
-					newProps[aggDef.Field] = strconv.FormatInt(key, 10)
+					newProps[aggDef.field] = strconv.FormatInt(key, 10)
 				}
 
 				if key, err := bucket.Get("key_as_string").String(); err == nil {
-					newProps[aggDef.Field] = key
+					newProps[aggDef.field] = key
 				}
 				err = rp.processBuckets(bucket.MustMap(), target, series, table, newProps, depth+1)
 				if err != nil {
@@ -224,13 +220,13 @@ func (rp *timeSeriesQueryResponseTransformer) processBuckets(aggs map[string]int
 	return nil
 }
 
-func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.Json, target *Query, series *tsdb.TimeSeriesSlice, props map[string]string) error {
-	for _, metric := range target.Metrics {
-		if metric.Hide {
+func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.Json, target *timeSeriesQueryModel, series *tsdb.TimeSeriesSlice, props map[string]string) error {
+	for _, metric := range target.metrics {
+		if metric.hide {
 			continue
 		}
 
-		switch metric.Type {
+		switch metric.aggType {
 		case countType:
 			newSeries := tsdb.TimeSeries{
 				Tags: make(map[string]string),
@@ -256,7 +252,7 @@ func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.J
 			}
 
 			firstBucket := simplejson.NewFromAny(buckets[0])
-			percentiles := firstBucket.GetPath(metric.ID, "values").MustMap()
+			percentiles := firstBucket.GetPath(metric.id, "values").MustMap()
 
 			percentileKeys := make([]string, 0)
 			for k := range percentiles {
@@ -271,10 +267,10 @@ func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.J
 					newSeries.Tags[k] = v
 				}
 				newSeries.Tags["metric"] = "p" + percentileName
-				newSeries.Tags["field"] = metric.Field
+				newSeries.Tags["field"] = metric.field
 				for _, v := range buckets {
 					bucket := simplejson.NewFromAny(v)
-					value := castToNullFloat(bucket.GetPath(metric.ID, "values", percentileName))
+					value := castToNullFloat(bucket.GetPath(metric.id, "values", percentileName))
 					key := castToNullFloat(bucket.Get("key"))
 					newSeries.Points = append(newSeries.Points, tsdb.TimePoint{value, key})
 				}
@@ -284,7 +280,7 @@ func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.J
 			buckets := esAgg.Get("buckets").MustArray()
 
 			metaKeys := make([]string, 0)
-			meta := metric.Meta.MustMap()
+			meta := metric.meta.MustMap()
 			for k := range meta {
 				metaKeys = append(metaKeys, k)
 			}
@@ -302,7 +298,7 @@ func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.J
 					newSeries.Tags[k] = v
 				}
 				newSeries.Tags["metric"] = statName
-				newSeries.Tags["field"] = metric.Field
+				newSeries.Tags["field"] = metric.field
 
 				for _, v := range buckets {
 					bucket := simplejson.NewFromAny(v)
@@ -310,11 +306,11 @@ func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.J
 					var value null.Float
 					switch statName {
 					case "std_deviation_bounds_upper":
-						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
+						value = castToNullFloat(bucket.GetPath(metric.id, "std_deviation_bounds", "upper"))
 					case "std_deviation_bounds_lower":
-						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
+						value = castToNullFloat(bucket.GetPath(metric.id, "std_deviation_bounds", "lower"))
 					default:
-						value = castToNullFloat(bucket.GetPath(metric.ID, statName))
+						value = castToNullFloat(bucket.GetPath(metric.id, statName))
 					}
 					newSeries.Points = append(newSeries.Points, tsdb.TimePoint{value, key})
 				}
@@ -328,21 +324,21 @@ func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.J
 				newSeries.Tags[k] = v
 			}
 
-			newSeries.Tags["metric"] = metric.Type
-			newSeries.Tags["field"] = metric.Field
-			newSeries.Tags["metricId"] = metric.ID
+			newSeries.Tags["metric"] = metric.aggType
+			newSeries.Tags["field"] = metric.field
+			newSeries.Tags["metricId"] = metric.id
 			for _, v := range esAgg.Get("buckets").MustArray() {
 				bucket := simplejson.NewFromAny(v)
 				key := castToNullFloat(bucket.Get("key"))
-				valueObj, err := bucket.Get(metric.ID).Map()
+				valueObj, err := bucket.Get(metric.id).Map()
 				if err != nil {
 					continue
 				}
 				var value null.Float
 				if _, ok := valueObj["normalized_value"]; ok {
-					value = castToNullFloat(bucket.GetPath(metric.ID, "normalized_value"))
+					value = castToNullFloat(bucket.GetPath(metric.id, "normalized_value"))
 				} else {
-					value = castToNullFloat(bucket.GetPath(metric.ID, "value"))
+					value = castToNullFloat(bucket.GetPath(metric.id, "value"))
 				}
 				newSeries.Points = append(newSeries.Points, tsdb.TimePoint{value, key})
 			}
@@ -352,7 +348,7 @@ func (rp *timeSeriesQueryResponseTransformer) processMetrics(esAgg *simplejson.J
 	return nil
 }
 
-func (rp *timeSeriesQueryResponseTransformer) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query, table *tsdb.Table, props map[string]string) error {
+func (rp *timeSeriesQueryResponseTransformer) processAggregationDocs(esAgg *simplejson.Json, aggDef *bucketAggregation, target *timeSeriesQueryModel, table *tsdb.Table, props map[string]string) error {
 	propKeys := make([]string, 0)
 	for k := range props {
 		propKeys = append(propKeys, k)
@@ -363,7 +359,7 @@ func (rp *timeSeriesQueryResponseTransformer) processAggregationDocs(esAgg *simp
 		for _, propKey := range propKeys {
 			table.Columns = append(table.Columns, tsdb.TableColumn{Text: propKey})
 		}
-		table.Columns = append(table.Columns, tsdb.TableColumn{Text: aggDef.Field})
+		table.Columns = append(table.Columns, tsdb.TableColumn{Text: aggDef.field})
 	}
 
 	addMetricValue := func(values *tsdb.RowValues, metricName string, value null.Float) {
@@ -394,13 +390,13 @@ func (rp *timeSeriesQueryResponseTransformer) processAggregationDocs(esAgg *simp
 			values = append(values, castToNullFloat(bucket.Get("key")))
 		}
 
-		for _, metric := range target.Metrics {
-			switch metric.Type {
+		for _, metric := range target.metrics {
+			switch metric.aggType {
 			case countType:
-				addMetricValue(&values, rp.getMetricName(metric.Type), castToNullFloat(bucket.Get("doc_count")))
+				addMetricValue(&values, rp.getMetricName(metric.aggType), castToNullFloat(bucket.Get("doc_count")))
 			case extendedStatsType:
 				metaKeys := make([]string, 0)
-				meta := metric.Meta.MustMap()
+				meta := metric.meta.MustMap()
 				for k := range meta {
 					metaKeys = append(metaKeys, k)
 				}
@@ -414,35 +410,36 @@ func (rp *timeSeriesQueryResponseTransformer) processAggregationDocs(esAgg *simp
 					var value null.Float
 					switch statName {
 					case "std_deviation_bounds_upper":
-						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "upper"))
+						value = castToNullFloat(bucket.GetPath(metric.id, "std_deviation_bounds", "upper"))
 					case "std_deviation_bounds_lower":
-						value = castToNullFloat(bucket.GetPath(metric.ID, "std_deviation_bounds", "lower"))
+						value = castToNullFloat(bucket.GetPath(metric.id, "std_deviation_bounds", "lower"))
 					default:
-						value = castToNullFloat(bucket.GetPath(metric.ID, statName))
+						value = castToNullFloat(bucket.GetPath(metric.id, statName))
 					}
 
-					addMetricValue(&values, rp.getMetricName(metric.Type), value)
+					addMetricValue(&values, rp.getMetricName(metric.aggType), value)
 					break
 				}
 			default:
-				metricName := rp.getMetricName(metric.Type)
-				otherMetrics := make([]*MetricAgg, 0)
+				metricName := rp.getMetricName(metric.aggType)
+				otherMetrics := make([]*metricAggregation, 0)
 
-				for _, m := range target.Metrics {
-					if m.Type == metric.Type {
+				for _, m := range target.metrics {
+					if m.aggType == metric.aggType {
 						otherMetrics = append(otherMetrics, m)
 					}
 				}
 
 				if len(otherMetrics) > 1 {
-					metricName += " " + metric.Field
-					if metric.Type == "bucket_script" {
+					metricName += " " + metric.field
+					if metric.aggType == "bucket_script" {
 						// Use the formula in the column name
-						metricName = metric.Settings.Get("script").MustString("")
+						metricName = metric.settings.Get("script").MustString("")
 					}
 				}
 
-				addMetricValue(&values, metricName, castToNullFloat(bucket.GetPath(metric.ID, "value")))
+				addMetricValue(&values, metricName, castToNullFloat(bucket.GetPath(metric.id, "value")))
+				break
 			}
 		}
 
@@ -452,10 +449,10 @@ func (rp *timeSeriesQueryResponseTransformer) processAggregationDocs(esAgg *simp
 	return nil
 }
 
-func (rp *timeSeriesQueryResponseTransformer) trimDatapoints(series *tsdb.TimeSeriesSlice, target *Query) {
-	var histogram *BucketAgg
-	for _, bucketAgg := range target.BucketAggs {
-		if bucketAgg.Type == dateHistType {
+func (rp *timeSeriesQueryResponseTransformer) trimDatapoints(series *tsdb.TimeSeriesSlice, target *timeSeriesQueryModel) {
+	var histogram *bucketAggregation
+	for _, bucketAgg := range target.bucketAggs {
+		if bucketAgg.aggType == dateHistType {
 			histogram = bucketAgg
 			break
 		}
@@ -465,7 +462,7 @@ func (rp *timeSeriesQueryResponseTransformer) trimDatapoints(series *tsdb.TimeSe
 		return
 	}
 
-	trimEdges, err := histogram.Settings.Get("trimEdges").Int()
+	trimEdges, err := histogram.settings.Get("trimEdges").Int()
 	if err != nil {
 		return
 	}
@@ -477,7 +474,7 @@ func (rp *timeSeriesQueryResponseTransformer) trimDatapoints(series *tsdb.TimeSe
 	}
 }
 
-func (rp *timeSeriesQueryResponseTransformer) nameSeries(seriesList *tsdb.TimeSeriesSlice, target *Query) {
+func (rp *timeSeriesQueryResponseTransformer) nameSeries(seriesList *tsdb.TimeSeriesSlice, target *timeSeriesQueryModel) {
 	set := make(map[string]string)
 	for _, v := range *seriesList {
 		if metricType, exists := v.Tags["metric"]; exists {
@@ -494,7 +491,7 @@ func (rp *timeSeriesQueryResponseTransformer) nameSeries(seriesList *tsdb.TimeSe
 
 var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
-func (rp *timeSeriesQueryResponseTransformer) getSeriesName(series *tsdb.TimeSeries, target *Query, metricTypeCount int) string {
+func (rp *timeSeriesQueryResponseTransformer) getSeriesName(series *tsdb.TimeSeries, target *timeSeriesQueryModel, metricTypeCount int) string {
 	metricType := series.Tags["metric"]
 	metricName := rp.getMetricName(metricType)
 	delete(series.Tags, "metric")
@@ -505,10 +502,10 @@ func (rp *timeSeriesQueryResponseTransformer) getSeriesName(series *tsdb.TimeSer
 		delete(series.Tags, "field")
 	}
 
-	if target.Alias != "" {
-		seriesName := target.Alias
+	if target.alias != "" {
+		seriesName := target.alias
 
-		subMatches := aliasPatternRegex.FindAllStringSubmatch(target.Alias, -1)
+		subMatches := aliasPatternRegex.FindAllStringSubmatch(target.alias, -1)
 		for _, subMatch := range subMatches {
 			group := subMatch[0]
 
@@ -540,13 +537,13 @@ func (rp *timeSeriesQueryResponseTransformer) getSeriesName(series *tsdb.TimeSer
 				metricID = v
 			}
 
-			for _, metric := range target.Metrics {
-				if metric.ID == metricID {
-					metricName = metric.Settings.Get("script").MustString()
-					for name, pipelineAgg := range metric.PipelineVariables {
-						for _, m := range target.Metrics {
-							if m.ID == pipelineAgg {
-								metricName = strings.ReplaceAll(metricName, "params."+name, describeMetric(m.Type, m.Field))
+			for _, metric := range target.metrics {
+				if metric.id == metricID {
+					metricName = metric.settings.Get("script").MustString()
+					for name, pipelineAgg := range metric.pipelineVariables {
+						for _, m := range target.metrics {
+							if m.id == pipelineAgg {
+								metricName = strings.ReplaceAll(metricName, "params."+name, describeMetric(m.aggType, m.field))
 							}
 						}
 					}
@@ -554,9 +551,9 @@ func (rp *timeSeriesQueryResponseTransformer) getSeriesName(series *tsdb.TimeSer
 			}
 		} else {
 			found := false
-			for _, metric := range target.Metrics {
-				if metric.ID == field {
-					metricName += " " + describeMetric(metric.Type, field)
+			for _, metric := range target.metrics {
+				if metric.id == field {
+					metricName += " " + describeMetric(metric.aggType, field)
 					found = true
 				}
 			}
@@ -802,9 +799,9 @@ func castToNullFloat(j *simplejson.Json) null.Float {
 	return null.NewFloat(0, false)
 }
 
-func findAgg(target *Query, aggID string) (*BucketAgg, error) {
-	for _, v := range target.BucketAggs {
-		if aggID == v.ID {
+func findAgg(target *timeSeriesQueryModel, aggID string) (*bucketAggregation, error) {
+	for _, v := range target.bucketAggs {
+		if aggID == v.id {
 			return v, nil
 		}
 	}
