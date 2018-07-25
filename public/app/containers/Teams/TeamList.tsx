@@ -55,7 +55,7 @@ export class TeamList extends React.Component<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <DeleteButton confirmDelete={() => this.deleteTeam(team)} />
+          <DeleteButton onConfirmDelete={() => this.deleteTeam(team)} />
         </td>
       </tr>
     );

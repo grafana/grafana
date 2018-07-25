@@ -1,73 +1,61 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 
-export default class DeleteButton extends Component<any, any> {
-  state = {
-    deleteButton: 'delete-button--show',
-    confirmSpan: 'confirm-delete--removed',
+export interface DeleteButtonProps {
+  onConfirmDelete();
+}
+
+export interface DeleteButtonStates {
+  showConfirm: boolean;
+}
+
+export default class DeleteButton extends PureComponent<DeleteButtonProps, DeleteButtonStates> {
+  state: DeleteButtonStates = {
+    showConfirm: false,
   };
 
-  handleDelete = event => {
+  onClickDelete = event => {
     if (event) {
       event.preventDefault();
     }
 
     this.setState({
-      deleteButton: 'delete-button--hide',
+      showConfirm: true,
     });
-
-    setTimeout(() => {
-      this.setState({
-        deleteButton: 'delete-button--removed',
-      });
-    }, 100);
-
-    setTimeout(() => {
-      this.setState({
-        confirmSpan: 'confirm-delete--hide',
-      });
-    }, 100);
-
-    setTimeout(() => {
-      this.setState({
-        confirmSpan: 'confirm-delete--show',
-      });
-    }, 150);
   };
 
-  cancelDelete = event => {
-    event.preventDefault();
-
+  onClickCancel = event => {
+    if (event) {
+      event.preventDefault();
+    }
     this.setState({
-      confirmSpan: 'confirm-delete--hide',
+      showConfirm: false,
     });
-
-    setTimeout(() => {
-      this.setState({
-        confirmSpan: 'confirm-delete--removed',
-        deleteButton: 'delete-button--hide',
-      });
-    }, 140);
-
-    setTimeout(() => {
-      this.setState({
-        deleteButton: 'delete-button--show',
-      });
-    }, 190);
   };
 
   render() {
-    const { confirmDelete } = this.props;
+    const onClickConfirm = this.props.onConfirmDelete;
+    let showConfirm;
+    let showDeleteButton;
+
+    if (this.state.showConfirm) {
+      showConfirm = 'show';
+      showDeleteButton = 'hide';
+    } else {
+      showConfirm = 'hide';
+      showDeleteButton = 'show';
+    }
+
     return (
       <span className="delete-button-container">
-        <a className={this.state.deleteButton + ' btn btn-danger btn-small'} onClick={this.handleDelete}>
+        <a className={'delete-button ' + showDeleteButton + ' btn btn-danger btn-small'} onClick={this.onClickDelete}>
           <i className="fa fa-remove" />
         </a>
         <span className="confirm-delete-container">
-          <span className={this.state.confirmSpan}>
-            <a className="btn btn-small" onClick={this.cancelDelete}>
+          <span className={'confirm-delete ' + showConfirm}>
+            <a className="btn btn-small" onClick={this.onClickCancel}>
               Cancel
             </a>
-            <a className="btn btn-danger btn-small" onClick={confirmDelete}>
+            <a className="btn btn-danger btn-small" onClick={onClickConfirm}>
               Confirm Delete
             </a>
           </span>
