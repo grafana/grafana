@@ -62,8 +62,9 @@ type DeleteDatasourceConfigV0 struct {
 }
 
 type DeleteDatasourceConfigV1 struct {
-	OrgId int64  `json:"orgId" yaml:"orgId"`
-	Name  string `json:"name" yaml:"name"`
+	OrgId  int64   `json:"orgId" yaml:"orgId"`
+	Name   string  `json:"name" yaml:"name"`
+	OrgIds []int64 `json:"orgIds" yaml:"orgIds"`
 }
 
 type DataSourceFromConfigV0 struct {
@@ -104,6 +105,7 @@ type DataSourceFromConfigV1 struct {
 	JsonData          map[string]interface{} `json:"jsonData" yaml:"jsonData"`
 	SecureJsonData    map[string]string      `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable          bool                   `json:"editable" yaml:"editable"`
+	OrgIds            []int64                `json:"orgIds" yaml:"orgIds"`
 }
 
 func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *DatasourcesAsConfig {
@@ -116,32 +118,40 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 	}
 
 	for _, ds := range cfg.Datasources {
-		r.Datasources = append(r.Datasources, &DataSourceFromConfig{
-			OrgId:             ds.OrgId,
-			Name:              ds.Name,
-			Type:              ds.Type,
-			Access:            ds.Access,
-			Url:               ds.Url,
-			Password:          ds.Password,
-			User:              ds.User,
-			Database:          ds.Database,
-			BasicAuth:         ds.BasicAuth,
-			BasicAuthUser:     ds.BasicAuthUser,
-			BasicAuthPassword: ds.BasicAuthPassword,
-			WithCredentials:   ds.WithCredentials,
-			IsDefault:         ds.IsDefault,
-			JsonData:          ds.JsonData,
-			SecureJsonData:    ds.SecureJsonData,
-			Editable:          ds.Editable,
-			Version:           ds.Version,
-		})
+		if len(ds.OrgIds) == 0 {
+			ds.OrgIds = append(ds.OrgIds, ds.OrgId)
+		}
+		for _, orgId := range ds.OrgIds {
+			r.Datasources = append(r.Datasources, &DataSourceFromConfig{
+				OrgId:             orgId,
+				Name:              ds.Name,
+				Type:              ds.Type,
+				Access:            ds.Access,
+				Url:               ds.Url,
+				Password:          ds.Password,
+				User:              ds.User,
+				Database:          ds.Database,
+				BasicAuth:         ds.BasicAuth,
+				BasicAuthUser:     ds.BasicAuthUser,
+				BasicAuthPassword: ds.BasicAuthPassword,
+				WithCredentials:   ds.WithCredentials,
+				IsDefault:         ds.IsDefault,
+				JsonData:          ds.JsonData,
+				SecureJsonData:    ds.SecureJsonData,
+				Editable:          ds.Editable,
+				Version:           ds.Version,
+			})
+		}
 	}
 
 	for _, ds := range cfg.DeleteDatasources {
-		r.DeleteDatasources = append(r.DeleteDatasources, &DeleteDatasourceConfig{
-			OrgId: ds.OrgId,
-			Name:  ds.Name,
-		})
+		ds.OrgIds = append(ds.OrgIds, ds.OrgId)
+		for _, orgId := range ds.OrgIds {
+			r.DeleteDatasources = append(r.DeleteDatasources, &DeleteDatasourceConfig{
+				OrgId: orgId,
+				Name:  ds.Name,
+			})
+		}
 	}
 
 	return r
