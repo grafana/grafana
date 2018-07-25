@@ -56,7 +56,24 @@ export function willApplySuggestion(
   return suggestion;
 }
 
-class PromQueryField extends React.Component<any, any> {
+interface PromQueryFieldProps {
+  initialQuery?: string | null;
+  labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
+  labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
+  metrics?: string[];
+  onPressEnter?: () => void;
+  onQueryChange?: (value: string) => void;
+  portalPrefix?: string;
+  request?: (url: string) => any;
+}
+
+interface PromQueryFieldState {
+  labelKeys: { [index: string]: string[] }; // metric -> [labelKey,...]
+  labelValues: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
+  metrics: string[];
+}
+
+class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryFieldState> {
   plugins: any[];
 
   constructor(props, context) {
@@ -76,12 +93,6 @@ class PromQueryField extends React.Component<any, any> {
 
   componentDidMount() {
     this.fetchMetricNames();
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.metrics && nextProps.metrics !== this.props.metrics) {
-      this.setState({ metrics: nextProps.metrics }, this.onReceiveMetrics);
-    }
   }
 
   onChangeQuery = value => {
@@ -277,11 +288,7 @@ class PromQueryField extends React.Component<any, any> {
       const body = await (res.data || res.json());
       this.setState({ metrics: body.data }, this.onReceiveMetrics);
     } catch (error) {
-      if (this.props.onRequestError) {
-        this.props.onRequestError(error);
-      } else {
-        console.error(error);
-      }
+      console.error(error);
     }
   }
 
