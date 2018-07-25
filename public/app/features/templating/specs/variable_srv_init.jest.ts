@@ -7,16 +7,18 @@ import _ from 'lodash';
 // import { Emitter } from 'app/core/core';
 import { VariableSrv } from '../variable_srv';
 import $q from 'q';
+// import { model } from 'mobx-state-tree/dist/internal';
 
 describe('VariableSrv init', function() {
   let templateSrv = {
-    init: () => {},
-  };
-  let $injector = {
-    instantiate: (vars, model) => {
-      return new vars(model.model);
+    init: vars => {
+      this.variables = vars;
     },
+    variableInitialized: () => {},
+    updateTemplateData: () => {},
+    replace: str => str,
   };
+  let $injector = <any>{};
   let $rootscope = {
     $on: () => {},
   };
@@ -57,24 +59,35 @@ describe('VariableSrv init', function() {
         },
       };
 
-      beforeEach(function() {
+      beforeEach(async () => {
         scenario.setupFn();
-        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv);
-        ctx.variableSrv.datasource = {};
-        ctx.variableSrv.datasource.metricFindQuery = jest.fn(() => Promise.resolve(scenario.queryResult));
-
-        ctx.variableSrv.datasourceSrv = {
-          get: () => Promise.resolve(ctx.datasource),
-          getMetricSources: () => Promise.resolve(scenario.metricSources),
+        ctx = {
+          datasource: {
+            metricFindQuery: jest.fn(() => Promise.resolve(scenario.queryResult)),
+          },
+          datasourceSrv: {
+            get: () => Promise.resolve(ctx.datasource),
+            getMetricSources: () => Promise.resolve(scenario.metricSources),
+          },
+          templateSrv,
         };
+
+        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv);
+
+        $injector.instantiate = (variable, model) => {
+          return getVarMockConstructor(variable, model, ctx);
+        };
+
+        ctx.variableSrv.datasource = ctx.datasource;
+        ctx.variableSrv.datasourceSrv = ctx.datasourceSrv;
 
         ctx.variableSrv.$location.search = () => Promise.resolve(scenario.urlParams);
         ctx.variableSrv.dashboard = {
           templating: { list: scenario.variables },
-          //   events: new Emitter(),
+          // events: new Emitter(),
         };
 
-        ctx.variableSrv.init(ctx.variableSrv.dashboard);
+        await ctx.variableSrv.init(ctx.variableSrv.dashboard);
         // ctx.$rootScope.$digest();
 
         scenario.variables = ctx.variableSrv.variables;
@@ -236,3 +249,17 @@ describe('VariableSrv init', function() {
     });
   });
 });
+
+function getVarMockConstructor(variable, model, ctx) {
+  console.log(model.model.type);
+  switch (model.model.type) {
+    case 'datasource':
+      return new variable(model.model, ctx.datasourceSrv, ctx.templateSrv, ctx.variableSrv);
+    case 'query':
+      return new variable(model.model, ctx.datasourceSrv, ctx.templateSrv, ctx.variableSrv);
+    case 'interval':
+      return new variable(model.model, {}, ctx.templateSrv, ctx.variableSrv);
+    default:
+      return new variable(model.model);
+  }
+}

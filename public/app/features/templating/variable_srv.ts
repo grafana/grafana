@@ -23,6 +23,7 @@ export class VariableSrv {
 
     // init variables
     for (let variable of this.variables) {
+      console.log(variable);
       variable.initLock = this.$q.defer();
     }
 
