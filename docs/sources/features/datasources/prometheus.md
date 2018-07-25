@@ -80,7 +80,26 @@ For details of *metric names*, *label names* and *label values* are please refer
 
 > Support for `$__range` and `$__range_ms` only available from Grafana v5.3
 
-It's possible to use some global template variables in Prometheus query template variables; `$__interval`, `$__interval_ms`, `$__range` and `$__range_ms`, where `$__range` is the dashboard's current time range and `$__range_ms` is the current range in milliseconds.
+It's possible to use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range` and `$__range_ms`, see [Global built-in variables](/reference/templating/#global-built-in-variables) for more information. These can be convenient to use in conjunction with the `query_result` function when you need to filter variable queries since
+`label_values` function doesn't support queries.
+
+Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
+
+**Example usage:**
+
+Populate a variable with the the busiest 5 request instances based on average QPS over the time range shown in the dashboard:
+
+```
+Query: query_result(topk(5, sum(rate(http_requests_total[$__range])) by (instance)))
+Regex: /"([^"]+)"/
+```
+
+Populate a variable with the instances having a certain state over the time range shown in the dashboard:
+
+```
+Query: query_result(max_over_time(<metric>[$__range]) != <state>)
+Regex:
+```
 
 ### Using variables in queries
 
