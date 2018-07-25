@@ -629,7 +629,7 @@ allowed_organizations =
     team_ids =
     allowed_organizations =
     ```
-
+Note: It's important to ensure that the SERVER_ROOT_URL in Grafana is set in your Azure Application Return URLs
 <hr>
 
 ## [auth.basic]
