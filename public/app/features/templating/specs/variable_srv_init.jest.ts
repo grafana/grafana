@@ -1,13 +1,9 @@
-//import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
-
 import '../all';
 
 import _ from 'lodash';
-// import helpers from 'test/specs/helpers';
-// import { Emitter } from 'app/core/core';
 import { VariableSrv } from '../variable_srv';
 import $q from 'q';
-// import { model } from 'mobx-state-tree/dist/internal';
+// import { TemplateSrv } from '../template_srv';
 
 describe('VariableSrv init', function() {
   let templateSrv = {
@@ -16,8 +12,9 @@ describe('VariableSrv init', function() {
     },
     variableInitialized: () => {},
     updateTemplateData: () => {},
-    replace: str => str,
+    replace: () => '  /pee$/',
   };
+  // let templateSrv = new TemplateSrv();
   let $injector = <any>{};
   let $rootscope = {
     $on: () => {},
@@ -29,29 +26,8 @@ describe('VariableSrv init', function() {
     dashboard: {},
   };
 
-  //   beforeEach(angularMocks.module('grafana.core'));
-  //   beforeEach(angularMocks.module('grafana.controllers'));
-  //   beforeEach(angularMocks.module('grafana.services'));
-  //   beforeEach(
-  //     angularMocks.module(function($compileProvider) {
-  //       $compileProvider.preAssignBindingsEnabled(true);
-  //     })
-  //   );
-
-  //   beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location']));
-  //   beforeEach(
-  //     angularMocks.inject(($rootScope, $q, $location, $injector) => {
-  //       ctx.$q = $q;
-  //       ctx.$rootScope = $rootScope;
-  //       ctx.$location = $location;
-  //       ctx.variableSrv = $injector.get('variableSrv');
-  //       ctx.$rootScope.$digest();
-  //     })
-  //   );
-
   function describeInitScenario(desc, fn) {
     describe(desc, function() {
-      //   events: new Emitter(),
       var scenario: any = {
         urlParams: {},
         setup: setupFn => {
@@ -81,14 +57,12 @@ describe('VariableSrv init', function() {
         ctx.variableSrv.datasource = ctx.datasource;
         ctx.variableSrv.datasourceSrv = ctx.datasourceSrv;
 
-        ctx.variableSrv.$location.search = () => Promise.resolve(scenario.urlParams);
+        ctx.variableSrv.$location.search = () => scenario.urlParams;
         ctx.variableSrv.dashboard = {
           templating: { list: scenario.variables },
-          // events: new Emitter(),
         };
 
         await ctx.variableSrv.init(ctx.variableSrv.dashboard);
-        // ctx.$rootScope.$digest();
 
         scenario.variables = ctx.variableSrv.variables;
       });
@@ -113,6 +87,7 @@ describe('VariableSrv init', function() {
       });
 
       it('should update current value', () => {
+        console.log(type);
         expect(scenario.variables[0].current.value).toBe('new');
         expect(scenario.variables[0].current.text).toBe('new');
       });
@@ -176,6 +151,7 @@ describe('VariableSrv init', function() {
     });
 
     it('should update current value', function() {
+      console.log(ctx.variableSrv.variables[0].options);
       var variable = ctx.variableSrv.variables[0];
       expect(variable.options.length).toBe(2);
     });
@@ -251,14 +227,16 @@ describe('VariableSrv init', function() {
 });
 
 function getVarMockConstructor(variable, model, ctx) {
-  console.log(model.model.type);
+  //   console.log(model.model.type);
   switch (model.model.type) {
     case 'datasource':
-      return new variable(model.model, ctx.datasourceSrv, ctx.templateSrv, ctx.variableSrv);
+      return new variable(model.model, ctx.datasourceSrv, ctx.variableSrv, ctx.templateSrv);
     case 'query':
       return new variable(model.model, ctx.datasourceSrv, ctx.templateSrv, ctx.variableSrv);
     case 'interval':
       return new variable(model.model, {}, ctx.templateSrv, ctx.variableSrv);
+    case 'custom':
+      return new variable(model.model, ctx.variableSrv);
     default:
       return new variable(model.model);
   }
