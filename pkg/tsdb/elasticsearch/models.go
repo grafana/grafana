@@ -98,3 +98,12 @@ func describeMetric(metricType, field string) string {
 	}
 	return text + " " + field
 }
+
+type annotationQueryModel struct {
+	timeField   string
+	tagsField   string
+	textField   string
+	titleField  string
+	queryString string
+	refID       string
+}
