@@ -1,40 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_POSTGRES_TEST",
-      "label": "Postgres TEST",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "postgres",
-      "pluginName": "PostgreSQL"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "postgres",
-      "name": "PostgreSQL",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "table",
-      "name": "Table",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -47,7 +11,7 @@
         "type": "dashboard"
       },
       {
-        "datasource": "${DS_POSTGRES_TEST}",
+        "datasource": "gdev-postgres-ds-tests",
         "enable": false,
         "hide": false,
         "iconColor": "#6ed0e0",
@@ -59,7 +23,7 @@
         "type": "tags"
       },
       {
-        "datasource": "${DS_POSTGRES_TEST}",
+        "datasource": "gdev-postgres-ds-tests",
         "enable": false,
         "hide": false,
         "iconColor": "rgba(255, 96, 96, 1)",
@@ -71,7 +35,7 @@
         "type": "tags"
       },
       {
-        "datasource": "${DS_POSTGRES_TEST}",
+        "datasource": "gdev-postgres-ds-tests",
         "enable": false,
         "hide": false,
         "iconColor": "#7eb26d",
@@ -83,7 +47,7 @@
         "type": "tags"
       },
       {
-        "datasource": "${DS_POSTGRES_TEST}",
+        "datasource": "gdev-postgres-ds-tests",
         "enable": false,
         "hide": false,
         "iconColor": "#1f78c1",
@@ -96,16 +60,17 @@
       }
     ]
   },
+  "description": "Run the postgres unit tests to generate the data backing this dashboard",
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1523320929325,
+  "id": 38,
+  "iteration": 1532619575136,
   "links": [],
   "panels": [
     {
       "columns": [],
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 4,
@@ -152,7 +117,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -206,7 +171,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -260,7 +225,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -314,7 +279,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -371,7 +336,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -454,7 +419,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -537,7 +502,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -620,7 +585,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -703,7 +668,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -786,7 +751,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -869,7 +834,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -962,7 +927,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1047,7 +1012,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1140,7 +1105,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1225,7 +1190,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1318,7 +1283,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1403,7 +1368,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1496,7 +1461,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1581,7 +1546,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1675,7 +1640,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1762,7 +1727,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1856,7 +1821,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1943,7 +1908,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -2037,7 +2002,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -2124,7 +2089,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -2218,7 +2183,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRES_TEST}",
+      "datasource": "gdev-postgres-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -2304,22 +2269,46 @@
   "refresh": false,
   "schemaVersion": 16,
   "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "postgres"],
   "templating": {
     "list": [
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_POSTGRES_TEST}",
+        "current": {
+          "selected": true,
+          "tags": [],
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": "gdev-postgres-ds-tests",
         "hide": 0,
         "includeAll": true,
         "label": "Metric",
         "multi": true,
         "name": "metric",
-        "options": [],
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "Metric A",
+            "value": "Metric A"
+          },
+          {
+            "selected": false,
+            "text": "Metric B",
+            "value": "Metric B"
+          }
+        ],
         "query": "SELECT DISTINCT measurement FROM metric_values",
-        "refresh": 1,
+        "refresh": 0,
         "regex": "",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -2372,6 +2361,7 @@
         ],
         "query": "1s,10s,30s,1m,5m,10m",
         "refresh": 2,
+        "skipUrlSync": false,
         "type": "interval"
       }
     ]
@@ -2406,7 +2396,7 @@
     ]
   },
   "timezone": "",
-  "title": "Postgres Data Source Test",
+  "title": "Datasource tests - Postgres (unittest)",
   "uid": "vHQdlVziz",
-  "version": 14
+  "version": 17
 }
