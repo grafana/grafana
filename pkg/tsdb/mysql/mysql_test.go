@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -21,8 +22,9 @@ import (
 // The tests require a MySQL db named grafana_ds_tests and a user/password grafana/password
 // Use the docker/blocks/mysql_tests/docker-compose.yaml to spin up a
 // preconfigured MySQL server suitable for running these tests.
-// There is also a dashboard.json in same directory that you can import to Grafana
-// once you've created a datasource for the test server/database.
+// There is also a datasource and dashboard provisioned by devenv scripts that you can
+// use to verify that the generated data are vizualized as expected, see
+// devenv/README.md for setup instructions.
 func TestMySQL(t *testing.T) {
 	// change to true to run the MySQL tests
 	runMySqlTests := false
@@ -35,18 +37,24 @@ func TestMySQL(t *testing.T) {
 	Convey("MySQL", t, func() {
 		x := InitMySQLTestDB(t)
 
-		endpoint := &MysqlQueryEndpoint{
-			sqlEngine: &tsdb.DefaultSqlEngine{
-				MacroEngine: NewMysqlMacroEngine(),
-				XormEngine:  x,
-			},
-			log: log.New("tsdb.mysql"),
+		origXormEngine := tsdb.NewXormEngine
+		tsdb.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+			return x, nil
 		}
 
-		sess := x.NewSession()
-		defer sess.Close()
+		endpoint, err := newMysqlQueryEndpoint(&models.DataSource{
+			JsonData:       simplejson.New(),
+			SecureJsonData: securejsondata.SecureJsonData{},
+		})
+		So(err, ShouldBeNil)
 
+		sess := x.NewSession()
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
+
+		Reset(func() {
+			sess.Close()
+			tsdb.NewXormEngine = origXormEngine
+		})
 
 		Convey("Given a table with different native data types", func() {
 			if exists, err := sess.IsTableExist("mysql_types"); err != nil || exists {
