@@ -7,7 +7,7 @@ import moment from 'moment';
 describe('SingleStatCtrl', function() {
   let ctx = <any>{};
   let epoch = 1505826363746;
-  let clock;
+  Date.now = () => epoch;
 
   let $scope = {
     $on: () => {},
@@ -24,7 +24,7 @@ describe('SingleStatCtrl', function() {
     },
   };
   SingleStatCtrl.prototype.dashboard = {
-    isTimezoneUtc: () => {},
+    isTimezoneUtc: jest.fn(() => true),
   };
 
   function singleStatScenario(desc, func) {
@@ -89,29 +89,30 @@ describe('SingleStatCtrl', function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
+      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
     });
 
     it('Should use time instead of value', function() {
-      console.log(ctx.data.value);
       expect(ctx.data.value).toBe(1505634997920);
       expect(ctx.data.valueRounded).toBe(1505634997920);
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).toBe(moment(1505634997920).format('YYYY-MM-DD HH:mm:ss'));
+      expect(ctx.data.valueFormatted).toBe('2017-09-17 09:56:37');
     });
   });
 
   singleStatScenario('showing last iso time instead of value (in UTC)', function(ctx) {
     ctx.setup(function() {
-      ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
+      ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 5000]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
       //   ctx.setIsUtc(true);
+      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
     });
 
-    it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).toBe(moment.utc(1505634997920).format('YYYY-MM-DD HH:mm:ss'));
+    it('should set value', function() {
+      expect(ctx.data.valueFormatted).toBe('1970-01-01 00:00:05');
     });
   });
 
@@ -120,6 +121,7 @@ describe('SingleStatCtrl', function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
+      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
     });
 
     it('Should use time instead of value', function() {
@@ -134,21 +136,22 @@ describe('SingleStatCtrl', function() {
 
   singleStatScenario('showing last us time instead of value (in UTC)', function(ctx) {
     ctx.setup(function() {
-      ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
+      ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 5000]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
       //   ctx.setIsUtc(true);
+      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).toBe(moment.utc(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
+      expect(ctx.data.valueFormatted).toBe('01/01/1970 12:00:05 am');
     });
   });
 
   singleStatScenario('showing last time from now instead of value', function(ctx) {
     beforeEach(() => {
       //   clock = sinon.useFakeTimers(epoch);
-      jest.useFakeTimers();
+      //jest.useFakeTimers();
     });
 
     ctx.setup(function() {
@@ -167,16 +170,11 @@ describe('SingleStatCtrl', function() {
     });
 
     afterEach(() => {
-      jest.clearAllTimers();
+      //   jest.clearAllTimers();
     });
   });
 
   singleStatScenario('showing last time from now instead of value (in UTC)', function(ctx) {
-    beforeEach(() => {
-      //   clock = sinon.useFakeTimers(epoch);
-      jest.useFakeTimers();
-    });
-
     ctx.setup(function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
       ctx.ctrl.panel.valueName = 'last_time';
@@ -186,10 +184,6 @@ describe('SingleStatCtrl', function() {
 
     it('should set formatted value', function() {
       expect(ctx.data.valueFormatted).toBe('2 days ago');
-    });
-
-    afterEach(() => {
-      jest.clearAllTimers();
     });
   });
 
