@@ -3,7 +3,6 @@ import '../all';
 import _ from 'lodash';
 import { VariableSrv } from '../variable_srv';
 import $q from 'q';
-// import { TemplateSrv } from '../template_srv';
 
 describe('VariableSrv init', function() {
   let templateSrv = {
@@ -12,22 +11,21 @@ describe('VariableSrv init', function() {
     },
     variableInitialized: () => {},
     updateTemplateData: () => {},
-    replace: () => '  /pee$/',
+    replace: str =>
+      str.replace(this.regex, match => {
+        return match;
+      }),
   };
-  // let templateSrv = new TemplateSrv();
+
   let $injector = <any>{};
   let $rootscope = {
     $on: () => {},
   };
 
-  let ctx = <any>{
-    datasourceSrv: {},
-    $location: {},
-    dashboard: {},
-  };
+  let ctx = <any>{};
 
   function describeInitScenario(desc, fn) {
-    describe(desc, function() {
+    describe(desc, () => {
       var scenario: any = {
         urlParams: {},
         setup: setupFn => {
@@ -43,7 +41,7 @@ describe('VariableSrv init', function() {
           },
           datasourceSrv: {
             get: () => Promise.resolve(ctx.datasource),
-            getMetricSources: () => Promise.resolve(scenario.metricSources),
+            getMetricSources: () => scenario.metricSources,
           },
           templateSrv,
         };
@@ -87,7 +85,6 @@ describe('VariableSrv init', function() {
       });
 
       it('should update current value', () => {
-        console.log(type);
         expect(scenario.variables[0].current.value).toBe('new');
         expect(scenario.variables[0].current.text).toBe('new');
       });
@@ -150,8 +147,7 @@ describe('VariableSrv init', function() {
       ];
     });
 
-    it('should update current value', function() {
-      console.log(ctx.variableSrv.variables[0].options);
+    it('should update current value', () => {
       var variable = ctx.variableSrv.variables[0];
       expect(variable.options.length).toBe(2);
     });
@@ -175,7 +171,7 @@ describe('VariableSrv init', function() {
       scenario.urlParams['var-apps'] = ['val2', 'val1'];
     });
 
-    it('should update current value', function() {
+    it('should update current value', () => {
       var variable = ctx.variableSrv.variables[0];
       expect(variable.current.value.length).toBe(2);
       expect(variable.current.value[0]).toBe('val2');
@@ -185,7 +181,7 @@ describe('VariableSrv init', function() {
       expect(variable.options[1].selected).toBe(true);
     });
 
-    it('should set options that are not in value to selected false', function() {
+    it('should set options that are not in value to selected false', () => {
       var variable = ctx.variableSrv.variables[0];
       expect(variable.options[2].selected).toBe(false);
     });
@@ -209,7 +205,7 @@ describe('VariableSrv init', function() {
       scenario.urlParams['var-apps'] = ['val2', 'val1'];
     });
 
-    it('should update current value', function() {
+    it('should update current value', () => {
       var variable = ctx.variableSrv.variables[0];
       expect(variable.current.value.length).toBe(2);
       expect(variable.current.value[0]).toBe('val2');
@@ -219,7 +215,7 @@ describe('VariableSrv init', function() {
       expect(variable.options[1].selected).toBe(true);
     });
 
-    it('should set options that are not in value to selected false', function() {
+    it('should set options that are not in value to selected false', () => {
       var variable = ctx.variableSrv.variables[0];
       expect(variable.options[2].selected).toBe(false);
     });
@@ -227,7 +223,6 @@ describe('VariableSrv init', function() {
 });
 
 function getVarMockConstructor(variable, model, ctx) {
-  //   console.log(model.model.type);
   switch (model.model.type) {
     case 'datasource':
       return new variable(model.model, ctx.datasourceSrv, ctx.variableSrv, ctx.templateSrv);
