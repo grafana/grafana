@@ -89,7 +89,7 @@ jobs:
           name: run linters
           command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
       - run:
-          name: run go vet 
+          name: run go vet
           command: 'go vet ./pkg/...'
 
   test-frontend:
@@ -158,6 +158,16 @@ jobs:
             - scripts/publish
       - store_artifacts:
           path: dist
+
+    build-deploy-docker-master:
+      docker:
+        - image: docker:stable-git
+      steps:
+        - checkout
+        - setup_remote_docker
+        - run: docker info
+        - run: echo $GRAFANA_VERSION
+        - run: ./build.sh ${GRAFANA_VERSION}
 
   build-enterprise:
     docker:
@@ -246,7 +256,7 @@ workflows:
   test-and-build:
     jobs:
       - build-all:
-          filters: *filter-only-master
+          filters: *filter-not-release
       - build-enterprise:
           filters: *filter-only-master
       - codespell:
@@ -270,7 +280,19 @@ workflows:
             - gometalinter
             - mysql-integration-test
             - postgres-integration-test
-          filters: *filter-only-master           
+          filters: *filter-only-master
+      - build-deploy-docker-master:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters:
+            branches:
+              only: grafana-docker
       - deploy-enterprise-master:
           requires:
             - build-all
