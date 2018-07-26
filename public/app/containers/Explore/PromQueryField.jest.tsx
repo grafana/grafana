@@ -11,25 +11,23 @@ describe('PromQueryField typeahead handling', () => {
     request: () => ({ data: { data: [] } }),
   };
 
-  it('returns no suggestions on emtpty context', () => {
+  it('returns default suggestions on emtpty context', () => {
     const instance = shallow(<PromQueryField {...defaultProps} />).instance() as PromQueryField;
-    const result = instance.getTypeahead('', 0, []);
-    expect(result.context).toBe(null);
-    expect(result.prefix).toBe('');
-    expect(result.refresher).toBe(null);
-    expect(result.suggestions).toEqual([]);
+    const result = instance.getTypeahead({ text: '', prefix: '', wrapperClasses: [] });
+    expect(result.context).toBeUndefined();
+    expect(result.refresher).toBeUndefined();
+    expect(result.suggestions.length).toEqual(2);
   });
 
   describe('range suggestions', () => {
     it('returns range suggestions in range context', () => {
       const instance = shallow(<PromQueryField {...defaultProps} />).instance() as PromQueryField;
-      const result = instance.getTypeahead('1', 1, ['context-range']);
+      const result = instance.getTypeahead({ text: '1', prefix: '1', wrapperClasses: ['context-range'] });
       expect(result.context).toBe('context-range');
-      expect(result.prefix).toBe('1');
-      expect(result.refresher).toBe(null);
+      expect(result.refresher).toBeUndefined();
       expect(result.suggestions).toEqual([
         {
-          items: [{ text: '1m' }, { text: '5m' }, { text: '10m' }, { text: '30m' }, { text: '1h' }],
+          items: [{ label: '1m' }, { label: '5m' }, { label: '10m' }, { label: '30m' }, { label: '1h' }],
           label: 'Range vector',
         },
       ]);
@@ -41,48 +39,56 @@ describe('PromQueryField typeahead handling', () => {
       const instance = shallow(
         <PromQueryField {...defaultProps} metrics={['foo', 'bar']} />
       ).instance() as PromQueryField;
-      const result = instance.getTypeahead('a', 1, []);
-      expect(result.context).toBe('context-metrics');
-      expect(result.prefix).toBe('a');
-      expect(result.refresher).toBe(null);
-      expect(result.suggestions).toEqual([{ items: [{ text: 'foo' }, { text: 'bar' }], label: 'Metrics' }]);
+      const result = instance.getTypeahead({ text: 'a', prefix: 'a', wrapperClasses: [] });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions.length).toEqual(2);
     });
 
-    it('returns metrics suggestions after a binary operator', () => {
+    it('returns default suggestions after a binary operator', () => {
       const instance = shallow(
         <PromQueryField {...defaultProps} metrics={['foo', 'bar']} />
       ).instance() as PromQueryField;
-      const result = instance.getTypeahead('*', 1, []);
-      expect(result.context).toBe('context-metrics');
-      expect(result.prefix).toBe('');
-      expect(result.refresher).toBe(null);
-      expect(result.suggestions).toEqual([{ items: [{ text: 'foo' }, { text: 'bar' }], label: 'Metrics' }]);
+      const result = instance.getTypeahead({ text: '*', prefix: '', wrapperClasses: [] });
+      expect(result.context).toBeUndefined();
+      expect(result.refresher).toBeUndefined();
+      expect(result.suggestions.length).toEqual(2);
     });
   });
 
   describe('label suggestions', () => {
     it('returns default label suggestions on label context and no metric', () => {
       const instance = shallow(<PromQueryField {...defaultProps} />).instance() as PromQueryField;
-      const result = instance.getTypeahead('j', 1, ['context-labels']);
+      const result = instance.getTypeahead({ text: 'j', prefix: 'j', wrapperClasses: ['context-labels'] });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ text: 'job' }, { text: 'instance' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([{ items: [{ label: 'job' }, { label: 'instance' }], label: 'Labels' }]);
     });
 
     it('returns label suggestions on label context and metric', () => {
       const instance = shallow(
         <PromQueryField {...defaultProps} labelKeys={{ foo: ['bar'] }} />
       ).instance() as PromQueryField;
-      const result = instance.getTypeahead('job', 3, ['context-labels'], 'foo');
+      const result = instance.getTypeahead({
+        text: 'job',
+        prefix: 'job',
+        wrapperClasses: ['context-labels'],
+        metric: 'foo',
+      });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ text: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
     });
 
     it('returns a refresher on label context and unavailable metric', () => {
       const instance = shallow(
         <PromQueryField {...defaultProps} labelKeys={{ foo: ['bar'] }} />
       ).instance() as PromQueryField;
-      const result = instance.getTypeahead('job', 3, ['context-labels'], 'xxx');
-      expect(result.context).toBe(null);
+      const result = instance.getTypeahead({
+        text: 'job',
+        prefix: 'job',
+        wrapperClasses: ['context-labels'],
+        metric: 'xxx',
+      });
+      expect(result.context).toBeUndefined();
       expect(result.refresher).toBeInstanceOf(Promise);
       expect(result.suggestions).toEqual([]);
     });
@@ -91,18 +97,29 @@ describe('PromQueryField typeahead handling', () => {
       const instance = shallow(
         <PromQueryField {...defaultProps} labelKeys={{ foo: ['bar'] }} labelValues={{ foo: { bar: ['baz'] } }} />
       ).instance() as PromQueryField;
-      const result = instance.getTypeahead('=ba', 3, ['context-labels'], 'foo', 'bar');
+      const result = instance.getTypeahead({
+        text: '=ba',
+        prefix: 'ba',
+        wrapperClasses: ['context-labels'],
+        metric: 'foo',
+        labelKey: 'bar',
+      });
       expect(result.context).toBe('context-label-values');
-      expect(result.suggestions).toEqual([{ items: [{ text: 'baz' }], label: 'Label values' }]);
+      expect(result.suggestions).toEqual([{ items: [{ label: 'baz' }], label: 'Label values' }]);
     });
 
     it('returns label suggestions on aggregation context and metric', () => {
       const instance = shallow(
         <PromQueryField {...defaultProps} labelKeys={{ foo: ['bar'] }} />
       ).instance() as PromQueryField;
-      const result = instance.getTypeahead('job', 3, ['context-aggregation'], 'foo');
+      const result = instance.getTypeahead({
+        text: 'job',
+        prefix: 'job',
+        wrapperClasses: ['context-aggregation'],
+        metric: 'foo',
+      });
       expect(result.context).toBe('context-aggregation');
-      expect(result.suggestions).toEqual([{ items: [{ text: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
     });
   });
 });

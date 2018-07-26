@@ -101,7 +101,7 @@ export interface SuggestionGroup {
 
 interface TypeaheadFieldProps {
   additionalPlugins?: any[];
-  cleanText: (text: string) => string;
+  cleanText?: (text: string) => string;
   initialValue: string | null;
   onBlur?: () => void;
   onFocus?: () => void;
@@ -122,16 +122,15 @@ export interface TypeaheadFieldState {
 }
 
 export interface TypeaheadInput {
-  selection?: Selection;
   editorNode: Element;
-  wrapperNode: Element;
-  offset: number;
+  prefix: string;
+  selection?: Selection;
   text: string;
+  wrapperNode: Element;
 }
 
 export interface TypeaheadOutput {
   context?: string;
-  prefix: string;
   refresher?: Promise<{}>;
   suggestions: SuggestionGroup[];
 }
@@ -199,7 +198,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
 
   handleTypeahead = _.debounce(async () => {
     const selection = window.getSelection();
-    const { onTypeahead } = this.props;
+    const { cleanText, onTypeahead } = this.props;
 
     if (onTypeahead && selection.anchorNode) {
       const wrapperNode = selection.anchorNode.parentElement;
@@ -212,13 +211,17 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
       const range = selection.getRangeAt(0);
       const offset = range.startOffset;
       const text = selection.anchorNode.textContent;
+      let prefix = text.substr(0, offset);
+      if (cleanText) {
+        prefix = cleanText(prefix);
+      }
 
-      const { suggestions, prefix, context, refresher } = onTypeahead({
-        selection,
+      const { suggestions, context, refresher } = onTypeahead({
         editorNode,
-        wrapperNode,
-        offset,
+        prefix,
+        selection,
         text,
+        wrapperNode,
       });
 
       const filteredSuggestions = suggestions
@@ -274,7 +277,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
 
     // Remove the current, incomplete text and replace it with the selected suggestion
     const backward = suggestion.deleteBackwards || typeaheadPrefix.length;
-    const text = cleanText(typeaheadText);
+    const text = cleanText ? cleanText(typeaheadText) : typeaheadText;
     const suffixLength = text.length - typeaheadPrefix.length;
     const offset = typeaheadText.indexOf(typeaheadPrefix);
     const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);

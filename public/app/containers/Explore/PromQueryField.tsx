@@ -73,6 +73,14 @@ interface PromQueryFieldState {
   metrics: string[];
 }
 
+interface PromTypeaheadInput {
+  text: string;
+  prefix: string;
+  wrapperClasses: string[];
+  metric?: string;
+  labelKey?: string;
+}
+
 class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryFieldState> {
   plugins: any[];
 
@@ -111,7 +119,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
   };
 
   onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
-    const { editorNode, offset, text, wrapperNode } = typeahead;
+    const { editorNode, prefix, text, wrapperNode } = typeahead;
 
     // Get DOM-dependent context
     const wrapperClasses = Array.from(wrapperNode.classList);
@@ -121,35 +129,90 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     const labelKeyNode = getPreviousCousin(wrapperNode, '.attr-name');
     const labelKey = labelKeyNode && labelKeyNode.textContent;
 
-    const result = this.getTypeahead(text, offset, wrapperClasses, metric, labelKey);
+    const result = this.getTypeahead({ text, prefix, wrapperClasses, metric, labelKey });
 
-    console.log('handleTypeahead', wrapperClasses, text, offset, result.prefix, result.context);
+    console.log('handleTypeahead', wrapperClasses, text, prefix, result.context);
 
     return result;
   };
 
   // Keep this DOM-free for testing
-  getTypeahead(
-    text: string,
-    offset: number,
-    wrapperClasses: string[],
-    metric?: string,
-    labelKey?: string
-  ): TypeaheadOutput {
-    // Determine candidates by context
-    let context: string | null = null;
+  getTypeahead({ prefix, wrapperClasses, metric, text }: PromTypeaheadInput): TypeaheadOutput {
+    // Determine candidates by CSS context
+    if (_.includes(wrapperClasses, 'context-range')) {
+      // Suggestions for metric[|]
+      return this.getRangeTypeahead();
+    } else if (_.includes(wrapperClasses, 'context-labels')) {
+      // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
+      return this.getLabelTypeahead.apply(this, arguments);
+    } else if (metric && _.includes(wrapperClasses, 'context-aggregation')) {
+      return this.getAggregationTypeahead.apply(this, arguments);
+    } else if (
+      // Non-empty but not inside known token unless it's a metric
+      (prefix && !_.includes(wrapperClasses, 'token')) ||
+      prefix === metric ||
+      (prefix === '' && !text.match(/^[)\s]+$/)) || // Empty context or after ')'
+      text.match(/[+\-*/^%]/) // After binary operator
+    ) {
+      return this.getEmptyTypeahead();
+    }
+
+    return {
+      suggestions: [],
+    };
+  }
+
+  getEmptyTypeahead(): TypeaheadOutput {
+    const suggestions: SuggestionGroup[] = [];
+    suggestions.push({
+      prefixMatch: true,
+      label: 'Functions',
+      items: FUNCTIONS.map(setFunctionMove),
+    });
+
+    if (this.state.metrics) {
+      suggestions.push({
+        label: 'Metrics',
+        items: this.state.metrics.map(wrapLabel),
+      });
+    }
+    return { suggestions };
+  }
+
+  getRangeTypeahead(): TypeaheadOutput {
+    return {
+      context: 'context-range',
+      suggestions: [
+        {
+          label: 'Range vector',
+          items: [...RATE_RANGES].map(wrapLabel),
+        },
+      ],
+    };
+  }
+
+  getAggregationTypeahead({ metric }: PromTypeaheadInput): TypeaheadOutput {
     let refresher: Promise<any> = null;
     const suggestions: SuggestionGroup[] = [];
-    const prefix = cleanText(text.substr(0, offset));
+    const labelKeys = this.state.labelKeys[metric];
+    if (labelKeys) {
+      suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
+    } else {
+      refresher = this.fetchMetricLabels(metric);
+    }
 
-    if (_.includes(wrapperClasses, 'context-range')) {
-      // Rate ranges
-      context = 'context-range';
-      suggestions.push({
-        label: 'Range vector',
-        items: [...RATE_RANGES].map(wrapLabel),
-      });
-    } else if (_.includes(wrapperClasses, 'context-labels') && metric) {
+    return {
+      refresher,
+      suggestions,
+      context: 'context-aggregation',
+    };
+  }
+
+  getLabelTypeahead({ metric, text, wrapperClasses, labelKey }: PromTypeaheadInput): TypeaheadOutput {
+    let context: string;
+    let refresher: Promise<any> = null;
+    const suggestions: SuggestionGroup[] = [];
+    if (metric) {
       const labelKeys = this.state.labelKeys[metric];
       if (labelKeys) {
         if ((text && text.startsWith('=')) || _.includes(wrapperClasses, 'attr-value')) {
@@ -170,8 +233,8 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
       } else {
         refresher = this.fetchMetricLabels(metric);
       }
-    } else if (_.includes(wrapperClasses, 'context-labels') && !metric) {
-      // Empty name queries
+    } else {
+      // Metric-independent label queries
       const defaultKeys = ['job', 'instance'];
       // Munge all keys that we have seen together
       const labelKeys = Object.keys(this.state.labelKeys).reduce((acc, metric) => {
@@ -197,41 +260,8 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
         context = 'context-labels';
         suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
       }
-    } else if (metric && _.includes(wrapperClasses, 'context-aggregation')) {
-      context = 'context-aggregation';
-      const labelKeys = this.state.labelKeys[metric];
-      if (labelKeys) {
-        suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
-      } else {
-        refresher = this.fetchMetricLabels(metric);
-      }
-    } else if (
-      // Non-empty but not inside known token unless it's a metric
-      (prefix && !_.includes(wrapperClasses, 'token')) ||
-      prefix === metric ||
-      (prefix === '' && !text.match(/^[)\s]+$/)) || // Empty context or after ')'
-      text.match(/[+\-*/^%]/) // After binary operator
-    ) {
-      suggestions.push({
-        prefixMatch: true,
-        label: 'Functions',
-        items: FUNCTIONS.map(setFunctionMove),
-      });
-
-      if (this.state.metrics) {
-        suggestions.push({
-          label: 'Metrics',
-          items: this.state.metrics.map(wrapLabel),
-        });
-      }
     }
-
-    return {
-      context,
-      prefix,
-      refresher,
-      suggestions,
-    };
+    return { context, refresher, suggestions };
   }
 
   request = url => {
