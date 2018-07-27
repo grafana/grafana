@@ -24,12 +24,15 @@ var newAnnotationQuery = func(client es.Client, tsdbQuery *tsdb.TsdbQuery) query
 
 func (e *annotationQuery) execute() (*tsdb.Response, error) {
 	query := e.tsdbQuery.Queries[0]
+	at, ok := query.Model.CheckGet("annotation")
+	if !ok {
+		return nil, fmt.Errorf("required property annotation is missing")
+	}
 	queryModel := annotationQueryModel{
-		timeField:   query.Model.Get("timeField").MustString(e.client.GetTimeField()),
-		tagsField:   query.Model.Get("tagsField").MustString("tags"),
-		textField:   query.Model.Get("textField").MustString(),
-		titleField:  query.Model.Get("titleField").MustString(),
-		queryString: query.Model.Get("query").MustString(),
+		timeField:   at.Get("timeField").MustString(e.client.GetTimeField()),
+		tagsField:   at.Get("tagsField").MustString("tags"),
+		textField:   at.Get("textField").MustString(),
+		queryString: at.Get("query").MustString(),
 		refID:       query.RefId,
 	}
 
@@ -136,17 +139,6 @@ func (rp *annotationQueryResponseTransformer) transform() (*tsdb.Response, error
 
 			if t, ok := tags.(string); ok {
 				tags = strings.Split(t, ",")
-			}
-
-			if queryModel.titleField != "" {
-				extractedTitle := getFieldFromSource(source, queryModel.titleField)
-				if title, ok := extractedTitle.(string); ok {
-					if strText, ok := text.(string); ok {
-						text = title + "\n" + strText
-					} else {
-						text = title
-					}
-				}
 			}
 
 			table.Rows = append(table.Rows, tsdb.RowValues{timeMs, text, tags})

@@ -103,7 +103,6 @@ type annotationQueryModel struct {
 	timeField   string
 	tagsField   string
 	textField   string
-	titleField  string
 	queryString string
 	refID       string
 }

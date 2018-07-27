@@ -26,7 +26,7 @@ func TestExecuteFieldsQuery(t *testing.T) {
 		Convey("When executing fields query should extract field type filter", func() {
 			c := newFakeClient(2)
 			_, err := executeFieldsQuery(c, `{
-				"type": "date"
+				"fieldTypeFilter": "date"
 			}`, "A")
 			So(err, ShouldBeNil)
 			So(extractedFieldTypeFilter, ShouldEqual, "date")

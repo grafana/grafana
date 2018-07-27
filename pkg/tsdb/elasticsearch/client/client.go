@@ -162,15 +162,22 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*h
 	c.meta.Get("request").Set("method", method)
 	c.meta.Get("request").Set("uri", uriPath)
 	u, _ := url.Parse(c.ds.Url)
-	u.Path = path.Join(u.Path, uriPath)
+	uriParts := strings.Split(uriPath, "?")
+	u.Path = path.Join(u.Path, uriParts[0])
+	url := u.String()
+
+	if len(uriParts) > 1 {
+		url = url + "?" + uriParts[1]
+		fmt.Println(url)
+	}
 
 	var req *http.Request
 	var err error
 	if method == http.MethodPost {
 		c.meta.Get("request").Set("body", string(body))
-		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
+		req, err = http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
 	} else {
-		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		req, err = http.NewRequest(http.MethodGet, url, nil)
 	}
 	if err != nil {
 		return nil, err
@@ -305,6 +312,14 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 
 	msr.StatusCode = res.StatusCode
 
+	if len(msr.Responses) == 0 && len(msr.Error) > 0 {
+		msr.Responses = []*SearchResponse{
+			{
+				Error: msr.Error,
+			},
+		}
+	}
+
 	for _, v := range msr.Responses {
 		v.StatusCode = res.StatusCode
 	}
@@ -411,7 +426,7 @@ func (c *baseClientImpl) replaceVariables(payload []byte, interval tsdb.Interval
 
 func newMeta() *simplejson.Json {
 	return simplejson.NewFromAny(map[string]interface{}{
-		"request":  nil,
-		"response": nil,
+		"request":  map[string]interface{}{},
+		"response": map[string]interface{}{},
 	})
 }

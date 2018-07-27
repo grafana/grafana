@@ -159,7 +159,8 @@ func TestClient(t *testing.T) {
 					Convey("Should send correct request and payload", func() {
 						So(req, ShouldNotBeNil)
 						So(req.Method, ShouldEqual, http.MethodPost)
-						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search?search_type=count&ignore_unavailable=true")
+						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search")
+						So(req.URL.RawQuery, ShouldEqual, "search_type=count&ignore_unavailable=true")
 
 						So(responseBuffer, ShouldNotBeNil)
 						bodyBytes := responseBuffer.Bytes()
@@ -288,7 +289,8 @@ func TestClient(t *testing.T) {
 					Convey("Should send correct request and payload", func() {
 						So(req, ShouldNotBeNil)
 						So(req.Method, ShouldEqual, http.MethodPost)
-						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search?search_type=query_then_fetch&ignore_unavailable=true")
+						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search")
+						So(req.URL.RawQuery, ShouldEqual, "search_type=query_then_fetch&ignore_unavailable=true")
 
 						So(responseBuffer, ShouldNotBeNil)
 						bodyBytes := responseBuffer.Bytes()
@@ -417,7 +419,8 @@ func TestClient(t *testing.T) {
 					Convey("Should send correct request and payload", func() {
 						So(req, ShouldNotBeNil)
 						So(req.Method, ShouldEqual, http.MethodPost)
-						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search?search_type=query_then_fetch&max_concurrent_shard_requests=100&ignore_unavailable=true")
+						So(req.URL.Path, ShouldEqual, "/metrics-2018.05.15/_search")
+						So(req.URL.RawQuery, ShouldEqual, "search_type=query_then_fetch&max_concurrent_shard_requests=100&ignore_unavailable=true")
 
 						So(responseBuffer, ShouldNotBeNil)
 						bodyBytes := responseBuffer.Bytes()
