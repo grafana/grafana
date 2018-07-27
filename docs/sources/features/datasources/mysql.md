@@ -103,7 +103,7 @@ The resulting table panel:
 
 If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch.
 Any column except `time` and `metric` is treated as a value column.
-You may return a column named `metric` that is used as metric name for the value column.
+You may return a column named `metric` that is used as metric name for the value column. If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name.
 
 **Example with `metric` column:**
 
