@@ -293,6 +293,7 @@ describe('SingleStatCtrl', function() {
       ctx.setup(function() {
         ctx.data = tableData;
         ctx.data[0].rows[0] = [1492759673649, 'ignore1', 99.99999, 'ignore2'];
+        ctx.ctrl.panel.mappingType = 0;
         ctx.ctrl.panel.tableColumn = 'mean';
       });
 
@@ -310,6 +311,7 @@ describe('SingleStatCtrl', function() {
       ctx.setup(function() {
         ctx.data = tableData;
         ctx.data[0].rows[0] = [1492759673649, 'ignore1', 9.9, 'ignore2'];
+        ctx.ctrl.panel.mappingType = 2;
         ctx.ctrl.panel.tableColumn = 'mean';
         ctx.ctrl.panel.valueMaps = [{ value: '10', text: 'OK' }];
       });

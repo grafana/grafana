@@ -310,14 +310,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueRounded = data.value;
         data.valueFormatted = formatFunc(data.value, this.dashboard.isTimezoneUtc());
       } else {
-        // console.log(lastPoint, lastValue);
-        // console.log(this.panel.valueName);
-        // console.log(this.panel);
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
 
         let decimalInfo = this.getDecimalsForValue(data.value);
-        console.log(decimalInfo);
         let formatFunc = kbn.valueFormats[this.panel.format];
         data.valueFormatted = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
