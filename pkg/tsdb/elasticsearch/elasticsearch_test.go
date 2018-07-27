@@ -39,11 +39,26 @@ import (
 // 		return &fakeQueryEndpoint{}
 // 	}
 
+// <<<<<<< HEAD
 // 	Convey("Should return error for empty query", func() {
 // 		_, err = esQueryExecutor.Query(context.TODO(), &ds, &tsdb.TsdbQuery{})
 // 		So(err, ShouldNotBeNil)
 // 		So(err.Error(), ShouldEqual, "query contains no queries")
 // 	})
+// =======
+// annotationQueryCreated := false
+// origNewAnnotationQuery := newAnnotationQuery
+// newAnnotationQuery = func(client es.Client, tsdbQuery *tsdb.TsdbQuery) queryEndpoint {
+// 	annotationQueryCreated = true
+// 	return &fakeQueryEndpoint{}
+// }
+
+// Convey("Should return error for empty query", func() {
+// 	_, err = esQueryExecutor.Query(context.TODO(), &ds, &tsdb.TsdbQuery{})
+// 	So(err, ShouldNotBeNil)
+// 	So(err.Error(), ShouldEqual, "query contains no queries")
+// })
+// >>>>>>> 53ed0f85e5... elasticsearch: handle annotation query
 
 // 	Convey("Should fallback to time series query", func() {
 // 		_, err = esQueryExecutor.Query(context.TODO(), &ds, &tsdb.TsdbQuery{
@@ -85,6 +100,7 @@ import (
 // 		So(getTermsQueryCreated, ShouldBeTrue)
 // 	})
 
+// <<<<<<< HEAD
 // 	Reset(func() {
 // 		es.NewClient = origNewClient
 // 		newTimeSeriesQuery = origNewTimeSeriesQuery
@@ -93,6 +109,31 @@ import (
 // 	})
 // })
 // }
+// =======
+// 		Convey("Should handle annotation query", func() {
+// 			_, err = esQueryExecutor.Query(context.TODO(), &ds, &tsdb.TsdbQuery{
+// 				Queries: []*tsdb.Query{
+// 					{
+// 						Model: simplejson.NewFromAny(map[string]interface{}{
+// 							"queryType": "annotation",
+// 						}),
+// 					},
+// 				},
+// 			})
+// 			So(err, ShouldBeNil)
+// 			So(annotationQueryCreated, ShouldBeTrue)
+// 		})
+
+// 		Reset(func() {
+// 			es.NewClient = origNewClient
+// 			newTimeSeriesQuery = origNewTimeSeriesQuery
+// 			newFieldsQuery = origNewFieldsQuery
+// 			newTermsQuery = origNewTermsQuery
+// 			newAnnotationQuery = origNewAnnotationQuery
+// 		})
+// 	})
+// }
+// >>>>>>> 53ed0f85e5... elasticsearch: handle annotation query
 
 type fakeQueryEndpoint struct{}
 

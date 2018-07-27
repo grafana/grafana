@@ -54,6 +54,8 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 		query = newFieldsQuery(client, tsdbQuery)
 	case "terms":
 		query = newTermsQuery(client, tsdbQuery)
+	case "annotation":
+		query = newAnnotationQuery(client, tsdbQuery)
 	case "timeseries":
 		fallthrough
 	default:
