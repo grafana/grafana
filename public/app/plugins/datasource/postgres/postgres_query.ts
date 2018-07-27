@@ -11,7 +11,6 @@ export default class PostgresQuery {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    target.schema = target.schema || 'public';
     target.format = target.format || 'time_series';
     target.timeColumn = target.timeColumn || 'time';
     target.metricColumn = target.metricColumn || 'none';
@@ -147,13 +146,15 @@ export default class PostgresQuery {
     }
 
     if (special) {
-      let over = '';
+      let overParts = [];
       if (this.hasMetricColumn()) {
-        over = 'PARTITION BY ' + this.target.metricColumn;
+        overParts.push('PARTITION BY ' + this.target.metricColumn);
       }
       if (!aggregate) {
-        over += ' ORDER BY ' + this.target.timeColumn;
+        overParts.push('ORDER BY ' + this.target.timeColumn);
       }
+
+      let over = overParts.join(' ');
       switch (special.params[0]) {
         case 'increase':
           query = query + ' - lag(' + query + ') OVER (' + over + ')';
@@ -234,7 +235,7 @@ export default class PostgresQuery {
     }
     query += this.buildValueColumns();
 
-    query += '\nFROM ' + this.target.schema + '.' + this.target.table;
+    query += '\nFROM ' + this.target.table;
 
     query += this.buildWhereClause();
     query += this.buildGroupByClause();

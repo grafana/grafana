@@ -10,7 +10,6 @@ export class PostgresMetaQuery {
     // query that returns first table found that has a timestamptz column and a float column
     let query = `
 SELECT
-	table_schema,
 	table_name,
 	( SELECT
 	    column_name
@@ -32,7 +31,10 @@ SELECT
   ) AS value_column
 FROM information_schema.tables t
 WHERE
-  table_schema !~* '^_|^pg_|information_schema' AND
+  table_schema IN (
+		SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
+    FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
+  ) AND
   EXISTS
   ( SELECT 1
     FROM information_schema.columns c
@@ -53,23 +55,30 @@ LIMIT 1
     return query;
   }
 
-  buildSchemaQuery() {
-    let query = 'SELECT quote_ident(schema_name) FROM information_schema.schemata WHERE';
-    query += " schema_name !~* '^pg_|^_|information_schema' ORDER BY schema_name";
-
-    return query;
-  }
-
   buildTableQuery() {
-    let query = 'SELECT quote_ident(table_name) FROM information_schema.tables WHERE ';
-    query += 'table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
-    query += ' ORDER BY table_name';
+    let query = `
+SELECT quote_ident(table_name)
+FROM information_schema.tables
+WHERE
+  table_schema IN (
+		SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
+    FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
+  )
+ORDER BY table_name`;
     return query;
   }
 
   buildColumnQuery(type?: string) {
-    let query = 'SELECT quote_ident(column_name) FROM information_schema.columns WHERE ';
-    query += 'table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
+    let query = `
+SELECT quote_ident(column_name)
+FROM information_schema.columns
+WHERE
+  table_schema IN (
+		SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
+    FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
+    LIMIT 1
+  )
+`;
     query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
 
     switch (type) {
@@ -100,15 +109,23 @@ LIMIT 1
 
   buildValueQuery(column: string) {
     let query = 'SELECT DISTINCT quote_literal(' + column + ')';
-    query += ' FROM ' + this.target.schema + '.' + this.target.table;
+    query += ' FROM ' + this.target.table;
     query += ' WHERE $__timeFilter(' + this.target.timeColumn + ')';
     query += ' ORDER BY 1 LIMIT 100';
     return query;
   }
 
   buildDatatypeQuery(column: string) {
-    let query = 'SELECT data_type FROM information_schema.columns WHERE ';
-    query += ' table_schema = ' + this.quoteIdentAsLiteral(this.target.schema);
+    let query = `
+SELECT data_type
+FROM information_schema.columns
+WHERE
+  table_schema IN (
+		SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
+    FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
+    LIMIT 1
+  )
+`;
     query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
     return query;

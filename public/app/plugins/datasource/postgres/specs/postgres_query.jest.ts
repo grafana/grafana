@@ -66,6 +66,37 @@ describe('PostgresQuery', function() {
     expect(query.buildValueColumn(column)).toBe('v - lag(v) OVER (ORDER BY time) AS "a"');
   });
 
+  describe('When generating value column SQL with metric column', function() {
+    let query = new PostgresQuery({}, templateSrv);
+    query.target.metricColumn = 'host';
+
+    let column = [{ type: 'column', params: ['value'] }];
+    expect(query.buildValueColumn(column)).toBe('value');
+    column = [{ type: 'column', params: ['value'] }, { type: 'alias', params: ['alias'] }];
+    expect(query.buildValueColumn(column)).toBe('value AS "alias"');
+    column = [
+      { type: 'column', params: ['v'] },
+      { type: 'alias', params: ['a'] },
+      { type: 'aggregate', params: ['max'] },
+    ];
+    expect(query.buildValueColumn(column)).toBe('max(v) AS "a"');
+    column = [
+      { type: 'column', params: ['v'] },
+      { type: 'alias', params: ['a'] },
+      { type: 'special', params: ['increase'] },
+    ];
+    expect(query.buildValueColumn(column)).toBe('v - lag(v) OVER (PARTITION BY host ORDER BY time) AS "a"');
+    column = [
+      { type: 'column', params: ['v'] },
+      { type: 'alias', params: ['a'] },
+      { type: 'aggregate', params: ['max'] },
+      { type: 'special', params: ['increase'] },
+    ];
+    expect(query.buildValueColumn(column)).toBe(
+      'max(v ORDER BY time) - lag(max(v ORDER BY time)) OVER (PARTITION BY host) AS "a"'
+    );
+  });
+
   describe('When generating WHERE clause', function() {
     let query = new PostgresQuery({ where: [] }, templateSrv);
 
@@ -95,18 +126,17 @@ describe('PostgresQuery', function() {
   describe('When generating complete statement', function() {
     let target = {
       timeColumn: 't',
-      schema: 'public',
       table: 'table',
       select: [[{ type: 'column', params: ['value'] }]],
       where: [],
     };
-    let result = 'SELECT\n  t AS "time",\n  value\nFROM public.table\nORDER BY 1';
+    let result = 'SELECT\n  t AS "time",\n  value\nFROM table\nORDER BY 1';
     let query = new PostgresQuery(target, templateSrv);
 
     expect(query.buildQuery()).toBe(result);
 
     query.target.metricColumn = 'm';
-    result = 'SELECT\n  t AS "time",\n  m AS metric,\n  value\nFROM public.table\nORDER BY 1';
+    result = 'SELECT\n  t AS "time",\n  m AS metric,\n  value\nFROM table\nORDER BY 1';
     expect(query.buildQuery()).toBe(result);
   });
 });

@@ -28,7 +28,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
   lastQueryMeta: QueryMeta;
   lastQueryError: string;
   showHelp: boolean;
-  schemaSegment: any;
   tableSegment: any;
   whereAdd: any;
   timeColumnSegment: any;
@@ -58,8 +57,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
         this.target.rawSql = defaultQuery;
       }
     }
-
-    this.schemaSegment = uiSegmentSrv.newSegment(this.target.schema);
 
     if (!this.target.table) {
       this.tableSegment = uiSegmentSrv.newSegment({ value: 'select table', fake: true });
@@ -117,18 +114,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
     let plusButton = this.uiSegmentSrv.newPlusButton();
     button.html = plusButton.html;
     button.value = plusButton.value;
-  }
-
-  getSchemaSegments() {
-    return this.datasource
-      .metricFindQuery(this.metaBuilder.buildSchemaQuery())
-      .then(this.transformToSegments({}))
-      .catch(this.handleQueryError.bind(this));
-  }
-
-  schemaChanged() {
-    this.target.schema = this.schemaSegment.value;
-    this.panelCtrl.refresh();
   }
 
   getTableSegments() {
