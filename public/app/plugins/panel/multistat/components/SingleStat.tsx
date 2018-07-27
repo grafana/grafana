@@ -21,7 +21,7 @@ export interface SingleStatProps {
   };
 }
 
-export class SingleStat extends React.Component<SingleStatProps> {
+export class SingleStat extends React.PureComponent<SingleStatProps> {
   constructor(props) {
     super(props);
   }

@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 import * as Series from 'app/types/series';
 import * as MultiStatPanel from '../types';
-import { BarStat } from './BarStat';
+import { BarStat, BarStatProps } from './BarStat';
 
 export interface MultiStatBarProps {
   stats: Series.SeriesStat[];
@@ -43,26 +43,24 @@ export function MultiStatBar(props: MultiStatBarProps) {
     const { label, value, valueFormatted } = stat;
     const color = props.getColor(value);
     let barSize;
-    let barContainerStyle: React.CSSProperties = {};
+    let styleLeft;
     if (direction === 'horizontal') {
       barSize = { w: barWidth, h: barLengths[index] };
-      barContainerStyle.left = barWidth * index;
+      styleLeft = barWidth * index;
     } else {
       barSize = { w: barLengths[index], h: barWidth };
     }
+
+    const optionalStyles: Partial<BarStatProps> = { color, colorValue, direction, valueOutOfBar, styleLeft };
 
     return (
       <BarStat
         key={index}
         label={label}
         value={valueFormatted}
-        color={color}
-        colorValue={colorValue}
         width={barSize.w}
         height={barSize.h}
-        valueOutOfBar={valueOutOfBar}
-        direction={direction}
-        style={barContainerStyle}
+        {...optionalStyles}
       />
     );
   });

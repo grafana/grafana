@@ -13,9 +13,11 @@ interface Props {
 
 interface State {
   thresholdValue: string;
+  mode?: MultiStatPanel.ThresholdMode;
+  color?: string;
 }
 
-export class ThresholdEditor extends React.Component<Props, State> {
+export class ThresholdEditor extends React.PureComponent<Props, State> {
   valueElem: any;
 
   static defaultProps: Partial<Props> = {
@@ -40,6 +42,8 @@ export class ThresholdEditor extends React.Component<Props, State> {
     const initialStateValue = props.threshold.value !== null ? props.threshold.value : '';
     this.state = {
       thresholdValue: initialStateValue,
+      mode: this.props.threshold.mode,
+      color: this.props.threshold.color,
     };
   }
 
@@ -69,8 +73,15 @@ export class ThresholdEditor extends React.Component<Props, State> {
     this.onThresholdChange(threshold);
   }
 
-  onModeChange = newValue => this.onPropertyChange('mode', newValue);
-  onColorChange = newValue => this.onPropertyChange('color', newValue);
+  onModeChange = newValue => {
+    this.setState({ mode: newValue });
+    this.onPropertyChange('mode', newValue);
+  };
+
+  onColorChange = newValue => {
+    this.setState({ color: newValue });
+    this.onPropertyChange('color', newValue);
+  };
 
   onRemove = () => {
     this.props.onRemove(this.props.index);
@@ -101,18 +112,18 @@ export class ThresholdEditor extends React.Component<Props, State> {
           <div className="gf-form-select-wrapper">
             <SimpleSelect
               className="gf-form-input"
-              value={this.props.threshold.mode}
+              value={this.state.mode}
               options={colorModeOptions}
               onChange={this.onModeChange}
             />
           </div>
         </div>
 
-        {this.props.threshold.mode === 'custom' && (
+        {this.state.mode === 'custom' && (
           <div className="gf-form">
             <label className="gf-form-label">Color</label>
             <span className="gf-form-label">
-              <ColorPicker color={this.props.threshold.color} onChange={this.onColorChange} />
+              <ColorPicker color={this.state.color} onChange={this.onColorChange} />
             </span>
           </div>
         )}

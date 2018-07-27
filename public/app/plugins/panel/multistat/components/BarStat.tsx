@@ -13,7 +13,7 @@ export interface BarStatProps {
   colorValue?: boolean;
   valueOutOfBar?: boolean;
   direction?: MultiStatPanel.PanelLayout;
-  style?: React.CSSProperties;
+  styleLeft?: string | number;
 }
 
 export class BarStat extends React.PureComponent<BarStatProps> {
@@ -25,7 +25,6 @@ export class BarStat extends React.PureComponent<BarStatProps> {
     color: DEFAULT_COLOR,
     colorValue: false,
     valueOutOfBar: false,
-    style: {},
   };
 
   constructor(props) {
@@ -43,7 +42,7 @@ export class BarStat extends React.PureComponent<BarStatProps> {
     let valueStyle: React.CSSProperties = {};
     let barLabelStyle: React.CSSProperties = {};
     let barStyle: React.CSSProperties = {};
-    let barContainerStyle: React.CSSProperties = this.props.style || {};
+    let barContainerStyle: React.CSSProperties = { left: this.props.styleLeft };
 
     if (this.props.width && this.props.height) {
       barStyle.background = bgColor;
