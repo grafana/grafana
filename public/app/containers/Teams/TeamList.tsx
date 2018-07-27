@@ -88,7 +88,7 @@ export class TeamList extends React.Component<Props, any> {
             </a>
           </div>
 
-          <div className="admin-list-table tr-overflow">
+          <div className="admin-list-table">
             <table className="filter-table filter-table--hover form-inline">
               <thead>
                 <tr>
