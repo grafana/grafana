@@ -87,7 +87,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('should set formatted value', function() {
-      expect(moment(ctx.data.valueFormatted).isSame('2017-09-17 09:56:37')).toBe(true);
+      expect(moment(ctx.data.valueFormatted).valueOf()).toBe(1505634997000);
     });
   });
 
