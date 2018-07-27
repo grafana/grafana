@@ -27,14 +27,21 @@ func TestExecuteAnnotationQuery(t *testing.T) {
 			return &fakeResponseTransformer{}
 		}
 
+		Convey("Should return error if annotation property is missing", func() {
+			c := newFakeClient(2)
+			_, err := executeTermsQuery(c, `{}`, from, to, "A")
+			So(err, ShouldNotBeNil)
+		})
+
 		Convey("With defaults es v2", func() {
 			c := newFakeClient(2)
-			_, err := executeAnnotationQuery(c, `{}`, from, to, "A")
+			_, err := executeAnnotationQuery(c, `{
+				"annotation": {}
+			}`, from, to, "A")
 			So(err, ShouldBeNil)
 			So(queryModel.timeField, ShouldEqual, c.timeField)
 			So(queryModel.tagsField, ShouldEqual, "tags")
 			So(queryModel.textField, ShouldEqual, "")
-			So(queryModel.titleField, ShouldEqual, "")
 			So(queryModel.queryString, ShouldEqual, "")
 			So(queryModel.refID, ShouldEqual, "A")
 
@@ -51,7 +58,9 @@ func TestExecuteAnnotationQuery(t *testing.T) {
 
 		Convey("With defaults es v5", func() {
 			c := newFakeClient(5)
-			_, err := executeAnnotationQuery(c, `{}`, from, to, "A")
+			_, err := executeAnnotationQuery(c, `{
+				"annotation": {}
+			}`, from, to, "A")
 			So(err, ShouldBeNil)
 
 			sr := c.searchRequests[0]
@@ -62,17 +71,17 @@ func TestExecuteAnnotationQuery(t *testing.T) {
 		Convey("With fields and querystring", func() {
 			c := newFakeClient(2)
 			_, err := executeAnnotationQuery(c, `{
-				"timeField": "@time",
-				"tagsField": "@tags",
-				"textField": "@text",
-				"titleField": "title",
-				"query": "@metric:cpu"
+				"annotation": {
+					"timeField": "@time",
+					"tagsField": "@tags",
+					"textField": "@text",
+					"query": "@metric:cpu"
+				}
 			}`, from, to, "A")
 			So(err, ShouldBeNil)
 			So(queryModel.timeField, ShouldEqual, "@time")
 			So(queryModel.tagsField, ShouldEqual, "@tags")
 			So(queryModel.textField, ShouldEqual, "@text")
-			So(queryModel.titleField, ShouldEqual, "title")
 			So(queryModel.queryString, ShouldEqual, "@metric:cpu")
 			So(queryModel.refID, ShouldEqual, "A")
 
@@ -221,13 +230,12 @@ func TestAnnotationQueryResponseTransformer(t *testing.T) {
 			So(rows[0][2].([]interface{})[1].(string), ShouldEqual, "website-01")
 		})
 
-		Convey("Should transform to annotation with string time, title field and csv tags", func() {
+		Convey("Should transform to annotation with string time and csv tags", func() {
 			rt, err := newAnnotationQueryResponseTransformerForTest(response, &annotationQueryModel{
-				timeField:  "time",
-				textField:  "description",
-				titleField: "@message",
-				tagsField:  "@tags",
-				refID:      "A",
+				timeField: "time",
+				textField: "description",
+				tagsField: "@tags",
+				refID:     "A",
 			})
 			So(err, ShouldBeNil)
 			result, err := rt.transform()
@@ -242,7 +250,7 @@ func TestAnnotationQueryResponseTransformer(t *testing.T) {
 			rows := queryRes.Tables[0].Rows
 			So(rows, ShouldHaveLength, 1)
 			So(rows[0][0], ShouldEqual, 1136214245000)
-			So(rows[0][1], ShouldEqual, "Deployed website\nTorkel deployed website")
+			So(rows[0][1], ShouldEqual, "Torkel deployed website")
 			So(rows[0][2].([]string)[0], ShouldEqual, "1")
 			So(rows[0][2].([]string)[1], ShouldEqual, "2")
 			So(rows[0][2].([]string)[2], ShouldEqual, "3")

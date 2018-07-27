@@ -28,7 +28,7 @@ func (e *fieldsQuery) execute() (*tsdb.Response, error) {
 	}
 
 	var fieldTypeFilter string
-	if typeProp, ok := query.Model.CheckGet("type"); ok {
+	if typeProp, ok := query.Model.CheckGet("fieldTypeFilter"); ok {
 		fieldTypeFilter = typeProp.MustString()
 	}
 

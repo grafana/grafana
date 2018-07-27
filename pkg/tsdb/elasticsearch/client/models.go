@@ -84,9 +84,10 @@ type MultiSearchRequest struct {
 
 // MultiSearchResponse represents a multi search response
 type MultiSearchResponse struct {
-	Status    int               `json:"status,omitempty"`
-	Responses []*SearchResponse `json:"responses"`
-	DebugInfo *SearchDebugInfo  `json:"-"`
+	Error      map[string]interface{} `json:"error"`
+	Responses  []*SearchResponse      `json:"responses"`
+	StatusCode int                    `json:"status,omitempty"`
+	DebugInfo  *SearchDebugInfo       `json:"-"`
 }
 
 // Query represents a query

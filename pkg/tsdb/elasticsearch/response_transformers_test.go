@@ -684,8 +684,42 @@ func TestTimeSeriesResponseTransformer(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
-					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
-          "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
+					"bucketAggs": [
+						{
+							"field": "@hostname",
+							"id": "2",
+							"settings": {
+								"order": "asc",
+								"orderBy": "_term",
+								"size": "0",
+								"min_doc_count": 1
+							},
+							"type": "terms"
+						}
+					],
+					"metrics": [
+						{
+							"field": "@value",
+							"id": "1",
+							"meta": {},
+							"settings": {},
+							"type": "avg"
+						},
+						{
+							"field": "@value",
+							"id": "3",
+							"meta": {},
+							"settings": {},
+							"type": "max"
+						},
+						{
+							"field": "@value",
+							"id": "4",
+							"meta": {},
+							"settings": {},
+							"type": "sum"
+						}
+					]
 				}`,
 			}
 			response := `{
@@ -693,19 +727,25 @@ func TestTimeSeriesResponseTransformer(t *testing.T) {
           {
             "aggregations": {
               "2": {
-                "buckets": [
-                  {
-                    "1": { "value": 1000 },
-                    "key": "server-1",
-                    "doc_count": 369
-                  },
-                  {
-                    "1": { "value": 2000 },
-                    "key": "server-2",
-                    "doc_count": 200
-                  }
-                ]
-              }
+								"doc_count_error_upper_bound": 0,
+								"sum_other_doc_count": 0,
+								"buckets": [
+									{
+										"key": "server 20",
+										"doc_count": 180,
+										"1": { "value": 157 },
+										"3": { "value": 169 },
+										"4": { "value": 28194 }
+									},
+									{
+										"key": "server\"21",
+										"doc_count": 180,
+										"1": { "value": 156 },
+										"3": { "value": 168 },
+										"4": { "value": 28190 }
+									}
+								]
+							}
             }
           }
         ]
@@ -723,18 +763,21 @@ func TestTimeSeriesResponseTransformer(t *testing.T) {
 			rows := queryRes.Tables[0].Rows
 			So(rows, ShouldHaveLength, 2)
 			cols := queryRes.Tables[0].Columns
-			So(cols, ShouldHaveLength, 3)
+			So(cols, ShouldHaveLength, 4)
 
-			So(cols[0].Text, ShouldEqual, "host")
+			So(cols[0].Text, ShouldEqual, "@hostname")
 			So(cols[1].Text, ShouldEqual, "Average")
-			So(cols[2].Text, ShouldEqual, "Count")
+			So(cols[2].Text, ShouldEqual, "Max")
+			So(cols[3].Text, ShouldEqual, "Sum")
 
-			So(rows[0][0].(string), ShouldEqual, "server-1")
-			So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-			So(rows[0][2].(null.Float).Float64, ShouldEqual, 369)
-			So(rows[1][0].(string), ShouldEqual, "server-2")
-			So(rows[1][1].(null.Float).Float64, ShouldEqual, 2000)
-			So(rows[1][2].(null.Float).Float64, ShouldEqual, 200)
+			So(rows[0][0].(string), ShouldEqual, "server 20")
+			So(rows[0][1].(null.Float).Float64, ShouldEqual, 157)
+			So(rows[0][2].(null.Float).Float64, ShouldEqual, 169)
+			So(rows[0][3].(null.Float).Float64, ShouldEqual, 28194)
+			So(rows[1][0].(string), ShouldEqual, "server\"21")
+			So(rows[1][1].(null.Float).Float64, ShouldEqual, 156)
+			So(rows[1][2].(null.Float).Float64, ShouldEqual, 168)
+			So(rows[1][3].(null.Float).Float64, ShouldEqual, 28190)
 		})
 
 		Convey("Multiple metrics of same type", func() {
@@ -1001,6 +1044,18 @@ func TestFieldsResponseTransformer(t *testing.T) {
 				"mappings": {
 					"metricsets": {
 						"_all": {},
+						"dynamic_templates": [
+							{
+								"strings": {
+									"match_mapping_type": "string",
+									"mapping": {
+										"index": "not_analyzed",
+										"omit_norms": true,
+										"type": "string"
+									}
+								}
+							}
+						],
 						"properties": {
 							"@timestamp": { "type": "date", "format": "epoch_millis" },
 							"beat": {
@@ -1130,7 +1185,7 @@ func TestTermsResponseTransformer(t *testing.T) {
 			}
 		}`
 
-		Convey("Should return all nested fields without field type filter", func() {
+		Convey("Should transform terms response to rows", func() {
 			rp, err := newTermsQueryResponseTransformerForTest(response, "1", "A")
 			So(err, ShouldBeNil)
 			result, err := rp.transform()
@@ -1142,16 +1197,19 @@ func TestTermsResponseTransformer(t *testing.T) {
 			So(queryRes.Tables, ShouldHaveLength, 1)
 
 			cols := queryRes.Tables[0].Columns
-			So(cols, ShouldHaveLength, 2)
-			So(cols[0].Text, ShouldEqual, "term")
-			So(cols[1].Text, ShouldEqual, "doc_count")
+			So(cols, ShouldHaveLength, 3)
+			So(cols[0].Text, ShouldEqual, "text")
+			So(cols[1].Text, ShouldEqual, "value")
+			So(cols[2].Text, ShouldEqual, "doc_count")
 
 			rows := queryRes.Tables[0].Rows
 			So(rows, ShouldHaveLength, 2)
 			So(rows[0][0], ShouldEqual, "test")
-			So(rows[0][1].(null.Float).Float64, ShouldEqual, 1)
+			So(rows[0][1], ShouldEqual, "test")
+			So(rows[0][2].(null.Float).Float64, ShouldEqual, 1)
 			So(rows[1][0], ShouldEqual, "test2_as_string")
-			So(rows[1][1].(null.Float).Float64, ShouldEqual, 2)
+			So(rows[1][1], ShouldEqual, "test2")
+			So(rows[1][2].(null.Float).Float64, ShouldEqual, 2)
 		})
 	})
 }

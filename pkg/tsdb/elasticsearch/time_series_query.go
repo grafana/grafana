@@ -219,15 +219,14 @@ func addHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *bucketAggregation) es.
 
 func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *bucketAggregation, metrics []*metricAggregation) es.AggBuilder {
 	aggBuilder.Terms(bucketAgg.id, bucketAgg.field, func(a *es.TermsAggregation, b es.AggBuilder) {
-		if size, err := bucketAgg.settings.Get("size").Int(); err == nil {
+		if size, err := bucketAgg.settings.Get("size").Int(); err == nil && size > 0 {
 			a.Size = size
-		} else if size, err := bucketAgg.settings.Get("size").String(); err == nil {
-			a.Size, err = strconv.Atoi(size)
-			if err != nil {
+		} else if strSize, err := bucketAgg.settings.Get("size").String(); err == nil {
+			if size, err = strconv.Atoi(strSize); err == nil && size > 0 {
+				a.Size = size
+			} else {
 				a.Size = 500
 			}
-		} else {
-			a.Size = 500
 		}
 		if a.Size == 0 {
 			a.Size = 500

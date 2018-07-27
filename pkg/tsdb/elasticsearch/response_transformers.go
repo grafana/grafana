@@ -667,6 +667,8 @@ func (t *fieldsQueryResponseTransformer) transform() (*tsdb.Response, error) {
 
 				fields[strings.Join(fieldNameParts, ".")] = mappedFieldType
 			}
+		case simplejson.JsonArrayElement:
+			return simplejson.SkipNode
 		}
 
 		return nil
@@ -746,26 +748,28 @@ func (rp *termsQueryResponseTransformer) transform() (*tsdb.Response, error) {
 		Rows:    make([]tsdb.RowValues, 0),
 	}
 
-	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "term"})
+	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "text"})
+	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "value"})
 	table.Columns = append(table.Columns, tsdb.TableColumn{Text: "doc_count"})
 
 	agg := simplejson.NewFromAny(termsAgg)
 	for _, v := range agg.Get("buckets").MustArray() {
 		bucket := simplejson.NewFromAny(v)
-		term := ""
 		docCount := castToNullFloat(bucket.Get("doc_count"))
 
+		value := ""
 		if key, err := bucket.Get("key").String(); err == nil {
-			term = key
+			value = key
 		} else if key, err := bucket.Get("key").Int64(); err == nil {
-			term = strconv.FormatInt(key, 10)
+			value = strconv.FormatInt(key, 10)
 		}
 
+		text := value
 		if key, err := bucket.Get("key_as_string").String(); err == nil {
-			term = key
+			text = key
 		}
 
-		table.Rows = append(table.Rows, tsdb.RowValues{term, docCount})
+		table.Rows = append(table.Rows, tsdb.RowValues{text, value, docCount})
 	}
 
 	result := tsdb.Response{
@@ -822,6 +826,12 @@ func getErrorFromElasticResponse(err map[string]interface{}) *tsdb.QueryResult {
 	default:
 		result.ErrorString = "Unknown elasticsearch error response"
 	}
+
+	if result.Meta == nil {
+		result.Meta = simplejson.New()
+	}
+
+	result.Meta.Set("error", err)
 
 	return result
 }
