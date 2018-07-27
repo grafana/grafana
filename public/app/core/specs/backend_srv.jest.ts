@@ -12,24 +12,15 @@ describe('backend_srv', function() {
 
   let _backendSrv = new BackendSrv(_httpBackend, {}, {}, {}, {});
 
-  //   beforeEach(angularMocks.module('grafana.core'));
-  //   beforeEach(angularMocks.module('grafana.services'));
-  //   beforeEach(
-  //     angularMocks.inject(function($httpBackend, $http, backendSrv) {
-  //       _httpBackend = $httpBackend;
-  //       _backendSrv = backendSrv;
-  //     })
-  //   );
-
   describe('when handling errors', () => {
     it('should return the http status code', async () => {
-      //   _httpBackend.whenGET('gateway-error').respond(502);
-      let res = await _backendSrv.datasourceRequest({
-        url: 'gateway-error',
-      });
-      console.log(res);
-      expect(res.status).toBe(502);
-      //   _httpBackend.flush();
+      try {
+        await _backendSrv.datasourceRequest({
+          url: 'gateway-error',
+        });
+      } catch (err) {
+        expect(err.status).toBe(502);
+      }
     });
   });
 });
