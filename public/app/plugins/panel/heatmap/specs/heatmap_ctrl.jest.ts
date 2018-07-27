@@ -1,26 +1,30 @@
-import { describe, beforeEach, it, expect, angularMocks } from '../../../../../test/lib/common';
-
 import moment from 'moment';
 import { HeatmapCtrl } from '../heatmap_ctrl';
-import helpers from '../../../../../test/specs/helpers';
 
 describe('HeatmapCtrl', function() {
-  var ctx = new helpers.ControllerTestContext();
+  let ctx = <any>{};
 
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(angularMocks.module('grafana.controllers'));
-  beforeEach(
-    angularMocks.module(function($compileProvider) {
-      $compileProvider.preAssignBindingsEnabled(true);
-    })
-  );
+  let $injector = {
+      get: () => {}
+  };
 
-  beforeEach(ctx.providePhase());
-  beforeEach(ctx.createPanelController(HeatmapCtrl));
-  beforeEach(() => {
-    ctx.ctrl.annotationsPromise = Promise.resolve({});
-    ctx.ctrl.updateTimeRange();
-  });
+  let $scope = {
+    $on: () => {},
+    events: {
+        on: () => {}
+    }
+  };
+
+HeatmapCtrl.prototype.panel = {
+    events: {
+        on: () => {},
+        emit: () => {}
+    }
+};
+
+    beforeEach(() => {
+        ctx.ctrl = new HeatmapCtrl($scope, $injector, {});
+    });
 
   describe('when time series are outside range', function() {
     beforeEach(function() {
@@ -36,7 +40,7 @@ describe('HeatmapCtrl', function() {
     });
 
     it('should set datapointsOutside', function() {
-      expect(ctx.ctrl.dataWarning.title).to.be('Data points outside time range');
+      expect(ctx.ctrl.dataWarning.title).toBe('Data points outside time range');
     });
   });
 
@@ -61,7 +65,7 @@ describe('HeatmapCtrl', function() {
     });
 
     it('should set datapointsOutside', function() {
-      expect(ctx.ctrl.dataWarning).to.be(null);
+      expect(ctx.ctrl.dataWarning).toBe(null);
     });
   });
 
@@ -72,7 +76,7 @@ describe('HeatmapCtrl', function() {
     });
 
     it('should set datapointsCount warning', function() {
-      expect(ctx.ctrl.dataWarning.title).to.be('No data points');
+      expect(ctx.ctrl.dataWarning.title).toBe('No data points');
     });
   });
 });
