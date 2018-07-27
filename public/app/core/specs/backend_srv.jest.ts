@@ -3,7 +3,6 @@ jest.mock('app/core/store');
 
 describe('backend_srv', function() {
   let _httpBackend = options => {
-    console.log(options);
     if (options.url === 'gateway-error') {
       return Promise.reject({ status: 502 });
     }
