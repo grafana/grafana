@@ -34,6 +34,9 @@ describe('GraphCtrl', () => {
 
   beforeEach(() => {
     ctx.ctrl = new GraphCtrl(scope, injector, {});
+    ctx.ctrl.events = {
+      emit: () => {},
+    };
     ctx.ctrl.annotationsPromise = Promise.resolve({});
     ctx.ctrl.updateTimeRange();
   });
