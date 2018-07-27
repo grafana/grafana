@@ -896,6 +896,10 @@ func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error)
 	return 15 * time.Second, nil
 }
 
+func (c *fakeClient) GetMeta() map[string]interface{} {
+	return map[string]interface{}{}
+}
+
 func (c *fakeClient) ExecuteSearch(r *es.SearchRequest) (*es.SearchResponse, error) {
 	c.searchRequests = append(c.searchRequests, r)
 	return c.searchResponse, c.searchError

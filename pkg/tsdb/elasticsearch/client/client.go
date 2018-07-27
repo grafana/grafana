@@ -36,6 +36,7 @@ type Client interface {
 	GetVersion() int
 	GetTimeField() string
 	GetMinInterval(queryInterval string) (time.Duration, error)
+	GetMeta() map[string]interface{}
 	ExecuteSearch(r *SearchRequest) (*SearchResponse, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	Search(interval tsdb.Interval) *SearchRequestBuilder
@@ -94,6 +95,7 @@ type baseClientImpl struct {
 	timeRange    *tsdb.TimeRange
 	indexPattern indexPattern
 	debugEnabled bool
+	meta         *simplejson.Json
 }
 
 func (c *baseClientImpl) GetVersion() int {
@@ -108,6 +110,10 @@ func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, er
 	return tsdb.GetIntervalFrom(c.ds, simplejson.NewFromAny(map[string]interface{}{
 		"interval": queryInterval,
 	}), 5*time.Second)
+}
+
+func (c *baseClientImpl) GetMeta() map[string]interface{} {
+	return c.meta.MustMap()
 }
 
 func (c *baseClientImpl) getSettings() *simplejson.Json {
@@ -155,7 +161,9 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	return payload.Bytes(), nil
 }
 
-func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*response, error) {
+func (c *baseClientImpl) executeRequest(method, uriPath string, uriQuery string, body []byte) (*response, error) {
+	c.meta.Get("request").Set("method", method)
+	c.meta.Get("request").Set("uri", uriPath)
 	u, err := url.Parse(c.ds.Url)
 	if err != nil {
 		return nil, err
@@ -165,6 +173,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 	var req *http.Request
 	if method == http.MethodPost {
+		c.meta.Get("request").Set("body", string(body))
 		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
 	} else {
 		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
@@ -207,18 +216,26 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		elapsed := time.Since(start)
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
-	//nolint:bodyclose
-	resp, err := ctxhttp.Do(c.ctx, httpClient, req)
+	res, err := ctxhttp.Do(c.ctx, httpClient, req)
+
 	if err != nil {
 		return nil, err
 	}
+
+	if res != nil {
+		c.meta.Get("response").Set("status", res.Status)
+		c.meta.Get("response").Set("statusCode", res.StatusCode)
+		c.meta.Get("response").Set("contentLength", res.ContentLength)
+	}
+
 	return &response{
-		httpResponse: resp,
+		httpResponse: res,
 		reqInfo:      reqInfo,
 	}, nil
 }
 
 func (c *baseClientImpl) ExecuteSearch(r *SearchRequest) (*SearchResponse, error) {
+	c.meta = newMeta()
 	clientLog.Debug("Executing search")
 
 	path := strings.Join(c.indices, ",") + "/_search"
@@ -267,6 +284,9 @@ func (c *baseClientImpl) ExecuteSearch(r *SearchRequest) (*SearchResponse, error
 	dec := json.NewDecoder(res.httpResponse.Body)
 	err = dec.Decode(&sr)
 	if err != nil {
+		responseBuffer := bytes.Buffer{}
+		responseBuffer.ReadFrom(res.httpResponse.Body)
+		c.meta.Get("response").Set("body", responseBuffer.String())
 		return nil, err
 	}
 
@@ -279,6 +299,7 @@ func (c *baseClientImpl) ExecuteSearch(r *SearchRequest) (*SearchResponse, error
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
+	c.meta = newMeta()
 	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
@@ -315,6 +336,9 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	dec := json.NewDecoder(res.Body)
 	err = dec.Decode(&msr)
 	if err != nil {
+		responseBuffer := bytes.Buffer{}
+		responseBuffer.ReadFrom(res.Body)
+		c.meta.Get("response").Set("body", responseBuffer.String())
 		return nil, err
 	}
 
@@ -349,6 +373,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 }
 
 func (c *baseClientImpl) GetIndexMapping() (*IndexMappingResponse, error) {
+	c.meta = newMeta()
 	clientLog.Debug("Get index mapping")
 
 	var index string
@@ -378,6 +403,9 @@ func (c *baseClientImpl) GetIndexMapping() (*IndexMappingResponse, error) {
 	dec := json.NewDecoder(res.httpResponse.Body)
 	err = dec.Decode(&objmap)
 	if err != nil {
+		responseBuffer := bytes.Buffer{}
+		responseBuffer.ReadFrom(res.httpResponse.Body)
+		c.meta.Get("response").Set("body", responseBuffer.String())
 		return nil, err
 	}
 
@@ -451,4 +479,11 @@ func (c *baseClientImpl) replaceVariables(payload []byte, interval tsdb.Interval
 	body = strings.ReplaceAll(body, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
 	body = strings.ReplaceAll(body, "$__interval", interval.Text)
 	return body
+}
+
+func newMeta() *simplejson.Json {
+	return simplejson.NewFromAny(map[string]interface{}{
+		"request":  nil,
+		"response": nil,
+	})
 }

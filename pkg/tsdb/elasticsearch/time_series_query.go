@@ -82,8 +82,8 @@ func (e *timeSeriesQuery) processQuery(q *timeSeriesQueryModel, ms *es.MultiSear
 				Error:       fmt.Errorf("invalid query, missing metrics and aggregations"),
 				ErrorString: "invalid query, missing metrics and aggregations",
 			}
-			return nil
 		}
+
 		metric := q.metrics[0]
 		b.Size(metric.settings.Get("size").MustInt(500))
 		b.SortDesc("@timestamp", "boolean")

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -59,5 +60,40 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 		query = newTimeSeriesQuery(client, tsdbQuery, intervalCalculator)
 	}
 
-	return query.execute()
+	res, err := query.execute()
+	if err != nil {
+		return res, err
+	}
+	enrichResponseWithMeta(client, tsdbQuery, res)
+	return res, nil
+}
+
+func enrichResponseWithMeta(client es.Client, tsdbQuery *tsdb.TsdbQuery, res *tsdb.Response) {
+	meta := client.GetMeta()
+	if len(meta) == 0 {
+		return
+	}
+
+	firstQuery := tsdbQuery.Queries[0]
+
+	if res == nil {
+		res = &tsdb.Response{}
+	}
+
+	if len(res.Results) == 0 {
+		res.Results = map[string]*tsdb.QueryResult{
+			firstQuery.RefId: {
+				Meta: simplejson.NewFromAny(meta),
+			},
+		}
+	} else {
+		if res.Results[firstQuery.RefId].Meta == nil {
+			res.Results[firstQuery.RefId].Meta = simplejson.NewFromAny(meta)
+		} else {
+			for k, v := range res.Results[firstQuery.RefId].Meta.MustMap() {
+				res.Results[firstQuery.RefId].Meta.Set(k, v)
+				break
+			}
+		}
+	}
 }

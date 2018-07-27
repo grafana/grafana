@@ -15,7 +15,7 @@ import (
 
 // 	origNewClient := es.NewClient
 // 	es.NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb.TimeRange) (es.Client, error) {
-// 		return nil, nil
+//  	return newFakeClient(2), nil
 // 	}
 
 // 	timeSeriesQueryCreated := false
