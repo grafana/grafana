@@ -57,9 +57,8 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		if len(q.bucketAggs) == 0 {
 			if len(q.metrics) == 0 || q.metrics[0].aggType != "raw_document" {
 				result.Results[q.refID] = &tsdb.QueryResult{
-					RefId:       q.refID,
-					Error:       fmt.Errorf("invalid query, missing metrics and aggregations"),
-					ErrorString: "invalid query, missing metrics and aggregations",
+					RefId: q.refID,
+					Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 				}
 				continue
 			}
