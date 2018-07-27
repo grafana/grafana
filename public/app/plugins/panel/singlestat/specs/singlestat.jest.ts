@@ -192,6 +192,8 @@ describe('SingleStatCtrl', function() {
   ) {
     ctx.setup(function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[99.999, 1], [99.99999, 2]] }];
+      ctx.ctrl.panel.valueName = 'avg';
+      ctx.ctrl.panel.format = 'none';
     });
 
     it('Should be rounded', function() {
@@ -259,7 +261,9 @@ describe('SingleStatCtrl', function() {
     singleStatScenario('with default values', function(ctx) {
       ctx.setup(function() {
         ctx.data = tableData;
+        ctx.ctrl.panel = {};
         ctx.ctrl.panel.tableColumn = 'mean';
+        ctx.ctrl.panel.format = 'none';
       });
 
       it('Should use first rows value as default main value', function() {
