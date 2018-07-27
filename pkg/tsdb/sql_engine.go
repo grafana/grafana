@@ -100,6 +100,8 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, rowTransfo
 	return &queryEndpoint, nil
 }
 
+const rowLimit = 1000000
+
 // Query is the main function for the SqlQueryEndpoint
 func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *TsdbQuery) (*Response, error) {
 	result := &Response{
@@ -164,7 +166,6 @@ func (e *sqlQueryEndpoint) transformToTable(query *Query, rows *core.Rows, resul
 		return err
 	}
 
-	rowLimit := 1000000
 	rowCount := 0
 	timeIndex := -1
 
@@ -225,7 +226,6 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 		return err
 	}
 
-	rowLimit := 1000000
 	rowCount := 0
 	timeIndex := -1
 	metricIndex := -1
