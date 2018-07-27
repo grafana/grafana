@@ -43,6 +43,13 @@ func TestElasticsearch(t *testing.T) {
 			return &fakeQueryEndpoint{}
 		}
 
+		annotationQueryCreated := false
+		origNewAnnotationQuery := newAnnotationQuery
+		newAnnotationQuery = func(client es.Client, tsdbQuery *tsdb.TsdbQuery) queryEndpoint {
+			annotationQueryCreated = true
+			return &fakeQueryEndpoint{}
+		}
+
 		Convey("Should return error for empty query", func() {
 			_, err = esQueryExecutor.Query(context.TODO(), &ds, &tsdb.TsdbQuery{})
 			So(err, ShouldNotBeNil)
@@ -89,11 +96,26 @@ func TestElasticsearch(t *testing.T) {
 			So(getTermsQueryCreated, ShouldBeTrue)
 		})
 
+		Convey("Should handle annotation query", func() {
+			_, err = esQueryExecutor.Query(context.TODO(), &ds, &tsdb.TsdbQuery{
+				Queries: []*tsdb.Query{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"queryType": "annotation",
+						}),
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+			So(annotationQueryCreated, ShouldBeTrue)
+		})
+
 		Reset(func() {
 			es.NewClient = origNewClient
 			newTimeSeriesQuery = origNewTimeSeriesQuery
 			newFieldsQuery = origNewFieldsQuery
 			newTermsQuery = origNewTermsQuery
+			newAnnotationQuery = origNewAnnotationQuery
 		})
 	})
 }
