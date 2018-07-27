@@ -5,7 +5,7 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { NavStore } from 'app/stores/NavStore/NavStore';
 import { TeamsStore, ITeam } from 'app/stores/TeamsStore/TeamsStore';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import appEvents from 'app/core/app_events';
+import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 
 interface Props {
   nav: typeof NavStore.Type;
@@ -28,18 +28,6 @@ export class TeamList extends React.Component<Props, any> {
   }
 
   deleteTeam(team: ITeam) {
-    appEvents.emit('confirm-modal', {
-      title: 'Delete',
-      text: 'Are you sure you want to delete Team ' + team.name + '?',
-      yesText: 'Delete',
-      icon: 'fa-warning',
-      onConfirm: () => {
-        this.deleteTeamConfirmed(team);
-      },
-    });
-  }
-
-  deleteTeamConfirmed(team) {
     this.props.backendSrv.delete('/api/teams/' + team.id).then(this.fetchTeams.bind(this));
   }
 
@@ -67,9 +55,7 @@ export class TeamList extends React.Component<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <a onClick={() => this.deleteTeam(team)} className="btn btn-danger btn-small">
-            <i className="fa fa-remove" />
-          </a>
+          <DeleteButton onConfirmDelete={() => this.deleteTeam(team)} />
         </td>
       </tr>
     );
@@ -102,7 +88,7 @@ export class TeamList extends React.Component<Props, any> {
             </a>
           </div>
 
-          <div className="admin-list-table">
+          <div className="admin-list-table tr-overflow">
             <table className="filter-table filter-table--hover form-inline">
               <thead>
                 <tr>
