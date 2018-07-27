@@ -264,7 +264,7 @@ export class PromCompleter {
     return Promise.resolve([]);
   }
 
-  getLabelNameAndValueForExpression(expr, type) {
+  getLabelNameAndValueForExpression(expr: string, type: string): Promise<any> {
     if (this.labelQueryCache[expr]) {
       return Promise.resolve(this.labelQueryCache[expr]);
     }
@@ -276,8 +276,8 @@ export class PromCompleter {
       }
       query = '{__name__' + op + '"' + expr + '"}';
     }
-    let range = this.datasource.getTimeRange();
-    let url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + range.from + '&end=' + range.to;
+    const { start, end } = this.datasource.getTimeRange();
+    const url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + start + '&end=' + end;
     return this.datasource.metadataRequest(url).then(response => {
       this.labelQueryCache[expr] = response.data.data;
       return response.data.data;

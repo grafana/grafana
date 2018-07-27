@@ -629,11 +629,11 @@ export class PrometheusDatasource {
     return Math.ceil(date.valueOf() / 1000);
   }
 
-  getTimeRange() {
+  getTimeRange(): { start: number; end: number } {
     let range = this.timeSrv.timeRange();
     return {
-      from: this.getPrometheusTime(range.from, false),
-      to: this.getPrometheusTime(range.to, true)
+      start: this.getPrometheusTime(range.from, false),
+      end: this.getPrometheusTime(range.to, true),
     };
   }
 
