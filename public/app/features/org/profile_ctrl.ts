@@ -4,8 +4,10 @@ import { coreModule } from 'app/core/core';
 export class ProfileCtrl {
   user: any;
   old_theme: any;
+  teams: any = [];
   orgs: any = [];
   userForm: any;
+  showTeamsList = false;
   showOrgsList = false;
   readonlyLoginFields = config.disableLoginForm;
   navModel: any;
@@ -13,6 +15,7 @@ export class ProfileCtrl {
   /** @ngInject **/
   constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
+    this.getUserTeams();
     this.getUserOrgs();
     this.navModel = navModelSrv.getNav('profile', 'profile-settings', 0);
   }
@@ -21,6 +24,18 @@ export class ProfileCtrl {
     this.backendSrv.get('/api/user').then(user => {
       this.user = user;
       this.user.theme = user.theme || 'dark';
+    });
+  }
+
+  getUserTeams() {
+    console.log(this.backendSrv.get('/api/teams'));
+    this.backendSrv.get('/api/user').then(teams => {
+      this.user.teams = [
+        { name: 'Backend', email: 'backend@grafana.com', members: 2 },
+        { name: 'Frontend', email: 'frontend@grafana.com', members: 2 },
+        { name: 'Ops', email: 'ops@grafana.com', members: 2 },
+      ];
+      this.showTeamsList = this.user.teams.length > 1;
     });
   }
 
