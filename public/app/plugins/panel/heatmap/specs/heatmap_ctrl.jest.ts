@@ -5,26 +5,23 @@ describe('HeatmapCtrl', function() {
   let ctx = <any>{};
 
   let $injector = {
-      get: () => {}
+    get: () => {},
   };
 
   let $scope = {
     $on: () => {},
-    events: {
-        on: () => {}
-    }
   };
 
-HeatmapCtrl.prototype.panel = {
+  HeatmapCtrl.prototype.panel = {
     events: {
-        on: () => {},
-        emit: () => {}
-    }
-};
+      on: () => {},
+      emit: () => {},
+    },
+  };
 
-    beforeEach(() => {
-        ctx.ctrl = new HeatmapCtrl($scope, $injector, {});
-    });
+  beforeEach(() => {
+    ctx.ctrl = new HeatmapCtrl($scope, $injector, {});
+  });
 
   describe('when time series are outside range', function() {
     beforeEach(function() {
