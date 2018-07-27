@@ -23,6 +23,9 @@ describe('SingleStatCtrl', function() {
   SingleStatCtrl.prototype.dashboard = {
     isTimezoneUtc: jest.fn(() => true),
   };
+  SingleStatCtrl.prototype.events = {
+    on: () => {},
+  };
 
   function singleStatScenario(desc, func) {
     describe(desc, function() {
@@ -84,7 +87,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).toBe('2017-09-17 09:56:37');
+      expect(moment(ctx.data.valueFormatted).isSame('2017-09-17 09:56:37')).toBe(true);
     });
   });
 
@@ -235,7 +238,9 @@ describe('SingleStatCtrl', function() {
     singleStatScenario('with default values', function(ctx) {
       ctx.setup(function() {
         ctx.data = tableData;
-        ctx.ctrl.panel = {};
+        ctx.ctrl.panel = {
+          emit: () => {},
+        };
         ctx.ctrl.panel.tableColumn = 'mean';
         ctx.ctrl.panel.format = 'none';
       });
