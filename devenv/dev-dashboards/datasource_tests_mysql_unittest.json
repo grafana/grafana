@@ -1,40 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_MYSQL_TEST",
-      "label": "MySQL TEST",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "mysql",
-      "pluginName": "MySQL"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "mysql",
-      "name": "MySQL",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "table",
-      "name": "Table",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -47,7 +11,7 @@
         "type": "dashboard"
       },
       {
-        "datasource": "${DS_MYSQL_TEST}",
+        "datasource": "gdev-mysql-ds-tests",
         "enable": false,
         "hide": false,
         "iconColor": "#6ed0e0",
@@ -59,7 +23,7 @@
         "type": "tags"
       },
       {
-        "datasource": "${DS_MYSQL_TEST}",
+        "datasource": "gdev-mysql-ds-tests",
         "enable": false,
         "hide": false,
         "iconColor": "rgba(255, 96, 96, 1)",
@@ -71,7 +35,7 @@
         "type": "tags"
       },
       {
-        "datasource": "${DS_MYSQL_TEST}",
+        "datasource": "gdev-mysql-ds-tests",
         "enable": false,
         "hide": false,
         "iconColor": "#7eb26d",
@@ -83,7 +47,7 @@
         "type": "tags"
       },
       {
-        "datasource": "${DS_MYSQL_TEST}",
+        "datasource": "gdev-mysql-ds-tests",
         "enable": false,
         "hide": false,
         "iconColor": "#1f78c1",
@@ -96,16 +60,16 @@
       }
     ]
   },
+  "description": "Run the mysql unit tests to generate the data backing this dashboard",
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1523320712115,
+  "iteration": 1532620354037,
   "links": [],
   "panels": [
     {
       "columns": [],
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 4,
@@ -152,7 +116,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -206,7 +170,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -260,7 +224,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -314,7 +278,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fontSize": "100%",
       "gridPos": {
         "h": 3,
@@ -371,7 +335,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -454,7 +418,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -537,7 +501,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -620,7 +584,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -703,7 +667,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -786,7 +750,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -869,7 +833,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -962,7 +926,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1059,7 +1023,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1152,7 +1116,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1237,7 +1201,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1330,7 +1294,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1415,7 +1379,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1508,7 +1472,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
         "h": 8,
@@ -1593,7 +1557,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1687,7 +1651,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1774,7 +1738,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1868,7 +1832,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -1955,7 +1919,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -2049,7 +2013,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -2136,7 +2100,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -2230,7 +2194,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL_TEST}",
+      "datasource": "gdev-mysql-ds-tests",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -2316,22 +2280,42 @@
   "refresh": false,
   "schemaVersion": 16,
   "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "mysql"],
   "templating": {
     "list": [
       {
         "allValue": "",
-        "current": {},
-        "datasource": "${DS_MYSQL_TEST}",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "gdev-mysql-ds-tests",
         "hide": 0,
         "includeAll": true,
         "label": "Metric",
         "multi": true,
         "name": "metric",
-        "options": [],
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "Metric A",
+            "value": "Metric A"
+          },
+          {
+            "selected": false,
+            "text": "Metric B",
+            "value": "Metric B"
+          }
+        ],
         "query": "SELECT DISTINCT measurement FROM metric_values",
-        "refresh": 1,
+        "refresh": 0,
         "regex": "",
+        "skipUrlSync": false,
         "sort": 0,
         "tagValuesQuery": "",
         "tags": [],
@@ -2384,6 +2368,7 @@
         ],
         "query": "1s,10s,30s,1m,5m,10m",
         "refresh": 2,
+        "skipUrlSync": false,
         "type": "interval"
       }
     ]
@@ -2418,7 +2403,7 @@
     ]
   },
   "timezone": "",
-  "title": "MySQL Data Source Test",
+  "title": "Datasource tests - MySQL (unittest)",
   "uid": "Hmf8FDkmz",
   "version": 12
 }

@@ -1,40 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_POSTGRESQL",
-      "label": "PostgreSQL",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "postgres",
-      "pluginName": "PostgreSQL"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": ""
-    },
-    {
-      "type": "datasource",
-      "id": "postgres",
-      "name": "PostgreSQL",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "table",
-      "name": "Table",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -52,8 +16,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1518601837383,
+  "iteration": 1532620601931,
   "links": [],
   "panels": [
     {
@@ -63,7 +26,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRESQL}",
+      "datasource": "gdev-postgres",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -150,14 +113,18 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRESQL}",
+      "datasource": "gdev-postgres",
       "fill": 2,
       "gridPos": {
         "h": 18,
@@ -236,14 +203,18 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_POSTGRESQL}",
+      "datasource": "gdev-postgres",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -316,11 +287,15 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "columns": [],
-      "datasource": "${DS_POSTGRESQL}",
+      "datasource": "gdev-postgres",
       "fontSize": "100%",
       "gridPos": {
         "h": 9,
@@ -377,6 +352,7 @@
   "schemaVersion": 16,
   "style": "dark",
   "tags": [
+    "gdev",
     "fake-data-gen",
     "postgres"
   ],
@@ -384,8 +360,11 @@
     "list": [
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_POSTGRESQL}",
+        "current": {
+          "text": "America",
+          "value": "America"
+        },
+        "datasource": "gdev-postgres",
         "hide": 0,
         "includeAll": false,
         "label": "Datacenter",
@@ -395,6 +374,7 @@
         "query": "SELECT DISTINCT datacenter FROM grafana_metric",
         "refresh": 1,
         "regex": "",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -404,8 +384,11 @@
       },
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_POSTGRESQL}",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "gdev-postgres",
         "hide": 0,
         "includeAll": true,
         "label": "Hostname",
@@ -415,6 +398,7 @@
         "query": "SELECT DISTINCT hostname FROM grafana_metric WHERE datacenter='$datacenter'",
         "refresh": 1,
         "regex": "",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -507,6 +491,7 @@
         ],
         "query": "1s,10s,30s,1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
+        "skipUrlSync": false,
         "type": "interval"
       }
     ]
@@ -541,7 +526,7 @@
     ]
   },
   "timezone": "",
-  "title": "Grafana Fake Data Gen - PostgreSQL",
+  "title": "Datasource tests - Postgres",
   "uid": "JYola5qzz",
-  "version": 1
+  "version": 4
 }

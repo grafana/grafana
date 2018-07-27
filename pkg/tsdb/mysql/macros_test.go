@@ -12,7 +12,7 @@ import (
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		engine := &MySqlMacroEngine{}
+		engine := &mySqlMacroEngine{}
 		query := &tsdb.Query{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
