@@ -8,13 +8,14 @@ import AddPermissions from 'app/core/components/Permissions/AddPermissions';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { FolderInfo } from './FolderInfo';
 
-export interface IProps {
+export interface Props {
   dashboardId: number;
   folder?: FolderInfo;
   backendSrv: any;
 }
+
 @observer
-class DashboardPermissions extends Component<IProps, any> {
+class DashboardPermissions extends Component<Props, any> {
   permissions: any;
 
   constructor(props) {
@@ -53,7 +54,7 @@ class DashboardPermissions extends Component<IProps, any> {
           </div>
         </div>
         <SlideDown in={this.permissions.isAddPermissionsVisible}>
-          <AddPermissions permissions={this.permissions} backendSrv={backendSrv} />
+          <AddPermissions permissions={this.permissions} />
         </SlideDown>
         <Permissions
           permissions={this.permissions}

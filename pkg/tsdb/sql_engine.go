@@ -68,6 +68,7 @@ func (e *DefaultSqlEngine) InitEngine(driverName string, dsInfo *models.DataSour
 	engine.SetMaxOpenConns(10)
 	engine.SetMaxIdleConns(10)
 
+	engineCache.versions[dsInfo.Id] = dsInfo.Version
 	engineCache.cache[dsInfo.Id] = engine
 	e.XormEngine = engine
 

@@ -15,6 +15,8 @@ weight = 1
 The Grafana back-end has a number of configuration options that can be
 specified in a `.ini` configuration file or specified using environment variables.
 
+> **Note.** Grafana needs to be restarted for any configuration changes to take effect.
+
 ## Comments In .ini Files
 
 Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
@@ -295,6 +297,12 @@ Defaults to `false`.
 Set to `true` to automatically add new users to the main organization
 (id 1). When set to `false`, new users will automatically cause a new
 organization to be created for that new user.
+
+### auto_assign_org_id
+
+Set this value to automatically add new users to the provided org.
+This requires `auto_assign_org` to be set to `true`. Please make sure
+that this organization does already exists.
 
 ### auto_assign_org_role
 
@@ -857,7 +865,7 @@ Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 Url to where Grafana will send PUT request with images
 
 ### public_url
-Optional parameter. Url to send to users in notifications, directly appended with the resulting uploaded file name.
+Optional parameter. Url to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the url, leaving any query string unchanged.
 
 ### username
 basic auth username

@@ -2,6 +2,8 @@
 
 * **Dataproxy**: Pass configured/auth headers to a Datasource [#10971](https://github.com/grafana/grafana/issues/10971), thx [@mrsiano](https://github.com/mrsiano)
 * **Cleanup**: Make temp file time to live configurable [#11607](https://github.com/grafana/grafana/issues/11607), thx [@xapon](https://github.com/xapon)
+* **LDAP**: Define Grafana Admin permission in ldap group mappings [#2469](https://github.com/grafana/grafana/issues/2496), PR [#12622](https://github.com/grafana/grafana/issues/12622)
+* **Cloudwatch**: CloudWatch GetMetricData support [#11487](https://github.com/grafana/grafana/issues/11487), thx [@mtanda](https://github.com/mtanda)
 
 ### Minor
 
@@ -11,18 +13,28 @@
 * **Table**: Make table sorting stable when null values exist [#12362](https://github.com/grafana/grafana/pull/12362), thx [@bz2](https://github.com/bz2)
 * **Prometheus**: Fix graph panel bar width issue in aligned prometheus queries [#12379](https://github.com/grafana/grafana/issues/12379)
 * **Prometheus**: Heatmap - fix unhandled error when some points are missing [#12484](https://github.com/grafana/grafana/issues/12484)
+* **Prometheus**: Add $interval, $interval_ms, $range, and $range_ms support for dashboard and template queries [#12597](https://github.com/grafana/grafana/issues/12597)
 * **Variables**: Skip unneeded extra query request when de-selecting variable values used for repeated panels [#8186](https://github.com/grafana/grafana/issues/8186), thx [@mtanda](https://github.com/mtanda)
 * **Postgres/MySQL/MSSQL**: Use floor rounding in $__timeGroup macro function [#12460](https://github.com/grafana/grafana/issues/12460), thx [@svenklemm](https://github.com/svenklemm)
 * **MySQL/MSSQL**: Use datetime format instead of epoch for $__timeFilter, $__timeFrom and $__timeTo macros [#11618](https://github.com/grafana/grafana/issues/11618) [#11619](https://github.com/grafana/grafana/issues/11619), thx [@AustinWinstanley](https://github.com/AustinWinstanley)
+* **Postgres**: Escape ssl mode parameter in connectionstring [#12644](https://github.com/grafana/grafana/issues/12644), thx [@yogyrahmawan](https://github.com/yogyrahmawan)
 * **Github OAuth**: Allow changes of user info at Github to be synched to Grafana when signing in [#11818](https://github.com/grafana/grafana/issues/11818), thx [@rwaweber](https://github.com/rwaweber)
 * **Alerting**: Fix diff and percent_diff reducers [#11563](https://github.com/grafana/grafana/issues/11563), thx [@jessetane](https://github.com/jessetane)
+* **Units**: Polish złoty currency [#12691](https://github.com/grafana/grafana/pull/12691), thx [@mwegrzynek](https://github.com/mwegrzynek)
+* **Cloudwatch**: Improved error handling [#12489](https://github.com/grafana/grafana/issues/12489), thx [@mtanda](https://github.com/mtanda)
+* **Table**: Adjust header contrast for the light theme [#12668](https://github.com/grafana/grafana/issues/12668)
+* **Elasticsearch**: For alerting/backend, support having index name to the right of pattern in index pattern [#12731](https://github.com/grafana/grafana/issues/12731)
 
-# 5.2.2 (unreleased)
+# 5.2.2 (2018-07-25)
 
 ### Minor
 
 * **Prometheus**: Fix graph panel bar width issue in aligned prometheus queries [#12379](https://github.com/grafana/grafana/issues/12379)
 * **Dashboard**: Dashboard links not updated when changing variables [#12506](https://github.com/grafana/grafana/issues/12506)
+* **Postgres/MySQL/MSSQL**: Fix connection leak [#12636](https://github.com/grafana/grafana/issues/12636) [#9827](https://github.com/grafana/grafana/issues/9827)
+* **Plugins**: Fix loading of external plugins [#12551](https://github.com/grafana/grafana/issues/12551)
+* **Dashboard**: Remove unwanted scrollbars in embedded panels [#12589](https://github.com/grafana/grafana/issues/12589)
+* **Prometheus**: Prevent error using $__interval_ms in query [#12533](https://github.com/grafana/grafana/pull/12533), thx [@mtanda](https://github.com/mtanda)
 
 # 5.2.1 (2018-06-29)
 
