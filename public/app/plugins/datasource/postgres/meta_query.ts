@@ -55,31 +55,46 @@ LIMIT 1
     return query;
   }
 
-  buildTableQuery() {
+  buildSchemaConstraint() {
     let query = `
-SELECT quote_ident(table_name)
-FROM information_schema.tables
-WHERE
-  table_schema IN (
-		SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
-    FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
-  )
-ORDER BY table_name`;
+table_schema IN (
+	SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
+  FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
+)`;
+    return query;
+  }
+
+  buildTableConstraint(table: string) {
+    let query = '';
+
+    // check for schema qualified table
+    if (table.includes('.')) {
+      let parts = table.split('.');
+      query = 'table_schema = ' + this.quoteIdentAsLiteral(parts[0]);
+      query += ' AND table_name = ' + this.quoteIdentAsLiteral(parts[1]);
+      return query;
+    } else {
+      query = `
+table_schema IN (
+	SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
+  FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
+)`;
+      query += ' AND table_name = ' + this.quoteIdentAsLiteral(table);
+
+      return query;
+    }
+  }
+
+  buildTableQuery() {
+    let query = 'SELECT quote_ident(table_name) FROM information_schema.tables WHERE ';
+    query += this.buildSchemaConstraint();
+    query += ' ORDER BY table_name';
     return query;
   }
 
   buildColumnQuery(type?: string) {
-    let query = `
-SELECT quote_ident(column_name)
-FROM information_schema.columns
-WHERE
-  table_schema IN (
-		SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
-    FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
-    LIMIT 1
-  )
-`;
-    query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
+    let query = 'SELECT quote_ident(column_name) FROM information_schema.columns WHERE ';
+    query += this.buildTableConstraint(this.target.table);
 
     switch (type) {
       case 'time': {
