@@ -6,52 +6,62 @@ import { getBGColor } from './utils';
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
-export interface Props {
-  stat: Series.SeriesStat;
-  size: MultiStatPanel.PanelSize;
+export interface SingleStatProps {
+  width: number;
+  height: number;
+  label: string;
+  value: string;
   color?: string;
-  options?: MultiStatPanel.PanelOptions;
+  layout?: MultiStatPanel.PanelLayout;
+  colorValue?: boolean;
+  colorBackground?: boolean;
+  flotpairs?: Series.Flotpair[];
+  sparkline?: {
+    show?: boolean;
+  };
 }
 
-export class SingleStat extends React.Component<Props> {
+export class SingleStat extends React.Component<SingleStatProps> {
   constructor(props) {
     super(props);
   }
 
-  static defaultProps: Partial<Props> = {
+  static defaultProps: Partial<SingleStatProps> = {
     color: DEFAULT_COLOR,
-    options: {},
+    sparkline: {
+      show: false,
+    },
   };
 
   render() {
-    const stat = this.props.stat;
-    const options = this.props.options;
+    const { label, value, layout, colorBackground, colorValue, flotpairs } = this.props;
     const valueColor = this.props.color;
     const bgColor = getBGColor(valueColor, 0.1);
 
-    const showSparkline = this.props.options.sparkline && this.props.options.sparkline.show;
-    const sparklineWidth = this.props.size.w;
-    let sparklineHeight = Math.floor(this.props.size.h * 0.25);
+    const showSparkline = this.props.sparkline && this.props.sparkline.show;
+    const sparklineWidth = this.props.width;
+    let sparklineHeight = Math.floor(this.props.height * 0.25);
     sparklineHeight = showSparkline ? sparklineHeight : 0;
     const sparklineSize = { w: sparklineWidth, h: sparklineHeight };
 
-    const widthRatio = this.props.size.w / (this.props.size.h - sparklineHeight);
+    const widthRatio = this.props.width / (this.props.height - sparklineHeight);
     const labelToTheLeft = widthRatio > 3;
 
     let containerStyle: React.CSSProperties = {};
-    if (options.layout === 'vertical') {
-      containerStyle.height = this.props.size.h;
+    if (layout === 'vertical') {
+      containerStyle.height = this.props.height;
     } else {
-      containerStyle.width = this.props.size.w;
+      containerStyle.width = this.props.width;
     }
 
-    if (options.colorBackground) {
+    if (colorBackground) {
       containerStyle.background = bgColor;
     }
 
     const { labelFontSize, labelFontSizePx, valueFontSize, valueFontSizePx } = getFontSize(
-      this.props.size,
-      this.props.options
+      this.props.width,
+      this.props.height,
+      showSparkline
     );
     const labelStyle: React.CSSProperties = {
       fontSize: labelFontSizePx,
@@ -63,12 +73,12 @@ export class SingleStat extends React.Component<Props> {
     let valueStyle: React.CSSProperties = {
       fontSize: valueFontSizePx,
     };
-    if (this.props.options.colorValue) {
+    if (colorValue) {
       valueStyle.color = valueColor;
     }
 
     const valueTopOffset = getTopOffset(
-      this.props.size.h,
+      this.props.height,
       sparklineHeight,
       labelFontSize,
       valueFontSize,
@@ -95,26 +105,24 @@ export class SingleStat extends React.Component<Props> {
       <div className="multistat-single" style={containerStyle}>
         <div className="multistat-label-container" style={labelContainerStyle}>
           <span className="multistat-label" style={labelStyle}>
-            {stat.label}
+            {label}
           </span>
         </div>
         <div className="multistat-value-container" style={valueContainerStyle}>
           <span className="singlestat-panel-value multistat-value" style={valueStyle}>
-            {stat.valueFormatted}
+            {value}
           </span>
         </div>
-        {this.props.options.sparkline.show && (
-          <SparkLine stat={stat} options={this.props.options} color={valueColor} size={sparklineSize} />
-        )}
+        {showSparkline && <SparkLine color={valueColor} size={sparklineSize} flotpairs={flotpairs} />}
       </div>
     );
   }
 }
 
-function getFontSize(panelSize: MultiStatPanel.PanelSize, options?) {
-  const size = Math.min(panelSize.h, panelSize.w * 0.75);
+function getFontSize(panelWidth: number, panelHeight: number, showSparkline?) {
+  const size = Math.min(panelHeight, panelWidth * 0.75);
   let increaseRatio = 1;
-  if (!(options && options.sparkline && options.sparkline.show)) {
+  if (!showSparkline) {
     increaseRatio = 1.2;
   }
 

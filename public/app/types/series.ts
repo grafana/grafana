@@ -1,5 +1,12 @@
-// [Value, Timestamp]
+/**
+ * [Value, Timestamp]
+ */
 export type Datapoint = [number, number];
+
+/**
+ * [Timestamp, Value]
+ */
+export type Flotpair = [number, number];
 
 export interface SeriesData {
   datapoints: Datapoint[];
@@ -14,7 +21,7 @@ export interface SeriesStat {
   value?: number;
   valueRounded?: number;
   valueFormatted?: string;
-  flotpairs?: any[];
+  flotpairs?: Flotpair[];
   scopedVars?: any;
 }
 

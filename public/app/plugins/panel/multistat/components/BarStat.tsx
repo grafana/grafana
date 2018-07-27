@@ -1,28 +1,29 @@
 import React from 'react';
-import * as Series from 'app/types/series';
 import * as MultiStatPanel from '../types';
 import { getBGColor } from './utils';
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 
-export interface Props {
-  stat: Series.SeriesStat;
-  size: MultiStatPanel.PanelSize;
+export interface BarStatProps {
+  width: number;
+  height: number;
+  label: string;
+  value: string;
   color?: string;
-  direction?: MultiStatPanel.PanelLayout;
-  options?: MultiStatPanel.PanelOptions;
+  colorValue?: boolean;
   valueOutOfBar?: boolean;
+  direction?: MultiStatPanel.PanelLayout;
   style?: React.CSSProperties;
 }
 
-export class BarStat extends React.Component<Props> {
+export class BarStat extends React.PureComponent<BarStatProps> {
   labelElem: any;
   valueElem: any;
   barElem: any;
 
-  static defaultProps: Partial<Props> = {
+  static defaultProps: Partial<BarStatProps> = {
     color: DEFAULT_COLOR,
-    options: {},
+    colorValue: false,
     valueOutOfBar: false,
     style: {},
   };
@@ -32,7 +33,6 @@ export class BarStat extends React.Component<Props> {
   }
 
   render() {
-    const stat = this.props.stat;
     const valueColor = this.props.color || DEFAULT_COLOR;
     const bgColor = getBGColor(valueColor);
     const verticalDirection = this.props.direction === 'vertical';
@@ -45,23 +45,23 @@ export class BarStat extends React.Component<Props> {
     let barStyle: React.CSSProperties = {};
     let barContainerStyle: React.CSSProperties = this.props.style || {};
 
-    if (this.props.size) {
+    if (this.props.width && this.props.height) {
       barStyle.background = bgColor;
       if (verticalDirection) {
-        barContainerStyle.height = this.props.size.h;
-        barContainerStyle.width = this.props.size.w;
-        barWidth = this.props.size.h * 0.8;
+        barContainerStyle.height = this.props.height;
+        barContainerStyle.width = this.props.width;
+        barWidth = this.props.height * 0.8;
         barStyle.height = barWidth;
-        barStyle.width = this.props.size.w;
+        barStyle.width = this.props.width;
         barContainerStyle.lineHeight = `${barWidth}px`;
       } else {
-        barWidth = this.props.size.w * 0.8;
+        barWidth = this.props.width * 0.8;
         barStyle.width = barWidth;
-        barStyle.height = this.props.size.h - 10;
-        barContainerStyle.height = this.props.size.h - 10;
+        barStyle.height = this.props.height - 10;
+        barContainerStyle.height = this.props.height - 10;
         barContainerStyle.width = barWidth;
         const valueOffset = barWidth / 4;
-        valueContainerStyle.bottom = valueOutOfBar ? this.props.size.h + valueOffset : 0;
+        valueContainerStyle.bottom = valueOutOfBar ? this.props.height + valueOffset : 0;
         valueContainerStyle.width = barWidth;
         barLabelStyle.bottom = 5;
         barLabelStyle.left = barWidth / 2 - 10;
@@ -72,7 +72,7 @@ export class BarStat extends React.Component<Props> {
     barLabelStyle.fontSize = labelFontSizePx;
     valueStyle.fontSize = valueFontSizePx;
 
-    if (this.props.options.colorValue) {
+    if (this.props.colorValue) {
       valueStyle.color = valueColor;
       if (verticalDirection) {
         barStyle.borderRightColor = valueColor;
@@ -84,12 +84,12 @@ export class BarStat extends React.Component<Props> {
     const barContainerClass = `multistat-bar-container multistat-bar-container--${this.props.direction}`;
     const barValueContainer = verticalDirection ? (
       <span className="bar-value" style={valueStyle} ref={el => (this.valueElem = el)}>
-        {stat.valueFormatted}
+        {this.props.value}
       </span>
     ) : (
       <div className="value-container" style={valueContainerStyle}>
         <span className="bar-value" style={valueStyle} ref={el => (this.valueElem = el)}>
-          {stat.valueFormatted}
+          {this.props.value}
         </span>
       </div>
     );
@@ -98,14 +98,14 @@ export class BarStat extends React.Component<Props> {
       <div className={barContainerClass} style={barContainerStyle}>
         <div className="multistat-bar" style={barStyle} ref={el => (this.barElem = el)}>
           <span className="bar-label bar-label--vertical" style={barLabelStyle} ref={el => (this.labelElem = el)}>
-            {stat.label}
+            {this.props.label}
           </span>
           {!this.props.valueOutOfBar && barValueContainer}
         </div>
         {this.props.valueOutOfBar && (
           <div className="value-container value-container--out-of-bar" style={valueContainerStyle}>
             <span className="bar-value" style={valueStyle} ref={el => (this.valueElem = el)}>
-              {stat.valueFormatted}
+              {this.props.value}
             </span>
           </div>
         )}

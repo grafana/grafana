@@ -5,13 +5,13 @@ import thresholdColors from './ThresholdManager/thresholdColors';
 import { MultiStatBar } from './MultiStatBar';
 import { MultiStatStats } from './MultiStatStats';
 
-export interface Props {
+export interface MultiStatProps {
   stats: any[];
   options: MultiStatPanel.PanelOptions;
   size: MultiStatPanel.PanelSize;
 }
 
-export function MultiStat(props: Props) {
+export function MultiStat(props: MultiStatProps) {
   const options = props.options;
   const thresholds = props.options.thresholds;
   const getColor = getColorFunc(thresholds);
@@ -25,7 +25,7 @@ export function MultiStat(props: Props) {
 
 function getColorForValue(value: number, thresholds: MultiStatPanel.ThresholdModel[]): string {
   if (!_.isFinite(value)) {
-    return null;
+    return undefined;
   }
 
   for (let i = thresholds.length - 1; i >= 0; i--) {
@@ -37,7 +37,7 @@ function getColorForValue(value: number, thresholds: MultiStatPanel.ThresholdMod
     }
   }
 
-  return null;
+  return undefined;
 }
 
 function getColorFunc(thresholds: MultiStatPanel.ThresholdModel[]): (v: number) => string {

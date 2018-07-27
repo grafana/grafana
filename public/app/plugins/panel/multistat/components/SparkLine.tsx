@@ -5,14 +5,15 @@ import * as Series from 'app/types/series';
 import * as MultiStatPanel from '../types';
 import { getBGColor } from './utils';
 
-export interface Props {
-  stat: Series.SeriesStat;
+export interface SparkLineProps {
+  flotpairs: Series.Flotpair[];
   size: MultiStatPanel.PanelSize;
-  options: any;
   color?: string;
+  fillColor?: string;
+  lineColor?: string;
 }
 
-export class SparkLine extends React.Component<Props> {
+export class SparkLine extends React.Component<SparkLineProps> {
   elem: any;
   $elem: any;
   plot: any;
@@ -29,7 +30,9 @@ export class SparkLine extends React.Component<Props> {
   componentDidUpdate(prevProps) {
     const width = this.props.size.w - 10;
     const height = this.props.size.h;
-    if (width <= 0 || height <= 0 || !this.props.stat.flotpairs) {
+    const flotpairs = this.props.flotpairs;
+
+    if (width <= 0 || height <= 0 || !flotpairs) {
       this.$elem.empty();
       return;
     }
@@ -44,14 +47,13 @@ export class SparkLine extends React.Component<Props> {
     // plotCss.height = height - dynamicHeightMargin + 'px';
     plotCss.height = height + 'px';
 
-    const flotpairs = this.props.stat.flotpairs;
     const timeRange = {
       from: flotpairs[0][0],
       to: flotpairs[flotpairs.length - 1][0],
     };
 
-    const fillColor = this.props.color ? getBGColor(this.props.color, 0.1) : this.props.options.sparkline.fillColor;
-    const lineColor = this.props.color || this.props.options.sparkline.lineColor;
+    const fillColor = this.props.color ? getBGColor(this.props.color, 0.1) : this.props.fillColor;
+    const lineColor = this.props.color || this.props.lineColor;
 
     let sparklineOptions = {
       legend: { show: false },
