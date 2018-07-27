@@ -1,6 +1,3 @@
-// import { describe, beforeEach, afterEach, it, sinon, expect, angularMocks } from 'test/lib/common';
-
-// import helpers from 'test/specs/helpers';
 import { SingleStatCtrl } from '../module';
 import moment from 'moment';
 
@@ -30,17 +27,6 @@ describe('SingleStatCtrl', function() {
   function singleStatScenario(desc, func) {
     describe(desc, function() {
       ctx.setup = function(setupFunc) {
-        // beforeEach(angularMocks.module('grafana.services'));
-        // beforeEach(angularMocks.module('grafana.controllers'));
-        // beforeEach(
-        //   angularMocks.module(function($compileProvider) {
-        //     $compileProvider.preAssignBindingsEnabled(true);
-        //   })
-        // );
-
-        // beforeEach(ctx.providePhase());
-        // beforeEach(ctx.createPanelController(SingleStatCtrl));
-
         beforeEach(function() {
           ctx.ctrl = new SingleStatCtrl($scope, $injector, {});
           setupFunc();
@@ -107,7 +93,6 @@ describe('SingleStatCtrl', function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 5000]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
-      //   ctx.setIsUtc(true);
       ctx.ctrl.dashboard.isTimezoneUtc = () => true;
     });
 
@@ -139,7 +124,6 @@ describe('SingleStatCtrl', function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 5000]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
-      //   ctx.setIsUtc(true);
       ctx.ctrl.dashboard.isTimezoneUtc = () => true;
     });
 
@@ -149,11 +133,6 @@ describe('SingleStatCtrl', function() {
   });
 
   singleStatScenario('showing last time from now instead of value', function(ctx) {
-    beforeEach(() => {
-      //   clock = sinon.useFakeTimers(epoch);
-      //jest.useFakeTimers();
-    });
-
     ctx.setup(function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
       ctx.ctrl.panel.valueName = 'last_time';
@@ -168,10 +147,6 @@ describe('SingleStatCtrl', function() {
     it('should set formatted value', function() {
       expect(ctx.data.valueFormatted).toBe('2 days ago');
     });
-
-    afterEach(() => {
-      //   jest.clearAllTimers();
-    });
   });
 
   singleStatScenario('showing last time from now instead of value (in UTC)', function(ctx) {
@@ -179,7 +154,6 @@ describe('SingleStatCtrl', function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeFromNow';
-      //   ctx.setIsUtc(true);
     });
 
     it('should set formatted value', function() {
