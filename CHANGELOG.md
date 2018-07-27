@@ -23,6 +23,7 @@
 * **Units**: Polish złoty currency [#12691](https://github.com/grafana/grafana/pull/12691), thx [@mwegrzynek](https://github.com/mwegrzynek)
 * **Cloudwatch**: Improved error handling [#12489](https://github.com/grafana/grafana/issues/12489), thx [@mtanda](https://github.com/mtanda)
 * **Table**: Adjust header contrast for the light theme [#12668](https://github.com/grafana/grafana/issues/12668)
+* **Elasticsearch**: For alerting/backend, support having index name to the right of pattern in index pattern [#12731](https://github.com/grafana/grafana/issues/12731)
 
 # 5.2.2 (2018-07-25)
 
