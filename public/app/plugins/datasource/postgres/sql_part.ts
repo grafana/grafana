@@ -76,13 +76,13 @@ register({
 });
 
 register({
-  type: 'special',
+  type: 'window',
   style: 'label',
   params: [
     {
       name: 'function',
       type: 'string',
-      options: ['increase', 'rate'],
+      options: ['increase', 'rate', 'sum'],
     },
   ],
   defaultParams: ['increase'],

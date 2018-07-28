@@ -61,9 +61,11 @@ describe('PostgresQuery', function() {
     column = [
       { type: 'column', params: ['v'] },
       { type: 'alias', params: ['a'] },
-      { type: 'special', params: ['increase'] },
+      { type: 'window', params: ['increase'] },
     ];
-    expect(query.buildValueColumn(column)).toBe('v - lag(v) OVER (ORDER BY time) AS "a"');
+    expect(query.buildValueColumn(column)).toBe(
+      '(CASE WHEN v >= lag(v) OVER (ORDER BY time) THEN v - lag(v) OVER (ORDER BY time) ELSE v END) AS "a"'
+    );
   });
 
   describe('When generating value column SQL with metric column', function() {
@@ -83,17 +85,20 @@ describe('PostgresQuery', function() {
     column = [
       { type: 'column', params: ['v'] },
       { type: 'alias', params: ['a'] },
-      { type: 'special', params: ['increase'] },
+      { type: 'window', params: ['increase'] },
     ];
-    expect(query.buildValueColumn(column)).toBe('v - lag(v) OVER (PARTITION BY host ORDER BY time) AS "a"');
+    expect(query.buildValueColumn(column)).toBe(
+      '(CASE WHEN v >= lag(v) OVER (PARTITION BY host ORDER BY time) THEN v - lag(v) OVER (PARTITION BY host ORDER BY time) ELSE v END) AS "a"'
+    );
     column = [
       { type: 'column', params: ['v'] },
       { type: 'alias', params: ['a'] },
       { type: 'aggregate', params: ['max'] },
-      { type: 'special', params: ['increase'] },
+      { type: 'window', params: ['increase'] },
     ];
     expect(query.buildValueColumn(column)).toBe(
-      'max(v ORDER BY time) - lag(max(v ORDER BY time)) OVER (PARTITION BY host) AS "a"'
+      '(CASE WHEN max(v ORDER BY time) >= lag(max(v ORDER BY time)) OVER (PARTITION BY host) ' +
+        'THEN max(v ORDER BY time) - lag(max(v ORDER BY time)) OVER (PARTITION BY host) ELSE max(v ORDER BY time) END) AS "a"'
     );
   });
 

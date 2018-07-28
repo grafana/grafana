@@ -135,7 +135,7 @@ export default class PostgresQuery {
     query = columnName.params[0];
 
     let aggregate = _.find(column, (g: any) => g.type === 'aggregate');
-    let special = _.find(column, (g: any) => g.type === 'special');
+    let special = _.find(column, (g: any) => g.type === 'window');
 
     if (aggregate) {
       if (special) {
@@ -155,9 +155,13 @@ export default class PostgresQuery {
       }
 
       let over = overParts.join(' ');
+      let curr: string;
+      let prev: string;
       switch (special.params[0]) {
         case 'increase':
-          query = query + ' - lag(' + query + ') OVER (' + over + ')';
+          curr = query;
+          prev = 'lag(' + curr + ') OVER (' + over + ')';
+          query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
           break;
         case 'rate':
           let timeColumn = this.target.timeColumn;
@@ -165,10 +169,13 @@ export default class PostgresQuery {
             timeColumn = 'min(' + timeColumn + ')';
           }
 
-          let curr = query;
-          let prev = 'lag(' + curr + ') OVER (' + over + ')';
+          curr = query;
+          prev = 'lag(' + curr + ') OVER (' + over + ')';
           query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
           query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
+          break;
+        default:
+          query = special.params[0] + '(' + query + ') OVER (' + over + ')';
           break;
       }
     }

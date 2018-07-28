@@ -99,8 +99,28 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   buildSelectMenu() {
     this.selectMenu = [
-      { text: 'Aggregate', value: 'aggregate' },
-      { text: 'Special', value: 'special' },
+      {
+        text: 'Aggregate Functions',
+        value: 'aggregate',
+        submenu: [
+          { text: 'Average', value: 'avg' },
+          { text: 'Count', value: 'count' },
+          { text: 'Maximum', value: 'max' },
+          { text: 'Minimum', value: 'min' },
+          { text: 'Sum', value: 'sum' },
+          { text: 'Standard deviation', value: 'stddev' },
+          { text: 'Variance', value: 'variance' },
+        ],
+      },
+      {
+        text: 'Window Functions',
+        value: 'window',
+        submenu: [
+          { text: 'Increase', value: 'increase' },
+          { text: 'Rate', value: 'rate' },
+          { text: 'Sum', value: 'sum' },
+        ],
+      },
       { text: 'Alias', value: 'alias' },
       { text: 'Column', value: 'column' },
     ];
@@ -207,8 +227,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
     };
   }
 
-  addSelectPart(selectParts, item) {
+  addSelectPart(selectParts, item, subItem) {
     let partModel = sqlPart.create({ type: item.value });
+    if (subItem) {
+      partModel.params = [subItem.value];
+    }
     let addAlias = false;
 
     switch (item.value) {
@@ -223,7 +246,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         if (this.target.group.length === 0) {
           this.addGroup('time', '1m');
         }
-      case 'special':
+      case 'window':
         let index = _.findIndex(selectParts, (p: any) => p.def.type === item.value);
         if (index !== -1) {
           selectParts[index] = partModel;
