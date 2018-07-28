@@ -33,10 +33,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
   timeColumnSegment: any;
   metricColumnSegment: any;
   selectMenu: any[];
-  selectModels: SqlPart[][];
-  groupByParts: SqlPart[][];
-  whereParts: SqlPart[][];
-  groupByAdd: any;
+  selectParts: SqlPart[][];
+  groupParts: SqlPart[];
+  whereParts: SqlPart[];
+  groupAdd: any;
 
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
@@ -69,22 +69,22 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     this.buildSelectMenu();
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
-    this.groupByAdd = this.uiSegmentSrv.newPlusButton();
+    this.groupAdd = this.uiSegmentSrv.newPlusButton();
 
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
   }
 
   updateProjection() {
-    this.selectModels = _.map(this.target.select, function(parts: any) {
+    this.selectParts = _.map(this.target.select, function(parts: any) {
       return _.map(parts, sqlPart.create).filter(n => n);
     });
     this.whereParts = _.map(this.target.where, sqlPart.create).filter(n => n);
-    this.groupByParts = _.map(this.target.groupBy, sqlPart.create).filter(n => n);
+    this.groupParts = _.map(this.target.group, sqlPart.create).filter(n => n);
   }
 
   updatePersistedParts() {
-    this.target.select = _.map(this.selectModels, function(selectParts) {
+    this.target.select = _.map(this.selectParts, function(selectParts) {
       return _.map(selectParts, function(part: any) {
         return { type: part.def.type, params: part.params };
       });
@@ -92,7 +92,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.target.where = _.map(this.whereParts, function(part: any) {
       return { type: part.def.type, name: part.name, params: part.params };
     });
-    this.target.groupBy = _.map(this.groupByParts, function(part: any) {
+    this.target.group = _.map(this.groupParts, function(part: any) {
       return { type: part.def.type, params: part.params };
     });
   }
@@ -216,12 +216,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
         let parts = _.map(selectParts, function(part: any) {
           return sqlPart.create({ type: part.def.type, params: _.clone(part.params) });
         });
-        this.selectModels.push(parts);
+        this.selectParts.push(parts);
         break;
       case 'aggregate':
         // add group by if no group by yet
-        if (this.target.groupBy.length === 0) {
-          this.addGroupBy('time', '1m');
+        if (this.target.group.length === 0) {
+          this.addGroup('time', '1m');
         }
       case 'special':
         let index = _.findIndex(selectParts, (p: any) => p.def.type === item.value);
@@ -256,9 +256,9 @@ export class PostgresQueryCtrl extends QueryCtrl {
   removeSelectPart(selectParts, part) {
     if (part.def.type === 'column') {
       // remove all parts of column unless its last column
-      if (this.selectModels.length > 1) {
-        let modelsIndex = _.indexOf(this.selectModels, selectParts);
-        this.selectModels.splice(modelsIndex, 1);
+      if (this.selectParts.length > 1) {
+        let modelsIndex = _.indexOf(this.selectParts, selectParts);
+        this.selectParts.splice(modelsIndex, 1);
       }
     } else {
       let partIndex = _.indexOf(selectParts, part);
@@ -299,7 +299,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
   }
 
-  handleGroupByPartEvent(part, index, evt) {
+  onGroupPartEvent(part, index, evt) {
     switch (evt.name) {
       case 'get-param-options': {
         return this.datasource
@@ -312,7 +312,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         break;
       }
       case 'action': {
-        this.removeGroupBy(part, index);
+        this.removeGroup(part, index);
         this.panelCtrl.refresh();
         break;
       }
@@ -322,7 +322,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
   }
 
-  addGroupBy(partType, value) {
+  addGroup(partType, value) {
     let params = [value];
     if (partType === 'time') {
       params = ['1m', 'none'];
@@ -331,13 +331,13 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     if (partType === 'time') {
       // put timeGroup at start
-      this.groupByParts.splice(0, 0, partModel);
+      this.groupParts.splice(0, 0, partModel);
     } else {
-      this.groupByParts.push(partModel);
+      this.groupParts.push(partModel);
     }
 
     // add aggregates when adding group by
-    for (let selectParts of this.selectModels) {
+    for (let selectParts of this.selectParts) {
       if (!selectParts.some(part => part.def.type === 'aggregate')) {
         let aggregate = sqlPart.create({ type: 'aggregate', params: ['avg'] });
         selectParts.splice(1, 0, aggregate);
@@ -351,10 +351,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.updatePersistedParts();
   }
 
-  removeGroupBy(part, index) {
+  removeGroup(part, index) {
     if (part.def.type === 'time') {
       // remove aggregations
-      this.selectModels = _.map(this.selectModels, (s: any) => {
+      this.selectParts = _.map(this.selectParts, (s: any) => {
         return _.filter(s, (part: any) => {
           if (part.def.type === 'aggregate') {
             return false;
@@ -364,7 +364,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       });
     }
 
-    this.groupByParts.splice(index, 1);
+    this.groupParts.splice(index, 1);
     this.updatePersistedParts();
   }
 
@@ -429,12 +429,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  getGroupByOptions() {
+  getGroupOptions() {
     return this.datasource
-      .metricFindQuery(this.metaBuilder.buildColumnQuery('groupby'))
+      .metricFindQuery(this.metaBuilder.buildColumnQuery('group'))
       .then(tags => {
         var options = [];
-        if (!this.queryModel.hasGroupByTime()) {
+        if (!this.queryModel.hasTimeGroup()) {
           options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time(1m,none)' }));
         }
         for (let tag of tags) {
@@ -445,14 +445,14 @@ export class PostgresQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryError.bind(this));
   }
 
-  groupByAction() {
-    switch (this.groupByAdd.value) {
+  onGroupAction() {
+    switch (this.groupAdd.value) {
       default: {
-        this.addGroupBy(this.groupByAdd.type, this.groupByAdd.value);
+        this.addGroup(this.groupAdd.type, this.groupAdd.value);
       }
     }
 
-    this.resetPlusButton(this.groupByAdd);
+    this.resetPlusButton(this.groupAdd);
     this.panelCtrl.refresh();
   }
 

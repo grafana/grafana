@@ -27,12 +27,12 @@ describe('PostgresQuery', function() {
 
   describe('When generating time column SQL with group by time', function() {
     let query = new PostgresQuery(
-      { timeColumn: 'time', groupBy: [{ type: 'time', params: ['5m', 'none'] }] },
+      { timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'none'] }] },
       templateSrv
     );
     expect(query.buildTimeColumn()).toBe('$__timeGroup(time,5m)');
 
-    query = new PostgresQuery({ timeColumn: 'time', groupBy: [{ type: 'time', params: ['5m', 'NULL'] }] }, templateSrv);
+    query = new PostgresQuery({ timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'NULL'] }] }, templateSrv);
     expect(query.buildTimeColumn()).toBe('$__timeGroup(time,5m,NULL)');
   });
 
@@ -114,13 +114,13 @@ describe('PostgresQuery', function() {
   });
 
   describe('When generating GROUP BY clause', function() {
-    let query = new PostgresQuery({ groupBy: [], metricColumn: 'none' }, templateSrv);
+    let query = new PostgresQuery({ group: [], metricColumn: 'none' }, templateSrv);
 
-    expect(query.buildGroupByClause()).toBe('');
-    query.target.groupBy = [{ type: 'time', params: ['5m'] }];
-    expect(query.buildGroupByClause()).toBe('\nGROUP BY 1');
+    expect(query.buildGroupClause()).toBe('');
+    query.target.group = [{ type: 'time', params: ['5m'] }];
+    expect(query.buildGroupClause()).toBe('\nGROUP BY 1');
     query.target.metricColumn = 'm';
-    expect(query.buildGroupByClause()).toBe('\nGROUP BY 1,2');
+    expect(query.buildGroupClause()).toBe('\nGROUP BY 1,2');
   });
 
   describe('When generating complete statement', function() {

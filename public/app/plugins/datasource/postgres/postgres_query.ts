@@ -15,7 +15,7 @@ export default class PostgresQuery {
     target.timeColumn = target.timeColumn || 'time';
     target.metricColumn = target.metricColumn || 'none';
 
-    target.groupBy = target.groupBy || [];
+    target.group = target.group || [];
     target.where = target.where || [{ type: 'macro', name: '$__timeFilter', params: [] }];
     target.select = target.select || [[{ type: 'column', params: ['value'] }]];
 
@@ -51,8 +51,8 @@ export default class PostgresQuery {
     return "'" + value.replace("'", "''") + "'";
   }
 
-  hasGroupByTime() {
-    return _.find(this.target.groupBy, (g: any) => g.type === 'time');
+  hasTimeGroup() {
+    return _.find(this.target.group, (g: any) => g.type === 'time');
   }
 
   hasMetricColumn() {
@@ -93,7 +93,7 @@ export default class PostgresQuery {
   }
 
   buildTimeColumn() {
-    let timeGroup = this.hasGroupByTime();
+    let timeGroup = this.hasTimeGroup();
     let query;
 
     if (timeGroup) {
@@ -201,24 +201,24 @@ export default class PostgresQuery {
     return query;
   }
 
-  buildGroupByClause() {
+  buildGroupClause() {
     let query = '';
-    let groupBySection = '';
+    let groupSection = '';
 
-    for (let i = 0; i < this.target.groupBy.length; i++) {
-      let part = this.target.groupBy[i];
+    for (let i = 0; i < this.target.group.length; i++) {
+      let part = this.target.group[i];
       if (i > 0) {
-        groupBySection += ', ';
+        groupSection += ', ';
       }
       if (part.type === 'time') {
-        groupBySection += '1';
+        groupSection += '1';
       } else {
-        groupBySection += part.params[0];
+        groupSection += part.params[0];
       }
     }
 
-    if (groupBySection.length) {
-      query = '\nGROUP BY ' + groupBySection;
+    if (groupSection.length) {
+      query = '\nGROUP BY ' + groupSection;
       if (this.hasMetricColumn()) {
         query += ',2';
       }
@@ -238,7 +238,7 @@ export default class PostgresQuery {
     query += '\nFROM ' + this.target.table;
 
     query += this.buildWhereClause();
-    query += this.buildGroupByClause();
+    query += this.buildGroupClause();
 
     query += '\nORDER BY 1';
 

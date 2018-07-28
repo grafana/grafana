@@ -111,7 +111,7 @@ table_schema IN (
         query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
         break;
       }
-      case 'groupby': {
+      case 'group': {
         query += " AND data_type IN ('text','char','varchar')";
         break;
       }
