@@ -1,6 +1,6 @@
 FROM debian:stretch-slim
 
-ARG GRAFANA_URL="https://s3-us-west-2.amazonaws.com/grafana-releases/master/grafana-latest.linux-x64.tar.gz"
+ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
 ARG GF_UID="472"
 ARG GF_GID="472"
 
@@ -12,9 +12,12 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
     GF_PATHS_PLUGINS="/var/lib/grafana/plugins" \
     GF_PATHS_PROVISIONING="/etc/grafana/provisioning"
 
-RUN apt-get update && apt-get install -qq -y tar libfontconfig curl ca-certificates && \
+COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
+
+RUN apt-get update && apt-get install -qq -y tar libfontconfig ca-certificates && \
     mkdir -p "$GF_PATHS_HOME/.aws" && \
-    curl "$GRAFANA_URL" | tar xfvz - --strip-components=1 -C "$GF_PATHS_HOME" && \
+    tar xfvz /tmp/grafana.tar.gz --strip-components=1 -C "$GF_PATHS_HOME" && \
+    rm /tmp/grafana.tar.gz && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     groupadd -r -g $GF_GID grafana && \

@@ -10,7 +10,6 @@ echo ${_grafana_version}
 if [ "$_grafana_version" != "" ]; then
 	echo "Building version ${_grafana_version}"
 	docker build \
-		--build-arg GRAFANA_URL="https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-${_grafana_version}.linux-amd64.tar.gz" \
 		--tag "${_docker_repo}:${_grafana_version}" \
 		--no-cache=true .
 	docker tag ${_docker_repo}:${_grafana_version} ${_docker_repo}:latest
