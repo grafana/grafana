@@ -138,16 +138,21 @@ export default class PostgresQuery {
     let special = _.find(column, (g: any) => g.type === 'window');
 
     if (aggregate) {
+      let func = aggregate.params[0];
       switch (aggregate.type) {
         case 'aggregate':
-          if (special) {
-            query = aggregate.params[0] + '(' + query + ' ORDER BY ' + this.target.timeColumn + ')';
+          if (func === 'first' || func === 'last') {
+            query = func + '(' + query + ',' + this.target.timeColumn + ')';
           } else {
-            query = aggregate.params[0] + '(' + query + ')';
+            if (special) {
+              query = func + '(' + query + ' ORDER BY ' + this.target.timeColumn + ')';
+            } else {
+              query = func + '(' + query + ')';
+            }
           }
           break;
         case 'percentile':
-          query = aggregate.params[0] + '(' + aggregate.params[1] + ') WITHIN GROUP (ORDER BY ' + query + ')';
+          query = func + '(' + aggregate.params[1] + ') WITHIN GROUP (ORDER BY ' + query + ')';
           break;
       }
     }

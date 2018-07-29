@@ -98,38 +98,49 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   buildSelectMenu() {
-    this.selectMenu = [
-      {
-        text: 'Aggregate Functions',
-        value: 'aggregate',
-        submenu: [
-          { text: 'Average', value: 'avg' },
-          { text: 'Count', value: 'count' },
-          { text: 'Maximum', value: 'max' },
-          { text: 'Minimum', value: 'min' },
-          { text: 'Sum', value: 'sum' },
-          { text: 'Standard deviation', value: 'stddev' },
-          { text: 'Variance', value: 'variance' },
-        ],
-      },
-      {
-        text: 'Ordered-Set Aggregate Functions',
-        value: 'percentile',
-        submenu: [
-          { text: 'Percentile (continuous)', value: 'percentile_cont' },
-          { text: 'Percentile (discrete)', value: 'percentile_disc' },
-        ],
-      },
-      {
-        text: 'Window Functions',
-        value: 'window',
-        submenu: [
-          { text: 'Increase', value: 'increase' },
-          { text: 'Rate', value: 'rate' },
-          { text: 'Sum', value: 'sum' },
-        ],
-      },
-    ];
+    this.selectMenu = [];
+    let aggregates = {
+      text: 'Aggregate Functions',
+      value: 'aggregate',
+      submenu: [
+        { text: 'Average', value: 'avg' },
+        { text: 'Count', value: 'count' },
+        { text: 'Maximum', value: 'max' },
+        { text: 'Minimum', value: 'min' },
+        { text: 'Sum', value: 'sum' },
+        { text: 'Standard deviation', value: 'stddev' },
+        { text: 'Variance', value: 'variance' },
+      ],
+    };
+
+    // first and last are timescaledb specific
+    aggregates.submenu.push({ text: 'First', value: 'first' });
+    aggregates.submenu.push({ text: 'Last', value: 'last' });
+
+    this.selectMenu.push(aggregates);
+
+    // ordered set aggregates require postgres 9.4+
+    let aggregates2 = {
+      text: 'Ordered-Set Aggregate Functions',
+      value: 'percentile',
+      submenu: [
+        { text: 'Percentile (continuous)', value: 'percentile_cont' },
+        { text: 'Percentile (discrete)', value: 'percentile_disc' },
+      ],
+    };
+    this.selectMenu.push(aggregates2);
+
+    let windows = {
+      text: 'Window Functions',
+      value: 'window',
+      submenu: [
+        { text: 'Increase', value: 'increase' },
+        { text: 'Rate', value: 'rate' },
+        { text: 'Sum', value: 'sum' },
+      ],
+    };
+    this.selectMenu.push(windows);
+
     this.selectMenu.push({ text: 'Alias', value: 'alias' });
     this.selectMenu.push({ text: 'Column', value: 'column' });
   }
