@@ -113,6 +113,14 @@ export class PostgresQueryCtrl extends QueryCtrl {
         ],
       },
       {
+        text: 'Ordered-Set Aggregate Functions',
+        value: 'percentile',
+        submenu: [
+          { text: 'Percentile (continuous)', value: 'percentile_cont' },
+          { text: 'Percentile (discrete)', value: 'percentile_disc' },
+        ],
+      },
+      {
         text: 'Window Functions',
         value: 'window',
         submenu: [
@@ -121,9 +129,9 @@ export class PostgresQueryCtrl extends QueryCtrl {
           { text: 'Sum', value: 'sum' },
         ],
       },
-      { text: 'Alias', value: 'alias' },
-      { text: 'Column', value: 'column' },
     ];
+    this.selectMenu.push({ text: 'Alias', value: 'alias' });
+    this.selectMenu.push({ text: 'Column', value: 'column' });
   }
 
   toggleEditorMode() {
@@ -241,17 +249,39 @@ export class PostgresQueryCtrl extends QueryCtrl {
         });
         this.selectParts.push(parts);
         break;
+      case 'percentile':
+        partModel.params.push('0.95');
       case 'aggregate':
         // add group by if no group by yet
         if (this.target.group.length === 0) {
           this.addGroup('time', '1m');
         }
-      case 'window':
-        let index = _.findIndex(selectParts, (p: any) => p.def.type === item.value);
-        if (index !== -1) {
-          selectParts[index] = partModel;
+        let aggIndex = _.findIndex(selectParts, (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile');
+        if (aggIndex !== -1) {
+          // replace current aggregation
+          selectParts[aggIndex] = partModel;
         } else {
           selectParts.splice(1, 0, partModel);
+        }
+        if (!_.find(selectParts, (p: any) => p.def.type === 'alias')) {
+          addAlias = true;
+        }
+        break;
+      case 'window':
+        let windowIndex = _.findIndex(selectParts, (p: any) => p.def.type === 'window');
+        if (windowIndex !== -1) {
+          // replace current window function
+          selectParts[windowIndex] = partModel;
+        } else {
+          let aggIndex = _.findIndex(
+            selectParts,
+            (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile'
+          );
+          if (aggIndex !== -1) {
+            selectParts.splice(aggIndex + 1, 0, partModel);
+          } else {
+            selectParts.splice(1, 0, partModel);
+          }
         }
         if (!_.find(selectParts, (p: any) => p.def.type === 'alias')) {
           addAlias = true;
@@ -322,7 +352,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
   }
 
-  onGroupPartEvent(part, index, evt) {
+  handleGroupPartEvent(part, index, evt) {
     switch (evt.name) {
       case 'get-param-options': {
         return this.datasource
@@ -379,7 +409,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       // remove aggregations
       this.selectParts = _.map(this.selectParts, (s: any) => {
         return _.filter(s, (part: any) => {
-          if (part.def.type === 'aggregate') {
+          if (part.def.type === 'aggregate' || part.def.type === 'percentile') {
             return false;
           }
           return true;
@@ -436,7 +466,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     return this.$q.when(options);
   }
 
-  whereAddAction(part, index) {
+  addWhereAction(part, index) {
     switch (this.whereAdd.type) {
       case 'macro': {
         this.whereParts.push(sqlPart.create({ type: 'macro', name: this.whereAdd.value, params: [] }));
@@ -468,7 +498,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryError.bind(this));
   }
 
-  onGroupAction() {
+  addGroupAction() {
     switch (this.groupAdd.value) {
       default: {
         this.addGroup(this.groupAdd.type, this.groupAdd.value);

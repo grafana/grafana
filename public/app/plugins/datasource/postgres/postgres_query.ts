@@ -134,14 +134,21 @@ export default class PostgresQuery {
     let columnName = _.find(column, (g: any) => g.type === 'column');
     query = columnName.params[0];
 
-    let aggregate = _.find(column, (g: any) => g.type === 'aggregate');
+    let aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
     let special = _.find(column, (g: any) => g.type === 'window');
 
     if (aggregate) {
-      if (special) {
-        query = aggregate.params[0] + '(' + query + ' ORDER BY ' + this.target.timeColumn + ')';
-      } else {
-        query = aggregate.params[0] + '(' + query + ')';
+      switch (aggregate.type) {
+        case 'aggregate':
+          if (special) {
+            query = aggregate.params[0] + '(' + query + ' ORDER BY ' + this.target.timeColumn + ')';
+          } else {
+            query = aggregate.params[0] + '(' + query + ')';
+          }
+          break;
+        case 'percentile':
+          query = aggregate.params[0] + '(' + aggregate.params[1] + ') WITHIN GROUP (ORDER BY ' + query + ')';
+          break;
       }
     }
 

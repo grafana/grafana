@@ -66,7 +66,7 @@
       </div>
 
       <div class="gf-form">
-        <metric-segment segment="ctrl.whereAdd" get-options="ctrl.getWhereOptions()" on-change="ctrl.whereAddAction(part, $index)"></metric-segment>
+        <metric-segment segment="ctrl.whereAdd" get-options="ctrl.getWhereOptions()" on-change="ctrl.addWhereAction(part, $index)"></metric-segment>
       </div>
 
       <div class="gf-form gf-form--grow">
@@ -83,12 +83,12 @@
 
         <sql-part-editor  ng-repeat="part in ctrl.groupParts"
                             part="part" class="gf-form-label sql-part"
-                            handle-event="ctrl.onGroupPartEvent(part, $index, $event)">
+                            handle-event="ctrl.handleGroupPartEvent(part, $index, $event)">
         </sql-part-editor>
       </div>
 
       <div class="gf-form">
-        <metric-segment segment="ctrl.groupAdd" get-options="ctrl.getGroupOptions()" on-change="ctrl.onGroupAction(part, $index)"></metric-segment>
+        <metric-segment segment="ctrl.groupAdd" get-options="ctrl.getGroupOptions()" on-change="ctrl.addGroupAction(part, $index)"></metric-segment>
       </div>
 
       <div class="gf-form gf-form--grow">
