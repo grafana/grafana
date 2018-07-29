@@ -1,40 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_MSSQL",
-      "label": "MSSQL",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "mssql",
-      "pluginName": "MSSQL"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "mssql",
-      "name": "MSSQL",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "table",
-      "name": "Table",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -52,8 +16,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1520976748896,
+  "iteration": 1532618661457,
   "links": [],
   "panels": [
     {
@@ -63,7 +26,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL}",
+      "datasource": "gdev-mssql",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -149,14 +112,18 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL}",
+      "datasource": "gdev-mssql",
       "fill": 2,
       "gridPos": {
         "h": 18,
@@ -234,14 +201,18 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MSSQL}",
+      "datasource": "gdev-mssql",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -313,11 +284,15 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "columns": [],
-      "datasource": "${DS_MSSQL}",
+      "datasource": "gdev-mssql",
       "fontSize": "100%",
       "gridPos": {
         "h": 10,
@@ -371,13 +346,13 @@
   ],
   "schemaVersion": 16,
   "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "mssql", "fake-data-gen"],
   "templating": {
     "list": [
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_MSSQL}",
+        "datasource": "gdev-mssql",
         "hide": 0,
         "includeAll": false,
         "label": "Datacenter",
@@ -387,6 +362,7 @@
         "query": "SELECT DISTINCT datacenter FROM grafana_metric",
         "refresh": 1,
         "regex": "",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -397,7 +373,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_MSSQL}",
+        "datasource": "gdev-mssql",
         "hide": 0,
         "includeAll": true,
         "label": "Hostname",
@@ -407,6 +383,7 @@
         "query": "SELECT DISTINCT hostname FROM grafana_metric WHERE datacenter='$datacenter'",
         "refresh": 1,
         "regex": "",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -499,6 +476,7 @@
         ],
         "query": "1s,10s,30s,1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
+        "skipUrlSync": false,
         "type": "interval"
       }
     ]
@@ -533,7 +511,7 @@
     ]
   },
   "timezone": "",
-  "title": "Grafana Fake Data Gen - MSSQL",
+  "title": "Datasource tests - MSSQL",
   "uid": "86Js1xRmk",
-  "version": 11
+  "version": 1
 }

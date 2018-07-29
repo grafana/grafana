@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -22,8 +23,9 @@ import (
 // The tests require a PostgreSQL db named grafanadstest and a user/password grafanatest/grafanatest!
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
-// There is also a dashboard.json in same directory that you can import to Grafana
-// once you've created a datasource for the test server/database.
+// There is also a datasource and dashboard provisioned by devenv scripts that you can
+// use to verify that the generated data are vizualized as expected, see
+// devenv/README.md for setup instructions.
 func TestPostgres(t *testing.T) {
 	// change to true to run the MySQL tests
 	runPostgresTests := false
@@ -36,18 +38,24 @@ func TestPostgres(t *testing.T) {
 	Convey("PostgreSQL", t, func() {
 		x := InitPostgresTestDB(t)
 
-		endpoint := &PostgresQueryEndpoint{
-			sqlEngine: &tsdb.DefaultSqlEngine{
-				MacroEngine: NewPostgresMacroEngine(),
-				XormEngine:  x,
-			},
-			log: log.New("tsdb.postgres"),
+		origXormEngine := tsdb.NewXormEngine
+		tsdb.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+			return x, nil
 		}
 
-		sess := x.NewSession()
-		defer sess.Close()
+		endpoint, err := newPostgresQueryEndpoint(&models.DataSource{
+			JsonData:       simplejson.New(),
+			SecureJsonData: securejsondata.SecureJsonData{},
+		})
+		So(err, ShouldBeNil)
 
+		sess := x.NewSession()
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+
+		Reset(func() {
+			sess.Close()
+			tsdb.NewXormEngine = origXormEngine
+		})
 
 		Convey("Given a table with different native data types", func() {
 			sql := `

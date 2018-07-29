@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
@@ -19,8 +20,9 @@ import (
 // The tests require a MSSQL db named grafanatest and a user/password grafana/Password!
 // Use the docker/blocks/mssql_tests/docker-compose.yaml to spin up a
 // preconfigured MSSQL server suitable for running these tests.
-// There is also a dashboard.json in same directory that you can import to Grafana
-// once you've created a datasource for the test server/database.
+// There is also a datasource and dashboard provisioned by devenv scripts that you can
+// use to verify that the generated data are vizualized as expected, see
+// devenv/README.md for setup instructions.
 // If needed, change the variable below to the IP address of the database.
 var serverIP = "localhost"
 
@@ -28,18 +30,24 @@ func TestMSSQL(t *testing.T) {
 	SkipConvey("MSSQL", t, func() {
 		x := InitMSSQLTestDB(t)
 
-		endpoint := &MssqlQueryEndpoint{
-			sqlEngine: &tsdb.DefaultSqlEngine{
-				MacroEngine: NewMssqlMacroEngine(),
-				XormEngine:  x,
-			},
-			log: log.New("tsdb.mssql"),
+		origXormEngine := tsdb.NewXormEngine
+		tsdb.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+			return x, nil
 		}
 
-		sess := x.NewSession()
-		defer sess.Close()
+		endpoint, err := newMssqlQueryEndpoint(&models.DataSource{
+			JsonData:       simplejson.New(),
+			SecureJsonData: securejsondata.SecureJsonData{},
+		})
+		So(err, ShouldBeNil)
 
+		sess := x.NewSession()
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+
+		Reset(func() {
+			sess.Close()
+			tsdb.NewXormEngine = origXormEngine
+		})
 
 		Convey("Given a table with different native data types", func() {
 			sql := `
