@@ -187,6 +187,8 @@ jobs:
       - image: docker:stable-git
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - setup_remote_docker
       - run: docker info
       - run: echo $GRAFANA_VERSION
