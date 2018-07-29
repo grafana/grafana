@@ -246,6 +246,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
     };
   }
 
+  findAggregateIndex(selectParts) {
+    return _.findIndex(selectParts, (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile');
+  }
+
   addSelectPart(selectParts, item, subItem) {
     let partModel = sqlPart.create({ type: item.value });
     if (subItem) {
@@ -267,7 +271,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         if (this.target.group.length === 0) {
           this.addGroup('time', '1m');
         }
-        let aggIndex = _.findIndex(selectParts, (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile');
+        let aggIndex = this.findAggregateIndex(selectParts);
         if (aggIndex !== -1) {
           // replace current aggregation
           selectParts[aggIndex] = partModel;
@@ -284,10 +288,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
           // replace current window function
           selectParts[windowIndex] = partModel;
         } else {
-          let aggIndex = _.findIndex(
-            selectParts,
-            (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile'
-          );
+          let aggIndex = this.findAggregateIndex(selectParts);
           if (aggIndex !== -1) {
             selectParts.splice(aggIndex + 1, 0, partModel);
           } else {

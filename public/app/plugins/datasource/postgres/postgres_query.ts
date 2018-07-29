@@ -135,7 +135,7 @@ export default class PostgresQuery {
     query = columnName.params[0];
 
     let aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
-    let special = _.find(column, (g: any) => g.type === 'window');
+    let windows = _.find(column, (g: any) => g.type === 'window');
 
     if (aggregate) {
       let func = aggregate.params[0];
@@ -144,7 +144,7 @@ export default class PostgresQuery {
           if (func === 'first' || func === 'last') {
             query = func + '(' + query + ',' + this.target.timeColumn + ')';
           } else {
-            if (special) {
+            if (windows) {
               query = func + '(' + query + ' ORDER BY ' + this.target.timeColumn + ')';
             } else {
               query = func + '(' + query + ')';
@@ -157,7 +157,7 @@ export default class PostgresQuery {
       }
     }
 
-    if (special) {
+    if (windows) {
       let overParts = [];
       if (this.hasMetricColumn()) {
         overParts.push('PARTITION BY ' + this.target.metricColumn);
@@ -169,7 +169,7 @@ export default class PostgresQuery {
       let over = overParts.join(' ');
       let curr: string;
       let prev: string;
-      switch (special.params[0]) {
+      switch (windows.params[0]) {
         case 'increase':
           curr = query;
           prev = 'lag(' + curr + ') OVER (' + over + ')';
@@ -187,7 +187,7 @@ export default class PostgresQuery {
           query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
           break;
         default:
-          query = special.params[0] + '(' + query + ') OVER (' + over + ')';
+          query = windows.params[0] + '(' + query + ') OVER (' + over + ')';
           break;
       }
     }
