@@ -568,6 +568,31 @@ func TestPostgres(t *testing.T) {
 				So(queryResult.Series[1].Name, ShouldEqual, "Metric B - value one")
 			})
 
+			Convey("When doing a metric query with metric column and multiple value columns", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT $__timeEpoch(time), measurement as metric, "valueOne", "valueTwo" FROM metric_values ORDER BY 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 4)
+				So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
+				So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
+				So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
+				So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
+			})
+
 			Convey("When doing a metric query grouping by time should return correct series", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
