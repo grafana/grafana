@@ -52,6 +52,7 @@ Filter Option | Example | Raw | Interpolated | Description
 `csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
 `distributed`| ${servers:distributed} | `'test1', 'test2'` | `test1,servers=test2` | Formats multi-value variable in custom format for OpenTSDB.
 `lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
+`urlescape` | ${servers:urlescape} |  `'foo()bar baz', 'test2'` | `{foo%28%29bar%20baz%2Ctest2}` | Formats multi-value variable into a glob, url escaped
 
 Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 

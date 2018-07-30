@@ -124,6 +124,13 @@ export class TemplateSrv {
         }
         return value;
       }
+      case 'urlescape': {
+        // like glob, but url escaped
+        if (_.isArray(value)) {
+          return escape('{' + value.join(',') + '}');
+        }
+        return escape(value);
+      }
       default: {
         if (_.isArray(value)) {
           return '{' + value.join(',') + '}';
