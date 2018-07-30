@@ -261,9 +261,6 @@ jobs:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
       - run:
-          name: Trigger Docker build
-          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN} master-$(echo "${CIRCLE_SHA1}" | cut -b1-7)'
-      - run:
           name: Publish to Grafana.com
           command: |
             rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
@@ -284,9 +281,6 @@ jobs:
       - run:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} release'
-      - run:
-          name: Trigger Docker build
-          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN} ${CIRCLE_TAG}'
 
 workflows:
   version: 2
