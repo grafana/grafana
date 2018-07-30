@@ -182,7 +182,7 @@ jobs:
           paths:
             - dist/grafana*
 
-  build-docker:
+  grafana-docker-master:
     docker:
       - image: docker:stable-git
     steps:
@@ -191,9 +191,8 @@ jobs:
           at: .
       - setup_remote_docker
       - run: docker info
-      - run: echo $GRAFANA_VERSION
       - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build.sh ${GRAFANA_VERSION}
+      - run: cd packaging/docker && ./build-deploy.sh "grafana-docker-${CIRCLE_SHA1}"
 
   build-enterprise:
     docker:
@@ -362,7 +361,7 @@ workflows:
             filters: *filter-not-release-or-master
         - postgres-integration-test:
             filters: *filter-not-release-or-master
-        - build-docker:
+        - grafana-docker-master:
             requires:
               - build
               - test-backend
