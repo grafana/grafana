@@ -63,10 +63,15 @@ func (r *SearchRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(root)
 }
 
+// SearchResponseHitsTotal represents search response hits
+type SearchResponseHitsTotal struct {
+	Value int64 `json:"value"`
+}
+
 // SearchResponseHits represents search response hits
 type SearchResponseHits struct {
-	Hits  []interface{} `json:"hits"`
-	Total int64         `json:"total"`
+	Hits  []interface{}            `json:"hits"`
+	Total *SearchResponseHitsTotal `json:"total"`
 }
 
 // SearchResponse represents a search response

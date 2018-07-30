@@ -27,7 +27,7 @@ var (
 	clientLog = log.New(loggerName)
 )
 
-var newDatasourceHttpClient = func(ds *models.DataSource) (*http.Client, error) {
+var newDatasourceHTTPClient = func(ds *models.DataSource) (*http.Client, error) {
 	return ds.GetHttpClient()
 }
 
@@ -174,9 +174,9 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, uriQuery string,
 	var req *http.Request
 	if method == http.MethodPost {
 		c.meta.Get("request").Set("body", string(body))
-		req, err = http.NewRequest(http.MethodPost, u.Path, bytes.NewBuffer(body))
+		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
 	} else {
-		req, err = http.NewRequest(http.MethodGet, u.Path, nil)
+		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
 	}
 	if err != nil {
 		return nil, err
@@ -206,7 +206,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, uriQuery string,
 		req.SetBasicAuth(c.ds.User, c.ds.DecryptedPassword())
 	}
 
-	httpClient, err := newDatasourceHttpClient(c.ds)
+	httpClient, err := newDatasourceHTTPClient(c.ds)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@ import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { InlineSegmentGroup, Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from 'emotion';
 import React, { FunctionComponent } from 'react';
-import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
+import { useDatasource, useQuery, useRange } from '../ElasticsearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { getStyles } from './styles';
 import { SettingsEditor } from './SettingsEditor';
@@ -67,6 +67,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
   const styles = getStyles(useTheme(), !!value.hide);
   const datasource = useDatasource();
   const query = useQuery();
+  const range = useRange();
   const dispatch = useDispatch<MetricAggregationAction>();
 
   const previousMetrics = query.metrics!.slice(
@@ -78,9 +79,9 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
   const getFields = async () => {
     const get = () => {
       if (value.type === 'cardinality') {
-        return datasource.getFields();
+        return datasource.getFields(undefined, range);
       }
-      return datasource.getFields('number');
+      return datasource.getFields('number', range);
     };
 
     return (await get().toPromise()).map(toSelectableValue);

@@ -2,7 +2,7 @@ import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { InlineSegmentGroup, Segment, SegmentAsync } from '@grafana/ui';
 import React, { FunctionComponent } from 'react';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
-import { useDatasource } from '../ElasticsearchQueryContext';
+import { useDatasource, useRange } from '../ElasticsearchQueryContext';
 import { segmentStyles } from '../styles';
 import { BucketAggregation, BucketAggregationType, isBucketAggregationWithField } from './aggregations';
 import { SettingsEditor } from './SettingsEditor';
@@ -33,6 +33,7 @@ interface QueryMetricEditorProps {
 
 export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ value }) => {
   const datasource = useDatasource();
+  const range = useRange();
   const dispatch = useDispatch<BucketAggregationAction>();
 
   // TODO: Move this in a separate hook (and simplify)
@@ -40,11 +41,11 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
     const get = () => {
       switch (value.type) {
         case 'date_histogram':
-          return datasource.getFields('date');
+          return datasource.getFields('date', range);
         case 'geohash_grid':
-          return datasource.getFields('geo_point');
+          return datasource.getFields('geo_point', range);
         default:
-          return datasource.getFields();
+          return datasource.getFields(undefined, range);
       }
     };
 
