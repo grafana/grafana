@@ -35,7 +35,7 @@ type metricAggregation struct {
 	hide              bool
 	id                string
 	pipelineAggregate string
-	pipelineVariables map[string]string `json:"pipelineVariables"`
+	pipelineVariables map[string]string
 	settings          *simplejson.Json
 	meta              *simplejson.Json
 	aggType           string

@@ -1,392 +1,247 @@
-import angular from 'angular';
-import * as dateMath from 'app/core/utils/datemath';
-import _ from 'lodash';
 import moment from 'moment';
 import { ElasticDatasource } from '../datasource';
+import $q from 'q';
 
-describe('ElasticDatasource', function(this: any) {
-  const backendSrv = {
-    datasourceRequest: jest.fn(),
+const timeFrom = 1432288354;
+const timeTo = 1432288401;
+const timeMock = { from: moment(timeFrom), to: moment(timeTo) };
+
+describe('ElasticDatasource', () => {
+  let ctx = {} as any;
+
+  const createContext = () => {
+    ctx = {
+      templateSrv: {
+        replace: jest.fn(text => text),
+        getAdhocFilters: jest.fn(() => []),
+      },
+      backendSrv: {
+        datasourceRequest: jest.fn(() => Promise.resolve('data')),
+      },
+      timeSrv: {
+        timeRange: jest.fn(() => ({
+          from: timeMock.from,
+          to: timeMock.to,
+        })),
+        setTime: jest.fn(() => {}),
+      },
+    };
+    ctx.ds = new ElasticDatasource(
+      { id: 1, name: 'es', jsonData: { timeField: '@timestamp' } },
+      $q,
+      ctx.backendSrv,
+      ctx.templateSrv,
+      ctx.timeSrv
+    );
+    ctx.ds.responseTransformer = {
+      transformTimeSeriesQueryResult: jest.fn(),
+      transformAnnotationQueryResponse: jest.fn(),
+      transformFieldsQueryResponse: jest.fn(),
+      transformTermsQueryResponse: jest.fn(),
+    };
+
+    return ctx;
   };
 
-  const $rootScope = {
-    $on: jest.fn(),
-    appEvent: jest.fn(),
-  };
+  beforeEach(() => {
+    ctx = createContext();
+  });
 
-  const templateSrv = {
-    replace: jest.fn(text => {
-      if (text.startsWith('$')) {
-        return `resolvedVariable`;
-      } else {
-        return text;
-      }
-    }),
-    getAdhocFilters: jest.fn(() => []),
-  };
+  it('when calling post should call backendSrv with expected payload', async () => {
+    await ctx.ds.post('test');
 
-  const timeSrv = {
-    time: { from: 'now-1h', to: 'now' },
-    timeRange: jest.fn(() => {
-      return {
-        from: dateMath.parse(this.time.from, false),
-        to: dateMath.parse(this.time.to, true),
+    expect(ctx.backendSrv.datasourceRequest).toHaveBeenCalledTimes(1);
+    expect(ctx.backendSrv.datasourceRequest).toHaveBeenCalledWith({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: 'test',
+    });
+  });
+
+  describe('execute query', () => {
+    it('with no targets should not call backendSrv', async () => {
+      const options = {
+        targets: [],
       };
-    }),
-    setTime: jest.fn(time => {
-      this.time = time;
-    }),
-  };
-
-  const ctx = {
-    $rootScope,
-    backendSrv,
-  } as any;
-
-  function createDatasource(instanceSettings) {
-    instanceSettings.jsonData = instanceSettings.jsonData || {};
-    ctx.ds = new ElasticDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
-  }
-
-  describe('When testing datasource with index pattern', () => {
-    beforeEach(() => {
-      createDatasource({
-        url: 'http://es.com',
-        index: '[asd-]YYYY.MM.DD',
-        jsonData: { interval: 'Daily', esVersion: '2' },
-      });
+      await ctx.ds.query(options);
+      expect(ctx.backendSrv.datasourceRequest).toHaveBeenCalledTimes(0);
     });
 
-    it('should translate index pattern to current day', () => {
-      let requestOptions;
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        requestOptions = options;
-        return Promise.resolve({ data: {} });
-      });
-
-      ctx.ds.testDatasource();
-
-      const today = moment.utc().format('YYYY.MM.DD');
-      expect(requestOptions.url).toBe('http://es.com/asd-' + today + '/_mapping');
-    });
-  });
-
-  describe('When issuing metric query with interval pattern', () => {
-    let requestOptions, parts, header, query, result;
-
-    beforeEach(async () => {
-      createDatasource({
-        url: 'http://es.com',
-        index: '[asd-]YYYY.MM.DD',
-        jsonData: { interval: 'Daily', esVersion: '2' },
-      });
-
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        requestOptions = options;
-        return Promise.resolve({
-          data: {
-            responses: [
-              {
-                aggregations: {
-                  '1': {
-                    buckets: [
-                      {
-                        doc_count: 10,
-                        key: 1000,
-                      },
-                    ],
-                  },
-                },
-              },
-            ],
-          },
-        });
-      });
-
-      query = {
-        range: {
-          from: moment.utc([2015, 4, 30, 10]),
-          to: moment.utc([2015, 5, 1, 10]),
-        },
-        targets: [
-          {
-            alias: '$varAlias',
-            bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
-            metrics: [{ type: 'count', id: '1' }],
-            query: 'escape\\:test',
-          },
-        ],
+    it('with only hidden targets should not call backendSrv', async () => {
+      const options = {
+        targets: [{ hide: true }],
       };
-
-      result = await ctx.ds.query(query);
-
-      parts = requestOptions.data.split('\n');
-      header = angular.fromJson(parts[0]);
+      await ctx.ds.query(options);
+      expect(ctx.backendSrv.datasourceRequest).toHaveBeenCalledTimes(0);
     });
 
-    it('should translate index pattern to current day', () => {
-      expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
-    });
-
-    it('should not resolve the variable in the original alias field in the query', () => {
-      expect(query.targets[0].alias).toEqual('$varAlias');
-    });
-
-    it('should resolve the alias variable for the alias/target in the result', () => {
-      expect(result.data[0].target).toEqual('resolvedVariable');
-    });
-
-    it('should json escape lucene query', () => {
-      const body = angular.fromJson(parts[1]);
-      expect(body.query.bool.filter[1].query_string.query).toBe('escape\\:test');
-    });
-  });
-
-  describe('When issuing document query', () => {
-    let requestOptions, parts, header;
-
-    beforeEach(() => {
-      createDatasource({
-        url: 'http://es.com',
-        index: 'test',
-        jsonData: { esVersion: '2' },
-      });
-
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        requestOptions = options;
-        return Promise.resolve({ data: { responses: [] } });
-      });
-
-      ctx.ds.query({
+    it('with targets should call backendSrv and response transformer', async () => {
+      const options = {
         range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10]),
+          from: moment(timeFrom),
+          to: moment(timeTo),
         },
+        intervalMs: 1000,
         targets: [
           {
-            bucketAggs: [],
-            metrics: [{ type: 'raw_document' }],
-            query: 'test',
-          },
-        ],
-      });
-
-      parts = requestOptions.data.split('\n');
-      header = angular.fromJson(parts[0]);
-    });
-
-    it('should set search type to query_then_fetch', () => {
-      expect(header.search_type).toEqual('query_then_fetch');
-    });
-
-    it('should set size', () => {
-      const body = angular.fromJson(parts[1]);
-      expect(body.size).toBe(500);
-    });
-  });
-
-  describe('When getting fields', () => {
-    beforeEach(() => {
-      createDatasource({ url: 'http://es.com', index: 'metricbeat' });
-
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({
-          data: {
-            metricbeat: {
-              mappings: {
-                metricsets: {
-                  _all: {},
-                  properties: {
-                    '@timestamp': { type: 'date' },
-                    beat: {
-                      properties: {
-                        name: {
-                          fields: { raw: { type: 'keyword' } },
-                          type: 'string',
-                        },
-                        hostname: { type: 'string' },
-                      },
-                    },
-                    system: {
-                      properties: {
-                        cpu: {
-                          properties: {
-                            system: { type: 'float' },
-                            user: { type: 'float' },
-                          },
-                        },
-                        process: {
-                          properties: {
-                            cpu: {
-                              properties: {
-                                total: { type: 'float' },
-                              },
-                            },
-                            name: { type: 'string' },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        });
-      });
-    });
-
-    it('should return nested fields', () => {
-      ctx.ds
-        .getFields({
-          find: 'fields',
-          query: '*',
-        })
-        .then(fieldObjects => {
-          const fields = _.map(fieldObjects, 'text');
-          expect(fields).toEqual([
-            '@timestamp',
-            'beat.name.raw',
-            'beat.name',
-            'beat.hostname',
-            'system.cpu.system',
-            'system.cpu.user',
-            'system.process.cpu.total',
-            'system.process.name',
-          ]);
-        });
-    });
-
-    it('should return fields related to query type', () => {
-      ctx.ds
-        .getFields({
-          find: 'fields',
-          query: '*',
-          type: 'number',
-        })
-        .then(fieldObjects => {
-          const fields = _.map(fieldObjects, 'text');
-          expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
-        });
-
-      ctx.ds
-        .getFields({
-          find: 'fields',
-          query: '*',
-          type: 'date',
-        })
-        .then(fieldObjects => {
-          const fields = _.map(fieldObjects, 'text');
-          expect(fields).toEqual(['@timestamp']);
-        });
-    });
-  });
-
-  describe('When issuing aggregation query on es5.x', () => {
-    let requestOptions, parts, header;
-
-    beforeEach(() => {
-      createDatasource({
-        url: 'http://es.com',
-        index: 'test',
-        jsonData: { esVersion: '5' },
-      });
-
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        requestOptions = options;
-        return Promise.resolve({ data: { responses: [] } });
-      });
-
-      ctx.ds.query({
-        range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10]),
-        },
-        targets: [
-          {
+            refId: 'A',
+            alias: 'cpu count',
+            query: '@metric:cpu',
+            timeField: '@timestamp',
             bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
-            metrics: [{ type: 'count' }],
-            query: 'test',
+            metrics: [{ type: 'count', id: '0' }],
+          },
+          {
+            refId: 'B',
+            alias: 'mem count',
+            query: '@metric:mem',
+            timeField: '@timestamp',
+            bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
+            metrics: [{ type: 'count', id: '0' }],
           },
         ],
-      });
+      };
+      ctx.templateSrv.getAdhocFilters = jest.fn(() => [{}]);
+      await ctx.ds.query(options);
 
-      parts = requestOptions.data.split('\n');
-      header = angular.fromJson(parts[0]);
-    });
+      expect(ctx.backendSrv.datasourceRequest).toHaveBeenCalledTimes(1);
+      const data = ctx.backendSrv.datasourceRequest.mock.calls[0][0].data;
+      expect(data.from).toBe(timeFrom.toString());
+      expect(data.to).toBe(timeTo.toString());
+      expect(data.queries).toHaveLength(2);
+      const q1 = data.queries[0];
+      expect(q1.queryType).toBe('timeseries');
+      expect(q1.refId).toBe('A');
+      expect(q1.datasourceId).toBe(1);
+      expect(q1.intervalMs).toBe(1000);
+      expect(q1.timeField).toBe('@timestamp');
+      expect(q1.alias).toBe('cpu count');
+      expect(q1.query).toBe('@metric:cpu');
+      expect(q1.bucketAggs).toHaveLength(1);
+      expect(q1.metrics).toHaveLength(1);
+      expect(q1.adhocFilters).toHaveLength(1);
+      const q2 = data.queries[1];
+      expect(q2.queryType).toBe('timeseries');
+      expect(q2.refId).toBe('B');
+      expect(q2.datasourceId).toBe(1);
+      expect(q1.intervalMs).toBe(1000);
+      expect(q2.timeField).toBe('@timestamp');
+      expect(q2.alias).toBe('mem count');
+      expect(q2.query).toBe('@metric:mem');
+      expect(q2.bucketAggs).toHaveLength(1);
+      expect(q2.metrics).toHaveLength(1);
+      expect(q1.adhocFilters).toHaveLength(1);
 
-    it('should not set search type to count', () => {
-      expect(header.search_type).not.toEqual('count');
-    });
+      expect(ctx.templateSrv.replace).toHaveBeenCalledTimes(4);
+      expect(ctx.templateSrv.replace.mock.calls[0][0]).toBe('@metric:cpu');
+      expect(ctx.templateSrv.replace.mock.calls[1][0]).toBe('cpu count');
+      expect(ctx.templateSrv.replace.mock.calls[2][0]).toBe('@metric:mem');
+      expect(ctx.templateSrv.replace.mock.calls[3][0]).toBe('mem count');
 
-    it('should set size to 0', () => {
-      const body = angular.fromJson(parts[1]);
-      expect(body.size).toBe(0);
+      expect(ctx.ds.responseTransformer.transformTimeSeriesQueryResult).toHaveBeenCalledTimes(1);
+      expect(ctx.ds.responseTransformer.transformTimeSeriesQueryResult).toHaveBeenCalledWith('data');
     });
   });
 
-  describe('When issuing metricFind query on es5.x', () => {
-    let requestOptions, parts, header, body, results;
+  it('when executing annotationQuery should call backendSrv and response transformer', async () => {
+    const annotationName = 'MyAnno';
+    const options = {
+      annotation: {
+        name: annotationName,
+        timeField: '@timestamp',
+        textField: 'description',
+        tagsField: '@tags',
+        query: '@metric:cpu',
+      },
+      range: {
+        from: moment(timeFrom),
+        to: moment(timeTo),
+      },
+    };
+    await ctx.ds.annotationQuery(options);
 
-    beforeEach(() => {
-      createDatasource({
-        url: 'http://es.com',
-        index: 'test',
-        jsonData: { esVersion: '5' },
-      });
+    expect(ctx.backendSrv.datasourceRequest).toHaveBeenCalledTimes(1);
+    const data = ctx.backendSrv.datasourceRequest.mock.calls[0][0].data;
+    expect(data.from).toBe(timeFrom.toString());
+    expect(data.to).toBe(timeTo.toString());
+    expect(data.queries).toHaveLength(1);
+    const q = data.queries[0];
+    expect(q.queryType).toBe('annotation');
+    expect(q.refId).toBe('MyAnno');
+    expect(q.datasourceId).toBe(1);
+    expect(q.annotation.timeField).toBe('@timestamp');
+    expect(q.annotation.textField).toBe('description');
+    expect(q.annotation.tagsField).toBe('@tags');
+    expect(q.annotation.query).toBe('@metric:cpu');
 
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        requestOptions = options;
-        return Promise.resolve({
-          data: {
-            responses: [
-              {
-                aggregations: {
-                  '1': {
-                    buckets: [
-                      { doc_count: 1, key: 'test' },
-                      {
-                        doc_count: 2,
-                        key: 'test2',
-                        key_as_string: 'test2_as_string',
-                      },
-                    ],
-                  },
-                },
-              },
-            ],
-          },
-        });
-      });
+    expect(ctx.ds.responseTransformer.transformAnnotationQueryResponse).toHaveBeenCalledTimes(1);
+    expect(ctx.ds.responseTransformer.transformAnnotationQueryResponse).toHaveBeenCalledWith(
+      options.annotation,
+      'data'
+    );
+  });
 
-      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then(res => {
-        results = res;
-      });
+  it('when executing getFields should call backendSrv and response parser', async () => {
+    const query = {
+      type: 'number',
+    };
+    await ctx.ds.getFields(query, 'ref');
 
-      parts = requestOptions.data.split('\n');
-      header = angular.fromJson(parts[0]);
-      body = angular.fromJson(parts[1]);
+    expect(ctx.backendSrv.datasourceRequest).toHaveBeenCalledTimes(1);
+    const data = ctx.backendSrv.datasourceRequest.mock.calls[0][0].data;
+    expect(data.from).toBe(timeFrom.toString());
+    expect(data.to).toBe(timeTo.toString());
+    expect(data.queries).toHaveLength(1);
+    const q = data.queries[0];
+    expect(q.queryType).toBe('fields');
+    expect(q.refId).toBe('ref');
+    expect(q.datasourceId).toBe(1);
+    expect(q.fieldTypeFilter).toBe('number');
+
+    expect(ctx.ds.responseTransformer.transformFieldsQueryResponse).toHaveBeenCalledTimes(1);
+    expect(ctx.ds.responseTransformer.transformFieldsQueryResponse).toHaveBeenCalledWith('ref', 'data');
+  });
+
+  it('when executing getTerms should call backendSrv and response parser', async () => {
+    const query = {
+      field: '@hostname',
+      query: '@metric:cpu',
+      size: 5,
+    };
+    await ctx.ds.getTerms(query, 'ref');
+
+    expect(ctx.backendSrv.datasourceRequest).toHaveBeenCalledTimes(1);
+    const data = ctx.backendSrv.datasourceRequest.mock.calls[0][0].data;
+    expect(data.from).toBe(timeFrom.toString());
+    expect(data.to).toBe(timeTo.toString());
+    expect(data.queries).toHaveLength(1);
+    const q = data.queries[0];
+    expect(q.queryType).toBe('terms');
+    expect(q.refId).toBe('ref');
+    expect(q.datasourceId).toBe(1);
+    expect(q.field).toBe('@hostname');
+    expect(q.query).toBe('@metric:cpu');
+    expect(q.size).toBe(5);
+
+    expect(ctx.ds.responseTransformer.transformTermsQueryResponse).toHaveBeenCalledTimes(1);
+    expect(ctx.ds.responseTransformer.transformTermsQueryResponse).toHaveBeenCalledWith('ref', 'data');
+  });
+
+  describe('testDatasource', () => {
+    it('with existing time field should return success', async () => {
+      ctx.ds.getFields = () => Promise.resolve([{ text: '@timestamp' }]);
+      const result = await ctx.ds.testDatasource();
+
+      expect(result.status).toBe('success');
+      expect(result.message).toBe('Index OK. Time field name OK.');
     });
 
-    it('should get results', () => {
-      expect(results.length).toEqual(2);
-    });
+    it('with non-existing time field should return error', async () => {
+      ctx.ds.getFields = () => Promise.resolve([{ text: 'time' }]);
+      const result = await ctx.ds.testDatasource();
 
-    it('should use key or key_as_string', () => {
-      expect(results[0].text).toEqual('test');
-      expect(results[1].text).toEqual('test2_as_string');
-    });
-
-    it('should not set search type to count', () => {
-      expect(header.search_type).not.toEqual('count');
-    });
-
-    it('should set size to 0', () => {
-      expect(body.size).toBe(0);
-    });
-
-    it('should not set terms aggregation size to 0', () => {
-      expect(body['aggs']['1']['terms'].size).not.toBe(0);
+      expect(result.status).toBe('error');
+      expect(result.message).toBe('No date field named @timestamp found');
     });
   });
 });
