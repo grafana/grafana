@@ -64,7 +64,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1532620354037,
+  "iteration": 1532949531280,
   "links": [],
   "panels": [
     {
@@ -871,14 +871,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  CONCAT(measurement, ' - value one') as metric, \n  avg(valueOne) as valueOne\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement IN($metric)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement as metric, \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement IN($metric)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  CONCAT(measurement, ' - value two') as metric, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values\nWHERE\n  $__timeFilter(time) AND\n  measurement IN($metric)\nGROUP BY 1,2\nORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1061,14 +1055,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__time(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
+          "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__time(time), CONCAT(measurement, ' - value two') as metric, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1239,14 +1227,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__time(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
+          "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__time(time), CONCAT(measurement, ' - value two') as metric, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1417,14 +1399,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__time(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
+          "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__time(time), CONCAT(measurement, ' - value two') as metric, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1593,14 +1569,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
+          "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), CONCAT(measurement, ' - value two') as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1774,14 +1744,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
+          "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), CONCAT(measurement, ' - value two') as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1955,14 +1919,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
+          "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), CONCAT(measurement, ' - value two') as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -2136,14 +2094,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values \nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
+          "rawSql": "SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values WHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), CONCAT(measurement, ' - value two') as metric, valueTwo FROM metric_values \nWHERE $__timeFilter(time) AND measurement IN($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -2280,7 +2232,10 @@
   "refresh": false,
   "schemaVersion": 16,
   "style": "dark",
-  "tags": ["gdev", "mysql"],
+  "tags": [
+    "gdev",
+    "mysql"
+  ],
   "templating": {
     "list": [
       {
@@ -2405,5 +2360,5 @@
   "timezone": "",
   "title": "Datasource tests - MySQL (unittest)",
   "uid": "Hmf8FDkmz",
-  "version": 12
+  "version": 1
 }
