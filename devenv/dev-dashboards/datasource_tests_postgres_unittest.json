@@ -64,7 +64,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1532619575136,
+  "iteration": 1532951521836,
   "links": [],
   "panels": [
     {
@@ -871,14 +871,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize'), \n  measurement || ' - value one' as metric, \n  avg(\"valueOne\") as \"valueOne\"\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement in($metric)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize'), \n  measurement, \n  avg(\"valueOne\") as \"valueOne\",\n  avg(\"valueTwo\") as \"valueTwo\"\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement in($metric)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize'), \n  measurement || ' - value two' as metric, \n  avg(\"valueTwo\") as \"valueTwo\"\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement in($metric)\nGROUP BY 1, 2\nORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1049,14 +1043,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement, \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1227,14 +1215,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement, \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1405,14 +1387,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement, \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1581,14 +1557,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement, \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1762,14 +1732,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement, \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -1943,14 +1907,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement, \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -2124,14 +2082,8 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value one' as metric, \"valueOne\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
+          "rawSql": "SELECT $__timeEpoch(time), measurement, \"valueOne\", \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
           "refId": "A"
-        },
-        {
-          "alias": "",
-          "format": "time_series",
-          "rawSql": "SELECT $__timeEpoch(time), measurement || ' - value two' as metric, \"valueTwo\" FROM metric_values \nWHERE $__timeFilter(time) AND measurement in($metric) ORDER BY 1",
-          "refId": "B"
         }
       ],
       "thresholds": [],
@@ -2268,7 +2220,10 @@
   "refresh": false,
   "schemaVersion": 16,
   "style": "dark",
-  "tags": ["gdev", "postgres"],
+  "tags": [
+    "gdev",
+    "postgres"
+  ],
   "templating": {
     "list": [
       {
@@ -2397,5 +2352,5 @@
   "timezone": "",
   "title": "Datasource tests - Postgres (unittest)",
   "uid": "vHQdlVziz",
-  "version": 17
+  "version": 1
 }
