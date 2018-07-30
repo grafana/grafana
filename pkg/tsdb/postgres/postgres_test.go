@@ -183,7 +183,7 @@ func TestPostgres(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m'), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -227,7 +227,7 @@ func TestPostgres(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m', NULL), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -281,7 +281,7 @@ func TestPostgres(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m', 1.5), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",

@@ -109,7 +109,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 				m.query.Model.Set("fillValue", floatVal)
 			}
 		}
-		return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v AS time", args[0], interval.Seconds(), interval.Seconds()), nil
+		return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
