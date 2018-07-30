@@ -1118,7 +1118,7 @@ kbn.getUnitFormats = function() {
       submenu: [
         { text: 'parts-per-million (ppm)', value: 'ppm' },
         { text: 'parts-per-billion (ppb)', value: 'conppb' },
-        { text: 'nanogram per cubic metre (ng/m3)', value: 'conngm3' },
+        { text: 'nanogram per cubic metre (ng/m³)', value: 'conngm3' },
         { text: 'nanogram per normal cubic metre (ng/Nm³)', value: 'conngNm3' },
         { text: 'microgram per cubic metre (μg/m³)', value: 'conμgm3' },
         { text: 'microgram per normal cubic metre (μg/Nm³)', value: 'conμgNm3' },
