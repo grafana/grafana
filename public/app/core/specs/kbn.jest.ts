@@ -402,7 +402,7 @@ describe('duration', function() {
 describe('volume', function() {
   it('1000m3', function() {
     var str = kbn.valueFormats['m3'](1000, 1, null);
-    expect(str).toBe('1000.0 m3');
+    expect(str).toBe('1000.0 m³');
   });
 });
 
