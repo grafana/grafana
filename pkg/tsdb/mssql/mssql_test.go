@@ -615,7 +615,7 @@ func TestMSSQL(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeEpoch(time), measurement AS metric, valueOne, valueTwo FROM metric_values ORDER BY 1",
+								"rawSql": "SELECT $__timeEpoch(time), measurement, valueOne, valueTwo FROM metric_values ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -660,21 +660,9 @@ func TestMSSQL(t *testing.T) {
 
 							SELECT
 								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-								measurement + ' - value one' as metric,
-								avg(valueOne) as value
-							FROM
-								metric_values
-							WHERE
-								time BETWEEN DATEADD(s, @from, '1970-01-01') AND DATEADD(s, @to, '1970-01-01') AND
-								(@metric = 'ALL' OR measurement = @metric)
-							GROUP BY
-								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
-								measurement
-							UNION ALL
-							SELECT
-								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-								measurement + ' - value two' as metric,
-								avg(valueTwo) as value
+								measurement as metric,
+								avg(valueOne) as valueOne,
+								avg(valueTwo) as valueTwo
 							FROM
 								metric_values
 							WHERE
@@ -717,10 +705,10 @@ func TestMSSQL(t *testing.T) {
 					So(queryResult.Error, ShouldBeNil)
 
 					So(len(queryResult.Series), ShouldEqual, 4)
-					So(queryResult.Series[0].Name, ShouldEqual, "Metric A - value one")
-					So(queryResult.Series[1].Name, ShouldEqual, "Metric B - value one")
-					So(queryResult.Series[2].Name, ShouldEqual, "Metric A - value two")
-					So(queryResult.Series[3].Name, ShouldEqual, "Metric B - value two")
+					So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
+					So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
+					So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
+					So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
 				})
 			})
 
@@ -749,21 +737,9 @@ func TestMSSQL(t *testing.T) {
 
 							SELECT
 								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-								measurement + ' - value one' as metric,
-								avg(valueOne) as value
-							FROM
-								metric_values
-							WHERE
-								time BETWEEN @from AND @to AND
-								(@metric = 'ALL' OR measurement = @metric)
-							GROUP BY
-								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
-								measurement
-							UNION ALL
-							SELECT
-								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-								measurement + ' - value two' as metric,
-								avg(valueTwo) as value
+								measurement as metric,
+								avg(valueOne) as valueOne,
+								avg(valueTwo) as valueTwo
 							FROM
 								metric_values
 							WHERE
@@ -806,10 +782,10 @@ func TestMSSQL(t *testing.T) {
 					So(queryResult.Error, ShouldBeNil)
 
 					So(len(queryResult.Series), ShouldEqual, 4)
-					So(queryResult.Series[0].Name, ShouldEqual, "Metric A - value one")
-					So(queryResult.Series[1].Name, ShouldEqual, "Metric B - value one")
-					So(queryResult.Series[2].Name, ShouldEqual, "Metric A - value two")
-					So(queryResult.Series[3].Name, ShouldEqual, "Metric B - value two")
+					So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
+					So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
+					So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
+					So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
 				})
 			})
 		})
