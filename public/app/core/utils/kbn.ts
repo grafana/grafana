@@ -500,7 +500,7 @@ kbn.valueFormats.watt = kbn.formatBuilders.decimalSIPrefix('W');
 kbn.valueFormats.kwatt = kbn.formatBuilders.decimalSIPrefix('W', 1);
 kbn.valueFormats.mwatt = kbn.formatBuilders.decimalSIPrefix('W', -1);
 kbn.valueFormats.kwattm = kbn.formatBuilders.decimalSIPrefix('W/Min', 1);
-kbn.valueFormats.Wm2 = kbn.formatBuilders.fixedUnit('W/m2');
+kbn.valueFormats.Wm2 = kbn.formatBuilders.fixedUnit('W/m²');
 kbn.valueFormats.voltamp = kbn.formatBuilders.decimalSIPrefix('VA');
 kbn.valueFormats.kvoltamp = kbn.formatBuilders.decimalSIPrefix('VA', 1);
 kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
@@ -1021,7 +1021,7 @@ kbn.getUnitFormats = function() {
         { text: 'Watt (W)', value: 'watt' },
         { text: 'Kilowatt (kW)', value: 'kwatt' },
         { text: 'Milliwatt (mW)', value: 'mwatt' },
-        { text: 'Watt per square metre (W/m2)', value: 'Wm2' },
+        { text: 'Watt per square metre (W/m²)', value: 'Wm2' },
         { text: 'Volt-ampere (VA)', value: 'voltamp' },
         { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
         { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
