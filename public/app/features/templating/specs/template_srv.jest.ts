@@ -277,7 +277,7 @@ describe('templateSrv', function() {
 
     it('multi value and urlescape format should render url-escaped string', function() {
       var result = _templateSrv.formatValue(['foo()bar baz', 'test2'], 'urlescape');
-      expect(result).toBe('foo%28%29bar%20baz%2Ctest2');
+      expect(result).toBe('%7Bfoo%28%29bar%20baz%2Ctest2%7D');
     });
 
     it('slash should be properly escaped in regex format', function() {
