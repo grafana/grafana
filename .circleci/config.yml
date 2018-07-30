@@ -192,7 +192,19 @@ jobs:
       - setup_remote_docker
       - run: docker info
       - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build-deploy.sh "grafana-docker-${CIRCLE_SHA1}"
+      - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
+
+  grafana-docker-release:
+      docker:
+        - image: docker:stable-git
+      steps:
+        - checkout
+        - attach_workspace:
+            at: .
+        - setup_remote_docker
+        - run: docker info
+        - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
+        - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
 
   build-enterprise:
     docker:
@@ -306,6 +318,16 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
+      - grafana-docker-master:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
       - deploy-enterprise-master:
           requires:
             - build-all
@@ -344,6 +366,16 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
+      - grafana-docker-release:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release
 
   build-branches-and-prs:
       jobs:
@@ -361,15 +393,3 @@ workflows:
             filters: *filter-not-release-or-master
         - postgres-integration-test:
             filters: *filter-not-release-or-master
-        - grafana-docker-master:
-            requires:
-              - build
-              - test-backend
-              - test-frontend
-              - codespell
-              - gometalinter
-              - mysql-integration-test
-              - postgres-integration-test
-            filters:
-              branches:
-                only: grafana-docker
