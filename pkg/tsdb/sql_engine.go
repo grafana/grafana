@@ -75,6 +75,10 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, rowTransfo
 		queryEndpoint.timeColumnNames = config.TimeColumnNames
 	}
 
+	if len(config.MetricColumnTypes) > 0 {
+		queryEndpoint.metricColumnTypes = config.MetricColumnTypes
+	}
+
 	engineCache.Lock()
 	defer engineCache.Unlock()
 
@@ -249,6 +253,7 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 				columnType := columnTypes[i].DatabaseTypeName()
 
 				for _, mct := range e.metricColumnTypes {
+					e.log.Info(mct)
 					if columnType == mct {
 						metricIndex = i
 						continue
