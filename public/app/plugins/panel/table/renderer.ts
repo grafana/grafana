@@ -214,15 +214,20 @@ export class TableRenderer {
     var style = '';
     var cellClasses = [];
     var cellClass = '';
+    var linkStyle = '';
+
+    if (this.colorState.row) {
+      linkStyle = ' style="color: white"';
+    }
 
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
+      linkStyle = ' style="color: white;"';
       this.colorState.cell = null;
     } else if (this.colorState.value) {
       style = ' style="color:' + this.colorState.value + '"';
       this.colorState.value = null;
     }
-
     // because of the fixed table headers css only solution
     // there is an issue if header cell is wider the cell
     // this hack adds header content to cell (not visible)
@@ -253,7 +258,7 @@ export class TableRenderer {
 
       cellClasses.push('table-panel-cell-link');
       columnHtml += `
-        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right">
+        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right" ${linkStyle}>
           ${value}
         </a>
       `;
