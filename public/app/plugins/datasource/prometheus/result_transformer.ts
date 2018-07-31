@@ -6,7 +6,9 @@ export class ResultTransformer {
 
   transform(result: any, response: any, options: any) {
     let prometheusResult = response.data.data.result;
-
+    console.log(prometheusResult);
+    // console.log(options);
+    // console.log(result);
     if (options.format === 'table') {
       result.push(this.transformMetricDataToTable(prometheusResult, options.responseListLength, options.refId));
     } else if (options.format === 'heatmap') {
@@ -26,6 +28,7 @@ export class ResultTransformer {
         }
       }
     }
+    // console.log(result);
   }
 
   transformMetricData(metricData, options, start, end) {
@@ -137,6 +140,7 @@ export class ResultTransformer {
     if (!label || label === '{}') {
       label = options.query;
     }
+    console.log(label);
     return label;
   }
 
@@ -156,6 +160,7 @@ export class ResultTransformer {
     var labelPart = _.map(_.toPairs(labelData), function(label) {
       return label[0] + '="' + label[1] + '"';
     }).join(',');
+    console.log(metricName);
     return metricName + '{' + labelPart + '}';
   }
 

@@ -175,8 +175,12 @@ export class PrometheusDatasource {
           responseIndex: index,
           refId: activeTargets[index].refId,
         };
-
+        console.log('format: ' + transformerOptions.format);
+        console.log('resultType: ' + response.data.data.resultType);
+        console.log('legendFormat: ' + transformerOptions.legendFormat);
+        // console.log(result);
         this.resultTransformer.transform(result, response, transformerOptions);
+        // console.log(result);
       });
 
       return { data: result };
@@ -233,6 +237,7 @@ export class PrometheusDatasource {
     if (start > end) {
       throw { message: 'Invalid time range' };
     }
+    // console.log(query.expr);
 
     var url = '/api/v1/query_range';
     var data = {

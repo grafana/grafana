@@ -21,23 +21,7 @@ let backendSrv = <any>{
 };
 
 let templateSrv = {
-  replace: (target, scopedVars, format) => {
-    if (!target) {
-      return target;
-    }
-    let variable, value, fmt;
-
-    return target.replace(scopedVars, (match, var1, var2, fmt2, var3, fmt3) => {
-      variable = this.index[var1 || var2 || var3];
-      fmt = fmt2 || fmt3 || format;
-      if (scopedVars) {
-        value = scopedVars[var1 || var2 || var3];
-        if (value) {
-          return this.formatValue(value.value, fmt, variable);
-        }
-      }
-    });
-  },
+  replace: jest.fn(str => str),
 };
 
 let timeSrv = {
@@ -63,10 +47,7 @@ describe('PrometheusDatasource', function() {
   //     })
   //   );
 
-  beforeEach(() => {
-    ctx.ds = new PrometheusDatasource(instanceSettings, $q, <any>backendSrv, templateSrv, timeSrv);
-  });
-  describe('When querying prometheus with one target using query editor target spec', function() {
+  describe('When querying prometheus with one target using query editor target spec', async () => {
     var results;
     var query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
@@ -106,7 +87,7 @@ describe('PrometheusDatasource', function() {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
-    it('should return series list', function() {
+    it('should return series list', async () => {
       expect(results.data.length).toBe(1);
       expect(results.data[0].target).toBe('test{job="testjob"}');
     });
