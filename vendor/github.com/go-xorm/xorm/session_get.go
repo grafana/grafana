@@ -76,6 +76,9 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 	defer rows.Close()
 
 	if !rows.Next() {
+		if rows.Err() != nil {
+			return false, rows.Err()
+		}
 		return false, nil
 	}
 
