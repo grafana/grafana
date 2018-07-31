@@ -15,7 +15,7 @@ const alertQueryDef = new QueryPartDef({
   defaultParams: ['#A', '15m', 'now', 'avg'],
 });
 
-const conditionTypes = [{ text: 'Query', value: 'query' }];
+const conditionTypes = [{ text: 'Query', value: 'query' }, { text: 'Multipart Query', value: 'multipartQuery' }];
 
 const alertStateSortScore = {
   alerting: 1,
@@ -26,11 +26,13 @@ const alertStateSortScore = {
 };
 
 const evalFunctions = [
-  { text: 'IS ABOVE', value: 'gt' },
-  { text: 'IS BELOW', value: 'lt' },
+  { text: 'IS ABOVE THRESHOLD', value: 'gt' },
+  { text: 'IS BELOW THRESHOLD', value: 'lt' },
   { text: 'IS OUTSIDE RANGE', value: 'outside_range' },
   { text: 'IS WITHIN RANGE', value: 'within_range' },
   { text: 'HAS NO VALUE', value: 'no_value' },
+  { text: 'ABOVE', value: 'gt-query' },
+  { text: 'BELOW', value: 'lt-query' },
 ];
 
 const evalOperators = [{ text: 'OR', value: 'or' }, { text: 'AND', value: 'and' }];
