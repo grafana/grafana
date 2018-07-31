@@ -258,7 +258,7 @@ export class TableRenderer {
 
       cellClasses.push('table-panel-cell-link');
       columnHtml += `
-        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right" ${linkStyle}>
+        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${linkStyle}>
           ${value}
         </a>
       `;
