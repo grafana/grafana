@@ -6,9 +6,11 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // DashAlertExtractor extracts alerts from the dashboard json
@@ -16,6 +18,26 @@ type DashAlertExtractor struct {
 	Dash  *m.Dashboard
 	OrgID int64
 	log   log.Logger
+}
+
+type MultipartQueryCondition struct {
+	Index         int
+	QueryParts    []QueryPart
+	Operator      string
+	HandleRequest tsdb.HandleRequestFunc
+}
+
+type NamedAlertQuery struct {
+	Model        *simplejson.Json
+	DatasourceId int64
+	ReferenceId  string
+	From         string
+	To           string
+}
+
+type QueryPart struct {
+	Query  NamedAlertQuery
+	Scalar null.Float
 }
 
 // NewDashAlertExtractor returns a new DashAlertExtractor
@@ -27,7 +49,7 @@ func NewDashAlertExtractor(dash *m.Dashboard, orgID int64) *DashAlertExtractor {
 	}
 }
 
-func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*m.DataSource, error) {
+func (e *DashAlertExtractor) lookupDatasourceId(dsName string) (*m.DataSource, error) {
 	if dsName == "" {
 		query := &m.GetDataSourcesQuery{OrgId: e.OrgID}
 		if err := bus.Dispatch(query); err != nil {
@@ -51,7 +73,7 @@ func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*m.DataSource, e
 	return nil, errors.New("Could not find datasource id for " + dsName)
 }
 
-func findPanelQueryByRefID(panel *simplejson.Json, refID string) *simplejson.Json {
+func findPanelQueryByRefId(panel *simplejson.Json, refID string) *simplejson.Json {
 	for _, targetsObj := range panel.Get("targets").MustArray() {
 		target := simplejson.NewFromAny(targetsObj)
 
@@ -126,54 +148,110 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 
 		for _, condition := range jsonAlert.Get("conditions").MustArray() {
 			jsonCondition := simplejson.NewFromAny(condition)
-
-			jsonQuery := jsonCondition.Get("query")
-			queryRefID := jsonQuery.Get("params").MustArray()[0].(string)
-			panelQuery := findPanelQueryByRefID(panel, queryRefID)
-
-			if panelQuery == nil {
-				reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefID)
+			if jsonCondition.Get("type").MustString() == "multipartQuery" {
+				check, err := CheckMultipartQuery(jsonCondition, panel, e)
+				if err != nil {
+					return check, err
+				}
+			} else if jsonCondition.Get("type").MustString() == "query" {
+				check, err := CheckSingleQuery(jsonCondition, panel, e)
+				if err != nil {
+					return check, err
+				}
+			} else {
+				reason := fmt.Sprintf("Invalid model type")
 				return nil, ValidationError{Reason: reason}
 			}
-
-			dsName := ""
-			if panelQuery.Get("datasource").MustString() != "" {
-				dsName = panelQuery.Get("datasource").MustString()
-			} else if panel.Get("datasource").MustString() != "" {
-				dsName = panel.Get("datasource").MustString()
-			}
-
-			datasource, err := e.lookupDatasourceID(dsName)
-			if err != nil {
-				return nil, err
-			}
-
-			jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
-
-			if interval, err := panel.Get("interval").String(); err == nil {
-				panelQuery.Set("interval", interval)
-			}
-
-			jsonQuery.Set("model", panelQuery.Interface())
 		}
 
 		alert.Settings = jsonAlert
 
 		// validate
 		_, err = NewRuleFromDBAlert(alert)
-		if err != nil {
+		if err == nil && alert.ValidToSave() {
+			alerts = append(alerts, alert)
+		} else {
 			return nil, err
 		}
-
-		if !validateAlertFunc(alert) {
-			e.log.Debug("Invalid Alert Data. Dashboard, Org or Panel ID is not correct", "alertName", alert.Name, "panelId", alert.PanelId)
-			return nil, m.ErrDashboardContainsInvalidAlertData
-		}
-
-		alerts = append(alerts, alert)
 	}
 
 	return alerts, nil
+}
+
+func CheckMultipartQuery(jsonCondition *simplejson.Json, panel *simplejson.Json, e *DashAlertExtractor) ([]*m.Alert, error) {
+	tempCondition := MultipartQueryCondition{}
+	tempCondition.QueryParts = make([]QueryPart, 2)
+	for i := range tempCondition.QueryParts {
+		tempCondition.QueryParts[i] = QueryPart{}
+		queryPartModel := jsonCondition.Get("queryParts").GetIndex(i)
+		jsonQuery := queryPartModel.Get("query")
+		queryRefId := jsonQuery.Get("params").MustArray()[0].(string)
+		panelQuery := findPanelQueryByRefId(panel, queryRefId)
+		if panelQuery == nil {
+			reason := fmt.Sprintf("Alert on PanelId:  refers to query(%s) that cannot be found", queryRefId)
+			return nil, ValidationError{Reason: reason}
+		}
+
+		dsName := ""
+		if panelQuery.Get("datasource").MustString() != "" {
+			dsName = panelQuery.Get("datasource").MustString()
+		} else if panel.Get("datasource").MustString() != "" {
+			dsName = panel.Get("datasource").MustString()
+		}
+
+		if datasource, err := e.lookupDatasourceId(dsName); err != nil {
+			return nil, err
+		} else {
+			jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
+		}
+
+		if interval, err := panel.Get("interval").String(); err == nil {
+			panelQuery.Set("interval", interval)
+		}
+
+		jsonQuery.Set("model", panelQuery.Interface())
+	}
+	return nil, nil
+}
+
+func CheckSingleQuery(jsonCondition *simplejson.Json, panel *simplejson.Json, e *DashAlertExtractor) ([]*m.Alert, error) {
+	jsonQuery := jsonCondition.Get("query")
+	queryRefId := jsonQuery.Get("params").MustArray()[0].(string)
+	panelQuery := findPanelQueryByRefId(panel, queryRefId)
+	if panelQuery == nil {
+		reason := fmt.Sprintf("Alert on PanelId: refers to query(%s) that cannot be found", queryRefId)
+		return nil, ValidationError{Reason: reason}
+	}
+
+	dsName := ""
+	if panelQuery.Get("datasource").MustString() != "" {
+		dsName = panelQuery.Get("datasource").MustString()
+	} else if panel.Get("datasource").MustString() != "" {
+		dsName = panel.Get("datasource").MustString()
+	}
+
+	if datasource, err := e.lookupDatasourceId(dsName); err != nil {
+		return nil, err
+	} else {
+		jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
+	}
+
+	if interval, err := panel.Get("interval").String(); err == nil {
+		panelQuery.Set("interval", interval)
+	}
+
+	jsonQuery.Set("model", panelQuery.Interface())
+	return nil, nil
+}
+
+func (e *DashAlertExtractor) GetInterval(jsonCondition *simplejson.Json, index int) string {
+	tempCondition := MultipartQueryCondition{}
+	tempCondition.HandleRequest = tsdb.HandleRequest
+	queryCount := 2
+	tempCondition.QueryParts = make([]QueryPart, queryCount)
+	tempCondition.QueryParts[index] = QueryPart{}
+	queryPartModel := jsonCondition.Get("queryParts").GetIndex(index)
+	return queryPartModel.Get("query").Get("model").Get("interval").MustString()
 }
 
 func validateAlertRule(alert *m.Alert) bool {

@@ -261,5 +261,37 @@ func TestAlertRuleExtraction(t *testing.T) {
 				So(err, ShouldEqual, m.ErrDashboardContainsInvalidAlertData)
 			})
 		})
+
+		Convey("Parse and validate dashboard containing influxdb multipart alert", func() {
+			json, err := ioutil.ReadFile("./test-data/influxdb-multipart-alert.json")
+			So(err, ShouldBeNil)
+
+			dashJson, err := simplejson.NewJson(json)
+			So(err, ShouldBeNil)
+			dash := m.NewDashboardFromJson(dashJson)
+			extractor := NewDashAlertExtractor(dash, 1)
+
+			alerts, err := extractor.GetAlerts()
+
+			Convey("Get rules without error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("should be able to read interval", func() {
+				So(len(alerts), ShouldEqual, 1)
+
+				for _, alert := range alerts {
+					So(alert.DashboardId, ShouldEqual, 4)
+
+					conditions := alert.Settings.Get("conditions").MustArray()
+					cond := simplejson.NewFromAny(conditions[0])
+
+					So(extractor.GetInterval(cond, 0), ShouldEqual, ">10s")
+					So(extractor.GetInterval(cond, 1), ShouldEqual, ">10s")
+				}
+			})
+
+		})
+
 	})
 }

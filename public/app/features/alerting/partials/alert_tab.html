@@ -35,27 +35,56 @@
 			</div>
 
 			<div class="gf-form-group">
-				<h5 class="section-heading">Conditions</h5>
-				<div class="gf-form-inline" ng-repeat="conditionModel in ctrl.conditionModels">
-					<div class="gf-form">
-						<metric-segment-model css-class="query-keyword width-5" ng-if="$index" property="conditionModel.operator.type" options="ctrl.evalOperators" custom="false"></metric-segment-model>
-						<span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
-					</div>
-          			<div class="gf-form">
-						<query-part-editor class="gf-form-label query-part width-9" part="conditionModel.reducerPart" handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)">
-						</query-part-editor>
-            			<span class="gf-form-label query-keyword">OF</span>
-					</div>
-					<div class="gf-form">
-						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
-						</query-part-editor>
-					</div>
-					<div class="gf-form">
-						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"></metric-segment-model>
-						<input class="gf-form-input max-width-9" type="number" step="any" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.evaluatorParamsChanged()"></input>
-            			<label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
-            			<input class="gf-form-input max-width-9" type="number" step="any" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
-					</div>
+        			<h5 class="section-heading">Conditions</h5>
+        			<div class="gf-form-inline" ng-repeat="conditionModel in ctrl.conditionModels">
+        				<div class="gf-form">
+         					<metric-segment-model css-class="query-keyword width-5" ng-if="$index" property="conditionModel.operator.type" options="ctrl.evalOperators" custom="false"></metric-segment-model>
+         					<span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
+          				</div>
+        				<div class="gf-form" ng-if="conditionModel.type === 'query'">
+            					<div class="gf-form">
+              						<query-part-editor class="gf-form-label query-part width-9" part="conditionModel.reducerPart" handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)">
+              						</query-part-editor>
+              						<span class="gf-form-label query-keyword">OF</span>
+            					</div>
+            					<div class="gf-form">
+              						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
+              						</query-part-editor>
+            					</div>
+            					<div class="gf-form">
+              						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel, $index)"></metric-segment-model>
+              						<input class="gf-form-input max-width-9" type="number" step="any" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.evaluatorParamsChanged()"></input>
+              						<label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
+              						<input class="gf-form-input max-width-9" type="number" step="any" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
+            					</div>
+          				</div>
+          				<div class="gf-form" ng-if="conditionModel.type === 'multipartQuery'">
+            					<div class="gf-form">
+              						<query-part-editor class="gf-form-label query-part width-9" part="conditionModel.reducerParts[0]" handle-event="ctrl.handleMultipartReducerPartEvent(conditionModel, 0, $event)">
+              						</query-part-editor>
+              						<span class="gf-form-label query-keyword">OF</span>
+            					</div>
+            					<div class="gf-form">
+              						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryParts[0]" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
+              						</query-part-editor>
+            					</div>
+            					<div class="gf-form">
+              						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel, $index)"></metric-segment-model>
+            					</div>
+            					<div class="gf-form">
+              						<input class="gf-form-input max-width-9" id="scalar" type="text" step="any" value="conditionModel.source.queryParts[1].scalar" ng-model="conditionModel.source.queryParts[1].scalar" ng-change="ctrl.scalarChanged(conditionModel)"></input>
+              						<span class="gf-form-label query-keyword">x</span>
+            					</div>
+            					<div class="gf-form">
+              						<query-part-editor class="gf-form-label query-part width-9" part="conditionModel.reducerParts[1]" handle-event="ctrl.handleMultipartReducerPartEvent(conditionModel, 1, $event)">
+              						</query-part-editor>
+              						<span class="gf-form-label query-keyword">OF</span>
+            					</div>
+            					<div class="gf-form">
+              						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryParts[1]" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
+              						</query-part-editor>
+            					</div>
+          				</div>
 					<div class="gf-form">
 						<label class="gf-form-label">
 							<a class="pointer" tabindex="1" ng-click="ctrl.removeCondition($index)">
@@ -81,8 +110,8 @@
 
 			<div class="gf-form-group">
 				<div class="gf-form">
-          			<span class="gf-form-label width-18">If no data or all values are null</span>
-          			<span class="gf-form-label query-keyword">SET STATE TO</span>
+          				<span class="gf-form-label width-18">If no data or all values are null</span>
+          				<span class="gf-form-label query-keyword">SET STATE TO</span>
 					<div class="gf-form-select-wrapper">
 						<select class="gf-form-input" ng-model="ctrl.alert.noDataState" ng-options="f.value as f.text for f in ctrl.noDataModes">
 						</select>
@@ -90,8 +119,8 @@
 				</div>
 
 				<div class="gf-form">
-          			<span class="gf-form-label width-18">If execution error or timeout</span>
-          			<span class="gf-form-label query-keyword">SET STATE TO</span>
+          				<span class="gf-form-label width-18">If execution error or timeout</span>
+          				<span class="gf-form-label query-keyword">SET STATE TO</span>
 					<div class="gf-form-select-wrapper">
 						<select class="gf-form-input" ng-model="ctrl.alert.executionErrorState" ng-options="f.value as f.text for f in ctrl.executionErrorModes">
 						</select>

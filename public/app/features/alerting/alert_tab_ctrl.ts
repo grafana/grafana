@@ -161,7 +161,7 @@ export class AlertTabCtrl {
 
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
-      alert.conditions.push(this.buildDefaultCondition());
+      alert.conditions.push(this.buildDefaultCondition('query'));
     }
 
     alert.noDataState = alert.noDataState || 'no_data';
@@ -214,14 +214,34 @@ export class AlertTabCtrl {
     }
   }
 
-  buildDefaultCondition() {
-    return {
-      type: 'query',
-      query: { params: ['A', '5m', 'now'] },
-      reducer: { type: 'avg', params: [] },
-      evaluator: { type: 'gt', params: [null] },
-      operator: { type: 'and' },
-    };
+  buildDefaultCondition(type: string) {
+    switch (type) {
+      case 'multipartQuery':
+        return {
+          type: 'multipartQuery',
+          queryParts: [
+            {
+              query: { params: ['A', '5m', 'now'], datasourceId: 1 },
+              reducer: { type: 'avg', params: [] },
+            },
+            {
+              query: { params: ['A', '5m', 'now'], datasourceId: 1 },
+              reducer: { type: 'avg', params: [] },
+              scalar: 1.5,
+            },
+          ],
+          evaluator: { type: 'gt-query', params: [null] },
+          operator: { type: 'and' },
+        };
+      default:
+        return {
+          type: 'query',
+          query: { params: ['A', '5m', 'now'] },
+          reducer: { type: 'avg', params: [] },
+          evaluator: { type: 'gt', params: [null] },
+          operator: { type: 'and' },
+        };
+    }
   }
 
   validateModel() {
@@ -233,50 +253,64 @@ export class AlertTabCtrl {
     let foundTarget = null;
 
     for (var condition of this.alert.conditions) {
-      if (condition.type !== 'query') {
-        continue;
-      }
+      if (condition.type === 'query' || condition.type === 'multipartQuery') {
+        for (var target of this.panel.targets) {
+          if (!firstTarget) {
+            firstTarget = target;
+          }
+          if (condition.type === 'query' && condition.query.params[0] === target.refId) {
+            foundTarget = target;
+            break;
+          } else if (condition.type === 'multipartQuery' && condition.queryParts[0].query.params[0] === target.refId) {
+            foundTarget = target;
+            break;
+          }
+        }
+        if (!foundTarget) {
+          if (firstTarget) {
+            if (!condition.query.params[0]) {
+              condition.queryParts[0].query.params = target.refId;
+            } else {
+              condition.query.params[0] = target.refId;
+            }
+            foundTarget = firstTarget;
+          } else {
+            this.error = 'Could not find any metric queries';
+          }
+        }
 
-      for (var target of this.panel.targets) {
-        if (!firstTarget) {
-          firstTarget = target;
-        }
-        if (condition.query.params[0] === target.refId) {
-          foundTarget = target;
-          break;
-        }
+        var datasourceName = foundTarget.datasource || this.panel.datasource;
+        this.datasourceSrv.get(datasourceName).then(ds => {
+          if (!ds.meta.alerting) {
+            this.error = 'The datasource does not support alerting queries';
+          } else if (ds.targetContainsTemplate(foundTarget)) {
+            this.error = 'Template variables are not supported in alert queries';
+          } else {
+            this.error = '';
+          }
+        });
       }
-
-      if (!foundTarget) {
-        if (firstTarget) {
-          condition.query.params[0] = firstTarget.refId;
-          foundTarget = firstTarget;
-        } else {
-          this.error = 'Could not find any metric queries';
-        }
-      }
-
-      var datasourceName = foundTarget.datasource || this.panel.datasource;
-      this.datasourceSrv.get(datasourceName).then(ds => {
-        if (!ds.meta.alerting) {
-          this.error = 'The datasource does not support alerting queries';
-        } else if (ds.targetContainsTemplate(foundTarget)) {
-          this.error = 'Template variables are not supported in alert queries';
-        } else {
-          this.error = '';
-        }
-      });
     }
   }
 
   buildConditionModel(source) {
     var cm: any = { source: source, type: source.type };
 
-    cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
-    cm.reducerPart = alertDef.createReducerPart(source.reducer);
-    cm.evaluator = source.evaluator;
-    cm.operator = source.operator;
-
+    switch (cm.type) {
+      case 'query':
+        cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
+        cm.reducerPart = alertDef.createReducerPart(source.reducer);
+        cm.evaluator = source.evaluator;
+        cm.operator = source.operator;
+        break;
+      case 'multipartQuery':
+        cm.queryParts = _.map(source.queryParts, queryPart => new QueryPart(queryPart.query, alertDef.alertQueryDef));
+        cm.reducerParts = _.map(source.queryParts, queryPart => alertDef.createReducerPart(queryPart.reducer));
+        cm.scalarPart = source.queryParts[1].scalar;
+        cm.evaluator = source.evaluator;
+        cm.operator = source.operator;
+        break;
+    }
     return cm;
   }
 
@@ -320,9 +354,36 @@ export class AlertTabCtrl {
     }
   }
 
+  handleMultipartReducerPartEvent(conditionModel, index, evt) {
+    switch (evt.name) {
+      case 'action': {
+        conditionModel.source.queryParts[index].reducer.type = evt.action.value;
+        conditionModel.reducerParts[index] = alertDef.createReducerPart(
+          conditionModel.source.queryParts[index].reducer
+        );
+        break;
+      }
+      case 'get-part-actions': {
+        var result = [];
+        for (var type of alertDef.reducerTypes) {
+          if (type.value !== conditionModel.source.queryParts[index].reducer.type) {
+            result.push(type);
+          }
+        }
+        return this.$q.when(result);
+      }
+    }
+  }
+
+  scalarChanged(conditionModel) {
+    var scalarInput = (<HTMLInputElement>document.getElementById('scalar')).value;
+    conditionModel.scalarPart = scalarInput;
+    conditionModel.source.queryParts[1].scalar = scalarInput;
+  }
+
   addCondition(type) {
-    var condition = this.buildDefaultCondition();
-    // add to persited model
+    var condition = this.buildDefaultCondition(type);
+    // add to persisted model
     this.alert.conditions.push(condition);
     // add to view model
     this.conditionModels.push(this.buildConditionModel(condition));
@@ -361,25 +422,61 @@ export class AlertTabCtrl {
     this.panelCtrl.render();
   }
 
-  evaluatorTypeChanged(evaluator) {
+  evaluatorTypeChanged(conditionModel, index: number) {
     // ensure params array is correct length
-    switch (evaluator.type) {
-      case 'lt':
-      case 'gt': {
-        evaluator.params = [evaluator.params[0]];
-        break;
+    if (conditionModel.type === 'query') {
+      switch (conditionModel.evaluator.type) {
+        case 'lt':
+        case 'gt': {
+          conditionModel.evaluator.params = [conditionModel.evaluator.params[0]];
+          break;
+        }
+        case 'within_range':
+        case 'outside_range': {
+          conditionModel.evaluator.params = [conditionModel.evaluator.params[0], conditionModel.evaluator.params[1]];
+          break;
+        }
+        case 'no_value': {
+          conditionModel.evaluator.params = [];
+          break;
+        }
+        default: {
+          this.conditionModelTypeChanged(conditionModel, 'multipartQuery', index, conditionModel.evaluator.type);
+        }
       }
-      case 'within_range':
-      case 'outside_range': {
-        evaluator.params = [evaluator.params[0], evaluator.params[1]];
-        break;
-      }
-      case 'no_value': {
-        evaluator.params = [];
+    } else if (conditionModel.type === 'multipartQuery') {
+      switch (conditionModel.evaluator.type) {
+        case 'gt-query':
+        case 'lt-query': {
+          conditionModel.evaluator.params = [];
+          break;
+        }
+        default: {
+          this.conditionModelTypeChanged(conditionModel, 'query', index, conditionModel.evaluator.type);
+        }
       }
     }
-
     this.evaluatorParamsChanged();
+  }
+
+  conditionModelTypeChanged(conditionModel, newType: string, index: number, evaluatorType) {
+    var tempDefault = this.buildDefaultCondition(newType);
+    var tempCondition = this.buildConditionModel(tempDefault);
+    if (newType === 'multipartQuery') {
+      tempCondition.evaluator.type = evaluatorType;
+      tempCondition.queryParts[0] = conditionModel.queryPart;
+      tempCondition.reducerParts[0] = conditionModel.reducerPart;
+      tempCondition.queryParts[1].params[0] = 'A';
+    } else {
+      tempCondition.evaluator.type = evaluatorType;
+      tempCondition.queryPart = conditionModel.queryParts[0];
+      tempCondition.reducerPart = conditionModel.reducerParts[0];
+    }
+    this.removeCondition(index);
+    // add to persisted model
+    this.alert.conditions.push(tempDefault);
+    // add to view model
+    this.conditionModels.push(tempCondition);
   }
 
   clearHistory() {
