@@ -14,6 +14,7 @@ export interface BarStatProps {
   valueOutOfBar?: boolean;
   direction?: MultiStatPanel.PanelLayout;
   styleLeft?: string | number;
+  fontSize?: number;
 }
 
 export class BarStat extends React.PureComponent<BarStatProps> {
@@ -67,9 +68,12 @@ export class BarStat extends React.PureComponent<BarStatProps> {
       }
     }
 
-    const { labelFontSizePx, valueFontSizePx } = getFontSize(barWidth, verticalDirection);
-    barLabelStyle.fontSize = labelFontSizePx;
-    valueStyle.fontSize = valueFontSizePx;
+    let labelFontSizePx, valueFontSizePx;
+    if (this.props.fontSize) {
+      labelFontSizePx = valueFontSizePx = this.props.fontSize + 'px';
+      barLabelStyle.fontSize = labelFontSizePx;
+      valueStyle.fontSize = valueFontSizePx;
+    }
 
     if (this.props.colorValue) {
       valueStyle.color = valueColor;
@@ -111,16 +115,4 @@ export class BarStat extends React.PureComponent<BarStatProps> {
       </div>
     );
   }
-}
-
-function getFontSize(barWidth, verticalDirection = false) {
-  const barSize = barWidth;
-  let increaseRatio = verticalDirection ? 1.5 : 1;
-
-  const labelFontSize = Math.ceil(barSize / 5 * increaseRatio);
-  const valueFontSize = Math.ceil(barSize / 5 * increaseRatio);
-  const labelFontSizePx = labelFontSize + 'px';
-  const valueFontSizePx = valueFontSize + 'px';
-
-  return { labelFontSize, valueFontSize, labelFontSizePx, valueFontSizePx };
 }
