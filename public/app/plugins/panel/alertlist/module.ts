@@ -18,11 +18,11 @@ class AlertListPanel extends PanelCtrl {
   ];
 
   soundOptions = [
-    { text: 'Springboard', value: 'public/sound/sound1' },
-    { text: 'Breaking glass', value: 'public/sound/sound2' },
-    { text: 'Decay', value: 'public/sound/sound3' },
-    { text: 'Strike', value: 'public/sound/sound4' },
-    { text: 'System fault', value: 'public/sound/sound5' },
+    { text: 'Alarm', value: 'public/sound/alarm' },
+    { text: 'Breaking glass', value: 'public/sound/breakingGlass' },
+    { text: 'Car horn', value: 'public/sound/carHorn' },
+    { text: 'Scream', value: 'public/sound/scream' },
+    { text: 'Doorbell', value: 'public/sound/doorbell' },
   ];
 
   stateFilter: any = {};
@@ -30,7 +30,6 @@ class AlertListPanel extends PanelCtrl {
   alertHistory: any = [];
   noAlertsMessage: string;
   audio: any;
-  soundFile: any;
   lastRefreshAt: any;
 
   // Set and populate defaults
@@ -44,7 +43,7 @@ class AlertListPanel extends PanelCtrl {
     nameFilter: '',
     folderId: null,
     sound: false,
-    soundFile: 'public/sound/sound1',
+    soundFile: 'public/sound/alarm',
   };
 
   /** @ngInject */
