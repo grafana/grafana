@@ -110,6 +110,12 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			}
 		}
 		return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+	case "__timeGroupAlias":
+		tg, err := m.evaluateMacro("__timeGroup", args)
+		if err == nil {
+			return tg + " AS \"time\"", err
+		}
+		return "", err
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
