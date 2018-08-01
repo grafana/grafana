@@ -55,15 +55,21 @@ func TestMacroEngine(t *testing.T) {
 			Convey("interpolate __timeGroup function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 				So(err, ShouldBeNil)
+				sql2, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroupAlias(time_column,'5m')")
+				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300")
+				So(sql2, ShouldEqual, sql+" AS [time]")
 			})
 
 			Convey("interpolate __timeGroup function with spaces around arguments", func() {
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
 				So(err, ShouldBeNil)
+				sql2, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroupAlias(time_column , '5m')")
+				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300")
+				So(sql2, ShouldEqual, sql+" AS [time]")
 			})
 
 			Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
