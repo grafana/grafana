@@ -214,15 +214,15 @@ export class TableRenderer {
     var style = '';
     var cellClasses = [];
     var cellClass = '';
-    var linkStyle = '';
+    var linkClass = '';
 
     if (this.colorState.row) {
-      linkStyle = ' style="color: white"';
+      linkClass = 'table-panel-link';
     }
 
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
-      linkStyle = ' style="color: white;"';
+      linkClass = 'table-panel-link';
       this.colorState.cell = null;
     } else if (this.colorState.value) {
       style = ' style="color:' + this.colorState.value + '"';
@@ -258,7 +258,12 @@ export class TableRenderer {
 
       cellClasses.push('table-panel-cell-link');
       columnHtml += `
-        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${linkStyle}>
+        <a href="${cellLink}"
+           target="${cellTarget}"
+           data-link-tooltip
+           data-original-title="${cellLinkTooltip}"
+           data-placement="right"
+           class="${linkClass}">
           ${value}
         </a>
       `;
