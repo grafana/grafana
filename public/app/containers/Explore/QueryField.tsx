@@ -126,6 +126,7 @@ export interface TypeaheadInput {
   prefix: string;
   selection?: Selection;
   text: string;
+  value: Value;
   wrapperNode: Element;
 }
 
@@ -199,6 +200,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
   handleTypeahead = _.debounce(async () => {
     const selection = window.getSelection();
     const { cleanText, onTypeahead } = this.props;
+    const { value } = this.state;
 
     if (onTypeahead && selection.anchorNode) {
       const wrapperNode = selection.anchorNode.parentElement;
@@ -221,6 +223,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
         prefix,
         selection,
         text,
+        value,
         wrapperNode,
       });
 
