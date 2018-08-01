@@ -175,7 +175,6 @@ export class PrometheusDatasource {
           responseIndex: index,
           refId: activeTargets[index].refId,
         };
-
         this.resultTransformer.transform(result, response, transformerOptions);
       });
 
