@@ -1,7 +1,6 @@
 import moment from 'moment';
 import { PrometheusDatasource } from '../datasource';
 import $q from 'q';
-import { angularMocks } from 'test/lib/common';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
