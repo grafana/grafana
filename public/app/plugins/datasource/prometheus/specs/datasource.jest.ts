@@ -150,49 +150,49 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('alignRange', function() {
-    it('does not modify already aligned intervals with perfect step', function() {
+  describe('alignRange', () => {
+    it('does not modify already aligned intervals with perfect step', () => {
       const range = alignRange(0, 3, 3);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(3);
     });
-    it('does modify end-aligned intervals to reflect number of steps possible', function() {
+    it('does modify end-aligned intervals to reflect number of steps possible', () => {
       const range = alignRange(1, 6, 3);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(6);
     });
-    it('does align intervals that are a multiple of steps', function() {
+    it('does align intervals that are a multiple of steps', () => {
       const range = alignRange(1, 4, 3);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(6);
     });
-    it('does align intervals that are not a multiple of steps', function() {
+    it('does align intervals that are not a multiple of steps', () => {
       const range = alignRange(1, 5, 3);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(6);
     });
   });
 
-  describe('Prometheus regular escaping', function() {
-    it('should not escape non-string', function() {
+  describe('Prometheus regular escaping', () => {
+    it('should not escape non-string', () => {
       expect(prometheusRegularEscape(12)).toEqual(12);
     });
-    it('should not escape simple string', function() {
+    it('should not escape simple string', () => {
       expect(prometheusRegularEscape('cryptodepression')).toEqual('cryptodepression');
     });
-    it("should escape '", function() {
+    it("should escape '", () => {
       expect(prometheusRegularEscape("looking'glass")).toEqual("looking\\\\'glass");
     });
-    it('should escape multiple characters', function() {
+    it('should escape multiple characters', () => {
       expect(prometheusRegularEscape("'looking'glass'")).toEqual("\\\\'looking\\\\'glass\\\\'");
     });
   });
 
-  describe('Prometheus regexes escaping', function() {
-    it('should not escape simple string', function() {
+  describe('Prometheus regexes escaping', () => {
+    it('should not escape simple string', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
-    it('should escape $^*+?.()\\', function() {
+    it('should escape $^*+?.()\\', () => {
       expect(prometheusSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
       expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
       expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
@@ -208,7 +208,7 @@ describe('PrometheusDatasource', () => {
       expect(prometheusSpecialRegexEscape('looking)glass')).toEqual('looking\\\\)glass');
       expect(prometheusSpecialRegexEscape('looking\\glass')).toEqual('looking\\\\\\\\glass');
     });
-    it('should escape multiple special characters', function() {
+    it('should escape multiple special characters', () => {
       expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
     });
   });
@@ -275,7 +275,7 @@ let timeSrv = {
   },
 };
 
-describe('PrometheusDatasource', function() {
+describe('PrometheusDatasource', () => {
   describe('When querying prometheus with one target using query editor target spec', async () => {
     var results;
     var query = {
@@ -310,7 +310,7 @@ describe('PrometheusDatasource', function() {
       });
     });
 
-    it('should generate the correct query', function() {
+    it('should generate the correct query', () => {
       let res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
@@ -320,7 +320,7 @@ describe('PrometheusDatasource', function() {
       expect(results.data[0].target).toBe('test{job="testjob"}');
     });
   });
-  describe('When querying prometheus with one target which return multiple series', function() {
+  describe('When querying prometheus with one target which return multiple series', () => {
     var results;
     var start = 60;
     var end = 360;
@@ -360,26 +360,26 @@ describe('PrometheusDatasource', function() {
       });
     });
 
-    it('should be same length', function() {
+    it('should be same length', () => {
       expect(results.data.length).toBe(2);
       expect(results.data[0].datapoints.length).toBe((end - start) / step + 1);
       expect(results.data[1].datapoints.length).toBe((end - start) / step + 1);
     });
 
-    it('should fill null until first datapoint in response', function() {
+    it('should fill null until first datapoint in response', () => {
       expect(results.data[0].datapoints[0][1]).toBe(start * 1000);
       expect(results.data[0].datapoints[0][0]).toBe(null);
       expect(results.data[0].datapoints[1][1]).toBe((start + step * 1) * 1000);
       expect(results.data[0].datapoints[1][0]).toBe(3846);
     });
-    it('should fill null after last datapoint in response', function() {
+    it('should fill null after last datapoint in response', () => {
       var length = (end - start) / step + 1;
       expect(results.data[0].datapoints[length - 2][1]).toBe((end - step * 1) * 1000);
       expect(results.data[0].datapoints[length - 2][0]).toBe(3848);
       expect(results.data[0].datapoints[length - 1][1]).toBe(end * 1000);
       expect(results.data[0].datapoints[length - 1][0]).toBe(null);
     });
-    it('should fill null at gap between series', function() {
+    it('should fill null at gap between series', () => {
       expect(results.data[0].datapoints[2][1]).toBe((start + step * 2) * 1000);
       expect(results.data[0].datapoints[2][0]).toBe(null);
       expect(results.data[1].datapoints[1][1]).toBe((start + step * 1) * 1000);
@@ -388,7 +388,7 @@ describe('PrometheusDatasource', function() {
       expect(results.data[1].datapoints[3][0]).toBe(null);
     });
   });
-  describe('When querying prometheus with one target and instant = true', function() {
+  describe('When querying prometheus with one target and instant = true', () => {
     var results;
     var urlExpected = 'proxied/api/v1/query?query=' + encodeURIComponent('test{job="testjob"}') + '&time=123';
     var query = {
@@ -420,17 +420,17 @@ describe('PrometheusDatasource', function() {
         results = data;
       });
     });
-    it('should generate the correct query', function() {
+    it('should generate the correct query', () => {
       let res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
     });
-    it('should return series list', function() {
+    it('should return series list', () => {
       expect(results.data.length).toBe(1);
       expect(results.data[0].target).toBe('test{job="testjob"}');
     });
   });
-  describe('When performing annotationQuery', function() {
+  describe('When performing annotationQuery', () => {
     var results;
 
     var options = {
@@ -475,7 +475,7 @@ describe('PrometheusDatasource', function() {
         results = data;
       });
     });
-    it('should return annotation list', function() {
+    it('should return annotation list', () => {
       expect(results.length).toBe(1);
       expect(results[0].tags).toContain('testjob');
       expect(results[0].title).toBe('InstanceDown');
@@ -484,7 +484,7 @@ describe('PrometheusDatasource', function() {
     });
   });
 
-  describe('When resultFormat is table and instant = true', function() {
+  describe('When resultFormat is table and instant = true', () => {
     var results;
     var query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
@@ -520,7 +520,7 @@ describe('PrometheusDatasource', function() {
     });
   });
 
-  describe('The "step" query parameter', function() {
+  describe('The "step" query parameter', () => {
     var response = {
       status: 'success',
       data: {
@@ -717,7 +717,7 @@ describe('PrometheusDatasource', function() {
     });
   });
 
-  describe('The __interval and __interval_ms template variables', function() {
+  describe('The __interval and __interval_ms template variables', () => {
     var response = {
       status: 'success',
       data: {
@@ -982,7 +982,7 @@ describe('PrometheusDatasource', function() {
   });
 });
 
-describe('PrometheusDatasource for POST', function() {
+describe('PrometheusDatasource for POST', () => {
   //   var ctx = new helpers.ServiceTestContext();
   let instanceSettings = {
     url: 'proxied',
@@ -992,7 +992,7 @@ describe('PrometheusDatasource for POST', function() {
     jsonData: { httpMethod: 'POST' },
   };
 
-  describe('When querying prometheus with one target using query editor target spec', function() {
+  describe('When querying prometheus with one target using query editor target spec', () => {
     var results;
     var urlExpected = 'proxied/api/v1/query_range';
     var dataExpected = {
@@ -1028,13 +1028,13 @@ describe('PrometheusDatasource for POST', function() {
         results = data;
       });
     });
-    it('should generate the correct query', function() {
+    it('should generate the correct query', () => {
       let res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('POST');
       expect(res.url).toBe(urlExpected);
       expect(res.data).toEqual(dataExpected);
     });
-    it('should return series list', function() {
+    it('should return series list', () => {
       expect(results.data.length).toBe(1);
       expect(results.data[0].target).toBe('test{job="testjob"}');
     });
