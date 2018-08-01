@@ -19,8 +19,14 @@ describe('VariableSrv', function() {
     },
     templateSrv: {
       setGrafanaVariable: jest.fn(),
-      init: () => {},
+      init: vars => {
+        this.variables = vars;
+      },
       updateTemplateData: () => {},
+      replace: str =>
+        str.replace(this.regex, match => {
+          return match;
+        }),
     },
     $location: {
       search: () => {},
@@ -54,15 +60,18 @@ describe('VariableSrv', function() {
         scenario.setupFn();
 
         var ds: any = {};
-        ds.metricFindQuery = Promise.resolve(scenario.queryResult);
+        ds.metricFindQuery = () => Promise.resolve(scenario.queryResult);
 
         ctx.variableSrv = new VariableSrv(ctx.$rootScope, $q, ctx.$location, ctx.$injector, ctx.templateSrv);
 
         ctx.variableSrv.timeSrv = ctx.timeSrv;
-        console.log(ctx.variableSrv.timeSrv);
-        ctx.variableSrv.datasourceSrv = {
-          get: Promise.resolve(ds),
+        ctx.datasourceSrv = {
+          get: () => Promise.resolve(ds),
           getMetricSources: () => scenario.metricSources,
+        };
+
+        ctx.$injector.instantiate = (ctr, model) => {
+          return getVarMockConstructor(ctr, model, ctx);
         };
 
         ctx.variableSrv.init({
@@ -74,7 +83,6 @@ describe('VariableSrv', function() {
         ctx.variableSrv.addVariable(scenario.variable);
 
         ctx.variableSrv.updateOptions(scenario.variable);
-        // ctx.$rootScope.$digest();
       });
 
       fn(scenario);
@@ -128,17 +136,17 @@ describe('VariableSrv', function() {
     });
 
     it('should set $__auto_interval_test', function() {
-      var call = ctx.templateSrv.setGrafanaVariable.firstCall;
-      expect(call.args[0]).toBe('$__auto_interval_test');
-      expect(call.args[1]).toBe('12h');
+      var call = ctx.templateSrv.setGrafanaVariable.mock.calls[0];
+      expect(call[0]).toBe('$__auto_interval_test');
+      expect(call[1]).toBe('12h');
     });
 
     // updateAutoValue() gets called twice: once directly once via VariableSrv.validateVariableSelectionState()
     // So use lastCall instead of a specific call number
     it('should set $__auto_interval', function() {
-      var call = ctx.templateSrv.setGrafanaVariable.lastCall;
-      expect(call.args[0]).toBe('$__auto_interval');
-      expect(call.args[1]).toBe('12h');
+      var call = ctx.templateSrv.setGrafanaVariable.mock.calls.pop();
+      expect(call[0]).toBe('$__auto_interval');
+      expect(call[1]).toBe('12h');
     });
   });
 
@@ -547,7 +555,7 @@ describe('VariableSrv', function() {
 
       ctx.variableSrv.updateOptions(variable1);
       ctx.variableSrv.updateOptions(variable2);
-      ctx.$rootScope.$digest();
+      // ctx.$rootScope.$digest();
     });
 
     it('should update options array', function() {
@@ -568,7 +576,7 @@ describe('VariableSrv', function() {
       // So check that all calls are valid rather than expect a specific number and/or ordering of calls
       for (var i = 0; i < ctx.templateSrv.setGrafanaVariable.mock.calls.length; i++) {
         var call = ctx.templateSrv.setGrafanaVariable.mock.calls[i];
-        switch (call.args[0]) {
+        switch (call[0]) {
           case '$__auto_interval_variable1':
             expect(call[1]).toBe('12h');
             variable1Set = true;
@@ -586,10 +594,25 @@ describe('VariableSrv', function() {
             break;
         }
       }
-      expect(variable1Set).toBe.equal(true);
-      expect(variable2Set).toBe.equal(true);
-      expect(legacySet).toBe.equal(true);
-      expect(unknownSet).toBe.equal(false);
+      expect(variable1Set).toEqual(true);
+      expect(variable2Set).toEqual(true);
+      expect(legacySet).toEqual(true);
+      expect(unknownSet).toEqual(false);
     });
   });
 });
+
+function getVarMockConstructor(variable, model, ctx) {
+  switch (model.model.type) {
+    case 'datasource':
+      return new variable(model.model, ctx.datasourceSrv, ctx.variableSrv, ctx.templateSrv);
+    case 'query':
+      return new variable(model.model, ctx.datasourceSrv, ctx.templateSrv, ctx.variableSrv);
+    case 'interval':
+      return new variable(model.model, ctx.timeSrv, ctx.templateSrv, ctx.variableSrv);
+    case 'custom':
+      return new variable(model.model, ctx.variableSrv);
+    default:
+      return new variable(model.model);
+  }
+}
