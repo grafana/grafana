@@ -54,6 +54,7 @@ Macros:
 - $__timeFilter(column) -&gt; column BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:01:17Z'
 - $__unixEpochFilter(column) -&gt; column &gt;= 1492750877 AND column &lt;= 1492750877
 - $__timeGroup(column, '5m'[, fillvalue]) -&gt; CAST(ROUND(DATEDIFF(second, '1970-01-01', column)/300.0, 0) as bigint)*300. Providing a <i>fillValue</i> of <i>NULL</i> or floating value will automatically fill empty series in timerange with that value.
+- $__timeGroupAlias(column, '5m'[, fillvalue]) -&gt; CAST(ROUND(DATEDIFF(second, '1970-01-01', column)/300.0, 0) as bigint)*300 AS [time]
 
 Example of group by and order by with $__timeGroup:
 SELECT
