@@ -16,7 +16,7 @@ export class MysqlDatasource {
   interpolateVariable(value, variable) {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return "'" + value + "'";
+        return "'" + value.replace(/'/g, `''`) + "'";
       } else {
         return value;
       }
@@ -31,7 +31,7 @@ export class MysqlDatasource {
         return value;
       }
 
-      return "'" + val + "'";
+      return "'" + val.replace(/'/g, `''`) + "'";
     });
     return quotedValues.join(',');
   }
