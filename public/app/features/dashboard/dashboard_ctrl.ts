@@ -72,7 +72,7 @@ export class DashboardCtrl implements PanelContainer {
         );
         console.log('maxRows: ' + maxRows);
         //Consider navbar and submenu controls, padding and margin
-        let availableHeight = window.innerHeight - 80 - 2 * GRID_CELL_VMARGIN;
+        let availableHeight = window.innerHeight - 80;
         let availableRows = Math.floor(availableHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
 
         console.log('availableRows: ' + availableRows);
