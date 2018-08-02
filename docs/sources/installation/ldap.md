@@ -23,8 +23,9 @@ specific configuration file (default: `/etc/grafana/ldap.toml`).
 ### Example config
 
 ```toml
-# Set to true to log user information returned from LDAP
-verbose_logging = false
+# To troubleshoot and get more log info enable ldap debug logging in grafana.ini
+# [log]
+# filters = ldap:debug
 
 [[servers]]
 # Ldap server host (specify multiple hosts space separated)
@@ -73,6 +74,8 @@ email =  "email"
 [[servers.group_mappings]]
 group_dn = "cn=admins,dc=grafana,dc=org"
 org_role = "Admin"
+# To make user an instance admin  (Grafana Admin) uncomment line below
+# grafana_admin = true
 # The Grafana organization database id, optional, if left out the default org (id 1) will be used.  Setting this allows for multiple group_dn's to be assigned to the same org_role provided the org_id differs
 # org_id = 1
 
@@ -131,6 +134,10 @@ the authoritative source.  So, if you change a user's role in the Grafana Org.
 Users page, this change will be reset the next time the user logs in. If you
 change the LDAP groups of a user, the change will take effect the next
 time the user logs in.
+
+### Grafana Admin
+with a servers.group_mappings section you can set grafana_admin = true or false to sync Grafana Admin permission. A Grafana server admin has admin access over all orgs &
+users.
 
 ### Priority
 The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the TOML config will be used.

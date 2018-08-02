@@ -181,7 +181,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(query.Result.FolderId, ShouldEqual, 0)
 				So(query.Result.CreatedBy, ShouldEqual, savedDash.CreatedBy)
-				So(query.Result.Created, ShouldEqual, savedDash.Created.Truncate(time.Second))
+				So(query.Result.Created, ShouldHappenWithin, 3*time.Second, savedDash.Created)
 				So(query.Result.UpdatedBy, ShouldEqual, 100)
 				So(query.Result.Updated.IsZero(), ShouldBeFalse)
 			})
@@ -387,6 +387,7 @@ func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isF
 
 func createUser(name string, role string, isAdmin bool) m.User {
 	setting.AutoAssignOrg = true
+	setting.AutoAssignOrgId = 1
 	setting.AutoAssignOrgRole = role
 
 	currentUserCmd := m.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}

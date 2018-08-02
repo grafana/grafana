@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import QueryField from './QueryField';
+import QueryField from './PromQueryField';
 
 class QueryRow extends PureComponent<any, any> {
   constructor(props) {
@@ -55,12 +55,12 @@ class QueryRow extends PureComponent<any, any> {
             <i className="fa fa-minus" />
           </button>
         </div>
-        <div className="query-field-wrapper">
+        <div className="slate-query-field-wrapper">
           <QueryField
             initialQuery={edited ? null : query}
+            portalPrefix="explore"
             onPressEnter={this.handlePressEnter}
             onQueryChange={this.handleChangeQuery}
-            placeholder="Enter a PromQL query"
             request={request}
           />
         </div>

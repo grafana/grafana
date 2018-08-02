@@ -330,6 +330,7 @@ func createPackage(options linuxPackageOptions) {
 	name := "grafana"
 	if enterprise {
 		name += "-enterprise"
+		args = append(args, "--replaces", "grafana")
 	}
 	args = append(args, "--name", name)
 

@@ -40,7 +40,10 @@
 		<pre class="gf-form-pre alert alert-info">Time series:
 - return column named time or time_sec (in UTC), as a unix time stamp or any sql native date data type. You can use the macros below.
 - return column(s) with numeric datatype as values
-- (Optional: return column named <i>metric</i> to represent the series name. If no column named metric is found the column name of the value column is used as series name)
+Optional:
+  - return column named <i>metric</i> to represent the series name.
+  - If multiple value columns are returned the metric column is used as prefix.
+  - If no column named metric is found the column name of the value column is used as series name
 
 Table:
 - return any set of columns

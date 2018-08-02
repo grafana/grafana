@@ -1,19 +1,20 @@
-﻿import React from 'react';
+import React from 'react';
 import renderer from 'react-test-renderer';
-import UserPicker from './UserPicker';
+import { UserPicker } from './UserPicker';
 
-const model = {
-  backendSrv: {
-    get: () => {
-      return new Promise((resolve, reject) => {});
-    },
+jest.mock('app/core/services/backend_srv', () => ({
+  getBackendSrv: () => {
+    return {
+      get: () => {
+        return Promise.resolve([]);
+      },
+    };
   },
-  handlePicked: () => {},
-};
+}));
 
 describe('UserPicker', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<UserPicker {...model} />).toJSON();
+    const tree = renderer.create(<UserPicker onSelected={() => {}} />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });
