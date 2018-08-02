@@ -4,7 +4,8 @@ import coreModule from 'app/core/core_module';
 import { PanelContainer } from './dashgrid/PanelContainer';
 import { DashboardModel } from './dashboard_model';
 import { PanelModel } from './panel_model';
-
+import { GRID_CELL_HEIGHT } from 'app/core/constants';
+import { PanelLinksEditorCtrl } from '../panellinks/module';
 export class DashboardCtrl implements PanelContainer {
   dashboard: DashboardModel;
   dashboardViewState: any;
@@ -62,6 +63,33 @@ export class DashboardCtrl implements PanelContainer {
       .finally(() => {
         this.dashboard = dashboard;
         this.dashboard.processRepeats();
+        console.log(this.dashboard.panels);
+
+        let maxRows = Math.max(
+          ...this.dashboard.panels.map(panel => {
+            return panel.gridPos.h + panel.gridPos.y;
+          })
+        );
+        console.log('maxRows: ' + maxRows);
+        //Consider navbar and submenu controls
+        let availableHeight = window.innerHeight - 280;
+        let availableRows = Math.floor(availableHeight / GRID_CELL_HEIGHT);
+
+        console.log('availableRows: ' + availableRows);
+        if (maxRows > availableRows) {
+          let scaleFactor = maxRows / availableRows;
+          console.log(scaleFactor);
+
+          this.dashboard.panels.forEach((panel, i) => {
+            console.log(i);
+            console.log(panel.gridPos);
+            panel.gridPos.y = Math.floor(panel.gridPos.y / scaleFactor) || 1;
+            panel.gridPos.h = Math.floor(panel.gridPos.h / scaleFactor) || 1;
+
+            console.log(panel.gridPos);
+          });
+        }
+        console.log(this.dashboard.panels);
 
         this.unsavedChangesSrv.init(dashboard, this.$scope);
 
