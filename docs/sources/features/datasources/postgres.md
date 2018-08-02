@@ -60,8 +60,9 @@ Macro example | Description
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'*
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
-*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint*300 AS time*
+*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint*300*
 *$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so all null values will be converted to the fill value (all null values would be set to zero using this example).
+*$__timeGroupAlias(dateColumn,'5m')* | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn >= 1494410783 AND dateColumn <= 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*

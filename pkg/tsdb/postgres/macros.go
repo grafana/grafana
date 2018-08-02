@@ -30,6 +30,23 @@ func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.Tim
 	var macroError error
 
 	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+
+		// detect if $__timeGroup is supposed to add AS time for pre 5.3 compatibility
+		// if there is a ',' directly after the macro call $__timeGroup is probably used
+		// in the old way. Inside window function ORDER BY $__timeGroup will be followed
+		// by ')'
+		if groups[1] == "__timeGroup" {
+			if index := strings.Index(sql, groups[0]); index >= 0 {
+				index += len(groups[0])
+				if len(sql) > index {
+					// check for character after macro expression
+					if sql[index] == ',' {
+						groups[1] = "__timeGroupAlias"
+					}
+				}
+			}
+		}
+
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
@@ -109,7 +126,13 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 				m.query.Model.Set("fillValue", floatVal)
 			}
 		}
-		return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v AS time", args[0], interval.Seconds(), interval.Seconds()), nil
+		return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+	case "__timeGroupAlias":
+		tg, err := m.evaluateMacro("__timeGroup", args)
+		if err == nil {
+			return tg + " AS \"time\"", err
+		}
+		return "", err
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

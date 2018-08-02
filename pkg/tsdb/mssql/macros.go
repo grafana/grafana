@@ -110,6 +110,12 @@ func (m *msSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			}
 		}
 		return fmt.Sprintf("FLOOR(DATEDIFF(second, '1970-01-01', %s)/%.0f)*%.0f", args[0], interval.Seconds(), interval.Seconds()), nil
+	case "__timeGroupAlias":
+		tg, err := m.evaluateMacro("__timeGroup", args)
+		if err == nil {
+			return tg + " AS [time]", err
+		}
+		return "", err
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

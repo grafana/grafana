@@ -48,20 +48,39 @@ func TestMacroEngine(t *testing.T) {
 				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", from.Format(time.RFC3339)))
 			})
 
-			Convey("interpolate __timeGroup function", func() {
+			Convey("interpolate __timeGroup function pre 5.3 compatibility", func() {
 
-				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
+				sql, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m'), value")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "GROUP BY floor(extract(epoch from time_column)/300)*300 AS time")
+				So(sql, ShouldEqual, "SELECT floor(extract(epoch from time_column)/300)*300 AS \"time\", value")
+
+				sql, err = engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m') as time, value")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "SELECT floor(extract(epoch from time_column)/300)*300 as time, value")
+			})
+
+			Convey("interpolate __timeGroup function", func() {
+
+				sql, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
+				So(err, ShouldBeNil)
+				sql2, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroupAlias(time_column,'5m')")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "SELECT floor(extract(epoch from time_column)/300)*300")
+				So(sql2, ShouldEqual, sql+" AS \"time\"")
 			})
 
 			Convey("interpolate __timeGroup function with spaces between args", func() {
 
-				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
+				sql, err := engine.Interpolate(query, timeRange, "$__timeGroup(time_column , '5m')")
+				So(err, ShouldBeNil)
+				sql2, err := engine.Interpolate(query, timeRange, "$__timeGroupAlias(time_column , '5m')")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "GROUP BY floor(extract(epoch from time_column)/300)*300 AS time")
+				So(sql, ShouldEqual, "floor(extract(epoch from time_column)/300)*300")
+				So(sql2, ShouldEqual, sql+" AS \"time\"")
 			})
 
 			Convey("interpolate __timeTo function", func() {
