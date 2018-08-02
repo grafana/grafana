@@ -449,6 +449,7 @@ kbn.valueFormats.currencyNOK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencySEK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyCZK = kbn.formatBuilders.currency('czk');
 kbn.valueFormats.currencyCHF = kbn.formatBuilders.currency('CHF');
+kbn.valueFormats.currencyPLN = kbn.formatBuilders.currency('zł');
 
 // Data (Binary)
 kbn.valueFormats.bits = kbn.formatBuilders.binarySIPrefix('b');
@@ -499,7 +500,7 @@ kbn.valueFormats.watt = kbn.formatBuilders.decimalSIPrefix('W');
 kbn.valueFormats.kwatt = kbn.formatBuilders.decimalSIPrefix('W', 1);
 kbn.valueFormats.mwatt = kbn.formatBuilders.decimalSIPrefix('W', -1);
 kbn.valueFormats.kwattm = kbn.formatBuilders.decimalSIPrefix('W/Min', 1);
-kbn.valueFormats.Wm2 = kbn.formatBuilders.fixedUnit('W/m2');
+kbn.valueFormats.Wm2 = kbn.formatBuilders.fixedUnit('W/m²');
 kbn.valueFormats.voltamp = kbn.formatBuilders.decimalSIPrefix('VA');
 kbn.valueFormats.kvoltamp = kbn.formatBuilders.decimalSIPrefix('VA', 1);
 kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
@@ -571,9 +572,9 @@ kbn.valueFormats.accG = kbn.formatBuilders.fixedUnit('g');
 // Volume
 kbn.valueFormats.litre = kbn.formatBuilders.decimalSIPrefix('L');
 kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
-kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m3');
-kbn.valueFormats.Nm3 = kbn.formatBuilders.fixedUnit('Nm3');
-kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm3');
+kbn.valueFormats.m3 = kbn.formatBuilders.fixedUnit('m³');
+kbn.valueFormats.Nm3 = kbn.formatBuilders.fixedUnit('Nm³');
+kbn.valueFormats.dm3 = kbn.formatBuilders.fixedUnit('dm³');
 kbn.valueFormats.gallons = kbn.formatBuilders.fixedUnit('gal');
 
 // Flow
@@ -604,14 +605,14 @@ kbn.valueFormats.radsvh = kbn.formatBuilders.decimalSIPrefix('Sv/h');
 // Concentration
 kbn.valueFormats.ppm = kbn.formatBuilders.fixedUnit('ppm');
 kbn.valueFormats.conppb = kbn.formatBuilders.fixedUnit('ppb');
-kbn.valueFormats.conngm3 = kbn.formatBuilders.fixedUnit('ng/m3');
-kbn.valueFormats.conngNm3 = kbn.formatBuilders.fixedUnit('ng/Nm3');
-kbn.valueFormats.conμgm3 = kbn.formatBuilders.fixedUnit('μg/m3');
-kbn.valueFormats.conμgNm3 = kbn.formatBuilders.fixedUnit('μg/Nm3');
-kbn.valueFormats.conmgm3 = kbn.formatBuilders.fixedUnit('mg/m3');
-kbn.valueFormats.conmgNm3 = kbn.formatBuilders.fixedUnit('mg/Nm3');
-kbn.valueFormats.congm3 = kbn.formatBuilders.fixedUnit('g/m3');
-kbn.valueFormats.congNm3 = kbn.formatBuilders.fixedUnit('g/Nm3');
+kbn.valueFormats.conngm3 = kbn.formatBuilders.fixedUnit('ng/m³');
+kbn.valueFormats.conngNm3 = kbn.formatBuilders.fixedUnit('ng/Nm³');
+kbn.valueFormats.conμgm3 = kbn.formatBuilders.fixedUnit('μg/m³');
+kbn.valueFormats.conμgNm3 = kbn.formatBuilders.fixedUnit('μg/Nm³');
+kbn.valueFormats.conmgm3 = kbn.formatBuilders.fixedUnit('mg/m³');
+kbn.valueFormats.conmgNm3 = kbn.formatBuilders.fixedUnit('mg/Nm³');
+kbn.valueFormats.congm3 = kbn.formatBuilders.fixedUnit('g/m³');
+kbn.valueFormats.congNm3 = kbn.formatBuilders.fixedUnit('g/Nm³');
 
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -880,6 +881,7 @@ kbn.getUnitFormats = function() {
         { text: 'Swedish Krona (kr)', value: 'currencySEK' },
         { text: 'Czech koruna (czk)', value: 'currencyCZK' },
         { text: 'Swiss franc (CHF)', value: 'currencyCHF' },
+        { text: 'Polish Złoty (PLN)', value: 'currencyPLN' },
       ],
     },
     {
@@ -957,7 +959,7 @@ kbn.getUnitFormats = function() {
       text: 'throughput',
       submenu: [
         { text: 'ops/sec (ops)', value: 'ops' },
-        { text: 'requets/sec (rps)', value: 'reqps' },
+        { text: 'requests/sec (rps)', value: 'reqps' },
         { text: 'reads/sec (rps)', value: 'rps' },
         { text: 'writes/sec (wps)', value: 'wps' },
         { text: 'I/O ops/sec (iops)', value: 'iops' },
@@ -1019,7 +1021,7 @@ kbn.getUnitFormats = function() {
         { text: 'Watt (W)', value: 'watt' },
         { text: 'Kilowatt (kW)', value: 'kwatt' },
         { text: 'Milliwatt (mW)', value: 'mwatt' },
-        { text: 'Watt per square metre (W/m2)', value: 'Wm2' },
+        { text: 'Watt per square metre (W/m²)', value: 'Wm2' },
         { text: 'Volt-ampere (VA)', value: 'voltamp' },
         { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
         { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
@@ -1116,14 +1118,14 @@ kbn.getUnitFormats = function() {
       submenu: [
         { text: 'parts-per-million (ppm)', value: 'ppm' },
         { text: 'parts-per-billion (ppb)', value: 'conppb' },
-        { text: 'nanogram per cubic metre (ng/m3)', value: 'conngm3' },
-        { text: 'nanogram per normal cubic metre (ng/Nm3)', value: 'conngNm3' },
-        { text: 'microgram per cubic metre (μg/m3)', value: 'conμgm3' },
-        { text: 'microgram per normal cubic metre (μg/Nm3)', value: 'conμgNm3' },
-        { text: 'milligram per cubic metre (mg/m3)', value: 'conmgm3' },
-        { text: 'milligram per normal cubic metre (mg/Nm3)', value: 'conmgNm3' },
-        { text: 'gram per cubic metre (g/m3)', value: 'congm3' },
-        { text: 'gram per normal cubic metre (g/Nm3)', value: 'congNm3' },
+        { text: 'nanogram per cubic metre (ng/m³)', value: 'conngm3' },
+        { text: 'nanogram per normal cubic metre (ng/Nm³)', value: 'conngNm3' },
+        { text: 'microgram per cubic metre (μg/m³)', value: 'conμgm3' },
+        { text: 'microgram per normal cubic metre (μg/Nm³)', value: 'conμgNm3' },
+        { text: 'milligram per cubic metre (mg/m³)', value: 'conmgm3' },
+        { text: 'milligram per normal cubic metre (mg/Nm³)', value: 'conmgNm3' },
+        { text: 'gram per cubic metre (g/m³)', value: 'congm3' },
+        { text: 'gram per normal cubic metre (g/Nm³)', value: 'congNm3' },
       ],
     },
   ];

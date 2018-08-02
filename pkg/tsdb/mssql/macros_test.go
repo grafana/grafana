@@ -14,7 +14,7 @@ import (
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		engine := &MsSqlMacroEngine{}
+		engine := &msSqlMacroEngine{}
 		query := &tsdb.Query{
 			Model: simplejson.New(),
 		}
@@ -49,21 +49,21 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column >= DATEADD(s, %d, '1970-01-01') AND time_column <= DATEADD(s, %d, '1970-01-01')", from.Unix(), to.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __timeGroup function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "GROUP BY CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) as bigint)*300")
+				So(sql, ShouldEqual, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300")
 			})
 
 			Convey("interpolate __timeGroup function with spaces around arguments", func() {
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "GROUP BY CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) as bigint)*300")
+				So(sql, ShouldEqual, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300")
 			})
 
 			Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
@@ -96,14 +96,14 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select DATEADD(second, %d, '1970-01-01')", from.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", from.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __timeTo function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeTo(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select DATEADD(second, %d, '1970-01-01')", to.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", to.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {
@@ -137,21 +137,21 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column >= DATEADD(s, %d, '1970-01-01') AND time_column <= DATEADD(s, %d, '1970-01-01')", from.Unix(), to.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __timeFrom function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select DATEADD(second, %d, '1970-01-01')", from.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", from.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __timeTo function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeTo(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select DATEADD(second, %d, '1970-01-01')", to.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", to.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {
@@ -185,21 +185,21 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column >= DATEADD(s, %d, '1970-01-01') AND time_column <= DATEADD(s, %d, '1970-01-01')", from.Unix(), to.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __timeFrom function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select DATEADD(second, %d, '1970-01-01')", from.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", from.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __timeTo function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeTo(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select DATEADD(second, %d, '1970-01-01')", to.Unix()))
+				So(sql, ShouldEqual, fmt.Sprintf("select '%s'", to.Format(time.RFC3339)))
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {

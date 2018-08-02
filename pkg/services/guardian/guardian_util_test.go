@@ -19,7 +19,7 @@ type scenarioContext struct {
 	givenUser          *m.SignedInUser
 	givenDashboardID   int64
 	givenPermissions   []*m.DashboardAclInfoDTO
-	givenTeams         []*m.Team
+	givenTeams         []*m.TeamDTO
 	updatePermissions  []*m.DashboardAcl
 	expectedFlags      permissionFlags
 	callerFile         string
@@ -84,11 +84,11 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext, per
 		return nil
 	})
 
-	teams := []*m.Team{}
+	teams := []*m.TeamDTO{}
 
 	for _, p := range permissions {
 		if p.TeamId > 0 {
-			teams = append(teams, &m.Team{Id: p.TeamId})
+			teams = append(teams, &m.TeamDTO{Id: p.TeamId})
 		}
 	}
 
