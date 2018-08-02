@@ -82,8 +82,8 @@ export class DashboardCtrl implements PanelContainer {
         this.dashboard.panels.forEach((panel, i) => {
           console.log(i);
           console.log(panel.gridPos);
-          panel.gridPos.y = Math.floor(panel.gridPos.y / scaleFactor) || 1;
-          panel.gridPos.h = Math.floor(panel.gridPos.h / scaleFactor) || 1;
+          panel.gridPos.y = Math.round(panel.gridPos.y / scaleFactor) || 1;
+          panel.gridPos.h = Math.round(panel.gridPos.h / scaleFactor) || 1;
 
           console.log(panel.gridPos);
         });
