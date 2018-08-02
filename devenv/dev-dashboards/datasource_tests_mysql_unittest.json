@@ -369,7 +369,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '5m'), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -452,7 +452,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '5m', NULL), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -535,7 +535,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '5m', 10.0) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '5m', 10.0), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -618,7 +618,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize') AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '$summarize'), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -701,7 +701,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize', NULL) AS time, sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '$summarize', NULL), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -784,7 +784,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize', 100.0) AS time, sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '$summarize', 100.0), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -871,7 +871,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement as metric, \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement IN($metric)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroupAlias(time, '$summarize'), \n  measurement as metric, \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement IN($metric)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -968,7 +968,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  measurement IN($metric)\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroupAlias(time, '$summarize'), \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  measurement IN($metric)\nGROUP BY 1\nORDER BY 1",
           "refId": "A"
         }
       ],
