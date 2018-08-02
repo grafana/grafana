@@ -253,7 +253,6 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 				columnType := columnTypes[i].DatabaseTypeName()
 
 				for _, mct := range e.metricColumnTypes {
-					e.log.Info(mct)
 					if columnType == mct {
 						metricIndex = i
 						continue
