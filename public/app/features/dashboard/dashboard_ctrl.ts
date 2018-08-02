@@ -5,7 +5,7 @@ import { PanelContainer } from './dashgrid/PanelContainer';
 import { DashboardModel } from './dashboard_model';
 import { PanelModel } from './panel_model';
 import { GRID_CELL_HEIGHT } from 'app/core/constants';
-import { PanelLinksEditorCtrl } from '../panellinks/module';
+
 export class DashboardCtrl implements PanelContainer {
   dashboard: DashboardModel;
   dashboardViewState: any;
