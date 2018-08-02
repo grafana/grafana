@@ -87,6 +87,12 @@
         height: 100%;
         display: inline-block;
       }
+
+      &.white {
+        a {
+          color: white;
+        }
+      }
     }
 
     &.cell-highlighted:hover {

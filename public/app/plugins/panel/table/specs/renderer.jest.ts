@@ -268,7 +268,7 @@ describe('when rendering table', () => {
       var expectedHtml = `
         <td class="table-panel-cell-link">
           <a href="/dashboard?param=host1&param_1=1230&param_2=40"
-            target="_blank" data-link-tooltip data-original-title="host1 1230 my.host.com" data-placement="right" class="">
+            target="_blank" data-link-tooltip data-original-title="host1 1230 my.host.com" data-placement="right">
             host1
           </a>
         </td>

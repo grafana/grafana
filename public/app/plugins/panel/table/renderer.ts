@@ -214,15 +214,10 @@ export class TableRenderer {
     var style = '';
     var cellClasses = [];
     var cellClass = '';
-    var linkClass = '';
-
-    if (this.colorState.row) {
-      linkClass = 'table-panel-link';
-    }
 
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
-      linkClass = 'table-panel-link';
+      cellClasses.push('white');
       this.colorState.cell = null;
     } else if (this.colorState.value) {
       style = ' style="color:' + this.colorState.value + '"';
@@ -257,13 +252,12 @@ export class TableRenderer {
       var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');
+
+      if (this.colorState.row) {
+        cellClasses.push('white');
+      }
       columnHtml += `
-        <a href="${cellLink}"
-           target="${cellTarget}"
-           data-link-tooltip
-           data-original-title="${cellLinkTooltip}"
-           data-placement="right"
-           class="${linkClass}">
+        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right">
           ${value}
         </a>
       `;
