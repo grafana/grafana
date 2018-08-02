@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import appEvents from 'app/core/app_events';
 import { PostgresMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { SqlPart } from 'app/core/components/sql_part/sql_part';
@@ -146,7 +147,19 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   toggleEditorMode() {
-    this.target.rawQuery = !this.target.rawQuery;
+    if (this.target.rawQuery) {
+      appEvents.emit('confirm-modal', {
+        title: 'Warning',
+        text2: 'Switching to query builder may overwrite your raw SQL.',
+        icon: 'fa-exclamation',
+        yesText: 'Switch',
+        onConfirm: () => {
+          this.target.rawQuery = !this.target.rawQuery;
+        },
+      });
+    } else {
+      this.target.rawQuery = !this.target.rawQuery;
+    }
   }
 
   resetPlusButton(button) {
