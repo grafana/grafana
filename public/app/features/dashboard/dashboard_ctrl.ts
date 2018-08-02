@@ -63,32 +63,24 @@ export class DashboardCtrl implements PanelContainer {
       .finally(() => {
         this.dashboard = dashboard;
         this.dashboard.processRepeats();
-        console.log(this.dashboard.panels);
 
-        let maxRows = Math.max(
-          ...this.dashboard.panels.map(panel => {
-            return panel.gridPos.h + panel.gridPos.y;
-          })
-        );
-        console.log('maxRows: ' + maxRows);
-        //Consider navbar and submenu controls, padding and margin
-        let availableHeight = window.innerHeight - 80;
-        let availableRows = Math.floor(availableHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+        if (window.location.search.search('autofitpanels') !== -1) {
+          let maxRows = Math.max(
+            ...this.dashboard.panels.map(panel => {
+              return panel.gridPos.h + panel.gridPos.y;
+            })
+          );
 
-        console.log('availableRows: ' + availableRows);
-        let scaleFactor = maxRows / availableRows;
-        console.log(scaleFactor);
+          //Consider navbar and submenu controls, padding and margin
+          let availableHeight = window.innerHeight - 80;
+          let availableRows = Math.floor(availableHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+          let scaleFactor = maxRows / availableRows;
 
-        this.dashboard.panels.forEach((panel, i) => {
-          console.log(i);
-          console.log(panel.gridPos);
-          panel.gridPos.y = Math.round(panel.gridPos.y / scaleFactor) || 1;
-          panel.gridPos.h = Math.round(panel.gridPos.h / scaleFactor) || 1;
-
-          console.log(panel.gridPos);
-        });
-
-        console.log(this.dashboard.panels);
+          this.dashboard.panels.forEach((panel, i) => {
+            panel.gridPos.y = Math.round(panel.gridPos.y / scaleFactor) || 1;
+            panel.gridPos.h = Math.round(panel.gridPos.h / scaleFactor) || 1;
+          });
+        }
 
         this.unsavedChangesSrv.init(dashboard, this.$scope);
 
