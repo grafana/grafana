@@ -92,7 +92,7 @@ export default class PostgresQuery {
     }
   }
 
-  buildTimeColumn() {
+  buildTimeColumn(alias = true) {
     let timeGroup = this.hasTimeGroup();
     let query;
 
@@ -103,9 +103,16 @@ export default class PostgresQuery {
       } else {
         args = timeGroup.params[0];
       }
-      query = '$__timeGroup(' + this.target.timeColumn + ',' + args + ')';
+      if (alias) {
+        query = '$__timeGroupAlias(' + this.target.timeColumn + ',' + args + ')';
+      } else {
+        query = '$__timeGroup(' + this.target.timeColumn + ',' + args + ')';
+      }
     } else {
-      query = this.target.timeColumn + ' AS "time"';
+      query = this.target.timeColumn;
+      if (alias) {
+        query += ' AS "time"';
+      }
     }
 
     return query;
@@ -162,9 +169,7 @@ export default class PostgresQuery {
       if (this.hasMetricColumn()) {
         overParts.push('PARTITION BY ' + this.target.metricColumn);
       }
-      if (!aggregate) {
-        overParts.push('ORDER BY ' + this.target.timeColumn);
-      }
+      overParts.push('ORDER BY ' + this.buildTimeColumn(false));
 
       let over = overParts.join(' ');
       let curr: string;
