@@ -53,7 +53,8 @@ Macros:
 - $__timeEpoch -&gt; extract(epoch from column) as "time"
 - $__timeFilter(column) -&gt; column BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:01:17Z'
 - $__unixEpochFilter(column) -&gt;  column &gt;= 1492750877 AND column &lt;= 1492750877
-- $__timeGroup(column,'5m') -&gt; (extract(epoch from column)/300)::bigint*300 AS time
+- $__timeGroup(column,'5m') -&gt; (extract(epoch from column)/300)::bigint*300
+- $__timeGroupAlias(column,'5m') -&gt; (extract(epoch from column)/300)::bigint*300 AS "time"
 
 Example of group by and order by with $__timeGroup:
 SELECT
