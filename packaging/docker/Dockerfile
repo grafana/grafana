@@ -12,14 +12,15 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
     GF_PATHS_PLUGINS="/var/lib/grafana/plugins" \
     GF_PATHS_PROVISIONING="/etc/grafana/provisioning"
 
+RUN apt-get update && apt-get install -qq -y tar libfontconfig ca-certificates && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
-RUN apt-get update && apt-get install -qq -y tar libfontconfig ca-certificates && \
-    mkdir -p "$GF_PATHS_HOME/.aws" && \
+RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     tar xfvz /tmp/grafana.tar.gz --strip-components=1 -C "$GF_PATHS_HOME" && \
     rm /tmp/grafana.tar.gz && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* && \
     groupadd -r -g $GF_GID grafana && \
     useradd -r -u $GF_UID -g grafana grafana && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
