@@ -17,6 +17,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
@@ -98,11 +99,15 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 			continue
 		}
 
+		RefId := queryContext.Queries[i].RefId
 		query, err := parseQuery(queryContext.Queries[i].Model)
 		if err != nil {
-			return nil, err
+			result.Results[RefId] = &tsdb.QueryResult{
+				Error: err,
+			}
+			return result, nil
 		}
-		query.RefId = queryContext.Queries[i].RefId
+		query.RefId = RefId
 
 		if query.Id != "" {
 			if _, ok := getMetricDataQueries[query.Region]; !ok {
@@ -113,15 +118,21 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		}
 
 		if query.Id == "" && query.Expression != "" {
-			return nil, fmt.Errorf("Invalid query: id should be set if using expression")
+			result.Results[query.RefId] = &tsdb.QueryResult{
+				Error: fmt.Errorf("Invalid query: id should be set if using expression"),
+			}
+			return result, nil
 		}
 
 		eg.Go(func() error {
 			queryRes, err := e.executeQuery(ectx, query, queryContext)
-			if err != nil {
+			if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
 				return err
 			}
 			result.Results[queryRes.RefId] = queryRes
+			if err != nil {
+				result.Results[queryRes.RefId].Error = err
+			}
 			return nil
 		})
 	}
@@ -131,11 +142,14 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 			q := getMetricDataQuery
 			eg.Go(func() error {
 				queryResponses, err := e.executeGetMetricDataQuery(ectx, region, q, queryContext)
-				if err != nil {
+				if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
 					return err
 				}
 				for _, queryRes := range queryResponses {
 					result.Results[queryRes.RefId] = queryRes
+					if err != nil {
+						result.Results[queryRes.RefId].Error = err
+					}
 				}
 				return nil
 			})

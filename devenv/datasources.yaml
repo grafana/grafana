@@ -51,12 +51,28 @@ datasources:
     user: grafana
     password: password
 
+  - name: gdev-mysql-ds-tests
+    type: mysql
+    url: localhost:3306
+    database: grafana_ds_tests
+    user: grafana
+    password: password
+
   - name: gdev-mssql
     type: mssql
     url: localhost:1433
     database: grafana
     user: grafana
-    password: "Password!"
+    secureJsonData:
+      password: Password!
+
+  - name: gdev-mssql-ds-tests
+    type: mssql
+    url: localhost:1433
+    database: grafanatest
+    user: grafana
+    secureJsonData:
+      password: Password!
 
   - name: gdev-postgres
     type: postgres
@@ -65,6 +81,16 @@ datasources:
     user: grafana
     secureJsonData:
       password: password
+    jsonData:
+      sslmode: "disable"
+
+  - name: gdev-postgres-ds-tests
+    type: postgres
+    url: localhost:5432
+    database: grafanadstest
+    user: grafanatest
+    secureJsonData:
+      password: grafanatest
     jsonData:
       sslmode: "disable"
 

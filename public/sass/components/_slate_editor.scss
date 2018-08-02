@@ -71,6 +71,7 @@
     .typeahead-item-hint {
       font-size: $font-size-xs;
       color: $text-color;
+      white-space: normal;
     }
   }
 }
@@ -122,7 +123,7 @@
   .token.attr-value,
   .token.keyword,
   .token.class-name {
-    color: $query-blue;
+    color: $blue;
   }
 
   .token.regex,

@@ -1,29 +1,37 @@
-import { describe, beforeEach, afterEach, it, sinon, expect, angularMocks } from 'test/lib/common';
-
-import helpers from 'test/specs/helpers';
 import { SingleStatCtrl } from '../module';
 import moment from 'moment';
 
 describe('SingleStatCtrl', function() {
-  var ctx = new helpers.ControllerTestContext();
-  var epoch = 1505826363746;
-  var clock;
+  let ctx = <any>{};
+  let epoch = 1505826363746;
+  Date.now = () => epoch;
+
+  let $scope = {
+    $on: () => {},
+  };
+
+  let $injector = {
+    get: () => {},
+  };
+
+  SingleStatCtrl.prototype.panel = {
+    events: {
+      on: () => {},
+      emit: () => {},
+    },
+  };
+  SingleStatCtrl.prototype.dashboard = {
+    isTimezoneUtc: jest.fn(() => true),
+  };
+  SingleStatCtrl.prototype.events = {
+    on: () => {},
+  };
 
   function singleStatScenario(desc, func) {
     describe(desc, function() {
       ctx.setup = function(setupFunc) {
-        beforeEach(angularMocks.module('grafana.services'));
-        beforeEach(angularMocks.module('grafana.controllers'));
-        beforeEach(
-          angularMocks.module(function($compileProvider) {
-            $compileProvider.preAssignBindingsEnabled(true);
-          })
-        );
-
-        beforeEach(ctx.providePhase());
-        beforeEach(ctx.createPanelController(SingleStatCtrl));
-
         beforeEach(function() {
+          ctx.ctrl = new SingleStatCtrl($scope, $injector, {});
           setupFunc();
           ctx.ctrl.onDataReceived(ctx.data);
           ctx.data = ctx.ctrl.data;
@@ -40,12 +48,12 @@ describe('SingleStatCtrl', function() {
     });
 
     it('Should use series avg as default main value', function() {
-      expect(ctx.data.value).to.be(15);
-      expect(ctx.data.valueRounded).to.be(15);
+      expect(ctx.data.value).toBe(15);
+      expect(ctx.data.valueRounded).toBe(15);
     });
 
     it('should set formatted falue', function() {
-      expect(ctx.data.valueFormatted).to.be('15');
+      expect(ctx.data.valueFormatted).toBe('15');
     });
   });
 
@@ -56,12 +64,12 @@ describe('SingleStatCtrl', function() {
     });
 
     it('Should use series avg as default main value', function() {
-      expect(ctx.data.value).to.be(0);
-      expect(ctx.data.valueRounded).to.be(0);
+      expect(ctx.data.value).toBe(0);
+      expect(ctx.data.valueRounded).toBe(0);
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be('test.cpu1');
+      expect(ctx.data.valueFormatted).toBe('test.cpu1');
     });
   });
 
@@ -70,28 +78,29 @@ describe('SingleStatCtrl', function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
+      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
     });
 
     it('Should use time instead of value', function() {
-      expect(ctx.data.value).to.be(1505634997920);
-      expect(ctx.data.valueRounded).to.be(1505634997920);
+      expect(ctx.data.value).toBe(1505634997920);
+      expect(ctx.data.valueRounded).toBe(1505634997920);
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be(moment(1505634997920).format('YYYY-MM-DD HH:mm:ss'));
+      expect(moment(ctx.data.valueFormatted).valueOf()).toBe(1505634997000);
     });
   });
 
   singleStatScenario('showing last iso time instead of value (in UTC)', function(ctx) {
     ctx.setup(function() {
-      ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
+      ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 5000]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsIso';
-      ctx.setIsUtc(true);
+      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
     });
 
-    it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be(moment.utc(1505634997920).format('YYYY-MM-DD HH:mm:ss'));
+    it('should set value', function() {
+      expect(ctx.data.valueFormatted).toBe('1970-01-01 00:00:05');
     });
   });
 
@@ -100,36 +109,33 @@ describe('SingleStatCtrl', function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
+      ctx.ctrl.dashboard.isTimezoneUtc = () => false;
     });
 
     it('Should use time instead of value', function() {
-      expect(ctx.data.value).to.be(1505634997920);
-      expect(ctx.data.valueRounded).to.be(1505634997920);
+      expect(ctx.data.value).toBe(1505634997920);
+      expect(ctx.data.valueRounded).toBe(1505634997920);
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be(moment(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
+      expect(ctx.data.valueFormatted).toBe(moment(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
     });
   });
 
   singleStatScenario('showing last us time instead of value (in UTC)', function(ctx) {
     ctx.setup(function() {
-      ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
+      ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 5000]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeAsUS';
-      ctx.setIsUtc(true);
+      ctx.ctrl.dashboard.isTimezoneUtc = () => true;
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be(moment.utc(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
+      expect(ctx.data.valueFormatted).toBe('01/01/1970 12:00:05 am');
     });
   });
 
   singleStatScenario('showing last time from now instead of value', function(ctx) {
-    beforeEach(() => {
-      clock = sinon.useFakeTimers(epoch);
-    });
-
     ctx.setup(function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
       ctx.ctrl.panel.valueName = 'last_time';
@@ -137,37 +143,24 @@ describe('SingleStatCtrl', function() {
     });
 
     it('Should use time instead of value', function() {
-      expect(ctx.data.value).to.be(1505634997920);
-      expect(ctx.data.valueRounded).to.be(1505634997920);
+      expect(ctx.data.value).toBe(1505634997920);
+      expect(ctx.data.valueRounded).toBe(1505634997920);
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be('2 days ago');
-    });
-
-    afterEach(() => {
-      clock.restore();
+      expect(ctx.data.valueFormatted).toBe('2 days ago');
     });
   });
 
   singleStatScenario('showing last time from now instead of value (in UTC)', function(ctx) {
-    beforeEach(() => {
-      clock = sinon.useFakeTimers(epoch);
-    });
-
     ctx.setup(function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[10, 12], [20, 1505634997920]] }];
       ctx.ctrl.panel.valueName = 'last_time';
       ctx.ctrl.panel.format = 'dateTimeFromNow';
-      ctx.setIsUtc(true);
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be('2 days ago');
-    });
-
-    afterEach(() => {
-      clock.restore();
+      expect(ctx.data.valueFormatted).toBe('2 days ago');
     });
   });
 
@@ -176,15 +169,17 @@ describe('SingleStatCtrl', function() {
   ) {
     ctx.setup(function() {
       ctx.data = [{ target: 'test.cpu1', datapoints: [[99.999, 1], [99.99999, 2]] }];
+      ctx.ctrl.panel.valueName = 'avg';
+      ctx.ctrl.panel.format = 'none';
     });
 
     it('Should be rounded', function() {
-      expect(ctx.data.value).to.be(99.999495);
-      expect(ctx.data.valueRounded).to.be(100);
+      expect(ctx.data.value).toBe(99.999495);
+      expect(ctx.data.valueRounded).toBe(100);
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be('100');
+      expect(ctx.data.valueFormatted).toBe('100');
     });
   });
 
@@ -195,15 +190,15 @@ describe('SingleStatCtrl', function() {
     });
 
     it('value should remain', function() {
-      expect(ctx.data.value).to.be(9.9);
+      expect(ctx.data.value).toBe(9.9);
     });
 
     it('round should be rounded up', function() {
-      expect(ctx.data.valueRounded).to.be(10);
+      expect(ctx.data.valueRounded).toBe(10);
     });
 
     it('Should replace value with text', function() {
-      expect(ctx.data.valueFormatted).to.be('OK');
+      expect(ctx.data.valueFormatted).toBe('OK');
     });
   });
 
@@ -215,7 +210,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('Should replace value with text OK', function() {
-      expect(ctx.data.valueFormatted).to.be('OK');
+      expect(ctx.data.valueFormatted).toBe('OK');
     });
   });
 
@@ -227,7 +222,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('Should replace value with text NOT OK', function() {
-      expect(ctx.data.valueFormatted).to.be('NOT OK');
+      expect(ctx.data.valueFormatted).toBe('NOT OK');
     });
   });
 
@@ -243,16 +238,20 @@ describe('SingleStatCtrl', function() {
     singleStatScenario('with default values', function(ctx) {
       ctx.setup(function() {
         ctx.data = tableData;
+        ctx.ctrl.panel = {
+          emit: () => {},
+        };
         ctx.ctrl.panel.tableColumn = 'mean';
+        ctx.ctrl.panel.format = 'none';
       });
 
       it('Should use first rows value as default main value', function() {
-        expect(ctx.data.value).to.be(15);
-        expect(ctx.data.valueRounded).to.be(15);
+        expect(ctx.data.value).toBe(15);
+        expect(ctx.data.valueRounded).toBe(15);
       });
 
       it('should set formatted value', function() {
-        expect(ctx.data.valueFormatted).to.be('15');
+        expect(ctx.data.valueFormatted).toBe('15');
       });
     });
 
@@ -263,7 +262,7 @@ describe('SingleStatCtrl', function() {
       });
 
       it('Should set column to first column that is not time', function() {
-        expect(ctx.ctrl.panel.tableColumn).to.be('test1');
+        expect(ctx.ctrl.panel.tableColumn).toBe('test1');
       });
     });
 
@@ -273,16 +272,17 @@ describe('SingleStatCtrl', function() {
       ctx.setup(function() {
         ctx.data = tableData;
         ctx.data[0].rows[0] = [1492759673649, 'ignore1', 99.99999, 'ignore2'];
+        ctx.ctrl.panel.mappingType = 0;
         ctx.ctrl.panel.tableColumn = 'mean';
       });
 
       it('Should be rounded', function() {
-        expect(ctx.data.value).to.be(99.99999);
-        expect(ctx.data.valueRounded).to.be(100);
+        expect(ctx.data.value).toBe(99.99999);
+        expect(ctx.data.valueRounded).toBe(100);
       });
 
       it('should set formatted falue', function() {
-        expect(ctx.data.valueFormatted).to.be('100');
+        expect(ctx.data.valueFormatted).toBe('100');
       });
     });
 
@@ -290,20 +290,21 @@ describe('SingleStatCtrl', function() {
       ctx.setup(function() {
         ctx.data = tableData;
         ctx.data[0].rows[0] = [1492759673649, 'ignore1', 9.9, 'ignore2'];
+        ctx.ctrl.panel.mappingType = 2;
         ctx.ctrl.panel.tableColumn = 'mean';
         ctx.ctrl.panel.valueMaps = [{ value: '10', text: 'OK' }];
       });
 
       it('value should remain', function() {
-        expect(ctx.data.value).to.be(9.9);
+        expect(ctx.data.value).toBe(9.9);
       });
 
       it('round should be rounded up', function() {
-        expect(ctx.data.valueRounded).to.be(10);
+        expect(ctx.data.valueRounded).toBe(10);
       });
 
       it('Should replace value with text', function() {
-        expect(ctx.data.valueFormatted).to.be('OK');
+        expect(ctx.data.valueFormatted).toBe('OK');
       });
     });
 
@@ -317,7 +318,7 @@ describe('SingleStatCtrl', function() {
       });
 
       it('Should replace value with text OK', function() {
-        expect(ctx.data.valueFormatted).to.be('OK');
+        expect(ctx.data.valueFormatted).toBe('OK');
       });
     });
 
@@ -331,7 +332,7 @@ describe('SingleStatCtrl', function() {
       });
 
       it('Should replace value with text NOT OK', function() {
-        expect(ctx.data.valueFormatted).to.be('NOT OK');
+        expect(ctx.data.valueFormatted).toBe('NOT OK');
       });
     });
 
@@ -343,7 +344,7 @@ describe('SingleStatCtrl', function() {
       });
 
       it('Should replace value with text NOT OK', function() {
-        expect(ctx.data.valueFormatted).to.be('ignore1');
+        expect(ctx.data.valueFormatted).toBe('ignore1');
       });
     });
 
@@ -355,7 +356,7 @@ describe('SingleStatCtrl', function() {
       });
 
       it('Should return zero', function() {
-        expect(ctx.data.value).to.be(0);
+        expect(ctx.data.value).toBe(0);
       });
     });
   });

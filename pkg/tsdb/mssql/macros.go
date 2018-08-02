@@ -14,18 +14,18 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
-type MsSqlMacroEngine struct {
-	TimeRange *tsdb.TimeRange
-	Query     *tsdb.Query
+type msSqlMacroEngine struct {
+	timeRange *tsdb.TimeRange
+	query     *tsdb.Query
 }
 
-func NewMssqlMacroEngine() tsdb.SqlMacroEngine {
-	return &MsSqlMacroEngine{}
+func newMssqlMacroEngine() tsdb.SqlMacroEngine {
+	return &msSqlMacroEngine{}
 }
 
-func (m *MsSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
-	m.TimeRange = timeRange
-	m.Query = query
+func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+	m.timeRange = timeRange
+	m.query = query
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
@@ -66,7 +66,7 @@ func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]str
 	return result + str[lastIndex:]
 }
 
-func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
+func (m *msSqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {
@@ -83,11 +83,11 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 
-		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339), m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("'%s'", m.TimeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("'%s'", m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeTo":
-		return fmt.Sprintf("'%s'", m.TimeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("'%s'", m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
@@ -97,16 +97,16 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			m.Query.Model.Set("fill", true)
-			m.Query.Model.Set("fillInterval", interval.Seconds())
+			m.query.Model.Set("fill", true)
+			m.query.Model.Set("fillInterval", interval.Seconds())
 			if args[2] == "NULL" {
-				m.Query.Model.Set("fillNull", true)
+				m.query.Model.Set("fillNull", true)
 			} else {
 				floatVal, err := strconv.ParseFloat(args[2], 64)
 				if err != nil {
 					return "", fmt.Errorf("error parsing fill value %v", args[2])
 				}
-				m.Query.Model.Set("fillValue", floatVal)
+				m.query.Model.Set("fillValue", floatVal)
 			}
 		}
 		return fmt.Sprintf("FLOOR(DATEDIFF(second, '1970-01-01', %s)/%.0f)*%.0f", args[0], interval.Seconds(), interval.Seconds()), nil
@@ -114,11 +114,11 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.TimeRange.GetFromAsSecondsEpoch(), args[0], m.TimeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsSecondsEpoch(), args[0], m.timeRange.GetToAsSecondsEpoch()), nil
 	case "__unixEpochFrom":
-		return fmt.Sprintf("%d", m.TimeRange.GetFromAsSecondsEpoch()), nil
+		return fmt.Sprintf("%d", m.timeRange.GetFromAsSecondsEpoch()), nil
 	case "__unixEpochTo":
-		return fmt.Sprintf("%d", m.TimeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("%d", m.timeRange.GetToAsSecondsEpoch()), nil
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}

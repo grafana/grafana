@@ -30,8 +30,8 @@ $white: #fff;
 
 // Accent colors
 // -------------------------
-$blue: #61c2f2;
-$blue-dark: #0083b3;
+$blue: #0083b3;
+$blue-light: #00a8e6;
 $green: #3aa655;
 $red: #d44939;
 $yellow: #ff851b;
@@ -45,7 +45,6 @@ $brand-success: $green;
 $brand-warning: $orange;
 $brand-danger: $red;
 
-$query-blue: $blue-dark;
 $query-red: $red;
 $query-green: $green;
 $query-purple: $purple;
@@ -82,7 +81,7 @@ $page-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 $link-color: $gray-1;
 $link-color-disabled: lighten($link-color, 30%);
 $link-hover-color: darken($link-color, 20%);
-$external-link-color: $blue;
+$external-link-color: $blue-light;
 
 // Typography
 // -------------------------
@@ -150,8 +149,8 @@ $scrollbarBorder: $gray-4;
 $btn-primary-bg: $brand-primary;
 $btn-primary-bg-hl: lighten($brand-primary, 8%);
 
-$btn-secondary-bg: $blue-dark;
-$btn-secondary-bg-hl: lighten($blue-dark, 4%);
+$btn-secondary-bg: $blue;
+$btn-secondary-bg-hl: lighten($blue, 4%);
 
 $btn-success-bg: lighten($green, 3%);
 $btn-success-bg-hl: darken($green, 3%);
@@ -168,7 +167,7 @@ $btn-inverse-text-color: $gray-1;
 $btn-inverse-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 
 $btn-active-bg: $white;
-$btn-active-text-color: $blue-dark;
+$btn-active-text-color: $blue;
 
 $btn-link-color: $gray-1;
 
@@ -219,8 +218,8 @@ $search-filter-box-bg: $gray-7;
 
 // Typeahead
 $typeahead-shadow: 0 5px 10px 0 $gray-5;
-$typeahead-selected-bg: lighten($blue, 25%);
-$typeahead-selected-color: $blue-dark;
+$typeahead-selected-bg: lighten($blue, 57%);
+$typeahead-selected-color: $blue;
 
 // Dropdowns
 // -------------------------
@@ -285,7 +284,7 @@ $info-text-color: $blue;
 $alert-error-bg: linear-gradient(90deg, #d44939, #e04d3d);
 $alert-success-bg: linear-gradient(90deg, #3aa655, #47b274);
 $alert-warning-bg: linear-gradient(90deg, #d44939, #e04d3d);
-$alert-info-bg: $blue-dark;
+$alert-info-bg: $blue;
 
 // popover
 $popover-bg: $page-bg;
@@ -293,7 +292,7 @@ $popover-color: $text-color;
 $popover-border-color: $gray-5;
 $popover-shadow: 0 0 20px $white;
 
-$popover-help-bg: $blue-dark;
+$popover-help-bg: $blue;
 $popover-help-color: $gray-6;
 $popover-error-bg: $btn-danger-bg;
 
@@ -310,7 +309,7 @@ $graph-tooltip-bg: $gray-5;
 $checkboxImageUrl: '../img/checkbox_white.png';
 
 // info box
-$info-box-background: linear-gradient(100deg, $blue-dark, darken($blue-dark, 5%));
+$info-box-background: linear-gradient(100deg, $blue, darken($blue, 5%));
 $info-box-color: $gray-7;
 
 // footer
@@ -356,3 +355,6 @@ $diff-json-new: #664e33;
 $diff-json-changed-fg: $gray-6;
 $diff-json-changed-num: $gray-4;
 $diff-json-icon: $gray-4;
+
+//Submenu
+$variable-option-bg: $blue-light;
