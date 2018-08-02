@@ -4,7 +4,7 @@ import coreModule from 'app/core/core_module';
 import { PanelContainer } from './dashgrid/PanelContainer';
 import { DashboardModel } from './dashboard_model';
 import { PanelModel } from './panel_model';
-import { GRID_CELL_HEIGHT } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 export class DashboardCtrl implements PanelContainer {
   dashboard: DashboardModel;
@@ -71,24 +71,23 @@ export class DashboardCtrl implements PanelContainer {
           })
         );
         console.log('maxRows: ' + maxRows);
-        //Consider navbar and submenu controls
-        let availableHeight = window.innerHeight - 280;
-        let availableRows = Math.floor(availableHeight / GRID_CELL_HEIGHT);
+        //Consider navbar and submenu controls, padding and margin
+        let availableHeight = window.innerHeight - 80 - 2 * GRID_CELL_VMARGIN;
+        let availableRows = Math.floor(availableHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
 
         console.log('availableRows: ' + availableRows);
-        if (maxRows > availableRows) {
-          let scaleFactor = maxRows / availableRows;
-          console.log(scaleFactor);
+        let scaleFactor = maxRows / availableRows;
+        console.log(scaleFactor);
 
-          this.dashboard.panels.forEach((panel, i) => {
-            console.log(i);
-            console.log(panel.gridPos);
-            panel.gridPos.y = Math.floor(panel.gridPos.y / scaleFactor) || 1;
-            panel.gridPos.h = Math.floor(panel.gridPos.h / scaleFactor) || 1;
+        this.dashboard.panels.forEach((panel, i) => {
+          console.log(i);
+          console.log(panel.gridPos);
+          panel.gridPos.y = Math.floor(panel.gridPos.y / scaleFactor) || 1;
+          panel.gridPos.h = Math.floor(panel.gridPos.h / scaleFactor) || 1;
 
-            console.log(panel.gridPos);
-          });
-        }
+          console.log(panel.gridPos);
+        });
+
         console.log(this.dashboard.panels);
 
         this.unsavedChangesSrv.init(dashboard, this.$scope);
