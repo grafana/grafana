@@ -106,6 +106,12 @@
       </div>
     </div>
     <div class="gf-form">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.toggleEditorMode()">
+        <span ng-show="ctrl.target.rawQuery">Query Builder</span>
+        <span ng-hide="ctrl.target.rawQuery">Edit SQL</span>
+      </label>
+    </div>
+    <div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
         Show Help
         <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
