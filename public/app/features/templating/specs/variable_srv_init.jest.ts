@@ -1,36 +1,31 @@
-import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
-
 import '../all';
 
 import _ from 'lodash';
-import helpers from 'test/specs/helpers';
-import { Emitter } from 'app/core/core';
+import { VariableSrv } from '../variable_srv';
+import $q from 'q';
 
 describe('VariableSrv init', function() {
-  var ctx = new helpers.ControllerTestContext();
+  let templateSrv = {
+    init: vars => {
+      this.variables = vars;
+    },
+    variableInitialized: () => {},
+    updateTemplateData: () => {},
+    replace: str =>
+      str.replace(this.regex, match => {
+        return match;
+      }),
+  };
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.controllers'));
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(
-    angularMocks.module(function($compileProvider) {
-      $compileProvider.preAssignBindingsEnabled(true);
-    })
-  );
+  let $injector = <any>{};
+  let $rootscope = {
+    $on: () => {},
+  };
 
-  beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location']));
-  beforeEach(
-    angularMocks.inject(($rootScope, $q, $location, $injector) => {
-      ctx.$q = $q;
-      ctx.$rootScope = $rootScope;
-      ctx.$location = $location;
-      ctx.variableSrv = $injector.get('variableSrv');
-      ctx.$rootScope.$digest();
-    })
-  );
+  let ctx = <any>{};
 
   function describeInitScenario(desc, fn) {
-    describe(desc, function() {
+    describe(desc, () => {
       var scenario: any = {
         urlParams: {},
         setup: setupFn => {
@@ -38,22 +33,34 @@ describe('VariableSrv init', function() {
         },
       };
 
-      beforeEach(function() {
+      beforeEach(async () => {
         scenario.setupFn();
-        ctx.datasource = {};
-        ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when(scenario.queryResult));
-
-        ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ctx.datasource));
-        ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
-
-        ctx.$location.search = sinon.stub().returns(scenario.urlParams);
-        ctx.dashboard = {
-          templating: { list: scenario.variables },
-          events: new Emitter(),
+        ctx = {
+          datasource: {
+            metricFindQuery: jest.fn(() => Promise.resolve(scenario.queryResult)),
+          },
+          datasourceSrv: {
+            get: () => Promise.resolve(ctx.datasource),
+            getMetricSources: () => scenario.metricSources,
+          },
+          templateSrv,
         };
 
-        ctx.variableSrv.init(ctx.dashboard);
-        ctx.$rootScope.$digest();
+        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv);
+
+        $injector.instantiate = (variable, model) => {
+          return getVarMockConstructor(variable, model, ctx);
+        };
+
+        ctx.variableSrv.datasource = ctx.datasource;
+        ctx.variableSrv.datasourceSrv = ctx.datasourceSrv;
+
+        ctx.variableSrv.$location.search = () => scenario.urlParams;
+        ctx.variableSrv.dashboard = {
+          templating: { list: scenario.variables },
+        };
+
+        await ctx.variableSrv.init(ctx.variableSrv.dashboard);
 
         scenario.variables = ctx.variableSrv.variables;
       });
@@ -78,8 +85,8 @@ describe('VariableSrv init', function() {
       });
 
       it('should update current value', () => {
-        expect(scenario.variables[0].current.value).to.be('new');
-        expect(scenario.variables[0].current.text).to.be('new');
+        expect(scenario.variables[0].current.value).toBe('new');
+        expect(scenario.variables[0].current.text).toBe('new');
       });
     });
   });
@@ -111,12 +118,12 @@ describe('VariableSrv init', function() {
       });
 
       it('should update child variable', () => {
-        expect(scenario.variables[1].options.length).to.be(2);
-        expect(scenario.variables[1].current.text).to.be('google-server1');
+        expect(scenario.variables[1].options.length).toBe(2);
+        expect(scenario.variables[1].current.text).toBe('google-server1');
       });
 
       it('should only update it once', () => {
-        expect(ctx.datasource.metricFindQuery.callCount).to.be(1);
+        expect(ctx.variableSrv.datasource.metricFindQuery).toHaveBeenCalledTimes(1);
       });
     });
   });
@@ -140,9 +147,9 @@ describe('VariableSrv init', function() {
       ];
     });
 
-    it('should update current value', function() {
+    it('should update current value', () => {
       var variable = ctx.variableSrv.variables[0];
-      expect(variable.options.length).to.be(2);
+      expect(variable.options.length).toBe(2);
     });
   });
 
@@ -164,19 +171,19 @@ describe('VariableSrv init', function() {
       scenario.urlParams['var-apps'] = ['val2', 'val1'];
     });
 
-    it('should update current value', function() {
+    it('should update current value', () => {
       var variable = ctx.variableSrv.variables[0];
-      expect(variable.current.value.length).to.be(2);
-      expect(variable.current.value[0]).to.be('val2');
-      expect(variable.current.value[1]).to.be('val1');
-      expect(variable.current.text).to.be('val2 + val1');
-      expect(variable.options[0].selected).to.be(true);
-      expect(variable.options[1].selected).to.be(true);
+      expect(variable.current.value.length).toBe(2);
+      expect(variable.current.value[0]).toBe('val2');
+      expect(variable.current.value[1]).toBe('val1');
+      expect(variable.current.text).toBe('val2 + val1');
+      expect(variable.options[0].selected).toBe(true);
+      expect(variable.options[1].selected).toBe(true);
     });
 
-    it('should set options that are not in value to selected false', function() {
+    it('should set options that are not in value to selected false', () => {
       var variable = ctx.variableSrv.variables[0];
-      expect(variable.options[2].selected).to.be(false);
+      expect(variable.options[2].selected).toBe(false);
     });
   });
 
@@ -198,19 +205,34 @@ describe('VariableSrv init', function() {
       scenario.urlParams['var-apps'] = ['val2', 'val1'];
     });
 
-    it('should update current value', function() {
+    it('should update current value', () => {
       var variable = ctx.variableSrv.variables[0];
-      expect(variable.current.value.length).to.be(2);
-      expect(variable.current.value[0]).to.be('val2');
-      expect(variable.current.value[1]).to.be('val1');
-      expect(variable.current.text).to.be('Val2 + Val1');
-      expect(variable.options[0].selected).to.be(true);
-      expect(variable.options[1].selected).to.be(true);
+      expect(variable.current.value.length).toBe(2);
+      expect(variable.current.value[0]).toBe('val2');
+      expect(variable.current.value[1]).toBe('val1');
+      expect(variable.current.text).toBe('Val2 + Val1');
+      expect(variable.options[0].selected).toBe(true);
+      expect(variable.options[1].selected).toBe(true);
     });
 
-    it('should set options that are not in value to selected false', function() {
+    it('should set options that are not in value to selected false', () => {
       var variable = ctx.variableSrv.variables[0];
-      expect(variable.options[2].selected).to.be(false);
+      expect(variable.options[2].selected).toBe(false);
     });
   });
 });
+
+function getVarMockConstructor(variable, model, ctx) {
+  switch (model.model.type) {
+    case 'datasource':
+      return new variable(model.model, ctx.datasourceSrv, ctx.variableSrv, ctx.templateSrv);
+    case 'query':
+      return new variable(model.model, ctx.datasourceSrv, ctx.templateSrv, ctx.variableSrv);
+    case 'interval':
+      return new variable(model.model, {}, ctx.templateSrv, ctx.variableSrv);
+    case 'custom':
+      return new variable(model.model, ctx.variableSrv);
+    default:
+      return new variable(model.model);
+  }
+}

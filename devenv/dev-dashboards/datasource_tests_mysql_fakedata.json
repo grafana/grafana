@@ -1,40 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_MYSQL",
-      "label": "MySQL",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "mysql",
-      "pluginName": "MySQL"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "mysql",
-      "name": "MySQL",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "table",
-      "name": "Table",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -52,8 +16,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1523372133566,
+  "iteration": 1532620738041,
   "links": [],
   "panels": [
     {
@@ -63,7 +26,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL}",
+      "datasource": "gdev-mysql",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -161,7 +124,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL}",
+      "datasource": "gdev-mysql",
       "fill": 2,
       "gridPos": {
         "h": 18,
@@ -251,7 +214,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_MYSQL}",
+      "datasource": "gdev-mysql",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -332,7 +295,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_MYSQL}",
+      "datasource": "gdev-mysql",
       "fontSize": "100%",
       "gridPos": {
         "h": 9,
@@ -390,6 +353,7 @@
   "schemaVersion": 16,
   "style": "dark",
   "tags": [
+    "gdev",
     "fake-data-gen",
     "mysql"
   ],
@@ -397,8 +361,11 @@
     "list": [
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_MYSQL}",
+        "current": {
+          "text": "America",
+          "value": "America"
+        },
+        "datasource": "gdev-mysql",
         "hide": 0,
         "includeAll": false,
         "label": "Datacenter",
@@ -408,6 +375,7 @@
         "query": "SELECT DISTINCT datacenter FROM grafana_metric",
         "refresh": 1,
         "regex": "",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -417,8 +385,11 @@
       },
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_MYSQL}",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "gdev-mysql",
         "hide": 0,
         "includeAll": true,
         "label": "Hostname",
@@ -428,6 +399,7 @@
         "query": "SELECT DISTINCT hostname FROM grafana_metric WHERE datacenter='$datacenter'",
         "refresh": 1,
         "regex": "",
+        "skipUrlSync": false,
         "sort": 1,
         "tagValuesQuery": "",
         "tags": [],
@@ -520,6 +492,7 @@
         ],
         "query": "1s,10s,30s,1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
+        "skipUrlSync": false,
         "type": "interval"
       }
     ]
@@ -554,7 +527,7 @@
     ]
   },
   "timezone": "",
-  "title": "Grafana Fake Data Gen - MySQL",
+  "title": "Datasource tests - MySQL",
   "uid": "DGsCac3kz",
   "version": 8
 }
