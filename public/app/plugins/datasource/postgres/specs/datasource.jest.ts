@@ -215,6 +215,13 @@ describe('PostgreSQLDatasource', function() {
       });
     });
 
+    describe('and variable contains single quote', () => {
+      it('should return a quoted value', () => {
+        ctx.variable.multi = true;
+        expect(ctx.ds.interpolateVariable("a'bc", ctx.variable)).toEqual("'a''bc'");
+      });
+    });
+
     describe('and variable allows all and is a string', () => {
       it('should return a quoted value', () => {
         ctx.variable.includeAll = true;

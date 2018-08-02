@@ -16,7 +16,7 @@ export class PostgresDatasource {
   interpolateVariable(value, variable) {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return "'" + value + "'";
+        return "'" + value.replace(/'/g, `''`) + "'";
       } else {
         return value;
       }
@@ -27,7 +27,7 @@ export class PostgresDatasource {
     }
 
     var quotedValues = _.map(value, function(val) {
-      return "'" + val + "'";
+      return "'" + val.replace(/'/g, `''`) + "'";
     });
     return quotedValues.join(',');
   }
