@@ -27,6 +27,14 @@ describe('ShareModalCtrl', () => {
       fillVariableValuesForUrl: () => {},
     },
   };
+
+  (<any>window).Intl.DateTimeFormat = () => {
+    return {
+      resolvedOptions: () => {
+        return { timeZone: 'UTC' };
+      },
+    };
+  };
   //   function setTime(range) {
   //     ctx.timeSrv.timeRange = () => range;
   //   }
@@ -48,10 +56,6 @@ describe('ShareModalCtrl', () => {
   //       $compileProvider.preAssignBindingsEnabled(true);
   //     })
   //   );
-
-  //   beforeEach(ctx.providePhase());
-
-  //   beforeEach(ctx.createControllerPhase('ShareModalCtrl'));
   beforeEach(() => {
     ctx.ctrl = new ShareModalCtrl(
       ctx.scope,
@@ -115,6 +119,9 @@ describe('ShareModalCtrl', () => {
     });
 
     it('should remove fullscreen from image url when is first param in querystring and modeSharePanel is true', () => {
+      ctx.$location.search = () => {
+        return { fullscreen: true, edit: true };
+      };
       ctx.$location.absUrl = () => 'http://server/#!/test?fullscreen&edit';
       ctx.scope.modeSharePanel = true;
       ctx.scope.panel = { id: 1 };
@@ -126,6 +133,9 @@ describe('ShareModalCtrl', () => {
     });
 
     it('should remove edit from image url when is first param in querystring and modeSharePanel is true', () => {
+      ctx.$location.search = () => {
+        return { edit: true, fullscreen: true };
+      };
       ctx.$location.absUrl = () => 'http://server/#!/test?edit&fullscreen';
       ctx.scope.modeSharePanel = true;
       ctx.scope.panel = { id: 1 };
@@ -137,6 +147,9 @@ describe('ShareModalCtrl', () => {
     });
 
     it('should include template variables in url', () => {
+      ctx.$location.search = () => {
+        return {};
+      };
       ctx.$location.absUrl = () => 'http://server/#!/test';
       ctx.scope.options.includeTemplateVars = true;
 
