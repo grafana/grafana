@@ -30,10 +30,11 @@ describe('PostgresQuery', function() {
       { timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'none'] }] },
       templateSrv
     );
-    expect(query.buildTimeColumn()).toBe('$__timeGroup(time,5m)');
+    expect(query.buildTimeColumn()).toBe('$__timeGroupAlias(time,5m)');
+    expect(query.buildTimeColumn(false)).toBe('$__timeGroup(time,5m)');
 
     query = new PostgresQuery({ timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'NULL'] }] }, templateSrv);
-    expect(query.buildTimeColumn()).toBe('$__timeGroup(time,5m,NULL)');
+    expect(query.buildTimeColumn()).toBe('$__timeGroupAlias(time,5m,NULL)');
   });
 
   describe('When generating metric column SQL', function() {
@@ -97,8 +98,8 @@ describe('PostgresQuery', function() {
       { type: 'window', params: ['increase'] },
     ];
     expect(query.buildValueColumn(column)).toBe(
-      '(CASE WHEN max(v ORDER BY time) >= lag(max(v ORDER BY time)) OVER (PARTITION BY host) ' +
-        'THEN max(v ORDER BY time) - lag(max(v ORDER BY time)) OVER (PARTITION BY host) ELSE max(v ORDER BY time) END) AS "a"'
+      '(CASE WHEN max(v ORDER BY time) >= lag(max(v ORDER BY time)) OVER (PARTITION BY host ORDER BY time) ' +
+        'THEN max(v ORDER BY time) - lag(max(v ORDER BY time)) OVER (PARTITION BY host ORDER BY time) ELSE max(v ORDER BY time) END) AS "a"'
     );
   });
 
