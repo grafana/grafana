@@ -17,6 +17,7 @@ import TypeaheadField, {
   TypeaheadOutput,
 } from './QueryField';
 
+const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 const METRIC_MARK = 'metric';
 const PRISM_LANGUAGE = 'promql';
@@ -241,22 +242,27 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
         const labelValues = this.state.labelValues[selector][labelKey];
         context = 'context-label-values';
         suggestions.push({
-          label: 'Label values',
+          label: `Label values for "${labelKey}"`,
           items: labelValues.map(wrapLabel),
         });
       }
     } else {
       // Label keys
-      const labelKeys = this.state.labelKeys[selector] || (containsMetric ? null : ['job', 'instance']);
+      const labelKeys = this.state.labelKeys[selector] || (containsMetric ? null : DEFAULT_KEYS);
       if (labelKeys) {
         context = 'context-labels';
-        suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
+        suggestions.push({ label: `Labels`, items: labelKeys.map(wrapLabel) });
       }
     }
 
     // Query labels for selector
-    if (selector && !this.state.labelKeys[selector]) {
-      refresher = this.fetchSeriesLabels(selector, !containsMetric);
+    if (selector && !this.state.labelValues[selector]) {
+      if (selector === EMPTY_SELECTOR) {
+        // Query label values for default labels
+        refresher = Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
+      } else {
+        refresher = this.fetchSeriesLabels(selector, !containsMetric);
+      }
     }
 
     return { context, refresher, suggestions };
@@ -268,6 +274,26 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     }
     return fetch(url);
   };
+
+  async fetchLabelValues(key) {
+    const url = `/api/v1/label/${key}/values`;
+    try {
+      const res = await this.request(url);
+      const body = await (res.data || res.json());
+      const exisingValues = this.state.labelValues[EMPTY_SELECTOR];
+      const values = {
+        ...exisingValues,
+        [key]: body.data,
+      };
+      const labelValues = {
+        ...this.state.labelValues,
+        [EMPTY_SELECTOR]: values,
+      };
+      this.setState({ labelValues });
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   async fetchSeriesLabels(name, withName?) {
     const url = `/api/v1/series?match[]=${name}`;

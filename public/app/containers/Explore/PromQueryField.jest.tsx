@@ -135,7 +135,7 @@ describe('PromQueryField typeahead handling', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-label-values');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'baz' }], label: 'Label values' }]);
+      expect(result.suggestions).toEqual([{ items: [{ label: 'baz' }], label: 'Label values for "bar"' }]);
     });
 
     it('returns label suggestions on aggregation context and metric w/ selector', () => {

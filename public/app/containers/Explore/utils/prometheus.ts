@@ -6,7 +6,9 @@ export function processLabels(labels, withName = false) {
     const { __name__, ...rest } = l;
     if (withName) {
       values['__name__'] = values['__name__'] || [];
-      values['__name__'].push(__name__);
+      if (values['__name__'].indexOf(__name__) === -1) {
+        values['__name__'].push(__name__);
+      }
     }
 
     Object.keys(rest).forEach(key => {
