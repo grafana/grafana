@@ -35,9 +35,6 @@ describe('ShareModalCtrl', () => {
       },
     };
   };
-  //   function setTime(range) {
-  //     ctx.timeSrv.timeRange = () => range;
-  //   }
 
   beforeEach(() => {
     config.bootData = {
@@ -45,18 +42,7 @@ describe('ShareModalCtrl', () => {
         orgId: 1,
       },
     };
-  });
 
-  //   setTime({ from: new Date(1000), to: new Date(2000) });
-
-  //   beforeEach(angularMocks.module('grafana.controllers'));
-  //   beforeEach(angularMocks.module('grafana.services'));
-  //   beforeEach(
-  //     angularMocks.module(function($compileProvider) {
-  //       $compileProvider.preAssignBindingsEnabled(true);
-  //     })
-  //   );
-  beforeEach(() => {
     ctx.ctrl = new ShareModalCtrl(
       ctx.scope,
       {},
@@ -100,7 +86,6 @@ describe('ShareModalCtrl', () => {
     });
 
     it('should remove panel id when no panel in scope', () => {
-      //   ctx.$location.path('/test');
       ctx.$location.absUrl = () => 'http://server/#!/test';
       ctx.scope.options.forCurrent = true;
       ctx.scope.panel = null;
@@ -110,7 +95,6 @@ describe('ShareModalCtrl', () => {
     });
 
     it('should add theme when specified', () => {
-      //   ctx.$location.path('/test');
       ctx.scope.options.theme = 'light';
       ctx.scope.panel = null;
 
