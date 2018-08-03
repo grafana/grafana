@@ -24,7 +24,8 @@ export class DashboardCtrl implements PanelContainer {
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
     public playlistSrv,
-    private panelLoader
+    private panelLoader,
+    private $location
   ) {
     // temp hack due to way dashboards are loaded
     // can't use controllerAs on route yet
@@ -64,7 +65,7 @@ export class DashboardCtrl implements PanelContainer {
         this.dashboard = dashboard;
         this.dashboard.processRepeats();
 
-        if (window.location.search.search('autofitpanels') !== -1) {
+        if (this.$location.search().autofitpanels) {
           let maxRows = Math.max(
             ...this.dashboard.panels.map(panel => {
               return panel.gridPos.h + panel.gridPos.y;
