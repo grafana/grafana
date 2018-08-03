@@ -118,6 +118,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	userInfo := &BasicUserInfo{
+		Id:    fmt.Sprintf("%d", data.Id),
 		Name:  data.Name,
 		Login: data.Username,
 		Email: data.Email,
