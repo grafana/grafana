@@ -86,7 +86,7 @@ export class ResultTransformer {
     table.columns.push({ text: 'Time', type: 'time' });
     _.each(sortedLabels, function(label, labelIndex) {
       metricLabels[label] = labelIndex + 1;
-      table.columns.push({ text: label });
+      table.columns.push({ text: label, filterable: !label.startsWith('__') });
     });
     let valueText = resultCount > 1 ? `Value #${refId}` : 'Value';
     table.columns.push({ text: valueText });
