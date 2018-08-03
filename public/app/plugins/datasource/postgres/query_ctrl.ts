@@ -138,6 +138,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         { text: 'Increase', value: 'increase' },
         { text: 'Rate', value: 'rate' },
         { text: 'Sum', value: 'sum' },
+        { text: 'Moving Average', value: 'avg', type: 'moving_window' },
       ],
     };
     this.selectMenu.push(windows);
@@ -263,14 +264,22 @@ export class PostgresQueryCtrl extends QueryCtrl {
     return _.findIndex(selectParts, (p: any) => p.def.type === 'aggregate' || p.def.type === 'percentile');
   }
 
+  findWindowIndex(selectParts) {
+    return _.findIndex(selectParts, (p: any) => p.def.type === 'window' || p.def.type === 'moving_window');
+  }
+
   addSelectPart(selectParts, item, subItem) {
-    let partModel = sqlPart.create({ type: item.value });
+    let partType = item.value;
+    if (subItem && subItem.type) {
+      partType = subItem.type;
+    }
+    let partModel = sqlPart.create({ type: partType });
     if (subItem) {
       partModel.params = [subItem.value];
     }
     let addAlias = false;
 
-    switch (item.value) {
+    switch (partType) {
       case 'column':
         let parts = _.map(selectParts, function(part: any) {
           return sqlPart.create({ type: part.def.type, params: _.clone(part.params) });
@@ -295,8 +304,10 @@ export class PostgresQueryCtrl extends QueryCtrl {
           addAlias = true;
         }
         break;
+      case 'moving_window':
+        partModel.params.push('5');
       case 'window':
-        let windowIndex = _.findIndex(selectParts, (p: any) => p.def.type === 'window');
+        let windowIndex = this.findWindowIndex(selectParts);
         if (windowIndex !== -1) {
           // replace current window function
           selectParts[windowIndex] = partModel;

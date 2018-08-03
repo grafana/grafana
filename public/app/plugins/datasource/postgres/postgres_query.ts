@@ -142,7 +142,7 @@ export default class PostgresQuery {
     query = columnName.params[0];
 
     let aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
-    let windows = _.find(column, (g: any) => g.type === 'window');
+    let windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
 
     if (aggregate) {
       let func = aggregate.params[0];
@@ -174,25 +174,32 @@ export default class PostgresQuery {
       let over = overParts.join(' ');
       let curr: string;
       let prev: string;
-      switch (windows.params[0]) {
-        case 'increase':
-          curr = query;
-          prev = 'lag(' + curr + ') OVER (' + over + ')';
-          query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
-          break;
-        case 'rate':
-          let timeColumn = this.target.timeColumn;
-          if (aggregate) {
-            timeColumn = 'min(' + timeColumn + ')';
-          }
+      switch (windows.type) {
+        case 'window':
+          switch (windows.params[0]) {
+            case 'increase':
+              curr = query;
+              prev = 'lag(' + curr + ') OVER (' + over + ')';
+              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
+              break;
+            case 'rate':
+              let timeColumn = this.target.timeColumn;
+              if (aggregate) {
+                timeColumn = 'min(' + timeColumn + ')';
+              }
 
-          curr = query;
-          prev = 'lag(' + curr + ') OVER (' + over + ')';
-          query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
-          query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
+              curr = query;
+              prev = 'lag(' + curr + ') OVER (' + over + ')';
+              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
+              query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
+              break;
+            default:
+              query = windows.params[0] + '(' + query + ') OVER (' + over + ')';
+              break;
+          }
           break;
-        default:
-          query = windows.params[0] + '(' + query + ') OVER (' + over + ')';
+        case 'moving_window':
+          query = windows.params[0] + '(' + query + ') OVER (' + over + ' ROWS ' + windows.params[1] + ' PRECEDING)';
           break;
       }
     }

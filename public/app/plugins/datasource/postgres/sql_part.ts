@@ -113,6 +113,25 @@ register({
   defaultParams: ['increase'],
 });
 
+register({
+  type: 'moving_window',
+  style: 'label',
+  label: 'Moving Window:',
+  params: [
+    {
+      name: 'function',
+      type: 'string',
+      options: ['avg'],
+    },
+    {
+      name: 'window_size',
+      type: 'number',
+      options: ['3', '5', '7', '10', '20'],
+    },
+  ],
+  defaultParams: ['avg', '5'],
+});
+
 export default {
   create: createPart,
 };
