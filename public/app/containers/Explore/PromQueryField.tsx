@@ -5,6 +5,7 @@ import React from 'react';
 import { getNextCharacter, getPreviousCousin } from './utils/dom';
 import PluginPrism, { setPrismTokens } from './slate-plugins/prism/index';
 import PrismPromql, { FUNCTIONS } from './slate-plugins/prism/promql';
+import BracesPlugin from './slate-plugins/braces';
 import RunnerPlugin from './slate-plugins/runner';
 import { processLabels, RATE_RANGES, cleanText } from './utils/prometheus';
 
@@ -88,6 +89,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     super(props, context);
 
     this.plugins = [
+      BracesPlugin(),
       RunnerPlugin({ handler: props.onPressEnter }),
       PluginPrism({ definition: PrismPromql, language: PRISM_LANGUAGE }),
     ];

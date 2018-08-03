@@ -5,7 +5,6 @@ import { Block, Change, Document, Text, Value } from 'slate';
 import { Editor } from 'slate-react';
 import Plain from 'slate-plain-serializer';
 
-import BracesPlugin from './slate-plugins/braces';
 import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
 
@@ -144,7 +143,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
     super(props, context);
 
     // Base plugins
-    this.plugins = [BracesPlugin(), ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins];
+    this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins];
 
     this.state = {
       suggestions: [],
