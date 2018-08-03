@@ -25,7 +25,13 @@ var template = `
       <li><a ng-click="ctrl.addDataQuery(datasource);"><i class="fa fa-trash"></i> Remove</a></li>
     </ul>
   </span>
-  <span class="panel-time-info" ng-if="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>
+  <span class="panel-time-info" ng-if="ctrl.timeInfo || ctrl.panel.time_range">
+    <i class="fa fa-clock-o"></i>
+    <span ng-if="ctrl.timeInfo">{{ctrl.timeInfo}}</span>
+    <span ng-if="ctrl.panel.time_range">
+      {{ctrl.dashboard.formatDate(ctrl.timeSrv.timeRange().from)}} to {{ctrl.dashboard.formatDate(ctrl.timeSrv.timeRange().to)}}
+    </span>
+  <span>
 </span>`;
 
 function renderMenuItem(item, ctrl) {

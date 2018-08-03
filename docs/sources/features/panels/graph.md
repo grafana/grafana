@@ -145,6 +145,9 @@ Display styles control visual properties of the graph.
 - **Lines** - Display values as a line graph
 - **Points** - Display points for values
 
+#### Time range
+- ``Show`` - Allows to show the time range as part of the title.
+
 #### Mode Options
 
 - **Fill** - Amount of color fill for a series (default 1). 0 is none.
