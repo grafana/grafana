@@ -32,8 +32,8 @@ SELECT
 FROM information_schema.tables t
 WHERE
   table_schema IN (
-		SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
-    FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
+		SELECT CASE WHEN trim(unnest) = '"$user"' THEN user ELSE trim(unnest) END
+    FROM unnest(string_to_array(current_setting('search_path'),','))
   ) AND
   EXISTS
   ( SELECT 1
@@ -42,7 +42,8 @@ WHERE
       c.table_schema = t.table_schema AND
       c.table_name = t.table_name AND
       udt_name IN ('timestamptz','timestamp')
-  )
+  ) AND
+  EXISTS
   ( SELECT 1
     FROM information_schema.columns c
     WHERE
