@@ -35,7 +35,7 @@ export function addHistoryMetadata(item: Suggestion, history: any[]): Suggestion
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
   const historyForItem = history.filter(h => h.ts > cutoffTs && h.query === item.label);
   const count = historyForItem.length;
-  const recent = historyForItem.pop();
+  const recent = historyForItem[0];
   let hint = `Queried ${count} times in the last 24h.`;
   if (recent) {
     const lastQueried = moment(recent.ts).fromNow();
@@ -189,11 +189,10 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
         .uniqBy('query')
-        .takeRight(HISTORY_ITEM_COUNT)
+        .take(HISTORY_ITEM_COUNT)
         .map(h => h.query)
         .map(wrapLabel)
         .map(item => addHistoryMetadata(item, history))
-        .reverse()
         .value();
 
       suggestions.push({

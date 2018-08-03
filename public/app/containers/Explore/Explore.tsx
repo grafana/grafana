@@ -289,10 +289,10 @@ export class Explore extends React.Component<any, IExploreState> {
     const ts = Date.now();
     queries.forEach(q => {
       const { query } = q;
-      history = [...history, { query, ts }];
+      history = [{ query, ts }, ...history];
     });
     if (history.length > MAX_HISTORY_ITEMS) {
-      history = history.slice(history.length - MAX_HISTORY_ITEMS);
+      history = history.slice(0, MAX_HISTORY_ITEMS);
     }
     // Combine all queries of a datasource type into one history
     const historyKey = `grafana.explore.history.${datasourceId}`;
