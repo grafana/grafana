@@ -151,11 +151,7 @@ export default class PostgresQuery {
           if (func === 'first' || func === 'last') {
             query = func + '(' + query + ',' + this.target.timeColumn + ')';
           } else {
-            if (windows) {
-              query = func + '(' + query + ' ORDER BY ' + this.target.timeColumn + ')';
-            } else {
-              query = func + '(' + query + ')';
-            }
+            query = func + '(' + query + ')';
           }
           break;
         case 'percentile':

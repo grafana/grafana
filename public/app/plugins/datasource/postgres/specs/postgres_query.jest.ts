@@ -98,8 +98,8 @@ describe('PostgresQuery', function() {
       { type: 'window', params: ['increase'] },
     ];
     expect(query.buildValueColumn(column)).toBe(
-      '(CASE WHEN max(v ORDER BY time) >= lag(max(v ORDER BY time)) OVER (PARTITION BY host ORDER BY time) ' +
-        'THEN max(v ORDER BY time) - lag(max(v ORDER BY time)) OVER (PARTITION BY host ORDER BY time) ELSE max(v ORDER BY time) END) AS "a"'
+      '(CASE WHEN max(v) >= lag(max(v)) OVER (PARTITION BY host ORDER BY time) ' +
+        'THEN max(v) - lag(max(v)) OVER (PARTITION BY host ORDER BY time) ELSE max(v) END) AS "a"'
     );
   });
 
