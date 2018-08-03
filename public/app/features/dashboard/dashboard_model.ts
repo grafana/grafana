@@ -9,6 +9,7 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 
 import { PanelModel } from './panel_model';
 import { DashboardMigrator } from './dashboard_migration';
+import { tickStep } from '../../core/utils/ticks';
 
 export class DashboardModel {
   id: any;
@@ -591,6 +592,10 @@ export class DashboardModel {
 
   updateSubmenuVisibility() {
     this.meta.submenuEnabled = (() => {
+      if (this.meta.autofitpanels) {
+        return false;
+      }
+
       if (this.links.length > 0) {
         return true;
       }

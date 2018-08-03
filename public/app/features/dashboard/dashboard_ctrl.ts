@@ -91,7 +91,7 @@ export class DashboardCtrl implements PanelContainer {
       );
 
       //Consider navbar and submenu controls, padding and margin
-      let availableHeight = window.innerHeight - 80;
+      let availableHeight = window.innerHeight - 40;
       let availableRows = Math.floor(availableHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
       let scaleFactor = maxRows / availableRows;
 
@@ -99,6 +99,8 @@ export class DashboardCtrl implements PanelContainer {
         panel.gridPos.y = Math.round(panel.gridPos.y / scaleFactor) || 1;
         panel.gridPos.h = Math.round(panel.gridPos.h / scaleFactor) || 1;
       });
+      this.dashboard.meta.autofitpanels = true;
+      console.log(this.dashboard);
     }
   }
 
