@@ -17,6 +17,8 @@ export function alignRange(start, end, step) {
 }
 
 const keywords = 'by|without|on|ignoring|group_left|group_right';
+
+// Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
 const builtInWords = [
   keywords,
   'count|count_values|min|max|avg|sum|stddev|stdvar|bottomk|topk|quantile',
@@ -37,11 +39,15 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
 
   // Add empty selector to bare metric name
   let previousWord;
-  query = query.replace(/(\w+)\b(?![\({=",])/g, (match, word) => {
+  query = query.replace(/(\w+)\b(?![\({=",])/g, (match, word, offset) => {
+    // Check if inside a selector
+    const nextSelectorStart = query.slice(offset).indexOf('{');
+    const nextSelectorEnd = query.slice(offset).indexOf('}');
+    const insideSelector = nextSelectorEnd > -1 && (nextSelectorStart === -1 || nextSelectorStart > nextSelectorEnd);
     // Handle "sum by (key) (metric)"
-    const previousWordisKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
+    const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
     previousWord = word;
-    if (builtInWords.indexOf(word) === -1 && !previousWordisKeyWord) {
+    if (!insideSelector && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
       return `${word}{}`;
     }
     return word;

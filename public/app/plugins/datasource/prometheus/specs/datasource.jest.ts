@@ -266,5 +266,8 @@ describe('PrometheusDatasource', () => {
       'foo{bar="baz",x="yy"} * metric{a="bb",bar="baz",y="zz"} * metric2{bar="baz"}'
     );
     expect(addLabelToQuery('sum by (xx) (foo)', 'bar', 'baz')).toBe('sum by (xx) (foo{bar="baz"})');
+    expect(addLabelToQuery('foo{instance="my-host.com:9100"}', 'bar', 'baz')).toBe(
+      'foo{bar="baz",instance="my-host.com:9100"}'
+    );
   });
 });

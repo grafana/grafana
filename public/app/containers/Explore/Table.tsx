@@ -17,7 +17,7 @@ interface SFCCellProps {
   value: string;
 }
 
-const Cell: React.SFC<SFCCellProps> = props => {
+function Cell(props: SFCCellProps) {
   const { columnIndex, rowIndex, table, value, onClickCell } = props;
   const column = table.columns[columnIndex];
   if (column && column.filterable && onClickCell) {
@@ -34,7 +34,7 @@ const Cell: React.SFC<SFCCellProps> = props => {
     );
   }
   return <td>{value}</td>;
-};
+}
 
 export default class Table extends PureComponent<TableProps, {}> {
   render() {
