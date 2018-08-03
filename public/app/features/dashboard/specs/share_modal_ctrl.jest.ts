@@ -56,7 +56,6 @@ describe('ShareModalCtrl', () => {
 
   describe('shareUrl with current time range and panel', () => {
     it('should generate share url absolute time', () => {
-      //   ctx.$location.path('/test');
       ctx.scope.panel = { id: 22 };
 
       ctx.scope.init();
