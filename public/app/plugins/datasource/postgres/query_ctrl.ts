@@ -275,7 +275,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
     }
     let partModel = sqlPart.create({ type: partType });
     if (subItem) {
-      partModel.params = [subItem.value];
+      partModel.params[0] = subItem.value;
     }
     let addAlias = false;
 
@@ -287,7 +287,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
         this.selectParts.push(parts);
         break;
       case 'percentile':
-        partModel.params.push('0.95');
       case 'aggregate':
         // add group by if no group by yet
         if (this.target.group.length === 0) {
@@ -305,7 +304,6 @@ export class PostgresQueryCtrl extends QueryCtrl {
         }
         break;
       case 'moving_window':
-        partModel.params.push('5');
       case 'window':
         let windowIndex = this.findWindowIndex(selectParts);
         if (windowIndex !== -1) {
