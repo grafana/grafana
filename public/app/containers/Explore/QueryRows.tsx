@@ -3,28 +3,35 @@ import React, { PureComponent } from 'react';
 import QueryField from './PromQueryField';
 
 class QueryRow extends PureComponent<any, {}> {
-  handleChangeQuery = value => {
+  onChangeQuery = value => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
       onChangeQuery(value, index);
     }
   };
 
-  handleClickAddButton = () => {
+  onClickAddButton = () => {
     const { index, onAddQueryRow } = this.props;
     if (onAddQueryRow) {
       onAddQueryRow(index);
     }
   };
 
-  handleClickRemoveButton = () => {
+  onClickClearButton = () => {
+    const { index, onChangeQuery } = this.props;
+    if (onChangeQuery) {
+      onChangeQuery('', index, true);
+    }
+  };
+
+  onClickRemoveButton = () => {
     const { index, onRemoveQueryRow } = this.props;
     if (onRemoveQueryRow) {
       onRemoveQueryRow(index);
     }
   };
 
-  handlePressEnter = () => {
+  onPressEnter = () => {
     const { onExecuteQuery } = this.props;
     if (onExecuteQuery) {
       onExecuteQuery();
@@ -36,11 +43,14 @@ class QueryRow extends PureComponent<any, {}> {
     return (
       <div className="query-row">
         <div className="query-row-tools">
-          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickAddButton}>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickAddButton}>
             <i className="fa fa-plus" />
           </button>
-          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickRemoveButton}>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickRemoveButton}>
             <i className="fa fa-minus" />
+          </button>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickClearButton}>
+            <i className="fa fa-times" />
           </button>
         </div>
         <div className="slate-query-field-wrapper">
@@ -48,8 +58,8 @@ class QueryRow extends PureComponent<any, {}> {
             initialQuery={edited ? null : query}
             history={history}
             portalPrefix="explore"
-            onPressEnter={this.handlePressEnter}
-            onQueryChange={this.handleChangeQuery}
+            onPressEnter={this.onPressEnter}
+            onQueryChange={this.onChangeQuery}
             request={request}
           />
         </div>
