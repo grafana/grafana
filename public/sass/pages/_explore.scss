@@ -47,6 +47,14 @@
     background-color: $btn-active-bg;
   }
 
+  .navbar-button--no-icon {
+    line-height: 18px;
+  }
+
+  .result-options {
+    margin-top: 2 * $panel-margin;
+  }
+
   .elapsed-time {
     position: absolute;
     left: 0;

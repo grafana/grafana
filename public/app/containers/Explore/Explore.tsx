@@ -267,6 +267,15 @@ export class Explore extends React.Component<any, IExploreState> {
     }
   };
 
+  onClickClear = () => {
+    this.setState({
+      graphResult: null,
+      logsResult: null,
+      queries: ensureQueries(),
+      tableResult: null,
+    });
+  };
+
   onClickTableCell = (columnKey: string, rowValue: string) => {
     const { datasource, queries } = this.state;
     if (datasource && datasource.modifyQuery) {
@@ -466,24 +475,12 @@ export class Explore extends React.Component<any, IExploreState> {
               </button>
             </div>
           ) : null}
-          <div className="navbar-buttons">
-            {supportsGraph ? (
-              <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.handleClickGraphButton}>
-                Graph
-              </button>
-            ) : null}
-            {supportsTable ? (
-              <button className={`btn navbar-button ${tableButtonActive}`} onClick={this.handleClickTableButton}>
-                Table
-              </button>
-            ) : null}
-            {supportsLogs ? (
-              <button className={`btn navbar-button ${logsButtonActive}`} onClick={this.handleClickLogsButton}>
-                Logs
-              </button>
-            ) : null}
-          </div>
           <TimePicker range={range} onChangeTime={this.handleChangeTime} />
+          <div className="navbar-buttons">
+            <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClickClear}>
+              Clear All
+            </button>
+          </div>
           <div className="navbar-buttons relative">
             <button className="btn navbar-button--primary" onClick={this.handleSubmit}>
               Run Query <i className="fa fa-level-down run-icon" />
@@ -514,6 +511,25 @@ export class Explore extends React.Component<any, IExploreState> {
               onRemoveQueryRow={this.handleRemoveQueryRow}
             />
             {queryError && !loading ? <div className="text-warning m-a-2">{queryError}</div> : null}
+
+            <div className="result-options">
+              {supportsGraph ? (
+                <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.handleClickGraphButton}>
+                  Graph
+                </button>
+              ) : null}
+              {supportsTable ? (
+                <button className={`btn navbar-button ${tableButtonActive}`} onClick={this.handleClickTableButton}>
+                  Table
+                </button>
+              ) : null}
+              {supportsLogs ? (
+                <button className={`btn navbar-button ${logsButtonActive}`} onClick={this.handleClickLogsButton}>
+                  Logs
+                </button>
+              ) : null}
+            </div>
+
             <main className="m-t-2">
               {supportsGraph && showingGraph ? (
                 <Graph
