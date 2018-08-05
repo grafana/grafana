@@ -836,16 +836,22 @@ export class DashboardModel {
       return;
     }
 
-    let currentGridHeight = Math.max(
+    const currentGridHeight = Math.max(
       ...this.panels.map(panel => {
         return panel.gridPos.h + panel.gridPos.y;
       })
     );
 
-    //Consider navbar and submenu controls, padding and margin
+    // Consider navbar and submenu controls, padding and margin
     let visibleHeight = window.innerHeight - 55 - 20;
-    let visibleGridHeight = Math.floor(visibleHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
-    let scaleFactor = currentGridHeight / visibleGridHeight;
+
+    // Remove submenu if visible
+    if (this.meta.submenuEnabled) {
+      visibleHeight -= 50;
+    }
+
+    const visibleGridHeight = Math.floor(visibleHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+    const scaleFactor = currentGridHeight / visibleGridHeight;
 
     this.panels.forEach((panel, i) => {
       panel.gridPos.y = Math.round(panel.gridPos.y / scaleFactor) || 1;
