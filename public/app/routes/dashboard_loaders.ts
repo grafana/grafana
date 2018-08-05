@@ -38,9 +38,10 @@ export class LoadDashboardCtrl {
         }
       }
 
-      if ($routeParams.keepRows) {
-        result.meta.keepRows = true;
+      if ($routeParams.autofitpanels) {
+        result.meta.autofitpanels = true;
       }
+
       $scope.initDashboard(result, $scope);
     });
   }

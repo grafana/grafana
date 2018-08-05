@@ -4,7 +4,6 @@ import coreModule from 'app/core/core_module';
 import { PanelContainer } from './dashgrid/PanelContainer';
 import { DashboardModel } from './dashboard_model';
 import { PanelModel } from './panel_model';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 export class DashboardCtrl implements PanelContainer {
   dashboard: DashboardModel;
@@ -24,8 +23,7 @@ export class DashboardCtrl implements PanelContainer {
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
     public playlistSrv,
-    private panelLoader,
-    private $location
+    private panelLoader
   ) {
     // temp hack due to way dashboards are loaded
     // can't use controllerAs on route yet
@@ -64,8 +62,8 @@ export class DashboardCtrl implements PanelContainer {
       .finally(() => {
         this.dashboard = dashboard;
         this.dashboard.processRepeats();
+        this.dashboard.autoFitPanels(window.innerHeight);
 
-        this.autofitPanels();
         this.unsavedChangesSrv.init(dashboard, this.$scope);
 
         // TODO refactor ViewStateSrv
@@ -80,28 +78,6 @@ export class DashboardCtrl implements PanelContainer {
         this.$scope.appEvent('dashboard-initialized', dashboard);
       })
       .catch(this.onInitFailed.bind(this, 'Dashboard init failed', true));
-  }
-
-  autofitPanels() {
-    if (this.$location.search().autofitpanels) {
-      let maxRows = Math.max(
-        ...this.dashboard.panels.map(panel => {
-          return panel.gridPos.h + panel.gridPos.y;
-        })
-      );
-
-      //Consider navbar and submenu controls, padding and margin
-      let availableHeight = window.innerHeight - 40;
-      let availableRows = Math.floor(availableHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
-      let scaleFactor = maxRows / availableRows;
-
-      this.dashboard.panels.forEach((panel, i) => {
-        panel.gridPos.y = Math.round(panel.gridPos.y / scaleFactor) || 1;
-        panel.gridPos.h = Math.round(panel.gridPos.h / scaleFactor) || 1;
-      });
-      this.dashboard.meta.autofitpanels = true;
-      console.log(this.dashboard);
-    }
   }
 
   onInitFailed(msg, fatal, err) {

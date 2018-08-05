@@ -305,19 +305,6 @@ describe('DashboardModel', function() {
     });
   });
 
-  describe('updateSubmenuVisibility with autofitpanels enabled', function() {
-    var model;
-
-    beforeEach(function() {
-      model = new DashboardModel({}, { autofitpanels: true });
-      model.updateSubmenuVisibility();
-    });
-
-    it('should not enable submmenu', function() {
-      expect(model.meta.submenuEnabled).toBe(false);
-    });
-  });
-
   describe('updateSubmenuVisibility with hidden annotation toggle', function() {
     var dashboard;
 

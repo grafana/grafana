@@ -1,7 +1,7 @@
 import moment from 'moment';
 import _ from 'lodash';
 
-import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
+import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { DEFAULT_ANNOTATION_COLOR } from 'app/core/utils/colors';
 import { Emitter } from 'app/core/utils/emitter';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -591,10 +591,6 @@ export class DashboardModel {
 
   updateSubmenuVisibility() {
     this.meta.submenuEnabled = (() => {
-      if (this.meta.autofitpanels) {
-        return false;
-      }
-
       if (this.links.length > 0) {
         return true;
       }
@@ -833,5 +829,27 @@ export class DashboardModel {
     });
 
     return !_.isEqual(updated, this.originalTemplating);
+  }
+
+  autoFitPanels(viewHeight: number) {
+    if (!this.meta.autofitpanels) {
+      return;
+    }
+
+    let maxRows = Math.max(
+      ...this.panels.map(panel => {
+        return panel.gridPos.h + panel.gridPos.y;
+      })
+    );
+
+    //Consider navbar and submenu controls, padding and margin
+    let availableHeight = window.innerHeight - 55 - 20;
+    let availableRows = Math.floor(availableHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+    let scaleFactor = maxRows / availableRows;
+
+    this.panels.forEach((panel, i) => {
+      panel.gridPos.y = Math.round(panel.gridPos.y / scaleFactor) || 1;
+      panel.gridPos.h = Math.round(panel.gridPos.h / scaleFactor) || 1;
+    });
   }
 }
