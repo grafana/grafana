@@ -836,16 +836,16 @@ export class DashboardModel {
       return;
     }
 
-    let maxRows = Math.max(
+    let currentGridHeight = Math.max(
       ...this.panels.map(panel => {
         return panel.gridPos.h + panel.gridPos.y;
       })
     );
 
     //Consider navbar and submenu controls, padding and margin
-    let availableHeight = window.innerHeight - 55 - 20;
-    let availableRows = Math.floor(availableHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
-    let scaleFactor = maxRows / availableRows;
+    let visibleHeight = window.innerHeight - 55 - 20;
+    let visibleGridHeight = Math.floor(visibleHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+    let scaleFactor = currentGridHeight / visibleGridHeight;
 
     this.panels.forEach((panel, i) => {
       panel.gridPos.y = Math.round(panel.gridPos.y / scaleFactor) || 1;
