@@ -3,10 +3,10 @@ import React, { PureComponent } from 'react';
 import QueryField from './PromQueryField';
 
 class QueryRow extends PureComponent<any, {}> {
-  onChangeQuery = value => {
+  onChangeQuery = (value, override?: boolean) => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
-      onChangeQuery(value, index);
+      onChangeQuery(value, index, override);
     }
   };
 
@@ -18,10 +18,7 @@ class QueryRow extends PureComponent<any, {}> {
   };
 
   onClickClearButton = () => {
-    const { index, onChangeQuery } = this.props;
-    if (onChangeQuery) {
-      onChangeQuery('', index, true);
-    }
+    this.onChangeQuery('', true);
   };
 
   onClickRemoveButton = () => {
@@ -42,18 +39,7 @@ class QueryRow extends PureComponent<any, {}> {
     const { edited, history, query, request } = this.props;
     return (
       <div className="query-row">
-        <div className="query-row-tools">
-          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickAddButton}>
-            <i className="fa fa-plus" />
-          </button>
-          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickRemoveButton}>
-            <i className="fa fa-minus" />
-          </button>
-          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickClearButton}>
-            <i className="fa fa-times" />
-          </button>
-        </div>
-        <div className="slate-query-field-wrapper">
+        <div className="query-row-field">
           <QueryField
             initialQuery={edited ? null : query}
             history={history}
@@ -62,6 +48,17 @@ class QueryRow extends PureComponent<any, {}> {
             onQueryChange={this.onChangeQuery}
             request={request}
           />
+        </div>
+        <div className="query-row-tools">
+          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickClearButton}>
+            <i className="fa fa-times" />
+          </button>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickAddButton}>
+            <i className="fa fa-plus" />
+          </button>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickRemoveButton}>
+            <i className="fa fa-minus" />
+          </button>
         </div>
       </div>
     );

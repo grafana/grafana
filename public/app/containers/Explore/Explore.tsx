@@ -208,7 +208,7 @@ export class Explore extends React.Component<any, IExploreState> {
     };
     const nextQueries = [...queries];
     nextQueries[index] = nextQuery;
-    this.setState({ queries: nextQueries });
+    this.setState({ queries: nextQueries }, override ? () => this.onSubmit() : undefined);
   };
 
   onChangeTime = nextRange => {

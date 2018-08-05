@@ -110,6 +110,11 @@
   width: 6rem;
 }
 
+.query-row-field {
+  margin-right: 3px;
+  width: 100%;
+}
+
 .explore {
   .logs {
     .logs-entries {
@@ -144,5 +149,13 @@
     .logs-row-level-info {
       background-color: $green;
     }
+  }
+}
+
+// Prometheus-specifics, to be extracted to datasource soon
+
+.explore {
+  .prom-query-field {
+    display: flex;
   }
 }
