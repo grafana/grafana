@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 _grafana_tag=$1
 

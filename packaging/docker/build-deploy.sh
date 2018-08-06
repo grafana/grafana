@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 _grafana_version=$1
 ./build.sh "$_grafana_version"
