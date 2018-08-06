@@ -32,6 +32,18 @@ describe('store', () => {
     expect(store.getBool('key5', false)).toBe(true);
   });
 
+  it('gets an object', () => {
+    expect(store.getObject('object1')).toBeUndefined();
+    expect(store.getObject('object1', [])).toEqual([]);
+    store.setObject('object1', [1]);
+    expect(store.getObject('object1')).toEqual([1]);
+  });
+
+  it('sets an object', () => {
+    expect(store.setObject('object2', { a: 1 })).toBe(true);
+    expect(store.getObject('object2')).toEqual({ a: 1 });
+  });
+
   it('key should be deleted', () => {
     store.set('key6', '123');
     store.delete('key6');

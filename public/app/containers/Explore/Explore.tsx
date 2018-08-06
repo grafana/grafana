@@ -4,6 +4,7 @@ import Select from 'react-select';
 
 import kbn from 'app/core/utils/kbn';
 import colors from 'app/core/utils/colors';
+import store from 'app/core/store';
 import TimeSeries from 'app/core/time_series2';
 import { decodePathComponent } from 'app/core/utils/location_util';
 import { parse as parseDate } from 'app/core/utils/datemath';
@@ -15,6 +16,8 @@ import Logs from './Logs';
 import Table from './Table';
 import TimePicker, { DEFAULT_RANGE } from './TimePicker';
 import { ensureQueries, generateQueryKey, hasQuery } from './utils/query';
+
+const MAX_HISTORY_ITEMS = 100;
 
 function makeTimeSeriesList(dataList, options) {
   return dataList.map((seriesData, index) => {
@@ -56,6 +59,7 @@ interface IExploreState {
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   graphResult: any;
+  history: any[];
   initialDatasource?: string;
   latency: number;
   loading: any;
@@ -86,6 +90,7 @@ export class Explore extends React.Component<any, IExploreState> {
       datasourceMissing: false,
       graphResult: null,
       initialDatasource: datasource,
+      history: [],
       latency: 0,
       loading: false,
       logsResult: null,
@@ -138,6 +143,7 @@ export class Explore extends React.Component<any, IExploreState> {
     const supportsGraph = datasource.meta.metrics;
     const supportsLogs = datasource.meta.logs;
     const supportsTable = datasource.meta.metrics;
+    const datasourceId = datasource.meta.id;
     let datasourceError = null;
 
     try {
@@ -147,10 +153,14 @@ export class Explore extends React.Component<any, IExploreState> {
       datasourceError = (error && error.statusText) || error;
     }
 
+    const historyKey = `grafana.explore.history.${datasourceId}`;
+    const history = store.getObject(historyKey, []);
+
     this.setState(
       {
         datasource,
         datasourceError,
+        history,
         supportsGraph,
         supportsLogs,
         supportsTable,
@@ -269,6 +279,27 @@ export class Explore extends React.Component<any, IExploreState> {
     }
   };
 
+  onQuerySuccess(datasourceId: string, queries: any[]): void {
+    // save queries to history
+    let { datasource, history } = this.state;
+    if (datasource.meta.id !== datasourceId) {
+      // Navigated away, queries did not matter
+      return;
+    }
+    const ts = Date.now();
+    queries.forEach(q => {
+      const { query } = q;
+      history = [{ query, ts }, ...history];
+    });
+    if (history.length > MAX_HISTORY_ITEMS) {
+      history = history.slice(0, MAX_HISTORY_ITEMS);
+    }
+    // Combine all queries of a datasource type into one history
+    const historyKey = `grafana.explore.history.${datasourceId}`;
+    store.setObject(historyKey, history);
+    this.setState({ history });
+  }
+
   buildQueryOptions(targetOptions: { format: string; instant?: boolean }) {
     const { datasource, queries, range } = this.state;
     const resolution = this.el.offsetWidth;
@@ -301,6 +332,7 @@ export class Explore extends React.Component<any, IExploreState> {
       const result = makeTimeSeriesList(res.data, options);
       const latency = Date.now() - now;
       this.setState({ latency, loading: false, graphResult: result, requestOptions: options });
+      this.onQuerySuccess(datasource.meta.id, queries);
     } catch (response) {
       console.error(response);
       const queryError = response.data ? response.data.error : response;
@@ -324,6 +356,7 @@ export class Explore extends React.Component<any, IExploreState> {
       const tableModel = res.data[0];
       const latency = Date.now() - now;
       this.setState({ latency, loading: false, tableResult: tableModel, requestOptions: options });
+      this.onQuerySuccess(datasource.meta.id, queries);
     } catch (response) {
       console.error(response);
       const queryError = response.data ? response.data.error : response;
@@ -347,6 +380,7 @@ export class Explore extends React.Component<any, IExploreState> {
       const logsData = res.data;
       const latency = Date.now() - now;
       this.setState({ latency, loading: false, logsResult: logsData, requestOptions: options });
+      this.onQuerySuccess(datasource.meta.id, queries);
     } catch (response) {
       console.error(response);
       const queryError = response.data ? response.data.error : response;
@@ -367,6 +401,7 @@ export class Explore extends React.Component<any, IExploreState> {
       datasourceLoading,
       datasourceMissing,
       graphResult,
+      history,
       latency,
       loading,
       logsResult,
@@ -405,12 +440,12 @@ export class Explore extends React.Component<any, IExploreState> {
               </a>
             </div>
           ) : (
-              <div className="navbar-buttons explore-first-button">
-                <button className="btn navbar-button" onClick={this.handleClickCloseSplit}>
-                  Close Split
+            <div className="navbar-buttons explore-first-button">
+              <button className="btn navbar-button" onClick={this.handleClickCloseSplit}>
+                Close Split
               </button>
-              </div>
-            )}
+            </div>
+          )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
@@ -470,6 +505,7 @@ export class Explore extends React.Component<any, IExploreState> {
         {datasource && !datasourceError ? (
           <div className="explore-container">
             <QueryRows
+              history={history}
               queries={queries}
               request={this.request}
               onAddQueryRow={this.handleAddQueryRow}
@@ -488,7 +524,9 @@ export class Explore extends React.Component<any, IExploreState> {
                   split={split}
                 />
               ) : null}
-              {supportsTable && showingTable ? <Table data={tableResult} onClickCell={this.onClickTableCell} className="m-t-3" /> : null}
+              {supportsTable && showingTable ? (
+                <Table data={tableResult} onClickCell={this.onClickTableCell} className="m-t-3" />
+              ) : null}
               {supportsLogs && showingLogs ? <Logs data={logsResult} /> : null}
             </main>
           </div>

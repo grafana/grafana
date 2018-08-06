@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 
 import QueryField from './PromQueryField';
 
-class QueryRow extends PureComponent<any, any> {
+class QueryRow extends PureComponent<any, {}> {
   handleChangeQuery = value => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
@@ -32,7 +32,7 @@ class QueryRow extends PureComponent<any, any> {
   };
 
   render() {
-    const { request, query, edited } = this.props;
+    const { edited, history, query, request } = this.props;
     return (
       <div className="query-row">
         <div className="query-row-tools">
@@ -46,6 +46,7 @@ class QueryRow extends PureComponent<any, any> {
         <div className="slate-query-field-wrapper">
           <QueryField
             initialQuery={edited ? null : query}
+            history={history}
             portalPrefix="explore"
             onPressEnter={this.handlePressEnter}
             onQueryChange={this.handleChangeQuery}
@@ -57,7 +58,7 @@ class QueryRow extends PureComponent<any, any> {
   }
 }
 
-export default class QueryRows extends PureComponent<any, any> {
+export default class QueryRows extends PureComponent<any, {}> {
   render() {
     const { className = '', queries, ...handlers } = this.props;
     return (

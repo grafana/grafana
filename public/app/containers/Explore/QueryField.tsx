@@ -97,6 +97,10 @@ export interface SuggestionGroup {
    * If true, do not filter items in this group based on the search.
    */
   skipFilter?: boolean;
+  /**
+   * If true, do not sort items.
+   */
+  skipSort?: boolean;
 }
 
 interface TypeaheadFieldProps {
@@ -244,7 +248,9 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
               group.items = group.items.filter(c => c.insertText || (c.filterText || c.label) !== prefix);
             }
 
-            group.items = _.sortBy(group.items, item => item.sortText || item.label);
+            if (!group.skipSort) {
+              group.items = _.sortBy(group.items, item => item.sortText || item.label);
+            }
           }
           return group;
         })
