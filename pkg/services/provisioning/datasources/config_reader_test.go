@@ -19,6 +19,7 @@ var (
 	allProperties                   = "testdata/all-properties"
 	versionZero                     = "testdata/version-0"
 	brokenYaml                      = "testdata/broken-yaml"
+	multipleOrgs                    = "testdata/multiple-orgs"
 
 	fakeRepo *fakeRepository
 )
@@ -69,6 +70,38 @@ func TestDatasourceAsConfig(t *testing.T) {
 				err := dc.applyChanges(doubleDatasourcesConfig)
 				Convey("should raise error", func() {
 					So(err, ShouldEqual, ErrInvalidConfigToManyDefault)
+				})
+			})
+		})
+
+		Convey("One configured datasource in multiple orgs", func() {
+			Convey("no datasource in organisations", func() {
+				dc := newDatasourceProvisioner(logger)
+				err := dc.applyChanges(multipleOrgs)
+				if err != nil {
+					t.Fatalf("applyChanges return an error %v", err)
+				}
+
+				So(len(fakeRepo.deleted), ShouldEqual, 0)
+				So(len(fakeRepo.inserted), ShouldEqual, 2)
+				So(len(fakeRepo.updated), ShouldEqual, 0)
+			})
+
+			Convey("One datasource in organisation with same name", func() {
+				fakeRepo.loadAll = []*models.DataSource{
+					{Name: "Graphite", OrgId: 1, Id: 1},
+				}
+
+				Convey("should update one of the datasources", func() {
+					dc := newDatasourceProvisioner(logger)
+					err := dc.applyChanges(multipleOrgs)
+					if err != nil {
+						t.Fatalf("applyChanges return an error %v", err)
+					}
+
+					So(len(fakeRepo.deleted), ShouldEqual, 0)
+					So(len(fakeRepo.inserted), ShouldEqual, 1)
+					So(len(fakeRepo.updated), ShouldEqual, 1)
 				})
 			})
 		})
@@ -175,6 +208,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 			validateDatasource(dsCfg)
 			validateDeleteDatasources(dsCfg)
 		})
+
 	})
 }
 func validateDeleteDatasources(dsCfg *DatasourcesAsConfig) {
