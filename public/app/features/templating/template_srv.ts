@@ -83,6 +83,13 @@ export class TemplateSrv {
     return '(' + quotedValues.join(' OR ') + ')';
   }
 
+  // like encodeURIComponent() but for all characters except alpha-numerics
+  encodeURIQueryValue(str) {
+    return str.replace(/[^a-z0-9]/gi, function(c) {
+      return '%' + c.charCodeAt(0).toString(16);
+    });
+  }
+
   formatValue(value, format, variable) {
     // for some scopedVars there is no variable
     variable = variable || {};
@@ -124,12 +131,12 @@ export class TemplateSrv {
         }
         return value;
       }
-      case 'urlescape': {
+      case 'percentencode': {
         // like glob, but url escaped
         if (_.isArray(value)) {
-          return escape('{' + value.join(',') + '}');
+          return this.encodeURIQueryValue('{' + value.join(',') + '}');
         }
-        return escape(value);
+        return this.encodeURIQueryValue(value);
       }
       default: {
         if (_.isArray(value)) {
