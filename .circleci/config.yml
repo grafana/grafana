@@ -5,9 +5,11 @@ aliases:
       ignore: /.*/
     tags:
       only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
-  - &filter-not-release
+  - &filter-not-release-or-master
     tags:
       ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+    branches:
+      ignore: master
   - &filter-only-master
     branches:
       only: master
@@ -89,7 +91,7 @@ jobs:
           name: run linters
           command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
       - run:
-          name: run go vet 
+          name: run go vet
           command: 'go vet ./pkg/...'
 
   test-frontend:
@@ -156,8 +158,53 @@ jobs:
             - dist/grafana*
             - scripts/*.sh
             - scripts/publish
-      - store_artifacts:
-          path: dist
+
+  build:
+    docker:
+     - image: grafana/build-container:1.0.0
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: build and package grafana
+          command: './scripts/build/build.sh'
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/grafana*
+
+  grafana-docker-master:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - setup_remote_docker
+      - run: docker info
+      - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
+      - run: cd packaging/docker && ./build-deploy.sh "master-${CIRCLE_SHA1}"
+
+  grafana-docker-release:
+      docker:
+        - image: docker:stable-git
+      steps:
+        - checkout
+        - attach_workspace:
+            at: .
+        - setup_remote_docker
+        - run: docker info
+        - run: cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
+        - run: cd packaging/docker && ./build-deploy.sh "${CIRCLE_TAG}"
 
   build-enterprise:
     docker:
@@ -214,9 +261,6 @@ jobs:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
       - run:
-          name: Trigger Docker build
-          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN} master-$(echo "${CIRCLE_SHA1}" | cut -b1-7)'
-      - run:
           name: Publish to Grafana.com
           command: |
             rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
@@ -237,30 +281,27 @@ jobs:
       - run:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} release'
-      - run:
-          name: Trigger Docker build
-          command: './scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN} ${CIRCLE_TAG}'
 
 workflows:
   version: 2
-  test-and-build:
+  build-master:
     jobs:
       - build-all:
           filters: *filter-only-master
       - build-enterprise:
           filters: *filter-only-master
       - codespell:
-          filters: *filter-not-release
+          filters: *filter-only-master
       - gometalinter:
-          filters: *filter-not-release
+          filters: *filter-only-master
       - test-frontend:
-          filters: *filter-not-release
+          filters: *filter-only-master
       - test-backend:
-          filters: *filter-not-release
+          filters: *filter-only-master
       - mysql-integration-test:
-          filters: *filter-not-release
+          filters: *filter-only-master
       - postgres-integration-test:
-          filters: *filter-not-release
+          filters: *filter-only-master
       - deploy-master:
           requires:
             - build-all
@@ -270,7 +311,17 @@ workflows:
             - gometalinter
             - mysql-integration-test
             - postgres-integration-test
-          filters: *filter-only-master           
+          filters: *filter-only-master
+      - grafana-docker-master:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
       - deploy-enterprise-master:
           requires:
             - build-all
@@ -309,3 +360,30 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
+      - grafana-docker-release:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - gometalinter
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release
+
+  build-branches-and-prs:
+      jobs:
+        - build:
+            filters: *filter-not-release-or-master
+        - codespell:
+            filters: *filter-not-release-or-master
+        - gometalinter:
+            filters: *filter-not-release-or-master
+        - test-frontend:
+            filters: *filter-not-release-or-master
+        - test-backend:
+            filters: *filter-not-release-or-master
+        - mysql-integration-test:
+            filters: *filter-not-release-or-master
+        - postgres-integration-test:
+            filters: *filter-not-release-or-master
