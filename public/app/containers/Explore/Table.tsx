@@ -66,7 +66,14 @@ export default class Table extends PureComponent<TableProps, {}> {
           {tableModel.rows.map((row, i) => (
             <tr key={i}>
               {row.map((value, j) => (
-                <Cell key={j} columnIndex={j} rowIndex={i} value={value} table={data} onClickCell={onClickCell} />
+                <Cell
+                  key={j}
+                  columnIndex={j}
+                  rowIndex={i}
+                  value={String(value)}
+                  table={data}
+                  onClickCell={onClickCell}
+                />
               ))}
             </tr>
           ))}

@@ -84,7 +84,9 @@ class Graph extends Component<any, any> {
 
   draw() {
     const { data, options: userOptions } = this.props;
+    const $el = $(`#${this.props.id}`);
     if (!data) {
+      $el.empty();
       return;
     }
     const series = data.map((ts: TimeSeries) => ({
@@ -93,7 +95,6 @@ class Graph extends Component<any, any> {
       data: ts.getFlotPairs('null'),
     }));
 
-    const $el = $(`#${this.props.id}`);
     const ticks = $el.width() / 100;
     let { from, to } = userOptions.range;
     if (!moment.isMoment(from)) {

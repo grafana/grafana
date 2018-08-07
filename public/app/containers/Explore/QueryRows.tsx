@@ -3,28 +3,32 @@ import React, { PureComponent } from 'react';
 import QueryField from './PromQueryField';
 
 class QueryRow extends PureComponent<any, {}> {
-  handleChangeQuery = value => {
+  onChangeQuery = (value, override?: boolean) => {
     const { index, onChangeQuery } = this.props;
     if (onChangeQuery) {
-      onChangeQuery(value, index);
+      onChangeQuery(value, index, override);
     }
   };
 
-  handleClickAddButton = () => {
+  onClickAddButton = () => {
     const { index, onAddQueryRow } = this.props;
     if (onAddQueryRow) {
       onAddQueryRow(index);
     }
   };
 
-  handleClickRemoveButton = () => {
+  onClickClearButton = () => {
+    this.onChangeQuery('', true);
+  };
+
+  onClickRemoveButton = () => {
     const { index, onRemoveQueryRow } = this.props;
     if (onRemoveQueryRow) {
       onRemoveQueryRow(index);
     }
   };
 
-  handlePressEnter = () => {
+  onPressEnter = () => {
     const { onExecuteQuery } = this.props;
     if (onExecuteQuery) {
       onExecuteQuery();
@@ -35,23 +39,26 @@ class QueryRow extends PureComponent<any, {}> {
     const { edited, history, query, request } = this.props;
     return (
       <div className="query-row">
-        <div className="query-row-tools">
-          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickAddButton}>
-            <i className="fa fa-plus" />
-          </button>
-          <button className="btn navbar-button navbar-button--tight" onClick={this.handleClickRemoveButton}>
-            <i className="fa fa-minus" />
-          </button>
-        </div>
-        <div className="slate-query-field-wrapper">
+        <div className="query-row-field">
           <QueryField
             initialQuery={edited ? null : query}
             history={history}
             portalPrefix="explore"
-            onPressEnter={this.handlePressEnter}
-            onQueryChange={this.handleChangeQuery}
+            onPressEnter={this.onPressEnter}
+            onQueryChange={this.onChangeQuery}
             request={request}
           />
+        </div>
+        <div className="query-row-tools">
+          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickClearButton}>
+            <i className="fa fa-times" />
+          </button>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickAddButton}>
+            <i className="fa fa-plus" />
+          </button>
+          <button className="btn navbar-button navbar-button--tight" onClick={this.onClickRemoveButton}>
+            <i className="fa fa-minus" />
+          </button>
         </div>
       </div>
     );

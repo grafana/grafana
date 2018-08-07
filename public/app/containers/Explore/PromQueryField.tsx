@@ -2,6 +2,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import React from 'react';
 import { Value } from 'slate';
+import Cascader from 'rc-cascader';
 
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from './utils/dom';
@@ -21,12 +22,14 @@ import TypeaheadField, {
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
+const HISTOGRAM_GROUP = '__histograms__';
+const HISTOGRAM_SELECTOR = '{le!=""}'; // Returns all timeseries for histograms
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 const METRIC_MARK = 'metric';
 const PRISM_LANGUAGE = 'promql';
 
-export const wrapLabel = label => ({ label });
+export const wrapLabel = (label: string) => ({ label });
 export const setFunctionMove = (suggestion: Suggestion): Suggestion => {
   suggestion.move = -1;
   return suggestion;
@@ -46,6 +49,22 @@ export function addHistoryMetadata(item: Suggestion, history: any[]): Suggestion
     ...item,
     documentation: hint,
   };
+}
+
+export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): CascaderOption[] {
+  return _.chain(metrics)
+    .groupBy(metric => metric.split(delimiter)[0])
+    .map((metricsForPrefix: string[], prefix: string): CascaderOption => {
+      const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
+      const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
+      return {
+        children,
+        label: prefix,
+        value: prefix,
+      };
+    })
+    .sortBy('label')
+    .value();
 }
 
 export function willApplySuggestion(
@@ -78,22 +97,33 @@ export function willApplySuggestion(
   return suggestion;
 }
 
+interface CascaderOption {
+  label: string;
+  value: string;
+  children?: CascaderOption[];
+  disabled?: boolean;
+}
+
 interface PromQueryFieldProps {
   history?: any[];
+  histogramMetrics?: string[];
   initialQuery?: string | null;
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   metrics?: string[];
+  metricsByPrefix?: CascaderOption[];
   onPressEnter?: () => void;
-  onQueryChange?: (value: string) => void;
+  onQueryChange?: (value: string, override?: boolean) => void;
   portalPrefix?: string;
   request?: (url: string) => any;
 }
 
 interface PromQueryFieldState {
+  histogramMetrics: string[];
   labelKeys: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   metrics: string[];
+  metricsByPrefix: CascaderOption[];
 }
 
 interface PromTypeaheadInput {
@@ -107,7 +137,7 @@ interface PromTypeaheadInput {
 class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryFieldState> {
   plugins: any[];
 
-  constructor(props, context) {
+  constructor(props: PromQueryFieldProps, context) {
     super(props, context);
 
     this.plugins = [
@@ -117,21 +147,45 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     ];
 
     this.state = {
+      histogramMetrics: props.histogramMetrics || [],
       labelKeys: props.labelKeys || {},
       labelValues: props.labelValues || {},
       metrics: props.metrics || [],
+      metricsByPrefix: props.metricsByPrefix || [],
     };
   }
 
   componentDidMount() {
     this.fetchMetricNames();
+    this.fetchHistogramMetrics();
   }
 
-  onChangeQuery = value => {
+  onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
+    let query;
+    if (selectedOptions.length === 1) {
+      if (selectedOptions[0].children.length === 0) {
+        query = selectedOptions[0].value;
+      } else {
+        // Ignore click on group
+        return;
+      }
+    } else {
+      const prefix = selectedOptions[0].value;
+      const metric = selectedOptions[1].value;
+      if (prefix === HISTOGRAM_GROUP) {
+        query = `histogram_quantile(0.95, sum(rate(${metric}[5m])) by (le))`;
+      } else {
+        query = metric;
+      }
+    }
+    this.onChangeQuery(query, true);
+  };
+
+  onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
     const { onQueryChange } = this.props;
     if (onQueryChange) {
-      onQueryChange(value);
+      onQueryChange(value, override);
     }
   };
 
@@ -317,7 +371,17 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     return fetch(url);
   };
 
-  async fetchLabelValues(key) {
+  fetchHistogramMetrics() {
+    this.fetchSeriesLabels(HISTOGRAM_SELECTOR, true, () => {
+      const histogramSeries = this.state.labelValues[HISTOGRAM_SELECTOR];
+      if (histogramSeries && histogramSeries['__name__']) {
+        const histogramMetrics = histogramSeries['__name__'].slice().sort();
+        this.setState({ histogramMetrics });
+      }
+    });
+  }
+
+  async fetchLabelValues(key: string) {
     const url = `/api/v1/label/${key}/values`;
     try {
       const res = await this.request(url);
@@ -337,7 +401,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     }
   }
 
-  async fetchSeriesLabels(name, withName?) {
+  async fetchSeriesLabels(name: string, withName?: boolean, callback?: () => void) {
     const url = `/api/v1/series?match[]=${name}`;
     try {
       const res = await this.request(url);
@@ -351,7 +415,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
         ...this.state.labelValues,
         [name]: values,
       };
-      this.setState({ labelKeys, labelValues });
+      this.setState({ labelKeys, labelValues }, callback);
     } catch (e) {
       console.error(e);
     }
@@ -362,23 +426,41 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     try {
       const res = await this.request(url);
       const body = await (res.data || res.json());
-      this.setState({ metrics: body.data }, this.onReceiveMetrics);
+      const metrics = body.data;
+      const metricsByPrefix = groupMetricsByPrefix(metrics);
+      this.setState({ metrics, metricsByPrefix }, this.onReceiveMetrics);
     } catch (error) {
       console.error(error);
     }
   }
 
   render() {
+    const { histogramMetrics, metricsByPrefix } = this.state;
+    const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
+    const metricsOptions = [
+      { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions },
+      ...metricsByPrefix,
+    ];
+
     return (
-      <TypeaheadField
-        additionalPlugins={this.plugins}
-        cleanText={cleanText}
-        initialValue={this.props.initialQuery}
-        onTypeahead={this.onTypeahead}
-        onWillApplySuggestion={willApplySuggestion}
-        onValueChanged={this.onChangeQuery}
-        placeholder="Enter a PromQL query"
-      />
+      <div className="prom-query-field">
+        <div className="prom-query-field-tools">
+          <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
+            <button className="btn navbar-button navbar-button--tight">Metrics</button>
+          </Cascader>
+        </div>
+        <div className="slate-query-field-wrapper">
+          <TypeaheadField
+            additionalPlugins={this.plugins}
+            cleanText={cleanText}
+            initialValue={this.props.initialQuery}
+            onTypeahead={this.onTypeahead}
+            onWillApplySuggestion={willApplySuggestion}
+            onValueChanged={this.onChangeQuery}
+            placeholder="Enter a PromQL query"
+          />
+        </div>
+      </div>
     );
   }
 }

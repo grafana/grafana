@@ -166,7 +166,7 @@ export class Explore extends React.Component<any, IExploreState> {
         supportsTable,
         datasourceLoading: false,
       },
-      () => datasourceError === null && this.handleSubmit()
+      () => datasourceError === null && this.onSubmit()
     );
   }
 
@@ -174,7 +174,7 @@ export class Explore extends React.Component<any, IExploreState> {
     this.el = el;
   };
 
-  handleAddQueryRow = index => {
+  onAddQueryRow = index => {
     const { queries } = this.state;
     const nextQueries = [
       ...queries.slice(0, index + 1),
@@ -184,7 +184,7 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setState({ queries: nextQueries });
   };
 
-  handleChangeDatasource = async option => {
+  onChangeDatasource = async option => {
     this.setState({
       datasource: null,
       datasourceError: null,
@@ -197,10 +197,10 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setDatasource(datasource);
   };
 
-  handleChangeQuery = (value, index) => {
+  onChangeQuery = (value: string, index: number, override?: boolean) => {
     const { queries } = this.state;
     const prevQuery = queries[index];
-    const edited = prevQuery.query !== value;
+    const edited = override ? false : prevQuery.query !== value;
     const nextQuery = {
       ...queries[index],
       edited,
@@ -208,63 +208,50 @@ export class Explore extends React.Component<any, IExploreState> {
     };
     const nextQueries = [...queries];
     nextQueries[index] = nextQuery;
-    this.setState({ queries: nextQueries });
+    this.setState({ queries: nextQueries }, override ? () => this.onSubmit() : undefined);
   };
 
-  handleChangeTime = nextRange => {
+  onChangeTime = nextRange => {
     const range = {
       from: nextRange.from,
       to: nextRange.to,
     };
-    this.setState({ range }, () => this.handleSubmit());
+    this.setState({ range }, () => this.onSubmit());
   };
 
-  handleClickCloseSplit = () => {
+  onClickClear = () => {
+    this.setState({
+      graphResult: null,
+      logsResult: null,
+      queries: ensureQueries(),
+      tableResult: null,
+    });
+  };
+
+  onClickCloseSplit = () => {
     const { onChangeSplit } = this.props;
     if (onChangeSplit) {
       onChangeSplit(false);
     }
   };
 
-  handleClickGraphButton = () => {
+  onClickGraphButton = () => {
     this.setState(state => ({ showingGraph: !state.showingGraph }));
   };
 
-  handleClickLogsButton = () => {
+  onClickLogsButton = () => {
     this.setState(state => ({ showingLogs: !state.showingLogs }));
   };
 
-  handleClickSplit = () => {
+  onClickSplit = () => {
     const { onChangeSplit } = this.props;
     if (onChangeSplit) {
       onChangeSplit(true, this.state);
     }
   };
 
-  handleClickTableButton = () => {
+  onClickTableButton = () => {
     this.setState(state => ({ showingTable: !state.showingTable }));
-  };
-
-  handleRemoveQueryRow = index => {
-    const { queries } = this.state;
-    if (queries.length <= 1) {
-      return;
-    }
-    const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
-    this.setState({ queries: nextQueries }, () => this.handleSubmit());
-  };
-
-  handleSubmit = () => {
-    const { showingLogs, showingGraph, showingTable, supportsGraph, supportsLogs, supportsTable } = this.state;
-    if (showingTable && supportsTable) {
-      this.runTableQuery();
-    }
-    if (showingGraph && supportsGraph) {
-      this.runGraphQuery();
-    }
-    if (showingLogs && supportsLogs) {
-      this.runLogsQuery();
-    }
   };
 
   onClickTableCell = (columnKey: string, rowValue: string) => {
@@ -275,7 +262,29 @@ export class Explore extends React.Component<any, IExploreState> {
         edited: false,
         query: datasource.modifyQuery(q.query, { addFilter: { key: columnKey, value: rowValue } }),
       }));
-      this.setState({ queries: nextQueries }, () => this.handleSubmit());
+      this.setState({ queries: nextQueries }, () => this.onSubmit());
+    }
+  };
+
+  onRemoveQueryRow = index => {
+    const { queries } = this.state;
+    if (queries.length <= 1) {
+      return;
+    }
+    const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
+    this.setState({ queries: nextQueries }, () => this.onSubmit());
+  };
+
+  onSubmit = () => {
+    const { showingLogs, showingGraph, showingTable, supportsGraph, supportsLogs, supportsTable } = this.state;
+    if (showingTable && supportsTable) {
+      this.runTableQuery();
+    }
+    if (showingGraph && supportsGraph) {
+      this.runGraphQuery();
+    }
+    if (showingLogs && supportsLogs) {
+      this.runLogsQuery();
     }
   };
 
@@ -441,7 +450,7 @@ export class Explore extends React.Component<any, IExploreState> {
             </div>
           ) : (
               <div className="navbar-buttons explore-first-button">
-                <button className="btn navbar-button" onClick={this.handleClickCloseSplit}>
+                <button className="btn navbar-button" onClick={this.onClickCloseSplit}>
                   Close Split
               </button>
               </div>
@@ -451,7 +460,7 @@ export class Explore extends React.Component<any, IExploreState> {
               <Select
                 className="datasource-picker"
                 clearable={false}
-                onChange={this.handleChangeDatasource}
+                onChange={this.onChangeDatasource}
                 options={datasources}
                 placeholder="Loading datasources..."
                 value={selectedDatasource}
@@ -461,31 +470,19 @@ export class Explore extends React.Component<any, IExploreState> {
           <div className="navbar__spacer" />
           {position === 'left' && !split ? (
             <div className="navbar-buttons">
-              <button className="btn navbar-button" onClick={this.handleClickSplit}>
+              <button className="btn navbar-button" onClick={this.onClickSplit}>
                 Split
               </button>
             </div>
           ) : null}
+          <TimePicker range={range} onChangeTime={this.onChangeTime} />
           <div className="navbar-buttons">
-            {supportsGraph ? (
-              <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.handleClickGraphButton}>
-                Graph
-              </button>
-            ) : null}
-            {supportsTable ? (
-              <button className={`btn navbar-button ${tableButtonActive}`} onClick={this.handleClickTableButton}>
-                Table
-              </button>
-            ) : null}
-            {supportsLogs ? (
-              <button className={`btn navbar-button ${logsButtonActive}`} onClick={this.handleClickLogsButton}>
-                Logs
-              </button>
-            ) : null}
+            <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClickClear}>
+              Clear All
+            </button>
           </div>
-          <TimePicker range={range} onChangeTime={this.handleChangeTime} />
           <div className="navbar-buttons relative">
-            <button className="btn navbar-button--primary" onClick={this.handleSubmit}>
+            <button className="btn navbar-button--primary" onClick={this.onSubmit}>
               Run Query <i className="fa fa-level-down run-icon" />
             </button>
             {loading || latency ? <ElapsedTime time={latency} className="text-info" /> : null}
@@ -508,12 +505,31 @@ export class Explore extends React.Component<any, IExploreState> {
               history={history}
               queries={queries}
               request={this.request}
-              onAddQueryRow={this.handleAddQueryRow}
-              onChangeQuery={this.handleChangeQuery}
-              onExecuteQuery={this.handleSubmit}
-              onRemoveQueryRow={this.handleRemoveQueryRow}
+              onAddQueryRow={this.onAddQueryRow}
+              onChangeQuery={this.onChangeQuery}
+              onExecuteQuery={this.onSubmit}
+              onRemoveQueryRow={this.onRemoveQueryRow}
             />
             {queryError && !loading ? <div className="text-warning m-a-2">{queryError}</div> : null}
+
+            <div className="result-options">
+              {supportsGraph ? (
+                <button className={`btn navbar-button ${graphButtonActive}`} onClick={this.onClickGraphButton}>
+                  Graph
+                </button>
+              ) : null}
+              {supportsTable ? (
+                <button className={`btn navbar-button ${tableButtonActive}`} onClick={this.onClickTableButton}>
+                  Table
+                </button>
+              ) : null}
+              {supportsLogs ? (
+                <button className={`btn navbar-button ${logsButtonActive}`} onClick={this.onClickLogsButton}>
+                  Logs
+                </button>
+              ) : null}
+            </div>
+
             <main className="m-t-2">
               {supportsGraph && showingGraph ? (
                 <Graph
