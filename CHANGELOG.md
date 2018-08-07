@@ -42,6 +42,12 @@
 
 * Postgres datasource no longer automatically adds time column alias when using the $__timeGroup alias. However, there's code in place which should make this change backward compatible and shouldn't create any issues.
 
+### New experimental features
+
+These are new features that's still being worked on and are in an experimental phase. We incourage users to try these out and provide any feedback in related issue.
+
+* **Dashboard**: Auto fit dashboard panels to optimize space used for current TV / Monitor [#12768](https://github.com/grafana/grafana/issues/12768)
+
 # 5.2.2 (2018-07-25)
 
 ### Minor
