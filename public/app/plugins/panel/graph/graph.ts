@@ -22,7 +22,7 @@ import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
 
 /** @ngInject **/
-function graphDirective(timeSrv, popoverSrv, contextSrv) {
+export function graphDirective(timeSrv, popoverSrv, contextSrv) {
   return {
     restrict: 'A',
     template: '',

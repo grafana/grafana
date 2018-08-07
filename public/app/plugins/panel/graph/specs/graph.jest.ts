@@ -12,112 +12,113 @@ jest.mock('app/core/core', () => ({
 
 import '../module';
 import { GraphCtrl } from '../module';
+import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
+import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+
 import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
+import $ from 'jquery';
+import { graphDirective } from '../graph';
 
 let ctx = <any>{};
+let ctrl;
 
 describe('grafanaGraph', function() {
-  function graphScenario(desc, func, elementWidth = 500) {
-    console.log('graphScenario function is being run');
-    describe(desc, () => {
-      console.log('describe function is being run');
+  console.log(graphDirective);
+  // function describe(desc, func, elementWidth = 500) {
+  // console.log('describe function is being run');
+  // describe(desc, () => {
+  // console.log('describe function is being run');
 
-      console.log(ctx);
-      ctx.setup = setupFunc => {
-        console.log('Setup function is called');
-        // beforeEach(
-        //   angularMocks.module($provide => {
-        //     $provide.value('timeSrv', new helpers.TimeSrvStub());
-        //   })
-        // );
+  // console.log(ctx);
+  // ctx.setup = setupFunc => {
+  console.log('Setup function is called');
+  // beforeEach(
+  //   angularMocks.module($provide => {
+  //     $provide.value('timeSrv', new helpers.TimeSrvStub());
+  //   })
+  // );
 
-        beforeEach(() => {
-          //   angularMocks.inject(($rootScope, $compile) => {
-          console.log('beforeEach is being run');
-          GraphCtrl.prototype = <any>{
-            ...GraphCtrl.prototype,
-            height: 200,
-            panel: {
-              events: {
-                on: () => {},
-              },
-              legend: {},
-              grid: {},
-              yaxes: [
-                {
-                  min: null,
-                  max: null,
-                  format: 'short',
-                  logBase: 1,
-                },
-                {
-                  min: null,
-                  max: null,
-                  format: 'short',
-                  logBase: 1,
-                },
-              ],
-              thresholds: [],
-              xaxis: {},
-              seriesOverrides: [],
-              tooltip: {
-                shared: true,
-              },
-            },
-            renderingCompleted: jest.fn(),
-            hiddenSeries: {},
-            dashboard: {
-              getTimezone: () => 'browser',
-            },
-            range: {
-              from: moment([2015, 1, 1, 10]),
-              to: moment([2015, 1, 1, 22]),
-            },
-          };
+  const setupCtx = () => {
+    //   angularMocks.inject(($rootScope, $compile) => {
+    GraphCtrl.prototype = <any>{
+      ...MetricsPanelCtrl.prototype,
+      ...PanelCtrl.prototype,
+      ...GraphCtrl.prototype,
+      height: 200,
+      panel: {
+        events: {
+          on: () => {},
+        },
+        legend: {},
+        grid: {},
+        yaxes: [
+          {
+            min: null,
+            max: null,
+            format: 'short',
+            logBase: 1,
+          },
+          {
+            min: null,
+            max: null,
+            format: 'short',
+            logBase: 1,
+          },
+        ],
+        thresholds: [],
+        xaxis: {},
+        seriesOverrides: [],
+        tooltip: {
+          shared: true,
+        },
+      },
+      renderingCompleted: jest.fn(),
+      hiddenSeries: {},
+      dashboard: {
+        getTimezone: () => 'browser',
+      },
+      range: {
+        from: moment([2015, 1, 1, 10]),
+        to: moment([2015, 1, 1, 22]),
+      },
+    };
 
-          //     var scope = $rootScope.$new();
-          //     scope.ctrl = ctrl;
-          //     scope.ctrl.events = ctrl.panel.events;
+    //     var scope = $rootScope.$new();
+    //     scope.ctrl = ctrl;
+    //     scope.ctrl.events = ctrl.panel.events;
 
-          //     $rootScope.onAppEvent = sinon.spy();
+    //     $rootScope.onAppEvent = sinon.spy();
 
-          ctx.data = [];
-          ctx.data.push(
-            new TimeSeries({
-              datapoints: [[1, 1], [2, 2]],
-              alias: 'series1',
-            })
-          );
-          ctx.data.push(
-            new TimeSeries({
-              datapoints: [[10, 1], [20, 2]],
-              alias: 'series2',
-            })
-          );
+    ctx.data = [];
+    ctx.data.push(
+      new TimeSeries({
+        datapoints: [[1, 1], [2, 2]],
+        alias: 'series1',
+      })
+    );
+    ctx.data.push(
+      new TimeSeries({
+        datapoints: [[10, 1], [20, 2]],
+        alias: 'series2',
+      })
+    );
+    $.plot = jest.fn();
 
-          let ctrl = new GraphCtrl({}, {}, {});
+    ctrl = new GraphCtrl(
+      {
+        $on: () => {},
+      },
+      {
+        get: () => {},
+      },
+      {}
+    );
 
-          setupFunc(ctrl, ctx.data);
+    ctx.plotData = $.plot.mock.calls[0][1];
 
-          //     var element = angular.element("<div style='width:" + elementWidth + "px' grafana-graph><div>");
-          //     $compile(element)(scope);
-          //     scope.$digest();
-
-          // $.plot = ctx.plotSpy = jest.fn();
-          // // ctrl.events.emit('render', ctx.data);
-          // ctx.onRender();
-          // ctrl.events.emit('render-legend');
-          // ctrl.events.emit('legend-rendering-complete');
-          // ctx.plotData = ctx.plotSpy.mock.calls[0][1];
-          // ctx.plotOptions = ctx.plotSpy.mock.calls[0][2];
-          //   })
-        });
-
-        func(ctx);
-      };
-    });
-  }
+    ctx.plotOptions = $.plot.mock.calls[0][2];
+  };
 
   describe('random test', () => {
     it('should work', () => {
@@ -125,9 +126,10 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('simple lines options', ctx => {
-    ctx.setup(ctrl => {
-      console.log('Im running');
+  describe('simple lines options', () => {
+    beforeEach(() => {
+      setupCtx();
+      console.log('Im running', ctrl.onMetricsPanelRefresh);
       ctrl.panel.lines = true;
       ctrl.panel.fill = 5;
       ctrl.panel.linewidth = 3;
@@ -142,8 +144,9 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('sorting stacked series as legend. disabled', ctx => {
-    ctx.setup(ctrl => {
+  describe('sorting stacked series as legend. disabled', () => {
+    beforeEach(() => {
+      setupCtx();
       ctrl.panel.legend.sort = undefined;
       ctrl.panel.stack = false;
     });
@@ -154,12 +157,10 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('sorting stacked series as legend. min descending order', ctx => {
-    ctx.setup(ctrl => {
-      ctrl.panel.legend.sort = 'min';
-      ctrl.panel.legend.sortDesc = true;
-      ctrl.panel.stack = true;
-    });
+  describe('sorting stacked series as legend. min descending order', () => {
+    ctrl.panel.legend.sort = 'min';
+    ctrl.panel.legend.sortDesc = true;
+    ctrl.panel.stack = true;
 
     it('highest value should be first', () => {
       expect(ctx.plotData[0].alias).toBe('series2');
@@ -167,12 +168,10 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('sorting stacked series as legend. min ascending order', ctx => {
-    ctx.setup((ctrl, data) => {
-      ctrl.panel.legend.sort = 'min';
-      ctrl.panel.legend.sortDesc = false;
-      ctrl.panel.stack = true;
-    });
+  describe('sorting stacked series as legend. min ascending order', () => {
+    ctrl.panel.legend.sort = 'min';
+    ctrl.panel.legend.sortDesc = false;
+    ctrl.panel.stack = true;
 
     it('lowest value should be first', () => {
       expect(ctx.plotData[0].alias).toBe('series1');
@@ -180,12 +179,10 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('sorting stacked series as legend. stacking disabled', ctx => {
-    ctx.setup(ctrl => {
-      ctrl.panel.legend.sort = 'min';
-      ctrl.panel.legend.sortDesc = true;
-      ctrl.panel.stack = false;
-    });
+  describe('sorting stacked series as legend. stacking disabled', () => {
+    ctrl.panel.legend.sort = 'min';
+    ctrl.panel.legend.sortDesc = true;
+    ctrl.panel.stack = false;
 
     it('highest value should be first', () => {
       expect(ctx.plotData[0].alias).toBe('series1');
@@ -193,12 +190,10 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('sorting stacked series as legend. current descending order', ctx => {
-    ctx.setup(ctrl => {
-      ctrl.panel.legend.sort = 'current';
-      ctrl.panel.legend.sortDesc = true;
-      ctrl.panel.stack = true;
-    });
+  describe('sorting stacked series as legend. current descending order', () => {
+    ctrl.panel.legend.sort = 'current';
+    ctrl.panel.legend.sortDesc = true;
+    ctrl.panel.stack = true;
 
     it('highest last value should be first', () => {
       expect(ctx.plotData[0].alias).toBe('series2');
@@ -206,23 +201,21 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('when logBase is log 10', function(ctx) {
-    ctx.setup(function(ctrl, data) {
-      ctrl.panel.yaxes[0].logBase = 10;
-      data[0] = new TimeSeries({
-        datapoints: [[2000, 1], [0.002, 2], [0, 3], [-1, 4]],
-        alias: 'seriesAutoscale',
-      });
-      data[0].yaxis = 1;
-      ctrl.panel.yaxes[1].logBase = 10;
-      ctrl.panel.yaxes[1].min = '0.05';
-      ctrl.panel.yaxes[1].max = '1500';
-      data[1] = new TimeSeries({
-        datapoints: [[2000, 1], [0.002, 2], [0, 3], [-1, 4]],
-        alias: 'seriesFixedscale',
-      });
-      data[1].yaxis = 2;
+  describe('when logBase is log 10', () => {
+    ctrl.panel.yaxes[0].logBase = 10;
+    ctx.data[0] = new TimeSeries({
+      datapoints: [[2000, 1], [0.002, 2], [0, 3], [-1, 4]],
+      alias: 'seriesAutoscale',
     });
+    ctx.data[0].yaxis = 1;
+    ctrl.panel.yaxes[1].logBase = 10;
+    ctrl.panel.yaxes[1].min = '0.05';
+    ctrl.panel.yaxes[1].max = '1500';
+    ctx.data[1] = new TimeSeries({
+      datapoints: [[2000, 1], [0.002, 2], [0, 3], [-1, 4]],
+      alias: 'seriesFixedscale',
+    });
+    ctx.data[1].yaxis = 2;
 
     it('should apply axis transform, autoscaling (if necessary) and ticks', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
@@ -247,15 +240,13 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('when logBase is log 10 and data points contain only zeroes', function(ctx) {
-    ctx.setup(function(ctrl, data) {
-      ctrl.panel.yaxes[0].logBase = 10;
-      data[0] = new TimeSeries({
-        datapoints: [[0, 1], [0, 2], [0, 3], [0, 4]],
-        alias: 'seriesAutoscale',
-      });
-      data[0].yaxis = 1;
+  describe('when logBase is log 10 and data points contain only zeroes', () => {
+    ctrl.panel.yaxes[0].logBase = 10;
+    ctx.data[0] = new TimeSeries({
+      datapoints: [[0, 1], [0, 2], [0, 3], [0, 4]],
+      alias: 'seriesAutoscale',
     });
+    ctx.data[0].yaxis = 1;
 
     it('should not set min and max and should create some fake ticks', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
@@ -271,16 +262,14 @@ describe('grafanaGraph', function() {
 
   // y-min set 0 is a special case for log scale,
   // this approximates it by setting min to 0.1
-  graphScenario('when logBase is log 10 and y-min is set to 0 and auto min is > 0.1', function(ctx) {
-    ctx.setup(function(ctrl, data) {
-      ctrl.panel.yaxes[0].logBase = 10;
-      ctrl.panel.yaxes[0].min = '0';
-      data[0] = new TimeSeries({
-        datapoints: [[2000, 1], [4, 2], [500, 3], [3000, 4]],
-        alias: 'seriesAutoscale',
-      });
-      data[0].yaxis = 1;
+  describe('when logBase is log 10 and y-min is set to 0 and auto min is > 0.1', () => {
+    ctrl.panel.yaxes[0].logBase = 10;
+    ctrl.panel.yaxes[0].min = '0';
+    ctx.data[0] = new TimeSeries({
+      datapoints: [[2000, 1], [4, 2], [500, 3], [3000, 4]],
+      alias: 'seriesAutoscale',
     });
+    ctx.data[0].yaxis = 1;
 
     it('should set min to 0.1 and add a tick for 0.1', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
@@ -294,18 +283,16 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('when logBase is log 2 and y-min is set to 0 and num of ticks exceeds max', function(ctx) {
-    ctx.setup(function(ctrl, data) {
-      const heightForApprox5Ticks = 125;
-      ctrl.height = heightForApprox5Ticks;
-      ctrl.panel.yaxes[0].logBase = 2;
-      ctrl.panel.yaxes[0].min = '0';
-      data[0] = new TimeSeries({
-        datapoints: [[2000, 1], [4, 2], [500, 3], [3000, 4], [10000, 5], [100000, 6]],
-        alias: 'seriesAutoscale',
-      });
-      data[0].yaxis = 1;
+  describe('when logBase is log 2 and y-min is set to 0 and num of ticks exceeds max', () => {
+    const heightForApprox5Ticks = 125;
+    ctrl.height = heightForApprox5Ticks;
+    ctrl.panel.yaxes[0].logBase = 2;
+    ctrl.panel.yaxes[0].min = '0';
+    ctx.data[0] = new TimeSeries({
+      datapoints: [[2000, 1], [4, 2], [500, 3], [3000, 4], [10000, 5], [100000, 6]],
+      alias: 'seriesAutoscale',
     });
+    ctx.data[0].yaxis = 1;
 
     it('should regenerate ticks so that if fits on the y-axis', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
@@ -321,12 +308,10 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('dashed lines options', function(ctx) {
-    ctx.setup(function(ctrl) {
-      ctrl.panel.lines = true;
-      ctrl.panel.linewidth = 2;
-      ctrl.panel.dashes = true;
-    });
+  describe('dashed lines options', () => {
+    ctrl.panel.lines = true;
+    ctrl.panel.linewidth = 2;
+    ctrl.panel.dashes = true;
 
     it('should configure dashed plot with correct options', function() {
       expect(ctx.plotOptions.series.lines.show).toBe(true);
@@ -335,13 +320,11 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('should use timeStep for barWidth', function(ctx) {
-    ctx.setup(function(ctrl, data) {
-      ctrl.panel.bars = true;
-      data[0] = new TimeSeries({
-        datapoints: [[1, 10], [2, 20]],
-        alias: 'series1',
-      });
+  describe('should use timeStep for barWidth', () => {
+    ctrl.panel.bars = true;
+    ctx.data[0] = new TimeSeries({
+      datapoints: [[1, 10], [2, 20]],
+      alias: 'series1',
     });
 
     it('should set barWidth', function() {
@@ -349,14 +332,14 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('series option overrides, fill & points', function(ctx) {
+  describe('series option overrides, fill & points', () => {
     ctx.setup(function(ctrl, data) {
       ctrl.panel.lines = true;
       ctrl.panel.fill = 5;
-      data[0].zindex = 10;
-      data[1].alias = 'test';
-      data[1].lines = { fill: 0.001 };
-      data[1].points = { show: true };
+      ctx.data[0].zindex = 10;
+      ctx.data[1].alias = 'test';
+      ctx.data[1].lines = { fill: 0.001 };
+      ctx.data[1].points = { show: true };
     });
 
     it('should match second series and fill zero, and enable points', function() {
@@ -366,11 +349,9 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('should order series order according to zindex', function(ctx) {
-    ctx.setup(function(ctrl, data) {
-      data[1].zindex = 1;
-      data[0].zindex = 10;
-    });
+  describe('should order series order according to zindex', () => {
+    ctx.data[1].zindex = 1;
+    ctx.data[0].zindex = 10;
 
     it('should move zindex 2 last', function() {
       expect(ctx.plotData[0].alias).toBe('series2');
@@ -378,10 +359,8 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('when series is hidden', function(ctx) {
-    ctx.setup(function(ctrl) {
-      ctrl.hiddenSeries = { series2: true };
-    });
+  describe('when series is hidden', () => {
+    ctrl.hiddenSeries = { series2: true };
 
     it('should remove datapoints and disable stack', function() {
       expect(ctx.plotData[0].alias).toBe('series1');
@@ -390,11 +369,9 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('when stack and percent', function(ctx) {
-    ctx.setup(function(ctrl) {
-      ctrl.panel.percentage = true;
-      ctrl.panel.stack = true;
-    });
+  describe('when stack and percent', () => {
+    ctrl.panel.percentage = true;
+    ctrl.panel.stack = true;
 
     it('should show percentage', function() {
       var axis = ctx.plotOptions.yaxes[0];
@@ -402,49 +379,45 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario(
-    'when panel too narrow to show x-axis dates in same granularity as wide panels',
-    function(ctx) {
-      describe('and the range is less than 24 hours', function() {
-        ctx.setup(function(ctrl) {
-          ctrl.range.from = moment([2015, 1, 1, 10]);
-          ctrl.range.to = moment([2015, 1, 1, 22]);
-        });
-
-        it('should format dates as hours minutes', function() {
-          var axis = ctx.plotOptions.xaxis;
-          expect(axis.timeformat).toBe('%H:%M');
-        });
+  describe('when panel too narrow to show x-axis dates in same granularity as wide panels', () => {
+    //Set width to 10px
+    describe('and the range is less than 24 hours', function() {
+      ctx.setup(function(ctrl) {
+        ctrl.range.from = moment([2015, 1, 1, 10]);
+        ctrl.range.to = moment([2015, 1, 1, 22]);
       });
 
-      describe('and the range is less than one year', function() {
-        ctx.setup(function(scope) {
-          scope.range.from = moment([2015, 1, 1]);
-          scope.range.to = moment([2015, 11, 20]);
-        });
+      it('should format dates as hours minutes', function() {
+        var axis = ctx.plotOptions.xaxis;
+        expect(axis.timeformat).toBe('%H:%M');
+      });
+    });
 
-        it('should format dates as month days', function() {
-          var axis = ctx.plotOptions.xaxis;
-          expect(axis.timeformat).toBe('%m/%d');
-        });
+    describe('and the range is less than one year', function() {
+      ctx.setup(function(scope) {
+        scope.range.from = moment([2015, 1, 1]);
+        scope.range.to = moment([2015, 11, 20]);
       });
-    },
-    10
-  );
 
-  graphScenario('when graph is histogram, and enable stack', function(ctx) {
-    ctx.setup(function(ctrl, data) {
-      ctrl.panel.xaxis.mode = 'histogram';
-      ctrl.panel.stack = true;
-      ctrl.hiddenSeries = {};
-      data[0] = new TimeSeries({
-        datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
-        alias: 'series1',
+      it('should format dates as month days', function() {
+        var axis = ctx.plotOptions.xaxis;
+        expect(axis.timeformat).toBe('%m/%d');
       });
-      data[1] = new TimeSeries({
-        datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
-        alias: 'series2',
-      });
+    });
+  });
+
+  describe('when graph is histogram, and enable stack', () => {
+    console.log(ctrl);
+    ctrl.panel.xaxis.mode = 'histogram';
+    ctrl.panel.stack = true;
+    ctrl.hiddenSeries = {};
+    ctx.data[0] = new TimeSeries({
+      datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+      alias: 'series1',
+    });
+    ctx.data[1] = new TimeSeries({
+      datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+      alias: 'series2',
     });
 
     it('should calculate correct histogram', function() {
@@ -455,19 +428,17 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('when graph is histogram, and some series are hidden', function(ctx) {
-    ctx.setup(function(ctrl, data) {
-      ctrl.panel.xaxis.mode = 'histogram';
-      ctrl.panel.stack = false;
-      ctrl.hiddenSeries = { series2: true };
-      data[0] = new TimeSeries({
-        datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
-        alias: 'series1',
-      });
-      data[1] = new TimeSeries({
-        datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
-        alias: 'series2',
-      });
+  describe('when graph is histogram, and some series are hidden', () => {
+    ctrl.panel.xaxis.mode = 'histogram';
+    ctrl.panel.stack = false;
+    ctrl.hiddenSeries = { series2: true };
+    ctx.data[0] = new TimeSeries({
+      datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+      alias: 'series1',
+    });
+    ctx.data[1] = new TimeSeries({
+      datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+      alias: 'series2',
     });
 
     it('should calculate correct histogram', function() {
