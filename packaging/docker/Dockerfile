@@ -23,6 +23,8 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
     GF_PATHS_PLUGINS="/var/lib/grafana/plugins" \
     GF_PATHS_PROVISIONING="/etc/grafana/provisioning"
 
+WORKDIR $GF_PATHS_HOME
+
 RUN apt-get update && apt-get install -qq -y libfontconfig ca-certificates && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
@@ -47,5 +49,4 @@ EXPOSE 3000
 COPY ./run.sh /run.sh
 
 USER grafana
-WORKDIR /
 ENTRYPOINT [ "/run.sh" ]
