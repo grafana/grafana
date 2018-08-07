@@ -119,8 +119,8 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			switch args[2] {
 			case "NULL":
 				m.query.Model.Set("fillMode", "null")
-			case "last":
-				m.query.Model.Set("fillMode", "last")
+			case "previous":
+				m.query.Model.Set("fillMode", "previous")
 			default:
 				m.query.Model.Set("fillMode", "value")
 				floatVal, err := strconv.ParseFloat(args[2], 64)

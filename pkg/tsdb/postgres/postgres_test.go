@@ -303,12 +303,12 @@ func TestPostgres(t *testing.T) {
 			})
 		})
 
-		Convey("When doing a metric query using timeGroup with last fill enabled", func() {
+		Convey("When doing a metric query using timeGroup with previous fill enabled", func() {
 			query := &tsdb.TsdbQuery{
 				Queries: []*tsdb.Query{
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
-							"rawSql": "SELECT $__timeGroup(time, '5m', last), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+							"rawSql": "SELECT $__timeGroup(time, '5m', previous), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
 						}),
 						RefId: "A",

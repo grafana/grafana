@@ -321,12 +321,12 @@ func TestMySQL(t *testing.T) {
 				So(points[3][0].Float64, ShouldEqual, 1.5)
 			})
 
-			Convey("When doing a metric query using timeGroup with last fill enabled", func() {
+			Convey("When doing a metric query using timeGroup with previous fill enabled", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m', last) as time_sec, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m', previous) as time_sec, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
