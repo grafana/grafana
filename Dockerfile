@@ -13,8 +13,10 @@ RUN if [ ! -z "${DEP_ENSURE}" ]; then \
     fi
 
 COPY pkg pkg
-RUN go install -ldflags="-s -w" ./pkg/cmd/grafana-server && \
-    go install -ldflags="-s -w" ./pkg/cmd/grafana-cli
+COPY build.go build.go
+COPY package.json package.json
+
+RUN go run build.go build
 
 # Node build container
 FROM node:8
@@ -22,7 +24,7 @@ FROM node:8
 WORKDIR /usr/src/app/
 
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+RUN yarn install --pure-lockfile --no-progress
 
 COPY Gruntfile.js tsconfig.json tslint.json ./
 COPY public public
@@ -30,7 +32,7 @@ COPY scripts scripts
 COPY emails emails
 
 ENV NODE_ENV production
-RUN yarn run build
+RUN ./node_modules/.bin/grunt build
 
 # Final container
 FROM debian:stretch-slim
@@ -48,6 +50,10 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
+RUN apt-get update && apt-get install -qq -y libfontconfig ca-certificates && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY conf ./conf
 
 RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
@@ -63,13 +69,14 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" && \
     chmod 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS"
 
-COPY --from=0 /go/bin/grafana-server /go/bin/grafana-cli ./bin/
+COPY --from=0 /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-server /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-cli ./bin/
 COPY --from=1 /usr/src/app/public ./public
 COPY --from=1 /usr/src/app/tools ./tools
+COPY tools/phantomjs/render.js ./tools/phantomjs/render.js
 
 EXPOSE 3000
 
-COPY ./scripts/docker/run.sh /run.sh
+COPY ./packaging/docker/run.sh /run.sh
 
 USER grafana
 ENTRYPOINT [ "/run.sh" ]
