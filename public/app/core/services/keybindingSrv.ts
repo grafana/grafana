@@ -21,7 +21,8 @@ export class KeybindingSrv {
     private datasourceSrv,
     private timeSrv,
     private contextSrv,
-    private $window
+    private $window,
+    private $route
   ) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
@@ -271,7 +272,8 @@ export class KeybindingSrv {
     this.bind('d a', () => {
       this.$location.search('autofitpanels', this.$location.search().autofitpanels ? null : true);
       //Force reload
-      this.$window.location.href = this.$location.absUrl();
+
+      this.$route.reload();
     });
   }
 }
