@@ -6,6 +6,7 @@ But it will give you an idea of our current vision and plan.
 ### Short term (1-2 months)
   - Multi-Stat panel
   - Metrics & Log Explore UI 
+  - Backend plugins
  
 ### Mid term (2-4 months)  
   - React Panels 
