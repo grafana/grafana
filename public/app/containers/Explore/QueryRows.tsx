@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 
+// TODO make this datasource-plugin-dependent
 import QueryField from './PromQueryField';
 
 class QueryRow extends PureComponent<any, {}> {
@@ -21,6 +22,13 @@ class QueryRow extends PureComponent<any, {}> {
     this.onChangeQuery('', true);
   };
 
+  onClickHintFix = action => {
+    const { index, onClickHintFix } = this.props;
+    if (onClickHintFix) {
+      onClickHintFix(action, index);
+    }
+  };
+
   onClickRemoveButton = () => {
     const { index, onRemoveQueryRow } = this.props;
     if (onRemoveQueryRow) {
@@ -36,14 +44,17 @@ class QueryRow extends PureComponent<any, {}> {
   };
 
   render() {
-    const { edited, history, query, request } = this.props;
+    const { edited, history, query, queryError, queryHint, request } = this.props;
     return (
       <div className="query-row">
         <div className="query-row-field">
           <QueryField
+            error={queryError}
+            hint={queryHint}
             initialQuery={edited ? null : query}
             history={history}
             portalPrefix="explore"
+            onClickHintFix={this.onClickHintFix}
             onPressEnter={this.onPressEnter}
             onQueryChange={this.onChangeQuery}
             request={request}
@@ -67,11 +78,19 @@ class QueryRow extends PureComponent<any, {}> {
 
 export default class QueryRows extends PureComponent<any, {}> {
   render() {
-    const { className = '', queries, ...handlers } = this.props;
+    const { className = '', queries, queryErrors = [], queryHints = [], ...handlers } = this.props;
     return (
       <div className={className}>
         {queries.map((q, index) => (
-          <QueryRow key={q.key} index={index} query={q.query} edited={q.edited} {...handlers} />
+          <QueryRow
+            key={q.key}
+            index={index}
+            query={q.query}
+            queryError={queryErrors[index]}
+            queryHint={queryHints[index]}
+            edited={q.edited}
+            {...handlers}
+          />
         ))}
       </div>
     );

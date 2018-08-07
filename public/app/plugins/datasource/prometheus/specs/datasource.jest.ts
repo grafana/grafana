@@ -122,7 +122,7 @@ describe('PrometheusDatasource', () => {
       ctx.ds.performTimeSeriesQuery = jest.fn().mockReturnValue(responseMock);
       return ctx.ds.query(ctx.query).then(result => {
         let results = result.data;
-        return expect(results).toEqual(expected);
+        return expect(results).toMatchObject(expected);
       });
     });
 
