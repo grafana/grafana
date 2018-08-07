@@ -6,6 +6,7 @@ const EMPTY_TABLE = new TableModel();
 interface TableProps {
   className?: string;
   data: TableModel;
+  loading: boolean;
   onClickCell?: (columnKey: string, rowValue: string) => void;
 }
 
@@ -38,8 +39,24 @@ function Cell(props: SFCCellProps) {
 
 export default class Table extends PureComponent<TableProps, {}> {
   render() {
-    const { className = '', data, onClickCell } = this.props;
-    const tableModel = data || EMPTY_TABLE;
+    const { className = '', data, loading, onClickCell } = this.props;
+    let tableModel = data || EMPTY_TABLE;
+    if (!loading && data && data.rows.length === 0) {
+      return (
+        <table className={`${className} filter-table`}>
+          <thead>
+            <tr>
+              <th>Table</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="muted">The queries returned no data for a table.</td>
+            </tr>
+          </tbody>
+        </table>
+      );
+    }
     return (
       <table className={`${className} filter-table`}>
         <thead>

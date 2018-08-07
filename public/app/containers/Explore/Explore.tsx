@@ -440,12 +440,12 @@ export class Explore extends React.Component<any, IExploreState> {
               </a>
             </div>
           ) : (
-            <div className="navbar-buttons explore-first-button">
-              <button className="btn navbar-button" onClick={this.handleClickCloseSplit}>
-                Close Split
+              <div className="navbar-buttons explore-first-button">
+                <button className="btn navbar-button" onClick={this.handleClickCloseSplit}>
+                  Close Split
               </button>
-            </div>
-          )}
+              </div>
+            )}
           {!datasourceMissing ? (
             <div className="navbar-buttons">
               <Select
@@ -513,21 +513,22 @@ export class Explore extends React.Component<any, IExploreState> {
               onExecuteQuery={this.handleSubmit}
               onRemoveQueryRow={this.handleRemoveQueryRow}
             />
-            {queryError ? <div className="text-warning m-a-2">{queryError}</div> : null}
+            {queryError && !loading ? <div className="text-warning m-a-2">{queryError}</div> : null}
             <main className="m-t-2">
               {supportsGraph && showingGraph ? (
                 <Graph
                   data={graphResult}
+                  height={graphHeight}
+                  loading={loading}
                   id={`explore-graph-${position}`}
                   options={requestOptions}
-                  height={graphHeight}
                   split={split}
                 />
               ) : null}
               {supportsTable && showingTable ? (
-                <Table data={tableResult} onClickCell={this.onClickTableCell} className="m-t-3" />
+                <Table className="m-t-3" data={tableResult} loading={loading} onClickCell={this.onClickTableCell} />
               ) : null}
-              {supportsLogs && showingLogs ? <Logs data={logsResult} /> : null}
+              {supportsLogs && showingLogs ? <Logs data={logsResult} loading={loading} /> : null}
             </main>
           </div>
         ) : null}

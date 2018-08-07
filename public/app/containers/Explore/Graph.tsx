@@ -123,7 +123,14 @@ class Graph extends Component<any, any> {
   }
 
   render() {
-    const { data, height } = this.props;
+    const { data, height, loading } = this.props;
+    if (!loading && data && data.length === 0) {
+      return (
+        <div className="panel-container">
+          <div className="muted m-a-1">The queries returned no time series to graph.</div>
+        </div>
+      );
+    }
     return (
       <div className="panel-container">
         <div id={this.props.id} className="explore-graph" style={{ height }} />
