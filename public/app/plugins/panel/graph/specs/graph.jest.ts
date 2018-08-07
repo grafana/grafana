@@ -1,18 +1,31 @@
+jest.mock('app/features/annotations/all', () => ({
+  EventManager: {
+    on: () => {},
+  },
+}));
+
+jest.mock('app/core/core', () => ({
+  coreModule: {
+    directive: () => {},
+  },
+}));
+
 import '../module';
 import { GraphCtrl } from '../module';
-// import angular from 'angular';
-// import $ from 'jquery';
-// import helpers from 'test/specs/helpers';
 import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
-// import { Emitter } from 'app/core/core';
-jest.mock('app/features/annotations/event_editor.ts');
+
+let ctx = <any>{};
+
 describe('grafanaGraph', function() {
   function graphScenario(desc, func, elementWidth = 500) {
+    console.log('graphScenario function is being run');
     describe(desc, () => {
-      var ctx: any = {};
+      console.log('describe function is being run');
 
+      console.log(ctx);
       ctx.setup = setupFunc => {
+        console.log('Setup function is called');
         // beforeEach(
         //   angularMocks.module($provide => {
         //     $provide.value('timeSrv', new helpers.TimeSrvStub());
@@ -21,11 +34,14 @@ describe('grafanaGraph', function() {
 
         beforeEach(() => {
           //   angularMocks.inject(($rootScope, $compile) => {
+          console.log('beforeEach is being run');
           GraphCtrl.prototype = <any>{
             ...GraphCtrl.prototype,
             height: 200,
             panel: {
-              events: new Emitter(),
+              events: {
+                on: () => {},
+              },
               legend: {},
               grid: {},
               yaxes: [
@@ -59,7 +75,6 @@ describe('grafanaGraph', function() {
               to: moment([2015, 1, 1, 22]),
             },
           };
-          let ctrl = new GraphCtrl({}, {}, {});
 
           //     var scope = $rootScope.$new();
           //     scope.ctrl = ctrl;
@@ -81,19 +96,21 @@ describe('grafanaGraph', function() {
             })
           );
 
+          let ctrl = new GraphCtrl({}, {}, {});
+
           setupFunc(ctrl, ctx.data);
 
           //     var element = angular.element("<div style='width:" + elementWidth + "px' grafana-graph><div>");
           //     $compile(element)(scope);
           //     scope.$digest();
 
-          $.plot = ctx.plotSpy = jest.fn();
-          ctrl.events.emit('render', ctx.data);
-          ctx.onRender();
-          ctrl.events.emit('render-legend');
-          ctrl.events.emit('legend-rendering-complete');
-          ctx.plotData = ctx.plotSpy.mock.calls[0][1];
-          ctx.plotOptions = ctx.plotSpy.mock.calls[0][2];
+          // $.plot = ctx.plotSpy = jest.fn();
+          // // ctrl.events.emit('render', ctx.data);
+          // ctx.onRender();
+          // ctrl.events.emit('render-legend');
+          // ctrl.events.emit('legend-rendering-complete');
+          // ctx.plotData = ctx.plotSpy.mock.calls[0][1];
+          // ctx.plotOptions = ctx.plotSpy.mock.calls[0][2];
           //   })
         });
 
@@ -102,8 +119,15 @@ describe('grafanaGraph', function() {
     });
   }
 
+  describe('random test', () => {
+    it('should work', () => {
+      expect(true).toBe(true);
+    });
+  });
+
   graphScenario('simple lines options', ctx => {
     ctx.setup(ctrl => {
+      console.log('Im running');
       ctrl.panel.lines = true;
       ctrl.panel.fill = 5;
       ctrl.panel.linewidth = 3;
@@ -203,13 +227,13 @@ describe('grafanaGraph', function() {
     it('should apply axis transform, autoscaling (if necessary) and ticks', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).toBe(2);
-      expect(axisAutoscale.inverseTransform(-3)).to.within(0.00099999999, 0.00100000001);
-      expect(axisAutoscale.min).to.within(0.00099999999, 0.00100000001);
+      expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
+      expect(axisAutoscale.min).toBeCloseTo(0.001);
       expect(axisAutoscale.max).toBe(10000);
-      expect(axisAutoscale.ticks.length).to.within(7, 8);
-      expect(axisAutoscale.ticks[0]).to.within(0.00099999999, 0.00100000001);
+      expect(axisAutoscale.ticks.length).toBeCloseTo(7.5);
+      expect(axisAutoscale.ticks[0]).toBeCloseTo(0.001);
       if (axisAutoscale.ticks.length === 7) {
-        expect(axisAutoscale.ticks[axisAutoscale.ticks.length - 1]).to.within(999.9999, 1000.0001);
+        expect(axisAutoscale.ticks[axisAutoscale.ticks.length - 1]).toBeCloseTo(1000);
       } else {
         expect(axisAutoscale.ticks[axisAutoscale.ticks.length - 1]).toBe(10000);
       }
@@ -236,7 +260,7 @@ describe('grafanaGraph', function() {
     it('should not set min and max and should create some fake ticks', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).toBe(2);
-      expect(axisAutoscale.inverseTransform(-3)).to.within(0.00099999999, 0.00100000001);
+      expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBe(undefined);
       expect(axisAutoscale.max).toBe(undefined);
       expect(axisAutoscale.ticks.length).toBe(2);
@@ -261,7 +285,7 @@ describe('grafanaGraph', function() {
     it('should set min to 0.1 and add a tick for 0.1', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).toBe(2);
-      expect(axisAutoscale.inverseTransform(-3)).to.within(0.00099999999, 0.00100000001);
+      expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBe(0.1);
       expect(axisAutoscale.max).toBe(10000);
       expect(axisAutoscale.ticks.length).toBe(6);
