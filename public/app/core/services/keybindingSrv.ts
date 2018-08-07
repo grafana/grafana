@@ -21,7 +21,6 @@ export class KeybindingSrv {
     private datasourceSrv,
     private timeSrv,
     private contextSrv,
-    private $window,
     private $route
   ) {
     // clear out all shortcuts on route change
