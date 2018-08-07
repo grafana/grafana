@@ -55,7 +55,7 @@ Macros:
 - $__unixEpochFilter(column) -&gt;  time_unix_epoch &gt; 1492750877 AND time_unix_epoch &lt; 1492750877
 - $__timeGroup(column,'5m'[, fillvalue]) -&gt; cast(cast(UNIX_TIMESTAMP(column)/(300) as signed)*300 as signed)
      by setting fillvalue grafana will fill in missing values according to the interval
-     fillvalue can be either a literal value, NULL or last; last will fill in the last seen value or NULL if none has been seen yet
+     fillvalue can be either a literal value, NULL or previous; previous will fill in the previous seen value or NULL if none has been seen yet
 - $__timeGroupAlias(column,'5m') -&gt; cast(cast(UNIX_TIMESTAMP(column)/(300) as signed)*300 as signed) AS "time"
 
 Example of group by and order by with $__timeGroup:
