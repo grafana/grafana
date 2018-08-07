@@ -82,10 +82,13 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
   return parts.join('');
 }
 
-function determineQueryHints(series: any[]): any[] {
+export function determineQueryHints(series: any[]): any[] {
   const hints = series.map((s, i) => {
     const query: string = s.query;
     const index: number = s.responseIndex;
+    if (query === undefined || index === undefined) {
+      return null;
+    }
 
     // ..._bucket metric needs a histogram_quantile()
     const histogramMetric = query.trim().match(/^\w+_bucket$/);
@@ -121,7 +124,6 @@ function determineQueryHints(series: any[]): any[] {
         const label = 'Time series is monotonously increasing.';
         return {
           label,
-          query,
           index,
           fix: {
             label: 'Fix by adding rate().',

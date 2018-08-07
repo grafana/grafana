@@ -3,6 +3,7 @@ import moment from 'moment';
 import q from 'q';
 import {
   alignRange,
+  determineQueryHints,
   PrometheusDatasource,
   prometheusSpecialRegexEscape,
   prometheusRegularEscape,
@@ -177,6 +178,52 @@ describe('PrometheusDatasource', () => {
       const range = alignRange(1, 5, 3);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(6);
+    });
+  });
+
+  describe('determineQueryHints()', () => {
+    it('returns no hints for no series', () => {
+      expect(determineQueryHints([])).toEqual([]);
+    });
+
+    it('returns no hints for empty series', () => {
+      expect(determineQueryHints([{ datapoints: [], query: '' }])).toEqual([null]);
+    });
+
+    it('returns no hint for a monotonously decreasing series', () => {
+      const series = [{ datapoints: [[23, 1000], [22, 1001]], query: 'metric', responseIndex: 0 }];
+      const hints = determineQueryHints(series);
+      expect(hints).toEqual([null]);
+    });
+
+    it('returns a rate hint for a monotonously increasing series', () => {
+      const series = [{ datapoints: [[23, 1000], [24, 1001]], query: 'metric', responseIndex: 0 }];
+      const hints = determineQueryHints(series);
+      expect(hints.length).toBe(1);
+      expect(hints[0]).toMatchObject({
+        label: 'Time series is monotonously increasing.',
+        fix: {
+          action: {
+            type: 'ADD_RATE',
+            query: 'metric',
+          },
+        },
+      });
+    });
+
+    it('returns a histogram hint for a bucket series', () => {
+      const series = [{ datapoints: [[23, 1000]], query: 'metric_bucket', responseIndex: 0 }];
+      const hints = determineQueryHints(series);
+      expect(hints.length).toBe(1);
+      expect(hints[0]).toMatchObject({
+        label: 'Time series has buckets, you probably wanted a histogram.',
+        fix: {
+          action: {
+            type: 'ADD_HISTOGRAM_QUANTILE',
+            query: 'metric_bucket',
+          },
+        },
+      });
     });
   });
 
