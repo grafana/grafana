@@ -4,11 +4,11 @@
 .rc-cascader-menus {
   font-size: 12px;
   overflow: hidden;
-  background: #fff;
+  background: $panel-bg;
   position: absolute;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.17);
+  border: $panel-border;
+  border-radius: $border-radius;
+  box-shadow: $typeahead-shadow;
   white-space: nowrap;
 }
 .rc-cascader-menus-hidden {
@@ -57,7 +57,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  border-right: 1px solid #e9e9e9;
+  border-right: $panel-border;
   overflow: auto;
 }
 .rc-cascader-menu:last-child {
@@ -75,11 +75,11 @@
   position: relative;
 }
 .rc-cascader-menu-item:hover {
-  background: #eaf8fe;
+  background: $typeahead-selected-bg;
 }
 .rc-cascader-menu-item-disabled {
   cursor: not-allowed;
-  color: #ccc;
+  color: $text-color-weak;
 }
 .rc-cascader-menu-item-disabled:hover {
   background: transparent;
@@ -88,14 +88,16 @@
   position: absolute;
   right: 12px;
   content: 'loading';
-  color: #aaa;
+  color: $text-color-weak;
   font-style: italic;
 }
 .rc-cascader-menu-item-active {
-  background: #d5f1fd;
+  color: $typeahead-selected-color;
+  background: $typeahead-selected-bg;
 }
 .rc-cascader-menu-item-active:hover {
-  background: #d5f1fd;
+  color: $typeahead-selected-color;
+  background: $typeahead-selected-bg;
 }
 .rc-cascader-menu-item-expand {
   position: relative;
@@ -103,7 +105,7 @@
 .rc-cascader-menu-item-expand:after {
   content: '>';
   font-size: 12px;
-  color: #999;
+  color: $text-color-weak;
   position: absolute;
   right: 16px;
   line-height: 32px;
