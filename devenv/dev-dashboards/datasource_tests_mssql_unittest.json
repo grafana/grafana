@@ -64,7 +64,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1532949769359,
+  "iteration": 1533713720618,
   "links": [],
   "panels": [
     {
@@ -338,8 +338,8 @@
       "datasource": "gdev-mssql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
+        "h": 6,
+        "w": 6,
         "x": 0,
         "y": 7
       },
@@ -421,9 +421,9 @@
       "datasource": "gdev-mssql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 8,
+        "h": 6,
+        "w": 6,
+        "x": 6,
         "y": 7
       },
       "id": 9,
@@ -504,9 +504,9 @@
       "datasource": "gdev-mssql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 16,
+        "h": 6,
+        "w": 6,
+        "x": 12,
         "y": 7
       },
       "id": 10,
@@ -581,16 +581,99 @@
     },
     {
       "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-mssql-ds-tests",
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 7
+      },
+      "id": 36,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 3,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(time, '5m', previous), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '5m') ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "timeGroup macro 5m with fill(previous) and null as zero",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
       "bars": true,
       "dashLength": 10,
       "dashes": false,
       "datasource": "gdev-mssql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
+        "h": 6,
+        "w": 6,
         "x": 0,
-        "y": 16
+        "y": 13
       },
       "id": 16,
       "legend": {
@@ -670,10 +753,10 @@
       "datasource": "gdev-mssql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 8,
-        "y": 16
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 13
       },
       "id": 12,
       "legend": {
@@ -753,10 +836,10 @@
       "datasource": "gdev-mssql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 16,
-        "y": 16
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 13
       },
       "id": 13,
       "legend": {
@@ -830,6 +913,89 @@
     },
     {
       "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-mssql-ds-tests",
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 13
+      },
+      "id": 37,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(time, '$summarize', previous), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY $__timeGroup(time, '$summarize') ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Metrics - timeGroup macro $summarize with fill(previous)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -839,7 +1005,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 19
       },
       "id": 27,
       "legend": {
@@ -926,7 +1092,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 25
+        "y": 19
       },
       "id": 5,
       "legend": {
@@ -1029,7 +1195,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 33
+        "y": 27
       },
       "id": 4,
       "legend": {
@@ -1116,7 +1282,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 33
+        "y": 27
       },
       "id": 28,
       "legend": {
@@ -1201,7 +1367,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 41
+        "y": 35
       },
       "id": 19,
       "legend": {
@@ -1288,7 +1454,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 41
+        "y": 35
       },
       "id": 18,
       "legend": {
@@ -1373,7 +1539,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 49
+        "y": 43
       },
       "id": 17,
       "legend": {
@@ -1460,7 +1626,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 49
+        "y": 43
       },
       "id": 20,
       "legend": {
@@ -1545,7 +1711,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 57
+        "y": 51
       },
       "id": 29,
       "legend": {
@@ -1632,7 +1798,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 57
+        "y": 51
       },
       "id": 30,
       "legend": {
@@ -1719,7 +1885,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 65
+        "y": 59
       },
       "id": 14,
       "legend": {
@@ -1807,7 +1973,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 65
+        "y": 59
       },
       "id": 15,
       "legend": {
@@ -1894,7 +2060,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 73
+        "y": 67
       },
       "id": 25,
       "legend": {
@@ -1982,7 +2148,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 73
+        "y": 67
       },
       "id": 22,
       "legend": {
@@ -2069,7 +2235,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 81
+        "y": 75
       },
       "id": 21,
       "legend": {
@@ -2157,7 +2323,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 81
+        "y": 75
       },
       "id": 26,
       "legend": {
@@ -2244,7 +2410,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 89
+        "y": 83
       },
       "id": 23,
       "legend": {
@@ -2332,7 +2498,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 89
+        "y": 83
       },
       "id": 24,
       "legend": {
@@ -2542,5 +2708,5 @@
   "timezone": "",
   "title": "Datasource tests - MSSQL (unit test)",
   "uid": "GlAqcPgmz",
-  "version": 3
+  "version": 10
 }
