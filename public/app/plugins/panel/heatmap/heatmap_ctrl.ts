@@ -76,6 +76,13 @@ let colorSchemes = [
   { name: 'Reds', value: 'interpolateReds', invert: 'dark' },
 
   // Sequential (Multi-Hue)
+  { name: 'Viridis', value: 'interpolateViridis', invert: 'light' },
+  { name: 'Magma', value: 'interpolateMagma', invert: 'light' },
+  { name: 'Inferno', value: 'interpolateInferno', invert: 'light' },
+  { name: 'Plasma', value: 'interpolatePlasma', invert: 'light' },
+  { name: 'Warm', value: 'interpolateWarm', invert: 'light' },
+  { name: 'Cool', value: 'interpolateCool', invert: 'light' },
+  { name: 'Cubehelix', value: 'interpolateCubehelixDefault', invert: 'light' },
   { name: 'BuGn', value: 'interpolateBuGn', invert: 'dark' },
   { name: 'BuPu', value: 'interpolateBuPu', invert: 'dark' },
   { name: 'GnBu', value: 'interpolateGnBu', invert: 'dark' },
@@ -87,7 +94,7 @@ let colorSchemes = [
   { name: 'YlGnBu', value: 'interpolateYlGnBu', invert: 'dark' },
   { name: 'YlGn', value: 'interpolateYlGn', invert: 'dark' },
   { name: 'YlOrBr', value: 'interpolateYlOrBr', invert: 'dark' },
-  { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'darm' },
+  { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'dark' },
 ];
 
 const ds_support_histogram_sort = ['prometheus', 'elasticsearch'];

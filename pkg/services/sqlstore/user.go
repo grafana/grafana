@@ -42,16 +42,23 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error
 	var org m.Org
 
 	if setting.AutoAssignOrg {
-		// right now auto assign to org with id 1
-		has, err := sess.Where("id=?", 1).Get(&org)
+		has, err := sess.Where("id=?", setting.AutoAssignOrgId).Get(&org)
 		if err != nil {
 			return 0, err
 		}
 		if has {
 			return org.Id, nil
+		} else {
+			if setting.AutoAssignOrgId == 1 {
+				org.Name = "Main Org."
+				org.Id = int64(setting.AutoAssignOrgId)
+			} else {
+				sqlog.Info("Could not create user: organization id %v does not exist",
+					setting.AutoAssignOrgId)
+				return 0, fmt.Errorf("Could not create user: organization id %v does not exist",
+					setting.AutoAssignOrgId)
+			}
 		}
-		org.Name = "Main Org."
-		org.Id = 1
 	} else {
 		org.Name = cmd.OrgName
 		if len(org.Name) == 0 {

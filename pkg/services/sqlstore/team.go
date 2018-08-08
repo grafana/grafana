@@ -22,6 +22,16 @@ func init() {
 	bus.AddHandler("sql", GetTeamMembers)
 }
 
+func getTeamSelectSqlBase() string {
+	return `SELECT
+		team.id as id,
+		team.org_id,
+		team.name as name,
+		team.email as email,
+		(SELECT COUNT(*) from team_member where team_member.team_id = team.id) as member_count
+		FROM team as team `
+}
+
 func CreateTeam(cmd *m.CreateTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 
@@ -130,21 +140,15 @@ func isTeamNameTaken(orgId int64, name string, existingId int64, sess *DBSession
 
 func SearchTeams(query *m.SearchTeamsQuery) error {
 	query.Result = m.SearchTeamQueryResult{
-		Teams: make([]*m.SearchTeamDto, 0),
+		Teams: make([]*m.TeamDTO, 0),
 	}
 	queryWithWildcards := "%" + query.Query + "%"
 
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	sql.WriteString(`select
-		team.id as id,
-		team.org_id,
-		team.name as name,
-		team.email as email,
-		(select count(*) from team_member where team_member.team_id = team.id) as member_count
-		from team as team
-		where team.org_id = ?`)
+	sql.WriteString(getTeamSelectSqlBase())
+	sql.WriteString(` WHERE team.org_id = ?`)
 
 	params = append(params, query.OrgId)
 
@@ -186,8 +190,14 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 }
 
 func GetTeamById(query *m.GetTeamByIdQuery) error {
-	var team m.Team
-	exists, err := x.Where("org_id=? and id=?", query.OrgId, query.Id).Get(&team)
+	var sql bytes.Buffer
+
+	sql.WriteString(getTeamSelectSqlBase())
+	sql.WriteString(` WHERE team.org_id = ? and team.id = ?`)
+
+	var team m.TeamDTO
+	exists, err := x.Sql(sql.String(), query.OrgId, query.Id).Get(&team)
+
 	if err != nil {
 		return err
 	}
@@ -202,13 +212,15 @@ func GetTeamById(query *m.GetTeamByIdQuery) error {
 
 // GetTeamsByUser is used by the Guardian when checking a users' permissions
 func GetTeamsByUser(query *m.GetTeamsByUserQuery) error {
-	query.Result = make([]*m.Team, 0)
+	query.Result = make([]*m.TeamDTO, 0)
 
-	sess := x.Table("team")
-	sess.Join("INNER", "team_member", "team.id=team_member.team_id")
-	sess.Where("team.org_id=? and team_member.user_id=?", query.OrgId, query.UserId)
+	var sql bytes.Buffer
 
-	err := sess.Find(&query.Result)
+	sql.WriteString(getTeamSelectSqlBase())
+	sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
+	sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
+
+	err := x.Sql(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
 	return err
 }
 

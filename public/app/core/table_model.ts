@@ -1,5 +1,15 @@
+interface Column {
+  text: string;
+  title?: string;
+  type?: string;
+  sort?: boolean;
+  desc?: boolean;
+  filterable?: boolean;
+  unit?: string;
+}
+
 export default class TableModel {
-  columns: any[];
+  columns: Column[];
   rows: any[];
   type: string;
   columnMap: any;

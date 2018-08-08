@@ -12,7 +12,7 @@ import (
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		engine := &MySqlMacroEngine{}
+		engine := &mySqlMacroEngine{}
 		query := &tsdb.Query{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
@@ -38,16 +38,22 @@ func TestMacroEngine(t *testing.T) {
 
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 				So(err, ShouldBeNil)
+				sql2, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroupAlias(time_column,'5m')")
+				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "GROUP BY UNIX_TIMESTAMP(time_column) DIV 300 * 300")
+				So(sql2, ShouldEqual, sql+" AS \"time\"")
 			})
 
 			Convey("interpolate __timeGroup function with spaces around arguments", func() {
 
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
 				So(err, ShouldBeNil)
+				sql2, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroupAlias(time_column , '5m')")
+				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "GROUP BY UNIX_TIMESTAMP(time_column) DIV 300 * 300")
+				So(sql2, ShouldEqual, sql+" AS \"time\"")
 			})
 
 			Convey("interpolate __timeFilter function", func() {

@@ -35,8 +35,12 @@ type Pagination struct {
 	// NewRequest should always be built from the same API operations. It is
 	// undefined if different API operations are returned on subsequent calls.
 	NewRequest func() (*Request, error)
+	// EndPageOnSameToken, when enabled, will allow the paginator to stop on
+	// token that are the same as its previous tokens.
+	EndPageOnSameToken bool
 
 	started    bool
+	prevTokens []interface{}
 	nextTokens []interface{}
 
 	err     error
@@ -49,7 +53,15 @@ type Pagination struct {
 //
 // Will always return true if Next has not been called yet.
 func (p *Pagination) HasNextPage() bool {
-	return !(p.started && len(p.nextTokens) == 0)
+	if !p.started {
+		return true
+	}
+
+	hasNextPage := len(p.nextTokens) != 0
+	if p.EndPageOnSameToken {
+		return hasNextPage && !awsutil.DeepEqual(p.nextTokens, p.prevTokens)
+	}
+	return hasNextPage
 }
 
 // Err returns the error Pagination encountered when retrieving the next page.
@@ -96,6 +108,7 @@ func (p *Pagination) Next() bool {
 		return false
 	}
 
+	p.prevTokens = p.nextTokens
 	p.nextTokens = req.nextPageTokens()
 	p.curPage = req.Data
 

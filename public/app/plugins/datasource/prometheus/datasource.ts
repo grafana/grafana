@@ -16,12 +16,146 @@ export function alignRange(start, end, step) {
   };
 }
 
+const keywords = 'by|without|on|ignoring|group_left|group_right';
+
+// Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
+const builtInWords = [
+  keywords,
+  'count|count_values|min|max|avg|sum|stddev|stdvar|bottomk|topk|quantile',
+  'true|false|null|__name__|job',
+  'abs|absent|ceil|changes|clamp_max|clamp_min|count_scalar|day_of_month|day_of_week|days_in_month|delta|deriv',
+  'drop_common_labels|exp|floor|histogram_quantile|holt_winters|hour|idelta|increase|irate|label_replace|ln|log2',
+  'log10|minute|month|predict_linear|rate|resets|round|scalar|sort|sort_desc|sqrt|time|vector|year|avg_over_time',
+  'min_over_time|max_over_time|sum_over_time|count_over_time|quantile_over_time|stddev_over_time|stdvar_over_time',
+]
+  .join('|')
+  .split('|');
+
+// addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
+export function addLabelToQuery(query: string, key: string, value: string): string {
+  if (!key || !value) {
+    throw new Error('Need label to add to query.');
+  }
+
+  // Add empty selector to bare metric name
+  let previousWord;
+  query = query.replace(/(\w+)\b(?![\({=",])/g, (match, word, offset) => {
+    // Check if inside a selector
+    const nextSelectorStart = query.slice(offset).indexOf('{');
+    const nextSelectorEnd = query.slice(offset).indexOf('}');
+    const insideSelector = nextSelectorEnd > -1 && (nextSelectorStart === -1 || nextSelectorStart > nextSelectorEnd);
+    // Handle "sum by (key) (metric)"
+    const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
+    previousWord = word;
+    if (!insideSelector && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
+      return `${word}{}`;
+    }
+    return word;
+  });
+
+  // Adding label to existing selectors
+  const selectorRegexp = /{([^{]*)}/g;
+  let match = null;
+  const parts = [];
+  let lastIndex = 0;
+  let suffix = '';
+  while ((match = selectorRegexp.exec(query))) {
+    const prefix = query.slice(lastIndex, match.index);
+    const selectorParts = match[1].split(',');
+    const labels = selectorParts.reduce((acc, label) => {
+      const labelParts = label.split('=');
+      if (labelParts.length === 2) {
+        acc[labelParts[0]] = labelParts[1];
+      }
+      return acc;
+    }, {});
+    labels[key] = `"${value}"`;
+    const selector = Object.keys(labels)
+      .sort()
+      .map(key => `${key}=${labels[key]}`)
+      .join(',');
+    lastIndex = match.index + match[1].length + 2;
+    suffix = query.slice(match.index + match[0].length);
+    parts.push(prefix, '{', selector, '}');
+  }
+  parts.push(suffix);
+  return parts.join('');
+}
+
+export function determineQueryHints(series: any[]): any[] {
+  const hints = series.map((s, i) => {
+    const query: string = s.query;
+    const index: number = s.responseIndex;
+    if (query === undefined || index === undefined) {
+      return null;
+    }
+
+    // ..._bucket metric needs a histogram_quantile()
+    const histogramMetric = query.trim().match(/^\w+_bucket$/);
+    if (histogramMetric) {
+      const label = 'Time series has buckets, you probably wanted a histogram.';
+      return {
+        index,
+        label,
+        fix: {
+          label: 'Fix by adding histogram_quantile().',
+          action: {
+            type: 'ADD_HISTOGRAM_QUANTILE',
+            query,
+            index,
+          },
+        },
+      };
+    }
+
+    // Check for monotony
+    const datapoints: [number, number][] = s.datapoints;
+    const simpleMetric = query.trim().match(/^\w+$/);
+    if (simpleMetric && datapoints.length > 1) {
+      let increasing = false;
+      const monotonic = datapoints.every((dp, index) => {
+        if (index === 0) {
+          return true;
+        }
+        increasing = increasing || dp[0] > datapoints[index - 1][0];
+        // monotonic?
+        return dp[0] >= datapoints[index - 1][0];
+      });
+      if (increasing && monotonic) {
+        const label = 'Time series is monotonously increasing.';
+        return {
+          label,
+          index,
+          fix: {
+            label: 'Fix by adding rate().',
+            action: {
+              type: 'ADD_RATE',
+              query,
+              index,
+            },
+          },
+        };
+      }
+    }
+
+    // No hint found
+    return null;
+  });
+  return hints;
+}
+
 export function prometheusRegularEscape(value) {
-  return value.replace(/'/g, "\\\\'");
+  if (typeof value === 'string') {
+    return value.replace(/'/g, "\\\\'");
+  }
+  return value;
 }
 
 export function prometheusSpecialRegexEscape(value) {
-  return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
+  if (typeof value === 'string') {
+    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
+  }
+  return value;
 }
 
 export class PrometheusDatasource {
@@ -151,10 +285,15 @@ export class PrometheusDatasource {
 
     return this.$q.all(allQueryPromise).then(responseList => {
       let result = [];
+      let hints = [];
 
       _.each(responseList, (response, index) => {
         if (response.status === 'error') {
-          throw response.error;
+          const error = {
+            index,
+            ...response.error,
+          };
+          throw error;
         }
 
         // Keeping original start/end for transformers
@@ -169,17 +308,24 @@ export class PrometheusDatasource {
           responseIndex: index,
           refId: activeTargets[index].refId,
         };
+        const series = this.resultTransformer.transform(response, transformerOptions);
+        result = [...result, ...series];
 
-        this.resultTransformer.transform(result, response, transformerOptions);
+        if (queries[index].hinting) {
+          const queryHints = determineQueryHints(series);
+          hints = [...hints, ...queryHints];
+        }
       });
 
-      return { data: result };
+      return { data: result, hints };
     });
   }
 
   createQuery(target, options, start, end) {
-    var query: any = {};
-    query.instant = target.instant;
+    const query: any = {
+      hinting: target.hinting,
+      instant: target.instant,
+    };
     var range = Math.ceil(end - start);
 
     var interval = kbn.interval_to_seconds(options.interval);
@@ -190,13 +336,14 @@ export class PrometheusDatasource {
     var intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     var adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    var scopedVars = options.scopedVars;
+    var scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
+        ...this.getRangeScopedVars(),
       });
     }
     query.step = interval;
@@ -279,9 +426,24 @@ export class PrometheusDatasource {
       return this.$q.when([]);
     }
 
-    let interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
+    let scopedVars = {
+      __interval: { text: this.interval, value: this.interval },
+      __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
+      ...this.getRangeScopedVars(),
+    };
+    let interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     var metricFindQuery = new PrometheusMetricFindQuery(this, interpolated, this.timeSrv);
     return metricFindQuery.process();
+  }
+
+  getRangeScopedVars() {
+    let range = this.timeSrv.timeRange();
+    let msRange = range.to.diff(range.from);
+    let regularRange = kbn.secondsToHms(msRange / 1000);
+    return {
+      __range_ms: { text: msRange, value: msRange },
+      __range: { text: regularRange, value: regularRange },
+    };
   }
 
   annotationQuery(options) {
@@ -357,9 +519,26 @@ export class PrometheusDatasource {
       state = {
         ...state,
         queries,
+        datasource: this.name,
       };
     }
     return state;
+  }
+
+  modifyQuery(query: string, action: any): string {
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        return addLabelToQuery(query, action.key, action.value);
+      }
+      case 'ADD_HISTOGRAM_QUANTILE': {
+        return `histogram_quantile(0.95, sum(rate(${query}[5m])) by (le))`;
+      }
+      case 'ADD_RATE': {
+        return `rate(${query}[5m])`;
+      }
+      default:
+        return query;
+    }
   }
 
   getPrometheusTime(date, roundUp) {

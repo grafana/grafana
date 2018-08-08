@@ -58,6 +58,7 @@ debug.test
 /examples/*/dist
 /packaging/**/*.rpm
 /packaging/**/*.deb
+/packaging/**/*.tar.gz
 
 # Ignore OSX indexing
 .DS_Store

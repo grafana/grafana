@@ -11,7 +11,7 @@ weight = 1
 # Variables
 
 Variables allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
-and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
+and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
 {{< docs-imagebox img="/img/docs/v50/variables_dashboard.png" >}}
@@ -272,6 +272,12 @@ The `$__timeFilter` is used in the MySQL data source.
 ### The $__name Variable
 
 This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
+
+### The $__range Variable
+
+> Only available in Grafana v5.3+
+
+Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond representation called `$__range_ms`.
 
 ## Repeating Panels
 
