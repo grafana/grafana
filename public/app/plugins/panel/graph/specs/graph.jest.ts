@@ -1,6 +1,9 @@
 jest.mock('app/features/annotations/all', () => ({
   EventManager: function() {
-    return { on: () => {} };
+    return {
+      on: () => {},
+      addFlotEvents: () => {},
+    };
   },
 }));
 
@@ -17,6 +20,8 @@ import '../module';
 import { GraphCtrl } from '../module';
 import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+
+import config from 'app/core/config';
 
 import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
@@ -51,6 +56,11 @@ describe('grafanaGraph', function() {
   // );
 
   const setupCtx = () => {
+    config.bootData = {
+      user: {
+        lightTheme: false,
+      },
+    };
     //   angularMocks.inject(($rootScope, $compile) => {
     GraphCtrl.prototype = <any>{
       ...MetricsPanelCtrl.prototype,
@@ -114,7 +124,6 @@ describe('grafanaGraph', function() {
         alias: 'series2',
       })
     );
-    $.plot = jest.fn();
 
     ctrl = new GraphCtrl(
       {
@@ -126,10 +135,12 @@ describe('grafanaGraph', function() {
       {}
     );
 
+    $.plot = ctrl.plot = jest.fn();
     scope.ctrl = ctrl;
 
-    link = graphDirective({}, {}, {}).link(scope, { mouseleave: () => {}, bind: () => {} });
-    console.log(link);
+    link = graphDirective({}, {}, {}).link(scope, { width: () => 500, mouseleave: () => {}, bind: () => {} });
+    link.data = ctx.data;
+    // console.log(link);
   };
 
   describe('random test', () => {
@@ -145,12 +156,14 @@ describe('grafanaGraph', function() {
       ctrl.panel.fill = 5;
       ctrl.panel.linewidth = 3;
       ctrl.panel.steppedLine = true;
-      console.log(link);
+
       link.render_panel();
+      // console.log(link.data);
+      console.log(ctrl.plot.mock.calls);
 
-      ctx.plotData = $.plot.mock.calls[0][1];
+      ctx.plotData = ctrl.plot.mock.calls[0][1];
 
-      ctx.plotOptions = $.plot.mock.calls[0][2];
+      ctx.plotOptions = ctrl.plot.mock.calls[0][2];
     });
 
     it('should configure plot with correct options', () => {

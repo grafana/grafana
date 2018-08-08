@@ -151,9 +151,9 @@ class Link {
         }
       }
     });
-
+    let tooltip = this.tooltip;
     scope.$on('$destroy', function() {
-      this.tooltip.destroy();
+      tooltip.destroy();
       elem.off();
       elem.remove();
     });
@@ -194,6 +194,7 @@ class Link {
   }
 
   processOffsetHook(plot, gridMargin) {
+    console.log(this.panel);
     var left = this.panel.yaxes[0];
     var right = this.panel.yaxes[1];
     if (left.show && left.label) {
@@ -253,10 +254,12 @@ class Link {
 
   // Function for rendering panel
   render_panel() {
+    console.log('Run render');
     this.panelWidth = this.elem.width();
     if (this.shouldAbortRender()) {
       return;
     }
+    console.log('keep running render');
 
     // give space to alert editing
     this.thresholdManager.prepare(this.elem, this.data);
