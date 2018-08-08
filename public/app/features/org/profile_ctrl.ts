@@ -28,13 +28,9 @@ export class ProfileCtrl {
   }
 
   getUserTeams() {
-    this.backendSrv.get('/api/user').then(teams => {
-      this.user.teams = [
-        { name: 'Backend', email: 'backend@grafana.com', members: 5 },
-        { name: 'Frontend', email: 'frontend@grafana.com', members: 4 },
-        { name: 'Ops', email: 'ops@grafana.com', members: 6 },
-      ];
-      this.showTeamsList = this.user.teams.length > 1;
+    this.backendSrv.get('/api/user/teams').then(teams => {
+      this.teams = teams;
+      this.showTeamsList = this.teams.length > 1;
     });
   }
 

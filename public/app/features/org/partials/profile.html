@@ -32,13 +32,11 @@
       <thead>
         <tr>
           <th>Name</th>
-          <th>Members</th>
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="team in ctrl.user.teams">
+        <tr ng-repeat="team in ctrl.teams">
           <td>{{team.name}}</td>
-          <td>{{team.members}}</td>
         </tr>
       </tbody>
     </table>
