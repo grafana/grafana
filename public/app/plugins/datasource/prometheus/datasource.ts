@@ -16,6 +16,72 @@ export function alignRange(start, end, step) {
   };
 }
 
+const keywords = 'by|without|on|ignoring|group_left|group_right';
+
+// Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
+const builtInWords = [
+  keywords,
+  'count|count_values|min|max|avg|sum|stddev|stdvar|bottomk|topk|quantile',
+  'true|false|null|__name__|job',
+  'abs|absent|ceil|changes|clamp_max|clamp_min|count_scalar|day_of_month|day_of_week|days_in_month|delta|deriv',
+  'drop_common_labels|exp|floor|histogram_quantile|holt_winters|hour|idelta|increase|irate|label_replace|ln|log2',
+  'log10|minute|month|predict_linear|rate|resets|round|scalar|sort|sort_desc|sqrt|time|vector|year|avg_over_time',
+  'min_over_time|max_over_time|sum_over_time|count_over_time|quantile_over_time|stddev_over_time|stdvar_over_time',
+]
+  .join('|')
+  .split('|');
+
+// addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
+export function addLabelToQuery(query: string, key: string, value: string): string {
+  if (!key || !value) {
+    throw new Error('Need label to add to query.');
+  }
+
+  // Add empty selector to bare metric name
+  let previousWord;
+  query = query.replace(/(\w+)\b(?![\({=",])/g, (match, word, offset) => {
+    // Check if inside a selector
+    const nextSelectorStart = query.slice(offset).indexOf('{');
+    const nextSelectorEnd = query.slice(offset).indexOf('}');
+    const insideSelector = nextSelectorEnd > -1 && (nextSelectorStart === -1 || nextSelectorStart > nextSelectorEnd);
+    // Handle "sum by (key) (metric)"
+    const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
+    previousWord = word;
+    if (!insideSelector && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
+      return `${word}{}`;
+    }
+    return word;
+  });
+
+  // Adding label to existing selectors
+  const selectorRegexp = /{([^{]*)}/g;
+  let match = null;
+  const parts = [];
+  let lastIndex = 0;
+  let suffix = '';
+  while ((match = selectorRegexp.exec(query))) {
+    const prefix = query.slice(lastIndex, match.index);
+    const selectorParts = match[1].split(',');
+    const labels = selectorParts.reduce((acc, label) => {
+      const labelParts = label.split('=');
+      if (labelParts.length === 2) {
+        acc[labelParts[0]] = labelParts[1];
+      }
+      return acc;
+    }, {});
+    labels[key] = `"${value}"`;
+    const selector = Object.keys(labels)
+      .sort()
+      .map(key => `${key}=${labels[key]}`)
+      .join(',');
+    lastIndex = match.index + match[1].length + 2;
+    suffix = query.slice(match.index + match[0].length);
+    parts.push(prefix, '{', selector, '}');
+  }
+  parts.push(suffix);
+  return parts.join('');
+}
+
 export function prometheusRegularEscape(value) {
   if (typeof value === 'string') {
     return value.replace(/'/g, "\\\\'");
@@ -382,6 +448,14 @@ export class PrometheusDatasource {
       };
     }
     return state;
+  }
+
+  modifyQuery(query: string, options: any): string {
+    const { addFilter } = options;
+    if (addFilter) {
+      return addLabelToQuery(query, addFilter.key, addFilter.value);
+    }
+    return query;
   }
 
   getPrometheusTime(date, roundUp) {

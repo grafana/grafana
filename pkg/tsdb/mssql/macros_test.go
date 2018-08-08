@@ -76,12 +76,25 @@ func TestMacroEngine(t *testing.T) {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', NULL)")
 
 				fill := query.Model.Get("fill").MustBool()
-				fillNull := query.Model.Get("fillNull").MustBool()
+				fillMode := query.Model.Get("fillMode").MustString()
 				fillInterval := query.Model.Get("fillInterval").MustInt()
 
 				So(err, ShouldBeNil)
 				So(fill, ShouldBeTrue)
-				So(fillNull, ShouldBeTrue)
+				So(fillMode, ShouldEqual, "null")
+				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+			})
+
+			Convey("interpolate __timeGroup function with fill (value = previous)", func() {
+				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', previous)")
+
+				fill := query.Model.Get("fill").MustBool()
+				fillMode := query.Model.Get("fillMode").MustString()
+				fillInterval := query.Model.Get("fillInterval").MustInt()
+
+				So(err, ShouldBeNil)
+				So(fill, ShouldBeTrue)
+				So(fillMode, ShouldEqual, "previous")
 				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
 			})
 

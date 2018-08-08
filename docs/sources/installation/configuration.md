@@ -181,7 +181,7 @@ embedded database (included in the main Grafana binary).
 
 ### url
 
-Use either URL or or the other fields below to configure the database
+Use either URL or the other fields below to configure the database
 Example: `mysql://user:secret@host:port/database`
 
 ### type
@@ -195,9 +195,9 @@ will be stored.
 
 ### host
 
-Only applicable to MySQL or Postgres. Includes IP or hostname and port.
+Only applicable to MySQL or Postgres. Includes IP or hostname and port or in case of unix sockets the path to it.
 For example, for MySQL running on the same host as Grafana: `host =
-127.0.0.1:3306`
+127.0.0.1:3306` or with unix sockets: `host = /var/run/mysqld/mysqld.sock`
 
 ### name
 
@@ -697,9 +697,9 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full
-- **memcache:** ex:  127.0.0.1:11211
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
+- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
+- **memcache:** ex:  `127.0.0.1:11211`
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
 
 Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 

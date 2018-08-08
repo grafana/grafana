@@ -74,6 +74,15 @@ bra run
 
 Open grafana in your browser (default: `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).
 
+### Building a docker image (on linux/amd64)
+
+This builds a docker image from your local sources:
+
+1. Build the frontend `go run build.go build-frontend`
+2. Build the docker image `make build-docker-dev`
+
+The resulting image will be tagged as `grafana/grafana:dev`
+
 ### Dev config
 
 Create a custom.ini in the conf directory to override default configuration options.

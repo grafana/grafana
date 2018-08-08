@@ -274,9 +274,15 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 	fillMissing := query.Model.Get("fill").MustBool(false)
 	var fillInterval float64
 	fillValue := null.Float{}
+	fillPrevious := false
+
 	if fillMissing {
 		fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
-		if !query.Model.Get("fillNull").MustBool(false) {
+		switch query.Model.Get("fillMode").MustString() {
+		case "null":
+		case "previous":
+			fillPrevious = true
+		case "value":
 			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
 			fillValue.Valid = true
 		}
@@ -352,6 +358,14 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 					intervalStart = series.Points[len(series.Points)-1][1].Float64 + fillInterval
 				}
 
+				if fillPrevious {
+					if len(series.Points) > 0 {
+						fillValue = series.Points[len(series.Points)-1][0]
+					} else {
+						fillValue.Valid = false
+					}
+				}
+
 				// align interval start
 				intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval
 
@@ -376,6 +390,14 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 			// fill in values from last fetched value till interval end
 			intervalStart := series.Points[len(series.Points)-1][1].Float64
 			intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
+
+			if fillPrevious {
+				if len(series.Points) > 0 {
+					fillValue = series.Points[len(series.Points)-1][0]
+				} else {
+					fillValue.Valid = false
+				}
+			}
 
 			// align interval start
 			intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval

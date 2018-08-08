@@ -166,6 +166,7 @@
     "mousetrap-global-bind": "^1.1.0",
     "prismjs": "^1.6.0",
     "prop-types": "^15.6.0",
+    "rc-cascader": "^0.14.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-grid-layout": "0.16.6",

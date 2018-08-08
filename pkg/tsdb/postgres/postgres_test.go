@@ -276,7 +276,7 @@ func TestPostgres(t *testing.T) {
 
 			})
 
-			Convey("When doing a metric query using timeGroup with float fill enabled", func() {
+			Convey("When doing a metric query using timeGroup with value fill enabled", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
@@ -301,6 +301,34 @@ func TestPostgres(t *testing.T) {
 				points := queryResult.Series[0].Points
 				So(points[3][0].Float64, ShouldEqual, 1.5)
 			})
+		})
+
+		Convey("When doing a metric query using timeGroup with previous fill enabled", func() {
+			query := &tsdb.TsdbQuery{
+				Queries: []*tsdb.Query{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": "SELECT $__timeGroup(time, '5m', previous), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+							"format": "time_series",
+						}),
+						RefId: "A",
+					},
+				},
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+				},
+			}
+
+			resp, err := endpoint.Query(nil, nil, query)
+			So(err, ShouldBeNil)
+			queryResult := resp.Results["A"]
+			So(queryResult.Error, ShouldBeNil)
+
+			points := queryResult.Series[0].Points
+			So(points[2][0].Float64, ShouldEqual, 15.0)
+			So(points[3][0].Float64, ShouldEqual, 15.0)
+			So(points[6][0].Float64, ShouldEqual, 20.0)
 		})
 
 		Convey("Given a table with metrics having multiple values and measurements", func() {
