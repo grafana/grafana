@@ -559,8 +559,8 @@ export class DashboardModel {
     this.removePanel(row);
   }
 
-  suppressPanel(panel: PanelModel) {
-    this.events.emit('panel-suppress', panel);
+  suppressPanels() {
+    this.events.emit('panel-suppress');
   }
 
   expandRows() {

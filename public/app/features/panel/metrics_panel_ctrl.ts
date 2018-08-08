@@ -270,7 +270,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     } else {
       this.panel.suppress = false;
     }
-    this.dashboard.suppressPanel(this.panel);
+    this.dashboard.suppressPanels();
     this.events.emit('data-received', result.data);
   }
 
