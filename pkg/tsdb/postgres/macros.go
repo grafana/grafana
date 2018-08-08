@@ -116,9 +116,13 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		if len(args) == 3 {
 			m.query.Model.Set("fill", true)
 			m.query.Model.Set("fillInterval", interval.Seconds())
-			if args[2] == "NULL" {
-				m.query.Model.Set("fillNull", true)
-			} else {
+			switch args[2] {
+			case "NULL":
+				m.query.Model.Set("fillMode", "null")
+			case "previous":
+				m.query.Model.Set("fillMode", "previous")
+			default:
+				m.query.Model.Set("fillMode", "value")
 				floatVal, err := strconv.ParseFloat(args[2], 64)
 				if err != nil {
 					return "", fmt.Errorf("error parsing fill value %v", args[2])
