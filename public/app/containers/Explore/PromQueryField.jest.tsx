@@ -3,7 +3,7 @@ import Enzyme, { shallow } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import Plain from 'slate-plain-serializer';
 
-import PromQueryField from './PromQueryField';
+import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
 
 Enzyme.configure({ adapter: new Adapter() });
 
@@ -175,5 +175,45 @@ describe('PromQueryField typeahead handling', () => {
       expect(result.context).toBe('context-aggregation');
       expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
     });
+  });
+});
+
+describe('groupMetricsByPrefix()', () => {
+  it('returns an empty group for no metrics', () => {
+    expect(groupMetricsByPrefix([])).toEqual([]);
+  });
+
+  it('returns options grouped by prefix', () => {
+    expect(groupMetricsByPrefix(['foo_metric'])).toMatchObject([
+      {
+        value: 'foo',
+        children: [
+          {
+            value: 'foo_metric',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('returns options without prefix as toplevel option', () => {
+    expect(groupMetricsByPrefix(['metric'])).toMatchObject([
+      {
+        value: 'metric',
+      },
+    ]);
+  });
+
+  it('returns recording rules grouped separately', () => {
+    expect(groupMetricsByPrefix([':foo_metric:'])).toMatchObject([
+      {
+        value: RECORDING_RULES_GROUP,
+        children: [
+          {
+            value: ':foo_metric:',
+          },
+        ],
+      },
+    ]);
   });
 });
