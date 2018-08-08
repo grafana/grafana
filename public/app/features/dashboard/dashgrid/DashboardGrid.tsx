@@ -68,7 +68,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   panelContainer: PanelContainer;
   dashboard: DashboardModel;
   panelMap: { [id: string]: PanelModel };
-  panelLoader: any;
 
   constructor(props) {
     super(props);
@@ -80,8 +79,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onWidthChange = this.onWidthChange.bind(this);
 
     this.state = { animated: false };
-
-    this.panelLoader = this.panelContainer.getPanelLoader();
 
     // subscribe to dashboard events
     this.dashboard = this.panelContainer.getDashboard();
