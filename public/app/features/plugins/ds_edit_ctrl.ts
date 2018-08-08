@@ -79,7 +79,9 @@ export class DataSourceEditCtrl {
 
       if (datasourceCreated) {
         datasourceCreated = false;
-        this.testDatasource();
+        this.onAfterSave().then(result => {
+          this.testDatasource();
+        });
       }
 
       return this.typeChanged();
@@ -117,6 +119,27 @@ export class DataSourceEditCtrl {
       config.datasources = settings.datasources;
       config.defaultDatasource = settings.defaultDatasource;
       this.datasourceSrv.init();
+    });
+  }
+
+  onAfterSave() {
+    return this.datasourceSrv.get(this.current.name).then(datasource => {
+      if (!datasource.onAfterSave) {
+        return;
+      }
+
+      return datasource
+        .onAfterSave(this.current)
+        .then(result => {
+          if (result.changed === true) {
+            return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(result => {
+              this.current = result.datasource;
+            });
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        });
     });
   }
 
@@ -161,13 +184,18 @@ export class DataSourceEditCtrl {
     }
 
     if (this.current.id) {
-      return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(result => {
-        this.current = result.datasource;
-        this.updateNav();
-        this.updateFrontendSettings().then(() => {
-          this.testDatasource();
+      return this.backendSrv
+        .put('/api/datasources/' + this.current.id, this.current)
+        .then(result => {
+          this.current = result.datasource;
+          return this.onAfterSave();
+        })
+        .then(result => {
+          this.updateNav();
+          this.updateFrontendSettings().then(() => {
+            this.testDatasource();
+          });
         });
-      });
     } else {
       return this.backendSrv.post('/api/datasources', this.current).then(result => {
         this.current = result.datasource;
