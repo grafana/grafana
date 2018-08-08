@@ -94,7 +94,7 @@ register({
     {
       name: 'fill',
       type: 'string',
-      options: ['none', 'NULL', '0'],
+      options: ['none', 'NULL', 'previous', '0'],
     },
   ],
   defaultParams: ['$__interval', 'none'],
