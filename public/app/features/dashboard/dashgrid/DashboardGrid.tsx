@@ -69,7 +69,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   dashboard: DashboardModel;
   panelMap: { [id: string]: PanelModel };
   panelLoader: any;
-  datasourceSrv: any;
 
   constructor(props) {
     super(props);
