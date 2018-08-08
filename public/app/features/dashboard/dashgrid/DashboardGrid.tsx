@@ -108,9 +108,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         continue;
       }
 
-      let panelPos: any = {};
-
-      panelPos = {
+      let panelPos: any = {
         i: stringId,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
@@ -185,7 +183,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
     for (let panel of this.dashboard.panels) {
       if (panel['suppress'] && !this.dashboard.showSuppressed) {
-        panel.updateGridPos({ x: 0, y: 0, h: 0, w: 0 });
+        panel.updateGridPos({ x: panel.gridPos.x, y: panel.gridPos.y, h: 0, w: 0 });
       } else {
         if (panel.gridPos.h === 0 || panel.gridPos.w === 0) {
           panel.updateGridPos(panel.savedGridPos);
