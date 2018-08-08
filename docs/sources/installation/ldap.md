@@ -48,6 +48,7 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 bind_password = 'grafana'
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
+# Allow login from email or username, example "(|(sAMAccountName=%s)(userPrincipalName=%s))"
 search_filter = "(cn=%s)"
 
 # An array of base dns to search through
