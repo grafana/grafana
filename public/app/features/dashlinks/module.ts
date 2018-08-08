@@ -144,8 +144,7 @@ export class DashLinksContainerCtrl {
             if (dash.id !== currentDashId) {
               memo.push({
                 title: dash.title,
-                url: 'dashboard/' + dash.uri,
-                target: link.target,
+                url: dash.url,
                 icon: 'fa fa-th-large',
                 keepTime: link.keepTime,
                 includeVars: link.includeVars,
