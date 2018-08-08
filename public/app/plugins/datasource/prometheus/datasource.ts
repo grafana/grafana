@@ -95,6 +95,7 @@ export function determineQueryHints(series: any[]): any[] {
     if (histogramMetric) {
       const label = 'Time series has buckets, you probably wanted a histogram.';
       return {
+        index,
         label,
         fix: {
           label: 'Fix by adding histogram_quantile().',

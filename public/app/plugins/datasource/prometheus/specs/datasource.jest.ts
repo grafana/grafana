@@ -202,6 +202,7 @@ describe('PrometheusDatasource', () => {
       expect(hints.length).toBe(1);
       expect(hints[0]).toMatchObject({
         label: 'Time series is monotonously increasing.',
+        index: 0,
         fix: {
           action: {
             type: 'ADD_RATE',
@@ -217,6 +218,7 @@ describe('PrometheusDatasource', () => {
       expect(hints.length).toBe(1);
       expect(hints[0]).toMatchObject({
         label: 'Time series has buckets, you probably wanted a histogram.',
+        index: 0,
         fix: {
           action: {
             type: 'ADD_HISTOGRAM_QUANTILE',
