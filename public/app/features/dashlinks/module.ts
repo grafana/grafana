@@ -145,6 +145,7 @@ export class DashLinksContainerCtrl {
               memo.push({
                 title: dash.title,
                 url: dash.url,
+                target: link.target === '_self' ? '' : link.target,
                 icon: 'fa fa-th-large',
                 keepTime: link.keepTime,
                 includeVars: link.includeVars,
