@@ -105,13 +105,16 @@ interface CascaderOption {
 }
 
 interface PromQueryFieldProps {
-  history?: any[];
+  error?: string;
+  hint?: any;
   histogramMetrics?: string[];
+  history?: any[];
   initialQuery?: string | null;
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   metrics?: string[];
   metricsByPrefix?: CascaderOption[];
+  onClickHintFix?: (action: any) => void;
   onPressEnter?: () => void;
   onQueryChange?: (value: string, override?: boolean) => void;
   portalPrefix?: string;
@@ -186,6 +189,13 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     const { onQueryChange } = this.props;
     if (onQueryChange) {
       onQueryChange(value, override);
+    }
+  };
+
+  onClickHintFix = () => {
+    const { hint, onClickHintFix } = this.props;
+    if (onClickHintFix && hint && hint.fix) {
+      onClickHintFix(hint.fix.action);
     }
   };
 
@@ -435,6 +445,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
   }
 
   render() {
+    const { error, hint } = this.props;
     const { histogramMetrics, metricsByPrefix } = this.state;
     const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
     const metricsOptions = [
@@ -449,16 +460,29 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
             <button className="btn navbar-button navbar-button--tight">Metrics</button>
           </Cascader>
         </div>
-        <div className="slate-query-field-wrapper">
-          <TypeaheadField
-            additionalPlugins={this.plugins}
-            cleanText={cleanText}
-            initialValue={this.props.initialQuery}
-            onTypeahead={this.onTypeahead}
-            onWillApplySuggestion={willApplySuggestion}
-            onValueChanged={this.onChangeQuery}
-            placeholder="Enter a PromQL query"
-          />
+        <div className="prom-query-field-wrapper">
+          <div className="slate-query-field-wrapper">
+            <TypeaheadField
+              additionalPlugins={this.plugins}
+              cleanText={cleanText}
+              initialValue={this.props.initialQuery}
+              onTypeahead={this.onTypeahead}
+              onWillApplySuggestion={willApplySuggestion}
+              onValueChanged={this.onChangeQuery}
+              placeholder="Enter a PromQL query"
+            />
+          </div>
+          {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
+          {hint ? (
+            <div className="prom-query-field-info text-warning">
+              {hint.label}{' '}
+              {hint.fix ? (
+                <a className="text-link muted" onClick={this.onClickHintFix}>
+                  {hint.fix.label}
+                </a>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     );

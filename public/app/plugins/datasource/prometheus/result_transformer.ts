@@ -4,11 +4,11 @@ import TableModel from 'app/core/table_model';
 export class ResultTransformer {
   constructor(private templateSrv) {}
 
-  transform(result: any, response: any, options: any) {
+  transform(response: any, options: any): any[] {
     let prometheusResult = response.data.data.result;
 
     if (options.format === 'table') {
-      result.push(this.transformMetricDataToTable(prometheusResult, options.responseListLength, options.refId));
+      return [this.transformMetricDataToTable(prometheusResult, options.responseListLength, options.refId)];
     } else if (options.format === 'heatmap') {
       let seriesList = [];
       prometheusResult.sort(sortSeriesByLabel);
@@ -16,16 +16,19 @@ export class ResultTransformer {
         seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
       }
       seriesList = this.transformToHistogramOverTime(seriesList);
-      result.push(...seriesList);
+      return seriesList;
     } else {
+      let seriesList = [];
       for (let metricData of prometheusResult) {
         if (response.data.data.resultType === 'matrix') {
-          result.push(this.transformMetricData(metricData, options, options.start, options.end));
+          seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
         } else if (response.data.data.resultType === 'vector') {
-          result.push(this.transformInstantMetricData(metricData, options));
+          seriesList.push(this.transformInstantMetricData(metricData, options));
         }
       }
+      return seriesList;
     }
+    return [];
   }
 
   transformMetricData(metricData, options, start, end) {
@@ -60,7 +63,12 @@ export class ResultTransformer {
       dps.push([null, t]);
     }
 
-    return { target: metricLabel, datapoints: dps };
+    return {
+      datapoints: dps,
+      query: options.query,
+      responseIndex: options.responseIndex,
+      target: metricLabel,
+    };
   }
 
   transformMetricDataToTable(md, resultCount: number, refId: string) {
@@ -124,7 +132,7 @@ export class ResultTransformer {
       metricLabel = null;
     metricLabel = this.createMetricLabel(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: metricLabel, datapoints: dps };
+    return { target: metricLabel, datapoints: dps, labels: md.metric };
   }
 
   createMetricLabel(labelData, options) {

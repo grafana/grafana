@@ -82,6 +82,68 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
   return parts.join('');
 }
 
+export function determineQueryHints(series: any[]): any[] {
+  const hints = series.map((s, i) => {
+    const query: string = s.query;
+    const index: number = s.responseIndex;
+    if (query === undefined || index === undefined) {
+      return null;
+    }
+
+    // ..._bucket metric needs a histogram_quantile()
+    const histogramMetric = query.trim().match(/^\w+_bucket$/);
+    if (histogramMetric) {
+      const label = 'Time series has buckets, you probably wanted a histogram.';
+      return {
+        index,
+        label,
+        fix: {
+          label: 'Fix by adding histogram_quantile().',
+          action: {
+            type: 'ADD_HISTOGRAM_QUANTILE',
+            query,
+            index,
+          },
+        },
+      };
+    }
+
+    // Check for monotony
+    const datapoints: [number, number][] = s.datapoints;
+    const simpleMetric = query.trim().match(/^\w+$/);
+    if (simpleMetric && datapoints.length > 1) {
+      let increasing = false;
+      const monotonic = datapoints.every((dp, index) => {
+        if (index === 0) {
+          return true;
+        }
+        increasing = increasing || dp[0] > datapoints[index - 1][0];
+        // monotonic?
+        return dp[0] >= datapoints[index - 1][0];
+      });
+      if (increasing && monotonic) {
+        const label = 'Time series is monotonously increasing.';
+        return {
+          label,
+          index,
+          fix: {
+            label: 'Fix by adding rate().',
+            action: {
+              type: 'ADD_RATE',
+              query,
+              index,
+            },
+          },
+        };
+      }
+    }
+
+    // No hint found
+    return null;
+  });
+  return hints;
+}
+
 export function prometheusRegularEscape(value) {
   if (typeof value === 'string') {
     return value.replace(/'/g, "\\\\'");
@@ -223,10 +285,15 @@ export class PrometheusDatasource {
 
     return this.$q.all(allQueryPromise).then(responseList => {
       let result = [];
+      let hints = [];
 
       _.each(responseList, (response, index) => {
         if (response.status === 'error') {
-          throw response.error;
+          const error = {
+            index,
+            ...response.error,
+          };
+          throw error;
         }
 
         // Keeping original start/end for transformers
@@ -241,16 +308,24 @@ export class PrometheusDatasource {
           responseIndex: index,
           refId: activeTargets[index].refId,
         };
-        this.resultTransformer.transform(result, response, transformerOptions);
+        const series = this.resultTransformer.transform(response, transformerOptions);
+        result = [...result, ...series];
+
+        if (queries[index].hinting) {
+          const queryHints = determineQueryHints(series);
+          hints = [...hints, ...queryHints];
+        }
       });
 
-      return { data: result };
+      return { data: result, hints };
     });
   }
 
   createQuery(target, options, start, end) {
-    var query: any = {};
-    query.instant = target.instant;
+    const query: any = {
+      hinting: target.hinting,
+      instant: target.instant,
+    };
     var range = Math.ceil(end - start);
 
     var interval = kbn.interval_to_seconds(options.interval);
@@ -450,12 +525,20 @@ export class PrometheusDatasource {
     return state;
   }
 
-  modifyQuery(query: string, options: any): string {
-    const { addFilter } = options;
-    if (addFilter) {
-      return addLabelToQuery(query, addFilter.key, addFilter.value);
+  modifyQuery(query: string, action: any): string {
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        return addLabelToQuery(query, action.key, action.value);
+      }
+      case 'ADD_HISTOGRAM_QUANTILE': {
+        return `histogram_quantile(0.95, sum(rate(${query}[5m])) by (le))`;
+      }
+      case 'ADD_RATE': {
+        return `rate(${query}[5m])`;
+      }
+      default:
+        return query;
     }
-    return query;
   }
 
   getPrometheusTime(date, roundUp) {
