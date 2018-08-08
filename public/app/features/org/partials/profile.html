@@ -31,12 +31,18 @@
     <table class="filter-table form-inline">
       <thead>
         <tr>
+          <th></th>
           <th>Name</th>
+          <th>Email</th>
+          <th>Members</th>
         </tr>
       </thead>
       <tbody>
         <tr ng-repeat="team in ctrl.teams">
+          <td class="width-4 text-center"><img class="filter-table__avatar" src={{team.avatarUrl}}></td>
           <td>{{team.name}}</td>
+          <td>{{team.email}}</td>
+          <td>{{team.memberCount}}</td>
         </tr>
       </tbody>
     </table>
