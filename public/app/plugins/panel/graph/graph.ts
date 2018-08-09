@@ -36,7 +36,7 @@ class Link {
   eventManager: EventManager;
   thresholdManager: ThresholdManager;
 
-  constructor(scope, private elem, timeSrv) {
+  constructor(private scope, private elem, timeSrv) {
     this.ctrl = scope.ctrl;
     this.dashboard = this.ctrl.dashboard;
     this.panel = this.ctrl.panel;
@@ -47,7 +47,7 @@ class Link {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
-    this.tooltip = new GraphTooltip(elem, this.ctrl.dashboard, scope, function() {
+    this.tooltip = new GraphTooltip(elem, this.ctrl.dashboard, this.scope, function() {
       return this.sortedSeries;
     });
 
@@ -194,6 +194,8 @@ class Link {
   }
 
   processOffsetHook(plot, gridMargin) {
+    console.log(arguments);
+    console.log(this);
     console.log(this.panel);
     var left = this.panel.yaxes[0];
     var right = this.panel.yaxes[1];
@@ -363,9 +365,9 @@ class Link {
     const stack = panel.stack ? true : null;
     let options = {
       hooks: {
-        draw: [this.drawHook],
-        processOffset: [this.processOffsetHook],
-        processRange: [this.processRangeHook],
+        draw: [this.drawHook.bind(this)],
+        processOffset: [this.processOffsetHook.bind(this)],
+        processRange: [this.processRangeHook.bind(this)],
       },
       legend: { show: false },
       series: {
