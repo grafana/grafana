@@ -5,16 +5,22 @@ import { SparkLine } from './SparkLine';
 import { getBGColor } from './utils';
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
+const BACKGROUND_OPACITY = 0.1;
+const LABEL_SIZE_COEF = 0.7;
+const SPARKLINE_HEIGHT = 0.25;
 
 export interface SingleStatProps {
+  layout?: MultiStatPanel.PanelLayout;
   width: number;
   height: number;
   label: string;
   value: string;
   color?: string;
-  layout?: MultiStatPanel.PanelLayout;
   colorValue?: boolean;
   colorBackground?: boolean;
+  fontSize?: number;
+  labelFontSize?: number;
+  labelToTheLeft?: boolean;
   flotpairs?: Series.Flotpair[];
   sparkline?: {
     show?: boolean;
@@ -34,56 +40,44 @@ export class SingleStat extends React.PureComponent<SingleStatProps> {
   };
 
   render() {
-    const { label, value, layout, colorBackground, colorValue, flotpairs } = this.props;
+    const { width, height, label, value, layout, colorBackground, colorValue, flotpairs, labelToTheLeft } = this.props;
     const valueColor = this.props.color;
-    const bgColor = getBGColor(valueColor, 0.1);
+    const bgColor = getBGColor(valueColor, BACKGROUND_OPACITY);
 
     const showSparkline = this.props.sparkline && this.props.sparkline.show;
-    const sparklineWidth = this.props.width;
-    let sparklineHeight = Math.floor(this.props.height * 0.25);
+    const sparklineWidth = width;
+    let sparklineHeight = Math.floor(height * SPARKLINE_HEIGHT);
     sparklineHeight = showSparkline ? sparklineHeight : 0;
     const sparklineSize = { w: sparklineWidth, h: sparklineHeight };
 
-    const widthRatio = this.props.width / (this.props.height - sparklineHeight);
-    const labelToTheLeft = widthRatio > 3;
-
     let containerStyle: React.CSSProperties = {};
     if (layout === 'vertical') {
-      containerStyle.height = this.props.height;
+      containerStyle.height = height;
     } else {
-      containerStyle.width = this.props.width;
+      containerStyle.width = width;
     }
 
     if (colorBackground) {
       containerStyle.background = bgColor;
     }
 
-    const { labelFontSize, labelFontSizePx, valueFontSize, valueFontSizePx } = getFontSize(
-      this.props.width,
-      this.props.height,
-      showSparkline
-    );
+    const labelFontSize = Math.floor((this.props.labelFontSize || this.props.fontSize) * LABEL_SIZE_COEF);
+    let valueFontSize = this.props.fontSize;
     const labelStyle: React.CSSProperties = {
-      fontSize: labelFontSizePx,
+      fontSize: labelFontSize,
     };
     const labelContainerStyle: React.CSSProperties = {
-      lineHeight: labelFontSizePx,
+      lineHeight: labelFontSize + 'px',
     };
 
     let valueStyle: React.CSSProperties = {
-      fontSize: valueFontSizePx,
+      fontSize: valueFontSize + 'px',
     };
     if (colorValue) {
       valueStyle.color = valueColor;
     }
 
-    const valueTopOffset = getTopOffset(
-      this.props.height,
-      sparklineHeight,
-      labelFontSize,
-      valueFontSize,
-      labelToTheLeft
-    );
+    const valueTopOffset = getTopOffset(height, sparklineHeight, labelFontSize, valueFontSize, labelToTheLeft);
     const valueTopOffsetPx = valueTopOffset + 'px';
     const valueContainerStyle: React.CSSProperties = {
       top: valueTopOffsetPx,
@@ -91,18 +85,13 @@ export class SingleStat extends React.PureComponent<SingleStatProps> {
 
     if (labelToTheLeft) {
       const labelTopOffset = Math.floor(valueTopOffset + (valueFontSize - labelFontSize) / 2);
-      containerStyle.display = 'flex';
-      labelContainerStyle.flexGrow = 1;
-      valueContainerStyle.flexGrow = 2;
-      labelContainerStyle.position = 'relative';
       labelContainerStyle.top = labelTopOffset;
-      labelContainerStyle.lineHeight = 'unset';
-      labelStyle.fontSize = labelFontSize * 1.5 + 'px';
-      labelStyle.verticalAlign = 'top';
+    } else {
+      labelContainerStyle.marginTop = (height - sparklineHeight) * 0.02 + 'px';
     }
 
     return (
-      <div className="multistat-single" style={containerStyle}>
+      <div className={`multistat-single ${labelToTheLeft ? 'label-left' : ''}`} style={containerStyle}>
         <div className="multistat-label-container" style={labelContainerStyle}>
           <span className="multistat-label" style={labelStyle}>
             {label}
@@ -119,24 +108,9 @@ export class SingleStat extends React.PureComponent<SingleStatProps> {
   }
 }
 
-function getFontSize(panelWidth: number, panelHeight: number, showSparkline?) {
-  const size = Math.min(panelHeight, panelWidth * 0.75);
-  let increaseRatio = 1;
-  if (!showSparkline) {
-    increaseRatio = 1.2;
-  }
-
-  const labelFontSize = Math.ceil(size / 10 * increaseRatio);
-  const valueFontSize = Math.ceil(size / 4 * increaseRatio);
-  const labelFontSizePx = labelFontSize + 'px';
-  const valueFontSizePx = valueFontSize + 'px';
-
-  return { labelFontSize, valueFontSize, labelFontSizePx, valueFontSizePx };
-}
-
 function getTopOffset(height, sparklineHeight, labelFontSize, valueFontSize, labelToTheLeft?) {
   if (labelToTheLeft) {
     return (height - sparklineHeight - valueFontSize) / 2;
   }
-  return (height - sparklineHeight - labelFontSize * 2 * 1.25 - valueFontSize) / 2;
+  return (height - sparklineHeight - labelFontSize - valueFontSize) / 3;
 }

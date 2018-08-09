@@ -34,6 +34,25 @@
   z-index: 1;
   font-size: 3em;
   font-weight: 500;
+  white-space: nowrap;
+
+  &.label-left {
+    display: flex;
+
+    .multistat-label-container {
+      position: relative;
+      flex-grow: 1;
+      line-height: unset;
+
+      .multistat-label {
+        vertical-align: top;
+      }
+    }
+
+    .multistat-value-container {
+      flex-grow: 2;
+    }
+  }
 
   .multistat-value-container {
     position: relative;
