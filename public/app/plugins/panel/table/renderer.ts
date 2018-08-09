@@ -216,13 +216,13 @@ export class TableRenderer {
     var cellClass = '';
 
     if (this.colorState.cell) {
-      style = ' style="background-color:' + this.colorState.cell + ';color: white"';
+      style = ' style="background-color:' + this.colorState.cell + '"';
+      cellClasses.push('table-panel-color-cell');
       this.colorState.cell = null;
     } else if (this.colorState.value) {
       style = ' style="color:' + this.colorState.value + '"';
       this.colorState.value = null;
     }
-
     // because of the fixed table headers css only solution
     // there is an issue if header cell is wider the cell
     // this hack adds header content to cell (not visible)
@@ -252,8 +252,9 @@ export class TableRenderer {
       var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');
+
       columnHtml += `
-        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right">
+        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${style}>
           ${value}
         </a>
       `;
@@ -287,6 +288,8 @@ export class TableRenderer {
     let startPos = page * pageSize;
     let endPos = Math.min(startPos + pageSize, this.table.rows.length);
     var html = '';
+    let rowClasses = [];
+    let rowClass = '';
 
     for (var y = startPos; y < endPos; y++) {
       let row = this.table.rows[y];
@@ -297,11 +300,16 @@ export class TableRenderer {
       }
 
       if (this.colorState.row) {
-        rowStyle = ' style="background-color:' + this.colorState.row + ';color: white"';
+        rowStyle = ' style="background-color:' + this.colorState.row + '"';
+        rowClasses.push('table-panel-color-row');
         this.colorState.row = null;
       }
 
-      html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
+      if (rowClasses.length) {
+        rowClass = ' class="' + rowClasses.join(' ') + '"';
+      }
+
+      html += '<tr ' + rowClass + rowStyle + '>' + cellHtml + '</tr>';
     }
 
     return html;

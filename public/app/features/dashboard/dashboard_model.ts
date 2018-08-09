@@ -1,7 +1,7 @@
 import moment from 'moment';
 import _ from 'lodash';
 
-import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
+import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { DEFAULT_ANNOTATION_COLOR } from 'app/core/utils/colors';
 import { Emitter } from 'app/core/utils/emitter';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -829,5 +829,33 @@ export class DashboardModel {
     });
 
     return !_.isEqual(updated, this.originalTemplating);
+  }
+
+  autoFitPanels(viewHeight: number) {
+    if (!this.meta.autofitpanels) {
+      return;
+    }
+
+    const currentGridHeight = Math.max(
+      ...this.panels.map(panel => {
+        return panel.gridPos.h + panel.gridPos.y;
+      })
+    );
+
+    // Consider navbar and submenu controls, padding and margin
+    let visibleHeight = window.innerHeight - 55 - 20;
+
+    // Remove submenu if visible
+    if (this.meta.submenuEnabled) {
+      visibleHeight -= 50;
+    }
+
+    const visibleGridHeight = Math.floor(visibleHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+    const scaleFactor = currentGridHeight / visibleGridHeight;
+
+    this.panels.forEach((panel, i) => {
+      panel.gridPos.y = Math.round(panel.gridPos.y / scaleFactor) || 1;
+      panel.gridPos.h = Math.round(panel.gridPos.h / scaleFactor) || 1;
+    });
   }
 }

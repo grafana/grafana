@@ -119,7 +119,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 		})
 
 		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
-			query.Result = []*m.Team{}
+			query.Result = []*m.TeamDTO{}
 			return nil
 		})
 
