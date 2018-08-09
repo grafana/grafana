@@ -82,11 +82,12 @@ export class BarStat extends React.PureComponent<BarStatProps> {
 
     if (this.props.colorValue) {
       valueStyle.color = valueColor;
-      if (verticalDirection) {
-        barStyle.borderRightColor = valueColor;
-      } else {
-        barStyle.borderTopColor = valueColor;
-      }
+    }
+
+    if (verticalDirection) {
+      barStyle.borderRightColor = valueColor;
+    } else {
+      barStyle.borderTopColor = valueColor;
     }
 
     const barContainerClass = `multistat-bar-container multistat-bar-container--${this.props.direction}`;
