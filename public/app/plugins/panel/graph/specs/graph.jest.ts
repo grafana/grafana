@@ -27,7 +27,6 @@ import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
-import { updateLegendValues } from 'app/core/time_series2';
 
 let ctx = <any>{};
 let ctrl;
@@ -42,27 +41,12 @@ let scope = {
 let link;
 
 describe('grafanaGraph', function() {
-  // function describe(desc, func, elementWidth = 500) {
-  // console.log('describe function is being run');
-  // describe(desc, () => {
-  // console.log('describe function is being run');
-
-  // console.log(ctx);
-  // ctx.setup = setupFunc => {
-  // console.log('Setup function is called');
-  // beforeEach(
-  //   angularMocks.module($provide => {
-  //     $provide.value('timeSrv', new helpers.TimeSrvStub());
-  //   })
-  // );
-
   const setupCtx = (beforeRender?) => {
     config.bootData = {
       user: {
         lightTheme: false,
       },
     };
-    //   angularMocks.inject(($rootScope, $compile) => {
     GraphCtrl.prototype = <any>{
       ...MetricsPanelCtrl.prototype,
       ...PanelCtrl.prototype,
@@ -106,12 +90,6 @@ describe('grafanaGraph', function() {
       },
     };
 
-    //     var scope = $rootScope.$new();
-    //     scope.ctrl = ctrl;
-    //     scope.ctrl.events = ctrl.panel.events;
-
-    //     $rootScope.onAppEvent = sinon.spy();
-
     ctx.data = [];
     ctx.data.push(
       new TimeSeries({
@@ -144,9 +122,10 @@ describe('grafanaGraph', function() {
       beforeRender();
     }
     link.data = ctx.data;
-    // console.log(link);
-    link.render_panel();
+
+    //Emulate functions called by event listeners
     link.buildFlotPairs(link.data);
+    link.render_panel();
     ctx.plotData = ctrl.plot.mock.calls[0][1];
 
     ctx.plotOptions = ctrl.plot.mock.calls[0][2];
@@ -271,12 +250,11 @@ describe('grafanaGraph', function() {
 
     it('should apply axis transform, autoscaling (if necessary) and ticks', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
-      console.log(axisAutoscale);
       expect(axisAutoscale.transform(100)).toBe(2);
       expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBeCloseTo(0.001);
       expect(axisAutoscale.max).toBe(10000);
-      expect(axisAutoscale.ticks.length).toBeCloseTo(7.5);
+      expect(axisAutoscale.ticks.length).toBeCloseTo(8);
       expect(axisAutoscale.ticks[0]).toBeCloseTo(0.001);
       if (axisAutoscale.ticks.length === 7) {
         expect(axisAutoscale.ticks[axisAutoscale.ticks.length - 1]).toBeCloseTo(1000);
@@ -484,8 +462,8 @@ describe('grafanaGraph', function() {
     describe('and the range is less than one year', function() {
       beforeEach(() => {
         setupCtx(() => {
-          scope.range.from = moment([2015, 1, 1]);
-          scope.range.to = moment([2015, 11, 20]);
+          ctrl.range.from = moment([2015, 1, 1]);
+          ctrl.range.to = moment([2015, 11, 20]);
         });
       });
 
