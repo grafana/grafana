@@ -55,7 +55,7 @@ describe('grafanaGraph', function() {
   //   })
   // );
 
-  const setupCtx = () => {
+  const setupCtx = (beforeRender?) => {
     config.bootData = {
       user: {
         lightTheme: false,
@@ -139,8 +139,16 @@ describe('grafanaGraph', function() {
     scope.ctrl = ctrl;
 
     link = graphDirective({}, {}, {}).link(scope, { width: () => 500, mouseleave: () => {}, bind: () => {} });
+    if (typeof beforeRender === 'function') {
+      beforeRender();
+    }
     link.data = ctx.data;
     // console.log(link);
+
+    link.render_panel();
+    ctx.plotData = ctrl.plot.mock.calls[0][1];
+
+    ctx.plotOptions = ctrl.plot.mock.calls[0][2];
   };
 
   describe('random test', () => {
@@ -151,19 +159,12 @@ describe('grafanaGraph', function() {
 
   describe('simple lines options', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.lines = true;
-      ctrl.panel.fill = 5;
-      ctrl.panel.linewidth = 3;
-      ctrl.panel.steppedLine = true;
-
-      link.render_panel();
-      // console.log(link.data);
-      console.log(ctrl.plot.mock.calls);
-
-      ctx.plotData = ctrl.plot.mock.calls[0][1];
-
-      ctx.plotOptions = ctrl.plot.mock.calls[0][2];
+      setupCtx(() => {
+        ctrl.panel.lines = true;
+        ctrl.panel.fill = 5;
+        ctrl.panel.linewidth = 3;
+        ctrl.panel.steppedLine = true;
+      });
     });
 
     it('should configure plot with correct options', () => {
@@ -176,9 +177,10 @@ describe('grafanaGraph', function() {
 
   describe('sorting stacked series as legend. disabled', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.legend.sort = undefined;
-      ctrl.panel.stack = false;
+      setupCtx(() => {
+        ctrl.panel.legend.sort = undefined;
+        ctrl.panel.stack = false;
+      });
     });
 
     it('should not modify order of time series', () => {
@@ -189,10 +191,11 @@ describe('grafanaGraph', function() {
 
   describe('sorting stacked series as legend. min descending order', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.legend.sort = 'min';
-      ctrl.panel.legend.sortDesc = true;
-      ctrl.panel.stack = true;
+      setupCtx(() => {
+        ctrl.panel.legend.sort = 'min';
+        ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.stack = true;
+      });
     });
     it('highest value should be first', () => {
       expect(ctx.plotData[0].alias).toBe('series2');
@@ -202,10 +205,11 @@ describe('grafanaGraph', function() {
 
   describe('sorting stacked series as legend. min ascending order', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.legend.sort = 'min';
-      ctrl.panel.legend.sortDesc = false;
-      ctrl.panel.stack = true;
+      setupCtx(() => {
+        ctrl.panel.legend.sort = 'min';
+        ctrl.panel.legend.sortDesc = false;
+        ctrl.panel.stack = true;
+      });
     });
     it('lowest value should be first', () => {
       expect(ctx.plotData[0].alias).toBe('series1');
@@ -215,10 +219,11 @@ describe('grafanaGraph', function() {
 
   describe('sorting stacked series as legend. stacking disabled', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.legend.sort = 'min';
-      ctrl.panel.legend.sortDesc = true;
-      ctrl.panel.stack = false;
+      setupCtx(() => {
+        ctrl.panel.legend.sort = 'min';
+        ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.stack = false;
+      });
     });
 
     it('highest value should be first', () => {
@@ -229,10 +234,11 @@ describe('grafanaGraph', function() {
 
   describe('sorting stacked series as legend. current descending order', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.legend.sort = 'current';
-      ctrl.panel.legend.sortDesc = true;
-      ctrl.panel.stack = true;
+      setupCtx(() => {
+        ctrl.panel.legend.sort = 'current';
+        ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.stack = true;
+      });
     });
 
     it('highest last value should be first', () => {
@@ -243,21 +249,23 @@ describe('grafanaGraph', function() {
 
   describe('when logBase is log 10', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.yaxes[0].logBase = 10;
-      ctx.data[0] = new TimeSeries({
-        datapoints: [[2000, 1], [0.002, 2], [0, 3], [-1, 4]],
-        alias: 'seriesAutoscale',
+      setupCtx(() => {
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[2000, 1], [0.002, 2], [0, 3], [-1, 4]],
+          alias: 'seriesAutoscale',
+        });
+        ctx.data[0].yaxis = 1;
+        ctx.data[1] = new TimeSeries({
+          datapoints: [[2000, 1], [0.002, 2], [0, 3], [-1, 4]],
+          alias: 'seriesFixedscale',
+        });
+        ctx.data[1].yaxis = 2;
+        ctrl.panel.yaxes[0].logBase = 10;
+
+        ctrl.panel.yaxes[1].logBase = 10;
+        ctrl.panel.yaxes[1].min = '0.05';
+        ctrl.panel.yaxes[1].max = '1500';
       });
-      ctx.data[0].yaxis = 1;
-      ctrl.panel.yaxes[1].logBase = 10;
-      ctrl.panel.yaxes[1].min = '0.05';
-      ctrl.panel.yaxes[1].max = '1500';
-      ctx.data[1] = new TimeSeries({
-        datapoints: [[2000, 1], [0.002, 2], [0, 3], [-1, 4]],
-        alias: 'seriesFixedscale',
-      });
-      ctx.data[1].yaxis = 2;
     });
 
     it('should apply axis transform, autoscaling (if necessary) and ticks', function() {
@@ -285,13 +293,14 @@ describe('grafanaGraph', function() {
 
   describe('when logBase is log 10 and data points contain only zeroes', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.yaxes[0].logBase = 10;
-      ctx.data[0] = new TimeSeries({
-        datapoints: [[0, 1], [0, 2], [0, 3], [0, 4]],
-        alias: 'seriesAutoscale',
+      setupCtx(() => {
+        ctrl.panel.yaxes[0].logBase = 10;
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[0, 1], [0, 2], [0, 3], [0, 4]],
+          alias: 'seriesAutoscale',
+        });
+        ctx.data[0].yaxis = 1;
       });
-      ctx.data[0].yaxis = 1;
     });
 
     it('should not set min and max and should create some fake ticks', function() {
@@ -310,14 +319,15 @@ describe('grafanaGraph', function() {
   // this approximates it by setting min to 0.1
   describe('when logBase is log 10 and y-min is set to 0 and auto min is > 0.1', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.yaxes[0].logBase = 10;
-      ctrl.panel.yaxes[0].min = '0';
-      ctx.data[0] = new TimeSeries({
-        datapoints: [[2000, 1], [4, 2], [500, 3], [3000, 4]],
-        alias: 'seriesAutoscale',
+      setupCtx(() => {
+        ctrl.panel.yaxes[0].logBase = 10;
+        ctrl.panel.yaxes[0].min = '0';
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[2000, 1], [4, 2], [500, 3], [3000, 4]],
+          alias: 'seriesAutoscale',
+        });
+        ctx.data[0].yaxis = 1;
       });
-      ctx.data[0].yaxis = 1;
     });
     it('should set min to 0.1 and add a tick for 0.1', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
@@ -333,16 +343,17 @@ describe('grafanaGraph', function() {
 
   describe('when logBase is log 2 and y-min is set to 0 and num of ticks exceeds max', () => {
     beforeEach(() => {
-      setupCtx();
-      const heightForApprox5Ticks = 125;
-      ctrl.height = heightForApprox5Ticks;
-      ctrl.panel.yaxes[0].logBase = 2;
-      ctrl.panel.yaxes[0].min = '0';
-      ctx.data[0] = new TimeSeries({
-        datapoints: [[2000, 1], [4, 2], [500, 3], [3000, 4], [10000, 5], [100000, 6]],
-        alias: 'seriesAutoscale',
+      setupCtx(() => {
+        const heightForApprox5Ticks = 125;
+        ctrl.height = heightForApprox5Ticks;
+        ctrl.panel.yaxes[0].logBase = 2;
+        ctrl.panel.yaxes[0].min = '0';
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[2000, 1], [4, 2], [500, 3], [3000, 4], [10000, 5], [100000, 6]],
+          alias: 'seriesAutoscale',
+        });
+        ctx.data[0].yaxis = 1;
       });
-      ctx.data[0].yaxis = 1;
     });
 
     it('should regenerate ticks so that if fits on the y-axis', function() {
@@ -361,10 +372,11 @@ describe('grafanaGraph', function() {
 
   describe('dashed lines options', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.lines = true;
-      ctrl.panel.linewidth = 2;
-      ctrl.panel.dashes = true;
+      setupCtx(() => {
+        ctrl.panel.lines = true;
+        ctrl.panel.linewidth = 2;
+        ctrl.panel.dashes = true;
+      });
     });
 
     it('should configure dashed plot with correct options', function() {
@@ -376,11 +388,12 @@ describe('grafanaGraph', function() {
 
   describe('should use timeStep for barWidth', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.bars = true;
-      ctx.data[0] = new TimeSeries({
-        datapoints: [[1, 10], [2, 20]],
-        alias: 'series1',
+      setupCtx(() => {
+        ctrl.panel.bars = true;
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[1, 10], [2, 20]],
+          alias: 'series1',
+        });
       });
     });
 
@@ -391,13 +404,14 @@ describe('grafanaGraph', function() {
 
   describe('series option overrides, fill & points', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.lines = true;
-      ctrl.panel.fill = 5;
-      ctx.data[0].zindex = 10;
-      ctx.data[1].alias = 'test';
-      ctx.data[1].lines = { fill: 0.001 };
-      ctx.data[1].points = { show: true };
+      setupCtx(() => {
+        ctrl.panel.lines = true;
+        ctrl.panel.fill = 5;
+        ctx.data[0].zindex = 10;
+        ctx.data[1].alias = 'test';
+        ctx.data[1].lines = { fill: 0.001 };
+        ctx.data[1].points = { show: true };
+      });
     });
 
     it('should match second series and fill zero, and enable points', function() {
@@ -409,9 +423,10 @@ describe('grafanaGraph', function() {
 
   describe('should order series order according to zindex', () => {
     beforeEach(() => {
-      setupCtx();
-      ctx.data[1].zindex = 1;
-      ctx.data[0].zindex = 10;
+      setupCtx(() => {
+        ctx.data[1].zindex = 1;
+        ctx.data[0].zindex = 10;
+      });
     });
 
     it('should move zindex 2 last', function() {
@@ -422,8 +437,9 @@ describe('grafanaGraph', function() {
 
   describe('when series is hidden', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.hiddenSeries = { series2: true };
+      setupCtx(() => {
+        ctrl.hiddenSeries = { series2: true };
+      });
     });
 
     it('should remove datapoints and disable stack', function() {
@@ -435,9 +451,10 @@ describe('grafanaGraph', function() {
 
   describe('when stack and percent', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.percentage = true;
-      ctrl.panel.stack = true;
+      setupCtx(() => {
+        ctrl.panel.percentage = true;
+        ctrl.panel.stack = true;
+      });
     });
 
     it('should show percentage', function() {
@@ -450,9 +467,10 @@ describe('grafanaGraph', function() {
     //Set width to 10px
     describe('and the range is less than 24 hours', function() {
       beforeEach(() => {
-        setupCtx();
-        ctrl.range.from = moment([2015, 1, 1, 10]);
-        ctrl.range.to = moment([2015, 1, 1, 22]);
+        setupCtx(() => {
+          ctrl.range.from = moment([2015, 1, 1, 10]);
+          ctrl.range.to = moment([2015, 1, 1, 22]);
+        });
       });
 
       it('should format dates as hours minutes', function() {
@@ -463,9 +481,10 @@ describe('grafanaGraph', function() {
 
     describe('and the range is less than one year', function() {
       beforeEach(() => {
-        setupCtx();
-        scope.range.from = moment([2015, 1, 1]);
-        scope.range.to = moment([2015, 11, 20]);
+        setupCtx(() => {
+          scope.range.from = moment([2015, 1, 1]);
+          scope.range.to = moment([2015, 11, 20]);
+        });
       });
 
       it('should format dates as month days', function() {
@@ -477,17 +496,18 @@ describe('grafanaGraph', function() {
 
   describe('when graph is histogram, and enable stack', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.xaxis.mode = 'histogram';
-      ctrl.panel.stack = true;
-      ctrl.hiddenSeries = {};
-      ctx.data[0] = new TimeSeries({
-        datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
-        alias: 'series1',
-      });
-      ctx.data[1] = new TimeSeries({
-        datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
-        alias: 'series2',
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.stack = true;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+        ctx.data[1] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series2',
+        });
       });
     });
 
@@ -501,17 +521,18 @@ describe('grafanaGraph', function() {
 
   describe('when graph is histogram, and some series are hidden', () => {
     beforeEach(() => {
-      setupCtx();
-      ctrl.panel.xaxis.mode = 'histogram';
-      ctrl.panel.stack = false;
-      ctrl.hiddenSeries = { series2: true };
-      ctx.data[0] = new TimeSeries({
-        datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
-        alias: 'series1',
-      });
-      ctx.data[1] = new TimeSeries({
-        datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
-        alias: 'series2',
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = { series2: true };
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+        ctx.data[1] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series2',
+        });
       });
     });
 

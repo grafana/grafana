@@ -47,7 +47,7 @@ class Link {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
-    this.tooltip = new GraphTooltip(elem, this.ctrl.dashboard, this.scope, function() {
+    this.tooltip = new GraphTooltip(elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });
 
@@ -194,9 +194,6 @@ class Link {
   }
 
   processOffsetHook(plot, gridMargin) {
-    console.log(arguments);
-    console.log(this);
-    console.log(this.panel);
     var left = this.panel.yaxes[0];
     var right = this.panel.yaxes[1];
     if (left.show && left.label) {
@@ -256,12 +253,10 @@ class Link {
 
   // Function for rendering panel
   render_panel() {
-    console.log('Run render');
     this.panelWidth = this.elem.width();
     if (this.shouldAbortRender()) {
       return;
     }
-    console.log('keep running render');
 
     // give space to alert editing
     this.thresholdManager.prepare(this.elem, this.data);
