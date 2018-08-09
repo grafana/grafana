@@ -61,48 +61,79 @@ export class TeamList extends React.Component<Props, any> {
     );
   }
 
+  renderTeamList(teams) {
+    return (
+      <div className="page-container page-body">
+        <div className="page-action-bar">
+          <div className="gf-form gf-form--grow">
+            <label className="gf-form--has-input-icon gf-form--grow">
+              <input
+                type="text"
+                className="gf-form-input"
+                placeholder="Search teams"
+                value={teams.search}
+                onChange={this.onSearchQueryChange}
+              />
+              <i className="gf-form-input-icon fa fa-search" />
+            </label>
+          </div>
+
+          <div className="page-action-bar__spacer" />
+
+          <a className="btn btn-success" href="org/teams/new">
+            <i className="fa fa-plus" /> New team
+          </a>
+        </div>
+
+        <div className="admin-list-table">
+          <table className="filter-table filter-table--hover form-inline">
+            <thead>
+              <tr>
+                <th />
+                <th>Name</th>
+                <th>Email</th>
+                <th>Members</th>
+                <th style={{ width: '1%' }} />
+              </tr>
+            </thead>
+            <tbody>{teams.filteredTeams.map(team => this.renderTeamMember(team))}</tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  renderEmptyList() {
+    return (
+      <div className="page-container page-body">
+        <div className="empty-list-cta">
+          <div className="empty-list-cta__title">There are no Teams defiened yet</div>
+          <a className="empty-list-cta__button btn btn-xlarge btn-success" href="org/teams/new">
+            <i className="fa fa-plus" /> New team
+          </a>
+          <div className="empty-list-cta__pro-tip">
+            <i className="fa fa-rocket" /> ProTip: Something something.{' '}
+            <a className="text-link empty-list-cta-pro-tip-link">Link</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const { nav, teams } = this.props;
+    let view;
+
+    if (teams.filteredTeams.length > 0) {
+      view = this.renderTeamList(teams);
+    } else {
+      view = this.renderEmptyList();
+    }
+
     return (
       <div>
         <PageHeader model={nav as any} />
-        <div className="page-container page-body">
-          <div className="page-action-bar">
-            <div className="gf-form gf-form--grow">
-              <label className="gf-form--has-input-icon gf-form--grow">
-                <input
-                  type="text"
-                  className="gf-form-input"
-                  placeholder="Search teams"
-                  value={teams.search}
-                  onChange={this.onSearchQueryChange}
-                />
-                <i className="gf-form-input-icon fa fa-search" />
-              </label>
-            </div>
-
-            <div className="page-action-bar__spacer" />
-
-            <a className="btn btn-success" href="org/teams/new">
-              <i className="fa fa-plus" /> New team
-            </a>
-          </div>
-
-          <div className="admin-list-table">
-            <table className="filter-table filter-table--hover form-inline">
-              <thead>
-                <tr>
-                  <th />
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Members</th>
-                  <th style={{ width: '1%' }} />
-                </tr>
-              </thead>
-              <tbody>{teams.filteredTeams.map(team => this.renderTeamMember(team))}</tbody>
-            </table>
-          </div>
-        </div>
+        {view}
       </div>
     );
   }
