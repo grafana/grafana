@@ -3,6 +3,9 @@ import * as MultiStatPanel from '../types';
 import { getBGColor } from './utils';
 
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
+const BAR_WIDTH_FACTOR = 0.8;
+const BAR_PADDING = 10;
+const VALUE_PADDING_FACTOR = 1.2;
 
 export interface BarStatProps {
   width: number;
@@ -15,6 +18,7 @@ export interface BarStatProps {
   direction?: MultiStatPanel.PanelLayout;
   styleLeft?: string | number;
   fontSize?: number;
+  valueFontSize?: number;
 }
 
 export class BarStat extends React.PureComponent<BarStatProps> {
@@ -50,27 +54,28 @@ export class BarStat extends React.PureComponent<BarStatProps> {
       if (verticalDirection) {
         barContainerStyle.height = this.props.height;
         barContainerStyle.width = this.props.width;
-        barWidth = this.props.height * 0.8;
+        barWidth = this.props.height * BAR_WIDTH_FACTOR;
         barStyle.height = barWidth;
         barStyle.width = this.props.width;
         barContainerStyle.lineHeight = `${barWidth}px`;
       } else {
-        barWidth = this.props.width * 0.8;
+        barWidth = this.props.width * BAR_WIDTH_FACTOR;
         barStyle.width = barWidth;
-        barStyle.height = this.props.height - 10;
-        barContainerStyle.height = this.props.height - 10;
+        barStyle.height = this.props.height - BAR_PADDING;
         barContainerStyle.width = barWidth;
-        const valueOffset = barWidth / 4;
+        barContainerStyle.height = this.props.height - BAR_PADDING;
+        const valueOffset = this.props.valueFontSize * VALUE_PADDING_FACTOR;
         valueContainerStyle.bottom = valueOutOfBar ? this.props.height + valueOffset : 0;
         valueContainerStyle.width = barWidth;
-        barLabelStyle.bottom = 5;
-        barLabelStyle.left = barWidth / 2 - 10;
+        barLabelStyle.bottom = this.props.fontSize / 2;
+        barLabelStyle.left = (barWidth - this.props.fontSize) / 2;
       }
     }
 
     let labelFontSizePx, valueFontSizePx;
     if (this.props.fontSize) {
-      labelFontSizePx = valueFontSizePx = this.props.fontSize + 'px';
+      labelFontSizePx = this.props.fontSize + 'px';
+      valueFontSizePx = this.props.valueFontSize + 'px';
       barLabelStyle.fontSize = labelFontSizePx;
       valueStyle.fontSize = valueFontSizePx;
     }

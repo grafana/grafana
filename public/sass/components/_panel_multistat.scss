@@ -54,6 +54,7 @@
 .multistat-bar-container {
   padding: 0rem 0.4rem;
   display: flex;
+  white-space: nowrap;
 
   &--horizontal {
     display: block;
@@ -109,14 +110,5 @@
 .multistat-bar {
   .bar-label {
     padding-left: 0.5rem;
-    font-size: 1vw;
-  }
-
-  .bar-value {
-    font-size: 1vw;
-  }
-
-  .value-container {
-    font-size: 1vw;
   }
 }

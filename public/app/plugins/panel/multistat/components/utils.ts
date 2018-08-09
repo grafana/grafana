@@ -6,24 +6,20 @@ export function getBGColor(color: string, alpha = 0.3): string {
   return tc.toRgbString();
 }
 
-const fontSizeFactor = 1.0;
+const FONT_SIZE_FACTOR = 1.0;
 
-export function getFontSize(minTextCellWidth: number, elemHeight: number): number {
-  const maxTextWidthPercent = 100;
-  const maxTextHeightPercent = 40;
-  const textCellWidth = minTextCellWidth * maxTextWidthPercent / 100;
-  const textCellHeight = elemHeight * maxTextHeightPercent / 100;
-  const textCellSize = Math.min(textCellWidth, textCellHeight);
-  return Math.round(textCellSize * fontSizeFactor);
+export function getFontSize(text: string, elemWidth: number, elemHeight = +Infinity): number {
+  const MAX_TEXT_WIDTH = 100 / 100;
+  const MAX_TEXT_HEIGHT = 40 / 100;
+  const textLength = text.length || 1;
+  const textCellWidth = elemWidth * MAX_TEXT_WIDTH / textLength;
+  const textCellHeight = elemHeight * MAX_TEXT_HEIGHT;
+  const textCellSize = Math.min(textCellWidth, textCellHeight) * FONT_SIZE_FACTOR;
+  return Math.round(textCellSize);
 }
 
-export function isValuesOutOfBar(
-  elemWidth: number,
-  elemHeight: number,
-  minTextCellWidth: number,
-  textLength: number
-): boolean {
-  const maxTextLengthPercent = 90;
-  const textCellSize = getFontSize(minTextCellWidth, elemHeight) / fontSizeFactor;
-  return textCellSize * textLength > elemWidth * maxTextLengthPercent / 100;
+export function isValuesOutOfBar(elemWidth: number, fontSize: number, textLength: number): boolean {
+  const maxTextLength = 90 / 100;
+  const textWidth = fontSize * textLength / FONT_SIZE_FACTOR;
+  return textWidth > elemWidth * maxTextLength;
 }

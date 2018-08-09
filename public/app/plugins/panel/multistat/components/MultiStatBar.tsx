@@ -39,18 +39,28 @@ export function MultiStatBar(props: MultiStatBarProps) {
     direction = 'horizontal';
   }
 
-  const maxLabelLength = getMaxLabelLength(stats);
-  const maxValueLength = getMaxValueLength(stats);
-  const maxTotalLength = maxLabelLength + maxValueLength;
-  const minBarLength = _.min(barLengths);
-  const minTextCellWidth = _.min(
-    barLengths.map((barLength, i) => {
-      const totalTextLength = stats[i].label.length + stats[i].valueFormatted.length;
-      return barLength / totalTextLength;
-    })
-  );
-  const fontSize = getFontSize(minTextCellWidth, barWidth);
-  const valueOutOfBar = isValuesOutOfBar(minBarLength, barWidth, minTextCellWidth, maxTotalLength);
+  const fontSizes = barLengths.map((barLength, i) => {
+    const text = direction === 'horizontal' ? stats[i].label : stats[i].label + stats[i].valueFormatted;
+    return getFontSize(text, barLength, barWidth);
+  });
+  const fontSize = _.min(fontSizes);
+  let valueFontSize = fontSize;
+  if (direction === 'horizontal') {
+    const valueFontSizes = stats.map(s => {
+      return getFontSize(s.valueFormatted, barWidth);
+    });
+    valueFontSize = _.min(valueFontSizes.concat(fontSize));
+  }
+
+  let valueOutOfBar = false;
+  barLengths.forEach((barLength, i) => {
+    const text = direction === 'horizontal' ? stats[i].label : stats[i].label + stats[i].valueFormatted;
+    const textLength = text.length;
+    const isOutOfBar = isValuesOutOfBar(barLength, fontSize, textLength);
+    if (isOutOfBar) {
+      valueOutOfBar = true;
+    }
+  });
 
   const statElements = stats.map((stat, index) => {
     const { label, value, valueFormatted } = stat;
@@ -64,7 +74,15 @@ export function MultiStatBar(props: MultiStatBarProps) {
       barSize = { w: barLengths[index], h: barWidth };
     }
 
-    const optionalStyles: Partial<BarStatProps> = { color, colorValue, direction, valueOutOfBar, styleLeft, fontSize };
+    const optionalStyles: Partial<BarStatProps> = {
+      color,
+      colorValue,
+      direction,
+      valueOutOfBar,
+      styleLeft,
+      fontSize,
+      valueFontSize,
+    };
 
     return (
       <BarStat
@@ -82,14 +100,4 @@ export function MultiStatBar(props: MultiStatBarProps) {
   const className = `multistat-bars--${classSuffix}`;
 
   return <div className={className}>{statElements}</div>;
-}
-
-function getMaxLabelLength(stats: Series.SeriesStat[]): number {
-  const labels = stats.map(s => s.label);
-  return _.max(labels.map(l => l.length));
-}
-
-function getMaxValueLength(stats: Series.SeriesStat[]): number {
-  const values = stats.map(s => s.valueFormatted);
-  return _.max(values.map(v => v.length));
 }
