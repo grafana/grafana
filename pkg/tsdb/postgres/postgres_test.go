@@ -311,6 +311,7 @@ func TestPostgres(t *testing.T) {
 			query := &tsdb.TsdbQuery{
 				Queries: []*tsdb.Query{
 					{
+						DataSource: &models.DataSource{JsonData: simplejson.New()},
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT $__timeGroup(time, '5m', previous), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",

@@ -132,9 +132,9 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 
 		if m.query.DataSource.JsonData.Get("timescaledb").MustBool() {
-			return fmt.Sprintf("time_bucket('%vs',%s) AS time", interval.Seconds(), args[0]), nil
+			return fmt.Sprintf("time_bucket('%vs',%s)", interval.Seconds(), args[0]), nil
 		} else {
-			return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v AS time", args[0], interval.Seconds(), interval.Seconds()), nil
+			return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 		}
 	case "__timeGroupAlias":
 		tg, err := m.evaluateMacro("__timeGroup", args)

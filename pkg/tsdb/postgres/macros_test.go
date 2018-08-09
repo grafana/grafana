@@ -92,7 +92,7 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(queryTS, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "GROUP BY time_bucket('300s',time_column) AS time")
+				So(sql, ShouldEqual, "GROUP BY time_bucket('300s',time_column)")
 			})
 
 			Convey("interpolate __timeGroup function with spaces between args and TimescaleDB enabled", func() {
@@ -100,7 +100,7 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(queryTS, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "GROUP BY time_bucket('300s',time_column) AS time")
+				So(sql, ShouldEqual, "GROUP BY time_bucket('300s',time_column)")
 			})
 
 			Convey("interpolate __timeTo function", func() {
