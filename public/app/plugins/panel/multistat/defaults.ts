@@ -9,6 +9,8 @@ const panelDefaults: MultiStatPanel.PanelOptions = {
   cacheTimeout: null,
   format: 'none',
   valueName: 'avg',
+  prefix: '',
+  postfix: '',
   prefixFontSize: '50%',
   valueFontSize: '80%',
   postfixFontSize: '50%',

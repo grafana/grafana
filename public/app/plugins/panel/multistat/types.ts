@@ -6,6 +6,8 @@ export interface PanelOptions extends Panel.MetricPanelOptions {
   format?: string;
   nullPointMode?: Panel.NullPointMode;
   valueName?: string;
+  prefix?: string;
+  postfix?: string;
   tableColumnValue?: string;
   tableColumnLabel?: string;
   prefixFontSize?: string;

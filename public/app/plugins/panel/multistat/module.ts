@@ -6,13 +6,14 @@ import defaults from './defaults';
 import { MetricsPanelCtrl } from '../../sdk';
 import { convertTSDataToMultistat, convertTableDataToMultistat } from './data_handler';
 import { MultiStat } from './components/MultiStat';
+import * as Series from 'app/types/series';
 
 class MultiStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
   dataType = 'timeseries';
   series: any[];
-  data: any;
+  data: Series.SeriesStat[];
   tableColumnOptions: any;
   fontSizes: any[];
   unitFormats: any[];
@@ -21,8 +22,9 @@ class MultiStatCtrl extends MetricsPanelCtrl {
   viewModeOptions: any[] = defaults.viewModeOptions;
 
   /** @ngInject */
-  constructor($scope, $injector) {
+  constructor($scope, $injector, templateSrv) {
     super($scope, $injector);
+    this.templateSrv = templateSrv;
 
     _.defaults(this.panel, defaults.panelDefaults);
 
@@ -52,7 +54,6 @@ class MultiStatCtrl extends MetricsPanelCtrl {
       this.data = convertTSDataToMultistat(dataList, this.panel);
       // this.setValues();
     }
-    // this.data = data;
     this.render();
   }
 
@@ -84,6 +85,19 @@ class MultiStatCtrl extends MetricsPanelCtrl {
     }
   }
 
+  setValuePrefixAndPostfix(data) {
+    data.forEach(seriesStat => {
+      if (!seriesStat._valueFormatted) {
+        // Backup original value
+        seriesStat._valueFormatted = seriesStat.valueFormatted;
+      }
+      let value = this.panel.prefix ? this.templateSrv.replace(this.panel.prefix, seriesStat.scopedVars) : '';
+      value += seriesStat._valueFormatted;
+      value += this.panel.postfix ? this.templateSrv.replace(this.panel.postfix, seriesStat.scopedVars) : '';
+      seriesStat.valueFormatted = value;
+    });
+  }
+
   setValueMapping(data) {}
 
   setUnitFormat(subItem) {
@@ -107,6 +121,7 @@ class MultiStatCtrl extends MetricsPanelCtrl {
       const width = multistatElem.width();
       const height = multistatElem.height();
       scope.size = { w: width, h: height };
+      ctrl.setValuePrefixAndPostfix(ctrl.data);
       renderMultiStatComponent();
     }
 
