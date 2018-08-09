@@ -27,6 +27,7 @@ import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
+import { updateLegendValues } from 'app/core/time_series2';
 
 let ctx = <any>{};
 let ctrl;
@@ -144,8 +145,8 @@ describe('grafanaGraph', function() {
     }
     link.data = ctx.data;
     // console.log(link);
-
     link.render_panel();
+    link.buildFlotPairs(link.data);
     ctx.plotData = ctrl.plot.mock.calls[0][1];
 
     ctx.plotOptions = ctrl.plot.mock.calls[0][2];
@@ -270,6 +271,7 @@ describe('grafanaGraph', function() {
 
     it('should apply axis transform, autoscaling (if necessary) and ticks', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
+      console.log(axisAutoscale);
       expect(axisAutoscale.transform(100)).toBe(2);
       expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBeCloseTo(0.001);
