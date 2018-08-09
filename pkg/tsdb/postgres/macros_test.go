@@ -17,7 +17,7 @@ func TestMacroEngine(t *testing.T) {
 		engine := newPostgresMacroEngine()
 		query := &tsdb.Query{DataSource: &models.DataSource{JsonData: simplejson.New()}}
 		queryTS := &tsdb.Query{DataSource: &models.DataSource{JsonData: simplejson.New()}}
-		queryTS.DataSource.JsonData.Set("timescaledb", "enabled")
+		queryTS.DataSource.JsonData.Set("timescaledb", true)
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
 			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)

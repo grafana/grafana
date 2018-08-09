@@ -42,13 +42,7 @@
 
 <div class="gf-form-group">
 	<div class="gf-form">
-		<label class="gf-form-label width-7">TimescaleDB</label>
-		<div class="gf-form-select-wrapper max-width-8 gf-form-select-wrapper--has-help-icon">
-			<select class="gf-form-input" ng-model="ctrl.current.jsonData.timescaledb" ng-options="mode for mode in ['auto', 'enabled', 'disabled']" ng-init="ctrl.current.jsonData.timescaledb=ctrl.current.jsonData.timescaledb || 'auto'"></select>
-			<info-popover mode="right-absolute">
-				This option determines whether TimescaleDB features will be used.
-			</info-popover>
-		</div>
+		<gf-form-switch class="gf-form" label="TimescaleDB" tooltip="Use TimescaleDB features in Grafana" label-class="width-9" checked="ctrl.current.jsonData.timescaledb" switch-class="max-width-6"></gf-form-switch>
 	</div>
 </div>
 

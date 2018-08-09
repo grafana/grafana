@@ -131,7 +131,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			}
 		}
 
-		if m.query.DataSource.JsonData.Get("timescaledb").MustString("auto") == "enabled" {
+		if m.query.DataSource.JsonData.Get("timescaledb").MustBool() {
 			return fmt.Sprintf("time_bucket('%vs',%s) AS time", interval.Seconds(), args[0]), nil
 		} else {
 			return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v AS time", args[0], interval.Seconds(), interval.Seconds()), nil
