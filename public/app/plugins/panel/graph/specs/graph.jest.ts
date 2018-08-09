@@ -131,12 +131,6 @@ describe('grafanaGraph', function() {
     ctx.plotOptions = ctrl.plot.mock.calls[0][2];
   };
 
-  describe('random test', () => {
-    it('should work', () => {
-      expect(true).toBe(true);
-    });
-  });
-
   describe('simple lines options', () => {
     beforeEach(() => {
       setupCtx(() => {
