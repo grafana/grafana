@@ -169,6 +169,10 @@ export class Explore extends React.Component<any, IExploreState> {
     const historyKey = `grafana.explore.history.${datasourceId}`;
     const history = store.getObject(historyKey, []);
 
+    if (datasource.init) {
+      datasource.init();
+    }
+
     this.setState(
       {
         datasource,

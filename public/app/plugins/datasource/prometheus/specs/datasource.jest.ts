@@ -4,6 +4,7 @@ import q from 'q';
 import {
   alignRange,
   determineQueryHints,
+  extractRuleMappingFromGroups,
   PrometheusDatasource,
   prometheusSpecialRegexEscape,
   prometheusRegularEscape,
@@ -226,6 +227,36 @@ describe('PrometheusDatasource', () => {
           },
         },
       });
+    });
+  });
+
+  describe('extractRuleMappingFromGroups()', () => {
+    it('returns empty mapping for no rule groups', () => {
+      expect(extractRuleMappingFromGroups([])).toEqual({});
+    });
+
+    it('returns a mapping for recording rules only', () => {
+      const groups = [
+        {
+          rules: [
+            {
+              name: 'HighRequestLatency',
+              query: 'job:request_latency_seconds:mean5m{job="myjob"} > 0.5',
+              type: 'alerting',
+            },
+            {
+              name: 'job:http_inprogress_requests:sum',
+              query: 'sum(http_inprogress_requests) by (job)',
+              type: 'recording',
+            },
+          ],
+          file: '/rules.yaml',
+          interval: 60,
+          name: 'example',
+        },
+      ];
+      const mapping = extractRuleMappingFromGroups(groups);
+      expect(mapping).toEqual({ 'job:http_inprogress_requests:sum': 'sum(http_inprogress_requests) by (job)' });
     });
   });
 

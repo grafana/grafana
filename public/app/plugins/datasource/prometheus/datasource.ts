@@ -82,7 +82,7 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
   return parts.join('');
 }
 
-export function determineQueryHints(series: any[]): any[] {
+export function determineQueryHints(series: any[], datasource?: any): any[] {
   const hints = series.map((s, i) => {
     const query: string = s.query;
     const index: number = s.responseIndex;
@@ -138,10 +138,54 @@ export function determineQueryHints(series: any[]): any[] {
       }
     }
 
+    // Check for recording rules expansion
+    if (datasource && datasource.ruleMappings) {
+      const mapping = datasource.ruleMappings;
+      const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
+        if (query.search(ruleName) > -1) {
+          return {
+            ...acc,
+            [ruleName]: mapping[ruleName],
+          };
+        }
+        return acc;
+      }, {});
+      if (_.size(mappingForQuery) > 0) {
+        const label = 'Query contains recording rules.';
+        return {
+          label,
+          index,
+          fix: {
+            label: 'Expand rules',
+            action: {
+              type: 'EXPAND_RULES',
+              query,
+              index,
+              mapping: mappingForQuery,
+            },
+          },
+        };
+      }
+    }
+
     // No hint found
     return null;
   });
   return hints;
+}
+
+export function extractRuleMappingFromGroups(groups: any[]) {
+  return groups.reduce(
+    (mapping, group) =>
+      group.rules.filter(rule => rule.type === 'recording').reduce(
+        (acc, rule) => ({
+          ...acc,
+          [rule.name]: rule.query,
+        }),
+        mapping
+      ),
+    {}
+  );
 }
 
 export function prometheusRegularEscape(value) {
@@ -162,6 +206,7 @@ export class PrometheusDatasource {
   type: string;
   editorSrc: string;
   name: string;
+  ruleMappings: { [index: string]: string };
   supportsExplore: boolean;
   supportMetrics: boolean;
   url: string;
@@ -189,6 +234,11 @@ export class PrometheusDatasource {
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.resultTransformer = new ResultTransformer(templateSrv);
+    this.ruleMappings = {};
+  }
+
+  init() {
+    this.loadRules();
   }
 
   _request(url, data?, options?: any) {
@@ -312,7 +362,7 @@ export class PrometheusDatasource {
         result = [...result, ...series];
 
         if (queries[index].hinting) {
-          const queryHints = determineQueryHints(series);
+          const queryHints = determineQueryHints(series, this);
           hints = [...hints, ...queryHints];
         }
       });
@@ -525,6 +575,21 @@ export class PrometheusDatasource {
     return state;
   }
 
+  loadRules() {
+    this.metadataRequest('/api/v1/rules')
+      .then(res => res.data || res.json())
+      .then(body => {
+        const groups = _.get(body, ['data', 'groups']);
+        if (groups) {
+          this.ruleMappings = extractRuleMappingFromGroups(groups);
+        }
+      })
+      .catch(e => {
+        console.log('Rules API is experimental. Ignore next error.');
+        console.error(e);
+      });
+  }
+
   modifyQuery(query: string, action: any): string {
     switch (action.type) {
       case 'ADD_FILTER': {
@@ -535,6 +600,14 @@ export class PrometheusDatasource {
       }
       case 'ADD_RATE': {
         return `rate(${query}[5m])`;
+      }
+      case 'EXPAND_RULES': {
+        const mapping = action.mapping;
+        if (mapping) {
+          const ruleNames = Object.keys(mapping);
+          const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\()`, 'ig');
+          return query.replace(rulesRegex, (match, pre, name, post) => mapping[name]);
+        }
       }
       default:
         return query;

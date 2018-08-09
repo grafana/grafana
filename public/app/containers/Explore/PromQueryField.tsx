@@ -28,6 +28,7 @@ const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 const METRIC_MARK = 'metric';
 const PRISM_LANGUAGE = 'promql';
+export const RECORDING_RULES_GROUP = '__recording_rules__';
 
 export const wrapLabel = (label: string) => ({ label });
 export const setFunctionMove = (suggestion: Suggestion): Suggestion => {
@@ -52,7 +53,22 @@ export function addHistoryMetadata(item: Suggestion, history: any[]): Suggestion
 }
 
 export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): CascaderOption[] {
-  return _.chain(metrics)
+  // Filter out recording rules and insert as first option
+  const ruleRegex = /:\w+:/;
+  const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
+  const rulesOption = {
+    label: 'Recording rules',
+    value: RECORDING_RULES_GROUP,
+    children: ruleNames
+      .slice()
+      .sort()
+      .map(name => ({ label: name, value: name })),
+  };
+
+  const options = ruleNames.length > 0 ? [rulesOption] : [];
+
+  const metricsOptions = _.chain(metrics)
+    .filter(metric => !ruleRegex.test(metric))
     .groupBy(metric => metric.split(delimiter)[0])
     .map((metricsForPrefix: string[], prefix: string): CascaderOption => {
       const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
@@ -65,6 +81,8 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
     })
     .sortBy('label')
     .value();
+
+  return [...options, ...metricsOptions];
 }
 
 export function willApplySuggestion(
