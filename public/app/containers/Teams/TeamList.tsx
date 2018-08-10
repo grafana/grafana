@@ -6,6 +6,7 @@ import { NavStore } from 'app/stores/NavStore/NavStore';
 import { TeamsStore, ITeam } from 'app/stores/TeamsStore/TeamsStore';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 interface Props {
   nav: typeof NavStore.Type;
@@ -106,16 +107,18 @@ export class TeamList extends React.Component<Props, any> {
   renderEmptyList() {
     return (
       <div className="page-container page-body">
-        <div className="empty-list-cta">
-          <div className="empty-list-cta__title">You haven't created any teams yet.</div>
-          <a className="empty-list-cta__button btn btn-xlarge btn-success" href="org/teams/new">
-            <i className="fa fa-plus" /> New team
-          </a>
-          <div className="empty-list-cta__pro-tip">
-            <i className="fa fa-rocket" /> ProTip: Something something.{' '}
-            <a className="text-link empty-list-cta-pro-tip-link">Link</a>
-          </div>
-        </div>
+        <EmptyListCTA
+          model={{
+            title: "You haven't created any teams yet.",
+            buttonIcon: 'fa fa-plus',
+            buttonLink: 'org/teams/new',
+            buttonTitle: ' New team',
+            proTip: 'Something something.',
+            proTipLink: '#',
+            proTipLinkTitle: 'Learn more',
+            proTipTarget: '_blank',
+          }}
+        />
       </div>
     );
   }
