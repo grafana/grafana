@@ -13,6 +13,8 @@ import { convertToHeatMap, convertToCards, histogramToHeatmap, calculateBucketSi
 describe('grafanaHeatmap', function() {
   //   beforeEach(angularMocks.module('grafana.core'));
 
+  let scope = <any>{};
+
   function heatmapScenario(desc, func, elementWidth = 500) {
     describe(desc, function() {
       var ctx: any = {};
@@ -89,7 +91,7 @@ describe('grafanaHeatmap', function() {
             },
           };
 
-          var scope = $rootScope.$new();
+          // var scope = $rootScope.$new();
           scope.ctrl = ctrl;
 
           ctx.series = [];
@@ -131,20 +133,21 @@ describe('grafanaHeatmap', function() {
           ctx.data.cards = cards;
           ctx.data.cardStats = cardStats;
 
-          let elemHtml = `
-          <div class="heatmap-wrapper">
-            <div class="heatmap-canvas-wrapper">
-              <div class="heatmap-panel" style='width:${elementWidth}px'></div>
-            </div>
-          </div>`;
+          // let elemHtml = `
+          // <div class="heatmap-wrapper">
+          //   <div class="heatmap-canvas-wrapper">
+          //     <div class="heatmap-panel" style='width:${elementWidth}px'></div>
+          //   </div>
+          // </div>`;
 
-          var element = $.parseHTML(elemHtml);
+          // var element = $.parseHTML(elemHtml);
           // $compile(element)(scope);
           // scope.$digest();
 
           ctrl.data = ctx.data;
-          ctx.element = element;
-          rendering(scope, $(element), [], ctrl);
+          // ctx.element = element;
+          let elem = {};
+          let render = new rendering(scope, elem, [], ctrl);
           ctrl.events.emit('render');
         });
       };
