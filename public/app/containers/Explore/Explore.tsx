@@ -564,6 +564,7 @@ export class Explore extends React.Component<any, IExploreState> {
               onClickHintFix={this.onModifyQueries}
               onExecuteQuery={this.onSubmit}
               onRemoveQueryRow={this.onRemoveQueryRow}
+              supportsLogs={supportsLogs}
             />
             <div className="result-options">
               {supportsGraph ? (
