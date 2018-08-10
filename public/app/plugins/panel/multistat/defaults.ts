@@ -14,6 +14,7 @@ const panelDefaults: MultiStatPanel.PanelOptions = {
   // prefixFontSize: '50%',
   // valueFontSize: '80%',
   // postfixFontSize: '50%',
+  decimals: null,
   thresholds: [],
   colorBackground: false,
   colorValue: false,

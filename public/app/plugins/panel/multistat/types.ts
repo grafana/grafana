@@ -10,9 +10,10 @@ export interface PanelOptions extends Panel.MetricPanelOptions {
   postfix?: string;
   tableColumnValue?: string;
   tableColumnLabel?: string;
-  prefixFontSize?: string;
-  valueFontSize?: string;
-  postfixFontSize?: string;
+  // prefixFontSize?: string;
+  // valueFontSize?: string;
+  // postfixFontSize?: string;
+  decimals: number;
   colorBackground?: boolean;
   colorValue?: boolean;
   sparkline?: {

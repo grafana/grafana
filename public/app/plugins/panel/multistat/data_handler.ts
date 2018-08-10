@@ -53,8 +53,8 @@ export function convertToSeriesStat(ts: TimeSeries, panel: MultistatPanelModel):
     alias: ts.alias,
   };
 
-  let lastPoint = _.last(ts.datapoints);
-  let lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
+  const lastPoint = _.last(ts.datapoints);
+  const lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
 
   if (panel.valueName === 'name') {
     seriesStat.value = 0;
@@ -65,7 +65,7 @@ export function convertToSeriesStat(ts: TimeSeries, panel: MultistatPanelModel):
     seriesStat.valueFormatted = _.escape(lastValue);
     seriesStat.valueRounded = 0;
   } else if (panel.valueName === 'last_time') {
-    let formatFunc = kbn.valueFormats[panel.format];
+    const formatFunc = kbn.valueFormats[panel.format];
     seriesStat.value = lastPoint[1];
     seriesStat.valueRounded = seriesStat.value;
     seriesStat.valueFormatted = formatFunc(seriesStat.value, this.dashboard.isTimezoneUtc());
@@ -74,7 +74,11 @@ export function convertToSeriesStat(ts: TimeSeries, panel: MultistatPanelModel):
     seriesStat.flotpairs = ts.flotpairs;
 
     let decimalInfo = getDecimalsForValue(seriesStat.value);
-    let formatFunc = kbn.valueFormats[panel.format];
+    if (_.isNumber(panel.decimals)) {
+      decimalInfo = { decimals: panel.decimals, scaledDecimals: null };
+    }
+
+    const formatFunc = kbn.valueFormats[panel.format];
     seriesStat.valueFormatted = formatFunc(seriesStat.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
     seriesStat.valueRounded = kbn.roundValue(seriesStat.value, decimalInfo.decimals);
   }
@@ -148,7 +152,10 @@ export function convertToTableStat(table, panel) {
       tableStat.value = 0;
       tableStat.valueRounded = 0;
     } else {
-      const decimalInfo = getDecimalsForValue(tableStat.value);
+      let decimalInfo = getDecimalsForValue(tableStat.value);
+      if (_.isNumber(panel.decimals)) {
+        decimalInfo = { decimals: panel.decimals, scaledDecimals: null };
+      }
       const formatFunc = kbn.valueFormats[panel.format];
       tableStat.valueFormatted = formatFunc(
         row[panel.tableColumnValue],
