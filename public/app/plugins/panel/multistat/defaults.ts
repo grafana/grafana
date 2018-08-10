@@ -7,6 +7,8 @@ const panelDefaults: MultiStatPanel.PanelOptions = {
   interval: null,
   targets: [{}],
   cacheTimeout: null,
+  layout: 'horizontal',
+  viewMode: 'stats',
   format: 'none',
   valueName: 'avg',
   prefix: '',
@@ -16,16 +18,14 @@ const panelDefaults: MultiStatPanel.PanelOptions = {
   // postfixFontSize: '50%',
   decimals: null,
   thresholds: [],
-  colorBackground: false,
-  colorValue: false,
+  colorBackground: true,
+  colorValue: true,
   sparkline: {
     show: false,
     // full: false,
     // lineColor: 'rgb(31, 120, 193)',
     // fillColor: 'rgba(31, 118, 189, 0.18)',
   },
-  layout: 'horizontal',
-  viewMode: 'stats',
 };
 
 const valueNameOptions = [
