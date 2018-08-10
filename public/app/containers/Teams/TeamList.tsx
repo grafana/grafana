@@ -107,7 +107,7 @@ export class TeamList extends React.Component<Props, any> {
     return (
       <div className="page-container page-body">
         <div className="empty-list-cta">
-          <div className="empty-list-cta__title">There are no Teams defiened yet</div>
+          <div className="empty-list-cta__title">You haven't created any teams yet.</div>
           <a className="empty-list-cta__button btn btn-xlarge btn-success" href="org/teams/new">
             <i className="fa fa-plus" /> New team
           </a>
