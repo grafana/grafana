@@ -36,30 +36,21 @@ class Link {
   eventManager: EventManager;
   thresholdManager: ThresholdManager;
 
-  constructor(private scope, private elem, timeSrv) {
+  constructor(private scope, private elem, private timeSrv) {
     this.ctrl = scope.ctrl;
     this.dashboard = this.ctrl.dashboard;
     this.panel = this.ctrl.panel;
     this.annotations = [];
-    // this.data;
-    // this.plot;
-    // this.sortedSeries;
+
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
-    this.tooltip = new GraphTooltip(elem, this.ctrl.dashboard, this.scope, () => {
+    this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });
 
     // panel events
-    this.ctrl.events.on('panel-teardown', () => {
-      this.thresholdManager = null;
-
-      if (this.plot) {
-        this.plot.destroy();
-        this.plot = null;
-      }
-    });
+    this.ctrl.events.on('panel-teardown', this.onPanelteardown.bind(this));
 
     /**
      * Split graph rendering into two parts.
@@ -67,96 +58,109 @@ class Link {
      * (see ctrl.events.on('render') in legend.ts).
      * When legend is rendered it emits 'legend-rendering-complete' and graph rendered.
      */
-    this.ctrl.events.on('render', renderData => {
-      this.data = renderData || this.data;
-      if (!this.data) {
-        return;
-      }
-      this.annotations = this.ctrl.annotations || [];
-      this.buildFlotPairs(this.data);
-      const graphHeight = elem.height();
-      updateLegendValues(this.data, this.panel, graphHeight);
-
-      this.ctrl.events.emit('render-legend');
-    });
-
-    this.ctrl.events.on('legend-rendering-complete', () => {
-      this.render_panel();
-    });
+    this.ctrl.events.on('render', this.onRender.bind(this));
+    this.ctrl.events.on('legend-rendering-complete', this.onLegendRenderingComplete.bind(this));
 
     // global events
-    appEvents.on(
-      'graph-hover',
-      evt => {
-        // ignore other graph hover events if shared tooltip is disabled
-        if (!this.dashboard.sharedTooltipModeEnabled()) {
-          return;
-        }
+    appEvents.on('graph-hover', this.onGraphHover.bind(this), scope);
 
-        // ignore if we are the emitter
-        if (!this.plot || evt.panel.id === this.panel.id || this.ctrl.otherPanelInFullscreenMode()) {
-          return;
-        }
+    appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
 
-        this.tooltip.show(evt.pos);
-      },
-      scope
-    );
+    this.elem.bind('plotselected', this.onPlotSelected.bind(this));
 
-    appEvents.on(
-      'graph-hover-clear',
-      (event, info) => {
-        if (this.plot) {
-          this.tooltip.clear(this.plot);
-        }
-      },
-      scope
-    );
+    this.elem.bind('plotclick', this.onPlotClick.bind(this));
+    scope.$on('$destroy', this.onScopeDestroy.bind(this));
+  }
 
-    elem.bind('plotselected', function(event, ranges) {
-      if (this.panel.xaxis.mode !== 'time') {
-        // Skip if panel in histogram or series mode
-        this.plot.clearSelection();
-        return;
-      }
+  onRender(renderData) {
+    this.data = renderData || this.data;
+    if (!this.data) {
+      return;
+    }
+    this.annotations = this.ctrl.annotations || [];
+    this.buildFlotPairs(this.data);
+    const graphHeight = this.elem.height();
+    updateLegendValues(this.data, this.panel, graphHeight);
 
-      if ((ranges.ctrlKey || ranges.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
-        // Add annotation
-        setTimeout(() => {
-          this.eventManager.updateTime(ranges.xaxis);
-        }, 100);
-      } else {
-        scope.$apply(function() {
-          timeSrv.setTime({
-            from: moment.utc(ranges.xaxis.from),
-            to: moment.utc(ranges.xaxis.to),
-          });
+    this.ctrl.events.emit('render-legend');
+  }
+
+  onGraphHover(evt) {
+    // ignore other graph hover events if shared tooltip is disabled
+    if (!this.dashboard.sharedTooltipModeEnabled()) {
+      return;
+    }
+
+    // ignore if we are the emitter
+    if (!this.plot || evt.panel.id === this.panel.id || this.ctrl.otherPanelInFullscreenMode()) {
+      return;
+    }
+
+    this.tooltip.show(evt.pos);
+  }
+
+  onPanelteardown() {
+    this.thresholdManager = null;
+
+    if (this.plot) {
+      this.plot.destroy();
+      this.plot = null;
+    }
+  }
+
+  onLegendRenderingComplete() {
+    this.render_panel();
+  }
+
+  onGraphHoverClear(event, info) {
+    if (this.plot) {
+      this.tooltip.clear(this.plot);
+    }
+  }
+
+  onPlotSelected(event, ranges) {
+    if (this.panel.xaxis.mode !== 'time') {
+      // Skip if panel in histogram or series mode
+      this.plot.clearSelection();
+      return;
+    }
+
+    if ((ranges.ctrlKey || ranges.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
+      // Add annotation
+      setTimeout(() => {
+        this.eventManager.updateTime(ranges.xaxis);
+      }, 100);
+    } else {
+      this.scope.$apply(() => {
+        this.timeSrv.setTime({
+          from: moment.utc(ranges.xaxis.from),
+          to: moment.utc(ranges.xaxis.to),
         });
-      }
-    });
+      });
+    }
+  }
 
-    elem.bind('plotclick', function(event, pos, item) {
-      if (this.panel.xaxis.mode !== 'time') {
-        // Skip if panel in histogram or series mode
-        return;
-      }
+  onPlotClick(event, pos, item) {
+    if (this.panel.xaxis.mode !== 'time') {
+      // Skip if panel in histogram or series mode
+      return;
+    }
 
-      if ((pos.ctrlKey || pos.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
-        // Skip if range selected (added in "plotselected" event handler)
-        let isRangeSelection = pos.x !== pos.x1;
-        if (!isRangeSelection) {
-          setTimeout(() => {
-            this.eventManager.updateTime({ from: pos.x, to: null });
-          }, 100);
-        }
+    if ((pos.ctrlKey || pos.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
+      // Skip if range selected (added in "plotselected" event handler)
+      let isRangeSelection = pos.x !== pos.x1;
+      if (!isRangeSelection) {
+        setTimeout(() => {
+          this.eventManager.updateTime({ from: pos.x, to: null });
+        }, 100);
       }
-    });
-    let tooltip = this.tooltip;
-    scope.$on('$destroy', function() {
-      tooltip.destroy();
-      elem.off();
-      elem.remove();
-    });
+    }
+  }
+
+  onScopeDestroy() {
+    this.tooltip.destroy();
+    this.elem.off();
+    this.elem.remove();
   }
 
   shouldAbortRender() {
