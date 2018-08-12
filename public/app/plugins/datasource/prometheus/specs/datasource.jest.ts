@@ -3,6 +3,8 @@ import moment from 'moment';
 import q from 'q';
 import {
   alignRange,
+  determineQueryHints,
+  extractRuleMappingFromGroups,
   PrometheusDatasource,
   prometheusSpecialRegexEscape,
   prometheusRegularEscape,
@@ -122,7 +124,7 @@ describe('PrometheusDatasource', () => {
       ctx.ds.performTimeSeriesQuery = jest.fn().mockReturnValue(responseMock);
       return ctx.ds.query(ctx.query).then(result => {
         let results = result.data;
-        return expect(results).toEqual(expected);
+        return expect(results).toMatchObject(expected);
       });
     });
 
@@ -177,6 +179,84 @@ describe('PrometheusDatasource', () => {
       const range = alignRange(1, 5, 3);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(6);
+    });
+  });
+
+  describe('determineQueryHints()', () => {
+    it('returns no hints for no series', () => {
+      expect(determineQueryHints([])).toEqual([]);
+    });
+
+    it('returns no hints for empty series', () => {
+      expect(determineQueryHints([{ datapoints: [], query: '' }])).toEqual([null]);
+    });
+
+    it('returns no hint for a monotonously decreasing series', () => {
+      const series = [{ datapoints: [[23, 1000], [22, 1001]], query: 'metric', responseIndex: 0 }];
+      const hints = determineQueryHints(series);
+      expect(hints).toEqual([null]);
+    });
+
+    it('returns a rate hint for a monotonously increasing series', () => {
+      const series = [{ datapoints: [[23, 1000], [24, 1001]], query: 'metric', responseIndex: 0 }];
+      const hints = determineQueryHints(series);
+      expect(hints.length).toBe(1);
+      expect(hints[0]).toMatchObject({
+        label: 'Time series is monotonously increasing.',
+        index: 0,
+        fix: {
+          action: {
+            type: 'ADD_RATE',
+            query: 'metric',
+          },
+        },
+      });
+    });
+
+    it('returns a histogram hint for a bucket series', () => {
+      const series = [{ datapoints: [[23, 1000]], query: 'metric_bucket', responseIndex: 0 }];
+      const hints = determineQueryHints(series);
+      expect(hints.length).toBe(1);
+      expect(hints[0]).toMatchObject({
+        label: 'Time series has buckets, you probably wanted a histogram.',
+        index: 0,
+        fix: {
+          action: {
+            type: 'ADD_HISTOGRAM_QUANTILE',
+            query: 'metric_bucket',
+          },
+        },
+      });
+    });
+  });
+
+  describe('extractRuleMappingFromGroups()', () => {
+    it('returns empty mapping for no rule groups', () => {
+      expect(extractRuleMappingFromGroups([])).toEqual({});
+    });
+
+    it('returns a mapping for recording rules only', () => {
+      const groups = [
+        {
+          rules: [
+            {
+              name: 'HighRequestLatency',
+              query: 'job:request_latency_seconds:mean5m{job="myjob"} > 0.5',
+              type: 'alerting',
+            },
+            {
+              name: 'job:http_inprogress_requests:sum',
+              query: 'sum(http_inprogress_requests) by (job)',
+              type: 'recording',
+            },
+          ],
+          file: '/rules.yaml',
+          interval: 60,
+          name: 'example',
+        },
+      ];
+      const mapping = extractRuleMappingFromGroups(groups);
+      expect(mapping).toEqual({ 'job:http_inprogress_requests:sum': 'sum(http_inprogress_requests) by (job)' });
     });
   });
 
