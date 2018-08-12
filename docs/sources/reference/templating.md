@@ -277,7 +277,7 @@ This variable is only available in the Singlestat panel and can be used in the p
 
 > Only available in Grafana v5.3+
 
-Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond representation called `$__range_ms`.
+Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
 ## Repeating Panels
 
