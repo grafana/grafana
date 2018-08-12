@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -567,4 +568,24 @@ func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (n
 	}
 
 	return value, nil
+}
+
+func SetupFillmode(query *Query, interval time.Duration, fillmode string) error {
+	query.Model.Set("fill", true)
+	query.Model.Set("fillInterval", interval.Seconds())
+	switch fillmode {
+	case "NULL":
+		query.Model.Set("fillMode", "null")
+	case "previous":
+		query.Model.Set("fillMode", "previous")
+	default:
+		query.Model.Set("fillMode", "value")
+		floatVal, err := strconv.ParseFloat(fillmode, 64)
+		if err != nil {
+			return fmt.Errorf("error parsing fill value %v", fillmode)
+		}
+		query.Model.Set("fillValue", floatVal)
+	}
+
+	return nil
 }
