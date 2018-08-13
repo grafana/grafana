@@ -190,6 +190,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   timeColumnChanged() {
     this.target.timeColumn = this.timeColumnSegment.value;
+    this.datasource.metricFindQuery(this.metaBuilder.buildDatatypeQuery(this.target.timeColumn)).then(result => {
+      if (result.length === 1) {
+        this.target.timeColumnType = result[0];
+      }
+    });
     this.panelCtrl.refresh();
   }
 
