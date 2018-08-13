@@ -19,6 +19,7 @@ export interface BarStatProps {
   styleLeft?: string | number;
   fontSize?: number;
   valueFontSize?: number;
+  verticalLabel?: boolean;
 }
 
 export class BarStat extends React.PureComponent<BarStatProps> {
@@ -40,7 +41,7 @@ export class BarStat extends React.PureComponent<BarStatProps> {
     const valueColor = this.props.color || DEFAULT_COLOR;
     const bgColor = getBGColor(valueColor);
     const verticalDirection = this.props.direction === 'vertical';
-    const valueOutOfBar = this.props.valueOutOfBar;
+    const { valueOutOfBar, verticalLabel } = this.props;
 
     let barWidth = 0;
     let valueContainerStyle: React.CSSProperties = {};
@@ -67,8 +68,12 @@ export class BarStat extends React.PureComponent<BarStatProps> {
         const valueOffset = this.props.valueFontSize * VALUE_PADDING_FACTOR;
         valueContainerStyle.bottom = valueOutOfBar ? this.props.height + valueOffset : 0;
         valueContainerStyle.width = barWidth;
-        barLabelStyle.bottom = this.props.fontSize / 2;
-        barLabelStyle.left = (barWidth - this.props.fontSize) / 2;
+        if (verticalLabel) {
+          barLabelStyle.bottom = this.props.fontSize / 2;
+          barLabelStyle.left = (barWidth - this.props.fontSize) / 2;
+        } else {
+          barLabelStyle.width = barWidth;
+        }
       }
     }
 
@@ -90,6 +95,7 @@ export class BarStat extends React.PureComponent<BarStatProps> {
       barStyle.borderTopColor = valueColor;
     }
 
+    const barLabelClassOption = verticalLabel ? 'bar-label--vertical' : 'bar-label--horizontal';
     const barContainerClass = `multistat-bar-container multistat-bar-container--${this.props.direction}`;
     const barValueContainer = verticalDirection ? (
       <span className="bar-value" style={valueStyle} ref={el => (this.valueElem = el)}>
@@ -106,7 +112,7 @@ export class BarStat extends React.PureComponent<BarStatProps> {
     return (
       <div className={barContainerClass} style={barContainerStyle}>
         <div className="multistat-bar" style={barStyle} ref={el => (this.barElem = el)}>
-          <span className="bar-label bar-label--vertical" style={barLabelStyle} ref={el => (this.labelElem = el)}>
+          <span className={`bar-label ${barLabelClassOption}`} style={barLabelStyle} ref={el => (this.labelElem = el)}>
             {this.props.label}
           </span>
           {!this.props.valueOutOfBar && barValueContainer}

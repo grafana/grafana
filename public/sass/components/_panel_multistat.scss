@@ -82,14 +82,20 @@
     .multistat-bar {
       border-top-style: solid;
       border-top-width: 2px;
-    }
 
-    .bar-label {
-      position: absolute;
+      .bar-label {
+        position: absolute;
 
-      &--vertical {
-        writing-mode: vertical-lr;
-        transform: rotate(-180deg);
+        &--vertical {
+          writing-mode: vertical-lr;
+          transform: rotate(-180deg);
+        }
+
+        &--horizontal {
+          text-align: center;
+          bottom: 0.3rem;
+          padding-left: 0rem;
+        }
       }
     }
 

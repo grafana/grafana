@@ -22,15 +22,16 @@ export function MultiStatBar(props: MultiStatBarProps) {
   const maxVal = _.max(values);
   const minVal = _.min(values);
   const delta = maxVal - minVal;
-  const minWidth = rootElemLength * 0.3;
-  const maxWidth = rootElemLength * 0.9;
-  const deltaWidth = maxWidth - minWidth;
+  const minLength = rootElemLength * 0.3;
+  const maxLength = rootElemLength * 0.9;
+  const deltaLength = maxLength - minLength;
   _.forEach(values, (v, i) => {
-    let width = (v - minVal) / delta * deltaWidth + minWidth;
-    barLengths[i] = Math.max(minWidth, width);
+    const length = (v - minVal) / delta * deltaLength + minLength;
+    barLengths[i] = Math.max(minLength, length);
   });
   const totalWidth = layout === 'horizontal' ? props.size.w : props.size.h;
   const barWidth = stats.length > 0 ? totalWidth / stats.length : 0;
+  const verticalLabel = minLength > barWidth;
 
   let direction: MultiStatPanel.PanelLayout;
   if (layout === 'vertical') {
@@ -41,9 +42,13 @@ export function MultiStatBar(props: MultiStatBarProps) {
 
   const fontSizes = barLengths.map((barLength, i) => {
     const text = direction === 'horizontal' ? stats[i].label : stats[i].label + stats[i].valueFormatted;
+    if (direction === 'horizontal' && !verticalLabel) {
+      return getFontSize(text, barWidth, barLength);
+    }
     return getFontSize(text, barLength, barWidth);
   });
   const fontSize = _.min(fontSizes);
+
   let valueFontSize = fontSize;
   if (direction === 'horizontal') {
     const valueFontSizes = stats.map(s => {
@@ -74,7 +79,7 @@ export function MultiStatBar(props: MultiStatBarProps) {
       barSize = { w: barLengths[index], h: barWidth };
     }
 
-    const optionalStyles: Partial<BarStatProps> = {
+    const optionalProps: Partial<BarStatProps> = {
       color,
       colorValue,
       direction,
@@ -82,6 +87,7 @@ export function MultiStatBar(props: MultiStatBarProps) {
       styleLeft,
       fontSize,
       valueFontSize,
+      verticalLabel,
     };
 
     return (
@@ -91,7 +97,7 @@ export function MultiStatBar(props: MultiStatBarProps) {
         value={valueFormatted}
         width={barSize.w}
         height={barSize.h}
-        {...optionalStyles}
+        {...optionalProps}
       />
     );
   });
