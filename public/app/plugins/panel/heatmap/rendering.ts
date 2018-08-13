@@ -456,7 +456,6 @@ export class Link {
     this.chartHeight = this.height - this.margin.top - this.margin.bottom;
     this.chartTop = this.margin.top;
     this.chartBottom = this.chartTop + this.chartHeight;
-
     if (this.panel.dataFormat === 'tsbuckets') {
       this.addYAxisFromBuckets();
     } else {
@@ -550,6 +549,7 @@ export class Link {
       .style('opacity', this.getCardOpacity.bind(this));
 
     let $cards = this.$heatmap.find('.heatmap-card');
+    console.log($cards);
     $cards
       .on('mouseenter', event => {
         this.tooltip.mouseOverBucket = true;

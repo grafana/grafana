@@ -8,10 +8,16 @@ import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
 // import { Emitter } from 'app/core/core';
 import rendering from '../rendering';
+// import * as d3 from 'd3';
 import { convertToHeatMap, convertToCards, histogramToHeatmap, calculateBucketSize } from '../heatmap_data_converter';
 jest.mock('app/core/core', () => ({
   appEvents: {
     on: () => {},
+  },
+  contextSrv: {
+    user: {
+      lightTheme: false,
+    },
   },
 }));
 
@@ -19,6 +25,7 @@ describe('grafanaHeatmap', function() {
   //   beforeEach(angularMocks.module('grafana.core'));
 
   let scope = <any>{};
+  let render;
 
   function heatmapScenario(desc, func, elementWidth = 500) {
     describe(desc, function() {
@@ -154,11 +161,20 @@ describe('grafanaHeatmap', function() {
 
           ctrl.data = ctx.data;
           ctx.element = {
-            find: () => ({ on: () => {} }),
+            find: () => ({
+              on: () => {},
+              css: () => 189,
+              width: () => 189,
+              height: () => 200,
+              find: () => ({
+                on: () => {},
+              }),
+            }),
             on: () => {},
           };
-          rendering(scope, ctx.element, [], ctrl);
-          ctrl.events.emit('render');
+          render = rendering(scope, ctx.element, [], ctrl);
+          render.render();
+          render.ctrl.renderingCompleted();
         });
       };
 
@@ -172,6 +188,9 @@ describe('grafanaHeatmap', function() {
     });
 
     it('should draw correct Y axis', function() {
+      console.log('Runnign first test');
+      // console.log(render.ctrl.data);
+      console.log(render.scope.yScale);
       var yTicks = getTicks(ctx.element, '.axis-y');
       expect(yTicks).toEqual(['1', '2', '3']);
     });
@@ -317,13 +336,13 @@ describe('grafanaHeatmap', function() {
 });
 
 function getTicks(element, axisSelector) {
-  return element
-    .find(axisSelector)
-    .find('text')
-    .map(function() {
-      return this.textContent;
-    })
-    .get();
+  // return element
+  //   .find(axisSelector)
+  //   .find('text')
+  //   .map(function() {
+  //     return this.textContent;
+  //   })
+  //   .get();
 }
 
 function formatTime(timeStr) {
