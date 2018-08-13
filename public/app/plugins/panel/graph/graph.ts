@@ -23,7 +23,7 @@ import config from 'app/core/config';
 
 import { GraphCtrl } from './module';
 
-class Link {
+class GraphElement {
   ctrl: GraphCtrl;
   tooltip: any;
   dashboard: any;
@@ -741,10 +741,10 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
     restrict: 'A',
     template: '',
     link: (scope, elem) => {
-      return new Link(scope, elem, timeSrv);
+      return new GraphElement(scope, elem, timeSrv);
     },
   };
 }
 
 coreModule.directive('grafanaGraph', graphDirective);
-export { Link, graphDirective };
+export { GraphElement, graphDirective };
