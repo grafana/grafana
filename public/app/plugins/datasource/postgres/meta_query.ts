@@ -133,14 +133,17 @@ table_schema IN (
 
   buildDatatypeQuery(column: string) {
     let query = `
-SELECT data_type
+SELECT udt_name
 FROM information_schema.columns
 WHERE
   table_schema IN (
-		SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
-    FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
-    LIMIT 1
+  SELECT schema FROM (
+		  SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END as schema
+      FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
+    ) s
+    WHERE EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = s.schema)
   )
+LIMIT 1
 `;
     query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);
