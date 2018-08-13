@@ -1,7 +1,5 @@
 # Grafana Docker image
 
-[![CircleCI](https://circleci.com/gh/grafana/grafana-docker.svg?style=svg)](https://circleci.com/gh/grafana/grafana-docker)
-
 ## Running your Grafana container
 
 Start your container binding the external port `3000`.

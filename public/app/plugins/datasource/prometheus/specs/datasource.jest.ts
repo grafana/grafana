@@ -321,8 +321,10 @@ describe('PrometheusDatasource', () => {
     it('should have the correct range and range_ms', () => {
       let range = ctx.templateSrvMock.replace.mock.calls[0][1].__range;
       let rangeMs = ctx.templateSrvMock.replace.mock.calls[0][1].__range_ms;
+      let rangeS = ctx.templateSrvMock.replace.mock.calls[0][1].__range_s;
       expect(range).toEqual({ text: '21s', value: '21s' });
       expect(rangeMs).toEqual({ text: 21031, value: 21031 });
+      expect(rangeS).toEqual({ text: 21, value: 21 });
     });
 
     it('should pass the default interval value', () => {
