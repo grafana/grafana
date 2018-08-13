@@ -978,7 +978,7 @@ export class FuncInstance {
           return value;
         }
         // param types that might be quoted
-        if (_.includes(['int_or_interval', 'node_or_tag', 'node'], paramType) && _.isFinite(+value)) {
+        if (_.includes(['int_or_interval', 'node_or_tag'], paramType) && _.isFinite(+value)) {
           return _.toString(+value);
         }
         return "'" + value + "'";
