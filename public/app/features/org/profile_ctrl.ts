@@ -30,7 +30,7 @@ export class ProfileCtrl {
   getUserTeams() {
     this.backendSrv.get('/api/user/teams').then(teams => {
       this.teams = teams;
-      this.showTeamsList = this.teams.length > 1;
+      this.showTeamsList = this.teams.length > 0;
     });
   }
 
