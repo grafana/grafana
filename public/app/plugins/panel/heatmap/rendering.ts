@@ -20,9 +20,9 @@ let MIN_CARD_SIZE = 1,
   MIN_SELECTION_WIDTH = 2;
 
 export default function rendering(scope, elem, attrs, ctrl) {
-  return new Link(scope, elem, attrs, ctrl);
+  return new HeatmapRenderer(scope, elem, attrs, ctrl);
 }
-export class Link {
+export class HeatmapRenderer {
   width: number;
   height: number;
   yScale: any;
