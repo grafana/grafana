@@ -39,7 +39,7 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
 
   // Add empty selector to bare metric name
   let previousWord;
-  query = query.replace(/(\w+)\b(?![\({=",])/g, (match, word, offset) => {
+  query = query.replace(/(\w+)\b(?![\(\]{=",])/g, (match, word, offset) => {
     // Check if inside a selector
     const nextSelectorStart = query.slice(offset).indexOf('{');
     const nextSelectorEnd = query.slice(offset).indexOf('}');
