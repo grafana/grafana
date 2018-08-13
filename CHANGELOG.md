@@ -40,6 +40,7 @@
 * **UI**: Fix iOS home screen "app" icon and Windows 10 app experience [#12752](https://github.com/grafana/grafana/issues/12752), thx [@andig](https://github.com/andig)
 * **Datasource**: Fix UI issue with secret fields after updating datasource [#11270](https://github.com/grafana/grafana/issues/11270)
 * **Plugins**: Convert URL-like text to links in plugins readme [#12843](https://github.com/grafana/grafana/pull/12843), thx [pgiraud](https://github.com/pgiraud)
+* **Docker**: Make it possible to set a specific plugin url [#12861](https://github.com/grafana/grafana/pull/12861), thx [ClementGautier](https://github.com/ClementGautier)
 
 ### Breaking changes
 
