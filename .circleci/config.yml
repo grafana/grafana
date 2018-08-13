@@ -104,6 +104,7 @@ jobs:
       - run:
           name: yarn install
           command: 'yarn install --pure-lockfile --no-progress'
+          no_output_timeout: 15m
       - save_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
