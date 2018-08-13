@@ -150,6 +150,14 @@ select:-webkit-autofill:focus {
       display: none;
     }
   }
+  &--register {
+    padding: 0 4rem;
+    justify-content: space-between;
+
+    & a {
+      color: #33b5e5 !important;
+    }
+  }
 }
 
 .login-tab-header {
@@ -332,6 +340,11 @@ select:-webkit-autofill:focus {
   .login-inner-box {
     width: 65%;
     padding: 1rem 2rem;
+
+    &--register {
+      padding: 0 4rem;
+      justify-content: space-between;
+    }
   }
 
   .login-divider {
@@ -367,6 +380,11 @@ select:-webkit-autofill:focus {
   .login-inner-box {
     width: 55%;
     padding: 1rem 4rem;
+
+    &--register {
+      padding: 0 4rem;
+      justify-content: space-between;
+    }
   }
 
   .login-button-group {

@@ -64,6 +64,22 @@ export class LoginCtrl {
       }, 400);
     };
 
+    $scope.changeView2 = function() {
+      let changePasswordView = document.querySelector('#change-password-view');
+      let registerGrafanaView = document.querySelector('#register-grafana-view');
+
+      changePasswordView.className += ' add';
+      setTimeout(() => {
+        changePasswordView.className += ' hidden';
+      }, 250);
+      setTimeout(() => {
+        registerGrafanaView.classList.remove('hidden');
+      }, 251);
+      setTimeout(() => {
+        registerGrafanaView.classList.remove('remove');
+      }, 301);
+    };
+
     $scope.changePassword = function() {
       $scope.command.oldPassword = 'admin';
 
@@ -73,12 +89,12 @@ export class LoginCtrl {
       }
 
       backendSrv.put('/api/user/password', $scope.command).then(function() {
-        $scope.toGrafana();
+        $scope.changeView2();
       });
     };
 
     $scope.skip = function() {
-      $scope.toGrafana();
+      $scope.changeView2();
     };
 
     $scope.loginModeChanged = function(newValue) {
