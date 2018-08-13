@@ -73,7 +73,6 @@
 .multistat-bar-container {
   padding: 0rem 0.4rem;
   display: flex;
-  white-space: nowrap;
 
   &--horizontal {
     display: block;
@@ -118,6 +117,7 @@
     .bar-value {
       float: right;
       padding-right: 0.5rem;
+      white-space: nowrap;
     }
 
     .value-container {
