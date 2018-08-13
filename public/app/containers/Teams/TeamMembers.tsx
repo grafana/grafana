@@ -69,8 +69,9 @@ export class TeamMembers extends React.Component<Props, State> {
 
   render() {
     const { newTeamMember, isAdding } = this.state;
-    const members = this.props.team.members.values();
+    const members = this.props.team.filteredMembers;
     const newTeamMemberValue = newTeamMember && newTeamMember.id.toString();
+    const { team } = this.props;
 
     return (
       <div>
@@ -81,7 +82,7 @@ export class TeamMembers extends React.Component<Props, State> {
                 type="text"
                 className="gf-form-input"
                 placeholder="Search members"
-                value={''}
+                value={team.search}
                 onChange={this.onSearchQueryChange}
               />
               <i className="gf-form-input-icon fa fa-search" />
