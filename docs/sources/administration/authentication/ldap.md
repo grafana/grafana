@@ -4,11 +4,27 @@ description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap"]
 type = "docs"
 [menu.docs]
-name = "LDAP Authentication"
+name = "LDAP Auth"
 identifier = "ldap"
-parent = "admin"
+parent = "authentication"
 weight = 2
 +++
+
+## [auth.ldap]
+### enabled
+Set to `true` to enable LDAP integration (default: `false`)
+
+### config_file
+Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
+
+### allow_sign_up
+
+Allow sign up should almost always be true (default) to allow new Grafana users to be created (if ldap authentication is ok). If set to
+false only pre-existing Grafana users will be able to login (if ldap authentication is ok).
+
+> For details on LDAP Configuration, go to the [LDAP Integration]({{< relref "ldap.md" >}}) page.
+
+<hr>
 
 # LDAP Authentication
 
