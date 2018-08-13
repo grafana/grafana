@@ -1,14 +1,19 @@
 // import { describe, beforeEach, it, sinon, expect, angularMocks } from '../../../../../test/lib/common';
 
 import '../module';
-import angular from 'angular';
-import $ from 'jquery';
+// import angular from 'angular';
+// import $ from 'jquery';
 // import helpers from 'test/specs/helpers';
 import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
-import { Emitter } from 'app/core/core';
+// import { Emitter } from 'app/core/core';
 import rendering from '../rendering';
 import { convertToHeatMap, convertToCards, histogramToHeatmap, calculateBucketSize } from '../heatmap_data_converter';
+jest.mock('app/core/core', () => ({
+  appEvents: {
+    on: () => {},
+  },
+}));
 
 describe('grafanaHeatmap', function() {
   //   beforeEach(angularMocks.module('grafana.core'));
@@ -37,7 +42,10 @@ describe('grafanaHeatmap', function() {
               },
               { name: 'Reds', value: 'interpolateReds', invert: 'dark' },
             ],
-            //   events: new Emitter(),
+            events: {
+              on: () => {},
+              emit: () => {},
+            },
             height: 200,
             panel: {
               heatmap: {},
@@ -145,9 +153,11 @@ describe('grafanaHeatmap', function() {
           // scope.$digest();
 
           ctrl.data = ctx.data;
-          // ctx.element = element;
-          let elem = {};
-          let render = new rendering(scope, elem, [], ctrl);
+          ctx.element = {
+            find: () => ({ on: () => {} }),
+            on: () => {},
+          };
+          rendering(scope, ctx.element, [], ctrl);
           ctrl.events.emit('render');
         });
       };

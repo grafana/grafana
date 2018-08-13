@@ -358,6 +358,6 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   link(scope, elem, attrs, ctrl) {
-    let render = new rendering(scope, elem, attrs, ctrl);
+    rendering(scope, elem, attrs, ctrl);
   }
 }

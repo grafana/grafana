@@ -19,7 +19,10 @@ let MIN_CARD_SIZE = 1,
   Y_AXIS_TICK_PADDING = 5,
   MIN_SELECTION_WIDTH = 2;
 
-export default class Link {
+export default function rendering(scope, elem, attrs, ctrl) {
+  return new Link(scope, elem, attrs, ctrl);
+}
+export class Link {
   width: number;
   height: number;
   yScale: any;
@@ -50,7 +53,7 @@ export default class Link {
   dataRangeWidingFactor: number;
   constructor(private scope, private elem, attrs, private ctrl) {
     // $heatmap is JQuery object, but heatmap is D3
-    this.$heatmap = elem.find('.heatmap-panel');
+    this.$heatmap = this.elem.find('.heatmap-panel');
     this.tooltip = new HeatmapTooltip(this.$heatmap, this.scope);
 
     this.selection = {
@@ -65,7 +68,7 @@ export default class Link {
 
     this.ctrl.events.on('render', this.onRender.bind(this));
 
-    this.ctrl.tickValueFormatter = this.tickValueFormatter;
+    this.ctrl.tickValueFormatter = this.tickValueFormatter.bind(this);
     /////////////////////////////
     // Selection and crosshair //
     /////////////////////////////
@@ -151,7 +154,7 @@ export default class Link {
     } else {
       timeFormat = d3.timeFormat(grafanaTimeFormatter);
     }
-
+    console.log(ticks);
     let xAxis = d3
       .axisBottom(this.xScale)
       .ticks(ticks)
@@ -345,11 +348,12 @@ export default class Link {
     const decimals = this.panel.yAxis.decimals === null ? decimalsAuto : this.panel.yAxis.decimals;
     this.ctrl.decimals = decimals;
 
+    let tickValueFormatter = this.tickValueFormatter.bind(this);
     function tickFormatter(valIndex) {
       let valueFormatted = tsBuckets[valIndex];
       if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
         // Try to format numeric tick labels
-        valueFormatted = this.tickValueFormatter(decimals)(_.toNumber(valueFormatted));
+        valueFormatted = tickValueFormatter(decimals)(_.toNumber(valueFormatted));
       }
       return valueFormatted;
     }
@@ -533,17 +537,17 @@ export default class Link {
     cards = cards
       .enter()
       .append('rect')
-      .attr('x', this.getCardX)
-      .attr('width', this.getCardWidth)
-      .attr('y', this.getCardY)
-      .attr('height', this.getCardHeight)
+      .attr('x', this.getCardX.bind(this))
+      .attr('width', this.getCardWidth.bind(this))
+      .attr('y', this.getCardY.bind(this))
+      .attr('height', this.getCardHeight.bind(this))
       .attr('rx', this.cardRound)
       .attr('ry', this.cardRound)
       .attr('class', 'bordered heatmap-card')
-      .style('fill', this.getCardColor)
-      .style('stroke', this.getCardColor)
+      .style('fill', this.getCardColor.bind(this))
+      .style('stroke', this.getCardColor.bind(this))
       .style('stroke-width', 0)
-      .style('opacity', this.getCardOpacity);
+      .style('opacity', this.getCardOpacity.bind(this));
 
     let $cards = this.$heatmap.find('.heatmap-card');
     $cards
@@ -683,11 +687,11 @@ export default class Link {
       this.onMouseUp();
     };
 
-    $(document).one('mouseup', this.mouseUpHandler);
+    $(document).one('mouseup', this.mouseUpHandler.bind(this));
   }
 
   onMouseUp() {
-    $(document).unbind('mouseup', this.mouseUpHandler);
+    $(document).unbind('mouseup', this.mouseUpHandler.bind(this));
     this.mouseUpHandler = null;
     this.selection.active = false;
 
