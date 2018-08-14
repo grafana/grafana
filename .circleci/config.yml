@@ -148,6 +148,11 @@ jobs:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
       - run:
+          name: verify signed packages
+          command: |
+            curl https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+            ./scripts/build/verify_signed_packages.sh dist/*.rpm
+      - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
       - run:
