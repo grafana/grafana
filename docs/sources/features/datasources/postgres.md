@@ -290,4 +290,5 @@ datasources:
       password: "Password!"
     jsonData:
       sslmode: "disable" # disable/require/verify-ca/verify-full
+      timescaledb: false
 ```
