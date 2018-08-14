@@ -5,6 +5,9 @@ import * as MultiStatPanel from '../types';
 import { BarStat, BarStatProps } from './BarStat';
 import { getFontSize, isValuesOutOfBar } from './utils';
 
+const MIN_BAR_LENGTH = 0.3;
+const MAX_BAR_LENGTH = 0.9;
+
 export interface MultiStatBarProps {
   stats: Series.SeriesStat[];
   options: MultiStatPanel.PanelOptions;
@@ -22,8 +25,8 @@ export function MultiStatBar(props: MultiStatBarProps) {
   const maxVal = _.max(values);
   const minVal = _.min(values);
   const delta = maxVal - minVal;
-  const minLength = rootElemLength * 0.3;
-  const maxLength = rootElemLength * 0.9;
+  const minLength = rootElemLength * MIN_BAR_LENGTH;
+  const maxLength = rootElemLength * MAX_BAR_LENGTH;
   const deltaLength = maxLength - minLength;
   _.forEach(values, (v, i) => {
     const length = (v - minVal) / delta * deltaLength + minLength;
@@ -43,8 +46,10 @@ export function MultiStatBar(props: MultiStatBarProps) {
   const fontSizes = barLengths.map((barLength, i) => {
     const text = direction === 'horizontal' ? stats[i].label : stats[i].label + stats[i].valueFormatted;
     if (direction === 'horizontal' && !verticalLabel) {
+      // Get font size when label is horizontal-oriented
       return getFontSize(text, barWidth, barLength);
     }
+    // Get font size for vertical-oriented label (swap bar width and height)
     return getFontSize(text, barLength, barWidth);
   });
   const fontSize = _.min(fontSizes);
