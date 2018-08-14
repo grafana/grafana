@@ -42,6 +42,17 @@
 
 <div class="gf-form-group">
 	<div class="gf-form">
+		<span class="gf-form-label width-9">
+			Version
+			<info-popover mode="right-normal" position="top center">
+				This option controls what functions are available in the PostgreSQL query builder.
+			</info-popover>
+		</span>
+		<span class="gf-form-select-wrapper">
+			<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.postgresVersion" ng-options="f.value as f.name for f in ctrl.postgresVersions"></select>
+		</span>
+	</div>
+	<div class="gf-form">
 		<gf-form-switch class="gf-form" label="TimescaleDB" tooltip="Use TimescaleDB features (e.g., time_bucket) in Grafana" label-class="width-9" checked="ctrl.current.jsonData.timescaledb" switch-class="max-width-6"></gf-form-switch>
 	</div>
 </div>

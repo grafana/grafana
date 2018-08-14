@@ -10,6 +10,14 @@ class PostgresConfigCtrl {
   constructor($scope) {
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
   }
+
+  // the value portion is derived from postgres server_version_num/100
+  postgresVersions = [
+    { name: '9.3.x', value: 903 },
+    { name: '9.4.x', value: 904 },
+    { name: '9.5.x', value: 905 },
+    { name: '9.6.x', value: 906 },
+  ];
 }
 
 const defaultQuery = `SELECT
