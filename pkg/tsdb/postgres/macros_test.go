@@ -6,19 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		datasource := &models.DataSource{JsonData: simplejson.New()}
-		engine := newPostgresMacroEngine(datasource)
-		datasourceTS := &models.DataSource{JsonData: simplejson.New()}
-		datasourceTS.JsonData.Set("timescaledb", true)
-		engineTS := newPostgresMacroEngine(datasourceTS)
+		engine := newPostgresMacroEngine(false)
+		engineTS := newPostgresMacroEngine(true)
 		query := &tsdb.Query{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -21,10 +20,8 @@ type postgresMacroEngine struct {
 	timescaledb bool
 }
 
-func newPostgresMacroEngine(datasource *models.DataSource) tsdb.SqlMacroEngine {
-	engine := &postgresMacroEngine{}
-	engine.timescaledb = datasource.JsonData.Get("timescaledb").MustBool(false)
-	return engine
+func newPostgresMacroEngine(timescaledb bool) tsdb.SqlMacroEngine {
+	return &postgresMacroEngine{timescaledb: timescaledb}
 }
 
 func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
