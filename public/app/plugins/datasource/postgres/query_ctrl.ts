@@ -123,15 +123,17 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.selectMenu.push(aggregates);
 
     // ordered set aggregates require postgres 9.4+
-    let aggregates2 = {
-      text: 'Ordered-Set Aggregate Functions',
-      value: 'percentile',
-      submenu: [
-        { text: 'Percentile (continuous)', value: 'percentile_cont' },
-        { text: 'Percentile (discrete)', value: 'percentile_disc' },
-      ],
-    };
-    this.selectMenu.push(aggregates2);
+    if (this.datasource.jsonData.postgresVersion >= 904) {
+      let aggregates2 = {
+        text: 'Ordered-Set Aggregate Functions',
+        value: 'percentile',
+        submenu: [
+          { text: 'Percentile (continuous)', value: 'percentile_cont' },
+          { text: 'Percentile (discrete)', value: 'percentile_disc' },
+        ],
+      };
+      this.selectMenu.push(aggregates2);
+    }
 
     let windows = {
       text: 'Window Functions',
