@@ -7,7 +7,7 @@ grunt && grunt watch
 
 ### Rerun tests on source change
 ```
-npm jest
+npm run jest
 ```
 or
 ```
