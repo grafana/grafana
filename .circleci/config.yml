@@ -151,7 +151,7 @@ jobs:
           name: verify signed packages
           command: |
             mkdir -p ~/.rpmdb/pubkeys
-            curl https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+            curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
             ./scripts/build/verify_signed_packages.sh dist/*.rpm
       - run:
           name: sha-sum packages
