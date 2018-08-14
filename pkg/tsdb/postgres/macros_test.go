@@ -12,8 +12,10 @@ import (
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		engine := newPostgresMacroEngine(false)
-		engineTS := newPostgresMacroEngine(true)
+		timescaledbEnabled := false
+		engine := newPostgresMacroEngine(timescaledbEnabled)
+		timescaledbEnabled = true
+		engineTS := newPostgresMacroEngine(timescaledbEnabled)
 		query := &tsdb.Query{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
