@@ -219,7 +219,7 @@ func TestDSRouteRule(t *testing.T) {
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "/render")
 
 			requestURL, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestURL}
+			req := http.Request{URL: requestURL, Header: http.Header{}}
 
 			proxy.getDirector()(&req)
 
@@ -244,7 +244,7 @@ func TestDSRouteRule(t *testing.T) {
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
 
 			requestURL, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestURL}
+			req := http.Request{URL: requestURL, Header: http.Header{}}
 
 			proxy.getDirector()(&req)
 
