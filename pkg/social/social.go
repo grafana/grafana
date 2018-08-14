@@ -55,7 +55,7 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google", "generic_oauth", "grafananet", "grafana_com"}
+	allOauthes := []string{"github", "gitlab", "google", "generic_oauth", "grafananet", "grafana_com"}
 
 	for _, name := range allOauthes {
 		sec := setting.Raw.Section("auth." + name)
@@ -112,6 +112,20 @@ func NewOAuthService() {
 				allowSignup:          info.AllowSignup,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+			}
+		}
+
+		// GitLab.
+		if name == "gitlab" {
+			SocialMap["gitlab"] = &SocialGitlab{
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
+				allowedDomains: info.AllowedDomains,
+				apiUrl:         info.ApiUrl,
+				allowSignup:    info.AllowSignup,
+				allowedGroups:  util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
 
