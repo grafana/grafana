@@ -12,7 +12,6 @@ module.exports = function(grunt) {
     'sasslint',
     'exec:tslint',
     "exec:jest",
-    'karma:test',
     'no-only-tests'
   ]);
 

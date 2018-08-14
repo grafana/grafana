@@ -59,11 +59,6 @@ Run tests
 yarn run jest
 ```
 
-Run karma tests
-```bash
-yarn run karma
-```
-
 ### Recompile backend on source change
 
 To rebuild on source change.
@@ -101,14 +96,11 @@ Execute all frontend tests
 yarn run test
 ```
 
-Writing & watching frontend tests (we have two test runners)
+Writing & watching frontend tests
 
 - jest for all new tests that do not require browser context (React+more)
    - Start watcher: `yarn run jest`
-   - Jest will run all test files that end with the name ".jest.ts"
-- karma + mocha is used for testing angularjs components. We do want to migrate these test to jest over time (if possible).
-  - Start watcher: `yarn run karma`
-  - Karma+Mocha runs all files that end with the name "_specs.ts".
+   - Jest will run all test files that end with the name ".test.ts"
 
 #### Backend
 ```bash

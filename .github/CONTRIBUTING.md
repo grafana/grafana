@@ -7,7 +7,11 @@ grunt && grunt watch
 
 ### Rerun tests on source change
 ```
-grunt karma:dev
+npm jest
+```
+or
+```
+yarn jest
 ```
 
 ### Run tests for backend assets before commit
