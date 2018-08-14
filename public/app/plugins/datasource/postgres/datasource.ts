@@ -5,12 +5,14 @@ import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
 export class PostgresDatasource {
   id: any;
   name: any;
+  jsonData: any;
   responseParser: ResponseParser;
 
   /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.jsonData = instanceSettings.jsonData;
     this.responseParser = new ResponseParser(this.$q);
   }
 
