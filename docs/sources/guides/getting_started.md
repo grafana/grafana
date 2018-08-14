@@ -15,6 +15,31 @@ weight = 1
 
 This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running and have added at least one [Data Source](/features/datasources/).
 
+## Logging in for the first time
+
+To run Grafana open your browser and go to port 3000 which is the default port. If you have changed the port you go to that port. There you will see the login page. User name is admin and password is admin. When you log in for the first time you will be asked to change your password. You can later go to user preferences and change your user name.
+
+
+## How to add a data source
+
+{{< docs-imagebox img="/img/docs/v52/sidemenu-datasource.png" max-width="250px" class="docs-image--right docs-image--no-shadow">}}
+
+Before you create your first dashboard you need to add your data source.
+
+First move your cursor to the cog on the side menu which will show you the configuration menu. If the side menu is not visible click the Grafana icon in the upper left corner. The first item on the configuration menu is data sources. Click and you will come to data sources. You can also simply click the cog.
+
+
+Click Add data source and you will come to the settings page of your new data source.
+
+{{< docs-imagebox img="/img/docs/v52/add-datasource.png" max-width="700px" class="docs-image--no-shadow">}}
+
+The first thing you will do is give the data source a name and select the right type.
+Next you need to specify the data sources HTTP URL and how you will access the data source.
+
+{{< docs-imagebox img="/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
+
+Now you are ready to save and test.
+
 ## Beginner guides
 
 Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2) to get a quick intro to setting up Dashboards and Panels.

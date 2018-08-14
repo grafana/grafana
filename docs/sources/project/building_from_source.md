@@ -144,3 +144,9 @@ Please contribute to the Grafana project and submit a pull request! Build new fe
 **Problem**: On Windows, getting errors about a tool not being installed even though you just installed that tool.
 
 **Solution**: It is usually because it got added to the path and you have to restart your command prompt to use it.
+
+## Logging in for the first time
+
+To run Grafana open your browser and go to port 3000 which is the default port. If you have changed the port you go to that port. There you will see the login page. User name is admin and password is admin. When you log in for the first time you will be asked to change your password. You can later go to user preferences and change your user name.
+
+Here you can get help [getting started](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2) with your dashboards.
