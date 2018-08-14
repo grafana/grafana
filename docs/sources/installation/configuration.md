@@ -84,7 +84,7 @@ command line in the init.d script or the systemd service file.
 
 ### temp_data_lifetime
 
-How long temporary images in `data` directory should be kept. Defaults to: `24h`. Supported modifiers: `h` (hours), 
+How long temporary images in `data` directory should be kept. Defaults to: `24h`. Supported modifiers: `h` (hours),
 `m` (minutes), for example: `168h`, `30m`, `10h30m`. Use `0` to never clean up temporary files.
 
 ### logs
@@ -431,6 +431,8 @@ allowed_organizations = github google
 <hr>
 
 ## [auth.gitlab]
+
+> Only available in Grafana v5.3+.
 
 You need to [create a GitLab OAuth
 application](https://docs.gitlab.com/ce/integration/oauth_provider.html).
