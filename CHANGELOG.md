@@ -61,6 +61,10 @@ These are new features that's still being worked on and are in an experimental p
 
 * **Dashboard**: Auto fit dashboard panels to optimize space used for current TV / Monitor [#12768](https://github.com/grafana/grafana/issues/12768)
 
+### Tech
+
+* **Frontend**: Convert all Frontend Karma tests to Jest tests [#12224](https://github.com/grafana/grafana/issues/12224)
+
 # 5.2.2 (2018-07-25)
 
 ### Minor
