@@ -13,7 +13,6 @@
   .react-resizable-handle,
   .add-row-panel-hint,
   .dash-row-menu-container,
-  .navbar-button--refresh,
   .navbar-buttons--zoom,
   .navbar-buttons--actions,
   .panel-menu-container,
@@ -36,7 +35,8 @@
     }
   }
 
-  .gf-timepicker-nav-btn {
-    transform: translate3d(40px, 0, 0);
+  .navbar-button--zoom,
+  .navbar-button--refresh {
+    display: none;
   }
 }

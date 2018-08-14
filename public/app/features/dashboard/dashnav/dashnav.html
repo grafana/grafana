@@ -25,11 +25,15 @@
 			<i class="fa" ng-class="{'fa-star-o': !ctrl.dashboard.meta.isStarred, 'fa-star': ctrl.dashboard.meta.isStarred}"></i>
 		</button>
 
+    <button class="btn navbar-button navbar-button--tv" ng-click="ctrl.toggleViewMode()" bs-tooltip="'Toggle fullscreen modes'" data-placement="bottom">
+			<i class="fa fa-desktop"></i>
+		</button>
+
 		<button class="btn navbar-button navbar-button--share" ng-show="::ctrl.dashboard.meta.canShare" ng-click="ctrl.shareDashboard(0)" bs-tooltip="'Share dashboard'" data-placement="bottom">
 			<i class="fa fa-share-square-o"></i></a>
 		</button>
 
-		<button class="btn navbar-button navbar-button--save" ng-show="ctrl.dashboard.meta.canSave" ng-click="ctrl.saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom">
+    <button class="btn navbar-button navbar-button--save" ng-show="ctrl.dashboard.meta.canSave" ng-click="ctrl.saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom">
 			<i class="fa fa-save"></i>
 		</button>
 
