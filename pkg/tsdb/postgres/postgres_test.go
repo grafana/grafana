@@ -102,7 +102,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT * FROM postgres_types",
 								"format": "table",
@@ -183,7 +182,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
@@ -228,7 +226,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
@@ -283,7 +280,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
@@ -311,7 +307,6 @@ func TestPostgres(t *testing.T) {
 			query := &tsdb.TsdbQuery{
 				Queries: []*tsdb.Query{
 					{
-						DataSource: &models.DataSource{JsonData: simplejson.New()},
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT $__timeGroup(time, '5m', previous), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series",
@@ -406,7 +401,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt64" as time, "timeInt64" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
@@ -429,7 +423,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt64Nullable" as time, "timeInt64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
@@ -452,7 +445,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat64" as time, "timeFloat64" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
@@ -475,7 +467,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat64Nullable" as time, "timeFloat64Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
@@ -520,7 +511,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeInt32Nullable" as time, "timeInt32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
@@ -543,7 +533,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat32" as time, "timeFloat32" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
@@ -566,7 +555,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "timeFloat32Nullable" as time, "timeFloat32Nullable" FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
@@ -589,7 +577,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT $__timeEpoch(time), measurement || ' - value one' as metric, "valueOne" FROM metric_values ORDER BY 1`,
 								"format": "time_series",
@@ -638,7 +625,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT $__timeEpoch(time), "valueOne", "valueTwo" FROM metric_values ORDER BY 1`,
 								"format": "time_series",
@@ -696,7 +682,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "time_sec" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC`,
 								"format": "table",
@@ -720,7 +705,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT "time_sec" as time, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC`,
 								"format": "table",
@@ -747,7 +731,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
 									CAST('%s' AS TIMESTAMP) as time,
@@ -778,7 +761,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
 									 %d as time,
@@ -809,7 +791,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
 									 cast(%d as bigint) as time,
@@ -840,7 +821,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
 									 %d as time,
@@ -869,7 +849,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT
 									 cast(null as bigint) as time,
@@ -898,7 +877,6 @@ func TestPostgres(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT
 									 cast(null as timestamp) as time,

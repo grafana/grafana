@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -15,12 +16,15 @@ const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type postgresMacroEngine struct {
-	timeRange *tsdb.TimeRange
-	query     *tsdb.Query
+	timeRange   *tsdb.TimeRange
+	query       *tsdb.Query
+	timescaledb bool
 }
 
-func newPostgresMacroEngine() tsdb.SqlMacroEngine {
-	return &postgresMacroEngine{}
+func newPostgresMacroEngine(datasource *models.DataSource) tsdb.SqlMacroEngine {
+	engine := &postgresMacroEngine{}
+	engine.timescaledb = datasource.JsonData.Get("timescaledb").MustBool(false)
+	return engine
 }
 
 func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
@@ -131,7 +135,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			}
 		}
 
-		if m.query.DataSource.JsonData.Get("timescaledb").MustBool() {
+		if m.timescaledb {
 			return fmt.Sprintf("time_bucket('%vs',%s)", interval.Seconds(), args[0]), nil
 		} else {
 			return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
@@ -142,7 +146,6 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return tg + " AS \"time\"", err
 		}
 		return "", err
-
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

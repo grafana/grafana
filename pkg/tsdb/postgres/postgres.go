@@ -32,7 +32,7 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 		log: logger,
 	}
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newPostgresMacroEngine(), logger)
+	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newPostgresMacroEngine(datasource), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) string {

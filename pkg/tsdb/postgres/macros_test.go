@@ -14,10 +14,12 @@ import (
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		engine := newPostgresMacroEngine()
-		query := &tsdb.Query{DataSource: &models.DataSource{JsonData: simplejson.New()}}
-		queryTS := &tsdb.Query{DataSource: &models.DataSource{JsonData: simplejson.New()}}
-		queryTS.DataSource.JsonData.Set("timescaledb", true)
+		datasource := &models.DataSource{JsonData: simplejson.New()}
+		engine := newPostgresMacroEngine(datasource)
+		datasourceTS := &models.DataSource{JsonData: simplejson.New()}
+		datasourceTS.JsonData.Set("timescaledb", true)
+		engineTS := newPostgresMacroEngine(datasourceTS)
+		query := &tsdb.Query{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
 			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
@@ -89,7 +91,7 @@ func TestMacroEngine(t *testing.T) {
 
 			Convey("interpolate __timeGroup function with TimescaleDB enabled", func() {
 
-				sql, err := engine.Interpolate(queryTS, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
+				sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "GROUP BY time_bucket('300s',time_column)")
@@ -97,7 +99,7 @@ func TestMacroEngine(t *testing.T) {
 
 			Convey("interpolate __timeGroup function with spaces between args and TimescaleDB enabled", func() {
 
-				sql, err := engine.Interpolate(queryTS, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
+				sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "GROUP BY time_bucket('300s',time_column)")
