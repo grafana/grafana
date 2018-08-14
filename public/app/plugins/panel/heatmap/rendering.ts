@@ -154,7 +154,7 @@ export class HeatmapRenderer {
     } else {
       timeFormat = d3.timeFormat(grafanaTimeFormatter);
     }
-    console.log(ticks);
+
     let xAxis = d3
       .axisBottom(this.xScale)
       .ticks(ticks)
@@ -549,7 +549,6 @@ export class HeatmapRenderer {
       .style('opacity', this.getCardOpacity.bind(this));
 
     let $cards = this.$heatmap.find('.heatmap-card');
-    console.log($cards);
     $cards
       .on('mouseenter', event => {
         this.tooltip.mouseOverBucket = true;
