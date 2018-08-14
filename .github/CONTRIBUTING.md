@@ -2,14 +2,10 @@ Follow the setup guide in README.md
 
 ### Rebuild frontend assets on source change
 ```
-grunt && grunt watch
+yarn watch
 ```
 
 ### Rerun tests on source change
-```
-npm run jest
-```
-or
 ```
 yarn jest
 ```
@@ -21,6 +17,6 @@ test -z "$(gofmt -s -l . | grep -v -E 'vendor/(github.com|golang.org|gopkg.in)' 
 
 ### Run tests for frontend assets before commit
 ```
-npm test
+yarn test
 go test -v ./pkg/...
 ```

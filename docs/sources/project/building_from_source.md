@@ -57,7 +57,7 @@ For this you need nodejs (v.6+).
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-npm run watch
+yarn watch
 ```
 
 ## Running Grafana Locally
@@ -83,18 +83,17 @@ go get github.com/Unknwon/bra
 bra run
 ```
 
-You'll also need to run `npm run watch` to watch for changes to the front-end (typescript, html, sass)
+You'll also need to run `yarn watch` to watch for changes to the front-end (typescript, html, sass)
 
 ### Running tests
 
-- You can run backend Golang tests using "go test ./pkg/...".
-- Execute all frontend tests with "npm run test"
+- You can run backend Golang tests using `go test ./pkg/...`.
+- Execute all frontend tests with `yarn test`
 
 Writing & watching frontend tests
 
-- jest for all new tests that do not require browser context (React+more)
-   - Start watcher: `npm run jest`
-   - Jest will run all test files that end with the name ".test.ts"
+- Start watcher: `yarn jest`
+- Jest will run all test files that end with the name ".test.ts"
 
 
 ## Creating optimized release packages
