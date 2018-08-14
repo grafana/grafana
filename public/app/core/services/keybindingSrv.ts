@@ -15,14 +15,7 @@ export class KeybindingSrv {
   timepickerOpen = false;
 
   /** @ngInject */
-  constructor(
-    private $rootScope,
-    private $location,
-    private datasourceSrv,
-    private timeSrv,
-    private contextSrv,
-    private $route
-  ) {
+  constructor(private $rootScope, private $location, private datasourceSrv, private timeSrv, private contextSrv) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
       Mousetrap.reset();
@@ -269,10 +262,8 @@ export class KeybindingSrv {
 
     //Autofit panels
     this.bind('d a', () => {
-      this.$location.search('autofitpanels', this.$location.search().autofitpanels ? null : true);
-      //Force reload
-
-      this.$route.reload();
+      // this has to be a full page reload
+      window.location.href = window.location.href + '&autofitpanels';
     });
   }
 }
