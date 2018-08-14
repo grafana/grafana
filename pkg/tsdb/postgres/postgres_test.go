@@ -27,7 +27,7 @@ import (
 // use to verify that the generated data are vizualized as expected, see
 // devenv/README.md for setup instructions.
 func TestPostgres(t *testing.T) {
-	// change to true to run the MySQL tests
+	// change to true to run the PostgreSQL tests
 	runPostgresTests := false
 	// runPostgresTests := true
 
