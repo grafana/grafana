@@ -114,9 +114,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
       ],
     };
 
-    // first and last are timescaledb specific
-    aggregates.submenu.push({ text: 'First', value: 'first' });
-    aggregates.submenu.push({ text: 'Last', value: 'last' });
+    // first and last aggregate are timescaledb specific
+    if (this.datasource.jsonData.timescaledb === true) {
+      aggregates.submenu.push({ text: 'First', value: 'first' });
+      aggregates.submenu.push({ text: 'Last', value: 'last' });
+    }
 
     this.selectMenu.push(aggregates);
 
