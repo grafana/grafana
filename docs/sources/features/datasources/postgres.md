@@ -31,6 +31,7 @@ Name | Description
 *User* | Database user's login/username
 *Password* | Database user's password
 *SSL Mode* | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+*TimescaleDB* | With this option enabled Grafana will use TimescaleDB features, e.g. use ```time_bucket``` for grouping by time (only available in Grafana 5.3+).
 
 ### Database User Permissions (Important!)
 
@@ -289,4 +290,5 @@ datasources:
       password: "Password!"
     jsonData:
       sslmode: "disable" # disable/require/verify-ca/verify-full
+      timescaledb: false
 ```

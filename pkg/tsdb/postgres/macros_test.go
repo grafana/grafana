@@ -12,7 +12,10 @@ import (
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
-		engine := newPostgresMacroEngine()
+		timescaledbEnabled := false
+		engine := newPostgresMacroEngine(timescaledbEnabled)
+		timescaledbEnabled = true
+		engineTS := newPostgresMacroEngine(timescaledbEnabled)
 		query := &tsdb.Query{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
@@ -81,6 +84,22 @@ func TestMacroEngine(t *testing.T) {
 
 				So(sql, ShouldEqual, "floor(extract(epoch from time_column)/300)*300")
 				So(sql2, ShouldEqual, sql+" AS \"time\"")
+			})
+
+			Convey("interpolate __timeGroup function with TimescaleDB enabled", func() {
+
+				sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "GROUP BY time_bucket('300s',time_column)")
+			})
+
+			Convey("interpolate __timeGroup function with spaces between args and TimescaleDB enabled", func() {
+
+				sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "GROUP BY time_bucket('300s',time_column)")
 			})
 
 			Convey("interpolate __timeTo function", func() {

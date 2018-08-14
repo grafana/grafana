@@ -21,6 +21,8 @@ type LdapServerConf struct {
 	StartTLS      bool             `toml:"start_tls"`
 	SkipVerifySSL bool             `toml:"ssl_skip_verify"`
 	RootCACert    string           `toml:"root_ca_cert"`
+	ClientCert    string           `toml:"client_cert"`
+	ClientKey     string           `toml:"client_key"`
 	BindDN        string           `toml:"bind_dn"`
 	BindPassword  string           `toml:"bind_password"`
 	Attr          LdapAttributeMap `toml:"attributes"`
