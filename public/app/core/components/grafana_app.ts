@@ -69,6 +69,24 @@ export class GrafanaCtrl {
   }
 }
 
+function setViewModeBodyClass(body, mode) {
+  body.removeClass('page-kiosk-mode');
+  body.removeClass('user-activity-low');
+
+  switch (mode) {
+    case 'a': {
+      body.addClass('user-activity-low');
+      break;
+    }
+    case 'b':
+    case 1:
+    case true: {
+      body.addClass('page-kiosk-mode');
+      break;
+    }
+  }
+}
+
 /** @ngInject */
 export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope, $location) {
   return {
@@ -128,15 +146,12 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
         // check for kiosk url param
         if (data.params.kiosk) {
-          appEvents.emit('toggle-kiosk-mode');
+          setViewModeBodyClass(body, data.params.kiosk);
         }
 
         // check for 'inactive' url param for clean looks like kiosk, but with title
         if (data.params.inactive) {
           body.addClass('user-activity-low');
-
-          // for some reason, with this class it looks cleanest
-          body.addClass('sidemenu-open');
         }
 
         // close all drops
@@ -146,15 +161,38 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       });
 
       // handle kiosk mode
-      appEvents.on('toggle-kiosk-mode', () => {
-        body.toggleClass('page-kiosk-mode');
+      appEvents.on('toggle-kiosk-mode', options => {
+        let search = $location.search();
+
+        if (options && options.exit) {
+          search.kiosk = 'b';
+        }
+
+        switch (search.kiosk) {
+          case 'a': {
+            search.kiosk = 'b';
+            appEvents.emit('alert-success', ['Press ESC to exit TV mode']);
+            break;
+          }
+          case 'b':
+          case 1:
+          case true: {
+            delete search.kiosk;
+            break;
+          }
+          default: {
+            search.kiosk = 'a';
+          }
+        }
+
+        $location.search(search);
+        setViewModeBodyClass(body, search.kiosk);
       });
 
       // handle in active view state class
       var lastActivity = new Date().getTime();
       var activeUser = true;
-      var inActiveTimeLimit = 60 * 1000;
-      var sidemenuHidden = false;
+      var inActiveTimeLimit = 60 * 5000;
 
       function checkForInActiveUser() {
         if (!activeUser) {
@@ -168,14 +206,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (new Date().getTime() - lastActivity > inActiveTimeLimit) {
           activeUser = false;
           body.addClass('user-activity-low');
-          // hide sidemenu
-          if (sidemenuOpen) {
-            sidemenuHidden = true;
-            body.removeClass('sidemenu-open');
-            $timeout(function() {
-              $rootScope.$broadcast('render');
-            }, 100);
-          }
         }
       }
 
@@ -184,16 +214,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (!activeUser) {
           activeUser = true;
           body.removeClass('user-activity-low');
-
-          // restore sidemenu
-          if (sidemenuHidden) {
-            sidemenuHidden = false;
-            body.addClass('sidemenu-open');
-            appEvents.emit('toggle-inactive-mode');
-            $timeout(function() {
-              $rootScope.$broadcast('render');
-            }, 100);
-          }
         }
       }
 

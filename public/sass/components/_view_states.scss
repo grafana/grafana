@@ -6,10 +6,14 @@
   .scroll-canvas--dashboard {
     height: 100%;
   }
+  .submenu-controls {
+    display: none;
+  }
 }
 
 .playlist-active,
 .user-activity-low {
+  .sidemenu,
   .react-resizable-handle,
   .add-row-panel-hint,
   .dash-row-menu-container,
@@ -18,7 +22,7 @@
   .panel-menu-container,
   .panel-info-corner--info,
   .panel-info-corner--links {
-    opacity: 0;
+    display: none;
   }
 
   .navbar {

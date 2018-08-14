@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import baron from 'baron';
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
 
 const scrollBarHTML = `
 <div class="baron__track">
