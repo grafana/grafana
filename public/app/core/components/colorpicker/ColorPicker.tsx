@@ -5,12 +5,12 @@ import Drop from 'tether-drop';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 
-export interface IProps {
+export interface Props {
   color: string;
   onChange: (c: string) => void;
 }
 
-export class ColorPicker extends React.Component<IProps, any> {
+export class ColorPicker extends React.Component<Props, any> {
   pickerElem: any;
   colorPickerDrop: any;
 

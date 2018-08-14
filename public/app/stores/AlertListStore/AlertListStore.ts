@@ -2,8 +2,8 @@ import { types, getEnv, flow } from 'mobx-state-tree';
 import { AlertRule } from './AlertRule';
 import { setStateFields } from './helpers';
 
-type IAlertRuleType = typeof AlertRule.Type;
-export interface IAlertRule extends IAlertRuleType {}
+type AlertRuleType = typeof AlertRule.Type;
+export interface AlertRule extends AlertRuleType {}
 
 export const AlertListStore = types
   .model('AlertListStore', {

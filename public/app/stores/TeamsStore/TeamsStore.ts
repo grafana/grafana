@@ -9,7 +9,7 @@ export const TeamMember = types.model('TeamMember', {
 });
 
 type TeamMemberType = typeof TeamMember.Type;
-export interface ITeamMember extends TeamMemberType {}
+export interface TeamMember extends TeamMemberType {}
 
 export const TeamGroup = types.model('TeamGroup', {
   groupId: types.identifier(types.string),
@@ -17,7 +17,7 @@ export const TeamGroup = types.model('TeamGroup', {
 });
 
 type TeamGroupType = typeof TeamGroup.Type;
-export interface ITeamGroup extends TeamGroupType {}
+export interface TeamGroup extends TeamGroupType {}
 
 export const Team = types
   .model('Team', {
@@ -71,7 +71,7 @@ export const Team = types
       }
     }),
 
-    removeMember: flow(function* load(member: ITeamMember) {
+    removeMember: flow(function* load(member: TeamMember) {
       const backendSrv = getEnv(self).backendSrv;
       yield backendSrv.delete(`/api/teams/${self.id}/members/${member.userId}`);
       // remove from store map
@@ -113,7 +113,7 @@ export const Team = types
   }));
 
 type TeamType = typeof Team.Type;
-export interface ITeam extends TeamType {}
+export interface Team extends TeamType {}
 
 export const TeamsStore = types
   .model('TeamsStore', {
