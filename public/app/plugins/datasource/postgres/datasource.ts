@@ -124,6 +124,10 @@ export class PostgresDatasource {
       .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
   }
 
+  getVersion() {
+    return this.metricFindQuery("SELECT current_setting('server_version_num')::int/100", {});
+  }
+
   testDatasource() {
     return this.metricFindQuery('SELECT 1', {})
       .then(res => {
