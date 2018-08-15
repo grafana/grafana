@@ -55,6 +55,24 @@ describe('when rendering func instance', function() {
     expect(func.render('hello')).toEqual("movingMedian(hello, '5min')");
   });
 
+  it('should never quote boolean paramater', function() {
+    var func = gfunc.createFuncInstance('sortByName');
+    func.params[0] = '$natural';
+    expect(func.render('hello')).toEqual('sortByName(hello, $natural)');
+  });
+
+  it('should never quote int paramater', function() {
+    var func = gfunc.createFuncInstance('maximumAbove');
+    func.params[0] = '$value';
+    expect(func.render('hello')).toEqual('maximumAbove(hello, $value)');
+  });
+
+  it('should never quote node paramater', function() {
+    var func = gfunc.createFuncInstance('aliasByNode');
+    func.params[0] = '$node';
+    expect(func.render('hello')).toEqual('aliasByNode(hello, $node)');
+  });
+
   it('should handle metric param and int param and string param', function() {
     var func = gfunc.createFuncInstance('groupByNode');
     func.params[0] = 5;

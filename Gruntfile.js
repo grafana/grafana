@@ -1,4 +1,3 @@
-/* jshint node:true */
 'use strict';
 module.exports = function (grunt) {
   var os = require('os');

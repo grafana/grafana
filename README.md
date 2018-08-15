@@ -43,7 +43,7 @@ To build the assets, rebuild on file change, and serve them by Grafana's webserv
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-yarn run watch
+yarn watch
 ```
 
 Build the assets, rebuild on file change with Hot Module Replacement (HMR), and serve them by webpack-dev-server (http://localhost:3333):
@@ -56,12 +56,7 @@ Note: HMR for Angular is not supported. If you edit files in the Angular part of
 
 Run tests
 ```bash
-yarn run jest
-```
-
-Run karma tests
-```bash
-yarn run karma
+yarn jest
 ```
 
 ### Recompile backend on source change
@@ -98,17 +93,13 @@ In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = 
 #### Frontend
 Execute all frontend tests
 ```bash
-yarn run test
+yarn test
 ```
 
-Writing & watching frontend tests (we have two test runners)
+Writing & watching frontend tests
 
-- jest for all new tests that do not require browser context (React+more)
-   - Start watcher: `yarn run jest`
-   - Jest will run all test files that end with the name ".jest.ts"
-- karma + mocha is used for testing angularjs components. We do want to migrate these test to jest over time (if possible).
-  - Start watcher: `yarn run karma`
-  - Karma+Mocha runs all files that end with the name "_specs.ts".
+- Start watcher: `yarn jest`
+- Jest will run all test files that end with the name ".test.ts"
 
 #### Backend
 ```bash

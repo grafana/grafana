@@ -3,7 +3,6 @@ package postgres
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,12 +14,13 @@ const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type postgresMacroEngine struct {
-	timeRange *tsdb.TimeRange
-	query     *tsdb.Query
+	timeRange   *tsdb.TimeRange
+	query       *tsdb.Query
+	timescaledb bool
 }
 
-func newPostgresMacroEngine() tsdb.SqlMacroEngine {
-	return &postgresMacroEngine{}
+func newPostgresMacroEngine(timescaledb bool) tsdb.SqlMacroEngine {
+	return &postgresMacroEngine{timescaledb: timescaledb}
 }
 
 func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
@@ -114,23 +114,17 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			m.query.Model.Set("fill", true)
-			m.query.Model.Set("fillInterval", interval.Seconds())
-			switch args[2] {
-			case "NULL":
-				m.query.Model.Set("fillMode", "null")
-			case "previous":
-				m.query.Model.Set("fillMode", "previous")
-			default:
-				m.query.Model.Set("fillMode", "value")
-				floatVal, err := strconv.ParseFloat(args[2], 64)
-				if err != nil {
-					return "", fmt.Errorf("error parsing fill value %v", args[2])
-				}
-				m.query.Model.Set("fillValue", floatVal)
+			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			if err != nil {
+				return "", err
 			}
 		}
-		return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+
+		if m.timescaledb {
+			return fmt.Sprintf("time_bucket('%vs',%s)", interval.Seconds(), args[0]), nil
+		} else {
+			return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+		}
 	case "__timeGroupAlias":
 		tg, err := m.evaluateMacro("__timeGroup", args)
 		if err == nil {

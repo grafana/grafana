@@ -3,7 +3,6 @@ package mysql
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -92,20 +91,9 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			m.query.Model.Set("fill", true)
-			m.query.Model.Set("fillInterval", interval.Seconds())
-			switch args[2] {
-			case "NULL":
-				m.query.Model.Set("fillMode", "null")
-			case "previous":
-				m.query.Model.Set("fillMode", "previous")
-			default:
-				m.query.Model.Set("fillMode", "value")
-				floatVal, err := strconv.ParseFloat(args[2], 64)
-				if err != nil {
-					return "", fmt.Errorf("error parsing fill value %v", args[2])
-				}
-				m.query.Model.Set("fillValue", floatVal)
+			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			if err != nil {
+				return "", err
 			}
 		}
 		return fmt.Sprintf("UNIX_TIMESTAMP(%s) DIV %.0f * %.0f", args[0], interval.Seconds(), interval.Seconds()), nil

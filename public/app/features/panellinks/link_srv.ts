@@ -77,6 +77,10 @@ export class LinkSrv {
       info.target = link.targetBlank ? '_blank' : '_self';
       info.href = this.templateSrv.replace(link.url || '', scopedVars);
       info.title = this.templateSrv.replace(link.title || '', scopedVars);
+    } else if (link.url) {
+      info.href = link.url;
+      info.title = this.templateSrv.replace(link.title || '', scopedVars);
+      info.target = link.targetBlank ? '_blank' : '';
     } else if (link.dashUri) {
       info.href = 'dashboard/' + link.dashUri + '?';
       info.title = this.templateSrv.replace(link.title || '', scopedVars);
