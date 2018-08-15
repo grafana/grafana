@@ -40,7 +40,14 @@ export class CustomVariable implements Variable {
   updateOptions() {
     // extract options in comma separated string
     this.options = _.map(this.query.split(/[,]+/), function(text) {
-      return { text: text.trim(), value: text.trim() };
+      // add human read friendly custom variable support 
+      // you can define custom variable like : key1=value1,key2=value2
+      var regexRs = /([^,]+)=([^,]+)/.exec(text);
+      if (regexRs) {
+        return { text: regexRs[2].trim(), value: regexRs[1].trim() };
+      } else {
+        return { text: text.trim(), value: text.trim() };
+      }      
     });
 
     if (this.includeAll) {
