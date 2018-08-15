@@ -4,6 +4,10 @@ import * as Series from 'app/types/series';
 import * as MultiStatPanel from '../types';
 import { SingleStat, SingleStatProps } from './SingleStat';
 import { getFontSize } from './utils';
+import { SPARKLINE_HEIGHT } from './SingleStat';
+
+const PANEL_PADDING = 30;
+const FONT_SIZE_COEF = 1.4;
 
 export interface MultiStatStatsProps {
   stats: Series.SeriesStat[];
@@ -20,7 +24,7 @@ export function MultiStatStats(props: MultiStatStatsProps) {
 
   if (layout === 'vertical') {
     classSuffix = 'vertical';
-    const rootElemHeight = props.size.h - 30;
+    const rootElemHeight = props.size.h - PANEL_PADDING;
     const statHeight = stats.length > 0 ? rootElemHeight / stats.length : 0;
     size = { w: props.size.w, h: statHeight };
   } else {
@@ -30,7 +34,7 @@ export function MultiStatStats(props: MultiStatStatsProps) {
     size = { w: statWidth, h: props.size.h };
   }
 
-  const widthRatio = size.w / (sparkline.show ? size.h * 0.75 : size.h);
+  const widthRatio = size.w / (sparkline.show ? size.h * (1 - SPARKLINE_HEIGHT) : size.h);
   const labelToTheLeft = widthRatio > 3;
 
   const fontSizes = stats.map(stat => {
@@ -43,7 +47,6 @@ export function MultiStatStats(props: MultiStatStatsProps) {
       label: getFontSize(labelText, textAreaWidth, textAreaHeight),
     };
   });
-  const FONT_SIZE_COEF = 1.4;
   const fontSize = Math.floor(_.min(_.map(fontSizes, 'value')) * FONT_SIZE_COEF);
   const labelFontSize = Math.min(Math.floor(_.min(_.map(fontSizes, 'label')) * FONT_SIZE_COEF), fontSize);
 

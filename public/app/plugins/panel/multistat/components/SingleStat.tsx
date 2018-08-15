@@ -7,7 +7,7 @@ import { getBGColor } from './utils';
 const DEFAULT_COLOR = 'rgb(31, 120, 193)';
 const BACKGROUND_OPACITY = 0.1;
 const LABEL_SIZE_COEF = 0.7;
-const SPARKLINE_HEIGHT = 0.25;
+export const SPARKLINE_HEIGHT = 0.25;
 
 export interface SingleStatProps {
   layout?: MultiStatPanel.PanelLayout;

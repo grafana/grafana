@@ -13,7 +13,7 @@ export interface PanelOptions extends Panel.MetricPanelOptions {
   // prefixFontSize?: string;
   // valueFontSize?: string;
   // postfixFontSize?: string;
-  decimals: number;
+  decimals?: number;
   colorBackground?: boolean;
   colorValue?: boolean;
   sparkline?: {
