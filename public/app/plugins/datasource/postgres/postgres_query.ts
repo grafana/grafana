@@ -48,7 +48,11 @@ export default class PostgresQuery {
   }
 
   quoteLiteral(value) {
-    return "'" + value.replace("'", "''") + "'";
+    return "'" + this.escapeLiteral(value) + "'";
+  }
+
+  escapeLiteral(value) {
+    return value.replace("'", "''");
   }
 
   hasTimeGroup() {
@@ -62,7 +66,7 @@ export default class PostgresQuery {
   interpolateQueryStr(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
-      return value;
+      return this.escapeLiteral(value);
     }
 
     if (typeof value === 'string') {
