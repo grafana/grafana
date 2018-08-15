@@ -11,21 +11,27 @@ export class PostgresConfigCtrl {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
     this.current.jsonData.postgresVersion = this.current.jsonData.postgresVersion || 903;
-    this.autoDetectPostgresVersion();
+    this.autoDetectFeatures();
   }
 
-  autoDetectPostgresVersion() {
+  autoDetectFeatures() {
     if (!this.current.id) {
       return;
     }
 
-    this.datasourceSrv
-      .loadDatasource(this.current.name)
-      .then(ds => {
-        return ds.getVersion();
-      })
-      .then(version => {
+    this.datasourceSrv.loadDatasource(this.current.name).then(ds => {
+      return ds.getVersion().then(version => {
         version = Number(version[0].text);
+
+        // timescaledb is only available for 9.6+
+        if (version >= 906) {
+          ds.getTimescaleDBVersion().then(version => {
+            if (version.length === 1) {
+              this.current.jsonData.timescaledb = true;
+            }
+          });
+        }
+
         let major = Math.trunc(version / 100);
         let minor = version % 100;
         let name = String(major);
@@ -37,6 +43,7 @@ export class PostgresConfigCtrl {
         }
         this.current.jsonData.postgresVersion = version;
       });
+    });
   }
 
   // the value portion is derived from postgres server_version_num/100

@@ -128,6 +128,10 @@ export class PostgresDatasource {
     return this.metricFindQuery("SELECT current_setting('server_version_num')::int/100", {});
   }
 
+  getTimescaleDBVersion() {
+    return this.metricFindQuery("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'", {});
+  }
+
   testDatasource() {
     return this.metricFindQuery('SELECT 1', {})
       .then(res => {
