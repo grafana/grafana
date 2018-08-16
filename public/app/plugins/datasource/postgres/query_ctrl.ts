@@ -381,6 +381,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         }
       }
       case 'part-param-changed': {
+        this.updatePersistedParts();
         this.panelCtrl.refresh();
         break;
       }
@@ -404,6 +405,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
           .catch(this.handleQueryError.bind(this));
       }
       case 'part-param-changed': {
+        this.updatePersistedParts();
         this.panelCtrl.refresh();
         break;
       }
@@ -497,6 +499,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         }
       }
       case 'part-param-changed': {
+        this.updatePersistedParts();
         this.datasource.metricFindQuery(this.metaBuilder.buildDatatypeQuery(part.params[0])).then((d: any) => {
           if (d.length === 1) {
             part.datatype = d[0].text;
