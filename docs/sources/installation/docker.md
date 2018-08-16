@@ -51,10 +51,13 @@ $ docker run \
   grafana/grafana:5.1.0
 ```
 
-## Running of the master branch
+## Running the master branch
 
-For every successful commit we publish a Grafana container to [`grafana/grafana`](https://hub.docker.com/r/grafana/grafana/tags/) and [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags/). In `grafana/grafana` container we will always overwrite the `master` tag with the latest version. In `grafana/grafana-dev` we will include
-the git commit in the tag. If you run Grafana master in production we **strongly** recommend that you use the later since different machines might run different version of grafana if they pull the master tag at different times.
+For every successful build of the master branch we update the `grafana/grafana:master` tag and create a new tag `grafana/grafana-dev:master-<commit hash>` with the hash of the git commit that was built. This means you can always get the latest version of Grafana.
+
+When running Grafana master in production we **strongly** recommend that you use the `grafana/grafana-dev:master-<commit hash>` tag as that will guarantee that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
+
+For a list of available tags, check out [grafana/grafana](https://hub.docker.com/r/grafana/grafana/tags/) and [grafana/grafana-dev](https://hub.docker.com/r/grafana/grafana-dev/tags/). 
 
 ## Installing Plugins for Grafana
 
