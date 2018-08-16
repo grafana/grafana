@@ -20,6 +20,7 @@ module.exports = merge(common, {
     path: path.resolve(__dirname, '../../public/build'),
     filename: '[name].[hash].js',
     publicPath: "/public/build/",
+    pathinfo: false,
   },
 
   resolve: {
@@ -35,6 +36,12 @@ module.exports = merge(common, {
     proxy: {
       '!/public/build': 'http://localhost:3000'
     }
+  },
+
+  optimization: {
+    removeAvailableModules: false,
+    removeEmptyChunks: false,
+    splitChunks: false,
   },
 
   module: {
@@ -56,7 +63,8 @@ module.exports = merge(common, {
         {
           loader: 'ts-loader',
           options: {
-            transpileOnly: true
+            transpileOnly: true,
+            experimentalWatchApi: true
           },
         }],
       },

@@ -19,6 +19,10 @@ The unique identifier (uid) of a folder can be used for uniquely identify folder
 
 The uid can have a maximum length of 40 characters.
 
+## A note about the General folder
+
+The General folder (id=0) is special and is not part of the Folder API which means
+that you cannot use this API for retrieving information about the General folder.
 
 ## Get all folders
 
@@ -219,7 +223,7 @@ Status Codes:
 - **404** – Folder not found
 - **412** – Precondition failed
 
-The **412** status code is used for explaing that you cannot update the folder and why.
+The **412** status code is used for explaining that you cannot update the folder and why.
 There can be different reasons for this:
 
 - The folder has been changed by someone else, `status=version-mismatch`
@@ -273,14 +277,14 @@ Status Codes:
 
 ## Get folder by id
 
-`GET /api/folders/:id`
+`GET /api/folders/id/:id`
 
 Will return the folder identified by id.
 
 **Example Request**:
 
 ```http
-GET /api/folders/1 HTTP/1.1
+GET /api/folders/id/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk

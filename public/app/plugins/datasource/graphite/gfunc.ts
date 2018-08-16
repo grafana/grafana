@@ -973,13 +973,12 @@ export class FuncInstance {
         } else if (_.get(_.last(this.def.params), 'multiple')) {
           paramType = _.get(_.last(this.def.params), 'type');
         }
-        if (paramType === 'value_or_series') {
+        // param types that should never be quoted
+        if (_.includes(['value_or_series', 'boolean', 'int', 'float', 'node'], paramType)) {
           return value;
         }
-        if (paramType === 'boolean' && _.includes(['true', 'false'], value)) {
-          return value;
-        }
-        if (_.includes(['int', 'float', 'int_or_interval', 'node_or_tag', 'node'], paramType) && _.isFinite(+value)) {
+        // param types that might be quoted
+        if (_.includes(['int_or_interval', 'node_or_tag'], paramType) && _.isFinite(+value)) {
           return _.toString(+value);
         }
         return "'" + value + "'";

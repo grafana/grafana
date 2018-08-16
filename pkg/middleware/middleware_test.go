@@ -82,7 +82,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 			setting.BasicAuthEnabled = true
 			authHeader := util.GetBasicAuthHeader("myUser", "myPass")
-			sc.fakeReq("GET", "/").withAuthoriziationHeader(authHeader).exec()
+			sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
 
 			Convey("Should init middleware context with user", func() {
 				So(sc.context.IsSignedIn, ShouldEqual, true)
@@ -125,6 +125,28 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("Should return api key invalid", func() {
 				So(sc.resp.Code, ShouldEqual, 401)
 				So(sc.respJson["message"], ShouldEqual, "Invalid API key")
+			})
+		})
+
+		middlewareScenario("Valid api key via Basic auth", func(sc *scenarioContext) {
+			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+
+			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
+				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
+				return nil
+			})
+
+			authHeader := util.GetBasicAuthHeader("api_key", "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9")
+			sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+
+			Convey("Should return 200", func() {
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			Convey("Should init middleware context", func() {
+				So(sc.context.IsSignedIn, ShouldEqual, true)
+				So(sc.context.OrgId, ShouldEqual, 12)
+				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
 			})
 		})
 
@@ -293,61 +315,6 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("When auth_proxy is enabled and request has X-Forwarded-For that is not trusted", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
-				return nil
-			})
-
-			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-				cmd.Result = &m.User{Id: 33}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.req.Header.Add("X-Forwarded-For", "client-ip, 192.168.1.1, 192.168.1.2")
-			sc.exec()
-
-			Convey("should return 407 status code", func() {
-				So(sc.resp.Code, ShouldEqual, 407)
-				So(sc.resp.Body.String(), ShouldContainSubstring, "Request for user (torkelo) from 192.168.1.2 is not from the authentication proxy")
-			})
-		})
-
-		middlewareScenario("When auth_proxy is enabled and request has X-Forwarded-For that is trusted", func(sc *scenarioContext) {
-			setting.AuthProxyEnabled = true
-			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
-			setting.AuthProxyHeaderProperty = "username"
-			setting.AuthProxyWhitelist = "192.168.1.1, 2001::23"
-
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
-				return nil
-			})
-
-			bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-				cmd.Result = &m.User{Id: 33}
-				return nil
-			})
-
-			sc.fakeReq("GET", "/")
-			sc.req.Header.Add("X-WEBAUTH-USER", "torkelo")
-			sc.req.Header.Add("X-Forwarded-For", "client-ip, 192.168.1.2, 192.168.1.1")
-			sc.exec()
-
-			Convey("Should init context with user info", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 33)
-				So(sc.context.OrgId, ShouldEqual, 4)
-			})
-		})
-
 		middlewareScenario("When session exists for previous user, create a new session", func(sc *scenarioContext) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
@@ -473,7 +440,7 @@ func (sc *scenarioContext) withInvalidApiKey() *scenarioContext {
 	return sc
 }
 
-func (sc *scenarioContext) withAuthoriziationHeader(authHeader string) *scenarioContext {
+func (sc *scenarioContext) withAuthorizationHeader(authHeader string) *scenarioContext {
 	sc.authHeader = authHeader
 	return sc
 }

@@ -480,17 +480,17 @@ export default class OpenTsDatasource {
 
   mapMetricsToTargets(metrics, options, tsdbVersion) {
     var interpolatedTagValue, arrTagV;
-    return _.map(metrics, function(metricData) {
+    return _.map(metrics, metricData => {
       if (tsdbVersion === 3) {
         return metricData.query.index;
       } else {
-        return _.findIndex(options.targets, function(target) {
+        return _.findIndex(options.targets, target => {
           if (target.filters && target.filters.length > 0) {
             return target.metric === metricData.metric;
           } else {
             return (
               target.metric === metricData.metric &&
-              _.every(target.tags, function(tagV, tagK) {
+              _.every(target.tags, (tagV, tagK) => {
                 interpolatedTagValue = this.templateSrv.replace(tagV, options.scopedVars, 'pipe');
                 arrTagV = interpolatedTagValue.split('|');
                 return _.includes(arrTagV, metricData.tags[tagK]) || interpolatedTagValue === '*';

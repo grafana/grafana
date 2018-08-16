@@ -44,4 +44,13 @@ describe('braces', () => {
     handler(event, change);
     expect(Plain.serialize(change.value)).toEqual('(foo) (bar)() ugh');
   });
+
+  it('adds closing braces outside a selector', () => {
+    const change = Plain.deserialize('sumrate(metric{namespace="dev", cluster="c1"}[2m])').change();
+    let event;
+    change.move(3);
+    event = new window.KeyboardEvent('keydown', { key: '(' });
+    handler(event, change);
+    expect(Plain.serialize(change.value)).toEqual('sum(rate(metric{namespace="dev", cluster="c1"}[2m]))');
+  });
 });
