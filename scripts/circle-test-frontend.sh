@@ -11,7 +11,6 @@ function exit_if_fail {
 }
 
 exit_if_fail npm run test:coverage
-exit_if_fail npm run build
 
 # publish code coverage
 echo "Publishing javascript code coverage"

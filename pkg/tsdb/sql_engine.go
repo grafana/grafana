@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -253,7 +254,6 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 				columnType := columnTypes[i].DatabaseTypeName()
 
 				for _, mct := range e.metricColumnTypes {
-					e.log.Info(mct)
 					if columnType == mct {
 						metricIndex = i
 						continue
@@ -275,9 +275,15 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 	fillMissing := query.Model.Get("fill").MustBool(false)
 	var fillInterval float64
 	fillValue := null.Float{}
+	fillPrevious := false
+
 	if fillMissing {
 		fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
-		if !query.Model.Get("fillNull").MustBool(false) {
+		switch query.Model.Get("fillMode").MustString() {
+		case "null":
+		case "previous":
+			fillPrevious = true
+		case "value":
 			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
 			fillValue.Valid = true
 		}
@@ -353,6 +359,14 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 					intervalStart = series.Points[len(series.Points)-1][1].Float64 + fillInterval
 				}
 
+				if fillPrevious {
+					if len(series.Points) > 0 {
+						fillValue = series.Points[len(series.Points)-1][0]
+					} else {
+						fillValue.Valid = false
+					}
+				}
+
 				// align interval start
 				intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval
 
@@ -377,6 +391,14 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *Query, rows *core.Rows, 
 			// fill in values from last fetched value till interval end
 			intervalStart := series.Points[len(series.Points)-1][1].Float64
 			intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
+
+			if fillPrevious {
+				if len(series.Points) > 0 {
+					fillValue = series.Points[len(series.Points)-1][0]
+				} else {
+					fillValue.Valid = false
+				}
+			}
 
 			// align interval start
 			intervalStart = math.Floor(intervalStart/fillInterval) * fillInterval
@@ -546,4 +568,24 @@ func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (n
 	}
 
 	return value, nil
+}
+
+func SetupFillmode(query *Query, interval time.Duration, fillmode string) error {
+	query.Model.Set("fill", true)
+	query.Model.Set("fillInterval", interval.Seconds())
+	switch fillmode {
+	case "NULL":
+		query.Model.Set("fillMode", "null")
+	case "previous":
+		query.Model.Set("fillMode", "previous")
+	default:
+		query.Model.Set("fillMode", "value")
+		floatVal, err := strconv.ParseFloat(fillmode, 64)
+		if err != nil {
+			return fmt.Errorf("error parsing fill value %v", fillmode)
+		}
+		query.Model.Set("fillValue", floatVal)
+	}
+
+	return nil
 }
