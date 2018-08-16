@@ -5,7 +5,6 @@ import { Block, Change, Document, Text, Value } from 'slate';
 import { Editor } from 'slate-react';
 import Plain from 'slate-plain-serializer';
 
-import BracesPlugin from './slate-plugins/braces';
 import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
 
@@ -97,6 +96,10 @@ export interface SuggestionGroup {
    * If true, do not filter items in this group based on the search.
    */
   skipFilter?: boolean;
+  /**
+   * If true, do not sort items.
+   */
+  skipSort?: boolean;
 }
 
 interface TypeaheadFieldProps {
@@ -126,6 +129,7 @@ export interface TypeaheadInput {
   prefix: string;
   selection?: Selection;
   text: string;
+  value: Value;
   wrapperNode: Element;
 }
 
@@ -144,7 +148,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
     super(props, context);
 
     // Base plugins
-    this.plugins = [BracesPlugin(), ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins];
+    this.plugins = [ClearPlugin(), NewlinePlugin(), ...props.additionalPlugins];
 
     this.state = {
       suggestions: [],
@@ -199,6 +203,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
   handleTypeahead = _.debounce(async () => {
     const selection = window.getSelection();
     const { cleanText, onTypeahead } = this.props;
+    const { value } = this.state;
 
     if (onTypeahead && selection.anchorNode) {
       const wrapperNode = selection.anchorNode.parentElement;
@@ -221,6 +226,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
         prefix,
         selection,
         text,
+        value,
         wrapperNode,
       });
 
@@ -241,7 +247,9 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
               group.items = group.items.filter(c => c.insertText || (c.filterText || c.label) !== prefix);
             }
 
-            group.items = _.sortBy(group.items, item => item.sortText || item.label);
+            if (!group.skipSort) {
+              group.items = _.sortBy(group.items, item => item.sortText || item.label);
+            }
           }
           return group;
         })

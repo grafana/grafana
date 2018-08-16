@@ -55,27 +55,46 @@ func TestMacroEngine(t *testing.T) {
 			Convey("interpolate __timeGroup function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 				So(err, ShouldBeNil)
+				sql2, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroupAlias(time_column,'5m')")
+				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300")
+				So(sql2, ShouldEqual, sql+" AS [time]")
 			})
 
 			Convey("interpolate __timeGroup function with spaces around arguments", func() {
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
 				So(err, ShouldBeNil)
+				sql2, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroupAlias(time_column , '5m')")
+				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300")
+				So(sql2, ShouldEqual, sql+" AS [time]")
 			})
 
 			Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', NULL)")
 
 				fill := query.Model.Get("fill").MustBool()
-				fillNull := query.Model.Get("fillNull").MustBool()
+				fillMode := query.Model.Get("fillMode").MustString()
 				fillInterval := query.Model.Get("fillInterval").MustInt()
 
 				So(err, ShouldBeNil)
 				So(fill, ShouldBeTrue)
-				So(fillNull, ShouldBeTrue)
+				So(fillMode, ShouldEqual, "null")
+				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+			})
+
+			Convey("interpolate __timeGroup function with fill (value = previous)", func() {
+				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', previous)")
+
+				fill := query.Model.Get("fill").MustBool()
+				fillMode := query.Model.Get("fillMode").MustString()
+				fillInterval := query.Model.Get("fillInterval").MustInt()
+
+				So(err, ShouldBeNil)
+				So(fill, ShouldBeTrue)
+				So(fillMode, ShouldEqual, "previous")
 				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
 			})
 

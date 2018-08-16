@@ -3,7 +3,6 @@ package postgres
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,12 +14,13 @@ const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type postgresMacroEngine struct {
-	timeRange *tsdb.TimeRange
-	query     *tsdb.Query
+	timeRange   *tsdb.TimeRange
+	query       *tsdb.Query
+	timescaledb bool
 }
 
-func newPostgresMacroEngine() tsdb.SqlMacroEngine {
-	return &postgresMacroEngine{}
+func newPostgresMacroEngine(timescaledb bool) tsdb.SqlMacroEngine {
+	return &postgresMacroEngine{timescaledb: timescaledb}
 }
 
 func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
@@ -30,6 +30,23 @@ func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.Tim
 	var macroError error
 
 	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+
+		// detect if $__timeGroup is supposed to add AS time for pre 5.3 compatibility
+		// if there is a ',' directly after the macro call $__timeGroup is probably used
+		// in the old way. Inside window function ORDER BY $__timeGroup will be followed
+		// by ')'
+		if groups[1] == "__timeGroup" {
+			if index := strings.Index(sql, groups[0]); index >= 0 {
+				index += len(groups[0])
+				if len(sql) > index {
+					// check for character after macro expression
+					if sql[index] == ',' {
+						groups[1] = "__timeGroupAlias"
+					}
+				}
+			}
+		}
+
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
@@ -97,19 +114,23 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			m.query.Model.Set("fill", true)
-			m.query.Model.Set("fillInterval", interval.Seconds())
-			if args[2] == "NULL" {
-				m.query.Model.Set("fillNull", true)
-			} else {
-				floatVal, err := strconv.ParseFloat(args[2], 64)
-				if err != nil {
-					return "", fmt.Errorf("error parsing fill value %v", args[2])
-				}
-				m.query.Model.Set("fillValue", floatVal)
+			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			if err != nil {
+				return "", err
 			}
 		}
-		return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v AS time", args[0], interval.Seconds(), interval.Seconds()), nil
+
+		if m.timescaledb {
+			return fmt.Sprintf("time_bucket('%vs',%s)", interval.Seconds(), args[0]), nil
+		} else {
+			return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+		}
+	case "__timeGroupAlias":
+		tg, err := m.evaluateMacro("__timeGroup", args)
+		if err == nil {
+			return tg + " AS \"time\"", err
+		}
+		return "", err
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

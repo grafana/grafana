@@ -14,11 +14,13 @@ echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building releases from tag $CIRCLE_TAG"
-  CC=${CCX64} go run build.go -includeBuildNumber=false build
+  OPT="-includeBuildNumber=false"
 else
   echo "Building incremental build for $CIRCLE_BRANCH"
-  CC=${CCX64} go run build.go -buildNumber=${CIRCLE_BUILD_NUM} build
+  OPT="-buildNumber=${CIRCLE_BUILD_NUM}"
 fi
+
+CC=${CCX64} go run build.go ${OPT} build
 
 yarn install --pure-lockfile --no-progress
 
@@ -28,14 +30,8 @@ if [ -d "dist" ]; then
   rm -rf dist
 fi
 
-if [ "$CIRCLE_TAG" != "" ]; then
-  echo "Building frontend from tag $CIRCLE_TAG"
-  go run build.go -includeBuildNumber=false build-frontend
-  echo "Packaging a release from tag $CIRCLE_TAG"
-  go run build.go -goos linux -pkg-arch amd64 -includeBuildNumber=false package-only latest
-else
-  echo "Building frontend for $CIRCLE_BRANCH"
-  go run build.go -buildNumber=${CIRCLE_BUILD_NUM} build-frontend
-  echo "Packaging incremental build for $CIRCLE_BRANCH"
-  go run build.go -goos linux -pkg-arch amd64 -buildNumber=${CIRCLE_BUILD_NUM} package-only latest
-fi
+echo "Building frontend"
+go run build.go ${OPT} build-frontend
+
+echo "Packaging"
+go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only latest
