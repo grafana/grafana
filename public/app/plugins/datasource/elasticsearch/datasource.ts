@@ -4,6 +4,7 @@ import moment from 'moment';
 import { ElasticQueryBuilder } from './query_builder';
 import { IndexPattern } from './index_pattern';
 import { ElasticResponse } from './elastic_response';
+import * as queryDef from './query_def';
 
 export class ElasticDatasource {
   basicAuth: string;
@@ -254,24 +255,33 @@ export class ElasticDatasource {
         continue;
       }
 
+      //timeShift
+      var shifted_time_from = moment.utc(options.range.from.valueOf());
+      var shifted_time_to = moment.utc(options.range.to.valueOf());
+      if (target.timeShift) {
+        var timeShiftMs = queryDef.getTimeShiftMs(target);
+        shifted_time_from = moment.utc(shifted_time_from.valueOf() - timeShiftMs);
+        shifted_time_to = moment.utc(shifted_time_to.valueOf() - timeShiftMs);
+      }
+
       var queryString = this.templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
       var queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
       var esQuery = angular.toJson(queryObj);
 
       var searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
-      var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+      var header = this.getQueryHeader(searchType, shifted_time_from, shifted_time_to);
       payload += header + '\n';
 
       payload += esQuery + '\n';
       sentTargets.push(target);
+      payload = payload.replace(/\$timeFrom/g, shifted_time_from.valueOf() + '');
+      payload = payload.replace(/\$timeTo/g, shifted_time_to.valueOf() + '');
     }
 
     if (sentTargets.length === 0) {
       return this.$q.when([]);
     }
 
-    payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
-    payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
     return this.post('_msearch', payload).then(function(res) {

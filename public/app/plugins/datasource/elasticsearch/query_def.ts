@@ -228,3 +228,19 @@ export function describeOrderBy(orderBy, target) {
     return 'metric not found';
   }
 }
+
+export function getTimeShiftMs(target) {
+  var timeShiftMs = 0;
+  if (target.timeShift) {
+    if (target.timeShift.match(/(\d+)h/)) {
+      timeShiftMs = target.timeShift.match(/(\d+)h/)[1] * 60 * 60 * 1000;
+    } else if (target.timeShift.match(/(\d+)d/)) {
+      timeShiftMs = target.timeShift.match(/(\d+)d/)[1] * 60 * 60 * 24 * 1000;
+    } else if (target.timeShift.match(/(\d+)w/)) {
+      timeShiftMs = target.timeShift.match(/(\d+)w/)[1] * 60 * 60 * 24 * 7 * 1000;
+    } else if (target.timeShift.match(/(\d+)m/)) {
+      timeShiftMs = target.timeShift.match(/(\d+)m/)[1] * 60 * 60 * 24 * 30 * 1000;
+    }
+  }
+  return timeShiftMs;
+}

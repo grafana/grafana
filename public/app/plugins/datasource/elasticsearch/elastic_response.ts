@@ -10,6 +10,7 @@ export class ElasticResponse {
 
   processMetrics(esAgg, target, seriesList, props) {
     var metric, y, i, newSeries, bucket, value;
+    var timeShiftMs = queryDef.getTimeShiftMs(target);
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -23,7 +24,7 @@ export class ElasticResponse {
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
             value = bucket.doc_count;
-            newSeries.datapoints.push([value, bucket.key]);
+            newSeries.datapoints.push([value, bucket.key + timeShiftMs]);
           }
           seriesList.push(newSeries);
           break;
@@ -47,7 +48,7 @@ export class ElasticResponse {
             for (i = 0; i < esAgg.buckets.length; i++) {
               bucket = esAgg.buckets[i];
               var values = bucket[metric.id].values;
-              newSeries.datapoints.push([values[percentileName], bucket.key]);
+              newSeries.datapoints.push([values[percentileName], bucket.key + timeShiftMs]);
             }
             seriesList.push(newSeries);
           }
@@ -75,7 +76,7 @@ export class ElasticResponse {
               stats.std_deviation_bounds_upper = stats.std_deviation_bounds.upper;
               stats.std_deviation_bounds_lower = stats.std_deviation_bounds.lower;
 
-              newSeries.datapoints.push([stats[statName], bucket.key]);
+              newSeries.datapoints.push([stats[statName], bucket.key + timeShiftMs]);
             }
 
             seriesList.push(newSeries);
@@ -96,9 +97,9 @@ export class ElasticResponse {
             value = bucket[metric.id];
             if (value !== undefined) {
               if (value.normalized_value) {
-                newSeries.datapoints.push([value.normalized_value, bucket.key]);
+                newSeries.datapoints.push([value.normalized_value, bucket.key + timeShiftMs]);
               } else {
-                newSeries.datapoints.push([value.value, bucket.key]);
+                newSeries.datapoints.push([value.value, bucket.key + timeShiftMs]);
               }
             }
           }
