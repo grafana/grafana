@@ -39,15 +39,17 @@ export class CustomVariable implements Variable {
 
   updateOptions() {
     // extract options in comma separated string
+    var tmpOptions = _.clone(this.options);
     this.options = _.map(this.query.split(/[,]+/), function(text) {
-      // add human read friendly custom variable support 
-      // you can define custom variable like : key1=value1,key2=value2
-      var regexRs = /([^,]+)=([^,]+)/.exec(text);
-      if (regexRs) {
-        return { text: regexRs[2].trim(), value: regexRs[1].trim() };
-      } else {
-        return { text: text.trim(), value: text.trim() };
-      }      
+      var opt = { text: text.trim(), value: text.trim() };
+      if (tmpOptions) {
+        _.forEach(tmpOptions, function(option) {
+          if (option.value === text) {
+            opt = option;
+          }
+        });
+      }
+      return opt;
     });
 
     if (this.includeAll) {
