@@ -73,6 +73,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 		alert.name,
 		alert.state,
 		alert.new_state_date,
+		alert.eval_data,
 		alert.eval_date,
 		alert.execution_error,
 		dashboard.uid as dashboard_uid,

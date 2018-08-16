@@ -7,6 +7,7 @@ export class DatasourceVariable implements Variable {
   options: any;
   current: any;
   refresh: any;
+  skipUrlSync: boolean;
 
   defaults = {
     type: 'datasource',
@@ -18,6 +19,7 @@ export class DatasourceVariable implements Variable {
     options: [],
     query: '',
     refresh: 1,
+    skipUrlSync: false,
   };
 
   /** @ngInject **/

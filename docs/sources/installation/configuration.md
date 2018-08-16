@@ -15,6 +15,8 @@ weight = 1
 The Grafana back-end has a number of configuration options that can be
 specified in a `.ini` configuration file or specified using environment variables.
 
+> **Note.** Grafana needs to be restarted for any configuration changes to take effect.
+
 ## Comments In .ini Files
 
 Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
@@ -82,7 +84,7 @@ command line in the init.d script or the systemd service file.
 
 ### temp_data_lifetime
 
-How long temporary images in `data` directory should be kept. Defaults to: `24h`. Supported modifiers: `h` (hours), 
+How long temporary images in `data` directory should be kept. Defaults to: `24h`. Supported modifiers: `h` (hours),
 `m` (minutes), for example: `168h`, `30m`, `10h30m`. Use `0` to never clean up temporary files.
 
 ### logs
@@ -179,7 +181,7 @@ embedded database (included in the main Grafana binary).
 
 ### url
 
-Use either URL or or the other fields below to configure the database
+Use either URL or the other fields below to configure the database
 Example: `mysql://user:secret@host:port/database`
 
 ### type
@@ -193,9 +195,9 @@ will be stored.
 
 ### host
 
-Only applicable to MySQL or Postgres. Includes IP or hostname and port.
+Only applicable to MySQL or Postgres. Includes IP or hostname and port or in case of unix sockets the path to it.
 For example, for MySQL running on the same host as Grafana: `host =
-127.0.0.1:3306`
+127.0.0.1:3306` or with unix sockets: `host = /var/run/mysqld/mysqld.sock`
 
 ### name
 
@@ -295,6 +297,12 @@ Defaults to `false`.
 Set to `true` to automatically add new users to the main organization
 (id 1). When set to `false`, new users will automatically cause a new
 organization to be created for that new user.
+
+### auto_assign_org_id
+
+Set this value to automatically add new users to the provided org.
+This requires `auto_assign_org` to be set to `true`. Please make sure
+that this organization does already exists.
 
 ### auto_assign_org_role
 
@@ -418,6 +426,108 @@ api_url = https://api.github.com/user
 allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
+```
+
+<hr>
+
+## [auth.gitlab]
+
+> Only available in Grafana v5.3+.
+
+You need to [create a GitLab OAuth
+application](https://docs.gitlab.com/ce/integration/oauth_provider.html).
+Choose a descriptive *Name*, and use the following *Redirect URI*:
+
+```
+https://grafana.example.com/login/gitlab
+```
+
+where `https://grafana.example.com` is the URL you use to connect to Grafana.
+Adjust it as needed if you don't use HTTPS or if you use a different port; for
+instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
+
+```
+http://203.0.113.31:3000/login/gitlab
+```
+
+Finally, select *api* as the *Scope* and submit the form. Note that if you're
+not going to use GitLab groups for authorization (i.e. not setting
+`allowed_groups`, see below), you can select *read_user* instead of *api* as
+the *Scope*, thus giving a more restricted access to your GitLab API.
+
+You'll get an *Application Id* and a *Secret* in return; we'll call them
+`GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
+section.
+
+Add the following to your Grafana configuration file to enable GitLab
+authentication:
+
+```ini
+[auth.gitlab]
+enabled = false
+allow_sign_up = false
+client_id = GITLAB_APPLICATION_ID
+client_secret = GITLAB_SECRET
+scopes = api
+auth_url = https://gitlab.com/oauth/authorize
+token_url = https://gitlab.com/oauth/token
+api_url = https://gitlab.com/api/v4
+allowed_groups =
+```
+
+Restart the Grafana backend for your changes to take effect.
+
+If you use your own instance of GitLab instead of `gitlab.com`, adjust
+`auth_url`, `token_url` and `api_url` accordingly by replacing the `gitlab.com`
+hostname with your own.
+
+With `allow_sign_up` set to `false`, only existing users will be able to login
+using their GitLab account, but with `allow_sign_up` set to `true`, *any* user
+who can authenticate on GitLab will be able to login on your Grafana instance;
+if you use the public `gitlab.com`, it means anyone in the world would be able
+to login on your Grafana instance.
+
+You can can however limit access to only members of a given group or list of
+groups by setting the `allowed_groups` option.
+
+### allowed_groups
+
+To limit access to authenticated users that are members of one or more [GitLab
+groups](https://docs.gitlab.com/ce/user/group/index.html), set `allowed_groups`
+to a comma- or space-separated list of groups. For instance, if you want to
+only give access to members of the `example` group, set
+
+
+```ini
+allowed_groups = example
+```
+
+If you want to also give access to members of the subgroup `bar`, which is in
+the group `foo`, set
+
+```ini
+allowed_groups = example, foo/bar
+```
+
+Note that in GitLab, the group or subgroup name doesn't always match its
+display name, especially if the display name contains spaces or special
+characters. Make sure you always use the group or subgroup name as it appears
+in the URL of the group or subgroup.
+
+Here's a complete example with `alloed_sign_up` enabled, and access limited to
+the `example` and `foo/bar` groups:
+
+```ini
+[auth.gitlab]
+enabled = false
+allow_sign_up = true
+client_id = GITLAB_APPLICATION_ID
+client_secret = GITLAB_SECRET
+scopes = api
+auth_url = https://gitlab.com/oauth/authorize
+token_url = https://gitlab.com/oauth/token
+api_url = https://gitlab.com/api/v4
+allowed_groups = example, foo/bar
 ```
 
 <hr>
@@ -689,9 +799,9 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full
-- **memcache:** ex:  127.0.0.1:11211
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
+- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
+- **memcache:** ex:  `127.0.0.1:11211`
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
 
 Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 
@@ -857,7 +967,7 @@ Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 Url to where Grafana will send PUT request with images
 
 ### public_url
-Optional parameter. Url to send to users in notifications, directly appended with the resulting uploaded file name.
+Optional parameter. Url to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the url, leaving any query string unchanged.
 
 ### username
 basic auth username
