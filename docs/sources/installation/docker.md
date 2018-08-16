@@ -38,6 +38,8 @@ The back-end web server has a number of configuration options. Go to the
 [Configuration]({{< relref "configuration.md" >}}) page for details on all
 those options.
 
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect you need to restart Grafana by restarting the Docker container.
+
 ## Running a Specific Version of Grafana
 
 ```bash
