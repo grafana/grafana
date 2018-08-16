@@ -15,10 +15,10 @@ fi
 echo "pushing ${_docker_repo}:${_grafana_version}"
 docker push "${_docker_repo}:${_grafana_version}"
 
-if echo "$_grafana_tag" | grep -q "^v"; then
+if echo "$_grafana_tag" | grep -q "^v" && echo "$_grafana_tag" | grep -vq "beta"; then
 	echo "pushing ${_docker_repo}:latest"
 	docker push "${_docker_repo}:latest"
-else
+elif echo "$_grafana_tag" | grep -q "master"; then
 	echo "pushing grafana/grafana:master"
 	docker push grafana/grafana:master
 fi
