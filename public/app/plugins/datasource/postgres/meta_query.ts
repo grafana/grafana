@@ -143,7 +143,6 @@ WHERE
     ) s
     WHERE EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = s.schema)
   )
-LIMIT 1
 `;
     query += ' AND table_name = ' + this.quoteIdentAsLiteral(this.target.table);
     query += ' AND column_name = ' + this.quoteIdentAsLiteral(column);

@@ -474,10 +474,22 @@ export class PostgresQueryCtrl extends QueryCtrl {
               .then(this.transformToSegments({}))
               .catch(this.handleQueryError.bind(this));
           case 'right':
-            return this.datasource
-              .metricFindQuery(this.metaBuilder.buildValueQuery(part.params[0]))
-              .then(this.transformToSegments({ addTemplateVars: true, templateQuoter: this.queryModel.quoteLiteral }))
-              .catch(this.handleQueryError.bind(this));
+            if (['int4', 'int8', 'float4', 'float8', 'timestamp', 'timestamptz'].indexOf(part.datatype) > -1) {
+              // don't do value lookups for numerical fields
+              return this.$q.when([]);
+            } else {
+              return this.datasource
+                .metricFindQuery(this.metaBuilder.buildValueQuery(part.params[0]))
+                .then(
+                  this.transformToSegments({
+                    addTemplateVars: true,
+                    templateQuoter: (v: string) => {
+                      return this.queryModel.quoteLiteral(v);
+                    },
+                  })
+                )
+                .catch(this.handleQueryError.bind(this));
+            }
           case 'op':
             return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=', 'IN', 'NOT IN']));
           default:
@@ -485,6 +497,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
         }
       }
       case 'part-param-changed': {
+        this.datasource.metricFindQuery(this.metaBuilder.buildDatatypeQuery(part.params[0])).then((d: any) => {
+          if (d.length === 1) {
+            part.datatype = d[0].text;
+          }
+        });
         this.panelCtrl.refresh();
         break;
       }
