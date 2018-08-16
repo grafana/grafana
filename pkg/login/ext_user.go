@@ -21,6 +21,7 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 		Email:      extUser.Email,
 		Login:      extUser.Login,
 	}
+
 	err := bus.Dispatch(userQuery)
 	if err != m.ErrUserNotFound && err != nil {
 		return err
@@ -66,7 +67,28 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 		}
 	}
 
-	return syncOrgRoles(cmd.Result, extUser)
+	err = syncOrgRoles(cmd.Result, extUser)
+	if err != nil {
+		return err
+	}
+
+	// Sync isGrafanaAdmin permission
+	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
+		if err := bus.Dispatch(&m.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
+			return err
+		}
+	}
+
+	err = bus.Dispatch(&m.SyncTeamsCommand{
+		User:         cmd.Result,
+		ExternalUser: extUser,
+	})
+
+	if err == bus.ErrHandlerNotFound {
+		return nil
+	}
+
+	return err
 }
 
 func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {
@@ -76,6 +98,7 @@ func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {
 		Name:         extUser.Name,
 		SkipOrgSetup: len(extUser.OrgRoles) > 0,
 	}
+
 	if err := bus.Dispatch(cmd); err != nil {
 		return nil, err
 	}

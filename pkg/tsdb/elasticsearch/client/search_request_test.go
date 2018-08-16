@@ -32,7 +32,7 @@ func TestSearchRequest(t *testing.T) {
 				Convey("When marshal to JSON should generate correct json", func() {
 					body, err := json.Marshal(sr)
 					So(err, ShouldBeNil)
-					json, err := simplejson.NewJson([]byte(body))
+					json, err := simplejson.NewJson(body)
 					So(err, ShouldBeNil)
 					So(json.Get("size").MustInt(500), ShouldEqual, 0)
 					So(json.Get("sort").Interface(), ShouldBeNil)
@@ -81,7 +81,7 @@ func TestSearchRequest(t *testing.T) {
 					Convey("When marshal to JSON should generate correct json", func() {
 						body, err := json.Marshal(sr)
 						So(err, ShouldBeNil)
-						json, err := simplejson.NewJson([]byte(body))
+						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
 						So(json.Get("size").MustInt(0), ShouldEqual, 200)
 
@@ -124,7 +124,7 @@ func TestSearchRequest(t *testing.T) {
 					Convey("When marshal to JSON should generate correct json", func() {
 						body, err := json.Marshal(sr)
 						So(err, ShouldBeNil)
-						json, err := simplejson.NewJson([]byte(body))
+						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
 
 						scriptFields, err := json.Get("script_fields").Map()
@@ -163,7 +163,7 @@ func TestSearchRequest(t *testing.T) {
 					Convey("When marshal to JSON should generate correct json", func() {
 						body, err := json.Marshal(sr)
 						So(err, ShouldBeNil)
-						json, err := simplejson.NewJson([]byte(body))
+						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
 
 						So(json.Get("aggs").MustMap(), ShouldHaveLength, 2)
@@ -200,7 +200,7 @@ func TestSearchRequest(t *testing.T) {
 					Convey("When marshal to JSON should generate correct json", func() {
 						body, err := json.Marshal(sr)
 						So(err, ShouldBeNil)
-						json, err := simplejson.NewJson([]byte(body))
+						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
 
 						So(json.Get("aggs").MustMap(), ShouldHaveLength, 1)
@@ -251,7 +251,7 @@ func TestSearchRequest(t *testing.T) {
 					Convey("When marshal to JSON should generate correct json", func() {
 						body, err := json.Marshal(sr)
 						So(err, ShouldBeNil)
-						json, err := simplejson.NewJson([]byte(body))
+						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
 
 						topAggOne := json.GetPath("aggs", "1")
@@ -300,7 +300,7 @@ func TestSearchRequest(t *testing.T) {
 					Convey("When marshal to JSON should generate correct json", func() {
 						body, err := json.Marshal(sr)
 						So(err, ShouldBeNil)
-						json, err := simplejson.NewJson([]byte(body))
+						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
 
 						topAgg := json.GetPath("aggs", "1")
@@ -364,7 +364,7 @@ func TestSearchRequest(t *testing.T) {
 					Convey("When marshal to JSON should generate correct json", func() {
 						body, err := json.Marshal(sr)
 						So(err, ShouldBeNil)
-						json, err := simplejson.NewJson([]byte(body))
+						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
 
 						termsAgg := json.GetPath("aggs", "1")
@@ -419,7 +419,7 @@ func TestSearchRequest(t *testing.T) {
 					Convey("When marshal to JSON should generate correct json", func() {
 						body, err := json.Marshal(sr)
 						So(err, ShouldBeNil)
-						json, err := simplejson.NewJson([]byte(body))
+						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
 
 						scriptFields, err := json.Get("script_fields").Map()

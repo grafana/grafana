@@ -191,7 +191,7 @@ export class KeybindingSrv {
               range,
             };
             const exploreState = encodePathComponent(JSON.stringify(state));
-            this.$location.url(`/explore/${exploreState}`);
+            this.$location.url(`/explore?state=${exploreState}`);
           }
         }
       });
@@ -258,6 +258,12 @@ export class KeybindingSrv {
 
     this.bind('d v', () => {
       appEvents.emit('toggle-view-mode');
+    });
+
+    //Autofit panels
+    this.bind('d a', () => {
+      // this has to be a full page reload
+      window.location.href = window.location.href + '&autofitpanels';
     });
   }
 }

@@ -59,7 +59,6 @@ Content-Type: application/json
     "panelId": 1,
     "name": "fire place sensor",
     "state": "alerting",
-    "message": "Someone is trying to break in through the fire place",
     "newStateDate": "2018-05-14T05:55:20+02:00",
     "evalDate": "0001-01-01T00:00:00Z",
     "evalData": null,

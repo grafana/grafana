@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 bulkDashboard() {
 
@@ -22,42 +22,43 @@ requiresJsonnet() {
 		fi
 }
 
-defaultDashboards() {
-		requiresJsonnet
-
-		ln -s -f -r ./dashboards/dev-dashboards/dev-dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
+devDashboards() {
+		echo -e "\xE2\x9C\x94 Setting up all dev dashboards using provisioning"
+		ln -s -f ../../../devenv/dashboards.yaml ../conf/provisioning/dashboards/dev.yaml
 }
 
-defaultDatasources() {
-		echo "setting up all default datasources using provisioning"
+devDatasources() {
+		echo -e "\xE2\x9C\x94 Setting up all dev datasources using provisioning"
 
-		ln -s -f -r ./datasources/default/default.yaml ../conf/provisioning/datasources/custom.yaml
+		ln -s -f ../../../devenv/datasources.yaml ../conf/provisioning/datasources/dev.yaml
 }
 
 usage() {
-	echo -e "install.sh\n\tThis script installs my basic setup for a debian laptop\n"
+	echo -e "\n"
 	echo "Usage:"
 	echo "  bulk-dashboards                     - create and provisioning 400 dashboards"
-	echo "  default-datasources                 - provisiong all core datasources"
+	echo "  no args                             - provisiong core datasources and dev dashboards"
 }
 
 main() {
-	local cmd=$1
+	echo -e "------------------------------------------------------------------"
+	echo -e "This script setups provisioning for dev datasources and dashboards"
+	echo -e "------------------------------------------------------------------"
+	echo -e "\n"
 
-	if [[ -z "$cmd" ]]; then
-		usage
-		exit 1
-	fi
+	local cmd=$1
 
 	if [[ $cmd == "bulk-dashboards" ]]; then
 		bulkDashboard
-	elif [[ $cmd == "default-datasources" ]]; then
-		defaultDatasources
-	elif [[ $cmd == "default-dashboards" ]]; then
-		defaultDashboards
 	else
+		devDashboards
+		devDatasources
+	fi
+
+  if [[ -z "$cmd" ]]; then
 		usage
 	fi
+
 }
 
 main "$@"
