@@ -46,6 +46,7 @@ type Request struct {
 	Handlers   Handlers
 
 	Retryer
+	AttemptTime            time.Time
 	Time                   time.Time
 	Operation              *Operation
 	HTTPRequest            *http.Request
@@ -121,6 +122,7 @@ func New(cfg aws.Config, clientInfo metadata.ClientInfo, handlers Handlers,
 		Handlers:   handlers.Copy(),
 
 		Retryer:     retryer,
+		AttemptTime: time.Now(),
 		Time:        time.Now(),
 		ExpireTime:  0,
 		Operation:   operation,
@@ -368,9 +370,9 @@ func (r *Request) Build() error {
 	return r.Error
 }
 
-// Sign will sign the request returning error if errors are encountered.
+// Sign will sign the request, returning error if errors are encountered.
 //
-// Send will build the request prior to signing. All Sign Handlers will
+// Sign will build the request prior to signing. All Sign Handlers will
 // be executed in the order they were set.
 func (r *Request) Sign() error {
 	r.Build()
@@ -440,7 +442,7 @@ func (r *Request) GetBody() io.ReadSeeker {
 	return r.safeBody
 }
 
-// Send will send the request returning error if errors are encountered.
+// Send will send the request, returning error if errors are encountered.
 //
 // Send will sign the request prior to sending. All Send Handlers will
 // be executed in the order they were set.
@@ -461,6 +463,7 @@ func (r *Request) Send() error {
 	}()
 
 	for {
+		r.AttemptTime = time.Now()
 		if aws.BoolValue(r.Retryable) {
 			if r.Config.LogLevel.Matches(aws.LogDebugWithRequestRetries) {
 				r.Config.Logger.Log(fmt.Sprintf("DEBUG: Retrying Request %s/%s, attempt %d",

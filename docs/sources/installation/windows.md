@@ -19,6 +19,8 @@ installation.
 
 ## Configure
 
+**Important:** After you've downloaded the zip file and before extracting it, make sure to open properties for that file (right-click Properties) and check the `unblock` checkbox and `Ok`.
+
 The zip file contains a folder with the current Grafana version. Extract
 this folder to anywhere you want Grafana to run from.  Go into the
 `conf` directory and copy `sample.ini` to `custom.ini`. You should edit

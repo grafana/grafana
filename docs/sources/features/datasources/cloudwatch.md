@@ -115,6 +115,8 @@ and `dimension keys/values`.
 In place of `region` you can specify `default` to use the default region configured in the datasource for the query,
 e.g. `metrics(AWS/DynamoDB, default)` or `dimension_values(default, ..., ..., ...)`.
 
+Read more about the available dimensions in the [CloudWatch  Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
+
 Name | Description
 ------- | --------
 *regions()* | Returns a list of regions AWS provides their service.

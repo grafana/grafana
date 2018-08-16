@@ -1,5 +1,5 @@
 .dashboard-container {
-  padding: $dashboard-padding;
+  padding: $dashboard-padding $dashboard-padding 0 $dashboard-padding;
   width: 100%;
   min-height: 100%;
 }
@@ -16,6 +16,7 @@ div.flot-text {
   height: 100%;
 
   &--solo {
+    margin: 0;
     .panel-container {
       border: none;
       z-index: $zindex-sidemenu + 1;

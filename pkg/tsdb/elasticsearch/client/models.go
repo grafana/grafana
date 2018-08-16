@@ -74,7 +74,7 @@ type MultiSearchRequest struct {
 
 // MultiSearchResponse represents a multi search response
 type MultiSearchResponse struct {
-	status    int               `json:"status,omitempty"`
+	Status    int               `json:"status,omitempty"`
 	Responses []*SearchResponse `json:"responses"`
 }
 
