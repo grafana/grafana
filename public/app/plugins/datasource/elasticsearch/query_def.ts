@@ -1,5 +1,12 @@
 import _ from 'lodash';
 
+export const bucketScriptOperations = [
+  { text: '+', value: '+', requiresField: false },
+  { text: '-', value: '-', requiresField: false },
+  { text: '*', value: '*', requiresField: false },
+  { text: '/', value: '/', requiresField: false },
+];
+
 export const metricAggTypes = [
   { text: 'Count', value: 'count', requiresField: false },
   {
@@ -60,6 +67,13 @@ export const metricAggTypes = [
   {
     text: 'Derivative',
     value: 'derivative',
+    requiresField: false,
+    isPipelineAgg: true,
+    minVersion: 2,
+  },
+  {
+    text: 'Bucket Script',
+    value: 'bucket_script',
     requiresField: false,
     isPipelineAgg: true,
     minVersion: 2,
@@ -128,6 +142,7 @@ export const pipelineOptions = {
     { text: 'minimize', default: false },
   ],
   derivative: [{ text: 'unit', default: undefined }],
+  bucket_script: [{ text: 'unit', default: undefined }],
 };
 
 export const movingAvgModelSettings = {

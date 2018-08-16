@@ -13,7 +13,9 @@
 	<div class="gf-form">
 		<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="width-10"></metric-segment-model>
 		<metric-segment-model ng-if="aggDef.requiresField" property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="width-12"></metric-segment-model>
-		<metric-segment-model ng-if="aggDef.isPipelineAgg" property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
+    <metric-segment-model ng-if="aggDef.isPipelineAgg" property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
+    <metric-segment-model ng-if="aggDef.isPipelineAgg && agg.type==='bucket_script'" property="agg.piplineAggOperation" options="bucketScriptOperations" on-change="onTypeChange()" custom="false" css-class="width-5"></metric-segment-model>
+    <metric-segment-model ng-if="aggDef.isPipelineAgg && agg.type==='bucket_script'" property="agg.pipelineAgg2" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>    
 	</div>
 
 	<div class="gf-form gf-form--grow">

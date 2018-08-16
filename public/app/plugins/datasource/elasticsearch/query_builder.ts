@@ -261,8 +261,27 @@ export class ElasticQueryBuilder {
       var metricAgg = null;
 
       if (queryDef.isPipelineAgg(metric.type)) {
-        if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
+        if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg) && metric.type !== 'bucket_script') {
           metricAgg = { buckets_path: metric.pipelineAgg };
+        } else if (queryDef.isPipelineAgg(metric.type) && metric.type === 'bucket_script') {
+          // if metric is count,we need use special path "_count"
+          var bucketPathVar1 = metric.pipelineAgg;
+          var bucketPathVar2 = metric.pipelineAgg2;
+          target.metrics.forEach(function(m) {
+            if (m.id === metric.pipelineAgg && m.type === 'count') {
+              bucketPathVar1 = '_count';
+            }
+            if (m.id === metric.pipelineAgg2 && m.type === 'count') {
+              bucketPathVar2 = '_count';
+            }
+          });
+          metricAgg = {
+            buckets_path: {
+              my_var1: bucketPathVar1,
+              my_var2: bucketPathVar2,
+            },
+            script: 'params.my_var1 ' + metric.piplineAggOperation + ' params.my_var2',
+          };
         } else {
           continue;
         }

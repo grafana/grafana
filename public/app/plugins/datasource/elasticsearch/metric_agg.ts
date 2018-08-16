@@ -21,6 +21,7 @@ export class ElasticMetricAggCtrl {
   constructor($scope, uiSegmentSrv, $q, $rootScope) {
     var metricAggs = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
+    $scope.bucketScriptOperations = queryDef.bucketScriptOperations;
     $scope.extendedStats = queryDef.extendedStats;
     $scope.pipelineAggOptions = [];
     $scope.modelSettingsValues = {};
