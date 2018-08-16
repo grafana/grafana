@@ -87,14 +87,14 @@ export class PostgresQueryCtrl extends QueryCtrl {
   updatePersistedParts() {
     this.target.select = _.map(this.selectParts, function(selectParts) {
       return _.map(selectParts, function(part: any) {
-        return { type: part.def.type, params: part.params };
+        return { type: part.def.type, datatype: part.datatype, params: part.params };
       });
     });
     this.target.where = _.map(this.whereParts, function(part: any) {
-      return { type: part.def.type, name: part.name, params: part.params };
+      return { type: part.def.type, datatype: part.datatype, name: part.name, params: part.params };
     });
     this.target.group = _.map(this.groupParts, function(part: any) {
-      return { type: part.def.type, params: part.params };
+      return { type: part.def.type, datatype: part.datatype, params: part.params };
     });
   }
 

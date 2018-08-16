@@ -38,6 +38,7 @@ export class SqlPart {
   params: any[];
   label: string;
   name: string;
+  datatype: string;
 
   constructor(part: any, def: any) {
     this.part = part;
@@ -45,6 +46,8 @@ export class SqlPart {
     if (!this.def) {
       throw { message: 'Could not find sql part ' + part.type };
     }
+
+    this.datatype = part.datatype;
 
     if (part.name) {
       this.name = part.name;
