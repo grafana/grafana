@@ -13,6 +13,7 @@ export class LoginCtrl {
 
     $scope.command = {};
     $scope.result = '';
+    $scope.loggingIn = false;
 
     contextSrv.sidemenu = false;
 
@@ -110,10 +111,12 @@ export class LoginCtrl {
         $scope.result = result;
 
         if ($scope.formModel.password !== 'admin' || $scope.ldapEnabled || $scope.authProxyEnabled) {
+          $scope.loggingIn = true;
           $scope.toGrafana();
           return;
+        } else {
+          $scope.changeView();
         }
-        $scope.changeView();
       });
     };
 
