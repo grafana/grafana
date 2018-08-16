@@ -1,10 +1,11 @@
 import React from 'react';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
+import Plain from 'slate-plain-serializer';
+
+import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
 
 Enzyme.configure({ adapter: new Adapter() });
-
-import PromQueryField from './PromQueryField';
 
 describe('PromQueryField typeahead handling', () => {
   const defaultProps = {
@@ -59,20 +60,35 @@ describe('PromQueryField typeahead handling', () => {
   describe('label suggestions', () => {
     it('returns default label suggestions on label context and no metric', () => {
       const instance = shallow(<PromQueryField {...defaultProps} />).instance() as PromQueryField;
-      const result = instance.getTypeahead({ text: 'j', prefix: 'j', wrapperClasses: ['context-labels'] });
+      const value = Plain.deserialize('{}');
+      const range = value.selection.merge({
+        anchorOffset: 1,
+      });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.getTypeahead({
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-labels'],
+        value: valueWithSelection,
+      });
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'job' }, { label: 'instance' }], label: 'Labels' }]);
     });
 
     it('returns label suggestions on label context and metric', () => {
       const instance = shallow(
-        <PromQueryField {...defaultProps} labelKeys={{ foo: ['bar'] }} />
+        <PromQueryField {...defaultProps} labelKeys={{ '{__name__="metric"}': ['bar'] }} />
       ).instance() as PromQueryField;
+      const value = Plain.deserialize('metric{}');
+      const range = value.selection.merge({
+        anchorOffset: 7,
+      });
+      const valueWithSelection = value.change().select(range).value;
       const result = instance.getTypeahead({
-        text: 'job',
-        prefix: 'job',
+        text: '',
+        prefix: '',
         wrapperClasses: ['context-labels'],
-        metric: 'foo',
+        value: valueWithSelection,
       });
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
@@ -80,13 +96,18 @@ describe('PromQueryField typeahead handling', () => {
 
     it('returns a refresher on label context and unavailable metric', () => {
       const instance = shallow(
-        <PromQueryField {...defaultProps} labelKeys={{ foo: ['bar'] }} />
+        <PromQueryField {...defaultProps} labelKeys={{ '{__name__="foo"}': ['bar'] }} />
       ).instance() as PromQueryField;
+      const value = Plain.deserialize('metric{}');
+      const range = value.selection.merge({
+        anchorOffset: 7,
+      });
+      const valueWithSelection = value.change().select(range).value;
       const result = instance.getTypeahead({
-        text: 'job',
-        prefix: 'job',
+        text: '',
+        prefix: '',
         wrapperClasses: ['context-labels'],
-        metric: 'xxx',
+        value: valueWithSelection,
       });
       expect(result.context).toBeUndefined();
       expect(result.refresher).toBeInstanceOf(Promise);
@@ -95,31 +116,104 @@ describe('PromQueryField typeahead handling', () => {
 
     it('returns label values on label context when given a metric and a label key', () => {
       const instance = shallow(
-        <PromQueryField {...defaultProps} labelKeys={{ foo: ['bar'] }} labelValues={{ foo: { bar: ['baz'] } }} />
+        <PromQueryField
+          {...defaultProps}
+          labelKeys={{ '{__name__="metric"}': ['bar'] }}
+          labelValues={{ '{__name__="metric"}': { bar: ['baz'] } }}
+        />
       ).instance() as PromQueryField;
+      const value = Plain.deserialize('metric{bar=ba}');
+      const range = value.selection.merge({
+        anchorOffset: 13,
+      });
+      const valueWithSelection = value.change().select(range).value;
       const result = instance.getTypeahead({
         text: '=ba',
         prefix: 'ba',
         wrapperClasses: ['context-labels'],
-        metric: 'foo',
         labelKey: 'bar',
+        value: valueWithSelection,
       });
       expect(result.context).toBe('context-label-values');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'baz' }], label: 'Label values' }]);
+      expect(result.suggestions).toEqual([{ items: [{ label: 'baz' }], label: 'Label values for "bar"' }]);
     });
 
-    it('returns label suggestions on aggregation context and metric', () => {
+    it('returns label suggestions on aggregation context and metric w/ selector', () => {
       const instance = shallow(
-        <PromQueryField {...defaultProps} labelKeys={{ foo: ['bar'] }} />
+        <PromQueryField {...defaultProps} labelKeys={{ '{__name__="metric",foo="xx"}': ['bar'] }} />
       ).instance() as PromQueryField;
+      const value = Plain.deserialize('sum(metric{foo="xx"}) by ()');
+      const range = value.selection.merge({
+        anchorOffset: 26,
+      });
+      const valueWithSelection = value.change().select(range).value;
       const result = instance.getTypeahead({
-        text: 'job',
-        prefix: 'job',
+        text: '',
+        prefix: '',
         wrapperClasses: ['context-aggregation'],
-        metric: 'foo',
+        value: valueWithSelection,
       });
       expect(result.context).toBe('context-aggregation');
       expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
     });
+
+    it('returns label suggestions on aggregation context and metric w/o selector', () => {
+      const instance = shallow(
+        <PromQueryField {...defaultProps} labelKeys={{ '{__name__="metric"}': ['bar'] }} />
+      ).instance() as PromQueryField;
+      const value = Plain.deserialize('sum(metric) by ()');
+      const range = value.selection.merge({
+        anchorOffset: 16,
+      });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.getTypeahead({
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-aggregation'],
+        value: valueWithSelection,
+      });
+      expect(result.context).toBe('context-aggregation');
+      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+    });
+  });
+});
+
+describe('groupMetricsByPrefix()', () => {
+  it('returns an empty group for no metrics', () => {
+    expect(groupMetricsByPrefix([])).toEqual([]);
+  });
+
+  it('returns options grouped by prefix', () => {
+    expect(groupMetricsByPrefix(['foo_metric'])).toMatchObject([
+      {
+        value: 'foo',
+        children: [
+          {
+            value: 'foo_metric',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('returns options without prefix as toplevel option', () => {
+    expect(groupMetricsByPrefix(['metric'])).toMatchObject([
+      {
+        value: 'metric',
+      },
+    ]);
+  });
+
+  it('returns recording rules grouped separately', () => {
+    expect(groupMetricsByPrefix([':foo_metric:'])).toMatchObject([
+      {
+        value: RECORDING_RULES_GROUP,
+        children: [
+          {
+            value: ':foo_metric:',
+          },
+        ],
+      },
+    ]);
   });
 });

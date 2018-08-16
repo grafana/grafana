@@ -40,6 +40,9 @@ start_tls = false
 ssl_skip_verify = false
 # set to the path to your root CA certificate or leave unset to use system defaults
 # root_ca_cert = "/path/to/certificate.crt"
+# Authentication against LDAP servers requiring client certificates
+# client_cert = "/path/to/client.crt"
+# client_key = "/path/to/client.key"
 
 # Search user bind dn
 bind_dn = "cn=admin,dc=grafana,dc=org"
@@ -48,6 +51,7 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 bind_password = 'grafana'
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
+# Allow login from email or username, example "(|(sAMAccountName=%s)(userPrincipalName=%s))"
 search_filter = "(cn=%s)"
 
 # An array of base dns to search through

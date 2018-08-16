@@ -16,6 +16,178 @@ export function alignRange(start, end, step) {
   };
 }
 
+const keywords = 'by|without|on|ignoring|group_left|group_right';
+
+// Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
+const builtInWords = [
+  keywords,
+  'count|count_values|min|max|avg|sum|stddev|stdvar|bottomk|topk|quantile',
+  'true|false|null|__name__|job',
+  'abs|absent|ceil|changes|clamp_max|clamp_min|count_scalar|day_of_month|day_of_week|days_in_month|delta|deriv',
+  'drop_common_labels|exp|floor|histogram_quantile|holt_winters|hour|idelta|increase|irate|label_replace|ln|log2',
+  'log10|minute|month|predict_linear|rate|resets|round|scalar|sort|sort_desc|sqrt|time|vector|year|avg_over_time',
+  'min_over_time|max_over_time|sum_over_time|count_over_time|quantile_over_time|stddev_over_time|stdvar_over_time',
+]
+  .join('|')
+  .split('|');
+
+// addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
+export function addLabelToQuery(query: string, key: string, value: string): string {
+  if (!key || !value) {
+    throw new Error('Need label to add to query.');
+  }
+
+  // Add empty selector to bare metric name
+  let previousWord;
+  query = query.replace(/(\w+)\b(?![\({=",])/g, (match, word, offset) => {
+    // Check if inside a selector
+    const nextSelectorStart = query.slice(offset).indexOf('{');
+    const nextSelectorEnd = query.slice(offset).indexOf('}');
+    const insideSelector = nextSelectorEnd > -1 && (nextSelectorStart === -1 || nextSelectorStart > nextSelectorEnd);
+    // Handle "sum by (key) (metric)"
+    const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
+    previousWord = word;
+    if (!insideSelector && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
+      return `${word}{}`;
+    }
+    return word;
+  });
+
+  // Adding label to existing selectors
+  const selectorRegexp = /{([^{]*)}/g;
+  let match = null;
+  const parts = [];
+  let lastIndex = 0;
+  let suffix = '';
+  while ((match = selectorRegexp.exec(query))) {
+    const prefix = query.slice(lastIndex, match.index);
+    const selectorParts = match[1].split(',');
+    const labels = selectorParts.reduce((acc, label) => {
+      const labelParts = label.split('=');
+      if (labelParts.length === 2) {
+        acc[labelParts[0]] = labelParts[1];
+      }
+      return acc;
+    }, {});
+    labels[key] = `"${value}"`;
+    const selector = Object.keys(labels)
+      .sort()
+      .map(key => `${key}=${labels[key]}`)
+      .join(',');
+    lastIndex = match.index + match[1].length + 2;
+    suffix = query.slice(match.index + match[0].length);
+    parts.push(prefix, '{', selector, '}');
+  }
+  parts.push(suffix);
+  return parts.join('');
+}
+
+export function determineQueryHints(series: any[], datasource?: any): any[] {
+  const hints = series.map((s, i) => {
+    const query: string = s.query;
+    const index: number = s.responseIndex;
+    if (query === undefined || index === undefined) {
+      return null;
+    }
+
+    // ..._bucket metric needs a histogram_quantile()
+    const histogramMetric = query.trim().match(/^\w+_bucket$/);
+    if (histogramMetric) {
+      const label = 'Time series has buckets, you probably wanted a histogram.';
+      return {
+        index,
+        label,
+        fix: {
+          label: 'Fix by adding histogram_quantile().',
+          action: {
+            type: 'ADD_HISTOGRAM_QUANTILE',
+            query,
+            index,
+          },
+        },
+      };
+    }
+
+    // Check for monotony
+    const datapoints: [number, number][] = s.datapoints;
+    const simpleMetric = query.trim().match(/^\w+$/);
+    if (simpleMetric && datapoints.length > 1) {
+      let increasing = false;
+      const monotonic = datapoints.every((dp, index) => {
+        if (index === 0) {
+          return true;
+        }
+        increasing = increasing || dp[0] > datapoints[index - 1][0];
+        // monotonic?
+        return dp[0] >= datapoints[index - 1][0];
+      });
+      if (increasing && monotonic) {
+        const label = 'Time series is monotonously increasing.';
+        return {
+          label,
+          index,
+          fix: {
+            label: 'Fix by adding rate().',
+            action: {
+              type: 'ADD_RATE',
+              query,
+              index,
+            },
+          },
+        };
+      }
+    }
+
+    // Check for recording rules expansion
+    if (datasource && datasource.ruleMappings) {
+      const mapping = datasource.ruleMappings;
+      const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
+        if (query.search(ruleName) > -1) {
+          return {
+            ...acc,
+            [ruleName]: mapping[ruleName],
+          };
+        }
+        return acc;
+      }, {});
+      if (_.size(mappingForQuery) > 0) {
+        const label = 'Query contains recording rules.';
+        return {
+          label,
+          index,
+          fix: {
+            label: 'Expand rules',
+            action: {
+              type: 'EXPAND_RULES',
+              query,
+              index,
+              mapping: mappingForQuery,
+            },
+          },
+        };
+      }
+    }
+
+    // No hint found
+    return null;
+  });
+  return hints;
+}
+
+export function extractRuleMappingFromGroups(groups: any[]) {
+  return groups.reduce(
+    (mapping, group) =>
+      group.rules.filter(rule => rule.type === 'recording').reduce(
+        (acc, rule) => ({
+          ...acc,
+          [rule.name]: rule.query,
+        }),
+        mapping
+      ),
+    {}
+  );
+}
+
 export function prometheusRegularEscape(value) {
   if (typeof value === 'string') {
     return value.replace(/'/g, "\\\\'");
@@ -34,6 +206,7 @@ export class PrometheusDatasource {
   type: string;
   editorSrc: string;
   name: string;
+  ruleMappings: { [index: string]: string };
   supportsExplore: boolean;
   supportMetrics: boolean;
   url: string;
@@ -61,6 +234,11 @@ export class PrometheusDatasource {
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.resultTransformer = new ResultTransformer(templateSrv);
+    this.ruleMappings = {};
+  }
+
+  init() {
+    this.loadRules();
   }
 
   _request(url, data?, options?: any) {
@@ -157,10 +335,15 @@ export class PrometheusDatasource {
 
     return this.$q.all(allQueryPromise).then(responseList => {
       let result = [];
+      let hints = [];
 
       _.each(responseList, (response, index) => {
         if (response.status === 'error') {
-          throw response.error;
+          const error = {
+            index,
+            ...response.error,
+          };
+          throw error;
         }
 
         // Keeping original start/end for transformers
@@ -175,16 +358,24 @@ export class PrometheusDatasource {
           responseIndex: index,
           refId: activeTargets[index].refId,
         };
-        this.resultTransformer.transform(result, response, transformerOptions);
+        const series = this.resultTransformer.transform(response, transformerOptions);
+        result = [...result, ...series];
+
+        if (queries[index].hinting) {
+          const queryHints = determineQueryHints(series, this);
+          hints = [...hints, ...queryHints];
+        }
       });
 
-      return { data: result };
+      return { data: result, hints };
     });
   }
 
   createQuery(target, options, start, end) {
-    var query: any = {};
-    query.instant = target.instant;
+    const query: any = {
+      hinting: target.hinting,
+      instant: target.instant,
+    };
     var range = Math.ceil(end - start);
 
     var interval = kbn.interval_to_seconds(options.interval);
@@ -298,9 +489,11 @@ export class PrometheusDatasource {
   getRangeScopedVars() {
     let range = this.timeSrv.timeRange();
     let msRange = range.to.diff(range.from);
+    let sRange = Math.round(msRange / 1000);
     let regularRange = kbn.secondsToHms(msRange / 1000);
     return {
       __range_ms: { text: msRange, value: msRange },
+      __range_s: { text: sRange, value: sRange },
       __range: { text: regularRange, value: regularRange },
     };
   }
@@ -382,6 +575,45 @@ export class PrometheusDatasource {
       };
     }
     return state;
+  }
+
+  loadRules() {
+    this.metadataRequest('/api/v1/rules')
+      .then(res => res.data || res.json())
+      .then(body => {
+        const groups = _.get(body, ['data', 'groups']);
+        if (groups) {
+          this.ruleMappings = extractRuleMappingFromGroups(groups);
+        }
+      })
+      .catch(e => {
+        console.log('Rules API is experimental. Ignore next error.');
+        console.error(e);
+      });
+  }
+
+  modifyQuery(query: string, action: any): string {
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        return addLabelToQuery(query, action.key, action.value);
+      }
+      case 'ADD_HISTOGRAM_QUANTILE': {
+        return `histogram_quantile(0.95, sum(rate(${query}[5m])) by (le))`;
+      }
+      case 'ADD_RATE': {
+        return `rate(${query}[5m])`;
+      }
+      case 'EXPAND_RULES': {
+        const mapping = action.mapping;
+        if (mapping) {
+          const ruleNames = Object.keys(mapping);
+          const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\()`, 'ig');
+          return query.replace(rulesRegex, (match, pre, name, post) => mapping[name]);
+        }
+      }
+      default:
+        return query;
+    }
   }
 
   getPrometheusTime(date, roundUp) {

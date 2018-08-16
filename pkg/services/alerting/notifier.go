@@ -3,7 +3,6 @@ package alerting
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -81,7 +80,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	renderOpts := rendering.Opts{
 		Width:   1000,
 		Height:  500,
-		Timeout: time.Second * 30,
+		Timeout: alertTimeout / 2,
 		OrgId:   context.Rule.OrgId,
 		OrgRole: m.ROLE_ADMIN,
 	}

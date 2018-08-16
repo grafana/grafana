@@ -5,6 +5,7 @@ import { LogsModel, LogRow } from 'app/core/logs_model';
 interface LogsProps {
   className?: string;
   data: LogsModel;
+  loading: boolean;
 }
 
 const EXAMPLE_QUERY = '{job="default/prometheus"}';

@@ -97,7 +97,9 @@ export class PluginEditCtrl {
 
   initReadme() {
     return this.backendSrv.get(`/api/plugins/${this.pluginId}/markdown/readme`).then(res => {
-      var md = new Remarkable();
+      var md = new Remarkable({
+        linkify: true
+      });
       this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
     });
   }

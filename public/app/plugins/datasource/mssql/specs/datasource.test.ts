@@ -1,20 +1,20 @@
 import moment from 'moment';
-import { PostgresDatasource } from '../datasource';
+import { MssqlDatasource } from '../datasource';
+import { TemplateSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
+import q from 'q';
 
-describe('PostgreSQLDatasource', function() {
-  let instanceSettings = { name: 'postgresql' };
-
-  let backendSrv = {};
-  let templateSrv = {
-    replace: jest.fn(text => text),
-  };
-  let ctx = <any>{
-    backendSrv,
+describe('MSSQLDatasource', function() {
+  const ctx: any = {
+    backendSrv: {},
+    templateSrv: new TemplateSrvStub(),
   };
 
-  beforeEach(() => {
-    ctx.ds = new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv);
+  beforeEach(function() {
+    ctx.$q = q;
+    ctx.instanceSettings = { name: 'mssql' };
+
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, ctx.templateSrv);
   });
 
   describe('When performing annotationQuery', function() {
@@ -25,7 +25,7 @@ describe('PostgreSQLDatasource', function() {
     const options = {
       annotation: {
         name: annotationName,
-        rawQuery: 'select time, title, text, tags from table;',
+        rawQuery: 'select time, text, tags from table;',
       },
       range: {
         from: moment(1432288354),
@@ -41,9 +41,9 @@ describe('PostgreSQLDatasource', function() {
             {
               columns: [{ text: 'time' }, { text: 'text' }, { text: 'tags' }],
               rows: [
-                [1432288355, 'some text', 'TagA,TagB'],
-                [1432288390, 'some text2', ' TagB , TagC'],
-                [1432288400, 'some text3'],
+                [1521545610656, 'some text', 'TagA,TagB'],
+                [1521546251185, 'some text2', ' TagB , TagC'],
+                [1521546501378, 'some text3'],
               ],
             },
           ],
@@ -51,11 +51,12 @@ describe('PostgreSQLDatasource', function() {
       },
     };
 
-    beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
-      ctx.ds.annotationQuery(options).then(function(data) {
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = options => {
+        return ctx.$q.when({ data: response, status: 200 });
+      };
+
+      return ctx.ds.annotationQuery(options).then(data => {
         results = data;
       });
     });
@@ -95,10 +96,11 @@ describe('PostgreSQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
-      ctx.ds.metricFindQuery(query).then(function(data) {
+      ctx.backendSrv.datasourceRequest = function(options) {
+        return ctx.$q.when({ data: response, status: 200 });
+      };
+
+      return ctx.ds.metricFindQuery(query).then(function(data) {
         results = data;
       });
     });
@@ -131,10 +133,11 @@ describe('PostgreSQLDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
-      ctx.ds.metricFindQuery(query).then(function(data) {
+      ctx.backendSrv.datasourceRequest = function(options) {
+        return ctx.$q.when({ data: response, status: 200 });
+      };
+
+      return ctx.ds.metricFindQuery(query).then(function(data) {
         results = data;
       });
     });
@@ -168,14 +171,14 @@ describe('PostgreSQLDatasource', function() {
       },
     };
 
-    beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = jest.fn(options => {
-        return Promise.resolve({ data: response, status: 200 });
-      });
-      ctx.ds.metricFindQuery(query).then(function(data) {
+    beforeEach(function() {
+      ctx.backendSrv.datasourceRequest = function(options) {
+        return ctx.$q.when({ data: response, status: 200 });
+      };
+
+      return ctx.ds.metricFindQuery(query).then(function(data) {
         results = data;
       });
-      //ctx.$rootScope.$apply();
     });
 
     it('should return list of unique keys', function() {
@@ -208,14 +211,21 @@ describe('PostgreSQLDatasource', function() {
       });
     });
 
-    describe('and variable allows multi-value and is a string', () => {
+    describe('and variable allows multi-value and value is a string', () => {
       it('should return a quoted value', () => {
         ctx.variable.multi = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
     });
 
-    describe('and variable allows all and is a string', () => {
+    describe('and variable contains single quote', () => {
+      it('should return a quoted value', () => {
+        ctx.variable.multi = true;
+        expect(ctx.ds.interpolateVariable("a'bc", ctx.variable)).toEqual("'a''bc'");
+      });
+    });
+
+    describe('and variable allows all and value is a string', () => {
       it('should return a quoted value', () => {
         ctx.variable.includeAll = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
