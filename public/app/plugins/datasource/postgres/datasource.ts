@@ -16,7 +16,7 @@ export class PostgresDatasource {
   interpolateVariable(value, variable) {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return "'" + value + "'";
+        return "'" + value.replace(/'/g, `''`) + "'";
       } else {
         return value;
       }
@@ -27,7 +27,7 @@ export class PostgresDatasource {
     }
 
     var quotedValues = _.map(value, function(val) {
-      return "'" + val + "'";
+      return "'" + val.replace(/'/g, `''`) + "'";
     });
     return quotedValues.join(',');
   }
@@ -124,25 +124,7 @@ export class PostgresDatasource {
   }
 
   testDatasource() {
-    return this.backendSrv
-      .datasourceRequest({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          from: '5m',
-          to: 'now',
-          queries: [
-            {
-              refId: 'A',
-              intervalMs: 1,
-              maxDataPoints: 1,
-              datasourceId: this.id,
-              rawSql: 'SELECT 1',
-              format: 'table',
-            },
-          ],
-        },
-      })
+    return this.metricFindQuery('SELECT 1', {})
       .then(res => {
         return { status: 'success', message: 'Database Connection OK' };
       })

@@ -259,6 +259,12 @@ export class KeybindingSrv {
     this.bind('d v', () => {
       appEvents.emit('toggle-view-mode');
     });
+
+    //Autofit panels
+    this.bind('d a', () => {
+      // this has to be a full page reload
+      window.location.href = window.location.href + '&autofitpanels';
+    });
   }
 }
 

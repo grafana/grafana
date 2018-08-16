@@ -39,7 +39,7 @@ describe('Prometheus Result Transformer', () => {
         [1443454528000, 'test', '', 'testjob', 3846],
         [1443454529000, 'test', 'localhost:8080', 'otherjob', 3847],
       ]);
-      expect(table.columns).toEqual([
+      expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
         { text: '__name__' },
         { text: 'instance' },
@@ -51,7 +51,7 @@ describe('Prometheus Result Transformer', () => {
     it('should column title include refId if response count is more than 2', () => {
       var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result, 2, 'B');
       expect(table.type).toBe('table');
-      expect(table.columns).toEqual([
+      expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
         { text: '__name__' },
         { text: 'instance' },
@@ -79,7 +79,7 @@ describe('Prometheus Result Transformer', () => {
       var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result);
       expect(table.type).toBe('table');
       expect(table.rows).toEqual([[1443454528000, 'test', 'testjob', 3846]]);
-      expect(table.columns).toEqual([
+      expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
         { text: '__name__' },
         { text: 'job' },
@@ -111,7 +111,6 @@ describe('Prometheus Result Transformer', () => {
     };
 
     it('should convert cumulative histogram to regular', () => {
-      let result = [];
       let options = {
         format: 'heatmap',
         start: 1445000010,
@@ -119,7 +118,7 @@ describe('Prometheus Result Transformer', () => {
         legendFormat: '{{le}}',
       };
 
-      ctx.resultTransformer.transform(result, { data: response }, options);
+      const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
         { target: '1', datapoints: [[10, 1445000010000], [10, 1445000020000], [0, 1445000030000]] },
         { target: '2', datapoints: [[10, 1445000010000], [0, 1445000020000], [30, 1445000030000]] },
@@ -172,14 +171,13 @@ describe('Prometheus Result Transformer', () => {
           ],
         },
       };
-      let result = [];
       let options = {
         format: 'timeseries',
         start: 0,
         end: 2,
       };
 
-      ctx.resultTransformer.transform(result, { data: response }, options);
+      const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([{ target: 'test{job="testjob"}', datapoints: [[10, 0], [10, 1000], [0, 2000]] }]);
     });
 
@@ -196,7 +194,6 @@ describe('Prometheus Result Transformer', () => {
           ],
         },
       };
-      let result = [];
       let options = {
         format: 'timeseries',
         step: 1,
@@ -204,7 +201,7 @@ describe('Prometheus Result Transformer', () => {
         end: 2,
       };
 
-      ctx.resultTransformer.transform(result, { data: response }, options);
+      const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([{ target: 'test{job="testjob"}', datapoints: [[null, 0], [10, 1000], [0, 2000]] }]);
     });
 
@@ -221,7 +218,6 @@ describe('Prometheus Result Transformer', () => {
           ],
         },
       };
-      let result = [];
       let options = {
         format: 'timeseries',
         step: 2,
@@ -229,7 +225,7 @@ describe('Prometheus Result Transformer', () => {
         end: 8,
       };
 
-      ctx.resultTransformer.transform(result, { data: response }, options);
+      const result = ctx.resultTransformer.transform({ data: response }, options);
       expect(result).toEqual([
         { target: 'test{job="testjob"}', datapoints: [[null, 0], [null, 2000], [10, 4000], [null, 6000], [10, 8000]] },
       ]);
