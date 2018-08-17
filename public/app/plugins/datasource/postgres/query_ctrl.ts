@@ -493,7 +493,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
                 .catch(this.handleQueryError.bind(this));
             }
           case 'op':
-            return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '<=', '>', '>=', 'IN', 'NOT IN']));
+            return this.$q.when(this.uiSegmentSrv.newOperators(this.metaBuilder.getOperators(part.datatype)));
           default:
             return this.$q.when([]);
         }

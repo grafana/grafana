@@ -1,6 +1,23 @@
 export class PostgresMetaQuery {
   constructor(private target, private queryModel) {}
 
+  getOperators(datatype: string) {
+    switch (datatype) {
+      case 'float4':
+      case 'float8': {
+        return ['=', '!=', '<', '<=', '>', '>='];
+      }
+      case 'text':
+      case 'varchar':
+      case 'char': {
+        return ['=', '!=', '<', '<=', '>', '>=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE', '~', '~*', '!~', '!~*'];
+      }
+      default: {
+        return ['=', '!=', '<', '<=', '>', '>=', 'IN', 'NOT IN'];
+      }
+    }
+  }
+
   // quote identifier as literal to use in metadata queries
   quoteIdentAsLiteral(value) {
     return this.queryModel.quoteLiteral(this.queryModel.unquoteIdentifier(value));
