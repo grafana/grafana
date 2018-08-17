@@ -74,7 +74,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 			})
 		})
 
-		Convey("Multiple datasources in different organizations with is_default in each organization", func() {
+		Convey("Multiple datasources in different organizations with isDefault in each organization", func() {
 			dc := newDatasourceProvisioner(logger)
 			err := dc.applyChanges(multipleOrgsWithDefault)
 			Convey("should not raise error", func() {
