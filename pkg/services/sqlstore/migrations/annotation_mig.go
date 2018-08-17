@@ -71,7 +71,7 @@ func addAnnotationMig(mg *Migrator) {
 	annotationTagTable := Table{
 		Name: "annotation_tag",
 		Columns: []*Column{
-			{Name: "annotation_id", Type: DB_BigInt, Nullable: false},
+			{Name: "annotation_id", Type: DB_BigInt, Nullable: false, IsPrimaryKey: true},
 			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
