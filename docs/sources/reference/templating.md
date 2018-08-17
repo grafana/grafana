@@ -311,11 +311,11 @@ It may be a good idea to use a variable in the row title as well.
 
 Example: [Repeated Rows Dashboard](http://play.grafana.org/dashboard/db/repeated-rows)
 
-### URL state
+## URL state
 
 Variable values are always synced to the URL using the syntax `var-<varname>=value`.
 
-### Examples
+## Examples
 
 - [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
 - [Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)
