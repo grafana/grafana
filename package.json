@@ -32,7 +32,6 @@
     "es6-shim": "^0.35.3",
     "expect.js": "~0.2.0",
     "expose-loader": "^0.7.3",
-    "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "file-loader": "^1.1.11",
     "fork-ts-checker-webpack-plugin": "^0.4.2",
     "gaze": "^1.1.2",
