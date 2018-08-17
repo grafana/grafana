@@ -213,7 +213,7 @@ export class QueryVariable implements Variable {
   }
 
   dependsOn(variable) {
-    return containsVariable(this.query, this.datasource, variable.name);
+    return containsVariable(this.query, this.datasource, this.regex, variable.name);
   }
 }
 
