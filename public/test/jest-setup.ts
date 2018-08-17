@@ -20,3 +20,33 @@ configure({ adapter: new Adapter() });
 
 var global = <any>window;
 global.$ = global.jQuery = $;
+
+/**
+ * Using enzyme with JSDOM
+ * https://github.com/airbnb/enzyme/blob/master/docs/guides/jsdom.md
+ */
+import { JSDOM } from 'jsdom';
+
+const jsdom = new JSDOM('<!doctype html><html><body></body></html>');
+const jsdom_window = jsdom.window;
+// const jsdom_window = jsdom.defaultView;
+
+function copyProps(src, target) {
+  const props = Object.getOwnPropertyNames(src)
+    .filter(prop => typeof target[prop] === 'undefined')
+    .reduce(
+      (result, prop) => ({
+        ...result,
+        [prop]: Object.getOwnPropertyDescriptor(src, prop),
+      }),
+      {}
+    );
+  Object.defineProperties(target, props);
+}
+
+global.window = jsdom_window;
+global.document = jsdom_window.document;
+global.navigator = {
+  userAgent: 'node.js',
+};
+copyProps(jsdom_window, global);
