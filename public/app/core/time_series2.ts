@@ -91,6 +91,7 @@ export default class TimeSeries {
   yaxis: any;
   zindex: any;
   stack: any;
+  stackpercent: boolean;
   nullPointMode: any;
   fillBelowTo: any;
   transform: any;
@@ -147,6 +148,9 @@ export default class TimeSeries {
       }
       if (override.stack !== void 0) {
         this.stack = override.stack;
+      }
+      if (override.percentage !== void 0) {
+        this.stackpercent = override.percentage;
       }
       if (override.linewidth !== void 0) {
         this.lines.lineWidth = this.dashes.show ? 0 : override.linewidth;

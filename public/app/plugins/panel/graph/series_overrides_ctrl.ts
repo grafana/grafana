@@ -147,6 +147,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.addOverrideOption('Points', 'points', [true, false]);
   $scope.addOverrideOption('Points Radius', 'pointradius', [1, 2, 3, 4, 5]);
   $scope.addOverrideOption('Stack', 'stack', [true, false, 'A', 'B', 'C', 'D']);
+  $scope.addOverrideOption('Percent', 'percentage', [true, false]);
   $scope.addOverrideOption('Color', 'color', ['change']);
   $scope.addOverrideOption('Y-axis', 'yaxis', [1, 2]);
   $scope.addOverrideOption('Z-index', 'zindex', [-3, -2, -1, 0, 1, 2, 3]);
