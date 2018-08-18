@@ -24,7 +24,7 @@ export class PostgresMetaQuery {
   }
 
   findMetricTable() {
-    // query that returns first table found that has a timestamptz column and a float column
+    // query that returns first table found that has a timestamp(tz) column and a float column
     let query = `
 SELECT
 	table_name,

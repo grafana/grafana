@@ -56,6 +56,18 @@ export class PostgresQueryCtrl extends QueryCtrl {
         this.target.rawSql = 'SELECT 1';
       } else {
         this.target.rawSql = defaultQuery;
+        this.datasource.metricFindQuery(this.metaBuilder.findMetricTable()).then(result => {
+          if (result.length > 0) {
+            this.target.table = result[0].text;
+            this.tableSegment = uiSegmentSrv.newSegment(this.target.table);
+            this.target.timeColumn = result[1].text;
+            this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
+            this.target.timeColumnType = 'timestamp';
+            this.target.select = [[{ type: 'column', params: [result[2].text] }]];
+            this.updateProjection();
+            this.panelCtrl.refresh();
+          }
+        });
       }
     }
 
