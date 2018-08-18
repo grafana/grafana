@@ -58,7 +58,7 @@ func init() {
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Provide a bot token to use the Slack file.upload API (starts with "xoxb")
+          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify #channel-name or @username in Recipient for this to work 
         </info-popover>
       </div>
     `,
