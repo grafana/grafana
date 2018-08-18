@@ -535,7 +535,13 @@ export class PostgresQueryCtrl extends QueryCtrl {
   addWhereAction(part, index) {
     switch (this.whereAdd.type) {
       case 'macro': {
-        this.whereParts.push(sqlPart.create({ type: 'macro', name: this.whereAdd.value, params: [] }));
+        let partModel = sqlPart.create({ type: 'macro', name: this.whereAdd.value, params: [] });
+        if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
+          // replace current macro
+          this.whereParts[0] = partModel;
+        } else {
+          this.whereParts.splice(0, 0, partModel);
+        }
         break;
       }
       default: {
