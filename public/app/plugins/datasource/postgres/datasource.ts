@@ -7,6 +7,7 @@ export class PostgresDatasource {
   name: any;
   jsonData: any;
   responseParser: ResponseParser;
+  queryModel: PostgresQuery;
 
   /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
@@ -14,12 +15,13 @@ export class PostgresDatasource {
     this.id = instanceSettings.id;
     this.jsonData = instanceSettings.jsonData;
     this.responseParser = new ResponseParser(this.$q);
+    this.queryModel = new PostgresQuery({});
   }
 
   interpolateVariable(value, variable) {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return "'" + value.replace(/'/g, `''`) + "'";
+        return this.queryModel.quoteLiteral(value);
       } else {
         return value;
       }
@@ -29,8 +31,8 @@ export class PostgresDatasource {
       return value;
     }
 
-    let quotedValues = _.map(value, function(val) {
-      return "'" + val.replace(/'/g, `''`) + "'";
+    let quotedValues = _.map(value, v => {
+      return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
   }
