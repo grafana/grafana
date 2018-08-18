@@ -96,6 +96,10 @@ export default class PostgresQuery {
     }
   }
 
+  hasUnixEpochTimecolumn() {
+    return ['int4', 'int8', 'float4', 'float8', 'numeric'].indexOf(this.target.timeColumnType) > -1;
+  }
+
   buildTimeColumn(alias = true) {
     let timeGroup = this.hasTimeGroup();
     let query;
@@ -108,7 +112,7 @@ export default class PostgresQuery {
       } else {
         args = timeGroup.params[0];
       }
-      if (['int4', 'int8', 'float4', 'float8', 'numeric'].indexOf(this.target.timeColumnType) > -1) {
+      if (this.hasUnixEpochTimecolumn()) {
         macro = '$__unixEpochGroup';
       }
       if (alias) {
