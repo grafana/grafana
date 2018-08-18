@@ -99,6 +99,7 @@ export default class PostgresQuery {
   buildTimeColumn(alias = true) {
     let timeGroup = this.hasTimeGroup();
     let query;
+    let macro = '$__timeGroup';
 
     if (timeGroup) {
       let args;
@@ -107,11 +108,13 @@ export default class PostgresQuery {
       } else {
         args = timeGroup.params[0];
       }
-      if (alias) {
-        query = '$__timeGroupAlias(' + this.target.timeColumn + ',' + args + ')';
-      } else {
-        query = '$__timeGroup(' + this.target.timeColumn + ',' + args + ')';
+      if (['int4', 'int8', 'float4', 'float8', 'numeric'].indexOf(this.target.timeColumnType) > -1) {
+        macro = '$__unixEpochGroup';
       }
+      if (alias) {
+        macro += 'Alias';
+      }
+      query = macro + '(' + this.target.timeColumn + ',' + args + ')';
     } else {
       query = this.target.timeColumn;
       if (alias) {

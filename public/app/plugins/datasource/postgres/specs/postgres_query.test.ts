@@ -35,6 +35,13 @@ describe('PostgresQuery', function() {
 
     query = new PostgresQuery({ timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'NULL'] }] }, templateSrv);
     expect(query.buildTimeColumn()).toBe('$__timeGroupAlias(time,5m,NULL)');
+
+    query = new PostgresQuery(
+      { timeColumn: 'time', timeColumnType: 'int4', group: [{ type: 'time', params: ['5m', 'none'] }] },
+      templateSrv
+    );
+    expect(query.buildTimeColumn()).toBe('$__unixEpochGroupAlias(time,5m)');
+    expect(query.buildTimeColumn(false)).toBe('$__unixEpochGroup(time,5m)');
   });
 
   describe('When generating metric column SQL', function() {
