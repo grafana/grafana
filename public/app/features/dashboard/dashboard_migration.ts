@@ -21,7 +21,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 16;
+    this.dashboard.schemaVersion = 17;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -366,6 +366,15 @@ export class DashboardMigrator {
 
     if (oldVersion < 16) {
       this.upgradeToGridLayout(old);
+    }
+
+    if (oldVersion < 17) {
+      panelUpgrades.push(panel => {
+        if (panel.minSpan) {
+          panel.maxPerRow = GRID_COLUMN_COUNT / panel.minSpan;
+        }
+        delete panel.minSpan;
+      });
     }
 
     if (panelUpgrades.length === 0) {

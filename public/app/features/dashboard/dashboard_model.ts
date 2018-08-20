@@ -442,7 +442,7 @@ export class DashboardModel {
     }
 
     const selectedOptions = this.getSelectedVariableOptions(variable);
-    const minWidth = panel.minSpan || 6;
+    const maxPerRow = panel.maxPerRow || 4;
     let xPos = 0;
     let yPos = panel.gridPos.y;
 
@@ -462,7 +462,7 @@ export class DashboardModel {
       } else {
         // set width based on how many are selected
         // assumed the repeated panels should take up full row width
-        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selectedOptions.length, minWidth);
+        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selectedOptions.length, GRID_COLUMN_COUNT / maxPerRow);
         copy.gridPos.x = xPos;
         copy.gridPos.y = yPos;
 
