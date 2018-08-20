@@ -77,6 +77,10 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 			//send notification
 			success := not.Notify(evalContext) == nil
 
+			if evalContext.IsTestRun {
+				return nil
+			}
+
 			//write result to db.
 			cmd := &m.RecordNotificationJournalCommand{
 				OrgId:      evalContext.Rule.OrgId,
