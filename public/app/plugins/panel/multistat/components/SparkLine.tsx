@@ -8,9 +8,11 @@ import { getBGColor } from './utils';
 export interface SparkLineProps {
   flotpairs: Series.Flotpair[];
   size: MultiStatPanel.PanelSize;
-  color?: string;
+  color: string;
   fillColor?: string;
   lineColor?: string;
+  customClass?: string;
+  customStyles?: any;
 }
 
 export class SparkLine extends React.Component<SparkLineProps> {
@@ -28,23 +30,17 @@ export class SparkLine extends React.Component<SparkLineProps> {
   }
 
   componentDidUpdate(prevProps) {
-    const width = this.props.size.w - 10;
-    const height = this.props.size.h;
-    const flotpairs = this.props.flotpairs;
+    const { size, flotpairs } = this.props;
+    const width = size.w;
+    const height = size.h;
 
     if (width <= 0 || height <= 0 || !flotpairs) {
       this.$elem.empty();
       return;
     }
 
-    let plotCss: any = {};
-    plotCss.position = 'absolute';
-
-    plotCss.bottom = '5px';
-    plotCss.left = '5px';
-    plotCss.width = width - 10 + 'px';
-    // const dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
-    // plotCss.height = height - dynamicHeightMargin + 'px';
+    let plotCss: any = { ...this.props.customStyles };
+    plotCss.width = width + 'px';
     plotCss.height = height + 'px';
 
     const timeRange = {
@@ -52,8 +48,8 @@ export class SparkLine extends React.Component<SparkLineProps> {
       to: flotpairs[flotpairs.length - 1][0],
     };
 
-    const fillColor = this.props.color ? getBGColor(this.props.color, 0.1) : this.props.fillColor;
-    const lineColor = this.props.color || this.props.lineColor;
+    const fillColor = this.props.fillColor || getBGColor(this.props.color, 0.1);
+    const lineColor = this.props.lineColor || this.props.color;
 
     let sparklineOptions = {
       legend: { show: false },
@@ -93,6 +89,7 @@ export class SparkLine extends React.Component<SparkLineProps> {
   }
 
   render() {
-    return <div ref={elem => (this.elem = elem)} />;
+    const className = `${this.props.customClass || ''}`;
+    return <div className={className} ref={elem => (this.elem = elem)} />;
   }
 }

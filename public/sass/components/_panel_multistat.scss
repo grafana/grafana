@@ -26,7 +26,6 @@
 }
 
 .multistat-single {
-  margin: 0.3rem;
   display: block;
   text-align: center;
   line-height: 1;
@@ -67,6 +66,11 @@
   .multistat-label {
     font-size: 0.4em;
     font-weight: 300;
+  }
+
+  .multistat-sparkline {
+    position: absolute;
+    bottom: 5px;
   }
 }
 

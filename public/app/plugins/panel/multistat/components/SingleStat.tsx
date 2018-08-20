@@ -44,18 +44,28 @@ export class SingleStat extends React.PureComponent<SingleStatProps> {
     const valueColor = this.props.color;
     const bgColor = getBGColor(valueColor, BACKGROUND_OPACITY);
 
-    const showSparkline = this.props.sparkline && this.props.sparkline.show;
-    const sparklineWidth = width;
-    let sparklineHeight = Math.floor(height * SPARKLINE_HEIGHT);
-    sparklineHeight = showSparkline ? sparklineHeight : 0;
-    const sparklineSize = { w: sparklineWidth, h: sparklineHeight };
-
     let containerStyle: React.CSSProperties = {};
+    const MARGIN_COEF = 0.05;
+    const MAX_MARGIN = 8;
+    let horizontalMargin = 0;
     if (layout === 'vertical') {
       containerStyle.height = height;
+      const margin = Math.min(Math.ceil(height * MARGIN_COEF), MAX_MARGIN);
+      containerStyle.marginBottom = margin;
     } else {
       containerStyle.width = width;
+      horizontalMargin = Math.min(Math.ceil(width * MARGIN_COEF), MAX_MARGIN);
+      containerStyle.marginLeft = horizontalMargin / 2;
+      containerStyle.marginRight = horizontalMargin / 2;
     }
+
+    const showSparkline = this.props.sparkline && this.props.sparkline.show;
+    const sparklinePadding = Math.ceil(width * 0.1);
+    const sparklineWidth = width - horizontalMargin - sparklinePadding;
+    const sparklineHeight = showSparkline ? Math.ceil(height * SPARKLINE_HEIGHT) : 0;
+    const sparklineSize = { w: sparklineWidth, h: sparklineHeight };
+    const sparklineClass = 'multistat-sparkline';
+    const sparklineStyles = { left: sparklinePadding / 2 };
 
     if (colorBackground) {
       containerStyle.background = bgColor;
@@ -102,7 +112,15 @@ export class SingleStat extends React.PureComponent<SingleStatProps> {
             {value}
           </span>
         </div>
-        {showSparkline && <SparkLine color={valueColor} size={sparklineSize} flotpairs={flotpairs} />}
+        {showSparkline && (
+          <SparkLine
+            color={valueColor}
+            size={sparklineSize}
+            flotpairs={flotpairs}
+            customClass={sparklineClass}
+            customStyles={sparklineStyles}
+          />
+        )}
       </div>
     );
   }
