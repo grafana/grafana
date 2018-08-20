@@ -25,7 +25,7 @@ export default class DisabledPermissionListItem extends Component<IProps, any> {
           <div className="gf-form">
             <DescriptionPicker
               optionsWithDesc={permissionOptions}
-              handlePicked={() => {}}
+              onSelected={() => {}}
               value={item.permission}
               disabled={true}
               className={'gf-form-input--form-dropdown-right'}

@@ -13,7 +13,7 @@ module.exports = {
   "roots": [
     "<rootDir>/public"
   ],
-  "testRegex": "(\\.|/)(jest)\\.(jsx?|tsx?)$",
+  "testRegex": "(\\.|/)(test)\\.(jsx?|tsx?)$",
   "moduleFileExtensions": [
     "ts",
     "tsx",

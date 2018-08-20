@@ -14,10 +14,11 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 
-	_ "github.com/grafana/grafana/pkg/extensions"
+	extensions "github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -34,7 +35,6 @@ import (
 var version = "5.0.0"
 var commit = "NA"
 var buildstamp string
-var enterprise string
 
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
@@ -77,7 +77,7 @@ func main() {
 	setting.BuildVersion = version
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
-	setting.Enterprise, _ = strconv.ParseBool(enterprise)
+	setting.IsEnterprise = extensions.IsEnterprise
 
 	metrics.M_Grafana_Version.WithLabelValues(version).Set(1)
 
@@ -87,7 +87,11 @@ func main() {
 
 	err := server.Run()
 
-	server.Exit(err)
+	code := server.Exit(err)
+	trace.Stop()
+	log.Close()
+
+	os.Exit(code)
 }
 
 func listenToSystemSignals(server *GrafanaServerImpl) {

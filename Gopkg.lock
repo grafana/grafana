@@ -32,6 +32,7 @@
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
     "aws/credentials/stscreds",
+    "aws/csm",
     "aws/defaults",
     "aws/ec2metadata",
     "aws/endpoints",
@@ -43,6 +44,8 @@
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
@@ -54,8 +57,8 @@
     "service/s3",
     "service/sts"
   ]
-  revision = "c7cd1ebe87257cde9b65112fc876b0339ea0ac30"
-  version = "v1.13.49"
+  revision = "fde4ded7becdeae4d26bf1212916aabba79349b4"
+  version = "v1.14.12"
 
 [[projects]]
   branch = "master"
@@ -425,6 +428,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/shurcooL/sanitized_anchor_name"
+  packages = ["."]
+  revision = "86672fcb3f950f35f2e675df2240550f2a50762f"
+
+[[projects]]
   name = "github.com/smartystreets/assertions"
   packages = [
     ".",
@@ -670,6 +679,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "85cc057e0cc074ab5b43bd620772d63d51e07b04e8782fcfe55e6929d2fc40f7"
+  inputs-digest = "cb8e7fd81f23ec987fc4d5dd9d31ae0f1164bc2f30cbea2fe86e0d97dd945beb"
   solver-name = "gps-cdcl"
   solver-version = 1

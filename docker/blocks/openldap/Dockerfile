@@ -8,7 +8,8 @@ ENV OPENLDAP_VERSION 2.4.40
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
-        slapd=${OPENLDAP_VERSION}* && \
+        slapd=${OPENLDAP_VERSION}* \
+        ldap-utils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -22,6 +23,7 @@ COPY modules/ /etc/ldap.dist/modules
 COPY prepopulate/ /etc/ldap.dist/prepopulate
 
 COPY entrypoint.sh /entrypoint.sh
+COPY prepopulate.sh /prepopulate.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 

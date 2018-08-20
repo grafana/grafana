@@ -1,6 +1,6 @@
 # Notes on OpenLdap Docker Block
 
-Any ldif files added to the prepopulate subdirectory will be automatically imported into the OpenLdap database. 
+Any ldif files added to the prepopulate subdirectory will be automatically imported into the OpenLdap database.
 
 The ldif files add three users, `ldapviewer`, `ldapeditor` and `ldapadmin`. Two groups, `admins` and `users`, are added that correspond with the group mappings in the default conf/ldap.toml. `ldapadmin` is a member of `admins` and `ldapeditor` is a member of `users`.
 
@@ -14,11 +14,32 @@ After adding ldif files to `prepopulate`:
 
 ## Enabling LDAP in Grafana
 
-The default `ldap.toml` file in `conf` has host set to `127.0.0.1` and port to set to 389 so all you need to do is enable it in the .ini file to get Grafana to use this block:
+Copy the ldap_dev.toml file in this folder into your `conf` folder (it is gitignored already). To enable it in the .ini file to get Grafana to use this block:
 
 ```ini
 [auth.ldap]
 enabled = true
-config_file = conf/ldap.toml
+config_file = conf/ldap_dev.toml
 ; allow_sign_up = true
 ```
+
+Test groups & users
+
+admins
+  ldap-admin
+  ldap-torkel
+  ldap-daniel
+backend
+  ldap-carl
+  ldap-torkel
+  ldap-leo
+frontend
+  ldap-torkel
+  ldap-tobias
+  ldap-daniel
+editors
+  ldap-editors
+
+
+no groups
+  ldap-viewer

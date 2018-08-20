@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"crypto/tls"
 	"testing"
 
@@ -14,6 +15,14 @@ func TestLdapAuther(t *testing.T) {
 
 	Convey("When translating ldap user to grafana user", t, func() {
 
+		var user1 = &m.User{}
+
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpsertUserCommand) error {
+			cmd.Result = user1
+			cmd.Result.Login = "torkelo"
+			return nil
+		})
+
 		Convey("Given no ldap group map match", func() {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{{}},
@@ -22,8 +31,6 @@ func TestLdapAuther(t *testing.T) {
 
 			So(err, ShouldEqual, ErrInvalidCredentials)
 		})
-
-		var user1 = &m.User{}
 
 		ldapAutherScenario("Given wildcard group match", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
@@ -91,12 +98,15 @@ func TestLdapAuther(t *testing.T) {
 				So(result.Login, ShouldEqual, "torkelo")
 			})
 
+			Convey("Should set isGrafanaAdmin to false by default", func() {
+				So(result.IsAdmin, ShouldBeFalse)
+			})
+
 		})
 
 	})
 
 	Convey("When syncing ldap groups to grafana org roles", t, func() {
-
 		ldapAutherScenario("given no current user orgs", func(sc *scenarioContext) {
 			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
@@ -217,8 +227,32 @@ func TestLdapAuther(t *testing.T) {
 				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
 				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
+
+			Convey("Should not update permissions unless specified", func() {
+				So(err, ShouldBeNil)
+				So(sc.updateUserPermissionsCmd, ShouldBeNil)
+			})
 		})
 
+		ldapAutherScenario("given ldap groups with grafana_admin=true", func(sc *scenarioContext) {
+			trueVal := true
+
+			ldapAuther := NewLdapAuthenticator(&LdapServerConf{
+				LdapGroups: []*LdapGroupToOrgRole{
+					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin", IsGrafanaAdmin: &trueVal},
+				},
+			})
+
+			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
+			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+				MemberOf: []string{"cn=admins"},
+			})
+
+			Convey("Should create user with admin set to true", func() {
+				So(err, ShouldBeNil)
+				So(sc.updateUserPermissionsCmd.IsGrafanaAdmin, ShouldBeTrue)
+			})
+		})
 	})
 
 	Convey("When calling SyncUser", t, func() {
@@ -322,6 +356,15 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 
 		bus.AddHandler("test", UpsertUser)
 
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.SyncTeamsCommand) error {
+			return nil
+		})
+
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpdateUserPermissionsCommand) error {
+			sc.updateUserPermissionsCmd = cmd
+			return nil
+		})
+
 		bus.AddHandler("test", func(cmd *m.GetUserByAuthInfoQuery) error {
 			sc.getUserByAuthInfoQuery = cmd
 			sc.getUserByAuthInfoQuery.Result = &m.User{Login: cmd.Login}
@@ -369,14 +412,15 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 }
 
 type scenarioContext struct {
-	getUserByAuthInfoQuery *m.GetUserByAuthInfoQuery
-	getUserOrgListQuery    *m.GetUserOrgListQuery
-	createUserCmd          *m.CreateUserCommand
-	addOrgUserCmd          *m.AddOrgUserCommand
-	updateOrgUserCmd       *m.UpdateOrgUserCommand
-	removeOrgUserCmd       *m.RemoveOrgUserCommand
-	updateUserCmd          *m.UpdateUserCommand
-	setUsingOrgCmd         *m.SetUsingOrgCommand
+	getUserByAuthInfoQuery   *m.GetUserByAuthInfoQuery
+	getUserOrgListQuery      *m.GetUserOrgListQuery
+	createUserCmd            *m.CreateUserCommand
+	addOrgUserCmd            *m.AddOrgUserCommand
+	updateOrgUserCmd         *m.UpdateOrgUserCommand
+	removeOrgUserCmd         *m.RemoveOrgUserCommand
+	updateUserCmd            *m.UpdateUserCommand
+	setUsingOrgCmd           *m.SetUsingOrgCommand
+	updateUserPermissionsCmd *m.UpdateUserPermissionsCommand
 }
 
 func (sc *scenarioContext) userQueryReturns(user *m.User) {

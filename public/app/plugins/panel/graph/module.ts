@@ -13,6 +13,7 @@ import { axesEditorComponent } from './axes_editor';
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
+  renderError: boolean;
   hiddenSeries: any = {};
   seriesList: any = [];
   dataList: any = [];

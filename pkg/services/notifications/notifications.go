@@ -98,8 +98,6 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
-
-	return nil
 }
 
 func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {

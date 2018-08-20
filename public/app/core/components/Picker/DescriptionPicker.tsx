@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import Select from 'react-select';
 import DescriptionOption from './DescriptionOption';
 
-export interface IProps {
+export interface Props {
   optionsWithDesc: OptionWithDescription[];
-  handlePicked: (permission) => void;
+  onSelected: (permission) => void;
   value: number;
   disabled: boolean;
   className?: string;
@@ -16,14 +16,14 @@ export interface OptionWithDescription {
   description: string;
 }
 
-class DescriptionPicker extends Component<IProps, any> {
+class DescriptionPicker extends Component<Props, any> {
   constructor(props) {
     super(props);
     this.state = {};
   }
 
   render() {
-    const { optionsWithDesc, handlePicked, value, disabled, className } = this.props;
+    const { optionsWithDesc, onSelected, value, disabled, className } = this.props;
 
     return (
       <div className="permissions-picker">
@@ -34,7 +34,7 @@ class DescriptionPicker extends Component<IProps, any> {
           clearable={false}
           labelKey="label"
           options={optionsWithDesc}
-          onChange={handlePicked}
+          onChange={onSelected}
           className={`width-7 gf-form-input gf-form-input--form-dropdown ${className || ''}`}
           optionComponent={DescriptionOption}
           placeholder="Choose"

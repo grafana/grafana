@@ -85,7 +85,7 @@ Status Codes:
 - **403** – Access denied
 - **412** – Precondition failed
 
-The **412** status code is used for explaing that you cannot create the dashboard and why.
+The **412** status code is used for explaining that you cannot create the dashboard and why.
 There can be different reasons for this:
 
 - The dashboard has been changed by someone else, `status=version-mismatch`
