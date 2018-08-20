@@ -37,28 +37,21 @@
           label="Send reminder"
           label-class="width-12"
           checked="ctrl.model.sendReminder"
-          tooltip="Choose to either notify on state change or at every interval">
+          tooltip="Choose to either notify on state change (default) or at every interval">
       </gf-form-switch>
       <div class="gf-form">
         <span class="alert alert-info width-30" ng-if="ctrl.model.sendReminder">
-          Alert reminders are sent after rules are evaluated. Therefore the alert rule interval has to be lower than the reminder frequency
+          Alert reminders are sent after rules are evaluated. Therefore the highest alert rule interval (of alert rules using this notification channel) must be lower than the reminder frequency.
         </span>
       </div>
       <div class="gf-form-inline">
-        <div class="gf-form">
-          <span class="gf-form-label width-12" ng-if="ctrl.model.sendReminder">Send reminder every</span>
-          <input
-            class="gf-form-input max-width-15"
-            type="text"
-            ng-model="ctrl.model.frequency"
-            ng-required="ctrl.model.sendReminder"
-            ng-if="ctrl.model.sendReminder"
-            spellcheck='false'
-            placeholder='15m'></input>
-          <info-popover mode="right-absolute" ng-if="ctrl.model.sendReminder">
-            Specify at what interval you want reminder's about this alerting being triggered.
-            Ex. 60s, 10m, 30m, 1h
-          </info-popover>
+        <div class="gf-form" ng-if="ctrl.model.sendReminder">
+            <span class="gf-form-label width-12">Reminder frequency</span>
+            <input type="text" placeholder="Select or specify custom" class="gf-form-input width-15" ng-model="ctrl.model.frequency"
+              bs-typeahead="ctrl.getFrequencySuggestion" data-min-length=0 ng-required="ctrl.model.sendReminder">
+            <info-popover mode="right-absolute">
+              Select at what interval you want reminder's to be sent after alerts being triggered, e.g. 30s, 1m, 10m, 30m or 1h etc.
+            </info-popover>
         </div>
       </div>
     </div>

@@ -20,11 +20,16 @@ export class AlertNotificationEditCtrl {
     },
     isDefault: false,
   };
+  getFrequencySuggestion: any;
 
   /** @ngInject */
   constructor(private $routeParams, private backendSrv, private $location, private $templateCache, navModelSrv) {
     this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
     this.isNew = !this.$routeParams.id;
+
+    this.getFrequencySuggestion = () => {
+      return ['1m', '5m', '10m', '15m', '30m', '1h'];
+    };
 
     this.backendSrv
       .get(`/api/alert-notifiers`)
