@@ -320,9 +320,15 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 		SecureJsonData: proxy.ds.SecureJsonData.Decrypt(),
 	}
 
-	routeURL, err := url.Parse(proxy.route.Url)
+	interpolatedURL, err := interpolateString(proxy.route.Url, data)
 	if err != nil {
-		logger.Error("Error parsing plugin route url")
+		logger.Error("Error interpolating proxy url", "error", err)
+		return
+	}
+
+	routeURL, err := url.Parse(interpolatedURL)
+	if err != nil {
+		logger.Error("Error parsing plugin route url", "error", err)
 		return
 	}
 
