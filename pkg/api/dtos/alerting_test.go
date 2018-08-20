@@ -10,11 +10,11 @@ func TestFormatShort(t *testing.T) {
 		interval time.Duration
 		expected string
 	}{
-		{interval: time.Duration(time.Hour), expected: "1h"},
-		{interval: time.Duration(time.Hour + time.Minute), expected: "1h1m"},
-		{interval: time.Duration((time.Hour * 10) + time.Minute), expected: "10h1m"},
-		{interval: time.Duration((time.Hour * 10) + (time.Minute * 10) + time.Second), expected: "10h10m1s"},
-		{interval: time.Duration(time.Minute * 10), expected: "10m"},
+		{interval: time.Hour, expected: "1h"},
+		{interval: time.Hour + time.Minute, expected: "1h1m"},
+		{interval: (time.Hour * 10) + time.Minute, expected: "10h1m"},
+		{interval: (time.Hour * 10) + (time.Minute * 10) + time.Second, expected: "10h10m1s"},
+		{interval: time.Minute * 10, expected: "10m"},
 	}
 
 	for _, tc := range tcs {
