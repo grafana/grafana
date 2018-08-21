@@ -21,7 +21,7 @@ func TestUserDataAccess(t *testing.T) {
 				Login: "user_test_login",
 			}
 
-			err := CreateUser(context.Background(), cmd)
+			err := CreateUser(cmd)
 			So(err, ShouldBeNil)
 
 			Convey("Loading a user", func() {
