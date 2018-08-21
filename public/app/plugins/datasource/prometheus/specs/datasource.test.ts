@@ -213,6 +213,30 @@ describe('PrometheusDatasource', () => {
       });
     });
 
+    it('returns a rate hint w/o action for a complex monotonously increasing series', () => {
+      const series = [{ datapoints: [[23, 1000], [24, 1001]], query: 'sum(metric)', responseIndex: 0 }];
+      const hints = determineQueryHints(series);
+      expect(hints.length).toBe(1);
+      expect(hints[0].label).toContain('rate()');
+      expect(hints[0].fix).toBeUndefined();
+    });
+
+    it('returns a rate hint for a monotonously increasing series with missing data', () => {
+      const series = [{ datapoints: [[23, 1000], [null, 1001], [24, 1002]], query: 'metric', responseIndex: 0 }];
+      const hints = determineQueryHints(series);
+      expect(hints.length).toBe(1);
+      expect(hints[0]).toMatchObject({
+        label: 'Time series is monotonously increasing.',
+        index: 0,
+        fix: {
+          action: {
+            type: 'ADD_RATE',
+            query: 'metric',
+          },
+        },
+      });
+    });
+
     it('returns a histogram hint for a bucket series', () => {
       const series = [{ datapoints: [[23, 1000]], query: 'metric_bucket', responseIndex: 0 }];
       const hints = determineQueryHints(series);

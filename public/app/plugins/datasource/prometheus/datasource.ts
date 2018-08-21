@@ -110,10 +110,9 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
 
     // Check for monotony
     const datapoints: [number, number][] = s.datapoints;
-    const simpleMetric = query.trim().match(/^\w+$/);
-    if (simpleMetric && datapoints.length > 1) {
+    if (datapoints.length > 1) {
       let increasing = false;
-      const monotonic = datapoints.every((dp, index) => {
+      const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {
         if (index === 0) {
           return true;
         }
@@ -122,18 +121,25 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
         return dp[0] >= datapoints[index - 1][0];
       });
       if (increasing && monotonic) {
-        const label = 'Time series is monotonously increasing.';
-        return {
-          label,
-          index,
-          fix: {
+        const simpleMetric = query.trim().match(/^\w+$/);
+        let label = 'Time series is monotonously increasing.';
+        let fix;
+        if (simpleMetric) {
+          fix = {
             label: 'Fix by adding rate().',
             action: {
               type: 'ADD_RATE',
               query,
               index,
             },
-          },
+          };
+        } else {
+          label = `${label} Try applying a rate() function.`;
+        }
+        return {
+          label,
+          index,
+          fix,
         };
       }
     }
