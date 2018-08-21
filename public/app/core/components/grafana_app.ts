@@ -152,9 +152,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         $('#tooltip, .tooltip').remove();
 
         // check for kiosk url param
-        if (data.params.kiosk) {
-          setViewModeBodyClass(body, data.params.kiosk, sidemenuOpen);
-        }
+        setViewModeBodyClass(body, data.params.kiosk, sidemenuOpen);
 
         // close all drops
         for (let drop of Drop.drops) {

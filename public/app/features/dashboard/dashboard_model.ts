@@ -842,12 +842,20 @@ export class DashboardModel {
       })
     );
 
-    // Consider navbar and submenu controls, padding and margin
-    let visibleHeight = window.innerHeight - 55 - 20;
+    const navbarHeight = 55;
+    const margin = 20;
+    const submenuHeight = 50;
 
-    // Remove submenu if visible
-    if (this.meta.submenuEnabled) {
-      visibleHeight -= 50;
+    let visibleHeight = viewHeight - navbarHeight - margin;
+
+    // Remove submenu height if visible
+    if (this.meta.submenuEnabled && !this.meta.kiosk) {
+      visibleHeight -= submenuHeight;
+    }
+
+    // add back navbar height
+    if (this.meta.kiosk === 'b') {
+      visibleHeight += 55;
     }
 
     const visibleGridHeight = Math.floor(visibleHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));

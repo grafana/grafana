@@ -9,35 +9,47 @@
     </a>
   </div>
 
-  <table class="filter-table">
+  <table class="filter-table filter-table--hover">
     <thead>
       <th><strong>Name</strong></th>
-      <th><strong>Start url</strong></th>
-      <th style="width: 78px"></th>
+      <th style="width: 100px"></th>
       <th style="width: 78px"></th>
     </thead>
     <tr ng-repeat="playlist in ctrl.playlists">
-      <td>
+      <td class="link-td">
 				<a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a>
       </td>
-      <td class="text-center">
-        <a href="playlists/play/{{playlist.id}}" class="btn btn-inverse btn-small">
-          Play
+      <td class="dropdown">
+        <button class="btn btn-inverse btn-small" data-toggle="dropdown">
+        	Start playlist
           <i class="fa fa-caret-down"></i>
-        </a>
-      </td>
-      <td  class="text-right">
-        <a href="playlists/edit/{{playlist.id}}" class="btn btn-inverse btn-small">
-          <i class="fa fa-edit"></i>
-          Edit
-        </a>
-      </td>
-      <td  class="text-right">
-        <a ng-click="ctrl.removePlaylist(playlist)" class="btn btn-danger btn-small">
-          <i class="fa fa-remove"></i>
-        </a>
-      </td>
-    </tr>
-  </table>
+        </button>
+				<ul class="dropdown-menu" role="menu">
+					<li>
+						<a href="{{playlist.startUrl}}">
+							<i class="fa fa-play"></i> In normal mode</span>
+						</a>
+						<a href="{{playlist.startUrl}}?kiosk=a">
+							<i class="fa fa-play"></i> In kiosk mode A</span>
+						</a>
+						<a href="{{playlist.startUrl}}?kiosk=a&autofitpanels">
+							<i class="fa fa-play"></i> In kiosk mode A (with panel auto fit)</span>
+						</a>
+						<a href="{{playlist.startUrl}}?kiosk=b">
+							<i class="fa fa-play"></i> In kiosk mode B</span>
+						</a>
+						<a ng-href="{{playlist.startUrl}}?kiosk=b&autofitpanels">
+							<i class="fa fa-play"></i> In kiosk mode B (with panel auto fit)</span>
+						</a>
+					</li>
+				</ul>
+			</td>
+			<td  class="text-right">
+				<a ng-click="ctrl.removePlaylist(playlist)" class="btn btn-danger btn-small">
+					<i class="fa fa-remove"></i>
+				</a>
+			</td>
+		</tr>
+	</table>
 
 </div>

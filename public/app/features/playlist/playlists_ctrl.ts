@@ -10,7 +10,10 @@ export class PlaylistsCtrl {
     this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
 
     backendSrv.get('/api/playlists').then(result => {
-      this.playlists = result;
+      this.playlists = result.map(item => {
+        item.startUrl = `playlists/play/${item.id}`;
+        return item;
+      });
     });
   }
 

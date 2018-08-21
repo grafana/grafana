@@ -8,13 +8,13 @@
 		</a>
 	</div>
 
+	<div class="navbar__spacer"></div>
+
 	<div class="navbar-buttons navbar-buttons--playlist" ng-if="ctrl.playlistSrv.isPlaying">
 		<a class="navbar-button navbar-button--tight" ng-click="ctrl.playlistSrv.prev()"><i class="fa fa-step-backward"></i></a>
 		<a class="navbar-button navbar-button--tight" ng-click="ctrl.playlistSrv.stop()"><i class="fa fa-stop"></i></a>
 		<a class="navbar-button navbar-button--tight" ng-click="ctrl.playlistSrv.next()"><i class="fa fa-step-forward"></i></a>
 	</div>
-
-	<div class="navbar__spacer"></div>
 
 	<div class="navbar-buttons navbar-buttons--actions">
 		<button class="btn navbar-button navbar-button--add-panel" ng-show="::ctrl.dashboard.meta.canSave" bs-tooltip="'Add panel'" data-placement="bottom" ng-click="ctrl.addPanel()">

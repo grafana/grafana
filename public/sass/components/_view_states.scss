@@ -11,14 +11,13 @@
   }
 
   .navbar-page-btn {
-    transform: translate3d(-40px, 0, 0);
+    transform: translate3d(-36px, 0, 0);
     i {
       opacity: 0;
     }
   }
 
   .navbar-button--zoom,
-  .navbar-button--tight,
   .navbar-button--refresh {
     display: none;
   }
