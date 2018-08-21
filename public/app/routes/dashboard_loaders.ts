@@ -34,7 +34,9 @@ export class LoadDashboardCtrl {
         const url = locationUtil.stripBaseFromUrl(result.meta.url);
 
         if (url !== $location.path()) {
+          // replace url to not create additional history items and then return so that initDashboard below isn't executed multiple times.
           $location.path(url).replace();
+          return;
         }
       }
 

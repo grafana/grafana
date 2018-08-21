@@ -39,7 +39,12 @@ export class PanelLinksEditorCtrl {
       backendSrv.search({ query: link.dashboard }).then(function(hits) {
         var dashboard = _.find(hits, { title: link.dashboard });
         if (dashboard) {
-          link.dashUri = dashboard.uri;
+          if (dashboard.url) {
+            link.url = dashboard.url;
+          } else {
+            // To support legacy url's
+            link.dashUri = dashboard.uri;
+          }
           link.title = dashboard.title;
         }
       });

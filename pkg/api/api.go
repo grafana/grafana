@@ -120,6 +120,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Put("/", bind(m.UpdateUserCommand{}), Wrap(UpdateSignedInUser))
 			userRoute.Post("/using/:id", Wrap(UserSetUsingOrg))
 			userRoute.Get("/orgs", Wrap(GetSignedInUserOrgList))
+			userRoute.Get("/teams", Wrap(GetSignedInUserTeamList))
 
 			userRoute.Post("/stars/dashboard/:id", Wrap(StarDashboard))
 			userRoute.Delete("/stars/dashboard/:id", Wrap(UnstarDashboard))

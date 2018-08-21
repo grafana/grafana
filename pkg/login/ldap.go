@@ -59,6 +59,13 @@ func (a *ldapAuther) Dial() error {
 			}
 		}
 	}
+	var clientCert tls.Certificate
+	if a.server.ClientCert != "" && a.server.ClientKey != "" {
+		clientCert, err = tls.LoadX509KeyPair(a.server.ClientCert, a.server.ClientKey)
+		if err != nil {
+			return err
+		}
+	}
 	for _, host := range strings.Split(a.server.Host, " ") {
 		address := fmt.Sprintf("%s:%d", host, a.server.Port)
 		if a.server.UseSSL {
@@ -66,6 +73,9 @@ func (a *ldapAuther) Dial() error {
 				InsecureSkipVerify: a.server.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
+			}
+			if len(clientCert.Certificate) > 0 {
+				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if a.server.StartTLS {
 				a.conn, err = ldap.Dial("tcp", address)

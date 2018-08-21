@@ -207,6 +207,7 @@ export class Explore extends React.Component<any, IExploreState> {
       datasourceError: null,
       datasourceLoading: true,
       graphResult: null,
+      latency: 0,
       logsResult: null,
       queryErrors: [],
       queryHints: [],
@@ -254,7 +255,10 @@ export class Explore extends React.Component<any, IExploreState> {
     this.setState({
       graphResult: null,
       logsResult: null,
+      latency: 0,
       queries: ensureQueries(),
+      queryErrors: [],
+      queryHints: [],
       tableResult: null,
     });
   };
@@ -276,8 +280,10 @@ export class Explore extends React.Component<any, IExploreState> {
 
   onClickSplit = () => {
     const { onChangeSplit } = this.props;
+    const state = { ...this.state };
+    state.queries = state.queries.map(({ edited, ...rest }) => rest);
     if (onChangeSplit) {
-      onChangeSplit(true, this.state);
+      onChangeSplit(true, state);
     }
   };
 
