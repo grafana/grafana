@@ -29,11 +29,14 @@ export const cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
 const selectorRegexp = /\{[^}]*?\}/;
 const labelRegexp = /\b\w+="[^"\n]*?"/g;
-export function getCleanSelector(query: string, cursorOffset = 1): string {
+export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
     // Special matcher for metrics
     if (query.match(/^\w+$/)) {
-      return `{__name__="${query}"}`;
+      return {
+        selector: `{__name__="${query}"}`,
+        labelKeys: ['__name__'],
+      };
     }
     throw new Error('Query must contain a selector: ' + query);
   }
@@ -79,10 +82,10 @@ export function getCleanSelector(query: string, cursorOffset = 1): string {
   }
 
   // Build sorted selector
-  const cleanSelector = Object.keys(labels)
-    .sort()
-    .map(key => `${key}=${labels[key]}`)
-    .join(',');
+  const labelKeys = Object.keys(labels).sort();
+  const cleanSelector = labelKeys.map(key => `${key}=${labels[key]}`).join(',');
 
-  return ['{', cleanSelector, '}'].join('');
+  const selectorString = ['{', cleanSelector, '}'].join('');
+
+  return { labelKeys, selector: selectorString };
 }

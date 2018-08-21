@@ -71,4 +71,4 @@ debug.test
 /vendor/**/appengine*
 *.orig
 
-/devenv/dashboards/bulk-testing/*.json
+/devenv/bulk-dashboards/*.json
