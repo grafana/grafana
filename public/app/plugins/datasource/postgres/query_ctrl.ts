@@ -59,9 +59,15 @@ export class PostgresQueryCtrl extends QueryCtrl {
         this.datasource.metricFindQuery(this.metaBuilder.findMetricTable()).then(result => {
           if (result.length > 0) {
             this.target.table = result[0].text;
-            this.tableSegment = uiSegmentSrv.newSegment(this.target.table);
+            let segment = this.uiSegmentSrv.newSegment(this.target.table);
+            this.tableSegment.html = segment.html;
+            this.tableSegment.value = segment.value;
+
             this.target.timeColumn = result[1].text;
-            this.timeColumnSegment = uiSegmentSrv.newSegment(this.target.timeColumn);
+            segment = this.uiSegmentSrv.newSegment(this.target.timeColumn);
+            this.timeColumnSegment.html = segment.html;
+            this.timeColumnSegment.value = segment.value;
+
             this.target.timeColumnType = 'timestamp';
             this.target.select = [[{ type: 'column', params: [result[2].text] }]];
             this.updateProjection();
