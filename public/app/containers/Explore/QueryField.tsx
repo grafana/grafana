@@ -331,7 +331,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
         }
         break;
       }
-
+      case 'Enter':
       case 'Tab': {
         if (this.menuEl) {
           // Dont blur input

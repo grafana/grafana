@@ -489,9 +489,11 @@ export class PrometheusDatasource {
   getRangeScopedVars() {
     let range = this.timeSrv.timeRange();
     let msRange = range.to.diff(range.from);
+    let sRange = Math.round(msRange / 1000);
     let regularRange = kbn.secondsToHms(msRange / 1000);
     return {
       __range_ms: { text: msRange, value: msRange },
+      __range_s: { text: sRange, value: sRange },
       __range: { text: regularRange, value: regularRange },
     };
   }
