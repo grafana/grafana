@@ -9,8 +9,8 @@ export function getBGColor(color: string, alpha = 0.3): string {
 const FONT_SIZE_FACTOR = 1.0;
 
 export function getFontSize(text: string, elemWidth: number, elemHeight = +Infinity): number {
-  const MAX_TEXT_WIDTH = 100 / 100;
-  const MAX_TEXT_HEIGHT = 40 / 100;
+  const MAX_TEXT_WIDTH = 1.0;
+  const MAX_TEXT_HEIGHT = 0.4;
   const textLength = text.length || 1;
   const textCellWidth = elemWidth * MAX_TEXT_WIDTH / textLength;
   const textCellHeight = elemHeight * MAX_TEXT_HEIGHT;
@@ -19,7 +19,7 @@ export function getFontSize(text: string, elemWidth: number, elemHeight = +Infin
 }
 
 export function isValuesOutOfBar(elemWidth: number, fontSize: number, textLength: number): boolean {
-  const maxTextLength = 90 / 100;
+  const maxTextLength = 0.9;
   const textWidth = fontSize * textLength / FONT_SIZE_FACTOR;
   return textWidth > elemWidth * maxTextLength;
 }

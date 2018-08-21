@@ -49,7 +49,7 @@ describe('<MultiStatBar />', () => {
   });
 
   it('should place value inside a bar if length is large', () => {
-    props.size.w = 900;
+    props.size = { w: 900, h: 50 };
     const wrapper = shallow(<MultiStatBar {...props} />);
     expect(wrapper.find(BarStat).get(0).props.valueOutOfBar).toBe(false);
   });
