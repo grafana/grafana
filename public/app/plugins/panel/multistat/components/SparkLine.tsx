@@ -1,24 +1,38 @@
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import React from 'react';
+import * as Flot from 'app/types/flot';
 import * as Series from 'app/types/series';
 import * as MultiStatPanel from '../types';
-import { getBGColor } from './utils';
 
 export interface SparkLineProps {
   flotpairs: Series.Flotpair[];
   size: MultiStatPanel.PanelSize;
-  color: string;
+  color?: string;
+  fill?: number;
   fillColor?: string;
   lineColor?: string;
+  lineWidth?: number;
   customClass?: string;
   customStyles?: any;
 }
+
+const defaultSparkLineProps: Partial<SparkLineProps> = {
+  color: 'rgb(31, 120, 193)',
+  fill: 0.1,
+  fillColor: '',
+  lineColor: '',
+  lineWidth: 1,
+  customClass: '',
+  customStyles: '',
+};
 
 export class SparkLine extends React.Component<SparkLineProps> {
   elem: any;
   $elem: any;
   plot: any;
+
+  static defaultProps = defaultSparkLineProps;
 
   constructor(props) {
     super(props);
@@ -33,33 +47,27 @@ export class SparkLine extends React.Component<SparkLineProps> {
     const { size, flotpairs } = this.props;
     const width = size.w;
     const height = size.h;
+    const lineColor = this.props.lineColor || this.props.color;
 
     if (width <= 0 || height <= 0 || !flotpairs) {
       this.$elem.empty();
       return;
     }
 
-    let plotCss: any = { ...this.props.customStyles };
-    plotCss.width = width + 'px';
-    plotCss.height = height + 'px';
-
     const timeRange = {
       from: flotpairs[0][0],
       to: flotpairs[flotpairs.length - 1][0],
     };
 
-    const fillColor = this.props.fillColor || getBGColor(this.props.color, 0.1);
-    const lineColor = this.props.lineColor || this.props.color;
-
-    let sparklineOptions = {
+    const sparklineOptions: Flot.FlotOptions = {
       legend: { show: false },
       series: {
         lines: {
           show: true,
-          fill: 1,
+          fill: this.props.fill,
           zero: false,
-          lineWidth: 1,
-          fillColor: fillColor,
+          lineWidth: this.props.lineWidth,
+          fillColor: this.props.fillColor,
         },
       },
       yaxes: { show: false },
@@ -72,7 +80,13 @@ export class SparkLine extends React.Component<SparkLineProps> {
       grid: { hoverable: false, show: false },
     };
 
-    let plotSeries = {
+    const plotCss: any = {
+      width: width + 'px',
+      height: height + 'px',
+      ...this.props.customStyles,
+    };
+
+    const plotSeries = {
       data: flotpairs,
       color: lineColor,
     };
