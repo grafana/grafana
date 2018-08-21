@@ -47,22 +47,6 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Error("Cannot read directory", "error", err)
 	}
 
-	copy := path
-	path, err := filepath.Abs(path)
-	if err != nil {
-		log.Error("Could not create absolute path ", "path", path)
-	}
-
-	path, err = filepath.EvalSymlinks(path)
-	if err != nil {
-		log.Error("Failed to read content of symlinked path: %s", path)
-	}
-
-	if path == "" {
-		path = copy
-		log.Info("falling back to original path due to EvalSymlink/Abs failure")
-	}
-
 	return &fileReader{
 		Cfg:              cfg,
 		Path:             path,
@@ -99,7 +83,24 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 }
 
 func (fr *fileReader) startWalkingDisk() error {
-	if _, err := os.Stat(fr.Path); err != nil {
+	//need to keep track of path given, symlink path,
+	copy := fr.Path
+	path, err := filepath.Abs(fr.Path)
+	if err != nil {
+		fr.log.Error("Could not create absolute path ", "path", path)
+	}
+
+	path, err = filepath.EvalSymlinks(path)
+	if err != nil {
+		fr.log.Error("Failed to read content of symlinked path: %s", path)
+	}
+
+	if path == "" {
+		path = copy
+		fr.log.Info("falling back to original path due to EvalSymlink/Abs failure")
+	}
+
+	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
 			return err
 		}
@@ -116,7 +117,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	}
 
 	filesFoundOnDisk := map[string]os.FileInfo{}
-	err = filepath.Walk(fr.Path, createWalkFn(filesFoundOnDisk))
+	err = filepath.Walk(path, createWalkFn(filesFoundOnDisk))
 	if err != nil {
 		return err
 	}
