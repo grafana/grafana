@@ -10,7 +10,7 @@ import PluginPrism, { setPrismTokens } from './slate-plugins/prism/index';
 import PrismPromql, { FUNCTIONS } from './slate-plugins/prism/promql';
 import BracesPlugin from './slate-plugins/braces';
 import RunnerPlugin from './slate-plugins/runner';
-import { processLabels, RATE_RANGES, cleanText, getCleanSelector } from './utils/prometheus';
+import { processLabels, RATE_RANGES, cleanText, parseSelector } from './utils/prometheus';
 
 import TypeaheadField, {
   Suggestion,
@@ -328,7 +328,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     const closeParensSelectorIndex = leftSide.slice(openParensSelectorIndex).indexOf(')') + openParensSelectorIndex;
     // foo{bar="1"}
     const selectorString = leftSide.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
-    const selector = getCleanSelector(selectorString, selectorString.length - 2);
+    const selector = parseSelector(selectorString, selectorString.length - 2).selector;
 
     const labelKeys = this.state.labelKeys[selector];
     if (labelKeys) {
@@ -353,12 +353,15 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
 
     // Get normalized selector
     let selector;
+    let parsedSelector;
     try {
-      selector = getCleanSelector(line, cursorOffset);
+      parsedSelector = parseSelector(line, cursorOffset);
+      selector = parsedSelector.selector;
     } catch {
       selector = EMPTY_SELECTOR;
     }
     const containsMetric = selector.indexOf('__name__=') > -1;
+    const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
     if ((text && text.startsWith('=')) || _.includes(wrapperClasses, 'attr-value')) {
       // Label values
@@ -374,8 +377,11 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
       // Label keys
       const labelKeys = this.state.labelKeys[selector] || (containsMetric ? null : DEFAULT_KEYS);
       if (labelKeys) {
-        context = 'context-labels';
-        suggestions.push({ label: `Labels`, items: labelKeys.map(wrapLabel) });
+        const possibleKeys = _.difference(labelKeys, existingKeys);
+        if (possibleKeys.length > 0) {
+          context = 'context-labels';
+          suggestions.push({ label: `Labels`, items: possibleKeys.map(wrapLabel) });
+        }
       }
     }
 

@@ -2,6 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
+import { Graph } from 'app/core/utils/dag';
 
 export class VariableSrv {
   dashboard: any;
@@ -120,16 +121,13 @@ export class VariableSrv {
       return this.$q.when();
     }
 
-    // cascade updates to variables that use this variable
-    var promises = _.map(this.variables, otherVariable => {
-      if (otherVariable === variable) {
-        return;
-      }
-
-      if (otherVariable.dependsOn(variable)) {
-        return this.updateOptions(otherVariable);
-      }
-    });
+    const g = this.createGraph();
+    const promises = g
+      .getNode(variable.name)
+      .getOptimizedInputEdges()
+      .map(e => {
+        return this.updateOptions(this.variables.find(v => v.name === e.inputNode.name));
+      });
 
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
@@ -287,6 +285,26 @@ export class VariableSrv {
 
     filter.operator = options.operator;
     this.variableUpdated(variable, true);
+  }
+
+  createGraph() {
+    let g = new Graph();
+
+    this.variables.forEach(v1 => {
+      g.createNode(v1.name);
+
+      this.variables.forEach(v2 => {
+        if (v1 === v2) {
+          return;
+        }
+
+        if (v1.dependsOn(v2)) {
+          g.link(v1.name, v2.name);
+        }
+      });
+    });
+
+    return g;
   }
 }
 
