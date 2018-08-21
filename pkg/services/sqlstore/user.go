@@ -113,9 +113,10 @@ func CreateUser(ctx context.Context, cmd *m.CreateUserCommand) error {
 			LastSeenAt:    time.Now().AddDate(-10, 0, 0),
 		}
 
+		user.Salt = util.GetRandomString(10)
+		user.Rands = util.GetRandomString(10)
+
 		if len(cmd.Password) > 0 {
-			user.Salt = util.GetRandomString(10)
-			user.Rands = util.GetRandomString(10)
 			user.Password = util.EncodePassword(cmd.Password, user.Salt)
 		}
 
