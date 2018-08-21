@@ -15,19 +15,15 @@
       <th><strong>Start url</strong></th>
       <th style="width: 78px"></th>
       <th style="width: 78px"></th>
-      <th style="width: 25px"></th>
     </thead>
     <tr ng-repeat="playlist in ctrl.playlists">
       <td>
 				<a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a>
       </td>
-      <td >
-				<a href="playlists/play/{{playlist.id}}">playlists/play/{{playlist.id}}</a>
-      </td>
       <td class="text-center">
         <a href="playlists/play/{{playlist.id}}" class="btn btn-inverse btn-small">
-          <i class="fa fa-play"></i>
           Play
+          <i class="fa fa-caret-down"></i>
         </a>
       </td>
       <td  class="text-right">

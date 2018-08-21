@@ -1,4 +1,40 @@
-.page-kiosk-mode {
+.playlist-active,
+.user-activity-low {
+  .react-resizable-handle,
+  .add-row-panel-hint,
+  .dash-row-menu-container,
+  .navbar-buttons--actions,
+  .panel-menu-container,
+  .panel-info-corner--info,
+  .panel-info-corner--links {
+    display: none;
+  }
+
+  .navbar-page-btn {
+    transform: translate3d(-40px, 0, 0);
+    i {
+      opacity: 0;
+    }
+  }
+
+  .navbar-button--zoom,
+  .navbar-button--tight,
+  .navbar-button--refresh {
+    display: none;
+  }
+}
+
+.kiosk-mode-a {
+  @extend .user-activity-low;
+
+  .submenu-controls {
+    display: none;
+  }
+}
+
+.kiosk-mode-b {
+  @extend .kiosk-mode-a;
+
   .sidemenu,
   .navbar {
     display: none;
@@ -7,40 +43,6 @@
     height: 100%;
   }
   .submenu-controls {
-    display: none;
-  }
-}
-
-.playlist-active,
-.user-activity-low {
-  .sidemenu,
-  .react-resizable-handle,
-  .add-row-panel-hint,
-  .dash-row-menu-container,
-  .navbar-buttons--zoom,
-  .navbar-buttons--actions,
-  .panel-menu-container,
-  .panel-info-corner--info,
-  .panel-info-corner--links {
-    display: none;
-  }
-
-  .navbar {
-    box-shadow: none;
-    background: transparent;
-  }
-
-  .navbar-page-btn {
-    border-color: transparent;
-    background: transparent;
-    transform: translate3d(-40px, 0, 0);
-    i {
-      opacity: 0;
-    }
-  }
-
-  .navbar-button--zoom,
-  .navbar-button--refresh {
     display: none;
   }
 }

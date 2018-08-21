@@ -69,20 +69,27 @@ export class GrafanaCtrl {
   }
 }
 
-function setViewModeBodyClass(body, mode) {
-  body.removeClass('page-kiosk-mode');
+function setViewModeBodyClass(body, mode, sidemenuOpen: boolean) {
+  body.removeClass('kiosk-mode-a');
+  body.removeClass('kiosk-mode-b');
   body.removeClass('user-activity-low');
 
   switch (mode) {
     case 'a': {
-      body.addClass('user-activity-low');
+      body.removeClass('sidemenu-open');
+      body.addClass('kiosk-mode-a');
       break;
     }
     case 'b':
+    // 1 & true for legacy states
     case 1:
     case true: {
-      body.addClass('page-kiosk-mode');
+      body.removeClass('sidemenu-open');
+      body.addClass('kiosk-mode-b');
       break;
+    }
+    default: {
+      body.toggleClass('sidemenu-open', sidemenuOpen);
     }
   }
 }
@@ -146,12 +153,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
         // check for kiosk url param
         if (data.params.kiosk) {
-          setViewModeBodyClass(body, data.params.kiosk);
-        }
-
-        // check for 'inactive' url param for clean looks like kiosk, but with title
-        if (data.params.inactive) {
-          body.addClass('user-activity-low');
+          setViewModeBodyClass(body, data.params.kiosk, sidemenuOpen);
         }
 
         // close all drops
@@ -186,7 +188,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         }
 
         $location.search(search);
-        setViewModeBodyClass(body, search.kiosk);
+        setViewModeBodyClass(body, search.kiosk, sidemenuOpen);
       });
 
       // handle in active view state class
@@ -206,6 +208,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (new Date().getTime() - lastActivity > inActiveTimeLimit) {
           activeUser = false;
           body.addClass('user-activity-low');
+          body.removeClass('sidemenu-open');
         }
       }
 
@@ -214,6 +217,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (!activeUser) {
           activeUser = true;
           body.removeClass('user-activity-low');
+          body.toggleClass('sidemenu-open', sidemenuOpen);
         }
       }
 
