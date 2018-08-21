@@ -104,6 +104,7 @@ jobs:
       - run:
           name: yarn install
           command: 'yarn install --pure-lockfile --no-progress'
+          no_output_timeout: 15m
       - save_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
@@ -146,6 +147,12 @@ jobs:
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
+      - run:
+          name: verify signed packages
+          command: |
+            mkdir -p ~/.rpmdb/pubkeys
+            curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+            ./scripts/build/verify_signed_packages.sh dist/*.rpm
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'

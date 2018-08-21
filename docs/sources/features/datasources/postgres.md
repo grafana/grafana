@@ -31,6 +31,7 @@ Name | Description
 *User* | Database user's login/username
 *Password* | Database user's password
 *SSL Mode* | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+*TimescaleDB* | With this option enabled Grafana will use TimescaleDB features, e.g. use ```time_bucket``` for grouping by time (only available in Grafana 5.3+).
 
 ### Database User Permissions (Important!)
 
@@ -68,6 +69,8 @@ Macro example | Description
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn >= 1494410783 AND dateColumn <= 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
+*$__unixEpochGroup(dateColumn,'5m', [fillmode])* | Same as $__timeGroup but for times stored as unix timestamp (only available in Grafana 5.3+).
+*$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])* | Same as above but also adds a column alias (only available in Grafana 5.3+).
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -289,4 +292,5 @@ datasources:
       password: "Password!"
     jsonData:
       sslmode: "disable" # disable/require/verify-ca/verify-full
+      timescaledb: false
 ```

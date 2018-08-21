@@ -238,6 +238,10 @@ export class TableRenderer {
       column.hidden = false;
     }
 
+    if (column.hidden === true) {
+      return '';
+    }
+
     if (column.style && column.style.preserveFormat) {
       cellClasses.push('table-panel-cell-pre');
     }

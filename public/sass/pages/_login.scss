@@ -76,6 +76,15 @@ select:-webkit-autofill:focus {
       margin-left: 1rem;
     }
   }
+  & .btn-inverse {
+    color: #e3e3e3;
+    text-shadow: 0px 1px 0 rgba(0, 0, 0, 0.1);
+    background-color: #2a2a2c;
+    background-image: linear-gradient(to bottom, #262628, #303032);
+    background-repeat: repeat-x;
+    border-color: #262628;
+    box-shadow: -1px -1px 0 0 rgba(255, 255, 255, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
+  }
 }
 
 .login-button-forgot-password {
