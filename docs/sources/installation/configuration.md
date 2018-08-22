@@ -587,6 +587,7 @@ browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 ```bash
 [auth.generic_oauth]
 enabled = true
+email_attribute_name = email:primary
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
 scopes =
@@ -608,6 +609,7 @@ Finally set up the generic oauth module like this:
 [auth.generic_oauth]
 name = Okta
 enabled = true
+email_attribute_name = email:primary
 scopes = openid profile email
 client_id = <okta application Client ID>
 client_secret = <okta application Client Secret>
@@ -622,6 +624,7 @@ api_url = https://<okta domain>/oauth2/v1/userinfo
 [auth.generic_oauth]
 name = BitBucket
 enabled = true
+email_attribute_name = email:primary
 allow_sign_up = true
 client_id = <client id>
 client_secret = <client secret>
@@ -657,6 +660,7 @@ allowed_organizations =
     [auth.generic_oauth]
     name = OneLogin
     enabled = true
+    email_attribute_name = email:primary
     allow_sign_up = true
     client_id = <client id>
     client_secret = <client secret>
@@ -682,6 +686,7 @@ allowed_organizations =
     ```bash
     [auth.generic_oauth]
     enabled = true
+    email_attribute_name = email:primary
     allow_sign_up = true
     team_ids =
     allowed_organizations =
@@ -721,6 +726,7 @@ allowed_organizations =
     [auth.generic_oauth]
     name = Azure AD
     enabled = true
+    email_attribute_name = email:primary
     allow_sign_up = true
     client_id = <application id>
     client_secret = <key value>
