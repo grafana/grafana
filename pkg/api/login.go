@@ -78,7 +78,14 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 	user := userQuery.Result
 
 	// validate remember me cookie
-	if val, _ := c.GetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName); val != user.Login {
+	signingKey := user.Rands + user.Password
+	if len(signingKey) < 10 {
+		c.Logger.Error("Invalid user signingKey")
+		return false
+	}
+
+
+	if val, _ := c.GetSuperSecureCookie(signingKey, setting.CookieRememberName); val != user.Login {
 		return false
 	}
 

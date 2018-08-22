@@ -14,6 +14,28 @@ func TestUserDataAccess(t *testing.T) {
 	Convey("Testing DB", t, func() {
 		InitTestDB(t)
 
+		Convey("Creating a user", func() {
+			cmd := &models.CreateUserCommand{
+				Email: "usertest@test.com",
+				Name:  "user name",
+				Login: "user_test_login",
+			}
+
+			err := CreateUser(cmd)
+			So(err, ShouldBeNil)
+
+			Convey("Loading a user", func() {
+				query := models.GetUserByIdQuery{Id: cmd.Result.Id}
+				err := GetUserById(&query)
+				So(err, ShouldBeNil)
+
+				So(query.Result.Email, ShouldEqual, "usertest@test.com")
+				So(query.Result.Password, ShouldEqual, "")
+				So(query.Result.Rands, ShouldHaveLength, 10)
+				So(query.Result.Salt, ShouldHaveLength, 10)
+			})
+		})
+
 		var err error
 		for i := 0; i < 5; i++ {
 			err = CreateUser(&models.CreateUserCommand{
