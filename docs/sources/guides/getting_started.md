@@ -17,7 +17,7 @@ This guide will help you get started and acquainted with Grafana. It assumes you
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to port 3000 which is the default port. If you have changed the port you go to that port. There you will see the login page. User name is admin and password is admin. When you log in for the first time you will be asked to change your password. You can later go to user preferences and change your user name.
+To run Grafana open your browser and go to the default port http://localhost:3000 or the port you have configured. There you will see the login page. Default username is admin and default password is admin. When you log in for the first time you will be asked to change your password. We strongly encourage you to follow Grafana’s best practices and change the default administrator password. You can later go to user preferences and change your user name.
 
 
 ## How to add a data source
@@ -26,19 +26,19 @@ To run Grafana open your browser and go to port 3000 which is the default port. 
 
 Before you create your first dashboard you need to add your data source.
 
-First move your cursor to the cog on the side menu which will show you the configuration menu. If the side menu is not visible click the Grafana icon in the upper left corner. The first item on the configuration menu is data sources. Click and you will come to data sources. You can also simply click the cog.
+First move your cursor to the cog on the side menu which will show you the configuration menu. If the side menu is not visible click the Grafana icon in the upper left corner. The first item on the configuration menu is data sources, click on that and you'll be taken to the data sources page where you can add and edit data sources. You can also simply click the cog.
 
 
 Click Add data source and you will come to the settings page of your new data source.
 
 {{< docs-imagebox img="/img/docs/v52/add-datasource.png" max-width="700px" class="docs-image--no-shadow">}}
 
-The first thing you will do is give the data source a name and select the right type.
-Next you need to specify the data sources HTTP URL and how you will access the data source.
+First, give the data source a Name and then select which Type of data source you'll want to create, see [Supported data sources](/features/datasources/#supported-data-sources/) for more information and how to configure your data source.
+
 
 {{< docs-imagebox img="/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
 
-Now you are ready to save and test.
+After you have configuered your data source you are ready to save and test.
 
 ## Beginner guides
 
