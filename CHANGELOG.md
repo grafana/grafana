@@ -54,6 +54,7 @@ om/grafana/grafana/issues/12668)
 * **Graphite**: Fix for quoting of int function parameters (when using variables) [#11927](https://github.com/grafana/grafana/pull/11927)
 * **InfluxDB**: Support timeFilter in query templating for InfluxDB [#12598](https://github.com/grafana/grafana/pull/12598), thx [kichristensen](https://github.com/kichristensen)
 * **Provisioning**: Should allow one default datasource per organisation [#12229](https://github.com/grafana/grafana/issues/12229)
+* **Heatmap**: Fix broken tooltip and crosshair on Firefox [#12486](https://github.com/grafana/grafana/issues/12486)
 
 ### Breaking changes
 
