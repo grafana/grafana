@@ -38,13 +38,13 @@ service using that tool.
 
 Read more about the [configuration options]({{< relref "configuration.md" >}}).
 
+## Logging in for the first time
+
+To run Grafana open your browser and go to the port you configured above, e.g. http://localhost:8080/.
+Then follow the instructions [here](/guides/getting_started/).
+
 ## Building on Windows
 
 The Grafana backend includes Sqlite3 which requires GCC to compile. So
 in order to compile Grafana on Windows you need to install GCC. We
 recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
-
-## Logging in for the first time
-
-To run Grafana open your browser and go to the port you configured above, e.g. http://localhost:8080.
-Then follow the instructions [here](/guides/getting_started/).

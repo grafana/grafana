@@ -215,5 +215,5 @@ chown -R root:root /etc/grafana && \
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to the default port http://localhost:3000 or the port you have configured.
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
 Then follow the instructions [here](/guides/getting_started/).

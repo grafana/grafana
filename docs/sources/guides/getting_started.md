@@ -13,11 +13,14 @@ weight = 1
 
 # Getting started
 
-This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running and have added at least one [Data Source](/features/datasources/).
+This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running. If not please read the [installation guide](/installation/).
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to the default port http://localhost:3000 or the port you have configured. There you will see the login page. Default username is admin and default password is admin. When you log in for the first time you will be asked to change your password. We strongly encourage you to follow Grafana’s best practices and change the default administrator password. You can later go to user preferences and change your user name.
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+
+There you will see the login page. Default username is admin and default password is admin. When you log in for the first time you will be asked to change your password. We strongly encourage you to
+follow Grafana’s best practices and change the default administrator password. You can later go to user preferences and change your user name.
 
 
 ## How to add a data source
