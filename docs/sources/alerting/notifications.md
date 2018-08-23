@@ -42,9 +42,9 @@ should be sent using number of seconds (s), minutes (m) or hours (h), for exampl
 
 **Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent earlier than a configured [alert rule evaluation interval](/alerting/rules/#name-evaluation-interval).
 
-These examples shows how often and when reminders are sent for a triggered alert.
+These examples show how often and when reminders are sent for a triggered alert.
 
-Alert rule evaluation interval | Send reminders every | Reminder sent every (after last alerting notification)
+Alert rule evaluation interval | Send reminders every | Reminder sent every (after last alert notification)
 ---------- | ----------- | -----------
 `30s` | `15s` | ~30 seconds
 `1m` | `5m` | ~5 minutes
