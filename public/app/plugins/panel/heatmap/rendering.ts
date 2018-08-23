@@ -69,6 +69,7 @@ export class HeatmapRenderer {
     this.ctrl.events.on('render', this.onRender.bind(this));
 
     this.ctrl.tickValueFormatter = this.tickValueFormatter.bind(this);
+
     /////////////////////////////
     // Selection and crosshair //
     /////////////////////////////
@@ -678,9 +679,17 @@ export class HeatmapRenderer {
     }
   }
 
+  getEventOffset(event) {
+    const elemOffset = this.$heatmap.offset();
+    const x = Math.floor(event.clientX - elemOffset.left);
+    const y = Math.floor(event.clientY - elemOffset.top);
+    return { x, y };
+  }
+
   onMouseDown(event) {
+    const offset = this.getEventOffset(event);
     this.selection.active = true;
-    this.selection.x1 = event.offsetX;
+    this.selection.x1 = offset.x;
 
     this.mouseUpHandler = () => {
       this.onMouseUp();
@@ -718,23 +727,25 @@ export class HeatmapRenderer {
       return;
     }
 
+    const offset = this.getEventOffset(event);
     if (this.selection.active) {
       // Clear crosshair and tooltip
       this.clearCrosshair();
       this.tooltip.destroy();
 
-      this.selection.x2 = this.limitSelection(event.offsetX);
+      this.selection.x2 = this.limitSelection(offset.x);
       this.drawSelection(this.selection.x1, this.selection.x2);
     } else {
-      this.emitGraphHoverEvent(event);
-      this.drawCrosshair(event.offsetX);
-      this.tooltip.show(event, this.data);
+      const pos = this.getEventPos(event, offset);
+      this.drawCrosshair(offset.x);
+      this.tooltip.show(pos, this.data);
+      this.emitGraphHoverEvent(pos);
     }
   }
 
-  emitGraphHoverEvent(event) {
-    let x = this.xScale.invert(event.offsetX - this.yAxisWidth).valueOf();
-    let y = this.yScale.invert(event.offsetY);
+  getEventPos(event, offset) {
+    let x = this.xScale.invert(offset.x - this.yAxisWidth).valueOf();
+    let y = this.yScale.invert(offset.y - this.chartTop);
     let pos = {
       pageX: event.pageX,
       pageY: event.pageY,
@@ -743,11 +754,15 @@ export class HeatmapRenderer {
       y: y,
       y1: y,
       panelRelY: null,
+      offset,
     };
 
-    // Set minimum offset to prevent showing legend from another panel
-    pos.panelRelY = Math.max(event.offsetY / this.height, 0.001);
+    return pos;
+  }
 
+  emitGraphHoverEvent(pos) {
+    // Set minimum offset to prevent showing legend from another panel
+    pos.panelRelY = Math.max(pos.offset.y / this.height, 0.001);
     // broadcast to other graph panels that we are hovering
     appEvents.emit('graph-hover', { pos: pos, panel: this.panel });
   }
