@@ -101,7 +101,8 @@ export class BackendSrv {
       },
       err => {
         // handle unauthorized
-        if (err.status === 401 && this.contextSrv.user.isSignedIn && firstAttempt) {
+        const isRemembered = document.cookie.indexOf('grafana_remember') !== -1;
+        if (err.status === 401 && this.contextSrv.user.isSignedIn && firstAttempt && isRemembered) {
           return this.loginPing().then(() => {
             options.retry = 1;
             return this.request(options);
@@ -181,7 +182,8 @@ export class BackendSrv {
         }
 
         // handle unauthorized for backend requests
-        if (requestIsLocal && firstAttempt && err.status === 401) {
+        const isRemembered = document.cookie.indexOf('grafana_remember') !== -1;
+        if (requestIsLocal && firstAttempt && err.status === 401 && isRemembered) {
           return this.loginPing().then(() => {
             options.retry = 1;
             if (canceler) {
