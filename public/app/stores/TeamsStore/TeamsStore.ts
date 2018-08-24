@@ -1,6 +1,6 @@
 import { types, getEnv, flow } from 'mobx-state-tree';
 
-export const TeamMember = types.model('TeamMember', {
+export const TeamMemberModel = types.model('TeamMember', {
   userId: types.identifier(types.number),
   teamId: types.number,
   avatarUrl: types.string,
@@ -8,18 +8,18 @@ export const TeamMember = types.model('TeamMember', {
   login: types.string,
 });
 
-type TeamMemberType = typeof TeamMember.Type;
+type TeamMemberType = typeof TeamMemberModel.Type;
 export interface TeamMember extends TeamMemberType {}
 
-export const TeamGroup = types.model('TeamGroup', {
+export const TeamGroupModel = types.model('TeamGroup', {
   groupId: types.identifier(types.string),
   teamId: types.number,
 });
 
-type TeamGroupType = typeof TeamGroup.Type;
+type TeamGroupType = typeof TeamGroupModel.Type;
 export interface TeamGroup extends TeamGroupType {}
 
-export const Team = types
+export const TeamModel = types
   .model('Team', {
     id: types.identifier(types.number),
     name: types.string,
@@ -27,8 +27,8 @@ export const Team = types
     email: types.string,
     memberCount: types.number,
     search: types.optional(types.string, ''),
-    members: types.optional(types.map(TeamMember), {}),
-    groups: types.optional(types.map(TeamGroup), {}),
+    members: types.optional(types.map(TeamMemberModel), {}),
+    groups: types.optional(types.map(TeamGroupModel), {}),
   })
   .views(self => ({
     get filteredMembers() {
@@ -67,7 +67,7 @@ export const Team = types
       self.members.clear();
 
       for (let member of rsp) {
-        self.members.set(member.userId.toString(), TeamMember.create(member));
+        self.members.set(member.userId.toString(), TeamMemberModel.create(member));
       }
     }),
 
@@ -89,7 +89,7 @@ export const Team = types
       self.groups.clear();
 
       for (let group of rsp) {
-        self.groups.set(group.groupId, TeamGroup.create(group));
+        self.groups.set(group.groupId, TeamGroupModel.create(group));
       }
     }),
 
@@ -98,7 +98,7 @@ export const Team = types
       yield backendSrv.post(`/api/teams/${self.id}/groups`, { groupId: groupId });
       self.groups.set(
         groupId,
-        TeamGroup.create({
+        TeamGroupModel.create({
           teamId: self.id,
           groupId: groupId,
         })
@@ -112,12 +112,12 @@ export const Team = types
     }),
   }));
 
-type TeamType = typeof Team.Type;
+type TeamType = typeof TeamModel.Type;
 export interface Team extends TeamType {}
 
 export const TeamsStore = types
   .model('TeamsStore', {
-    map: types.map(Team),
+    map: types.map(TeamModel),
     search: types.optional(types.string, ''),
   })
   .views(self => ({
@@ -136,7 +136,7 @@ export const TeamsStore = types
       self.map.clear();
 
       for (let team of rsp.teams) {
-        self.map.set(team.id.toString(), Team.create(team));
+        self.map.set(team.id.toString(), TeamModel.create(team));
       }
     }),
 
@@ -151,6 +151,6 @@ export const TeamsStore = types
 
       const backendSrv = getEnv(self).backendSrv;
       const team = yield backendSrv.get(`/api/teams/${id}`);
-      self.map.set(id, Team.create(team));
+      self.map.set(id, TeamModel.create(team));
     }),
   }));
