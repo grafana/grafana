@@ -26,7 +26,7 @@ export class PanelHeader extends React.Component<PanelHeaderProps, any> {
       {
         panelId: this.props.panel.id,
         fullscreen: true,
-        edit: null,
+        edit: false,
       },
       false
     );

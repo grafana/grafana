@@ -30,6 +30,8 @@ export const ViewStore = types
       for (let key of Object.keys(query)) {
         if (query[key]) {
           self.query.set(key, query[key]);
+        } else {
+          self.query.delete(key);
         }
       }
     }

@@ -6,48 +6,53 @@ import baron from 'baron';
 var module = angular.module('grafana.directives');
 
 var panelTemplate = `
-  <div class="panel-container" ng-class="{'panel-container--is-editing': ctrl.panel.isEditing}">
-    <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
-      <span class="panel-info-corner">
-        <i class="fa"></i>
-        <span class="panel-info-corner-inner"></span>
-      </span>
+  <div ng-class="{'panel-editor-container': ctrl.panel.isEditing, 'panel-height-helper': !ctrl.panel.isEditing}">
+    <div ng-class="{'panel-editor-container__panel': ctrl.panel.isEditing, 'panel-height-helper': !ctrl.panel.isEditing}">
+      <div class="panel-container">
+        <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
+          <span class="panel-info-corner">
+            <i class="fa"></i>
+            <span class="panel-info-corner-inner"></span>
+          </span>
 
-      <span class="panel-loading" ng-show="ctrl.loading">
-        <i class="fa fa-spinner fa-spin"></i>
-      </span>
+          <span class="panel-loading" ng-show="ctrl.loading">
+            <i class="fa fa-spinner fa-spin"></i>
+          </span>
 
-      <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
-    </div>
+          <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
+        </div>
 
-    <div class="panel-content">
-      <ng-transclude class="panel-height-helper"></ng-transclude>
-    </div>
-  </div>
-
-  <div class="panel-full-edit" ng-if="ctrl.panel.isEditing">
-    <div class="tabbed-view">
-      <div class="tabbed-view-header">
-        <h3 class="tabbed-view-panel-title">
-          {{ctrl.pluginName}}
-        </h3>
-
-        <ul class="gf-tabs">
-          <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
-            <a class="gf-tabs-link" ng-click="ctrl.changeTab($index)" ng-class="{active: ctrl.editorTabIndex === $index}">
-              {{::tab.title}}
-            </a>
-          </li>
-        </ul>
-
-        <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
-          <i class="fa fa-remove"></i>
-        </button>
+        <div class="panel-content">
+          <ng-transclude class="panel-height-helper"></ng-transclude>
+        </div>
       </div>
+    </div>
 
-      <div class="tabbed-view-body">
-        <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
-          <panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
+    <div ng-if="ctrl.panel.isEditing" ng-class="{'panel-editor-container__editor': ctrl.panel.isEditing,
+                                                 'panel-height-helper': !ctrl.panel.isEditing}">
+      <div class="tabbed-view tabbed-view--new">
+        <div class="tabbed-view-header">
+          <h3 class="tabbed-view-panel-title">
+            {{ctrl.pluginName}}
+          </h3>
+
+          <ul class="gf-tabs">
+            <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
+              <a class="gf-tabs-link" ng-click="ctrl.changeTab($index)" ng-class="{active: ctrl.editorTabIndex === $index}">
+                {{::tab.title}}
+              </a>
+            </li>
+          </ul>
+
+          <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
+            <i class="fa fa-remove"></i>
+          </button>
+        </div>
+
+        <div class="tabbed-view-body">
+          <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
+            <panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
+          </div>
         </div>
       </div>
     </div>
@@ -86,7 +91,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       }
 
       function panelHeightUpdated() {
-        panelContent.css({ height: ctrl.height + 'px' });
+        // panelContent.css({ height: ctrl.height + 'px' });
       }
 
       function resizeScrollableContent() {
@@ -135,6 +140,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
         ctrl.calculatePanelHeight();
         panelHeightUpdated();
         $timeout(() => {
+          console.log('panel directive panel size changed, render');
           resizeScrollableContent();
           ctrl.render();
         });
