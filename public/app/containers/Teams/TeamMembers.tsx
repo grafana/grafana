@@ -1,13 +1,13 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { observer } from 'mobx-react';
-import { ITeam, ITeamMember } from 'app/stores/TeamsStore/TeamsStore';
-import appEvents from 'app/core/app_events';
+import { Team, TeamMember } from 'app/stores/TeamsStore/TeamsStore';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
+import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 
 interface Props {
-  team: ITeam;
+  team: Team;
 }
 
 interface State {
@@ -30,23 +30,15 @@ export class TeamMembers extends React.Component<Props, State> {
     this.props.team.setSearchQuery(evt.target.value);
   };
 
-  removeMember(member: ITeamMember) {
-    appEvents.emit('confirm-modal', {
-      title: 'Remove Member',
-      text: 'Are you sure you want to remove ' + member.login + ' from this group?',
-      yesText: 'Remove',
-      icon: 'fa-warning',
-      onConfirm: () => {
-        this.removeMemberConfirmed(member);
-      },
-    });
-  }
-
-  removeMemberConfirmed(member: ITeamMember) {
+  removeMember(member: TeamMember) {
     this.props.team.removeMember(member);
   }
 
-  renderMember(member: ITeamMember) {
+  removeMemberConfirmed(member: TeamMember) {
+    this.props.team.removeMember(member);
+  }
+
+  renderMember(member: TeamMember) {
     return (
       <tr key={member.userId}>
         <td className="width-4 text-center">
@@ -54,10 +46,8 @@ export class TeamMembers extends React.Component<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
-        <td style={{ width: '1%' }}>
-          <a onClick={() => this.removeMember(member)} className="btn btn-danger btn-mini">
-            <i className="fa fa-remove" />
-          </a>
+        <td className="text-right">
+          <DeleteButton onConfirmDelete={() => this.removeMember(member)} />
         </td>
       </tr>
     );
@@ -79,8 +69,9 @@ export class TeamMembers extends React.Component<Props, State> {
 
   render() {
     const { newTeamMember, isAdding } = this.state;
-    const members = this.props.team.members.values();
+    const members = this.props.team.filteredMembers;
     const newTeamMemberValue = newTeamMember && newTeamMember.id.toString();
+    const { team } = this.props;
 
     return (
       <div>
@@ -91,7 +82,7 @@ export class TeamMembers extends React.Component<Props, State> {
                 type="text"
                 className="gf-form-input"
                 placeholder="Search members"
-                value={''}
+                value={team.search}
                 onChange={this.onSearchQueryChange}
               />
               <i className="gf-form-input-icon fa fa-search" />

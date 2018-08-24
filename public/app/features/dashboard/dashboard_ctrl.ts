@@ -60,6 +60,8 @@ export class DashboardCtrl {
       .finally(() => {
         this.dashboard = dashboard;
         this.dashboard.processRepeats();
+        this.dashboard.updateSubmenuVisibility();
+        this.dashboard.autoFitPanels(window.innerHeight);
 
         this.unsavedChangesSrv.init(dashboard, this.$scope);
 
@@ -68,8 +70,6 @@ export class DashboardCtrl {
         this.dashboardViewState = this.dashboardViewStateSrv.create(this.$scope);
 
         this.keybindingSrv.setupDashboardBindings(this.$scope, dashboard);
-
-        this.dashboard.updateSubmenuVisibility();
         this.setWindowTitleAndTheme();
 
         this.$scope.appEvent('dashboard-initialized', dashboard);

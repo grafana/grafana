@@ -28,19 +28,7 @@ export class HeatmapTooltip {
     this.mouseOverBucket = false;
     this.originalFillColor = null;
 
-    elem.on('mouseover', this.onMouseOver.bind(this));
     elem.on('mouseleave', this.onMouseLeave.bind(this));
-  }
-
-  onMouseOver(e) {
-    if (!this.panel.tooltip.show || !this.scope.ctrl.data || _.isEmpty(this.scope.ctrl.data.buckets)) {
-      return;
-    }
-
-    if (!this.tooltip) {
-      this.add();
-      this.move(e);
-    }
   }
 
   onMouseLeave() {
@@ -81,9 +69,13 @@ export class HeatmapTooltip {
 
     let { xBucketIndex, yBucketIndex } = this.getBucketIndexes(pos, data);
 
-    if (!data.buckets[xBucketIndex] || !this.tooltip) {
+    if (!data.buckets[xBucketIndex]) {
       this.destroy();
       return;
+    }
+
+    if (!this.tooltip) {
+      this.add();
     }
 
     let boundBottom, boundTop, valuesNumber;
@@ -158,13 +150,12 @@ export class HeatmapTooltip {
   }
 
   getBucketIndexes(pos, data) {
-    const xBucketIndex = this.getXBucketIndex(pos.offsetX, data);
-    const yBucketIndex = this.getYBucketIndex(pos.offsetY, data);
+    const xBucketIndex = this.getXBucketIndex(pos.x, data);
+    const yBucketIndex = this.getYBucketIndex(pos.y, data);
     return { xBucketIndex, yBucketIndex };
   }
 
-  getXBucketIndex(offsetX, data) {
-    let x = this.scope.xScale.invert(offsetX - this.scope.yAxisWidth).valueOf();
+  getXBucketIndex(x, data) {
     // First try to find X bucket by checking x pos is in the
     // [bucket.x, bucket.x + xBucketSize] interval
     let xBucket = _.find(data.buckets, bucket => {
@@ -173,8 +164,7 @@ export class HeatmapTooltip {
     return xBucket ? xBucket.x : getValueBucketBound(x, data.xBucketSize, 1);
   }
 
-  getYBucketIndex(offsetY, data) {
-    let y = this.scope.yScale.invert(offsetY - this.scope.chartTop);
+  getYBucketIndex(y, data) {
     if (data.tsBuckets) {
       return Math.floor(y);
     }

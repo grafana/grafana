@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -22,10 +23,11 @@ import (
 // The tests require a PostgreSQL db named grafanadstest and a user/password grafanatest/grafanatest!
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
-// There is also a dashboard.json in same directory that you can import to Grafana
-// once you've created a datasource for the test server/database.
+// There is also a datasource and dashboard provisioned by devenv scripts that you can
+// use to verify that the generated data are vizualized as expected, see
+// devenv/README.md for setup instructions.
 func TestPostgres(t *testing.T) {
-	// change to true to run the MySQL tests
+	// change to true to run the PostgreSQL tests
 	runPostgresTests := false
 	// runPostgresTests := true
 
@@ -36,18 +38,24 @@ func TestPostgres(t *testing.T) {
 	Convey("PostgreSQL", t, func() {
 		x := InitPostgresTestDB(t)
 
-		endpoint := &PostgresQueryEndpoint{
-			sqlEngine: &tsdb.DefaultSqlEngine{
-				MacroEngine: NewPostgresMacroEngine(),
-				XormEngine:  x,
-			},
-			log: log.New("tsdb.postgres"),
+		origXormEngine := tsdb.NewXormEngine
+		tsdb.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+			return x, nil
 		}
 
-		sess := x.NewSession()
-		defer sess.Close()
+		endpoint, err := newPostgresQueryEndpoint(&models.DataSource{
+			JsonData:       simplejson.New(),
+			SecureJsonData: securejsondata.SecureJsonData{},
+		})
+		So(err, ShouldBeNil)
 
+		sess := x.NewSession()
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+
+		Reset(func() {
+			sess.Close()
+			tsdb.NewXormEngine = origXormEngine
+		})
 
 		Convey("Given a table with different native data types", func() {
 			sql := `
@@ -175,7 +183,7 @@ func TestPostgres(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m'), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -219,7 +227,7 @@ func TestPostgres(t *testing.T) {
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m', NULL), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -268,12 +276,12 @@ func TestPostgres(t *testing.T) {
 
 			})
 
-			Convey("When doing a metric query using timeGroup with float fill enabled", func() {
+			Convey("When doing a metric query using timeGroup with value fill enabled", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeGroup(time, '5m', 1.5), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+								"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
 							RefId: "A",
@@ -293,6 +301,34 @@ func TestPostgres(t *testing.T) {
 				points := queryResult.Series[0].Points
 				So(points[3][0].Float64, ShouldEqual, 1.5)
 			})
+		})
+
+		Convey("When doing a metric query using timeGroup with previous fill enabled", func() {
+			query := &tsdb.TsdbQuery{
+				Queries: []*tsdb.Query{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": "SELECT $__timeGroup(time, '5m', previous), avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+							"format": "time_series",
+						}),
+						RefId: "A",
+					},
+				},
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+				},
+			}
+
+			resp, err := endpoint.Query(nil, nil, query)
+			So(err, ShouldBeNil)
+			queryResult := resp.Results["A"]
+			So(queryResult.Error, ShouldBeNil)
+
+			points := queryResult.Series[0].Points
+			So(points[2][0].Float64, ShouldEqual, 15.0)
+			So(points[3][0].Float64, ShouldEqual, 15.0)
+			So(points[6][0].Float64, ShouldEqual, 20.0)
 		})
 
 		Convey("Given a table with metrics having multiple values and measurements", func() {
@@ -558,6 +594,31 @@ func TestPostgres(t *testing.T) {
 				So(len(queryResult.Series), ShouldEqual, 2)
 				So(queryResult.Series[0].Name, ShouldEqual, "Metric A - value one")
 				So(queryResult.Series[1].Name, ShouldEqual, "Metric B - value one")
+			})
+
+			Convey("When doing a metric query with metric column and multiple value columns", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": `SELECT $__timeEpoch(time), measurement as metric, "valueOne", "valueTwo" FROM metric_values ORDER BY 1`,
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+
+				So(len(queryResult.Series), ShouldEqual, 4)
+				So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
+				So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
+				So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
+				So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
 			})
 
 			Convey("When doing a metric query grouping by time should return correct series", func() {

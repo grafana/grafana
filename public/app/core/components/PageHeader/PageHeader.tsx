@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
 import { toJS } from 'mobx';
 
-export interface IProps {
+export interface Props {
   model: NavModel;
 }
 
@@ -82,7 +82,7 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
 };
 
 @observer
-export default class PageHeader extends React.Component<IProps, any> {
+export default class PageHeader extends React.Component<Props, any> {
   constructor(props) {
     super(props);
   }

@@ -209,7 +209,7 @@ export class TemplateSrv {
         value = this.getAllValue(variable);
         // skip formatting of custom all values
         if (variable.allValue) {
-          return value;
+          return this.replace(value);
         }
       }
 

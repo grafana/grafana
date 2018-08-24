@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 bulkDashboard() {
 
@@ -7,11 +7,11 @@ bulkDashboard() {
 		COUNTER=0
 		MAX=400
 		while [  $COUNTER -lt $MAX ]; do
-				jsonnet -o "dashboards/bulk-testing/dashboard${COUNTER}.json" -e "local bulkDash = import 'dashboards/bulk-testing/bulkdash.jsonnet'; bulkDash + {  uid: 'uid-${COUNTER}',  title: 'title-${COUNTER}' }"
+				jsonnet -o "bulk-dashboards/dashboard${COUNTER}.json" -e "local bulkDash = import 'bulk-dashboards/bulkdash.jsonnet'; bulkDash + {  uid: 'uid-${COUNTER}',  title: 'title-${COUNTER}' }"
 				let COUNTER=COUNTER+1
 		done
 
-		ln -s -f -r ./dashboards/bulk-testing/bulk-dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
+		ln -s -f -r ./bulk-dashboards/bulk-dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
 }
 
 requiresJsonnet() {
@@ -22,31 +22,37 @@ requiresJsonnet() {
 		fi
 }
 
-defaultDashboards() {
+devDashboards() {
+		echo -e "\xE2\x9C\x94 Setting up all dev dashboards using provisioning"
 		ln -s -f ../../../devenv/dashboards.yaml ../conf/provisioning/dashboards/dev.yaml
 }
 
-defaultDatasources() {
-		echo "setting up all default datasources using provisioning"
+devDatasources() {
+		echo -e "\xE2\x9C\x94 Setting up all dev datasources using provisioning"
 
 		ln -s -f ../../../devenv/datasources.yaml ../conf/provisioning/datasources/dev.yaml
 }
 
 usage() {
-	echo -e "install.sh\n\tThis script setups dev provision for datasources and dashboards"
+	echo -e "\n"
 	echo "Usage:"
 	echo "  bulk-dashboards                     - create and provisioning 400 dashboards"
 	echo "  no args                             - provisiong core datasources and dev dashboards"
 }
 
 main() {
+	echo -e "------------------------------------------------------------------"
+	echo -e "This script setups provisioning for dev datasources and dashboards"
+	echo -e "------------------------------------------------------------------"
+	echo -e "\n"
+
 	local cmd=$1
 
 	if [[ $cmd == "bulk-dashboards" ]]; then
 		bulkDashboard
 	else
-		defaultDashboards
-		defaultDatasources
+		devDashboards
+		devDatasources
 	fi
 
   if [[ -z "$cmd" ]]; then

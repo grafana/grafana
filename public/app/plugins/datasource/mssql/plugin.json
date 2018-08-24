@@ -10,8 +10,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "",
-      "large": ""
+      "small": "img/sql_server_logo.svg",
+      "large": "img/sql_server_logo.svg"
     }
   },
 

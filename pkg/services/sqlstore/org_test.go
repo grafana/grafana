@@ -17,6 +17,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 		Convey("Given single org mode", func() {
 			setting.AutoAssignOrg = true
+			setting.AutoAssignOrgId = 1
 			setting.AutoAssignOrgRole = "Viewer"
 
 			Convey("Users should be added to default organization", func() {
