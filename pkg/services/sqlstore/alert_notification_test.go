@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
@@ -88,7 +89,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			})
 		})
 
-		Convey("Cannot update alert notifier with notitfyonce = false", func() {
+		Convey("Cannot update alert notifier with send reminder = false", func() {
 			cmd := &m.CreateAlertNotificationCommand{
 				Name:         "ops update",
 				Type:         "email",
@@ -134,6 +135,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(cmd.Result.Id, ShouldNotEqual, 0)
 			So(cmd.Result.OrgId, ShouldNotEqual, 0)
 			So(cmd.Result.Type, ShouldEqual, "email")
+			So(cmd.Result.Frequency, ShouldEqual, 10*time.Second)
 
 			Convey("Cannot save Alert Notification with the same name", func() {
 				err = CreateAlertNotificationCommand(cmd)
@@ -146,13 +148,28 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					Type:         "webhook",
 					OrgId:        cmd.Result.OrgId,
 					SendReminder: true,
-					Frequency:    "10s",
+					Frequency:    "60s",
 					Settings:     simplejson.New(),
 					Id:           cmd.Result.Id,
 				}
 				err := UpdateAlertNotification(newCmd)
 				So(err, ShouldBeNil)
 				So(newCmd.Result.Name, ShouldEqual, "NewName")
+				So(newCmd.Result.Frequency, ShouldEqual, 60*time.Second)
+			})
+
+			Convey("Can update alert notification to disable sending of reminders", func() {
+				newCmd := &m.UpdateAlertNotificationCommand{
+					Name:         "NewName",
+					Type:         "webhook",
+					OrgId:        cmd.Result.OrgId,
+					SendReminder: false,
+					Settings:     simplejson.New(),
+					Id:           cmd.Result.Id,
+				}
+				err := UpdateAlertNotification(newCmd)
+				So(err, ShouldBeNil)
+				So(newCmd.Result.SendReminder, ShouldBeFalse)
 			})
 		})
 
