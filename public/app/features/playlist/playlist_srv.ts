@@ -13,7 +13,7 @@ class PlaylistSrv {
   public isPlaying: boolean;
 
   /** @ngInject */
-  constructor(private $location: any, private $timeout: any, private backendSrv: any, private $routeParams) {}
+  constructor(private $location: any, private $timeout: any, private backendSrv: any) {}
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
