@@ -3,7 +3,7 @@ import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { NavStore } from 'app/stores/NavStore/NavStore';
-import { TeamsStore, ITeam } from 'app/stores/TeamsStore/TeamsStore';
+import { TeamsStore, Team } from 'app/stores/TeamsStore/TeamsStore';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 
@@ -27,7 +27,7 @@ export class TeamList extends React.Component<Props, any> {
     this.props.teams.loadTeams();
   }
 
-  deleteTeam(team: ITeam) {
+  deleteTeam(team: Team) {
     this.props.backendSrv.delete('/api/teams/' + team.id).then(this.fetchTeams.bind(this));
   }
 
@@ -35,7 +35,7 @@ export class TeamList extends React.Component<Props, any> {
     this.props.teams.setSearchQuery(evt.target.value);
   };
 
-  renderTeamMember(team: ITeam): JSX.Element {
+  renderTeamMember(team: Team): JSX.Element {
     let teamUrl = `org/teams/edit/${team.id}`;
 
     return (

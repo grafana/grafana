@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { types, getEnv } from 'mobx-state-tree';
 import { NavItem } from './NavItem';
-import { ITeam } from '../TeamsStore/TeamsStore';
+import { Team } from '../TeamsStore/TeamsStore';
 
 export const NavStore = types
   .model('NavStore', {
@@ -117,7 +117,7 @@ export const NavStore = types
       self.main = NavItem.create(main);
     },
 
-    initTeamPage(team: ITeam, tab: string, isSyncEnabled: boolean) {
+    initTeamPage(team: Team, tab: string, isSyncEnabled: boolean) {
       let main = {
         img: team.avatarUrl,
         id: 'team-' + team.id,

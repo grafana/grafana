@@ -63,7 +63,7 @@ function parseUrlState(initial: string | undefined) {
   return { datasource: null, queries: [], range: DEFAULT_RANGE };
 }
 
-interface IExploreState {
+interface ExploreState {
   datasource: any;
   datasourceError: any;
   datasourceLoading: boolean | null;
@@ -88,12 +88,12 @@ interface IExploreState {
   tableResult: any;
 }
 
-export class Explore extends React.Component<any, IExploreState> {
+export class Explore extends React.Component<any, ExploreState> {
   el: any;
 
   constructor(props) {
     super(props);
-    const initialState: IExploreState = props.initialState;
+    const initialState: ExploreState = props.initialState;
     const { datasource, queries, range } = parseUrlState(props.routeParams.state);
     this.state = {
       datasource: null,

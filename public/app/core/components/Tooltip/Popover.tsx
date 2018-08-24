@@ -2,11 +2,11 @@
 import withTooltip from './withTooltip';
 import { Target } from 'react-popper';
 
-interface IPopoverProps {
+interface PopoverProps {
   tooltipSetState: (prevState: object) => void;
 }
 
-class Popover extends React.Component<IPopoverProps, any> {
+class Popover extends React.Component<PopoverProps, any> {
   constructor(props) {
     super(props);
     this.toggleTooltip = this.toggleTooltip.bind(this);

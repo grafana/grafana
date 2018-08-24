@@ -1,13 +1,13 @@
 import { types, getEnv, flow } from 'mobx-state-tree';
-import { AlertRule } from './AlertRule';
+import { AlertRule as AlertRuleModel } from './AlertRule';
 import { setStateFields } from './helpers';
 
-type IAlertRuleType = typeof AlertRule.Type;
-export interface IAlertRule extends IAlertRuleType {}
+type AlertRuleType = typeof AlertRuleModel.Type;
+export interface AlertRule extends AlertRuleType {}
 
 export const AlertListStore = types
   .model('AlertListStore', {
-    rules: types.array(AlertRule),
+    rules: types.array(AlertRuleModel),
     stateFilter: types.optional(types.string, 'all'),
     search: types.optional(types.string, ''),
   })
@@ -38,7 +38,7 @@ export const AlertListStore = types
           }
         }
 
-        self.rules.push(AlertRule.create(rule));
+        self.rules.push(AlertRuleModel.create(rule));
       }
     }),
     setSearchQuery(query: string) {

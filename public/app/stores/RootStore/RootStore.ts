@@ -34,5 +34,5 @@ export const RootStore = types.model({
   }),
 });
 
-type IRootStoreType = typeof RootStore.Type;
-export interface IRootStore extends IRootStoreType {}
+type RootStoreType = typeof RootStore.Type;
+export interface RootStoreInterface extends RootStoreType {}
