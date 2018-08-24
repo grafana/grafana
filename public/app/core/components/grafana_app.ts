@@ -70,22 +70,21 @@ export class GrafanaCtrl {
 }
 
 function setViewModeBodyClass(body, mode, sidemenuOpen: boolean) {
-  body.removeClass('kiosk-mode-a');
-  body.removeClass('kiosk-mode-b');
-  body.removeClass('user-activity-low');
+  body.removeClass('view-mode--tv');
+  body.removeClass('view-mode--kiosk');
+  body.removeClass('view-mode--inactive');
 
   switch (mode) {
-    case 'a': {
+    case 'tv': {
       body.removeClass('sidemenu-open');
-      body.addClass('kiosk-mode-a');
+      body.addClass('kiosk-mode--tv');
       break;
     }
-    case 'b':
     // 1 & true for legacy states
     case 1:
     case true: {
       body.removeClass('sidemenu-open');
-      body.addClass('kiosk-mode-b');
+      body.addClass('view-mode--kiosk');
       break;
     }
     default: {
@@ -123,7 +122,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       });
 
       scope.$watch(() => playlistSrv.isPlaying, function(newValue) {
-        elem.toggleClass('playlist-active', newValue === true);
+        elem.toggleClass('view-mode--playlist', newValue === true);
       });
 
       // check if we are in server side render
@@ -165,23 +164,22 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         let search = $location.search();
 
         if (options && options.exit) {
-          search.kiosk = 'b';
+          search.kiosk = 1;
         }
 
         switch (search.kiosk) {
-          case 'a': {
-            search.kiosk = 'b';
+          case 'tv': {
+            search.kiosk = 1;
             appEvents.emit('alert-success', ['Press ESC to exit TV mode']);
             break;
           }
-          case 'b':
           case 1:
           case true: {
             delete search.kiosk;
             break;
           }
           default: {
-            search.kiosk = 'a';
+            search.kiosk = 'tv';
           }
         }
 
@@ -205,7 +203,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
         if (new Date().getTime() - lastActivity > inActiveTimeLimit) {
           activeUser = false;
-          body.addClass('user-activity-low');
+          body.addClass('view-mode--inactive');
           body.removeClass('sidemenu-open');
         }
       }
@@ -214,7 +212,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         lastActivity = new Date().getTime();
         if (!activeUser) {
           activeUser = true;
-          body.removeClass('user-activity-low');
+          body.removeClass('view-mode--inactive');
           body.toggleClass('sidemenu-open', sidemenuOpen);
         }
       }

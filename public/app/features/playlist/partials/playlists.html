@@ -27,19 +27,19 @@
 				<ul class="dropdown-menu" role="menu">
 					<li>
 						<a href="{{playlist.startUrl}}">
-							<i class="fa fa-play"></i> In normal mode</span>
+							<i class="fa fa-play"></i> In Normal mode</span>
 						</a>
-						<a href="{{playlist.startUrl}}?kiosk=a">
-							<i class="fa fa-play"></i> In kiosk mode A</span>
+						<a href="{{playlist.startUrl}}?kiosk=tv">
+							<i class="fa fa-play"></i> In TV mode</span>
 						</a>
-						<a href="{{playlist.startUrl}}?kiosk=a&autofitpanels">
-							<i class="fa fa-play"></i> In kiosk mode A (with panel auto fit)</span>
+            <a href="{{playlist.startUrl}}?kiosk=tv&autofitpanels">
+              <i class="fa fa-play"></i> In TV mode <span class="muted">(with auto fit panels)</span>
 						</a>
-						<a href="{{playlist.startUrl}}?kiosk=b">
-							<i class="fa fa-play"></i> In kiosk mode B</span>
+						<a href="{{playlist.startUrl}}?kiosk">
+							<i class="fa fa-play"></i> In Kiosk mode</span>
 						</a>
-						<a ng-href="{{playlist.startUrl}}?kiosk=b&autofitpanels">
-							<i class="fa fa-play"></i> In kiosk mode B (with panel auto fit)</span>
+            <a ng-href="{{playlist.startUrl}}?kiosk&autofitpanels">
+              <i class="fa fa-play"></i> In Kiosk mode <span class="muted">(with auto fit panels)</span>
 						</a>
 					</li>
 				</ul>

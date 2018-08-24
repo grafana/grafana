@@ -1,10 +1,8 @@
-.playlist-active,
-.user-activity-low {
+.view-mode--inactive {
   .react-resizable-handle,
   .add-row-panel-hint,
   .dash-row-menu-container,
   .navbar-buttons--actions,
-  .panel-menu-container,
   .panel-info-corner--info,
   .panel-info-corner--links {
     display: none;
@@ -23,16 +21,20 @@
   }
 }
 
-.kiosk-mode-a {
-  @extend .user-activity-low;
+.view-mode--playlist {
+  @extend .view-mode--inactive;
+}
+
+.view-mode--tv {
+  @extend .view-mode--inactive;
 
   .submenu-controls {
     display: none;
   }
 }
 
-.kiosk-mode-b {
-  @extend .kiosk-mode-a;
+.view-mode--kiosk {
+  @extend .view-mode--tv;
 
   .sidemenu,
   .navbar {
