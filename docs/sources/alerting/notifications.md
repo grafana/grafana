@@ -40,7 +40,7 @@ When checked, this option will notify for all alert rules - existing and new.
 When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders
 should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h` etc.
 
-**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent earlier than a configured [alert rule evaluation interval](/alerting/rules/#name-evaluation-interval).
+**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured [alert rule evaluation interval](/alerting/rules/#name-evaluation-interval).
 
 These examples show how often and when reminders are sent for a triggered alert.
 
