@@ -317,7 +317,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       case 'aggregate':
         // add group by if no group by yet
         if (this.target.group.length === 0) {
-          this.addGroup('time', '1m');
+          this.addGroup('time', '$__interval');
         }
         let aggIndex = this.findAggregateIndex(selectParts);
         if (aggIndex !== -1) {
