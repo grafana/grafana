@@ -16,7 +16,7 @@ export class DashboardViewState {
   oldTimeRange: any;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private $rootScope) {
+  constructor($scope, private $location, private $timeout) {
     var self = this;
     self.state = {};
     self.panelScopes = [];
@@ -176,10 +176,10 @@ export class DashboardViewState {
 }
 
 /** @ngInject */
-export function dashboardViewStateSrv($location, $timeout, $rootScope) {
+export function dashboardViewStateSrv($location, $timeout) {
   return {
     create: function($scope) {
-      return new DashboardViewState($scope, $location, $timeout, $rootScope);
+      return new DashboardViewState($scope, $location, $timeout);
     },
   };
 }

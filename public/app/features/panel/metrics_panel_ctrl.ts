@@ -8,8 +8,6 @@ import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 import { encodePathComponent } from 'app/core/utils/location_util';
 
-import { metricsTabDirective } from './metrics_tab';
-
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: any;
@@ -58,7 +56,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Metrics', metricsTabDirective);
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 

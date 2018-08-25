@@ -34,6 +34,7 @@ export class PanelModel {
   soloMode?: boolean;
   targets: any[];
   datasource: string;
+  thresholds?: any;
 
   // non persisted
   fullscreen: boolean;
@@ -116,9 +117,11 @@ export class PanelModel {
     this.events.emit('panel-init-edit-mode');
   }
 
-  changeType(newType: string) {
-    this.type = newType;
-    this.events.emit('panel-size-changed');
+  changeType(pluginId: string) {
+    this.type = pluginId;
+
+    delete this.thresholds;
+    delete this.alert;
   }
 
   destroy() {

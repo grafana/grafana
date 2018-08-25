@@ -11,6 +11,7 @@ import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from './PanelEditor';
 
 export interface Props {
+  panelType: string;
   panel: PanelModel;
   dashboard: DashboardModel;
 }
@@ -53,6 +54,10 @@ export class DashboardPanel extends React.Component<Props, State> {
     this.loadPlugin();
   };
 
+  onAngularPluginTypeChanged = () => {
+    this.loadPlugin();
+  };
+
   loadPlugin() {
     if (this.isSpecial()) {
       return;
@@ -63,9 +68,11 @@ export class DashboardPanel extends React.Component<Props, State> {
       this.pluginInfo = config.panels[this.props.panel.type];
 
       if (this.pluginInfo.exports) {
+        this.cleanUpAngularPanel();
         this.setState({ pluginExports: this.pluginInfo.exports });
       } else {
         importPluginModule(this.pluginInfo.module).then(pluginExports => {
+          this.cleanUpAngularPanel();
           // cache plugin exports (saves a promise async cycle next time)
           this.pluginInfo.exports = pluginExports;
           // update panel state
@@ -80,7 +87,6 @@ export class DashboardPanel extends React.Component<Props, State> {
   }
 
   componentDidUpdate() {
-    console.log('componentDidUpdate');
     this.loadPlugin();
 
     // handle angular plugin loading
@@ -94,10 +100,15 @@ export class DashboardPanel extends React.Component<Props, State> {
     this.angularPanel = loader.load(this.element, scopeProps, template);
   }
 
-  componentWillUnmount() {
+  cleanUpAngularPanel() {
     if (this.angularPanel) {
       this.angularPanel.destroy();
+      this.angularPanel = null;
     }
+  }
+
+  componentWillUnmount() {
+    this.cleanUpAngularPanel();
   }
 
   renderReactPanel() {

@@ -6,6 +6,8 @@ import { PanelModel } from 'app/features/dashboard/panel_model';
 import Remarkable from 'remarkable';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
+import { metricsTabDirective } from './metrics_tab';
+import { vizTabDirective } from './viz_tab';
 
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
@@ -97,7 +99,10 @@ export class PanelCtrl {
 
   initEditMode() {
     this.editorTabs = [];
+    this.addEditorTab('Queries', metricsTabDirective, 0, 'fa fa-database');
+    this.addEditorTab('Visualization', vizTabDirective, 1, 'fa fa-line-chart');
     this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
+
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
 
@@ -118,8 +123,8 @@ export class PanelCtrl {
     route.updateParams();
   }
 
-  addEditorTab(title, directiveFn, index?) {
-    var editorTab = { title, directiveFn };
+  addEditorTab(title, directiveFn, index?, icon?) {
+    var editorTab = { title, directiveFn, icon };
 
     if (_.isString(directiveFn)) {
       editorTab.directiveFn = function() {

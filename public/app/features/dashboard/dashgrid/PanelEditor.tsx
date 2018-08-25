@@ -31,7 +31,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
 
     this.tabs = [
       { id: 'queries', text: 'Queries', icon: 'fa fa-database' },
-      { id: 'viz', text: 'Visualization', icon: 'fa fa-line-chart' },
+      { id: 'visualization', text: 'Visualization', icon: 'fa fa-line-chart' },
     ];
   }
 
@@ -87,7 +87,7 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
 
         <div className="tabbed-view-body">
           {activeTab === 'queries' && this.renderQueriesTab()}
-          {activeTab === 'viz' && this.renderVizTab()}
+          {activeTab === 'visualization' && this.renderVizTab()}
         </div>
       </div>
     );
@@ -109,8 +109,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
   return (
     <li className="gf-tabs-item" key={tab.id}>
       <a className={tabClasses} onClick={() => onClick(tab)}>
-        <i className={tab.icon} />
-        {tab.text}
+        <i className={tab.icon} /> {tab.text}
       </a>
     </li>
   );

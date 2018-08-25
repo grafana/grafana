@@ -228,6 +228,11 @@ export class DashboardModel {
     return this.meta.fullscreen && !panel.fullscreen;
   }
 
+  changePanelType(panel: PanelModel, pluginId: string) {
+    panel.changeType(pluginId);
+    this.events.emit('panel-type-changed', panel);
+  }
+
   private ensureListExist(data) {
     if (!data) {
       data = {};

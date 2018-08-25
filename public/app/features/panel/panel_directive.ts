@@ -32,13 +32,11 @@ var panelTemplate = `
                                                  'panel-height-helper': !ctrl.panel.isEditing}">
       <div class="tabbed-view tabbed-view--new">
         <div class="tabbed-view-header">
-          <h3 class="tabbed-view-panel-title">
-            {{ctrl.pluginName}}
-          </h3>
 
           <ul class="gf-tabs">
             <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
               <a class="gf-tabs-link" ng-click="ctrl.changeTab($index)" ng-class="{active: ctrl.editorTabIndex === $index}">
+                <i class="{{::tab.icon}}" ng-show="tab.icon"></i>
                 {{::tab.title}}
               </a>
             </li>
@@ -50,7 +48,7 @@ var panelTemplate = `
         </div>
 
         <div class="tabbed-view-body">
-          <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
+          <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index" class="panel-height-helper">
             <panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
           </div>
         </div>
