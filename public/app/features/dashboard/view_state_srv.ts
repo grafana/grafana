@@ -1,6 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import config from 'app/core/config';
+import appEvents from 'app/core/app_events';
 import { DashboardModel } from './dashboard_model';
 
 // represents the transient view state
@@ -132,7 +133,7 @@ export class DashboardViewState {
         if (this.fullscreenPanel === panel && this.editStateChanged === false) {
           return;
         } else {
-          this.leaveFullscreen(false);
+          this.leaveFullscreen();
         }
       }
 
@@ -140,30 +141,26 @@ export class DashboardViewState {
         this.enterFullscreen(panel);
       }
     } else if (this.fullscreenPanel) {
-      this.leaveFullscreen(true);
+      this.leaveFullscreen();
     }
   }
 
-  leaveFullscreen(render) {
-    var panel = this.fullscreenPanel;
+  leaveFullscreen() {
+    const panel = this.fullscreenPanel;
 
     this.dashboard.setViewMode(panel, false, false);
-    this.$scope.appEvent('dash-scroll', { restore: true });
 
-    if (!render) {
-      return false;
-    }
+    delete this.fullscreenPanel;
 
     this.$timeout(() => {
-      if (this.oldTimeRange !== this.dashboard.time) {
-        this.$rootScope.$broadcast('refresh');
-      } else {
-        this.$rootScope.$broadcast('render');
-      }
-      delete this.fullscreenPanel;
-    });
+      appEvents.emit('dash-scroll', { restore: true });
 
-    return true;
+      if (this.oldTimeRange !== this.dashboard.time) {
+        this.dashboard.startRefresh();
+      } else {
+        this.dashboard.render();
+      }
+    });
   }
 
   enterFullscreen(panel) {

@@ -200,6 +200,34 @@ export class DashboardModel {
     this.events.emit('view-mode-changed', panel);
   }
 
+  startRefresh() {
+    this.events.emit('refresh');
+
+    for (const panel of this.panels) {
+      if (!this.otherPanelInFullscreen(panel)) {
+        panel.refresh();
+      }
+    }
+  }
+
+  render() {
+    this.events.emit('render');
+
+    for (const panel of this.panels) {
+      panel.render();
+    }
+  }
+
+  panelInitialized(panel: PanelModel) {
+    if (!this.otherPanelInFullscreen(panel)) {
+      panel.refresh();
+    }
+  }
+
+  otherPanelInFullscreen(panel: PanelModel) {
+    return this.meta.fullscreen && !panel.fullscreen;
+  }
+
   private ensureListExist(data) {
     if (!data) {
       data = {};

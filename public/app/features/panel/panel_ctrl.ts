@@ -47,7 +47,6 @@ export class PanelCtrl {
       this.pluginName = plugin.name;
     }
 
-    $scope.$on('refresh', () => this.refresh());
     $scope.$on('component-did-mount', () => this.panelDidMount());
 
     $scope.$on('$destroy', () => {
@@ -57,8 +56,7 @@ export class PanelCtrl {
   }
 
   init() {
-    this.events.emit('panel-initialized');
-    this.publishAppEvent('panel-initialized', { scope: this.$scope });
+    this.dashboard.panelInitialized(this.panel);
   }
 
   panelDidMount() {
@@ -70,7 +68,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-    this.events.emit('refresh', null);
+    this.panel.refresh();
   }
 
   publishAppEvent(evtName, evt) {

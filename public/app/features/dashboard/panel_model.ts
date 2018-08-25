@@ -13,6 +13,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   fullscreen: true,
   isEditing: true,
+  hasRefreshed: true,
 };
 
 export class PanelModel {
@@ -37,6 +38,7 @@ export class PanelModel {
   // non persisted
   fullscreen: boolean;
   isEditing: boolean;
+  hasRefreshed: boolean;
   events: Emitter;
 
   constructor(model) {
@@ -91,6 +93,23 @@ export class PanelModel {
 
   resizeDone() {
     this.events.emit('panel-size-changed');
+  }
+
+  refresh() {
+    this.hasRefreshed = true;
+    this.events.emit('refresh');
+  }
+
+  render() {
+    if (!this.hasRefreshed) {
+      this.refresh();
+    } else {
+      this.events.emit('render');
+    }
+  }
+
+  panelInitialized() {
+    this.events.emit('panel-initialized');
   }
 
   initEditMode() {

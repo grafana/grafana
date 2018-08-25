@@ -151,6 +151,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       panelHeightUpdated();
 
       ctrl.events.on('render', () => {
+        console.log('panel_directive: render', ctrl.panel.id);
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;

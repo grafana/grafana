@@ -24,7 +24,6 @@ export class TimeSrv {
     document.addEventListener('visibilitychange', () => {
       if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
         this.autoRefreshBlocked = false;
-
         this.refreshDashboard();
       }
     });
@@ -136,7 +135,7 @@ export class TimeSrv {
   }
 
   refreshDashboard() {
-    this.$rootScope.$broadcast('refresh');
+    this.dashboard.startRefresh();
   }
 
   private startNextRefreshTimer(afterMs) {
