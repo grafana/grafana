@@ -31,6 +31,11 @@
   .react-resizable-handle {
     display: none;
   }
+
+  // the react-grid has a height transition
+  .react-grid-layout {
+    transition-property: none;
+  }
 }
 
 @include media-breakpoint-down(sm) {

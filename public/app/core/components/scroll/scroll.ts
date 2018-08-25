@@ -19,6 +19,7 @@ export function geminiScrollbar() {
       let scrollRoot = elem.parent();
       let scroller = elem;
 
+      console.log('scroll');
       if (attrs.grafanaScrollbar && attrs.grafanaScrollbar === 'scrollonroot') {
         scrollRoot = scroller;
       }

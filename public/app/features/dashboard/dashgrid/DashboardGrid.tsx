@@ -165,7 +165,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
   componentDidMount() {
     setTimeout(() => {
-      this.setState({ animated: false });
+      this.setState({ animated: true });
     });
   }
 
