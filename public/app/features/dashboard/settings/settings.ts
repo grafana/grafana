@@ -156,7 +156,7 @@ export class SettingsCtrl {
   }
 
   hideSettings() {
-    var urlParams = this.$location.search();
+    const urlParams = this.$location.search();
     delete urlParams.editview;
     setTimeout(() => {
       this.$rootScope.$apply(() => {

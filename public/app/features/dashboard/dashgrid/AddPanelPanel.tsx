@@ -97,7 +97,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     const dashboard = panelContainer.getDashboard();
     const { gridPos } = this.props.panel;
 
-    var newPanel: any = {
+    const newPanel: any = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },

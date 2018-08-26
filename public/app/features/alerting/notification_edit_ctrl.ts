@@ -99,7 +99,7 @@ export class AlertNotificationEditCtrl {
       return;
     }
 
-    var payload = {
+    const payload = {
       name: this.model.name,
       type: this.model.type,
       settings: this.model.settings,
