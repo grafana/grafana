@@ -5,21 +5,21 @@ export class ResultTransformer {
   constructor(private templateSrv) {}
 
   transform(response: any, options: any): any[] {
-    let prometheusResult = response.data.data.result;
+    const prometheusResult = response.data.data.result;
 
     if (options.format === 'table') {
       return [this.transformMetricDataToTable(prometheusResult, options.responseListLength, options.refId)];
     } else if (options.format === 'heatmap') {
       let seriesList = [];
       prometheusResult.sort(sortSeriesByLabel);
-      for (let metricData of prometheusResult) {
+      for (const metricData of prometheusResult) {
         seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
       }
       seriesList = this.transformToHistogramOverTime(seriesList);
       return seriesList;
     } else {
-      let seriesList = [];
-      for (let metricData of prometheusResult) {
+      const seriesList = [];
+      for (const metricData of prometheusResult) {
         if (response.data.data.resultType === 'matrix') {
           seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
         } else if (response.data.data.resultType === 'vector') {
@@ -44,7 +44,7 @@ export class ResultTransformer {
       throw new Error('Prometheus heatmap error: data should be a time series');
     }
 
-    for (let value of metricData.values) {
+    for (const value of metricData.values) {
       let dp_value = parseFloat(value[1]);
       if (_.isNaN(dp_value)) {
         dp_value = null;
@@ -96,7 +96,7 @@ export class ResultTransformer {
       metricLabels[label] = labelIndex + 1;
       table.columns.push({ text: label, filterable: !label.startsWith('__') });
     });
-    let valueText = resultCount > 1 ? `Value #${refId}` : 'Value';
+    const valueText = resultCount > 1 ? `Value #${refId}` : 'Value';
     table.columns.push({ text: valueText });
 
     // Populate rows, set value to empty string when label not present.
@@ -175,8 +175,8 @@ export class ResultTransformer {
     le30    30  10  35    =>    10  0   5
     */
     for (let i = seriesList.length - 1; i > 0; i--) {
-      let topSeries = seriesList[i].datapoints;
-      let bottomSeries = seriesList[i - 1].datapoints;
+      const topSeries = seriesList[i].datapoints;
+      const bottomSeries = seriesList[i - 1].datapoints;
       if (!topSeries || !bottomSeries) {
         throw new Error('Prometheus heatmap transform error: data should be a time series');
       }

@@ -103,10 +103,10 @@ export class ManageDashboardsCtrl {
 
     this.sections = result;
 
-    for (let section of this.sections) {
+    for (const section of this.sections) {
       section.checked = false;
 
-      for (let dashboard of section.items) {
+      for (const dashboard of section.items) {
         dashboard.checked = false;
       }
     }
@@ -119,7 +119,7 @@ export class ManageDashboardsCtrl {
   selectionChanged() {
     let selectedDashboards = 0;
 
-    for (let section of this.sections) {
+    for (const section of this.sections) {
       selectedDashboards += _.filter(section.items, { checked: true }).length;
     }
 
@@ -129,7 +129,7 @@ export class ManageDashboardsCtrl {
   }
 
   getFoldersAndDashboardsToDelete() {
-    let selectedDashboards = {
+    const selectedDashboards = {
       folders: [],
       dashboards: [],
     };
@@ -148,7 +148,7 @@ export class ManageDashboardsCtrl {
 
   getFolderIds(sections) {
     const ids = [];
-    for (let s of sections) {
+    for (const s of sections) {
       if (s.checked) {
         ids.push(s.id);
       }
@@ -191,7 +191,7 @@ export class ManageDashboardsCtrl {
   }
 
   getDashboardsToMove() {
-    let selectedDashboards = [];
+    const selectedDashboards = [];
 
     for (const section of this.sections) {
       const selected = _.filter(section.items, { checked: true });
@@ -264,7 +264,7 @@ export class ManageDashboardsCtrl {
   }
 
   onSelectAllChanged() {
-    for (let section of this.sections) {
+    for (const section of this.sections) {
       if (!section.hideHeader) {
         section.checked = this.selectAllChecked;
       }

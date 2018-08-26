@@ -111,9 +111,9 @@ export class DashboardViewState {
   }
 
   toggleCollapsedPanelRow(panelId) {
-    for (let panel of this.dashboard.panels) {
+    for (const panel of this.dashboard.panels) {
       if (panel.collapsed) {
-        for (let rowPanel of panel.panels) {
+        for (const rowPanel of panel.panels) {
           if (rowPanel.id === panelId) {
             this.dashboard.toggleRow(panel);
             return;

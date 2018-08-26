@@ -94,13 +94,13 @@ export class ChangeTracker {
   // remove stuff that should not count in diff
   cleanDashboardFromIgnoredChanges(dashData) {
     // need to new up the domain model class to get access to expand / collapse row logic
-    let model = new DashboardModel(dashData);
+    const model = new DashboardModel(dashData);
 
     // Expand all rows before making comparison. This is required because row expand / collapse
     // change order of panel array and panel positions.
     model.expandRows();
 
-    let dash = model.getSaveModelClone();
+    const dash = model.getSaveModelClone();
 
     // ignore time and refresh
     dash.time = 0;
@@ -138,8 +138,8 @@ export class ChangeTracker {
   }
 
   hasChanges() {
-    let current = this.cleanDashboardFromIgnoredChanges(this.current.getSaveModelClone());
-    let original = this.cleanDashboardFromIgnoredChanges(this.original);
+    const current = this.cleanDashboardFromIgnoredChanges(this.current.getSaveModelClone());
+    const original = this.cleanDashboardFromIgnoredChanges(this.original);
 
     var currentTimepicker = _.find(current.nav, { type: 'timepicker' });
     var originalTimepicker = _.find(original.nav, { type: 'timepicker' });

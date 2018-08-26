@@ -5,7 +5,7 @@ import { VariableSrv } from '../variable_srv';
 import $q from 'q';
 
 describe('VariableSrv init', function() {
-  let templateSrv = {
+  const templateSrv = {
     init: vars => {
       this.variables = vars;
     },
@@ -17,8 +17,8 @@ describe('VariableSrv init', function() {
       }),
   };
 
-  let $injector = <any>{};
-  let $rootscope = {
+  const $injector = <any>{};
+  const $rootscope = {
     $on: () => {},
   };
 

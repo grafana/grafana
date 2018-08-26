@@ -15,7 +15,7 @@ export class BridgeSrv {
 
   init() {
     this.$rootScope.$on('$routeUpdate', (evt, data) => {
-      let angularUrl = this.$location.url();
+      const angularUrl = this.$location.url();
       if (store.view.currentUrl !== angularUrl) {
         store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
       }
@@ -28,7 +28,7 @@ export class BridgeSrv {
     reaction(
       () => store.view.currentUrl,
       currentUrl => {
-        let angularUrl = this.$location.url();
+        const angularUrl = this.$location.url();
         const url = locationUtil.stripBaseFromUrl(currentUrl);
         if (angularUrl !== url) {
           this.$timeout(() => {

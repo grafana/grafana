@@ -51,7 +51,7 @@ export class DashboardImportCtrl {
     this.inputs = [];
 
     if (this.dash.__inputs) {
-      for (let input of this.dash.__inputs) {
+      for (const input of this.dash.__inputs) {
         var inputModel = {
           name: input.name,
           label: input.label,
@@ -95,7 +95,7 @@ export class DashboardImportCtrl {
 
   inputValueChanged() {
     this.inputsValid = true;
-    for (let input of this.inputs) {
+    for (const input of this.inputs) {
       if (!input.value) {
         this.inputsValid = false;
       }

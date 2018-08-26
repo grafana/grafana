@@ -24,7 +24,7 @@ describe('Annotations', () => {
         { id: 2, time: 2 },
       ];
 
-      let regions = makeRegions(testAnnotations, { range: range });
+      const regions = makeRegions(testAnnotations, { range: range });
       expect(regions).toEqual(expectedAnnotations);
     });
 
@@ -33,7 +33,7 @@ describe('Annotations', () => {
       testAnnotations = [{ id: 5, time: 4, regionId: 5 }];
       const expectedAnnotations = [{ id: 5, regionId: 5, isRegion: true, time: 4, timeEnd: 7 }];
 
-      let regions = makeRegions(testAnnotations, { range: range });
+      const regions = makeRegions(testAnnotations, { range: range });
       expect(regions).toEqual(expectedAnnotations);
     });
   });
@@ -49,7 +49,7 @@ describe('Annotations', () => {
       ];
       const expectedAnnotations = [{ id: 1, time: 1 }, { id: 2, time: 2 }, { id: 5, time: 5 }];
 
-      let deduplicated = dedupAnnotations(testAnnotations);
+      const deduplicated = dedupAnnotations(testAnnotations);
       expect(deduplicated).toEqual(expectedAnnotations);
     });
 
@@ -63,7 +63,7 @@ describe('Annotations', () => {
       ];
       const expectedAnnotations = [{ id: 1, time: 1 }, { id: 2, time: 2 }, { id: 5, time: 5 }];
 
-      let deduplicated = dedupAnnotations(testAnnotations);
+      const deduplicated = dedupAnnotations(testAnnotations);
       expect(deduplicated).toEqual(expectedAnnotations);
     });
   });

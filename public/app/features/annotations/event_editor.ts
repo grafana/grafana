@@ -31,7 +31,7 @@ export class EventEditorCtrl {
       return;
     }
 
-    let saveModel = _.cloneDeep(this.event);
+    const saveModel = _.cloneDeep(this.event);
     saveModel.time = saveModel.time.valueOf();
     saveModel.timeEnd = 0;
 
@@ -85,7 +85,7 @@ export class EventEditorCtrl {
 
 function tryEpochToMoment(timestamp) {
   if (timestamp && _.isNumber(timestamp)) {
-    let epoch = Number(timestamp);
+    const epoch = Number(timestamp);
     return moment(epoch);
   } else {
     return timestamp;

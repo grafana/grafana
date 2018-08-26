@@ -29,7 +29,7 @@ export class SpectrumPicker extends React.Component<Props, any> {
   }
 
   componentDidMount() {
-    let spectrumOptions = _.assignIn(
+    const spectrumOptions = _.assignIn(
       {
         flat: true,
         showAlpha: true,

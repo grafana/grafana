@@ -4,7 +4,7 @@ import { GraphCtrl } from '../module';
 jest.mock('../graph', () => ({}));
 
 describe('GraphCtrl', () => {
-  let injector = {
+  const injector = {
     get: () => {
       return {
         timeRange: () => {
@@ -17,7 +17,7 @@ describe('GraphCtrl', () => {
     },
   };
 
-  let scope = {
+  const scope = {
     $on: () => {},
   };
 
@@ -30,7 +30,7 @@ describe('GraphCtrl', () => {
     },
   };
 
-  let ctx = <any>{};
+  const ctx = <any>{};
 
   beforeEach(() => {
     ctx.ctrl = new GraphCtrl(scope, injector, {});

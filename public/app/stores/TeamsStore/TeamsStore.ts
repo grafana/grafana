@@ -32,8 +32,8 @@ export const TeamModel = types
   })
   .views(self => ({
     get filteredMembers() {
-      let members = this.members.values();
-      let regex = new RegExp(self.search, 'i');
+      const members = this.members.values();
+      const regex = new RegExp(self.search, 'i');
       return members.filter(member => {
         return regex.test(member.login) || regex.test(member.email);
       });
@@ -66,7 +66,7 @@ export const TeamModel = types
       const rsp = yield backendSrv.get(`/api/teams/${self.id}/members`);
       self.members.clear();
 
-      for (let member of rsp) {
+      for (const member of rsp) {
         self.members.set(member.userId.toString(), TeamMemberModel.create(member));
       }
     }),
@@ -88,7 +88,7 @@ export const TeamModel = types
       const rsp = yield backendSrv.get(`/api/teams/${self.id}/groups`);
       self.groups.clear();
 
-      for (let group of rsp) {
+      for (const group of rsp) {
         self.groups.set(group.groupId, TeamGroupModel.create(group));
       }
     }),
@@ -122,8 +122,8 @@ export const TeamsStore = types
   })
   .views(self => ({
     get filteredTeams() {
-      let teams = this.map.values();
-      let regex = new RegExp(self.search, 'i');
+      const teams = this.map.values();
+      const regex = new RegExp(self.search, 'i');
       return teams.filter(team => {
         return regex.test(team.name);
       });
@@ -135,7 +135,7 @@ export const TeamsStore = types
       const rsp = yield backendSrv.get('/api/teams/search/', { perpage: 50, page: 1 });
       self.map.clear();
 
-      for (let team of rsp.teams) {
+      for (const team of rsp.teams) {
         self.map.set(team.id.toString(), TeamModel.create(team));
       }
     }),

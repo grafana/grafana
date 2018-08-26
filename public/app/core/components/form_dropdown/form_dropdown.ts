@@ -132,7 +132,7 @@ export class FormDropdownCtrl {
       this.optionCache = options;
 
       // extract texts
-      let optionTexts = _.map(options, op => {
+      const optionTexts = _.map(options, op => {
         return _.escape(op.text);
       });
 

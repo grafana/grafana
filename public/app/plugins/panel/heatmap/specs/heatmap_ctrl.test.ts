@@ -2,13 +2,13 @@ import moment from 'moment';
 import { HeatmapCtrl } from '../heatmap_ctrl';
 
 describe('HeatmapCtrl', function() {
-  let ctx = <any>{};
+  const ctx = <any>{};
 
-  let $injector = {
+  const $injector = {
     get: () => {},
   };
 
-  let $scope = {
+  const $scope = {
     $on: () => {},
   };
 

@@ -12,7 +12,7 @@ describe('SearchCtrl', () => {
     search: (options: any) => {},
     getDashboardTags: () => {},
   };
-  let ctrl = new SearchCtrl({ $on: () => {} }, {}, {}, <SearchSrv>searchSrvStub);
+  const ctrl = new SearchCtrl({ $on: () => {} }, {}, {}, <SearchSrv>searchSrvStub);
 
   describe('Given an empty result', () => {
     beforeEach(() => {

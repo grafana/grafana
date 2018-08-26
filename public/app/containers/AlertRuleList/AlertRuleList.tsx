@@ -132,13 +132,13 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
   render() {
     const { rule } = this.props;
 
-    let stateClass = classNames({
+    const stateClass = classNames({
       fa: true,
       'fa-play': rule.isPaused,
       'fa-pause': !rule.isPaused,
     });
 
-    let ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
+    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
 
     return (
       <li className="alert-rule-item">

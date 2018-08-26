@@ -40,7 +40,7 @@ function Cell(props: SFCCellProps) {
 export default class Table extends PureComponent<TableProps, {}> {
   render() {
     const { className = '', data, loading, onClickCell } = this.props;
-    let tableModel = data || EMPTY_TABLE;
+    const tableModel = data || EMPTY_TABLE;
     if (!loading && data && data.rows.length === 0) {
       return (
         <table className={`${className} filter-table`}>

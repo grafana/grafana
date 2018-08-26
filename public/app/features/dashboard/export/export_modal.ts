@@ -29,7 +29,7 @@ export class DashExportCtrl {
 
   saveJson() {
     var clone = this.dash;
-    let editScope = this.$rootScope.$new();
+    const editScope = this.$rootScope.$new();
     editScope.object = clone;
     editScope.enableCopy = true;
 

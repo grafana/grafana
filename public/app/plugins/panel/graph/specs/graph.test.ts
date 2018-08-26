@@ -28,9 +28,9 @@ import moment from 'moment';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
 
-let ctx = <any>{};
+const ctx = <any>{};
 let ctrl;
-let scope = {
+const scope = {
   ctrl: {},
   range: {
     from: moment([2015, 1, 1]),

@@ -92,7 +92,7 @@ function formatDate(date) {
 // now/d
 // if no to <expr> then to now is assumed
 export function describeTextRange(expr: any) {
-  let isLast = expr.indexOf('+') !== 0;
+  const isLast = expr.indexOf('+') !== 0;
   if (expr.indexOf('now') === -1) {
     expr = (isLast ? 'now-' : 'now') + expr;
   }
@@ -108,11 +108,11 @@ export function describeTextRange(expr: any) {
     opt = { from: 'now', to: expr };
   }
 
-  let parts = /^now([-+])(\d+)(\w)/.exec(expr);
+  const parts = /^now([-+])(\d+)(\w)/.exec(expr);
   if (parts) {
-    let unit = parts[3];
-    let amount = parseInt(parts[2]);
-    let span = spans[unit];
+    const unit = parts[3];
+    const amount = parseInt(parts[2]);
+    const span = spans[unit];
     if (span) {
       opt.display = isLast ? 'Last ' : 'Next ';
       opt.display += amount + ' ' + span.display;

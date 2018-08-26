@@ -4,12 +4,12 @@ import config from 'app/core/config';
 import { DashboardViewState } from '../view_state_srv';
 
 describe('when updating view state', () => {
-  let location = {
+  const location = {
     replace: jest.fn(),
     search: jest.fn(),
   };
 
-  let $scope = {
+  const $scope = {
     onAppEvent: jest.fn(() => {}),
     dashboard: {
       meta: {},
@@ -17,7 +17,7 @@ describe('when updating view state', () => {
     },
   };
 
-  let $rootScope = {};
+  const $rootScope = {};
   let viewState;
 
   beforeEach(() => {

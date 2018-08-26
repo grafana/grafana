@@ -457,16 +457,16 @@ describe('DashboardModel', function() {
     });
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
-      let options = { saveTimerange: false };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveTimerange: false };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.time.from).toBe('now-6h');
       expect(saveModel.time.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
-      let options = { saveTimerange: true };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveTimerange: true };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.time.from).toBe('now-3h');
       expect(saveModel.time.to).toBe('now-1h');
@@ -478,16 +478,16 @@ describe('DashboardModel', function() {
     });
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
-      let options = { saveTimerange: false };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveTimerange: false };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.time.from).toBe('now-6h');
       expect(saveModel.time.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
-      let options = { saveTimerange: true };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveTimerange: true };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.time.from).toBe('now-3h');
       expect(saveModel.time.to).toBe('now-1h');
@@ -542,8 +542,8 @@ describe('DashboardModel', function() {
     it('getSaveModelClone should return original variable when saveVariables=false', () => {
       model.templating.list[0].current.text = 'server_002';
 
-      let options = { saveVariables: false };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveVariables: false };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_001');
     });
@@ -551,8 +551,8 @@ describe('DashboardModel', function() {
     it('getSaveModelClone should return updated variable when saveVariables=true', () => {
       model.templating.list[0].current.text = 'server_002';
 
-      let options = { saveVariables: true };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveVariables: true };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_002');
     });
@@ -620,8 +620,8 @@ describe('DashboardModel', function() {
     it('getSaveModelClone should return original variable when saveVariables=false', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
-      let options = { saveVariables: false };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveVariables: false };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 20');
     });
@@ -629,8 +629,8 @@ describe('DashboardModel', function() {
     it('getSaveModelClone should return updated variable when saveVariables=true', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
-      let options = { saveVariables: true };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveVariables: true };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 1');
     });

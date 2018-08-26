@@ -68,7 +68,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       },
     };
 
-    let panelInfo = config.panels[scope.panel.type];
+    const panelInfo = config.panels[scope.panel.type];
     var panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
     if (panelInfo) {
       panelCtrlPromise = importPluginModule(panelInfo.module).then(function(panelModule) {
@@ -107,7 +107,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     switch (attrs.type) {
       // QueryCtrl
       case 'query-ctrl': {
-        let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
+        const datasource = scope.target.datasource || scope.ctrl.panel.datasource;
         return datasourceSrv.get(datasource).then(ds => {
           scope.datasource = ds;
 
@@ -160,7 +160,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // AppConfigCtrl
       case 'app-config-ctrl': {
-        let model = scope.ctrl.model;
+        const model = scope.ctrl.model;
         return importPluginModule(model.module).then(function(appModule) {
           return {
             baseUrl: model.baseUrl,
@@ -173,7 +173,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // App Page
       case 'app-page': {
-        let appModel = scope.ctrl.appModel;
+        const appModel = scope.ctrl.appModel;
         return importPluginModule(appModel.module).then(function(appModule) {
           return {
             baseUrl: appModel.baseUrl,

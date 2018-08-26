@@ -2,7 +2,7 @@ import { LinkSrv } from '../link_srv';
 import _ from 'lodash';
 
 jest.mock('angular', () => {
-  let AngularJSMock = require('test/mocks/angular');
+  const AngularJSMock = require('test/mocks/angular');
   return new AngularJSMock();
 });
 
