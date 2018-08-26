@@ -48,7 +48,7 @@ export default class PostgresQuery {
   }
 
   quoteLiteral(value) {
-    return "'" + this.escapeLiteral(value) + "'";
+    return "'" + value.replace("'", "''") + "'";
   }
 
   escapeLiteral(value) {
@@ -74,7 +74,7 @@ export default class PostgresQuery {
     }
 
     let escapedValues = _.map(value, this.quoteLiteral);
-    return '(' + escapedValues.join(',') + ')';
+    return escapedValues.join(',');
   }
 
   render(interpolate?) {
