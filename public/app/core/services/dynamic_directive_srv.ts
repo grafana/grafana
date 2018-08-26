@@ -6,7 +6,7 @@ class DynamicDirectiveSrv {
   constructor(private $compile, private $rootScope) {}
 
   addDirective(element, name, scope) {
-    var child = angular.element(document.createElement(name));
+    const child = angular.element(document.createElement(name));
     this.$compile(child)(scope);
 
     element.empty();

@@ -13,7 +13,7 @@ export class DashNavCtrl {
     appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);
 
     if (this.dashboard.meta.isSnapshot) {
-      var meta = this.dashboard.meta;
+      const meta = this.dashboard.meta;
       this.titleTooltip = 'Created: &nbsp;' + moment(meta.created).calendar();
       if (meta.expires) {
         this.titleTooltip += '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
@@ -49,7 +49,7 @@ export class DashNavCtrl {
   }
 
   shareDashboard(tabIndex) {
-    var modalScope = this.$scope.$new();
+    const modalScope = this.$scope.$new();
     modalScope.tabIndex = tabIndex;
     modalScope.dashboard = this.dashboard;
 

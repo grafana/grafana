@@ -16,14 +16,14 @@ export class DashboardViewState {
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout, private $rootScope) {
-    var self = this;
+    const self = this;
     self.state = {};
     self.panelScopes = [];
     self.$scope = $scope;
     self.dashboard = $scope.dashboard;
 
     $scope.onAppEvent('$routeUpdate', function() {
-      var urlState = self.getQueryStringState();
+      const urlState = self.getQueryStringState();
       if (self.needsSync(urlState)) {
         self.update(urlState, true);
       }
@@ -48,7 +48,7 @@ export class DashboardViewState {
   }
 
   getQueryStringState() {
-    var state = this.$location.search();
+    const state = this.$location.search();
     state.panelId = parseInt(state.panelId) || null;
     state.fullscreen = state.fullscreen ? true : null;
     state.edit = state.edit === 'true' || state.edit === true || null;
@@ -58,7 +58,7 @@ export class DashboardViewState {
   }
 
   serializeToUrl() {
-    var urlState = _.clone(this.state);
+    const urlState = _.clone(this.state);
     urlState.fullscreen = this.state.fullscreen ? true : null;
     urlState.edit = this.state.edit ? true : null;
     return urlState;
@@ -129,7 +129,7 @@ export class DashboardViewState {
     }
 
     if (this.dashboard.meta.fullscreen) {
-      var panelScope = this.getPanelScope(this.state.panelId);
+      const panelScope = this.getPanelScope(this.state.panelId);
       if (!panelScope) {
         return;
       }
@@ -162,8 +162,8 @@ export class DashboardViewState {
   }
 
   leaveFullscreen(render) {
-    var self = this;
-    var ctrl = self.fullscreenPanel.ctrl;
+    const self = this;
+    const ctrl = self.fullscreenPanel.ctrl;
 
     ctrl.editMode = false;
     ctrl.fullscreen = false;
@@ -188,7 +188,7 @@ export class DashboardViewState {
   }
 
   enterFullscreen(panelScope) {
-    var ctrl = panelScope.ctrl;
+    const ctrl = panelScope.ctrl;
 
     ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
     ctrl.fullscreen = true;
@@ -203,7 +203,7 @@ export class DashboardViewState {
   }
 
   registerPanel(panelScope) {
-    var self = this;
+    const self = this;
     self.panelScopes.push(panelScope);
 
     if (!self.dashboard.meta.soloMode) {
@@ -216,7 +216,7 @@ export class DashboardViewState {
       }
     }
 
-    var unbind = panelScope.$on('$destroy', function() {
+    const unbind = panelScope.$on('$destroy', function() {
       self.panelScopes = _.without(self.panelScopes, panelScope);
       unbind();
     });

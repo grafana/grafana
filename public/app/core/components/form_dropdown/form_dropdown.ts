@@ -67,7 +67,7 @@ export class FormDropdownCtrl {
 
     // modify typeahead lookup
     // this = typeahead
-    var typeahead = this.inputElement.data('typeahead');
+    const typeahead = this.inputElement.data('typeahead');
     typeahead.lookup = function() {
       this.query = this.$element.val() || '';
       this.source(this.query, this.process.bind(this));
@@ -100,7 +100,7 @@ export class FormDropdownCtrl {
   }
 
   getOptionsInternal(query) {
-    var result = this.getOptions({ $query: query });
+    const result = this.getOptions({ $query: query });
     if (this.isPromiseLike(result)) {
       return result;
     }
@@ -118,7 +118,7 @@ export class FormDropdownCtrl {
       // if we have text use it
       if (this.lookupText) {
         this.getOptionsInternal('').then(options => {
-          var item = _.find(options, { value: this.model });
+          const item = _.find(options, { value: this.model });
           this.updateDisplay(item ? item.text : this.model);
         });
       } else {
@@ -186,7 +186,7 @@ export class FormDropdownCtrl {
     }
 
     this.$scope.$apply(() => {
-      var option = _.find(this.optionCache, { text: text });
+      const option = _.find(this.optionCache, { text: text });
 
       if (option) {
         if (_.isObject(this.model)) {
@@ -228,7 +228,7 @@ export class FormDropdownCtrl {
     this.linkElement.hide();
     this.linkMode = false;
 
-    var typeahead = this.inputElement.data('typeahead');
+    const typeahead = this.inputElement.data('typeahead');
     if (typeahead) {
       this.inputElement.val('');
       typeahead.lookup();
