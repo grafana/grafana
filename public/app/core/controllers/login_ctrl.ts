@@ -45,8 +45,8 @@ export class LoginCtrl {
     };
 
     $scope.changeView = function() {
-      let loginView = document.querySelector('#login-view');
-      let changePasswordView = document.querySelector('#change-password-view');
+      const loginView = document.querySelector('#login-view');
+      const changePasswordView = document.querySelector('#change-password-view');
 
       loginView.className += ' add';
       setTimeout(() => {

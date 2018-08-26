@@ -2,16 +2,16 @@ import { Graph } from './dag';
 
 describe('Directed acyclic graph', () => {
   describe('Given a graph with nodes with different links in between them', () => {
-    let dag = new Graph();
-    let nodeA = dag.createNode('A');
-    let nodeB = dag.createNode('B');
-    let nodeC = dag.createNode('C');
-    let nodeD = dag.createNode('D');
-    let nodeE = dag.createNode('E');
-    let nodeF = dag.createNode('F');
-    let nodeG = dag.createNode('G');
-    let nodeH = dag.createNode('H');
-    let nodeI = dag.createNode('I');
+    const dag = new Graph();
+    const nodeA = dag.createNode('A');
+    const nodeB = dag.createNode('B');
+    const nodeC = dag.createNode('C');
+    const nodeD = dag.createNode('D');
+    const nodeE = dag.createNode('E');
+    const nodeF = dag.createNode('F');
+    const nodeG = dag.createNode('G');
+    const nodeH = dag.createNode('H');
+    const nodeI = dag.createNode('I');
     dag.link([nodeB, nodeC, nodeD, nodeE, nodeF, nodeG, nodeH], nodeA);
     dag.link([nodeC, nodeD, nodeE, nodeF, nodeI], nodeB);
     dag.link([nodeD, nodeE, nodeF, nodeG], nodeC);

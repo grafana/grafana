@@ -5,7 +5,7 @@ import $q from 'q';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('graphiteDatasource', () => {
-  let ctx: any = {
+  const ctx: any = {
     backendSrv: {},
     $q: $q,
     templateSrv: new TemplateSrvStub(),
@@ -18,7 +18,7 @@ describe('graphiteDatasource', () => {
   });
 
   describe('When querying graphite with one target using query editor target spec', function() {
-    let query = {
+    const query = {
       panelId: 3,
       dashboardId: 5,
       rangeRaw: { from: 'now-1h', to: 'now' },
@@ -56,7 +56,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should query correctly', function() {
-      let params = requestOptions.data.split('&');
+      const params = requestOptions.data.split('&');
       expect(params).toContain('target=prod1.count');
       expect(params).toContain('target=prod2.count');
       expect(params).toContain('from=-1h');
@@ -64,7 +64,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should exclude undefined params', function() {
-      let params = requestOptions.data.split('&');
+      const params = requestOptions.data.split('&');
       expect(params).not.toContain('cacheTimeout=undefined');
     });
 
@@ -157,28 +157,28 @@ describe('graphiteDatasource', () => {
 
   describe('building graphite params', function() {
     it('should return empty array if no targets', function() {
-      let results = ctx.ds.buildGraphiteParams({
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{}],
       });
       expect(results.length).toBe(0);
     });
 
     it('should uri escape targets', function() {
-      let results = ctx.ds.buildGraphiteParams({
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'prod1.{test,test2}' }, { target: 'prod2.count' }],
       });
       expect(results).toContain('target=prod1.%7Btest%2Ctest2%7D');
     });
 
     it('should replace target placeholder', function() {
-      let results = ctx.ds.buildGraphiteParams({
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'series1' }, { target: 'series2' }, { target: 'asPercent(#A,#B)' }],
       });
       expect(results[2]).toBe('target=asPercent(series1%2Cseries2)');
     });
 
     it('should replace target placeholder for hidden series', function() {
-      let results = ctx.ds.buildGraphiteParams({
+      const results = ctx.ds.buildGraphiteParams({
         targets: [
           { target: 'series1', hide: true },
           { target: 'sumSeries(#A)', hide: true },
@@ -189,28 +189,28 @@ describe('graphiteDatasource', () => {
     });
 
     it('should replace target placeholder when nesting query references', function() {
-      let results = ctx.ds.buildGraphiteParams({
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'series1' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
       });
       expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should fix wrong minute interval parameters', function() {
-      let results = ctx.ds.buildGraphiteParams({
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')" }],
       });
       expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
     });
 
     it('should fix wrong month interval parameters', function() {
-      let results = ctx.ds.buildGraphiteParams({
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')" }],
       });
       expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
     });
 
     it('should ignore empty targets', function() {
-      let results = ctx.ds.buildGraphiteParams({
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'series1' }, { target: '' }],
       });
       expect(results.length).toBe(2);
@@ -308,19 +308,19 @@ describe('graphiteDatasource', () => {
 
 function accessScenario(name, url, fn) {
   describe('access scenario ' + name, function() {
-    let ctx: any = {
+    const ctx: any = {
       backendSrv: {},
       $q: $q,
       templateSrv: new TemplateSrvStub(),
       instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
     };
 
-    let httpOptions = {
+    const httpOptions = {
       headers: {},
     };
 
     describe('when using proxy mode', () => {
-      let options = { dashboardId: 1, panelId: 2 };
+      const options = { dashboardId: 1, panelId: 2 };
 
       it('tracing headers should be added', () => {
         ctx.instanceSettings.url = url;

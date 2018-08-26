@@ -46,7 +46,7 @@ describe('AlertRuleList', () => {
 
   it('should render 1 rule', () => {
     page.update();
-    let ruleNode = page.find('.alert-rule-item');
+    const ruleNode = page.find('.alert-rule-item');
     expect(toJson(ruleNode)).toMatchSnapshot();
   });
 

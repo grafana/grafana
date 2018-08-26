@@ -1,7 +1,7 @@
 import { ResultTransformer } from '../result_transformer';
 
 describe('Prometheus Result Transformer', () => {
-  let ctx: any = {};
+  const ctx: any = {};
 
   beforeEach(() => {
     ctx.templateSrv = {
@@ -111,7 +111,7 @@ describe('Prometheus Result Transformer', () => {
     };
 
     it('should convert cumulative histogram to regular', () => {
-      let options = {
+      const options = {
         format: 'heatmap',
         start: 1445000010,
         end: 1445000030,
@@ -171,7 +171,7 @@ describe('Prometheus Result Transformer', () => {
           ],
         },
       };
-      let options = {
+      const options = {
         format: 'timeseries',
         start: 0,
         end: 2,
@@ -194,7 +194,7 @@ describe('Prometheus Result Transformer', () => {
           ],
         },
       };
-      let options = {
+      const options = {
         format: 'timeseries',
         step: 1,
         start: 0,
@@ -218,7 +218,7 @@ describe('Prometheus Result Transformer', () => {
           ],
         },
       };
-      let options = {
+      const options = {
         format: 'timeseries',
         step: 2,
         start: 0,

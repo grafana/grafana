@@ -22,7 +22,7 @@ export class DashNavCtrl {
   }
 
   toggleSettings() {
-    let search = this.$location.search();
+    const search = this.$location.search();
     if (search.editview) {
       delete search.editview;
     } else {
@@ -32,7 +32,7 @@ export class DashNavCtrl {
   }
 
   close() {
-    let search = this.$location.search();
+    const search = this.$location.search();
     if (search.editview) {
       delete search.editview;
     } else if (search.fullscreen) {

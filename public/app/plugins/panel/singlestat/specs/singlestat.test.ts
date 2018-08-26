@@ -2,15 +2,15 @@ import { SingleStatCtrl } from '../module';
 import moment from 'moment';
 
 describe('SingleStatCtrl', function() {
-  let ctx = <any>{};
-  let epoch = 1505826363746;
+  const ctx = <any>{};
+  const epoch = 1505826363746;
   Date.now = () => epoch;
 
-  let $scope = {
+  const $scope = {
     $on: () => {},
   };
 
-  let $injector = {
+  const $injector = {
     get: () => {},
   };
 

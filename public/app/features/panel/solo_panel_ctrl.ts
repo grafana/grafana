@@ -34,7 +34,7 @@ export class SoloPanelCtrl {
     };
 
     $scope.initPanelScope = function() {
-      let panelInfo = $scope.dashboard.getPanelInfoById(panelId);
+      const panelInfo = $scope.dashboard.getPanelInfoById(panelId);
 
       // fake row ctrl scope
       $scope.ctrl = {

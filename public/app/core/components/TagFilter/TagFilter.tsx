@@ -43,7 +43,7 @@ export class TagFilter extends React.Component<Props, any> {
   }
 
   render() {
-    let selectOptions = {
+    const selectOptions = {
       loadOptions: this.searchTags,
       onChange: this.onChange,
       value: this.props.tags,

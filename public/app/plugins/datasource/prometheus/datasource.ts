@@ -317,7 +317,7 @@ export class PrometheusDatasource {
 
     options = _.clone(options);
 
-    for (let target of options.targets) {
+    for (const target of options.targets) {
       if (!target.expr || target.hide) {
         continue;
       }
@@ -482,21 +482,21 @@ export class PrometheusDatasource {
       return this.$q.when([]);
     }
 
-    let scopedVars = {
+    const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
       __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
       ...this.getRangeScopedVars(),
     };
-    let interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
+    const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     var metricFindQuery = new PrometheusMetricFindQuery(this, interpolated, this.timeSrv);
     return metricFindQuery.process();
   }
 
   getRangeScopedVars() {
-    let range = this.timeSrv.timeRange();
-    let msRange = range.to.diff(range.from);
-    let sRange = Math.round(msRange / 1000);
-    let regularRange = kbn.secondsToHms(msRange / 1000);
+    const range = this.timeSrv.timeRange();
+    const msRange = range.to.diff(range.from);
+    const sRange = Math.round(msRange / 1000);
+    const regularRange = kbn.secondsToHms(msRange / 1000);
     return {
       __range_ms: { text: msRange, value: msRange },
       __range_s: { text: sRange, value: sRange },
@@ -537,7 +537,7 @@ export class PrometheusDatasource {
           })
           .value();
 
-        for (let value of series.values) {
+        for (const value of series.values) {
           if (value[1] === '1') {
             var event = {
               annotation: annotation,
@@ -557,7 +557,7 @@ export class PrometheusDatasource {
   }
 
   testDatasource() {
-    let now = new Date().getTime();
+    const now = new Date().getTime();
     return this.performInstantQuery({ expr: '1+1' }, now / 1000).then(response => {
       if (response.data.status === 'success') {
         return { status: 'success', message: 'Data source is working' };

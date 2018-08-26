@@ -3,7 +3,7 @@ import gfunc from '../gfunc';
 import { GraphiteQueryCtrl } from '../query_ctrl';
 
 describe('GraphiteQueryCtrl', () => {
-  let ctx = <any>{
+  const ctx = <any>{
     datasource: {
       metricFindQuery: jest.fn(() => Promise.resolve([])),
       getFuncDefs: jest.fn(() => Promise.resolve(gfunc.getFuncDefs('1.0'))),

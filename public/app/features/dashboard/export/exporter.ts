@@ -24,7 +24,7 @@ export class DashboardExporter {
     var promises = [];
     var variableLookup: any = {};
 
-    for (let variable of saveModel.templating.list) {
+    for (const variable of saveModel.templating.list) {
       variableLookup[variable.name] = variable;
     }
 
@@ -69,7 +69,7 @@ export class DashboardExporter {
       }
 
       if (panel.targets) {
-        for (let target of panel.targets) {
+        for (const target of panel.targets) {
           if (target.datasource !== undefined) {
             templateizeDatasourceUsage(target);
           }
@@ -88,19 +88,19 @@ export class DashboardExporter {
     };
 
     // check up panel data sources
-    for (let panel of saveModel.panels) {
+    for (const panel of saveModel.panels) {
       processPanel(panel);
 
       // handle collapsed rows
       if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
-        for (let rowPanel of panel.panels) {
+        for (const rowPanel of panel.panels) {
           processPanel(rowPanel);
         }
       }
     }
 
     // templatize template vars
-    for (let variable of saveModel.templating.list) {
+    for (const variable of saveModel.templating.list) {
       if (variable.type === 'query') {
         templateizeDatasourceUsage(variable);
         variable.options = [];
@@ -110,7 +110,7 @@ export class DashboardExporter {
     }
 
     // templatize annotations vars
-    for (let annotationDef of saveModel.annotations.list) {
+    for (const annotationDef of saveModel.annotations.list) {
       templateizeDatasourceUsage(annotationDef);
     }
 
@@ -129,7 +129,7 @@ export class DashboardExporter {
         });
 
         // templatize constants
-        for (let variable of saveModel.templating.list) {
+        for (const variable of saveModel.templating.list) {
           if (variable.type === 'constant') {
             var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
             inputs.push({

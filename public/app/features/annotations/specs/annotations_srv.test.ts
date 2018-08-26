@@ -3,7 +3,7 @@ import 'app/features/dashboard/time_srv';
 import { AnnotationsSrv } from '../annotations_srv';
 
 describe('AnnotationsSrv', function() {
-  let $rootScope = {
+  const $rootScope = {
     onAppEvent: jest.fn(),
   };
   let $q;
@@ -11,7 +11,7 @@ describe('AnnotationsSrv', function() {
   let backendSrv;
   let timeSrv;
 
-  let annotationsSrv = new AnnotationsSrv($rootScope, $q, datasourceSrv, backendSrv, timeSrv);
+  const annotationsSrv = new AnnotationsSrv($rootScope, $q, datasourceSrv, backendSrv, timeSrv);
 
   describe('When translating the query result', () => {
     const annotationSource = {

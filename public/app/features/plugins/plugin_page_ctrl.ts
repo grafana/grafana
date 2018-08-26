@@ -33,7 +33,7 @@ export class AppPageCtrl {
       return;
     }
 
-    let pluginNav = this.navModelSrv.getNav('plugin-page-' + app.id);
+    const pluginNav = this.navModelSrv.getNav('plugin-page-' + app.id);
 
     this.navModel = {
       main: {

@@ -29,10 +29,10 @@ export class ColorPicker extends React.Component<Props, any> {
   openColorPicker() {
     const dropContent = <ColorPickerPopover color={this.props.color} onColorSelect={this.onColorSelect} />;
 
-    let dropContentElem = document.createElement('div');
+    const dropContentElem = document.createElement('div');
     ReactDOM.render(dropContent, dropContentElem);
 
-    let drop = new Drop({
+    const drop = new Drop({
       target: this.pickerElem[0],
       content: dropContentElem,
       position: 'top center',

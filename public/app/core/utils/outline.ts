@@ -1,6 +1,6 @@
 // based on http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
 function outlineFixer() {
-  let d: any = document;
+  const d: any = document;
 
   var style_element = d.createElement('STYLE');
   var dom_events = 'addEventListener' in d;

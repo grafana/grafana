@@ -6,21 +6,21 @@ import { ElasticDatasource } from '../datasource';
 import * as dateMath from 'app/core/utils/datemath';
 
 describe('ElasticDatasource', function() {
-  let backendSrv = {
+  const backendSrv = {
     datasourceRequest: jest.fn(),
   };
 
-  let $rootScope = {
+  const $rootScope = {
     $on: jest.fn(),
     appEvent: jest.fn(),
   };
 
-  let templateSrv = {
+  const templateSrv = {
     replace: jest.fn(text => text),
     getAdhocFilters: jest.fn(() => []),
   };
 
-  let timeSrv = {
+  const timeSrv = {
     time: { from: 'now-1h', to: 'now' },
     timeRange: jest.fn(() => {
       return {
@@ -33,7 +33,7 @@ describe('ElasticDatasource', function() {
     }),
   };
 
-  let ctx = <any>{
+  const ctx = <any>{
     $rootScope,
     backendSrv,
   };

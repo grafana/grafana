@@ -91,7 +91,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
   // This function will try to return the proper full name of the local timezone
   // Chrome does not handle the timezone offset (but phantomjs does)
   $scope.getLocalTimeZone = function() {
-    let utcOffset = '&tz=UTC' + encodeURIComponent(moment().format('Z'));
+    const utcOffset = '&tz=UTC' + encodeURIComponent(moment().format('Z'));
 
     // Older browser does not the internationalization API
     if (!(<any>window).Intl) {

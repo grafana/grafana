@@ -36,7 +36,7 @@ export class TeamList extends React.Component<Props, any> {
   };
 
   renderTeamMember(team: Team): JSX.Element {
-    let teamUrl = `org/teams/edit/${team.id}`;
+    const teamUrl = `org/teams/edit/${team.id}`;
 
     return (
       <tr key={team.id}>

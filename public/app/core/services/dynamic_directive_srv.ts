@@ -36,7 +36,7 @@ class DynamicDirectiveSrv {
   }
 
   create(options) {
-    let directiveDef = {
+    const directiveDef = {
       restrict: 'E',
       scope: options.scope,
       link: (scope, elem, attrs) => {

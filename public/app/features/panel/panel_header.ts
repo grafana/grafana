@@ -60,7 +60,7 @@ function renderMenuItem(item, ctrl) {
 
   if (item.submenu) {
     html += '<ul class="dropdown-menu dropdown-menu--menu panel-menu">';
-    for (let subitem of item.submenu) {
+    for (const subitem of item.submenu) {
       html += renderMenuItem(subitem, ctrl);
     }
     html += '</ul>';
@@ -73,7 +73,7 @@ function renderMenuItem(item, ctrl) {
 function createMenuTemplate(ctrl) {
   let html = '';
 
-  for (let item of ctrl.getMenu()) {
+  for (const item of ctrl.getMenu()) {
     html += renderMenuItem(item, ctrl);
   }
 
@@ -86,7 +86,7 @@ function panelHeader($compile) {
     restrict: 'E',
     template: template,
     link: function(scope, elem, attrs) {
-      let menuElem = elem.find('.panel-menu');
+      const menuElem = elem.find('.panel-menu');
       let menuScope;
       let isDragged;
 
@@ -99,7 +99,7 @@ function panelHeader($compile) {
         }
 
         menuScope = scope.$new();
-        let menuHtml = createMenuTemplate(scope.ctrl);
+        const menuHtml = createMenuTemplate(scope.ctrl);
         menuElem.html(menuHtml);
         $compile(menuElem)(menuScope);
 
@@ -132,12 +132,12 @@ function panelHeader($compile) {
           .find('[data-toggle=dropdown]')
           .parentsUntil('.panel')
           .parent();
-        let menuElem = elem.find('[data-toggle=dropdown]').parent();
+        const menuElem = elem.find('[data-toggle=dropdown]').parent();
         panelElem = panelElem && panelElem.length ? panelElem[0] : undefined;
         if (panelElem) {
           panelElem = $(panelElem);
           $(panelGridClass).removeClass(menuOpenClass);
-          let state = !menuElem.hasClass('open');
+          const state = !menuElem.hasClass('open');
           panelElem.toggleClass(menuOpenClass, state);
         }
       }

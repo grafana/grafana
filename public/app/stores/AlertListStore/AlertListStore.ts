@@ -13,7 +13,7 @@ export const AlertListStore = types
   })
   .views(self => ({
     get filteredRules() {
-      let regex = new RegExp(self.search, 'i');
+      const regex = new RegExp(self.search, 'i');
       return self.rules.filter(alert => {
         return regex.test(alert.name) || regex.test(alert.stateText) || regex.test(alert.info);
       });
@@ -26,7 +26,7 @@ export const AlertListStore = types
       const apiRules = yield backendSrv.get('/api/alerts', filters);
       self.rules.clear();
 
-      for (let rule of apiRules) {
+      for (const rule of apiRules) {
         setStateFields(rule, rule.state);
 
         if (rule.state !== 'paused') {

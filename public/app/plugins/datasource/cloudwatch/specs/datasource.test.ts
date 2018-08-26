@@ -4,18 +4,18 @@ import * as dateMath from 'app/core/utils/datemath';
 import _ from 'lodash';
 
 describe('CloudWatchDatasource', function() {
-  let instanceSettings = {
+  const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
 
-  let templateSrv = {
+  const templateSrv = {
     data: {},
     templateSettings: { interpolate: /\[\[([\s\S]+?)\]\]/g },
     replace: text => _.template(text, templateSrv.templateSettings)(templateSrv.data),
     variableExists: () => false,
   };
 
-  let timeSrv = {
+  const timeSrv = {
     time: { from: 'now-1h', to: 'now' },
     timeRange: () => {
       return {
@@ -24,8 +24,8 @@ describe('CloudWatchDatasource', function() {
       };
     },
   };
-  let backendSrv = {};
-  let ctx = <any>{
+  const backendSrv = {};
+  const ctx = <any>{
     backendSrv,
     templateSrv,
   };
@@ -121,7 +121,7 @@ describe('CloudWatchDatasource', function() {
       });
     });
 
-    it('should cancel query for invalid extended statistics', function () {
+    it('should cancel query for invalid extended statistics', function() {
       var query = {
         range: { from: 'now-1h', to: 'now' },
         rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -252,7 +252,7 @@ describe('CloudWatchDatasource', function() {
 
   function describeMetricFindQuery(query, func) {
     describe('metricFindQuery ' + query, () => {
-      let scenario: any = {};
+      const scenario: any = {};
       scenario.setup = setupCallback => {
         beforeEach(() => {
           setupCallback();
@@ -461,12 +461,12 @@ describe('CloudWatchDatasource', function() {
         3600,
       ],
     ];
-    for (let t of testData) {
-      let target = t[0];
-      let options = t[1];
-      let now = new Date(options.range.from.valueOf() + t[2] * 1000);
-      let expected = t[3];
-      let actual = ctx.ds.getPeriod(target, options, now);
+    for (const t of testData) {
+      const target = t[0];
+      const options = t[1];
+      const now = new Date(options.range.from.valueOf() + t[2] * 1000);
+      const expected = t[3];
+      const actual = ctx.ds.getPeriod(target, options, now);
       expect(actual).toBe(expected);
     }
   });

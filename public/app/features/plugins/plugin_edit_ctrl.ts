@@ -53,7 +53,7 @@ export class PluginEditCtrl {
         url: `plugins/${this.model.id}/edit?tab=config`,
       });
 
-      let hasDashboards = _.find(model.includes, { type: 'dashboard' });
+      const hasDashboards = _.find(model.includes, { type: 'dashboard' });
 
       if (hasDashboards) {
         this.navModel.main.children.push({
@@ -69,7 +69,7 @@ export class PluginEditCtrl {
 
     this.tab = this.$routeParams.tab || defaultTab;
 
-    for (let tab of this.navModel.main.children) {
+    for (const tab of this.navModel.main.children) {
       if (tab.id === this.tab) {
         tab.active = true;
       }
@@ -98,7 +98,7 @@ export class PluginEditCtrl {
   initReadme() {
     return this.backendSrv.get(`/api/plugins/${this.pluginId}/markdown/readme`).then(res => {
       var md = new Remarkable({
-        linkify: true
+        linkify: true,
       });
       this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
     });
