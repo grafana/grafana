@@ -70,7 +70,7 @@ export class KeybindingSrv {
   }
 
   exit() {
-    var popups = $('.popover.in');
+    const popups = $('.popover.in');
     if (popups.length > 0) {
       return;
     }
@@ -89,7 +89,7 @@ export class KeybindingSrv {
     }
 
     // close settings view
-    var search = this.$location.search();
+    const search = this.$location.search();
     if (search.editview) {
       delete search.editview;
       this.$location.search(search);
@@ -123,7 +123,7 @@ export class KeybindingSrv {
   }
 
   showDashEditView() {
-    var search = _.extend(this.$location.search(), { editview: 'settings' });
+    const search = _.extend(this.$location.search(), { editview: 'settings' });
     this.$location.search(search);
   }
 
@@ -218,8 +218,8 @@ export class KeybindingSrv {
     // share panel
     this.bind('p s', () => {
       if (dashboard.meta.focusPanelId) {
-        var shareScope = scope.$new();
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        const shareScope = scope.$new();
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
         shareScope.panel = panelInfo.panel;
         shareScope.dashboard = dashboard;
 

@@ -118,7 +118,7 @@ export class LoginCtrl {
     };
 
     $scope.toGrafana = function() {
-      var params = $location.search();
+      const params = $location.search();
 
       if (params.redirect && params.redirect[0] === '/') {
         window.location.href = config.appSubUrl + params.redirect;

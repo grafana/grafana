@@ -2,7 +2,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import * as dateMath from './datemath';
 
-var spans = {
+const spans = {
   s: { display: 'second' },
   m: { display: 'minute' },
   h: { display: 'hour' },
@@ -12,7 +12,7 @@ var spans = {
   y: { display: 'year' },
 };
 
-var rangeOptions = [
+const rangeOptions = [
   { from: 'now/d', to: 'now/d', display: 'Today', section: 2 },
   { from: 'now/d', to: 'now', display: 'Today so far', section: 2 },
   { from: 'now/w', to: 'now/w', display: 'This week', section: 2 },
@@ -58,15 +58,15 @@ var rangeOptions = [
   { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 0 },
 ];
 
-var absoluteFormat = 'MMM D, YYYY HH:mm:ss';
+const absoluteFormat = 'MMM D, YYYY HH:mm:ss';
 
-var rangeIndex = {};
+const rangeIndex = {};
 _.each(rangeOptions, function(frame) {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 
 export function getRelativeTimesList(timepickerSettings, currentDisplay) {
-  var groups = _.groupBy(rangeOptions, (option: any) => {
+  const groups = _.groupBy(rangeOptions, (option: any) => {
     option.active = option.display === currentDisplay;
     return option.section;
   });
@@ -130,7 +130,7 @@ export function describeTextRange(expr: any) {
 }
 
 export function describeTimeRange(range) {
-  var option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
+  const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
   if (option) {
     return option.display;
   }
@@ -140,17 +140,17 @@ export function describeTimeRange(range) {
   }
 
   if (moment.isMoment(range.from)) {
-    var toMoment = dateMath.parse(range.to, true);
+    const toMoment = dateMath.parse(range.to, true);
     return formatDate(range.from) + ' to ' + toMoment.fromNow();
   }
 
   if (moment.isMoment(range.to)) {
-    var from = dateMath.parse(range.from, false);
+    const from = dateMath.parse(range.from, false);
     return from.fromNow() + ' to ' + formatDate(range.to);
   }
 
   if (range.to.toString() === 'now') {
-    var res = describeTextRange(range.from);
+    const res = describeTextRange(range.from);
     return res.display;
   }
 

@@ -15,8 +15,8 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
   });
 
   const gotoUrl = evt => {
-    var element = evt.target;
-    var url = element.options[element.selectedIndex].value;
+    const element = evt.target;
+    const url = element.options[element.selectedIndex].value;
     appEvents.emit('location-change', { href: url });
   };
 

@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 
-var pluginInfoCache = {};
+const pluginInfoCache = {};
 
 export class AppPageCtrl {
   page: any;

@@ -2,9 +2,9 @@ import TimeSeries from 'app/core/time_series2';
 import { updateLegendValues } from 'app/core/time_series2';
 
 describe('TimeSeries', function() {
-  var points, series;
-  var yAxisFormats = ['short', 'ms'];
-  var testData;
+  let points, series;
+  const yAxisFormats = ['short', 'ms'];
+  let testData;
 
   beforeEach(function() {
     testData = {

@@ -238,7 +238,7 @@ export class ManageDashboardsCtrl {
   }
 
   onTagFilterChange() {
-    var res = this.filterByTag(this.selectedTagFilter.term);
+    const res = this.filterByTag(this.selectedTagFilter.term);
     this.selectedTagFilter = this.tagFilterOptions[0];
     return res;
   }

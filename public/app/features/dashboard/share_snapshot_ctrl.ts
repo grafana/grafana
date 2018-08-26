@@ -55,16 +55,16 @@ export class ShareSnapshotCtrl {
     };
 
     $scope.saveSnapshot = function(external) {
-      var dash = $scope.dashboard.getSaveModelClone();
+      const dash = $scope.dashboard.getSaveModelClone();
       $scope.scrubDashboard(dash);
 
-      var cmdData = {
+      const cmdData = {
         dashboard: dash,
         name: dash.title,
         expires: $scope.snapshot.expires,
       };
 
-      var postUrl = external ? $scope.externalUrl + $scope.apiUrl : $scope.apiUrl;
+      const postUrl = external ? $scope.externalUrl + $scope.apiUrl : $scope.apiUrl;
 
       backendSrv.post(postUrl, cmdData).then(
         function(results) {
@@ -75,8 +75,8 @@ export class ShareSnapshotCtrl {
             $scope.snapshotUrl = results.url;
             $scope.saveExternalSnapshotRef(cmdData, results);
           } else {
-            var url = $location.url();
-            var baseUrl = $location.absUrl();
+            const url = $location.url();
+            let baseUrl = $location.absUrl();
 
             if (url !== '/') {
               baseUrl = baseUrl.replace(url, '') + '/';
@@ -139,7 +139,7 @@ export class ShareSnapshotCtrl {
 
       // snapshot single panel
       if ($scope.modeSharePanel) {
-        var singlePanel = $scope.panel.getSaveModel();
+        const singlePanel = $scope.panel.getSaveModel();
         singlePanel.gridPos.w = 24;
         singlePanel.gridPos.x = 0;
         singlePanel.gridPos.y = 0;

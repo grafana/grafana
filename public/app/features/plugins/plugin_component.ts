@@ -13,7 +13,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     if (component.template) {
       return $q.when(component.template);
     }
-    var cached = $templateCache.get(component.templateUrl);
+    const cached = $templateCache.get(component.templateUrl);
     if (cached) {
       return $q.when(cached);
     }
@@ -58,7 +58,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
   }
 
   function loadPanelComponentInfo(scope, attrs) {
-    var componentInfo: any = {
+    const componentInfo: any = {
       name: 'panel-plugin-' + scope.panel.type,
       bindings: { dashboard: '=', panel: '=', row: '=' },
       attrs: {
@@ -143,7 +143,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
-        var dsMeta = scope.ctrl.datasourceMeta;
+        const dsMeta = scope.ctrl.datasourceMeta;
         return importPluginModule(dsMeta.module).then(function(dsModule): any {
           if (!dsModule.ConfigCtrl) {
             return { notFound: true };
@@ -197,7 +197,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
   }
 
   function appendAndCompile(scope, elem, componentInfo) {
-    var child = angular.element(document.createElement(componentInfo.name));
+    const child = angular.element(document.createElement(componentInfo.name));
     _.each(componentInfo.attrs, (value, key) => {
       child.attr(key, value);
     });
@@ -228,8 +228,8 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     }
 
     if (!componentInfo.Component.registered) {
-      var directiveName = attrs.$normalize(componentInfo.name);
-      var directiveFn = getPluginComponentDirective(componentInfo);
+      const directiveName = attrs.$normalize(componentInfo.name);
+      const directiveFn = getPluginComponentDirective(componentInfo);
       coreModule.directive(directiveName, directiveFn);
       componentInfo.Component.registered = true;
     }
