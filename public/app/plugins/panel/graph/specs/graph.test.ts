@@ -243,7 +243,7 @@ describe('grafanaGraph', function() {
     });
 
     it('should apply axis transform, autoscaling (if necessary) and ticks', function() {
-      var axisAutoscale = ctx.plotOptions.yaxes[0];
+      const axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).toBe(2);
       expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBeCloseTo(0.001);
@@ -256,7 +256,7 @@ describe('grafanaGraph', function() {
         expect(axisAutoscale.ticks[axisAutoscale.ticks.length - 1]).toBe(10000);
       }
 
-      var axisFixedscale = ctx.plotOptions.yaxes[1];
+      const axisFixedscale = ctx.plotOptions.yaxes[1];
       expect(axisFixedscale.min).toBe(0.05);
       expect(axisFixedscale.max).toBe(1500);
       expect(axisFixedscale.ticks.length).toBe(5);
@@ -278,7 +278,7 @@ describe('grafanaGraph', function() {
     });
 
     it('should not set min and max and should create some fake ticks', function() {
-      var axisAutoscale = ctx.plotOptions.yaxes[0];
+      const axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).toBe(2);
       expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBe(undefined);
@@ -304,7 +304,7 @@ describe('grafanaGraph', function() {
       });
     });
     it('should set min to 0.1 and add a tick for 0.1', function() {
-      var axisAutoscale = ctx.plotOptions.yaxes[0];
+      const axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).toBe(2);
       expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBe(0.1);
@@ -331,7 +331,7 @@ describe('grafanaGraph', function() {
     });
 
     it('should regenerate ticks so that if fits on the y-axis', function() {
-      var axisAutoscale = ctx.plotOptions.yaxes[0];
+      const axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.min).toBe(0.1);
       expect(axisAutoscale.ticks.length).toBe(8);
       expect(axisAutoscale.ticks[0]).toBe(0.1);
@@ -432,7 +432,7 @@ describe('grafanaGraph', function() {
     });
 
     it('should show percentage', function() {
-      var axis = ctx.plotOptions.yaxes[0];
+      const axis = ctx.plotOptions.yaxes[0];
       expect(axis.tickFormatter(100, axis)).toBe('100%');
     });
   });
@@ -448,7 +448,7 @@ describe('grafanaGraph', function() {
       });
 
       it('should format dates as hours minutes', function() {
-        var axis = ctx.plotOptions.xaxis;
+        const axis = ctx.plotOptions.xaxis;
         expect(axis.timeformat).toBe('%H:%M');
       });
     });
@@ -462,7 +462,7 @@ describe('grafanaGraph', function() {
       });
 
       it('should format dates as month days', function() {
-        var axis = ctx.plotOptions.xaxis;
+        const axis = ctx.plotOptions.xaxis;
         expect(axis.timeformat).toBe('%m/%d');
       });
     });

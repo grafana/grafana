@@ -16,8 +16,8 @@ describe('opentsdb', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    var results;
-    var requestOptions;
+    let results;
+    let requestOptions;
 
     beforeEach(async () => {
       ctx.backendSrv.datasourceRequest = await function(options) {

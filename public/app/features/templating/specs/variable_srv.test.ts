@@ -4,7 +4,7 @@ import moment from 'moment';
 import $q from 'q';
 
 describe('VariableSrv', function() {
-  var ctx = <any>{
+  const ctx = <any>{
     datasourceSrv: {},
     timeSrv: {
       timeRange: () => {},
@@ -33,7 +33,7 @@ describe('VariableSrv', function() {
 
   function describeUpdateVariable(desc, fn) {
     describe(desc, () => {
-      var scenario: any = {};
+      const scenario: any = {};
       scenario.setup = function(setupFn) {
         scenario.setupFn = setupFn;
       };
@@ -41,7 +41,7 @@ describe('VariableSrv', function() {
       beforeEach(async () => {
         scenario.setupFn();
 
-        var ds: any = {};
+        const ds: any = {};
         ds.metricFindQuery = () => Promise.resolve(scenario.queryResult);
 
         ctx.variableSrv = new VariableSrv(ctx.$rootScope, $q, ctx.$location, ctx.$injector, ctx.templateSrv);
@@ -100,7 +100,7 @@ describe('VariableSrv', function() {
         auto_count: 10,
       };
 
-      var range = {
+      const range = {
         from: moment(new Date())
           .subtract(7, 'days')
           .toDate(),
@@ -118,7 +118,7 @@ describe('VariableSrv', function() {
     });
 
     it('should set $__auto_interval_test', () => {
-      var call = ctx.templateSrv.setGrafanaVariable.mock.calls[0];
+      const call = ctx.templateSrv.setGrafanaVariable.mock.calls[0];
       expect(call[0]).toBe('$__auto_interval_test');
       expect(call[1]).toBe('12h');
     });
@@ -126,7 +126,7 @@ describe('VariableSrv', function() {
     // updateAutoValue() gets called twice: once directly once via VariableSrv.validateVariableSelectionState()
     // So use lastCall instead of a specific call number
     it('should set $__auto_interval', () => {
-      var call = ctx.templateSrv.setGrafanaVariable.mock.calls.pop();
+      const call = ctx.templateSrv.setGrafanaVariable.mock.calls.pop();
       expect(call[0]).toBe('$__auto_interval');
       expect(call[1]).toBe('12h');
     });
@@ -503,10 +503,10 @@ describe('VariableSrv', function() {
   });
 
   describe('multiple interval variables with auto', () => {
-    var variable1, variable2;
+    let variable1, variable2;
 
     beforeEach(() => {
-      var range = {
+      const range = {
         from: moment(new Date())
           .subtract(7, 'days')
           .toDate(),
@@ -515,7 +515,7 @@ describe('VariableSrv', function() {
       ctx.timeSrv.timeRange = () => range;
       ctx.templateSrv.setGrafanaVariable = jest.fn();
 
-      var variableModel1 = {
+      const variableModel1 = {
         type: 'interval',
         query: '1s,2h,5h,1d',
         name: 'variable1',
@@ -525,7 +525,7 @@ describe('VariableSrv', function() {
       variable1 = ctx.variableSrv.createVariableFromModel(variableModel1);
       ctx.variableSrv.addVariable(variable1);
 
-      var variableModel2 = {
+      const variableModel2 = {
         type: 'interval',
         query: '1s,2h,5h',
         name: 'variable2',
@@ -550,14 +550,14 @@ describe('VariableSrv', function() {
     });
 
     it('should correctly set $__auto_interval_variableX', () => {
-      var variable1Set,
+      let variable1Set,
         variable2Set,
         legacySet,
         unknownSet = false;
       // updateAutoValue() gets called repeatedly: once directly once via VariableSrv.validateVariableSelectionState()
       // So check that all calls are valid rather than expect a specific number and/or ordering of calls
-      for (var i = 0; i < ctx.templateSrv.setGrafanaVariable.mock.calls.length; i++) {
-        var call = ctx.templateSrv.setGrafanaVariable.mock.calls[i];
+      for (let i = 0; i < ctx.templateSrv.setGrafanaVariable.mock.calls.length; i++) {
+        const call = ctx.templateSrv.setGrafanaVariable.mock.calls[i];
         switch (call[0]) {
           case '$__auto_interval_variable1':
             expect(call[1]).toBe('12h');

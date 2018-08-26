@@ -2,7 +2,7 @@ import InfluxSeries from '../influx_series';
 
 describe('when generating timeseries from influxdb response', function() {
   describe('given multiple fields for series', function() {
-    var options = {
+    const options = {
       alias: '',
       series: [
         {
@@ -15,8 +15,8 @@ describe('when generating timeseries from influxdb response', function() {
     };
     describe('and no alias', function() {
       it('should generate multiple datapoints for each column', function() {
-        var series = new InfluxSeries(options);
-        var result = series.getTimeSeries();
+        const series = new InfluxSeries(options);
+        const result = series.getTimeSeries();
 
         expect(result.length).toBe(3);
         expect(result[0].target).toBe('cpu.mean {app: test, server: server1}');
@@ -42,8 +42,8 @@ describe('when generating timeseries from influxdb response', function() {
     describe('and simple alias', function() {
       it('should use alias', function() {
         options.alias = 'new series';
-        var series = new InfluxSeries(options);
-        var result = series.getTimeSeries();
+        const series = new InfluxSeries(options);
+        const result = series.getTimeSeries();
 
         expect(result[0].target).toBe('new series');
         expect(result[1].target).toBe('new series');
@@ -54,8 +54,8 @@ describe('when generating timeseries from influxdb response', function() {
     describe('and alias patterns', function() {
       it('should replace patterns', function() {
         options.alias = 'alias: $m -> $tag_server ([[measurement]])';
-        var series = new InfluxSeries(options);
-        var result = series.getTimeSeries();
+        const series = new InfluxSeries(options);
+        const result = series.getTimeSeries();
 
         expect(result[0].target).toBe('alias: cpu -> server1 (cpu)');
         expect(result[1].target).toBe('alias: cpu -> server1 (cpu)');
@@ -65,7 +65,7 @@ describe('when generating timeseries from influxdb response', function() {
   });
 
   describe('given measurement with default fieldname', function() {
-    var options = {
+    const options = {
       series: [
         {
           name: 'cpu',
@@ -84,8 +84,8 @@ describe('when generating timeseries from influxdb response', function() {
 
     describe('and no alias', function() {
       it('should generate label with no field', function() {
-        var series = new InfluxSeries(options);
-        var result = series.getTimeSeries();
+        const series = new InfluxSeries(options);
+        const result = series.getTimeSeries();
 
         expect(result[0].target).toBe('cpu {app: test, server: server1}');
         expect(result[1].target).toBe('cpu {app: test2, server: server2}');
@@ -94,7 +94,7 @@ describe('when generating timeseries from influxdb response', function() {
   });
 
   describe('given two series', function() {
-    var options = {
+    const options = {
       alias: '',
       series: [
         {
@@ -114,8 +114,8 @@ describe('when generating timeseries from influxdb response', function() {
 
     describe('and no alias', function() {
       it('should generate two time series', function() {
-        var series = new InfluxSeries(options);
-        var result = series.getTimeSeries();
+        const series = new InfluxSeries(options);
+        const result = series.getTimeSeries();
 
         expect(result.length).toBe(2);
         expect(result[0].target).toBe('cpu.mean {app: test, server: server1}');
@@ -135,8 +135,8 @@ describe('when generating timeseries from influxdb response', function() {
     describe('and simple alias', function() {
       it('should use alias', function() {
         options.alias = 'new series';
-        var series = new InfluxSeries(options);
-        var result = series.getTimeSeries();
+        const series = new InfluxSeries(options);
+        const result = series.getTimeSeries();
 
         expect(result[0].target).toBe('new series');
       });
@@ -145,8 +145,8 @@ describe('when generating timeseries from influxdb response', function() {
     describe('and alias patterns', function() {
       it('should replace patterns', function() {
         options.alias = 'alias: $m -> $tag_server ([[measurement]])';
-        var series = new InfluxSeries(options);
-        var result = series.getTimeSeries();
+        const series = new InfluxSeries(options);
+        const result = series.getTimeSeries();
 
         expect(result[0].target).toBe('alias: cpu -> server1 (cpu)');
         expect(result[1].target).toBe('alias: cpu -> server2 (cpu)');
@@ -155,7 +155,7 @@ describe('when generating timeseries from influxdb response', function() {
   });
 
   describe('given measurement with dots', function() {
-    var options = {
+    const options = {
       alias: '',
       series: [
         {
@@ -169,15 +169,15 @@ describe('when generating timeseries from influxdb response', function() {
 
     it('should replace patterns', function() {
       options.alias = 'alias: $1 -> [[3]]';
-      var series = new InfluxSeries(options);
-      var result = series.getTimeSeries();
+      const series = new InfluxSeries(options);
+      const result = series.getTimeSeries();
 
       expect(result[0].target).toBe('alias: prod -> count');
     });
   });
 
   describe('given table response', function() {
-    var options = {
+    const options = {
       alias: '',
       series: [
         {
@@ -190,8 +190,8 @@ describe('when generating timeseries from influxdb response', function() {
     };
 
     it('should return table', function() {
-      var series = new InfluxSeries(options);
-      var table = series.getTable();
+      const series = new InfluxSeries(options);
+      const table = series.getTable();
 
       expect(table.type).toBe('table');
       expect(table.columns.length).toBe(5);
@@ -201,7 +201,7 @@ describe('when generating timeseries from influxdb response', function() {
   });
 
   describe('given table response from SHOW CARDINALITY', function() {
-    var options = {
+    const options = {
       alias: '',
       series: [
         {
@@ -213,8 +213,8 @@ describe('when generating timeseries from influxdb response', function() {
     };
 
     it('should return table', function() {
-      var series = new InfluxSeries(options);
-      var table = series.getTable();
+      const series = new InfluxSeries(options);
+      const table = series.getTable();
 
       expect(table.type).toBe('table');
       expect(table.columns.length).toBe(1);
@@ -225,7 +225,7 @@ describe('when generating timeseries from influxdb response', function() {
 
   describe('given annotation response', function() {
     describe('with empty tagsColumn', function() {
-      var options = {
+      const options = {
         alias: '',
         annotation: {},
         series: [
@@ -239,15 +239,15 @@ describe('when generating timeseries from influxdb response', function() {
       };
 
       it('should multiple tags', function() {
-        var series = new InfluxSeries(options);
-        var annotations = series.getAnnotations();
+        const series = new InfluxSeries(options);
+        const annotations = series.getAnnotations();
 
         expect(annotations[0].tags.length).toBe(0);
       });
     });
 
     describe('given annotation response', function() {
-      var options = {
+      const options = {
         alias: '',
         annotation: {
           tagsColumn: 'datacenter, source',
@@ -263,8 +263,8 @@ describe('when generating timeseries from influxdb response', function() {
       };
 
       it('should multiple tags', function() {
-        var series = new InfluxSeries(options);
-        var annotations = series.getAnnotations();
+        const series = new InfluxSeries(options);
+        const annotations = series.getAnnotations();
 
         expect(annotations[0].tags.length).toBe(2);
         expect(annotations[0].tags[0]).toBe('America');

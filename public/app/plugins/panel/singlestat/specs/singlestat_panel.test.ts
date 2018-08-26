@@ -3,7 +3,7 @@ import { getColorForValue } from '../module';
 describe('grafanaSingleStat', function() {
   describe('legacy thresholds', () => {
     describe('positive thresholds', () => {
-      var data: any = {
+      const data: any = {
         colorMap: ['green', 'yellow', 'red'],
         thresholds: [20, 50],
       };
@@ -39,7 +39,7 @@ describe('grafanaSingleStat', function() {
   });
 
   describe('negative thresholds', () => {
-    var data: any = {
+    const data: any = {
       colorMap: ['green', 'yellow', 'red'],
       thresholds: [0, 20],
     };
@@ -58,7 +58,7 @@ describe('grafanaSingleStat', function() {
   });
 
   describe('negative thresholds', () => {
-    var data: any = {
+    const data: any = {
       colorMap: ['green', 'yellow', 'red'],
       thresholds: [-27, 20],
     };

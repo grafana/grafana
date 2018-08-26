@@ -3,18 +3,18 @@ jest.mock('app/core/core', () => ({}));
 import $ from 'jquery';
 import GraphTooltip from '../graph_tooltip';
 
-var scope = {
+const scope = {
   appEvent: jest.fn(),
   onAppEvent: jest.fn(),
   ctrl: {},
 };
 
-var elem = $('<div></div>');
-var dashboard = {};
-var getSeriesFn;
+const elem = $('<div></div>');
+const dashboard = {};
+const getSeriesFn = () => {};
 
 function describeSharedTooltip(desc, fn) {
-  var ctx: any = {};
+  const ctx: any = {};
   ctx.ctrl = scope.ctrl;
   ctx.ctrl.panel = {
     tooltip: {
@@ -31,7 +31,7 @@ function describeSharedTooltip(desc, fn) {
   describe(desc, function() {
     beforeEach(function() {
       ctx.setupFn();
-      var tooltip = new GraphTooltip(elem, dashboard, scope, getSeriesFn);
+      const tooltip = new GraphTooltip(elem, dashboard, scope, getSeriesFn);
       ctx.results = tooltip.getMultiSeriesPlotHoverInfo(ctx.data, ctx.pos);
     });
 
@@ -40,28 +40,28 @@ function describeSharedTooltip(desc, fn) {
 }
 
 describe('findHoverIndexFromData', function() {
-  var tooltip = new GraphTooltip(elem, dashboard, scope, getSeriesFn);
-  var series = {
+  const tooltip = new GraphTooltip(elem, dashboard, scope, getSeriesFn);
+  const series = {
     data: [[100, 0], [101, 0], [102, 0], [103, 0], [104, 0], [105, 0], [106, 0], [107, 0]],
   };
 
   it('should return 0 if posX out of lower bounds', function() {
-    var posX = 99;
+    const posX = 99;
     expect(tooltip.findHoverIndexFromData(posX, series)).toBe(0);
   });
 
   it('should return n - 1 if posX out of upper bounds', function() {
-    var posX = 108;
+    const posX = 108;
     expect(tooltip.findHoverIndexFromData(posX, series)).toBe(series.data.length - 1);
   });
 
   it('should return i if posX in series', function() {
-    var posX = 104;
+    const posX = 104;
     expect(tooltip.findHoverIndexFromData(posX, series)).toBe(4);
   });
 
   it('should return i if posX not in series and i + 1 > posX', function() {
-    var posX = 104.9;
+    const posX = 104.9;
     expect(tooltip.findHoverIndexFromData(posX, series)).toBe(4);
   });
 });

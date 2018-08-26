@@ -11,7 +11,7 @@ describe('Prometheus Result Transformer', () => {
   });
 
   describe('When resultFormat is table', () => {
-    var response = {
+    const response = {
       status: 'success',
       data: {
         resultType: 'matrix',
@@ -33,7 +33,7 @@ describe('Prometheus Result Transformer', () => {
     };
 
     it('should return table model', () => {
-      var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result);
+      const table = ctx.resultTransformer.transformMetricDataToTable(response.data.result);
       expect(table.type).toBe('table');
       expect(table.rows).toEqual([
         [1443454528000, 'test', '', 'testjob', 3846],
@@ -49,7 +49,7 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('should column title include refId if response count is more than 2', () => {
-      var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result, 2, 'B');
+      const table = ctx.resultTransformer.transformMetricDataToTable(response.data.result, 2, 'B');
       expect(table.type).toBe('table');
       expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
@@ -62,7 +62,7 @@ describe('Prometheus Result Transformer', () => {
   });
 
   describe('When resultFormat is table and instant = true', () => {
-    var response = {
+    const response = {
       status: 'success',
       data: {
         resultType: 'vector',
@@ -76,7 +76,7 @@ describe('Prometheus Result Transformer', () => {
     };
 
     it('should return table model', () => {
-      var table = ctx.resultTransformer.transformMetricDataToTable(response.data.result);
+      const table = ctx.resultTransformer.transformMetricDataToTable(response.data.result);
       expect(table.type).toBe('table');
       expect(table.rows).toEqual([[1443454528000, 'test', 'testjob', 3846]]);
       expect(table.columns).toMatchObject([
@@ -89,7 +89,7 @@ describe('Prometheus Result Transformer', () => {
   });
 
   describe('When resultFormat is heatmap', () => {
-    var response = {
+    const response = {
       status: 'success',
       data: {
         resultType: 'matrix',
