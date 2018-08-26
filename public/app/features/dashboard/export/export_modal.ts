@@ -21,14 +21,14 @@ export class DashExportCtrl {
   }
 
   save() {
-    var blob = new Blob([angular.toJson(this.dash, true)], {
+    const blob = new Blob([angular.toJson(this.dash, true)], {
       type: 'application/json;charset=utf-8',
     });
     saveAs(blob, this.dash.title + '-' + new Date().getTime() + '.json');
   }
 
   saveJson() {
-    var clone = this.dash;
+    const clone = this.dash;
     const editScope = this.$rootScope.$new();
     editScope.object = clone;
     editScope.enableCopy = true;

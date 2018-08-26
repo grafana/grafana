@@ -8,10 +8,10 @@ jest.mock('app/core/services/context_srv', () => ({}));
 
 describe('DashboardModel', function() {
   describe('when creating dashboard with old schema', function() {
-    var model;
-    var graph;
-    var singlestat;
-    var table;
+    let model;
+    let graph;
+    let singlestat;
+    let table;
 
     beforeEach(function() {
       model = new DashboardModel({
@@ -384,7 +384,8 @@ describe('DashboardModel', function() {
 
 function createRow(options, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
-  let { collapse, height, showTitle, title, repeat, repeatIteration } = options;
+  const { collapse, showTitle, title, repeat, repeatIteration } = options;
+  let { height } = options;
   height = height * PANEL_HEIGHT_STEP;
   const panels = [];
   _.each(panelDescriptions, panelDesc => {

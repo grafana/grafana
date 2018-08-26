@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { coreModule } from 'app/core/core';
 
-var template = `
+const template = `
 <span class="panel-title">
   <span class="icon-gf panel-alert-icon"></span>
   <span class="panel-title-text">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>

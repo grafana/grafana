@@ -12,23 +12,23 @@ export class DashboardExporter {
     // this is pretty hacky and needs to be changed
     dashboard.cleanUpRepeats();
 
-    var saveModel = dashboard.getSaveModelClone();
+    const saveModel = dashboard.getSaveModelClone();
     saveModel.id = null;
 
     // undo repeat cleanup
     dashboard.processRepeats();
 
-    var inputs = [];
-    var requires = {};
-    var datasources = {};
-    var promises = [];
-    var variableLookup: any = {};
+    const inputs = [];
+    const requires = {};
+    const datasources = {};
+    const promises = [];
+    const variableLookup: any = {};
 
     for (const variable of saveModel.templating.list) {
       variableLookup[variable.name] = variable;
     }
 
-    var templateizeDatasourceUsage = obj => {
+    const templateizeDatasourceUsage = obj => {
       // ignore data source properties that contain a variable
       if (obj.datasource && obj.datasource.indexOf('$') === 0) {
         if (variableLookup[obj.datasource.substring(1)]) {
@@ -42,7 +42,7 @@ export class DashboardExporter {
             return;
           }
 
-          var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+          const refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
           datasources[refName] = {
             name: refName,
             label: ds.name,
@@ -76,7 +76,7 @@ export class DashboardExporter {
         }
       }
 
-      var panelDef = config.panels[panel.type];
+      const panelDef = config.panels[panel.type];
       if (panelDef) {
         requires['panel' + panelDef.id] = {
           type: 'panel',
@@ -131,7 +131,7 @@ export class DashboardExporter {
         // templatize constants
         for (const variable of saveModel.templating.list) {
           if (variable.type === 'constant') {
-            var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
+            const refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
             inputs.push({
               name: refName,
               type: 'constant',
@@ -149,7 +149,7 @@ export class DashboardExporter {
         }
 
         // make inputs and requires a top thing
-        var newObj = {};
+        const newObj = {};
         newObj['__inputs'] = inputs;
         newObj['__requires'] = _.sortBy(requires, ['id']);
 
