@@ -26,7 +26,7 @@ describe('VariableSrv init', function() {
 
   function describeInitScenario(desc, fn) {
     describe(desc, () => {
-      var scenario: any = {
+      const scenario: any = {
         urlParams: {},
         setup: setupFn => {
           scenario.setupFn = setupFn;
@@ -92,7 +92,7 @@ describe('VariableSrv init', function() {
   });
 
   describe('given dependent variables', () => {
-    var variableList = [
+    const variableList = [
       {
         name: 'app',
         type: 'query',
@@ -110,7 +110,7 @@ describe('VariableSrv init', function() {
       },
     ];
 
-    describeInitScenario('when setting parent var from url', scenario => {
+    describeInitScenario('when setting parent const from url', scenario => {
       scenario.setup(() => {
         scenario.variables = _.cloneDeep(variableList);
         scenario.urlParams['var-app'] = 'google';
@@ -148,7 +148,7 @@ describe('VariableSrv init', function() {
     });
 
     it('should update current value', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.options.length).toBe(2);
     });
   });
@@ -172,7 +172,7 @@ describe('VariableSrv init', function() {
     });
 
     it('should update current value', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.current.value.length).toBe(2);
       expect(variable.current.value[0]).toBe('val2');
       expect(variable.current.value[1]).toBe('val1');
@@ -182,7 +182,7 @@ describe('VariableSrv init', function() {
     });
 
     it('should set options that are not in value to selected false', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.options[2].selected).toBe(false);
     });
   });
@@ -206,7 +206,7 @@ describe('VariableSrv init', function() {
     });
 
     it('should update current value', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.current.value.length).toBe(2);
       expect(variable.current.value[0]).toBe('val2');
       expect(variable.current.value[1]).toBe('val1');
@@ -216,7 +216,7 @@ describe('VariableSrv init', function() {
     });
 
     it('should set options that are not in value to selected false', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.options[2].selected).toBe(false);
     });
   });

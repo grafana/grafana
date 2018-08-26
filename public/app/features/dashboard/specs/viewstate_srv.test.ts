@@ -37,7 +37,7 @@ describe('when updating view state', () => {
     });
 
     it('should update querystring and view state', () => {
-      var updateState = { fullscreen: true, edit: true, panelId: 1 };
+      const updateState = { fullscreen: true, edit: true, panelId: 1 };
 
       viewState.update(updateState);
 

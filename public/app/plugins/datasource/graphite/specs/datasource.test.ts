@@ -324,7 +324,7 @@ function accessScenario(name, url, fn) {
 
       it('tracing headers should be added', () => {
         ctx.instanceSettings.url = url;
-        var ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+        const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
         ds.addTracingHeaders(httpOptions, options);
         fn(httpOptions);
       });

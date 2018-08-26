@@ -53,7 +53,7 @@ describe('ElasticDatasource', function() {
     });
 
     it('should translate index pattern to current day', function() {
-      var requestOptions;
+      let requestOptions;
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
         return Promise.resolve({ data: {} });
@@ -61,13 +61,13 @@ describe('ElasticDatasource', function() {
 
       ctx.ds.testDatasource();
 
-      var today = moment.utc().format('YYYY.MM.DD');
+      const today = moment.utc().format('YYYY.MM.DD');
       expect(requestOptions.url).toBe('http://es.com/asd-' + today + '/_mapping');
     });
   });
 
   describe('When issuing metric query with interval pattern', function() {
-    var requestOptions, parts, header;
+    let requestOptions, parts, header;
 
     beforeEach(() => {
       createDatasource({
@@ -104,13 +104,13 @@ describe('ElasticDatasource', function() {
     });
 
     it('should json escape lucene query', function() {
-      var body = angular.fromJson(parts[1]);
+      const body = angular.fromJson(parts[1]);
       expect(body.query.bool.filter[1].query_string.query).toBe('escape\\:test');
     });
   });
 
   describe('When issuing document query', function() {
-    var requestOptions, parts, header;
+    let requestOptions, parts, header;
 
     beforeEach(function() {
       createDatasource({
@@ -147,7 +147,7 @@ describe('ElasticDatasource', function() {
     });
 
     it('should set size', function() {
-      var body = angular.fromJson(parts[1]);
+      const body = angular.fromJson(parts[1]);
       expect(body.size).toBe(500);
     });
   });
@@ -210,7 +210,7 @@ describe('ElasticDatasource', function() {
           query: '*',
         })
         .then(fieldObjects => {
-          var fields = _.map(fieldObjects, 'text');
+          const fields = _.map(fieldObjects, 'text');
           expect(fields).toEqual([
             '@timestamp',
             'beat.name.raw',
@@ -232,7 +232,7 @@ describe('ElasticDatasource', function() {
           type: 'number',
         })
         .then(fieldObjects => {
-          var fields = _.map(fieldObjects, 'text');
+          const fields = _.map(fieldObjects, 'text');
           expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
         });
 
@@ -243,14 +243,14 @@ describe('ElasticDatasource', function() {
           type: 'date',
         })
         .then(fieldObjects => {
-          var fields = _.map(fieldObjects, 'text');
+          const fields = _.map(fieldObjects, 'text');
           expect(fields).toEqual(['@timestamp']);
         });
     });
   });
 
   describe('When issuing aggregation query on es5.x', function() {
-    var requestOptions, parts, header;
+    let requestOptions, parts, header;
 
     beforeEach(function() {
       createDatasource({
@@ -287,13 +287,13 @@ describe('ElasticDatasource', function() {
     });
 
     it('should set size to 0', function() {
-      var body = angular.fromJson(parts[1]);
+      const body = angular.fromJson(parts[1]);
       expect(body.size).toBe(0);
     });
   });
 
   describe('When issuing metricFind query on es5.x', function() {
-    var requestOptions, parts, header, body, results;
+    let requestOptions, parts, header, body, results;
 
     beforeEach(() => {
       createDatasource({

@@ -1,14 +1,14 @@
 import { ElasticQueryBuilder } from '../query_builder';
 
 describe('ElasticQueryBuilder', () => {
-  var builder;
+  let builder;
 
   beforeEach(() => {
     builder = new ElasticQueryBuilder({ timeField: '@timestamp' });
   });
 
   it('with defaults', () => {
-    var query = builder.build({
+    const query = builder.build({
       metrics: [{ type: 'Count', id: '0' }],
       timeField: '@timestamp',
       bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
@@ -19,12 +19,12 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with defaults on es5.x', () => {
-    var builder_5x = new ElasticQueryBuilder({
+    const builder_5x = new ElasticQueryBuilder({
       timeField: '@timestamp',
       esVersion: 5,
     });
 
-    var query = builder_5x.build({
+    const query = builder_5x.build({
       metrics: [{ type: 'Count', id: '0' }],
       timeField: '@timestamp',
       bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
@@ -35,7 +35,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with multiple bucket aggs', () => {
-    var query = builder.build({
+    const query = builder.build({
       metrics: [{ type: 'count', id: '1' }],
       timeField: '@timestamp',
       bucketAggs: [
@@ -49,7 +49,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with select field', () => {
-    var query = builder.build(
+    const query = builder.build(
       {
         metrics: [{ type: 'avg', field: '@value', id: '1' }],
         bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
@@ -58,12 +58,12 @@ describe('ElasticQueryBuilder', () => {
       1000
     );
 
-    var aggs = query.aggs['2'].aggs;
+    const aggs = query.aggs['2'].aggs;
     expect(aggs['1'].avg.field).toBe('@value');
   });
 
   it('with term agg and order by metric agg', () => {
-    var query = builder.build(
+    const query = builder.build(
       {
         metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '5' }],
         bucketAggs: [
@@ -80,15 +80,15 @@ describe('ElasticQueryBuilder', () => {
       1000
     );
 
-    var firstLevel = query.aggs['2'];
-    var secondLevel = firstLevel.aggs['3'];
+    const firstLevel = query.aggs['2'];
+    const secondLevel = firstLevel.aggs['3'];
 
     expect(firstLevel.aggs['5'].avg.field).toBe('@value');
     expect(secondLevel.aggs['5'].avg.field).toBe('@value');
   });
 
   it('with metric percentiles', () => {
-    var query = builder.build(
+    const query = builder.build(
       {
         metrics: [
           {
@@ -106,14 +106,14 @@ describe('ElasticQueryBuilder', () => {
       1000
     );
 
-    var firstLevel = query.aggs['3'];
+    const firstLevel = query.aggs['3'];
 
     expect(firstLevel.aggs['1'].percentiles.field).toBe('@load_time');
     expect(firstLevel.aggs['1'].percentiles.percents).toEqual([1, 2, 3, 4]);
   });
 
   it('with filters aggs', () => {
-    var query = builder.build({
+    const query = builder.build({
       metrics: [{ type: 'count', id: '1' }],
       timeField: '@timestamp',
       bucketAggs: [
@@ -134,11 +134,11 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with filters aggs on es5.x', () => {
-    var builder_5x = new ElasticQueryBuilder({
+    const builder_5x = new ElasticQueryBuilder({
       timeField: '@timestamp',
       esVersion: 5,
     });
-    var query = builder_5x.build({
+    const query = builder_5x.build({
       metrics: [{ type: 'count', id: '1' }],
       timeField: '@timestamp',
       bucketAggs: [
@@ -159,7 +159,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with raw_document metric', () => {
-    var query = builder.build({
+    const query = builder.build({
       metrics: [{ type: 'raw_document', id: '1', settings: {} }],
       timeField: '@timestamp',
       bucketAggs: [],
@@ -168,7 +168,7 @@ describe('ElasticQueryBuilder', () => {
     expect(query.size).toBe(500);
   });
   it('with raw_document metric size set', () => {
-    var query = builder.build({
+    const query = builder.build({
       metrics: [{ type: 'raw_document', id: '1', settings: { size: 1337 } }],
       timeField: '@timestamp',
       bucketAggs: [],
@@ -178,7 +178,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with moving average', () => {
-    var query = builder.build({
+    const query = builder.build({
       metrics: [
         {
           id: '3',
@@ -195,7 +195,7 @@ describe('ElasticQueryBuilder', () => {
       bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
     });
 
-    var firstLevel = query.aggs['3'];
+    const firstLevel = query.aggs['3'];
 
     expect(firstLevel.aggs['2']).not.toBe(undefined);
     expect(firstLevel.aggs['2'].moving_avg).not.toBe(undefined);
@@ -203,7 +203,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with broken moving average', () => {
-    var query = builder.build({
+    const query = builder.build({
       metrics: [
         {
           id: '3',
@@ -224,7 +224,7 @@ describe('ElasticQueryBuilder', () => {
       bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
     });
 
-    var firstLevel = query.aggs['3'];
+    const firstLevel = query.aggs['3'];
 
     expect(firstLevel.aggs['2']).not.toBe(undefined);
     expect(firstLevel.aggs['2'].moving_avg).not.toBe(undefined);
@@ -233,7 +233,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with derivative', () => {
-    var query = builder.build({
+    const query = builder.build({
       metrics: [
         {
           id: '3',
@@ -249,7 +249,7 @@ describe('ElasticQueryBuilder', () => {
       bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
     });
 
-    var firstLevel = query.aggs['3'];
+    const firstLevel = query.aggs['3'];
 
     expect(firstLevel.aggs['2']).not.toBe(undefined);
     expect(firstLevel.aggs['2'].derivative).not.toBe(undefined);
@@ -257,7 +257,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with histogram', () => {
-    var query = builder.build({
+    const query = builder.build({
       metrics: [{ id: '1', type: 'count' }],
       bucketAggs: [
         {
@@ -269,7 +269,7 @@ describe('ElasticQueryBuilder', () => {
       ],
     });
 
-    var firstLevel = query.aggs['3'];
+    const firstLevel = query.aggs['3'];
     expect(firstLevel.histogram.field).toBe('bytes');
     expect(firstLevel.histogram.interval).toBe(10);
     expect(firstLevel.histogram.min_doc_count).toBe(2);
@@ -277,7 +277,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with adhoc filters', () => {
-    var query = builder.build(
+    const query = builder.build(
       {
         metrics: [{ type: 'Count', id: '0' }],
         timeField: '@timestamp',
