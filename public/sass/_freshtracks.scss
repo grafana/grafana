@@ -1,0 +1,18 @@
+$ft-grey: #546e7a;
+$ft-blue: #2196f3;
+
+.ft-theme {
+  .page-sub-heading {
+    color: $ft-grey;
+    font-weight: 300;
+    font-size: 2rem;
+  }
+
+  .modal-tagline {
+    color: $ft-grey;
+  }
+
+  .btn-success {
+    @include buttonBackground($ft-blue, $ft-blue);
+  }
+}
