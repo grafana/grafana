@@ -581,7 +581,7 @@ describe('PrometheusDatasource', () => {
   describe('When performing annotationQuery', () => {
     let results;
 
-    const options = {
+    const options: any = {
       annotation: {
         expr: 'ALERTS{alertstate="firing"}',
         tagKeys: 'job',
@@ -594,79 +594,60 @@ describe('PrometheusDatasource', () => {
       },
     };
 
-    beforeEach(async () => {
-      const response = {
-        status: 'success',
+    const response = {
+      status: 'success',
+      data: {
         data: {
-          data: {
-            resultType: 'matrix',
-            result: [
-              {
-                metric: {
-                  __name__: 'ALERTS',
-                  alertname: 'InstanceDown',
-                  alertstate: 'firing',
-                  instance: 'testinstance',
-                  job: 'testjob',
-                },
-                values: [[123, '1']],
+          resultType: 'matrix',
+          result: [
+            {
+              metric: {
+                __name__: 'ALERTS',
+                alertname: 'InstanceDown',
+                alertstate: 'firing',
+                instance: 'testinstance',
+                job: 'testjob',
               },
-            ],
-          },
+              values: [[123, '1']],
+            },
+          ],
         },
-      };
+      },
+    };
 
-      backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+    describe('not use useValueForTime', () => {
+      beforeEach(async () => {
+        options.annotation.useValueForTime = false;
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, <any>backendSrv, templateSrv, timeSrv);
 
-      await ctx.ds.annotationQuery(options).then(data => {
-        results = data;
+        await ctx.ds.annotationQuery(options).then(function (data) {
+          results = data;
+        });
+      });
+
+      it('should return annotation list', () => {
+        expect(results.length).toBe(1);
+        expect(results[0].tags).toContain('testjob');
+        expect(results[0].title).toBe('InstanceDown');
+        expect(results[0].text).toBe('testinstance');
+        expect(results[0].time).toBe(123 * 1000);
       });
     });
-    it('should return annotation list', () => {
-      expect(results.length).toBe(1);
-      expect(results[0].tags).toContain('testjob');
-      expect(results[0].title).toBe('InstanceDown');
-      expect(results[0].text).toBe('testinstance');
-      expect(results[0].time).toBe(123 * 1000);
-    });
 
-    it('should return annotation list with seriesValueAsTiemstamp', () => {
-      const options = {
-        annotation: {
-          expr: 'timestamp_seconds',
-          tagKeys: 'job',
-          titleFormat: '{{job}}',
-          textFormat: '{{instance}}',
-          useValueForTime: true,
-        },
-        range: {
-          from: new Date('2014-04-10T05:20:10Z'),
-          to: new Date('2014-05-20T03:10:22Z'),
-        },
-      };
-      ctx.backendSrvMock.datasourceRequest.mockReturnValue(
-        Promise.resolve({
-          status: 'success',
-          data: {
-            resultType: 'matrix',
-            result: [
-              {
-                metric: {
-                  __name__: 'timestamp_milliseconds',
-                  instance: 'testinstance',
-                  job: 'testjob',
-                },
-                values: [[1443454528, '1500000000000']],
-              },
-            ],
-          },
-        })
-      );
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
-      ctx.ds.annotationQuery(options).then(function (results) {
-        expect(results[0].time).toEqual(1500000000000);
-        ctx.backendSrvMock.datasourceRequest.mockReset();
+    describe('use useValueForTime', () => {
+      beforeEach(async () => {
+        options.annotation.useValueForTime = true;
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, <any>backendSrv, templateSrv, timeSrv);
+
+        await ctx.ds.annotationQuery(options).then(function (data) {
+          results = data;
+        });
+      });
+
+      it('should return annotation list', () => {
+        expect(results[0].time).toEqual(1);
       });
     });
   });
