@@ -5,12 +5,14 @@ export class PostgresConfigCtrl {
 
   current: any;
   datasourceSrv: any;
+  showTimescaleDBHelp: boolean;
 
   /** @ngInject **/
   constructor($scope, datasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
     this.current.jsonData.postgresVersion = this.current.jsonData.postgresVersion || 903;
+    this.showTimescaleDBHelp = false;
     this.autoDetectFeatures();
   }
 
@@ -44,6 +46,10 @@ export class PostgresConfigCtrl {
         this.current.jsonData.postgresVersion = version;
       });
     });
+  }
+
+  toggleTimescaleDBHelp() {
+    this.showTimescaleDBHelp = !this.showTimescaleDBHelp;
   }
 
   // the value portion is derived from postgres server_version_num/100
