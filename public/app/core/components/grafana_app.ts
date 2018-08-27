@@ -77,7 +77,7 @@ function setViewModeBodyClass(body, mode, sidemenuOpen: boolean) {
   switch (mode) {
     case 'tv': {
       body.removeClass('sidemenu-open');
-      body.addClass('kiosk-mode--tv');
+      body.addClass('view-mode--tv');
       break;
     }
     // 1 & true for legacy states
