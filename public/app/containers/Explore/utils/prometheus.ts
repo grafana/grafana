@@ -65,7 +65,7 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 
   // Extract clean labels to form clean selector, incomplete labels are dropped
   const selector = query.slice(prefixOpen, suffixClose);
-  let labels = {};
+  const labels = {};
   selector.replace(labelRegexp, match => {
     const delimiterIndex = match.indexOf('=');
     const key = match.slice(0, delimiterIndex);

@@ -63,7 +63,7 @@ function parseUrlState(initial: string | undefined) {
   return { datasource: null, queries: [], range: DEFAULT_RANGE };
 }
 
-interface IExploreState {
+interface ExploreState {
   datasource: any;
   datasourceError: any;
   datasourceLoading: boolean | null;
@@ -88,12 +88,12 @@ interface IExploreState {
   tableResult: any;
 }
 
-export class Explore extends React.Component<any, IExploreState> {
+export class Explore extends React.Component<any, ExploreState> {
   el: any;
 
   constructor(props) {
     super(props);
-    const initialState: IExploreState = props.initialState;
+    const initialState: ExploreState = props.initialState;
     const { datasource, queries, range } = parseUrlState(props.routeParams.state);
     this.state = {
       datasource: null,
@@ -346,19 +346,24 @@ export class Explore extends React.Component<any, IExploreState> {
 
   onQuerySuccess(datasourceId: string, queries: any[]): void {
     // save queries to history
-    let { datasource, history } = this.state;
+    let { history } = this.state;
+    const { datasource } = this.state;
+
     if (datasource.meta.id !== datasourceId) {
       // Navigated away, queries did not matter
       return;
     }
+
     const ts = Date.now();
     queries.forEach(q => {
       const { query } = q;
       history = [{ query, ts }, ...history];
     });
+
     if (history.length > MAX_HISTORY_ITEMS) {
       history = history.slice(0, MAX_HISTORY_ITEMS);
     }
+
     // Combine all queries of a datasource type into one history
     const historyKey = `grafana.explore.history.${datasourceId}`;
     store.setObject(historyKey, history);

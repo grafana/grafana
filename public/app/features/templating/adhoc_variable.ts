@@ -43,7 +43,7 @@ export class AdhocVariable implements Variable {
     }
 
     this.filters = urlValue.map(item => {
-      var values = item.split('|').map(value => {
+      const values = item.split('|').map(value => {
         return this.unescapeDelimiter(value);
       });
       return {

@@ -71,7 +71,7 @@ export class DashboardLoaderSrv {
   }
 
   _loadScriptedDashboard(file) {
-    var url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
+    const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return this.$http({ url: url, method: 'GET' })
       .then(this._executeScript.bind(this))
@@ -99,14 +99,14 @@ export class DashboardLoaderSrv {
   }
 
   _executeScript(result) {
-    var services = {
+    const services = {
       dashboardSrv: this.dashboardSrv,
       datasourceSrv: this.datasourceSrv,
       $q: this.$q,
     };
 
     /*jshint -W054 */
-    var script_func = new Function(
+    const script_func = new Function(
       'ARGS',
       'kbn',
       'dateMath',
@@ -119,11 +119,11 @@ export class DashboardLoaderSrv {
       'services',
       result.data
     );
-    var script_result = script_func(this.$routeParams, kbn, dateMath, _, moment, window, document, $, $, services);
+    const script_result = script_func(this.$routeParams, kbn, dateMath, _, moment, window, document, $, $, services);
 
     // Handle async dashboard scripts
     if (_.isFunction(script_result)) {
-      var deferred = this.$q.defer();
+      const deferred = this.$q.defer();
       script_result(dashboard => {
         this.$timeout(() => {
           deferred.resolve({ data: dashboard });

@@ -10,7 +10,7 @@ import {
 } from '../heatmap_data_converter';
 
 describe('isHeatmapDataEqual', () => {
-  let ctx: any = {};
+  const ctx: any = {};
 
   beforeEach(() => {
     ctx.heatmapA = {
@@ -35,17 +35,17 @@ describe('isHeatmapDataEqual', () => {
   });
 
   it('should proper compare objects', () => {
-    let heatmapC = _.cloneDeep(ctx.heatmapA);
+    const heatmapC = _.cloneDeep(ctx.heatmapA);
     heatmapC['1422774000000'].buckets['1'].values = [1, 1.5];
 
-    let heatmapD = _.cloneDeep(ctx.heatmapA);
+    const heatmapD = _.cloneDeep(ctx.heatmapA);
     heatmapD['1422774000000'].buckets['1'].values = [1.5, 1, 1.6];
 
-    let heatmapE = _.cloneDeep(ctx.heatmapA);
+    const heatmapE = _.cloneDeep(ctx.heatmapA);
     heatmapE['1422774000000'].buckets['1'].values = [1, 1.6];
 
-    let empty = {};
-    let emptyValues = _.cloneDeep(ctx.heatmapA);
+    const empty = {};
+    const emptyValues = _.cloneDeep(ctx.heatmapA);
     emptyValues['1422774000000'].buckets['1'].values = [];
 
     expect(isHeatmapDataEqual(ctx.heatmapA, ctx.heatmapB)).toBe(true);
@@ -69,7 +69,7 @@ describe('isHeatmapDataEqual', () => {
 });
 
 describe('calculateBucketSize', () => {
-  let ctx: any = {};
+  const ctx: any = {};
 
   describe('when logBase is 1 (linear scale)', () => {
     beforeEach(() => {
@@ -88,7 +88,7 @@ describe('calculateBucketSize', () => {
 
     it('should properly calculate bucket size', () => {
       _.each(ctx.bounds_set, b => {
-        let bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
+        const bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
         expect(bucketSize).toBe(b.size);
       });
     });
@@ -108,7 +108,7 @@ describe('calculateBucketSize', () => {
 
     it('should properly calculate bucket size', () => {
       _.each(ctx.bounds_set, b => {
-        let bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
+        const bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
         expect(isEqual(bucketSize, b.size)).toBe(true);
       });
     });
@@ -116,7 +116,7 @@ describe('calculateBucketSize', () => {
 });
 
 describe('HeatmapDataConverter', () => {
-  let ctx: any = {};
+  const ctx: any = {};
 
   beforeEach(() => {
     ctx.series = [];
@@ -150,7 +150,7 @@ describe('HeatmapDataConverter', () => {
     });
 
     it('should build proper heatmap data', () => {
-      let expectedHeatmap = {
+      const expectedHeatmap = {
         '1422774000000': {
           x: 1422774000000,
           buckets: {
@@ -183,7 +183,7 @@ describe('HeatmapDataConverter', () => {
         },
       };
 
-      let heatmap = convertToHeatMap(ctx.series, ctx.yBucketSize, ctx.xBucketSize, ctx.logBase);
+      const heatmap = convertToHeatMap(ctx.series, ctx.yBucketSize, ctx.xBucketSize, ctx.logBase);
       expect(isHeatmapDataEqual(heatmap, expectedHeatmap)).toBe(true);
     });
   });
@@ -194,7 +194,7 @@ describe('HeatmapDataConverter', () => {
     });
 
     it('should build proper heatmap data', () => {
-      let expectedHeatmap = {
+      const expectedHeatmap = {
         '1422774000000': {
           x: 1422774000000,
           buckets: {
@@ -210,14 +210,14 @@ describe('HeatmapDataConverter', () => {
         },
       };
 
-      let heatmap = convertToHeatMap(ctx.series, ctx.yBucketSize, ctx.xBucketSize, ctx.logBase);
+      const heatmap = convertToHeatMap(ctx.series, ctx.yBucketSize, ctx.xBucketSize, ctx.logBase);
       expect(isHeatmapDataEqual(heatmap, expectedHeatmap)).toBe(true);
     });
   });
 });
 
 describe('Histogram converter', () => {
-  let ctx: any = {};
+  const ctx: any = {};
 
   beforeEach(() => {
     ctx.series = [];
@@ -248,7 +248,7 @@ describe('Histogram converter', () => {
     beforeEach(() => {});
 
     it('should build proper heatmap data', () => {
-      let expectedHeatmap = {
+      const expectedHeatmap = {
         '1422774000000': {
           x: 1422774000000,
           buckets: {
@@ -343,18 +343,18 @@ describe('convertToCards', () => {
   });
 
   it('should build proper cards data', () => {
-    let expectedCards = [
+    const expectedCards = [
       { x: 1422774000000, y: 1, count: 1, values: [1], yBounds: {} },
       { x: 1422774000000, y: 2, count: 1, values: [2], yBounds: {} },
       { x: 1422774060000, y: 2, count: 2, values: [2, 3], yBounds: {} },
     ];
-    let res = convertToCards(buckets);
+    const res = convertToCards(buckets);
     expect(res.cards).toMatchObject(expectedCards);
   });
 
   it('should build proper cards stats', () => {
-    let expectedStats = { min: 1, max: 2 };
-    let res = convertToCards(buckets);
+    const expectedStats = { min: 1, max: 2 };
+    const res = convertToCards(buckets);
     expect(res.cardStats).toMatchObject(expectedStats);
   });
 });

@@ -3,17 +3,17 @@ import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 
 describe('PostgreSQLDatasource', function() {
-  let instanceSettings = { name: 'postgresql' };
+  const instanceSettings = { name: 'postgresql' };
 
-  let backendSrv = {};
-  let templateSrv = {
+  const backendSrv = {};
+  const templateSrv = {
     replace: jest.fn(text => text),
   };
   const raw = {
     from: moment.utc('2018-04-25 10:00'),
     to: moment.utc('2018-04-25 11:00'),
   };
-  let ctx = <any>{
+  const ctx = <any>{
     backendSrv,
     timeSrvMock: {
       timeRange: () => ({

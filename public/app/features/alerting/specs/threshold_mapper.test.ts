@@ -5,7 +5,7 @@ import { ThresholdMapper } from '../threshold_mapper';
 describe('ThresholdMapper', () => {
   describe('with greater than evaluator', () => {
     it('can map query conditions to thresholds', () => {
-      var panel: any = {
+      const panel: any = {
         type: 'graph',
         alert: {
           conditions: [
@@ -17,7 +17,7 @@ describe('ThresholdMapper', () => {
         },
       };
 
-      var updated = ThresholdMapper.alertToGraphThresholds(panel);
+      const updated = ThresholdMapper.alertToGraphThresholds(panel);
       expect(updated).toBe(true);
       expect(panel.thresholds[0].op).toBe('gt');
       expect(panel.thresholds[0].value).toBe(100);
@@ -26,7 +26,7 @@ describe('ThresholdMapper', () => {
 
   describe('with outside range evaluator', () => {
     it('can map query conditions to thresholds', () => {
-      var panel: any = {
+      const panel: any = {
         type: 'graph',
         alert: {
           conditions: [
@@ -38,7 +38,7 @@ describe('ThresholdMapper', () => {
         },
       };
 
-      var updated = ThresholdMapper.alertToGraphThresholds(panel);
+      const updated = ThresholdMapper.alertToGraphThresholds(panel);
       expect(updated).toBe(true);
       expect(panel.thresholds[0].op).toBe('lt');
       expect(panel.thresholds[0].value).toBe(100);
@@ -50,7 +50,7 @@ describe('ThresholdMapper', () => {
 
   describe('with inside range evaluator', () => {
     it('can map query conditions to thresholds', () => {
-      var panel: any = {
+      const panel: any = {
         type: 'graph',
         alert: {
           conditions: [
@@ -62,7 +62,7 @@ describe('ThresholdMapper', () => {
         },
       };
 
-      var updated = ThresholdMapper.alertToGraphThresholds(panel);
+      const updated = ThresholdMapper.alertToGraphThresholds(panel);
       expect(updated).toBe(true);
       expect(panel.thresholds[0].op).toBe('gt');
       expect(panel.thresholds[0].value).toBe(100);

@@ -21,11 +21,11 @@ export class TableRenderer {
     this.colorState = {};
 
     for (let colIndex = 0; colIndex < this.table.columns.length; colIndex++) {
-      let column = this.table.columns[colIndex];
+      const column = this.table.columns[colIndex];
       column.title = column.text;
 
       for (let i = 0; i < this.panel.styles.length; i++) {
-        let style = this.panel.styles[i];
+        const style = this.panel.styles[i];
 
         var regex = kbn.stringToJsRegex(style.pattern);
         if (column.text.match(regex)) {
@@ -154,7 +154,7 @@ export class TableRenderer {
     }
 
     if (column.style.type === 'number') {
-      let valueFormatter = kbn.valueFormats[column.unit || column.style.unit];
+      const valueFormatter = kbn.valueFormats[column.unit || column.style.unit];
 
       return v => {
         if (v === null || v === void 0) {
@@ -193,9 +193,9 @@ export class TableRenderer {
   }
 
   renderRowVariables(rowIndex) {
-    let scopedVars = {};
+    const scopedVars = {};
     let cell_variable;
-    let row = this.table.rows[rowIndex];
+    const row = this.table.rows[rowIndex];
     for (let i = 0; i < row.length; i++) {
       cell_variable = `__cell_${i}`;
       scopedVars[cell_variable] = { value: row[i] };
@@ -288,15 +288,15 @@ export class TableRenderer {
   }
 
   render(page) {
-    let pageSize = this.panel.pageSize || 100;
-    let startPos = page * pageSize;
-    let endPos = Math.min(startPos + pageSize, this.table.rows.length);
+    const pageSize = this.panel.pageSize || 100;
+    const startPos = page * pageSize;
+    const endPos = Math.min(startPos + pageSize, this.table.rows.length);
     var html = '';
-    let rowClasses = [];
+    const rowClasses = [];
     let rowClass = '';
 
     for (var y = startPos; y < endPos; y++) {
-      let row = this.table.rows[y];
+      const row = this.table.rows[y];
       let cellHtml = '';
       let rowStyle = '';
       for (var i = 0; i < this.table.columns.length; i++) {
@@ -320,11 +320,11 @@ export class TableRenderer {
   }
 
   render_values() {
-    let rows = [];
+    const rows = [];
 
     for (var y = 0; y < this.table.rows.length; y++) {
-      let row = this.table.rows[y];
-      let new_row = [];
+      const row = this.table.rows[y];
+      const new_row = [];
       for (var i = 0; i < this.table.columns.length; i++) {
         new_row.push(this.formatColumnValue(i, row[i]));
       }

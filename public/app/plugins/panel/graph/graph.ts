@@ -148,7 +148,7 @@ class GraphElement {
 
     if ((pos.ctrlKey || pos.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
       // Skip if range selected (added in "plotselected" event handler)
-      let isRangeSelection = pos.x !== pos.x1;
+      const isRangeSelection = pos.x !== pos.x1;
       if (!isRangeSelection) {
         setTimeout(() => {
           this.eventManager.updateTime({ from: pos.x, to: null });
@@ -269,7 +269,7 @@ class GraphElement {
     this.panel.dashes = this.panel.lines ? this.panel.dashes : false;
 
     // Populate element
-    let options: any = this.buildFlotOptions(this.panel);
+    const options: any = this.buildFlotOptions(this.panel);
     this.prepareXAxis(options, this.panel);
     this.configureYAxisOptions(this.data, options);
     this.thresholdManager.addFlotOptions(options, this.panel);
@@ -281,7 +281,7 @@ class GraphElement {
 
   buildFlotPairs(data) {
     for (let i = 0; i < data.length; i++) {
-      let series = data[i];
+      const series = data[i];
       series.data = series.getFlotPairs(series.nullPointMode || this.panel.nullPointMode);
 
       // if hidden remove points and disable stack
@@ -299,7 +299,7 @@ class GraphElement {
         options.series.bars.align = 'center';
 
         for (let i = 0; i < this.data.length; i++) {
-          let series = this.data[i];
+          const series = this.data[i];
           series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
         }
 
@@ -310,9 +310,9 @@ class GraphElement {
         let bucketSize: number;
 
         if (this.data.length) {
-          let histMin = _.min(_.map(this.data, s => s.stats.min));
-          let histMax = _.max(_.map(this.data, s => s.stats.max));
-          let ticks = panel.xaxis.buckets || this.panelWidth / 50;
+          const histMin = _.min(_.map(this.data, s => s.stats.min));
+          const histMax = _.max(_.map(this.data, s => s.stats.max));
+          const ticks = panel.xaxis.buckets || this.panelWidth / 50;
           bucketSize = tickStep(histMin, histMax, ticks);
           options.series.bars.barWidth = bucketSize * 0.8;
           this.data = convertToHistogramData(this.data, bucketSize, this.ctrl.hiddenSeries, histMin, histMax);
@@ -362,7 +362,7 @@ class GraphElement {
       gridColor = '#a1a1a1';
     }
     const stack = panel.stack ? true : null;
-    let options = {
+    const options = {
       hooks: {
         draw: [this.drawHook.bind(this)],
         processOffset: [this.processOffsetHook.bind(this)],
@@ -481,12 +481,12 @@ class GraphElement {
 
   addXHistogramAxis(options, bucketSize) {
     let ticks, min, max;
-    let defaultTicks = this.panelWidth / 50;
+    const defaultTicks = this.panelWidth / 50;
 
     if (this.data.length && bucketSize) {
-      let tick_values = [];
-      for (let d of this.data) {
-        for (let point of d.data) {
+      const tick_values = [];
+      for (const d of this.data) {
+        for (const point of d.data) {
           tick_values[point[0]] = true;
         }
       }

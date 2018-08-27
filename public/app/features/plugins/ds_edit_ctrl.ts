@@ -6,7 +6,7 @@ import { store } from 'app/stores/store';
 
 var datasourceTypes = [];
 
-var defaults = {
+const defaults = {
   name: '',
   type: 'graphite',
   url: '',
