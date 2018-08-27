@@ -102,11 +102,11 @@ export class LoginCtrl {
 
     $scope.login = function() {
       delete $scope.loginError;
-      $scope.loggingIn = true;
 
       if (!$scope.loginForm.$valid) {
         return;
       }
+      $scope.loggingIn = true;
 
       backendSrv
         .post('/login', $scope.formModel)
