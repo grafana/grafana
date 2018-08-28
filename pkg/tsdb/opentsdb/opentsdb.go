@@ -120,8 +120,8 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 
 	var data []OpenTsdbResponse
 	dec := json.NewDecoder(bytes.NewBuffer(body))
-    dec.UseNumber()
-    err = dec.Decode(&data)
+	dec.UseNumber()
+	err = dec.Decode(&data)
 	if err != nil {
 		plog.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
