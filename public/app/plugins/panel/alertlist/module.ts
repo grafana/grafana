@@ -17,10 +17,20 @@ class AlertListPanel extends PanelCtrl {
     { text: 'Importance', value: 3 },
   ];
 
+  soundOptions = [
+    { text: 'Alarm', value: 'public/sound/alarm' },
+    { text: 'Breaking glass', value: 'public/sound/breakingGlass' },
+    { text: 'Car horn', value: 'public/sound/carHorn' },
+    { text: 'Scream', value: 'public/sound/scream' },
+    { text: 'Doorbell', value: 'public/sound/doorbell' },
+  ];
+
   stateFilter: any = {};
   currentAlerts: any = [];
   alertHistory: any = [];
   noAlertsMessage: string;
+  audio: any;
+  lastRefreshAt: any;
 
   // Set and populate defaults
   panelDefaults = {
@@ -32,6 +42,8 @@ class AlertListPanel extends PanelCtrl {
     dashboardFilter: '',
     nameFilter: '',
     folderId: null,
+    sound: false,
+    soundFile: 'public/sound/alarm',
   };
 
   /** @ngInject */
@@ -44,6 +56,32 @@ class AlertListPanel extends PanelCtrl {
 
     for (const key in this.panel.stateFilter) {
       this.stateFilter[this.panel.stateFilter[key]] = true;
+    }
+
+    this.audio = new Audio();
+    this.setSoundFile();
+    this.lastRefreshAt = moment();
+  }
+
+  updateSoundFile() {
+    this.setSoundFile();
+    this.playSound();
+    this.onRefresh();
+  }
+
+  setSoundFile() {
+    if (this.audio.canPlayType('audio/mpeg') === '') {
+      this.audio.src = this.panel.soundFile + '.ogg';
+    } else {
+      this.audio.src = this.panel.soundFile + '.mp3';
+    }
+    this.audio.load();
+  }
+
+  playSound() {
+    var playPromise = this.audio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(function() {}).catch(function(error) {});
     }
   }
 
@@ -90,6 +128,7 @@ class AlertListPanel extends PanelCtrl {
 
     getAlertsPromise.then(() => {
       this.renderingCompleted();
+      this.lastRefreshAt = moment();
     });
   }
 
@@ -127,6 +166,7 @@ class AlertListPanel extends PanelCtrl {
   }
 
   getCurrentAlertState() {
+    var soundFlag = false;
     var params: any = {
       state: this.panel.stateFilter,
     };
@@ -165,7 +205,17 @@ class AlertListPanel extends PanelCtrl {
         this.currentAlerts = this.currentAlerts.slice(0, this.panel.limit);
       }
       this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
-
+      for (let _ in this.currentAlerts) {
+        var alert = this.currentAlerts[_];
+        var newStateDate = moment(alert.newStateDate).locale('en');
+        if (this.lastRefreshAt < newStateDate && alert.stateModel.text === 'ALERTING') {
+          soundFlag = true;
+        }
+      }
+      if (soundFlag && this.panel.sound) {
+        this.audio.load();
+        this.playSound();
+      }
       return this.currentAlerts;
     });
   }
