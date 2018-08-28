@@ -21,20 +21,75 @@
   <meta name="msapplication-TileColor" content="#2b5797">
   <meta name="msapplication-config" content="public/img/browserconfig.xml">
   <style>
-    @keyframes rotate-icon {from {transform: rotateZ(0deg);}to {transform: rotateZ(360deg);}}
-    .rotating-logo {
-    animation-name: rotate-icon;
-    animation-duration: 1.1s;
-    animation-iteration-count: infinite;
-    animation-timing-function: cubic-bezier(0.4, 0.35, 0.5, 0.55)
+    .preloader {
+      height: 100%;
+      flex-direction: column;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .logo-bounce {
+      animation-name: bounce;
+      animation-duration: .9s;
+      animation-iteration-count: infinite;
+    }
+
+    .logo {
+      display: block;
+      animation-name: squash;
+      animation-duration: .9s;
+      animation-iteration-count: infinite;
+    }
+
+    @keyframes bounce {
+      from,
+      to {
+        transform: translateY(0px);
+        animation-timing-function: cubic-bezier(0.3, 0.0, 0.1, 1)
+      }
+      50% {
+        transform: translateY(-50px);
+        animation-timing-function: cubic-bezier(.9, 0, .7, 1)
+      }
+    }
+
+    @keyframes squash {
+      0% {
+        transform: scaleX(1.3) scaleY(.7);
+        animation-timing-function: cubic-bezier(.3, 0, .1, 1);
+        transform-origin: bottom center;
+      }
+      15% {
+        transform: scaleX(.75) scaleY(1.25);
+        animation-timing-function: cubic-bezier(0, 0, .7, .75);
+        transform-origin: bottom center;
+      }
+      55% {
+        transform: scaleX(1.05) scaleY(.95);
+        animation-timing-function: cubic-bezier(.9, 0, 1, 1);
+        transform-origin: top center;
+      }
+      95% {
+        transform: scaleX(.75) scaleY(1.25);
+        animation-timing-function: cubic-bezier(0, 0, 0, 1);
+        transform-origin: bottom center;
+      }
+      100% {
+        transform: scaleX(1.3) scaleY(.7);
+        transform-origin: bottom center;
+        animation-timing-function: cubic-bezier(0, 0, 0.7, 1);
+      }
     }
   </style>
 </head>
 
-<body  class="theme-[[ .Theme ]]">
-  <div class="page-loader" style="display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column">
-    <div class="rotating-logo">
-      <img src="public/img/grafana_icon.svg" style="width: 60px">
+<body class="theme-[[ .Theme ]]">
+  <div class="preloader">
+    <div class="logo-bounce">
+      <div class="logo">
+        <img src="public/img/grafana_icon.svg" style="width: 60px">
+      </div>
     </div>
     <div style="margin-top: 14px">LOADING GRAFANA</div>
   </div>
