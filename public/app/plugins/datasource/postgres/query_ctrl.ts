@@ -54,6 +54,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       if (this.panelCtrl.panel.type === 'table') {
         this.target.format = 'table';
         this.target.rawSql = 'SELECT 1';
+        this.target.rawQuery = true;
       } else {
         this.target.rawSql = defaultQuery;
         this.datasource.metricFindQuery(this.metaBuilder.findMetricTable()).then(result => {
