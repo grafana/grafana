@@ -72,7 +72,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       return;
     }
 
-    var path = this.queryModel.getSegmentPathUpTo(fromIndex + 1);
+    const path = this.queryModel.getSegmentPathUpTo(fromIndex + 1);
     if (path === '') {
       return Promise.resolve();
     }
@@ -110,7 +110,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     if (index > 0) {
       query = this.queryModel.getSegmentPathUpTo(index) + '.' + query;
     }
-    var options = {
+    const options = {
       range: this.panelCtrl.range,
       requestId: 'get-alt-segments',
     };
@@ -118,7 +118,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return this.datasource
       .metricFindQuery(query, options)
       .then(segments => {
-        var altSegments = _.map(segments, segment => {
+        const altSegments = _.map(segments, segment => {
           return this.uiSegmentSrv.newSegment({
             value: segment.text,
             expandable: segment.expandable,
@@ -238,7 +238,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       return;
     }
 
-    var oldTarget = this.queryModel.target.target;
+    const oldTarget = this.queryModel.target.target;
     this.updateModelTarget();
 
     if (this.queryModel.target !== oldTarget && !this.paused) {
@@ -247,7 +247,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   addFunction(funcDef) {
-    var newFunc = this.datasource.createFuncInstance(funcDef, {
+    const newFunc = this.datasource.createFuncInstance(funcDef, {
       withDefaultParams: true,
     });
     newFunc.added = true;

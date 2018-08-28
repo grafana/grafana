@@ -6,8 +6,8 @@ export class ThresholdMapper {
         continue;
       }
 
-      var evaluator = condition.evaluator;
-      var thresholds = (panel.thresholds = []);
+      const evaluator = condition.evaluator;
+      const thresholds = (panel.thresholds = []);
 
       switch (evaluator.type) {
         case 'gt': {
@@ -51,13 +51,13 @@ export class ThresholdMapper {
       break;
     }
 
-    for (var t of panel.thresholds) {
+    for (const t of panel.thresholds) {
       t.fill = true;
       t.line = true;
       t.colorMode = 'critical';
     }
 
-    var updated = true;
+    const updated = true;
     return updated;
   }
 }

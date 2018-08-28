@@ -19,8 +19,8 @@ export class DashboardMigrator {
 
   updateSchema(old) {
     var i, j, k, n;
-    var oldVersion = this.dashboard.schemaVersion;
-    var panelUpgrades = [];
+    const oldVersion = this.dashboard.schemaVersion;
+    const panelUpgrades = [];
     this.dashboard.schemaVersion = 16;
 
     if (oldVersion === this.dashboard.schemaVersion) {
@@ -108,7 +108,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 6) {
       // move pulldowns to new schema
-      var annotations = _.find(old.pulldowns, { type: 'annotations' });
+      const annotations = _.find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {
@@ -118,7 +118,7 @@ export class DashboardMigrator {
 
       // update template variables
       for (i = 0; i < this.dashboard.templating.list.length; i++) {
-        var variable = this.dashboard.templating.list[i];
+        const variable = this.dashboard.templating.list[i];
         if (variable.datasource === void 0) {
           variable.datasource = null;
         }
@@ -162,7 +162,7 @@ export class DashboardMigrator {
               delete target.fill;
             } else {
               target.select = _.map(target.fields, function(field) {
-                var parts = [];
+                const parts = [];
                 parts.push({ type: 'field', params: [field.name] });
                 parts.push({ type: field.func, params: [] });
                 if (field.mathExpr) {
@@ -204,7 +204,7 @@ export class DashboardMigrator {
         }
 
         if (panel.thresholds) {
-          var k = panel.thresholds.split(',');
+          const k = panel.thresholds.split(',');
 
           if (k.length >= 3) {
             k.shift();
@@ -224,7 +224,7 @@ export class DashboardMigrator {
 
         _.each(panel.styles, function(style) {
           if (style.thresholds && style.thresholds.length >= 3) {
-            var k = style.thresholds;
+            const k = style.thresholds;
             k.shift();
             style.thresholds = k;
           }
@@ -309,7 +309,7 @@ export class DashboardMigrator {
         }
 
         panel.thresholds = [];
-        var t1: any = {},
+        const t1: any = {},
           t2: any = {};
 
         if (panel.grid.threshold1 !== null) {

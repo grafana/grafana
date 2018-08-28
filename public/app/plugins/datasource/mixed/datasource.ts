@@ -6,15 +6,15 @@ class MixedDatasource {
   constructor(private $q, private datasourceSrv) {}
 
   query(options) {
-    var sets = _.groupBy(options.targets, 'datasource');
-    var promises = _.map(sets, targets => {
-      var dsName = targets[0].datasource;
+    const sets = _.groupBy(options.targets, 'datasource');
+    const promises = _.map(sets, targets => {
+      const dsName = targets[0].datasource;
       if (dsName === '-- Mixed --') {
         return this.$q([]);
       }
 
       return this.datasourceSrv.get(dsName).then(function(ds) {
-        var opt = angular.copy(options);
+        const opt = angular.copy(options);
         opt.targets = targets;
         return ds.query(opt);
       });

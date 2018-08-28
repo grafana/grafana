@@ -74,8 +74,8 @@ export function sideMenuDirective() {
     link: function(scope, elem) {
       // hack to hide dropdown menu
       elem.on('click.dropdown', '.dropdown-menu a', function(evt) {
-        var menu = $(evt.target).parents('.dropdown-menu');
-        var parent = menu.parent();
+        const menu = $(evt.target).parents('.dropdown-menu');
+        const parent = menu.parent();
         menu.detach();
 
         setTimeout(function() {
