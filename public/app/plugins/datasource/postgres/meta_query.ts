@@ -27,9 +27,9 @@ export class PostgresMetaQuery {
     // query that returns first table found that has a timestamp(tz) column and a float column
     let query = `
 SELECT
-	table_name,
+	quote_ident(table_name) as table_name,
 	( SELECT
-	    column_name
+	    quote_ident(column_name) as column_name
 	  FROM information_schema.columns c
     WHERE
       c.table_schema = t.table_schema AND
@@ -38,7 +38,7 @@ SELECT
     ORDER BY ordinal_position LIMIT 1
   ) AS time_column,
   ( SELECT
-      column_name
+      quote_ident(column_name) AS column_name
     FROM information_schema.columns c
     WHERE
       c.table_schema = t.table_schema AND
