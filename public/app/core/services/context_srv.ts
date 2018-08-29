@@ -59,7 +59,7 @@ export class ContextSrv {
   }
 }
 
-var contextSrv = new ContextSrv();
+const contextSrv = new ContextSrv();
 export { contextSrv };
 
 coreModule.factory('contextSrv', function() {

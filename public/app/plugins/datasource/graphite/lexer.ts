@@ -9,7 +9,7 @@ import _ from 'lodash';
 // http://www.fileformat.info/info/unicode/category/Lo/list.htm
 // http://www.fileformat.info/info/unicode/category/Nl/list.htm
 
-var unicodeLetterTable = [
+const unicodeLetterTable = [
   170,
   170,
   181,
@@ -898,7 +898,7 @@ var unicodeLetterTable = [
   195101,
 ];
 
-var identifierStartTable = [];
+const identifierStartTable = [];
 
 for (var i = 0; i < 128; i++) {
   identifierStartTable[i] =
@@ -920,7 +920,7 @@ for (var i = 0; i < 128; i++) {
     (i >= 97 && i <= 122); // a-z
 }
 
-var identifierPartTable = identifierStartTable;
+const identifierPartTable = identifierStartTable;
 
 export function Lexer(expression) {
   this.input = expression;
@@ -940,7 +940,7 @@ Lexer.prototype = {
   },
 
   tokenize: function() {
-    var list = [];
+    const list = [];
     var token;
     while ((token = this.next())) {
       list.push(token);
@@ -1037,7 +1037,7 @@ Lexer.prototype = {
       return /^[0-9a-fA-F]$/.test(str);
     }
 
-    var readUnicodeEscapeSequence = _.bind(function() {
+    const readUnicodeEscapeSequence = _.bind(function() {
       /*jshint validthis:true */
       index += 1;
 
@@ -1045,10 +1045,10 @@ Lexer.prototype = {
         return null;
       }
 
-      var ch1 = this.peek(index + 1);
-      var ch2 = this.peek(index + 2);
-      var ch3 = this.peek(index + 3);
-      var ch4 = this.peek(index + 4);
+      const ch1 = this.peek(index + 1);
+      const ch2 = this.peek(index + 2);
+      const ch3 = this.peek(index + 3);
+      const ch4 = this.peek(index + 4);
       var code;
 
       if (isHexDigit(ch1) && isHexDigit(ch2) && isHexDigit(ch3) && isHexDigit(ch4)) {
@@ -1065,10 +1065,10 @@ Lexer.prototype = {
       return null;
     }, this);
 
-    var getIdentifierStart = _.bind(function() {
+    const getIdentifierStart = _.bind(function() {
       /*jshint validthis:true */
-      var chr = this.peek(index);
-      var code = chr.charCodeAt(0);
+      const chr = this.peek(index);
+      const code = chr.charCodeAt(0);
 
       if (chr === '*') {
         index += 1;
@@ -1096,10 +1096,10 @@ Lexer.prototype = {
       return null;
     }, this);
 
-    var getIdentifierPart = _.bind(function() {
+    const getIdentifierPart = _.bind(function() {
       /*jshint validthis:true */
-      var chr = this.peek(index);
-      var code = chr.charCodeAt(0);
+      const chr = this.peek(index);
+      const code = chr.charCodeAt(0);
 
       if (code === 92) {
         return readUnicodeEscapeSequence();
@@ -1170,7 +1170,7 @@ Lexer.prototype = {
   scanNumericLiteral: function(): any {
     var index = 0;
     var value = '';
-    var length = this.input.length;
+    const length = this.input.length;
     var char = this.peek(index);
     var bad;
 
@@ -1385,7 +1385,7 @@ Lexer.prototype = {
   },
 
   scanPunctuator: function() {
-    var ch1 = this.peek();
+    const ch1 = this.peek();
 
     if (this.isPunctuator(ch1)) {
       return {
@@ -1411,7 +1411,7 @@ Lexer.prototype = {
    */
   scanStringLiteral: function() {
     /*jshint loopfunc:true */
-    var quote = this.peek();
+    const quote = this.peek();
 
     // String must start with a quote.
     if (quote !== '"' && quote !== "'") {
@@ -1434,8 +1434,8 @@ Lexer.prototype = {
         };
       }
 
-      var char = this.peek();
-      var jump = 1; // A length of a jump, after we're done
+      const char = this.peek();
+      const jump = 1; // A length of a jump, after we're done
       // parsing this character.
 
       value += char;

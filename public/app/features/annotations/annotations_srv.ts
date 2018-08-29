@@ -40,7 +40,7 @@ export class AnnotationsSrv {
         annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
-        var alertState = _.find(results[1], { panelId: options.panel.id });
+        const alertState = _.find(results[1], { panelId: options.panel.id });
 
         return {
           annotations: annotations,
@@ -82,14 +82,14 @@ export class AnnotationsSrv {
   }
 
   getGlobalAnnotations(options) {
-    var dashboard = options.dashboard;
+    const dashboard = options.dashboard;
 
     if (this.globalAnnotationsPromise) {
       return this.globalAnnotationsPromise;
     }
 
-    var range = this.timeSrv.timeRange();
-    var promises = [];
+    const range = this.timeSrv.timeRange();
+    const promises = [];
 
     for (const annotation of dashboard.annotations.list) {
       if (!annotation.enable) {
@@ -155,7 +155,7 @@ export class AnnotationsSrv {
       delete annotation.snapshotData;
     }
 
-    for (var item of results) {
+    for (const item of results) {
       item.source = annotation;
     }
     return results;

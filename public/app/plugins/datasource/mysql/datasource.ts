@@ -26,7 +26,7 @@ export class MysqlDatasource {
       return value;
     }
 
-    var quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, function(val) {
       if (typeof value === 'number') {
         return value;
       }
@@ -37,7 +37,7 @@ export class MysqlDatasource {
   }
 
   query(options) {
-    var queries = _.filter(options.targets, item => {
+    const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
       return {
@@ -107,7 +107,7 @@ export class MysqlDatasource {
       format: 'table',
     };
 
-    var data = {
+    const data = {
       queries: [interpolatedQuery],
     };
 

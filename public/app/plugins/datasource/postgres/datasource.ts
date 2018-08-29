@@ -31,14 +31,14 @@ export class PostgresDatasource {
       return value;
     }
 
-    let quotedValues = _.map(value, v => {
+    const quotedValues = _.map(value, v => {
       return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
   }
 
   query(options) {
-    let queries = _.filter(options.targets, target => {
+    const queries = _.filter(options.targets, target => {
       return target.hide !== true;
     }).map(target => {
       let queryModel = new PostgresQuery(target, this.templateSrv, options.scopedVars);
@@ -111,7 +111,7 @@ export class PostgresDatasource {
     };
 
     let range = this.timeSrv.timeRange();
-    let data = {
+    const data = {
       queries: [interpolatedQuery],
       from: range.from.valueOf().toString(),
       to: range.to.valueOf().toString(),

@@ -43,7 +43,7 @@ export class PanelCtrl {
     this.events = this.panel.events;
     this.timing = {};
 
-    var plugin = config.panels[this.panel.type];
+    const plugin = config.panels[this.panel.type];
     if (plugin) {
       this.pluginId = plugin.id;
       this.pluginName = plugin.name;
@@ -105,7 +105,7 @@ export class PanelCtrl {
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
 
-    var urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
+    const urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
     if (urlTab) {
       this.editorTabs.forEach((tab, i) => {
         if (tab.title.toLowerCase() === urlTab) {
@@ -117,13 +117,13 @@ export class PanelCtrl {
 
   changeTab(newIndex) {
     this.editorTabIndex = newIndex;
-    var route = this.$injector.get('$route');
+    const route = this.$injector.get('$route');
     route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
     route.updateParams();
   }
 
   addEditorTab(title, directiveFn, index?) {
-    var editorTab = { title, directiveFn };
+    const editorTab = { title, directiveFn };
 
     if (_.isString(directiveFn)) {
       editorTab.directiveFn = function() {
@@ -225,9 +225,9 @@ export class PanelCtrl {
 
   calculatePanelHeight() {
     if (this.fullscreen) {
-      var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.4);
-      var fullscreenHeight = Math.floor(docHeight * 0.8);
+      const docHeight = $(window).height();
+      const editHeight = Math.floor(docHeight * 0.4);
+      const fullscreenHeight = Math.floor(docHeight * 0.8);
       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
@@ -293,7 +293,7 @@ export class PanelCtrl {
   }
 
   sharePanel() {
-    var shareScope = this.$scope.$new();
+    const shareScope = this.$scope.$new();
     shareScope.panel = this.panel;
     shareScope.dashboard = this.dashboard;
 
@@ -323,10 +323,10 @@ export class PanelCtrl {
       markdown = this.error || this.panel.description;
     }
 
-    var linkSrv = this.$injector.get('linkSrv');
-    var sanitize = this.$injector.get('$sanitize');
-    var templateSrv = this.$injector.get('templateSrv');
-    var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
+    const linkSrv = this.$injector.get('linkSrv');
+    const sanitize = this.$injector.get('$sanitize');
+    const templateSrv = this.$injector.get('templateSrv');
+    const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     var html = '<div class="markdown-html">';
 
     html += new Remarkable().render(interpolatedMarkdown);
@@ -334,7 +334,7 @@ export class PanelCtrl {
     if (this.panel.links && this.panel.links.length > 0) {
       html += '<ul>';
       for (const link of this.panel.links) {
-        var info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
+        const info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
         html +=
           '<li><a class="panel-menu-link" href="' +
           info.href +
@@ -352,7 +352,7 @@ export class PanelCtrl {
   }
 
   openInspector() {
-    var modalScope = this.$scope.$new();
+    const modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
     modalScope.dashboard = this.dashboard;
     modalScope.panelInfoHtml = this.getInfoContent({ mode: 'inspector' });

@@ -49,7 +49,7 @@ export class GrafanaCtrl {
     };
 
     $rootScope.onAppEvent = function(name, callback, localScope) {
-      var unbind = $rootScope.$on(name, callback);
+      const unbind = $rootScope.$on(name, callback);
       var callerScope = this;
       if (callerScope.$id === 1 && !localScope) {
         console.log('warning rootScope onAppEvent called without localscope');
@@ -76,7 +76,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
     controller: GrafanaCtrl,
     link: (scope, elem) => {
       var sidemenuOpen;
-      var body = $('body');
+      const body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = function() {};
@@ -153,7 +153,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       // handle in active view state class
       var lastActivity = new Date().getTime();
       var activeUser = true;
-      var inActiveTimeLimit = 60 * 1000;
+      const inActiveTimeLimit = 60 * 1000;
       var sidemenuHidden = false;
 
       function checkForInActiveUser() {
@@ -215,16 +215,16 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
       // handle document clicks that should hide things
       body.click(function(evt) {
-        var target = $(evt.target);
+        const target = $(evt.target);
         if (target.parents().length === 0) {
           return;
         }
 
         // for stuff that animates, slides out etc, clicking it needs to
         // hide it right away
-        var clickAutoHide = target.closest('[data-click-hide]');
+        const clickAutoHide = target.closest('[data-click-hide]');
         if (clickAutoHide.length) {
-          var clickAutoHideParent = clickAutoHide.parent();
+          const clickAutoHideParent = clickAutoHide.parent();
           clickAutoHide.detach();
           setTimeout(function() {
             clickAutoHideParent.append(clickAutoHide);
@@ -245,7 +245,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         }
 
         // hide popovers
-        var popover = elem.find('.popover');
+        const popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
         }

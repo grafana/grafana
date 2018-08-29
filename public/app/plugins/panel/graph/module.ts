@@ -255,14 +255,14 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   toggleSeriesExclusiveMode(serie) {
-    var hidden = this.hiddenSeries;
+    const hidden = this.hiddenSeries;
 
     if (hidden[serie.alias]) {
       delete hidden[serie.alias];
     }
 
     // check if every other series is hidden
-    var alreadyExclusive = _.every(this.seriesList, value => {
+    const alreadyExclusive = _.every(this.seriesList, value => {
       if (value.alias === serie.alias) {
         return true;
       }
@@ -312,13 +312,13 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   legendValuesOptionChanged() {
-    var legend = this.panel.legend;
+    const legend = this.panel.legend;
     legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
     this.render();
   }
 
   exportCsv() {
-    var scope = this.$scope.$new(true);
+    const scope = this.$scope.$new(true);
     scope.seriesList = this.seriesList;
     this.publishAppEvent('show-modal', {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',

@@ -279,7 +279,7 @@ export class JsonExplorer {
       const objectWrapperSpan = createElement('span');
 
       // get constructor name and append it to wrapper span
-      var constructorName = createElement('span', 'constructor-name', this.constructorName);
+      const constructorName = createElement('span', 'constructor-name', this.constructorName);
       objectWrapperSpan.appendChild(constructorName);
 
       // if it's an array append the array specific elements like brackets and length

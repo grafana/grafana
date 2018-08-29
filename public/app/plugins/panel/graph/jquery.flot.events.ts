@@ -290,9 +290,9 @@ export class EventMarkers {
    * update the position of the event-markers (e.g. after scrolling or zooming)
    */
   updateEvents() {
-    let o = this._plot.getPlotOffset(),
-      left,
-      top;
+    const o = this._plot.getPlotOffset();
+    let left;
+    let top;
     const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
 
     $.each(this._events, (index, event) => {
