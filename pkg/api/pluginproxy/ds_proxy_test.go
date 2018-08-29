@@ -49,6 +49,13 @@ func TestDSRouteRule(t *testing.T) {
 							{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 						},
 					},
+					{
+						Path: "api/common",
+						Url:  "{{.JsonData.dynamicUrl}}",
+						Headers: []plugins.AppPluginRouteHeader{
+							{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
+						},
+					},
 				},
 			}
 
@@ -57,7 +64,8 @@ func TestDSRouteRule(t *testing.T) {
 
 			ds := &m.DataSource{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"clientId": "asd",
+					"clientId":   "asd",
+					"dynamicUrl": "https://dynamic.grafana.com",
 				}),
 				SecureJsonData: map[string][]byte{
 					"key": key,
@@ -79,6 +87,17 @@ func TestDSRouteRule(t *testing.T) {
 
 				Convey("should add headers and update url", func() {
 					So(req.URL.String(), ShouldEqual, "https://www.google.com/some/method")
+					So(req.Header.Get("x-header"), ShouldEqual, "my secret 123")
+				})
+			})
+
+			Convey("When matching route path and has dynamic url", func() {
+				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/common/some/method")
+				proxy.route = plugin.Routes[3]
+				proxy.applyRoute(req)
+
+				Convey("should add headers and interpolate the url", func() {
+					So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com/some/method")
 					So(req.Header.Get("x-header"), ShouldEqual, "my secret 123")
 				})
 			})

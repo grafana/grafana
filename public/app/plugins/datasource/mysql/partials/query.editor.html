@@ -57,6 +57,8 @@ Macros:
      by setting fillvalue grafana will fill in missing values according to the interval
      fillvalue can be either a literal value, NULL or previous; previous will fill in the previous seen value or NULL if none has been seen yet
 - $__timeGroupAlias(column,'5m') -&gt; cast(cast(UNIX_TIMESTAMP(column)/(300) as signed)*300 as signed) AS "time"
+- $__unixEpochGroup(column,'5m') -&gt; column DIV 300 * 300
+- $__unixEpochGroupAlias(column,'5m') -&gt; column DIV 300 * 300 AS "time"
 
 Example of group by and order by with $__timeGroup:
 SELECT

@@ -98,8 +98,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     const layout = [];
     this.panelMap = {};
 
-    for (let panel of this.dashboard.panels) {
-      let stringId = panel.id.toString();
+    for (const panel of this.dashboard.panels) {
+      const stringId = panel.id.toString();
       this.panelMap[stringId] = panel;
 
       if (!panel.gridPos) {
@@ -107,7 +107,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         continue;
       }
 
-      let panelPos: any = {
+      const panelPos: any = {
         i: stringId,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
@@ -186,7 +186,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   renderPanels() {
     const panelElements = [];
 
-    for (let panel of this.dashboard.panels) {
+    for (const panel of this.dashboard.panels) {
       const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
       panelElements.push(
         <div key={panel.id.toString()} ref={e => this.observer.watch(e, panel)} className={panelClasses}>

@@ -59,11 +59,11 @@ export default class GraphiteQuery {
   }
 
   checkForSeriesByTag() {
-    let seriesByTagFunc = _.find(this.functions, func => func.def.name === 'seriesByTag');
+    const seriesByTagFunc = _.find(this.functions, func => func.def.name === 'seriesByTag');
     if (seriesByTagFunc) {
       this.seriesByTagUsed = true;
       seriesByTagFunc.hidden = true;
-      let tags = this.splitSeriesByTagParams(seriesByTagFunc);
+      const tags = this.splitSeriesByTagParams(seriesByTagFunc);
       this.tags = tags;
     }
   }
@@ -186,8 +186,8 @@ export default class GraphiteQuery {
       let refCount = 0;
       _.each(targetsByRefId, (t, id) => {
         if (id !== refId) {
-          let match = nestedSeriesRefRegex.exec(t.target);
-          let count = match && match.length ? match.length - 1 : 0;
+          const match = nestedSeriesRefRegex.exec(t.target);
+          const count = match && match.length ? match.length - 1 : 0;
           refCount += count;
         }
       });
@@ -232,9 +232,9 @@ export default class GraphiteQuery {
     const tagPattern = /([^\!=~]+)(\!?=~?)(.*)/;
     return _.flatten(
       _.map(func.params, (param: string) => {
-        let matches = tagPattern.exec(param);
+        const matches = tagPattern.exec(param);
         if (matches) {
-          let tag = matches.slice(1);
+          const tag = matches.slice(1);
           if (tag.length === 3) {
             return {
               key: tag[0],
@@ -253,7 +253,7 @@ export default class GraphiteQuery {
   }
 
   getSeriesByTagFunc() {
-    let seriesByTagFuncIndex = this.getSeriesByTagFuncIndex();
+    const seriesByTagFuncIndex = this.getSeriesByTagFuncIndex();
     if (seriesByTagFuncIndex >= 0) {
       return this.functions[seriesByTagFuncIndex];
     } else {
@@ -262,7 +262,7 @@ export default class GraphiteQuery {
   }
 
   addTag(tag) {
-    let newTagParam = renderTagString(tag);
+    const newTagParam = renderTagString(tag);
     this.getSeriesByTagFunc().params.push(newTagParam);
     this.tags.push(tag);
   }
@@ -280,7 +280,7 @@ export default class GraphiteQuery {
       return;
     }
 
-    let newTagParam = renderTagString(tag);
+    const newTagParam = renderTagString(tag);
     this.getSeriesByTagFunc().params[tagIndex] = newTagParam;
     this.tags[tagIndex] = tag;
   }

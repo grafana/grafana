@@ -95,7 +95,7 @@ export class DashboardModel {
 
   addBuiltInAnnotationQuery() {
     let found = false;
-    for (let item of this.annotations.list) {
+    for (const item of this.annotations.list) {
       if (item.builtIn === 1) {
         found = true;
         break;
@@ -138,7 +138,7 @@ export class DashboardModel {
 
   // cleans meta data and other non persistent state
   getSaveModelClone(options?) {
-    let defaults = _.defaults(options || {}, {
+    const defaults = _.defaults(options || {}, {
       saveVariables: true,
       saveTimerange: true,
     });
@@ -160,8 +160,8 @@ export class DashboardModel {
 
     if (!defaults.saveVariables) {
       for (let i = 0; i < copy.templating.list.length; i++) {
-        let current = copy.templating.list[i];
-        let original = _.find(this.originalTemplating, { name: current.name, type: current.type });
+        const current = copy.templating.list[i];
+        const original = _.find(this.originalTemplating, { name: current.name, type: current.type });
 
         if (!original) {
           continue;
@@ -213,13 +213,13 @@ export class DashboardModel {
   getNextPanelId() {
     let max = 0;
 
-    for (let panel of this.panels) {
+    for (const panel of this.panels) {
       if (panel.id > max) {
         max = panel.id;
       }
 
       if (panel.collapsed) {
-        for (let rowPanel of panel.panels) {
+        for (const rowPanel of panel.panels) {
           if (rowPanel.id > max) {
             max = rowPanel.id;
           }
@@ -237,7 +237,7 @@ export class DashboardModel {
   }
 
   getPanelById(id) {
-    for (let panel of this.panels) {
+    for (const panel of this.panels) {
       if (panel.id === id) {
         return panel;
       }
@@ -248,7 +248,7 @@ export class DashboardModel {
   addPanel(panelData) {
     panelData.id = this.getNextPanelId();
 
-    let panel = new PanelModel(panelData);
+    const panel = new PanelModel(panelData);
 
     this.panels.unshift(panel);
 
@@ -273,15 +273,15 @@ export class DashboardModel {
     }
 
     this.iteration = (this.iteration || new Date().getTime()) + 1;
-    let panelsToRemove = [];
+    const panelsToRemove = [];
 
     // cleanup scopedVars
-    for (let panel of this.panels) {
+    for (const panel of this.panels) {
       delete panel.scopedVars;
     }
 
     for (let i = 0; i < this.panels.length; i++) {
-      let panel = this.panels[i];
+      const panel = this.panels[i];
       if ((!panel.repeat || panel.repeatedByRow) && panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
         panelsToRemove.push(panel);
       }
@@ -304,7 +304,7 @@ export class DashboardModel {
     this.iteration = (this.iteration || new Date().getTime()) + 1;
 
     for (let i = 0; i < this.panels.length; i++) {
-      let panel = this.panels[i];
+      const panel = this.panels[i];
       if (panel.repeat) {
         this.repeatPanel(panel, i);
       }
@@ -315,9 +315,9 @@ export class DashboardModel {
   }
 
   cleanUpRowRepeats(rowPanels) {
-    let panelsToRemove = [];
+    const panelsToRemove = [];
     for (let i = 0; i < rowPanels.length; i++) {
-      let panel = rowPanels[i];
+      const panel = rowPanels[i];
       if (!panel.repeat && panel.repeatPanelId) {
         panelsToRemove.push(panel);
       }
@@ -333,16 +333,16 @@ export class DashboardModel {
 
     let rowPanels = row.panels;
     if (!row.collapsed) {
-      let rowPanelIndex = _.findIndex(this.panels, p => p.id === row.id);
+      const rowPanelIndex = _.findIndex(this.panels, p => p.id === row.id);
       rowPanels = this.getRowPanels(rowPanelIndex);
     }
 
     this.cleanUpRowRepeats(rowPanels);
 
     for (let i = 0; i < rowPanels.length; i++) {
-      let panel = rowPanels[i];
+      const panel = rowPanels[i];
       if (panel.repeat) {
-        let panelIndex = _.findIndex(this.panels, p => p.id === panel.id);
+        const panelIndex = _.findIndex(this.panels, p => p.id === panel.id);
         this.repeatPanel(panel, panelIndex);
       }
     }
@@ -354,7 +354,7 @@ export class DashboardModel {
       return sourcePanel;
     }
 
-    let clone = new PanelModel(sourcePanel.getSaveModel());
+    const clone = new PanelModel(sourcePanel.getSaveModel());
     clone.id = this.getNextPanelId();
 
     // insert after source panel + value index
@@ -370,13 +370,13 @@ export class DashboardModel {
     // if first clone return source
     if (valueIndex === 0) {
       if (!sourceRowPanel.collapsed) {
-        let rowPanels = this.getRowPanels(sourcePanelIndex);
+        const rowPanels = this.getRowPanels(sourcePanelIndex);
         sourceRowPanel.panels = rowPanels;
       }
       return sourceRowPanel;
     }
 
-    let clone = new PanelModel(sourceRowPanel.getSaveModel());
+    const clone = new PanelModel(sourceRowPanel.getSaveModel());
     // for row clones we need to figure out panels under row to clone and where to insert clone
     let rowPanels, insertPos;
     if (sourceRowPanel.collapsed) {
@@ -397,7 +397,7 @@ export class DashboardModel {
   }
 
   repeatPanel(panel: PanelModel, panelIndex: number) {
-    let variable = _.find(this.templating.list, { name: panel.repeat });
+    const variable = _.find(this.templating.list, { name: panel.repeat });
     if (!variable) {
       return;
     }
@@ -407,13 +407,13 @@ export class DashboardModel {
       return;
     }
 
-    let selectedOptions = this.getSelectedVariableOptions(variable);
-    let minWidth = panel.minSpan || 6;
+    const selectedOptions = this.getSelectedVariableOptions(variable);
+    const minWidth = panel.minSpan || 6;
     let xPos = 0;
     let yPos = panel.gridPos.y;
 
     for (let index = 0; index < selectedOptions.length; index++) {
-      let option = selectedOptions[index];
+      const option = selectedOptions[index];
       let copy;
 
       copy = this.getPanelRepeatClone(panel, index, panelIndex);
@@ -443,9 +443,9 @@ export class DashboardModel {
     }
 
     // Update gridPos for panels below
-    let yOffset = yPos - panel.gridPos.y;
+    const yOffset = yPos - panel.gridPos.y;
     if (yOffset > 0) {
-      let panelBelowIndex = panelIndex + selectedOptions.length;
+      const panelBelowIndex = panelIndex + selectedOptions.length;
       for (let i = panelBelowIndex; i < this.panels.length; i++) {
         this.panels[i].gridPos.y += yOffset;
       }
@@ -453,7 +453,7 @@ export class DashboardModel {
   }
 
   repeatRow(panel: PanelModel, panelIndex: number, variable) {
-    let selectedOptions = this.getSelectedVariableOptions(variable);
+    const selectedOptions = this.getSelectedVariableOptions(variable);
     let yPos = panel.gridPos.y;
 
     function setScopedVars(panel, variableOption) {
@@ -462,12 +462,12 @@ export class DashboardModel {
     }
 
     for (let optionIndex = 0; optionIndex < selectedOptions.length; optionIndex++) {
-      let option = selectedOptions[optionIndex];
-      let rowCopy = this.getRowRepeatClone(panel, optionIndex, panelIndex);
+      const option = selectedOptions[optionIndex];
+      const rowCopy = this.getRowRepeatClone(panel, optionIndex, panelIndex);
       setScopedVars(rowCopy, option);
 
-      let rowHeight = this.getRowHeight(rowCopy);
-      let rowPanels = rowCopy.panels || [];
+      const rowHeight = this.getRowHeight(rowCopy);
+      const rowPanels = rowCopy.panels || [];
       let panelBelowIndex;
 
       if (panel.collapsed) {
@@ -483,11 +483,11 @@ export class DashboardModel {
         panelBelowIndex = panelIndex + optionIndex + 1;
       } else {
         // insert after 'row' panel
-        let insertPos = panelIndex + (rowPanels.length + 1) * optionIndex + 1;
+        const insertPos = panelIndex + (rowPanels.length + 1) * optionIndex + 1;
         _.each(rowPanels, (rowPanel, i) => {
           setScopedVars(rowPanel, option);
           if (optionIndex > 0) {
-            let cloneRowPanel = new PanelModel(rowPanel);
+            const cloneRowPanel = new PanelModel(rowPanel);
             this.updateRepeatedPanelIds(cloneRowPanel, true);
             // For exposed row additionally set proper Y grid position and add it to dashboard panels
             cloneRowPanel.gridPos.y += rowHeight * optionIndex;
@@ -650,29 +650,29 @@ export class DashboardModel {
   formatDate(date, format?) {
     date = moment.isMoment(date) ? date : moment(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
-    let timezone = this.getTimezone();
+    const timezone = this.getTimezone();
 
     return timezone === 'browser' ? moment(date).format(format) : moment.utc(date).format(format);
   }
 
   destroy() {
     this.events.removeAllListeners();
-    for (let panel of this.panels) {
+    for (const panel of this.panels) {
       panel.destroy();
     }
   }
 
   toggleRow(row: PanelModel) {
-    let rowIndex = _.indexOf(this.panels, row);
+    const rowIndex = _.indexOf(this.panels, row);
 
     if (row.collapsed) {
       row.collapsed = false;
-      let hasRepeat = _.some(row.panels, p => p.repeat);
+      const hasRepeat = _.some(row.panels, p => p.repeat);
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
-        let firstPanel = row.panels[0];
-        let yDiff = firstPanel.gridPos.y - (row.gridPos.y + row.gridPos.h);
+        const firstPanel = row.panels[0];
+        const yDiff = firstPanel.gridPos.y - (row.gridPos.y + row.gridPos.h);
 
         // start inserting after row
         let insertPos = rowIndex + 1;
@@ -680,7 +680,7 @@ export class DashboardModel {
         // needed to know home much panels below should be pushed down
         let yMax = row.gridPos.y;
 
-        for (let panel of row.panels) {
+        for (const panel of row.panels) {
           // make sure y is adjusted (in case row moved while collapsed)
           // console.log('yDiff', yDiff);
           panel.gridPos.y -= yDiff;
@@ -713,7 +713,7 @@ export class DashboardModel {
       return;
     }
 
-    let rowPanels = this.getRowPanels(rowIndex);
+    const rowPanels = this.getRowPanels(rowIndex);
 
     // remove panels
     _.pull(this.panels, ...rowPanels);
@@ -729,10 +729,10 @@ export class DashboardModel {
    * Will return all panels after rowIndex until it encounters another row
    */
   getRowPanels(rowIndex: number): PanelModel[] {
-    let rowPanels = [];
+    const rowPanels = [];
 
     for (let index = rowIndex + 1; index < this.panels.length; index++) {
-      let panel = this.panels[index];
+      const panel = this.panels[index];
 
       // break when encountering another row
       if (panel.type === 'row') {
@@ -791,7 +791,7 @@ export class DashboardModel {
   }
 
   private updateSchema(old) {
-    let migrator = new DashboardMigrator(this);
+    const migrator = new DashboardMigrator(this);
     migrator.updateSchema(old);
   }
 

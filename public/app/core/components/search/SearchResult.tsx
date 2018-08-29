@@ -54,7 +54,7 @@ export class SearchResultSection extends React.Component<SectionProps, any> {
   };
 
   render() {
-    let collapseClassNames = classNames({
+    const collapseClassNames = classNames({
       fa: true,
       'fa-plus': !this.props.section.expanded,
       'fa-minus': this.props.section.expanded,

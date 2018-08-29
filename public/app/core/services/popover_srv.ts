@@ -18,10 +18,10 @@ function popoverSrv($compile, $rootScope, $timeout) {
       openDrop = null;
     }
 
-    var scope = _.extend($rootScope.$new(true), options.model);
-    var drop;
+    const scope = _.extend($rootScope.$new(true), options.model);
+    let drop;
 
-    var cleanUp = () => {
+    const cleanUp = () => {
       setTimeout(() => {
         scope.$destroy();
 
@@ -41,7 +41,7 @@ function popoverSrv($compile, $rootScope, $timeout) {
       drop.close();
     };
 
-    var contentElement = document.createElement('div');
+    const contentElement = document.createElement('div');
     contentElement.innerHTML = options.template;
 
     $compile(contentElement)(scope);

@@ -293,8 +293,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (this.series && this.series.length > 0) {
-      let lastPoint = _.last(this.series[0].datapoints);
-      let lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
+      const lastPoint = _.last(this.series[0].datapoints);
+      const lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
 
       if (this.panel.valueName === 'name') {
         data.value = 0;
@@ -305,7 +305,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueFormatted = _.escape(lastValue);
         data.valueRounded = 0;
       } else if (this.panel.valueName === 'last_time') {
-        let formatFunc = kbn.valueFormats[this.panel.format];
+        const formatFunc = kbn.valueFormats[this.panel.format];
         data.value = lastPoint[1];
         data.valueRounded = data.value;
         data.valueFormatted = formatFunc(data.value, this.dashboard.isTimezoneUtc());
@@ -313,8 +313,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
 
-        let decimalInfo = this.getDecimalsForValue(data.value);
-        let formatFunc = kbn.valueFormats[this.panel.format];
+        const decimalInfo = this.getDecimalsForValue(data.value);
+        const formatFunc = kbn.valueFormats[this.panel.format];
         data.valueFormatted = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
@@ -330,7 +330,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     // check value to text mappings if its enabled
     if (this.panel.mappingType === 1) {
       for (let i = 0; i < this.panel.valueMaps.length; i++) {
-        let map = this.panel.valueMaps[i];
+        const map = this.panel.valueMaps[i];
         // special null case
         if (map.value === 'null') {
           if (data.value === null || data.value === void 0) {
@@ -349,7 +349,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
     } else if (this.panel.mappingType === 2) {
       for (let i = 0; i < this.panel.rangeMaps.length; i++) {
-        let map = this.panel.rangeMaps[i];
+        const map = this.panel.rangeMaps[i];
         // special null case
         if (map.from === 'null' && map.to === 'null') {
           if (data.value === null || data.value === void 0) {

@@ -140,7 +140,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         }
 
         // close all drops
-        for (let drop of Drop.drops) {
+        for (const drop of Drop.drops) {
           drop.destroy();
         }
       });

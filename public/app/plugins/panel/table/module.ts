@@ -243,7 +243,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     });
 
     function addFilterClicked(e) {
-      let filterData = $(e.currentTarget).data();
+      const filterData = $(e.currentTarget).data();
       var options = {
         datasource: panel.datasource,
         key: data.columns[filterData.column].text,

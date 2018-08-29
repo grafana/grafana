@@ -389,7 +389,7 @@ export class DashboardMigrator {
 
   upgradeToGridLayout(old) {
     let yPos = 0;
-    let widthFactor = GRID_COLUMN_COUNT / 12;
+    const widthFactor = GRID_COLUMN_COUNT / 12;
 
     const maxPanelId = _.max(
       _.flattenDeep(
@@ -407,15 +407,15 @@ export class DashboardMigrator {
     // Add special "row" panels if even one row is collapsed, repeated or has visible title
     const showRows = _.some(old.rows, row => row.collapse || row.showTitle || row.repeat);
 
-    for (let row of old.rows) {
+    for (const row of old.rows) {
       if (row.repeatIteration) {
         continue;
       }
 
-      let height: any = row.height || DEFAULT_ROW_HEIGHT;
+      const height: any = row.height || DEFAULT_ROW_HEIGHT;
       const rowGridHeight = getGridHeight(height);
 
-      let rowPanel: any = {};
+      const rowPanel: any = {};
       let rowPanelModel: PanelModel;
       if (showRows) {
         // add special row panel
@@ -436,9 +436,9 @@ export class DashboardMigrator {
         yPos++;
       }
 
-      let rowArea = new RowArea(rowGridHeight, GRID_COLUMN_COUNT, yPos);
+      const rowArea = new RowArea(rowGridHeight, GRID_COLUMN_COUNT, yPos);
 
-      for (let panel of row.panels) {
+      for (const panel of row.panels) {
         panel.span = panel.span || DEFAULT_PANEL_SPAN;
         if (panel.minSpan) {
           panel.minSpan = Math.min(GRID_COLUMN_COUNT, GRID_COLUMN_COUNT / 12 * panel.minSpan);
@@ -446,7 +446,7 @@ export class DashboardMigrator {
         const panelWidth = Math.floor(panel.span) * widthFactor;
         const panelHeight = panel.height ? getGridHeight(panel.height) : rowGridHeight;
 
-        let panelPos = rowArea.getPanelPosition(panelHeight, panelWidth);
+        const panelPos = rowArea.getPanelPosition(panelHeight, panelWidth);
         yPos = rowArea.yPos;
         panel.gridPos = {
           x: panelPos.x,
