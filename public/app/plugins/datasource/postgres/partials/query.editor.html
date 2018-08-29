@@ -106,7 +106,7 @@
       </div>
     </div>
     <div class="gf-form">
-      <label class="gf-form-label query-keyword pointer" ng-click="ctrl.toggleEditorMode()">
+      <label class="gf-form-label query-keyword pointer" ng-click="ctrl.toggleEditorMode()" ng-show="ctrl.panelCtrl.panel.type !== 'table'">
         <span ng-show="ctrl.target.rawQuery">Query Builder</span>
         <span ng-hide="ctrl.target.rawQuery">Edit SQL</span>
       </label>
