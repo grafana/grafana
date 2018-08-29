@@ -43,7 +43,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
     const bucketAggs = this.target.bucketAggs;
     const metricAggTypes = queryDef.getMetricAggTypes(this.esVersion);
     const bucketAggTypes = queryDef.bucketAggTypes;
-    var text = '';
+    let text = '';
 
     if (this.target.query) {
       text += 'Query: ' + this.target.query + ', ';

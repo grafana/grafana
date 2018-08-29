@@ -14,7 +14,7 @@ export default class InfluxSeries {
 
   getTimeSeries() {
     const output = [];
-    var i, j;
+    let i, j;
 
     if (this.series.length === 0) {
       return output;
@@ -27,7 +27,7 @@ export default class InfluxSeries {
       });
 
       for (j = 1; j < columns; j++) {
-        var seriesName = series.name;
+        let seriesName = series.name;
         const columnName = series.columns[j];
         if (columnName !== 'value') {
           seriesName = seriesName + '.' + columnName;
@@ -86,10 +86,10 @@ export default class InfluxSeries {
     const list = [];
 
     _.each(this.series, series => {
-      var titleCol = null;
-      var timeCol = null;
+      let titleCol = null;
+      let timeCol = null;
       const tagsCol = [];
-      var textCol = null;
+      let textCol = null;
 
       _.each(series.columns, (column, index) => {
         if (column === 'time') {
@@ -143,7 +143,7 @@ export default class InfluxSeries {
 
   getTable() {
     const table = new TableModel();
-    var i, j;
+    let i, j;
 
     if (this.series.length === 0) {
       return table;

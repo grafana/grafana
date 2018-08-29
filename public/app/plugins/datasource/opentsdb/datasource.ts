@@ -114,7 +114,7 @@ export default class OpenTsDatasource {
     return this.performTimeSeriesQuery(queries, start, end).then(
       function(results) {
         if (results.data[0]) {
-          var annotationObject = results.data[0].annotations;
+          let annotationObject = results.data[0].annotations;
           if (options.annotation.isGlobal) {
             annotationObject = results.data[0].globalAnnotations;
           }
@@ -137,7 +137,7 @@ export default class OpenTsDatasource {
 
   targetContainsTemplate(target) {
     if (target.filters && target.filters.length > 0) {
-      for (var i = 0; i < target.filters.length; i++) {
+      for (let i = 0; i < target.filters.length; i++) {
         if (this.templateSrv.variableExists(target.filters[i].filter)) {
           return true;
         }
@@ -156,7 +156,7 @@ export default class OpenTsDatasource {
   }
 
   performTimeSeriesQuery(queries, start, end) {
-    var msResolution = false;
+    let msResolution = false;
     if (this.tsdbResolution === 2) {
       msResolution = true;
     }
@@ -213,7 +213,7 @@ export default class OpenTsDatasource {
       return key.trim();
     });
     const key = keysArray[0];
-    var keysQuery = key + '=*';
+    let keysQuery = key + '=*';
 
     if (keysArray.length > 1) {
       keysQuery += ',' + keysArray.splice(1).join(',');
@@ -278,7 +278,7 @@ export default class OpenTsDatasource {
       return this.$q.when([]);
     }
 
-    var interpolated;
+    let interpolated;
     try {
       interpolated = this.templateSrv.replace(query, {}, 'distributed');
     } catch (err) {
@@ -385,7 +385,7 @@ export default class OpenTsDatasource {
       return this.templateSrv.replace(target.alias, scopedVars);
     }
 
-    var label = md.metric;
+    let label = md.metric;
     const tagData = [];
 
     if (!_.isEmpty(md.tags)) {
@@ -438,7 +438,7 @@ export default class OpenTsDatasource {
     }
 
     if (!target.disableDownsampling) {
-      var interval = this.templateSrv.replace(target.downsampleInterval || options.interval);
+      let interval = this.templateSrv.replace(target.downsampleInterval || options.interval);
 
       if (interval.match(/\.[0-9]+s/)) {
         interval = parseFloat(interval) * 1000 + 'ms';
@@ -479,7 +479,7 @@ export default class OpenTsDatasource {
   }
 
   mapMetricsToTargets(metrics, options, tsdbVersion) {
-    var interpolatedTagValue, arrTagV;
+    let interpolatedTagValue, arrTagV;
     return _.map(metrics, metricData => {
       if (tsdbVersion === 3) {
         return metricData.query.index;

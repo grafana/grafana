@@ -41,7 +41,7 @@ function fieldRenderer(part, innerExpr) {
 
 function replaceAggregationAddStrategy(selectParts, partModel) {
   // look for existing aggregation
-  for (var i = 0; i < selectParts.length; i++) {
+  for (let i = 0; i < selectParts.length; i++) {
     const part = selectParts[i];
     if (part.def.category === categories.Aggregations) {
       if (part.def.type === partModel.def.type) {
@@ -79,7 +79,7 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
 }
 
 function addTransformationStrategy(selectParts, partModel) {
-  var i;
+  let i;
   // look for index to add transformation
   for (i = 0; i < selectParts.length; i++) {
     const part = selectParts[i];

@@ -967,7 +967,7 @@ export class FuncInstance {
     const parameters = _.map(
       this.params,
       function(value, index) {
-        var paramType;
+        let paramType;
         if (index < this.def.params.length) {
           paramType = this.def.params[index].type;
         } else if (_.get(_.last(this.def.params), 'multiple')) {
@@ -1041,7 +1041,7 @@ export class FuncInstance {
       return;
     }
 
-    var text = this.def.name + '(';
+    let text = this.def.name + '(';
     text += this.params.join(', ');
     text += ')';
     this.text = text;
@@ -1086,7 +1086,7 @@ function parseFuncDefs(rawDefs) {
       return;
     }
 
-    var description = funcDef.description;
+    let description = funcDef.description;
     if (description) {
       // tidy up some pydoc syntax that rst2html can't handle
       description = description

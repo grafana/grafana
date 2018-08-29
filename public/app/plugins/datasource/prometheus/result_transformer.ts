@@ -73,7 +73,7 @@ export class ResultTransformer {
 
   transformMetricDataToTable(md, resultCount: number, refId: string) {
     const table = new TableModel();
-    var i, j;
+    let i, j;
     const metricLabels = {};
 
     if (md.length === 0) {

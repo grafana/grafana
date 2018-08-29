@@ -140,7 +140,7 @@ export class ElasticMetricAggCtrl {
     $scope.updateMovingAvgModelSettings = function() {
       const modelSettingsKeys = [];
       const modelSettings = queryDef.getMovingAvgSettings($scope.agg.settings.model, false);
-      for (var i = 0; i < modelSettings.length; i++) {
+      for (let i = 0; i < modelSettings.length; i++) {
         modelSettingsKeys.push(modelSettings[i].value);
       }
 

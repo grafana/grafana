@@ -27,7 +27,7 @@ function getReactComponent(name, $injector) {
   }
 
   // ensure the specified React component is accessible, and fail fast if it's not
-  var reactComponent;
+  let reactComponent;
   try {
     reactComponent = $injector.get(name);
   } catch (e) {}
@@ -256,7 +256,7 @@ const reactDirective = function($injector) {
 
         // for each of the properties, get their scope value and set it to scope.props
         const renderMyComponent = function() {
-          var scopeProps = {};
+          let scopeProps = {};
           const config = {};
 
           props.forEach(function(prop) {

@@ -120,7 +120,7 @@ export class CloudWatchQueryParameterCtrl {
       }
 
       const target = $scope.target;
-      var query = $q.when([]);
+      let query = $q.when([]);
 
       if (segment.type === 'key' || segment.type === 'plus-button') {
         query = $scope.datasource.getDimensionKeys($scope.target.namespace, $scope.target.region);
@@ -164,7 +164,7 @@ export class CloudWatchQueryParameterCtrl {
       const dims = {};
       const length = $scope.dimSegments.length;
 
-      for (var i = 0; i < length - 2; i += 3) {
+      for (let i = 0; i < length - 2; i += 3) {
         const keySegment = $scope.dimSegments[i];
         const valueSegment = $scope.dimSegments[i + 2];
         if (!valueSegment.fake) {

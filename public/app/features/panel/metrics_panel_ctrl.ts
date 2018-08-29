@@ -75,7 +75,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
       this.updateTimeRange();
-      var data = this.panel.snapshotData;
+      let data = this.panel.snapshotData;
       // backward compatibility
       if (!_.isArray(data)) {
         data = data.data;
@@ -155,7 +155,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   calculateInterval() {
-    var intervalOverride = this.panel.interval;
+    let intervalOverride = this.panel.interval;
 
     // if no panel interval check datasource
     if (intervalOverride) {

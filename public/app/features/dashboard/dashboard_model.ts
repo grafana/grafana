@@ -144,7 +144,7 @@ export class DashboardModel {
     });
 
     // make clone
-    var copy: any = {};
+    let copy: any = {};
     for (const property in this) {
       if (DashboardModel.nonPersistedProperties[property] || !this.hasOwnProperty(property)) {
         continue;

@@ -26,7 +26,7 @@ Parser.prototype = {
 
   curlyBraceSegment: function() {
     if (this.match('identifier', '{') || this.match('{')) {
-      var curlySegment = '';
+      let curlySegment = '';
 
       while (!this.match('') && !this.match('}')) {
         curlySegment += this.consumeToken().value;

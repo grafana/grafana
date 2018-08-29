@@ -104,7 +104,7 @@ function bootstrapTagsinput() {
 
           select.tagsinput('removeAll');
 
-          for (var i = 0; i < scope.model.length; i++) {
+          for (let i = 0; i < scope.model.length; i++) {
             select.tagsinput('add', scope.model[i]);
           }
         },

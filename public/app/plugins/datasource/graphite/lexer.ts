@@ -900,7 +900,7 @@ const unicodeLetterTable = [
 
 const identifierStartTable = [];
 
-for (var i = 0; i < 128; i++) {
+for (let i = 0; i < 128; i++) {
   identifierStartTable[i] =
     (i >= 48 && i <= 57) || // 0-9
     i === 36 || // $
@@ -941,7 +941,7 @@ Lexer.prototype = {
 
   tokenize: function() {
     const list = [];
-    var token;
+    let token;
     while ((token = this.next())) {
       list.push(token);
     }
@@ -964,7 +964,7 @@ Lexer.prototype = {
       }
     }
 
-    var match = this.scanStringLiteral();
+    let match = this.scanStringLiteral();
     if (match) {
       return match;
     }
@@ -1007,9 +1007,9 @@ Lexer.prototype = {
    * (true/false) and NullLiteral (null).
    */
   scanIdentifier: function() {
-    var id = '';
-    var index = 0;
-    var type, char;
+    let id = '';
+    let index = 0;
+    let type, char;
 
     // Detects any character in the Unicode categories "Uppercase
     // letter (Lu)", "Lowercase letter (Ll)", "Titlecase letter
@@ -1020,7 +1020,7 @@ Lexer.prototype = {
     // Google's Traceur.
 
     function isUnicodeLetter(code) {
-      for (var i = 0; i < unicodeLetterTable.length; ) {
+      for (let i = 0; i < unicodeLetterTable.length; ) {
         if (code < unicodeLetterTable[i++]) {
           return false;
         }
@@ -1049,7 +1049,7 @@ Lexer.prototype = {
       const ch2 = this.peek(index + 2);
       const ch3 = this.peek(index + 3);
       const ch4 = this.peek(index + 4);
-      var code;
+      let code;
 
       if (isHexDigit(ch1) && isHexDigit(ch2) && isHexDigit(ch3) && isHexDigit(ch4)) {
         code = parseInt(ch1 + ch2 + ch3 + ch4, 16);
@@ -1168,11 +1168,11 @@ Lexer.prototype = {
    * scanNumericLiteral function in the Esprima parser's source code.
    */
   scanNumericLiteral: function(): any {
-    var index = 0;
-    var value = '';
+    let index = 0;
+    let value = '';
     const length = this.input.length;
-    var char = this.peek(index);
-    var bad;
+    let char = this.peek(index);
+    let bad;
 
     function isDecimalDigit(str) {
       return /^[0-9]$/.test(str);
@@ -1418,7 +1418,7 @@ Lexer.prototype = {
       return null;
     }
 
-    var value = '';
+    let value = '';
 
     this.skip();
 
