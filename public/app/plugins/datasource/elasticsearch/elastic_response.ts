@@ -112,29 +112,29 @@ export class ElasticResponse {
   processAggregationDocs(esAgg, aggDef, target, table, props) {
     // add columns
     if (table.columns.length === 0) {
-      for (let propKey of _.keys(props)) {
+      for (const propKey of _.keys(props)) {
         table.addColumn({ text: propKey, filterable: true });
       }
       table.addColumn({ text: aggDef.field, filterable: true });
     }
 
     // helper func to add values to value array
-    let addMetricValue = (values, metricName, value) => {
+    const addMetricValue = (values, metricName, value) => {
       table.addColumn({ text: metricName });
       values.push(value);
     };
 
-    for (let bucket of esAgg.buckets) {
-      let values = [];
+    for (const bucket of esAgg.buckets) {
+      const values = [];
 
-      for (let propValues of _.values(props)) {
+      for (const propValues of _.values(props)) {
         values.push(propValues);
       }
 
       // add bucket key (value)
       values.push(bucket.key);
 
-      for (let metric of target.metrics) {
+      for (const metric of target.metrics) {
         switch (metric.type) {
           case 'count': {
             addMetricValue(values, this.getMetricName(metric.type), bucket.doc_count);
@@ -157,7 +157,7 @@ export class ElasticResponse {
           }
           default: {
             let metricName = this.getMetricName(metric.type);
-            let otherMetrics = _.filter(target.metrics, { type: metric.type });
+            const otherMetrics = _.filter(target.metrics, { type: metric.type });
 
             // if more of the same metric type include field field name in property
             if (otherMetrics.length > 1) {

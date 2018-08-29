@@ -3,7 +3,7 @@ import coreModule from '../core_module';
 
 /** @ngInject */
 export function uiSegmentSrv($sce, templateSrv) {
-  let self = this;
+  const self = this;
 
   function MetricSegment(options) {
     if (options === '*' || options.value === '*') {
@@ -78,7 +78,7 @@ export function uiSegmentSrv($sce, templateSrv) {
 
   this.transformToSegments = function(addTemplateVars, variableTypeFilter) {
     return function(results) {
-      let segments = _.map(results, function(segment) {
+      const segments = _.map(results, function(segment) {
         return self.newSegment({ value: segment.text, expandable: segment.expandable });
       });
 

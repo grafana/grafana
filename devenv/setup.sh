@@ -7,11 +7,11 @@ bulkDashboard() {
 		COUNTER=0
 		MAX=400
 		while [  $COUNTER -lt $MAX ]; do
-				jsonnet -o "dashboards/bulk-testing/dashboard${COUNTER}.json" -e "local bulkDash = import 'dashboards/bulk-testing/bulkdash.jsonnet'; bulkDash + {  uid: 'uid-${COUNTER}',  title: 'title-${COUNTER}' }"
+				jsonnet -o "bulk-dashboards/dashboard${COUNTER}.json" -e "local bulkDash = import 'bulk-dashboards/bulkdash.jsonnet'; bulkDash + {  uid: 'uid-${COUNTER}',  title: 'title-${COUNTER}' }"
 				let COUNTER=COUNTER+1
 		done
 
-		ln -s -f -r ./dashboards/bulk-testing/bulk-dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
+		ln -s -f -r ./bulk-dashboards/bulk-dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
 }
 
 requiresJsonnet() {

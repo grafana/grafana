@@ -2,7 +2,7 @@ import * as fileExport from '../utils/file_export';
 import { beforeEach, expect } from 'test/lib/common';
 
 describe('file_export', () => {
-  let ctx: any = {};
+  const ctx: any = {};
 
   beforeEach(() => {
     ctx.seriesList = [
@@ -28,7 +28,7 @@ describe('file_export', () => {
 
   describe('when exporting series as rows', () => {
     it('should export points in proper order', () => {
-      let text = fileExport.convertSeriesListToCsv(ctx.seriesList, ctx.timeFormat);
+      const text = fileExport.convertSeriesListToCsv(ctx.seriesList, ctx.timeFormat);
       const expectedText =
         '"Series";"Time";"Value"\r\n' +
         '"series_1";"1500026100";1\r\n' +
@@ -48,7 +48,7 @@ describe('file_export', () => {
 
   describe('when exporting series as columns', () => {
     it('should export points in proper order', () => {
-      let text = fileExport.convertSeriesListToCsvColumns(ctx.seriesList, ctx.timeFormat);
+      const text = fileExport.convertSeriesListToCsvColumns(ctx.seriesList, ctx.timeFormat);
       const expectedText =
         '"Time";"series_1";"series_2"\r\n' +
         '"1500026100";1;11\r\n' +

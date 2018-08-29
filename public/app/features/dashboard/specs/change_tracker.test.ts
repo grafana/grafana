@@ -12,7 +12,7 @@ jest.mock('app/core/services/context_srv', () => ({
 describe('ChangeTracker', () => {
   let rootScope;
   let location;
-  let timeout;
+  const timeout = () => {};
   let tracker: ChangeTracker;
   let dash;
   let scope;

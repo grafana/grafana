@@ -52,7 +52,7 @@ export class SaveProvisionedDashboardModalCtrl {
   }
 
   save() {
-    var blob = new Blob([angular.toJson(this.dash, true)], {
+    const blob = new Blob([angular.toJson(this.dash, true)], {
       type: 'application/json;charset=utf-8',
     });
     saveAs(blob, this.dash.title + '-' + new Date().getTime() + '.json');

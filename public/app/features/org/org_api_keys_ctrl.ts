@@ -24,7 +24,7 @@ export class OrgApiKeysCtrl {
 
     $scope.addToken = function() {
       backendSrv.post('/api/auth/keys', $scope.token).then(function(result) {
-        var modalScope = $scope.$new(true);
+        const modalScope = $scope.$new(true);
         modalScope.key = result.key;
         modalScope.rootPath = window.location.origin + $scope.$root.appSubUrl;
 

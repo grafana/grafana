@@ -5,5 +5,5 @@ providers:
    folder: 'Bulk dashboards'
    type: file
    options:
-     path: devenv/dashboards/bulk-testing
+     path: devenv/bulk-dashboards
 

@@ -17,13 +17,13 @@ export class SideMenuCtrl {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
 
-    let navTree = _.cloneDeep(config.bootData.navTree);
+    const navTree = _.cloneDeep(config.bootData.navTree);
     this.mainLinks = _.filter(navTree, item => !item.hideFromMenu);
     this.bottomNav = _.filter(navTree, item => item.hideFromMenu);
     this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
 
     if (contextSrv.user.orgCount > 1) {
-      let profileNode = _.find(this.bottomNav, { id: 'profile' });
+      const profileNode = _.find(this.bottomNav, { id: 'profile' });
       if (profileNode) {
         profileNode.showOrgSwitcher = true;
       }

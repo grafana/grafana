@@ -1,11 +1,11 @@
 import { DataProcessor } from '../data_processor';
 
 describe('Graph DataProcessor', function() {
-  var panel: any = {
+  const panel: any = {
     xaxis: {},
   };
 
-  var processor = new DataProcessor(panel);
+  const processor = new DataProcessor(panel);
 
   describe('Given default xaxis options and query that returns docs', () => {
     beforeEach(() => {
@@ -29,7 +29,7 @@ describe('Graph DataProcessor', function() {
   });
 
   describe('getDataFieldNames(', () => {
-    var dataList = [
+    const dataList = [
       {
         type: 'docs',
         datapoints: [
@@ -46,7 +46,7 @@ describe('Graph DataProcessor', function() {
     ];
 
     it('Should return all field names', () => {
-      var fields = processor.getDataFieldNames(dataList, false);
+      const fields = processor.getDataFieldNames(dataList, false);
       expect(fields).toContain('hostname');
       expect(fields).toContain('valueField');
       expect(fields).toContain('nested.prop1');
@@ -54,7 +54,7 @@ describe('Graph DataProcessor', function() {
     });
 
     it('Should return all number fields', () => {
-      var fields = processor.getDataFieldNames(dataList, true);
+      const fields = processor.getDataFieldNames(dataList, true);
       expect(fields).toContain('valueField');
       expect(fields).toContain('nested.value2');
     });

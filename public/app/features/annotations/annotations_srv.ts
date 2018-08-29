@@ -91,7 +91,7 @@ export class AnnotationsSrv {
     var range = this.timeSrv.timeRange();
     var promises = [];
 
-    for (let annotation of dashboard.annotations.list) {
+    for (const annotation of dashboard.annotations.list) {
       if (!annotation.enable) {
         continue;
       }

@@ -1,5 +1,6 @@
 {
   "rules": {
+    "interface-name": [true, "never-prefix"],
     "no-string-throw": true,
     "no-unused-expression": true,
     "no-unused-variable": false,

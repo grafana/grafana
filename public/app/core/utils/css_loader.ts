@@ -1,18 +1,18 @@
-var waitSeconds = 100;
-var head = document.getElementsByTagName('head')[0];
+const waitSeconds = 100;
+const head = document.getElementsByTagName('head')[0];
 
 // get all link tags in the page
-var links = document.getElementsByTagName('link');
-var linkHrefs = [];
-for (var i = 0; i < links.length; i++) {
+const links = document.getElementsByTagName('link');
+const linkHrefs = [];
+for (let i = 0; i < links.length; i++) {
   linkHrefs.push(links[i].href);
 }
 
-var isWebkit = !!window.navigator.userAgent.match(/AppleWebKit\/([^ ;]*)/);
-var webkitLoadCheck = function(link, callback) {
+const isWebkit = !!window.navigator.userAgent.match(/AppleWebKit\/([^ ;]*)/);
+const webkitLoadCheck = function(link, callback) {
   setTimeout(function() {
     for (var i = 0; i < document.styleSheets.length; i++) {
-      var sheet = document.styleSheets[i];
+      const sheet = document.styleSheets[i];
       if (sheet.href === link.href) {
         return callback();
       }
@@ -21,16 +21,16 @@ var webkitLoadCheck = function(link, callback) {
   }, 10);
 };
 
-var noop = function() {};
+const noop = function() {};
 
-var loadCSS = function(url) {
+const loadCSS = function(url) {
   return new Promise(function(resolve, reject) {
-    var link = document.createElement('link');
-    var timeout = setTimeout(function() {
+    const link = document.createElement('link');
+    const timeout = setTimeout(function() {
       reject('Unable to load CSS');
     }, waitSeconds * 1000);
 
-    var _callback = function(error) {
+    const _callback = function(error) {
       clearTimeout(timeout);
       link.onload = link.onerror = noop;
       setTimeout(function() {

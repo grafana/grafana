@@ -3,13 +3,13 @@ import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import IContainerProps from 'app/containers/IContainerProps';
+import ContainerProps from 'app/containers/ContainerProps';
 import { getSnapshot } from 'mobx-state-tree';
 import appEvents from 'app/core/app_events';
 
 @inject('nav', 'folder', 'view')
 @observer
-export class FolderSettings extends React.Component<IContainerProps, any> {
+export class FolderSettings extends React.Component<ContainerProps, any> {
   formSnapshot: any;
 
   componentDidMount() {

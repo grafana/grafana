@@ -16,14 +16,14 @@ class PlaylistSrv {
   next() {
     this.$timeout.cancel(this.cancelPromise);
 
-    var playedAllDashboards = this.index > this.dashboards.length - 1;
+    const playedAllDashboards = this.index > this.dashboards.length - 1;
 
     if (playedAllDashboards) {
       window.location.href = this.getUrlWithKioskMode();
       return;
     }
 
-    var dash = this.dashboards[this.index];
+    const dash = this.dashboards[this.index];
     this.$location.url('dashboard/' + dash.uri);
 
     this.index++;

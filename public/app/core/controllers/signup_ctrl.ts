@@ -9,7 +9,7 @@ export class SignUpCtrl {
 
     $scope.formModel = {};
 
-    var params = $location.search();
+    const params = $location.search();
 
     // validate email is semi ok
     if (params.email && !params.email.match(/^\S+@\S+$/)) {

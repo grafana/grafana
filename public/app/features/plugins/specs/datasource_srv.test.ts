@@ -16,7 +16,7 @@ const templateSrv = {
 };
 
 describe('datasource_srv', function() {
-  let _datasourceSrv = new DatasourceSrv({}, {}, {}, templateSrv);
+  const _datasourceSrv = new DatasourceSrv({}, {}, {}, templateSrv);
 
   describe('when loading explore sources', () => {
     beforeEach(() => {
@@ -46,7 +46,7 @@ describe('datasource_srv', function() {
 
   describe('when loading metric sources', () => {
     let metricSources;
-    let unsortedDatasources = {
+    const unsortedDatasources = {
       mmm: {
         type: 'test-db',
         meta: { metrics: { m: 1 } },

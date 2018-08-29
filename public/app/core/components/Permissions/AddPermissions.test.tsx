@@ -22,7 +22,7 @@ describe('AddPermissions', () => {
   let wrapper;
   let store;
   let instance;
-  let backendSrv: any = getBackendSrv();
+  const backendSrv: any = getBackendSrv();
 
   beforeAll(() => {
     store = RootStore.create({}, { backendSrv: backendSrv });

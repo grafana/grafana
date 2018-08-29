@@ -27,11 +27,11 @@ function translateFillOption(fill) {
  */
 export function updateLegendValues(data: TimeSeries[], panel, height) {
   for (let i = 0; i < data.length; i++) {
-    let series = data[i];
+    const series = data[i];
     const yaxes = panel.yaxes;
     const seriesYAxis = series.yaxis || 1;
     const axis = yaxes[seriesYAxis - 1];
-    let formater = kbn.valueFormats[axis.format];
+    const formater = kbn.valueFormats[axis.format];
 
     // decimal override
     if (_.isNumber(panel.decimals)) {
@@ -54,7 +54,7 @@ export function getDataMinMax(data: TimeSeries[]) {
   let datamin = null;
   let datamax = null;
 
-  for (let series of data) {
+  for (const series of data) {
     if (datamax === null || datamax < series.stats.max) {
       datamax = series.stats.max;
     }
@@ -225,7 +225,7 @@ export default class TimeSeries {
       // Due to missing values we could have different timeStep all along the series
       // so we have to find the minimum one (could occur with aggregators such as ZimSum)
       if (previousTime !== undefined) {
-        let timeStep = currentTime - previousTime;
+        const timeStep = currentTime - previousTime;
         if (timeStep < this.stats.timeStep) {
           this.stats.timeStep = timeStep;
         }

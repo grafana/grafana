@@ -1,11 +1,11 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { observer } from 'mobx-react';
-import { ITeam } from 'app/stores/TeamsStore/TeamsStore';
+import { Team } from 'app/stores/TeamsStore/TeamsStore';
 import { Label } from 'app/core/components/Forms/Forms';
 
 interface Props {
-  team: ITeam;
+  team: Team;
 }
 
 @observer
