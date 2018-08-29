@@ -201,6 +201,19 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   tableChanged() {
     this.target.table = this.tableSegment.value;
+    this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then(result => {
+      // check if time column is still valid
+      if (result.length > 0) {
+        if (!_.find(result, (r: any) => r.text === this.target.timeColumn)) {
+          let segment = this.uiSegmentSrv.newSegment(result[0].text);
+          this.timeColumnSegment.html = segment.html;
+          this.timeColumnSegment.value = segment.value;
+
+          this.timeColumnChanged();
+        }
+      }
+    });
+
     this.panelCtrl.refresh();
   }
 
