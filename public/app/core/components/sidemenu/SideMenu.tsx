@@ -1,5 +1,8 @@
 import React, { PureComponent } from 'react';
+import _ from 'lodash';
+import SideMenuTop from './sideMenuTop/SideMenuTop';
 import config from 'app/core/config';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {}
 export interface State {
@@ -7,23 +10,19 @@ export interface State {
   bottomNav: any[];
   mainLinks: any[];
   isSignedIn: boolean;
-  loginUrl: string;
 }
 
 export class SideMenu extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
 
-    const navTree = config.bootData.navTree;
+    const navTree = _.cloneDeep(config.bootData.navTree);
 
     this.state = {
-      mainLinks: navTree.filter(item => {
-        return !item.hideFromMenu;
-      }),
-      isSignedIn: true,
-      loginUrl: '',
-      user: {},
-      bottomNav: [],
+      mainLinks: _.filter(navTree, item => !item.hideFromMenu),
+      bottomNav: _.filter(navTree, item => item.hideFromMenu),
+      isSignedIn: contextSrv.isSignedIn,
+      user: contextSrv.user,
     };
   }
 
@@ -38,7 +37,9 @@ export class SideMenu extends PureComponent<Props, State> {
   };
 
   render() {
-    const { mainLinks, isSignedIn, loginUrl, bottomNav } = this.state;
+    const { mainLinks, isSignedIn, bottomNav } = this.state;
+
+    const loginUrl = `login?redirect=${encodeURIComponent(window.location.pathname)}`;
 
     return [
       <a className="sidemenu__logo" href="/">
@@ -50,18 +51,7 @@ export class SideMenu extends PureComponent<Props, State> {
           <i className="fa fa-times" />&nbsp;Close
         </span>
       </div>,
-      <div className="sidemenu__top">
-        {mainLinks.map((link, index) => {
-          return (
-            <a className="sidemenu-link" href={link.url} target={link.target} key={`${link.id}-${index}`}>
-              <span className="icon-circle sidemenu-icon">
-                <i className={link.icon} />
-                {link.img && <img src={link.img} />}
-              </span>
-            </a>
-          );
-        })}
-      </div>,
+      <SideMenuTop mainLinks={mainLinks} />,
       <div className="sidemenu__bottom">
         {!isSignedIn && (
           <div className="sidemen-item">
@@ -107,10 +97,10 @@ export class SideMenu extends PureComponent<Props, State> {
                     </a>
                   </li>
                 )}
-                {link.children.map(child => {
+                {link.children.map((child, index) => {
                   if (!child.hideFromMenu) {
                     return (
-                      <li className={child.divider}>
+                      <li className={child.divider} key={`${child.text}-${index}`}>
                         <a href={child.url} target={child.target} onClick={this.itemClicked}>
                           {child.icon && <i className={child.icon} />}
                           {child.text}
