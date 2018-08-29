@@ -230,6 +230,7 @@ describe('PostgreSQLDatasource', function() {
       it('should return a quoted value', () => {
         ctx.variable.multi = true;
         expect(ctx.ds.interpolateVariable("a'bc", ctx.variable)).toEqual("'a''bc'");
+        expect(ctx.ds.interpolateVariable("a'b'c", ctx.variable)).toEqual("'a''b''c'");
       });
     });
 
