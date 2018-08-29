@@ -294,7 +294,7 @@ transformers['json'] = {
   transform: function(data, panel, model) {
     var i, y, z;
 
-    for (let column of panel.columns) {
+    for (const column of panel.columns) {
       var tableCol: any = { text: column.text };
 
       // if filterable data then set columns to filterable

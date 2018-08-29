@@ -157,7 +157,7 @@ export class PanelCtrl {
   }
 
   getMenu() {
-    let menu = [];
+    const menu = [];
     menu.push({
       text: 'View',
       click: 'ctrl.viewPanel();',
@@ -185,7 +185,7 @@ export class PanelCtrl {
     // Additional items from sub-class
     menu.push(...this.getAdditionalMenuItems());
 
-    let extendedMenu = this.getExtendedMenu();
+    const extendedMenu = this.getExtendedMenu();
     menu.push({
       text: 'More ...',
       click: '',
@@ -208,7 +208,7 @@ export class PanelCtrl {
   }
 
   getExtendedMenu() {
-    let menu = [];
+    const menu = [];
     if (!this.fullscreen && this.dashboard.meta.canEdit) {
       menu.push({
         text: 'Duplicate',
@@ -278,7 +278,7 @@ export class PanelCtrl {
   }
 
   editPanelJson() {
-    let editScope = this.$scope.$root.$new();
+    const editScope = this.$scope.$root.$new();
     editScope.object = this.panel.getSaveModel();
     editScope.updateHandler = this.replacePanel.bind(this);
     editScope.enableCopy = true;
@@ -295,12 +295,12 @@ export class PanelCtrl {
   }
 
   replacePanel(newPanel, oldPanel) {
-    let dashboard = this.dashboard;
-    let index = _.findIndex(dashboard.panels, panel => {
+    const dashboard = this.dashboard;
+    const index = _.findIndex(dashboard.panels, panel => {
       return panel.id === oldPanel.id;
     });
 
-    let deletedPanel = dashboard.panels.splice(index, 1);
+    const deletedPanel = dashboard.panels.splice(index, 1);
     this.dashboard.events.emit('panel-removed', deletedPanel);
 
     newPanel = new PanelModel(newPanel);
@@ -352,7 +352,7 @@ export class PanelCtrl {
 
     if (this.panel.links && this.panel.links.length > 0) {
       html += '<ul>';
-      for (let link of this.panel.links) {
+      for (const link of this.panel.links) {
         var info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
         html +=
           '<li><a class="panel-menu-link" href="' +

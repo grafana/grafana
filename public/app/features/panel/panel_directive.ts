@@ -4,9 +4,9 @@ import Drop from 'tether-drop';
 import baron from 'baron';
 import ResizeSensor from 'css-element-queries/src/ResizeSensor.js';
 
-var module = angular.module('grafana.directives');
+const module = angular.module('grafana.directives');
 
-var panelTemplate = `
+const panelTemplate = `
   <div class="panel-container">
     <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.fullscreen}">
       <span class="panel-info-corner">
@@ -64,21 +64,21 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
     transclude: true,
     scope: { ctrl: '=' },
     link: function(scope, elem) {
-      var panelContainer = elem.find('.panel-container');
-      var panelContent = elem.find('.panel-content');
-      var cornerInfoElem = elem.find('.panel-info-corner');
-      var ctrl = scope.ctrl;
-      var infoDrop;
-      var panelScrollbar;
-      var panelInnerContent;
-      var panelInnerContentHeight = -1;
+      const panelContainer = elem.find('.panel-container');
+      const panelContent = elem.find('.panel-content');
+      const cornerInfoElem = elem.find('.panel-info-corner');
+      const ctrl = scope.ctrl;
+      let infoDrop;
+      let panelScrollbar;
+      let panelInnerContent;
+      let panelInnerContentHeight = -1;
 
       // the reason for handling these classes this way is for performance
       // limit the watchers on panels etc
-      var transparentLastState = false;
-      var lastHasAlertRule = false;
-      var lastAlertState;
-      var hasAlertRule;
+      let transparentLastState = false;
+      let lastHasAlertRule = false;
+      let lastAlertState;
+      let hasAlertRule;
 
       function mouseEnter() {
         panelContainer.toggleClass('panel-hover-highlight', true);
@@ -131,8 +131,8 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
             </div>
           `;
 
-          let scrollRoot = panelContent;
-          let scroller = panelContent.find(':first').find(':first');
+          const scrollRoot = panelContent;
+          const scroller = panelContent.find(':first').find(':first');
 
           // Add a div under the scroller and watch for changes
           if (ctrl.panel.dynamicHeight) {
@@ -207,7 +207,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       });
 
       function updatePanelCornerInfo() {
-        var cornerMode = ctrl.getInfoMode();
+        const cornerMode = ctrl.getInfoMode();
         cornerInfoElem[0].className = 'panel-info-corner panel-info-corner--' + cornerMode;
 
         if (cornerMode) {

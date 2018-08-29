@@ -36,7 +36,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     }
 
     this.tagSegments = [];
-    for (let tag of this.target.tags) {
+    for (const tag of this.target.tags) {
       if (!tag.operator) {
         if (/^\/.*\/$/.test(tag.value)) {
           tag.operator = '=~';
@@ -106,7 +106,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         if (!this.queryModel.hasGroupByTime()) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'time($interval)' }));
         }
-        for (let tag of tags) {
+        for (const tag of tags) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'tag(' + tag.text + ')' }));
         }
         return options;
@@ -251,7 +251,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       });
 
       if (addTemplateVars) {
-        for (let variable of this.templateSrv.variables) {
+        for (const variable of this.templateSrv.variables) {
           segments.unshift(
             this.uiSegmentSrv.newSegment({
               type: 'value',

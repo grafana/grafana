@@ -94,6 +94,25 @@ describe('PromQueryField typeahead handling', () => {
       expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
     });
 
+    it('returns label suggestions on label context but leaves out labels that already exist', () => {
+      const instance = shallow(
+        <PromQueryField {...defaultProps} labelKeys={{ '{job="foo"}': ['bar', 'job'] }} />
+      ).instance() as PromQueryField;
+      const value = Plain.deserialize('{job="foo",}');
+      const range = value.selection.merge({
+        anchorOffset: 11,
+      });
+      const valueWithSelection = value.change().select(range).value;
+      const result = instance.getTypeahead({
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-labels'],
+        value: valueWithSelection,
+      });
+      expect(result.context).toBe('context-labels');
+      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+    });
+
     it('returns a refresher on label context and unavailable metric', () => {
       const instance = shallow(
         <PromQueryField {...defaultProps} labelKeys={{ '{__name__="foo"}': ['bar'] }} />

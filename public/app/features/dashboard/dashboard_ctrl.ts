@@ -106,7 +106,7 @@ export class DashboardCtrl implements PanelContainer {
   }
 
   showJsonEditor(evt, options) {
-    var editScope = this.$rootScope.$new();
+    const editScope = this.$rootScope.$new();
     editScope.object = options.object;
     editScope.updateHandler = options.updateHandler;
     this.$scope.appEvent('show-dash-editor', {
@@ -137,7 +137,7 @@ export class DashboardCtrl implements PanelContainer {
       return;
     }
 
-    var panelInfo = this.dashboard.getPanelInfoById(options.panelId);
+    const panelInfo = this.dashboard.getPanelInfoById(options.panelId);
     this.removePanel(panelInfo.panel, true);
   }
 

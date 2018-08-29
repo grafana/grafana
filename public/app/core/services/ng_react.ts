@@ -295,6 +295,6 @@ var reactDirective = function($injector) {
   };
 };
 
-let ngModule = angular.module('react', []);
+const ngModule = angular.module('react', []);
 ngModule.directive('reactComponent', ['$injector', reactComponent]);
 ngModule.factory('reactDirective', ['$injector', reactDirective]);

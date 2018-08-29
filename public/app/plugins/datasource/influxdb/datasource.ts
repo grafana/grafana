@@ -147,15 +147,15 @@ export default class InfluxDatasource {
   }
 
   targetContainsTemplate(target) {
-    for (let group of target.groupBy) {
-      for (let param of group.params) {
+    for (const group of target.groupBy) {
+      for (const param of group.params) {
         if (this.templateSrv.variableExists(param)) {
           return true;
         }
       }
     }
 
-    for (let i in target.tags) {
+    for (const i in target.tags) {
       if (this.templateSrv.variableExists(target.tags[i].value)) {
         return true;
       }
@@ -219,7 +219,7 @@ export default class InfluxDatasource {
 
     return this._seriesQuery(query)
       .then(res => {
-        let error = _.get(res, 'results[0].error');
+        const error = _.get(res, 'results[0].error');
         if (error) {
           return { status: 'error', message: error };
         }
@@ -234,7 +234,7 @@ export default class InfluxDatasource {
     const currentUrl = this.urls.shift();
     this.urls.push(currentUrl);
 
-    let params: any = {};
+    const params: any = {};
 
     if (this.username) {
       params.u = this.username;
@@ -252,7 +252,7 @@ export default class InfluxDatasource {
       data = null;
     }
 
-    let req: any = {
+    const req: any = {
       method: method,
       url: currentUrl + url,
       params: params,

@@ -64,6 +64,10 @@ func main() {
 
 	readVersionFromPackageJson()
 
+	if pkgArch == "" {
+		pkgArch = goarch
+	}
+
 	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
 
 	if flag.NArg() == 0 {
@@ -105,10 +109,17 @@ func main() {
 
 		case "package":
 			grunt(gruntBuildArg("build")...)
-			packageGrafana()
+			grunt(gruntBuildArg("package")...)
+			if goos == "linux" {
+				createLinuxPackages()
+			}
 
 		case "package-only":
-			packageGrafana()
+			grunt(gruntBuildArg("package")...)
+			if goos == "linux" {
+				createLinuxPackages()
+			}
+
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)
@@ -130,22 +141,6 @@ func main() {
 		default:
 			log.Fatalf("Unknown command %q", cmd)
 		}
-	}
-}
-
-func packageGrafana() {
-	platformArg := fmt.Sprintf("--platform=%v", goos)
-	previousPkgArch := pkgArch
-	if pkgArch == "" {
-		pkgArch = goarch
-	}
-	postProcessArgs := gruntBuildArg("package")
-	postProcessArgs = append(postProcessArgs, platformArg)
-	grunt(postProcessArgs...)
-	pkgArch = previousPkgArch
-
-	if goos == "linux" {
-		createLinuxPackages()
 	}
 }
 
@@ -404,6 +399,8 @@ func gruntBuildArg(task string) []string {
 	if phjsToRelease != "" {
 		args = append(args, fmt.Sprintf("--phjsToRelease=%v", phjsToRelease))
 	}
+	args = append(args, fmt.Sprintf("--platform=%v", goos))
+
 	return args
 }
 

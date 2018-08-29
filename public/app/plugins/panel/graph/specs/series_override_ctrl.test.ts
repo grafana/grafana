@@ -2,7 +2,7 @@ import '../series_overrides_ctrl';
 import { SeriesOverridesCtrl } from '../series_overrides_ctrl';
 
 describe('SeriesOverridesCtrl', () => {
-  let popoverSrv = {};
+  const popoverSrv = {};
   let $scope;
 
   beforeEach(() => {

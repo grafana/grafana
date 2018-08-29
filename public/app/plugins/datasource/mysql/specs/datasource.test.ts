@@ -3,13 +3,13 @@ import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 
 describe('MySQLDatasource', function() {
-  let instanceSettings = { name: 'mysql' };
-  let backendSrv = {};
-  let templateSrv = {
+  const instanceSettings = { name: 'mysql' };
+  const backendSrv = {};
+  const templateSrv = {
     replace: jest.fn(text => text),
   };
 
-  let ctx = <any>{
+  const ctx = <any>{
     backendSrv,
   };
 
