@@ -426,7 +426,7 @@ export default class CloudWatchDatasource {
     return _.chain(targets)
       .map(target => {
         const dimensionKey = _.findKey(target.dimensions, v => {
-          return templateSrv.constiableExists(v) && !_.has(scopedVars, templateSrv.getVariableName(v));
+          return templateSrv.variableExists(v) && !_.has(scopedVars, templateSrv.getVariableName(v));
         });
 
         if (dimensionKey) {
