@@ -385,7 +385,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     if (addAlias) {
       // set initial alias name to column name
-      partModel = sqlPart.create({ type: 'alias', params: [selectParts[0].params[0]] });
+      partModel = sqlPart.create({ type: 'alias', params: [selectParts[0].params[0].replace('"', '')] });
       if (selectParts[selectParts.length - 1].def.type === 'alias') {
         selectParts[selectParts.length - 1] = partModel;
       } else {
