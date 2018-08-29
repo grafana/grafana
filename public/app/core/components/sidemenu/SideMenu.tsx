@@ -37,16 +37,6 @@ export class SideMenu extends PureComponent<Props, State> {
     appEvents.emit('toggle-sidemenu-mobile');
   };
 
-  itemClicked = (event, item) => {
-    event.preventDefault();
-    console.log('clicked me');
-    if (item.url === '/shortcuts') {
-      appEvents.emit('show-modal', {
-        templateHtml: '<help-modal></help-modal>',
-      });
-    }
-  };
-
   render() {
     const { mainLinks, isSignedIn, bottomNav } = this.state;
 
@@ -63,13 +53,7 @@ export class SideMenu extends PureComponent<Props, State> {
         </span>
       </div>,
       <TopSection mainLinks={mainLinks} key="topsection" />,
-      <BottomSection
-        itemClicked={this.itemClicked}
-        bottomNav={bottomNav}
-        isSignedIn={isSignedIn}
-        loginUrl={loginUrl}
-        key="bottomsection"
-      />,
+      <BottomSection bottomNav={bottomNav} isSignedIn={isSignedIn} loginUrl={loginUrl} key="bottomsection" />,
     ];
   }
 }

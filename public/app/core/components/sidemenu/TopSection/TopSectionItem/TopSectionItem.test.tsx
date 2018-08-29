@@ -1,24 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { SideMenu } from './SideMenu';
-
-jest.mock('context_srv', () => ({
-  sidemenu: true,
-}));
+import TopSectionItem from './TopSectionItem';
 
 const setup = (propOverrides?: object) => {
   const props = Object.assign(
     {
-      loginUrl: '',
-      user: {},
-      mainLinks: [],
-      bottomeLinks: [],
-      isSignedIn: false,
+      link: {},
     },
     propOverrides
   );
 
-  return shallow(<SideMenu {...props} />);
+  return shallow(<TopSectionItem {...props} />);
 };
 
 describe('Render', () => {

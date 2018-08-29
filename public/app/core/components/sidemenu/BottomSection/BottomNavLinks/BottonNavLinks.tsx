@@ -1,13 +1,25 @@
 import React, { SFC } from 'react';
+import appEvents from '../../../../app_events';
 
 interface BottonNavLinksProps {
   link: any;
-  itemClicked: (event, item) => void;
-  switchOrg: () => void;
 }
 
 const BottomNavLinks: SFC<BottonNavLinksProps> = props => {
-  const { link, itemClicked, switchOrg } = props;
+  const { link } = props;
+
+  const itemClicked = (event, item) => {
+    event.preventDefault();
+    if (item.url === '/shortcuts') {
+      appEvents.emit('show-modal', {
+        templateHtml: '<help-modal></help-modal>',
+      });
+    }
+  };
+
+  const switchOrg = () => {
+    console.log('switch org yo');
+  };
 
   return (
     <div className="sidemenu-item dropdown dropup">
