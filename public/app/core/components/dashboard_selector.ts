@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 
-var template = `
+const template = `
 <select class="gf-form-input" ng-model="ctrl.model" ng-options="f.value as f.text for f in ctrl.options"></select>
 `;
 

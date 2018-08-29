@@ -3,7 +3,7 @@ import coreModule from '../core_module';
 
 function getBlockNodes(nodes) {
   var node = nodes[0];
-  var endNode = nodes[nodes.length - 1];
+  const endNode = nodes[nodes.length - 1];
   var blockNodes;
 
   for (var i = 1; node !== endNode && (node = node.nextSibling); i++) {

@@ -1,7 +1,7 @@
 import store from 'app/core/store';
 import coreModule from 'app/core/core_module';
 
-var template = `
+const template = `
 <div class="layout-selector">
   <button ng-click="ctrl.listView()" ng-class="{active: ctrl.mode === 'list'}">
     <i class="fa fa-list"></i>
@@ -51,7 +51,7 @@ export function layoutMode($rootScope) {
     restrict: 'A',
     scope: {},
     link: function(scope, elem) {
-      var layout = store.get('grafana.list.layout.mode') || 'grid';
+      const layout = store.get('grafana.list.layout.mode') || 'grid';
       var className = 'card-list-layout-' + layout;
       elem.addClass(className);
 

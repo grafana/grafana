@@ -47,7 +47,7 @@ function bootstrapTagsinput() {
         scope.model = [];
       }
 
-      var select = $('select', element);
+      const select = $('select', element);
 
       if (attrs.placeholder) {
         select.attr('placeholder', attrs.placeholder);
@@ -76,7 +76,7 @@ function bootstrapTagsinput() {
             scope.onTagsUpdated();
           }
         }
-        var tagElement = select
+        const tagElement = select
           .next()
           .children('span')
           .filter(function() {
@@ -86,7 +86,7 @@ function bootstrapTagsinput() {
       });
 
       select.on('itemRemoved', function(event) {
-        var idx = scope.model.indexOf(event.item);
+        const idx = scope.model.indexOf(event.item);
         if (idx !== -1) {
           scope.model.splice(idx, 1);
           if (scope.onTagsUpdated) {

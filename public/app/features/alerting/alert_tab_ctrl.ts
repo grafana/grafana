@@ -50,7 +50,7 @@ export class AlertTabCtrl {
     this.addNotificationSegment = this.uiSegmentSrv.newPlusButton();
 
     // subscribe to graph threshold handle changes
-    var thresholdChangedEventHandler = this.graphThresholdChanged.bind(this);
+    const thresholdChangedEventHandler = this.graphThresholdChanged.bind(this);
     this.panelCtrl.events.on('threshold-changed', thresholdChangedEventHandler);
 
     // set panel alert edit mode
@@ -129,7 +129,7 @@ export class AlertTabCtrl {
   }
 
   notificationAdded() {
-    var model = _.find(this.notifications, {
+    const model = _.find(this.notifications, {
       name: this.addNotificationSegment.value,
     });
     if (!model) {
@@ -154,7 +154,7 @@ export class AlertTabCtrl {
   }
 
   initModel() {
-    var alert = (this.alert = this.panel.alert);
+    const alert = (this.alert = this.panel.alert);
     if (!alert) {
       return;
     }
@@ -170,7 +170,7 @@ export class AlertTabCtrl {
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
 
-    var defaultName = this.panel.title + ' alert';
+    const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
 
     this.conditionModels = _.reduce(
@@ -185,7 +185,7 @@ export class AlertTabCtrl {
     ThresholdMapper.alertToGraphThresholds(this.panel);
 
     for (const addedNotification of alert.notifications) {
-      var model = _.find(this.notifications, { id: addedNotification.id });
+      const model = _.find(this.notifications, { id: addedNotification.id });
       if (model && model.isDefault === false) {
         model.iconClass = this.getNotificationIcon(model.type);
         this.alertNotifications.push(model);
@@ -205,7 +205,7 @@ export class AlertTabCtrl {
   }
 
   graphThresholdChanged(evt) {
-    for (var condition of this.alert.conditions) {
+    for (const condition of this.alert.conditions) {
       if (condition.type === 'query') {
         condition.evaluator.params[evt.handleIndex] = evt.threshold.value;
         this.evaluatorParamsChanged();
@@ -232,12 +232,12 @@ export class AlertTabCtrl {
     let firstTarget;
     let foundTarget = null;
 
-    for (var condition of this.alert.conditions) {
+    for (const condition of this.alert.conditions) {
       if (condition.type !== 'query') {
         continue;
       }
 
-      for (var target of this.panel.targets) {
+      for (const target of this.panel.targets) {
         if (!firstTarget) {
           firstTarget = target;
         }
@@ -256,7 +256,7 @@ export class AlertTabCtrl {
         }
       }
 
-      var datasourceName = foundTarget.datasource || this.panel.datasource;
+      const datasourceName = foundTarget.datasource || this.panel.datasource;
       this.datasourceSrv.get(datasourceName).then(ds => {
         if (!ds.meta.alerting) {
           this.error = 'The datasource does not support alerting queries';
@@ -270,7 +270,7 @@ export class AlertTabCtrl {
   }
 
   buildConditionModel(source) {
-    var cm: any = { source: source, type: source.type };
+    const cm: any = { source: source, type: source.type };
 
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
     cm.reducerPart = alertDef.createReducerPart(source.reducer);
@@ -292,7 +292,7 @@ export class AlertTabCtrl {
         this.validateModel();
       }
       case 'get-param-options': {
-        var result = this.panel.targets.map(target => {
+        const result = this.panel.targets.map(target => {
           return this.uiSegmentSrv.newSegment({ value: target.refId });
         });
 
@@ -309,8 +309,8 @@ export class AlertTabCtrl {
         break;
       }
       case 'get-part-actions': {
-        var result = [];
-        for (var type of alertDef.reducerTypes) {
+        const result = [];
+        for (const type of alertDef.reducerTypes) {
           if (type.value !== conditionModel.source.reducer.type) {
             result.push(type);
           }
@@ -321,7 +321,7 @@ export class AlertTabCtrl {
   }
 
   addCondition(type) {
-    var condition = this.buildDefaultCondition();
+    const condition = this.buildDefaultCondition();
     // add to persited model
     this.alert.conditions.push(condition);
     // add to view model
@@ -406,7 +406,7 @@ export class AlertTabCtrl {
     this.testing = true;
     this.testResult = false;
 
-    var payload = {
+    const payload = {
       dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),
       panelId: this.panelCtrl.panel.id,
     };

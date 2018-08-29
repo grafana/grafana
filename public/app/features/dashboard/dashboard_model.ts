@@ -145,7 +145,7 @@ export class DashboardModel {
 
     // make clone
     var copy: any = {};
-    for (var property in this) {
+    for (const property in this) {
       if (DashboardModel.nonPersistedProperties[property] || !this.hasOwnProperty(property)) {
         continue;
       }
@@ -542,7 +542,7 @@ export class DashboardModel {
   }
 
   removePanel(panel: PanelModel) {
-    var index = _.indexOf(this.panels, panel);
+    const index = _.indexOf(this.panels, panel);
     this.panels.splice(index, 1);
     this.events.emit('panel-removed', panel);
   }
@@ -559,7 +559,7 @@ export class DashboardModel {
 
   expandRows() {
     for (let i = 0; i < this.panels.length; i++) {
-      var panel = this.panels[i];
+      const panel = this.panels[i];
 
       if (panel.type !== 'row') {
         continue;
@@ -573,7 +573,7 @@ export class DashboardModel {
 
   collapseRows() {
     for (let i = 0; i < this.panels.length; i++) {
-      var panel = this.panels[i];
+      const panel = this.panels[i];
 
       if (panel.type !== 'row') {
         continue;
@@ -595,12 +595,12 @@ export class DashboardModel {
         return true;
       }
 
-      var visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
+      const visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
       if (visibleVars.length > 0) {
         return true;
       }
 
-      var visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
+      const visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
       if (visibleAnnotations.length > 0) {
         return true;
       }
@@ -773,7 +773,7 @@ export class DashboardModel {
   }
 
   getNextQueryLetter(panel) {
-    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     return _.find(letters, function(refId) {
       return _.every(panel.targets, function(other) {
