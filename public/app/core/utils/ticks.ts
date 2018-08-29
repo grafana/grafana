@@ -7,7 +7,7 @@
  * @param count Ticks count
  */
 export function tickStep(start: number, stop: number, count: number): number {
-  let e10 = Math.sqrt(50),
+  const e10 = Math.sqrt(50),
     e5 = Math.sqrt(10),
     e2 = Math.sqrt(2);
 
@@ -76,7 +76,7 @@ export function getFlotRange(panelMin, panelMax, datamin, datamax) {
 
   let min = +(panelMin != null ? panelMin : datamin);
   let max = +(panelMax != null ? panelMax : datamax);
-  let delta = max - min;
+  const delta = max - min;
 
   if (delta === 0.0) {
     // Grafana fix: wide Y min and max using increased wideFactor
@@ -123,11 +123,11 @@ export function getFlotTickDecimals(datamin, datamax, axis, height) {
   const { min, max } = getFlotRange(axis.min, axis.max, datamin, datamax);
   const noTicks = 0.3 * Math.sqrt(height);
   const delta = (max - min) / noTicks;
-  let dec = -Math.floor(Math.log(delta) / Math.LN10);
+  const dec = -Math.floor(Math.log(delta) / Math.LN10);
 
-  let magn = Math.pow(10, -dec);
+  const magn = Math.pow(10, -dec);
   // norm is between 1.0 and 10.0
-  let norm = delta / magn;
+  const norm = delta / magn;
   let size;
 
   if (norm < 1.5) {
@@ -159,10 +159,10 @@ export function getFlotTickDecimals(datamin, datamax, axis, height) {
  */
 export function grafanaTimeFormat(ticks, min, max) {
   if (min && max && ticks) {
-    let range = max - min;
-    let secPerTick = range / ticks / 1000;
-    let oneDay = 86400000;
-    let oneYear = 31536000000;
+    const range = max - min;
+    const secPerTick = range / ticks / 1000;
+    const oneDay = 86400000;
+    const oneYear = 31536000000;
 
     if (secPerTick <= 45) {
       return '%H:%M:%S';
@@ -193,7 +193,7 @@ export function logp(value, base) {
  * Get decimal precision of number (3.14 => 2)
  */
 export function getPrecision(num: number): number {
-  let str = num.toString();
+  const str = num.toString();
   return getStringPrecision(str);
 }
 
@@ -201,7 +201,7 @@ export function getPrecision(num: number): number {
  * Get decimal precision of number stored as a string ("3.14" => 2)
  */
 export function getStringPrecision(num: string): number {
-  let dot_index = num.indexOf('.');
+  const dot_index = num.indexOf('.');
   if (dot_index === -1) {
     return 0;
   } else {

@@ -10,7 +10,7 @@ import { DashboardExporter } from '../export/exporter';
 import { DashboardModel } from '../dashboard_model';
 
 describe('given dashboard with repeated panels', () => {
-  var dash, exported;
+  let dash, exported;
 
   beforeEach(done => {
     dash = {
@@ -89,7 +89,7 @@ describe('given dashboard with repeated panels', () => {
     config.buildInfo.version = '3.0.2';
 
     //Stubs test function calls
-    var datasourceSrvStub = { get: jest.fn(arg => getStub(arg)) };
+    const datasourceSrvStub = { get: jest.fn(arg => getStub(arg)) };
 
     config.panels['graph'] = {
       id: 'graph',
@@ -110,7 +110,7 @@ describe('given dashboard with repeated panels', () => {
     };
 
     dash = new DashboardModel(dash, {});
-    var exporter = new DashboardExporter(datasourceSrvStub);
+    const exporter = new DashboardExporter(datasourceSrvStub);
     exporter.makeExportable(dash).then(clean => {
       exported = clean;
       done();
@@ -118,12 +118,12 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should replace datasource refs', () => {
-    var panel = exported.panels[0];
+    const panel = exported.panels[0];
     expect(panel.datasource).toBe('${DS_GFDB}');
   });
 
   it('should replace datasource refs in collapsed row', () => {
-    var panel = exported.panels[5].panels[0];
+    const panel = exported.panels[5].panels[0];
     expect(panel.datasource).toBe('${DS_GFDB}');
   });
 
@@ -145,7 +145,7 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add datasource to required', () => {
-    var require = _.find(exported.__requires, { name: 'TestDB' });
+    const require = _.find(exported.__requires, { name: 'TestDB' });
     expect(require.name).toBe('TestDB');
     expect(require.id).toBe('testdb');
     expect(require.type).toBe('datasource');
@@ -153,52 +153,52 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should not add built in datasources to required', () => {
-    var require = _.find(exported.__requires, { name: 'Mixed' });
+    const require = _.find(exported.__requires, { name: 'Mixed' });
     expect(require).toBe(undefined);
   });
 
   it('should add datasources used in mixed mode', () => {
-    var require = _.find(exported.__requires, { name: 'OtherDB' });
+    const require = _.find(exported.__requires, { name: 'OtherDB' });
     expect(require).not.toBe(undefined);
   });
 
   it('should add graph panel to required', () => {
-    var require = _.find(exported.__requires, { name: 'Graph' });
+    const require = _.find(exported.__requires, { name: 'Graph' });
     expect(require.name).toBe('Graph');
     expect(require.id).toBe('graph');
     expect(require.version).toBe('1.1.0');
   });
 
   it('should add table panel to required', () => {
-    var require = _.find(exported.__requires, { name: 'Table' });
+    const require = _.find(exported.__requires, { name: 'Table' });
     expect(require.name).toBe('Table');
     expect(require.id).toBe('table');
     expect(require.version).toBe('1.1.1');
   });
 
   it('should add heatmap panel to required', () => {
-    var require = _.find(exported.__requires, { name: 'Heatmap' });
+    const require = _.find(exported.__requires, { name: 'Heatmap' });
     expect(require.name).toBe('Heatmap');
     expect(require.id).toBe('heatmap');
     expect(require.version).toBe('1.1.2');
   });
 
   it('should add grafana version', () => {
-    var require = _.find(exported.__requires, { name: 'Grafana' });
+    const require = _.find(exported.__requires, { name: 'Grafana' });
     expect(require.type).toBe('grafana');
     expect(require.id).toBe('grafana');
     expect(require.version).toBe('3.0.2');
   });
 
   it('should add constant template variables as inputs', () => {
-    var input = _.find(exported.__inputs, { name: 'VAR_PREFIX' });
+    const input = _.find(exported.__inputs, { name: 'VAR_PREFIX' });
     expect(input.type).toBe('constant');
     expect(input.label).toBe('prefix');
     expect(input.value).toBe('collectd');
   });
 
   it('should templatize constant variables', () => {
-    var variable = _.find(exported.templating.list, { name: 'prefix' });
+    const variable = _.find(exported.templating.list, { name: 'prefix' });
     expect(variable.query).toBe('${VAR_PREFIX}');
     expect(variable.current.text).toBe('${VAR_PREFIX}');
     expect(variable.current.value).toBe('${VAR_PREFIX}');
@@ -208,7 +208,7 @@ describe('given dashboard with repeated panels', () => {
 });
 
 // Stub responses
-var stubs = [];
+const stubs = [];
 stubs['gfdb'] = {
   name: 'gfdb',
   meta: { id: 'testdb', info: { version: '1.2.1' }, name: 'TestDB' },

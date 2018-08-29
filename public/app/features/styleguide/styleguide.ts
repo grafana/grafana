@@ -17,7 +17,7 @@ class StyleGuideCtrl {
   switchTheme() {
     this.$routeParams.theme = this.theme === 'dark' ? 'light' : 'dark';
 
-    var cmd = {
+    const cmd = {
       theme: this.$routeParams.theme,
     };
 

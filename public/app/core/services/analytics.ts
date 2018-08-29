@@ -12,7 +12,7 @@ export class Analytics {
       dataType: 'script',
       cache: true,
     });
-    var ga = ((<any>window).ga =
+    const ga = ((<any>window).ga =
       (<any>window).ga ||
       function() {
         (ga.q = ga.q || []).push(arguments);
@@ -25,8 +25,8 @@ export class Analytics {
 
   init() {
     this.$rootScope.$on('$viewContentLoaded', () => {
-      var track = { page: this.$location.url() };
-      var ga = (<any>window).ga || this.gaInit();
+      const track = { page: this.$location.url() };
+      const ga = (<any>window).ga || this.gaInit();
       ga('set', track);
       ga('send', 'pageview');
     });

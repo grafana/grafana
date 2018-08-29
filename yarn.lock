@@ -850,7 +850,7 @@ async@^1.4.0, async@^1.5.0, async@^1.5.2, async@~1.5.2:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
 
-async@^2.0.0, async@^2.1.4, async@^2.4.1, async@^2.6.0:
+async@^2.0.0, async@^2.1.4, async@^2.6.0:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/async/-/async-2.6.1.tgz#b245a23ca71930044ec53fa46aa00a3e87c6a610"
   dependencies:
@@ -4104,15 +4104,6 @@ extglob@^2.0.4:
     regex-not "^1.0.0"
     snapdragon "^0.8.1"
     to-regex "^3.0.1"
-
-extract-text-webpack-plugin@^4.0.0-beta.0:
-  version "4.0.0-beta.0"
-  resolved "https://registry.yarnpkg.com/extract-text-webpack-plugin/-/extract-text-webpack-plugin-4.0.0-beta.0.tgz#f7361d7ff430b42961f8d1321ba8c1757b5d4c42"
-  dependencies:
-    async "^2.4.1"
-    loader-utils "^1.1.0"
-    schema-utils "^0.4.5"
-    webpack-sources "^1.1.0"
 
 extract-zip@^1.6.5:
   version "1.6.7"
@@ -7661,9 +7652,9 @@ ng-annotate-loader@^0.6.1:
     normalize-path "2.0.1"
     source-map "0.5.6"
 
-ng-annotate-webpack-plugin@^0.2.1-pre:
-  version "0.2.1-pre"
-  resolved "https://registry.yarnpkg.com/ng-annotate-webpack-plugin/-/ng-annotate-webpack-plugin-0.2.1-pre.tgz#40d9aa8cd214e30e3125a8481634ab0dd9b3dd68"
+ng-annotate-webpack-plugin@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/ng-annotate-webpack-plugin/-/ng-annotate-webpack-plugin-0.3.0.tgz#2e7f5e29c6a4ce26649edcb06c1213408b35b84a"
   dependencies:
     ng-annotate "^1.2.1"
     webpack-core "^0.6.5"
@@ -11463,6 +11454,12 @@ tslint-loader@^3.5.3:
     rimraf "^2.4.4"
     semver "^5.3.0"
 
+tslint-react@^3.6.0:
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/tslint-react/-/tslint-react-3.6.0.tgz#7f462c95c4a0afaae82507f06517ff02942196a1"
+  dependencies:
+    tsutils "^2.13.1"
+
 tslint@^5.8.0:
   version "5.10.0"
   resolved "https://registry.yarnpkg.com/tslint/-/tslint-5.10.0.tgz#11e26bccb88afa02dd0d9956cae3d4540b5f54c3"
@@ -11483,6 +11480,12 @@ tslint@^5.8.0:
 tsutils@^2.12.1:
   version "2.27.1"
   resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.27.1.tgz#ab0276ac23664f36ce8fd4414daec4aebf4373ee"
+  dependencies:
+    tslib "^1.8.1"
+
+tsutils@^2.13.1:
+  version "2.29.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.29.0.tgz#32b488501467acbedd4b85498673a0812aca0b99"
   dependencies:
     tslib "^1.8.1"
 

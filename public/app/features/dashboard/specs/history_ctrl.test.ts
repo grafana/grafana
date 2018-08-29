@@ -70,7 +70,7 @@ describe('HistoryListCtrl', () => {
       });
 
       it('should add a checked property to each revision', () => {
-        let actual = _.filter(historyListCtrl.revisions, rev => rev.hasOwnProperty('checked'));
+        const actual = _.filter(historyListCtrl.revisions, rev => rev.hasOwnProperty('checked'));
         expect(actual.length).toBe(4);
       });
 
@@ -78,7 +78,7 @@ describe('HistoryListCtrl', () => {
         historyListCtrl.revisions[0].checked = true;
         historyListCtrl.revisions[2].checked = true;
         historyListCtrl.reset();
-        let actual = _.filter(historyListCtrl.revisions, rev => !rev.checked);
+        const actual = _.filter(historyListCtrl.revisions, rev => !rev.checked);
         expect(actual.length).toBe(4);
       });
     });

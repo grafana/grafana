@@ -2,7 +2,7 @@ import { DashboardImportCtrl } from '../dashboard_import_ctrl';
 import config from '../../../core/config';
 
 describe('DashboardImportCtrl', function() {
-  var ctx: any = {};
+  const ctx: any = {};
 
   let navModelSrv;
   let backendSrv;

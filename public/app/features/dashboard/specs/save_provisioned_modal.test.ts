@@ -1,12 +1,12 @@
 import { SaveProvisionedDashboardModalCtrl } from '../save_provisioned_modal';
 
 describe('SaveProvisionedDashboardModalCtrl', () => {
-  var json = {
+  const json = {
     title: 'name',
     id: 5,
   };
 
-  var mockDashboardSrv = {
+  const mockDashboardSrv = {
     getCurrent: function() {
       return {
         id: 5,
@@ -18,7 +18,7 @@ describe('SaveProvisionedDashboardModalCtrl', () => {
     },
   };
 
-  var ctrl = new SaveProvisionedDashboardModalCtrl(mockDashboardSrv);
+  const ctrl = new SaveProvisionedDashboardModalCtrl(mockDashboardSrv);
 
   it('should remove id from dashboard model', () => {
     expect(ctrl.dash.id).toBeUndefined();

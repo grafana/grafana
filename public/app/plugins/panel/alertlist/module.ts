@@ -42,7 +42,7 @@ class AlertListPanel extends PanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRefresh.bind(this));
 
-    for (let key in this.panel.stateFilter) {
+    for (const key in this.panel.stateFilter) {
       this.stateFilter[this.panel.stateFilter[key]] = true;
     }
   }
@@ -67,7 +67,7 @@ class AlertListPanel extends PanelCtrl {
   updateStateFilter() {
     var result = [];
 
-    for (let key in this.stateFilter) {
+    for (const key in this.stateFilter) {
       if (this.stateFilter[key]) {
         result.push(key);
       }

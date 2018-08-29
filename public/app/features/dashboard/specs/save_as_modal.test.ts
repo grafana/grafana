@@ -4,12 +4,12 @@ import { describe, it, expect } from 'test/lib/common';
 describe('saving dashboard as', () => {
   function scenario(name, panel, verify) {
     describe(name, () => {
-      var json = {
+      const json = {
         title: 'name',
         panels: [panel],
       };
 
-      var mockDashboardSrv = {
+      const mockDashboardSrv = {
         getCurrent: function() {
           return {
             id: 5,
@@ -21,8 +21,8 @@ describe('saving dashboard as', () => {
         },
       };
 
-      var ctrl = new SaveDashboardAsModalCtrl(mockDashboardSrv);
-      var ctx: any = {
+      const ctrl = new SaveDashboardAsModalCtrl(mockDashboardSrv);
+      const ctx: any = {
         clone: ctrl.clone,
         ctrl: ctrl,
         panel: panel,
@@ -35,14 +35,14 @@ describe('saving dashboard as', () => {
   }
 
   scenario('default values', {}, ctx => {
-    var clone = ctx.clone;
+    const clone = ctx.clone;
     expect(clone.id).toBe(null);
     expect(clone.title).toBe('name Copy');
     expect(clone.editable).toBe(true);
     expect(clone.hideControls).toBe(false);
   });
 
-  var graphPanel = {
+  const graphPanel = {
     id: 1,
     type: 'graph',
     alert: { rule: 1 },

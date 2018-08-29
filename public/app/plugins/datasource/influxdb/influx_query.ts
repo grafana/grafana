@@ -202,10 +202,10 @@ export default class InfluxQuery {
     var query = 'SELECT ';
     var i, y;
     for (i = 0; i < this.selectModels.length; i++) {
-      let parts = this.selectModels[i];
+      const parts = this.selectModels[i];
       var selectText = '';
       for (y = 0; y < parts.length; y++) {
-        let part = parts[y];
+        const part = parts[y];
         selectText = part.render(selectText);
       }
 

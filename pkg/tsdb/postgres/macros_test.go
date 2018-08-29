@@ -129,6 +129,18 @@ func TestMacroEngine(t *testing.T) {
 
 				So(sql, ShouldEqual, fmt.Sprintf("select %d", to.Unix()))
 			})
+
+			Convey("interpolate __unixEpochGroup function", func() {
+
+				sql, err := engine.Interpolate(query, timeRange, "SELECT $__unixEpochGroup(time_column,'5m')")
+				So(err, ShouldBeNil)
+				sql2, err := engine.Interpolate(query, timeRange, "SELECT $__unixEpochGroupAlias(time_column,'5m')")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "SELECT floor(time_column/300)*300")
+				So(sql2, ShouldEqual, sql+" AS \"time\"")
+			})
+
 		})
 
 		Convey("Given a time range between 1960-02-01 07:00 and 1965-02-03 08:00", func() {

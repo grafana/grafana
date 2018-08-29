@@ -6,7 +6,7 @@ import coreModule from '../core_module';
 export class InspectCtrl {
   /** @ngInject */
   constructor($scope, $sanitize) {
-    var model = $scope.inspector;
+    const model = $scope.inspector;
 
     $scope.init = function() {
       $scope.editor = { index: 0 };
@@ -53,10 +53,10 @@ export class InspectCtrl {
     };
   }
   getParametersFromQueryString(queryString) {
-    var result = [];
-    var parameters = queryString.split('&');
-    for (var i = 0; i < parameters.length; i++) {
-      var keyValue = parameters[i].split('=');
+    const result = [];
+    const parameters = queryString.split('&');
+    for (let i = 0; i < parameters.length; i++) {
+      const keyValue = parameters[i].split('=');
       if (keyValue[1].length > 0) {
         result.push({
           key: keyValue[0],

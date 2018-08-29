@@ -46,7 +46,7 @@ export class SaveDashboardAsModalCtrl {
 
   /** @ngInject */
   constructor(private dashboardSrv) {
-    var dashboard = this.dashboardSrv.getCurrent();
+    const dashboard = this.dashboardSrv.getCurrent();
     this.clone = dashboard.getSaveModelClone();
     this.clone.id = null;
     this.clone.uid = '';

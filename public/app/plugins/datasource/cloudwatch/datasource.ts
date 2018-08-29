@@ -45,7 +45,7 @@ export default class CloudWatchDatasource {
       item.returnData = typeof item.hide === 'undefined' ? true : !item.hide;
 
       // valid ExtendedStatistics is like p90.00, check the pattern
-      let hasInvalidStatistics = item.statistics.some(s => {
+      const hasInvalidStatistics = item.statistics.some(s => {
         return s.indexOf('p') === 0 && !/p\d{2}\.\d{2}/.test(s);
       });
       if (hasInvalidStatistics) {
@@ -402,7 +402,7 @@ export default class CloudWatchDatasource {
             value: v,
           };
         });
-    let useSelectedVariables =
+    const useSelectedVariables =
       selectedVariables.some(s => {
         return s.value === currentVariables[0].value;
       }) || currentVariables[0].value === '$__all';

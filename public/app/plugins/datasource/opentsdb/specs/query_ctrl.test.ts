@@ -1,7 +1,7 @@
 import { OpenTsQueryCtrl } from '../query_ctrl';
 
 describe('OpenTsQueryCtrl', () => {
-  var ctx = <any>{
+  const ctx = <any>{
     target: { target: '' },
     datasource: {
       tsdbVersion: '',

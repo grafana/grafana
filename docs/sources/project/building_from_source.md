@@ -141,3 +141,8 @@ Please contribute to the Grafana project and submit a pull request! Build new fe
 **Problem**: On Windows, getting errors about a tool not being installed even though you just installed that tool.
 
 **Solution**: It is usually because it got added to the path and you have to restart your command prompt to use it.
+
+## Logging in for the first time
+
+To run Grafana open your browser and go to the default port http://localhost:3000 or the port you have configured.
+Then follow the instructions [here](/guides/getting_started/).

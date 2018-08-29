@@ -4,16 +4,16 @@ import coreModule from '../core_module';
 
 /** @ngInject */
 export function metricSegment($compile, $sce) {
-  let inputTemplate =
+  const inputTemplate =
     '<input type="text" data-provide="typeahead" ' +
     ' class="gf-form-input input-medium"' +
     ' spellcheck="false" style="display:none"></input>';
 
-  let linkTemplate =
+  const linkTemplate =
     '<a class="gf-form-label" ng-class="segment.cssClass" ' +
     'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
 
-  let selectTemplate =
+  const selectTemplate =
     '<a class="gf-form-input gf-form-input--dropdown" ng-class="segment.cssClass" ' +
     'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
 
@@ -25,13 +25,13 @@ export function metricSegment($compile, $sce) {
       debounce: '@',
     },
     link: function($scope, elem) {
-      let $input = $(inputTemplate);
-      let segment = $scope.segment;
-      let $button = $(segment.selectMode ? selectTemplate : linkTemplate);
+      const $input = $(inputTemplate);
+      const segment = $scope.segment;
+      const $button = $(segment.selectMode ? selectTemplate : linkTemplate);
       let options = null;
       let cancelBlur = null;
       let linkMode = true;
-      let debounceLookup = $scope.debounce;
+      const debounceLookup = $scope.debounce;
 
       $input.appendTo(elem);
       $button.appendTo(elem);
@@ -44,7 +44,7 @@ export function metricSegment($compile, $sce) {
         value = _.unescape(value);
 
         $scope.$apply(function() {
-          let selected = _.find($scope.altSegments, { value: value });
+          const selected = _.find($scope.altSegments, { value: value });
           if (selected) {
             segment.value = selected.value;
             segment.html = selected.html || selected.value;
@@ -141,10 +141,10 @@ export function metricSegment($compile, $sce) {
         matcher: $scope.matcher,
       });
 
-      let typeahead = $input.data('typeahead');
+      const typeahead = $input.data('typeahead');
       typeahead.lookup = function() {
         this.query = this.$element.val() || '';
-        let items = this.source(this.query, $.proxy(this.process, this));
+        const items = this.source(this.query, $.proxy(this.process, this));
         return items ? this.process(items) : items;
       };
 
@@ -169,7 +169,7 @@ export function metricSegment($compile, $sce) {
 
         linkMode = false;
 
-        let typeahead = $input.data('typeahead');
+        const typeahead = $input.data('typeahead');
         if (typeahead) {
           $input.val('');
           typeahead.lookup();
@@ -200,8 +200,8 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
         let cachedOptions;
 
         $scope.valueToSegment = function(value) {
-          let option = _.find($scope.options, { value: value });
-          let segment = {
+          const option = _.find($scope.options, { value: value });
+          const segment = {
             cssClass: attrs.cssClass,
             custom: attrs.custom,
             value: option ? option.text : value,
@@ -234,7 +234,7 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
 
         $scope.onSegmentChange = function() {
           if (cachedOptions) {
-            let option = _.find(cachedOptions, { text: $scope.segment.value });
+            const option = _.find(cachedOptions, { text: $scope.segment.value });
             if (option && option.value !== $scope.property) {
               $scope.property = option.value;
             } else if (attrs.custom !== 'false') {

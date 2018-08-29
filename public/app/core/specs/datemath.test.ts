@@ -5,11 +5,11 @@ import moment from 'moment';
 import _ from 'lodash';
 
 describe('DateMath', () => {
-  var spans = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
-  var anchor = '2014-01-01T06:06:06.666Z';
-  var unix = moment(anchor).valueOf();
-  var format = 'YYYY-MM-DDTHH:mm:ss.SSSZ';
-  var clock;
+  const spans = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
+  const anchor = '2014-01-01T06:06:06.666Z';
+  const unix = moment(anchor).valueOf();
+  const format = 'YYYY-MM-DDTHH:mm:ss.SSSZ';
+  let clock;
 
   describe('errors', () => {
     it('should return undefined if passed something falsy', () => {
@@ -36,21 +36,21 @@ describe('DateMath', () => {
   });
 
   it('now/d should set to start of current day', () => {
-    var expected = new Date();
+    const expected = new Date();
     expected.setHours(0);
     expected.setMinutes(0);
     expected.setSeconds(0);
     expected.setMilliseconds(0);
 
-    var startOfDay = dateMath.parse('now/d', false).valueOf();
+    const startOfDay = dateMath.parse('now/d', false).valueOf();
     expect(startOfDay).toBe(expected.getTime());
   });
 
   it('now/d on a utc dashboard should be start of the current day in UTC time', () => {
-    var today = new Date();
-    var expected = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
+    const today = new Date();
+    const expected = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
 
-    var startOfDay = dateMath.parse('now/d', false, 'utc').valueOf();
+    const startOfDay = dateMath.parse('now/d', false, 'utc').valueOf();
     expect(startOfDay).toBe(expected.getTime());
   });
 
@@ -65,8 +65,8 @@ describe('DateMath', () => {
     });
 
     _.each(spans, span => {
-      var nowEx = 'now-5' + span;
-      var thenEx = anchor + '||-5' + span;
+      const nowEx = 'now-5' + span;
+      const thenEx = anchor + '||-5' + span;
 
       it('should return 5' + span + ' ago', () => {
         expect(dateMath.parse(nowEx).format(format)).toEqual(now.subtract(5, span).format(format));
@@ -116,17 +116,17 @@ describe('DateMath', () => {
 
   describe('relative time to date parsing', function() {
     it('should handle negative time', function() {
-      var date = dateMath.parseDateMath('-2d', moment([2014, 1, 5]));
+      const date = dateMath.parseDateMath('-2d', moment([2014, 1, 5]));
       expect(date.valueOf()).toEqual(moment([2014, 1, 3]).valueOf());
     });
 
     it('should handle multiple math expressions', function() {
-      var date = dateMath.parseDateMath('-2d-6h', moment([2014, 1, 5]));
+      const date = dateMath.parseDateMath('-2d-6h', moment([2014, 1, 5]));
       expect(date.valueOf()).toEqual(moment([2014, 1, 2, 18]).valueOf());
     });
 
     it('should return false when invalid expression', function() {
-      var date = dateMath.parseDateMath('2', moment([2014, 1, 5]));
+      const date = dateMath.parseDateMath('2', moment([2014, 1, 5]));
       expect(date).toEqual(undefined);
     });
   });

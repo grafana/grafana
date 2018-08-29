@@ -41,8 +41,8 @@ export class DatasourceVariable implements Variable {
   }
 
   updateOptions() {
-    var options = [];
-    var sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
+    const options = [];
+    const sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
     var regex;
 
     if (this.regex) {
@@ -51,7 +51,7 @@ export class DatasourceVariable implements Variable {
     }
 
     for (var i = 0; i < sources.length; i++) {
-      var source = sources[i];
+      const source = sources[i];
       // must match on type
       if (source.meta.id !== this.query) {
         continue;

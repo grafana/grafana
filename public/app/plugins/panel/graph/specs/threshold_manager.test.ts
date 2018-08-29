@@ -5,7 +5,7 @@ import { ThresholdManager } from '../threshold_manager';
 describe('ThresholdManager', function() {
   function plotOptionsScenario(desc, func) {
     describe(desc, function() {
-      var ctx: any = {
+      const ctx: any = {
         panel: {
           thresholds: [],
         },
@@ -17,9 +17,9 @@ describe('ThresholdManager', function() {
 
       ctx.setup = function(thresholds, data) {
         ctx.panel.thresholds = thresholds;
-        var manager = new ThresholdManager(ctx.panelCtrl);
+        const manager = new ThresholdManager(ctx.panelCtrl);
         if (data !== undefined) {
-          var element = angular.element('<div grafana-graph><div>');
+          const element = angular.element('<div grafana-graph><div>');
           manager.prepare(element, data);
         }
         manager.addFlotOptions(ctx.options, ctx.panel);
@@ -34,7 +34,7 @@ describe('ThresholdManager', function() {
       ctx.setup([{ op: 'gt', value: 300, fill: true, line: true, colorMode: 'critical' }]);
 
       it('should add fill for threshold with fill: true', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
 
         expect(markings[0].yaxis.from).toBe(300);
         expect(markings[0].yaxis.to).toBe(Infinity);
@@ -42,7 +42,7 @@ describe('ThresholdManager', function() {
       });
 
       it('should add line', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
         expect(markings[1].yaxis.from).toBe(300);
         expect(markings[1].yaxis.to).toBe(300);
         expect(markings[1].color).toBe('rgba(237, 46, 24, 0.60)');
@@ -56,13 +56,13 @@ describe('ThresholdManager', function() {
       ]);
 
       it('should add fill for first thresholds to next threshold', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
         expect(markings[0].yaxis.from).toBe(200);
         expect(markings[0].yaxis.to).toBe(300);
       });
 
       it('should add fill for last thresholds to infinity', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
         expect(markings[1].yaxis.from).toBe(300);
         expect(markings[1].yaxis.to).toBe(Infinity);
       });
@@ -75,13 +75,13 @@ describe('ThresholdManager', function() {
       ]);
 
       it('should add fill for first thresholds to next threshold', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
         expect(markings[0].yaxis.from).toBe(300);
         expect(markings[0].yaxis.to).toBe(200);
       });
 
       it('should add fill for last thresholds to itself', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
         expect(markings[1].yaxis.from).toBe(200);
         expect(markings[1].yaxis.to).toBe(200);
       });
@@ -94,20 +94,20 @@ describe('ThresholdManager', function() {
       ]);
 
       it('should add fill for first thresholds to next threshold', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
         expect(markings[0].yaxis.from).toBe(300);
         expect(markings[0].yaxis.to).toBe(Infinity);
       });
 
       it('should add fill for last thresholds to itself', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
         expect(markings[1].yaxis.from).toBe(200);
         expect(markings[1].yaxis.to).toBe(-Infinity);
       });
     });
 
     plotOptionsScenario('for threshold on two Y axes', ctx => {
-      var data = new Array(2);
+      const data = new Array(2);
       data[0] = new TimeSeries({
         datapoints: [[0, 1], [300, 2]],
         alias: 'left',
@@ -127,12 +127,12 @@ describe('ThresholdManager', function() {
       );
 
       it('should add first threshold for left axis', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
         expect(markings[0].yaxis.from).toBe(100);
       });
 
       it('should add second threshold for right axis', function() {
-        var markings = ctx.options.grid.markings;
+        const markings = ctx.options.grid.markings;
         expect(markings[1].y2axis.from).toBe(200);
       });
     });
