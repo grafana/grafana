@@ -248,7 +248,7 @@ export class PrometheusDatasource {
   }
 
   _request(url, data?, options?: any) {
-    options = _.defaults(options, {
+    options = _.defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
     });
