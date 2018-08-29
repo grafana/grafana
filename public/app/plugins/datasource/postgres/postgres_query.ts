@@ -37,22 +37,22 @@ export default class PostgresQuery {
   // remove identifier quoting from identifier to use in metadata queries
   unquoteIdentifier(value) {
     if (value[0] === '"' && value[value.length - 1] === '"') {
-      return value.substring(1, value.length - 1).replace('""', '"');
+      return value.substring(1, value.length - 1).replace(/""/g, '"');
     } else {
       return value;
     }
   }
 
   quoteIdentifier(value) {
-    return '"' + value.replace('"', '""') + '"';
+    return '"' + value.replace(/"/g, '""') + '"';
   }
 
   quoteLiteral(value) {
-    return "'" + value.replace("'", "''") + "'";
+    return "'" + value.replace(/'/g, "''") + "'";
   }
 
   escapeLiteral(value) {
-    return value.replace("'", "''");
+    return value.replace(/'/g, "''");
   }
 
   hasTimeGroup() {
