@@ -32,8 +32,8 @@ export class ResultTransformer {
   }
 
   transformMetricData(metricData, options, start, end) {
-    let dps = [],
-      metricLabel = null;
+    const dps = [];
+    let metricLabel = null;
 
     metricLabel = this.createMetricLabel(metricData.metric, options);
 
@@ -72,9 +72,9 @@ export class ResultTransformer {
   }
 
   transformMetricDataToTable(md, resultCount: number, refId: string) {
-    var table = new TableModel();
+    const table = new TableModel();
     var i, j;
-    var metricLabels = {};
+    const metricLabels = {};
 
     if (md.length === 0) {
       return table;
@@ -82,7 +82,7 @@ export class ResultTransformer {
 
     // Collect all labels across all metrics
     _.each(md, function(series) {
-      for (var label in series.metric) {
+      for (const label in series.metric) {
         if (!metricLabels.hasOwnProperty(label)) {
           metricLabels[label] = 1;
         }
@@ -90,7 +90,7 @@ export class ResultTransformer {
     });
 
     // Sort metric labels, create columns for them and record their index
-    var sortedLabels = _.keys(metricLabels).sort();
+    const sortedLabels = _.keys(metricLabels).sort();
     table.columns.push({ text: 'Time', type: 'time' });
     _.each(sortedLabels, function(label, labelIndex) {
       metricLabels[label] = labelIndex + 1;
@@ -106,11 +106,11 @@ export class ResultTransformer {
       }
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
-          var values = series.values[i];
-          var reordered: any = [values[0] * 1000];
+          const values = series.values[i];
+          const reordered: any = [values[0] * 1000];
           if (series.metric) {
             for (j = 0; j < sortedLabels.length; j++) {
-              var label = sortedLabels[j];
+              const label = sortedLabels[j];
               if (series.metric.hasOwnProperty(label)) {
                 reordered.push(series.metric[label]);
               } else {
@@ -128,8 +128,8 @@ export class ResultTransformer {
   }
 
   transformInstantMetricData(md, options) {
-    var dps = [],
-      metricLabel = null;
+    const dps = [];
+    let metricLabel = null;
     metricLabel = this.createMetricLabel(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
     return { target: metricLabel, datapoints: dps, labels: md.metric };
@@ -149,7 +149,7 @@ export class ResultTransformer {
   }
 
   renderTemplate(aliasPattern, aliasData) {
-    var aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+    const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
     return aliasPattern.replace(aliasRegex, function(match, g1) {
       if (aliasData[g1]) {
         return aliasData[g1];
@@ -159,9 +159,9 @@ export class ResultTransformer {
   }
 
   getOriginalMetricName(labelData) {
-    var metricName = labelData.__name__ || '';
+    const metricName = labelData.__name__ || '';
     delete labelData.__name__;
-    var labelPart = _.map(_.toPairs(labelData), function(label) {
+    const labelPart = _.map(_.toPairs(labelData), function(label) {
       return label[0] + '="' + label[1] + '"';
     }).join(',');
     return metricName + '{' + labelPart + '}';

@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/core/components/query_part/query_part';
 
-var index = [];
-var categories = {
+const index = [];
+const categories = {
   Aggregations: [],
   Selectors: [],
   Transformations: [],
@@ -13,7 +13,7 @@ var categories = {
 };
 
 function createPart(part): any {
-  var def = index[part.type];
+  const def = index[part.type];
   if (!def) {
     throw { message: 'Could not find query part ' + part.type };
   }
@@ -26,7 +26,7 @@ function register(options: any) {
   options.category.push(index[options.type]);
 }
 
-var groupByTimeFunctions = [];
+const groupByTimeFunctions = [];
 
 function aliasRenderer(part, innerExpr) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
@@ -42,7 +42,7 @@ function fieldRenderer(part, innerExpr) {
 function replaceAggregationAddStrategy(selectParts, partModel) {
   // look for existing aggregation
   for (var i = 0; i < selectParts.length; i++) {
-    var part = selectParts[i];
+    const part = selectParts[i];
     if (part.def.category === categories.Aggregations) {
       if (part.def.type === partModel.def.type) {
         return;
@@ -53,9 +53,9 @@ function replaceAggregationAddStrategy(selectParts, partModel) {
       }
       // remove next aggregation if distinct was replaced
       if (part.def.type === 'distinct') {
-        var morePartsAvailable = selectParts.length >= i + 2;
+        const morePartsAvailable = selectParts.length >= i + 2;
         if (partModel.def.type !== 'count' && morePartsAvailable) {
-          var nextPart = selectParts[i + 1];
+          const nextPart = selectParts[i + 1];
           if (nextPart.def.category === categories.Aggregations) {
             selectParts.splice(i + 1, 1);
           }
@@ -82,7 +82,7 @@ function addTransformationStrategy(selectParts, partModel) {
   var i;
   // look for index to add transformation
   for (i = 0; i < selectParts.length; i++) {
-    var part = selectParts[i];
+    const part = selectParts[i];
     if (part.def.category === categories.Math || part.def.category === categories.Aliasing) {
       break;
     }
@@ -92,7 +92,7 @@ function addTransformationStrategy(selectParts, partModel) {
 }
 
 function addMathStrategy(selectParts, partModel) {
-  var partCount = selectParts.length;
+  const partCount = selectParts.length;
   if (partCount > 0) {
     // if last is math, replace it
     if (selectParts[partCount - 1].def.type === 'math') {
@@ -113,7 +113,7 @@ function addMathStrategy(selectParts, partModel) {
 }
 
 function addAliasStrategy(selectParts, partModel) {
-  var partCount = selectParts.length;
+  const partCount = selectParts.length;
   if (partCount > 0) {
     // if last is alias, replace it
     if (selectParts[partCount - 1].def.type === 'alias') {
@@ -126,7 +126,7 @@ function addAliasStrategy(selectParts, partModel) {
 
 function addFieldStrategy(selectParts, partModel, query) {
   // copy all parts
-  var parts = _.map(selectParts, function(part: any) {
+  const parts = _.map(selectParts, function(part: any) {
     return createPart({ type: part.def.type, params: _.clone(part.params) });
   });
 

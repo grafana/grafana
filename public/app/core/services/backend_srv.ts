@@ -74,8 +74,8 @@ export class BackendSrv {
 
   request(options) {
     options.retry = options.retry || 0;
-    var requestIsLocal = !options.url.match(/^http/);
-    var firstAttempt = options.retry === 0;
+    const requestIsLocal = !options.url.match(/^http/);
+    const firstAttempt = options.retry === 0;
 
     if (requestIsLocal) {
       if (this.contextSrv.user && this.contextSrv.user.orgId) {
@@ -123,30 +123,31 @@ export class BackendSrv {
   }
 
   resolveCancelerIfExists(requestId) {
-    var cancelers = this.inFlightRequests[requestId];
+    const cancelers = this.inFlightRequests[requestId];
     if (!_.isUndefined(cancelers) && cancelers.length) {
       cancelers[0].resolve();
     }
   }
 
   datasourceRequest(options) {
+    let canceler = null;
     options.retry = options.retry || 0;
 
     // A requestID is provided by the datasource as a unique identifier for a
     // particular query. If the requestID exists, the promise it is keyed to
     // is canceled, canceling the previous datasource request if it is still
     // in-flight.
-    var requestId = options.requestId;
+    const requestId = options.requestId;
     if (requestId) {
       this.resolveCancelerIfExists(requestId);
       // create new canceler
-      var canceler = this.$q.defer();
+      canceler = this.$q.defer();
       options.timeout = canceler.promise;
       this.addCanceler(requestId, canceler);
     }
 
-    var requestIsLocal = !options.url.match(/^http/);
-    var firstAttempt = options.retry === 0;
+    const requestIsLocal = !options.url.match(/^http/);
+    const firstAttempt = options.retry === 0;
 
     if (requestIsLocal) {
       if (this.contextSrv.user && this.contextSrv.user.orgId) {

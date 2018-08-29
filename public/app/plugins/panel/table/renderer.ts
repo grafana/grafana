@@ -27,7 +27,7 @@ export class TableRenderer {
       for (let i = 0; i < this.panel.styles.length; i++) {
         const style = this.panel.styles[i];
 
-        var regex = kbn.stringToJsRegex(style.pattern);
+        const regex = kbn.stringToJsRegex(style.pattern);
         if (column.text.match(regex)) {
           column.style = style;
 
@@ -184,7 +184,7 @@ export class TableRenderer {
       return;
     }
 
-    var numericValue = Number(value);
+    const numericValue = Number(value);
     if (numericValue === NaN) {
       return;
     }
@@ -210,9 +210,9 @@ export class TableRenderer {
   renderCell(columnIndex, rowIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
 
-    var column = this.table.columns[columnIndex];
+    const column = this.table.columns[columnIndex];
     var style = '';
-    var cellClasses = [];
+    const cellClasses = [];
     var cellClass = '';
 
     if (this.colorState.cell) {
@@ -248,12 +248,12 @@ export class TableRenderer {
 
     if (column.style && column.style.link) {
       // Render cell as link
-      var scopedVars = this.renderRowVariables(rowIndex);
+      const scopedVars = this.renderRowVariables(rowIndex);
       scopedVars['__cell'] = { value: value };
 
-      var cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
-      var cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
-      var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
+      const cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
+      const cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
+      const cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');
 

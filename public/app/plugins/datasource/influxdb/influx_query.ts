@@ -50,11 +50,11 @@ export default class InfluxQuery {
   }
 
   addGroupBy(value) {
-    var stringParts = value.match(/^(\w+)\((.*)\)$/);
-    var typePart = stringParts[1];
-    var arg = stringParts[2];
-    var partModel = queryPart.create({ type: typePart, params: [arg] });
-    var partCount = this.target.groupBy.length;
+    const stringParts = value.match(/^(\w+)\((.*)\)$/);
+    const typePart = stringParts[1];
+    const arg = stringParts[2];
+    const partModel = queryPart.create({ type: typePart, params: [arg] });
+    const partCount = this.target.groupBy.length;
 
     if (partCount === 0) {
       this.target.groupBy.push(partModel.part);
@@ -74,7 +74,7 @@ export default class InfluxQuery {
   }
 
   removeGroupByPart(part, index) {
-    var categories = queryPart.getCategories();
+    const categories = queryPart.getCategories();
 
     if (part.def.type === 'time') {
       // remove fill
@@ -82,7 +82,7 @@ export default class InfluxQuery {
       // remove aggregations
       this.target.select = _.map(this.target.select, (s: any) => {
         return _.filter(s, (part: any) => {
-          var partModel = queryPart.create(part);
+          const partModel = queryPart.create(part);
           if (partModel.def.category === categories.Aggregations) {
             return false;
           }
@@ -107,11 +107,11 @@ export default class InfluxQuery {
     // if we remove the field remove the whole statement
     if (part.def.type === 'field') {
       if (this.selectModels.length > 1) {
-        var modelsIndex = _.indexOf(this.selectModels, selectParts);
+        const modelsIndex = _.indexOf(this.selectModels, selectParts);
         this.selectModels.splice(modelsIndex, 1);
       }
     } else {
-      var partIndex = _.indexOf(selectParts, part);
+      const partIndex = _.indexOf(selectParts, part);
       selectParts.splice(partIndex, 1);
     }
 
@@ -119,7 +119,7 @@ export default class InfluxQuery {
   }
 
   addSelectPart(selectParts, type) {
-    var partModel = queryPart.create({ type: type });
+    const partModel = queryPart.create({ type: type });
     partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
   }
@@ -184,12 +184,12 @@ export default class InfluxQuery {
       return kbn.regexEscape(value);
     }
 
-    var escapedValues = _.map(value, kbn.regexEscape);
+    const escapedValues = _.map(value, kbn.regexEscape);
     return '(' + escapedValues.join('|') + ')';
   }
 
   render(interpolate?) {
-    var target = this.target;
+    const target = this.target;
 
     if (target.rawQuery) {
       if (interpolate) {
@@ -216,7 +216,7 @@ export default class InfluxQuery {
     }
 
     query += ' FROM ' + this.getMeasurementAndPolicy(interpolate) + ' WHERE ';
-    var conditions = _.map(target.tags, (tag, index) => {
+    const conditions = _.map(target.tags, (tag, index) => {
       return this.renderTagCondition(tag, index, interpolate);
     });
 
@@ -228,7 +228,7 @@ export default class InfluxQuery {
 
     var groupBySection = '';
     for (i = 0; i < this.groupByParts.length; i++) {
-      var part = this.groupByParts[i];
+      const part = this.groupByParts[i];
       if (i > 0) {
         // for some reason fill has no separator
         groupBySection += part.def.type === 'fill' ? ' ' : ', ';
@@ -260,7 +260,7 @@ export default class InfluxQuery {
   }
 
   renderAdhocFilters(filters) {
-    var conditions = _.map(filters, (tag, index) => {
+    const conditions = _.map(filters, (tag, index) => {
       return this.renderTagCondition(tag, index, false);
     });
     return conditions.join(' ');
