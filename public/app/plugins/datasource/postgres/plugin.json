@@ -18,10 +18,6 @@
 
   "alerting": true,
   "annotations": true,
-  "metrics": true,
-
-  "queryOptions": {
-    "minInterval": true
-  }
+  "metrics": true
 
 }
