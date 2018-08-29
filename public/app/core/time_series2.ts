@@ -8,7 +8,7 @@ function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   }
 
   if (aliasOrRegex[0] === '/') {
-    var regex = kbn.stringToJsRegex(aliasOrRegex);
+    const regex = kbn.stringToJsRegex(aliasOrRegex);
     return seriesAlias.match(regex) != null;
   }
 
@@ -43,9 +43,9 @@ export function updateLegendValues(data: TimeSeries[], panel, height) {
       // legend and tooltip gets one more decimal precision
       // than graph legend ticks
       const { datamin, datamax } = getDataMinMax(data);
-      let { tickDecimals, scaledDecimals } = getFlotTickDecimals(datamin, datamax, axis, height);
-      tickDecimals = (tickDecimals || -1) + 1;
-      series.updateLegendValues(formater, tickDecimals, scaledDecimals + 2);
+      const { tickDecimals, scaledDecimals } = getFlotTickDecimals(datamin, datamax, axis, height);
+      const tickDecimalsPlusOne = (tickDecimals || -1) + 1;
+      series.updateLegendValues(formater, tickDecimalsPlusOne, scaledDecimals + 2);
     }
   }
 }
@@ -125,7 +125,7 @@ export default class TimeSeries {
     delete this.bars.show;
 
     for (var i = 0; i < overrides.length; i++) {
-      var override = overrides[i];
+      const override = overrides[i];
       if (!matchSeriesOverride(override.alias, this.alias)) {
         continue;
       }
@@ -193,7 +193,7 @@ export default class TimeSeries {
   }
 
   getFlotPairs(fillStyle) {
-    var result = [];
+    const result = [];
 
     this.stats.total = 0;
     this.stats.max = -Number.MAX_VALUE;
@@ -209,8 +209,8 @@ export default class TimeSeries {
     this.allIsNull = true;
     this.allIsZero = true;
 
-    var ignoreNulls = fillStyle === 'connected';
-    var nullAsZero = fillStyle === 'null as zero';
+    const ignoreNulls = fillStyle === 'connected';
+    const nullAsZero = fillStyle === 'null as zero';
     var currentTime;
     var currentValue;
     var nonNulls = 0;
@@ -330,7 +330,7 @@ export default class TimeSeries {
   isMsResolutionNeeded() {
     for (var i = 0; i < this.datapoints.length; i++) {
       if (this.datapoints[i][1] !== null) {
-        var timestamp = this.datapoints[i][1].toString();
+        const timestamp = this.datapoints[i][1].toString();
         if (timestamp.length === 13 && timestamp % 1000 !== 0) {
           return true;
         }

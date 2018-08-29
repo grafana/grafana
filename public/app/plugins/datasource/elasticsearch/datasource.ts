@@ -37,7 +37,7 @@ export class ElasticDatasource {
   }
 
   private request(method, url, data?) {
-    var options: any = {
+    const options: any = {
       url: this.url + '/' + url,
       method: method,
       data: data,
@@ -56,8 +56,8 @@ export class ElasticDatasource {
   }
 
   private get(url) {
-    var range = this.timeSrv.timeRange();
-    var index_list = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
+    const range = this.timeSrv.timeRange();
+    const index_list = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
     if (_.isArray(index_list) && index_list.length) {
       return this.request('GET', index_list[0] + url).then(function(results) {
         results.data.$$config = results.config;
@@ -90,21 +90,21 @@ export class ElasticDatasource {
   }
 
   annotationQuery(options) {
-    var annotation = options.annotation;
-    var timeField = annotation.timeField || '@timestamp';
-    var queryString = annotation.query || '*';
-    var tagsField = annotation.tagsField || 'tags';
-    var textField = annotation.textField || null;
+    const annotation = options.annotation;
+    const timeField = annotation.timeField || '@timestamp';
+    const queryString = annotation.query || '*';
+    const tagsField = annotation.tagsField || 'tags';
+    const textField = annotation.textField || null;
 
-    var range = {};
+    const range = {};
     range[timeField] = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       format: 'epoch_millis',
     };
 
-    var queryInterpolated = this.templateSrv.replace(queryString, {}, 'lucene');
-    var query = {
+    const queryInterpolated = this.templateSrv.replace(queryString, {}, 'lucene');
+    const query = {
       bool: {
         filter: [
           { range: range },
@@ -117,7 +117,7 @@ export class ElasticDatasource {
       },
     };
 
-    var data = {
+    const data = {
       query: query,
       size: 10000,
     };
@@ -127,7 +127,7 @@ export class ElasticDatasource {
       data['fields'] = [timeField, '_source'];
     }
 
-    var header: any = {
+    const header: any = {
       search_type: 'query_then_fetch',
       ignore_unavailable: true,
     };
@@ -139,18 +139,18 @@ export class ElasticDatasource {
       header.index = this.indexPattern.getIndexList(options.range.from, options.range.to);
     }
 
-    var payload = angular.toJson(header) + '\n' + angular.toJson(data) + '\n';
+    const payload = angular.toJson(header) + '\n' + angular.toJson(data) + '\n';
 
     return this.post('_msearch', payload).then(res => {
-      var list = [];
-      var hits = res.responses[0].hits.hits;
+      const list = [];
+      const hits = res.responses[0].hits.hits;
 
-      var getFieldFromSource = function(source, fieldName) {
+      const getFieldFromSource = function(source, fieldName) {
         if (!fieldName) {
           return;
         }
 
-        var fieldNames = fieldName.split('.');
+        const fieldNames = fieldName.split('.');
         var fieldValue = source;
 
         for (var i = 0; i < fieldNames.length; i++) {
@@ -165,16 +165,16 @@ export class ElasticDatasource {
       };
 
       for (var i = 0; i < hits.length; i++) {
-        var source = hits[i]._source;
+        const source = hits[i]._source;
         var time = getFieldFromSource(source, timeField);
         if (typeof hits[i].fields !== 'undefined') {
-          var fields = hits[i].fields;
+          const fields = hits[i].fields;
           if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
             time = fields[timeField];
           }
         }
 
-        var event = {
+        const event = {
           annotation: annotation,
           time: moment.utc(time).valueOf(),
           text: getFieldFromSource(source, textField),
@@ -204,7 +204,7 @@ export class ElasticDatasource {
     // validate that the index exist and has date field
     return this.getFields({ type: 'date' }).then(
       function(dateFields) {
-        var timeField = _.find(dateFields, { text: this.timeField });
+        const timeField = _.find(dateFields, { text: this.timeField });
         if (!timeField) {
           return {
             status: 'error',
@@ -229,7 +229,7 @@ export class ElasticDatasource {
   }
 
   getQueryHeader(searchType, timeFrom, timeTo) {
-    var query_header: any = {
+    const query_header: any = {
       search_type: searchType,
       ignore_unavailable: true,
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
@@ -243,10 +243,10 @@ export class ElasticDatasource {
   query(options) {
     var payload = '';
     var target;
-    var sentTargets = [];
+    const sentTargets = [];
 
     // add global adhoc filters to timeFilter
-    var adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
 
     for (var i = 0; i < options.targets.length; i++) {
       target = options.targets[i];
@@ -254,12 +254,12 @@ export class ElasticDatasource {
         continue;
       }
 
-      var queryString = this.templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
-      var queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
-      var esQuery = angular.toJson(queryObj);
+      const queryString = this.templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
+      const queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
+      const esQuery = angular.toJson(queryObj);
 
-      var searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
-      var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+      const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
+      const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
       payload += header + '\n';
 
       payload += esQuery + '\n';
@@ -281,7 +281,7 @@ export class ElasticDatasource {
 
   getFields(query) {
     return this.get('/_mapping').then(function(result) {
-      var typeMap = {
+      const typeMap = {
         float: 'number',
         double: 'number',
         integer: 'number',
@@ -307,12 +307,12 @@ export class ElasticDatasource {
       }
 
       // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
-      var fieldNameParts = [];
-      var fields = {};
+      const fieldNameParts = [];
+      const fields = {};
 
       function getFieldsRecursively(obj) {
-        for (var key in obj) {
-          var subObj = obj[key];
+        for (const key in obj) {
+          const subObj = obj[key];
 
           // Check mapping field for nested fields
           if (_.isObject(subObj.properties)) {
@@ -326,7 +326,7 @@ export class ElasticDatasource {
           }
 
           if (_.isString(subObj.type)) {
-            var fieldName = fieldNameParts.concat(key).join('.');
+            const fieldName = fieldNameParts.concat(key).join('.');
 
             // Hide meta-fields and check field type
             if (shouldAddField(subObj, key, query)) {
@@ -340,12 +340,12 @@ export class ElasticDatasource {
         fieldNameParts.pop();
       }
 
-      for (var indexName in result) {
-        var index = result[indexName];
+      for (const indexName in result) {
+        const index = result[indexName];
         if (index && index.mappings) {
-          var mappings = index.mappings;
-          for (var typeName in mappings) {
-            var properties = mappings[typeName].properties;
+          const mappings = index.mappings;
+          for (const typeName in mappings) {
+            const properties = mappings[typeName].properties;
             getFieldsRecursively(properties);
           }
         }
@@ -359,9 +359,9 @@ export class ElasticDatasource {
   }
 
   getTerms(queryDef) {
-    var range = this.timeSrv.timeRange();
-    var searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
-    var header = this.getQueryHeader(searchType, range.from, range.to);
+    const range = this.timeSrv.timeRange();
+    const searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
+    const header = this.getQueryHeader(searchType, range.from, range.to);
     var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
     esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
@@ -373,7 +373,7 @@ export class ElasticDatasource {
         return [];
       }
 
-      var buckets = res.responses[0].aggregations['1'].buckets;
+      const buckets = res.responses[0].aggregations['1'].buckets;
       return _.map(buckets, function(bucket) {
         return {
           text: bucket.key_as_string || bucket.key,

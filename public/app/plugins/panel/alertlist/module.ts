@@ -54,7 +54,7 @@ class AlertListPanel extends PanelCtrl {
       });
     }
 
-    var result = _.sortBy(alerts, a => {
+    const result = _.sortBy(alerts, a => {
       return a.name.toLowerCase();
     });
     if (this.panel.sortOrder === 2) {
@@ -65,7 +65,7 @@ class AlertListPanel extends PanelCtrl {
   }
 
   updateStateFilter() {
-    var result = [];
+    const result = [];
 
     for (const key in this.stateFilter) {
       if (this.stateFilter[key]) {
@@ -99,7 +99,7 @@ class AlertListPanel extends PanelCtrl {
   }
 
   getStateChanges() {
-    var params: any = {
+    const params: any = {
       limit: this.panel.limit,
       type: 'alert',
       newState: this.panel.stateFilter,
@@ -127,7 +127,7 @@ class AlertListPanel extends PanelCtrl {
   }
 
   getCurrentAlertState() {
-    var params: any = {
+    const params: any = {
       state: this.panel.stateFilter,
     };
 

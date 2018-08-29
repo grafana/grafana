@@ -82,7 +82,7 @@ export class InfluxQueryBuilder {
     }
 
     if (this.target.tags && this.target.tags.length > 0) {
-      var whereConditions = _.reduce(
+      const whereConditions = _.reduce(
         this.target.tags,
         function(memo, tag) {
           // do not add a condition for the key we want to explore for

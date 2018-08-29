@@ -81,7 +81,7 @@ export class AnnotationsEditorCtrl {
   }
 
   removeAnnotation(annotation) {
-    var index = _.indexOf(this.annotations, annotation);
+    const index = _.indexOf(this.annotations, annotation);
     this.annotations.splice(index, 1);
   }
 

@@ -198,8 +198,8 @@ class GraphElement {
   }
 
   processOffsetHook(plot, gridMargin) {
-    var left = this.panel.yaxes[0];
-    var right = this.panel.yaxes[1];
+    const left = this.panel.yaxes[0];
+    const right = this.panel.yaxes[1];
     if (left.show && left.label) {
       gridMargin.left = 20;
     }
@@ -208,17 +208,17 @@ class GraphElement {
     }
 
     // apply y-axis min/max options
-    var yaxis = plot.getYAxes();
+    const yaxis = plot.getYAxes();
     for (var i = 0; i < yaxis.length; i++) {
-      var axis = yaxis[i];
-      var panelOptions = this.panel.yaxes[i];
+      const axis = yaxis[i];
+      const panelOptions = this.panel.yaxes[i];
       axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
       axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
     }
   }
 
   processRangeHook(plot) {
-    var yAxes = plot.getYAxes();
+    const yAxes = plot.getYAxes();
     const align = this.panel.yaxis.align || false;
 
     if (yAxes.length > 1 && align === true) {
@@ -424,12 +424,12 @@ class GraphElement {
   }
 
   sortSeries(series, panel) {
-    var sortBy = panel.legend.sort;
-    var sortOrder = panel.legend.sortDesc;
-    var haveSortBy = sortBy !== null && sortBy !== undefined;
-    var haveSortOrder = sortOrder !== null && sortOrder !== undefined;
-    var shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
-    var sortDesc = panel.legend.sortDesc === true ? -1 : 1;
+    const sortBy = panel.legend.sort;
+    const sortOrder = panel.legend.sortDesc;
+    const haveSortBy = sortBy !== null && sortBy !== undefined;
+    const haveSortOrder = sortOrder !== null && sortOrder !== undefined;
+    const shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
+    const sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
     if (shouldSortBy) {
       return _.sortBy(series, s => s.stats[sortBy] * sortDesc);
@@ -447,9 +447,9 @@ class GraphElement {
   }
 
   addTimeAxis(options) {
-    var ticks = this.panelWidth / 100;
-    var min = _.isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
-    var max = _.isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
+    const ticks = this.panelWidth / 100;
+    const min = _.isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
+    const max = _.isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
 
     options.xaxis = {
       timezone: this.dashboard.getTimezone(),
@@ -464,7 +464,7 @@ class GraphElement {
   }
 
   addXSeriesAxis(options) {
-    var ticks = _.map(this.data, function(series, index) {
+    const ticks = _.map(this.data, function(series, index) {
       return [index + 1, series.alias];
     });
 
@@ -535,7 +535,7 @@ class GraphElement {
   addXTableAxis(options) {
     var ticks = _.map(this.data, function(series, seriesIndex) {
       return _.map(series.datapoints, function(point, pointIndex) {
-        var tickIndex = seriesIndex * series.datapoints.length + pointIndex;
+        const tickIndex = seriesIndex * series.datapoints.length + pointIndex;
         return [tickIndex + 1, point[1]];
       });
     });
@@ -553,7 +553,7 @@ class GraphElement {
   }
 
   configureYAxisOptions(data, options) {
-    var defaults = {
+    const defaults = {
       position: 'left',
       show: this.panel.yaxes[0].show,
       index: 1,
@@ -566,7 +566,7 @@ class GraphElement {
     options.yaxes.push(defaults);
 
     if (_.find(data, { yaxis: 2 })) {
-      var secondY = _.clone(defaults);
+      const secondY = _.clone(defaults);
       secondY.index = 2;
       secondY.show = this.panel.yaxes[1].show;
       secondY.logBase = this.panel.yaxes[1].logBase || 1;
@@ -711,10 +711,10 @@ class GraphElement {
 
   time_format(ticks, min, max) {
     if (min && max && ticks) {
-      var range = max - min;
-      var secPerTick = range / ticks / 1000;
-      var oneDay = 86400000;
-      var oneYear = 31536000000;
+      const range = max - min;
+      const secPerTick = range / ticks / 1000;
+      const oneDay = 86400000;
+      const oneYear = 31536000000;
 
       if (secPerTick <= 45) {
         return '%H:%M:%S';

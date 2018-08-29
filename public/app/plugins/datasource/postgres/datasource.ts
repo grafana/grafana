@@ -26,14 +26,14 @@ export class PostgresDatasource {
       return value;
     }
 
-    var quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, function(val) {
       return "'" + val.replace(/'/g, `''`) + "'";
     });
     return quotedValues.join(',');
   }
 
   query(options) {
-    var queries = _.filter(options.targets, item => {
+    const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
       return {
@@ -103,7 +103,7 @@ export class PostgresDatasource {
       format: 'table',
     };
 
-    var data = {
+    const data = {
       queries: [interpolatedQuery],
     };
 

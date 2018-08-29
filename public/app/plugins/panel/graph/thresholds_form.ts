@@ -13,7 +13,7 @@ export class ThresholdFormCtrl {
       this.disabled = true;
     }
 
-    var unbindDestroy = $scope.$on('$destroy', () => {
+    const unbindDestroy = $scope.$on('$destroy', () => {
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
       unbindDestroy();
@@ -58,7 +58,7 @@ export class ThresholdFormCtrl {
   }
 }
 
-var template = `
+const template = `
 <div class="gf-form-group">
   <h5>Thresholds</h5>
   <p class="muted" ng-show="ctrl.disabled">

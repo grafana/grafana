@@ -164,7 +164,7 @@ export function getPipelineOptions(metric) {
 
 export function isPipelineAgg(metricType) {
   if (metricType) {
-    var po = pipelineOptions[metricType];
+    const po = pipelineOptions[metricType];
     return po !== null && po !== undefined;
   }
 
@@ -172,7 +172,7 @@ export function isPipelineAgg(metricType) {
 }
 
 export function getPipelineAggOptions(targets) {
-  var result = [];
+  const result = [];
   _.each(targets.metrics, function(metric) {
     if (!isPipelineAgg(metric.type)) {
       result.push({ text: describeMetric(metric), value: metric.id });
@@ -183,7 +183,7 @@ export function getPipelineAggOptions(targets) {
 }
 
 export function getMovingAvgSettings(model, filtered) {
-  var filteredResult = [];
+  const filteredResult = [];
   if (filtered) {
     _.each(movingAvgModelSettings[model], function(setting) {
       if (!setting.isCheckbox) {
@@ -196,7 +196,7 @@ export function getMovingAvgSettings(model, filtered) {
 }
 
 export function getOrderByOptions(target) {
-  var metricRefs = [];
+  const metricRefs = [];
   _.each(target.metrics, function(metric) {
     if (metric.type !== 'count') {
       metricRefs.push({ text: describeMetric(metric), value: metric.id });
@@ -207,21 +207,21 @@ export function getOrderByOptions(target) {
 }
 
 export function describeOrder(order) {
-  var def = _.find(orderOptions, { value: order });
+  const def = _.find(orderOptions, { value: order });
   return def.text;
 }
 
 export function describeMetric(metric) {
-  var def = _.find(metricAggTypes, { value: metric.type });
+  const def = _.find(metricAggTypes, { value: metric.type });
   return def.text + ' ' + metric.field;
 }
 
 export function describeOrderBy(orderBy, target) {
-  var def = _.find(orderByOptions, { value: orderBy });
+  const def = _.find(orderByOptions, { value: orderBy });
   if (def) {
     return def.text;
   }
-  var metric = _.find(target.metrics, { id: orderBy });
+  const metric = _.find(target.metrics, { id: orderBy });
   if (metric) {
     return describeMetric(metric);
   } else {
