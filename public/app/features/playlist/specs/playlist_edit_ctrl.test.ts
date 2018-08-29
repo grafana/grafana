@@ -4,7 +4,7 @@ import { PlaylistEditCtrl } from '../playlist_edit_ctrl';
 describe('PlaylistEditCtrl', () => {
   var ctx: any;
   beforeEach(() => {
-    let navModelSrv = {
+    const navModelSrv = {
       getNav: () => {
         return { breadcrumbs: [], node: {} };
       },

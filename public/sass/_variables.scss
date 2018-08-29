@@ -197,7 +197,7 @@ $external-services: (
     github: (bgColor: #464646, borderColor: #393939, icon: ''),
     gitlab: (bgColor: #fc6d26, borderColor: #e24329, icon: ''),
     google: (bgColor: #e84d3c, borderColor: #b83e31, icon: ''),
-    grafanacom: (bgColor: inherit, borderColor: #393939, icon: ''),
-    oauth: (bgColor: inherit, borderColor: #393939, icon: '')
+    grafanacom: (bgColor: #262628, borderColor: #393939, icon: ''),
+    oauth: (bgColor: #262628, borderColor: #393939, icon: '')
   )
   !default;

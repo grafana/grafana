@@ -130,7 +130,7 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 
-### All supported notifier
+### All supported notifiers
 
 Name | Type |Support images
 -----|------------ | ------
@@ -148,6 +148,7 @@ Pushover | `pushover` | no
 Telegram | `telegram` | no
 Line | `line` | no
 Prometheus Alertmanager | `prometheus-alertmanager` | no
+Microsoft Teams | `teams` | yes
 
 
 

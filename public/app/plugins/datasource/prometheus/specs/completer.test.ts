@@ -13,10 +13,10 @@ describe('Prometheus editor completer', function() {
     };
   }
 
-  let editor = {};
+  const editor = {};
 
-  let backendSrv = <BackendSrv>{};
-  let datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
+  const backendSrv = <BackendSrv>{};
+  const datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
 
   datasourceStub.performInstantQuery = jest.fn(() =>
     Promise.resolve({
@@ -36,7 +36,7 @@ describe('Prometheus editor completer', function() {
   );
   datasourceStub.performSuggestQuery = jest.fn(() => Promise.resolve(['node_cpu']));
 
-  let templateSrv = {
+  const templateSrv = {
     variables: [
       {
         name: 'var_name',
@@ -44,7 +44,7 @@ describe('Prometheus editor completer', function() {
       },
     ],
   };
-  let completer = new PromCompleter(datasourceStub, templateSrv);
+  const completer = new PromCompleter(datasourceStub, templateSrv);
 
   describe('When inside brackets', () => {
     it('Should return range vectors', () => {

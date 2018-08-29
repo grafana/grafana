@@ -1,47 +1,66 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body">
-  <div class="page-action-bar">
-    <div class="page-action-bar__spacer"></div>
-    <a class="btn btn-success pull-right" href="playlists/create">
-      <i class="fa fa-plus"></i>
-      New Playlist
-    </a>
+  <div ng-if="ctrl.playlists.length > 0">
+    <div class="page-action-bar">
+      <div class="page-action-bar__spacer"></div>
+      <a class="btn btn-success pull-right" href="playlists/create">
+        <i class="fa fa-plus"></i>
+        New Playlist
+      </a>
+    </div>
+
+    <table class="filter-table">
+      <thead>
+        <th>
+          <strong>Name</strong>
+        </th>
+        <th>
+          <strong>Start url</strong>
+        </th>
+        <th style="width: 78px"></th>
+        <th style="width: 78px"></th>
+        <th style="width: 25px"></th>
+      </thead>
+      <tr ng-repeat="playlist in ctrl.playlists">
+        <td>
+          <a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a>
+        </td>
+        <td>
+          <a href="playlists/play/{{playlist.id}}">playlists/play/{{playlist.id}}</a>
+        </td>
+        <td class="text-center">
+          <a href="playlists/play/{{playlist.id}}" class="btn btn-inverse btn-small">
+            <i class="fa fa-play"></i>
+            Play
+          </a>
+        </td>
+        <td class="text-right">
+          <a href="playlists/edit/{{playlist.id}}" class="btn btn-inverse btn-small">
+            <i class="fa fa-edit"></i>
+            Edit
+          </a>
+        </td>
+        <td class="text-right">
+          <a ng-click="ctrl.removePlaylist(playlist)" class="btn btn-danger btn-small">
+            <i class="fa fa-remove"></i>
+          </a>
+        </td>
+      </tr>
+    </table>
   </div>
 
-  <table class="filter-table">
-    <thead>
-      <th><strong>Name</strong></th>
-      <th><strong>Start url</strong></th>
-      <th style="width: 78px"></th>
-      <th style="width: 78px"></th>
-      <th style="width: 25px"></th>
-    </thead>
-    <tr ng-repeat="playlist in ctrl.playlists">
-      <td>
-				<a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a>
-      </td>
-      <td >
-				<a href="playlists/play/{{playlist.id}}">playlists/play/{{playlist.id}}</a>
-      </td>
-      <td class="text-center">
-        <a href="playlists/play/{{playlist.id}}" class="btn btn-inverse btn-small">
-          <i class="fa fa-play"></i>
-          Play
-        </a>
-      </td>
-      <td  class="text-right">
-        <a href="playlists/edit/{{playlist.id}}" class="btn btn-inverse btn-small">
-          <i class="fa fa-edit"></i>
-          Edit
-        </a>
-      </td>
-      <td  class="text-right">
-        <a ng-click="ctrl.removePlaylist(playlist)" class="btn btn-danger btn-small">
-          <i class="fa fa-remove"></i>
-        </a>
-      </td>
-    </tr>
-  </table>
+  <div ng-if="ctrl.playlists.length === 0">
+    <empty-list-cta model="{
+      title: 'There are no playlists created yet',
+      buttonIcon: 'fa fa-plus',
+      buttonLink: 'playlists/create',
+      buttonTitle: ' Create Playlist',
+      proTip: 'You can run the playlist in Kiosk Mode.',
+      proTipLink: 'http://docs.grafana.org/reference/playlist/',
+      proTipLinkTitle: 'Learn more',
+      proTipTarget: '_blank'
+    }" />
+  </div>
 
 </div>

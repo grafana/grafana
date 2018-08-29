@@ -24,7 +24,7 @@ function grafanaRoutes($routeProvider) {
       controller: 'PlaylistsCtrl',
       resolve: {
         init: function(playlistSrv, $route) {
-          let playlistId = $route.current.params.id;
+          const playlistId = $route.current.params.id;
           playlistSrv.start(playlistId);
         },
       },

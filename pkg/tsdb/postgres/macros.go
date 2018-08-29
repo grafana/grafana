@@ -140,6 +140,27 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		return fmt.Sprintf("%d", m.timeRange.GetFromAsSecondsEpoch()), nil
 	case "__unixEpochTo":
 		return fmt.Sprintf("%d", m.timeRange.GetToAsSecondsEpoch()), nil
+	case "__unixEpochGroup":
+		if len(args) < 2 {
+			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
+		}
+		interval, err := time.ParseDuration(strings.Trim(args[1], `'`))
+		if err != nil {
+			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if len(args) == 3 {
+			err := tsdb.SetupFillmode(m.query, interval, args[2])
+			if err != nil {
+				return "", err
+			}
+		}
+		return fmt.Sprintf("floor(%s/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+	case "__unixEpochGroupAlias":
+		tg, err := m.evaluateMacro("__unixEpochGroup", args)
+		if err == nil {
+			return tg + " AS \"time\"", err
+		}
+		return "", err
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}

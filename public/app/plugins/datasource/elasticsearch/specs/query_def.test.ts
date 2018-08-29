@@ -3,7 +3,7 @@ import * as queryDef from '../query_def';
 describe('ElasticQueryDef', () => {
   describe('getPipelineAggOptions', () => {
     describe('with zero targets', () => {
-      var response = queryDef.getPipelineAggOptions([]);
+      const response = queryDef.getPipelineAggOptions([]);
 
       test('should return zero', () => {
         expect(response.length).toBe(0);
@@ -11,11 +11,11 @@ describe('ElasticQueryDef', () => {
     });
 
     describe('with count and sum targets', () => {
-      var targets = {
+      const targets = {
         metrics: [{ type: 'count', field: '@value' }, { type: 'sum', field: '@value' }],
       };
 
-      var response = queryDef.getPipelineAggOptions(targets);
+      const response = queryDef.getPipelineAggOptions(targets);
 
       test('should return zero', () => {
         expect(response.length).toBe(2);
@@ -23,11 +23,11 @@ describe('ElasticQueryDef', () => {
     });
 
     describe('with count and moving average targets', () => {
-      var targets = {
+      const targets = {
         metrics: [{ type: 'count', field: '@value' }, { type: 'moving_avg', field: '@value' }],
       };
 
-      var response = queryDef.getPipelineAggOptions(targets);
+      const response = queryDef.getPipelineAggOptions(targets);
 
       test('should return one', () => {
         expect(response.length).toBe(1);
@@ -35,11 +35,11 @@ describe('ElasticQueryDef', () => {
     });
 
     describe('with derivatives targets', () => {
-      var targets = {
+      const targets = {
         metrics: [{ type: 'derivative', field: '@value' }],
       };
 
-      var response = queryDef.getPipelineAggOptions(targets);
+      const response = queryDef.getPipelineAggOptions(targets);
 
       test('should return zero', () => {
         expect(response.length).toBe(0);
@@ -49,7 +49,7 @@ describe('ElasticQueryDef', () => {
 
   describe('isPipelineMetric', () => {
     describe('moving_avg', () => {
-      var result = queryDef.isPipelineAgg('moving_avg');
+      const result = queryDef.isPipelineAgg('moving_avg');
 
       test('is pipe line metric', () => {
         expect(result).toBe(true);
@@ -57,7 +57,7 @@ describe('ElasticQueryDef', () => {
     });
 
     describe('count', () => {
-      var result = queryDef.isPipelineAgg('count');
+      const result = queryDef.isPipelineAgg('count');
 
       test('is not pipe line metric', () => {
         expect(result).toBe(false);

@@ -210,8 +210,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.metricFindQuery = function(query, optionalOptions) {
-    let options = optionalOptions || {};
-    let interpolatedQuery = templateSrv.replace(query);
+    const options = optionalOptions || {};
+    const interpolatedQuery = templateSrv.replace(query);
 
     // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
     let matches = interpolatedQuery.match(/^tag_values\(([^,]+)((, *[^,]+)*)\)$/);
@@ -242,7 +242,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       return this.getTagsAutoComplete(expressions, undefined, options);
     }
 
-    let httpOptions: any = {
+    const httpOptions: any = {
       method: 'GET',
       url: '/metrics/find',
       params: {
@@ -268,9 +268,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.getTags = function(optionalOptions) {
-    let options = optionalOptions || {};
+    const options = optionalOptions || {};
 
-    let httpOptions: any = {
+    const httpOptions: any = {
       method: 'GET',
       url: '/tags',
       // for cancellations
@@ -293,9 +293,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.getTagValues = function(tag, optionalOptions) {
-    let options = optionalOptions || {};
+    const options = optionalOptions || {};
 
-    let httpOptions: any = {
+    const httpOptions: any = {
       method: 'GET',
       url: '/tags/' + templateSrv.replace(tag),
       // for cancellations
@@ -322,9 +322,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.getTagsAutoComplete = (expressions, tagPrefix, optionalOptions) => {
-    let options = optionalOptions || {};
+    const options = optionalOptions || {};
 
-    let httpOptions: any = {
+    const httpOptions: any = {
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
@@ -357,9 +357,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.getTagValuesAutoComplete = (expressions, tag, valuePrefix, optionalOptions) => {
-    let options = optionalOptions || {};
+    const options = optionalOptions || {};
 
-    let httpOptions: any = {
+    const httpOptions: any = {
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
@@ -393,9 +393,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.getVersion = function(optionalOptions) {
-    let options = optionalOptions || {};
+    const options = optionalOptions || {};
 
-    let httpOptions = {
+    const httpOptions = {
       method: 'GET',
       url: '/version',
       requestId: options.requestId,
@@ -404,7 +404,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return this.doGraphiteRequest(httpOptions)
       .then(results => {
         if (results.data) {
-          let semver = new SemVersion(results.data);
+          const semver = new SemVersion(results.data);
           return semver.isValid() ? results.data : '';
         }
         return '';
@@ -437,7 +437,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       return this.funcDefsPromise;
     }
 
-    let httpOptions = {
+    const httpOptions = {
       method: 'GET',
       url: '/functions',
     };
@@ -461,7 +461,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.testDatasource = function() {
-    let query = {
+    const query = {
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
       targets: [{ target: 'constantLine(100)' }],

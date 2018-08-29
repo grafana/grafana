@@ -4,7 +4,7 @@ import PrometheusMetricFindQuery from '../metric_find_query';
 import q from 'q';
 
 describe('PrometheusMetricFindQuery', function() {
-  let instanceSettings = {
+  const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
@@ -15,7 +15,7 @@ describe('PrometheusMetricFindQuery', function() {
     from: moment.utc('2018-04-25 10:00'),
     to: moment.utc('2018-04-25 11:00'),
   };
-  let ctx: any = {
+  const ctx: any = {
     backendSrvMock: {
       datasourceRequest: jest.fn(() => Promise.resolve({})),
     },

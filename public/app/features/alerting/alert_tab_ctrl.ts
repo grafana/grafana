@@ -184,7 +184,7 @@ export class AlertTabCtrl {
 
     ThresholdMapper.alertToGraphThresholds(this.panel);
 
-    for (let addedNotification of alert.notifications) {
+    for (const addedNotification of alert.notifications) {
       var model = _.find(this.notifications, { id: addedNotification.id });
       if (model && model.isDefault === false) {
         model.iconClass = this.getNotificationIcon(model.type);
@@ -192,7 +192,7 @@ export class AlertTabCtrl {
       }
     }
 
-    for (let notification of this.notifications) {
+    for (const notification of this.notifications) {
       if (notification.isDefault) {
         notification.iconClass = this.getNotificationIcon(notification.type);
         notification.bgColor = '#00678b';

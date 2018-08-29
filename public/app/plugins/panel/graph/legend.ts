@@ -16,7 +16,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       var i;
       var legendScrollbar;
       const legendRightDefaultWidth = 10;
-      let legendElem = elem.parent();
+      const legendElem = elem.parent();
 
       scope.$on('$destroy', function() {
         destroyScrollbar();
@@ -111,7 +111,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function render() {
-        let legendWidth = legendElem.width();
+        const legendWidth = legendElem.width();
         if (!ctrl.panel.legend.show) {
           elem.empty();
           firstRender = true;
@@ -176,7 +176,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function renderSeriesLegendElements() {
-        let seriesElements = [];
+        const seriesElements = [];
         for (i = 0; i < seriesList.length; i++) {
           var series = seriesList[i];
 
@@ -231,7 +231,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function renderLegendElement(tableHeaderElem) {
-        let legendWidth = elem.width();
+        const legendWidth = elem.width();
 
         var seriesElements = renderSeriesLegendElements();
 
@@ -262,8 +262,8 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           </div>
         `;
 
-        let scrollRoot = elem;
-        let scroller = elem.find('.graph-legend-scroll');
+        const scrollRoot = elem;
+        const scroller = elem.find('.graph-legend-scroll');
 
         // clear existing scroll bar track to prevent duplication
         scrollRoot.find('.baron__track').remove();
@@ -272,7 +272,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         $(scrollBarHTML).appendTo(scrollRoot);
         scroller.addClass(scrollerClass);
 
-        let scrollbarParams = {
+        const scrollbarParams = {
           root: scrollRoot[0],
           scroller: scroller[0],
           bar: '.baron__bar',

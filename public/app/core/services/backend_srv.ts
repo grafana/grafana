@@ -276,11 +276,11 @@ export class BackendSrv {
   deleteFoldersAndDashboards(folderUids, dashboardUids) {
     const tasks = [];
 
-    for (let folderUid of folderUids) {
+    for (const folderUid of folderUids) {
       tasks.push(this.createTask(this.deleteFolder.bind(this), true, folderUid, true));
     }
 
-    for (let dashboardUid of dashboardUids) {
+    for (const dashboardUid of dashboardUids) {
       tasks.push(this.createTask(this.deleteDashboard.bind(this), true, dashboardUid, true));
     }
 
@@ -290,7 +290,7 @@ export class BackendSrv {
   moveDashboards(dashboardUids, toFolder) {
     const tasks = [];
 
-    for (let uid of dashboardUids) {
+    for (const uid of dashboardUids) {
       tasks.push(this.createTask(this.moveDashboard.bind(this), true, uid, toFolder));
     }
 
@@ -304,7 +304,7 @@ export class BackendSrv {
   }
 
   private moveDashboard(uid, toFolder) {
-    let deferred = this.$q.defer();
+    const deferred = this.$q.defer();
 
     this.getDashboardByUid(uid).then(fullDash => {
       const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
@@ -315,7 +315,7 @@ export class BackendSrv {
       }
 
       const clone = model.getSaveModelClone();
-      let options = {
+      const options = {
         folderId: toFolder.id,
         overwrite: false,
       };

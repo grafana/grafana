@@ -2,22 +2,22 @@ import OpenTsDatasource from '../datasource';
 import $q from 'q';
 
 describe('opentsdb', () => {
-  let ctx = <any>{
+  const ctx = <any>{
     backendSrv: {},
     ds: {},
     templateSrv: {
       replace: str => str,
     },
   };
-  let instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
+  const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
 
   beforeEach(() => {
     ctx.ctrl = new OpenTsDatasource(instanceSettings, $q, ctx.backendSrv, ctx.templateSrv);
   });
 
   describe('When performing metricFindQuery', () => {
-    var results;
-    var requestOptions;
+    let results;
+    let requestOptions;
 
     beforeEach(async () => {
       ctx.backendSrv.datasourceRequest = await function(options) {

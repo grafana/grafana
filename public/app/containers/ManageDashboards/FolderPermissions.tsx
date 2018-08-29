@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
-import IContainerProps from 'app/containers/IContainerProps';
+import ContainerProps from 'app/containers/ContainerProps';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import Permissions from 'app/core/components/Permissions/Permissions';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
@@ -12,7 +12,7 @@ import SlideDown from 'app/core/components/Animations/SlideDown';
 
 @inject('nav', 'folder', 'view', 'permissions')
 @observer
-export class FolderPermissions extends Component<IContainerProps, any> {
+export class FolderPermissions extends Component<ContainerProps, any> {
   constructor(props) {
     super(props);
     this.handleAddPermission = this.handleAddPermission.bind(this);

@@ -5,16 +5,16 @@ import Drop from 'tether-drop';
 
 /** @ngInject */
 export function createAnnotationToolip(element, event, plot) {
-  let injector = angular.element(document).injector();
-  let content = document.createElement('div');
+  const injector = angular.element(document).injector();
+  const content = document.createElement('div');
   content.innerHTML = '<annotation-tooltip event="event" on-edit="onEdit()"></annotation-tooltip>';
 
   injector.invoke([
     '$compile',
     '$rootScope',
     function($compile, $rootScope) {
-      let eventManager = plot.getOptions().events.manager;
-      let tmpScope = $rootScope.$new(true);
+      const eventManager = plot.getOptions().events.manager;
+      const tmpScope = $rootScope.$new(true);
       tmpScope.event = event;
       tmpScope.onEdit = function() {
         eventManager.editEvent(event);
@@ -24,7 +24,7 @@ export function createAnnotationToolip(element, event, plot) {
       tmpScope.$digest();
       tmpScope.$destroy();
 
-      let drop = new Drop({
+      const drop = new Drop({
         target: element[0],
         content: content,
         position: 'bottom center',
@@ -51,7 +51,7 @@ let markerElementToAttachTo = null;
 
 /** @ngInject */
 export function createEditPopover(element, event, plot) {
-  let eventManager = plot.getOptions().events.manager;
+  const eventManager = plot.getOptions().events.manager;
   if (eventManager.editorOpen) {
     // update marker element to attach to (needed in case of legend on the right
     // when there is a double render pass and the inital marker element is removed)
@@ -66,15 +66,15 @@ export function createEditPopover(element, event, plot) {
 
   // wait for element to be attached and positioned
   setTimeout(function() {
-    let injector = angular.element(document).injector();
-    let content = document.createElement('div');
+    const injector = angular.element(document).injector();
+    const content = document.createElement('div');
     content.innerHTML = '<event-editor panel-ctrl="panelCtrl" event="event" close="close()"></event-editor>';
 
     injector.invoke([
       '$compile',
       '$rootScope',
       function($compile, $rootScope) {
-        let scope = $rootScope.$new(true);
+        const scope = $rootScope.$new(true);
         let drop;
 
         scope.event = event;
@@ -240,22 +240,22 @@ export class EventMarkers {
    * create internal objects for the given events
    */
   setupEvents(events) {
-    let parts = _.partition(events, 'isRegion');
-    let regions = parts[0];
+    const parts = _.partition(events, 'isRegion');
+    const regions = parts[0];
     events = parts[1];
 
     $.each(events, (index, event) => {
-      let ve = new VisualEvent(event, this._buildDiv(event));
+      const ve = new VisualEvent(event, this._buildDiv(event));
       this._events.push(ve);
     });
 
     $.each(regions, (index, event) => {
-      let vre = new VisualEvent(event, this._buildRegDiv(event));
+      const vre = new VisualEvent(event, this._buildRegDiv(event));
       this._events.push(vre);
     });
 
     this._events.sort((a, b) => {
-      let ao = a.getOptions(),
+      const ao = a.getOptions(),
         bo = b.getOptions();
       if (ao.min > bo.min) {
         return 1;
@@ -293,7 +293,7 @@ export class EventMarkers {
     let o = this._plot.getPlotOffset(),
       left,
       top;
-    let xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
+    const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
 
     $.each(this._events, (index, event) => {
       top = o.top + this._plot.height() - event.visual().height();
@@ -316,16 +316,16 @@ export class EventMarkers {
    * create a DOM element for the given event
    */
   _buildDiv(event) {
-    let that = this;
+    const that = this;
 
-    let container = this._plot.getPlaceholder();
-    let o = this._plot.getPlotOffset();
-    let xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
+    const container = this._plot.getPlaceholder();
+    const o = this._plot.getPlotOffset();
+    const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
     let top, left, color, markerSize, markerShow, lineStyle, lineWidth;
     let markerTooltip;
 
     // map the eventType to a types object
-    let eventTypeId = event.eventType;
+    const eventTypeId = event.eventType;
 
     if (this._types === null || !this._types[eventTypeId] || !this._types[eventTypeId].color) {
       color = '#666';
@@ -369,7 +369,7 @@ export class EventMarkers {
     top = o.top + this._plot.height() + topOffset;
     left = xaxis.p2c(event.min) + o.left;
 
-    let line = $('<div class="events_line flot-temp-elem"></div>')
+    const line = $('<div class="events_line flot-temp-elem"></div>')
       .css({
         position: 'absolute',
         opacity: 0.8,
@@ -385,7 +385,7 @@ export class EventMarkers {
       .appendTo(container);
 
     if (markerShow) {
-      let marker = $('<div class="events_marker"></div>').css({
+      const marker = $('<div class="events_marker"></div>').css({
         position: 'absolute',
         left: -markerSize - Math.round(lineWidth / 2) + 'px',
         'font-size': 0,
@@ -420,7 +420,7 @@ export class EventMarkers {
         event: event,
       });
 
-      let mouseenter = function() {
+      const mouseenter = function() {
         createAnnotationToolip(marker, $(this).data('event'), that._plot);
       };
 
@@ -428,7 +428,7 @@ export class EventMarkers {
         createEditPopover(marker, event.editModel, that._plot);
       }
 
-      let mouseleave = function() {
+      const mouseleave = function() {
         that._plot.clearSelection();
       };
 
@@ -438,7 +438,7 @@ export class EventMarkers {
       }
     }
 
-    let drawableEvent = new DrawableEvent(
+    const drawableEvent = new DrawableEvent(
       line,
       function drawFunc(obj) {
         obj.show();
@@ -465,15 +465,15 @@ export class EventMarkers {
    * create a DOM element for the given region
    */
   _buildRegDiv(event) {
-    let that = this;
+    const that = this;
 
-    let container = this._plot.getPlaceholder();
-    let o = this._plot.getPlotOffset();
-    let xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
+    const container = this._plot.getPlaceholder();
+    const o = this._plot.getPlotOffset();
+    const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
     let top, left, lineWidth, regionWidth, lineStyle, color, markerTooltip;
 
     // map the eventType to a types object
-    let eventTypeId = event.eventType;
+    const eventTypeId = event.eventType;
 
     if (this._types === null || !this._types[eventTypeId] || !this._types[eventTypeId].color) {
       color = '#666';
@@ -499,17 +499,17 @@ export class EventMarkers {
       lineStyle = this._types[eventTypeId].lineStyle.toLowerCase();
     }
 
-    let topOffset = 2;
+    const topOffset = 2;
     top = o.top + this._plot.height() + topOffset;
 
-    let timeFrom = Math.min(event.min, event.timeEnd);
-    let timeTo = Math.max(event.min, event.timeEnd);
+    const timeFrom = Math.min(event.min, event.timeEnd);
+    const timeTo = Math.max(event.min, event.timeEnd);
     left = xaxis.p2c(timeFrom) + o.left;
-    let right = xaxis.p2c(timeTo) + o.left;
+    const right = xaxis.p2c(timeTo) + o.left;
     regionWidth = right - left;
 
     _.each([left, right], position => {
-      let line = $('<div class="events_line flot-temp-elem"></div>').css({
+      const line = $('<div class="events_line flot-temp-elem"></div>').css({
         position: 'absolute',
         opacity: 0.8,
         left: position + 'px',
@@ -524,7 +524,7 @@ export class EventMarkers {
       line.appendTo(container);
     });
 
-    let region = $('<div class="events_marker region_marker flot-temp-elem"></div>').css({
+    const region = $('<div class="events_marker region_marker flot-temp-elem"></div>').css({
       position: 'absolute',
       opacity: 0.5,
       left: left + 'px',
@@ -541,7 +541,7 @@ export class EventMarkers {
       event: event,
     });
 
-    let mouseenter = function() {
+    const mouseenter = function() {
       createAnnotationToolip(region, $(this).data('event'), that._plot);
     };
 
@@ -549,7 +549,7 @@ export class EventMarkers {
       createEditPopover(region, event.editModel, that._plot);
     }
 
-    let mouseleave = function() {
+    const mouseleave = function() {
       that._plot.clearSelection();
     };
 
@@ -558,7 +558,7 @@ export class EventMarkers {
       region.hover(mouseenter, mouseleave);
     }
 
-    let drawableEvent = new DrawableEvent(
+    const drawableEvent = new DrawableEvent(
       region,
       function drawFunc(obj) {
         obj.show();
@@ -585,8 +585,8 @@ export class EventMarkers {
    * check if the event is inside visible range
    */
   _insidePlot(x) {
-    let xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
-    let xc = xaxis.p2c(x);
+    const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
+    const xc = xaxis.p2c(x);
     return xc > 0 && xc < xaxis.p2c(xaxis.max);
   }
 }
@@ -598,8 +598,8 @@ export class EventMarkers {
 /** @ngInject */
 export function init(plot) {
   /*jshint validthis:true */
-  let that = this;
-  let eventMarkers = new EventMarkers(plot);
+  const that = this;
+  const eventMarkers = new EventMarkers(plot);
 
   plot.getEvents = function() {
     return eventMarkers._events;
@@ -638,7 +638,7 @@ export function init(plot) {
   });
 
   plot.hooks.draw.push(function(plot) {
-    let options = plot.getOptions();
+    const options = plot.getOptions();
 
     if (eventMarkers.eventsEnabled) {
       // check for first run
@@ -654,7 +654,7 @@ export function init(plot) {
   });
 }
 
-let defaultOptions = {
+const defaultOptions = {
   events: {
     data: null,
     types: null,
