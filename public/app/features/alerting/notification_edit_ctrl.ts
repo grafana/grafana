@@ -30,7 +30,7 @@ export class AlertNotificationEditCtrl {
         this.notifiers = notifiers;
 
         // add option templates
-        for (let notifier of this.notifiers) {
+        for (const notifier of this.notifiers) {
           this.$templateCache.put(this.getNotifierTemplateId(notifier.type), notifier.optionsTemplate);
         }
 
@@ -99,7 +99,7 @@ export class AlertNotificationEditCtrl {
       return;
     }
 
-    var payload = {
+    const payload = {
       name: this.model.name,
       type: this.model.type,
       settings: this.model.settings,

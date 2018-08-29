@@ -2,7 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import { PluginEditCtrl } from './plugin_edit_ctrl';
 
-var pluginInfoCache = {};
+const pluginInfoCache = {};
 
 export class AppPageCtrl {
   page: any;

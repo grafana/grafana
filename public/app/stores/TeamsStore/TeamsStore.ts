@@ -1,6 +1,6 @@
 import { types, getEnv, flow } from 'mobx-state-tree';
 
-export const TeamMember = types.model('TeamMember', {
+export const TeamMemberModel = types.model('TeamMember', {
   userId: types.identifier(types.number),
   teamId: types.number,
   avatarUrl: types.string,
@@ -8,18 +8,18 @@ export const TeamMember = types.model('TeamMember', {
   login: types.string,
 });
 
-type TeamMemberType = typeof TeamMember.Type;
-export interface ITeamMember extends TeamMemberType {}
+type TeamMemberType = typeof TeamMemberModel.Type;
+export interface TeamMember extends TeamMemberType {}
 
-export const TeamGroup = types.model('TeamGroup', {
+export const TeamGroupModel = types.model('TeamGroup', {
   groupId: types.identifier(types.string),
   teamId: types.number,
 });
 
-type TeamGroupType = typeof TeamGroup.Type;
-export interface ITeamGroup extends TeamGroupType {}
+type TeamGroupType = typeof TeamGroupModel.Type;
+export interface TeamGroup extends TeamGroupType {}
 
-export const Team = types
+export const TeamModel = types
   .model('Team', {
     id: types.identifier(types.number),
     name: types.string,
@@ -27,13 +27,13 @@ export const Team = types
     email: types.string,
     memberCount: types.number,
     search: types.optional(types.string, ''),
-    members: types.optional(types.map(TeamMember), {}),
-    groups: types.optional(types.map(TeamGroup), {}),
+    members: types.optional(types.map(TeamMemberModel), {}),
+    groups: types.optional(types.map(TeamGroupModel), {}),
   })
   .views(self => ({
     get filteredMembers() {
-      let members = this.members.values();
-      let regex = new RegExp(self.search, 'i');
+      const members = this.members.values();
+      const regex = new RegExp(self.search, 'i');
       return members.filter(member => {
         return regex.test(member.login) || regex.test(member.email);
       });
@@ -66,12 +66,12 @@ export const Team = types
       const rsp = yield backendSrv.get(`/api/teams/${self.id}/members`);
       self.members.clear();
 
-      for (let member of rsp) {
-        self.members.set(member.userId.toString(), TeamMember.create(member));
+      for (const member of rsp) {
+        self.members.set(member.userId.toString(), TeamMemberModel.create(member));
       }
     }),
 
-    removeMember: flow(function* load(member: ITeamMember) {
+    removeMember: flow(function* load(member: TeamMember) {
       const backendSrv = getEnv(self).backendSrv;
       yield backendSrv.delete(`/api/teams/${self.id}/members/${member.userId}`);
       // remove from store map
@@ -88,8 +88,8 @@ export const Team = types
       const rsp = yield backendSrv.get(`/api/teams/${self.id}/groups`);
       self.groups.clear();
 
-      for (let group of rsp) {
-        self.groups.set(group.groupId, TeamGroup.create(group));
+      for (const group of rsp) {
+        self.groups.set(group.groupId, TeamGroupModel.create(group));
       }
     }),
 
@@ -98,7 +98,7 @@ export const Team = types
       yield backendSrv.post(`/api/teams/${self.id}/groups`, { groupId: groupId });
       self.groups.set(
         groupId,
-        TeamGroup.create({
+        TeamGroupModel.create({
           teamId: self.id,
           groupId: groupId,
         })
@@ -112,18 +112,18 @@ export const Team = types
     }),
   }));
 
-type TeamType = typeof Team.Type;
-export interface ITeam extends TeamType {}
+type TeamType = typeof TeamModel.Type;
+export interface Team extends TeamType {}
 
 export const TeamsStore = types
   .model('TeamsStore', {
-    map: types.map(Team),
+    map: types.map(TeamModel),
     search: types.optional(types.string, ''),
   })
   .views(self => ({
     get filteredTeams() {
-      let teams = this.map.values();
-      let regex = new RegExp(self.search, 'i');
+      const teams = this.map.values();
+      const regex = new RegExp(self.search, 'i');
       return teams.filter(team => {
         return regex.test(team.name);
       });
@@ -135,8 +135,8 @@ export const TeamsStore = types
       const rsp = yield backendSrv.get('/api/teams/search/', { perpage: 50, page: 1 });
       self.map.clear();
 
-      for (let team of rsp.teams) {
-        self.map.set(team.id.toString(), Team.create(team));
+      for (const team of rsp.teams) {
+        self.map.set(team.id.toString(), TeamModel.create(team));
       }
     }),
 
@@ -151,6 +151,6 @@ export const TeamsStore = types
 
       const backendSrv = getEnv(self).backendSrv;
       const team = yield backendSrv.get(`/api/teams/${id}`);
-      self.map.set(id, Team.create(team));
+      self.map.set(id, TeamModel.create(team));
     }),
   }));

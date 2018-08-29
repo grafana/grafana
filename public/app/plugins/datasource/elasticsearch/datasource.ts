@@ -414,13 +414,13 @@ export class ElasticDatasource {
       return true;
     }
 
-    for (let bucketAgg of target.bucketAggs) {
+    for (const bucketAgg of target.bucketAggs) {
       if (this.templateSrv.variableExists(bucketAgg.field) || this.objectContainsTemplate(bucketAgg.settings)) {
         return true;
       }
     }
 
-    for (let metric of target.metrics) {
+    for (const metric of target.metrics) {
       if (
         this.templateSrv.variableExists(metric.field) ||
         this.objectContainsTemplate(metric.settings) ||
@@ -449,13 +449,13 @@ export class ElasticDatasource {
       return false;
     }
 
-    for (let key of Object.keys(obj)) {
+    for (const key of Object.keys(obj)) {
       if (this.isPrimitive(obj[key])) {
         if (this.templateSrv.variableExists(obj[key])) {
           return true;
         }
       } else if (Array.isArray(obj[key])) {
-        for (let item of obj[key]) {
+        for (const item of obj[key]) {
           if (this.objectContainsTemplate(item)) {
             return true;
           }

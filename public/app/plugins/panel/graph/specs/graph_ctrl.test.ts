@@ -4,7 +4,7 @@ import { GraphCtrl } from '../module';
 jest.mock('../graph', () => ({}));
 
 describe('GraphCtrl', () => {
-  let injector = {
+  const injector = {
     get: () => {
       return {
         timeRange: () => {
@@ -17,7 +17,7 @@ describe('GraphCtrl', () => {
     },
   };
 
-  let scope = {
+  const scope = {
     $on: () => {},
   };
 
@@ -30,7 +30,7 @@ describe('GraphCtrl', () => {
     },
   };
 
-  let ctx = <any>{};
+  const ctx = <any>{};
 
   beforeEach(() => {
     ctx.ctrl = new GraphCtrl(scope, injector, {});
@@ -43,7 +43,7 @@ describe('GraphCtrl', () => {
 
   describe('when time series are outside range', () => {
     beforeEach(() => {
-      var data = [
+      const data = [
         {
           target: 'test.cpu1',
           datapoints: [[45, 1234567890], [60, 1234567899]],
@@ -61,14 +61,14 @@ describe('GraphCtrl', () => {
 
   describe('when time series are inside range', () => {
     beforeEach(() => {
-      var range = {
+      const range = {
         from: moment()
           .subtract(1, 'days')
           .valueOf(),
         to: moment().valueOf(),
       };
 
-      var data = [
+      const data = [
         {
           target: 'test.cpu1',
           datapoints: [[45, range.from + 1000], [60, range.from + 10000]],
@@ -86,7 +86,7 @@ describe('GraphCtrl', () => {
 
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
-      var data = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
+      const data = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
       ctx.ctrl.onDataReceived(data);
     });
 

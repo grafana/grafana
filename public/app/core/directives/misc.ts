@@ -156,7 +156,7 @@ function gfDropdown($parse, $compile, $timeout) {
     var ul = ['<ul class="dropdown-menu ' + upclass + '" role="menu" aria-labelledby="drop1">', '</ul>'];
 
     for (let index = 0; index < items.length; index++) {
-      let item = items[index];
+      const item = items[index];
 
       if (item.divider) {
         ul.splice(index + 1, 0, '<li class="divider"></li>');

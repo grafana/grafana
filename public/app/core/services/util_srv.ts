@@ -33,7 +33,7 @@ export class UtilSrv {
       this.modalScope = this.$rootScope.$new();
     }
 
-    var modal = this.$modal({
+    const modal = this.$modal({
       modalClass: options.modalClass,
       template: options.src,
       templateHtml: options.templateHtml,
@@ -50,7 +50,7 @@ export class UtilSrv {
   }
 
   showConfirmModal(payload) {
-    var scope = this.$rootScope.$new();
+    const scope = this.$rootScope.$new();
 
     scope.onConfirm = function() {
       payload.onConfirm();

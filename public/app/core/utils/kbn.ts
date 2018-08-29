@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 
-var kbn: any = {};
+const kbn: any = {};
 
 kbn.valueFormats = {};
 
@@ -103,27 +103,27 @@ kbn.round_interval = function(interval) {
 };
 
 kbn.secondsToHms = function(seconds) {
-  var numyears = Math.floor(seconds / 31536000);
+  const numyears = Math.floor(seconds / 31536000);
   if (numyears) {
     return numyears + 'y';
   }
-  var numdays = Math.floor((seconds % 31536000) / 86400);
+  const numdays = Math.floor((seconds % 31536000) / 86400);
   if (numdays) {
     return numdays + 'd';
   }
-  var numhours = Math.floor(((seconds % 31536000) % 86400) / 3600);
+  const numhours = Math.floor(((seconds % 31536000) % 86400) / 3600);
   if (numhours) {
     return numhours + 'h';
   }
-  var numminutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
+  const numminutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
   if (numminutes) {
     return numminutes + 'm';
   }
-  var numseconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
+  const numseconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
   if (numseconds) {
     return numseconds + 's';
   }
-  var nummilliseconds = Math.floor(seconds * 1000.0);
+  const nummilliseconds = Math.floor(seconds * 1000.0);
   if (nummilliseconds) {
     return nummilliseconds + 'ms';
   }
@@ -132,10 +132,10 @@ kbn.secondsToHms = function(seconds) {
 };
 
 kbn.secondsToHhmmss = function(seconds) {
-  var strings = [];
-  var numhours = Math.floor(seconds / 3600);
-  var numminutes = Math.floor((seconds % 3600) / 60);
-  var numseconds = Math.floor((seconds % 3600) % 60);
+  const strings = [];
+  const numhours = Math.floor(seconds / 3600);
+  const numminutes = Math.floor((seconds % 3600) / 60);
+  const numseconds = Math.floor((seconds % 3600) % 60);
   numhours > 9 ? strings.push('' + numhours) : strings.push('0' + numhours);
   numminutes > 9 ? strings.push('' + numminutes) : strings.push('0' + numminutes);
   numseconds > 9 ? strings.push('' + numseconds) : strings.push('0' + numseconds);
@@ -191,7 +191,7 @@ kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
 };
 
 kbn.describe_interval = function(str) {
-  var matches = str.match(kbn.interval_regex);
+  const matches = str.match(kbn.interval_regex);
   if (!matches || !_.has(kbn.intervals_in_seconds, matches[2])) {
     throw new Error('Invalid interval string, expecting a number followed by one of "Mwdhmsy"');
   } else {
@@ -204,12 +204,12 @@ kbn.describe_interval = function(str) {
 };
 
 kbn.interval_to_ms = function(str) {
-  var info = kbn.describe_interval(str);
+  const info = kbn.describe_interval(str);
   return info.sec * 1000 * info.count;
 };
 
 kbn.interval_to_seconds = function(str) {
-  var info = kbn.describe_interval(str);
+  const info = kbn.describe_interval(str);
   return info.sec * info.count;
 };
 
@@ -233,7 +233,7 @@ kbn.stringToJsRegex = function(str) {
     return new RegExp('^' + str + '$');
   }
 
-  var match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
+  const match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
   return new RegExp(match[1], match[2]);
 };
 
@@ -242,8 +242,8 @@ kbn.toFixed = function(value, decimals) {
     return '';
   }
 
-  var factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
-  var formatted = String(Math.round(value * factor) / factor);
+  const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
+  const formatted = String(Math.round(value * factor) / factor);
 
   // if exponent return directly
   if (formatted.indexOf('e') !== -1 || value === 0) {
@@ -253,8 +253,8 @@ kbn.toFixed = function(value, decimals) {
   // If tickDecimals was specified, ensure that we have exactly that
   // much precision; otherwise default to the value's own precision.
   if (decimals != null) {
-    var decimalPos = formatted.indexOf('.');
-    var precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
+    const decimalPos = formatted.indexOf('.');
+    const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
     if (precision < decimals) {
       return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
     }
@@ -275,8 +275,8 @@ kbn.roundValue = function(num, decimals) {
   if (num === null) {
     return null;
   }
-  var n = Math.pow(10, decimals);
-  var formatted = (n * num).toFixed(decimals);
+  const n = Math.pow(10, decimals);
+  const formatted = (n * num).toFixed(decimals);
   return Math.round(parseFloat(formatted)) / n;
 };
 
@@ -305,7 +305,7 @@ kbn.formatBuilders.scaledUnits = function(factor, extArray) {
     }
 
     var steps = 0;
-    var limit = extArray.length;
+    const limit = extArray.length;
 
     while (Math.abs(size) >= factor) {
       steps++;
@@ -330,7 +330,7 @@ kbn.formatBuilders.scaledUnits = function(factor, extArray) {
 kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
   var prefixes = ['n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
   prefixes = prefixes.slice(3 + (offset || 0));
-  var units = prefixes.map(function(p) {
+  const units = prefixes.map(function(p) {
     return ' ' + p + unit;
   });
   return kbn.formatBuilders.scaledUnits(1000, units);
@@ -340,8 +340,8 @@ kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
 // offset is given, it starts the units at the given prefix; otherwise, the
 // offset defaults to zero and the initial unit is not prefixed.
 kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
-  var prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
-  var units = prefixes.map(function(p) {
+  const prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
+  const units = prefixes.map(function(p) {
     return ' ' + p + unit;
   });
   return kbn.formatBuilders.scaledUnits(1024, units);
@@ -350,25 +350,25 @@ kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
 // Currency formatter for prefixing a symbol onto a number. Supports scaling
 // up to the trillions.
 kbn.formatBuilders.currency = function(symbol) {
-  var units = ['', 'K', 'M', 'B', 'T'];
-  var scaler = kbn.formatBuilders.scaledUnits(1000, units);
+  const units = ['', 'K', 'M', 'B', 'T'];
+  const scaler = kbn.formatBuilders.scaledUnits(1000, units);
   return function(size, decimals, scaledDecimals) {
     if (size === null) {
       return '';
     }
-    var scaled = scaler(size, decimals, scaledDecimals);
+    const scaled = scaler(size, decimals, scaledDecimals);
     return symbol + scaled;
   };
 };
 
 kbn.formatBuilders.simpleCountUnit = function(symbol) {
-  var units = ['', 'K', 'M', 'B', 'T'];
-  var scaler = kbn.formatBuilders.scaledUnits(1000, units);
+  const units = ['', 'K', 'M', 'B', 'T'];
+  const scaler = kbn.formatBuilders.scaledUnits(1000, units);
   return function(size, decimals, scaledDecimals) {
     if (size === null) {
       return '';
     }
-    var scaled = scaler(size, decimals, scaledDecimals);
+    const scaled = scaler(size, decimals, scaledDecimals);
     return scaled + ' ' + symbol;
   };
 };
@@ -420,7 +420,7 @@ kbn.valueFormats.hex0x = function(value, decimals) {
   if (value == null) {
     return '';
   }
-  var hexString = kbn.valueFormats.hex(value, decimals);
+  const hexString = kbn.valueFormats.hex(value, decimals);
   if (hexString.substring(0, 1) === '-') {
     return '-0x' + hexString.substring(1);
   }
@@ -769,7 +769,7 @@ kbn.toDuration = function(size, decimals, timeScale) {
     return kbn.toDuration(-size, decimals, timeScale) + ' ago';
   }
 
-  var units = [
+  const units = [
     { short: 'y', long: 'year' },
     { short: 'M', long: 'month' },
     { short: 'w', long: 'week' },
@@ -788,16 +788,16 @@ kbn.toDuration = function(size, decimals, timeScale) {
       }).short
     ] * 1000;
 
-  var strings = [];
+  const strings = [];
   // after first value >= 1 print only $decimals more
   var decrementDecimals = false;
   for (var i = 0; i < units.length && decimals >= 0; i++) {
-    var interval = kbn.intervals_in_seconds[units[i].short] * 1000;
-    var value = size / interval;
+    const interval = kbn.intervals_in_seconds[units[i].short] * 1000;
+    const value = size / interval;
     if (value >= 1 || decrementDecimals) {
       decrementDecimals = true;
-      var floor = Math.floor(value);
-      var unit = units[i].long + (floor !== 1 ? 's' : '');
+      const floor = Math.floor(value);
+      const unit = units[i].long + (floor !== 1 ? 's' : '');
       strings.push(floor + ' ' + unit);
       size = size % interval;
       decimals--;
@@ -824,7 +824,7 @@ kbn.valueFormats.timeticks = function(size, decimals, scaledDecimals) {
 };
 
 kbn.valueFormats.dateTimeAsIso = function(epoch, isUtc) {
-  var time = isUtc ? moment.utc(epoch) : moment(epoch);
+  const time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
     return time.format('HH:mm:ss');
@@ -833,7 +833,7 @@ kbn.valueFormats.dateTimeAsIso = function(epoch, isUtc) {
 };
 
 kbn.valueFormats.dateTimeAsUS = function(epoch, isUtc) {
-  var time = isUtc ? moment.utc(epoch) : moment(epoch);
+  const time = isUtc ? moment.utc(epoch) : moment(epoch);
 
   if (moment().isSame(epoch, 'day')) {
     return time.format('h:mm:ss a');
@@ -842,7 +842,7 @@ kbn.valueFormats.dateTimeAsUS = function(epoch, isUtc) {
 };
 
 kbn.valueFormats.dateTimeFromNow = function(epoch, isUtc) {
-  var time = isUtc ? moment.utc(epoch) : moment(epoch);
+  const time = isUtc ? moment.utc(epoch) : moment(epoch);
   return time.fromNow();
 };
 

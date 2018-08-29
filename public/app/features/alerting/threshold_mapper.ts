@@ -1,7 +1,7 @@
 export class ThresholdMapper {
   static alertToGraphThresholds(panel) {
     for (var i = 0; i < panel.alert.conditions.length; i++) {
-      let condition = panel.alert.conditions[i];
+      const condition = panel.alert.conditions[i];
       if (condition.type !== 'query') {
         continue;
       }
@@ -11,18 +11,18 @@ export class ThresholdMapper {
 
       switch (evaluator.type) {
         case 'gt': {
-          let value = evaluator.params[0];
+          const value = evaluator.params[0];
           thresholds.push({ value: value, op: 'gt' });
           break;
         }
         case 'lt': {
-          let value = evaluator.params[0];
+          const value = evaluator.params[0];
           thresholds.push({ value: value, op: 'lt' });
           break;
         }
         case 'outside_range': {
-          let value1 = evaluator.params[0];
-          let value2 = evaluator.params[1];
+          const value1 = evaluator.params[0];
+          const value2 = evaluator.params[1];
 
           if (value1 > value2) {
             thresholds.push({ value: value1, op: 'gt' });
@@ -35,8 +35,8 @@ export class ThresholdMapper {
           break;
         }
         case 'within_range': {
-          let value1 = evaluator.params[0];
-          let value2 = evaluator.params[1];
+          const value1 = evaluator.params[0];
+          const value2 = evaluator.params[1];
 
           if (value1 > value2) {
             thresholds.push({ value: value1, op: 'lt' });

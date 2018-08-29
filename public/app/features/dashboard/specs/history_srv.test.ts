@@ -8,7 +8,7 @@ describe('historySrv', function() {
   const versionsResponse = versions();
   const restoreResponse = restore;
 
-  let backendSrv = {
+  const backendSrv = {
     get: jest.fn(() => Promise.resolve({})),
     post: jest.fn(() => Promise.resolve({})),
   };
@@ -44,7 +44,7 @@ describe('historySrv', function() {
 
   describe('restoreDashboard', () => {
     it('should return a success response given valid parameters', function() {
-      let version = 6;
+      const version = 6;
       backendSrv.post = jest.fn(() => Promise.resolve(restoreResponse(version)));
       historySrv = new HistorySrv(backendSrv);
       return historySrv.restoreDashboard(dash, version).then(function(response) {
@@ -54,7 +54,7 @@ describe('historySrv', function() {
 
     it('should return an empty object when not given an id', async () => {
       historySrv = new HistorySrv(backendSrv);
-      let rsp = await historySrv.restoreDashboard(emptyDash, 6);
+      const rsp = await historySrv.restoreDashboard(emptyDash, 6);
       expect(rsp).toEqual({});
     });
   });

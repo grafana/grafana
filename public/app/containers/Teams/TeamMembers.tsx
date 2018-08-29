@@ -1,13 +1,13 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { observer } from 'mobx-react';
-import { ITeam, ITeamMember } from 'app/stores/TeamsStore/TeamsStore';
+import { Team, TeamMember } from 'app/stores/TeamsStore/TeamsStore';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 
 interface Props {
-  team: ITeam;
+  team: Team;
 }
 
 interface State {
@@ -30,15 +30,15 @@ export class TeamMembers extends React.Component<Props, State> {
     this.props.team.setSearchQuery(evt.target.value);
   };
 
-  removeMember(member: ITeamMember) {
+  removeMember(member: TeamMember) {
     this.props.team.removeMember(member);
   }
 
-  removeMemberConfirmed(member: ITeamMember) {
+  removeMemberConfirmed(member: TeamMember) {
     this.props.team.removeMember(member);
   }
 
-  renderMember(member: ITeamMember) {
+  renderMember(member: TeamMember) {
     return (
       <tr key={member.userId}>
         <td className="width-4 text-center">
