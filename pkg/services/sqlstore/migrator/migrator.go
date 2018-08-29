@@ -12,7 +12,7 @@ import (
 
 type Migrator struct {
 	x          *xorm.Engine
-	dialect    Dialect
+	Dialect    Dialect
 	migrations []Migration
 	Logger     log.Logger
 }
@@ -31,7 +31,7 @@ func NewMigrator(engine *xorm.Engine) *Migrator {
 	mg.x = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
-	mg.dialect = NewDialect(mg.x.DriverName())
+	mg.Dialect = NewDialect(mg.x.DriverName())
 	return mg
 }
 
@@ -82,7 +82,7 @@ func (mg *Migrator) Start() error {
 			continue
 		}
 
-		sql := m.Sql(mg.dialect)
+		sql := m.Sql(mg.Dialect)
 
 		record := MigrationLog{
 			MigrationId: m.Id(),
@@ -120,7 +120,7 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 
 	condition := m.GetCondition()
 	if condition != nil {
-		sql, args := condition.Sql(mg.dialect)
+		sql, args := condition.Sql(mg.Dialect)
 		results, err := sess.Query(sql, args...)
 		if err != nil || len(results) == 0 {
 			mg.Logger.Info("Skipping migration condition not fulfilled", "id", m.Id())
@@ -128,7 +128,13 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 		}
 	}
 
-	_, err := sess.Exec(m.Sql(mg.dialect))
+	var err error
+	if codeMigration, ok := m.(CodeMigration); ok {
+		err = codeMigration.Exec(sess, mg)
+	} else {
+		_, err = sess.Exec(m.Sql(mg.Dialect))
+	}
+
 	if err != nil {
 		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
 		return err
