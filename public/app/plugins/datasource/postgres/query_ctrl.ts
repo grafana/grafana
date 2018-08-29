@@ -215,9 +215,25 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.target.timeColumn = this.timeColumnSegment.value;
     this.datasource.metricFindQuery(this.metaBuilder.buildDatatypeQuery(this.target.timeColumn)).then(result => {
       if (result.length === 1) {
-        this.target.timeColumnType = result[0].text;
+        if (this.target.timeColumnType !== result[0].text) {
+          this.target.timeColumnType = result[0].text;
+          let partModel;
+          if (this.queryModel.hasUnixEpochTimecolumn()) {
+            partModel = sqlPart.create({ type: 'macro', name: '$__unixEpochFilter', params: [] });
+          } else {
+            partModel = sqlPart.create({ type: 'macro', name: '$__timeFilter', params: [] });
+          }
+
+          if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
+            // replace current macro
+            this.whereParts[0] = partModel;
+          } else {
+            this.whereParts.splice(0, 0, partModel);
+          }
+        }
       }
     });
+    this.updatePersistedParts();
     this.panelCtrl.refresh();
   }
 
