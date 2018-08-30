@@ -113,9 +113,9 @@ export class TeamList extends React.Component<Props, any> {
             buttonIcon: 'fa fa-plus',
             buttonLink: 'org/teams/new',
             buttonTitle: ' New team',
-            proTip: 'Something something.',
-            proTipLink: '#',
-            proTipLinkTitle: 'Learn more',
+            proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
+            proTipLink: '',
+            proTipLinkTitle: '',
             proTipTarget: '_blank',
           }}
         />
