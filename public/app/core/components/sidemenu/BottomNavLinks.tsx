@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
 import appEvents from '../../app_events';
+import { User } from '../../services/context_srv';
 
 interface BottonNavLinksProps {
   link: any;
-  user: any;
+  user: User;
 }
 
 export default class BottomNavLinks extends PureComponent<BottonNavLinksProps> {
