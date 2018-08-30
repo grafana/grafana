@@ -5,6 +5,12 @@
     "ban": [true,
       {"name": "Array", "message": "tsstyle#array-constructor"}
     ],
+    "ban-types": [true,
+      ["Object", "Use {} instead."],
+      ["String", "Use 'string' instead."],
+      ["Number", "Use 'number' instead."],
+      ["Boolean", "Use 'boolean' instead."]
+    ],
     "interface-name": [true, "never-prefix"],
     "no-string-throw": true,
     "no-unused-expression": true,
