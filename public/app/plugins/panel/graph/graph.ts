@@ -27,11 +27,11 @@ class GraphElement {
   ctrl: GraphCtrl;
   tooltip: any;
   dashboard: any;
-  annotations: Array<object>;
+  annotations: object[];
   panel: any;
   plot: any;
-  sortedSeries: Array<any>;
-  data: Array<any>;
+  sortedSeries: any[];
+  data: any[];
   panelWidth: number;
   eventManager: EventManager;
   thresholdManager: ThresholdManager;

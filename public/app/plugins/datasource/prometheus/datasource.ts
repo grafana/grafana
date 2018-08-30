@@ -109,7 +109,7 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
     }
 
     // Check for monotony
-    const datapoints: [number, number][] = s.datapoints;
+    const datapoints: number[][] = s.datapoints;
     if (datapoints.length > 1) {
       let increasing = false;
       const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {

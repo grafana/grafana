@@ -1,5 +1,6 @@
 {
   "rules": {
+    "array-type": [true, "array-simple"],
     "interface-name": [true, "never-prefix"],
     "no-string-throw": true,
     "no-unused-expression": true,
@@ -19,13 +20,7 @@
     "member-access": false,
     "no-arg": true,
     "no-bitwise": false,
-    "no-console": [true,
-      "debug",
-      "info",
-      "time",
-      "timeEnd",
-      "trace"
-    ],
+    "no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
     "no-construct": true,
     "no-debugger": true,
     "no-empty": false,
@@ -37,26 +32,20 @@
     "no-trailing-whitespace": true,
     "no-var-keyword": false,
     "object-literal-sort-keys": false,
-    "one-line": [true,
-      "check-open-brace",
-      "check-catch",
-      "check-else"
-    ],
+    "one-line": [true, "check-open-brace", "check-catch", "check-else"],
     "prefer-const": true,
     "radix": false,
-    "typedef-whitespace": [true, {
-      "call-signature": "nospace",
-      "index-signature": "nospace",
-      "parameter": "nospace",
-      "property-declaration": "nospace",
-      "variable-declaration": "nospace"
-    }],
+    "typedef-whitespace": [
+      true,
+      {
+        "call-signature": "nospace",
+        "index-signature": "nospace",
+        "parameter": "nospace",
+        "property-declaration": "nospace",
+        "variable-declaration": "nospace"
+      }
+    ],
     "variable-name": [true, "ban-keywords"],
-    "whitespace": [true,
-      "check-branch",
-      "check-decl",
-      "check-type",
-      "check-preblock"
-    ]
+    "whitespace": [true, "check-branch", "check-decl", "check-type", "check-preblock"]
   }
 }
