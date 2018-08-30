@@ -201,26 +201,26 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   tableChanged() {
     this.target.table = this.tableSegment.value;
-    this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then(result => {
+    let task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then(result => {
       // check if time column is still valid
-      if (result.length > 0) {
-        if (!_.find(result, (r: any) => r.text === this.target.timeColumn)) {
-          let segment = this.uiSegmentSrv.newSegment(result[0].text);
-          this.timeColumnSegment.html = segment.html;
-          this.timeColumnSegment.value = segment.value;
+      if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
+        let segment = this.uiSegmentSrv.newSegment(result[0].text);
+        this.timeColumnSegment.html = segment.html;
+        this.timeColumnSegment.value = segment.value;
 
-          this.timeColumnChanged();
-        }
+        return this.timeColumnChanged(false);
       }
     });
-
-    this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then(result => {
+    let task2 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then(result => {
       if (result.length > 0) {
         this.target.select = [[{ type: 'column', params: [result[0].text] }]];
         this.target.where = [];
         this.target.group = [];
       }
       this.updateProjection();
+    });
+
+    this.$q.all([task1, task2]).then(() => {
       this.panelCtrl.refresh();
     });
   }
@@ -232,9 +232,9 @@ export class PostgresQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryError.bind(this));
   }
 
-  timeColumnChanged() {
+  timeColumnChanged(refresh?: boolean) {
     this.target.timeColumn = this.timeColumnSegment.value;
-    this.datasource.metricFindQuery(this.metaBuilder.buildDatatypeQuery(this.target.timeColumn)).then(result => {
+    return this.datasource.metricFindQuery(this.metaBuilder.buildDatatypeQuery(this.target.timeColumn)).then(result => {
       if (result.length === 1) {
         if (this.target.timeColumnType !== result[0].text) {
           this.target.timeColumnType = result[0].text;
@@ -253,9 +253,12 @@ export class PostgresQueryCtrl extends QueryCtrl {
           }
         }
       }
+
+      this.updatePersistedParts();
+      if (refresh !== false) {
+        this.panelCtrl.refresh();
+      }
     });
-    this.updatePersistedParts();
-    this.panelCtrl.refresh();
   }
 
   getMetricColumnSegments() {
