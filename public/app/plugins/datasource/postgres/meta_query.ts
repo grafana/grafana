@@ -121,7 +121,7 @@ table_schema IN (
         break;
       }
       case 'metric': {
-        query += " AND data_type IN ('text','char','varchar')";
+        query += " AND data_type IN ('text','character','character varying')";
         break;
       }
       case 'value': {
