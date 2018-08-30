@@ -1,9 +1,23 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { SideMenu } from './SideMenu';
+import appEvents from '../../app_events';
+import { contextSrv } from 'app/core/services/context_srv';
 
-jest.mock('context_srv', () => ({
-  sidemenu: true,
+jest.mock('../../app_events', () => ({
+  emit: jest.fn(),
+}));
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    sidemenu: true,
+    user: {},
+    isSignedIn: false,
+    isGrafanaAdmin: false,
+    isEditor: false,
+    hasEditPermissionFolders: false,
+    toggleSideMenu: jest.fn(),
+  },
 }));
 
 const setup = (propOverrides?: object) => {
@@ -26,5 +40,29 @@ describe('Render', () => {
     const wrapper = setup();
 
     expect(wrapper).toMatchSnapshot();
+  });
+});
+
+describe('Functions', () => {
+  describe('toggle side menu', () => {
+    const wrapper = setup();
+    wrapper.instance().toggleSideMenu();
+
+    it('should call contextSrv.toggleSideMenu', () => {
+      expect(contextSrv.toggleSideMenu).toHaveBeenCalled();
+    });
+
+    it('should emit toggle sidemenu event', () => {
+      expect(appEvents.emit).toHaveBeenCalledWith('toggle-sidemenu');
+    });
+  });
+
+  describe('toggle side menu on mobile', () => {
+    const wrapper = setup();
+    wrapper.instance().toggleSideMenuSmallBreakpoint();
+
+    it('should emit toggle sidemenu event', () => {
+      expect(appEvents.emit).toHaveBeenCalledWith('toggle-sidemenu-mobile');
+    });
   });
 });

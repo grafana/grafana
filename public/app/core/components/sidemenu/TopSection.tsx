@@ -1,14 +1,15 @@
 import React, { SFC } from 'react';
+import _ from 'lodash';
 import TopSectionItem from './TopSectionItem';
+import config from '../../config';
 
-interface TopSectionProps {
-  mainLinks: any[];
-}
+const TopSection: SFC<any> = () => {
+  const navTree = _.cloneDeep(config.bootData.navTree);
+  const mainLinks = _.filter(navTree, item => !item.hideFromMenu);
 
-const TopSection: SFC<TopSectionProps> = props => {
   return (
     <div className="sidemenu__top">
-      {props.mainLinks.map((link, index) => {
+      {mainLinks.map((link, index) => {
         return <TopSectionItem link={link} key={`${link.id}-${index}`} />;
       })}
     </div>

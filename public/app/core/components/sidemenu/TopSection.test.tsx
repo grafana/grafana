@@ -2,6 +2,29 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import TopSection from './TopSection';
 
+jest.mock('../../config', () => ({
+  bootData: {
+    navTree: [
+      {
+        id: '1',
+        hideFromMenu: true,
+      },
+      {
+        id: '2',
+        hideFromMenu: true,
+      },
+      {
+        id: '3',
+        hideFromMenu: false,
+      },
+      {
+        id: '4',
+        hideFromMenu: true,
+      },
+    ],
+  },
+}));
+
 const setup = (propOverrides?: object) => {
   const props = Object.assign(
     {

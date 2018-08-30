@@ -3,7 +3,17 @@
 exports[`Render should render component 1`] = `
 <div
   className="sidemenu__top"
-/>
+>
+  <TopSectionItem
+    key="3-0"
+    link={
+      Object {
+        "hideFromMenu": false,
+        "id": "3",
+      }
+    }
+  />
+</div>
 `;
 
 exports[`Render should render items 1`] = `
@@ -11,42 +21,11 @@ exports[`Render should render items 1`] = `
   className="sidemenu__top"
 >
   <TopSectionItem
-    key="1-0"
+    key="3-0"
     link={
       Object {
-        "id": 1,
-      }
-    }
-  />
-  <TopSectionItem
-    key="2-1"
-    link={
-      Object {
-        "id": 2,
-      }
-    }
-  />
-  <TopSectionItem
-    key="3-2"
-    link={
-      Object {
-        "id": 3,
-      }
-    }
-  />
-  <TopSectionItem
-    key="4-3"
-    link={
-      Object {
-        "id": 4,
-      }
-    }
-  />
-  <TopSectionItem
-    key="5-4"
-    link={
-      Object {
-        "id": 5,
+        "hideFromMenu": false,
+        "id": "3",
       }
     }
   />

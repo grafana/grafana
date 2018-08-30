@@ -1,12 +1,7 @@
 import React, { SFC } from 'react';
 
-interface SignInProps {
-  loginUrl: string;
-}
-
-const SignIn: SFC<SignInProps> = props => {
-  const { loginUrl } = props;
-
+const SignIn: SFC<any> = () => {
+  const loginUrl = `login?redirect=${encodeURIComponent(window.location.pathname)}`;
   return (
     <div className="sidemenu-item">
       <a href={loginUrl} className="sidemenu-link" target="_self">
