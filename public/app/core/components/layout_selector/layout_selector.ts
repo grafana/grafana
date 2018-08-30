@@ -52,7 +52,7 @@ export function layoutMode($rootScope) {
     scope: {},
     link: function(scope, elem) {
       const layout = store.get('grafana.list.layout.mode') || 'grid';
-      var className = 'card-list-layout-' + layout;
+      let className = 'card-list-layout-' + layout;
       elem.addClass(className);
 
       $rootScope.onAppEvent(

@@ -35,7 +35,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
   };
 
   $scope.buildUrl = function() {
-    var baseUrl = $location.absUrl();
+    let baseUrl = $location.absUrl();
     const queryStart = baseUrl.indexOf('?');
 
     if (queryStart !== -1) {
@@ -72,7 +72,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
 
     $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
-    var soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
+    let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
     soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
     delete params.fullscreen;
     delete params.edit;

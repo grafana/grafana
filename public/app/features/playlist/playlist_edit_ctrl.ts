@@ -88,7 +88,7 @@ export class PlaylistEditCtrl {
   }
 
   savePlaylist(playlist, playlistItems) {
-    var savePromise;
+    let savePromise;
 
     playlist.items = playlistItems;
 

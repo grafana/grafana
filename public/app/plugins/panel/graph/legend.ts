@@ -8,13 +8,13 @@ const module = angular.module('grafana.directives');
 module.directive('graphLegend', function(popoverSrv, $timeout) {
   return {
     link: function(scope, elem) {
-      var firstRender = true;
+      let firstRender = true;
       const ctrl = scope.ctrl;
       const panel = ctrl.panel;
-      var data;
-      var seriesList;
-      var i;
-      var legendScrollbar;
+      let data;
+      let seriesList;
+      let i;
+      let legendScrollbar;
       const legendRightDefaultWidth = 10;
       const legendElem = elem.parent();
 
@@ -100,7 +100,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         if (!panel.legend[statName]) {
           return '';
         }
-        var html = '<th class="pointer" data-stat="' + statName + '">' + statName;
+        let html = '<th class="pointer" data-stat="' + statName + '">' + statName;
 
         if (panel.legend.sort === statName) {
           const cssClass = panel.legend.sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up';
@@ -138,9 +138,9 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
 
         elem.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
-        var tableHeaderElem;
+        let tableHeaderElem;
         if (panel.legend.alignAsTable) {
-          var header = '<tr>';
+          let header = '<tr>';
           header += '<th colspan="2" style="text-align:left"></th>';
           if (panel.legend.values) {
             header += getTableHeaderHtml('min');
@@ -184,7 +184,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
             continue;
           }
 
-          var html = '<div class="graph-legend-series';
+          let html = '<div class="graph-legend-series';
 
           if (series.yaxis === 2) {
             html += ' graph-legend-series--right-y';

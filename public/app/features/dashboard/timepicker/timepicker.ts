@@ -75,7 +75,7 @@ export class TimePickerCtrl {
     const range = this.timeSrv.timeRange();
 
     const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
-    var to, from;
+    let to, from;
     if (direction === -1) {
       to = range.to.valueOf() - timespan;
       from = range.from.valueOf() - timespan;

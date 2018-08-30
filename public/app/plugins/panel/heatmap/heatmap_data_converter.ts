@@ -268,7 +268,7 @@ function pushToXBuckets(buckets, point, bucketNum, seriesName) {
 }
 
 function pushToYBuckets(buckets, bucketNum, value, point, bounds) {
-  var count = 1;
+  let count = 1;
   // Use the 3rd argument as scale/count
   if (point.length > 3) {
     count = parseInt(point[2]);

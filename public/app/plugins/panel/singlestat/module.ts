@@ -243,7 +243,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     const delta = value / 2;
-    var dec = -Math.floor(Math.log(delta) / Math.LN10);
+    let dec = -Math.floor(Math.log(delta) / Math.LN10);
 
     const magn = Math.pow(10, -dec);
     const norm = delta / magn; // norm is between 1.0 and 10.0
@@ -400,7 +400,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     const $timeout = this.$timeout;
     const panel = ctrl.panel;
     const templateSrv = this.templateSrv;
-    var data, linkInfo;
+    let data, linkInfo;
     const $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
@@ -419,24 +419,24 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getBigValueHtml() {
-      var body = '<div class="singlestat-panel-value-container">';
+      let body = '<div class="singlestat-panel-value-container">';
 
       if (panel.prefix) {
-        var prefix = panel.prefix;
+        let prefix = panel.prefix;
         if (panel.colorPrefix) {
           prefix = applyColoringThresholds(data.value, panel.prefix);
         }
         body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, prefix);
       }
 
-      var value = data.valueFormatted;
+      let value = data.valueFormatted;
       if (panel.colorValue) {
         value = applyColoringThresholds(data.value, value);
       }
       body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
       if (panel.postfix) {
-        var postfix = panel.postfix;
+        let postfix = panel.postfix;
         if (panel.colorPostfix) {
           postfix = applyColoringThresholds(data.value, panel.postfix);
         }
@@ -449,7 +449,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getValueText() {
-      var result = panel.prefix ? templateSrv.replace(panel.prefix, data.scopedVars) : '';
+      let result = panel.prefix ? templateSrv.replace(panel.prefix, data.scopedVars) : '';
       result += data.valueFormatted;
       result += panel.postfix ? templateSrv.replace(panel.postfix, data.scopedVars) : '';
 
@@ -480,7 +480,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       plotCanvas.css(plotCss);
 
       const thresholds = [];
-      for (var i = 0; i < data.thresholds.length; i++) {
+      for (let i = 0; i < data.thresholds.length; i++) {
         thresholds.push({
           value: data.thresholds[i],
           color: data.colorMap[i],
@@ -720,7 +720,7 @@ function getColorForValue(data, value) {
     return null;
   }
 
-  for (var i = data.thresholds.length; i > 0; i--) {
+  for (let i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i - 1]) {
       return data.colorMap[i];
     }

@@ -26,7 +26,7 @@ export default class AdminListUsersCtrl {
         this.showPaging = this.totalPages > 1;
         this.pages = [];
 
-        for (var i = 1; i < this.totalPages + 1; i++) {
+        for (let i = 1; i < this.totalPages + 1; i++) {
           this.pages.push({ page: i, current: i === this.page });
         }
       });

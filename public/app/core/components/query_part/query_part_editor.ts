@@ -91,7 +91,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
 
         const typeaheadSource = function(query, callback) {
           if (param.options) {
-            var options = param.options;
+            let options = param.options;
             if (param.type === 'int') {
               options = _.map(options, function(val) {
                 return val.toString();

@@ -120,7 +120,7 @@ function checkOppositeSides(yLeft, yRight) {
 }
 
 function getRate(yLeft, yRight) {
-  var rateLeft, rateRight, rate;
+  let rateLeft, rateRight, rate;
   if (checkTwoCross(yLeft, yRight)) {
     rateLeft = yRight.min ? yLeft.min / yRight.min : 0;
     rateRight = yRight.max ? yLeft.max / yRight.max : 0;
