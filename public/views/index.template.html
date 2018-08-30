@@ -38,28 +38,32 @@
       align-items: center;
     }
 
-    .preloader--light {
+    .theme-light .preloader {
       background: linear-gradient(-60deg, #f7f8fa, #f5f6f9 70%, #f7f8fa 98%);
     }
 
-    .preloader--dark {
+    .theme-dark .preloader {
       background: linear-gradient(180deg, #222426 10px, #161719 100px);
     }
 
     .preloader__enter {
-      animation-name: first-bounce;
-      animation-duration: .9s;
+      opacity: 0;
+      animation-name: preloader-fade-in;
       animation-iteration-count: 1;
+      animation-duration: 2s;
+      animation-delay: 2s;
+      animation-fill-mode: forwards;
     }
 
     .preloader__bounce {
+      text-align: center;
       animation-name: preloader-bounce;
       animation-duration: .9s;
       animation-iteration-count: infinite;
     }
 
     .preloader__logo {
-      display: block;
+      display: inline-block;
       animation-name: preloader-squash;
       animation-duration: .9s;
       animation-iteration-count: infinite;
@@ -75,43 +79,20 @@
       font-weight: 500;
       font-size: 14px;
       font-family: 'Roboto';
-      opacity: 0;
-      animation-name: text-fade-in;
-      animation-duration: 1.35s;
-      animation-iteration-count: 1;
-      animation-delay: .45s;
-      animation-fill-mode: forwards;
     }
 
-    .preloader__text--light {
+    .theme-light .preloader__text {
       color: #52545c;
     }
 
-    .preloader__text--dark {
+    .theme-dark .preloader__text {
       color: #d8d9da;
     }
 
-    @keyframes first-bounce {
-      0% {
-        transform: translateY(100px);
-        opacity: 0;
-        animation-timing-function: cubic-bezier(0.3, 0.0, 0.1, 1)
-      }
-      50% {
-        transform: translateY(-50px);
-        opacity: .8;
-        animation-timing-function: cubic-bezier(.9, 0, .7, 1)
-      }
-      100% {
-        transform: translateY(0px);
-        opacity: 1;
-      }
-    }
-
-    @keyframes text-fade-in {
+    @keyframes preloader-fade-in {
       0% {
         opacity: 0;
-        animation-timing-function: cubic-bezier(0, 0, .2, .9)
+        animation-timing-function: linear;
       }
       100% {
         opacity: 1;
@@ -165,14 +146,14 @@
     }
   </style>
 
-  <div class="preloader preloader--[[ .Theme ]]">
+  <div class="preloader">
     <div class="preloader__enter">
       <div class="preloader__bounce">
         <div class="preloader__logo">
         </div>
       </div>
+      <div class="preloader__text">Loading Grafana</div>
     </div>
-    <div class="preloader__text preloader__text--[[ .Theme ]]">Loading Grafana</div>
   </div>
 
   <grafana-app class="grafana-app" ng-cloak>
