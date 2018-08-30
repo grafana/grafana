@@ -91,7 +91,7 @@ export class QueryVariable implements Variable {
     if (this.useTags) {
       return this.metricFindQuery(datasource, this.tagsQuery).then(results => {
         this.tags = [];
-        for (var i = 0; i < results.length; i++) {
+        for (let i = 0; i < results.length; i++) {
           this.tags.push(results[i].text);
         }
         return datasource;
@@ -142,7 +142,7 @@ export class QueryVariable implements Variable {
   }
 
   metricNamesToVariableValues(metricNames) {
-    var regex, options, i, matches;
+    let regex, options, i, matches;
     options = [];
 
     if (this.regex) {
@@ -150,9 +150,9 @@ export class QueryVariable implements Variable {
     }
     for (i = 0; i < metricNames.length; i++) {
       const item = metricNames[i];
-      var text = item.text === undefined || item.text === null ? item.value : item.text;
+      let text = item.text === undefined || item.text === null ? item.value : item.text;
 
-      var value = item.value === undefined || item.value === null ? item.text : item.value;
+      let value = item.value === undefined || item.value === null ? item.text : item.value;
 
       if (_.isNumber(value)) {
         value = value.toString();

@@ -21,7 +21,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
         const files = evt.target.files; // FileList object
         const readerOnload = function() {
           return function(e) {
-            var dash;
+            let dash;
             try {
               dash = JSON.parse(e.target.result);
             } catch (err) {
@@ -36,7 +36,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
           };
         };
 
-        for (var i = 0, f; (f = files[i]); i++) {
+        for (let i = 0, f; (f = files[i]); i++) {
           const reader = new FileReader();
           reader.onload = readerOnload();
           reader.readAsText(f);

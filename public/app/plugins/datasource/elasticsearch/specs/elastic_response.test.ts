@@ -1,9 +1,9 @@
 import { ElasticResponse } from '../elastic_response';
 
 describe('ElasticResponse', () => {
-  var targets;
-  var response;
-  var result;
+  let targets;
+  let response;
+  let result;
 
   describe('simple query and count', () => {
     beforeEach(() => {
@@ -48,7 +48,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple query count & avg aggregation', () => {
-    var result;
+    let result;
 
     beforeEach(() => {
       targets = [
@@ -97,7 +97,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query one metric', () => {
-    var result;
+    let result;
 
     beforeEach(() => {
       targets = [
@@ -149,7 +149,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query two metrics', () => {
-    var result;
+    let result;
 
     beforeEach(() => {
       targets = [
@@ -209,7 +209,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with percentiles ', () => {
-    var result;
+    let result;
 
     beforeEach(() => {
       targets = [
@@ -257,7 +257,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with extended_stats', () => {
-    var result;
+    let result;
 
     beforeEach(() => {
       targets = [
@@ -333,7 +333,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by with alias pattern', () => {
-    var result;
+    let result;
 
     beforeEach(() => {
       targets = [
@@ -394,7 +394,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('histogram response', () => {
-    var result;
+    let result;
 
     beforeEach(() => {
       targets = [
@@ -426,7 +426,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with two filters agg', () => {
-    var result;
+    let result;
 
     beforeEach(() => {
       targets = [

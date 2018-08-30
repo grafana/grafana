@@ -81,7 +81,7 @@ export class ColumnOptionsCtrl {
 
     const styles = this.panel.styles;
     const stylesCount = styles.length;
-    var indexToInsert = stylesCount;
+    let indexToInsert = stylesCount;
 
     // check if last is a catch all rule, then add it before that one
     if (stylesCount > 0) {

@@ -87,7 +87,7 @@ export class QueryTroubleshooterCtrl {
   }
 
   handleMocking(data) {
-    var mockedData;
+    let mockedData;
     try {
       mockedData = JSON.parse(this.mockedResponse);
     } catch (err) {

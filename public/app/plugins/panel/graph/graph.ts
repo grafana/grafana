@@ -209,7 +209,7 @@ class GraphElement {
 
     // apply y-axis min/max options
     const yaxis = plot.getYAxes();
-    for (var i = 0; i < yaxis.length; i++) {
+    for (let i = 0; i < yaxis.length; i++) {
       const axis = yaxis[i];
       const panelOptions = this.panel.yaxes[i];
       axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
@@ -231,7 +231,7 @@ class GraphElement {
   // let's find the smallest one so that bars are correctly rendered.
   // In addition, only take series which are rendered as bars for this.
   getMinTimeStepOfSeries(data) {
-    var min = Number.MAX_VALUE;
+    let min = Number.MAX_VALUE;
 
     for (let i = 0; i < data.length; i++) {
       if (!data[i].stats.timeStep) {
@@ -533,7 +533,7 @@ class GraphElement {
   }
 
   addXTableAxis(options) {
-    var ticks = _.map(this.data, function(series, seriesIndex) {
+    let ticks = _.map(this.data, function(series, seriesIndex) {
       return _.map(series.datapoints, function(point, pointIndex) {
         const tickIndex = seriesIndex * series.datapoints.length + pointIndex;
         return [tickIndex + 1, point[1]];
@@ -611,8 +611,8 @@ class GraphElement {
       axis.max = null;
     }
 
-    var series, i;
-    var max = axis.max,
+    let series, i;
+    let max = axis.max,
       min = axis.min;
 
     for (i = 0; i < data.length; i++) {
@@ -681,7 +681,7 @@ class GraphElement {
   generateTicksForLogScaleYAxis(min, max, logBase) {
     let ticks = [];
 
-    var nextTick;
+    let nextTick;
     for (nextTick = min; nextTick <= max; nextTick *= logBase) {
       ticks.push(nextTick);
     }

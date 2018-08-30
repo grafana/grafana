@@ -2,7 +2,7 @@ import _ from 'lodash';
 import coreModule from '../../core_module';
 
 function typeaheadMatcher(item) {
-  var str = this.query;
+  let str = this.query;
   if (str === '') {
     return true;
   }

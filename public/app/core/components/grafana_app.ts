@@ -50,7 +50,7 @@ export class GrafanaCtrl {
 
     $rootScope.onAppEvent = function(name, callback, localScope) {
       const unbind = $rootScope.$on(name, callback);
-      var callerScope = this;
+      let callerScope = this;
       if (callerScope.$id === 1 && !localScope) {
         console.log('warning rootScope onAppEvent called without localscope');
       }
@@ -75,7 +75,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
     restrict: 'E',
     controller: GrafanaCtrl,
     link: (scope, elem) => {
-      var sidemenuOpen;
+      let sidemenuOpen;
       const body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
@@ -108,7 +108,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
       // tooltip removal fix
       // manage page classes
-      var pageClass;
+      let pageClass;
       scope.$on('$routeChangeSuccess', function(evt, data) {
         if (pageClass) {
           body.removeClass(pageClass);
@@ -151,10 +151,10 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       });
 
       // handle in active view state class
-      var lastActivity = new Date().getTime();
-      var activeUser = true;
+      let lastActivity = new Date().getTime();
+      let activeUser = true;
       const inActiveTimeLimit = 60 * 1000;
-      var sidemenuHidden = false;
+      let sidemenuHidden = false;
 
       function checkForInActiveUser() {
         if (!activeUser) {

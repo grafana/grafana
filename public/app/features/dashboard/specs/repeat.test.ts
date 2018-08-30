@@ -5,7 +5,7 @@ import { expect } from 'test/lib/common';
 jest.mock('app/core/services/context_srv', () => ({}));
 
 describe('given dashboard with panel repeat', function() {
-  var dashboard;
+  let dashboard;
 
   beforeEach(function() {
     const dashboardJSON = {
@@ -56,7 +56,7 @@ describe('given dashboard with panel repeat', function() {
 });
 
 describe('given dashboard with panel repeat in horizontal direction', function() {
-  var dashboard;
+  let dashboard;
 
   beforeEach(function() {
     dashboard = new DashboardModel({
@@ -188,7 +188,7 @@ describe('given dashboard with panel repeat in horizontal direction', function()
 });
 
 describe('given dashboard with panel repeat in vertical direction', function() {
-  var dashboard;
+  let dashboard;
 
   beforeEach(function() {
     dashboard = new DashboardModel({

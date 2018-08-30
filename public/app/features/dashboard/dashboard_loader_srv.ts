@@ -36,7 +36,7 @@ export class DashboardLoaderSrv {
   }
 
   loadDashboard(type, slug, uid) {
-    var promise;
+    let promise;
 
     if (type === 'script') {
       promise = this._loadScriptedDashboard(slug);
