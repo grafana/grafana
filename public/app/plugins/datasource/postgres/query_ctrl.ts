@@ -205,6 +205,11 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.target.group = [];
     this.updateProjection();
 
+    let segment = this.uiSegmentSrv.newSegment('none');
+    this.metricColumnSegment.html = segment.html;
+    this.metricColumnSegment.value = segment.value;
+    this.target.metricColumn = 'none';
+
     let task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then(result => {
       // check if time column is still valid
       if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
