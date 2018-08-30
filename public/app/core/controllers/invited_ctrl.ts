@@ -9,9 +9,9 @@ export class InvitedCtrl {
 
     $scope.navModel = {
       main: {
-        icon: 'gicon gicon-branding',
-        text: 'Invite',
-        subTitle: 'Register your Grafana account',
+        icon: 'gicon ft-branding',
+        text: 'Register',
+        subTitle: 'Register your FreshTracks.io account',
         breadcrumbs: [{ title: 'Login', url: 'login' }],
       },
     };

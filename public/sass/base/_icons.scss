@@ -92,6 +92,12 @@
   background-image: url('../img/grafana_icon.svg');
 }
 
+.ft-branding {
+  background-image: url('../img/ft_icon.svg');
+  margin-left: -18px;
+  width: 97px !important;
+}
+
 .gicon-cog {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_cog.svg');
 }
