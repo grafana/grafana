@@ -84,7 +84,7 @@ export class ElasticBucketAggCtrl {
       $scope.isFirst = $scope.index === 0;
       $scope.bucketAggCount = bucketAggs.length;
 
-      var settingsLinkText = '';
+      let settingsLinkText = '';
       const settings = $scope.agg.settings || {};
 
       switch ($scope.agg.type) {
@@ -199,7 +199,7 @@ export class ElasticBucketAggCtrl {
     $scope.addBucketAgg = function() {
       // if last is date histogram add it before
       const lastBucket = bucketAggs[bucketAggs.length - 1];
-      var addIndex = bucketAggs.length - 1;
+      let addIndex = bucketAggs.length - 1;
 
       if (lastBucket && lastBucket.type === 'date_histogram') {
         addIndex -= 1;

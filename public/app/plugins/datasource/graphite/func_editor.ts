@@ -24,9 +24,9 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       const $funcControls = $(funcControlsTemplate);
       const ctrl = $scope.ctrl;
       const func = $scope.func;
-      var scheduledRelink = false;
-      var paramCountAtLink = 0;
-      var cancelBlur = null;
+      let scheduledRelink = false;
+      let paramCountAtLink = 0;
+      let cancelBlur = null;
 
       function clickFuncParam(paramIndex) {
         /*jshint validthis:true */
@@ -133,7 +133,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       function addTypeahead($input, paramIndex) {
         $input.attr('data-provide', 'typeahead');
 
-        var options = paramDef(paramIndex).options;
+        let options = paramDef(paramIndex).options;
         if (paramDef(paramIndex).type === 'int') {
           options = _.map(options, function(val) {
             return val.toString();
@@ -190,7 +190,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
             return false;
           }
 
-          var paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
+          let paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
 
           const last = index >= func.params.length - 1 && param.optional && !paramValue;
           if (last && param.multiple) {

@@ -294,9 +294,9 @@ export class PromCompleter {
   }
 
   findMetricName(session, row, column) {
-    var metricName = '';
+    let metricName = '';
 
-    var tokens;
+    let tokens;
     const nameLabelNameToken = this.findToken(
       session,
       row,
@@ -323,9 +323,9 @@ export class PromCompleter {
   }
 
   findToken(session, row, column, target, value, guard) {
-    var tokens, idx;
+    let tokens, idx;
     // find index and get column of previous token
-    for (var r = row; r >= 0; r--) {
+    for (let r = row; r >= 0; r--) {
       let c;
       tokens = session.getTokens(r);
       if (r === row) {

@@ -74,9 +74,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     if (!result || !result.data) {
       return [];
     }
-    for (var i = 0; i < result.data.length; i++) {
+    for (let i = 0; i < result.data.length; i++) {
       const series = result.data[i];
-      for (var y = 0; y < series.datapoints.length; y++) {
+      for (let y = 0; y < series.datapoints.length; y++) {
         series.datapoints[y][1] *= 1000;
       }
     }
@@ -109,10 +109,10 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       return this.query(graphiteQuery).then(function(result) {
         const list = [];
 
-        for (var i = 0; i < result.data.length; i++) {
+        for (let i = 0; i < result.data.length; i++) {
           const target = result.data[i];
 
-          for (var y = 0; y < target.datapoints.length; y++) {
+          for (let y = 0; y < target.datapoints.length; y++) {
             const datapoint = target.datapoints[y];
             if (!datapoint[0]) {
               continue;
@@ -133,10 +133,10 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       const tags = templateSrv.replace(options.annotation.tags);
       return this.events({ range: options.rangeRaw, tags: tags }).then(results => {
         const list = [];
-        for (var i = 0; i < results.data.length; i++) {
+        for (let i = 0; i < results.data.length; i++) {
           const e = results.data[i];
 
-          var tags = e.tags;
+          let tags = e.tags;
           if (_.isString(e.tags)) {
             tags = this.parseTags(e.tags);
           }
@@ -157,7 +157,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
   this.events = function(options) {
     try {
-      var tags = '';
+      let tags = '';
       if (options.tags) {
         tags = '&tags=' + options.tags;
       }
@@ -493,10 +493,10 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     const graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const clean_options = [],
       targets = {};
-    var target, targetValue, i;
+    let target, targetValue, i;
     const regex = /\#([A-Z])/g;
     const intervalFormatFixRegex = /'(\d+)m'/gi;
-    var hasTargets = false;
+    let hasTargets = false;
 
     options['format'] = 'json';
 

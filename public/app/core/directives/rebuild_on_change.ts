@@ -2,11 +2,11 @@ import $ from 'jquery';
 import coreModule from '../core_module';
 
 function getBlockNodes(nodes) {
-  var node = nodes[0];
+  let node = nodes[0];
   const endNode = nodes[nodes.length - 1];
-  var blockNodes;
+  let blockNodes;
 
-  for (var i = 1; node !== endNode && (node = node.nextSibling); i++) {
+  for (let i = 1; node !== endNode && (node = node.nextSibling); i++) {
     if (blockNodes || nodes[i] !== node) {
       if (!blockNodes) {
         blockNodes = $([].slice.call(nodes, 0, i));
@@ -27,7 +27,7 @@ function rebuildOnChange($animate) {
     priority: 600,
     restrict: 'E',
     link: function(scope, elem, attrs, ctrl, transclude) {
-      var block, childScope, previousElements;
+      let block, childScope, previousElements;
 
       function cleanUp() {
         if (previousElements) {

@@ -279,7 +279,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       }
     }
 
-    var query, addTemplateVars;
+    let query, addTemplateVars;
     if (segment.type === 'key' || segment.type === 'plus-button') {
       query = this.queryBuilder.buildExploreQuery('TAG_KEYS');
       addTemplateVars = false;
@@ -343,8 +343,8 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   rebuildTargetTagConditions() {
     const tags = [];
-    var tagIndex = 0;
-    var tagOperator = '';
+    let tagIndex = 0;
+    let tagOperator = '';
 
     _.each(this.tagSegments, (segment2, index) => {
       if (segment2.type === 'key') {

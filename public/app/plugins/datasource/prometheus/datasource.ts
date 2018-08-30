@@ -384,7 +384,7 @@ export class PrometheusDatasource {
     };
     const range = Math.ceil(end - start);
 
-    var interval = kbn.interval_to_seconds(options.interval);
+    let interval = kbn.interval_to_seconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
     const minInterval = kbn.interval_to_seconds(
       this.templateSrv.replace(target.interval, options.scopedVars) || options.interval
@@ -392,7 +392,7 @@ export class PrometheusDatasource {
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    var scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
+    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
@@ -507,7 +507,7 @@ export class PrometheusDatasource {
   annotationQuery(options) {
     const annotation = options.annotation;
     const expr = annotation.expr || '';
-    var tagKeys = annotation.tagKeys || '';
+    let tagKeys = annotation.tagKeys || '';
     const titleFormat = annotation.titleFormat || '';
     const textFormat = annotation.textFormat || '';
 

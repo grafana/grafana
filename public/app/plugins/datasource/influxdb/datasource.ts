@@ -40,14 +40,14 @@ export default class InfluxDatasource {
   }
 
   query(options) {
-    var timeFilter = this.getTimeFilter(options);
+    let timeFilter = this.getTimeFilter(options);
     const scopedVars = options.scopedVars;
     const targets = _.cloneDeep(options.targets);
     const queryTargets = [];
-    var queryModel;
-    var i, y;
+    let queryModel;
+    let i, y;
 
-    var allQueries = _.map(targets, target => {
+    let allQueries = _.map(targets, target => {
       if (target.hide) {
         return '';
       }
@@ -95,7 +95,7 @@ export default class InfluxDatasource {
         }
 
         const target = queryTargets[i];
-        var alias = target.alias;
+        let alias = target.alias;
         if (alias) {
           alias = this.templateSrv.replace(target.alias, options.scopedVars);
         }
@@ -132,7 +132,7 @@ export default class InfluxDatasource {
     }
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw });
-    var query = options.annotation.query.replace('$timeFilter', timeFilter);
+    let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, null, 'regex');
 
     return this._seriesQuery(query, options).then(data => {

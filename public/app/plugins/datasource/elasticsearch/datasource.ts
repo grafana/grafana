@@ -151,9 +151,9 @@ export class ElasticDatasource {
         }
 
         const fieldNames = fieldName.split('.');
-        var fieldValue = source;
+        let fieldValue = source;
 
-        for (var i = 0; i < fieldNames.length; i++) {
+        for (let i = 0; i < fieldNames.length; i++) {
           fieldValue = fieldValue[fieldNames[i]];
           if (!fieldValue) {
             console.log('could not find field in annotation: ', fieldName);
@@ -164,9 +164,9 @@ export class ElasticDatasource {
         return fieldValue;
       };
 
-      for (var i = 0; i < hits.length; i++) {
+      for (let i = 0; i < hits.length; i++) {
         const source = hits[i]._source;
-        var time = getFieldFromSource(source, timeField);
+        let time = getFieldFromSource(source, timeField);
         if (typeof hits[i].fields !== 'undefined') {
           const fields = hits[i].fields;
           if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
@@ -216,7 +216,7 @@ export class ElasticDatasource {
       function(err) {
         console.log(err);
         if (err.data && err.data.error) {
-          var message = angular.toJson(err.data.error);
+          let message = angular.toJson(err.data.error);
           if (err.data.error.reason) {
             message = err.data.error.reason;
           }
@@ -241,14 +241,14 @@ export class ElasticDatasource {
   }
 
   query(options) {
-    var payload = '';
-    var target;
+    let payload = '';
+    let target;
     const sentTargets = [];
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
 
-    for (var i = 0; i < options.targets.length; i++) {
+    for (let i = 0; i < options.targets.length; i++) {
       target = options.targets[i];
       if (target.hide) {
         continue;
@@ -362,7 +362,7 @@ export class ElasticDatasource {
     const range = this.timeSrv.timeRange();
     const searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
     const header = this.getQueryHeader(searchType, range.from, range.to);
-    var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
+    let esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
     esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
     esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());

@@ -43,7 +43,7 @@ export class BackendSrv {
       return;
     }
 
-    var data = err.data || { message: 'Unexpected error' };
+    let data = err.data || { message: 'Unexpected error' };
     if (_.isString(data)) {
       data = { message: data };
     }

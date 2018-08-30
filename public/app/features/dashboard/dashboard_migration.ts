@@ -18,7 +18,7 @@ export class DashboardMigrator {
   }
 
   updateSchema(old) {
-    var i, j, k, n;
+    let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
     this.dashboard.schemaVersion = 16;
@@ -83,7 +83,7 @@ export class DashboardMigrator {
     // schema version 3 changes
     if (oldVersion < 3) {
       // ensure panel ids
-      var maxId = this.dashboard.getNextPanelId();
+      let maxId = this.dashboard.getNextPanelId();
       panelUpgrades.push(function(panel) {
         if (!panel.id) {
           panel.id = maxId;

@@ -35,7 +35,7 @@ export function graphiteAddFunc($compile) {
           minLength: 1,
           items: 10,
           updater: function(value) {
-            var funcDef = ctrl.datasource.getFuncDef(value);
+            let funcDef = ctrl.datasource.getFuncDef(value);
             if (!funcDef) {
               // try find close match
               value = value.toLowerCase();
@@ -81,7 +81,7 @@ export function graphiteAddFunc($compile) {
         $compile(elem.contents())($scope);
       });
 
-      var drop;
+      let drop;
       const cleanUpDrop = function() {
         if (drop) {
           drop.destroy();
@@ -93,7 +93,7 @@ export function graphiteAddFunc($compile) {
         .on('mouseenter', 'ul.dropdown-menu li', function() {
           cleanUpDrop();
 
-          var funcDef;
+          let funcDef;
           try {
             funcDef = ctrl.datasource.getFuncDef($('a', this).text());
           } catch (e) {
@@ -101,7 +101,7 @@ export function graphiteAddFunc($compile) {
           }
 
           if (funcDef && funcDef.description) {
-            var shortDesc = funcDef.description;
+            let shortDesc = funcDef.description;
             if (shortDesc.length > 500) {
               shortDesc = shortDesc.substring(0, 497) + '...';
             }
