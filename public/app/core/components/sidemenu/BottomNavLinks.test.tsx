@@ -79,7 +79,8 @@ describe('Functions', () => {
     const mockEvent = { preventDefault: jest.fn() };
     it('should emit show modal event if url matches shortcut', () => {
       const child = { url: '/shortcuts' };
-      wrapper.instance().itemClicked(mockEvent, child);
+      const instance = wrapper.instance() as BottomNavLinks;
+      instance.itemClicked(mockEvent, child);
 
       expect(appEvents.emit).toHaveBeenCalledWith('show-modal', { templateHtml: '<help-modal></help-modal>' });
     });

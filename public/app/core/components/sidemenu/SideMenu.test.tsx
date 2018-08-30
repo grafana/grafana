@@ -46,7 +46,8 @@ describe('Render', () => {
 describe('Functions', () => {
   describe('toggle side menu', () => {
     const wrapper = setup();
-    wrapper.instance().toggleSideMenu();
+    const instance = wrapper.instance() as SideMenu;
+    instance.toggleSideMenu();
 
     it('should call contextSrv.toggleSideMenu', () => {
       expect(contextSrv.toggleSideMenu).toHaveBeenCalled();
@@ -59,7 +60,8 @@ describe('Functions', () => {
 
   describe('toggle side menu on mobile', () => {
     const wrapper = setup();
-    wrapper.instance().toggleSideMenuSmallBreakpoint();
+    const instance = wrapper.instance() as SideMenu;
+    instance.toggleSideMenuSmallBreakpoint();
 
     it('should emit toggle sidemenu event', () => {
       expect(appEvents.emit).toHaveBeenCalledWith('toggle-sidemenu-mobile');
