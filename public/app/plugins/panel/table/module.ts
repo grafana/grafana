@@ -160,7 +160,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    var scope = this.$scope.$new(true);
+    const scope = this.$scope.$new(true);
     scope.tableData = this.renderer.render_values();
     scope.panel = 'table';
     this.publishAppEvent('show-modal', {
@@ -172,7 +172,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
   link(scope, elem, attrs, ctrl: TablePanelCtrl) {
     var data;
-    var panel = ctrl.panel;
+    const panel = ctrl.panel;
     var pageCount = 0;
 
     function getTableHeight() {
@@ -192,7 +192,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function switchPage(e) {
-      var el = $(e.currentTarget);
+      const el = $(e.currentTarget);
       ctrl.pageIndex = parseInt(el.text(), 10) - 1;
       renderPanel();
     }
@@ -200,20 +200,20 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     function appendPaginationControls(footerElem) {
       footerElem.empty();
 
-      var pageSize = panel.pageSize || 100;
+      const pageSize = panel.pageSize || 100;
       pageCount = Math.ceil(data.rows.length / pageSize);
       if (pageCount === 1) {
         return;
       }
 
-      var startPage = Math.max(ctrl.pageIndex - 3, 0);
-      var endPage = Math.min(pageCount, startPage + 9);
+      const startPage = Math.max(ctrl.pageIndex - 3, 0);
+      const endPage = Math.min(pageCount, startPage + 9);
 
-      var paginationList = $('<ul></ul>');
+      const paginationList = $('<ul></ul>');
 
       for (var i = startPage; i < endPage; i++) {
-        var activeClass = i === ctrl.pageIndex ? 'active' : '';
-        var pageLinkElem = $(
+        const activeClass = i === ctrl.pageIndex ? 'active' : '';
+        const pageLinkElem = $(
           '<li><a class="table-panel-page-link pointer ' + activeClass + '">' + (i + 1) + '</a></li>'
         );
         paginationList.append(pageLinkElem);
@@ -223,10 +223,10 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function renderPanel() {
-      var panelElem = elem.parents('.panel-content');
-      var rootElem = elem.find('.table-panel-scroll');
-      var tbodyElem = elem.find('tbody');
-      var footerElem = elem.find('.table-panel-footer');
+      const panelElem = elem.parents('.panel-content');
+      const rootElem = elem.find('.table-panel-scroll');
+      const tbodyElem = elem.find('tbody');
+      const footerElem = elem.find('.table-panel-footer');
 
       elem.css({ 'font-size': panel.fontSize });
       panelElem.addClass('table-panel-content');
@@ -244,7 +244,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     function addFilterClicked(e) {
       const filterData = $(e.currentTarget).data();
-      var options = {
+      const options = {
         datasource: panel.datasource,
         key: data.columns[filterData.column].text,
         value: data.rows[filterData.row][filterData.column],
@@ -257,7 +257,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     elem.on('click', '.table-panel-page-link', switchPage);
     elem.on('click', '.table-panel-filter-link', addFilterClicked);
 
-    var unbindDestroy = scope.$on('$destroy', function() {
+    const unbindDestroy = scope.$on('$destroy', function() {
       elem.off('click', '.table-panel-page-link');
       elem.off('click', '.table-panel-filter-link');
       unbindDestroy();

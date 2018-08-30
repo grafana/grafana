@@ -12,7 +12,7 @@ function escapeString(str: string): string {
  * Determines if a value is an object
 */
 export function isObject(value: any): boolean {
-  var type = typeof value;
+  const type = typeof value;
   return !!value && type === 'object';
 }
 
@@ -55,7 +55,7 @@ export function getType(object: Object): string {
  * Generates inline preview for a JavaScript object based on a value
 */
 export function getValuePreview(object: Object, value: string): string {
-  var type = getType(object);
+  const type = getType(object);
 
   if (type === 'null' || type === 'undefined') {
     return type;

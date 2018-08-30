@@ -20,7 +20,7 @@ export class CloudWatchQueryParameterCtrl {
   /** @ngInject */
   constructor($scope, templateSrv, uiSegmentSrv, datasourceSrv, $q) {
     $scope.init = function() {
-      var target = $scope.target;
+      const target = $scope.target;
       target.namespace = target.namespace || '';
       target.metricName = target.metricName || '';
       target.statistics = target.statistics || ['Average'];
@@ -106,8 +106,8 @@ export class CloudWatchQueryParameterCtrl {
     };
 
     $scope.ensurePlusButton = function(segments) {
-      var count = segments.length;
-      var lastSegment = segments[Math.max(count - 1, 0)];
+      const count = segments.length;
+      const lastSegment = segments[Math.max(count - 1, 0)];
 
       if (!lastSegment || lastSegment.type !== 'plus-button') {
         segments.push(uiSegmentSrv.newPlusButton());
@@ -119,13 +119,13 @@ export class CloudWatchQueryParameterCtrl {
         return $q.when([]);
       }
 
-      var target = $scope.target;
+      const target = $scope.target;
       var query = $q.when([]);
 
       if (segment.type === 'key' || segment.type === 'plus-button') {
         query = $scope.datasource.getDimensionKeys($scope.target.namespace, $scope.target.region);
       } else if (segment.type === 'value') {
-        var dimensionKey = $scope.dimSegments[$index - 2].value;
+        const dimensionKey = $scope.dimSegments[$index - 2].value;
         query = $scope.datasource.getDimensionValues(
           target.region,
           target.namespace,
@@ -161,12 +161,12 @@ export class CloudWatchQueryParameterCtrl {
     };
 
     $scope.syncDimSegmentsWithModel = function() {
-      var dims = {};
-      var length = $scope.dimSegments.length;
+      const dims = {};
+      const length = $scope.dimSegments.length;
 
       for (var i = 0; i < length - 2; i += 3) {
-        var keySegment = $scope.dimSegments[i];
-        var valueSegment = $scope.dimSegments[i + 2];
+        const keySegment = $scope.dimSegments[i];
+        const valueSegment = $scope.dimSegments[i + 2];
         if (!valueSegment.fake) {
           dims[keySegment.value] = valueSegment.value;
         }
@@ -212,7 +212,7 @@ export class CloudWatchQueryParameterCtrl {
 
     $scope.transformToSegments = function(addTemplateVars) {
       return function(results) {
-        var segments = _.map(results, function(segment) {
+        const segments = _.map(results, function(segment) {
           return uiSegmentSrv.newSegment({
             value: segment.text,
             expandable: segment.expandable,

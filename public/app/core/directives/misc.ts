@@ -82,11 +82,11 @@ function editorOptBool($compile) {
   return {
     restrict: 'E',
     link: function(scope, elem, attrs) {
-      var ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
-      var tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
-      var showIf = attrs.showIf ? ' ng-show="' + attrs.showIf + '" ' : '';
+      const ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
+      const tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
+      const showIf = attrs.showIf ? ' ng-show="' + attrs.showIf + '" ' : '';
 
-      var template =
+      const template =
         '<div class="editor-option gf-form-checkbox text-center"' +
         showIf +
         '>' +
@@ -119,11 +119,11 @@ function editorCheckbox($compile, $interpolate) {
   return {
     restrict: 'E',
     link: function(scope, elem, attrs) {
-      var text = $interpolate(attrs.text)(scope);
-      var model = $interpolate(attrs.model)(scope);
-      var ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
-      var tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
-      var label = '<label for="' + scope.$id + model + '" class="checkbox-label">' + text + tip + '</label>';
+      const text = $interpolate(attrs.text)(scope);
+      const model = $interpolate(attrs.model)(scope);
+      const ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
+      const tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
+      const label = '<label for="' + scope.$id + model + '" class="checkbox-label">' + text + tip + '</label>';
 
       var template =
         '<input class="cr1" id="' +
@@ -152,8 +152,8 @@ function editorCheckbox($compile, $interpolate) {
 /** @ngInject */
 function gfDropdown($parse, $compile, $timeout) {
   function buildTemplate(items, placement?) {
-    var upclass = placement === 'top' ? 'dropup' : '';
-    var ul = ['<ul class="dropdown-menu ' + upclass + '" role="menu" aria-labelledby="drop1">', '</ul>'];
+    const upclass = placement === 'top' ? 'dropup' : '';
+    const ul = ['<ul class="dropdown-menu ' + upclass + '" role="menu" aria-labelledby="drop1">', '</ul>'];
 
     for (let index = 0; index < items.length; index++) {
       const item = items[index];
@@ -192,11 +192,11 @@ function gfDropdown($parse, $compile, $timeout) {
     restrict: 'EA',
     scope: true,
     link: function postLink(scope, iElement, iAttrs) {
-      var getter = $parse(iAttrs.gfDropdown),
+      const getter = $parse(iAttrs.gfDropdown),
         items = getter(scope);
       $timeout(function() {
-        var placement = iElement.data('placement');
-        var dropdown = angular.element(buildTemplate(items, placement).join(''));
+        const placement = iElement.data('placement');
+        const dropdown = angular.element(buildTemplate(items, placement).join(''));
         dropdown.insertAfter(iElement);
         $compile(iElement.next('ul.dropdown-menu'))(scope);
       });

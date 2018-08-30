@@ -10,7 +10,7 @@ export class ElasticQueryBuilder {
   }
 
   getRangeFilter() {
-    var filter = {};
+    const filter = {};
     filter[this.timeField] = {
       gte: '$timeFrom',
       lte: '$timeTo',
@@ -60,8 +60,8 @@ export class ElasticQueryBuilder {
   }
 
   getDateHistogramAgg(aggDef) {
-    var esAgg: any = {};
-    var settings = aggDef.settings || {};
+    const esAgg: any = {};
+    const settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
     esAgg.field = this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
@@ -80,8 +80,8 @@ export class ElasticQueryBuilder {
   }
 
   getHistogramAgg(aggDef) {
-    var esAgg: any = {};
-    var settings = aggDef.settings || {};
+    const esAgg: any = {};
+    const settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
     esAgg.field = aggDef.field;
     esAgg.min_doc_count = settings.min_doc_count || 0;
@@ -93,9 +93,9 @@ export class ElasticQueryBuilder {
   }
 
   getFiltersAgg(aggDef) {
-    var filterObj = {};
+    const filterObj = {};
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
-      var query = aggDef.settings.filters[i].query;
+      const query = aggDef.settings.filters[i].query;
       var label = aggDef.settings.filters[i].label;
       label = label === '' || label === undefined ? query : label;
       filterObj[label] = {
@@ -182,7 +182,7 @@ export class ElasticQueryBuilder {
     target.timeField = this.timeField;
 
     var i, nestedAggs, metric;
-    var query = {
+    const query = {
       size: 0,
       query: {
         bool: {
@@ -208,15 +208,15 @@ export class ElasticQueryBuilder {
         throw { message: 'Invalid query' };
       }
 
-      var size = (metric.settings && metric.settings.size) || 500;
+      const size = (metric.settings && metric.settings.size) || 500;
       return this.documentQuery(query, size);
     }
 
     nestedAggs = query;
 
     for (i = 0; i < target.bucketAggs.length; i++) {
-      var aggDef = target.bucketAggs[i];
-      var esAgg = {};
+      const aggDef = target.bucketAggs[i];
+      const esAgg = {};
 
       switch (aggDef.type) {
         case 'date_histogram': {
@@ -257,7 +257,7 @@ export class ElasticQueryBuilder {
         continue;
       }
 
-      var aggField = {};
+      const aggField = {};
       var metricAgg = null;
 
       if (queryDef.isPipelineAgg(metric.type)) {
@@ -270,7 +270,7 @@ export class ElasticQueryBuilder {
         metricAgg = { field: metric.field };
       }
 
-      for (var prop in metric.settings) {
+      for (const prop in metric.settings) {
         if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
           metricAgg[prop] = metric.settings[prop];
         }
@@ -284,7 +284,7 @@ export class ElasticQueryBuilder {
   }
 
   getTermsQuery(queryDef) {
-    var query: any = {
+    const query: any = {
       size: 0,
       query: {
         bool: {

@@ -50,7 +50,7 @@ export class PromCompleter {
     }
 
     if (token.type === 'paren.lparen' && token.value === '[') {
-      var vectors = [];
+      const vectors = [];
       for (const unit of ['s', 'm', 'h']) {
         for (const value of [1, 5, 10, 30]) {
           vectors.push({
@@ -77,7 +77,7 @@ export class PromCompleter {
       return;
     }
 
-    var query = prefix;
+    const query = prefix;
 
     return this.datasource.performSuggestQuery(query, true).then(metricNames => {
       wrappedCallback(
@@ -109,7 +109,7 @@ export class PromCompleter {
     }
 
     return this.getLabelNameAndValueForExpression(metricName, 'metricName').then(result => {
-      var labelNames = this.transformToCompletions(
+      const labelNames = this.transformToCompletions(
         _.uniq(
           _.flatten(
             result.map(r => {
@@ -130,7 +130,7 @@ export class PromCompleter {
       return Promise.resolve([]);
     }
 
-    var labelNameToken = this.findToken(
+    const labelNameToken = this.findToken(
       session,
       pos.row,
       pos.column,
@@ -141,14 +141,14 @@ export class PromCompleter {
     if (!labelNameToken) {
       return Promise.resolve([]);
     }
-    var labelName = labelNameToken.value;
+    const labelName = labelNameToken.value;
 
     if (this.labelValueCache[metricName] && this.labelValueCache[metricName][labelName]) {
       return Promise.resolve(this.labelValueCache[metricName][labelName]);
     }
 
     return this.getLabelNameAndValueForExpression(metricName, 'metricName').then(result => {
-      var labelValues = this.transformToCompletions(
+      const labelValues = this.transformToCompletions(
         _.uniq(
           result.map(r => {
             return r.metric[labelName];
@@ -187,7 +187,7 @@ export class PromCompleter {
           return Promise.resolve([]);
         }
         return this.getLabelNameAndValueForExpression(expr, 'expression').then(result => {
-          var labelNames = this.transformToCompletions(
+          const labelNames = this.transformToCompletions(
             _.uniq(
               _.flatten(
                 result.map(r => {
@@ -229,7 +229,7 @@ export class PromCompleter {
             return Promise.resolve([]);
           }
           return this.getLabelNameAndValueForExpression(expr, 'expression').then(result => {
-            var labelNames = this.transformToCompletions(
+            const labelNames = this.transformToCompletions(
               _.uniq(
                 _.flatten(
                   result.map(r => {
@@ -245,7 +245,7 @@ export class PromCompleter {
         } else {
           const metricName = this.findMetricName(session, binaryOperatorToken.row, binaryOperatorToken.column);
           return this.getLabelNameAndValueForExpression(metricName, 'metricName').then(result => {
-            var labelNames = this.transformToCompletions(
+            const labelNames = this.transformToCompletions(
               _.uniq(
                 _.flatten(
                   result.map(r => {
@@ -297,7 +297,7 @@ export class PromCompleter {
     var metricName = '';
 
     var tokens;
-    var nameLabelNameToken = this.findToken(
+    const nameLabelNameToken = this.findToken(
       session,
       row,
       column,
@@ -307,12 +307,12 @@ export class PromCompleter {
     );
     if (nameLabelNameToken) {
       tokens = session.getTokens(nameLabelNameToken.row);
-      var nameLabelValueToken = tokens[nameLabelNameToken.index + 2];
+      const nameLabelValueToken = tokens[nameLabelNameToken.index + 2];
       if (nameLabelValueToken && nameLabelValueToken.type === 'string.quoted.label-matcher') {
         metricName = nameLabelValueToken.value.slice(1, -1); // cut begin/end quotation
       }
     } else {
-      var metricNameToken = this.findToken(session, row, column, 'identifier', null, null);
+      const metricNameToken = this.findToken(session, row, column, 'identifier', null, null);
       if (metricNameToken) {
         tokens = session.getTokens(metricNameToken.row);
         metricName = metricNameToken.value;

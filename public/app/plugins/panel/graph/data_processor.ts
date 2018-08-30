@@ -102,13 +102,13 @@ export class DataProcessor {
   }
 
   timeSeriesHandler(seriesData, index, options) {
-    var datapoints = seriesData.datapoints || [];
-    var alias = seriesData.target;
+    const datapoints = seriesData.datapoints || [];
+    const alias = seriesData.target;
 
-    var colorIndex = index % colors.length;
-    var color = this.panel.aliasColors[alias] || colors[colorIndex];
+    const colorIndex = index % colors.length;
+    const color = this.panel.aliasColors[alias] || colors[colorIndex];
 
-    var series = new TimeSeries({
+    const series = new TimeSeries({
       datapoints: datapoints,
       alias: alias,
       color: color,
@@ -116,8 +116,8 @@ export class DataProcessor {
     });
 
     if (datapoints && datapoints.length > 0) {
-      var last = datapoints[datapoints.length - 1][1];
-      var from = options.range.from;
+      const last = datapoints[datapoints.length - 1][1];
+      const from = options.range.from;
       if (last - from < -10000) {
         series.isOutsideRange = true;
       }
@@ -144,8 +144,8 @@ export class DataProcessor {
           return;
         }
 
-        var validOptions = this.getXAxisValueOptions({});
-        var found = _.find(validOptions, { value: this.panel.xaxis.values[0] });
+        const validOptions = this.getXAxisValueOptions({});
+        const found = _.find(validOptions, { value: this.panel.xaxis.values[0] });
         if (!found) {
           this.panel.xaxis.values = ['total'];
         }
@@ -160,7 +160,7 @@ export class DataProcessor {
     }
 
     const fields = [];
-    var firstItem = dataList[0];
+    const firstItem = dataList[0];
     const fieldParts = [];
 
     function getPropertiesRecursive(obj) {

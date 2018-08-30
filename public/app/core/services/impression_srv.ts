@@ -6,7 +6,7 @@ export class ImpressionSrv {
   constructor() {}
 
   addDashboardImpression(dashboardId) {
-    var impressionsKey = this.impressionKey(config);
+    const impressionsKey = this.impressionKey(config);
     var impressions = [];
     if (store.exists(impressionsKey)) {
       impressions = JSON.parse(store.get(impressionsKey));

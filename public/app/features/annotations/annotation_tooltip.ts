@@ -21,16 +21,16 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       onEdit: '&',
     },
     link: function(scope, element) {
-      var event = scope.event;
+      const event = scope.event;
       var title = event.title;
       var text = event.text;
-      var dashboard = dashboardSrv.getCurrent();
+      const dashboard = dashboardSrv.getCurrent();
 
       var tooltip = '<div class="graph-annotation">';
       var titleStateClass = '';
 
       if (event.alertId) {
-        var stateModel = alertDef.getStateDisplayModel(event.newState);
+        const stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
         title = `<i class="icon-gf ${stateModel.iconClass}"></i> ${stateModel.text}`;
         text = alertDef.getAlertAnnotationInfo(event);
@@ -70,7 +70,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
         tooltip += '<div>' + sanitizeString(text.replace(/\n/g, '<br>')) + '</div>';
       }
 
-      var tags = event.tags;
+      const tags = event.tags;
 
       if (tags && tags.length) {
         scope.tags = tags;
@@ -81,7 +81,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       tooltip += '</div>';
       tooltip += '</div>';
 
-      var $tooltip = $(tooltip);
+      const $tooltip = $(tooltip);
       $tooltip.appendTo(element);
 
       $compile(element.contents())(scope);

@@ -42,6 +42,7 @@
       "check-catch",
       "check-else"
     ],
+    "prefer-const": true,
     "radix": false,
     "typedef-whitespace": [true, {
       "call-signature": "nospace",

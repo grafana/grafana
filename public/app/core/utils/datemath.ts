@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 
-var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+const units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
 export function parse(text, roundUp?, timezone?) {
   if (!text) {
@@ -47,7 +47,7 @@ export function parse(text, roundUp?, timezone?) {
 }
 
 export function isValid(text) {
-  var date = parse(text);
+  const date = parse(text);
   if (!date) {
     return false;
   }
@@ -60,12 +60,12 @@ export function isValid(text) {
 }
 
 export function parseDateMath(mathString, time, roundUp?) {
-  var dateTime = time;
+  const dateTime = time;
   var i = 0;
-  var len = mathString.length;
+  const len = mathString.length;
 
   while (i < len) {
-    var c = mathString.charAt(i++);
+    const c = mathString.charAt(i++);
     var type;
     var num;
     var unit;
@@ -85,7 +85,7 @@ export function parseDateMath(mathString, time, roundUp?) {
     } else if (mathString.length === 2) {
       num = mathString.charAt(i);
     } else {
-      var numFrom = i;
+      const numFrom = i;
       while (!isNaN(mathString.charAt(i))) {
         i++;
         if (i > 10) {
