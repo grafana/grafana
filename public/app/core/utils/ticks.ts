@@ -11,9 +11,9 @@ export function tickStep(start: number, stop: number, count: number): number {
     e5 = Math.sqrt(10),
     e2 = Math.sqrt(2);
 
-  let step0 = Math.abs(stop - start) / Math.max(0, count),
-    step1 = Math.pow(10, Math.floor(Math.log(step0) / Math.LN10)),
-    error = step0 / step1;
+  const step0 = Math.abs(stop - start) / Math.max(0, count);
+  let step1 = Math.pow(10, Math.floor(Math.log(step0) / Math.LN10));
+  const error = step0 / step1;
 
   if (error >= e10) {
     step1 *= 10;
@@ -39,13 +39,13 @@ export function getScaledDecimals(decimals, tick_size) {
  * @param tickDecimals  Tick decimal precision
  */
 export function getFlotTickSize(min: number, max: number, noTicks: number, tickDecimals: number) {
-  var delta = (max - min) / noTicks,
-    dec = -Math.floor(Math.log(delta) / Math.LN10),
-    maxDec = tickDecimals;
+  const delta = (max - min) / noTicks;
+  let dec = -Math.floor(Math.log(delta) / Math.LN10);
+  const maxDec = tickDecimals;
 
-  var magn = Math.pow(10, -dec),
-    norm = delta / magn, // norm is between 1.0 and 10.0
-    size;
+  const magn = Math.pow(10, -dec);
+  const norm = delta / magn; // norm is between 1.0 and 10.0
+  let size;
 
   if (norm < 1.5) {
     size = 1;
@@ -81,8 +81,8 @@ export function getFlotRange(panelMin, panelMax, datamin, datamax) {
   if (delta === 0.0) {
     // Grafana fix: wide Y min and max using increased wideFactor
     // when all series values are the same
-    var wideFactor = 0.25;
-    var widen = Math.abs(max === 0 ? 1 : max * wideFactor);
+    const wideFactor = 0.25;
+    const widen = Math.abs(max === 0 ? 1 : max * wideFactor);
 
     if (panelMin === null) {
       min -= widen;
@@ -94,7 +94,7 @@ export function getFlotRange(panelMin, panelMax, datamin, datamax) {
     }
   } else {
     // consider autoscaling
-    var margin = autoscaleMargin;
+    const margin = autoscaleMargin;
     if (margin != null) {
       if (panelMin == null) {
         min -= delta * margin;

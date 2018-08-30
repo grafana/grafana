@@ -12,11 +12,11 @@ export default class PrometheusMetricFindQuery {
   }
 
   process() {
-    var label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)\s*$/;
-    var metric_names_regex = /^metrics\((.+)\)\s*$/;
-    var query_result_regex = /^query_result\((.+)\)\s*$/;
+    const label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)\s*$/;
+    const metric_names_regex = /^metrics\((.+)\)\s*$/;
+    const query_result_regex = /^query_result\((.+)\)\s*$/;
 
-    var label_values_query = this.query.match(label_values_regex);
+    const label_values_query = this.query.match(label_values_regex);
     if (label_values_query) {
       if (label_values_query[1]) {
         return this.labelValuesQuery(label_values_query[2], label_values_query[1]);
@@ -25,12 +25,12 @@ export default class PrometheusMetricFindQuery {
       }
     }
 
-    var metric_names_query = this.query.match(metric_names_regex);
+    const metric_names_query = this.query.match(metric_names_regex);
     if (metric_names_query) {
       return this.metricNameQuery(metric_names_query[1]);
     }
 
-    var query_result_query = this.query.match(query_result_regex);
+    const query_result_query = this.query.match(query_result_regex);
     if (query_result_query) {
       return this.queryResultQuery(query_result_query[1]);
     }
@@ -52,12 +52,12 @@ export default class PrometheusMetricFindQuery {
         });
       });
     } else {
-      var start = this.datasource.getPrometheusTime(this.range.from, false);
-      var end = this.datasource.getPrometheusTime(this.range.to, true);
+      const start = this.datasource.getPrometheusTime(this.range.from, false);
+      const end = this.datasource.getPrometheusTime(this.range.to, true);
       url = '/api/v1/series?match[]=' + encodeURIComponent(metric) + '&start=' + start + '&end=' + end;
 
       return this.datasource.metadataRequest(url).then(function(result) {
-        var _labels = _.map(result.data.data, function(metric) {
+        const _labels = _.map(result.data.data, function(metric) {
           return metric[label] || '';
         }).filter(function(label) {
           return label !== '';
@@ -74,12 +74,12 @@ export default class PrometheusMetricFindQuery {
   }
 
   metricNameQuery(metricFilterPattern) {
-    var url = '/api/v1/label/__name__/values';
+    const url = '/api/v1/label/__name__/values';
 
     return this.datasource.metadataRequest(url).then(function(result) {
       return _.chain(result.data.data)
         .filter(function(metricName) {
-          var r = new RegExp(metricFilterPattern);
+          const r = new RegExp(metricFilterPattern);
           return r.test(metricName);
         })
         .map(function(matchedMetricName) {
@@ -93,7 +93,7 @@ export default class PrometheusMetricFindQuery {
   }
 
   queryResultQuery(query) {
-    var end = this.datasource.getPrometheusTime(this.range.to, true);
+    const end = this.datasource.getPrometheusTime(this.range.to, true);
     return this.datasource.performInstantQuery({ expr: query }, end).then(function(result) {
       return _.map(result.data.data.result, function(metricData) {
         var text = metricData.metric.__name__ || '';
@@ -115,11 +115,11 @@ export default class PrometheusMetricFindQuery {
   }
 
   metricNameAndLabelsQuery(query) {
-    var start = this.datasource.getPrometheusTime(this.range.from, false);
-    var end = this.datasource.getPrometheusTime(this.range.to, true);
-    var url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + start + '&end=' + end;
+    const start = this.datasource.getPrometheusTime(this.range.from, false);
+    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + start + '&end=' + end;
 
-    var self = this;
+    const self = this;
     return this.datasource.metadataRequest(url).then(function(result) {
       return _.map(result.data.data, metric => {
         return {

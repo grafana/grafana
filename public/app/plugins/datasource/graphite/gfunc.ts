@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { isVersionGtOrEq } from 'app/core/utils/version';
 
-var index = {};
+const index = {};
 
 function addFuncDef(funcDef) {
   funcDef.params = funcDef.params || [];
@@ -13,7 +13,7 @@ function addFuncDef(funcDef) {
   }
 }
 
-var optionalSeriesRefArgs = [{ name: 'other', type: 'value_or_series', optional: true, multiple: true }];
+const optionalSeriesRefArgs = [{ name: 'other', type: 'value_or_series', optional: true, multiple: true }];
 
 addFuncDef({
   name: 'scaleToSeconds',
@@ -962,9 +962,9 @@ export class FuncInstance {
   }
 
   render(metricExp) {
-    var str = this.def.name + '(';
+    const str = this.def.name + '(';
 
-    var parameters = _.map(
+    const parameters = _.map(
       this.params,
       function(value, index) {
         var paramType;
@@ -1063,7 +1063,7 @@ function getFuncDef(name, idx?) {
 }
 
 function getFuncDefs(graphiteVersion, idx?) {
-  var funcs = {};
+  const funcs = {};
   _.forEach(idx || index, function(funcDef) {
     if (isVersionRelatedFunction(funcDef, graphiteVersion)) {
       funcs[funcDef.name] = _.assign({}, funcDef, {
@@ -1078,7 +1078,7 @@ function getFuncDefs(graphiteVersion, idx?) {
 
 // parse response from graphite /functions endpoint into internal format
 function parseFuncDefs(rawDefs) {
-  var funcDefs = {};
+  const funcDefs = {};
 
   _.forEach(rawDefs || {}, (funcDef, funcName) => {
     // skip graphite graph functions
@@ -1095,7 +1095,7 @@ function parseFuncDefs(rawDefs) {
         .replace(/.. code-block *:: *none/g, '.. code-block::');
     }
 
-    var func = {
+    const func = {
       name: funcDef.name,
       description: description,
       category: funcDef.group,
@@ -1120,7 +1120,7 @@ function parseFuncDefs(rawDefs) {
     }
 
     _.forEach(funcDef.params, rawParam => {
-      var param = {
+      const param = {
         name: rawParam.name,
         type: 'string',
         optional: !rawParam.required,

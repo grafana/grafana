@@ -161,7 +161,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.errors = this.validateTarget();
 
     if (!this.errors.filters) {
-      var currentFilter = {
+      const currentFilter = {
         type: this.target.currentFilterType,
         tagk: this.target.currentFilterKey,
         filter: this.target.currentFilterValue,
@@ -198,7 +198,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   validateTarget() {
-    var errs: any = {};
+    const errs: any = {};
 
     if (this.target.shouldDownsample) {
       try {

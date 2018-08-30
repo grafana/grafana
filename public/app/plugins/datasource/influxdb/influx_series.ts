@@ -13,7 +13,7 @@ export default class InfluxSeries {
   }
 
   getTimeSeries() {
-    var output = [];
+    const output = [];
     var i, j;
 
     if (this.series.length === 0) {
@@ -21,14 +21,14 @@ export default class InfluxSeries {
     }
 
     _.each(this.series, series => {
-      var columns = series.columns.length;
-      var tags = _.map(series.tags, function(value, key) {
+      const columns = series.columns.length;
+      const tags = _.map(series.tags, function(value, key) {
         return key + ': ' + value;
       });
 
       for (j = 1; j < columns; j++) {
         var seriesName = series.name;
-        var columnName = series.columns[j];
+        const columnName = series.columns[j];
         if (columnName !== 'value') {
           seriesName = seriesName + '.' + columnName;
         }
@@ -39,7 +39,7 @@ export default class InfluxSeries {
           seriesName = seriesName + ' {' + tags.join(', ') + '}';
         }
 
-        var datapoints = [];
+        const datapoints = [];
         if (series.values) {
           for (i = 0; i < series.values.length; i++) {
             datapoints[i] = [series.values[i][j], series.values[i][0]];
@@ -54,12 +54,12 @@ export default class InfluxSeries {
   }
 
   _getSeriesName(series, index) {
-    var regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
-    var segments = series.name.split('.');
+    const regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
+    const segments = series.name.split('.');
 
     return this.alias.replace(regex, function(match, g1, g2) {
-      var group = g1 || g2;
-      var segIndex = parseInt(group, 10);
+      const group = g1 || g2;
+      const segIndex = parseInt(group, 10);
 
       if (group === 'm' || group === 'measurement') {
         return series.name;
@@ -74,7 +74,7 @@ export default class InfluxSeries {
         return match;
       }
 
-      var tag = group.replace('tag_', '');
+      const tag = group.replace('tag_', '');
       if (!series.tags) {
         return match;
       }
@@ -83,12 +83,12 @@ export default class InfluxSeries {
   }
 
   getAnnotations() {
-    var list = [];
+    const list = [];
 
     _.each(this.series, series => {
       var titleCol = null;
       var timeCol = null;
-      var tagsCol = [];
+      const tagsCol = [];
       var textCol = null;
 
       _.each(series.columns, (column, index) => {
@@ -117,7 +117,7 @@ export default class InfluxSeries {
       });
 
       _.each(series.values, value => {
-        var data = {
+        const data = {
           annotation: this.annotation,
           time: +new Date(value[timeCol]),
           title: value[titleCol],
@@ -142,7 +142,7 @@ export default class InfluxSeries {
   }
 
   getTable() {
-    var table = new TableModel();
+    const table = new TableModel();
     var i, j;
 
     if (this.series.length === 0) {
@@ -168,10 +168,10 @@ export default class InfluxSeries {
 
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
-          var values = series.values[i];
-          var reordered = [values[0]];
+          const values = series.values[i];
+          const reordered = [values[0]];
           if (series.tags) {
-            for (var key in series.tags) {
+            for (const key in series.tags) {
               if (series.tags.hasOwnProperty(key)) {
                 reordered.push(series.tags[key]);
               }

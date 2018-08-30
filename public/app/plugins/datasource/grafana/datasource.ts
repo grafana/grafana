@@ -13,7 +13,7 @@ class GrafanaDatasource {
         maxDataPoints: options.maxDataPoints,
       })
       .then(res => {
-        var data = [];
+        const data = [];
 
         if (res.results) {
           _.forEach(res.results, queryRes => {

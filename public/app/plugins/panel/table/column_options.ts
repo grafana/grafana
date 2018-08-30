@@ -66,7 +66,7 @@ export class ColumnOptionsCtrl {
   }
 
   addColumnStyle() {
-    var newStyleRule = {
+    const newStyleRule = {
       unit: 'short',
       type: 'number',
       alias: '',
@@ -79,13 +79,13 @@ export class ColumnOptionsCtrl {
       mappingType: 1,
     };
 
-    var styles = this.panel.styles;
-    var stylesCount = styles.length;
+    const styles = this.panel.styles;
+    const stylesCount = styles.length;
     var indexToInsert = stylesCount;
 
     // check if last is a catch all rule, then add it before that one
     if (stylesCount > 0) {
-      var last = styles[stylesCount - 1];
+      const last = styles[stylesCount - 1];
       if (last.pattern === '/.*/') {
         indexToInsert = stylesCount - 1;
       }
@@ -100,8 +100,8 @@ export class ColumnOptionsCtrl {
   }
 
   invertColorOrder(index) {
-    var ref = this.panel.styles[index].colors;
-    var copy = ref[0];
+    const ref = this.panel.styles[index].colors;
+    const copy = ref[0];
     ref[0] = ref[2];
     ref[2] = copy;
     this.panelCtrl.render();

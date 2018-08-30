@@ -30,20 +30,20 @@ export class ThresholdManager {
   }
 
   initDragging(evt) {
-    var handleElem = $(evt.currentTarget).parents('.alert-handle-wrapper');
-    var handleIndex = $(evt.currentTarget).data('handleIndex');
+    const handleElem = $(evt.currentTarget).parents('.alert-handle-wrapper');
+    const handleIndex = $(evt.currentTarget).data('handleIndex');
 
     var lastY = null;
     var posTop;
-    var plot = this.plot;
-    var panelCtrl = this.panelCtrl;
-    var model = this.thresholds[handleIndex];
+    const plot = this.plot;
+    const panelCtrl = this.panelCtrl;
+    const model = this.thresholds[handleIndex];
 
     function dragging(evt) {
       if (lastY === null) {
         lastY = evt.clientY;
       } else {
-        var diff = evt.clientY - lastY;
+        const diff = evt.clientY - lastY;
         posTop = posTop + diff;
         lastY = evt.clientY;
         handleElem.css({ top: posTop + diff });
@@ -84,8 +84,8 @@ export class ThresholdManager {
   }
 
   renderHandle(handleIndex, defaultHandleTopPos) {
-    var model = this.thresholds[handleIndex];
-    var value = model.value;
+    const model = this.thresholds[handleIndex];
+    const value = model.value;
     var valueStr = value;
     var handleTopPos = 0;
 
@@ -94,11 +94,11 @@ export class ThresholdManager {
       valueStr = '';
       handleTopPos = defaultHandleTopPos;
     } else {
-      var valueCanvasPos = this.plot.p2c({ x: 0, y: value });
+      const valueCanvasPos = this.plot.p2c({ x: 0, y: value });
       handleTopPos = Math.round(Math.min(Math.max(valueCanvasPos.top, 0), this.height) - 6);
     }
 
-    var handleElem = $(this.getHandleHtml(handleIndex, model, valueStr));
+    const handleElem = $(this.getHandleHtml(handleIndex, model, valueStr));
     this.placeholder.append(handleElem);
 
     handleElem.toggleClass('alert-handle-wrapper--no-value', valueStr === '');
@@ -119,7 +119,7 @@ export class ThresholdManager {
     }
 
     if (this.shouldDrawHandles()) {
-      var thresholdMargin = this.panelCtrl.panel.thresholds.length > 1 ? '220px' : '110px';
+      const thresholdMargin = this.panelCtrl.panel.thresholds.length > 1 ? '220px' : '110px';
       elem.css('margin-right', thresholdMargin);
     } else if (this.needsCleanup) {
       elem.css('margin-right', '0');

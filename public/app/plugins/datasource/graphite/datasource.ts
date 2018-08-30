@@ -30,7 +30,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.query = function(options) {
-    var graphOptions = {
+    const graphOptions = {
       from: this.translateTime(options.rangeRaw.from, false),
       until: this.translateTime(options.rangeRaw.to, true),
       targets: options.targets,
@@ -39,12 +39,12 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       maxDataPoints: options.maxDataPoints,
     };
 
-    var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
+    const params = this.buildGraphiteParams(graphOptions, options.scopedVars);
     if (params.length === 0) {
       return $q.when({ data: [] });
     }
 
-    var httpOptions: any = {
+    const httpOptions: any = {
       method: 'POST',
       url: '/render',
       data: params.join('&'),
@@ -63,7 +63,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   };
 
   this.addTracingHeaders = function(httpOptions, options) {
-    var proxyMode = !this.url.match(/^http/);
+    const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
       httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
@@ -75,7 +75,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       return [];
     }
     for (var i = 0; i < result.data.length; i++) {
-      var series = result.data[i];
+      const series = result.data[i];
       for (var y = 0; y < series.datapoints.length; y++) {
         series.datapoints[y][1] *= 1000;
       }
@@ -98,8 +98,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.annotationQuery = function(options) {
     // Graphite metric as annotation
     if (options.annotation.target) {
-      var target = templateSrv.replace(options.annotation.target, {}, 'glob');
-      var graphiteQuery = {
+      const target = templateSrv.replace(options.annotation.target, {}, 'glob');
+      const graphiteQuery = {
         rangeRaw: options.rangeRaw,
         targets: [{ target: target }],
         format: 'json',
@@ -107,13 +107,13 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       };
 
       return this.query(graphiteQuery).then(function(result) {
-        var list = [];
+        const list = [];
 
         for (var i = 0; i < result.data.length; i++) {
-          var target = result.data[i];
+          const target = result.data[i];
 
           for (var y = 0; y < target.datapoints.length; y++) {
-            var datapoint = target.datapoints[y];
+            const datapoint = target.datapoints[y];
             if (!datapoint[0]) {
               continue;
             }
@@ -130,11 +130,11 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       });
     } else {
       // Graphite event as annotation
-      var tags = templateSrv.replace(options.annotation.tags);
+      const tags = templateSrv.replace(options.annotation.tags);
       return this.events({ range: options.rangeRaw, tags: tags }).then(results => {
-        var list = [];
+        const list = [];
         for (var i = 0; i < results.data.length; i++) {
-          var e = results.data[i];
+          const e = results.data[i];
 
           var tags = e.tags;
           if (_.isString(e.tags)) {
@@ -490,12 +490,12 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   this.buildGraphiteParams = function(options, scopedVars) {
-    var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
-    var clean_options = [],
+    const graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
+    const clean_options = [],
       targets = {};
     var target, targetValue, i;
-    var regex = /\#([A-Z])/g;
-    var intervalFormatFixRegex = /'(\d+)m'/gi;
+    const regex = /\#([A-Z])/g;
+    const intervalFormatFixRegex = /'(\d+)m'/gi;
     var hasTargets = false;
 
     options['format'] = 'json';

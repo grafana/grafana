@@ -10,15 +10,15 @@ export function alignYLevel(yAxes, level) {
     return;
   }
 
-  var [yLeft, yRight] = yAxes;
+  const [yLeft, yRight] = yAxes;
   moveLevelToZero(yLeft, yRight, level);
 
   expandStuckValues(yLeft, yRight);
 
   // one of graphs on zero
-  var zero = yLeft.min === 0 || yRight.min === 0 || yLeft.max === 0 || yRight.max === 0;
+  const zero = yLeft.min === 0 || yRight.min === 0 || yLeft.max === 0 || yRight.max === 0;
 
-  var oneSide = checkOneSide(yLeft, yRight);
+  const oneSide = checkOneSide(yLeft, yRight);
 
   if (zero && oneSide) {
     yLeft.min = yLeft.max > 0 ? 0 : yLeft.min;
@@ -35,7 +35,7 @@ export function alignYLevel(yAxes, level) {
         yRight.min = -yRight.max;
       }
     } else {
-      var rate = getRate(yLeft, yRight);
+      const rate = getRate(yLeft, yRight);
 
       if (oneSide) {
         // all graphs above the Y level
@@ -67,7 +67,7 @@ export function alignYLevel(yAxes, level) {
 
 function expandStuckValues(yLeft, yRight) {
   // wide Y min and max using increased wideFactor
-  var wideFactor = 0.25;
+  const wideFactor = 0.25;
   if (yLeft.max === yLeft.min) {
     yLeft.min -= wideFactor;
     yLeft.max += wideFactor;
@@ -126,14 +126,14 @@ function getRate(yLeft, yRight) {
     rateRight = yRight.max ? yLeft.max / yRight.max : 0;
   } else {
     if (checkOneSide(yLeft, yRight)) {
-      var absLeftMin = Math.abs(yLeft.min);
-      var absLeftMax = Math.abs(yLeft.max);
-      var absRightMin = Math.abs(yRight.min);
-      var absRightMax = Math.abs(yRight.max);
-      var upLeft = _.max([absLeftMin, absLeftMax]);
-      var downLeft = _.min([absLeftMin, absLeftMax]);
-      var upRight = _.max([absRightMin, absRightMax]);
-      var downRight = _.min([absRightMin, absRightMax]);
+      const absLeftMin = Math.abs(yLeft.min);
+      const absLeftMax = Math.abs(yLeft.max);
+      const absRightMin = Math.abs(yRight.min);
+      const absRightMax = Math.abs(yRight.max);
+      const upLeft = _.max([absLeftMin, absLeftMax]);
+      const downLeft = _.min([absLeftMin, absLeftMax]);
+      const upRight = _.max([absRightMin, absRightMax]);
+      const downRight = _.min([absRightMin, absRightMax]);
 
       rateLeft = downLeft ? upLeft / downLeft : upLeft;
       rateRight = downRight ? upRight / downRight : upRight;
