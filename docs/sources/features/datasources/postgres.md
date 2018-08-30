@@ -31,7 +31,9 @@ Name | Description
 *User* | Database user's login/username
 *Password* | Database user's password
 *SSL Mode* | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-*TimescaleDB* | With this option enabled Grafana will use TimescaleDB features, e.g. use ```time_bucket``` for grouping by time (only available in Grafana 5.3+).
+*Version* | This option determines which functions are available in the query builder (only available in Grafana 5.3+).
+*TimescaleDB* | TimescaleDB is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use ```time_bucket``` in the ```$__timeGroup``` macro and display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+).
+
 
 ### Database User Permissions (Important!)
 
