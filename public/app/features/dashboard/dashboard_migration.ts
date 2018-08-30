@@ -140,15 +140,12 @@ export class DashboardMigrator {
       }
 
       // ensure query refIds
-      panelUpgrades.push(function(panel) {
-        _.each(
-          panel.targets,
-          function(target) {
-            if (!target.refId) {
-              target.refId = this.dashboard.getNextQueryLetter(panel);
-            }
-          }.bind(this)
-        );
+      panelUpgrades.push(panel => {
+        _.each(panel.targets, target => {
+          if (!target.refId) {
+            target.refId = this.dashboard.getNextQueryLetter(panel);
+          }
+        });
       });
     }
 

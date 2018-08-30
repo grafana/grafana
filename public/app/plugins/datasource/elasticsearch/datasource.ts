@@ -203,7 +203,7 @@ export class ElasticDatasource {
     this.timeSrv.setTime({ from: 'now-1m', to: 'now' }, true);
     // validate that the index exist and has date field
     return this.getFields({ type: 'date' }).then(
-      function(dateFields) {
+      dateFields => {
         const timeField = _.find(dateFields, { text: this.timeField });
         if (!timeField) {
           return {
@@ -212,7 +212,7 @@ export class ElasticDatasource {
           };
         }
         return { status: 'success', message: 'Index OK. Time field name OK.' };
-      }.bind(this),
+      },
       function(err) {
         console.log(err);
         if (err.data && err.data.error) {

@@ -4,7 +4,7 @@ import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 
 /** @ngInject */
-export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, templateSrv) {
   this.basicAuth = instanceSettings.basicAuth;
   this.url = instanceSettings.url;
   this.name = instanceSettings.name;
