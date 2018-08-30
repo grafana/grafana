@@ -420,7 +420,7 @@ export class EventMarkers {
         event: event,
       });
 
-      const mouseenter = function() {
+      const mouseenter = function(this: any) {
         createAnnotationToolip(marker, $(this).data('event'), that._plot);
       };
 
@@ -541,7 +541,7 @@ export class EventMarkers {
       event: event,
     });
 
-    const mouseenter = function() {
+    const mouseenter = function(this: any) {
       createAnnotationToolip(region, $(this).data('event'), that._plot);
     };
 
@@ -596,7 +596,7 @@ export class EventMarkers {
  */
 
 /** @ngInject */
-export function init(plot) {
+export function init(this: any, plot) {
   /*jshint validthis:true */
   const that = this;
   const eventMarkers = new EventMarkers(plot);

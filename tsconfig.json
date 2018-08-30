@@ -20,7 +20,7 @@
     "emitDecoratorMetadata": false,
     "experimentalDecorators": true,
     "noImplicitReturns": true,
-    "noImplicitThis": false,
+    "noImplicitThis": true,
     "noImplicitUseStrict": false,
     "noImplicitAny": false,
     "noUnusedLocals": true,
