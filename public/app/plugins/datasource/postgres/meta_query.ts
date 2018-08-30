@@ -130,7 +130,7 @@ table_schema IN (
         break;
       }
       case 'group': {
-        query += " AND data_type IN ('text','char','varchar')";
+        query += " AND data_type IN ('text','character','character varying')";
         break;
       }
     }
