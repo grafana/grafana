@@ -1,6 +1,6 @@
 import React, { SFC } from 'react';
-import SignIn from './SignIn/SignIn';
-import BottomNavLinks from './BottomNavLinks/BottonNavLinks';
+import SignIn from './SignIn';
+import BottomNavLinks from './BottonNavLinks';
 
 interface BottomSectionProps {
   isSignedIn: boolean;

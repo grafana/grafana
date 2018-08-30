@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import SideMenuDropDown from '../../SideMenuDropDown/SideMenuDropDown';
+import SideMenuDropDown from './SideMenuDropDown';
 
 interface TopSectionItemProps {
   link: any;

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
-import TopSection from './TopSection/TopSection';
-import BottomSection from './BottomSection/BottomSection';
+import TopSection from './TopSection';
+import BottomSection from './BottomSection';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import appEvents from '../../app_events';

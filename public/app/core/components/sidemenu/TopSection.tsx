@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import TopSectionItem from './TopSectionItem/TopSectionItem';
+import TopSectionItem from './TopSectionItem';
 
 interface TopSectionProps {
   mainLinks: any[];

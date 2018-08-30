@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import DropDownChild from './DropDownChild/DropDownChild';
+import DropDownChild from './DropDownChild';
 
 interface SideMenuDropDownProps {
   link: any;

@@ -1,5 +1,5 @@
 import React, { SFC } from 'react';
-import appEvents from '../../../../app_events';
+import appEvents from '../../app_events';
 
 interface BottonNavLinksProps {
   link: any;
