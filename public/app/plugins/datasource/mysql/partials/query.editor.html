@@ -1,10 +1,102 @@
-<query-editor-row query-ctrl="ctrl" can-collapse="false">
-	<div class="gf-form-inline">
-		<div class="gf-form gf-form--grow">
-			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
-			</code-editor>
-		</div>
-	</div>
+<query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
+
+  <div ng-if="ctrl.target.rawQuery">
+    <div class="gf-form-inline">
+      <div class="gf-form gf-form--grow">
+        <code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
+        </code-editor>
+      </div>
+    </div>
+  </div>
+
+  <div ng-if="!ctrl.target.rawQuery">
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-6">FROM</label>
+        <metric-segment segment="ctrl.tableSegment" get-options="ctrl.getTableSegments()" on-change="ctrl.tableChanged()"></metric-segment>
+
+        <label class="gf-form-label query-keyword width-7">Time column</label>
+        <metric-segment segment="ctrl.timeColumnSegment" get-options="ctrl.getTimeColumnSegments()" on-change="ctrl.timeColumnChanged()"></metric-segment>
+
+        <label class="gf-form-label query-keyword width-9">
+          Metric column
+          <info-popover mode="right-normal">Column to be used as metric name for the value column.</info-popover>
+        </label>
+        <metric-segment segment="ctrl.metricColumnSegment" get-options="ctrl.getMetricColumnSegments()" on-change="ctrl.metricColumnChanged()"></metric-segment>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+
+    </div>
+
+    <div class="gf-form-inline" ng-repeat="selectParts in ctrl.selectParts">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-6">
+          <span ng-show="$index === 0">SELECT</span>&nbsp;
+        </label>
+      </div>
+
+      <div class="gf-form" ng-repeat="part in selectParts">
+        <sql-part-editor class="gf-form-label sql-part" part="part" handle-event="ctrl.handleSelectPartEvent(selectParts, part, $event)">
+        </sql-part-editor>
+      </div>
+
+      <div class="gf-form">
+        <label class="dropdown"
+                dropdown-typeahead="ctrl.selectMenu"
+                dropdown-typeahead-on-select="ctrl.addSelectPart(selectParts, $item, $subItem)">
+        </label>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-6">WHERE</label>
+      </div>
+
+      <div class="gf-form" ng-repeat="part in ctrl.whereParts">
+        <sql-part-editor class="gf-form-label sql-part" part="part" handle-event="ctrl.handleWherePartEvent(ctrl.whereParts, part, $event, $index)">
+        </sql-part-editor>
+      </div>
+
+      <div class="gf-form">
+        <metric-segment segment="ctrl.whereAdd" get-options="ctrl.getWhereOptions()" on-change="ctrl.addWhereAction(part, $index)"></metric-segment>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+
+    </div>
+
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-6">
+          <span>GROUP BY</span>
+        </label>
+
+        <sql-part-editor  ng-repeat="part in ctrl.groupParts"
+                            part="part" class="gf-form-label sql-part"
+                            handle-event="ctrl.handleGroupPartEvent(part, $index, $event)">
+        </sql-part-editor>
+      </div>
+
+      <div class="gf-form">
+        <metric-segment segment="ctrl.groupAdd" get-options="ctrl.getGroupOptions()" on-change="ctrl.addGroupAction(part, $index)"></metric-segment>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+
+  </div>
 
   <div class="gf-form-inline">
     <div class="gf-form">
