@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 
-export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
+export default function GraphTooltip(this: any, elem, dashboard, scope, getSeriesFn) {
   const self = this;
   const ctrl = scope.ctrl;
   const panel = ctrl.panel;

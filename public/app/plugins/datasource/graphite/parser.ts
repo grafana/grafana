@@ -1,6 +1,6 @@
 import { Lexer } from './lexer';
 
-export function Parser(expression) {
+export function Parser(this: any, expression) {
   this.expression = expression;
   this.lexer = new Lexer(expression);
   this.tokens = this.lexer.tokenize();

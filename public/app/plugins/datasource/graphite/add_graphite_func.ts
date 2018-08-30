@@ -90,7 +90,7 @@ export function graphiteAddFunc($compile) {
       };
 
       $(elem)
-        .on('mouseenter', 'ul.dropdown-menu li', function() {
+        .on('mouseenter', 'ul.dropdown-menu li', () => {
           cleanUpDrop();
 
           let funcDef;

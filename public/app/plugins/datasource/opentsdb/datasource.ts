@@ -39,15 +39,12 @@ export default class OpenTsDatasource {
     const end = this.convertToTSDBTime(options.rangeRaw.to, true);
     const qs = [];
 
-    _.each(
-      options.targets,
-      function(target) {
-        if (!target.metric) {
-          return;
-        }
-        qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
-      }.bind(this)
-    );
+    _.each(options.targets, target => {
+      if (!target.metric) {
+        return;
+      }
+      qs.push(this.convertTargetToQuery(target, options, this.tsdbVersion));
+    });
 
     const queries = _.compact(qs);
 
@@ -75,30 +72,19 @@ export default class OpenTsDatasource {
       return query.hide !== true;
     });
 
-    return this.performTimeSeriesQuery(queries, start, end).then(
-      function(response) {
-        const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
-        const result = _.map(
-          response.data,
-          function(metricData, index) {
-            index = metricToTargetMapping[index];
-            if (index === -1) {
-              index = 0;
-            }
-            this._saveTagKeys(metricData);
+    return this.performTimeSeriesQuery(queries, start, end).then(response => {
+      const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
+      const result = _.map(response.data, (metricData, index) => {
+        index = metricToTargetMapping[index];
+        if (index === -1) {
+          index = 0;
+        }
+        this._saveTagKeys(metricData);
 
-            return this.transformMetricData(
-              metricData,
-              groupByTags,
-              options.targets[index],
-              options,
-              this.tsdbResolution
-            );
-          }.bind(this)
-        );
-        return { data: result };
-      }.bind(this)
-    );
+        return this.transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
+      });
+      return { data: result };
+    });
   }
 
   annotationQuery(options) {

@@ -33,7 +33,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
 
       $scope.partActions = [];
 
-      function clickFuncParam(paramIndex) {
+      function clickFuncParam(this: any, paramIndex) {
         /*jshint validthis:true */
         const $link = $(this);
         const $input = $link.next();
@@ -53,7 +53,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
         }
       }
 
-      function inputBlur(paramIndex) {
+      function inputBlur(this: any, paramIndex) {
         /*jshint validthis:true */
         const $input = $(this);
         const $link = $input.prev();
@@ -72,14 +72,14 @@ export function queryPartEditorDirective($compile, templateSrv) {
         $link.show();
       }
 
-      function inputKeyPress(paramIndex, e) {
+      function inputKeyPress(this: any, paramIndex, e) {
         /*jshint validthis:true */
         if (e.which === 13) {
           inputBlur.call(this, paramIndex);
         }
       }
 
-      function inputKeyDown() {
+      function inputKeyDown(this: any) {
         /*jshint validthis:true */
         this.style.width = (3 + this.value.length) * 8 + 'px';
       }

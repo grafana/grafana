@@ -4,7 +4,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 
-export function ControllerTestContext() {
+export function ControllerTestContext(this: any) {
   const self = this;
 
   this.datasource = {};
@@ -106,7 +106,7 @@ export function ControllerTestContext() {
   };
 }
 
-export function ServiceTestContext() {
+export function ServiceTestContext(this: any) {
   const self = this;
   self.templateSrv = new TemplateSrvStub();
   self.timeSrv = new TimeSrvStub();
@@ -138,11 +138,11 @@ export function ServiceTestContext() {
   };
 }
 
-export function DashboardViewStateStub() {
+export function DashboardViewStateStub(this: any) {
   this.registerPanel = function() {};
 }
 
-export function TimeSrvStub() {
+export function TimeSrvStub(this: any) {
   this.init = sinon.spy();
   this.time = { from: 'now-1h', to: 'now' };
   this.timeRange = function(parse) {
@@ -164,13 +164,13 @@ export function TimeSrvStub() {
   };
 }
 
-export function ContextSrvStub() {
+export function ContextSrvStub(this: any) {
   this.hasRole = function() {
     return true;
   };
 }
 
-export function TemplateSrvStub() {
+export function TemplateSrvStub(this: any) {
   this.variables = [];
   this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
   this.data = {};

@@ -9,10 +9,10 @@ $.fn.place_tt = (function() {
     offset: 5,
   };
 
-  return function(x, y, opts) {
+  return function(this: any, x, y, opts) {
     opts = $.extend(true, {}, defaults, opts);
 
-    return this.each(function() {
+    return this.each(() => {
       const $tooltip = $(this);
       let width, height;
 

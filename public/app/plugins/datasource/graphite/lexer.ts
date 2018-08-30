@@ -922,7 +922,7 @@ for (let i = 0; i < 128; i++) {
 
 const identifierPartTable = identifierStartTable;
 
-export function Lexer(expression) {
+export function Lexer(this: any, expression) {
   this.input = expression;
   this.char = 1;
   this.from = 1;
@@ -1037,7 +1037,7 @@ Lexer.prototype = {
       return /^[0-9a-fA-F]$/.test(str);
     }
 
-    const readUnicodeEscapeSequence = _.bind(function() {
+    const readUnicodeEscapeSequence = _.bind(function(this: any) {
       /*jshint validthis:true */
       index += 1;
 
@@ -1065,7 +1065,7 @@ Lexer.prototype = {
       return null;
     }, this);
 
-    const getIdentifierStart = _.bind(function() {
+    const getIdentifierStart = _.bind(function(this: any) {
       /*jshint validthis:true */
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);
@@ -1096,7 +1096,7 @@ Lexer.prototype = {
       return null;
     }, this);
 
-    const getIdentifierPart = _.bind(function() {
+    const getIdentifierPart = _.bind(function(this: any) {
       /*jshint validthis:true */
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
 
-function typeaheadMatcher(item) {
+function typeaheadMatcher(this: any, item) {
   let str = this.query;
   if (str === '') {
     return true;

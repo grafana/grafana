@@ -204,7 +204,7 @@ const reactComponent = function($injector) {
       attrs.props ? watchProps(attrs.watchDepth, scope, [attrs.props], renderMyComponent) : renderMyComponent();
 
       // cleanup when scope is destroyed
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         if (!attrs.onScopeDestroy) {
           ReactDOM.unmountComponentAtNode(elem[0]);
         } else {
@@ -280,7 +280,7 @@ const reactDirective = function($injector) {
         props.length ? watchProps(attrs.watchDepth, scope, propExpressions, renderMyComponent) : renderMyComponent();
 
         // cleanup when scope is destroyed
-        scope.$on('$destroy', function() {
+        scope.$on('$destroy', () => {
           if (!attrs.onScopeDestroy) {
             ReactDOM.unmountComponentAtNode(elem[0]);
           } else {
