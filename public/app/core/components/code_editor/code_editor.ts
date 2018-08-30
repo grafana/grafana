@@ -99,9 +99,9 @@ function link(scope, elem, attrs) {
   if (scope.codeEditorFocus) {
     setTimeout(function() {
       textarea.focus();
-      var domEl = textarea[0];
+      const domEl = textarea[0];
       if (domEl.setSelectionRange) {
-        var pos = textarea.val().length * 2;
+        const pos = textarea.val().length * 2;
         domEl.setSelectionRange(pos, pos);
       }
     }, 100);

@@ -31,6 +31,10 @@ export class DashNavCtrl {
     this.$location.search(search);
   }
 
+  toggleViewMode() {
+    appEvents.emit('toggle-kiosk-mode');
+  }
+
   close() {
     const search = this.$location.search();
     if (search.editview) {

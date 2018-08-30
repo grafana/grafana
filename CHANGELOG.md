@@ -1,5 +1,6 @@
 # 5.3.0 (unreleased)
 
+* **Dashboard**: TV & Kiosk mode changes, new cycle view mode button in dashboard toolbar [#13025](https://github.com/grafana/grafana/pull/13025)
 * **OAuth**: Gitlab OAuth with support for filter by groups [#5623](https://github.com/grafana/grafana/issues/5623), thx [@BenoitKnecht](https://github.com/BenoitKnecht)
 * **Dataproxy**: Pass configured/auth headers to a Datasource [#10971](https://github.com/grafana/grafana/issues/10971), thx [@mrsiano](https://github.com/mrsiano)
 * **Cleanup**: Make temp file time to live configurable [#11607](https://github.com/grafana/grafana/issues/11607), thx [@xapon](https://github.com/xapon)
@@ -62,6 +63,8 @@ om/grafana/grafana/issues/12668)
 ### Breaking changes
 
 * Postgres datasource no longer automatically adds time column alias when using the $__timeGroup alias. However, there's code in place which should make this change backward compatible and shouldn't create any issues.
+* Kiosk mode now also hides submenu (variables)
+* ?inactive url parameter no longer supported, replaced with kiosk=tv url parameter
 
 ### New experimental features
 
@@ -72,6 +75,12 @@ These are new features that's still being worked on and are in an experimental p
 ### Tech
 
 * **Frontend**: Convert all Frontend Karma tests to Jest tests [#12224](https://github.com/grafana/grafana/issues/12224)
+
+# 5.2.3 (2018-08-29)
+
+### Important fix for LDAP & OAuth login vulnerability
+
+See [security announcement](https://community.grafana.com/t/grafana-5-2-3-and-4-6-4-security-update/10050) for details.
 
 # 5.2.2 (2018-07-25)
 
@@ -440,6 +449,12 @@ The following operations have been deprecated and will be removed in a future re
 The following properties have been deprecated and will be removed in a future release:
   - `uri` property in `GET /api/search` -> Use new `url` or `uid` property instead
   - `meta.slug` property in `GET /api/dashboards/uid/:uid` and `GET /api/dashboards/db/:slug` -> Use new `meta.url` or `dashboard.uid` property instead
+
+# 4.6.4 (2018-08-29)
+
+### Important fix for LDAP & OAuth login vulnerability
+
+See [security announcement](https://community.grafana.com/t/grafana-5-2-3-and-4-6-4-security-update/10050) for details.
 
 # 4.6.3 (2017-12-14)
 

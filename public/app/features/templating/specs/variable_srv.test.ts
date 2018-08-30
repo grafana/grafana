@@ -3,7 +3,7 @@ import { VariableSrv } from '../variable_srv';
 import moment from 'moment';
 import $q from 'q';
 
-describe('VariableSrv', function() {
+describe('VariableSrv', function(this: any) {
   const ctx = <any>{
     datasourceSrv: {},
     timeSrv: {

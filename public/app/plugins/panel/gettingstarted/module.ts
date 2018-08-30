@@ -88,7 +88,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     }
 
     this.stepIndex += 1;
-    var currentStep = this.steps[this.stepIndex];
+    const currentStep = this.steps[this.stepIndex];
     return currentStep.check().then(passed => {
       if (passed) {
         currentStep.cssClass = 'completed';

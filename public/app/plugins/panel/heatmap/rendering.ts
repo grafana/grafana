@@ -100,7 +100,7 @@ export class HeatmapRenderer {
 
   setElementHeight() {
     try {
-      var height = this.ctrl.height || this.panel.height || this.ctrl.row.height;
+      let height = this.ctrl.height || this.panel.height || this.ctrl.row.height;
       if (_.isString(height)) {
         height = parseInt(height.replace('px', ''), 10);
       }

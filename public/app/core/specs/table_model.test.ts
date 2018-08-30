@@ -26,7 +26,7 @@ describe('when sorting table desc', () => {
 });
 
 describe('when sorting table asc', () => {
-  var table;
+  let table;
   const panel = {
     sort: { col: 1, desc: false },
   };
@@ -46,8 +46,8 @@ describe('when sorting table asc', () => {
 });
 
 describe('when sorting with nulls', () => {
-  var table;
-  var values;
+  let table;
+  let values;
 
   beforeEach(() => {
     table = new TableModel();

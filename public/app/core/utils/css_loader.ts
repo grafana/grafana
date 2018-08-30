@@ -11,7 +11,7 @@ for (let i = 0; i < links.length; i++) {
 const isWebkit = !!window.navigator.userAgent.match(/AppleWebKit\/([^ ;]*)/);
 const webkitLoadCheck = function(link, callback) {
   setTimeout(function() {
-    for (var i = 0; i < document.styleSheets.length; i++) {
+    for (let i = 0; i < document.styleSheets.length; i++) {
       const sheet = document.styleSheets[i];
       if (sheet.href === link.href) {
         return callback();
@@ -68,7 +68,7 @@ export function fetch(load): any {
   }
 
   // don't reload styles loaded in the head
-  for (var i = 0; i < linkHrefs.length; i++) {
+  for (let i = 0; i < linkHrefs.length; i++) {
     if (load.address === linkHrefs[i]) {
       return '';
     }

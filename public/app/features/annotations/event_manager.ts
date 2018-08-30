@@ -55,7 +55,7 @@ export class EventManager {
       return;
     }
 
-    var types = {
+    const types = {
       $__alerting: {
         color: ALERTING_COLOR,
         position: 'BOTTOM',
@@ -102,8 +102,8 @@ export class EventManager {
       }
     } else {
       // annotations from query
-      for (var i = 0; i < annotations.length; i++) {
-        var item = annotations[i];
+      for (let i = 0; i < annotations.length; i++) {
+        const item = annotations[i];
 
         // add properties used by jquery flot events
         item.min = item.time;

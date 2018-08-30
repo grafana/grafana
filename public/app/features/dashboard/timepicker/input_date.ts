@@ -18,7 +18,7 @@ export function inputDateDirective() {
           return text;
         }
 
-        var parsed;
+        let parsed;
         if ($scope.ctrl.isUtc) {
           parsed = moment.utc(text, format);
         } else {
