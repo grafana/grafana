@@ -481,7 +481,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   addGroup(partType, value) {
     let params = [value];
     if (partType === 'time') {
-      params = ['1m', 'none'];
+      params = ['$__interval', 'none'];
     }
     let partModel = sqlPart.create({ type: partType, params: params });
 
@@ -618,7 +618,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
       .then(tags => {
         var options = [];
         if (!this.queryModel.hasTimeGroup()) {
-          options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time(1m,none)' }));
+          options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time($__interval,none)' }));
         }
         for (let tag of tags) {
           options.push(this.uiSegmentSrv.newSegment({ type: 'column', value: tag.text }));
