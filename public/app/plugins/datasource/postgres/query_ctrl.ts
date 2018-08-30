@@ -209,17 +209,15 @@ export class PostgresQueryCtrl extends QueryCtrl {
           this.timeColumnSegment.html = segment.html;
           this.timeColumnSegment.value = segment.value;
 
-          this.target.where = [];
-          this.target.updatePersistedParts();
           this.timeColumnChanged();
         }
       }
     });
 
     this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then(result => {
-      // check if value columns are still valid
       if (result.length > 0) {
         this.target.select = [[{ type: 'column', params: [result[0].text] }]];
+        this.target.where = [];
         this.target.group = [];
       }
       this.updateProjection();
