@@ -106,7 +106,7 @@
 		<a class="btn btn-success " ng-show="ctrl.isNew"
 			ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()"
 			ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Create new playlist</a>
-		<a class="btn btn-success" ng-show="!ctrl.isNew()"
+		<a class="btn btn-success" ng-show="!ctrl.isNew"
 			ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()"
 			ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Save</a>
 		<a class="btn-text" ng-click="ctrl.backToList()">Cancel</a>

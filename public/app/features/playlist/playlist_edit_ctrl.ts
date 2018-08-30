@@ -22,7 +22,7 @@ export class PlaylistEditCtrl {
     this.isNew = !$route.current.params.id;
 
     if ($route.current.params.id) {
-      var playlistId = $route.current.params.id;
+      const playlistId = $route.current.params.id;
 
       backendSrv.get('/api/playlists/' + playlistId).then(result => {
         this.playlist = result;
@@ -58,7 +58,7 @@ export class PlaylistEditCtrl {
   }
 
   addTagPlaylistItem(tag) {
-    var playlistItem: any = {
+    const playlistItem: any = {
       value: tag.term,
       type: 'dashboard_by_tag',
       order: this.playlistItems.length + 1,
@@ -77,7 +77,7 @@ export class PlaylistEditCtrl {
   }
 
   savePlaylist(playlist, playlistItems) {
-    var savePromise;
+    let savePromise;
 
     playlist.items = playlistItems;
 
@@ -113,8 +113,8 @@ export class PlaylistEditCtrl {
   }
 
   movePlaylistItem(playlistItem, offset) {
-    var currentPosition = this.playlistItems.indexOf(playlistItem);
-    var newPosition = currentPosition + offset;
+    const currentPosition = this.playlistItems.indexOf(playlistItem);
+    const newPosition = currentPosition + offset;
 
     if (newPosition >= 0 && newPosition < this.playlistItems.length) {
       this.playlistItems.splice(currentPosition, 1);

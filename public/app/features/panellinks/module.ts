@@ -27,7 +27,7 @@ export class PanelLinksEditorCtrl {
 
     $scope.searchDashboards = function(queryStr, callback) {
       backendSrv.search({ query: queryStr }).then(function(hits) {
-        var dashboards = _.map(hits, function(dash) {
+        const dashboards = _.map(hits, function(dash) {
           return dash.title;
         });
 
@@ -37,7 +37,7 @@ export class PanelLinksEditorCtrl {
 
     $scope.dashboardChanged = function(link) {
       backendSrv.search({ query: link.dashboard }).then(function(hits) {
-        var dashboard = _.find(hits, { title: link.dashboard });
+        const dashboard = _.find(hits, { title: link.dashboard });
         if (dashboard) {
           if (dashboard.url) {
             link.url = dashboard.url;

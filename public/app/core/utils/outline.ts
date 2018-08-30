@@ -1,11 +1,11 @@
 // based on http://www.paciellogroup.com/blog/2012/04/how-to-remove-css-outlines-in-an-accessible-manner/
 function outlineFixer() {
-  let d: any = document;
+  const d: any = document;
 
-  var style_element = d.createElement('STYLE');
-  var dom_events = 'addEventListener' in d;
+  const style_element = d.createElement('STYLE');
+  const dom_events = 'addEventListener' in d;
 
-  var add_event_listener = function(type, callback) {
+  const add_event_listener = function(type, callback) {
     // Basic cross-browser event handling
     if (dom_events) {
       d.addEventListener(type, callback);
@@ -14,7 +14,7 @@ function outlineFixer() {
     }
   };
 
-  var set_css = function(css_text) {
+  const set_css = function(css_text) {
     // Handle setting of <style> element contents in IE8
     !!style_element.styleSheet ? (style_element.styleSheet.cssText = css_text) : (style_element.innerHTML = css_text);
   };

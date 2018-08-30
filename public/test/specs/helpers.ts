@@ -5,7 +5,7 @@ import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 
 export function ControllerTestContext() {
-  var self = this;
+  const self = this;
 
   this.datasource = {};
   this.$element = {};
@@ -58,7 +58,7 @@ export function ControllerTestContext() {
       $rootScope.onAppEvent = sinon.spy();
       $rootScope.colors = [];
 
-      for (var i = 0; i < 50; i++) {
+      for (let i = 0; i < 50; i++) {
         $rootScope.colors.push('#' + i);
       }
 
@@ -88,7 +88,7 @@ export function ControllerTestContext() {
       self.scope.onAppEvent = sinon.spy();
 
       $rootScope.colors = [];
-      for (var i = 0; i < 50; i++) {
+      for (let i = 0; i < 50; i++) {
         $rootScope.colors.push('#' + i);
       }
 
@@ -107,7 +107,7 @@ export function ControllerTestContext() {
 }
 
 export function ServiceTestContext() {
-  var self = this;
+  const self = this;
   self.templateSrv = new TemplateSrvStub();
   self.timeSrv = new TimeSrvStub();
   self.datasourceSrv = {};
@@ -195,7 +195,7 @@ export function TemplateSrvStub() {
   };
 }
 
-var allDeps = {
+const allDeps = {
   ContextSrvStub,
   TemplateSrvStub,
   TimeSrvStub,

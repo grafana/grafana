@@ -44,8 +44,8 @@ export class TimePickerCtrl {
   }
 
   onRefresh() {
-    var time = angular.copy(this.timeSrv.timeRange());
-    var timeRaw = angular.copy(time.raw);
+    const time = angular.copy(this.timeSrv.timeRange());
+    const timeRaw = angular.copy(time.raw);
 
     if (!this.dashboard.isTimezoneUtc()) {
       time.from.local();
@@ -74,10 +74,10 @@ export class TimePickerCtrl {
   }
 
   move(direction) {
-    var range = this.timeSrv.timeRange();
+    const range = this.timeSrv.timeRange();
 
-    var timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
-    var to, from;
+    const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+    let to, from;
     if (direction === -1) {
       to = range.to.valueOf() - timespan;
       from = range.from.valueOf() - timespan;
@@ -144,7 +144,7 @@ export class TimePickerCtrl {
   }
 
   setRelativeFilter(timespan) {
-    var range = { from: timespan.from, to: timespan.to };
+    const range = { from: timespan.from, to: timespan.to };
 
     if (this.panel.nowDelay && range.to === 'now') {
       range.to = 'now-' + this.panel.nowDelay;

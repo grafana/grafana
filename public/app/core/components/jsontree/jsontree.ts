@@ -11,7 +11,7 @@ coreModule.directive('jsonTree', [
         rootName: '@',
       },
       link: function(scope, elem) {
-        var jsonExp = new JsonExplorer(scope.object, 3, {
+        const jsonExp = new JsonExplorer(scope.object, 3, {
           animateOpen: true,
         });
 

@@ -41,17 +41,17 @@ export class DatasourceVariable implements Variable {
   }
 
   updateOptions() {
-    var options = [];
-    var sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
-    var regex;
+    const options = [];
+    const sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
+    let regex;
 
     if (this.regex) {
       regex = this.templateSrv.replace(this.regex, null, 'regex');
       regex = kbn.stringToJsRegex(regex);
     }
 
-    for (var i = 0; i < sources.length; i++) {
-      var source = sources[i];
+    for (let i = 0; i < sources.length; i++) {
+      const source = sources[i];
       // must match on type
       if (source.meta.id !== this.query) {
         continue;

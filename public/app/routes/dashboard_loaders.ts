@@ -11,7 +11,7 @@ export class LoadDashboardCtrl {
         if (homeDash.redirectUri) {
           $location.path(homeDash.redirectUri);
         } else {
-          var meta = homeDash.meta;
+          const meta = homeDash.meta;
           meta.canSave = meta.canShare = meta.canStar = false;
           $scope.initDashboard(homeDash, $scope);
         }

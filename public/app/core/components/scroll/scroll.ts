@@ -16,7 +16,7 @@ export function geminiScrollbar() {
     restrict: 'A',
     link: function(scope, elem, attrs) {
       let scrollRoot = elem.parent();
-      let scroller = elem;
+      const scroller = elem;
 
       if (attrs.grafanaScrollbar && attrs.grafanaScrollbar === 'scrollonroot') {
         scrollRoot = scroller;
@@ -26,7 +26,7 @@ export function geminiScrollbar() {
       $(scrollBarHTML).appendTo(scrollRoot);
       elem.addClass(scrollerClass);
 
-      let scrollParams = {
+      const scrollParams = {
         root: scrollRoot[0],
         scroller: scroller[0],
         bar: '.baron__bar',
@@ -36,7 +36,7 @@ export function geminiScrollbar() {
         direction: 'v',
       };
 
-      let scrollbar = baron(scrollParams);
+      const scrollbar = baron(scrollParams);
 
       scope.$on('$destroy', () => {
         scrollbar.dispose();

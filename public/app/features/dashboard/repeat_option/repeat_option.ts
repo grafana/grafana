@@ -1,6 +1,6 @@
 import { coreModule } from 'app/core/core';
 
-var template = `
+const template = `
 <div class="gf-form-select-wrapper max-width-18">
   <select class="gf-form-input" ng-model="panel.repeat" ng-options="f.value as f.text for f in variables" ng-change="optionChanged()">
   <option value=""></option>

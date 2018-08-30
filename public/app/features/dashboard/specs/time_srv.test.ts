@@ -3,25 +3,25 @@ import '../time_srv';
 import moment from 'moment';
 
 describe('timeSrv', function() {
-  var rootScope = {
+  const rootScope = {
     $on: jest.fn(),
     onAppEvent: jest.fn(),
     appEvent: jest.fn(),
   };
 
-  var timer = {
+  const timer = {
     register: jest.fn(),
     cancel: jest.fn(),
     cancelAll: jest.fn(),
   };
 
-  var location = {
+  let location = {
     search: jest.fn(() => ({})),
   };
 
-  var timeSrv;
+  let timeSrv;
 
-  var _dashboard: any = {
+  const _dashboard: any = {
     time: { from: 'now-6h', to: 'now' },
     getTimezone: jest.fn(() => 'browser'),
   };
@@ -34,14 +34,14 @@ describe('timeSrv', function() {
   describe('timeRange', function() {
     it('should return unparsed when parse is false', function() {
       timeSrv.setTime({ from: 'now', to: 'now-1h' });
-      var time = timeSrv.timeRange();
+      const time = timeSrv.timeRange();
       expect(time.raw.from).toBe('now');
       expect(time.raw.to).toBe('now-1h');
     });
 
     it('should return parsed when parse is true', function() {
       timeSrv.setTime({ from: 'now', to: 'now-1h' });
-      var time = timeSrv.timeRange();
+      const time = timeSrv.timeRange();
       expect(moment.isMoment(time.from)).toBe(true);
       expect(moment.isMoment(time.to)).toBe(true);
     });
@@ -58,7 +58,7 @@ describe('timeSrv', function() {
 
       timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
       timeSrv.init(_dashboard);
-      var time = timeSrv.timeRange();
+      const time = timeSrv.timeRange();
       expect(time.raw.from).toBe('now-2d');
       expect(time.raw.to).toBe('now');
     });
@@ -74,7 +74,7 @@ describe('timeSrv', function() {
       timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
 
       timeSrv.init(_dashboard);
-      var time = timeSrv.timeRange();
+      const time = timeSrv.timeRange();
       expect(time.from.valueOf()).toEqual(new Date('2014-04-10T05:20:10Z').getTime());
       expect(time.to.valueOf()).toEqual(new Date('2014-05-20T03:10:22Z').getTime());
     });
@@ -90,7 +90,7 @@ describe('timeSrv', function() {
       timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
 
       timeSrv.init(_dashboard);
-      var time = timeSrv.timeRange();
+      const time = timeSrv.timeRange();
       expect(time.from.valueOf()).toEqual(new Date('2014-04-10T00:00:00Z').getTime());
       expect(time.to.valueOf()).toEqual(new Date('2014-05-20T00:00:00Z').getTime());
     });
@@ -106,7 +106,7 @@ describe('timeSrv', function() {
       timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
 
       timeSrv.init(_dashboard);
-      var time = timeSrv.timeRange();
+      const time = timeSrv.timeRange();
       expect(time.from.valueOf()).toEqual(1410337646373);
       expect(time.to.valueOf()).toEqual(1410337665699);
     });

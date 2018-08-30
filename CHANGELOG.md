@@ -21,6 +21,8 @@
 * **Prometheus**: Add $__interval, $__interval_ms, $__range, $__range_s & $__range_ms support for dashboard and template queries [#12597](https://github.com/grafana/grafana/issues/12597) [#12882](https://github.com/grafana/grafana/issues/12882), thx [@roidelapluie](https://github.com/roidelapluie)
 * **Variables**: Skip unneeded extra query request when de-selecting variable values used for repeated panels [#8186](https://github.com/grafana/grafana/issues/8186), thx [@mtanda](https://github.com/mtanda)
 * **Variables**: Limit amount of queries executed when updating variable that other variable(s) are dependent on [#11890](https://github.com/grafana/grafana/issues/11890)
+* **Variables**: Support query variable refresh when another variable referenced in `Regex` field change its value [#12952](https://github.com/grafana/grafana/issues/12952), thx [@franciscocpg](https://github.com/franciscocpg)
+* **Variables**: Support variables in query variable `Custom all value` field [#12965](https://github.com/grafana/grafana/issues/12965), thx [@franciscocpg](https://github.com/franciscocpg)
 * **Postgres/MySQL/MSSQL**: New $__unixEpochGroup and $__unixEpochGroupAlias macros [#12892](https://github.com/grafana/grafana/issues/12892), thx [@svenklemm](https://github.com/svenklemm)
 * **Postgres/MySQL/MSSQL**: Add previous fill mode to $__timeGroup macro which will fill in previously seen value when point is missing [#12756](https://github.com/grafana/grafana/issues/12756), thx [@svenklemm](https://github.com/svenklemm)
 * **Postgres/MySQL/MSSQL**: Use floor rounding in $__timeGroup macro function [#12460](https://github.com/grafana/grafana/issues/12460), thx [@svenklemm](https://github.com/svenklemm)
@@ -54,6 +56,8 @@ om/grafana/grafana/issues/12668)
 * **Graphite**: Fix for quoting of int function parameters (when using variables) [#11927](https://github.com/grafana/grafana/pull/11927)
 * **InfluxDB**: Support timeFilter in query templating for InfluxDB [#12598](https://github.com/grafana/grafana/pull/12598), thx [kichristensen](https://github.com/kichristensen)
 * **Provisioning**: Should allow one default datasource per organisation [#12229](https://github.com/grafana/grafana/issues/12229)
+* **Heatmap**: Fix broken tooltip and crosshair on Firefox [#12486](https://github.com/grafana/grafana/issues/12486)
+* **Login**: Show loading animation while waiting for authentication response on login [#12865](https://github.com/grafana/grafana/issues/12865)
 
 ### Breaking changes
 
@@ -68,6 +72,12 @@ These are new features that's still being worked on and are in an experimental p
 ### Tech
 
 * **Frontend**: Convert all Frontend Karma tests to Jest tests [#12224](https://github.com/grafana/grafana/issues/12224)
+
+# 5.2.3 (2018-08-29)
+
+### Important fix for LDAP & OAuth login vulnerability
+
+See [security announcement](https://community.grafana.com/t/grafana-5-2-3-and-4-6-4-security-update/10050) for details.
 
 # 5.2.2 (2018-07-25)
 
@@ -436,6 +446,12 @@ The following operations have been deprecated and will be removed in a future re
 The following properties have been deprecated and will be removed in a future release:
   - `uri` property in `GET /api/search` -> Use new `url` or `uid` property instead
   - `meta.slug` property in `GET /api/dashboards/uid/:uid` and `GET /api/dashboards/db/:slug` -> Use new `meta.url` or `dashboard.uid` property instead
+
+# 4.6.4 (2018-08-29)
+
+### Important fix for LDAP & OAuth login vulnerability
+
+See [security announcement](https://community.grafana.com/t/grafana-5-2-3-and-4-6-4-security-update/10050) for details.
 
 # 4.6.3 (2017-12-14)
 

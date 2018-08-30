@@ -3,7 +3,7 @@ import $q from 'q';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('InfluxDataSource', () => {
-  let ctx: any = {
+  const ctx: any = {
     backendSrv: {},
     $q: $q,
     templateSrv: new TemplateSrvStub(),
@@ -16,8 +16,8 @@ describe('InfluxDataSource', () => {
   });
 
   describe('When issuing metricFindQuery', () => {
-    let query = 'SELECT max(value) FROM measurement WHERE $timeFilter';
-    let queryOptions: any = {
+    const query = 'SELECT max(value) FROM measurement WHERE $timeFilter';
+    const queryOptions: any = {
       range: {
         from: '2018-01-01T00:00:00Z',
         to: '2018-01-02T00:00:00Z',

@@ -22,7 +22,7 @@ function grafanaRoutes($routeProvider) {
       template: '',
       resolve: {
         init: function(playlistSrv, $route) {
-          let playlistId = $route.current.params.id;
+          const playlistId = $route.current.params.id;
           playlistSrv.start(playlistId);
         },
       },

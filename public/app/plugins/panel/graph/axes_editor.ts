@@ -67,8 +67,8 @@ export class AxesEditorCtrl {
   }
 
   getDataFieldNames(onlyNumbers) {
-    var props = this.panelCtrl.processor.getDataFieldNames(this.panelCtrl.dataList, onlyNumbers);
-    var items = props.map(prop => {
+    const props = this.panelCtrl.processor.getDataFieldNames(this.panelCtrl.dataList, onlyNumbers);
+    const items = props.map(prop => {
       return { text: prop, value: prop };
     });
 

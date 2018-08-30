@@ -49,8 +49,8 @@ export class GrafanaCtrl {
     };
 
     $rootScope.onAppEvent = function(name, callback, localScope) {
-      var unbind = $rootScope.$on(name, callback);
-      var callerScope = this;
+      const unbind = $rootScope.$on(name, callback);
+      let callerScope = this;
       if (callerScope.$id === 1 && !localScope) {
         console.log('warning rootScope onAppEvent called without localscope');
       }
@@ -99,8 +99,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
     restrict: 'E',
     controller: GrafanaCtrl,
     link: (scope, elem) => {
-      var sidemenuOpen;
-      var body = $('body');
+      let sidemenuOpen;
+      const body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = function() {};
@@ -132,7 +132,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
       // tooltip removal fix
       // manage page classes
-      var pageClass;
+      let pageClass;
       scope.$on('$routeChangeSuccess', function(evt, data) {
         if (pageClass) {
           body.removeClass(pageClass);
@@ -154,14 +154,14 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         setViewModeBodyClass(body, data.params.kiosk, sidemenuOpen);
 
         // close all drops
-        for (let drop of Drop.drops) {
+        for (const drop of Drop.drops) {
           drop.destroy();
         }
       });
 
       // handle kiosk mode
       appEvents.on('toggle-kiosk-mode', options => {
-        let search = $location.search();
+        const search = $location.search();
 
         if (options && options.exit) {
           search.kiosk = 1;
@@ -188,9 +188,9 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       });
 
       // handle in active view state class
-      var lastActivity = new Date().getTime();
-      var activeUser = true;
-      var inActiveTimeLimit = 60 * 5000;
+      let lastActivity = new Date().getTime();
+      let activeUser = true;
+      const inActiveTimeLimit = 60 * 5000;
 
       function checkForInActiveUser() {
         if (!activeUser) {
@@ -235,16 +235,16 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
       // handle document clicks that should hide things
       body.click(function(evt) {
-        var target = $(evt.target);
+        const target = $(evt.target);
         if (target.parents().length === 0) {
           return;
         }
 
         // for stuff that animates, slides out etc, clicking it needs to
         // hide it right away
-        var clickAutoHide = target.closest('[data-click-hide]');
+        const clickAutoHide = target.closest('[data-click-hide]');
         if (clickAutoHide.length) {
-          var clickAutoHideParent = clickAutoHide.parent();
+          const clickAutoHideParent = clickAutoHide.parent();
           clickAutoHide.detach();
           setTimeout(function() {
             clickAutoHideParent.append(clickAutoHide);
@@ -265,7 +265,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         }
 
         // hide popovers
-        var popover = elem.find('.popover');
+        const popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
         }

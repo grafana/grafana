@@ -5,7 +5,7 @@ import { inject, observer } from 'mobx-react';
 import config from 'app/core/config';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { NavStore } from 'app/stores/NavStore/NavStore';
-import { TeamsStore, ITeam } from 'app/stores/TeamsStore/TeamsStore';
+import { TeamsStore, Team } from 'app/stores/TeamsStore/TeamsStore';
 import { ViewStore } from 'app/stores/ViewStore/ViewStore';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
@@ -40,7 +40,7 @@ export class TeamPages extends React.Component<Props, any> {
     nav.initTeamPage(this.getCurrentTeam(), this.currentPage, this.isSyncEnabled);
   }
 
-  getCurrentTeam(): ITeam {
+  getCurrentTeam(): Team {
     const { teams, view } = this.props;
     return teams.map.get(view.routeParams.get('id'));
   }

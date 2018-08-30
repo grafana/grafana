@@ -4,7 +4,7 @@ import DisabledPermissionsListItem from './DisabledPermissionsListItem';
 import { observer } from 'mobx-react';
 import { FolderInfo } from './FolderInfo';
 
-export interface IProps {
+export interface Props {
   permissions: any[];
   removeItem: any;
   permissionChanged: any;
@@ -13,7 +13,7 @@ export interface IProps {
 }
 
 @observer
-class PermissionsList extends Component<IProps, any> {
+class PermissionsList extends Component<Props, any> {
   render() {
     const { permissions, removeItem, permissionChanged, fetching, folderInfo } = this.props;
 
