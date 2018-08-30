@@ -1,6 +1,10 @@
 {
   "rules": {
     "array-type": [true, "array-simple"],
+    "arrow-return-shorthand": true,
+    "ban": [true,
+      {"name": "Array", "message": "tsstyle#array-constructor"}
+    ],
     "interface-name": [true, "never-prefix"],
     "no-string-throw": true,
     "no-unused-expression": true,
