@@ -201,23 +201,24 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   tableChanged() {
     this.target.table = this.tableSegment.value;
+    this.target.where = [];
+    this.target.group = [];
+    this.updateProjection();
+
     let task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then(result => {
       // check if time column is still valid
       if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
         let segment = this.uiSegmentSrv.newSegment(result[0].text);
         this.timeColumnSegment.html = segment.html;
         this.timeColumnSegment.value = segment.value;
-
-        return this.timeColumnChanged(false);
       }
+      return this.timeColumnChanged(false);
     });
     let task2 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then(result => {
       if (result.length > 0) {
         this.target.select = [[{ type: 'column', params: [result[0].text] }]];
-        this.target.where = [];
-        this.target.group = [];
+        this.updateProjection();
       }
-      this.updateProjection();
     });
 
     this.$q.all([task1, task2]).then(() => {
@@ -238,19 +239,19 @@ export class PostgresQueryCtrl extends QueryCtrl {
       if (result.length === 1) {
         if (this.target.timeColumnType !== result[0].text) {
           this.target.timeColumnType = result[0].text;
-          let partModel;
-          if (this.queryModel.hasUnixEpochTimecolumn()) {
-            partModel = sqlPart.create({ type: 'macro', name: '$__unixEpochFilter', params: [] });
-          } else {
-            partModel = sqlPart.create({ type: 'macro', name: '$__timeFilter', params: [] });
-          }
+        }
+        let partModel;
+        if (this.queryModel.hasUnixEpochTimecolumn()) {
+          partModel = sqlPart.create({ type: 'macro', name: '$__unixEpochFilter', params: [] });
+        } else {
+          partModel = sqlPart.create({ type: 'macro', name: '$__timeFilter', params: [] });
+        }
 
-          if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
-            // replace current macro
-            this.whereParts[0] = partModel;
-          } else {
-            this.whereParts.splice(0, 0, partModel);
-          }
+        if (this.whereParts.length >= 1 && this.whereParts[0].def.type === 'macro') {
+          // replace current macro
+          this.whereParts[0] = partModel;
+        } else {
+          this.whereParts.splice(0, 0, partModel);
         }
       }
 
