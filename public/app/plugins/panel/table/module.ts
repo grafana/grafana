@@ -222,6 +222,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       footerElem.append(paginationList);
     }
 
+    function onTableScroll(e) {
+      // move table headers together with horizontal scroll
+      const rootElement = $(e.currentTarget);
+      const headerElements = rootElement.find('.table-panel-table-header-inner');
+      headerElements.css('margin-left', -rootElement.scrollLeft());
+    }
+
     function renderPanel() {
       const panelElem = elem.parents('.panel-content');
       const rootElem = elem.find('.table-panel-scroll');
@@ -230,6 +237,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
       elem.css({ 'font-size': panel.fontSize });
       panelElem.addClass('table-panel-content');
+      rootElem.scroll(onTableScroll);
 
       appendTableRows(tbodyElem);
       appendPaginationControls(footerElem);
