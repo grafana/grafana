@@ -100,6 +100,7 @@ var (
 	AllowUserSignUp         bool
 	AllowUserOrgCreate      bool
 	AutoAssignOrg           bool
+	AutoAssignOrgId         int
 	AutoAssignOrgRole       string
 	VerifyEmailEnabled      bool
 	LoginHint               string
@@ -592,6 +593,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()

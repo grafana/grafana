@@ -6,6 +6,7 @@ import { AlertListStore } from './../AlertListStore/AlertListStore';
 import { ViewStore } from './../ViewStore/ViewStore';
 import { FolderStore } from './../FolderStore/FolderStore';
 import { PermissionsStore } from './../PermissionsStore/PermissionsStore';
+import { TeamsStore } from './../TeamsStore/TeamsStore';
 
 export const RootStore = types.model({
   search: types.optional(SearchStore, {
@@ -28,7 +29,10 @@ export const RootStore = types.model({
     routeParams: {},
   }),
   folder: types.optional(FolderStore, {}),
+  teams: types.optional(TeamsStore, {
+    map: {},
+  }),
 });
 
-type IRootStoreType = typeof RootStore.Type;
-export interface IRootStore extends IRootStoreType {}
+type RootStoreType = typeof RootStore.Type;
+export interface RootStoreInterface extends RootStoreType {}

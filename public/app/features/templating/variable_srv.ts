@@ -2,6 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
+import { Graph } from 'app/core/utils/dag';
 
 export class VariableSrv {
   dashboard: any;
@@ -22,11 +23,11 @@ export class VariableSrv {
     this.templateSrv.init(this.variables);
 
     // init variables
-    for (let variable of this.variables) {
+    for (const variable of this.variables) {
       variable.initLock = this.$q.defer();
     }
 
-    var queryParams = this.$location.search();
+    const queryParams = this.$location.search();
     return this.$q
       .all(
         this.variables.map(variable => {
@@ -43,8 +44,8 @@ export class VariableSrv {
       return Promise.resolve({});
     }
 
-    var promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
-      var previousOptions = variable.options.slice();
+    const promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
+      const previousOptions = variable.options.slice();
 
       return variable.updateOptions().then(() => {
         if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
@@ -57,9 +58,9 @@ export class VariableSrv {
   }
 
   processVariable(variable, queryParams) {
-    var dependencies = [];
+    const dependencies = [];
 
-    for (let otherVariable of this.variables) {
+    for (const otherVariable of this.variables) {
       if (variable.dependsOn(otherVariable)) {
         dependencies.push(otherVariable.initLock.promise);
       }
@@ -68,7 +69,7 @@ export class VariableSrv {
     return this.$q
       .all(dependencies)
       .then(() => {
-        var urlValue = queryParams['var-' + variable.name];
+        const urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
           return variable.setValueFromUrl(urlValue).then(variable.initLock.resolve);
         }
@@ -86,14 +87,14 @@ export class VariableSrv {
   }
 
   createVariableFromModel(model) {
-    var ctor = variableTypes[model.type].ctor;
+    const ctor = variableTypes[model.type].ctor;
     if (!ctor) {
       throw {
         message: 'Unable to find variable constructor for ' + model.type,
       };
     }
 
-    var variable = this.$injector.instantiate(ctor, { model: model });
+    const variable = this.$injector.instantiate(ctor, { model: model });
     return variable;
   }
 
@@ -104,7 +105,7 @@ export class VariableSrv {
   }
 
   removeVariable(variable) {
-    var index = _.indexOf(this.variables, variable);
+    const index = _.indexOf(this.variables, variable);
     this.variables.splice(index, 1);
     this.templateSrv.updateTemplateData();
     this.dashboard.updateSubmenuVisibility();
@@ -120,16 +121,13 @@ export class VariableSrv {
       return this.$q.when();
     }
 
-    // cascade updates to variables that use this variable
-    var promises = _.map(this.variables, otherVariable => {
-      if (otherVariable === variable) {
-        return;
-      }
-
-      if (otherVariable.dependsOn(variable)) {
-        return this.updateOptions(otherVariable);
-      }
-    });
+    const g = this.createGraph();
+    const promises = g
+      .getNode(variable.name)
+      .getOptimizedInputEdges()
+      .map(e => {
+        return this.updateOptions(this.variables.find(v => v.name === e.inputNode.name));
+      });
 
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
@@ -141,7 +139,7 @@ export class VariableSrv {
 
   selectOptionsForCurrentValue(variable) {
     var i, y, value, option;
-    var selected: any = [];
+    const selected: any = [];
 
     for (i = 0; i < variable.options.length; i++) {
       option = variable.options[i];
@@ -187,7 +185,7 @@ export class VariableSrv {
 
       return variable.setValue(selected);
     } else {
-      var currentOption = _.find(variable.options, {
+      const currentOption = _.find(variable.options, {
         text: variable.current.text,
       });
       if (currentOption) {
@@ -214,13 +212,13 @@ export class VariableSrv {
       });
 
       let defaultText = urlValue;
-      let defaultValue = urlValue;
+      const defaultValue = urlValue;
 
       if (!option && _.isArray(urlValue)) {
         defaultText = [];
 
         for (let n = 0; n < urlValue.length; n++) {
-          let t = _.find(variable.options, op => {
+          const t = _.find(variable.options, op => {
             return op.value === urlValue[n];
           });
 
@@ -248,7 +246,7 @@ export class VariableSrv {
 
   updateUrlParamsWithCurrentVariables() {
     // update url
-    var params = this.$location.search();
+    const params = this.$location.search();
 
     // remove variable params
     _.each(params, function(value, key) {
@@ -277,7 +275,7 @@ export class VariableSrv {
       this.addVariable(variable);
     }
 
-    let filters = variable.filters;
+    const filters = variable.filters;
     let filter = _.find(filters, { key: options.key, value: options.value });
 
     if (!filter) {
@@ -287,6 +285,26 @@ export class VariableSrv {
 
     filter.operator = options.operator;
     this.variableUpdated(variable, true);
+  }
+
+  createGraph() {
+    const g = new Graph();
+
+    this.variables.forEach(v1 => {
+      g.createNode(v1.name);
+
+      this.variables.forEach(v2 => {
+        if (v1 === v2) {
+          return;
+        }
+
+        if (v1.dependsOn(v2)) {
+          g.link(v1.name, v2.name);
+        }
+      });
+    });
+
+    return g;
   }
 }
 

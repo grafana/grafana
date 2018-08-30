@@ -8,7 +8,7 @@ import appEvents from 'app/core/app_events';
 import Drop from 'tether-drop';
 import { createStore } from 'app/stores/store';
 import colors from 'app/core/utils/colors';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { configureStore } from 'app/store/configureStore';
 
@@ -25,7 +25,9 @@ export class GrafanaCtrl {
     backendSrv: BackendSrv,
     datasourceSrv: DatasourceSrv
   ) {
+    // sets singleston instances for angular services so react components can access them
     configureStore();
+    setBackendSrv(backendSrv);
     createStore({ backendSrv, datasourceSrv });
 
     $scope.init = function() {
@@ -140,7 +142,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         }
 
         // close all drops
-        for (let drop of Drop.drops) {
+        for (const drop of Drop.drops) {
           drop.destroy();
         }
       });

@@ -72,6 +72,13 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 		return err
 	}
 
+	// Sync isGrafanaAdmin permission
+	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
+		if err := bus.Dispatch(&m.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
+			return err
+		}
+	}
+
 	err = bus.Dispatch(&m.SyncTeamsCommand{
 		User:         cmd.Result,
 		ExternalUser: extUser,

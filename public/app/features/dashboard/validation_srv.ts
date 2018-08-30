@@ -37,7 +37,7 @@ export class ValidationSrv {
       });
     }
 
-    let deferred = this.$q.defer();
+    const deferred = this.$q.defer();
 
     const promises = [];
     promises.push(this.backendSrv.search({ type: hitTypes.FOLDER, folderIds: [folderId], query: name }));
@@ -54,7 +54,7 @@ export class ValidationSrv {
         hits = hits.concat(res[1]);
       }
 
-      for (let hit of hits) {
+      for (const hit of hits) {
         if (nameLowerCased === hit.title.toLowerCase()) {
           deferred.reject({
             type: 'EXISTING',

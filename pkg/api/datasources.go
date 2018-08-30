@@ -158,12 +158,26 @@ func UpdateDataSource(c *m.ReqContext, cmd m.UpdateDataSourceCommand) Response {
 		}
 		return Error(500, "Failed to update datasource", err)
 	}
-	ds := convertModelToDtos(cmd.Result)
+
+	query := m.GetDataSourceByIdQuery{
+		Id:    cmd.Id,
+		OrgId: c.OrgId,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrDataSourceNotFound {
+			return Error(404, "Data source not found", nil)
+		}
+		return Error(500, "Failed to query datasources", err)
+	}
+
+	dtos := convertModelToDtos(query.Result)
+
 	return JSON(200, util.DynMap{
 		"message":    "Datasource updated",
 		"id":         cmd.Id,
 		"name":       cmd.Name,
-		"datasource": ds,
+		"datasource": dtos,
 	})
 }
 

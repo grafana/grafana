@@ -22,7 +22,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
-
     this.target = this.target;
     this.queryModel = new InfluxQuery(this.target, templateSrv, this.panel.scopedVars);
     this.queryBuilder = new InfluxQueryBuilder(this.target, this.datasource.database);
@@ -37,7 +36,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     }
 
     this.tagSegments = [];
-    for (let tag of this.target.tags) {
+    for (const tag of this.target.tags) {
       if (!tag.operator) {
         if (/^\/.*\/$/.test(tag.value)) {
           tag.operator = '=~';
@@ -107,7 +106,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         if (!this.queryModel.hasGroupByTime()) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'time($interval)' }));
         }
-        for (let tag of tags) {
+        for (const tag of tags) {
           options.push(this.uiSegmentSrv.newSegment({ value: 'tag(' + tag.text + ')' }));
         }
         return options;
@@ -252,7 +251,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       });
 
       if (addTemplateVars) {
-        for (let variable of this.templateSrv.variables) {
+        for (const variable of this.templateSrv.variables) {
           segments.unshift(
             this.uiSegmentSrv.newSegment({
               type: 'value',

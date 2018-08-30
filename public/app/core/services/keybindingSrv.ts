@@ -70,7 +70,7 @@ export class KeybindingSrv {
   }
 
   exit() {
-    var popups = $('.popover.in');
+    const popups = $('.popover.in');
     if (popups.length > 0) {
       return;
     }
@@ -89,7 +89,7 @@ export class KeybindingSrv {
     }
 
     // close settings view
-    var search = this.$location.search();
+    const search = this.$location.search();
     if (search.editview) {
       delete search.editview;
       this.$location.search(search);
@@ -123,7 +123,7 @@ export class KeybindingSrv {
   }
 
   showDashEditView() {
-    var search = _.extend(this.$location.search(), { editview: 'settings' });
+    const search = _.extend(this.$location.search(), { editview: 'settings' });
     this.$location.search(search);
   }
 
@@ -191,7 +191,7 @@ export class KeybindingSrv {
               range,
             };
             const exploreState = encodePathComponent(JSON.stringify(state));
-            this.$location.url(`/explore/${exploreState}`);
+            this.$location.url(`/explore?state=${exploreState}`);
           }
         }
       });
@@ -210,7 +210,7 @@ export class KeybindingSrv {
     // duplicate panel
     this.bind('p d', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        let panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
+        const panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
         dashboard.duplicatePanel(dashboard.panels[panelIndex]);
       }
     });
@@ -218,8 +218,8 @@ export class KeybindingSrv {
     // share panel
     this.bind('p s', () => {
       if (dashboard.meta.focusPanelId) {
-        var shareScope = scope.$new();
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        const shareScope = scope.$new();
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
         shareScope.panel = panelInfo.panel;
         shareScope.dashboard = dashboard;
 
@@ -258,6 +258,12 @@ export class KeybindingSrv {
 
     this.bind('d v', () => {
       appEvents.emit('toggle-view-mode');
+    });
+
+    //Autofit panels
+    this.bind('d a', () => {
+      // this has to be a full page reload
+      window.location.href = window.location.href + '&autofitpanels';
     });
   }
 }

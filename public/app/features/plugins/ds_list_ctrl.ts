@@ -17,8 +17,9 @@ export class DataSourcesCtrl {
   }
 
   onQueryUpdated() {
-    let regex = new RegExp(this.searchQuery, 'ig');
+    const regex = new RegExp(this.searchQuery, 'ig');
     this.datasources = _.filter(this.unfiltered, item => {
+      regex.lastIndex = 0;
       return regex.test(item.name) || regex.test(item.type);
     });
   }

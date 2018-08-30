@@ -28,7 +28,7 @@ export class MetricsTabCtrl {
     this.datasources = datasourceSrv.getMetricSources();
     this.panelDsValue = this.panelCtrl.panel.datasource;
 
-    for (let ds of this.datasources) {
+    for (const ds of this.datasources) {
       if (ds.value === this.panelDsValue) {
         this.datasourceInstance = ds;
       }

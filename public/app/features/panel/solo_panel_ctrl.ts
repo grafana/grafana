@@ -5,13 +5,13 @@ import appEvents from 'app/core/app_events';
 export class SoloPanelCtrl {
   /** @ngInject */
   constructor($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv, backendSrv) {
-    var panelId;
+    let panelId;
 
     $scope.init = function() {
       contextSrv.sidemenu = false;
       appEvents.emit('toggle-sidemenu-hidden');
 
-      var params = $location.search();
+      const params = $location.search();
       panelId = parseInt(params.panelId);
 
       $scope.onAppEvent('dashboard-initialized', $scope.initPanelScope);
@@ -34,7 +34,7 @@ export class SoloPanelCtrl {
     };
 
     $scope.initPanelScope = function() {
-      let panelInfo = $scope.dashboard.getPanelInfoById(panelId);
+      const panelInfo = $scope.dashboard.getPanelInfoById(panelId);
 
       // fake row ctrl scope
       $scope.ctrl = {

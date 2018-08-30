@@ -62,6 +62,8 @@ export class DashboardCtrl implements PanelContainer {
       .finally(() => {
         this.dashboard = dashboard;
         this.dashboard.processRepeats();
+        this.dashboard.updateSubmenuVisibility();
+        this.dashboard.autoFitPanels(window.innerHeight);
 
         this.unsavedChangesSrv.init(dashboard, this.$scope);
 
@@ -70,8 +72,6 @@ export class DashboardCtrl implements PanelContainer {
         this.dashboardViewState = this.dashboardViewStateSrv.create(this.$scope);
 
         this.keybindingSrv.setupDashboardBindings(this.$scope, dashboard);
-
-        this.dashboard.updateSubmenuVisibility();
         this.setWindowTitleAndTheme();
 
         this.$scope.appEvent('dashboard-initialized', dashboard);
@@ -106,7 +106,7 @@ export class DashboardCtrl implements PanelContainer {
   }
 
   showJsonEditor(evt, options) {
-    var editScope = this.$rootScope.$new();
+    const editScope = this.$rootScope.$new();
     editScope.object = options.object;
     editScope.updateHandler = options.updateHandler;
     this.$scope.appEvent('show-dash-editor', {
@@ -137,7 +137,7 @@ export class DashboardCtrl implements PanelContainer {
       return;
     }
 
-    var panelInfo = this.dashboard.getPanelInfoById(options.panelId);
+    const panelInfo = this.dashboard.getPanelInfoById(options.panelId);
     this.removePanel(panelInfo.panel, true);
   }
 

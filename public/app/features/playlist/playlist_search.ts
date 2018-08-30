@@ -19,7 +19,7 @@ export class PlaylistSearchCtrl {
 
   searchDashboards() {
     this.tagsMode = false;
-    var prom: any = {};
+    const prom: any = {};
 
     prom.promise = this.backendSrv.search(this.query).then(result => {
       return {
@@ -50,7 +50,7 @@ export class PlaylistSearchCtrl {
   }
 
   getTags() {
-    var prom: any = {};
+    const prom: any = {};
     prom.promise = this.backendSrv.get('/api/dashboards/tags').then(result => {
       return {
         dashboardResult: [],

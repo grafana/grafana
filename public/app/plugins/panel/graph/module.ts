@@ -13,6 +13,7 @@ import { axesEditorComponent } from './axes_editor';
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
+  renderError: boolean;
   hiddenSeries: any = {};
   seriesList: any = [];
   dataList: any = [];
@@ -195,7 +196,7 @@ class GraphCtrl extends MetricsPanelCtrl {
         tip: 'No datapoints returned from data query',
       };
     } else {
-      for (let series of this.seriesList) {
+      for (const series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
             title: 'Data points outside time range',
@@ -225,7 +226,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    for (let series of this.seriesList) {
+    for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
       if (series.unit) {

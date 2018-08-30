@@ -14,7 +14,7 @@ export class DataProcessor {
     var firstItem;
     if (options.dataList && options.dataList.length > 0) {
       firstItem = options.dataList[0];
-      let autoDetectMode = this.getAutoDetectXAxisMode(firstItem);
+      const autoDetectMode = this.getAutoDetectXAxisMode(firstItem);
       if (this.panel.xaxis.mode !== autoDetectMode) {
         this.panel.xaxis.mode = autoDetectMode;
         this.setPanelDefaultsForNewXAxisMode();
@@ -127,7 +127,7 @@ export class DataProcessor {
   }
 
   customHandler(dataItem) {
-    let nameField = this.panel.xaxis.name;
+    const nameField = this.panel.xaxis.name;
     if (!nameField) {
       throw {
         message: 'No field name specified to use for x-axis, check your axes settings',
@@ -159,9 +159,9 @@ export class DataProcessor {
       return [];
     }
 
-    let fields = [];
+    const fields = [];
     var firstItem = dataList[0];
-    let fieldParts = [];
+    const fieldParts = [];
 
     function getPropertiesRecursive(obj) {
       _.forEach(obj, (value, key) => {
@@ -170,7 +170,7 @@ export class DataProcessor {
           getPropertiesRecursive(value);
         } else {
           if (!onlyNumbers || _.isNumber(value)) {
-            let field = fieldParts.concat(key).join('.');
+            const field = fieldParts.concat(key).join('.');
             fields.push(field);
           }
         }
@@ -205,7 +205,7 @@ export class DataProcessor {
   }
 
   pluckDeep(obj: any, property: string) {
-    let propertyParts = property.split('.');
+    const propertyParts = property.split('.');
     let value = obj;
     for (let i = 0; i < propertyParts.length; ++i) {
       if (value[propertyParts[i]]) {

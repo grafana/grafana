@@ -2,13 +2,13 @@ import React from 'react';
 import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import IContainerProps from 'app/containers/IContainerProps';
 import { store } from 'app/store/configureStore';
 import { setNav } from 'app/store/nav/actions';
+import ContainerProps from 'app/containers/ContainerProps';
 
 @inject('nav', 'serverStats')
 @observer
-export class ServerStats extends React.Component<IContainerProps, any> {
+export class ServerStats extends React.Component<ContainerProps, any> {
   constructor(props) {
     super(props);
     const { nav, serverStats } = this.props;

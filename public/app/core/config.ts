@@ -31,7 +31,7 @@ export class Settings {
   loginError: any;
 
   constructor(options) {
-    var defaults = {
+    const defaults = {
       datasources: {},
       window_title_prefix: 'Grafana - ',
       panels: {},
@@ -51,8 +51,8 @@ export class Settings {
   }
 }
 
-var bootData = (<any>window).grafanaBootData || { settings: {} };
-var options = bootData.settings;
+const bootData = (<any>window).grafanaBootData || { settings: {} };
+const options = bootData.settings;
 options.bootData = bootData;
 
 const config = new Settings(options);

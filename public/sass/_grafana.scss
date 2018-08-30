@@ -1,6 +1,7 @@
 // vendor
 @import '../vendor/css/timepicker.css';
 @import '../vendor/css/spectrum.css';
+@import '../vendor/css/rc-cascader.scss';
 
 // MIXINS
 @import 'mixins/mixins';
@@ -67,6 +68,7 @@
 @import 'components/filter-list';
 @import 'components/filter-table';
 @import 'components/old_stuff';
+@import 'components/slate_editor';
 @import 'components/typeahead';
 @import 'components/modals';
 @import 'components/dropdown';
@@ -92,6 +94,7 @@
 @import 'components/form_select_box';
 @import 'components/user-picker';
 @import 'components/description-picker';
+@import 'components/delete_button';
 
 // PAGES
 @import 'pages/login';

@@ -45,8 +45,8 @@ export class LoginCtrl {
     };
 
     $scope.changeView = function() {
-      let loginView = document.querySelector('#login-view');
-      let changePasswordView = document.querySelector('#change-password-view');
+      const loginView = document.querySelector('#login-view');
+      const changePasswordView = document.querySelector('#change-password-view');
 
       loginView.className += ' add';
       setTimeout(() => {
@@ -118,7 +118,7 @@ export class LoginCtrl {
     };
 
     $scope.toGrafana = function() {
-      var params = $location.search();
+      const params = $location.search();
 
       if (params.redirect && params.redirect[0] === '/') {
         window.location.href = config.appSubUrl + params.redirect;

@@ -14,12 +14,12 @@ After adding ldif files to `prepopulate`:
 
 ## Enabling LDAP in Grafana
 
-The default `ldap.toml` file in `conf` has host set to `127.0.0.1` and port to set to 389 so all you need to do is enable it in the .ini file to get Grafana to use this block:
+Copy the ldap_dev.toml file in this folder into your `conf` folder (it is gitignored already). To enable it in the .ini file to get Grafana to use this block:
 
 ```ini
 [auth.ldap]
 enabled = true
-config_file = conf/ldap.toml
+config_file = conf/ldap_dev.toml
 ; allow_sign_up = true
 ```
 
@@ -43,6 +43,3 @@ editors
 
 no groups
   ldap-viewer
-
-
-

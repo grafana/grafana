@@ -152,6 +152,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.addOverrideOption('Z-index', 'zindex', [-3, -2, -1, 0, 1, 2, 3]);
   $scope.addOverrideOption('Transform', 'transform', ['negative-Y']);
   $scope.addOverrideOption('Legend', 'legend', [true, false]);
+  $scope.addOverrideOption('Hide in tooltip', 'hideTooltip', [true, false]);
   $scope.updateCurrentOverrides();
 }
 

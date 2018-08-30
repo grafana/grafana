@@ -46,16 +46,16 @@ export class ValueSelectDropdownCtrl {
   }
 
   updateLinkText() {
-    let current = this.variable.current;
+    const current = this.variable.current;
 
     if (current.tags && current.tags.length) {
       // filer out values that are in selected tags
-      let selectedAndNotInTag = _.filter(this.variable.options, option => {
+      const selectedAndNotInTag = _.filter(this.variable.options, option => {
         if (!option.selected) {
           return false;
         }
         for (let i = 0; i < current.tags.length; i++) {
-          let tag = current.tags[i];
+          const tag = current.tags[i];
           if (_.indexOf(tag.values, option.value) !== -1) {
             return false;
           }
@@ -64,7 +64,7 @@ export class ValueSelectDropdownCtrl {
       });
 
       // convert values to text
-      let currentTexts = _.map(selectedAndNotInTag, 'text');
+      const currentTexts = _.map(selectedAndNotInTag, 'text');
 
       // join texts
       this.linkText = currentTexts.join(' + ');
@@ -142,7 +142,7 @@ export class ValueSelectDropdownCtrl {
     commitChange = commitChange || false;
     excludeOthers = excludeOthers || false;
 
-    let setAllExceptCurrentTo = newValue => {
+    const setAllExceptCurrentTo = newValue => {
       _.each(this.options, other => {
         if (option !== other) {
           other.selected = newValue;
@@ -246,9 +246,9 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
     controllerAs: 'vm',
     bindToController: true,
     link: function(scope, elem) {
-      let bodyEl = angular.element($window.document.body);
-      let linkEl = elem.find('.variable-value-link');
-      let inputEl = elem.find('input');
+      const bodyEl = angular.element($window.document.body);
+      const linkEl = elem.find('.variable-value-link');
+      const inputEl = elem.find('input');
 
       function openDropdown() {
         inputEl.css('width', Math.max(linkEl.width(), 80) + 'px');
@@ -288,7 +288,7 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
         }
       });
 
-      let cleanUp = $rootScope.$on('template-variable-value-updated', () => {
+      const cleanUp = $rootScope.$on('template-variable-value-updated', () => {
         scope.vm.updateLinkText();
       });
 
