@@ -18,7 +18,7 @@ function getBlockNodes(nodes) {
   return blockNodes || nodes;
 }
 
-/** @ngInject **/
+/** @ngInject */
 function rebuildOnChange($animate) {
   return {
     multiElement: true,

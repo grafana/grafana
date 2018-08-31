@@ -12,7 +12,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
   esVersion: any;
   rawQueryOld: string;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private $rootScope, private uiSegmentSrv) {
     super($scope, $injector);
 

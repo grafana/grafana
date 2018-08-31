@@ -22,7 +22,7 @@ export class DatasourceVariable implements Variable {
     skipUrlSync: false,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model, private datasourceSrv, private variableSrv, private templateSrv) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;

@@ -12,7 +12,7 @@ export class ProfileCtrl {
   readonlyLoginFields = config.disableLoginForm;
   navModel: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
     this.getUserTeams();

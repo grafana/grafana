@@ -1,7 +1,7 @@
 import angular from 'angular';
 
 export class OrgDetailsCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $http, backendSrv, contextSrv, navModelSrv) {
     $scope.init = function() {
       $scope.getOrgInfo();

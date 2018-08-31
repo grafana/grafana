@@ -36,7 +36,7 @@ export class FormDropdownCtrl {
   startOpen: any;
   debounce: number;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private $scope, $element, private $sce, private templateSrv, private $q) {
     this.inputElement = $element.find('input').first();
     this.linkElement = $element.find('a').first();

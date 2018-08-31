@@ -3,7 +3,7 @@ import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import alertDef from '../alerting/alert_def';
 
-/** @ngInject **/
+/** @ngInject */
 export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, $compile) {
   function sanitizeString(str) {
     try {

@@ -8,7 +8,7 @@ import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions
 import TeamPages from 'app/containers/Teams/TeamPages';
 import TeamList from 'app/containers/Teams/TeamList';
 
-/** @ngInject **/
+/** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
   $locationProvider.html5Mode(true);
 

@@ -2,7 +2,7 @@ import angular from 'angular';
 import config from 'app/core/config';
 
 export class ChangePasswordCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, backendSrv, $location, navModelSrv) {
     $scope.command = {};
     $scope.authProxyEnabled = config.authProxyEnabled;
