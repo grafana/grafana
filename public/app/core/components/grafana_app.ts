@@ -105,6 +105,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = function() {};
 
+      $('.preloader').remove();
+
       sidemenuOpen = scope.contextSrv.sidemenu;
       body.toggleClass('sidemenu-open', sidemenuOpen);
 
