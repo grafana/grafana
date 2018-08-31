@@ -1,16 +1,23 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
+import { connect } from 'react-redux';
 import classNames from 'classnames';
-import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { AlertRule } from 'app/stores/AlertListStore/AlertListStore';
 import appEvents from 'app/core/app_events';
-import ContainerProps from 'app/containers/ContainerProps';
 import Highlighter from 'react-highlight-words';
+import { initNav } from 'app/core/actions';
+import { ContainerProps } from 'app/types';
+import { getAlertRules, AlertRule } from '../apis';
 
-@inject('view', 'nav', 'alertList')
-@observer
-export class AlertRuleList extends React.Component<ContainerProps, any> {
+interface Props extends ContainerProps {}
+
+interface State {
+  rules: AlertRule[];
+  search: string;
+  stateFilter: string;
+}
+
+export class AlertRuleList extends PureComponent<Props, State> {
   stateFilters = [
     { text: 'All', value: 'all' },
     { text: 'OK', value: 'ok' },
@@ -23,19 +30,35 @@ export class AlertRuleList extends React.Component<ContainerProps, any> {
   constructor(props) {
     super(props);
 
-    this.props.nav.load('alerting', 'alert-list');
+    this.state = {
+      rules: [],
+      search: '',
+      stateFilter: '',
+    };
+
+    this.props.initNav('alerting', 'alert-list');
+  }
+
+  componentDidMount() {
     this.fetchRules();
   }
 
   onStateFilterChanged = evt => {
-    this.props.view.updateQuery({ state: evt.target.value });
-    this.fetchRules();
+    // this.props.view.updateQuery({ state: evt.target.value });
+    // this.fetchRules();
   };
 
-  fetchRules() {
-    this.props.alertList.loadRules({
-      state: this.props.view.query.get('state') || 'all',
-    });
+  async fetchRules() {
+    try {
+      const rules = await getAlertRules();
+      this.setState({ rules });
+    } catch (error) {
+      console.error(error);
+    }
+
+    // this.props.alertList.loadRules({
+    //   state: this.props.view.query.get('state') || 'all',
+    // });
   }
 
   onOpenHowTo = () => {
@@ -47,15 +70,16 @@ export class AlertRuleList extends React.Component<ContainerProps, any> {
   };
 
   onSearchQueryChange = evt => {
-    this.props.alertList.setSearchQuery(evt.target.value);
+    // this.props.alertList.setSearchQuery(evt.target.value);
   };
 
   render() {
-    const { nav, alertList } = this.props;
+    const { navModel } = this.props;
+    const { rules, search, stateFilter } = this.state;
 
     return (
       <div>
-        <PageHeader model={nav as any} />
+        <PageHeader model={navModel} />
         <div className="page-container page-body">
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
@@ -64,7 +88,7 @@ export class AlertRuleList extends React.Component<ContainerProps, any> {
                   type="text"
                   className="gf-form-input"
                   placeholder="Search alerts"
-                  value={alertList.search}
+                  value={search}
                   onChange={this.onSearchQueryChange}
                 />
                 <i className="gf-form-input-icon fa fa-search" />
@@ -74,7 +98,7 @@ export class AlertRuleList extends React.Component<ContainerProps, any> {
               <label className="gf-form-label">States</label>
 
               <div className="gf-form-select-wrapper width-13">
-                <select className="gf-form-input" onChange={this.onStateFilterChanged} value={alertList.stateFilter}>
+                <select className="gf-form-input" onChange={this.onStateFilterChanged} value={stateFilter}>
                   {this.stateFilters.map(AlertStateFilterOption)}
                 </select>
               </div>
@@ -89,8 +113,8 @@ export class AlertRuleList extends React.Component<ContainerProps, any> {
 
           <section>
             <ol className="alert-rule-list">
-              {alertList.filteredRules.map(rule => (
-                <AlertRuleItem rule={rule} key={rule.id} search={alertList.search} />
+              {rules.map(rule => (
+                <AlertRuleItem rule={rule} key={rule.id} search={search} />
               ))}
             </ol>
           </section>
@@ -113,10 +137,9 @@ export interface AlertRuleItemProps {
   search: string;
 }
 
-@observer
 export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
   toggleState = () => {
-    this.props.rule.togglePaused();
+    // this.props.rule.togglePaused();
   };
 
   renderText(text: string) {
@@ -134,8 +157,8 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
 
     const stateClass = classNames({
       fa: true,
-      'fa-play': rule.isPaused,
-      'fa-pause': !rule.isPaused,
+      'fa-play': rule.state === 'paused',
+      'fa-pause': rule.state !== 'paused',
     });
 
     const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
@@ -175,4 +198,12 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
   }
 }
 
-export default hot(module)(AlertRuleList);
+const mapStateToProps = state => ({
+  navModel: state.navModel,
+});
+
+const mapDispatchToProps = {
+  initNav,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(AlertRuleList));
