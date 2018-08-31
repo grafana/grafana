@@ -9,7 +9,7 @@ export class MysqlDatasource {
   queryModel: MysqlQuery;
 
   /** @ngInject **/
-  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
+  constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
@@ -108,8 +108,11 @@ export class MysqlDatasource {
       format: 'table',
     };
 
+    const range = this.timeSrv.timeRange();
     const data = {
       queries: [interpolatedQuery],
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
     };
 
     if (optionalOptions && optionalOptions.range && optionalOptions.range.from) {
