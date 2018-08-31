@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 
 	plugin "github.com/hashicorp/go-plugin"
@@ -35,6 +36,12 @@ type RenderingService struct {
 
 func (rs *RenderingService) Init() error {
 	rs.log = log.New("rendering")
+
+	// ensure ImagesDir exists
+	err := os.MkdirAll(rs.Cfg.ImagesDir, 0700)
+	if err != nil {
+		return err
+	}
 
 	// set value used for domain attribute of renderKey cookie
 	if rs.Cfg.RendererUrl != "" {
