@@ -10,7 +10,7 @@ import { createStore } from 'app/stores/store';
 import colors from 'app/core/utils/colors';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { configureStore } from 'app/store/configureStore';
+import { configureStore } from 'app/stores/configureStore';
 
 export class GrafanaCtrl {
   /** @ngInject */

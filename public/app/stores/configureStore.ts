@@ -1,10 +1,10 @@
 import { createStore, applyMiddleware, compose, combineReducers } from 'redux';
 import thunk from 'redux-thunk';
 import { createLogger } from 'redux-logger';
-import { navReducer } from './nav/reducers';
+import sharedReducers from 'app/core/reducers';
 
 const rootReducer = combineReducers({
-  nav: navReducer,
+  ...sharedReducers
 });
 
 export let store;
