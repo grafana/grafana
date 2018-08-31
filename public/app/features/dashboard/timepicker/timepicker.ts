@@ -23,6 +23,7 @@ export class TimePickerCtrl {
   isUtc: boolean;
   firstDayOfWeek: number;
   isOpen: boolean;
+  isAbsolute: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
@@ -65,6 +66,7 @@ export class TimePickerCtrl {
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
     this.timeRaw = timeRaw;
+    this.isAbsolute = moment.isMoment(this.timeRaw.to);
   }
 
   zoom(factor) {
@@ -75,7 +77,7 @@ export class TimePickerCtrl {
     const range = this.timeSrv.timeRange();
 
     const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
-    var to, from;
+    let to, from;
     if (direction === -1) {
       to = range.to.valueOf() - timespan;
       from = range.from.valueOf() - timespan;

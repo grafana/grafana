@@ -40,9 +40,8 @@ export class LoadDashboardCtrl {
         }
       }
 
-      if ($routeParams.autofitpanels) {
-        result.meta.autofitpanels = true;
-      }
+      result.meta.autofitpanels = $routeParams.autofitpanels;
+      result.meta.kiosk = $routeParams.kiosk;
 
       $scope.initDashboard(result, $scope);
     });

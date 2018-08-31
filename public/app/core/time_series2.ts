@@ -124,7 +124,7 @@ export default class TimeSeries {
     delete this.stack;
     delete this.bars.show;
 
-    for (var i = 0; i < overrides.length; i++) {
+    for (let i = 0; i < overrides.length; i++) {
       const override = overrides[i];
       if (!matchSeriesOverride(override.alias, this.alias)) {
         continue;
@@ -211,14 +211,14 @@ export default class TimeSeries {
 
     const ignoreNulls = fillStyle === 'connected';
     const nullAsZero = fillStyle === 'null as zero';
-    var currentTime;
-    var currentValue;
-    var nonNulls = 0;
-    var previousTime;
-    var previousValue = 0;
-    var previousDeltaUp = true;
+    let currentTime;
+    let currentValue;
+    let nonNulls = 0;
+    let previousTime;
+    let previousValue = 0;
+    let previousDeltaUp = true;
 
-    for (var i = 0; i < this.datapoints.length; i++) {
+    for (let i = 0; i < this.datapoints.length; i++) {
       currentValue = this.datapoints[i][0];
       currentTime = this.datapoints[i][1];
 
@@ -328,7 +328,7 @@ export default class TimeSeries {
   }
 
   isMsResolutionNeeded() {
-    for (var i = 0; i < this.datapoints.length; i++) {
+    for (let i = 0; i < this.datapoints.length; i++) {
       if (this.datapoints[i][1] !== null) {
         const timestamp = this.datapoints[i][1].toString();
         if (timestamp.length === 13 && timestamp % 1000 !== 0) {

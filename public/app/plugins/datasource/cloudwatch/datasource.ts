@@ -85,12 +85,12 @@ export default class CloudWatchDatasource {
     const end = this.convertToCloudWatchTime(options.range.to, true);
     now = Math.round((now || Date.now()) / 1000);
 
-    var period;
+    let period;
     const range = end - start;
 
     const hourSec = 60 * 60;
     const daySec = hourSec * 24;
-    var periodUnit = 60;
+    let periodUnit = 60;
     if (!target.period) {
       if (now - start <= daySec * 15) {
         // until 15 days ago
@@ -222,10 +222,10 @@ export default class CloudWatchDatasource {
   }
 
   metricFindQuery(query) {
-    var region;
-    var namespace;
-    var metricName;
-    var filterJson;
+    let region;
+    let namespace;
+    let metricName;
+    let filterJson;
 
     const regionQuery = query.match(/^regions\(\)/);
     if (regionQuery) {
@@ -291,7 +291,7 @@ export default class CloudWatchDatasource {
       return this.templateSrv.replace(s);
     });
     const defaultPeriod = annotation.prefixMatching ? '' : '300';
-    var period = annotation.period || defaultPeriod;
+    let period = annotation.period || defaultPeriod;
     period = parseInt(period, 10);
     const parameters = {
       prefixMatching: annotation.prefixMatching,

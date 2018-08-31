@@ -5,7 +5,7 @@ import { ElasticDatasource } from '../datasource';
 
 import * as dateMath from 'app/core/utils/datemath';
 
-describe('ElasticDatasource', function() {
+describe('ElasticDatasource', function(this: any) {
   const backendSrv = {
     datasourceRequest: jest.fn(),
   };

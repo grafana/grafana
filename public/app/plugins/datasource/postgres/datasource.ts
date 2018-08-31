@@ -9,7 +9,7 @@ export class PostgresDatasource {
   responseParser: ResponseParser;
   queryModel: PostgresQuery;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -41,7 +41,7 @@ export class PostgresDatasource {
     const queries = _.filter(options.targets, target => {
       return target.hide !== true;
     }).map(target => {
-      let queryModel = new PostgresQuery(target, this.templateSrv, options.scopedVars);
+      const queryModel = new PostgresQuery(target, this.templateSrv, options.scopedVars);
 
       return {
         refId: target.refId,
@@ -110,7 +110,7 @@ export class PostgresDatasource {
       format: 'table',
     };
 
-    let range = this.timeSrv.timeRange();
+    const range = this.timeSrv.timeRange();
     const data = {
       queries: [interpolatedQuery],
       from: range.from.valueOf().toString(),

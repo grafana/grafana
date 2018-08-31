@@ -40,7 +40,7 @@ export default class PrometheusMetricFindQuery {
   }
 
   labelValuesQuery(label, metric) {
-    var url;
+    let url;
 
     if (!metric) {
       // return label values globally
@@ -96,7 +96,7 @@ export default class PrometheusMetricFindQuery {
     const end = this.datasource.getPrometheusTime(this.range.to, true);
     return this.datasource.performInstantQuery({ expr: query }, end).then(function(result) {
       return _.map(result.data.data.result, function(metricData) {
-        var text = metricData.metric.__name__ || '';
+        let text = metricData.metric.__name__ || '';
         delete metricData.metric.__name__;
         text +=
           '{' +

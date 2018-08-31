@@ -1,6 +1,6 @@
 export class ThresholdMapper {
   static alertToGraphThresholds(panel) {
-    for (var i = 0; i < panel.alert.conditions.length; i++) {
+    for (let i = 0; i < panel.alert.conditions.length; i++) {
       const condition = panel.alert.conditions[i];
       if (condition.type !== 'query') {
         continue;

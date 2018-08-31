@@ -7,7 +7,7 @@ export class PostgresConfigCtrl {
   datasourceSrv: any;
   showTimescaleDBHelp: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, datasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
@@ -34,8 +34,8 @@ export class PostgresConfigCtrl {
           });
         }
 
-        let major = Math.trunc(version / 100);
-        let minor = version % 100;
+        const major = Math.trunc(version / 100);
+        const minor = version % 100;
         let name = String(major);
         if (version < 1000) {
           name = String(major) + '.' + String(minor);

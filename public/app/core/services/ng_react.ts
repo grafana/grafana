@@ -27,7 +27,7 @@ function getReactComponent(name, $injector) {
   }
 
   // ensure the specified React component is accessible, and fail fast if it's not
-  var reactComponent;
+  let reactComponent;
   try {
     reactComponent = $injector.get(name);
   } catch (e) {}
@@ -204,7 +204,7 @@ const reactComponent = function($injector) {
       attrs.props ? watchProps(attrs.watchDepth, scope, [attrs.props], renderMyComponent) : renderMyComponent();
 
       // cleanup when scope is destroyed
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         if (!attrs.onScopeDestroy) {
           ReactDOM.unmountComponentAtNode(elem[0]);
         } else {
@@ -256,7 +256,7 @@ const reactDirective = function($injector) {
 
         // for each of the properties, get their scope value and set it to scope.props
         const renderMyComponent = function() {
-          var scopeProps = {};
+          let scopeProps = {};
           const config = {};
 
           props.forEach(function(prop) {
@@ -280,7 +280,7 @@ const reactDirective = function($injector) {
         props.length ? watchProps(attrs.watchDepth, scope, propExpressions, renderMyComponent) : renderMyComponent();
 
         // cleanup when scope is destroyed
-        scope.$on('$destroy', function() {
+        scope.$on('$destroy', () => {
           if (!attrs.onScopeDestroy) {
             ReactDOM.unmountComponentAtNode(elem[0]);
           } else {

@@ -69,7 +69,7 @@ function bootstrapTagsinput() {
             },
       });
 
-      select.on('itemAdded', function(event) {
+      select.on('itemAdded', event => {
         if (scope.model.indexOf(event.item) === -1) {
           scope.model.push(event.item);
           if (scope.onTagsUpdated) {
@@ -79,7 +79,7 @@ function bootstrapTagsinput() {
         const tagElement = select
           .next()
           .children('span')
-          .filter(function() {
+          .filter(() => {
             return $(this).text() === event.item;
           });
         setColor(event.item, tagElement);
@@ -104,7 +104,7 @@ function bootstrapTagsinput() {
 
           select.tagsinput('removeAll');
 
-          for (var i = 0; i < scope.model.length; i++) {
+          for (let i = 0; i < scope.model.length; i++) {
             select.tagsinput('add', scope.model[i]);
           }
         },

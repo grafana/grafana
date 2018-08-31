@@ -9,7 +9,7 @@ function tip($compile) {
   return {
     restrict: 'E',
     link: function(scope, elem, attrs) {
-      var _t =
+      let _t =
         '<i class="grafana-tip fa fa-' +
         (attrs.icon || 'question-circle') +
         '" bs-tooltip="\'' +
@@ -125,7 +125,7 @@ function editorCheckbox($compile, $interpolate) {
       const tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
       const label = '<label for="' + scope.$id + model + '" class="checkbox-label">' + text + tip + '</label>';
 
-      var template =
+      let template =
         '<input class="cr1" id="' +
         scope.$id +
         model +
@@ -163,7 +163,7 @@ function gfDropdown($parse, $compile, $timeout) {
         continue;
       }
 
-      var li =
+      let li =
         '<li' +
         (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') +
         '>' +

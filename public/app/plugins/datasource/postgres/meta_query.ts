@@ -25,7 +25,7 @@ export class PostgresMetaQuery {
 
   findMetricTable() {
     // query that returns first table found that has a timestamp(tz) column and a float column
-    let query = `
+    const query = `
 SELECT
 	quote_ident(table_name) as table_name,
 	( SELECT
@@ -74,7 +74,7 @@ LIMIT 1
   }
 
   buildSchemaConstraint() {
-    let query = `
+    const query = `
 table_schema IN (
 	SELECT CASE WHEN trim(unnest) = \'"$user"\' THEN user ELSE trim(unnest) END
   FROM unnest(string_to_array(current_setting(\'search_path\'),\',\'))
@@ -87,7 +87,7 @@ table_schema IN (
 
     // check for schema qualified table
     if (table.includes('.')) {
-      let parts = table.split('.');
+      const parts = table.split('.');
       query = 'table_schema = ' + this.quoteIdentAsLiteral(parts[0]);
       query += ' AND table_name = ' + this.quoteIdentAsLiteral(parts[1]);
       return query;

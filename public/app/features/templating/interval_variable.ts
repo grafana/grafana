@@ -28,7 +28,7 @@ export class IntervalVariable implements Variable {
     skipUrlSync: false,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;

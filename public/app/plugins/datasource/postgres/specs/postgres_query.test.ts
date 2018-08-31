@@ -1,23 +1,23 @@
 import PostgresQuery from '../postgres_query';
 
 describe('PostgresQuery', function() {
-  let templateSrv = {
+  const templateSrv = {
     replace: jest.fn(text => text),
   };
 
   describe('When initializing', function() {
     it('should not be in SQL mode', function() {
-      let query = new PostgresQuery({}, templateSrv);
+      const query = new PostgresQuery({}, templateSrv);
       expect(query.target.rawQuery).toBe(false);
     });
     it('should be in SQL mode for pre query builder queries', function() {
-      let query = new PostgresQuery({ rawSql: 'SELECT 1' }, templateSrv);
+      const query = new PostgresQuery({ rawSql: 'SELECT 1' }, templateSrv);
       expect(query.target.rawQuery).toBe(true);
     });
   });
 
   describe('When generating time column SQL', function() {
-    let query = new PostgresQuery({}, templateSrv);
+    const query = new PostgresQuery({}, templateSrv);
 
     query.target.timeColumn = 'time';
     expect(query.buildTimeColumn()).toBe('time AS "time"');
@@ -45,7 +45,7 @@ describe('PostgresQuery', function() {
   });
 
   describe('When generating metric column SQL', function() {
-    let query = new PostgresQuery({}, templateSrv);
+    const query = new PostgresQuery({}, templateSrv);
 
     query.target.metricColumn = 'host';
     expect(query.buildMetricColumn()).toBe('host AS metric');
@@ -54,7 +54,7 @@ describe('PostgresQuery', function() {
   });
 
   describe('When generating value column SQL', function() {
-    let query = new PostgresQuery({}, templateSrv);
+    const query = new PostgresQuery({}, templateSrv);
 
     let column = [{ type: 'column', params: ['value'] }];
     expect(query.buildValueColumn(column)).toBe('value');
@@ -77,7 +77,7 @@ describe('PostgresQuery', function() {
   });
 
   describe('When generating value column SQL with metric column', function() {
-    let query = new PostgresQuery({}, templateSrv);
+    const query = new PostgresQuery({}, templateSrv);
     query.target.metricColumn = 'host';
 
     let column = [{ type: 'column', params: ['value'] }];
@@ -111,7 +111,7 @@ describe('PostgresQuery', function() {
   });
 
   describe('When generating WHERE clause', function() {
-    let query = new PostgresQuery({ where: [] }, templateSrv);
+    const query = new PostgresQuery({ where: [] }, templateSrv);
 
     expect(query.buildWhereClause()).toBe('');
 
@@ -127,7 +127,7 @@ describe('PostgresQuery', function() {
   });
 
   describe('When generating GROUP BY clause', function() {
-    let query = new PostgresQuery({ group: [], metricColumn: 'none' }, templateSrv);
+    const query = new PostgresQuery({ group: [], metricColumn: 'none' }, templateSrv);
 
     expect(query.buildGroupClause()).toBe('');
     query.target.group = [{ type: 'time', params: ['5m'] }];
@@ -137,14 +137,14 @@ describe('PostgresQuery', function() {
   });
 
   describe('When generating complete statement', function() {
-    let target = {
+    const target = {
       timeColumn: 't',
       table: 'table',
       select: [[{ type: 'column', params: ['value'] }]],
       where: [],
     };
     let result = 'SELECT\n  t AS "time",\n  value\nFROM table\nORDER BY 1';
-    let query = new PostgresQuery(target, templateSrv);
+    const query = new PostgresQuery(target, templateSrv);
 
     expect(query.buildQuery()).toBe(result);
 

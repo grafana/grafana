@@ -21,7 +21,7 @@ export class ElasticQueryBuilder {
   }
 
   buildTermsAgg(aggDef, queryNode, target) {
-    var metricRef, metric, y;
+    let metricRef, metric, y;
     queryNode.terms = { field: aggDef.field };
 
     if (!aggDef.settings) {
@@ -94,9 +94,9 @@ export class ElasticQueryBuilder {
 
   getFiltersAgg(aggDef) {
     const filterObj = {};
-    for (var i = 0; i < aggDef.settings.filters.length; i++) {
+    for (let i = 0; i < aggDef.settings.filters.length; i++) {
       const query = aggDef.settings.filters[i].query;
-      var label = aggDef.settings.filters[i].label;
+      let label = aggDef.settings.filters[i].label;
       label = label === '' || label === undefined ? query : label;
       filterObj[label] = {
         query_string: {
@@ -133,7 +133,7 @@ export class ElasticQueryBuilder {
       return;
     }
 
-    var i, filter, condition, queryCondition;
+    let i, filter, condition, queryCondition;
 
     for (i = 0; i < adhocFilters.length; i++) {
       filter = adhocFilters[i];
@@ -181,7 +181,7 @@ export class ElasticQueryBuilder {
     target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', id: '2', settings: { interval: 'auto' } }];
     target.timeField = this.timeField;
 
-    var i, nestedAggs, metric;
+    let i, nestedAggs, metric;
     const query = {
       size: 0,
       query: {
@@ -258,7 +258,7 @@ export class ElasticQueryBuilder {
       }
 
       const aggField = {};
-      var metricAgg = null;
+      let metricAgg = null;
 
       if (queryDef.isPipelineAgg(metric.type)) {
         if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
@@ -302,7 +302,7 @@ export class ElasticQueryBuilder {
       });
     }
 
-    var size = 500;
+    let size = 500;
     if (queryDef.size) {
       size = queryDef.size;
     }

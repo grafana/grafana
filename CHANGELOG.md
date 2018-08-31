@@ -1,5 +1,6 @@
 # 5.3.0 (unreleased)
 
+* **Dashboard**: TV & Kiosk mode changes, new cycle view mode button in dashboard toolbar [#13025](https://github.com/grafana/grafana/pull/13025)
 * **OAuth**: Gitlab OAuth with support for filter by groups [#5623](https://github.com/grafana/grafana/issues/5623), thx [@BenoitKnecht](https://github.com/BenoitKnecht)
 * **Dataproxy**: Pass configured/auth headers to a Datasource [#10971](https://github.com/grafana/grafana/issues/10971), thx [@mrsiano](https://github.com/mrsiano)
 * **Cleanup**: Make temp file time to live configurable [#11607](https://github.com/grafana/grafana/issues/11607), thx [@xapon](https://github.com/xapon)
@@ -62,6 +63,8 @@ om/grafana/grafana/issues/12668)
 ### Breaking changes
 
 * Postgres datasource no longer automatically adds time column alias when using the $__timeGroup alias. However, there's code in place which should make this change backward compatible and shouldn't create any issues.
+* Kiosk mode now also hides submenu (variables)
+* ?inactive url parameter no longer supported, replaced with kiosk=tv url parameter
 
 ### New experimental features
 

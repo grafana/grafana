@@ -1,4 +1,41 @@
-.page-kiosk-mode {
+.view-mode--inactive {
+  .react-resizable-handle,
+  .add-row-panel-hint,
+  .dash-row-menu-container,
+  .navbar-buttons--actions,
+  .panel-info-corner--info,
+  .panel-info-corner--links {
+    display: none;
+  }
+
+  .navbar-page-btn {
+    transform: translate3d(-36px, 0, 0);
+    i {
+      opacity: 0;
+    }
+  }
+
+  .navbar-button--zoom,
+  .navbar-button--refresh {
+    display: none;
+  }
+}
+
+.view-mode--playlist {
+  @extend .view-mode--inactive;
+}
+
+.view-mode--tv {
+  @extend .view-mode--inactive;
+
+  .submenu-controls {
+    display: none;
+  }
+}
+
+.view-mode--kiosk {
+  @extend .view-mode--tv;
+
   .sidemenu,
   .navbar {
     display: none;
@@ -6,37 +43,7 @@
   .scroll-canvas--dashboard {
     height: 100%;
   }
-}
-
-.playlist-active,
-.user-activity-low {
-  .react-resizable-handle,
-  .add-row-panel-hint,
-  .dash-row-menu-container,
-  .navbar-button--refresh,
-  .navbar-buttons--zoom,
-  .navbar-buttons--actions,
-  .panel-menu-container,
-  .panel-info-corner--info,
-  .panel-info-corner--links {
-    opacity: 0;
-  }
-
-  .navbar {
-    box-shadow: none;
-    background: transparent;
-  }
-
-  .navbar-page-btn {
-    border-color: transparent;
-    background: transparent;
-    transform: translate3d(-40px, 0, 0);
-    i {
-      opacity: 0;
-    }
-  }
-
-  .gf-timepicker-nav-btn {
-    transform: translate3d(40px, 0, 0);
+  .submenu-controls {
+    display: none;
   }
 }

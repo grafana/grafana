@@ -24,11 +24,11 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       const $funcControls = $(funcControlsTemplate);
       const ctrl = $scope.ctrl;
       const func = $scope.func;
-      var scheduledRelink = false;
-      var paramCountAtLink = 0;
-      var cancelBlur = null;
+      let scheduledRelink = false;
+      let paramCountAtLink = 0;
+      let cancelBlur = null;
 
-      function clickFuncParam(paramIndex) {
+      function clickFuncParam(this: any, paramIndex) {
         /*jshint validthis:true */
 
         const $link = $(this);
@@ -108,7 +108,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       }
 
       // this = input element
-      function inputBlur(paramIndex) {
+      function inputBlur(this: any, paramIndex) {
         /*jshint validthis:true */
         const inputElem = this;
         // happens long before the click event on the typeahead options
@@ -118,14 +118,14 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
         }, 200);
       }
 
-      function inputKeyPress(paramIndex, e) {
+      function inputKeyPress(this: any, paramIndex, e) {
         /*jshint validthis:true */
         if (e.which === 13) {
           $(this).blur();
         }
       }
 
-      function inputKeyDown() {
+      function inputKeyDown(this: any) {
         /*jshint validthis:true */
         this.style.width = (3 + this.value.length) * 8 + 'px';
       }
@@ -133,7 +133,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       function addTypeahead($input, paramIndex) {
         $input.attr('data-provide', 'typeahead');
 
-        var options = paramDef(paramIndex).options;
+        let options = paramDef(paramIndex).options;
         if (paramDef(paramIndex).type === 'int') {
           options = _.map(options, function(val) {
             return val.toString();
@@ -190,7 +190,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
             return false;
           }
 
-          var paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
+          let paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
 
           const last = index >= func.params.length - 1 && param.optional && !paramValue;
           if (last && param.multiple) {
