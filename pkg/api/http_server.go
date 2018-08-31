@@ -143,25 +143,16 @@ func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
 
 	tlsCfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
+		PreferServerCipherSuites: false, // we support only safe ciphers, so client may decide preferred cipher
 		CipherSuites: []uint16{
-			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,  // the best cipher for mobile devices without HW AES support - Snapdragon 800-
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, // must be enabled for http/2 support
 		},
+		NextProtos: []string{"h2", "http/1.1"},
 	}
 
 	hs.httpSrv.TLSConfig = tlsCfg
-	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
 
 	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 }
