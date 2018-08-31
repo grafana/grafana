@@ -86,7 +86,7 @@ export class MysqlMetaQuery {
   }
 
   buildTableQuery() {
-    return 'SELECT table_name FROM information_schema.tables ORDER BY table_name';
+    return "SELECT table_name FROM information_schema.tables WHERE table_schema <> 'information_schema' ORDER BY table_name";
   }
 
   buildColumnQuery(type?: string) {
