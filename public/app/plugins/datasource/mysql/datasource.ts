@@ -19,7 +19,7 @@ export class MysqlDatasource {
   interpolateVariable(value, variable) {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return "'" + value.replace(/'/g, `''`) + "'";
+        return this.queryModel.quoteLiteral(value);
       } else {
         return value;
       }
@@ -29,12 +29,8 @@ export class MysqlDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, function(val) {
-      if (typeof value === 'number') {
-        return value;
-      }
-
-      return "'" + val.replace(/'/g, `''`) + "'";
+    const quotedValues = _.map(value, v => {
+      return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
   }
