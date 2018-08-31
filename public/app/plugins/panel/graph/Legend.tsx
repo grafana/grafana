@@ -41,19 +41,23 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLege
   }
 
   render() {
-    const { className, hiddenSeries, sideWidth } = this.props;
+    const { className, hiddenSeries, rightSide, sideWidth } = this.props;
     const { values, min, max, avg, current, total } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     const seriesList = this.sortLegend();
+    const legendCustomClasses = `${this.props.alignAsTable ? 'graph-legend-table' : ''} ${className}`;
+
+    // Set min-width if side style and there is a value, otherwise remove the CSS property
+    // Set width so it works with IE11
+    const width: any = rightSide && sideWidth ? sideWidth : undefined;
+    const ieWidth: any = rightSide && sideWidth ? sideWidth - 1 : undefined;
     const legendStyle: React.CSSProperties = {
-      width: sideWidth,
+      minWidth: width,
+      width: ieWidth,
     };
 
     return (
-      <div
-        className={`graph-legend-content ${className} ${this.props.alignAsTable ? 'graph-legend-table' : ''}`}
-        style={legendStyle}
-      >
+      <div className={`graph-legend-content ${legendCustomClasses}`} style={legendStyle}>
         <div className="graph-legend-scroll">
           {this.props.alignAsTable ? (
             <LegendTable seriesList={seriesList} hiddenSeries={hiddenSeries} {...seriesValuesProps} />
@@ -97,16 +101,30 @@ class LegendSeriesItem extends React.Component<LegendSeriesItemProps> {
     const valueItems = this.props.values ? renderLegendValues(this.props, series) : [];
     return (
       <div className={`graph-legend-series ${seriesOptionClasses}`} data-series-index={index}>
-        <div className="graph-legend-icon">
-          <i className="fa fa-minus pointer" style={{ color: series.color }} />
-        </div>
-        <a className="graph-legend-alias pointer" title={series.aliasEscaped}>
-          {series.aliasEscaped}
-        </a>
+        <LegendSeriesLabel label={series.aliasEscaped} color={series.color} />
         {valueItems}
       </div>
     );
   }
+}
+
+interface LegendSeriesLabelProps {
+  label: string;
+  color: string;
+}
+
+function LegendSeriesLabel(props: LegendSeriesLabelProps) {
+  const { label, color } = props;
+  return (
+    <div>
+      <div className="graph-legend-icon">
+        <i className="fa fa-minus pointer" style={{ color: color }} />
+      </div>
+      <a className="graph-legend-alias pointer" title={label}>
+        {label}
+      </a>
+    </div>
+  );
 }
 
 function LegendValue(props) {
@@ -118,7 +136,7 @@ function LegendValue(props) {
   return <div className={`graph-legend-value ${valueName}`}>{value}</div>;
 }
 
-function renderLegendValues(props: LegendSeriesItemProps, series, asTable = false) {
+function renderLegendValues(props: LegendSeriesItemProps, series, asTable = false): React.ReactElement<any>[] {
   const legendValueItems = [];
   for (const valueName of LEGEND_STATS) {
     if (props[valueName]) {
@@ -184,12 +202,7 @@ class LegendSeriesItemAsTable extends React.Component<LegendSeriesItemProps> {
     return (
       <tr className={`graph-legend-series ${seriesOptionClasses}`} data-series-index={index}>
         <td>
-          <div className="graph-legend-icon">
-            <i className="fa fa-minus pointer" style={{ color: series.color }} />
-          </div>
-          <a className="graph-legend-alias pointer" title={series.aliasEscaped}>
-            {series.aliasEscaped}
-          </a>
+          <LegendSeriesLabel label={series.aliasEscaped} color={series.color} />
         </td>
         {valueItems}
       </tr>
