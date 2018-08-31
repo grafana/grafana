@@ -1,16 +1,19 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
+import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
 
 export class MysqlDatasource {
   id: any;
   name: any;
   responseParser: ResponseParser;
+  queryModel: MysqlQuery;
 
   /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
+    this.queryModel = new MysqlQuery({});
   }
 
   interpolateVariable(value, variable) {
@@ -37,16 +40,18 @@ export class MysqlDatasource {
   }
 
   query(options) {
-    const queries = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(item => {
+    const queries = _.filter(options.targets, target => {
+      return target.hide !== true;
+    }).map(target => {
+      let queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);
+
       return {
-        refId: item.refId,
+        refId: target.refId,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        rawSql: this.templateSrv.replace(item.rawSql, options.scopedVars, this.interpolateVariable),
-        format: item.format,
+        rawSql: queryModel.render(this.interpolateVariable),
+        format: target.format,
       };
     });
 
