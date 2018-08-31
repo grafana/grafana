@@ -10,7 +10,7 @@ class PlaylistSrv {
   private index: number;
   private interval: any;
   private startUrl: string;
-  public isPlaying: boolean;
+  isPlaying: boolean;
 
   /** @ngInject */
   constructor(private $location: any, private $timeout: any, private backendSrv: any) {}
