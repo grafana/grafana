@@ -5,11 +5,13 @@ import classNames from 'classnames';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import appEvents from 'app/core/app_events';
 import Highlighter from 'react-highlight-words';
-import { initNav } from 'app/core/actions';
+import { initNav, updateLocation } from 'app/core/actions';
 import { ContainerProps } from 'app/types';
 import { getAlertRules, AlertRule } from '../apis';
 
-interface Props extends ContainerProps {}
+interface Props extends ContainerProps {
+  updateLocation: typeof updateLocation;
+}
 
 interface State {
   rules: AlertRule[];
@@ -44,7 +46,9 @@ export class AlertRuleList extends PureComponent<Props, State> {
   }
 
   onStateFilterChanged = evt => {
-    // this.props.view.updateQuery({ state: evt.target.value });
+    this.props.updateLocation({
+      query: { state: evt.target.value },
+    });
     // this.fetchRules();
   };
 
@@ -113,9 +117,7 @@ export class AlertRuleList extends PureComponent<Props, State> {
 
           <section>
             <ol className="alert-rule-list">
-              {rules.map(rule => (
-                <AlertRuleItem rule={rule} key={rule.id} search={search} />
-              ))}
+              {rules.map(rule => <AlertRuleItem rule={rule} key={rule.id} search={search} />)}
             </ol>
           </section>
         </div>
@@ -204,6 +206,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = {
   initNav,
+  updateLocation,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(AlertRuleList));
