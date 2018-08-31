@@ -80,7 +80,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		RenderKey: rs.getRenderKey(opts.UserId, opts.OrgId, opts.OrgRole),
 		Encoding:  opts.Encoding,
 		Timezone:  isoTimeOffsetToPosixTz(opts.Timezone),
-		Domain:    rs.getLocalDomain(),
+		Domain:    rs.domain,
 	})
 
 	if err != nil {
