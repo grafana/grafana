@@ -97,7 +97,7 @@ describe('VariableSrv', function(this: any) {
         query: '1s,2h,5h,1d',
         name: 'test',
         auto: true,
-        auto_count: 10,
+        autoCount: 10,
       };
 
       const range = {
@@ -520,7 +520,7 @@ describe('VariableSrv', function(this: any) {
         query: '1s,2h,5h,1d',
         name: 'variable1',
         auto: true,
-        auto_count: 10,
+        autoCount: 10,
       };
       variable1 = ctx.variableSrv.createVariableFromModel(variableModel1);
       ctx.variableSrv.addVariable(variable1);
@@ -530,7 +530,7 @@ describe('VariableSrv', function(this: any) {
         query: '1s,2h,5h',
         name: 'variable2',
         auto: true,
-        auto_count: 1000,
+        autoCount: 1000,
       };
       variable2 = ctx.variableSrv.createVariableFromModel(variableModel2);
       ctx.variableSrv.addVariable(variable2);
