@@ -7,7 +7,7 @@ import { importPluginModule } from './plugin_loader';
 
 import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
 
-/** @ngInject **/
+/** @ngInject */
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
   function getTemplate(component) {
     if (component.template) {

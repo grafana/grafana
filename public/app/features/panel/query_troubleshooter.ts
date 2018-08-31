@@ -40,7 +40,7 @@ export class QueryTroubleshooterCtrl {
   mockedResponse: string;
   jsonExplorer: JsonExplorer;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, private $timeout) {
     this.onRequestErrorEventListener = this.onRequestError.bind(this);
     this.onRequestResponseEventListener = this.onRequestResponse.bind(this);

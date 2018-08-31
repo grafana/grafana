@@ -25,6 +25,7 @@
     "eofline": true,
     "forin": false,
     "indent": [true, "spaces", 2],
+    "jsdoc-format": true,
     "label-position": true,
     "max-line-length": [true, 150],
     "member-access": [true, "no-public"],

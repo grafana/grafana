@@ -2,7 +2,7 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import Drop from 'tether-drop';
 
-/** @ngInject **/
+/** @ngInject */
 function popoverSrv(this: any, $compile, $rootScope, $timeout) {
   let openDrop = null;
 

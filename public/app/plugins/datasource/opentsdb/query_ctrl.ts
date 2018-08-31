@@ -19,7 +19,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   addTagMode: boolean;
   addFilterMode: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
 

@@ -19,7 +19,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   measurementSegment: any;
   removeTagFilterSegment: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
     this.target = this.target;

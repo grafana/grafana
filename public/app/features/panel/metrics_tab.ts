@@ -110,7 +110,7 @@ export class MetricsTabCtrl {
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 export function metricsTabDirective() {
   'use strict';
   return {

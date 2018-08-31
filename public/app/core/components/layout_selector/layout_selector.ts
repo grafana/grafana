@@ -15,7 +15,7 @@ const template = `
 export class LayoutSelectorCtrl {
   mode: string;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private $rootScope) {
     this.mode = store.get('grafana.list.layout.mode') || 'grid';
   }
@@ -33,7 +33,7 @@ export class LayoutSelectorCtrl {
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 export function layoutSelector() {
   return {
     restrict: 'E',
@@ -45,7 +45,7 @@ export function layoutSelector() {
   };
 }
 
-/** @ngInject **/
+/** @ngInject */
 export function layoutMode($rootScope) {
   return {
     restrict: 'A',

@@ -735,7 +735,7 @@ class GraphElement {
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 function graphDirective(timeSrv, popoverSrv, contextSrv) {
   return {
     restrict: 'A',

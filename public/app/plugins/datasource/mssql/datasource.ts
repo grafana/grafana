@@ -6,7 +6,7 @@ export class MssqlDatasource {
   name: any;
   responseParser: ResponseParser;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
