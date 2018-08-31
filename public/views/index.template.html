@@ -50,8 +50,8 @@
       opacity: 0;
       animation-name: preloader-fade-in;
       animation-iteration-count: 1;
-      animation-duration: 2s;
-      animation-delay: 2s;
+      animation-duration: .9s;
+      animation-delay: 1.35s;
       animation-fill-mode: forwards;
     }
 
@@ -79,6 +79,11 @@
       font-weight: 500;
       font-size: 14px;
       font-family: 'Roboto';
+      opacity: 0;
+      animation-name: preloader-fade-in;
+      animation-duration: .9s;
+      animation-delay: 1.8s;
+      animation-fill-mode: forwards;
     }
 
     .theme-light .preloader__text {
@@ -92,7 +97,8 @@
     @keyframes preloader-fade-in {
       0% {
         opacity: 0;
-        animation-timing-function: linear;
+        /*animation-timing-function: linear;*/
+        animation-timing-function: cubic-bezier(0, 0, 0.5, 1)
       }
       100% {
         opacity: 1;
@@ -149,11 +155,10 @@
   <div class="preloader">
     <div class="preloader__enter">
       <div class="preloader__bounce">
-        <div class="preloader__logo">
-        </div>
+        <div class="preloader__logo"></div>
       </div>
-      <div class="preloader__text">Loading Grafana</div>
     </div>
+    <div class="preloader__text">Loading Grafana</div>
   </div>
 
   <grafana-app class="grafana-app" ng-cloak>
