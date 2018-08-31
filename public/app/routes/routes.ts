@@ -1,7 +1,7 @@
 import './dashboard_loaders';
 import './ReactContainer';
 
-import ServerStats from 'app/features/serverStats/ServerStats';
+import ServerStats from 'app/features/admin/containers/ServerStats';
 import AlertRuleList from 'app/features/alerting/containers/AlertRuleList';
 import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
 import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions';
