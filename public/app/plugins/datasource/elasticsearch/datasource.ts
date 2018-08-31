@@ -57,9 +57,9 @@ export class ElasticDatasource {
 
   private get(url) {
     const range = this.timeSrv.timeRange();
-    const index_list = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
-    if (_.isArray(index_list) && index_list.length) {
-      return this.request('GET', index_list[0] + url).then(function(results) {
+    const indexList = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
+    if (_.isArray(indexList) && indexList.length) {
+      return this.request('GET', indexList[0] + url).then(function(results) {
         results.data.$$config = results.config;
         return results.data;
       });
@@ -229,15 +229,15 @@ export class ElasticDatasource {
   }
 
   getQueryHeader(searchType, timeFrom, timeTo) {
-    const query_header: any = {
+    const queryHeader: any = {
       search_type: searchType,
       ignore_unavailable: true,
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
     if (this.esVersion >= 56) {
-      query_header['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
+      queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
     }
-    return angular.toJson(query_header);
+    return angular.toJson(queryHeader);
   }
 
   query(options) {

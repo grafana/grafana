@@ -194,11 +194,11 @@ export class TableRenderer {
 
   renderRowVariables(rowIndex) {
     const scopedVars = {};
-    let cell_variable;
+    let cellVariable;
     const row = this.table.rows[rowIndex];
     for (let i = 0; i < row.length; i++) {
-      cell_variable = `__cell_${i}`;
-      scopedVars[cell_variable] = { value: row[i] };
+      cellVariable = `__cell_${i}`;
+      scopedVars[cellVariable] = { value: row[i] };
     }
     return scopedVars;
   }
@@ -324,11 +324,11 @@ export class TableRenderer {
 
     for (let y = 0; y < this.table.rows.length; y++) {
       const row = this.table.rows[y];
-      const new_row = [];
+      const newRow = [];
       for (let i = 0; i < this.table.columns.length; i++) {
-        new_row.push(this.formatColumnValue(i, row[i]));
+        newRow.push(this.formatColumnValue(i, row[i]));
       }
-      rows.push(new_row);
+      rows.push(newRow);
     }
     return {
       columns: this.table.columns,

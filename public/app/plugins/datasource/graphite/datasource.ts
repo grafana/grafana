@@ -490,8 +490,8 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
   this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   this.buildGraphiteParams = function(options, scopedVars) {
-    const graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
-    const clean_options = [],
+    const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
+    const cleanOptions = [],
       targets = {};
     let target, targetValue, i;
     const regex = /\#([A-Z])/g;
@@ -535,16 +535,16 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
 
       if (!target.hide) {
         hasTargets = true;
-        clean_options.push('target=' + encodeURIComponent(targetValue));
+        cleanOptions.push('target=' + encodeURIComponent(targetValue));
       }
     }
 
     _.each(options, function(value, key) {
-      if (_.indexOf(graphite_options, key) === -1) {
+      if (_.indexOf(graphiteOptions, key) === -1) {
         return;
       }
       if (value) {
-        clean_options.push(key + '=' + encodeURIComponent(value));
+        cleanOptions.push(key + '=' + encodeURIComponent(value));
       }
     });
 
@@ -552,7 +552,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
       return [];
     }
 
-    return clean_options;
+    return cleanOptions;
   };
 }
 
