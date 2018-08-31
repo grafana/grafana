@@ -9,20 +9,30 @@ parent = "authentication"
 weight = 1
 +++
 
-## [auth]
+# Authentication
 
-### disable_login_form
+Grafana provides many ways to authenticate users. By default it will use local users & passwords stored in the Grafana
+database.
+
+## Settings
+
+Via the [server ini config file]({{< relref "installation/debian.md" >}}) you can setup many different authentication methods. Auth settings
+are documented below.
+
+### [auth]
+
+#### disable_login_form
 
 Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
 
-### disable_signout_menu
+#### disable_signout_menu
 
 Set to true to disable the signout link in the side menu. useful if you use auth.proxy, defaults to false.
 
 <hr>
 
-## [auth.basic]
-### enabled
+### [auth.basic]
+#### enabled
 When enabled is `true` (default) the http api will accept basic authentication.
 
 <hr>

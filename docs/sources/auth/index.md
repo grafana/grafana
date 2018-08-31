@@ -6,5 +6,5 @@ type = "docs"
 name = "Authentication"
 identifier = "authentication"
 parent = "admin"
-weight = 1
+weight = 3
 +++

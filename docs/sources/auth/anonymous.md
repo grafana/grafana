@@ -4,7 +4,7 @@ description = "Anonymous authentication "
 keywords = ["grafana", "configuration", "documentation", "anonymous"]
 type = "docs"
 [menu.docs]
-name = "Anonymous Auth"
+name = "Anonymous"
 identifier = "anonymous-auth"
 parent = "authentication"
 weight = 4
