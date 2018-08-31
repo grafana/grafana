@@ -20,6 +20,9 @@ import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { GraphLegend, GraphLegendProps } from './Legend';
 
 import { GraphCtrl } from './module';
 
@@ -82,7 +85,21 @@ class GraphElement {
     const graphHeight = this.elem.height();
     updateLegendValues(this.data, this.panel, graphHeight);
 
-    this.ctrl.events.emit('render-legend');
+    // this.ctrl.events.emit('render-legend');
+    const { values, min, max, avg, current, total } = this.panel.legend;
+    const { alignAsTable, rightSide, sideWidth } = this.panel.legend;
+    const legendOptions = { alignAsTable, rightSide, sideWidth };
+    const valueOptions = { values, min, max, avg, current, total };
+    const legendProps: GraphLegendProps = {
+      seriesList: this.data,
+      hiddenSeries: this.ctrl.hiddenSeries,
+      ...legendOptions,
+      ...valueOptions,
+    };
+    const legendReactElem = React.createElement(GraphLegend, legendProps);
+    const legendElem = this.elem.parent().find('.graph-legend');
+    ReactDOM.render(legendReactElem, legendElem[0]);
+    this.onLegendRenderingComplete();
   }
 
   onGraphHover(evt) {

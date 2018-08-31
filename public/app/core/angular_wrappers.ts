@@ -6,6 +6,7 @@ import LoginBackground from './components/Login/LoginBackground';
 import { SearchResult } from './components/search/SearchResult';
 import { TagFilter } from './components/TagFilter/TagFilter';
 import DashboardPermissions from './components/Permissions/DashboardPermissions';
+import { GraphLegend } from 'app/plugins/panel/graph/Legend';
 
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
@@ -19,4 +20,5 @@ export function registerAngularDirectives() {
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('dashboardPermissions', DashboardPermissions, ['backendSrv', 'dashboardId', 'folder']);
+  react2AngularDirective('graphLegendReact', GraphLegend, ['seriesList', 'className']);
 }
