@@ -6,6 +6,7 @@ export const TeamMemberModel = types.model('TeamMember', {
   avatarUrl: types.string,
   email: types.string,
   login: types.string,
+  isTeamAdmin: types.boolean,
 });
 
 type TeamMemberType = typeof TeamMemberModel.Type;

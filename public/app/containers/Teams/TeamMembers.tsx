@@ -46,6 +46,7 @@ export class TeamMembers extends React.Component<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
+        <td>{member.isTeamAdmin.toString()}</td>
         <td className="text-right">
           <DeleteButton onConfirmDelete={() => this.removeMember(member)} />
         </td>
@@ -121,6 +122,7 @@ export class TeamMembers extends React.Component<Props, State> {
                 <th />
                 <th>Name</th>
                 <th>Email</th>
+                <th>IsTeamAdmin</th>
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>

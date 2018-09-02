@@ -19,6 +19,7 @@ func init() {
 
 	bus.AddHandler("sql", AddTeamMember)
 	bus.AddHandler("sql", RemoveTeamMember)
+	bus.AddHandler("sql", UpdateIsTeamAdmin)
 	bus.AddHandler("sql", GetTeamMembers)
 }
 
@@ -275,6 +276,21 @@ func RemoveTeamMember(cmd *m.RemoveTeamMemberCommand) error {
 	})
 }
 
+// set or unset a TeamMember as a amdin for a team
+func UpdateIsTeamAdmin(cmd *m.UpdateIsTeamAdminCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		if teamExists, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+			return err
+		} else if !teamExists {
+			return m.ErrTeamNotFound
+		}
+
+		var rawSql = "UPDATE team_member SET is_team_admin = ? WHERE org_id=? and team_id=? and user_id=?"
+		_, err := sess.Exec(rawSql, cmd.IsTeamAdmin, cmd.OrgId, cmd.TeamId, cmd.UserId)
+		return err
+	})
+}
+
 // GetTeamMembers return a list of members for the specified team
 func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 	query.Result = make([]*m.TeamMemberDTO, 0)
@@ -289,7 +305,7 @@ func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 	if query.UserId != 0 {
 		sess.Where("team_member.user_id=?", query.UserId)
 	}
-	sess.Cols("user.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login")
+	sess.Cols("user.org_id", "team_member.team_id", "team_member.user_id", "team_member.is_team_admin", "user.email", "user.login")
 	sess.Asc("user.login", "user.email")
 
 	err := sess.Find(&query.Result)

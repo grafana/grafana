@@ -59,3 +59,22 @@ func RemoveTeamMember(c *m.ReqContext) Response {
 	}
 	return Success("Team Member removed")
 }
+
+// Put /api/teams/:teamId/members/:userId
+func UpdateIsTeamAdmin(c *m.ReqContext, cmd m.UpdateIsTeamAdminCommand) Response {
+	cmd.OrgId = c.OrgId
+	cmd.TeamId = c.ParamsInt64(":teamId")
+	cmd.UserId = c.ParamsInt64(":userId")
+	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrTeamNotFound {
+			return Error(404, "Team not found", nil)
+		}
+
+		if err == m.ErrTeamMemberNotFound {
+			return Error(404, "Team member not found", nil)
+		}
+
+		return Error(500, "Failed to update isTeamAdmin", err)
+	}
+	return Success("update isTeamAdmin success")
+}

@@ -12,10 +12,11 @@ var (
 
 // TeamMember model
 type TeamMember struct {
-	Id     int64
-	OrgId  int64
-	TeamId int64
-	UserId int64
+	Id          int64
+	OrgId       int64
+	TeamId      int64
+	UserId      int64
+	IsTeamAdmin bool
 
 	Created time.Time
 	Updated time.Time
@@ -36,6 +37,13 @@ type RemoveTeamMemberCommand struct {
 	TeamId int64
 }
 
+type UpdateIsTeamAdminCommand struct {
+	UserId      int64 `json:"userId"`
+	OrgId       int64 `json:"-"`
+	TeamId      int64 `json:"teamId"`
+	IsTeamAdmin bool  `json:"isTeamAdmin"`
+}
+
 // ----------------------
 // QUERIES
 
@@ -50,10 +58,11 @@ type GetTeamMembersQuery struct {
 // Projections and DTOs
 
 type TeamMemberDTO struct {
-	OrgId     int64  `json:"orgId"`
-	TeamId    int64  `json:"teamId"`
-	UserId    int64  `json:"userId"`
-	Email     string `json:"email"`
-	Login     string `json:"login"`
-	AvatarUrl string `json:"avatarUrl"`
+	OrgId       int64  `json:"orgId"`
+	TeamId      int64  `json:"teamId"`
+	UserId      int64  `json:"userId"`
+	IsTeamAdmin bool   `json:"isTeamAdmin"`
+	Email       string `json:"email"`
+	Login       string `json:"login"`
+	AvatarUrl   string `json:"avatarUrl"`
 }
