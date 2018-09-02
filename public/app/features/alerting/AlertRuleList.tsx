@@ -41,14 +41,20 @@ export class AlertRuleList extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.fetchRules(this.getStateFilter());
+    console.log('did mount');
+    this.fetchRules();
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.stateFilter !== this.props.stateFilter) {
+      this.fetchRules();
+    }
   }
 
   onStateFilterChanged = evt => {
     this.props.updateLocation({
       query: { state: evt.target.value },
     });
-    this.fetchRules(evt.target.value);
   };
 
   getStateFilter(): string {
@@ -59,8 +65,8 @@ export class AlertRuleList extends PureComponent<Props, State> {
     return 'all';
   }
 
-  async fetchRules(stateFilter: string) {
-    await this.props.getAlertRulesAsync({ state: stateFilter });
+  async fetchRules() {
+    await this.props.getAlertRulesAsync({ state: this.getStateFilter() });
   }
 
   onOpenHowTo = () => {
