@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { ThresholdMapper } from './threshold_mapper';
+import { ThresholdMapper } from './state/ThresholdMapper';
 import { QueryPart } from 'app/core/components/query_part/query_part';
-import alertDef from './alert_def';
+import alertDef from './state/alertDef';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 

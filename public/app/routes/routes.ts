@@ -2,7 +2,7 @@ import './dashboard_loaders';
 import './ReactContainer';
 
 import ServerStats from 'app/features/admin/containers/ServerStats';
-import AlertRuleList from 'app/features/alerting/containers/AlertRuleList';
+import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
 import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions';
 import TeamPages from 'app/containers/Teams/TeamPages';

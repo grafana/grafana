@@ -1,5 +1,5 @@
 import moment from 'moment';
-import alertDef from 'app/features/alerting/alert_def';
+import alertDef from 'app/features/alerting/state/alertDef';
 
 export function setStateFields(rule, state) {
   const stateModel = alertDef.getStateDisplayModel(state);

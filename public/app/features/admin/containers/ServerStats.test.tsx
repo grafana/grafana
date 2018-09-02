@@ -1,26 +1,18 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
 import { ServerStats } from './ServerStats';
-import { RootStore } from 'app/stores/RootStore/RootStore';
-import { backendSrv, createNavTree } from 'test/mocks/common';
+import { initNav } from 'test/mocks/common';
+import { ServerStat } from '../apis';
 
 describe('ServerStats', () => {
   it('Should render table with stats', done => {
-    backendSrv.get.mockReturnValue(
-      Promise.resolve({
-        dashboards: 10,
-      })
-    );
+    const stats: ServerStat[] = [{ name: 'test', value: 'asd' }];
 
-    const store = RootStore.create(
-      {},
-      {
-        backendSrv: backendSrv,
-        navTree: createNavTree('cfg', 'admin', 'server-stats'),
-      }
-    );
+    let getServerStats = () => {
+      return Promise.resolve(stats);
+    };
 
-    const page = renderer.create(<ServerStats backendSrv={backendSrv} {...store} />);
+    const page = renderer.create(<ServerStats initNav={initNav} getServerStats={getServerStats} />);
 
     setTimeout(() => {
       expect(page.toJSON()).toMatchSnapshot();

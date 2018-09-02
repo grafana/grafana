@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import moment from 'moment';
-import alertDef from '../../../features/alerting/alert_def';
+import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 
 import * as dateMath from 'app/core/utils/datemath';

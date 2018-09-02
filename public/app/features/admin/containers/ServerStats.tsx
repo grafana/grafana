@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { initNav } from 'app/core/actions';
@@ -14,7 +14,7 @@ interface State {
   stats: ServerStat[];
 }
 
-export class ServerStats extends React.Component<Props, State> {
+export class ServerStats extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
 

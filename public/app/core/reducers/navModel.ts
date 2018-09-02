@@ -12,7 +12,6 @@ function getNotFoundModel(): NavModel {
   };
 
   return {
-    breadcrumbs: [node],
     node: node,
     main: node,
   };
@@ -53,7 +52,6 @@ const navModelReducer = (state = initialState, action: Action): NavModel => {
       return {
         main: main,
         node: node,
-        breadcrumbs: [],
       };
     }
   }

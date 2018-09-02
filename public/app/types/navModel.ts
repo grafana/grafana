@@ -9,11 +9,11 @@ export interface NavModelItem {
   hideFromTabs?: boolean;
   divider?: boolean;
   children?: NavModelItem[];
+  breadcrumbs?: NavModelItem[];
   target?: string;
 }
 
 export interface NavModel {
-  breadcrumbs: NavModelItem[];
   main: NavModelItem;
   node: NavModelItem;
 }

@@ -1,3 +1,5 @@
+import { NavModel, NavModelItem } from 'app/types';
+
 export const backendSrv = {
   get: jest.fn(),
   getDashboard: jest.fn(),
@@ -16,4 +18,31 @@ export function createNavTree(...args) {
   }
 
   return root;
+}
+
+export function getNavModel(title: string, tabs: string[]): NavModel {
+  const node: NavModelItem = {
+    id: title,
+    text: title,
+    icon: 'fa fa-fw fa-warning',
+    subTitle: 'subTitle',
+    url: title,
+    children: [],
+    breadcrumbs: [],
+  };
+
+  for (let tab of tabs) {
+    node.children.push({
+      id: tab,
+      icon: 'icon',
+      subTitle: 'subTitle',
+      url: title,
+      text: title,
+    });
+  }
+
+  return {
+    node: node,
+    main: node,
+  };
 }

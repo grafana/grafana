@@ -1,5 +1,5 @@
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import alertDef from '../alert_def';
+import alertDef from './alertDef';
 import moment from 'moment';
 
 export interface AlertRule {

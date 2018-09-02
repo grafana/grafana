@@ -7,7 +7,7 @@ import appEvents from 'app/core/app_events';
 import Highlighter from 'react-highlight-words';
 import { initNav, updateLocation } from 'app/core/actions';
 import { ContainerProps } from 'app/types';
-import { getAlertRules, AlertRule } from '../apis';
+import { getAlertRules, AlertRule } from './state/apis';
 
 interface Props extends ContainerProps {
   updateLocation: typeof updateLocation;
