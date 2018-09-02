@@ -15,12 +15,11 @@ interface Props {
   alertRules: AlertRule[];
   updateLocation: typeof updateLocation;
   getAlertRulesAsync: typeof getAlertRulesAsync;
+  stateFilter: string;
 }
 
 interface State {
-  rules: AlertRule[];
   search: string;
-  stateFilter: string;
 }
 
 export class AlertRuleList extends PureComponent<Props, State> {
@@ -37,29 +36,31 @@ export class AlertRuleList extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      rules: [],
       search: '',
-      stateFilter: '',
     };
   }
 
   componentDidMount() {
-    this.fetchRules();
+    this.fetchRules(this.getStateFilter());
   }
 
   onStateFilterChanged = evt => {
     this.props.updateLocation({
       query: { state: evt.target.value },
     });
-    this.fetchRules();
+    this.fetchRules(evt.target.value);
   };
 
-  async fetchRules() {
-    await this.props.getAlertRulesAsync();
+  getStateFilter(): string {
+    const { stateFilter } = this.props;
+    if (stateFilter) {
+      return stateFilter.toString();
+    }
+    return 'all';
+  }
 
-    // this.props.alertList.loadRules({
-    //   state: this.props.view.query.get('state') || 'all',
-    // });
+  async fetchRules(stateFilter: string) {
+    await this.props.getAlertRulesAsync({ state: stateFilter });
   }
 
   onOpenHowTo = () => {
@@ -76,7 +77,7 @@ export class AlertRuleList extends PureComponent<Props, State> {
 
   render() {
     const { navModel, alertRules } = this.props;
-    const { search, stateFilter } = this.state;
+    const { search } = this.state;
 
     return (
       <div>
@@ -99,7 +100,7 @@ export class AlertRuleList extends PureComponent<Props, State> {
               <label className="gf-form-label">States</label>
 
               <div className="gf-form-select-wrapper width-13">
-                <select className="gf-form-input" onChange={this.onStateFilterChanged} value={stateFilter}>
+                <select className="gf-form-input" onChange={this.onStateFilterChanged} value={this.getStateFilter()}>
                   {this.stateFilters.map(AlertStateFilterOption)}
                 </select>
               </div>
@@ -200,6 +201,7 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'alert-list'),
   alertRules: state.alertRules,
+  stateFilter: state.location.query.state,
 });
 
 const mapDispatchToProps = {

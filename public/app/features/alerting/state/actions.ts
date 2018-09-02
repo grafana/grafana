@@ -14,9 +14,11 @@ export const loadAlertRules = (rules: AlertRule[]): LoadAlertRulesAction => ({
 
 export type Action = LoadAlertRulesAction;
 
-export const getAlertRulesAsync = () => async (dispatch: Dispatch<Action>): Promise<AlertRule[]> => {
+export const getAlertRulesAsync = (options: { state: string }) => async (
+  dispatch: Dispatch<Action>
+): Promise<AlertRule[]> => {
   try {
-    const rules = await getBackendSrv().get('/api/alerts', {});
+    const rules = await getBackendSrv().get('/api/alerts', options);
     dispatch(loadAlertRules(rules));
     return rules;
   } catch (error) {
