@@ -1,62 +1,29 @@
 import { Action } from 'app/core/actions/navModel';
-import { NavModel, NavModelItem } from 'app/types';
+import { NavModelItem, NavIndex } from 'app/types';
 import config from 'app/core/config';
 
-function getNotFoundModel(): NavModel {
-  var node: NavModelItem = {
-    id: 'not-found',
-    text: 'Page not found',
-    icon: 'fa fa-fw fa-warning',
-    subTitle: '404 Error',
-    url: 'not-found',
-  };
-
-  return {
-    node: node,
-    main: node,
-  };
+export function buildInitialState(): NavIndex {
+  const navIndex: NavIndex = {};
+  const rootNodes = config.bootData.navTree as NavModelItem[];
+  buildNavIndex(navIndex, rootNodes);
+  return navIndex;
 }
 
-export const initialState: NavModel = getNotFoundModel();
+function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
+  for (const node of children) {
+    navIndex[node.id] = {
+      ...node,
+      parentItem: parentItem,
+    };
 
-const navModelReducer = (state = initialState, action: Action): NavModel => {
-  switch (action.type) {
-    case 'INIT_NAV_MODEL': {
-      let children = config.bootData.navTree as NavModelItem[];
-      let main, node;
-      const parents = [];
-
-      for (const id of action.args) {
-        node = children.find(el => el.id === id);
-
-        if (!node) {
-          throw new Error(`NavItem with id ${id} not found`);
-        }
-
-        children = node.children;
-        parents.push(node);
-      }
-
-      main = parents[parents.length - 2];
-
-      if (main.children) {
-        for (const item of main.children) {
-          item.active = false;
-
-          if (item.url === node.url) {
-            item.active = true;
-          }
-        }
-      }
-
-      return {
-        main: main,
-        node: node,
-      };
+    if (node.children) {
+      buildNavIndex(navIndex, node.children, node);
     }
   }
+}
 
+export const initialState: NavIndex = buildInitialState();
+
+export const navIndexReducer = (state = initialState, action: Action): NavIndex => {
   return state;
 };
-
-export default navModelReducer;

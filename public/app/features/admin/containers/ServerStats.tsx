@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { initNav } from 'app/core/actions';
-import { ContainerProps } from 'app/types';
+import { NavModel, StoreState } from 'app/types';
+import { selectNavNode } from 'app/core/selectors/navModel';
 import { getServerStats, ServerStat } from '../apis';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 
-interface Props extends ContainerProps {
+interface Props {
+  navModel: NavModel;
   getServerStats: () => Promise<ServerStat[]>;
 }
 
@@ -21,8 +22,6 @@ export class ServerStats extends PureComponent<Props, State> {
     this.state = {
       stats: [],
     };
-
-    this.props.initNav('cfg', 'admin', 'server-stats');
   }
 
   async componentDidMount() {
@@ -66,13 +65,9 @@ function StatItem(stat: ServerStat) {
   );
 }
 
-const mapStateToProps = state => ({
-  navModel: state.navModel,
+const mapStateToProps = (state: StoreState) => ({
+  navModel: selectNavNode(state.navIndex, 'server-stats'),
   getServerStats: getServerStats,
 });
 
-const mapDispatchToProps = {
-  initNav,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ServerStats));
+export default hot(module)(connect(mapStateToProps)(ServerStats));

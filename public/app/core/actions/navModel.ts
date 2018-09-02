@@ -1,11 +1,13 @@
-export type Action = InitNavModelAction;
+export type Action = UpdateNavIndexAction;
 
-export interface InitNavModelAction {
-  type: 'INIT_NAV_MODEL';
-  args: string[];
+// this action is not used yet
+// kind of just a placeholder, will be need for dynamic pages
+// like datasource edit, teams edit page
+
+export interface UpdateNavIndexAction {
+  type: 'UPDATE_NAV_INDEX';
 }
 
-export const initNav = (...args: string[]): InitNavModelAction => ({
-  type: 'INIT_NAV_MODEL',
-  args: args,
+export const updateNavIndex = (): UpdateNavIndexAction => ({
+  type: 'UPDATE_NAV_INDEX',
 });

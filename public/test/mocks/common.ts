@@ -20,7 +20,7 @@ export function createNavTree(...args) {
   return root;
 }
 
-export function getNavModel(title: string, tabs: string[]): NavModel {
+export function createNavModel(title: string, ...tabs: string[]): NavModel {
   const node: NavModelItem = {
     id: title,
     text: title,
@@ -38,8 +38,11 @@ export function getNavModel(title: string, tabs: string[]): NavModel {
       subTitle: 'subTitle',
       url: title,
       text: title,
+      active: false,
     });
   }
+
+  node.children[0].active = true;
 
   return {
     node: node,

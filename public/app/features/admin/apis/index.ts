@@ -2,7 +2,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export interface ServerStat {
   name: string;
-  value: string;
+  value: number;
 }
 
 export const getServerStats = async (): Promise<ServerStat[]> => {

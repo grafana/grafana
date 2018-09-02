@@ -17,8 +17,9 @@ exports[`ServerStats Should render table with stats 1`] = `
           <span
             className="page-header__logo"
           >
-            
-            
+            <i
+              className="page-header__icon fa fa-fw fa-warning"
+            />
           </span>
           <div
             className="page-header__info-block"
@@ -26,9 +27,13 @@ exports[`ServerStats Should render table with stats 1`] = `
             <h1
               className="page-header__title"
             >
-              admin-Text
+              Admin
             </h1>
-            
+            <div
+              className="page-header__sub-title"
+            >
+              subTitle
+            </div>
           </div>
         </div>
         <nav>
@@ -36,19 +41,19 @@ exports[`ServerStats Should render table with stats 1`] = `
             className="gf-form-select-wrapper width-20 page-header__select-nav"
           >
             <label
-              className="gf-form-select-icon "
+              className="gf-form-select-icon icon"
               htmlFor="page-header-select-nav"
             />
             <select
               className="gf-select-nav gf-form-input"
               id="page-header-select-nav"
               onChange={[Function]}
-              value="/url/server-stats"
+              value="Admin"
             >
               <option
-                value="/url/server-stats"
+                value="Admin"
               >
-                server-stats-Text
+                Admin
               </option>
             </select>
           </div>
@@ -60,13 +65,13 @@ exports[`ServerStats Should render table with stats 1`] = `
             >
               <a
                 className="gf-tabs-link active"
-                href="/url/server-stats"
+                href="Admin"
                 target={undefined}
               >
                 <i
-                  className=""
+                  className="icon"
                 />
-                server-stats-Text
+                Admin
               </a>
             </li>
           </ul>
@@ -101,66 +106,10 @@ exports[`ServerStats Should render table with stats 1`] = `
         </tr>
         <tr>
           <td>
-            Total users
+            Total Users
           </td>
           <td>
-            0
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Active users (seen last 30 days)
-          </td>
-          <td>
-            0
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Total orgs
-          </td>
-          <td>
-            0
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Total playlists
-          </td>
-          <td>
-            0
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Total snapshots
-          </td>
-          <td>
-            0
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Total dashboard tags
-          </td>
-          <td>
-            0
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Total starred dashboards
-          </td>
-          <td>
-            0
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Total alerts
-          </td>
-          <td>
-            0
+            1
           </td>
         </tr>
       </tbody>

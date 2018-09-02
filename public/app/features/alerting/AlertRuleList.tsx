@@ -5,11 +5,13 @@ import classNames from 'classnames';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import appEvents from 'app/core/app_events';
 import Highlighter from 'react-highlight-words';
-import { initNav, updateLocation } from 'app/core/actions';
-import { ContainerProps } from 'app/types';
+import { updateLocation } from 'app/core/actions';
+import { selectNavNode } from 'app/core/selectors/navModel';
+import { NavModel, StoreState } from 'app/types';
 import { getAlertRules, AlertRule } from './state/apis';
 
-interface Props extends ContainerProps {
+interface Props {
+  navModel: NavModel;
   updateLocation: typeof updateLocation;
 }
 
@@ -37,8 +39,6 @@ export class AlertRuleList extends PureComponent<Props, State> {
       search: '',
       stateFilter: '',
     };
-
-    this.props.initNav('alerting', 'alert-list');
   }
 
   componentDidMount() {
@@ -200,12 +200,11 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
   }
 }
 
-const mapStateToProps = state => ({
-  navModel: state.navModel,
+const mapStateToProps = (state: StoreState) => ({
+  navModel: selectNavNode(state.navIndex, 'alert-list'),
 });
 
 const mapDispatchToProps = {
-  initNav,
   updateLocation,
 };
 

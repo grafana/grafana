@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'test/lib/common';
 
-import { ThresholdMapper } from './threshold_mapper';
+import { ThresholdMapper } from './ThresholdMapper';
 
 describe('ThresholdMapper', () => {
   describe('with greater than evaluator', () => {
