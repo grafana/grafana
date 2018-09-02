@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel, StoreState } from 'app/types';
-import { selectNavNode } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { getServerStats, ServerStat } from '../apis';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 
@@ -66,7 +66,7 @@ function StatItem(stat: ServerStat) {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  navModel: selectNavNode(state.navIndex, 'server-stats'),
+  navModel: getNavModel(state.navIndex, 'server-stats'),
   getServerStats: getServerStats,
 });
 

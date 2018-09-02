@@ -6,13 +6,15 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import appEvents from 'app/core/app_events';
 import Highlighter from 'react-highlight-words';
 import { updateLocation } from 'app/core/actions';
-import { selectNavNode } from 'app/core/selectors/navModel';
-import { NavModel, StoreState } from 'app/types';
-import { getAlertRules, AlertRule } from './state/apis';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { NavModel, StoreState, AlertRule } from 'app/types';
+import { getAlertRulesAsync } from './state/actions';
 
 interface Props {
   navModel: NavModel;
+  alertRules: AlertRule[];
   updateLocation: typeof updateLocation;
+  getAlertRulesAsync: typeof getAlertRulesAsync;
 }
 
 interface State {
@@ -49,16 +51,11 @@ export class AlertRuleList extends PureComponent<Props, State> {
     this.props.updateLocation({
       query: { state: evt.target.value },
     });
-    // this.fetchRules();
+    this.fetchRules();
   };
 
   async fetchRules() {
-    try {
-      const rules = await getAlertRules();
-      this.setState({ rules });
-    } catch (error) {
-      console.error(error);
-    }
+    await this.props.getAlertRulesAsync();
 
     // this.props.alertList.loadRules({
     //   state: this.props.view.query.get('state') || 'all',
@@ -78,8 +75,8 @@ export class AlertRuleList extends PureComponent<Props, State> {
   };
 
   render() {
-    const { navModel } = this.props;
-    const { rules, search, stateFilter } = this.state;
+    const { navModel, alertRules } = this.props;
+    const { search, stateFilter } = this.state;
 
     return (
       <div>
@@ -117,7 +114,7 @@ export class AlertRuleList extends PureComponent<Props, State> {
 
           <section>
             <ol className="alert-rule-list">
-              {rules.map(rule => <AlertRuleItem rule={rule} key={rule.id} search={search} />)}
+              {alertRules.map(rule => <AlertRuleItem rule={rule} key={rule.id} search={search} />)}
             </ol>
           </section>
         </div>
@@ -201,11 +198,13 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  navModel: selectNavNode(state.navIndex, 'alert-list'),
+  navModel: getNavModel(state.navIndex, 'alert-list'),
+  alertRules: state.alertRules,
 });
 
 const mapDispatchToProps = {
   updateLocation,
+  getAlertRulesAsync,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(AlertRuleList));

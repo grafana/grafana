@@ -15,7 +15,7 @@ function getNotFoundModel(): NavModel {
   };
 }
 
-export function selectNavNode(navIndex: NavIndex, id: string): NavModel {
+export function getNavModel(navIndex: NavIndex, id: string): NavModel {
   if (navIndex[id]) {
     const node = navIndex[id];
     const main = {

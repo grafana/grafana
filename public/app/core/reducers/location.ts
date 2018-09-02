@@ -16,7 +16,7 @@ function renderUrl(path: string, query: UrlQueryMap): string {
   return path;
 }
 
-const routerReducer = (state = initialState, action: Action): LocationState => {
+export const locationReducer = (state = initialState, action: Action): LocationState => {
   switch (action.type) {
     case 'UPDATE_LOCATION': {
       const { path, query, routeParams } = action.payload;
@@ -31,5 +31,3 @@ const routerReducer = (state = initialState, action: Action): LocationState => {
 
   return state;
 };
-
-export default routerReducer;

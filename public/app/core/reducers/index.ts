@@ -1,5 +1,5 @@
 import { navIndexReducer as navIndex } from './navModel';
-import location from './location';
+import { locationReducer as location } from './location';
 
 export default {
   navIndex,
