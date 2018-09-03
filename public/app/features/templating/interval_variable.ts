@@ -4,8 +4,8 @@ import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class IntervalVariable implements Variable {
   name: string;
-  autoCount: number;
-  autoMin: number;
+  auto_count: number; // tslint:disable-line variable-name
+  auto_min: number; // tslint:disable-line variable-name
   options: any;
   auto: boolean;
   query: string;
@@ -23,8 +23,8 @@ export class IntervalVariable implements Variable {
     current: {},
     query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
     auto: false,
-    autoMin: '10s',
-    autoCount: 30,
+    auto_min: '10s',
+    auto_count: 30,
     skipUrlSync: false,
   };
 
@@ -57,7 +57,7 @@ export class IntervalVariable implements Variable {
       });
     }
 
-    const res = kbn.calculateInterval(this.timeSrv.timeRange(), this.autoCount, this.autoMin);
+    const res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, this.auto_min);
     this.templateSrv.setGrafanaVariable('$__auto_interval_' + this.name, res.interval);
     // for backward compatibility, to be removed eventually
     this.templateSrv.setGrafanaVariable('$__auto_interval', res.interval);
