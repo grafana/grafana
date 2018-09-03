@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 import classNames from 'classnames/bind';
 import { AlertRule } from '../../types';
@@ -8,7 +8,7 @@ export interface Props {
   search: string;
 }
 
-export default class AlertRuleItem extends React.Component<Props, any> {
+export default class AlertRuleItem extends PureComponent<Props, any> {
   toggleState = () => {
     // this.props.rule.togglePaused();
   };
