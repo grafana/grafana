@@ -51,7 +51,7 @@ export class Settings {
   }
 }
 
-const bootData = (<any>window).grafanaBootData || { settings: {} };
+const bootData = (window as any).grafanaBootData || { settings: {} };
 const options = bootData.settings;
 options.bootData = bootData;
 

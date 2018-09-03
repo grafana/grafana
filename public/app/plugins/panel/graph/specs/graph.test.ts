@@ -28,7 +28,7 @@ import moment from 'moment';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
 
-const ctx = <any>{};
+const ctx = {} as any;
 let ctrl;
 const scope = {
   ctrl: {},
@@ -47,7 +47,7 @@ describe('grafanaGraph', function() {
         lightTheme: false,
       },
     };
-    GraphCtrl.prototype = <any>{
+    GraphCtrl.prototype = {
       ...MetricsPanelCtrl.prototype,
       ...PanelCtrl.prototype,
       ...GraphCtrl.prototype,
@@ -88,7 +88,7 @@ describe('grafanaGraph', function() {
         from: moment([2015, 1, 1, 10]),
         to: moment([2015, 1, 1, 22]),
       },
-    };
+    } as any;
 
     ctx.data = [];
     ctx.data.push(

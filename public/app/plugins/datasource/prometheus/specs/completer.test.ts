@@ -15,7 +15,7 @@ describe('Prometheus editor completer', function() {
 
   const editor = {};
 
-  const backendSrv = <BackendSrv>{};
+  const backendSrv = {} as BackendSrv;
   const datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
 
   datasourceStub.performInstantQuery = jest.fn(() =>

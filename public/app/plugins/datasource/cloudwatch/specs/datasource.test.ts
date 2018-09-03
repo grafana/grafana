@@ -25,10 +25,10 @@ describe('CloudWatchDatasource', function() {
     },
   };
   const backendSrv = {};
-  const ctx = <any>{
+  const ctx = {
     backendSrv,
     templateSrv,
-  };
+  } as any;
 
   beforeEach(() => {
     ctx.ds = new CloudWatchDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);

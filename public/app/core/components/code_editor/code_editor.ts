@@ -84,7 +84,7 @@ function link(scope, elem, attrs) {
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
-  (<any>codeEditor.renderer).setScrollMargin(15, 15);
+  (codeEditor.renderer as any).setScrollMargin(15, 15);
   codeEditor.renderer.setPadding(10);
 
   setThemeMode();
@@ -152,7 +152,7 @@ function link(scope, elem, attrs) {
 
     if (scope.getCompleter()) {
       // make copy of array as ace seems to share completers array between instances
-      const anyEditor = <any>codeEditor;
+      const anyEditor = codeEditor as any;
       anyEditor.completers = anyEditor.completers.slice();
       anyEditor.completers.push(scope.getCompleter());
     }

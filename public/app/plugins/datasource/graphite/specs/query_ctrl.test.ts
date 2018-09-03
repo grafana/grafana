@@ -3,7 +3,7 @@ import gfunc from '../gfunc';
 import { GraphiteQueryCtrl } from '../query_ctrl';
 
 describe('GraphiteQueryCtrl', () => {
-  const ctx = <any>{
+  const ctx = {
     datasource: {
       metricFindQuery: jest.fn(() => Promise.resolve([])),
       getFuncDefs: jest.fn(() => Promise.resolve(gfunc.getFuncDefs('1.0'))),
@@ -15,7 +15,7 @@ describe('GraphiteQueryCtrl', () => {
     panelCtrl: {
       refresh: jest.fn(),
     },
-  };
+  } as any;
 
   ctx.panelCtrl.panel = {
     targets: [ctx.target],

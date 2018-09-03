@@ -60,7 +60,7 @@ export class InspectCtrl {
       if (keyValue[1].length > 0) {
         result.push({
           key: keyValue[0],
-          value: (<any>window).unescape(keyValue[1]),
+          value: (window as any).unescape(keyValue[1]),
         });
       }
     }
