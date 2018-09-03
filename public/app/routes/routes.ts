@@ -144,7 +144,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org/teams', {
       template: '<react-container />',
       resolve: {
-        roles: () => ['Editor', 'Admin'],
         component: () => TeamList,
       },
     })
@@ -156,7 +155,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org/teams/edit/:id/:page?', {
       template: '<react-container />',
       resolve: {
-        roles: () => ['Admin'],
         component: () => TeamPages,
       },
     })

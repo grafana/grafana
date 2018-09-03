@@ -325,6 +325,25 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 		}
 
 		data.NavTree = append(data.NavTree, cfgNode)
+	} else {
+		cfgNode := &dtos.NavLink{
+			Id:       "cfg",
+			Text:     "Configuration",
+			SubTitle: "Organization: " + c.OrgName,
+			Icon:     "gicon gicon-cog",
+			Url:      setting.AppSubUrl + "/org/teams",
+			Children: []*dtos.NavLink{
+				{
+					Text:        "Teams",
+					Id:          "teams",
+					Description: "Manage org groups",
+					Icon:        "gicon gicon-team",
+					Url:         setting.AppSubUrl + "/org/teams",
+				},
+			},
+		}
+
+		data.NavTree = append(data.NavTree, cfgNode)
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
