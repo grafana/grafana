@@ -38,6 +38,8 @@
     "no-empty": false,
     "no-eval": true,
     "no-inferrable-types": true,
+    "no-namespace": [true, "allow-declarations"],
+    "no-reference": true,
     "no-shadowed-variable": false,
     "no-string-literal": false,
     "no-switch-case-fall-through": false,
@@ -57,14 +59,7 @@
         "variable-declaration": "nospace"
       }
     ],
-    "variable-name": [
-      true,
-      "check-format",
-      "ban-keywords",
-      "allow-leading-underscore",
-      "allow-trailing-underscore",
-      "allow-pascal-case"
-    ],
+    "variable-name": [true, "ban-keywords"],
     "whitespace": [true, "check-branch", "check-decl", "check-type", "check-preblock"]
   }
 }
