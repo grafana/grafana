@@ -1,11 +1,11 @@
-import React, { SFC } from 'react';
+import React from 'react';
 import _ from 'lodash';
 import SignIn from './SignIn';
 import BottomNavLinks from './BottomNavLinks';
 import { contextSrv } from 'app/core/services/context_srv';
 import config from '../../config';
 
-const BottomSection: SFC<any> = () => {
+export default function BottomSection() {
   const navTree = _.cloneDeep(config.bootData.navTree);
   const bottomNav = _.filter(navTree, item => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
@@ -26,6 +26,4 @@ const BottomSection: SFC<any> = () => {
       })}
     </div>
   );
-};
-
-export default BottomSection;
+}
