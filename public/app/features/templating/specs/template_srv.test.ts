@@ -276,7 +276,7 @@ describe('templateSrv', function() {
     });
 
     it('multi value and percentencode format should render percent-encoded string', function() {
-      var result = _templateSrv.formatValue(['foo()bar BAZ', 'test2'], 'percentencode');
+      const result = _templateSrv.formatValue(['foo()bar BAZ', 'test2'], 'percentencode');
       expect(result).toBe('%7bfoo%28%29bar%20BAZ%2ctest2%7d');
     });
 
