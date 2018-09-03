@@ -29,6 +29,7 @@
     "label-position": true,
     "max-line-length": [true, 150],
     "member-access": [true, "no-public"],
+    "new-parens": true,
     "no-angle-bracket-type-assertion": true,
     "no-arg": true,
     "no-bitwise": false,
