@@ -33,7 +33,7 @@ func NewTeamsNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &TeamsNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		log:          log.New("alerting.notifier.teams"),
 	}, nil
