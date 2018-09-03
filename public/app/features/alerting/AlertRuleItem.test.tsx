@@ -2,6 +2,10 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import AlertRuleItem, { Props } from './AlertRuleItem';
 
+jest.mock('react-redux', () => ({
+  connect: params => params,
+}));
+
 const setup = (propOverrides?: object) => {
   const props: Props = {
     rule: {
@@ -17,6 +21,7 @@ const setup = (propOverrides?: object) => {
       url: 'https://something.something.darkside',
     },
     search: '',
+    togglePauseAlertRule: jest.fn(),
   };
   Object.assign(props, propOverrides);
 

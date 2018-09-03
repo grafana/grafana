@@ -32,8 +32,8 @@ export interface AlertRule {
   stateIcon: string;
   stateClass: string;
   stateAge: string;
-  info?: string;
   url: string;
+  info?: string;
   executionError?: string;
   evalData?: { noData: boolean };
 }
