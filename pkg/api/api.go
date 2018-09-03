@@ -152,11 +152,15 @@ func (hs *HTTPServer) registerRoutes() {
 			teamsRoute.Post("/", bind(m.CreateTeamCommand{}), Wrap(CreateTeam))
 			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), Wrap(UpdateTeam))
 			teamsRoute.Delete("/:teamId", Wrap(DeleteTeamByID))
+		}, reqOrgAdmin)
+
+		// team (admin or team admin permission required)
+		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
 			teamsRoute.Get("/:teamId/members", Wrap(GetTeamMembers))
 			teamsRoute.Post("/:teamId/members", bind(m.AddTeamMemberCommand{}), Wrap(AddTeamMember))
 			teamsRoute.Delete("/:teamId/members/:userId", Wrap(RemoveTeamMember))
 			teamsRoute.Patch("/:teamId/members/:userId", bind(m.UpdateIsTeamAdminCommand{}), Wrap(UpdateIsTeamAdmin))
-		}, reqOrgAdmin)
+		})
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
