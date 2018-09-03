@@ -8,6 +8,8 @@ export class User {
   isSignedIn: any;
   orgRole: any;
   orgId: number;
+  orgName: string;
+  orgCount: number;
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
