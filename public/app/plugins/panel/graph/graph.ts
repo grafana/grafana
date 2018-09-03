@@ -86,9 +86,10 @@ class GraphElement {
     updateLegendValues(this.data, this.panel, graphHeight);
 
     // this.ctrl.events.emit('render-legend');
+    console.log(this.ctrl);
     const { values, min, max, avg, current, total } = this.panel.legend;
-    const { alignAsTable, rightSide, sideWidth } = this.panel.legend;
-    const legendOptions = { alignAsTable, rightSide, sideWidth };
+    const { alignAsTable, rightSide, sideWidth, hideEmpty, hideZero } = this.panel.legend;
+    const legendOptions = { alignAsTable, rightSide, sideWidth, hideEmpty, hideZero };
     const valueOptions = { values, min, max, avg, current, total };
     const legendProps: GraphLegendProps = {
       seriesList: this.data,

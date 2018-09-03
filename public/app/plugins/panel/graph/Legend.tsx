@@ -1,32 +1,62 @@
 import _ from 'lodash';
 import React from 'react';
+import { TimeSeries } from 'app/core/core';
 
 const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
-export interface GraphLegendProps {
-  seriesList: any[];
+interface LegendProps {
+  seriesList: TimeSeries[];
+  optionalClass?: string;
+}
+
+interface LegendDisplayProps {
   hiddenSeries: any;
+  hideEmpty?: boolean;
+  hideZero?: boolean;
+  alignAsTable?: boolean;
+  rightSide?: boolean;
+  sideWidth?: number;
+}
+
+interface LegendValuesProps {
   values?: boolean;
   min?: boolean;
   max?: boolean;
   avg?: boolean;
   current?: boolean;
   total?: boolean;
-  alignAsTable?: boolean;
-  rightSide?: boolean;
-  sideWidth?: number;
+}
+
+interface LegendSortProps {
   sort?: 'min' | 'max' | 'avg' | 'current' | 'total';
   sortDesc?: boolean;
-  className?: string;
 }
+
+export type GraphLegendProps = LegendProps & LegendDisplayProps & LegendValuesProps & LegendSortProps;
+
+const defaultGraphLegendProps: Partial<GraphLegendProps> = {
+  values: false,
+  min: false,
+  max: false,
+  avg: false,
+  current: false,
+  total: false,
+  alignAsTable: false,
+  rightSide: false,
+  sort: undefined,
+  sortDesc: false,
+  optionalClass: '',
+};
 
 export interface GraphLegendState {}
 
 export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLegendState> {
+  static defaultProps = defaultGraphLegendProps;
+
   sortLegend() {
     let seriesList = this.props.seriesList || [];
     if (this.props.sort) {
-      seriesList = _.sortBy(seriesList, function(series) {
+      seriesList = _.sortBy(seriesList, series => {
         let sort = series.stats[this.props.sort];
         if (sort === null) {
           sort = -Infinity;
@@ -41,11 +71,12 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLege
   }
 
   render() {
-    const { className, hiddenSeries, rightSide, sideWidth } = this.props;
+    const { optionalClass, hiddenSeries, rightSide, sideWidth, hideEmpty, hideZero } = this.props;
     const { values, min, max, avg, current, total } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
-    const seriesList = this.sortLegend();
-    const legendCustomClasses = `${this.props.alignAsTable ? 'graph-legend-table' : ''} ${className}`;
+    const seriesHideProps = { hideEmpty, hideZero };
+    const seriesList = _.filter(this.sortLegend(), series => !series.hideFromLegend(seriesHideProps));
+    const legendCustomClasses = `${this.props.alignAsTable ? 'graph-legend-table' : ''} ${optionalClass}`;
 
     // Set min-width if side style and there is a value, otherwise remove the CSS property
     // Set width so it works with IE11
@@ -62,15 +93,7 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLege
           {this.props.alignAsTable ? (
             <LegendTable seriesList={seriesList} hiddenSeries={hiddenSeries} {...seriesValuesProps} />
           ) : (
-            seriesList.map((series, i) => (
-              <LegendSeriesItem
-                key={series.id}
-                series={series}
-                index={i}
-                hiddenSeries={hiddenSeries}
-                {...seriesValuesProps}
-              />
-            ))
+            <LegendSeriesList seriesList={seriesList} hiddenSeries={hiddenSeries} {...seriesValuesProps} />
           )}
         </div>
       </div>
@@ -78,23 +101,24 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLege
   }
 }
 
-interface LegendSeriesItemProps {
-  series: any;
-  index: number;
-  hiddenSeries: any;
-  values?: boolean;
-  min?: boolean;
-  max?: boolean;
-  avg?: boolean;
-  current?: boolean;
-  total?: boolean;
+class LegendSeriesList extends React.PureComponent<GraphLegendProps> {
+  render() {
+    const { seriesList, hiddenSeries, values, min, max, avg, current, total } = this.props;
+    const seriesValuesProps = { values, min, max, avg, current, total };
+    return seriesList.map((series, i) => (
+      <LegendSeriesItem key={series.id} series={series} index={i} hiddenSeries={hiddenSeries} {...seriesValuesProps} />
+    ));
+  }
 }
 
-class LegendSeriesItem extends React.Component<LegendSeriesItemProps> {
-  constructor(props) {
-    super(props);
-  }
+interface LegendSeriesProps {
+  series: TimeSeries;
+  index: number;
+}
 
+type LegendSeriesItemProps = LegendSeriesProps & LegendDisplayProps & LegendValuesProps;
+
+class LegendSeriesItem extends React.PureComponent<LegendSeriesItemProps> {
   render() {
     const { series, index, hiddenSeries } = this.props;
     const seriesOptionClasses = getOptionSeriesCSSClasses(series, hiddenSeries);
@@ -113,21 +137,27 @@ interface LegendSeriesLabelProps {
   color: string;
 }
 
-function LegendSeriesLabel(props: LegendSeriesLabelProps) {
-  const { label, color } = props;
-  return (
-    <div>
-      <div className="graph-legend-icon">
+class LegendSeriesLabel extends React.PureComponent<LegendSeriesLabelProps> {
+  render() {
+    const { label, color } = this.props;
+    return [
+      <div className="graph-legend-icon" key="icon">
         <i className="fa fa-minus pointer" style={{ color: color }} />
-      </div>
-      <a className="graph-legend-alias pointer" title={label}>
+      </div>,
+      <a className="graph-legend-alias pointer" title={label} key="label">
         {label}
-      </a>
-    </div>
-  );
+      </a>,
+    ];
+  }
 }
 
-function LegendValue(props) {
+interface LegendValueProps {
+  value: string;
+  valueName: string;
+  asTable?: boolean;
+}
+
+function LegendValue(props: LegendValueProps) {
   const value = props.value;
   const valueName = props.valueName;
   if (props.asTable) {
@@ -149,30 +179,21 @@ function renderLegendValues(props: LegendSeriesItemProps, series, asTable = fals
   return legendValueItems;
 }
 
-interface LegendTableProps {
-  seriesList: any[];
-  hiddenSeries: any;
-  values?: boolean;
-  min?: boolean;
-  max?: boolean;
-  avg?: boolean;
-  current?: boolean;
-  total?: boolean;
-}
-
-class LegendTable extends React.PureComponent<LegendTableProps> {
+class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
   render() {
     const seriesList = this.props.seriesList;
-    const { values, min, max, avg, current, total } = this.props;
+    const { values, min, max, avg, current, total, sort, sortDesc } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
-
     return (
       <table>
         <tbody>
           <tr>
             <th style={{ textAlign: 'left' }} />
             {LEGEND_STATS.map(
-              statName => seriesValuesProps[statName] && <LegendTableHeader key={statName} statName={statName} />
+              statName =>
+                seriesValuesProps[statName] && (
+                  <LegendTableHeader key={statName} statName={statName} sort={sort} sortDesc={sortDesc} />
+                )
             )}
           </tr>
           {seriesList.map((series, i) => (
@@ -190,11 +211,21 @@ class LegendTable extends React.PureComponent<LegendTableProps> {
   }
 }
 
-class LegendSeriesItemAsTable extends React.Component<LegendSeriesItemProps> {
-  constructor(props) {
-    super(props);
-  }
+interface LegendTableHeaderProps {
+  statName: string;
+}
 
+function LegendTableHeader(props: LegendTableHeaderProps & LegendSortProps) {
+  const { statName, sort, sortDesc } = props;
+  return (
+    <th className="pointer" data-stat={statName}>
+      {statName}
+      {sort === statName && <span className={sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up'} />}
+    </th>
+  );
+}
+
+class LegendSeriesItemAsTable extends React.PureComponent<LegendSeriesItemProps> {
   render() {
     const { series, index, hiddenSeries } = this.props;
     const seriesOptionClasses = getOptionSeriesCSSClasses(series, hiddenSeries);
@@ -208,20 +239,6 @@ class LegendSeriesItemAsTable extends React.Component<LegendSeriesItemProps> {
       </tr>
     );
   }
-}
-
-interface LegendTableHeaderProps {
-  statName: string;
-  sortDesc?: boolean;
-}
-
-function LegendTableHeader(props: LegendTableHeaderProps) {
-  return (
-    <th className="pointer" data-stat={props.statName}>
-      {props.statName}
-      <span className={props.sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up'} />
-    </th>
-  );
 }
 
 function getOptionSeriesCSSClasses(series, hiddenSeries) {
