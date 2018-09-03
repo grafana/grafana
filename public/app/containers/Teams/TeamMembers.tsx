@@ -1,6 +1,7 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { observer } from 'mobx-react';
+import { BackendSrv } from 'app/core/services/backend_srv';
 import { Team, TeamMember } from 'app/stores/TeamsStore/TeamsStore';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
@@ -8,6 +9,7 @@ import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 
 interface Props {
   team: Team;
+  backendSrv: BackendSrv;
 }
 
 interface State {
@@ -23,6 +25,10 @@ export class TeamMembers extends React.Component<Props, State> {
   }
 
   componentDidMount() {
+    this.fetchTeamMembers();
+  }
+
+  fetchTeamMembers() {
     this.props.team.loadMembers();
   }
 
@@ -46,13 +52,41 @@ export class TeamMembers extends React.Component<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
-        <td>{member.isTeamAdmin.toString()}</td>
+        <td>
+          <div className="gf-form-select-wrapper width-12">
+            <select
+              className="gf-form-input"
+              onChange={e => {
+                this.changeMemberAdmin(member, e.target.value);
+              }}
+              value={member.isTeamAdmin ? 1 : 0}
+            >
+              <option key={0} value={0}>
+                normal member
+              </option>
+              <option key={1} value={1}>
+                team admin
+              </option>
+            </select>
+          </div>
+        </td>
         <td className="text-right">
           <DeleteButton onConfirmDelete={() => this.removeMember(member)} />
         </td>
       </tr>
     );
   }
+
+  changeMemberAdmin = (member, role) => {
+    const { team, backendSrv } = this.props;
+    if (member.isTeamAdmin !== role) {
+      backendSrv
+        .patch(`/api/teams/${team.id}/members/${member.userId}`, {
+          isTeamAdmin: role === '1' ? true : false,
+        })
+        .then(this.fetchTeamMembers.bind(this));
+    }
+  };
 
   onToggleAdding = () => {
     this.setState({ isAdding: !this.state.isAdding });
@@ -122,7 +156,7 @@ export class TeamMembers extends React.Component<Props, State> {
                 <th />
                 <th>Name</th>
                 <th>Email</th>
-                <th>IsTeamAdmin</th>
+                <th>Role</th>
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>

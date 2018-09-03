@@ -7,6 +7,7 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { NavStore } from 'app/stores/NavStore/NavStore';
 import { TeamsStore, Team } from 'app/stores/TeamsStore/TeamsStore';
 import { ViewStore } from 'app/stores/ViewStore/ViewStore';
+import { BackendSrv } from 'app/core/services/backend_srv';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
 import TeamGroupSync from './TeamGroupSync';
@@ -15,6 +16,7 @@ interface Props {
   nav: typeof NavStore.Type;
   teams: typeof TeamsStore.Type;
   view: typeof ViewStore.Type;
+  backendSrv: BackendSrv;
 }
 
 @inject('nav', 'teams', 'view')
@@ -22,11 +24,13 @@ interface Props {
 export class TeamPages extends React.Component<Props, any> {
   isSyncEnabled: boolean;
   currentPage: string;
+  isGrafanaAdmin: boolean;
 
   constructor(props) {
     super(props);
 
     this.isSyncEnabled = config.buildInfo.isEnterprise;
+    this.isGrafanaAdmin = config.bootData.user.isGrafanaAdmin;
     this.currentPage = this.getCurrentPage();
 
     this.loadTeam();
@@ -52,7 +56,7 @@ export class TeamPages extends React.Component<Props, any> {
   }
 
   render() {
-    const { nav } = this.props;
+    const { nav, backendSrv } = this.props;
     const currentTeam = this.getCurrentTeam();
 
     if (!nav.main) {
@@ -64,8 +68,8 @@ export class TeamPages extends React.Component<Props, any> {
         <PageHeader model={nav as any} />
         {currentTeam && (
           <div className="page-container page-body">
-            {this.currentPage === 'members' && <TeamMembers team={currentTeam} />}
-            {this.currentPage === 'settings' && <TeamSettings team={currentTeam} />}
+            {this.currentPage === 'members' && <TeamMembers team={currentTeam} backendSrv={backendSrv} />}
+            {this.currentPage === 'settings' && this.isGrafanaAdmin && <TeamSettings team={currentTeam} />}
             {this.currentPage === 'groupsync' && this.isSyncEnabled && <TeamGroupSync team={currentTeam} />}
           </div>
         )}

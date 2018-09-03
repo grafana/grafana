@@ -1,6 +1,7 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
+import config from 'app/core/config';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { NavStore } from 'app/stores/NavStore/NavStore';
 import { TeamsStore, Team } from 'app/stores/TeamsStore/TeamsStore';
@@ -17,11 +18,13 @@ interface Props {
 @inject('nav', 'teams')
 @observer
 export class TeamList extends React.Component<Props, any> {
+  isGrafanaAdmin: boolean;
   constructor(props) {
     super(props);
 
     this.props.nav.load('cfg', 'teams');
     this.fetchTeams();
+    this.isGrafanaAdmin = config.bootData.user.isGrafanaAdmin;
   }
 
   fetchTeams() {
@@ -55,9 +58,11 @@ export class TeamList extends React.Component<Props, any> {
         <td className="link-td">
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
-        <td className="text-right">
-          <DeleteButton onConfirmDelete={() => this.deleteTeam(team)} />
-        </td>
+        {this.isGrafanaAdmin && (
+          <td className="text-right">
+            <DeleteButton onConfirmDelete={() => this.deleteTeam(team)} />
+          </td>
+        )}
       </tr>
     );
   }
@@ -80,10 +85,11 @@ export class TeamList extends React.Component<Props, any> {
           </div>
 
           <div className="page-action-bar__spacer" />
-
-          <a className="btn btn-success" href="org/teams/new">
-            <i className="fa fa-plus" /> New team
-          </a>
+          {this.isGrafanaAdmin && (
+            <a className="btn btn-success" href="org/teams/new">
+              <i className="fa fa-plus" /> New team
+            </a>
+          )}
         </div>
 
         <div className="admin-list-table">
@@ -94,7 +100,7 @@ export class TeamList extends React.Component<Props, any> {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Members</th>
-                <th style={{ width: '1%' }} />
+                {this.isGrafanaAdmin && <th style={{ width: '1%' }} />}
               </tr>
             </thead>
             <tbody>{teams.filteredTeams.map(team => this.renderTeamMember(team))}</tbody>
