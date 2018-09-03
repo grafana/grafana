@@ -12,8 +12,16 @@ const setup = (propOverrides?: object) => {
     {
       link: {},
       user: {
-        orgName: 'Grafana',
+        isGrafanaAdmin: false,
+        isSignedIn: false,
         orgCount: 2,
+        orgRole: '',
+        orgId: 1,
+        orgName: 'Grafana',
+        timezone: 'UTC',
+        helpFlags1: 1,
+        lightTheme: false,
+        hasEditPermissionInFolders: false,
       },
     },
     propOverrides
