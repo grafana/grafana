@@ -69,8 +69,13 @@ export type NavIndex = { [s: string]: NavModelItem };
 // Store
 //
 
+export interface AlertRulesState {
+  items: AlertRule[];
+  searchQuery: string;
+}
+
 export interface StoreState {
   navIndex: NavIndex;
   location: LocationState;
-  alertRules: AlertRule[];
+  alertRules: AlertRulesState;
 }

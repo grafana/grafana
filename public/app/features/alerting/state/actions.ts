@@ -2,17 +2,32 @@ import { Dispatch } from 'redux';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AlertRule } from 'app/types';
 
+export enum ActionTypes {
+  LoadAlertRules = 'LOAD_ALERT_RULES',
+  SetSearchQuery = 'SET_SEARCH_QUERY',
+}
+
 export interface LoadAlertRulesAction {
-  type: 'LOAD_ALERT_RULES';
+  type: ActionTypes.LoadAlertRules;
   payload: AlertRule[];
 }
 
+export interface SetSearchQueryAction {
+  type: ActionTypes.SetSearchQuery;
+  payload: string;
+}
+
 export const loadAlertRules = (rules: AlertRule[]): LoadAlertRulesAction => ({
-  type: 'LOAD_ALERT_RULES',
+  type: ActionTypes.LoadAlertRules,
   payload: rules,
 });
 
-export type Action = LoadAlertRulesAction;
+export const setSearchQuery = (query: string): SetSearchQueryAction => ({
+  type: ActionTypes.SetSearchQuery,
+  payload: query,
+});
+
+export type Action = LoadAlertRulesAction | SetSearchQueryAction;
 
 export const getAlertRulesAsync = (options: { state: string }) => async (
   dispatch: Dispatch<Action>

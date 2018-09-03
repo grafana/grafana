@@ -1,21 +1,23 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
-import Highlighter from 'react-highlight-words';
 import { updateLocation } from 'app/core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, AlertRule } from 'app/types';
-import { getAlertRulesAsync } from './state/actions';
+import { getAlertRulesAsync, setSearchQuery } from './state/actions';
+import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 
 interface Props {
   navModel: NavModel;
   alertRules: AlertRule[];
   updateLocation: typeof updateLocation;
   getAlertRulesAsync: typeof getAlertRulesAsync;
+  setSearchQuery: typeof setSearchQuery;
   stateFilter: string;
+  search: string;
 }
 
 interface State {
@@ -31,14 +33,6 @@ export class AlertRuleList extends PureComponent<Props, State> {
     { text: 'No Data', value: 'no_data' },
     { text: 'Paused', value: 'paused' },
   ];
-
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      search: '',
-    };
-  }
 
   componentDidMount() {
     console.log('did mount');
@@ -77,13 +71,21 @@ export class AlertRuleList extends PureComponent<Props, State> {
     });
   };
 
-  onSearchQueryChange = evt => {
-    // this.props.alertList.setSearchQuery(evt.target.value);
+  onSearchQueryChange = event => {
+    const { value } = event.target;
+    this.props.setSearchQuery(value);
   };
 
+  alertStateFilterOption({ text, value }) {
+    return (
+      <option key={value} value={value}>
+        {text}
+      </option>
+    );
+  }
+
   render() {
-    const { navModel, alertRules } = this.props;
-    const { search } = this.state;
+    const { navModel, alertRules, search } = this.props;
 
     return (
       <div>
@@ -107,7 +109,7 @@ export class AlertRuleList extends PureComponent<Props, State> {
 
               <div className="gf-form-select-wrapper width-13">
                 <select className="gf-form-input" onChange={this.onStateFilterChanged} value={this.getStateFilter()}>
-                  {this.stateFilters.map(AlertStateFilterOption)}
+                  {this.stateFilters.map(this.alertStateFilterOption)}
                 </select>
               </div>
             </div>
@@ -130,89 +132,17 @@ export class AlertRuleList extends PureComponent<Props, State> {
   }
 }
 
-function AlertStateFilterOption({ text, value }) {
-  return (
-    <option key={value} value={value}>
-      {text}
-    </option>
-  );
-}
-
-export interface AlertRuleItemProps {
-  rule: AlertRule;
-  search: string;
-}
-
-export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
-  toggleState = () => {
-    // this.props.rule.togglePaused();
-  };
-
-  renderText(text: string) {
-    return (
-      <Highlighter
-        highlightClassName="highlight-search-match"
-        textToHighlight={text}
-        searchWords={[this.props.search]}
-      />
-    );
-  }
-
-  render() {
-    const { rule } = this.props;
-
-    const stateClass = classNames({
-      fa: true,
-      'fa-play': rule.state === 'paused',
-      'fa-pause': rule.state !== 'paused',
-    });
-
-    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
-
-    return (
-      <li className="alert-rule-item">
-        <span className={`alert-rule-item__icon ${rule.stateClass}`}>
-          <i className={rule.stateIcon} />
-        </span>
-        <div className="alert-rule-item__body">
-          <div className="alert-rule-item__header">
-            <div className="alert-rule-item__name">
-              <a href={ruleUrl}>{this.renderText(rule.name)}</a>
-            </div>
-            <div className="alert-rule-item__text">
-              <span className={`${rule.stateClass}`}>{this.renderText(rule.stateText)}</span>
-              <span className="alert-rule-item__time"> for {rule.stateAge}</span>
-            </div>
-          </div>
-          {rule.info && <div className="small muted alert-rule-item__info">{this.renderText(rule.info)}</div>}
-        </div>
-
-        <div className="alert-rule-item__actions">
-          <button
-            className="btn btn-small btn-inverse alert-list__btn width-2"
-            title="Pausing an alert rule prevents it from executing"
-            onClick={this.toggleState}
-          >
-            <i className={stateClass} />
-          </button>
-          <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-            <i className="icon-gf icon-gf-settings" />
-          </a>
-        </div>
-      </li>
-    );
-  }
-}
-
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'alert-list'),
-  alertRules: state.alertRules,
+  alertRules: getAlertRuleItems(state.alertRules),
   stateFilter: state.location.query.state,
+  search: getSearchQuery(state.alertRules),
 });
 
 const mapDispatchToProps = {
   updateLocation,
   getAlertRulesAsync,
+  setSearchQuery,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(AlertRuleList));

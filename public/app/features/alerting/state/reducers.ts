@@ -1,9 +1,9 @@
-import { Action } from './actions';
-import { AlertRule } from 'app/types';
-import alertDef from './alertDef';
 import moment from 'moment';
+import { AlertRulesState } from 'app/types';
+import { Action, ActionTypes } from './actions';
+import alertDef from './alertDef';
 
-export const initialState: AlertRule[] = [];
+export const initialState: AlertRulesState = { items: [], searchQuery: '' };
 
 export function setStateFields(rule, state) {
   const stateModel = alertDef.getStateDisplayModel(state);
@@ -16,9 +16,9 @@ export function setStateFields(rule, state) {
     .replace(' ago', '');
 }
 
-export const alertRulesReducer = (state = initialState, action: Action): AlertRule[] => {
+export const alertRulesReducer = (state = initialState, action: Action): AlertRulesState => {
   switch (action.type) {
-    case 'LOAD_ALERT_RULES': {
+    case ActionTypes.LoadAlertRules: {
       const alertRules = action.payload;
 
       for (const rule of alertRules) {
@@ -34,8 +34,11 @@ export const alertRulesReducer = (state = initialState, action: Action): AlertRu
         }
       }
 
-      return alertRules;
+      return { items: alertRules, searchQuery: state.searchQuery };
     }
+
+    case ActionTypes.SetSearchQuery:
+      return { items: state.items, searchQuery: action.payload };
   }
 
   return state;
