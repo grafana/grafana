@@ -185,7 +185,7 @@ export class TableRenderer {
     }
 
     const numericValue = Number(value);
-    if (numericValue === NaN) {
+    if (isNaN(numericValue)) {
       return;
     }
 

@@ -59,7 +59,15 @@
         "variable-declaration": "nospace"
       }
     ],
-    "variable-name": [true, "ban-keywords"],
+    "variable-name": [
+      true,
+      "check-format",
+      "ban-keywords",
+      "allow-leading-underscore",
+      "allow-trailing-underscore",
+      "allow-pascal-case"
+    ],
+    "use-isnan": true,
     "whitespace": [true, "check-branch", "check-decl", "check-type", "check-preblock"]
   }
 }
