@@ -35,7 +35,6 @@ export class AlertRuleList extends PureComponent<Props, State> {
   ];
 
   componentDidMount() {
-    console.log('did mount');
     this.fetchRules();
   }
 
