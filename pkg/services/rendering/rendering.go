@@ -45,8 +45,8 @@ func (rs *RenderingService) Init() error {
 
 	// set value used for domain attribute of renderKey cookie
 	if rs.Cfg.RendererUrl != "" {
-		// AppUrl has already been passed, it wont generate an error.
-		u, _ := url.Parse(setting.AppUrl)
+		// RendererCallbackUrl has already been passed, it wont generate an error.
+		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
 		rs.domain = u.Hostname()
 	} else if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
 		rs.domain = setting.HttpAddr
@@ -109,7 +109,7 @@ func (rs *RenderingService) getURL(path string) string {
 		// can reach this Grafana instance.
 
 		// &render=1 signals to the legacy redirect layer to
-		return fmt.Sprintf("%s%s&render=1", setting.AppUrl, path)
+		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
 
 	}
 	// &render=1 signals to the legacy redirect layer to
