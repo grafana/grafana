@@ -1,6 +1,6 @@
 import { Dispatch } from 'redux';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { AlertRule } from 'app/types';
+import { AlertRule, StoreState } from 'app/types';
 
 export enum ActionTypes {
   LoadAlertRules = 'LOAD_ALERT_RULES',
@@ -38,6 +38,22 @@ export const getAlertRulesAsync = (options: { state: string }) => async (
     return rules;
   } catch (error) {
     console.error(error);
+    throw error;
+  }
+};
+
+export const togglePauseAlertRule = (id: number, options: { paused: boolean }) => async (
+  // Maybe fix dispatch type?
+  dispatch: Dispatch<any>,
+  getState: () => StoreState
+): Promise<boolean> => {
+  try {
+    await getBackendSrv().post(`/api/alerts/${id}/pause`, options);
+    const stateFilter = getState().location.query.state || 'all';
+    dispatch(getAlertRulesAsync({ state: stateFilter.toString() }));
+    return true;
+  } catch (error) {
+    console.log(error);
     throw error;
   }
 };

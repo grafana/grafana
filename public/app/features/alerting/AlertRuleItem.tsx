@@ -1,16 +1,21 @@
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 import Highlighter from 'react-highlight-words';
 import classNames from 'classnames/bind';
+import { togglePauseAlertRule } from './state/actions';
 import { AlertRule } from '../../types';
 
 export interface Props {
   rule: AlertRule;
   search: string;
+  togglePauseAlertRule: typeof togglePauseAlertRule;
 }
 
-export default class AlertRuleItem extends PureComponent<Props, any> {
-  toggleState = () => {
-    // this.props.rule.togglePaused();
+class AlertRuleItem extends PureComponent<Props, any> {
+  togglePaused = () => {
+    const { rule } = this.props;
+
+    this.props.togglePauseAlertRule(rule.id, { paused: rule.state === 'paused' });
   };
 
   renderText(text: string) {
@@ -56,7 +61,7 @@ export default class AlertRuleItem extends PureComponent<Props, any> {
           <button
             className="btn btn-small btn-inverse alert-list__btn width-2"
             title="Pausing an alert rule prevents it from executing"
-            onClick={this.toggleState}
+            onClick={this.togglePaused}
           >
             <i className={stateClass} />
           </button>
@@ -68,3 +73,7 @@ export default class AlertRuleItem extends PureComponent<Props, any> {
     );
   }
 }
+
+export default connect(null, {
+  togglePauseAlertRule,
+})(AlertRuleItem);
