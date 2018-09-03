@@ -11,9 +11,9 @@ export class Settings {
   datasources: any;
   panels: any;
   appSubUrl: string;
-  window_title_prefix: string;
+  windowTitlePrefix: string;
   buildInfo: BuildInfo;
-  new_panel_title: string;
+  newPanelTitle: string;
   bootData: any;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;

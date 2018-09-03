@@ -106,7 +106,7 @@ export class DashboardLoaderSrv {
     };
 
     /*jshint -W054 */
-    const script_func = new Function(
+    const scriptFunc = new Function(
       'ARGS',
       'kbn',
       'dateMath',
@@ -119,12 +119,12 @@ export class DashboardLoaderSrv {
       'services',
       result.data
     );
-    const script_result = script_func(this.$routeParams, kbn, dateMath, _, moment, window, document, $, $, services);
+    const scriptResult = scriptFunc(this.$routeParams, kbn, dateMath, _, moment, window, document, $, $, services);
 
     // Handle async dashboard scripts
-    if (_.isFunction(script_result)) {
+    if (_.isFunction(scriptResult)) {
       const deferred = this.$q.defer();
-      script_result(dashboard => {
+      scriptResult(dashboard => {
         this.$timeout(() => {
           deferred.resolve({ data: dashboard });
         });
@@ -132,7 +132,7 @@ export class DashboardLoaderSrv {
       return deferred.promise;
     }
 
-    return { data: script_result };
+    return { data: scriptResult };
   }
 }
 

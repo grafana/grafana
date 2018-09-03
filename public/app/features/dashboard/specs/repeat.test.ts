@@ -271,8 +271,8 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
   });
 
   it('should panels in self row', () => {
-    const panel_types = _.map(dashboard.panels, 'type');
-    expect(panel_types).toEqual([
+    const panelTypes = _.map(dashboard.panels, 'type');
+    expect(panelTypes).toEqual([
       'row',
       'graph',
       'graph',
@@ -350,8 +350,8 @@ describe('given dashboard with row repeat', function() {
   });
 
   it('should not repeat only row', function() {
-    const panel_types = _.map(dashboard.panels, 'type');
-    expect(panel_types).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph', 'row', 'graph']);
+    const panelTypes = _.map(dashboard.panels, 'type');
+    expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph', 'row', 'graph']);
   });
 
   it('should set scopedVars for each panel', function() {
@@ -399,8 +399,8 @@ describe('given dashboard with row repeat', function() {
     dashboard = new DashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
-    const panel_types = _.map(dashboard.panels, 'type');
-    expect(panel_types).toEqual(['row', 'row', 'row', 'graph']);
+    const panelTypes = _.map(dashboard.panels, 'type');
+    expect(panelTypes).toEqual(['row', 'row', 'row', 'graph']);
     expect(dashboard.panels[0].panels).toHaveLength(2);
     expect(dashboard.panels[1].panels).toHaveLength(2);
   });
@@ -441,8 +441,8 @@ describe('given dashboard with row repeat', function() {
     dashboard = new DashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
-    const panel_types = _.map(dashboard.panels, 'type');
-    expect(panel_types).toEqual([
+    const panelTypes = _.map(dashboard.panels, 'type');
+    expect(panelTypes).toEqual([
       'row',
       'graph',
       'graph',
@@ -488,7 +488,7 @@ describe('given dashboard with row repeat', function() {
     dashboard = new DashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
-    const panel_ids = _.flattenDeep(
+    const panelIds = _.flattenDeep(
       _.map(dashboard.panels, panel => {
         let ids = [];
         if (panel.panels && panel.panels.length) {
@@ -498,7 +498,7 @@ describe('given dashboard with row repeat', function() {
         return ids;
       })
     );
-    expect(panel_ids.length).toEqual(_.uniq(panel_ids).length);
+    expect(panelIds.length).toEqual(_.uniq(panelIds).length);
   });
 
   it('should place new panels in proper order', function() {
@@ -511,10 +511,10 @@ describe('given dashboard with row repeat', function() {
     dashboard = new DashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
-    const panel_types = _.map(dashboard.panels, 'type');
-    expect(panel_types).toEqual(['row', 'graph', 'graph', 'graph', 'row', 'graph', 'graph', 'graph']);
-    const panel_y_positions = _.map(dashboard.panels, p => p.gridPos.y);
-    expect(panel_y_positions).toEqual([0, 1, 1, 5, 7, 8, 8, 12]);
+    const panelTypes = _.map(dashboard.panels, 'type');
+    expect(panelTypes).toEqual(['row', 'graph', 'graph', 'graph', 'row', 'graph', 'graph', 'graph']);
+    const panelYPositions = _.map(dashboard.panels, p => p.gridPos.y);
+    expect(panelYPositions).toEqual([0, 1, 1, 5, 7, 8, 8, 12]);
   });
 });
 
@@ -566,8 +566,8 @@ describe('given dashboard with row and panel repeat', () => {
   });
 
   it('should repeat row and panels for each row', () => {
-    const panel_types = _.map(dashboard.panels, 'type');
-    expect(panel_types).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
+    const panelTypes = _.map(dashboard.panels, 'type');
+    expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
   });
 
   it('should clean up old repeated panels', () => {
@@ -592,8 +592,8 @@ describe('given dashboard with row and panel repeat', () => {
     dashboard = new DashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
-    const panel_types = _.map(dashboard.panels, 'type');
-    expect(panel_types).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
+    const panelTypes = _.map(dashboard.panels, 'type');
+    expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
   });
 
   it('should set scopedVars for each row', () => {

@@ -45,9 +45,9 @@ export class ResultTransformer {
     }
 
     for (const value of metricData.values) {
-      let dp_value = parseFloat(value[1]);
-      if (_.isNaN(dp_value)) {
-        dp_value = null;
+      let dpValue = parseFloat(value[1]);
+      if (_.isNaN(dpValue)) {
+        dpValue = null;
       }
 
       const timestamp = parseFloat(value[0]) * 1000;
@@ -55,7 +55,7 @@ export class ResultTransformer {
         dps.push([null, t]);
       }
       baseTimestamp = timestamp + stepMs;
-      dps.push([dp_value, timestamp]);
+      dps.push([dpValue, timestamp]);
     }
 
     const endTimestamp = end * 1000;
