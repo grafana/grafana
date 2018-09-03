@@ -484,22 +484,22 @@ class GraphElement {
     const defaultTicks = this.panelWidth / 50;
 
     if (this.data.length && bucketSize) {
-      const tick_values = [];
+      const tickValues = [];
       for (const d of this.data) {
         for (const point of d.data) {
-          tick_values[point[0]] = true;
+          tickValues[point[0]] = true;
         }
       }
-      ticks = Object.keys(tick_values).map(v => Number(v));
+      ticks = Object.keys(tickValues).map(v => Number(v));
       min = _.min(ticks);
       max = _.max(ticks);
 
       // Adjust tick step
       let tickStep = bucketSize;
-      let ticks_num = Math.floor((max - min) / tickStep);
-      while (ticks_num > defaultTicks) {
+      let ticksNum = Math.floor((max - min) / tickStep);
+      while (ticksNum > defaultTicks) {
         tickStep = tickStep * 2;
-        ticks_num = Math.ceil((max - min) / tickStep);
+        ticksNum = Math.ceil((max - min) / tickStep);
       }
 
       // Expand ticks for pretty view

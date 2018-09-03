@@ -62,7 +62,7 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
     let results: any = [[], [], []];
 
     //now we know the current X (j) position for X and Y values
-    let last_value = 0; //needed for stacked values
+    let lastValue = 0; //needed for stacked values
 
     let minDistance, minTime;
 
@@ -106,8 +106,8 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
         } else if (!series.stack) {
           value = series.data[hoverIndex][1];
         } else {
-          last_value += series.data[hoverIndex][1];
-          value = last_value;
+          lastValue += series.data[hoverIndex][1];
+          value = lastValue;
         }
       } else {
         value = series.data[hoverIndex][1];

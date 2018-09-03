@@ -2,7 +2,7 @@ import { SingleStatCtrl } from '../module';
 import moment from 'moment';
 
 describe('SingleStatCtrl', function() {
-  const ctx = <any>{};
+  const ctx = {} as any;
   const epoch = 1505826363746;
   Date.now = () => epoch;
 

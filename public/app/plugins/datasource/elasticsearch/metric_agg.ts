@@ -67,8 +67,8 @@ export class ElasticMetricAggCtrl {
       }
       switch ($scope.agg.type) {
         case 'cardinality': {
-          const precision_threshold = $scope.agg.settings.precision_threshold || '';
-          $scope.settingsLinkText = 'Precision threshold: ' + precision_threshold;
+          const precisionThreshold = $scope.agg.settings.precision_threshold || '';
+          $scope.settingsLinkText = 'Precision threshold: ' + precisionThreshold;
           break;
         }
         case 'percentiles': {

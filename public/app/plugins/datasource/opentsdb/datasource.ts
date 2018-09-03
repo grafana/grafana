@@ -277,35 +277,35 @@ export default class OpenTsDatasource {
       });
     };
 
-    const metrics_regex = /metrics\((.*)\)/;
-    const tag_names_regex = /tag_names\((.*)\)/;
-    const tag_values_regex = /tag_values\((.*?),\s?(.*)\)/;
-    const tag_names_suggest_regex = /suggest_tagk\((.*)\)/;
-    const tag_values_suggest_regex = /suggest_tagv\((.*)\)/;
+    const metricsRegex = /metrics\((.*)\)/;
+    const tagNamesRegex = /tag_names\((.*)\)/;
+    const tagValuesRegex = /tag_values\((.*?),\s?(.*)\)/;
+    const tagNamesSuggestRegex = /suggest_tagk\((.*)\)/;
+    const tagValuesSuggestRegex = /suggest_tagv\((.*)\)/;
 
-    const metrics_query = interpolated.match(metrics_regex);
-    if (metrics_query) {
-      return this._performSuggestQuery(metrics_query[1], 'metrics').then(responseTransform);
+    const metricsQuery = interpolated.match(metricsRegex);
+    if (metricsQuery) {
+      return this._performSuggestQuery(metricsQuery[1], 'metrics').then(responseTransform);
     }
 
-    const tag_names_query = interpolated.match(tag_names_regex);
-    if (tag_names_query) {
-      return this._performMetricKeyLookup(tag_names_query[1]).then(responseTransform);
+    const tagNamesQuery = interpolated.match(tagNamesRegex);
+    if (tagNamesQuery) {
+      return this._performMetricKeyLookup(tagNamesQuery[1]).then(responseTransform);
     }
 
-    const tag_values_query = interpolated.match(tag_values_regex);
-    if (tag_values_query) {
-      return this._performMetricKeyValueLookup(tag_values_query[1], tag_values_query[2]).then(responseTransform);
+    const tagValuesQuery = interpolated.match(tagValuesRegex);
+    if (tagValuesQuery) {
+      return this._performMetricKeyValueLookup(tagValuesQuery[1], tagValuesQuery[2]).then(responseTransform);
     }
 
-    const tag_names_suggest_query = interpolated.match(tag_names_suggest_regex);
-    if (tag_names_suggest_query) {
-      return this._performSuggestQuery(tag_names_suggest_query[1], 'tagk').then(responseTransform);
+    const tagNamesSuggestQuery = interpolated.match(tagNamesSuggestRegex);
+    if (tagNamesSuggestQuery) {
+      return this._performSuggestQuery(tagNamesSuggestQuery[1], 'tagk').then(responseTransform);
     }
 
-    const tag_values_suggest_query = interpolated.match(tag_values_suggest_regex);
-    if (tag_values_suggest_query) {
-      return this._performSuggestQuery(tag_values_suggest_query[1], 'tagv').then(responseTransform);
+    const tagValuesSuggestQuery = interpolated.match(tagValuesSuggestRegex);
+    if (tagValuesSuggestQuery) {
+      return this._performSuggestQuery(tagValuesSuggestQuery[1], 'tagv').then(responseTransform);
     }
 
     return this.$q.when([]);
@@ -440,9 +440,9 @@ export default class OpenTsDatasource {
     if (target.filters && target.filters.length > 0) {
       query.filters = angular.copy(target.filters);
       if (query.filters) {
-        for (const filter_key in query.filters) {
-          query.filters[filter_key].filter = this.templateSrv.replace(
-            query.filters[filter_key].filter,
+        for (const filterKey in query.filters) {
+          query.filters[filterKey].filter = this.templateSrv.replace(
+            query.filters[filterKey].filter,
             options.scopedVars,
             'pipe'
           );
@@ -451,8 +451,8 @@ export default class OpenTsDatasource {
     } else {
       query.tags = angular.copy(target.tags);
       if (query.tags) {
-        for (const tag_key in query.tags) {
-          query.tags[tag_key] = this.templateSrv.replace(query.tags[tag_key], options.scopedVars, 'pipe');
+        for (const tagKey in query.tags) {
+          query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], options.scopedVars, 'pipe');
         }
       }
     }

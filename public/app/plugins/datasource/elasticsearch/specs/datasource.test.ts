@@ -33,10 +33,10 @@ describe('ElasticDatasource', function(this: any) {
     }),
   };
 
-  const ctx = <any>{
+  const ctx = {
     $rootScope,
     backendSrv,
-  };
+  } as any;
 
   function createDatasource(instanceSettings) {
     instanceSettings.jsonData = instanceSettings.jsonData || {};

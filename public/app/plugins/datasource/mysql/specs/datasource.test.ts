@@ -9,9 +9,9 @@ describe('MySQLDatasource', function() {
     replace: jest.fn(text => text),
   };
 
-  const ctx = <any>{
+  const ctx = {
     backendSrv,
-  };
+  } as any;
 
   beforeEach(() => {
     ctx.ds = new MysqlDatasource(instanceSettings, backendSrv, {}, templateSrv);

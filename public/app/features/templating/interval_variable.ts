@@ -4,8 +4,8 @@ import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class IntervalVariable implements Variable {
   name: string;
-  auto_count: number;
-  auto_min: number;
+  auto_count: number; // tslint:disable-line variable-name
+  auto_min: number; // tslint:disable-line variable-name
   options: any;
   auto: boolean;
   query: string;

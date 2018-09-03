@@ -27,7 +27,7 @@ Grafana will now persist all long term data in the database. How to configure th
 ## User sessions
 
 The second thing to consider is how to deal with user sessions and how to configure your load balancer infront of Grafana.
-Grafana support two says of storing session data locally on disk or in a database/cache-server.
+Grafana supports two ways of storing session data: locally on disk or in a database/cache-server.
 If you want to store sessions on disk you can use `sticky sessions` in your load balanacer. If you prefer to store session data in a database/cache-server
 you can use any stateless routing strategy in your load balancer (ex round robin or least connections).
 
