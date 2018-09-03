@@ -17,12 +17,12 @@ describe('VariableSrv init', function(this: any) {
       }),
   };
 
-  const $injector = <any>{};
+  const $injector = {} as any;
   const $rootscope = {
     $on: () => {},
   };
 
-  let ctx = <any>{};
+  let ctx = {} as any;
 
   function describeInitScenario(desc, fn) {
     describe(desc, () => {

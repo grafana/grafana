@@ -94,11 +94,11 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
     const utcOffset = '&tz=UTC' + encodeURIComponent(moment().format('Z'));
 
     // Older browser does not the internationalization API
-    if (!(<any>window).Intl) {
+    if (!(window as any).Intl) {
       return utcOffset;
     }
 
-    const dateFormat = (<any>window).Intl.DateTimeFormat();
+    const dateFormat = (window as any).Intl.DateTimeFormat();
     if (!dateFormat.resolvedOptions) {
       return utcOffset;
     }

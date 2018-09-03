@@ -9,9 +9,9 @@ describe('PostgreSQLDatasource', function() {
   const templateSrv = {
     replace: jest.fn(text => text),
   };
-  const ctx = <any>{
+  const ctx = {
     backendSrv,
-  };
+  } as any;
 
   beforeEach(() => {
     ctx.ds = new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv);

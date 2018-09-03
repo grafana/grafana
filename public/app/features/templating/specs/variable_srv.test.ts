@@ -4,7 +4,7 @@ import moment from 'moment';
 import $q from 'q';
 
 describe('VariableSrv', function(this: any) {
-  const ctx = <any>{
+  const ctx = {
     datasourceSrv: {},
     timeSrv: {
       timeRange: () => {},
@@ -29,7 +29,7 @@ describe('VariableSrv', function(this: any) {
     $location: {
       search: () => {},
     },
-  };
+  } as any;
 
   function describeUpdateVariable(desc, fn) {
     describe(desc, () => {

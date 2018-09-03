@@ -2,7 +2,7 @@ import moment from 'moment';
 import { HeatmapCtrl } from '../heatmap_ctrl';
 
 describe('HeatmapCtrl', function() {
-  const ctx = <any>{};
+  const ctx = {} as any;
 
   const $injector = {
     get: () => {},
