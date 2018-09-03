@@ -8,7 +8,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.override = $scope.override || {};
 
   $scope.addOverrideOption = function(name, propertyName, values) {
-    var option = {
+    const option = {
       text: name,
       propertyName: propertyName,
       index: $scope.overrideMenu.lenght,
@@ -48,7 +48,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   };
 
   $scope.openColorSelector = function(color) {
-    var fakeSeries = { color: color };
+    const fakeSeries = { color: color };
     popoverSrv.show({
       element: $element.find('.dropdown')[0],
       position: 'top center',
@@ -80,7 +80,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.updateCurrentOverrides = function() {
     $scope.currentOverrides = [];
     _.each($scope.overrideMenu, function(option) {
-      var value = $scope.override[option.propertyName];
+      const value = $scope.override[option.propertyName];
       if (_.isUndefined(value)) {
         return;
       }
@@ -152,6 +152,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.addOverrideOption('Z-index', 'zindex', [-3, -2, -1, 0, 1, 2, 3]);
   $scope.addOverrideOption('Transform', 'transform', ['negative-Y']);
   $scope.addOverrideOption('Legend', 'legend', [true, false]);
+  $scope.addOverrideOption('Hide in tooltip', 'hideTooltip', [true, false]);
   $scope.updateCurrentOverrides();
 }
 

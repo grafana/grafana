@@ -2,10 +2,10 @@ import _ from 'lodash';
 import coreModule from '../core_module';
 
 /** @ngInject */
-export function uiSegmentSrv($sce, templateSrv) {
-  let self = this;
+export function uiSegmentSrv(this: any, $sce, templateSrv) {
+  const self = this;
 
-  function MetricSegment(options) {
+  function MetricSegment(this: any, options) {
     if (options === '*' || options.value === '*') {
       this.value = '*';
       this.html = $sce.trustAsHtml('<i class="fa fa-asterisk"><i>');
@@ -78,7 +78,7 @@ export function uiSegmentSrv($sce, templateSrv) {
 
   this.transformToSegments = function(addTemplateVars, variableTypeFilter) {
     return function(results) {
-      let segments = _.map(results, function(segment) {
+      const segments = _.map(results, function(segment) {
         return self.newSegment({ value: segment.text, expandable: segment.expandable });
       });
 

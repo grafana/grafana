@@ -6,7 +6,7 @@ export class MysqlDatasource {
   name: any;
   responseParser: ResponseParser;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -16,7 +16,7 @@ export class MysqlDatasource {
   interpolateVariable(value, variable) {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return "'" + value + "'";
+        return "'" + value.replace(/'/g, `''`) + "'";
       } else {
         return value;
       }
@@ -26,18 +26,18 @@ export class MysqlDatasource {
       return value;
     }
 
-    var quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, function(val) {
       if (typeof value === 'number') {
         return value;
       }
 
-      return "'" + val + "'";
+      return "'" + val.replace(/'/g, `''`) + "'";
     });
     return quotedValues.join(',');
   }
 
   query(options) {
-    var queries = _.filter(options.targets, item => {
+    const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
       return {
@@ -107,7 +107,7 @@ export class MysqlDatasource {
       format: 'table',
     };
 
-    var data = {
+    const data = {
       queries: [interpolatedQuery],
     };
 

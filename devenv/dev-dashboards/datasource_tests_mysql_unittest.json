@@ -64,7 +64,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1532949531280,
+  "iteration": 1534508678095,
   "links": [],
   "panels": [
     {
@@ -338,8 +338,8 @@
       "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
+        "h": 6,
+        "w": 6,
         "x": 0,
         "y": 7
       },
@@ -369,7 +369,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '5m') AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '5m'), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -421,9 +421,9 @@
       "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 8,
+        "h": 6,
+        "w": 6,
+        "x": 6,
         "y": 7
       },
       "id": 9,
@@ -452,7 +452,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '5m', NULL) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '5m', NULL), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -504,9 +504,9 @@
       "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 16,
+        "h": 6,
+        "w": 6,
+        "x": 12,
         "y": 7
       },
       "id": 10,
@@ -535,7 +535,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '5m', 10.0) AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '5m', 10.0), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -581,16 +581,99 @@
     },
     {
       "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-mysql-ds-tests",
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 7
+      },
+      "id": 36,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": true,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(time, '5m', previous), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "timeGroup macro 5m with fill(previous)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
       "bars": true,
       "dashLength": 10,
       "dashes": false,
       "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
+        "h": 6,
+        "w": 6,
         "x": 0,
-        "y": 16
+        "y": 13
       },
       "id": 16,
       "legend": {
@@ -618,7 +701,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize') AS time, avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '$summarize'), avg(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -670,10 +753,10 @@
       "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 8,
-        "y": 16
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 13
       },
       "id": 12,
       "legend": {
@@ -701,7 +784,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize', NULL) AS time, sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '$summarize', NULL), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -753,10 +836,10 @@
       "datasource": "gdev-mysql-ds-tests",
       "fill": 2,
       "gridPos": {
-        "h": 9,
-        "w": 8,
-        "x": 16,
-        "y": 16
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 13
       },
       "id": 13,
       "legend": {
@@ -784,7 +867,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroup(time, '$summarize', 100.0) AS time, sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT $__timeGroupAlias(time, '$summarize', 100.0), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -792,6 +875,89 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Metrics - timeGroup macro $summarize with fill(100.0)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-mysql-ds-tests",
+      "fill": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 13
+      },
+      "id": 37,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(time, '$summarize', previous), sum(value) as value FROM metric WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Metrics - timeGroup macro $summarize with fill(previous)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -839,7 +1005,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 19
       },
       "id": 27,
       "legend": {
@@ -871,7 +1037,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  measurement as metric, \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement IN($metric)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroupAlias(time, '$summarize'), \n  measurement as metric, \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__timeFilter(time) AND\n  measurement IN($metric)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -926,7 +1092,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 25
+        "y": 19
       },
       "id": 5,
       "legend": {
@@ -968,7 +1134,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT \n  $__timeGroup(time, '$summarize') as time, \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  measurement IN($metric)\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT \n  $__timeGroupAlias(time, '$summarize'), \n  avg(valueOne) as valueOne, \n  avg(valueTwo) as valueTwo \nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  measurement IN($metric)\nGROUP BY 1\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1023,7 +1189,191 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 33
+        "y": 27
+      },
+      "id": 38,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT \n  $__unixEpochGroupAlias(timeInt32, '$summarize'), \n  measurement, \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__unixEpochFilter(timeInt32) AND\n  measurement in($metric)\nGROUP BY 1, 2\nORDER BY 1, 2",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple series with metric column using unixEpochGroup macro ($summarize)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-mysql-ds-tests",
+      "fill": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 39,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "MovingAverageValueOne",
+          "dashes": true,
+          "lines": false
+        },
+        {
+          "alias": "MovingAverageValueTwo",
+          "dashes": true,
+          "lines": false,
+          "yaxis": 1
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT \n  $__unixEpochGroupAlias(timeInt32, '$summarize'), \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__unixEpochFilter(timeInt32) AND\n  measurement in($metric)\nGROUP BY 1\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple series without metric column using unixEpochGroup macro ($summarize)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-mysql-ds-tests",
+      "fill": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 35
       },
       "id": 4,
       "legend": {
@@ -1110,7 +1460,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 33
+        "y": 35
       },
       "id": 28,
       "legend": {
@@ -1195,7 +1545,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 41
+        "y": 43
       },
       "id": 19,
       "legend": {
@@ -1282,7 +1632,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 41
+        "y": 43
       },
       "id": 18,
       "legend": {
@@ -1367,7 +1717,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 49
+        "y": 51
       },
       "id": 17,
       "legend": {
@@ -1454,7 +1804,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 49
+        "y": 51
       },
       "id": 20,
       "legend": {
@@ -1539,7 +1889,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 57
+        "y": 59
       },
       "id": 14,
       "legend": {
@@ -1627,7 +1977,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 57
+        "y": 59
       },
       "id": 15,
       "legend": {
@@ -1714,7 +2064,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 65
+        "y": 67
       },
       "id": 25,
       "legend": {
@@ -1802,7 +2152,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 65
+        "y": 67
       },
       "id": 22,
       "legend": {
@@ -1889,7 +2239,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 73
+        "y": 75
       },
       "id": 21,
       "legend": {
@@ -1977,7 +2327,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 73
+        "y": 75
       },
       "id": 26,
       "legend": {
@@ -2064,7 +2414,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 81
+        "y": 83
       },
       "id": 23,
       "legend": {
@@ -2152,7 +2502,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 81
+        "y": 83
       },
       "id": 24,
       "legend": {
@@ -2360,5 +2710,5 @@
   "timezone": "",
   "title": "Datasource tests - MySQL (unittest)",
   "uid": "Hmf8FDkmz",
-  "version": 1
+  "version": 2
 }

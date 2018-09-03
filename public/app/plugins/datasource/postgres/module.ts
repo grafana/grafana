@@ -6,7 +6,7 @@ class PostgresConfigCtrl {
 
   current: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope) {
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
   }
@@ -27,7 +27,7 @@ class PostgresAnnotationsQueryCtrl {
 
   annotation: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor() {
     this.annotation.rawQuery = this.annotation.rawQuery || defaultQuery;
   }

@@ -11,9 +11,9 @@ export class Settings {
   datasources: any;
   panels: any;
   appSubUrl: string;
-  window_title_prefix: string;
+  windowTitlePrefix: string;
   buildInfo: BuildInfo;
-  new_panel_title: string;
+  newPanelTitle: string;
   bootData: any;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
@@ -31,7 +31,7 @@ export class Settings {
   loginError: any;
 
   constructor(options) {
-    var defaults = {
+    const defaults = {
       datasources: {},
       window_title_prefix: 'Grafana - ',
       panels: {},
@@ -51,8 +51,8 @@ export class Settings {
   }
 }
 
-var bootData = (<any>window).grafanaBootData || { settings: {} };
-var options = bootData.settings;
+const bootData = (window as any).grafanaBootData || { settings: {} };
+const options = bootData.settings;
 options.bootData = bootData;
 
 const config = new Settings(options);

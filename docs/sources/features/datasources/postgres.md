@@ -31,6 +31,7 @@ Name | Description
 *User* | Database user's login/username
 *Password* | Database user's password
 *SSL Mode* | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+*TimescaleDB* | With this option enabled Grafana will use TimescaleDB features, e.g. use ```time_bucket``` for grouping by time (only available in Grafana 5.3+).
 
 ### Database User Permissions (Important!)
 
@@ -60,11 +61,16 @@ Macro example | Description
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'*
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
-*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint*300 AS time*
-*$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so all null values will be converted to the fill value (all null values would be set to zero using this example).
+*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint*300*
+*$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
+*$__timeGroup(dateColumn,'5m', NULL)* | Same as above but NULL will be used as value for missing points.
+*$__timeGroup(dateColumn,'5m', previous)* | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
+*$__timeGroupAlias(dateColumn,'5m')* | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn >= 1494410783 AND dateColumn <= 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
+*$__unixEpochGroup(dateColumn,'5m', [fillmode])* | Same as $__timeGroup but for times stored as unix timestamp (only available in Grafana 5.3+).
+*$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])* | Same as above but also adds a column alias (only available in Grafana 5.3+).
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -286,4 +292,5 @@ datasources:
       password: "Password!"
     jsonData:
       sslmode: "disable" # disable/require/verify-ca/verify-full
+      timescaledb: false
 ```

@@ -81,7 +81,7 @@ module.exports = merge(common, {
       chunks: ['vendor', 'app'],
     }),
     function () {
-      this.plugin("done", function (stats) {
+      this.hooks.done.tap('Done', function (stats) {
         if (stats.compilation.errors && stats.compilation.errors.length) {
           console.log(stats.compilation.errors);
           process.exit(1);

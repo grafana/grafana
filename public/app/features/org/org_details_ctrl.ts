@@ -1,7 +1,7 @@
 import angular from 'angular';
 
 export class OrgDetailsCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $http, backendSrv, contextSrv, navModelSrv) {
     $scope.init = function() {
       $scope.getOrgInfo();
@@ -20,7 +20,7 @@ export class OrgDetailsCtrl {
       if (!$scope.orgForm.$valid) {
         return;
       }
-      var data = { name: $scope.org.name };
+      const data = { name: $scope.org.name };
       backendSrv.put('/api/org', data).then($scope.getOrgInfo);
     };
 

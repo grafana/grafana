@@ -20,7 +20,7 @@ export interface DashboardAcl {
   sortRank?: number;
 }
 
-export interface IProps {
+export interface Props {
   dashboardId: number;
   folderInfo?: FolderInfo;
   permissions?: any;
@@ -29,7 +29,7 @@ export interface IProps {
 }
 
 @observer
-class Permissions extends Component<IProps, any> {
+class Permissions extends Component<Props, any> {
   constructor(props) {
     super(props);
     const { dashboardId, isFolder, folderInfo } = this.props;

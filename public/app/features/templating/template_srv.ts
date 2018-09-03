@@ -32,8 +32,8 @@ export class TemplateSrv {
   updateTemplateData() {
     this.index = {};
 
-    for (var i = 0; i < this.variables.length; i++) {
-      var variable = this.variables[i];
+    for (let i = 0; i < this.variables.length; i++) {
+      const variable = this.variables[i];
 
       if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
         continue;
@@ -48,10 +48,10 @@ export class TemplateSrv {
   }
 
   getAdhocFilters(datasourceName) {
-    var filters = [];
+    let filters = [];
 
-    for (var i = 0; i < this.variables.length; i++) {
-      var variable = this.variables[i];
+    for (let i = 0; i < this.variables.length; i++) {
+      const variable = this.variables[i];
       if (variable.type !== 'adhoc') {
         continue;
       }
@@ -77,7 +77,7 @@ export class TemplateSrv {
     if (value instanceof Array && value.length === 0) {
       return '__empty__';
     }
-    var quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, function(val) {
       return '"' + luceneEscape(val) + '"';
     });
     return '(' + quotedValues.join(' OR ') + ')';
@@ -104,7 +104,7 @@ export class TemplateSrv {
           return kbn.regexEscape(value);
         }
 
-        var escapedValues = _.map(value, kbn.regexEscape);
+        const escapedValues = _.map(value, kbn.regexEscape);
         if (escapedValues.length === 1) {
           return escapedValues[0];
         }
@@ -153,7 +153,7 @@ export class TemplateSrv {
 
   getVariableName(expression) {
     this.regex.lastIndex = 0;
-    var match = this.regex.exec(expression);
+    const match = this.regex.exec(expression);
     if (!match) {
       return null;
     }
@@ -161,7 +161,7 @@ export class TemplateSrv {
   }
 
   variableExists(expression) {
-    var name = this.getVariableName(expression);
+    const name = this.getVariableName(expression);
     return name && this.index[name] !== void 0;
   }
 
@@ -184,8 +184,8 @@ export class TemplateSrv {
     if (variable.allValue) {
       return variable.allValue;
     }
-    var values = [];
-    for (var i = 1; i < variable.options.length; i++) {
+    const values = [];
+    for (let i = 1; i < variable.options.length; i++) {
       values.push(variable.options[i].value);
     }
     return values;
@@ -196,7 +196,7 @@ export class TemplateSrv {
       return target;
     }
 
-    var variable, systemValue, value, fmt;
+    let variable, systemValue, value, fmt;
     this.regex.lastIndex = 0;
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fmt3) => {
@@ -223,11 +223,11 @@ export class TemplateSrv {
         value = this.getAllValue(variable);
         // skip formatting of custom all values
         if (variable.allValue) {
-          return value;
+          return this.replace(value);
         }
       }
 
-      var res = this.formatValue(value, fmt, variable);
+      const res = this.formatValue(value, fmt, variable);
       return res;
     });
   }
@@ -241,12 +241,12 @@ export class TemplateSrv {
       return target;
     }
 
-    var variable;
+    let variable;
     this.regex.lastIndex = 0;
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3) => {
       if (scopedVars) {
-        var option = scopedVars[var1 || var2 || var3];
+        const option = scopedVars[var1 || var2 || var3];
         if (option) {
           return option.text;
         }

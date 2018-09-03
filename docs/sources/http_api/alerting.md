@@ -50,6 +50,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```http
 HTTP/1.1 200
 Content-Type: application/json
+
 [
   {
     "id": 1,
@@ -59,7 +60,6 @@ Content-Type: application/json
     "panelId": 1,
     "name": "fire place sensor",
     "state": "alerting",
-    "message": "Someone is trying to break in through the fire place",
     "newStateDate": "2018-05-14T05:55:20+02:00",
     "evalDate": "0001-01-01T00:00:00Z",
     "evalData": null,
@@ -87,6 +87,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```http
 HTTP/1.1 200
 Content-Type: application/json
+
 {
   "id": 1,
   "dashboardId": 1,
@@ -147,6 +148,7 @@ JSON Body Schema:
 ```http
 HTTP/1.1 200
 Content-Type: application/json
+
 {
   "alertId": 1,
   "state":   "Paused",
@@ -178,6 +180,7 @@ JSON Body Schema:
 ```http
 HTTP/1.1 200
 Content-Type: application/json
+
 {
   "state":   "Paused",
   "message": "alert paused",
@@ -205,14 +208,21 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{
-  "id": 1,
-  "name": "Team A",
-  "type": "email",
-  "isDefault": true,
-  "created": "2017-01-01 12:45",
-  "updated": "2017-01-01 12:45"
-}
+[
+  {
+    "id": 1,
+    "name": "Team A",
+    "type": "email",
+    "isDefault": false,
+    "sendReminder": false,
+    "settings": {
+      "addresses": "carl@grafana.com;dev@grafana.com"
+    },
+    "created": "2018-04-23T14:44:09+02:00",
+    "updated": "2018-08-20T15:47:49+02:00"
+  }
+]
+
 ```
 
 ## Create alert notification
@@ -233,6 +243,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "name": "new alert notification",  //Required
   "type":  "email", //Required
   "isDefault": false,
+  "sendReminder": false,
   "settings": {
     "addresses": "carl@grafana.com;dev@grafana.com"
   }
@@ -244,14 +255,18 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```http
 HTTP/1.1 200
 Content-Type: application/json
+
 {
   "id": 1,
   "name": "new alert notification",
   "type": "email",
   "isDefault": false,
-  "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
-  "created": "2017-01-01 12:34",
-  "updated": "2017-01-01 12:34"
+  "sendReminder": false,
+  "settings": {
+    "addresses": "carl@grafana.com;dev@grafana.com"
+  },
+  "created": "2018-04-23T14:44:09+02:00",
+  "updated": "2018-08-20T15:47:49+02:00"
 }
 ```
 
@@ -272,6 +287,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "name": "new alert notification",  //Required
   "type":  "email", //Required
   "isDefault": false,
+  "sendReminder": true,
+  "frequency": "15m",
   "settings": {
     "addresses: "carl@grafana.com;dev@grafana.com"
   }
@@ -283,12 +300,17 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```http
 HTTP/1.1 200
 Content-Type: application/json
+
 {
   "id": 1,
   "name": "new alert notification",
   "type": "email",
   "isDefault": false,
-  "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
+  "sendReminder": true,
+  "frequency": "15m",
+  "settings": {
+    "addresses": "carl@grafana.com;dev@grafana.com"
+  },
   "created": "2017-01-01 12:34",
   "updated": "2017-01-01 12:34"
 }
@@ -312,6 +334,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```http
 HTTP/1.1 200
 Content-Type: application/json
+
 {
   "message": "Notification deleted"
 }
