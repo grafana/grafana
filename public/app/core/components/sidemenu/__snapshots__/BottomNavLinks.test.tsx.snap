@@ -1,0 +1,163 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render children 1`] = `
+<div
+  className="sidemenu-item dropdown dropup"
+>
+  <a
+    className="sidemenu-link"
+  >
+    <span
+      className="icon-circle sidemenu-icon"
+    />
+  </a>
+  <ul
+    className="dropdown-menu dropdown-menu--sidemenu"
+    role="menu"
+  >
+    <li
+      key="undefined-0"
+    >
+      <a
+        onClick={[Function]}
+      />
+    </li>
+    <li
+      key="undefined-1"
+    >
+      <a
+        onClick={[Function]}
+      />
+    </li>
+    <li
+      key="undefined-2"
+    >
+      <a
+        onClick={[Function]}
+      />
+    </li>
+    <li
+      className="side-menu-header"
+    >
+      <span
+        className="sidemenu-item-text"
+      />
+    </li>
+  </ul>
+</div>
+`;
+
+exports[`Render should render component 1`] = `
+<div
+  className="sidemenu-item dropdown dropup"
+>
+  <a
+    className="sidemenu-link"
+  >
+    <span
+      className="icon-circle sidemenu-icon"
+    />
+  </a>
+  <ul
+    className="dropdown-menu dropdown-menu--sidemenu"
+    role="menu"
+  >
+    <li
+      className="side-menu-header"
+    >
+      <span
+        className="sidemenu-item-text"
+      />
+    </li>
+  </ul>
+</div>
+`;
+
+exports[`Render should render organisation switcher 1`] = `
+<div
+  className="sidemenu-item dropdown dropup"
+>
+  <a
+    className="sidemenu-link"
+  >
+    <span
+      className="icon-circle sidemenu-icon"
+    />
+  </a>
+  <ul
+    className="dropdown-menu dropdown-menu--sidemenu"
+    role="menu"
+  >
+    <li
+      className="sidemenu-org-switcher"
+    >
+      <a
+        onClick={[Function]}
+      >
+        <div>
+          <div
+            className="sidemenu-org-switcher__org-name"
+          >
+            Grafana
+          </div>
+          <div
+            className="sidemenu-org-switcher__org-current"
+          >
+            Current Org:
+          </div>
+        </div>
+        <div
+          className="sidemenu-org-switcher__switch"
+        >
+          <i
+            className="fa fa-fw fa-random"
+          />
+          Switch
+        </div>
+      </a>
+    </li>
+    <li
+      className="side-menu-header"
+    >
+      <span
+        className="sidemenu-item-text"
+      />
+    </li>
+  </ul>
+</div>
+`;
+
+exports[`Render should render subtitle 1`] = `
+<div
+  className="sidemenu-item dropdown dropup"
+>
+  <a
+    className="sidemenu-link"
+  >
+    <span
+      className="icon-circle sidemenu-icon"
+    />
+  </a>
+  <ul
+    className="dropdown-menu dropdown-menu--sidemenu"
+    role="menu"
+  >
+    <li
+      className="sidemenu-subtitle"
+    >
+      <span
+        className="sidemenu-item-text"
+      >
+        subtitle
+      </span>
+    </li>
+    <li
+      className="side-menu-header"
+    >
+      <span
+        className="sidemenu-item-text"
+      />
+    </li>
+  </ul>
+</div>
+`;

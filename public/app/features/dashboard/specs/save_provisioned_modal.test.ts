@@ -7,11 +7,11 @@ describe('SaveProvisionedDashboardModalCtrl', () => {
   };
 
   const mockDashboardSrv = {
-    getCurrent: function() {
+    getCurrent: () => {
       return {
         id: 5,
         meta: {},
-        getSaveModelClone: function() {
+        getSaveModelClone: () => {
           return json;
         },
       };

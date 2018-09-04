@@ -122,12 +122,13 @@ export class VariableSrv {
     }
 
     const g = this.createGraph();
-    const promises = g
-      .getNode(variable.name)
-      .getOptimizedInputEdges()
-      .map(e => {
+    const node = g.getNode(variable.name);
+    let promises = [];
+    if (node) {
+      promises = node.getOptimizedInputEdges().map(e => {
         return this.updateOptions(this.variables.find(v => v.name === e.inputNode.name));
       });
+    }
 
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
