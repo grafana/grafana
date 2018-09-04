@@ -7,7 +7,7 @@ export class LoadDashboardCtrl {
     $scope.appEvent('dashboard-fetch-start');
 
     if (!$routeParams.uid && !$routeParams.slug) {
-      backendSrv.get('/api/dashboards/home').then(function(homeDash) {
+      backendSrv.get('/api/dashboards/home').then(homeDash => {
         if (homeDash.redirectUri) {
           $location.path(homeDash.redirectUri);
         } else {
@@ -29,7 +29,7 @@ export class LoadDashboardCtrl {
       return;
     }
 
-    dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
+    dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(result => {
       if (result.meta.url) {
         const url = locationUtil.stripBaseFromUrl(result.meta.url);
 

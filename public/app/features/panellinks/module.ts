@@ -10,7 +10,7 @@ function panelLinksEditor() {
     restrict: 'E',
     controller: 'PanelLinksEditorCtrl',
     templateUrl: 'public/app/features/panellinks/module.html',
-    link: function() {},
+    link: () => {},
   };
 }
 
@@ -19,15 +19,15 @@ export class PanelLinksEditorCtrl {
   constructor($scope, backendSrv) {
     $scope.panel.links = $scope.panel.links || [];
 
-    $scope.addLink = function() {
+    $scope.addLink = () => {
       $scope.panel.links.push({
         type: 'dashboard',
       });
     };
 
-    $scope.searchDashboards = function(queryStr, callback) {
-      backendSrv.search({ query: queryStr }).then(function(hits) {
-        const dashboards = _.map(hits, function(dash) {
+    $scope.searchDashboards = (queryStr, callback) => {
+      backendSrv.search({ query: queryStr }).then(hits => {
+        const dashboards = _.map(hits, dash => {
           return dash.title;
         });
 
@@ -35,8 +35,8 @@ export class PanelLinksEditorCtrl {
       });
     };
 
-    $scope.dashboardChanged = function(link) {
-      backendSrv.search({ query: link.dashboard }).then(function(hits) {
+    $scope.dashboardChanged = link => {
+      backendSrv.search({ query: link.dashboard }).then(hits => {
         const dashboard = _.find(hits, { title: link.dashboard });
         if (dashboard) {
           if (dashboard.url) {
@@ -50,7 +50,7 @@ export class PanelLinksEditorCtrl {
       });
     };
 
-    $scope.deleteLink = function(link) {
+    $scope.deleteLink = link => {
       $scope.panel.links = _.without($scope.panel.links, link);
     };
   }

@@ -16,11 +16,11 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
     scope: {
       onUpload: '&',
     },
-    link: function(scope) {
+    link: scope => {
       function file_selected(evt) {
         const files = evt.target.files; // FileList object
-        const readerOnload = function() {
-          return function(e) {
+        const readerOnload = () => {
+          return e => {
             let dash;
             try {
               dash = JSON.parse(e.target.result);
@@ -30,7 +30,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
               return;
             }
 
-            scope.$apply(function() {
+            scope.$apply(() => {
               scope.onUpload({ dash: dash });
             });
           };

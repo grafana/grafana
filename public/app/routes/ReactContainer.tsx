@@ -50,7 +50,7 @@ export function reactContainer(
 
       ReactDOM.render(WrapInProvider(store, component, props), elem[0]);
 
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         ReactDOM.unmountComponentAtNode(elem[0]);
       });
     },

@@ -14,18 +14,18 @@ export class SelectOrgCtrl {
       },
     };
 
-    $scope.init = function() {
+    $scope.init = () => {
       $scope.getUserOrgs();
     };
 
-    $scope.getUserOrgs = function() {
-      backendSrv.get('/api/user/orgs').then(function(orgs) {
+    $scope.getUserOrgs = () => {
+      backendSrv.get('/api/user/orgs').then(orgs => {
         $scope.orgs = orgs;
       });
     };
 
-    $scope.setUsingOrg = function(org) {
-      backendSrv.post('/api/user/using/' + org.orgId).then(function() {
+    $scope.setUsingOrg = org => {
+      backendSrv.post('/api/user/using/' + org.orgId).then(() => {
         window.location.href = config.appSubUrl + '/';
       });
     };
