@@ -36,7 +36,7 @@ export const FolderStore = types
       return res;
     }),
 
-    setTitle: function(originalTitle: string, title: string) {
+    setTitle: (originalTitle: string, title: string) => {
       self.folder.title = title;
       self.folder.hasChanged = originalTitle.toLowerCase() !== title.trim().toLowerCase() && title.trim().length > 0;
     },
