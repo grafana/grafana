@@ -10,11 +10,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/inconshreveable/log15"
@@ -91,7 +89,6 @@ func (w *FileLogWriter) Init() error {
 	if len(w.Filename) == 0 {
 		return errors.New("config must have filename")
 	}
-	go w.listenToSystemSignals()
 	return w.StartLogger()
 }
 
@@ -240,29 +237,8 @@ func (w *FileLogWriter) Flush() {
 	w.mw.fd.Sync()
 }
 
-// listen to system signals
-func (w *FileLogWriter) listenToSystemSignals() {
-	sighupChan := make(chan os.Signal, 1)
-	terminationChan := make(chan os.Signal, 1)
-
-	signal.Notify(sighupChan, syscall.SIGHUP)
-	signal.Notify(terminationChan, os.Interrupt, os.Kill, syscall.SIGTERM)
-
-	for {
-		select {
-		case <-sighupChan:
-			_, err := os.Lstat(w.Filename)
-			if err == nil { // file exists
-				w.doReload()
-			}
-		case <-terminationChan:
-			break
-		}
-	}
-}
-
-// doReload closes the file and open it again
-func (w *FileLogWriter) doReload() (err error) {
+// Reload file logger
+func (w *FileLogWriter) Reload() {
 	// block Logger's io.Writer
 	w.mw.Lock()
 	defer w.mw.Unlock()
@@ -272,11 +248,8 @@ func (w *FileLogWriter) doReload() (err error) {
 	fd.Close()
 
 	// Open again
-	err = w.StartLogger()
+	err := w.StartLogger()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Reload StartLogger: %s\n", err)
-		return err
 	}
-
-	return nil
 }
