@@ -35,7 +35,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 
 	queryParams := rendererUrl.Query()
 	queryParams.Add("url", rs.getURL(opts.Path))
-	queryParams.Add("renderKey", rs.getRenderKey(opts.UserId, opts.OrgId, opts.OrgRole))
+	queryParams.Add("renderKey", rs.getRenderKey(opts.OrgId, opts.UserId, opts.OrgRole))
 	queryParams.Add("width", strconv.Itoa(opts.Width))
 	queryParams.Add("height", strconv.Itoa(opts.Height))
 	queryParams.Add("domain", rs.domain)
