@@ -137,7 +137,7 @@ describe('GraphiteQueryCtrl', () => {
       ctx.ctrl.target.target = 'test.count';
       ctx.ctrl.datasource.metricFindQuery = () => Promise.resolve([]);
       ctx.ctrl.parseTarget();
-      ctx.ctrl.getAltSegments(1).then(function(results) {
+      ctx.ctrl.getAltSegments(1).then(results => {
         ctx.altSegments = results;
       });
     });

@@ -6,7 +6,7 @@ jest.mock('angular', () => {
   return new AngularJSMock();
 });
 
-describe('linkSrv', function() {
+describe('linkSrv', () => {
   let linkSrv;
   const templateSrvMock = {};
   const timeSrvMock = {};
@@ -15,24 +15,24 @@ describe('linkSrv', function() {
     linkSrv = new LinkSrv(templateSrvMock, timeSrvMock);
   });
 
-  describe('when appending query strings', function() {
-    it('add ? to URL if not present', function() {
+  describe('when appending query strings', () => {
+    it('add ? to URL if not present', () => {
       const url = linkSrv.appendToQueryString('http://example.com', 'foo=bar');
       expect(url).toBe('http://example.com?foo=bar');
     });
 
-    it('do not add & to URL if ? is present but query string is empty', function() {
+    it('do not add & to URL if ? is present but query string is empty', () => {
       const url = linkSrv.appendToQueryString('http://example.com?', 'foo=bar');
       expect(url).toBe('http://example.com?foo=bar');
     });
 
-    it('add & to URL if query string is present', function() {
+    it('add & to URL if query string is present', () => {
       const url = linkSrv.appendToQueryString('http://example.com?foo=bar', 'hello=world');
       expect(url).toBe('http://example.com?foo=bar&hello=world');
     });
 
-    it('do not change the URL if there is nothing to append', function() {
-      _.each(['', undefined, null], function(toAppend) {
+    it('do not change the URL if there is nothing to append', () => {
+      _.each(['', undefined, null], toAppend => {
         const url1 = linkSrv.appendToQueryString('http://example.com', toAppend);
         expect(url1).toBe('http://example.com');
 
