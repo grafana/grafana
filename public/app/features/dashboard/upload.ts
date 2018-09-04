@@ -1,7 +1,7 @@
 import coreModule from 'app/core/core_module';
 
 const template = `
-<input type="file" id="dashupload" name="dashupload" class="hide"/>
+<input type="file" id="dashupload" name="dashupload" class="hide" onchange="angular.element(this).scope().file_selected"/>
 <label class="btn btn-success" for="dashupload">
   <i class="fa fa-upload"></i>
   Upload .json File
@@ -16,7 +16,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
     scope: {
       onUpload: '&',
     },
-    link: scope => {
+    link: (scope, elem) => {
       function file_selected(evt) {
         const files = evt.target.files; // FileList object
         const readerOnload = () => {
@@ -52,7 +52,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
       // Check for the various File API support.
       if (wnd.File && wnd.FileReader && wnd.FileList && wnd.Blob) {
         // Something
-        document.getElementById('dashupload').addEventListener('change', file_selected, false);
+        elem[0].addEventListener('change', file_selected, false);
       } else {
         alertSrv.set('Oops', 'Sorry, the HTML5 File APIs are not fully supported in this browser.', 'error');
       }
