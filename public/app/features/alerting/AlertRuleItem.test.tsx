@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import AlertRuleItem, { Props } from './AlertRuleItem';
 
 jest.mock('react-redux', () => ({
-  connect: params => params,
+  connect: () => params => params,
 }));
 
 const setup = (propOverrides?: object) => {
@@ -23,6 +23,7 @@ const setup = (propOverrides?: object) => {
     search: '',
     togglePauseAlertRule: jest.fn(),
   };
+
   Object.assign(props, propOverrides);
 
   return shallow(<AlertRuleItem {...props} />);

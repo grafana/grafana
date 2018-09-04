@@ -15,7 +15,7 @@ class AlertRuleItem extends PureComponent<Props, any> {
   togglePaused = () => {
     const { rule } = this.props;
 
-    this.props.togglePauseAlertRule(rule.id, { paused: rule.state === 'paused' });
+    this.props.togglePauseAlertRule(rule.id, { paused: rule.state !== 'paused' });
   };
 
   renderText(text: string) {

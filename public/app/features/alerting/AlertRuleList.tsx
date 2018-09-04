@@ -10,7 +10,7 @@ import { NavModel, StoreState, AlertRule } from 'app/types';
 import { getAlertRulesAsync, setSearchQuery } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 
-interface Props {
+export interface Props {
   navModel: NavModel;
   alertRules: AlertRule[];
   updateLocation: typeof updateLocation;
@@ -20,11 +20,7 @@ interface Props {
   search: string;
 }
 
-interface State {
-  search: string;
-}
-
-export class AlertRuleList extends PureComponent<Props, State> {
+class AlertRuleList extends PureComponent<Props, any> {
   stateFilters = [
     { text: 'All', value: 'all' },
     { text: 'OK', value: 'ok' },
@@ -44,11 +40,9 @@ export class AlertRuleList extends PureComponent<Props, State> {
     }
   }
 
-  onStateFilterChanged = evt => {
-    this.props.updateLocation({
-      query: { state: evt.target.value },
-    });
-  };
+  async fetchRules() {
+    await this.props.getAlertRulesAsync({ state: this.getStateFilter() });
+  }
 
   getStateFilter(): string {
     const { stateFilter } = this.props;
@@ -58,9 +52,11 @@ export class AlertRuleList extends PureComponent<Props, State> {
     return 'all';
   }
 
-  async fetchRules() {
-    await this.props.getAlertRulesAsync({ state: this.getStateFilter() });
-  }
+  onStateFilterChanged = event => {
+    this.props.updateLocation({
+      query: { state: event.target.value },
+    });
+  };
 
   onOpenHowTo = () => {
     appEvents.emit('show-modal', {
@@ -75,13 +71,13 @@ export class AlertRuleList extends PureComponent<Props, State> {
     this.props.setSearchQuery(value);
   };
 
-  alertStateFilterOption({ text, value }) {
+  alertStateFilterOption = ({ text, value }) => {
     return (
       <option key={value} value={value}>
         {text}
       </option>
     );
-  }
+  };
 
   render() {
     const { navModel, alertRules, search } = this.props;
@@ -112,14 +108,11 @@ export class AlertRuleList extends PureComponent<Props, State> {
                 </select>
               </div>
             </div>
-
             <div className="page-action-bar__spacer" />
-
             <a className="btn btn-secondary" onClick={this.onOpenHowTo}>
               <i className="fa fa-info-circle" /> How to add an alert
             </a>
           </div>
-
           <section>
             <ol className="alert-rule-list">
               {alertRules.map(rule => <AlertRuleItem rule={rule} key={rule.id} search={search} />)}

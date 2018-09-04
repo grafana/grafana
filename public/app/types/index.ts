@@ -22,6 +22,21 @@ export type UrlQueryMap = { [s: string]: UrlQueryValue };
 // Alerting
 //
 
+export interface AlertRuleApi {
+  id: number;
+  dashboardId: number;
+  dashboardUid: string;
+  dashboardSlug: string;
+  panelId: number;
+  name: string;
+  state: string;
+  newStateDate: string;
+  evalDate: string;
+  evalData?: object;
+  executionError: string;
+  url: string;
+}
+
 export interface AlertRule {
   id: number;
   dashboardId: number;

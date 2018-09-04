@@ -1,6 +1,6 @@
 import { Dispatch } from 'redux';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { AlertRule, StoreState } from 'app/types';
+import { AlertRuleApi, StoreState } from 'app/types';
 
 export enum ActionTypes {
   LoadAlertRules = 'LOAD_ALERT_RULES',
@@ -9,7 +9,7 @@ export enum ActionTypes {
 
 export interface LoadAlertRulesAction {
   type: ActionTypes.LoadAlertRules;
-  payload: AlertRule[];
+  payload: AlertRuleApi[];
 }
 
 export interface SetSearchQueryAction {
@@ -17,7 +17,7 @@ export interface SetSearchQueryAction {
   payload: string;
 }
 
-export const loadAlertRules = (rules: AlertRule[]): LoadAlertRulesAction => ({
+export const loadAlertRules = (rules: AlertRuleApi[]): LoadAlertRulesAction => ({
   type: ActionTypes.LoadAlertRules,
   payload: rules,
 });
@@ -31,7 +31,7 @@ export type Action = LoadAlertRulesAction | SetSearchQueryAction;
 
 export const getAlertRulesAsync = (options: { state: string }) => async (
   dispatch: Dispatch<Action>
-): Promise<AlertRule[]> => {
+): Promise<AlertRuleApi[]> => {
   try {
     const rules = await getBackendSrv().get('/api/alerts', options);
     dispatch(loadAlertRules(rules));
