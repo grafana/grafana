@@ -4,10 +4,10 @@ import { expect } from 'test/lib/common';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
-describe('given dashboard with panel repeat', function() {
+describe('given dashboard with panel repeat', () => {
   let dashboard;
 
-  beforeEach(function() {
+  beforeEach(() => {
     const dashboardJSON = {
       panels: [
         { id: 1, type: 'row', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
@@ -35,7 +35,7 @@ describe('given dashboard with panel repeat', function() {
     dashboard.processRepeats();
   });
 
-  it('should repeat panels when row is expanding', function() {
+  it('should repeat panels when row is expanding', () => {
     expect(dashboard.panels.length).toBe(4);
 
     // toggle row
@@ -55,10 +55,10 @@ describe('given dashboard with panel repeat', function() {
   });
 });
 
-describe('given dashboard with panel repeat in horizontal direction', function() {
+describe('given dashboard with panel repeat in horizontal direction', () => {
   let dashboard;
 
-  beforeEach(function() {
+  beforeEach(() => {
     dashboard = new DashboardModel({
       panels: [
         {
@@ -89,22 +89,22 @@ describe('given dashboard with panel repeat in horizontal direction', function()
     dashboard.processRepeats();
   });
 
-  it('should repeat panel 3 times', function() {
+  it('should repeat panel 3 times', () => {
     expect(dashboard.panels.length).toBe(3);
   });
 
-  it('should mark panel repeated', function() {
+  it('should mark panel repeated', () => {
     expect(dashboard.panels[0].repeat).toBe('apps');
     expect(dashboard.panels[1].repeatPanelId).toBe(2);
   });
 
-  it('should set scopedVars on panels', function() {
+  it('should set scopedVars on panels', () => {
     expect(dashboard.panels[0].scopedVars.apps.value).toBe('se1');
     expect(dashboard.panels[1].scopedVars.apps.value).toBe('se2');
     expect(dashboard.panels[2].scopedVars.apps.value).toBe('se3');
   });
 
-  it('should place on first row and adjust width so all fit', function() {
+  it('should place on first row and adjust width so all fit', () => {
     expect(dashboard.panels[0].gridPos).toMatchObject({
       x: 0,
       y: 0,
@@ -125,23 +125,23 @@ describe('given dashboard with panel repeat in horizontal direction', function()
     });
   });
 
-  describe('After a second iteration', function() {
-    beforeEach(function() {
+  describe('After a second iteration', () => {
+    beforeEach(() => {
       dashboard.panels[0].fill = 10;
       dashboard.processRepeats();
     });
 
-    it('reused panel should copy properties from source', function() {
+    it('reused panel should copy properties from source', () => {
       expect(dashboard.panels[1].fill).toBe(10);
     });
 
-    it('should have same panel count', function() {
+    it('should have same panel count', () => {
       expect(dashboard.panels.length).toBe(3);
     });
   });
 
-  describe('After a second iteration with different variable', function() {
-    beforeEach(function() {
+  describe('After a second iteration with different variable', () => {
+    beforeEach(() => {
       dashboard.templating.list.push({
         name: 'server',
         current: { text: 'se1, se2, se3', value: ['se1'] },
@@ -151,46 +151,46 @@ describe('given dashboard with panel repeat in horizontal direction', function()
       dashboard.processRepeats();
     });
 
-    it('should remove scopedVars value for last variable', function() {
+    it('should remove scopedVars value for last variable', () => {
       expect(dashboard.panels[0].scopedVars.apps).toBe(undefined);
     });
 
-    it('should have new variable value in scopedVars', function() {
+    it('should have new variable value in scopedVars', () => {
       expect(dashboard.panels[0].scopedVars.server.value).toBe('se1');
     });
   });
 
-  describe('After a second iteration and selected values reduced', function() {
-    beforeEach(function() {
+  describe('After a second iteration and selected values reduced', () => {
+    beforeEach(() => {
       dashboard.templating.list[0].options[1].selected = false;
       dashboard.processRepeats();
     });
 
-    it('should clean up repeated panel', function() {
+    it('should clean up repeated panel', () => {
       expect(dashboard.panels.length).toBe(2);
     });
   });
 
-  describe('After a second iteration and panel repeat is turned off', function() {
-    beforeEach(function() {
+  describe('After a second iteration and panel repeat is turned off', () => {
+    beforeEach(() => {
       dashboard.panels[0].repeat = null;
       dashboard.processRepeats();
     });
 
-    it('should clean up repeated panel', function() {
+    it('should clean up repeated panel', () => {
       expect(dashboard.panels.length).toBe(1);
     });
 
-    it('should remove scoped vars from reused panel', function() {
+    it('should remove scoped vars from reused panel', () => {
       expect(dashboard.panels[0].scopedVars).toBe(undefined);
     });
   });
 });
 
-describe('given dashboard with panel repeat in vertical direction', function() {
+describe('given dashboard with panel repeat in vertical direction', () => {
   let dashboard;
 
-  beforeEach(function() {
+  beforeEach(() => {
     dashboard = new DashboardModel({
       panels: [
         { id: 1, type: 'row', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
@@ -218,7 +218,7 @@ describe('given dashboard with panel repeat in vertical direction', function() {
     dashboard.processRepeats();
   });
 
-  it('should place on items on top of each other and keep witdh', function() {
+  it('should place on items on top of each other and keep witdh', () => {
     expect(dashboard.panels[0].gridPos).toMatchObject({ x: 0, y: 0, h: 1, w: 24 }); // first row
 
     expect(dashboard.panels[1].gridPos).toMatchObject({ x: 5, y: 1, h: 2, w: 8 });
@@ -290,7 +290,7 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
     ]);
   });
 
-  it('should be placed in their places', function() {
+  it('should be placed in their places', () => {
     expect(dashboard.panels[0].gridPos).toMatchObject({ x: 0, y: 0, h: 1, w: 24 }); // 1st row
 
     expect(dashboard.panels[1].gridPos).toMatchObject({ x: 0, y: 1, h: 2, w: 6 });
@@ -311,10 +311,10 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
   });
 });
 
-describe('given dashboard with row repeat', function() {
+describe('given dashboard with row repeat', () => {
   let dashboard, dashboardJSON;
 
-  beforeEach(function() {
+  beforeEach(() => {
     dashboardJSON = {
       panels: [
         {
@@ -349,12 +349,12 @@ describe('given dashboard with row repeat', function() {
     dashboard.processRepeats();
   });
 
-  it('should not repeat only row', function() {
+  it('should not repeat only row', () => {
     const panelTypes = _.map(dashboard.panels, 'type');
     expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph', 'row', 'graph']);
   });
 
-  it('should set scopedVars for each panel', function() {
+  it('should set scopedVars for each panel', () => {
     dashboardJSON.templating.list[0].options[2].selected = true;
     dashboard = new DashboardModel(dashboardJSON);
     dashboard.processRepeats();
@@ -375,12 +375,12 @@ describe('given dashboard with row repeat', function() {
     expect(scopedVars).toEqual(['se1', 'se1', 'se1', 'se2', 'se2', 'se2', 'se3', 'se3', 'se3']);
   });
 
-  it('should repeat only configured row', function() {
+  it('should repeat only configured row', () => {
     expect(dashboard.panels[6].id).toBe(4);
     expect(dashboard.panels[7].id).toBe(5);
   });
 
-  it('should repeat only row if it is collapsed', function() {
+  it('should repeat only row if it is collapsed', () => {
     dashboardJSON.panels = [
       {
         id: 1,
@@ -405,7 +405,7 @@ describe('given dashboard with row repeat', function() {
     expect(dashboard.panels[1].panels).toHaveLength(2);
   });
 
-  it('should properly repeat multiple rows', function() {
+  it('should properly repeat multiple rows', () => {
     dashboardJSON.panels = [
       {
         id: 1,
@@ -469,7 +469,7 @@ describe('given dashboard with row repeat', function() {
     expect(dashboard.panels[12].scopedVars['hosts'].value).toBe('backend02');
   });
 
-  it('should assign unique ids for repeated panels', function() {
+  it('should assign unique ids for repeated panels', () => {
     dashboardJSON.panels = [
       {
         id: 1,
@@ -501,7 +501,7 @@ describe('given dashboard with row repeat', function() {
     expect(panelIds.length).toEqual(_.uniq(panelIds).length);
   });
 
-  it('should place new panels in proper order', function() {
+  it('should place new panels in proper order', () => {
     dashboardJSON.panels = [
       { id: 1, type: 'row', gridPos: { x: 0, y: 0, h: 1, w: 24 }, repeat: 'apps' },
       { id: 2, type: 'graph', gridPos: { x: 0, y: 1, h: 3, w: 12 } },
@@ -646,7 +646,7 @@ describe('given dashboard with row and panel repeat', () => {
     });
   });
 
-  it('should repeat panels when row is expanding', function() {
+  it('should repeat panels when row is expanding', () => {
     dashboard = new DashboardModel(dashboardJSON);
     dashboard.processRepeats();
 

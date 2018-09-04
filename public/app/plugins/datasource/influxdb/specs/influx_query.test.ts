@@ -1,10 +1,10 @@
 import InfluxQuery from '../influx_query';
 
-describe('InfluxQuery', function() {
+describe('InfluxQuery', () => {
   const templateSrv = { replace: val => val };
 
-  describe('render series with mesurement only', function() {
-    it('should generate correct query', function() {
+  describe('render series with mesurement only', () => {
+    it('should generate correct query', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -18,8 +18,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('render series with policy only', function() {
-    it('should generate correct query', function() {
+  describe('render series with policy only', () => {
+    it('should generate correct query', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -36,8 +36,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('render series with math and alias', function() {
-    it('should generate correct query', function() {
+  describe('render series with math and alias', () => {
+    it('should generate correct query', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -61,8 +61,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('series with single tag only', function() {
-    it('should generate correct query', function() {
+  describe('series with single tag only', () => {
+    it('should generate correct query', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -81,7 +81,7 @@ describe('InfluxQuery', function() {
       );
     });
 
-    it('should switch regex operator with tag value is regex', function() {
+    it('should switch regex operator with tag value is regex', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -99,8 +99,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('series with multiple tags only', function() {
-    it('should generate correct query', function() {
+  describe('series with multiple tags only', () => {
+    it('should generate correct query', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -119,8 +119,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('series with tags OR condition', function() {
-    it('should generate correct query', function() {
+  describe('series with tags OR condition', () => {
+    it('should generate correct query', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -139,8 +139,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('query with value condition', function() {
-    it('should not quote value', function() {
+  describe('query with value condition', () => {
+    it('should not quote value', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -156,8 +156,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('series with groupByTag', function() {
-    it('should generate correct query', function() {
+  describe('series with groupByTag', () => {
+    it('should generate correct query', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -173,8 +173,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('render series without group by', function() {
-    it('should generate correct query', function() {
+  describe('render series without group by', () => {
+    it('should generate correct query', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -189,8 +189,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('render series without group by and fill', function() {
-    it('should generate correct query', function() {
+  describe('render series without group by and fill', () => {
+    it('should generate correct query', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -205,8 +205,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('when adding group by part', function() {
-    it('should add tag before fill', function() {
+  describe('when adding group by part', () => {
+    it('should add tag before fill', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -223,7 +223,7 @@ describe('InfluxQuery', function() {
       expect(query.target.groupBy[2].type).toBe('fill');
     });
 
-    it('should add tag last if no fill', function() {
+    it('should add tag last if no fill', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -239,8 +239,8 @@ describe('InfluxQuery', function() {
     });
   });
 
-  describe('when adding select part', function() {
-    it('should add mean after after field', function() {
+  describe('when adding select part', () => {
+    it('should add mean after after field', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -255,7 +255,7 @@ describe('InfluxQuery', function() {
       expect(query.target.select[0][1].type).toBe('mean');
     });
 
-    it('should replace sum by mean', function() {
+    it('should replace sum by mean', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -270,7 +270,7 @@ describe('InfluxQuery', function() {
       expect(query.target.select[0][1].type).toBe('sum');
     });
 
-    it('should add math before alias', function() {
+    it('should add math before alias', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -285,7 +285,7 @@ describe('InfluxQuery', function() {
       expect(query.target.select[0][2].type).toBe('math');
     });
 
-    it('should add math last', function() {
+    it('should add math last', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -300,7 +300,7 @@ describe('InfluxQuery', function() {
       expect(query.target.select[0][2].type).toBe('math');
     });
 
-    it('should replace math', function() {
+    it('should replace math', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -315,7 +315,7 @@ describe('InfluxQuery', function() {
       expect(query.target.select[0][2].type).toBe('math');
     });
 
-    it('should add math when one only query part', function() {
+    it('should add math when one only query part', () => {
       const query = new InfluxQuery(
         {
           measurement: 'cpu',
@@ -330,8 +330,8 @@ describe('InfluxQuery', function() {
       expect(query.target.select[0][1].type).toBe('math');
     });
 
-    describe('when render adhoc filters', function() {
-      it('should generate correct query segment', function() {
+    describe('when render adhoc filters', () => {
+      it('should generate correct query segment', () => {
         const query = new InfluxQuery({ measurement: 'cpu' }, templateSrv, {});
 
         const queryText = query.renderAdhocFilters([

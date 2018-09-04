@@ -4,7 +4,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 jest.mock('../datasource');
 jest.mock('app/core/services/backend_srv');
 
-describe('Prometheus editor completer', function() {
+describe('Prometheus editor completer', () => {
   function getSessionStub(data) {
     return {
       getTokenAt: jest.fn(() => data.currentToken),

@@ -2,7 +2,7 @@ import moment from 'moment';
 import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 
-describe('PostgreSQLDatasource', function() {
+describe('PostgreSQLDatasource', () => {
   const instanceSettings = { name: 'postgresql' };
 
   const backendSrv = {};
@@ -17,7 +17,7 @@ describe('PostgreSQLDatasource', function() {
     ctx.ds = new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv);
   });
 
-  describe('When performing annotationQuery', function() {
+  describe('When performing annotationQuery', () => {
     let results;
 
     const annotationName = 'MyAnno';
@@ -51,16 +51,16 @@ describe('PostgreSQLDatasource', function() {
       },
     };
 
-    beforeEach(function() {
+    beforeEach(() => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.annotationQuery(options).then(function(data) {
+      ctx.ds.annotationQuery(options).then(data => {
         results = data;
       });
     });
 
-    it('should return annotation list', function() {
+    it('should return annotation list', () => {
       expect(results.length).toBe(3);
 
       expect(results[0].text).toBe('some text');
@@ -74,7 +74,7 @@ describe('PostgreSQLDatasource', function() {
     });
   });
 
-  describe('When performing metricFindQuery', function() {
+  describe('When performing metricFindQuery', () => {
     let results;
     const query = 'select * from atable';
     const response = {
@@ -94,23 +94,23 @@ describe('PostgreSQLDatasource', function() {
       },
     };
 
-    beforeEach(function() {
+    beforeEach(() => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.metricFindQuery(query).then(function(data) {
+      ctx.ds.metricFindQuery(query).then(data => {
         results = data;
       });
     });
 
-    it('should return list of all column values', function() {
+    it('should return list of all column values', () => {
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
       expect(results[5].text).toBe('some text3');
     });
   });
 
-  describe('When performing metricFindQuery with key, value columns', function() {
+  describe('When performing metricFindQuery with key, value columns', () => {
     let results;
     const query = 'select * from atable';
     const response = {
@@ -130,16 +130,16 @@ describe('PostgreSQLDatasource', function() {
       },
     };
 
-    beforeEach(function() {
+    beforeEach(() => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.metricFindQuery(query).then(function(data) {
+      ctx.ds.metricFindQuery(query).then(data => {
         results = data;
       });
     });
 
-    it('should return list of as text, value', function() {
+    it('should return list of as text, value', () => {
       expect(results.length).toBe(3);
       expect(results[0].text).toBe('aTitle');
       expect(results[0].value).toBe('value1');
@@ -148,7 +148,7 @@ describe('PostgreSQLDatasource', function() {
     });
   });
 
-  describe('When performing metricFindQuery with key, value columns and with duplicate keys', function() {
+  describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
     let results;
     const query = 'select * from atable';
     const response = {
@@ -172,13 +172,13 @@ describe('PostgreSQLDatasource', function() {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.metricFindQuery(query).then(function(data) {
+      ctx.ds.metricFindQuery(query).then(data => {
         results = data;
       });
       //ctx.$rootScope.$apply();
     });
 
-    it('should return list of unique keys', function() {
+    it('should return list of unique keys', () => {
       expect(results.length).toBe(1);
       expect(results[0].text).toBe('aTitle');
       expect(results[0].value).toBe('same');
@@ -186,7 +186,7 @@ describe('PostgreSQLDatasource', function() {
   });
 
   describe('When interpolating variables', () => {
-    beforeEach(function() {
+    beforeEach(() => {
       ctx.variable = new CustomVariable({}, {});
     });
 

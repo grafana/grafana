@@ -15,7 +15,7 @@ const templateSrv = {
   ],
 };
 
-describe('datasource_srv', function() {
+describe('datasource_srv', () => {
   const _datasourceSrv = new DatasourceSrv({}, {}, {}, templateSrv);
 
   describe('when loading explore sources', () => {
