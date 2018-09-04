@@ -4,10 +4,6 @@ import { AlertRuleList, Props } from './AlertRuleList';
 import { AlertRule, NavModel } from '../../types';
 import appEvents from '../../core/app_events';
 
-jest.mock('react-redux', () => ({
-  connect: () => params => params,
-}));
-
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
 }));
@@ -93,7 +89,7 @@ describe('Life cycle', () => {
       const { instance } = setup();
       instance.fetchRules = jest.fn();
 
-      instance.componentDidUpdate({ stateFilter: 'ok' });
+      instance.componentDidUpdate({ stateFilter: 'ok' } as Props);
 
       expect(instance.fetchRules).toHaveBeenCalled();
     });

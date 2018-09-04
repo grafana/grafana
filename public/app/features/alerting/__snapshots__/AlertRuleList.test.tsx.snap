@@ -101,7 +101,7 @@ exports[`Render should render alert rules 1`] = `
       <ol
         className="alert-rule-list"
       >
-        <AlertRuleItem
+        <Connect(AlertRuleItem)
           key="1"
           rule={
             Object {
@@ -121,7 +121,7 @@ exports[`Render should render alert rules 1`] = `
           }
           search=""
         />
-        <AlertRuleItem
+        <Connect(AlertRuleItem)
           key="3"
           rule={
             Object {
