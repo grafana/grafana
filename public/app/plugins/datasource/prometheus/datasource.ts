@@ -526,13 +526,13 @@ export class PrometheusDatasource {
     const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
 
     const self = this;
-    return this.performTimeSeriesQuery(query, query.start, query.end).then(function(results) {
+    return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {
       const eventList = [];
       tagKeys = tagKeys.split(',');
 
-      _.each(results.data.data.result, function(series) {
+      _.each(results.data.data.result, series => {
         const tags = _.chain(series.metric)
-          .filter(function(v, k) {
+          .filter((v, k) => {
             return _.includes(tagKeys, k);
           })
           .value();

@@ -77,7 +77,7 @@ export class DatasourceSrv {
 
     this.addDataSourceVariables(sources);
 
-    _.each(config.datasources, function(value) {
+    _.each(config.datasources, value => {
       if (value.meta && value.meta.annotations) {
         sources.push(value);
       }
@@ -97,7 +97,7 @@ export class DatasourceSrv {
   getMetricSources(options) {
     const metricSources = [];
 
-    _.each(config.datasources, function(value, key) {
+    _.each(config.datasources, (value, key) => {
       if (value.meta && value.meta.metrics) {
         let metricSource = { value: key, name: key, meta: value.meta, sort: key };
 
@@ -121,7 +121,7 @@ export class DatasourceSrv {
       this.addDataSourceVariables(metricSources);
     }
 
-    metricSources.sort(function(a, b) {
+    metricSources.sort((a, b) => {
       if (a.sort.toLowerCase() > b.sort.toLowerCase()) {
         return 1;
       }

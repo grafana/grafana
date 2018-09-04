@@ -1370,7 +1370,7 @@ Lexer.prototype = {
     };
   },
 
-  isPunctuator: function(ch1) {
+  isPunctuator: ch1 => {
     switch (ch1) {
       case '.':
       case '(':

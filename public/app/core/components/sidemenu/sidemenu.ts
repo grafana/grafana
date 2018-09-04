@@ -71,14 +71,14 @@ export function sideMenuDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {},
-    link: function(scope, elem) {
+    link: (scope, elem) => {
       // hack to hide dropdown menu
-      elem.on('click.dropdown', '.dropdown-menu a', function(evt) {
+      elem.on('click.dropdown', '.dropdown-menu a', evt => {
         const menu = $(evt.target).parents('.dropdown-menu');
         const parent = menu.parent();
         menu.detach();
 
-        setTimeout(function() {
+        setTimeout(() => {
           parent.append(menu);
         }, 100);
       });

@@ -88,7 +88,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   getTextValues(metricFindResult) {
-    return _.map(metricFindResult, function(value) {
+    return _.map(metricFindResult, value => {
       return value.text;
     });
   }

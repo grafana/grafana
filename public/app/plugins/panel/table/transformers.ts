@@ -7,10 +7,10 @@ const transformers = {};
 
 transformers['timeseries_to_rows'] = {
   description: 'Time series to rows',
-  getColumns: function() {
+  getColumns: () => {
     return [];
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     model.columns = [{ text: 'Time', type: 'date' }, { text: 'Metric' }, { text: 'Value' }];
 
     for (let i = 0; i < data.length; i++) {
@@ -25,10 +25,10 @@ transformers['timeseries_to_rows'] = {
 
 transformers['timeseries_to_columns'] = {
   description: 'Time series to columns',
-  getColumns: function() {
+  getColumns: () => {
     return [];
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     model.columns.push({ text: 'Time', type: 'date' });
 
     // group by time
@@ -67,7 +67,7 @@ transformers['timeseries_to_columns'] = {
 
 transformers['timeseries_aggregations'] = {
   description: 'Time series aggregations',
-  getColumns: function() {
+  getColumns: () => {
     return [
       { text: 'Avg', value: 'avg' },
       { text: 'Min', value: 'min' },
@@ -77,7 +77,7 @@ transformers['timeseries_aggregations'] = {
       { text: 'Count', value: 'count' },
     ];
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     let i, y;
     model.columns.push({ text: 'Metric' });
 
@@ -105,10 +105,10 @@ transformers['timeseries_aggregations'] = {
 
 transformers['annotations'] = {
   description: 'Annotations',
-  getColumns: function() {
+  getColumns: () => {
     return [];
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     model.columns.push({ text: 'Time', type: 'date' });
     model.columns.push({ text: 'Title' });
     model.columns.push({ text: 'Text' });
@@ -127,7 +127,7 @@ transformers['annotations'] = {
 
 transformers['table'] = {
   description: 'Table',
-  getColumns: function(data) {
+  getColumns: data => {
     if (!data || data.length === 0) {
       return [];
     }
@@ -154,7 +154,7 @@ transformers['table'] = {
 
     return columns;
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     if (!data || data.length === 0) {
       return;
     }
@@ -264,7 +264,7 @@ transformers['table'] = {
 
 transformers['json'] = {
   description: 'JSON Data',
-  getColumns: function(data) {
+  getColumns: data => {
     if (!data || data.length === 0) {
       return [];
     }
@@ -287,11 +287,11 @@ transformers['json'] = {
       }
     }
 
-    return _.map(names, function(value, key) {
+    return _.map(names, (value, key) => {
       return { text: key, value: key };
     });
   },
-  transform: function(data, panel, model) {
+  transform: (data, panel, model) => {
     let i, y, z;
 
     for (const column of panel.columns) {
