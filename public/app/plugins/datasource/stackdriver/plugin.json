@@ -1,0 +1,16 @@
+{
+  "name": "Stackdriver",
+  "type": "datasource",
+  "id": "stackdriver",
+  "metrics": true,
+  "alerting": false,
+  "annotations": false,
+  "queryOptions": {
+    "maxDataPoints": true,
+    "cacheTimeout": true
+  },
+  "info": {
+    "description": "Data Source for Stackdriver",
+    "version": "1.0.0"
+  }
+}
