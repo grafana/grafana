@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
+import appEvents from '../../app_events';
+import { contextSrv } from 'app/core/services/context_srv';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
-import { contextSrv } from 'app/core/services/context_srv';
-import appEvents from '../../app_events';
 
-export class SideMenu extends PureComponent<any> {
+export class SideMenu extends PureComponent {
   toggleSideMenu = () => {
     contextSrv.toggleSideMenu();
     appEvents.emit('toggle-sidemenu');

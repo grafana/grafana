@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { SFC } from 'react';
 import DropDownChild from './DropDownChild';
 
-interface SideMenuDropDownProps {
+interface Props {
   link: any;
 }
 
-export default function SideMenuDropDown(props: SideMenuDropDownProps) {
+const SideMenuDropDown: SFC<Props> = props => {
   const { link } = props;
   return (
     <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">
@@ -18,4 +18,6 @@ export default function SideMenuDropDown(props: SideMenuDropDownProps) {
         })}
     </ul>
   );
-}
+};
+
+export default SideMenuDropDown;

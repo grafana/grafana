@@ -26,17 +26,7 @@ describe('Render', () => {
     const wrapper = setup({
       link: {
         text: 'link',
-        children: [
-          {
-            id: 1,
-          },
-          {
-            id: 2,
-          },
-          {
-            id: 3,
-          },
-        ],
+        children: [{ id: 1 }, { id: 2 }, { id: 3 }],
       },
     });
 

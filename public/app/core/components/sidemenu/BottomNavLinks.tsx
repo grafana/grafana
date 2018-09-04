@@ -2,12 +2,12 @@ import React, { PureComponent } from 'react';
 import appEvents from '../../app_events';
 import { User } from '../../services/context_srv';
 
-interface BottonNavLinksProps {
+export interface Props {
   link: any;
   user: User;
 }
 
-export default class BottomNavLinks extends PureComponent<BottonNavLinksProps> {
+class BottomNavLinks extends PureComponent<Props> {
   itemClicked = (event, child) => {
     if (child.url === '/shortcuts') {
       event.preventDefault();
@@ -74,3 +74,5 @@ export default class BottomNavLinks extends PureComponent<BottonNavLinksProps> {
     );
   }
 }
+
+export default BottomNavLinks;

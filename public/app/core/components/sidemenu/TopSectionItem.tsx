@@ -1,11 +1,11 @@
 import React, { SFC } from 'react';
 import SideMenuDropDown from './SideMenuDropDown';
 
-interface TopSectionItemProps {
+export interface Props {
   link: any;
 }
 
-const TopSectionItem: SFC<TopSectionItemProps> = props => {
+const TopSectionItem: SFC<Props> = props => {
   const { link } = props;
   return (
     <div className="sidemenu-item dropdown">

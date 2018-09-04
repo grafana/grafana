@@ -5,22 +5,10 @@ import TopSection from './TopSection';
 jest.mock('../../config', () => ({
   bootData: {
     navTree: [
-      {
-        id: '1',
-        hideFromMenu: true,
-      },
-      {
-        id: '2',
-        hideFromMenu: true,
-      },
-      {
-        id: '3',
-        hideFromMenu: false,
-      },
-      {
-        id: '4',
-        hideFromMenu: true,
-      },
+      { id: '1', hideFromMenu: true },
+      { id: '2', hideFromMenu: true },
+      { id: '3', hideFromMenu: false },
+      { id: '4', hideFromMenu: true },
     ],
   },
 }));
@@ -45,23 +33,7 @@ describe('Render', () => {
 
   it('should render items', () => {
     const wrapper = setup({
-      mainLinks: [
-        {
-          id: 1,
-        },
-        {
-          id: 2,
-        },
-        {
-          id: 3,
-        },
-        {
-          id: 4,
-        },
-        {
-          id: 5,
-        },
-      ],
+      mainLinks: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }],
     });
 
     expect(wrapper).toMatchSnapshot();
