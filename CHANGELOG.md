@@ -5,6 +5,7 @@
 * **Alerting**: Notification reminders [#7330](https://github.com/grafana/grafana/issues/7330), thx [@jbaublitz](https://github.com/jbaublitz)
 * **Dashboard**: TV & Kiosk mode changes, new cycle view mode button in dashboard toolbar [#13025](https://github.com/grafana/grafana/pull/13025)
 * **OAuth**: Gitlab OAuth with support for filter by groups [#5623](https://github.com/grafana/grafana/issues/5623), thx [@BenoitKnecht](https://github.com/BenoitKnecht)
+* **Postgres**: Graphical query builder [#10095](https://github.com/grafana/grafana/issues/10095), thx [svenklemm](https://github.com/svenklemm)
 
 ### New Features
 
