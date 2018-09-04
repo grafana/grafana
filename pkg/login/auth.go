@@ -28,8 +28,8 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 		return err
 	}
 
-	if len(query.Password) < 4 {
-		return ErrPasswordTooShort
+	if err := validatePasswordLength(query.Password); err != nil {
+		return err
 	}
 
 	err := loginUsingGrafanaDB(query)
@@ -55,4 +55,11 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 	}
 
 	return err
+}
+func validatePasswordLength(password string) error {
+	if len(password) < 4 {
+		return ErrPasswordTooShort
+	}
+
+	return nil
 }
