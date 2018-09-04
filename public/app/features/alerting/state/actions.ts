@@ -1,6 +1,6 @@
-import { Dispatch } from 'redux';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AlertRuleApi, StoreState } from 'app/types';
+import { ThunkAction } from 'redux-thunk';
 
 export enum ActionTypes {
   LoadAlertRules = 'LOAD_ALERT_RULES',
@@ -29,31 +29,19 @@ export const setSearchQuery = (query: string): SetSearchQueryAction => ({
 
 export type Action = LoadAlertRulesAction | SetSearchQueryAction;
 
-export const getAlertRulesAsync = (options: { state: string }) => async (
-  dispatch: Dispatch<Action>
-): Promise<AlertRuleApi[]> => {
-  try {
+type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
+
+export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
+  return async dispatch => {
     const rules = await getBackendSrv().get('/api/alerts', options);
     dispatch(loadAlertRules(rules));
-    return rules;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
+  };
+}
 
-export const togglePauseAlertRule = (id: number, options: { paused: boolean }) => async (
-  // Maybe fix dispatch type?
-  dispatch: Dispatch<any>,
-  getState: () => StoreState
-): Promise<boolean> => {
-  try {
+export function togglePauseAlertRule(id: number, options: { paused: boolean }): ThunkResult<void> {
+  return async (dispatch, getState) => {
     await getBackendSrv().post(`/api/alerts/${id}/pause`, options);
     const stateFilter = getState().location.query.state || 'all';
     dispatch(getAlertRulesAsync({ state: stateFilter.toString() }));
-    return true;
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
-};
+  };
+}

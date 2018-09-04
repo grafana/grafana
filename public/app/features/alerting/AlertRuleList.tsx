@@ -20,7 +20,7 @@ export interface Props {
   search: string;
 }
 
-class AlertRuleList extends PureComponent<Props, any> {
+export class AlertRuleList extends PureComponent<Props, any> {
   stateFilters = [
     { text: 'All', value: 'all' },
     { text: 'OK', value: 'ok' },
