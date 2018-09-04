@@ -149,9 +149,16 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 	params := make([]interface{}, 0)
 
 	sql.WriteString(getTeamSelectSqlBase())
-	sql.WriteString(` WHERE team.org_id = ?`)
 
-	params = append(params, query.OrgId)
+	if query.IsGrafanaAdmin {
+		sql.WriteString(` WHERE team.org_id = ?`)
+		params = append(params, query.OrgId)
+	} else {
+		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
+		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ? and team_member.is_team_admin = 1`)
+
+		params = append(params, query.OrgId, query.UserId)
+	}
 
 	if query.Query != "" {
 		sql.WriteString(` and team.name ` + dialect.LikeStr() + ` ?`)
@@ -169,7 +176,6 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 		offset := query.Limit * (query.Page - 1)
 		sql.WriteString(dialect.LimitOffset(int64(query.Limit), int64(offset)))
 	}
-
 	if err := x.Sql(sql.String(), params...).Find(&query.Result.Teams); err != nil {
 		return err
 	}
@@ -179,7 +185,6 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 	if query.Query != "" {
 		countSess.Where(`name `+dialect.LikeStr()+` ?`, queryWithWildcards)
 	}
-
 	if query.Name != "" {
 		countSess.Where("name=?", query.Name)
 	}

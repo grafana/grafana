@@ -58,13 +58,14 @@ func SearchTeams(c *m.ReqContext) Response {
 	if page < 1 {
 		page = 1
 	}
-
 	query := m.SearchTeamsQuery{
-		OrgId: c.OrgId,
-		Query: c.Query("query"),
-		Name:  c.Query("name"),
-		Page:  page,
-		Limit: perPage,
+		IsGrafanaAdmin: c.IsGrafanaAdmin,
+		UserId:         c.UserId,
+		OrgId:          c.OrgId,
+		Query:          c.Query("query"),
+		Name:           c.Query("name"),
+		Page:           page,
+		Limit:          perPage,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
