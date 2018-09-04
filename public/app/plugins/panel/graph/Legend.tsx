@@ -7,6 +7,8 @@ const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 interface LegendProps {
   seriesList: TimeSeries[];
   optionalClass?: string;
+  onToggleSeries?: (series: TimeSeries, event: Event) => void;
+  onToggleSort?: (sortBy, sortDesc) => void;
 }
 
 interface LegendDisplayProps {
@@ -70,11 +72,18 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLege
     return seriesList;
   }
 
+  onToggleSeries(series: TimeSeries, event: Event) {
+    // const scrollPosition = legendScrollbar.scroller.scrollTop;
+    this.props.onToggleSeries(series, event);
+    // legendScrollbar.scroller.scrollTop = scrollPosition;
+  }
+
   render() {
-    const { optionalClass, hiddenSeries, rightSide, sideWidth, hideEmpty, hideZero } = this.props;
+    const { optionalClass, hiddenSeries, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.props;
     const { values, min, max, avg, current, total } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     const seriesHideProps = { hideEmpty, hideZero };
+    const sortProps = { sort, sortDesc };
     const seriesList = _.filter(this.sortLegend(), series => !series.hideFromLegend(seriesHideProps));
     const legendCustomClasses = `${this.props.alignAsTable ? 'graph-legend-table' : ''} ${optionalClass}`;
 
@@ -87,14 +96,19 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLege
       width: ieWidth,
     };
 
+    const legendProps: GraphLegendProps = {
+      seriesList: seriesList,
+      hiddenSeries: hiddenSeries,
+      onToggleSeries: (s, e) => this.onToggleSeries(s, e),
+      onToggleSort: (sortBy, sortDesc) => this.props.onToggleSort(sortBy, sortDesc),
+      ...seriesValuesProps,
+      ...sortProps,
+    };
+
     return (
       <div className={`graph-legend-content ${legendCustomClasses}`} style={legendStyle}>
         <div className="graph-legend-scroll">
-          {this.props.alignAsTable ? (
-            <LegendTable seriesList={seriesList} hiddenSeries={hiddenSeries} {...seriesValuesProps} />
-          ) : (
-            <LegendSeriesList seriesList={seriesList} hiddenSeries={hiddenSeries} {...seriesValuesProps} />
-          )}
+          {this.props.alignAsTable ? <LegendTable {...legendProps} /> : <LegendSeriesList {...legendProps} />}
         </div>
       </div>
     );
@@ -106,7 +120,14 @@ class LegendSeriesList extends React.PureComponent<GraphLegendProps> {
     const { seriesList, hiddenSeries, values, min, max, avg, current, total } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     return seriesList.map((series, i) => (
-      <LegendSeriesItem key={series.id} series={series} index={i} hiddenSeries={hiddenSeries} {...seriesValuesProps} />
+      <LegendSeriesItem
+        key={series.id}
+        series={series}
+        index={i}
+        hiddenSeries={hiddenSeries}
+        {...seriesValuesProps}
+        onLabelClick={e => this.props.onToggleSeries(series, e)}
+      />
     ));
   }
 }
@@ -114,6 +135,7 @@ class LegendSeriesList extends React.PureComponent<GraphLegendProps> {
 interface LegendSeriesProps {
   series: TimeSeries;
   index: number;
+  onLabelClick?: (event) => void;
 }
 
 type LegendSeriesItemProps = LegendSeriesProps & LegendDisplayProps & LegendValuesProps;
@@ -125,7 +147,11 @@ class LegendSeriesItem extends React.PureComponent<LegendSeriesItemProps> {
     const valueItems = this.props.values ? renderLegendValues(this.props, series) : [];
     return (
       <div className={`graph-legend-series ${seriesOptionClasses}`} data-series-index={index}>
-        <LegendSeriesLabel label={series.aliasEscaped} color={series.color} />
+        <LegendSeriesLabel
+          label={series.aliasEscaped}
+          color={series.color}
+          onLabelClick={e => this.props.onLabelClick(e)}
+        />
         {valueItems}
       </div>
     );
@@ -135,16 +161,18 @@ class LegendSeriesItem extends React.PureComponent<LegendSeriesItemProps> {
 interface LegendSeriesLabelProps {
   label: string;
   color: string;
+  onLabelClick?: (event) => void;
+  onIconClick?: (event) => void;
 }
 
 class LegendSeriesLabel extends React.PureComponent<LegendSeriesLabelProps> {
   render() {
     const { label, color } = this.props;
     return [
-      <div className="graph-legend-icon" key="icon">
+      <div className="graph-legend-icon" key="icon" onClick={e => this.props.onIconClick(e)}>
         <i className="fa fa-minus pointer" style={{ color: color }} />
       </div>,
-      <a className="graph-legend-alias pointer" title={label} key="label">
+      <a className="graph-legend-alias pointer" title={label} key="label" onClick={e => this.props.onLabelClick(e)}>
         {label}
       </a>,
     ];
@@ -180,6 +208,24 @@ function renderLegendValues(props: LegendSeriesItemProps, series, asTable = fals
 }
 
 class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
+  onToggleSort(stat) {
+    let sortDesc = this.props.sortDesc;
+    let sortBy = this.props.sort;
+    if (stat !== sortBy) {
+      sortDesc = null;
+    }
+
+    // if already sort ascending, disable sorting
+    if (sortDesc === false) {
+      sortBy = null;
+      sortDesc = null;
+    } else {
+      sortDesc = !sortDesc;
+      sortBy = stat;
+    }
+    this.props.onToggleSort(sortBy, sortDesc);
+  }
+
   render() {
     const seriesList = this.props.seriesList;
     const { values, min, max, avg, current, total, sort, sortDesc } = this.props;
@@ -192,7 +238,13 @@ class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
             {LEGEND_STATS.map(
               statName =>
                 seriesValuesProps[statName] && (
-                  <LegendTableHeader key={statName} statName={statName} sort={sort} sortDesc={sortDesc} />
+                  <LegendTableHeaderItem
+                    key={statName}
+                    statName={statName}
+                    sort={sort}
+                    sortDesc={sortDesc}
+                    onClick={e => this.onToggleSort(statName)}
+                  />
                 )
             )}
           </tr>
@@ -203,6 +255,7 @@ class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
               index={i}
               hiddenSeries={this.props.hiddenSeries}
               {...seriesValuesProps}
+              onLabelClick={e => this.props.onToggleSeries(series, e)}
             />
           ))}
         </tbody>
@@ -213,12 +266,13 @@ class LegendTable extends React.PureComponent<Partial<GraphLegendProps>> {
 
 interface LegendTableHeaderProps {
   statName: string;
+  onClick?: (event) => void;
 }
 
-function LegendTableHeader(props: LegendTableHeaderProps & LegendSortProps) {
+function LegendTableHeaderItem(props: LegendTableHeaderProps & LegendSortProps) {
   const { statName, sort, sortDesc } = props;
   return (
-    <th className="pointer" data-stat={statName}>
+    <th className="pointer" data-stat={statName} onClick={e => props.onClick(e)}>
       {statName}
       {sort === statName && <span className={sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up'} />}
     </th>
@@ -233,7 +287,11 @@ class LegendSeriesItemAsTable extends React.PureComponent<LegendSeriesItemProps>
     return (
       <tr className={`graph-legend-series ${seriesOptionClasses}`} data-series-index={index}>
         <td>
-          <LegendSeriesLabel label={series.aliasEscaped} color={series.color} />
+          <LegendSeriesLabel
+            label={series.aliasEscaped}
+            color={series.color}
+            onLabelClick={e => this.props.onLabelClick(e)}
+          />
         </td>
         {valueItems}
       </tr>
@@ -246,7 +304,7 @@ function getOptionSeriesCSSClasses(series, hiddenSeries) {
   if (series.yaxis === 2) {
     classes.push('graph-legend-series--right-y');
   }
-  if (hiddenSeries[series.alias]) {
+  if (hiddenSeries[series.alias] && hiddenSeries[series.alias] === true) {
     classes.push('graph-legend-series-hidden');
   }
   return classes.join(' ');

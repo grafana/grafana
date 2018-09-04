@@ -287,6 +287,12 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
   }
 
+  toggleSort(sortBy, sortDesc) {
+    this.panel.legend.sort = sortBy;
+    this.panel.legend.sortDesc = sortDesc;
+    this.render();
+  }
+
   toggleAxis(info) {
     var override = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {

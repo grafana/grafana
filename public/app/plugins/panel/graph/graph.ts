@@ -86,16 +86,18 @@ class GraphElement {
     updateLegendValues(this.data, this.panel, graphHeight);
 
     // this.ctrl.events.emit('render-legend');
-    console.log(this.ctrl);
+    // console.log(this.ctrl);
     const { values, min, max, avg, current, total } = this.panel.legend;
-    const { alignAsTable, rightSide, sideWidth, hideEmpty, hideZero } = this.panel.legend;
-    const legendOptions = { alignAsTable, rightSide, sideWidth, hideEmpty, hideZero };
+    const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
+    const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
     const valueOptions = { values, min, max, avg, current, total };
     const legendProps: GraphLegendProps = {
       seriesList: this.data,
       hiddenSeries: this.ctrl.hiddenSeries,
       ...legendOptions,
       ...valueOptions,
+      onToggleSeries: this.ctrl.toggleSeries.bind(this.ctrl),
+      onToggleSort: this.ctrl.toggleSort.bind(this.ctrl),
     };
     const legendReactElem = React.createElement(GraphLegend, legendProps);
     const legendElem = this.elem.parent().find('.graph-legend');
