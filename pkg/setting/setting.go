@@ -197,6 +197,7 @@ type Cfg struct {
 	ImagesDir                        string
 	PhantomDir                       string
 	RendererUrl                      string
+	RendererCallbackUrl              string
 	DisableBruteForceLoginProtection bool
 
 	TempDataLifetime time.Duration
@@ -641,6 +642,18 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// Rendering
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererUrl = renderSec.Key("server_url").String()
+	cfg.RendererCallbackUrl = renderSec.Key("callback_url").String()
+	if cfg.RendererCallbackUrl == "" {
+		cfg.RendererCallbackUrl = AppUrl
+	} else {
+		if cfg.RendererCallbackUrl[len(cfg.RendererCallbackUrl)-1] != '/' {
+			cfg.RendererCallbackUrl += "/"
+		}
+		_, err := url.Parse(cfg.RendererCallbackUrl)
+		if err != nil {
+			log.Fatal(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
+		}
+	}
 	cfg.ImagesDir = filepath.Join(DataPath, "png")
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
