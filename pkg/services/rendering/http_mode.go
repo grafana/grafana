@@ -52,7 +52,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 	reqContext, cancel := context.WithTimeout(ctx, opts.Timeout+time.Second*2)
 	defer cancel()
 
-	req.WithContext(reqContext)
+	req = req.WithContext(reqContext)
 
 	// make request to renderer server
 	resp, err := netClient.Do(req)
