@@ -164,7 +164,6 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		} else {
 			req.URL.Path = util.JoinUrlFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
-
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
@@ -352,7 +351,6 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 	}
 
 	if proxy.route.JwtTokenAuth != nil {
-		logger.Info("getJwtAccessToken", "JwtAccessToken", proxy.route.JwtTokenAuth)
 		if token, err := proxy.getJwtAccessToken(data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
@@ -433,7 +431,7 @@ func (proxy *DataSourceProxy) getJwtAccessToken(data templateData) (string, erro
 	ctx := context.Background()
 	tokenSrc := conf.TokenSource(ctx)
 	token, err := tokenSrc.Token()
-	if err == nil {
+	if err != nil {
 		return "", err
 	}
 	return token.AccessToken, nil
