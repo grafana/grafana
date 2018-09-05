@@ -36,10 +36,15 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
           };
         };
 
-        for (let i = 0, f; (f = files[i]); i++) {
+        let i = 0;
+        let file = files[i];
+
+        while (file) {
           const reader = new FileReader();
           reader.onload = readerOnload();
-          reader.readAsText(f);
+          reader.readAsText(file);
+          i += 1;
+          file = files[i];
         }
       }
 

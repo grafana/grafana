@@ -9,7 +9,8 @@ if ('Element' in window && !Element.prototype.closest) {
       i = matches.length;
       // eslint-disable-next-line
       while (--i >= 0 && matches.item(i) !== el) {}
-    } while (i < 0 && (el = el.parentElement));
+      el = el.parentElement;
+    } while (i < 0 && el);
     return el;
   };
 }

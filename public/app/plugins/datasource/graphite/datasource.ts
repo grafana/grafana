@@ -218,9 +218,10 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     if (matches) {
       const expressions = [];
       const exprRegex = /, *([^,]+)/g;
-      let match;
-      while ((match = exprRegex.exec(matches[2])) !== null) {
+      let match = exprRegex.exec(matches[2]);
+      while (match !== null) {
         expressions.push(match[1]);
+        match = exprRegex.exec(matches[2]);
       }
       options.limit = 10000;
       return this.getTagValuesAutoComplete(expressions, matches[1], undefined, options);
@@ -233,9 +234,10 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
       if (matches[1]) {
         expressions.push(matches[1]);
         const exprRegex = /, *([^,]+)/g;
-        let match;
-        while ((match = exprRegex.exec(matches[2])) !== null) {
+        let match = exprRegex.exec(matches[2]);
+        while (match !== null) {
           expressions.push(match[1]);
+          match = exprRegex.exec(matches[2]);
         }
       }
       options.limit = 10000;
