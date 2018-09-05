@@ -32,7 +32,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
 
     // automatically disable lines for this series and the fill below to series
     // can be removed by the user if they still want lines
-    if (item.propertyName === 'fillBelowTo') {
+    if (item.propertyName === 'singleFillBelowTo' || item.propertyName === 'wildcardFillBelowTo') {
       $scope.override['lines'] = false;
       $scope.ctrl.addSeriesOverride({ alias: subItem.value, lines: false });
     }
@@ -72,6 +72,23 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   };
 
   $scope.getSeriesNames = function() {
+    const extendedHash = _.map($scope.ctrl.groupedList, function(seriesGroup) {
+      return seriesGroup;
+    });
+    const hash = _.map($scope.ctrl.seriesList, function(series) {
+      return series.alias;
+    });
+
+    return _.concat(extendedHash, hash);
+  };
+
+  $scope.getWildcardSeriesNames = function() {
+    return _.map($scope.ctrl.groupedList, function(seriesGroup) {
+      return seriesGroup;
+    });
+  };
+
+  $scope.getSingleSeriesNames = function() {
     return _.map($scope.ctrl.seriesList, function(series) {
       return series.alias;
     });
@@ -97,7 +114,8 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.addOverrideOption('Line fill', 'fill', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   $scope.addOverrideOption('Line width', 'linewidth', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   $scope.addOverrideOption('Null point mode', 'nullPointMode', ['connected', 'null', 'null as zero']);
-  $scope.addOverrideOption('Fill below to', 'fillBelowTo', $scope.getSeriesNames());
+  $scope.addOverrideOption('Fill below to', 'singleFillBelowTo', $scope.getSingleSeriesNames());
+  $scope.addOverrideOption('Wildcard fill below to', 'wildcardFillBelowTo', $scope.getWildcardSeriesNames());
   $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
   $scope.addOverrideOption('Dashes', 'dashes', [true, false]);
   $scope.addOverrideOption('Dash Length', 'dashLength', [

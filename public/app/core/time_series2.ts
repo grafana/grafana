@@ -97,6 +97,8 @@ export default class TimeSeries {
   flotpairs: any;
   unit: any;
 
+  identifier: any;
+
   constructor(opts) {
     this.datapoints = opts.datapoints;
     this.label = opts.alias;
@@ -110,9 +112,10 @@ export default class TimeSeries {
     this.legend = true;
     this.unit = opts.unit;
     this.hasMsResolution = this.isMsResolutionNeeded();
+    this.identifier = '';
   }
 
-  applySeriesOverrides(overrides) {
+  applySeriesOverrides(overrides, wildcard) {
     this.lines = {};
     this.dashes = {
       dashLength: [],
@@ -124,9 +127,34 @@ export default class TimeSeries {
     delete this.stack;
     delete this.bars.show;
 
+    if (wildcard) {
+      const objectRegex = /^(\S+)\s+(\{object.+\})$/;
+      const match = objectRegex.exec(this.alias);
+      if (match) {
+        this.identifier = match[2];
+      }
+    }
+
     for (let i = 0; i < overrides.length; i++) {
       const override = overrides[i];
-      if (!matchSeriesOverride(override.alias, this.alias)) {
+      let matchAlias;
+      let matchFillBelowTo;
+
+      if (wildcard) {
+        const match = objectRegex.exec(override.alias);
+        if (match && match[2] !== void 0) {
+          matchAlias = override.alias;
+          matchFillBelowTo = override.singleFillBelowTo;
+        } else {
+          matchAlias = override.alias + ' ' + this.identifier;
+          matchFillBelowTo = override.wildcardFillBelowTo + ' ' + this.identifier;
+        }
+      } else {
+        matchAlias = override.alias;
+        matchFillBelowTo = override.singleFillBelowTo;
+      }
+
+      if (!matchSeriesOverride(matchAlias, this.alias)) {
         continue;
       }
       if (override.lines !== void 0) {
@@ -170,8 +198,8 @@ export default class TimeSeries {
       if (override.zindex !== void 0) {
         this.zindex = override.zindex;
       }
-      if (override.fillBelowTo !== void 0) {
-        this.fillBelowTo = override.fillBelowTo;
+      if (override.singleFillBelowTo !== void 0 || override.wildcardFillBelowTo !== void 0) {
+        this.fillBelowTo = matchFillBelowTo;
       }
       if (override.color !== void 0) {
         this.setColor(override.color);

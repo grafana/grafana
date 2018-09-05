@@ -16,6 +16,8 @@ class GraphCtrl extends MetricsPanelCtrl {
   renderError: boolean;
   hiddenSeries: any = {};
   seriesList: any = [];
+  groupedList: any = [];
+  groupedSet: any = [];
   dataList: any = [];
   annotations: any = [];
   alertState: any;
@@ -174,12 +176,23 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onDataError(err) {
     this.seriesList = [];
+    this.groupedList = [];
+    this.groupedSet = [];
     this.annotations = [];
     this.render([]);
   }
 
   onDataReceived(dataList) {
     this.dataList = dataList;
+    this.groupedSet = new Set();
+    const groupRegex = /^(\S+)\s+\{object.+\}$/;
+    for (const series of dataList) {
+      const match = groupRegex.exec(series.target);
+      if (match) {
+        this.groupedSet.add(match[1]);
+      }
+    }
+    this.groupedList = Array.from(this.groupedSet);
     this.seriesList = this.processor.getSeriesList({
       dataList: dataList,
       range: this.range,
@@ -226,8 +239,13 @@ class GraphCtrl extends MetricsPanelCtrl {
       return;
     }
 
+    let wildcard = false;
+    if (this.groupedList.length > 0) {
+      wildcard = true;
+    }
+
     for (const series of this.seriesList) {
-      series.applySeriesOverrides(this.panel.seriesOverrides);
+      series.applySeriesOverrides(this.panel.seriesOverrides, wildcard);
 
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
