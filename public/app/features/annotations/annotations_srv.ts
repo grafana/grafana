@@ -25,7 +25,7 @@ export class AnnotationsSrv {
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        var annotations = _.flattenDeep(results[0]);
+        let annotations = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {

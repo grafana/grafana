@@ -7,7 +7,7 @@ const template = `
 </div>
 `;
 
-/** @ngInject **/
+/** @ngInject */
 function dashRepeatOptionDirective(variableSrv) {
   return {
     restrict: 'E',

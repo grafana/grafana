@@ -56,7 +56,7 @@ coreModule.filter('noXml', function() {
 /** @ngInject */
 function interpolateTemplateVars(templateSrv) {
   const filterFunc: any = function(text, scope) {
-    var scopedVars;
+    let scopedVars;
     if (scope.ctrl) {
       scopedVars = (scope.ctrl.panel || scope.ctrl.row).scopedVars;
     } else {

@@ -3,7 +3,7 @@ import { PrometheusDatasource } from '../datasource';
 import PrometheusMetricFindQuery from '../metric_find_query';
 import q from 'q';
 
-describe('PrometheusMetricFindQuery', function() {
+describe('PrometheusMetricFindQuery', () => {
   const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',

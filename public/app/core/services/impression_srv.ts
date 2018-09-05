@@ -7,7 +7,7 @@ export class ImpressionSrv {
 
   addDashboardImpression(dashboardId) {
     const impressionsKey = this.impressionKey(config);
-    var impressions = [];
+    let impressions = [];
     if (store.exists(impressionsKey)) {
       impressions = JSON.parse(store.get(impressionsKey));
       if (!_.isArray(impressions)) {
@@ -28,7 +28,7 @@ export class ImpressionSrv {
   }
 
   getDashboardOpened() {
-    var impressions = store.get(this.impressionKey(config)) || '[]';
+    let impressions = store.get(this.impressionKey(config)) || '[]';
 
     impressions = JSON.parse(impressions);
 

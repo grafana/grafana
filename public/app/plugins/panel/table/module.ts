@@ -171,12 +171,12 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   link(scope, elem, attrs, ctrl: TablePanelCtrl) {
-    var data;
+    let data;
     const panel = ctrl.panel;
-    var pageCount = 0;
+    let pageCount = 0;
 
     function getTableHeight() {
-      var panelHeight = ctrl.height;
+      let panelHeight = ctrl.height;
 
       if (pageCount > 1) {
         panelHeight -= 26;
@@ -211,7 +211,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
       const paginationList = $('<ul></ul>');
 
-      for (var i = startPage; i < endPage; i++) {
+      for (let i = startPage; i < endPage; i++) {
         const activeClass = i === ctrl.pageIndex ? 'active' : '';
         const pageLinkElem = $(
           '<li><a class="table-panel-page-link pointer ' + activeClass + '">' + (i + 1) + '</a></li>'

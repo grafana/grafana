@@ -1,6 +1,6 @@
 import { DataProcessor } from '../data_processor';
 
-describe('Graph DataProcessor', function() {
+describe('Graph DataProcessor', () => {
   const panel: any = {
     xaxis: {},
   };

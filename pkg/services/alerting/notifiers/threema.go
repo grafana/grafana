@@ -106,7 +106,7 @@ func NewThreemaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &ThreemaNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		GatewayID:    gatewayID,
 		RecipientID:  recipientID,
 		APISecret:    apiSecret,

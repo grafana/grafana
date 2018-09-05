@@ -30,7 +30,7 @@ describe('GraphCtrl', () => {
     },
   };
 
-  const ctx = <any>{};
+  const ctx = {} as any;
 
   beforeEach(() => {
     ctx.ctrl = new GraphCtrl(scope, injector, {});

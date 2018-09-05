@@ -4,7 +4,7 @@ import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 
 /** @ngInject */
-export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, templateSrv) {
   this.basicAuth = instanceSettings.basicAuth;
   this.url = instanceSettings.url;
   this.name = instanceSettings.name;
@@ -74,9 +74,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     if (!result || !result.data) {
       return [];
     }
-    for (var i = 0; i < result.data.length; i++) {
+    for (let i = 0; i < result.data.length; i++) {
       const series = result.data[i];
-      for (var y = 0; y < series.datapoints.length; y++) {
+      for (let y = 0; y < series.datapoints.length; y++) {
         series.datapoints[y][1] *= 1000;
       }
     }
@@ -109,10 +109,10 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       return this.query(graphiteQuery).then(function(result) {
         const list = [];
 
-        for (var i = 0; i < result.data.length; i++) {
+        for (let i = 0; i < result.data.length; i++) {
           const target = result.data[i];
 
-          for (var y = 0; y < target.datapoints.length; y++) {
+          for (let y = 0; y < target.datapoints.length; y++) {
             const datapoint = target.datapoints[y];
             if (!datapoint[0]) {
               continue;
@@ -133,10 +133,10 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       const tags = templateSrv.replace(options.annotation.tags);
       return this.events({ range: options.rangeRaw, tags: tags }).then(results => {
         const list = [];
-        for (var i = 0; i < results.data.length; i++) {
+        for (let i = 0; i < results.data.length; i++) {
           const e = results.data[i];
 
-          var tags = e.tags;
+          let tags = e.tags;
           if (_.isString(e.tags)) {
             tags = this.parseTags(e.tags);
           }
@@ -157,7 +157,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
   this.events = function(options) {
     try {
-      var tags = '';
+      let tags = '';
       if (options.tags) {
         tags = '&tags=' + options.tags;
       }
@@ -490,13 +490,13 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   this.buildGraphiteParams = function(options, scopedVars) {
-    const graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
-    const clean_options = [],
+    const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
+    const cleanOptions = [],
       targets = {};
-    var target, targetValue, i;
+    let target, targetValue, i;
     const regex = /\#([A-Z])/g;
     const intervalFormatFixRegex = /'(\d+)m'/gi;
-    var hasTargets = false;
+    let hasTargets = false;
 
     options['format'] = 'json';
 
@@ -535,16 +535,16 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
       if (!target.hide) {
         hasTargets = true;
-        clean_options.push('target=' + encodeURIComponent(targetValue));
+        cleanOptions.push('target=' + encodeURIComponent(targetValue));
       }
     }
 
     _.each(options, function(value, key) {
-      if (_.indexOf(graphite_options, key) === -1) {
+      if (_.indexOf(graphiteOptions, key) === -1) {
         return;
       }
       if (value) {
-        clean_options.push(key + '=' + encodeURIComponent(value));
+        cleanOptions.push(key + '=' + encodeURIComponent(value));
       }
     });
 
@@ -552,7 +552,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       return [];
     }
 
-    return clean_options;
+    return cleanOptions;
   };
 }
 

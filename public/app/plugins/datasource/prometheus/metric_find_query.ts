@@ -12,27 +12,27 @@ export default class PrometheusMetricFindQuery {
   }
 
   process() {
-    const label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)\s*$/;
-    const metric_names_regex = /^metrics\((.+)\)\s*$/;
-    const query_result_regex = /^query_result\((.+)\)\s*$/;
+    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)\s*$/;
+    const metricNamesRegex = /^metrics\((.+)\)\s*$/;
+    const queryResultRegex = /^query_result\((.+)\)\s*$/;
 
-    const label_values_query = this.query.match(label_values_regex);
-    if (label_values_query) {
-      if (label_values_query[1]) {
-        return this.labelValuesQuery(label_values_query[2], label_values_query[1]);
+    const labelValuesQuery = this.query.match(labelValuesRegex);
+    if (labelValuesQuery) {
+      if (labelValuesQuery[1]) {
+        return this.labelValuesQuery(labelValuesQuery[2], labelValuesQuery[1]);
       } else {
-        return this.labelValuesQuery(label_values_query[2], null);
+        return this.labelValuesQuery(labelValuesQuery[2], null);
       }
     }
 
-    const metric_names_query = this.query.match(metric_names_regex);
-    if (metric_names_query) {
-      return this.metricNameQuery(metric_names_query[1]);
+    const metricNamesQuery = this.query.match(metricNamesRegex);
+    if (metricNamesQuery) {
+      return this.metricNameQuery(metricNamesQuery[1]);
     }
 
-    const query_result_query = this.query.match(query_result_regex);
-    if (query_result_query) {
-      return this.queryResultQuery(query_result_query[1]);
+    const queryResultQuery = this.query.match(queryResultRegex);
+    if (queryResultQuery) {
+      return this.queryResultQuery(queryResultQuery[1]);
     }
 
     // if query contains full metric name, return metric name and label list
@@ -40,7 +40,7 @@ export default class PrometheusMetricFindQuery {
   }
 
   labelValuesQuery(label, metric) {
-    var url;
+    let url;
 
     if (!metric) {
       // return label values globally
@@ -96,7 +96,7 @@ export default class PrometheusMetricFindQuery {
     const end = this.datasource.getPrometheusTime(this.range.to, true);
     return this.datasource.performInstantQuery({ expr: query }, end).then(function(result) {
       return _.map(result.data.data.result, function(metricData) {
-        var text = metricData.metric.__name__ || '';
+        let text = metricData.metric.__name__ || '';
         delete metricData.metric.__name__;
         text +=
           '{' +

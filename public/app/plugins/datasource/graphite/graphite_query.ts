@@ -179,7 +179,7 @@ export default class GraphiteQuery {
     delete targetsByRefId[target.refId];
 
     const nestedSeriesRefRegex = /\#([A-Z])/g;
-    var targetWithNestedQueries = target.target;
+    let targetWithNestedQueries = target.target;
 
     // Use ref count to track circular references
     function countTargetRefs(targetsByRefId, refId) {

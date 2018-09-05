@@ -102,7 +102,7 @@ export class EventManager {
       }
     } else {
       // annotations from query
-      for (var i = 0; i < annotations.length; i++) {
+      for (let i = 0; i < annotations.length; i++) {
         const item = annotations[i];
 
         // add properties used by jquery flot events

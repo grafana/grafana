@@ -74,7 +74,7 @@ export class QueryPart {
       return;
     }
 
-    var text = this.def.type + '(';
+    let text = this.def.type + '(';
     text += this.params.join(', ');
     text += ')';
     this.text = text;

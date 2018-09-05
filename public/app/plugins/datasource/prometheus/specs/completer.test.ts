@@ -4,7 +4,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 jest.mock('../datasource');
 jest.mock('app/core/services/backend_srv');
 
-describe('Prometheus editor completer', function() {
+describe('Prometheus editor completer', () => {
   function getSessionStub(data) {
     return {
       getTokenAt: jest.fn(() => data.currentToken),
@@ -15,7 +15,7 @@ describe('Prometheus editor completer', function() {
 
   const editor = {};
 
-  const backendSrv = <BackendSrv>{};
+  const backendSrv = {} as BackendSrv;
   const datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
 
   datasourceStub.performInstantQuery = jest.fn(() =>

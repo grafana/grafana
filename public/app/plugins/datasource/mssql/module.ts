@@ -21,7 +21,7 @@ class MssqlAnnotationsQueryCtrl {
 
   annotation: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor() {
     this.annotation.rawQuery = this.annotation.rawQuery || defaultQuery;
   }
