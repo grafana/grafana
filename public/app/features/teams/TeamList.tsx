@@ -4,8 +4,8 @@ import { hot } from 'react-hot-loader';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 import { NavModel, Team } from '../../types';
-import { loadTeams, deleteTeam } from './state/actions';
-import { getTeams } from './state/selectors';
+import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
+import { getSearchQuery, getTeams } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
 
 export interface Props {
@@ -13,7 +13,8 @@ export interface Props {
   teams: Team[];
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
-  search: string;
+  setSearchQuery: typeof setSearchQuery;
+  searchQuery: string;
 }
 
 export class TeamList extends PureComponent<Props, any> {
@@ -30,10 +31,10 @@ export class TeamList extends PureComponent<Props, any> {
   };
 
   onSearchQueryChange = event => {
-    console.log('set search', event.target.value);
+    this.props.setSearchQuery(event.target.value);
   };
 
-  renderTeamMember(team: Team) {
+  renderTeam(team: Team) {
     const teamUrl = `org/teams/edit/${team.id}`;
 
     return (
@@ -60,7 +61,7 @@ export class TeamList extends PureComponent<Props, any> {
   }
 
   render() {
-    const { navModel, teams, search } = this.props;
+    const { navModel, teams, searchQuery } = this.props;
 
     return (
       <div>
@@ -73,7 +74,7 @@ export class TeamList extends PureComponent<Props, any> {
                   type="text"
                   className="gf-form-input"
                   placeholder="Search teams"
-                  value={search}
+                  value={searchQuery}
                   onChange={this.onSearchQueryChange}
                 />
                 <i className="gf-form-input-icon fa fa-search" />
@@ -98,7 +99,7 @@ export class TeamList extends PureComponent<Props, any> {
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>
-              <tbody>{teams.map(team => this.renderTeamMember(team))}</tbody>
+              <tbody>{teams.map(team => this.renderTeam(team))}</tbody>
             </table>
           </div>
         </div>
@@ -111,13 +112,14 @@ function mapStateToProps(state) {
   return {
     navModel: getNavModel(state.navIndex, 'teams'),
     teams: getTeams(state.teams),
-    search: '',
+    searchQuery: getSearchQuery(state.teams),
   };
 }
 
 const mapDispatchToProps = {
   loadTeams,
   deleteTeam,
+  setSearchQuery,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamList));

@@ -4,6 +4,7 @@ import { StoreState, Team } from '../../../types';
 
 export enum ActionTypes {
   LoadTeams = 'LOAD_TEAMS',
+  SetSearchQuery = 'SET_SEARCH_QUERY',
 }
 
 export interface LoadTeamsAction {
@@ -11,13 +12,23 @@ export interface LoadTeamsAction {
   payload: Team[];
 }
 
-export type Action = LoadTeamsAction;
+export interface SetSearchQueryAction {
+  type: ActionTypes.SetSearchQuery;
+  payload: string;
+}
+
+export type Action = LoadTeamsAction | SetSearchQueryAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
 const teamsLoaded = (teams: Team[]): LoadTeamsAction => ({
   type: ActionTypes.LoadTeams,
   payload: teams,
+});
+
+export const setSearchQuery = (searchQuery: string): SetSearchQueryAction => ({
+  type: ActionTypes.SetSearchQuery,
+  payload: searchQuery,
 });
 
 export function loadTeams(): ThunkResult<void> {

@@ -119,6 +119,7 @@ export interface AlertRulesState {
 
 export interface TeamsState {
   teams: Team[];
+  searchQuery: string;
 }
 
 export interface StoreState {

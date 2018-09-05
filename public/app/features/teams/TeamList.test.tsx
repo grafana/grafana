@@ -2,6 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, TeamList } from './TeamList';
 import { NavModel, Team } from '../../types';
+import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -9,7 +10,8 @@ const setup = (propOverrides?: object) => {
     teams: [] as Team[],
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
-    search: '',
+    setSearchQuery: jest.fn(),
+    searchQuery: '',
   };
 
   Object.assign(props, propOverrides);
@@ -23,17 +25,6 @@ const setup = (propOverrides?: object) => {
   };
 };
 
-const mockTeam: Team = {
-  id: 1,
-  name: 'test',
-  avatarUrl: 'some/url/',
-  email: 'test@test.com',
-  memberCount: 1,
-  search: '',
-  members: [],
-  groups: [],
-};
-
 describe('Render', () => {
   it('should render component', () => {
     const { wrapper } = setup();
@@ -42,7 +33,7 @@ describe('Render', () => {
 
   it('should render teams table', () => {
     const { wrapper } = setup({
-      teams: [mockTeam],
+      teams: getMultipleMockTeams(5),
     });
 
     expect(wrapper).toMatchSnapshot();
@@ -63,9 +54,20 @@ describe('Functions', () => {
   describe('Delete team', () => {
     it('should call delete team', () => {
       const { instance } = setup();
-      instance.deleteTeam(mockTeam);
+      instance.deleteTeam(getMockTeam());
 
       expect(instance.props.deleteTeam).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('on search query change', () => {
+    it('should call setSearchQuery', () => {
+      const { instance } = setup();
+      const mockEvent = { target: { value: 'test' } };
+
+      instance.onSearchQueryChange(mockEvent);
+
+      expect(instance.props.setSearchQuery).toHaveBeenCalledWith('test');
     });
   });
 });

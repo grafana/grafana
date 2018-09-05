@@ -167,7 +167,7 @@ exports[`Render should render teams table 1`] = `
               <a
                 href="org/teams/edit/1"
               >
-                test
+                test-1
               </a>
             </td>
             <td
@@ -176,7 +176,7 @@ exports[`Render should render teams table 1`] = `
               <a
                 href="org/teams/edit/1"
               >
-                test@test.com
+                test-1@test.com
               </a>
             </td>
             <td
@@ -186,6 +186,206 @@ exports[`Render should render teams table 1`] = `
                 href="org/teams/edit/1"
               >
                 1
+              </a>
+            </td>
+            <td
+              className="text-right"
+            >
+              <DeleteButton
+                onConfirmDelete={[Function]}
+              />
+            </td>
+          </tr>
+          <tr
+            key="2"
+          >
+            <td
+              className="width-4 text-center link-td"
+            >
+              <a
+                href="org/teams/edit/2"
+              >
+                <img
+                  className="filter-table__avatar"
+                  src="some/url/"
+                />
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/2"
+              >
+                test-2
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/2"
+              >
+                test-2@test.com
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/2"
+              >
+                2
+              </a>
+            </td>
+            <td
+              className="text-right"
+            >
+              <DeleteButton
+                onConfirmDelete={[Function]}
+              />
+            </td>
+          </tr>
+          <tr
+            key="3"
+          >
+            <td
+              className="width-4 text-center link-td"
+            >
+              <a
+                href="org/teams/edit/3"
+              >
+                <img
+                  className="filter-table__avatar"
+                  src="some/url/"
+                />
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/3"
+              >
+                test-3
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/3"
+              >
+                test-3@test.com
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/3"
+              >
+                3
+              </a>
+            </td>
+            <td
+              className="text-right"
+            >
+              <DeleteButton
+                onConfirmDelete={[Function]}
+              />
+            </td>
+          </tr>
+          <tr
+            key="4"
+          >
+            <td
+              className="width-4 text-center link-td"
+            >
+              <a
+                href="org/teams/edit/4"
+              >
+                <img
+                  className="filter-table__avatar"
+                  src="some/url/"
+                />
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/4"
+              >
+                test-4
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/4"
+              >
+                test-4@test.com
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/4"
+              >
+                4
+              </a>
+            </td>
+            <td
+              className="text-right"
+            >
+              <DeleteButton
+                onConfirmDelete={[Function]}
+              />
+            </td>
+          </tr>
+          <tr
+            key="5"
+          >
+            <td
+              className="width-4 text-center link-td"
+            >
+              <a
+                href="org/teams/edit/5"
+              >
+                <img
+                  className="filter-table__avatar"
+                  src="some/url/"
+                />
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/5"
+              >
+                test-5
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/5"
+              >
+                test-5@test.com
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/5"
+              >
+                5
               </a>
             </td>
             <td
