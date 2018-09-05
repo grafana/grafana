@@ -58,8 +58,8 @@ a time pattern for the index name or a wildcard.
 
 ### Elasticsearch version
 
-Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences how queries are composed. Currently only 2.x and 5.x
-are supported.
+Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences how queries are composed.
+Currently the versions available is 2.x, 5.x and 5.6+ where 5.6+ means a version of 5.6 or higher, 6.3.2 for example.
 
 ### Min time interval
 A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.

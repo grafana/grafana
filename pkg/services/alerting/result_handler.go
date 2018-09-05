@@ -88,6 +88,18 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		}
 	}
 
+	if evalContext.Rule.State == m.AlertStateOK && evalContext.PrevAlertState != m.AlertStateOK {
+		for _, notifierId := range evalContext.Rule.Notifications {
+			cmd := &m.CleanNotificationJournalCommand{
+				AlertId:    evalContext.Rule.Id,
+				NotifierId: notifierId,
+				OrgId:      evalContext.Rule.OrgId,
+			}
+			if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+				handler.log.Error("Failed to clean up old notification records", "notifier", notifierId, "alert", evalContext.Rule.Id, "Error", err)
+			}
+		}
+	}
 	handler.notifier.SendIfNeeded(evalContext)
 
 	return nil

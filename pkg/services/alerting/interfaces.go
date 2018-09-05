@@ -1,6 +1,9 @@
 package alerting
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type EvalHandler interface {
 	Eval(evalContext *EvalContext)
@@ -15,10 +18,14 @@ type Notifier interface {
 	Notify(evalContext *EvalContext) error
 	GetType() string
 	NeedsImage() bool
-	ShouldNotify(evalContext *EvalContext) bool
+
+	// ShouldNotify checks this evaluation should send an alert notification
+	ShouldNotify(ctx context.Context, evalContext *EvalContext) bool
 
 	GetNotifierId() int64
 	GetIsDefault() bool
+	GetSendReminder() bool
+	GetFrequency() time.Duration
 }
 
 type NotifierSlice []Notifier

@@ -38,7 +38,7 @@ coreModule.filter('moment', function() {
 });
 
 coreModule.filter('noXml', function() {
-  var noXml = function(text) {
+  const noXml = function(text) {
     return _.isString(text)
       ? text
           .replace(/&/g, '&amp;')
@@ -55,8 +55,8 @@ coreModule.filter('noXml', function() {
 
 /** @ngInject */
 function interpolateTemplateVars(templateSrv) {
-  var filterFunc: any = function(text, scope) {
-    var scopedVars;
+  const filterFunc: any = function(text, scope) {
+    let scopedVars;
     if (scope.ctrl) {
       scopedVars = (scope.ctrl.panel || scope.ctrl.row).scopedVars;
     } else {

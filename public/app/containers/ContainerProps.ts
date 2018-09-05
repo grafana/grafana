@@ -6,7 +6,7 @@ import { AlertListStore } from './../stores/AlertListStore/AlertListStore';
 import { ViewStore } from './../stores/ViewStore/ViewStore';
 import { FolderStore } from './../stores/FolderStore/FolderStore';
 
-interface IContainerProps {
+interface ContainerProps {
   search: typeof SearchStore.Type;
   serverStats: typeof ServerStatsStore.Type;
   nav: typeof NavStore.Type;
@@ -17,4 +17,4 @@ interface IContainerProps {
   backendSrv: any;
 }
 
-export default IContainerProps;
+export default ContainerProps;

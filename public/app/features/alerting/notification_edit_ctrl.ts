@@ -11,6 +11,8 @@ export class AlertNotificationEditCtrl {
   model: any;
   defaults: any = {
     type: 'email',
+    sendReminder: false,
+    frequency: '15m',
     settings: {
       httpMethod: 'POST',
       autoResolve: true,
@@ -18,11 +20,16 @@ export class AlertNotificationEditCtrl {
     },
     isDefault: false,
   };
+  getFrequencySuggestion: any;
 
   /** @ngInject */
   constructor(private $routeParams, private backendSrv, private $location, private $templateCache, navModelSrv) {
     this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
     this.isNew = !this.$routeParams.id;
+
+    this.getFrequencySuggestion = () => {
+      return ['1m', '5m', '10m', '15m', '30m', '1h'];
+    };
 
     this.backendSrv
       .get(`/api/alert-notifiers`)
@@ -30,7 +37,7 @@ export class AlertNotificationEditCtrl {
         this.notifiers = notifiers;
 
         // add option templates
-        for (let notifier of this.notifiers) {
+        for (const notifier of this.notifiers) {
           this.$templateCache.put(this.getNotifierTemplateId(notifier.type), notifier.optionsTemplate);
         }
 
@@ -99,9 +106,10 @@ export class AlertNotificationEditCtrl {
       return;
     }
 
-    var payload = {
+    const payload = {
       name: this.model.name,
       type: this.model.type,
+      frequency: this.model.frequency,
       settings: this.model.settings,
     };
 

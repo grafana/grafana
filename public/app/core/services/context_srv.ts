@@ -8,6 +8,8 @@ export class User {
   isSignedIn: any;
   orgRole: any;
   orgId: number;
+  orgName: string;
+  orgCount: number;
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
@@ -59,7 +61,7 @@ export class ContextSrv {
   }
 }
 
-var contextSrv = new ContextSrv();
+const contextSrv = new ContextSrv();
 export { contextSrv };
 
 coreModule.factory('contextSrv', function() {

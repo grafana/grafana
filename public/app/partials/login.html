@@ -16,8 +16,11 @@
               placeholder="password">
           </div>
           <div class="login-button-group">
-            <button type="submit" class="btn btn-large p-x-2" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
+            <button type="submit" class="btn btn-large p-x-2" ng-if="!loggingIn" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
               Log In
+            </button>
+            <button type="submit" class="btn btn-large p-x-2 btn-inverse btn-loading" ng-if="loggingIn">
+              Logging In<span>.</span><span>.</span><span>.</span>
             </button>
             <div class="small login-button-forgot-password">
               <a href="user/password/send-reset-email">
@@ -55,12 +58,12 @@
             <i class="btn-service-icon fa fa-gitlab"></i>
             Sign in with GitLab
           </a>
-          <a class="btn btn-medium btn-inverse btn-service btn-service--grafanacom login-btn" href="login/grafana_com" target="_self"
+          <a class="btn btn-medium btn-service btn-service--grafanacom login-btn" href="login/grafana_com" target="_self"
             ng-if="oauth.grafana_com">
             <i class="btn-service-icon"></i>
             Sign in with Grafana.com
           </a>
-          <a class="btn btn-medium btn-inverse btn-service btn-service--oauth login-btn" href="login/generic_oauth" target="_self"
+          <a class="btn btn-medium btn-service btn-service--oauth login-btn" href="login/generic_oauth" target="_self"
             ng-if="oauth.generic_oauth">
             <i class="btn-service-icon fa fa-sign-in"></i>
             Sign in with {{oauth.generic_oauth.name}}

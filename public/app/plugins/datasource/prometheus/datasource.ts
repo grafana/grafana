@@ -39,7 +39,7 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
 
   // Add empty selector to bare metric name
   let previousWord;
-  query = query.replace(/(\w+)\b(?![\({=",])/g, (match, word, offset) => {
+  query = query.replace(/(\w+)\b(?![\(\]{=",])/g, (match, word, offset) => {
     // Check if inside a selector
     const nextSelectorStart = query.slice(offset).indexOf('{');
     const nextSelectorEnd = query.slice(offset).indexOf('}');
@@ -109,11 +109,10 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
     }
 
     // Check for monotony
-    const datapoints: [number, number][] = s.datapoints;
-    const simpleMetric = query.trim().match(/^\w+$/);
-    if (simpleMetric && datapoints.length > 1) {
+    const datapoints: number[][] = s.datapoints;
+    if (datapoints.length > 1) {
       let increasing = false;
-      const monotonic = datapoints.every((dp, index) => {
+      const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {
         if (index === 0) {
           return true;
         }
@@ -122,18 +121,25 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
         return dp[0] >= datapoints[index - 1][0];
       });
       if (increasing && monotonic) {
-        const label = 'Time series is monotonously increasing.';
-        return {
-          label,
-          index,
-          fix: {
+        const simpleMetric = query.trim().match(/^\w+$/);
+        let label = 'Time series is monotonously increasing.';
+        let fix;
+        if (simpleMetric) {
+          fix = {
             label: 'Fix by adding rate().',
             action: {
               type: 'ADD_RATE',
               query,
               index,
             },
-          },
+          };
+        } else {
+          label = `${label} Try applying a rate() function.`;
+        }
+        return {
+          label,
+          index,
+          fix,
         };
       }
     }
@@ -242,11 +248,11 @@ export class PrometheusDatasource {
   }
 
   _request(url, data?, options?: any) {
-    var options: any = {
+    options = _.defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
-      ...options,
-    };
+    });
+
     if (options.method === 'GET') {
       if (!_.isEmpty(data)) {
         options.url =
@@ -294,7 +300,7 @@ export class PrometheusDatasource {
       return prometheusSpecialRegexEscape(value);
     }
 
-    var escapedValues = _.map(value, prometheusSpecialRegexEscape);
+    const escapedValues = _.map(value, prometheusSpecialRegexEscape);
     return escapedValues.join('|');
   }
 
@@ -303,15 +309,15 @@ export class PrometheusDatasource {
   }
 
   query(options) {
-    var start = this.getPrometheusTime(options.range.from, false);
-    var end = this.getPrometheusTime(options.range.to, true);
+    const start = this.getPrometheusTime(options.range.from, false);
+    const end = this.getPrometheusTime(options.range.to, true);
 
-    var queries = [];
-    var activeTargets = [];
+    const queries = [];
+    const activeTargets = [];
 
     options = _.clone(options);
 
-    for (let target of options.targets) {
+    for (const target of options.targets) {
       if (!target.expr || target.hide) {
         continue;
       }
@@ -325,7 +331,7 @@ export class PrometheusDatasource {
       return this.$q.when({ data: [] });
     }
 
-    var allQueryPromise = _.map(queries, query => {
+    const allQueryPromise = _.map(queries, query => {
       if (!query.instant) {
         return this.performTimeSeriesQuery(query, query.start, query.end);
       } else {
@@ -376,17 +382,17 @@ export class PrometheusDatasource {
       hinting: target.hinting,
       instant: target.instant,
     };
-    var range = Math.ceil(end - start);
+    const range = Math.ceil(end - start);
 
-    var interval = kbn.interval_to_seconds(options.interval);
+    let interval = kbn.interval_to_seconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
-    var minInterval = kbn.interval_to_seconds(
+    const minInterval = kbn.interval_to_seconds(
       this.templateSrv.replace(target.interval, options.scopedVars) || options.interval
     );
-    var intervalFactor = target.intervalFactor || 1;
+    const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
-    var adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    var scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
+    const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
+    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
@@ -424,8 +430,8 @@ export class PrometheusDatasource {
       throw { message: 'Invalid time range' };
     }
 
-    var url = '/api/v1/query_range';
-    var data = {
+    const url = '/api/v1/query_range';
+    const data = {
       query: query.expr,
       start: start,
       end: end,
@@ -438,8 +444,8 @@ export class PrometheusDatasource {
   }
 
   performInstantQuery(query, time) {
-    var url = '/api/v1/query';
-    var data = {
+    const url = '/api/v1/query';
+    const data = {
       query: query.expr,
       time: time,
     };
@@ -450,7 +456,7 @@ export class PrometheusDatasource {
   }
 
   performSuggestQuery(query, cache = false) {
-    var url = '/api/v1/label/__name__/values';
+    const url = '/api/v1/label/__name__/values';
 
     if (cache && this.metricsNameCache && this.metricsNameCache.expire > Date.now()) {
       return this.$q.when(
@@ -476,21 +482,21 @@ export class PrometheusDatasource {
       return this.$q.when([]);
     }
 
-    let scopedVars = {
+    const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
       __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
       ...this.getRangeScopedVars(),
     };
-    let interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
-    var metricFindQuery = new PrometheusMetricFindQuery(this, interpolated, this.timeSrv);
+    const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
+    const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated, this.timeSrv);
     return metricFindQuery.process();
   }
 
   getRangeScopedVars() {
-    let range = this.timeSrv.timeRange();
-    let msRange = range.to.diff(range.from);
-    let sRange = Math.round(msRange / 1000);
-    let regularRange = kbn.secondsToHms(msRange / 1000);
+    const range = this.timeSrv.timeRange();
+    const msRange = range.to.diff(range.from);
+    const sRange = Math.round(msRange / 1000);
+    const regularRange = kbn.secondsToHms(msRange / 1000);
     return {
       __range_ms: { text: msRange, value: msRange },
       __range_s: { text: sRange, value: sRange },
@@ -499,19 +505,19 @@ export class PrometheusDatasource {
   }
 
   annotationQuery(options) {
-    var annotation = options.annotation;
-    var expr = annotation.expr || '';
-    var tagKeys = annotation.tagKeys || '';
-    var titleFormat = annotation.titleFormat || '';
-    var textFormat = annotation.textFormat || '';
+    const annotation = options.annotation;
+    const expr = annotation.expr || '';
+    let tagKeys = annotation.tagKeys || '';
+    const titleFormat = annotation.titleFormat || '';
+    const textFormat = annotation.textFormat || '';
 
     if (!expr) {
       return this.$q.when([]);
     }
 
-    var step = annotation.step || '60s';
-    var start = this.getPrometheusTime(options.range.from, false);
-    var end = this.getPrometheusTime(options.range.to, true);
+    const step = annotation.step || '60s';
+    const start = this.getPrometheusTime(options.range.from, false);
+    const end = this.getPrometheusTime(options.range.to, true);
     // Unsetting min interval
     const queryOptions = {
       ...options,
@@ -519,21 +525,21 @@ export class PrometheusDatasource {
     };
     const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
 
-    var self = this;
+    const self = this;
     return this.performTimeSeriesQuery(query, query.start, query.end).then(function(results) {
-      var eventList = [];
+      const eventList = [];
       tagKeys = tagKeys.split(',');
 
       _.each(results.data.data.result, function(series) {
-        var tags = _.chain(series.metric)
+        const tags = _.chain(series.metric)
           .filter(function(v, k) {
             return _.includes(tagKeys, k);
           })
           .value();
 
-        for (let value of series.values) {
+        for (const value of series.values) {
           if (value[1] === '1') {
-            var event = {
+            const event = {
               annotation: annotation,
               time: Math.floor(parseFloat(value[0])) * 1000,
               title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
@@ -551,7 +557,7 @@ export class PrometheusDatasource {
   }
 
   testDatasource() {
-    let now = new Date().getTime();
+    const now = new Date().getTime();
     return this.performInstantQuery({ expr: '1+1' }, now / 1000).then(response => {
       if (response.data.status === 'success') {
         return { status: 'success', message: 'Data source is working' };

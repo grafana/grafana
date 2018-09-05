@@ -35,16 +35,16 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
   };
 
   $scope.buildUrl = function() {
-    var baseUrl = $location.absUrl();
-    var queryStart = baseUrl.indexOf('?');
+    let baseUrl = $location.absUrl();
+    const queryStart = baseUrl.indexOf('?');
 
     if (queryStart !== -1) {
       baseUrl = baseUrl.substring(0, queryStart);
     }
 
-    var params = angular.copy($location.search());
+    const params = angular.copy($location.search());
 
-    var range = timeSrv.timeRange();
+    const range = timeSrv.timeRange();
     params.from = range.from.valueOf();
     params.to = range.to.valueOf();
     params.orgId = config.bootData.user.orgId;
@@ -72,7 +72,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
 
     $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
-    var soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
+    let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
     soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
     delete params.fullscreen;
     delete params.edit;
@@ -91,14 +91,14 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
   // This function will try to return the proper full name of the local timezone
   // Chrome does not handle the timezone offset (but phantomjs does)
   $scope.getLocalTimeZone = function() {
-    let utcOffset = '&tz=UTC' + encodeURIComponent(moment().format('Z'));
+    const utcOffset = '&tz=UTC' + encodeURIComponent(moment().format('Z'));
 
     // Older browser does not the internationalization API
-    if (!(<any>window).Intl) {
+    if (!(window as any).Intl) {
       return utcOffset;
     }
 
-    const dateFormat = (<any>window).Intl.DateTimeFormat();
+    const dateFormat = (window as any).Intl.DateTimeFormat();
     if (!dateFormat.resolvedOptions) {
       return utcOffset;
     }

@@ -18,5 +18,5 @@ jest.mock('app/features/plugins/plugin_loader', () => ({}));
 
 configure({ adapter: new Adapter() });
 
-var global = <any>window;
+const global = window as any;
 global.$ = global.jQuery = $;

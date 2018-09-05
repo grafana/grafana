@@ -5,22 +5,22 @@ import { ElasticDatasource } from '../datasource';
 
 import * as dateMath from 'app/core/utils/datemath';
 
-describe('ElasticDatasource', function() {
-  let backendSrv = {
+describe('ElasticDatasource', function(this: any) {
+  const backendSrv = {
     datasourceRequest: jest.fn(),
   };
 
-  let $rootScope = {
+  const $rootScope = {
     $on: jest.fn(),
     appEvent: jest.fn(),
   };
 
-  let templateSrv = {
+  const templateSrv = {
     replace: jest.fn(text => text),
     getAdhocFilters: jest.fn(() => []),
   };
 
-  let timeSrv = {
+  const timeSrv = {
     time: { from: 'now-1h', to: 'now' },
     timeRange: jest.fn(() => {
       return {
@@ -33,18 +33,18 @@ describe('ElasticDatasource', function() {
     }),
   };
 
-  let ctx = <any>{
+  const ctx = {
     $rootScope,
     backendSrv,
-  };
+  } as any;
 
   function createDatasource(instanceSettings) {
     instanceSettings.jsonData = instanceSettings.jsonData || {};
     ctx.ds = new ElasticDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
   }
 
-  describe('When testing datasource with index pattern', function() {
-    beforeEach(function() {
+  describe('When testing datasource with index pattern', () => {
+    beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
         index: '[asd-]YYYY.MM.DD',
@@ -52,8 +52,8 @@ describe('ElasticDatasource', function() {
       });
     });
 
-    it('should translate index pattern to current day', function() {
-      var requestOptions;
+    it('should translate index pattern to current day', () => {
+      let requestOptions;
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
         return Promise.resolve({ data: {} });
@@ -61,13 +61,13 @@ describe('ElasticDatasource', function() {
 
       ctx.ds.testDatasource();
 
-      var today = moment.utc().format('YYYY.MM.DD');
+      const today = moment.utc().format('YYYY.MM.DD');
       expect(requestOptions.url).toBe('http://es.com/asd-' + today + '/_mapping');
     });
   });
 
-  describe('When issuing metric query with interval pattern', function() {
-    var requestOptions, parts, header;
+  describe('When issuing metric query with interval pattern', () => {
+    let requestOptions, parts, header;
 
     beforeEach(() => {
       createDatasource({
@@ -99,20 +99,20 @@ describe('ElasticDatasource', function() {
       header = angular.fromJson(parts[0]);
     });
 
-    it('should translate index pattern to current day', function() {
+    it('should translate index pattern to current day', () => {
       expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
     });
 
-    it('should json escape lucene query', function() {
-      var body = angular.fromJson(parts[1]);
+    it('should json escape lucene query', () => {
+      const body = angular.fromJson(parts[1]);
       expect(body.query.bool.filter[1].query_string.query).toBe('escape\\:test');
     });
   });
 
-  describe('When issuing document query', function() {
-    var requestOptions, parts, header;
+  describe('When issuing document query', () => {
+    let requestOptions, parts, header;
 
-    beforeEach(function() {
+    beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
         index: 'test',
@@ -142,17 +142,17 @@ describe('ElasticDatasource', function() {
       header = angular.fromJson(parts[0]);
     });
 
-    it('should set search type to query_then_fetch', function() {
+    it('should set search type to query_then_fetch', () => {
       expect(header.search_type).toEqual('query_then_fetch');
     });
 
-    it('should set size', function() {
-      var body = angular.fromJson(parts[1]);
+    it('should set size', () => {
+      const body = angular.fromJson(parts[1]);
       expect(body.size).toBe(500);
     });
   });
 
-  describe('When getting fields', function() {
+  describe('When getting fields', () => {
     beforeEach(() => {
       createDatasource({ url: 'http://es.com', index: 'metricbeat' });
 
@@ -203,14 +203,14 @@ describe('ElasticDatasource', function() {
       });
     });
 
-    it('should return nested fields', function() {
+    it('should return nested fields', () => {
       ctx.ds
         .getFields({
           find: 'fields',
           query: '*',
         })
         .then(fieldObjects => {
-          var fields = _.map(fieldObjects, 'text');
+          const fields = _.map(fieldObjects, 'text');
           expect(fields).toEqual([
             '@timestamp',
             'beat.name.raw',
@@ -224,7 +224,7 @@ describe('ElasticDatasource', function() {
         });
     });
 
-    it('should return fields related to query type', function() {
+    it('should return fields related to query type', () => {
       ctx.ds
         .getFields({
           find: 'fields',
@@ -232,7 +232,7 @@ describe('ElasticDatasource', function() {
           type: 'number',
         })
         .then(fieldObjects => {
-          var fields = _.map(fieldObjects, 'text');
+          const fields = _.map(fieldObjects, 'text');
           expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
         });
 
@@ -243,16 +243,16 @@ describe('ElasticDatasource', function() {
           type: 'date',
         })
         .then(fieldObjects => {
-          var fields = _.map(fieldObjects, 'text');
+          const fields = _.map(fieldObjects, 'text');
           expect(fields).toEqual(['@timestamp']);
         });
     });
   });
 
-  describe('When issuing aggregation query on es5.x', function() {
-    var requestOptions, parts, header;
+  describe('When issuing aggregation query on es5.x', () => {
+    let requestOptions, parts, header;
 
-    beforeEach(function() {
+    beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
         index: 'test',
@@ -282,18 +282,18 @@ describe('ElasticDatasource', function() {
       header = angular.fromJson(parts[0]);
     });
 
-    it('should not set search type to count', function() {
+    it('should not set search type to count', () => {
       expect(header.search_type).not.toEqual('count');
     });
 
-    it('should set size to 0', function() {
-      var body = angular.fromJson(parts[1]);
+    it('should set size to 0', () => {
+      const body = angular.fromJson(parts[1]);
       expect(body.size).toBe(0);
     });
   });
 
-  describe('When issuing metricFind query on es5.x', function() {
-    var requestOptions, parts, header, body, results;
+  describe('When issuing metricFind query on es5.x', () => {
+    let requestOptions, parts, header, body, results;
 
     beforeEach(() => {
       createDatasource({

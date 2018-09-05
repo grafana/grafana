@@ -40,7 +40,7 @@ export class QueryTroubleshooterCtrl {
   mockedResponse: string;
   jsonExplorer: JsonExplorer;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, private $timeout) {
     this.onRequestErrorEventListener = this.onRequestError.bind(this);
     this.onRequestResponseEventListener = this.onRequestResponse.bind(this);
@@ -87,7 +87,7 @@ export class QueryTroubleshooterCtrl {
   }
 
   handleMocking(data) {
-    var mockedData;
+    let mockedData;
     try {
       mockedData = JSON.parse(this.mockedResponse);
     } catch (err) {
@@ -172,7 +172,7 @@ export function queryTroubleshooter() {
     },
     link: function(scope, elem, attrs, ctrl) {
       ctrl.renderJsonExplorer = function(data) {
-        var jsonElem = elem.find('.query-troubleshooter-json');
+        const jsonElem = elem.find('.query-troubleshooter-json');
 
         ctrl.jsonExplorer = new JsonExplorer(data, 3, {
           animateOpen: true,
