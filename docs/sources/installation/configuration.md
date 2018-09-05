@@ -587,7 +587,6 @@ browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 ```bash
 [auth.generic_oauth]
 enabled = true
-email_attribute_name = email:primary
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
 scopes =
@@ -598,7 +597,14 @@ allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
 ```
 
-Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
+Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
+
+Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
+
+1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
+2. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
+3. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
+4. If no e-mail address is found in steps (1-3), then the e-mail address of the user is set to the empty string.
 
 ### Set up oauth2 with Okta
 
@@ -609,7 +615,6 @@ Finally set up the generic oauth module like this:
 [auth.generic_oauth]
 name = Okta
 enabled = true
-email_attribute_name = email:primary
 scopes = openid profile email
 client_id = <okta application Client ID>
 client_secret = <okta application Client Secret>
@@ -624,7 +629,6 @@ api_url = https://<okta domain>/oauth2/v1/userinfo
 [auth.generic_oauth]
 name = BitBucket
 enabled = true
-email_attribute_name = email:primary
 allow_sign_up = true
 client_id = <client id>
 client_secret = <client secret>
@@ -660,7 +664,6 @@ allowed_organizations =
     [auth.generic_oauth]
     name = OneLogin
     enabled = true
-    email_attribute_name = email:primary
     allow_sign_up = true
     client_id = <client id>
     client_secret = <client secret>
@@ -686,7 +689,6 @@ allowed_organizations =
     ```bash
     [auth.generic_oauth]
     enabled = true
-    email_attribute_name = email:primary
     allow_sign_up = true
     team_ids =
     allowed_organizations =
@@ -726,7 +728,6 @@ allowed_organizations =
     [auth.generic_oauth]
     name = Azure AD
     enabled = true
-    email_attribute_name = email:primary
     allow_sign_up = true
     client_id = <application id>
     client_secret = <key value>
