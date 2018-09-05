@@ -14,8 +14,8 @@ export class Analytics {
     });
     const ga = ((window as any).ga =
       (window as any).ga ||
+      //tslint:disable-next-line:only-arrow-functions
       function() {
-        //tslint:disable-line:only-arrow-functions
         (ga.q = ga.q || []).push(arguments);
       });
     ga.l = +new Date();
