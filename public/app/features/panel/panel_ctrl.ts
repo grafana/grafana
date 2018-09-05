@@ -126,7 +126,7 @@ export class PanelCtrl {
     const editorTab = { title, directiveFn };
 
     if (_.isString(directiveFn)) {
-      editorTab.directiveFn = function() {
+      editorTab.directiveFn = () => {
         return { templateUrl: directiveFn };
       };
     }

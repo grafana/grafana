@@ -126,7 +126,7 @@ function addAliasStrategy(selectParts, partModel) {
 
 function addFieldStrategy(selectParts, partModel, query) {
   // copy all parts
-  const parts = _.map(selectParts, function(part: any) {
+  const parts = _.map(selectParts, (part: any) => {
     return createPart({ type: part.def.type, params: _.clone(part.params) });
   });
 
@@ -453,7 +453,7 @@ register({
 
 export default {
   create: createPart,
-  getCategories: function() {
+  getCategories: () => {
     return categories;
   },
   replaceAggregationAdd: replaceAggregationAddStrategy,

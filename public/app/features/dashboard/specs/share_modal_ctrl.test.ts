@@ -136,7 +136,7 @@ describe('ShareModalCtrl', () => {
       ctx.$location.absUrl = () => 'http://server/#!/test';
       ctx.scope.options.includeTemplateVars = true;
 
-      ctx.templateSrv.fillVariableValuesForUrl = function(params) {
+      ctx.templateSrv.fillVariableValuesForUrl = params => {
         params['var-app'] = 'mupp';
         params['var-server'] = 'srv-01';
       };

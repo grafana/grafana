@@ -20,7 +20,6 @@ import './services/search_srv';
 import './services/ng_react';
 
 import { grafanaAppDirective } from './components/grafana_app';
-import { sideMenuDirective } from './components/sidemenu/sidemenu';
 import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
 import { navbarDirective } from './components/navbar/navbar';
@@ -62,7 +61,6 @@ export {
   arrayJoin,
   coreModule,
   grafanaAppDirective,
-  sideMenuDirective,
   navbarDirective,
   searchDirective,
   liveSrv,

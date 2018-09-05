@@ -16,7 +16,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
   this.funcDefs = null;
   this.funcDefsPromise = null;
 
-  this.getQueryOptionsInfo = function() {
+  this.getQueryOptionsInfo = () => {
     return {
       maxDataPoints: true,
       cacheTimeout: true,
@@ -70,7 +70,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     }
   };
 
-  this.convertDataPointsToMs = function(result) {
+  this.convertDataPointsToMs = result => {
     if (!result || !result.data) {
       return [];
     }
@@ -83,7 +83,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     return result;
   };
 
-  this.parseTags = function(tagString) {
+  this.parseTags = tagString => {
     let tags = [];
     tags = tagString.split(',');
     if (tags.length === 1) {
@@ -106,7 +106,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
         maxDataPoints: 100,
       };
 
-      return this.query(graphiteQuery).then(function(result) {
+      return this.query(graphiteQuery).then(result => {
         const list = [];
 
         for (let i = 0; i < result.data.length; i++) {
@@ -175,11 +175,11 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     }
   };
 
-  this.targetContainsTemplate = function(target) {
+  this.targetContainsTemplate = target => {
     return templateSrv.variableExists(target.target);
   };
 
-  this.translateTime = function(date, roundUp) {
+  this.translateTime = (date, roundUp) => {
     if (_.isString(date)) {
       if (date === 'now') {
         return 'now';
@@ -218,9 +218,10 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     if (matches) {
       const expressions = [];
       const exprRegex = /, *([^,]+)/g;
-      let match;
-      while ((match = exprRegex.exec(matches[2])) !== null) {
+      let match = exprRegex.exec(matches[2]);
+      while (match !== null) {
         expressions.push(match[1]);
+        match = exprRegex.exec(matches[2]);
       }
       options.limit = 10000;
       return this.getTagValuesAutoComplete(expressions, matches[1], undefined, options);
@@ -233,9 +234,10 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
       if (matches[1]) {
         expressions.push(matches[1]);
         const exprRegex = /, *([^,]+)/g;
-        let match;
-        while ((match = exprRegex.exec(matches[2])) !== null) {
+        let match = exprRegex.exec(matches[2]);
+        while (match !== null) {
           expressions.push(match[1]);
+          match = exprRegex.exec(matches[2]);
         }
       }
       options.limit = 10000;
@@ -467,7 +469,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
       targets: [{ target: 'constantLine(100)' }],
       maxDataPoints: 300,
     };
-    return this.query(query).then(function() {
+    return this.query(query).then(() => {
       return { status: 'success', message: 'Data source is working' };
     });
   };
@@ -539,7 +541,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
       }
     }
 
-    _.each(options, function(value, key) {
+    _.each(options, (value, key) => {
       if (_.indexOf(graphiteOptions, key) === -1) {
         return;
       }

@@ -12,7 +12,7 @@ class AdminSettingsCtrl {
   constructor($scope, backendSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'admin', 'server-settings', 1);
 
-    backendSrv.get('/api/admin/settings').then(function(settings) {
+    backendSrv.get('/api/admin/settings').then(settings => {
       $scope.settings = settings;
     });
   }

@@ -97,7 +97,7 @@ function link(scope, elem, attrs) {
   textarea.addClass('gf-form-input');
 
   if (scope.codeEditorFocus) {
-    setTimeout(function() {
+    setTimeout(() => {
       textarea.focus();
       const domEl = textarea[0];
       if (domEl.setSelectionRange) {
@@ -119,7 +119,7 @@ function link(scope, elem, attrs) {
   scope.$watch('content', (newValue, oldValue) => {
     const editorValue = codeEditor.getValue();
     if (newValue !== editorValue && newValue !== oldValue) {
-      scope.$$postDigest(function() {
+      scope.$$postDigest(() => {
         setEditorContent(newValue);
       });
     }

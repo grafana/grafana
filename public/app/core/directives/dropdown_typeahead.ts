@@ -20,7 +20,7 @@ export function dropdownTypeahead($compile) {
       dropdownTypeaheadOnSelect: '&dropdownTypeaheadOnSelect',
       model: '=ngModel',
     },
-    link: function($scope, elem, attrs) {
+    link: ($scope, elem, attrs) => {
       const $input = $(inputTemplate);
       const $button = $(buttonTemplate);
       $input.appendTo(elem);
@@ -31,9 +31,9 @@ export function dropdownTypeahead($compile) {
       }
 
       if (attrs.ngModel) {
-        $scope.$watch('model', function(newValue) {
-          _.each($scope.menuItems, function(item) {
-            _.each(item.submenu, function(subItem) {
+        $scope.$watch('model', newValue => {
+          _.each($scope.menuItems, item => {
+            _.each(item.submenu, subItem => {
               if (subItem.value === newValue) {
                 $button.html(subItem.text);
               }
@@ -44,12 +44,12 @@ export function dropdownTypeahead($compile) {
 
       const typeaheadValues = _.reduce(
         $scope.menuItems,
-        function(memo, value, index) {
+        (memo, value, index) => {
           if (!value.submenu) {
             value.click = 'menuItemSelected(' + index + ')';
             memo.push(value.text);
           } else {
-            _.each(value.submenu, function(item, subIndex) {
+            _.each(value.submenu, (item, subIndex) => {
               item.click = 'menuItemSelected(' + index + ',' + subIndex + ')';
               memo.push(value.text + ' ' + item.text);
             });
@@ -59,7 +59,7 @@ export function dropdownTypeahead($compile) {
         []
       );
 
-      $scope.menuItemSelected = function(index, subIndex) {
+      $scope.menuItemSelected = (index, subIndex) => {
         const menuItem = $scope.menuItems[index];
         const payload: any = { $item: menuItem };
         if (menuItem.submenu && subIndex !== void 0) {
@@ -73,10 +73,10 @@ export function dropdownTypeahead($compile) {
         source: typeaheadValues,
         minLength: 1,
         items: 10,
-        updater: function(value) {
+        updater: value => {
           const result: any = {};
-          _.each($scope.menuItems, function(menuItem) {
-            _.each(menuItem.submenu, function(submenuItem) {
+          _.each($scope.menuItems, menuItem => {
+            _.each(menuItem.submenu, submenuItem => {
               if (value === menuItem.text + ' ' + submenuItem.text) {
                 result.$subItem = submenuItem;
                 result.$item = menuItem;
@@ -85,7 +85,7 @@ export function dropdownTypeahead($compile) {
           });
 
           if (result.$item) {
-            $scope.$apply(function() {
+            $scope.$apply(() => {
               $scope.dropdownTypeaheadOnSelect(result);
             });
           }
@@ -95,24 +95,24 @@ export function dropdownTypeahead($compile) {
         },
       });
 
-      $button.click(function() {
+      $button.click(() => {
         $button.hide();
         $input.show();
         $input.focus();
       });
 
-      $input.keyup(function() {
+      $input.keyup(() => {
         elem.toggleClass('open', $input.val() === '');
       });
 
-      $input.blur(function() {
+      $input.blur(() => {
         $input.hide();
         $input.val('');
         $button.show();
         $button.focus();
         // clicking the function dropdown menu won't
         // work if you remove class at once
-        setTimeout(function() {
+        setTimeout(() => {
           elem.removeClass('open');
         }, 200);
       });
@@ -138,7 +138,7 @@ export function dropdownTypeahead2($compile) {
       dropdownTypeaheadOnSelect: '&dropdownTypeaheadOnSelect',
       model: '=ngModel',
     },
-    link: function($scope, elem, attrs) {
+    link: ($scope, elem, attrs) => {
       const $input = $(inputTemplate);
       const $button = $(buttonTemplate);
       $input.appendTo(elem);
@@ -149,9 +149,9 @@ export function dropdownTypeahead2($compile) {
       }
 
       if (attrs.ngModel) {
-        $scope.$watch('model', function(newValue) {
-          _.each($scope.menuItems, function(item) {
-            _.each(item.submenu, function(subItem) {
+        $scope.$watch('model', newValue => {
+          _.each($scope.menuItems, item => {
+            _.each(item.submenu, subItem => {
               if (subItem.value === newValue) {
                 $button.html(subItem.text);
               }
@@ -162,12 +162,12 @@ export function dropdownTypeahead2($compile) {
 
       const typeaheadValues = _.reduce(
         $scope.menuItems,
-        function(memo, value, index) {
+        (memo, value, index) => {
           if (!value.submenu) {
             value.click = 'menuItemSelected(' + index + ')';
             memo.push(value.text);
           } else {
-            _.each(value.submenu, function(item, subIndex) {
+            _.each(value.submenu, (item, subIndex) => {
               item.click = 'menuItemSelected(' + index + ',' + subIndex + ')';
               memo.push(value.text + ' ' + item.text);
             });
@@ -177,7 +177,7 @@ export function dropdownTypeahead2($compile) {
         []
       );
 
-      $scope.menuItemSelected = function(index, subIndex) {
+      $scope.menuItemSelected = (index, subIndex) => {
         const menuItem = $scope.menuItems[index];
         const payload: any = { $item: menuItem };
         if (menuItem.submenu && subIndex !== void 0) {
@@ -191,10 +191,10 @@ export function dropdownTypeahead2($compile) {
         source: typeaheadValues,
         minLength: 1,
         items: 10,
-        updater: function(value) {
+        updater: value => {
           const result: any = {};
-          _.each($scope.menuItems, function(menuItem) {
-            _.each(menuItem.submenu, function(submenuItem) {
+          _.each($scope.menuItems, menuItem => {
+            _.each(menuItem.submenu, submenuItem => {
               if (value === menuItem.text + ' ' + submenuItem.text) {
                 result.$subItem = submenuItem;
                 result.$item = menuItem;
@@ -203,7 +203,7 @@ export function dropdownTypeahead2($compile) {
           });
 
           if (result.$item) {
-            $scope.$apply(function() {
+            $scope.$apply(() => {
               $scope.dropdownTypeaheadOnSelect(result);
             });
           }
@@ -213,24 +213,24 @@ export function dropdownTypeahead2($compile) {
         },
       });
 
-      $button.click(function() {
+      $button.click(() => {
         $button.hide();
         $input.show();
         $input.focus();
       });
 
-      $input.keyup(function() {
+      $input.keyup(() => {
         elem.toggleClass('open', $input.val() === '');
       });
 
-      $input.blur(function() {
+      $input.blur(() => {
         $input.hide();
         $input.val('');
         $button.show();
         $button.focus();
         // clicking the function dropdown menu won't
         // work if you remove class at once
-        setTimeout(function() {
+        setTimeout(() => {
           elem.removeClass('open');
         }, 200);
       });

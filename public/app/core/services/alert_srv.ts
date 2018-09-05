@@ -70,7 +70,7 @@ export class AlertSrv {
     const newAlertJson = angular.toJson(newAlert);
 
     // remove same alert if it already exists
-    _.remove(this.list, function(value) {
+    _.remove(this.list, value => {
       return angular.toJson(value) === newAlertJson;
     });
 

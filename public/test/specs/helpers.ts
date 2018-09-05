@@ -15,10 +15,10 @@ export function ControllerTestContext(this: any) {
   this.timeSrv = new TimeSrvStub();
   this.templateSrv = new TemplateSrvStub();
   this.datasourceSrv = {
-    getMetricSources: function() {},
-    get: function() {
+    getMetricSources: () => {},
+    get: () => {
       return {
-        then: function(callback) {
+        then: callback => {
           callback(self.datasource);
         },
       };
@@ -26,8 +26,8 @@ export function ControllerTestContext(this: any) {
   };
   this.isUtc = false;
 
-  this.providePhase = function(mocks) {
-    return angularMocks.module(function($provide) {
+  this.providePhase = mocks => {
+    return angularMocks.module($provide => {
       $provide.value('contextSrv', self.contextSrv);
       $provide.value('datasourceSrv', self.datasourceSrv);
       $provide.value('annotationsSrv', self.annotationsSrv);
@@ -35,14 +35,14 @@ export function ControllerTestContext(this: any) {
       $provide.value('templateSrv', self.templateSrv);
       $provide.value('$element', self.$element);
       $provide.value('$sanitize', self.$sanitize);
-      _.each(mocks, function(value, key) {
+      _.each(mocks, (value, key) => {
         $provide.value(key, value);
       });
     });
   };
 
-  this.createPanelController = function(Ctrl) {
-    return angularMocks.inject(function($controller, $rootScope, $q, $location, $browser) {
+  this.createPanelController = Ctrl => {
+    return angularMocks.inject(($controller, $rootScope, $q, $location, $browser) => {
       self.scope = $rootScope.$new();
       self.$location = $location;
       self.$browser = $browser;
@@ -50,7 +50,7 @@ export function ControllerTestContext(this: any) {
       self.panel = new PanelModel({ type: 'test' });
       self.dashboard = { meta: {} };
       self.isUtc = false;
-      self.dashboard.isTimezoneUtc = function() {
+      self.dashboard.isTimezoneUtc = () => {
         return self.isUtc;
       };
 
@@ -74,8 +74,8 @@ export function ControllerTestContext(this: any) {
     });
   };
 
-  this.createControllerPhase = function(controllerName) {
-    return angularMocks.inject(function($controller, $rootScope, $q, $location, $browser) {
+  this.createControllerPhase = controllerName => {
+    return angularMocks.inject(($controller, $rootScope, $q, $location, $browser) => {
       self.scope = $rootScope.$new();
       self.$location = $location;
       self.$browser = $browser;
@@ -101,7 +101,7 @@ export function ControllerTestContext(this: any) {
     });
   };
 
-  this.setIsUtc = function(isUtc = false) {
+  this.setIsUtc = (isUtc = false) => {
     self.isUtc = isUtc;
   };
 }
@@ -114,23 +114,23 @@ export function ServiceTestContext(this: any) {
   self.backendSrv = {};
   self.$routeParams = {};
 
-  this.providePhase = function(mocks) {
-    return angularMocks.module(function($provide) {
-      _.each(mocks, function(key) {
+  this.providePhase = mocks => {
+    return angularMocks.module($provide => {
+      _.each(mocks, key => {
         $provide.value(key, self[key]);
       });
     });
   };
 
-  this.createService = function(name) {
-    return angularMocks.inject(function($q, $rootScope, $httpBackend, $injector, $location, $timeout) {
+  this.createService = name => {
+    return angularMocks.inject(($q, $rootScope, $httpBackend, $injector, $location, $timeout) => {
       self.$q = $q;
       self.$rootScope = $rootScope;
       self.$httpBackend = $httpBackend;
       self.$location = $location;
 
-      self.$rootScope.onAppEvent = function() {};
-      self.$rootScope.appEvent = function() {};
+      self.$rootScope.onAppEvent = () => {};
+      self.$rootScope.appEvent = () => {};
       self.$timeout = $timeout;
 
       self.service = $injector.get(name);
@@ -139,7 +139,7 @@ export function ServiceTestContext(this: any) {
 }
 
 export function DashboardViewStateStub(this: any) {
-  this.registerPanel = function() {};
+  this.registerPanel = () => {};
 }
 
 export function TimeSrvStub(this: any) {
@@ -155,7 +155,7 @@ export function TimeSrvStub(this: any) {
     };
   };
 
-  this.replace = function(target) {
+  this.replace = target => {
     return target;
   };
 
@@ -165,7 +165,7 @@ export function TimeSrvStub(this: any) {
 }
 
 export function ContextSrvStub(this: any) {
-  this.hasRole = function() {
+  this.hasRole = () => {
     return true;
   };
 }
@@ -177,17 +177,17 @@ export function TemplateSrvStub(this: any) {
   this.replace = function(text) {
     return _.template(text, this.templateSettings)(this.data);
   };
-  this.init = function() {};
-  this.getAdhocFilters = function() {
+  this.init = () => {};
+  this.getAdhocFilters = () => {
     return [];
   };
-  this.fillVariableValuesForUrl = function() {};
-  this.updateTemplateData = function() {};
-  this.variableExists = function() {
+  this.fillVariableValuesForUrl = () => {};
+  this.updateTemplateData = () => {};
+  this.variableExists = () => {
     return false;
   };
-  this.variableInitialized = function() {};
-  this.highlightVariablesAsHtml = function(str) {
+  this.variableInitialized = () => {};
+  this.highlightVariablesAsHtml = str => {
     return str;
   };
   this.setGrafanaVariable = function(name, value) {

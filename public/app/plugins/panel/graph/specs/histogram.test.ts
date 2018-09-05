@@ -1,6 +1,6 @@
 import { convertValuesToHistogram, getSeriesValues } from '../histogram';
 
-describe('Graph Histogam Converter', function() {
+describe('Graph Histogam Converter', () => {
   describe('Values to histogram converter', () => {
     let values;
     let bucketSize = 10;

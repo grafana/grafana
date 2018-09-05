@@ -437,7 +437,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
 
-      await ctx.ds.query(query).then(function(data) {
+      await ctx.ds.query(query).then(data => {
         results = data;
       });
     });
@@ -487,7 +487,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
 
-      await ctx.ds.query(query).then(function(data) {
+      await ctx.ds.query(query).then(data => {
         results = data;
       });
     });
@@ -548,7 +548,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
 
-      await ctx.ds.query(query).then(function(data) {
+      await ctx.ds.query(query).then(data => {
         results = data;
       });
     });
@@ -603,7 +603,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
 
-      await ctx.ds.annotationQuery(options).then(function(data) {
+      await ctx.ds.annotationQuery(options).then(data => {
         results = data;
       });
     });
@@ -642,7 +642,7 @@ describe('PrometheusDatasource', () => {
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
-      await ctx.ds.query(query).then(function(data) {
+      await ctx.ds.query(query).then(data => {
         results = data;
       });
     });
@@ -1156,7 +1156,7 @@ describe('PrometheusDatasource for POST', () => {
       };
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
-      await ctx.ds.query(query).then(function(data) {
+      await ctx.ds.query(query).then(data => {
         results = data;
       });
     });

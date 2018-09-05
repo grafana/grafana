@@ -61,7 +61,7 @@ const rangeOptions = [
 const absoluteFormat = 'MMM D, YYYY HH:mm:ss';
 
 const rangeIndex = {};
-_.each(rangeOptions, function(frame) {
+_.each(rangeOptions, frame => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 

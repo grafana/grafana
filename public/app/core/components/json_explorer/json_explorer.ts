@@ -14,10 +14,10 @@ const MAX_ANIMATED_TOGGLE_ITEMS = 10;
 
 const requestAnimationFrame =
   window.requestAnimationFrame ||
-  function(cb: () => void) {
+  ((cb: () => void) => {
     cb();
     return 0;
-  };
+  });
 
 export interface JsonExplorerConfig {
   animateOpen?: boolean;
