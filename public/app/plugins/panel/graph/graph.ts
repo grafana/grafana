@@ -464,7 +464,7 @@ class GraphElement {
   }
 
   addXSeriesAxis(options) {
-    const ticks = _.map(this.data, function(series, index) {
+    const ticks = _.map(this.data, (series, index) => {
       return [index + 1, series.alias];
     });
 
@@ -533,8 +533,8 @@ class GraphElement {
   }
 
   addXTableAxis(options) {
-    let ticks = _.map(this.data, function(series, seriesIndex) {
-      return _.map(series.datapoints, function(point, pointIndex) {
+    let ticks = _.map(this.data, (series, seriesIndex) => {
+      return _.map(series.datapoints, (point, pointIndex) => {
         const tickIndex = seriesIndex * series.datapoints.length + pointIndex;
         return [tickIndex + 1, point[1]];
       });
@@ -627,10 +627,10 @@ class GraphElement {
       }
     }
 
-    axis.transform = function(v) {
+    axis.transform = v => {
       return v < Number.MIN_VALUE ? null : Math.log(v) / Math.log(axis.logBase);
     };
-    axis.inverseTransform = function(v) {
+    axis.inverseTransform = v => {
       return Math.pow(axis.logBase, v);
     };
 
@@ -701,7 +701,7 @@ class GraphElement {
   }
 
   configureAxisMode(axis, format) {
-    axis.tickFormatter = function(val, axis) {
+    axis.tickFormatter = (val, axis) => {
       if (!kbn.valueFormats[format]) {
         throw new Error(`Unit '${format}' is not supported`);
       }

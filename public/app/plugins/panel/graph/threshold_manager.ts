@@ -61,7 +61,7 @@ export class ThresholdManager {
       handleElem.off('mouseleave', dragging);
 
       // trigger digest and render
-      panelCtrl.$scope.$apply(function() {
+      panelCtrl.$scope.$apply(() => {
         panelCtrl.render();
         panelCtrl.events.emit('threshold-changed', {
           threshold: model,
