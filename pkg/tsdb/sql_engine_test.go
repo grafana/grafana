@@ -14,6 +14,28 @@ func TestSqlEngine(t *testing.T) {
 		dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 		earlyDt := time.Date(1970, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 
+		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
+			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
+			to := from.Add(5 * time.Minute)
+			timeRange := NewFakeTimeRange("5m", "now", to)
+			query := &Query{}
+
+			Convey("interpolate $__interval", func() {
+				sql, err := Interpolate(query, timeRange, "select $__interval ")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "select 300s ")
+			})
+
+			Convey("interpolate $__interval_ms", func() {
+				sql, err := Interpolate(query, timeRange, "select $__interval_ms ")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "select 300000 ")
+			})
+
+		})
+
 		Convey("Given row values with time.Time as time columns", func() {
 			var nilPointer *time.Time
 

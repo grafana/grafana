@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -126,7 +127,15 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 		queryResult := &QueryResult{Meta: simplejson.New(), RefId: query.RefId}
 		result.Results[query.RefId] = queryResult
 
+		// datasource specific substitutions
 		rawSQL, err := e.macroEngine.Interpolate(query, tsdbQuery.TimeRange, rawSQL)
+		if err != nil {
+			queryResult.Error = err
+			continue
+		}
+
+		// global substitutions
+		rawSQL, err = Interpolate(query, tsdbQuery.TimeRange, rawSQL)
 		if err != nil {
 			queryResult.Error = err
 			continue
@@ -161,6 +170,31 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	return result, nil
+}
+
+// global macros/substitutions for all sql datasources
+func Interpolate(query *Query, timeRange *TimeRange, sql string) (string, error) {
+	rExp, _ := regexp.Compile(`\$__(interval|interval_ms)\b`)
+	var macroError error
+
+	sql = ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+		switch groups[1] {
+		case "interval":
+			diff := timeRange.GetToAsSecondsEpoch() - timeRange.GetFromAsSecondsEpoch()
+			return fmt.Sprintf("%ds", diff)
+		case "interval_ms":
+			diff := timeRange.GetToAsSecondsEpoch() - timeRange.GetFromAsSecondsEpoch()
+			return fmt.Sprintf("%d", diff*1000)
+		default:
+			return groups[0]
+		}
+	})
+
+	if macroError != nil {
+		return "", macroError
+	}
+
+	return sql, nil
 }
 
 func (e *sqlQueryEndpoint) transformToTable(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error {
@@ -588,4 +622,21 @@ func SetupFillmode(query *Query, interval time.Duration, fillmode string) error 
 	}
 
 	return nil
+}
+
+func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
+	result := ""
+	lastIndex := 0
+
+	for _, v := range re.FindAllSubmatchIndex([]byte(str), -1) {
+		groups := []string{}
+		for i := 0; i < len(v); i += 2 {
+			groups = append(groups, str[v[i]:v[i+1]])
+		}
+
+		result += str[lastIndex:v[0]] + repl(groups)
+		lastIndex = v[1]
+	}
+
+	return result + str[lastIndex:]
 }
