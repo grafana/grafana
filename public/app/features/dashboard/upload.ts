@@ -1,4 +1,5 @@
 import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
 
 const template = `
 <input type="file" id="dashupload" name="dashupload" class="hide" onchange="angular.element(this).scope().file_selected"/>
@@ -26,7 +27,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
               dash = JSON.parse(e.target.result);
             } catch (err) {
               console.log(err);
-              scope.appEvent('alert-error', ['Import failed', 'JSON -> JS Serialization failed: ' + err.message]);
+              appEvents.emit('alert-error', ['Import failed', 'JSON -> JS Serialization failed: ' + err.message]);
               return;
             }
 

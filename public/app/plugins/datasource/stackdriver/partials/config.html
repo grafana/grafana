@@ -1,6 +1,26 @@
-<datasource-http-settings
-	current="ctrl.current"
-	suggest-url="http://localhost:8080">
-</datasource-http-settings>
-
-<h3 class="page-heading">Hello Stackdriver</h3>
+<h3>Stackdriver Authentication</h3>
+<div class="gf-form-group" ng-if="!ctrl.inputDataValid">
+	<div class="gf-form">
+		<form>
+			<dash-upload on-upload="ctrl.onUpload(dash)"></dash-upload>
+		</form>
+	</div>
+</div>
+<div class="gf-form-group">
+	<h5 class="section-heading" ng-if="!ctrl.inputDataValid">Or paste JSON</h5>
+	<div class="gf-form" ng-if="!ctrl.inputDataValid">
+		<textarea rows="10" data-share-panel-url="" class="gf-form-input" ng-model="ctrl.jsonText" ng-paste="ctrl.onPasteJwt($event)"></textarea>
+	</div>
+	<div ng-repeat="valError in ctrl.validationErrors" class="text-error p-l-1">
+		<i class="fa fa-warning"></i>
+		{{valError}}
+	</div>
+	<div ng-if="ctrl.inputDataValid">
+		<div class="text-success p-l-1">
+			<i class="fa fa-info"></i>
+			Successfully validated input format
+		</div>
+		<br />
+		<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.resetValidationMessages()">Reset form</a>
+	</div>
+</div>
