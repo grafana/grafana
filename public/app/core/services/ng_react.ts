@@ -52,8 +52,8 @@ function applied(fn, scope) {
   if (fn.wrappedInApply) {
     return fn;
   }
+  //tslint:disable-next-line:only-arrow-functions
   const wrapped: any = function() {
-    //tslint:disable-line:only-arrow-functions
     const args = arguments;
     const phase = scope.$root.$$phase;
     if (phase === '$apply' || phase === '$digest') {

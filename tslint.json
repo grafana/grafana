@@ -49,6 +49,7 @@
     "no-var-keyword": true,
     "object-literal-sort-keys": false,
     "one-line": [true, "check-open-brace", "check-catch", "check-else"],
+    "only-arrow-functions": [true, "allow-declarations", "allow-named-functions"],
     "prefer-const": true,
     "radix": false,
     "typedef-whitespace": [
