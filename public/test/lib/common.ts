@@ -1,4 +1,4 @@
-const _global = <any>window;
+const _global = window as any;
 const beforeEach = _global.beforeEach;
 const afterEach = _global.afterEach;
 const before = _global.before;

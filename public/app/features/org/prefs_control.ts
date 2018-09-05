@@ -14,7 +14,7 @@ export class PrefsControlCtrl {
   ];
   themes: any = [{ value: '', text: 'Default' }, { value: 'dark', text: 'Dark' }, { value: 'light', text: 'Light' }];
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private backendSrv, private $location) {}
 
   $onInit() {

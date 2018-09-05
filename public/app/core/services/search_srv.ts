@@ -31,7 +31,7 @@ export class SearchSrv {
   }
 
   private queryForRecentDashboards() {
-    var dashIds = _.take(impressionSrv.getDashboardOpened(), 5);
+    const dashIds = _.take(impressionSrv.getDashboardOpened(), 5);
     if (dashIds.length === 0) {
       return Promise.resolve([]);
     }

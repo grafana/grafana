@@ -4,7 +4,7 @@ import { variableTypes } from './variable';
 import appEvents from 'app/core/app_events';
 
 export class VariableEditorCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, datasourceSrv, variableSrv, templateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};

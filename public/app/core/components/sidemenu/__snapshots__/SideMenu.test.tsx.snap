@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+Array [
+  <div
+    className="sidemenu__logo"
+    key="logo"
+    onClick={[Function]}
+  />,
+  <div
+    className="sidemenu__logo_small_breakpoint"
+    key="hamburger"
+    onClick={[Function]}
+  />,
+  <TopSection
+    key="topsection"
+  />,
+  <BottomSection
+    key="bottomsection"
+  />,
+]
+`;

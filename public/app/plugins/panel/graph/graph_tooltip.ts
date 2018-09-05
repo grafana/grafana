@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 
-export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
+export default function GraphTooltip(this: any, elem, dashboard, scope, getSeriesFn) {
   const self = this;
   const ctrl = scope.ctrl;
   const panel = ctrl.panel;
@@ -62,7 +62,7 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
     let results: any = [[], [], []];
 
     //now we know the current X (j) position for X and Y values
-    let last_value = 0; //needed for stacked values
+    let lastValue = 0; //needed for stacked values
 
     let minDistance, minTime;
 
@@ -106,8 +106,8 @@ export default function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
         } else if (!series.stack) {
           value = series.data[hoverIndex][1];
         } else {
-          last_value += series.data[hoverIndex][1];
-          value = last_value;
+          lastValue += series.data[hoverIndex][1];
+          value = lastValue;
         }
       } else {
         value = series.data[hoverIndex][1];

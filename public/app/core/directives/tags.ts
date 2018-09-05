@@ -47,7 +47,7 @@ function bootstrapTagsinput() {
         scope.model = [];
       }
 
-      var select = $('select', element);
+      const select = $('select', element);
 
       if (attrs.placeholder) {
         select.attr('placeholder', attrs.placeholder);
@@ -69,24 +69,24 @@ function bootstrapTagsinput() {
             },
       });
 
-      select.on('itemAdded', function(event) {
+      select.on('itemAdded', event => {
         if (scope.model.indexOf(event.item) === -1) {
           scope.model.push(event.item);
           if (scope.onTagsUpdated) {
             scope.onTagsUpdated();
           }
         }
-        var tagElement = select
+        const tagElement = select
           .next()
           .children('span')
-          .filter(function() {
+          .filter(() => {
             return $(this).text() === event.item;
           });
         setColor(event.item, tagElement);
       });
 
       select.on('itemRemoved', function(event) {
-        var idx = scope.model.indexOf(event.item);
+        const idx = scope.model.indexOf(event.item);
         if (idx !== -1) {
           scope.model.splice(idx, 1);
           if (scope.onTagsUpdated) {
@@ -104,7 +104,7 @@ function bootstrapTagsinput() {
 
           select.tagsinput('removeAll');
 
-          for (var i = 0; i < scope.model.length; i++) {
+          for (let i = 0; i < scope.model.length; i++) {
             select.tagsinput('add', scope.model[i]);
           }
         },

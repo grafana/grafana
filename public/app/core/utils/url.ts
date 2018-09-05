@@ -20,7 +20,7 @@ export function toUrlParams(a) {
   };
 
   const buildParams = function(prefix, obj) {
-    var i, len, key;
+    let i, len, key;
 
     if (prefix) {
       if (isArray(obj)) {

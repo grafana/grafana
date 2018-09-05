@@ -3,7 +3,7 @@ import { uiSegmentSrv } from 'app/core/services/segment_srv';
 import { InfluxQueryCtrl } from '../query_ctrl';
 
 describe('InfluxDBQueryCtrl', () => {
-  const ctx = <any>{};
+  const ctx = {} as any;
 
   beforeEach(() => {
     InfluxQueryCtrl.prototype.datasource = {

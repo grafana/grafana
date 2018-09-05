@@ -6,6 +6,7 @@ import { NavStore } from 'app/stores/NavStore/NavStore';
 import { TeamsStore, Team } from 'app/stores/TeamsStore/TeamsStore';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 interface Props {
   nav: typeof NavStore.Type;
@@ -61,48 +62,81 @@ export class TeamList extends React.Component<Props, any> {
     );
   }
 
+  renderTeamList(teams) {
+    return (
+      <div className="page-container page-body">
+        <div className="page-action-bar">
+          <div className="gf-form gf-form--grow">
+            <label className="gf-form--has-input-icon gf-form--grow">
+              <input
+                type="text"
+                className="gf-form-input"
+                placeholder="Search teams"
+                value={teams.search}
+                onChange={this.onSearchQueryChange}
+              />
+              <i className="gf-form-input-icon fa fa-search" />
+            </label>
+          </div>
+
+          <div className="page-action-bar__spacer" />
+
+          <a className="btn btn-success" href="org/teams/new">
+            <i className="fa fa-plus" /> New team
+          </a>
+        </div>
+
+        <div className="admin-list-table">
+          <table className="filter-table filter-table--hover form-inline">
+            <thead>
+              <tr>
+                <th />
+                <th>Name</th>
+                <th>Email</th>
+                <th>Members</th>
+                <th style={{ width: '1%' }} />
+              </tr>
+            </thead>
+            <tbody>{teams.filteredTeams.map(team => this.renderTeamMember(team))}</tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  renderEmptyList() {
+    return (
+      <div className="page-container page-body">
+        <EmptyListCTA
+          model={{
+            title: "You haven't created any teams yet.",
+            buttonIcon: 'fa fa-plus',
+            buttonLink: 'org/teams/new',
+            buttonTitle: ' New team',
+            proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
+            proTipLink: '',
+            proTipLinkTitle: '',
+            proTipTarget: '_blank',
+          }}
+        />
+      </div>
+    );
+  }
+
   render() {
     const { nav, teams } = this.props;
+    let view;
+
+    if (teams.filteredTeams.length > 0) {
+      view = this.renderTeamList(teams);
+    } else {
+      view = this.renderEmptyList();
+    }
+
     return (
       <div>
         <PageHeader model={nav as any} />
-        <div className="page-container page-body">
-          <div className="page-action-bar">
-            <div className="gf-form gf-form--grow">
-              <label className="gf-form--has-input-icon gf-form--grow">
-                <input
-                  type="text"
-                  className="gf-form-input"
-                  placeholder="Search teams"
-                  value={teams.search}
-                  onChange={this.onSearchQueryChange}
-                />
-                <i className="gf-form-input-icon fa fa-search" />
-              </label>
-            </div>
-
-            <div className="page-action-bar__spacer" />
-
-            <a className="btn btn-success" href="org/teams/new">
-              <i className="fa fa-plus" /> New team
-            </a>
-          </div>
-
-          <div className="admin-list-table">
-            <table className="filter-table filter-table--hover form-inline">
-              <thead>
-                <tr>
-                  <th />
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Members</th>
-                  <th style={{ width: '1%' }} />
-                </tr>
-              </thead>
-              <tbody>{teams.filteredTeams.map(team => this.renderTeamMember(team))}</tbody>
-            </table>
-          </div>
-        </div>
+        {view}
       </div>
     );
   }

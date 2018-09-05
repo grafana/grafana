@@ -19,7 +19,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   supportsTags: boolean;
   paused: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private uiSegmentSrv, private templateSrv, $timeout) {
     super($scope, $injector);
     this.supportsTags = this.datasource.supportsTags;
@@ -72,7 +72,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       return;
     }
 
-    var path = this.queryModel.getSegmentPathUpTo(fromIndex + 1);
+    const path = this.queryModel.getSegmentPathUpTo(fromIndex + 1);
     if (path === '') {
       return Promise.resolve();
     }
@@ -106,11 +106,11 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   getAltSegments(index, prefix) {
-    var query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
+    let query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
     if (index > 0) {
       query = this.queryModel.getSegmentPathUpTo(index) + '.' + query;
     }
-    var options = {
+    const options = {
       range: this.panelCtrl.range,
       requestId: 'get-alt-segments',
     };
@@ -118,7 +118,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return this.datasource
       .metricFindQuery(query, options)
       .then(segments => {
-        var altSegments = _.map(segments, segment => {
+        const altSegments = _.map(segments, segment => {
           return this.uiSegmentSrv.newSegment({
             value: segment.text,
             expandable: segment.expandable,
@@ -238,7 +238,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       return;
     }
 
-    var oldTarget = this.queryModel.target.target;
+    const oldTarget = this.queryModel.target.target;
     this.updateModelTarget();
 
     if (this.queryModel.target !== oldTarget && !this.paused) {
@@ -247,7 +247,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   addFunction(funcDef) {
-    var newFunc = this.datasource.createFuncInstance(funcDef, {
+    const newFunc = this.datasource.createFuncInstance(funcDef, {
       withDefaultParams: true,
     });
     newFunc.added = true;
@@ -291,7 +291,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       return;
     }
 
-    for (var i = 0; i < this.segments.length; i++) {
+    for (let i = 0; i < this.segments.length; i++) {
       if (this.segments[i].value.indexOf('*') >= 0) {
         func.params[0] = i;
         func.added = false;

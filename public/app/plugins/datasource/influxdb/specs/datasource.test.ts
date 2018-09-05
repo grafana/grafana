@@ -10,7 +10,7 @@ describe('InfluxDataSource', () => {
     instanceSettings: { url: 'url', name: 'influxDb', jsonData: {} },
   };
 
-  beforeEach(function() {
+  beforeEach(() => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
     ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
   });
@@ -26,7 +26,7 @@ describe('InfluxDataSource', () => {
     let requestQuery;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = function(req) {
+      ctx.backendSrv.datasourceRequest = req => {
         requestQuery = req.params.q;
         return ctx.$q.when({
           results: [
@@ -43,7 +43,7 @@ describe('InfluxDataSource', () => {
         });
       };
 
-      await ctx.ds.metricFindQuery(query, queryOptions).then(function(_) {});
+      await ctx.ds.metricFindQuery(query, queryOptions).then(_ => {});
     });
 
     it('should replace $timefilter', () => {

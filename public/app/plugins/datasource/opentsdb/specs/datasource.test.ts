@@ -2,13 +2,13 @@ import OpenTsDatasource from '../datasource';
 import $q from 'q';
 
 describe('opentsdb', () => {
-  const ctx = <any>{
+  const ctx = {
     backendSrv: {},
     ds: {},
     templateSrv: {
       replace: str => str,
     },
-  };
+  } as any;
   const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
 
   beforeEach(() => {

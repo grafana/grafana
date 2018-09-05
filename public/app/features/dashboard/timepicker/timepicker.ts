@@ -23,6 +23,7 @@ export class TimePickerCtrl {
   isUtc: boolean;
   firstDayOfWeek: number;
   isOpen: boolean;
+  isAbsolute: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
@@ -65,40 +66,41 @@ export class TimePickerCtrl {
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
     this.timeRaw = timeRaw;
+    this.isAbsolute = moment.isMoment(this.timeRaw.to);
 
-    // Add a human readable timespan to the tooltip
-    if (moment.isMoment(timeRaw.from) || moment.isMoment(timeRaw.to)) {
-      const diff = time.to.diff(time.from);
-      const duration = moment.duration(diff);
-      const days = duration.asDays();
-      if (days > 10) {
-        this.tooltip += '<br/><br/>' + duration.humanize();
-      } else {
-        let lines = 0;
-        const h = duration.hours();
-        const m = duration.minutes();
-        const s = duration.seconds();
-        this.tooltip += '<br/>';
-        if (days >= 2) {
-          this.tooltip += '<br/>' + duration.days() + ' days';
-          lines++;
-        } else if (days >= 1) {
-          this.tooltip += '<br/>1 day';
-          lines++;
-        }
-        if (h > 0 && lines < 2) {
-          this.tooltip += '<br/>' + h + ' hours';
-          lines++;
-        }
-        if (m > 0 && lines < 2) {
-          this.tooltip += '<br/>' + m + ' minutes';
-          lines++;
-        }
-        if (lines < 1) {
-          this.tooltip += '<br/>' + duration.asSeconds() + ' seconds';
-        } else if (s > 0 && lines < 2) {
-          this.tooltip += '<br/>' + s + ' seconds';
-        }
+    const diff = time.to.diff(time.from);
+    const duration = moment.duration(diff);
+    const days = duration.asDays();
+    if (days > 10) {
+      this.tooltip += '<br/><br/>' + duration.humanize();
+    } else {
+      let lines = 0;
+      const h = duration.hours();
+      const m = duration.minutes();
+      const s = duration.seconds();
+      this.tooltip += '<br/>';
+
+      if (days > 1) {
+        this.tooltip += '<br/>' + duration.days() + ' days.';
+        lines++;
+      } else if (days === 1) {
+        this.tooltip += '<br/>1 day';
+        lines++;
+      }
+
+      if (h > 0 && lines < 2) {
+        this.tooltip += '<br/>' + h + ' hours';
+        lines++;
+      }
+      if (m > 0 && lines < 2) {
+        this.tooltip += '<br/>' + m + ' minutes';
+        lines++;
+      }
+
+      if (lines < 1) {
+        this.tooltip += '<br/>' + duration.asSeconds() + ' seconds';
+      } else if (s > 0 && lines < 2) {
+        this.tooltip += '<br/>' + s + ' seconds';
       }
     }
   }
@@ -111,7 +113,7 @@ export class TimePickerCtrl {
     const range = this.timeSrv.timeRange();
 
     const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
-    var to, from;
+    let to, from;
     if (direction === -1) {
       to = range.to.valueOf() - timespan;
       from = range.from.valueOf() - timespan;

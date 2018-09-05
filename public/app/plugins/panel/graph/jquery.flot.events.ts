@@ -290,9 +290,9 @@ export class EventMarkers {
    * update the position of the event-markers (e.g. after scrolling or zooming)
    */
   updateEvents() {
-    let o = this._plot.getPlotOffset(),
-      left,
-      top;
+    const o = this._plot.getPlotOffset();
+    let left;
+    let top;
     const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
 
     $.each(this._events, (index, event) => {
@@ -420,7 +420,7 @@ export class EventMarkers {
         event: event,
       });
 
-      const mouseenter = function() {
+      const mouseenter = function(this: any) {
         createAnnotationToolip(marker, $(this).data('event'), that._plot);
       };
 
@@ -541,7 +541,7 @@ export class EventMarkers {
       event: event,
     });
 
-    const mouseenter = function() {
+    const mouseenter = function(this: any) {
       createAnnotationToolip(region, $(this).data('event'), that._plot);
     };
 
@@ -596,7 +596,7 @@ export class EventMarkers {
  */
 
 /** @ngInject */
-export function init(plot) {
+export function init(this: any, plot) {
   /*jshint validthis:true */
   const that = this;
   const eventMarkers = new EventMarkers(plot);

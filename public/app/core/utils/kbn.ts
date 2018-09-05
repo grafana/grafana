@@ -169,8 +169,8 @@ kbn.intervals_in_seconds = {
 };
 
 kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
-  var lowLimitMs = 1; // 1 millisecond default low limit
-  var intervalMs;
+  let lowLimitMs = 1; // 1 millisecond default low limit
+  let intervalMs;
 
   if (lowLimitInterval) {
     if (lowLimitInterval[0] === '>') {
@@ -304,7 +304,7 @@ kbn.formatBuilders.scaledUnits = function(factor, extArray) {
       return '';
     }
 
-    var steps = 0;
+    let steps = 0;
     const limit = extArray.length;
 
     while (Math.abs(size) >= factor) {
@@ -328,7 +328,7 @@ kbn.formatBuilders.scaledUnits = function(factor, extArray) {
 // offset is given, it adjusts the starting units at the given prefix; a value
 // of 0 starts at no scale; -3 drops to nano, +2 starts at mega, etc.
 kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
-  var prefixes = ['n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+  let prefixes = ['n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
   prefixes = prefixes.slice(3 + (offset || 0));
   const units = prefixes.map(function(p) {
     return ' ' + p + unit;
@@ -450,6 +450,7 @@ kbn.valueFormats.currencySEK = kbn.formatBuilders.currency('kr');
 kbn.valueFormats.currencyCZK = kbn.formatBuilders.currency('czk');
 kbn.valueFormats.currencyCHF = kbn.formatBuilders.currency('CHF');
 kbn.valueFormats.currencyPLN = kbn.formatBuilders.currency('zł');
+kbn.valueFormats.currencyBTC = kbn.formatBuilders.currency('฿');
 
 // Data (Binary)
 kbn.valueFormats.bits = kbn.formatBuilders.binarySIPrefix('b');
@@ -790,8 +791,8 @@ kbn.toDuration = function(size, decimals, timeScale) {
 
   const strings = [];
   // after first value >= 1 print only $decimals more
-  var decrementDecimals = false;
-  for (var i = 0; i < units.length && decimals >= 0; i++) {
+  let decrementDecimals = false;
+  for (let i = 0; i < units.length && decimals >= 0; i++) {
     const interval = kbn.intervals_in_seconds[units[i].short] * 1000;
     const value = size / interval;
     if (value >= 1 || decrementDecimals) {
@@ -882,6 +883,7 @@ kbn.getUnitFormats = function() {
         { text: 'Czech koruna (czk)', value: 'currencyCZK' },
         { text: 'Swiss franc (CHF)', value: 'currencyCHF' },
         { text: 'Polish Złoty (PLN)', value: 'currencyPLN' },
+        { text: 'Bitcoin (฿)', value: 'currencyBTC' },
       ],
     },
     {

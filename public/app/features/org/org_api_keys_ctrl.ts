@@ -1,7 +1,7 @@
 import angular from 'angular';
 
 export class OrgApiKeysCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $http, backendSrv, navModelSrv) {
     $scope.navModel = navModelSrv.getNav('cfg', 'apikeys', 0);
 
