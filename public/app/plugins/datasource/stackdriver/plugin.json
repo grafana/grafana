@@ -12,5 +12,19 @@
   "info": {
     "description": "Data Source for Stackdriver",
     "version": "1.0.0"
-  }
+  },
+  "routes": [
+    {
+      "path": "stackdriver",
+      "method": "GET",
+      "url": "https://content-monitoring.googleapis.com",
+      "jwtTokenAuth": {
+        "params": {
+          "token_uri": "{{.JsonData.tokenUri}}",
+          "client_email": "{{.JsonData.clientEmail}}",
+          "private_key": "{{.SecureJsonData.privateKey}}"
+        }
+      }
+    }
+  ]
 }
