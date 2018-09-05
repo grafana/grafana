@@ -2,6 +2,9 @@
 // Location
 //
 
+import { TeamGroupModel, TeamMemberModel } from '../stores/TeamsStore/TeamsStore';
+import { types } from 'mobx-state-tree';
+
 export interface LocationUpdate {
   path?: string;
   query?: UrlQueryMap;
@@ -54,6 +57,34 @@ export interface AlertRule {
 }
 
 //
+// Teams
+//
+
+export interface Team {
+  id: number;
+  name: string;
+  avatarUrl: string;
+  email: string;
+  memberCount: number;
+  search?: string;
+  members?: TeamMember[];
+  groups?: TeamGroup[];
+}
+
+export interface TeamMember {
+  userId: number;
+  teamId: number;
+  avatarUrl: string;
+  email: string;
+  login: string;
+}
+
+export interface TeamGroup {
+  groupId: string;
+  teamId: number;
+}
+
+//
 // NavModel
 //
 
@@ -89,8 +120,13 @@ export interface AlertRulesState {
   searchQuery: string;
 }
 
+export interface TeamsState {
+  teams: Team[];
+}
+
 export interface StoreState {
   navIndex: NavIndex;
   location: LocationState;
   alertRules: AlertRulesState;
+  teams: TeamsState;
 }

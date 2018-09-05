@@ -5,8 +5,8 @@ import ServerStats from 'app/features/admin/containers/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
 import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions';
-import TeamPages from 'app/containers/Teams/TeamPages';
-import TeamList from 'app/containers/Teams/TeamList';
+import TeamPages from 'app/features/teams/TeamPages';
+import TeamList from 'app/features/teams/TeamList';
 
 /** @ngInject **/
 export function setupAngularRoutes($routeProvider, $locationProvider) {

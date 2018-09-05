@@ -1,4 +1,5 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
@@ -6,6 +7,8 @@ import { NavStore } from 'app/stores/NavStore/NavStore';
 import { TeamsStore, Team } from 'app/stores/TeamsStore/TeamsStore';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import { loadTeams } from './state/actions';
+import { getTeams } from './state/selectors';
 
 interface Props {
   nav: typeof NavStore.Type;
@@ -108,4 +111,16 @@ export class TeamList extends React.Component<Props, any> {
   }
 }
 
-export default hot(module)(TeamList);
+function mapStateToProps(state) {
+  return {
+    teams: getTeams(state),
+  };
+}
+
+function mapDispatchToProps() {
+  return {
+    loadTeams,
+  };
+}
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamList));
