@@ -24,7 +24,6 @@ describe('StackdriverDataSource', () => {
       let ds;
       let result;
       beforeEach(async () => {
-        console.log('erik', metricDescriptors);
         const backendSrv = {
           datasourceRequest: async () => Promise.resolve({ status: 200, data: metricDescriptors }),
         };
