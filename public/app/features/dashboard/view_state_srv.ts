@@ -49,7 +49,7 @@ export class DashboardViewState {
 
   getQueryStringState() {
     const state = this.$location.search();
-    state.panelId = parseInt(state.panelId) || null;
+    state.panelId = parseInt(state.panelId, 10) || null;
     state.fullscreen = state.fullscreen ? true : null;
     state.edit = state.edit === 'true' || state.edit === true || null;
     state.editview = state.editview || null;

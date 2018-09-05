@@ -53,7 +53,7 @@ export class ThresholdManager {
     function stopped() {
       // calculate graph level
       let graphValue = plot.c2p({ left: 0, top: posTop }).y;
-      graphValue = parseInt(graphValue.toFixed(0));
+      graphValue = parseInt(graphValue.toFixed(0), 10);
       model.value = graphValue;
 
       handleElem.off('mousemove', dragging);

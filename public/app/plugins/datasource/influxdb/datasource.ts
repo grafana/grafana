@@ -314,7 +314,7 @@ export default class InfluxDatasource {
 
       const parts = /^now-(\d+)([d|h|m|s])$/.exec(date);
       if (parts) {
-        const amount = parseInt(parts[1]);
+        const amount = parseInt(parts[1], 10);
         const unit = parts[2];
         return 'now() - ' + amount + unit;
       }

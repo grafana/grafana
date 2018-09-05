@@ -50,7 +50,7 @@
     "object-literal-sort-keys": false,
     "one-line": [true, "check-open-brace", "check-catch", "check-else"],
     "prefer-const": true,
-    "radix": false,
+    "radix": true,
     "typedef-whitespace": [
       true,
       {

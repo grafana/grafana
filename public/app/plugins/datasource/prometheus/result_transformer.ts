@@ -37,7 +37,7 @@ export class ResultTransformer {
 
     metricLabel = this.createMetricLabel(metricData.metric, options);
 
-    const stepMs = parseInt(options.step) * 1000;
+    const stepMs = parseInt(options.step, 10) * 1000;
     let baseTimestamp = start * 1000;
 
     if (metricData.values === undefined) {
