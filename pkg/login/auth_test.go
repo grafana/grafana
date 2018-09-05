@@ -215,7 +215,7 @@ func authScenario(desc string, fn authScenarioFunc) {
 		sc := &authScenarioContext{
 			loginUserQuery: &m.LoginUserQuery{
 				Username:  "user",
-				Password:  "password",
+				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",
 			},
 		}
