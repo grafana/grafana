@@ -34,13 +34,13 @@ export class DashPanelsEditorCtrl {
   }
 
   updateStats() {
-    let stats = {
+    const stats = {
       alerts: 0,
       descriptions: 0,
       repeat: 0,
       skip: {}, // id = true
     };
-    let sources = {};
+    const sources = {};
 
     this.panels = _.filter(this.dashboard.panels, panel => {
       if (panel.repeatPanelId) {
@@ -74,9 +74,9 @@ export class DashPanelsEditorCtrl {
 
   getIconFor(panel) {
     if (panel) {
-      let meta = config.panels[panel.type];
+      const meta = config.panels[panel.type];
       if (_.has(meta, 'info.logos')) {
-        let logos = meta.info.logos;
+        const logos = meta.info.logos;
         if (logos.small != null) {
           return logos.small;
         }
