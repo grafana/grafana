@@ -113,18 +113,22 @@ export class TeamList extends React.Component<Props, any> {
   renderEmptyList() {
     return (
       <div className="page-container page-body">
-        <EmptyListCTA
-          model={{
-            title: "You haven't created any teams yet.",
-            buttonIcon: 'fa fa-plus',
-            buttonLink: 'org/teams/new',
-            buttonTitle: ' New team',
-            proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
-            proTipLink: '',
-            proTipLinkTitle: '',
-            proTipTarget: '_blank',
-          }}
-        />
+        {this.isGrafanaAdmin ? (
+          <EmptyListCTA
+            model={{
+              title: "You haven't created any teams yet.",
+              buttonIcon: 'fa fa-plus',
+              buttonLink: 'org/teams/new',
+              buttonTitle: ' New team',
+              proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
+              proTipLink: '',
+              proTipLinkTitle: '',
+              proTipTarget: '_blank',
+            }}
+          />
+        ) : (
+          <div> You don't have permissions to get team list </div>
+        )}
       </div>
     );
   }
