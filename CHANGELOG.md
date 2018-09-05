@@ -84,6 +84,7 @@ These are new features that's still being worked on and are in an experimental p
 ### Tech
 
 * **Frontend**: Convert all Frontend Karma tests to Jest tests [#12224](https://github.com/grafana/grafana/issues/12224)
+* **Backend**: Upgrade to golang 1.11 [#13030](https://github.com/grafana/grafana/issues/13030)
 
 # 5.2.3 (2018-08-29)
 
