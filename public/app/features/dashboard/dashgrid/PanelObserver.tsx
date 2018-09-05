@@ -31,7 +31,7 @@ export class PanelObserverScroll implements PanelObserver {
   // this may be called a couple times as
   watch(e: HTMLElement, panel: PanelModel) {
     if (e && panel) {
-      let x = this.findScrollWindow(e);
+      const x = this.findScrollWindow(e);
       if (this.scroller) {
         if (x !== this.scroller) {
           console.error('???? did the root scroll element change????');
@@ -130,12 +130,12 @@ export class PanelObserverScroll implements PanelObserver {
   }
 
   // Check visibility for all elements
-  updateVisibilityProps(view_top: number, view_bottom: number) {
+  updateVisibilityProps(viewTop: number, viewBottom: number) {
     //console.log( 'CHECK In Viewport', view_top, view_bottom );
     this.registry.forEach((element, panel) => {
       const top = this.getTop(element);
       const bottom = top + element.offsetHeight;
-      const vis = !(view_top > bottom || view_bottom < top);
+      const vis = !(viewTop > bottom || viewBottom < top);
       //console.log( 'VIS', vis, panel.title, top, bottom );
       if (panel.visible !== vis) {
         panel.visible = vis;
