@@ -26,3 +26,13 @@ export function loadTeams(): ThunkResult<void> {
     dispatch(teamsLoaded(response.teams));
   };
 }
+
+export function deleteTeam(id: number): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv()
+      .delete(`/api/teams/${id}`)
+      .then(() => {
+        dispatch(loadTeams());
+      });
+  };
+}

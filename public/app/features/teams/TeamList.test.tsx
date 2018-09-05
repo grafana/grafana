@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { TeamList, Props } from './TeamList';
+import { Props, TeamList } from './TeamList';
 import { NavModel, Team } from '../../types';
 
 const setup = (propOverrides?: object) => {
@@ -8,6 +8,7 @@ const setup = (propOverrides?: object) => {
     navModel: {} as NavModel,
     teams: [] as Team[],
     loadTeams: jest.fn(),
+    deleteTeam: jest.fn(),
     search: '',
   };
 
@@ -22,6 +23,17 @@ const setup = (propOverrides?: object) => {
   };
 };
 
+const mockTeam: Team = {
+  id: 1,
+  name: 'test',
+  avatarUrl: 'some/url/',
+  email: 'test@test.com',
+  memberCount: 1,
+  search: '',
+  members: [],
+  groups: [],
+};
+
 describe('Render', () => {
   it('should render component', () => {
     const { wrapper } = setup();
@@ -30,18 +42,7 @@ describe('Render', () => {
 
   it('should render teams table', () => {
     const { wrapper } = setup({
-      teams: [
-        {
-          id: 1,
-          name: 'test',
-          avatarUrl: 'some/url/',
-          email: 'test@test.com',
-          memberCount: 1,
-          search: '',
-          members: [],
-          groups: [],
-        },
-      ],
+      teams: [mockTeam],
     });
 
     expect(wrapper).toMatchSnapshot();
@@ -58,4 +59,13 @@ describe('Life cycle', () => {
   });
 });
 
-describe('Functions', () => {});
+describe('Functions', () => {
+  describe('Delete team', () => {
+    it('should call delete team', () => {
+      const { instance } = setup();
+      instance.deleteTeam(mockTeam);
+
+      expect(instance.props.deleteTeam).toHaveBeenCalledWith(1);
+    });
+  });
+});

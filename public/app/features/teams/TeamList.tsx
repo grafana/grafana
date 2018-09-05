@@ -4,7 +4,7 @@ import { hot } from 'react-hot-loader';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 import { NavModel, Team } from '../../types';
-import { loadTeams } from './state/actions';
+import { loadTeams, deleteTeam } from './state/actions';
 import { getTeams } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
 
@@ -12,6 +12,7 @@ export interface Props {
   navModel: NavModel;
   teams: Team[];
   loadTeams: typeof loadTeams;
+  deleteTeam: typeof deleteTeam;
   search: string;
 }
 
@@ -25,7 +26,7 @@ export class TeamList extends PureComponent<Props, any> {
   }
 
   deleteTeam = (team: Team) => {
-    console.log('delete team', team);
+    this.props.deleteTeam(team.id);
   };
 
   onSearchQueryChange = event => {
@@ -116,6 +117,7 @@ function mapStateToProps(state) {
 
 const mapDispatchToProps = {
   loadTeams,
+  deleteTeam,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamList));
