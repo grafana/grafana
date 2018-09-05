@@ -6,6 +6,7 @@ export default class StackdriverDatasource {
   constructor(instanceSettings, private backendSrv) {
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
+    this.doRequest = this.doRequest;
   }
 
   testDatasource() {
@@ -15,7 +16,7 @@ export default class StackdriverDatasource {
         if (response.status === 200) {
           return {
             status: 'success',
-            message: 'Successfully queried the Azure Monitor service.',
+            message: 'Successfully queried the Stackdriver API.',
             title: 'Success',
           };
         }

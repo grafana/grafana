@@ -5,12 +5,16 @@ export class StackdriverConfigCtrl {
   jsonText: string;
   validationErrors: string[] = [];
   inputDataValid: boolean;
+  defaultProject: string;
+  projects: string[];
+  loadingProjects: boolean;
 
   /** @ngInject */
   constructor($scope, datasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.secureJsonData = this.current.secureJsonData || {};
+    this.projects = [];
   }
 
   save(jwt) {
@@ -45,6 +49,7 @@ export class StackdriverConfigCtrl {
     this.jsonText = '';
     if (this.validateJwt(json)) {
       this.save(json);
+      this.displayProjects();
     }
   }
 
@@ -53,6 +58,7 @@ export class StackdriverConfigCtrl {
       const json = JSON.parse(e.originalEvent.clipboardData.getData('text/plain') || this.jsonText);
       if (this.validateJwt(json)) {
         this.save(json);
+        this.displayProjects();
       }
     } catch (error) {
       this.resetValidationMessages();
@@ -64,5 +70,17 @@ export class StackdriverConfigCtrl {
     this.validationErrors = [];
     this.inputDataValid = false;
     this.jsonText = '';
+  }
+
+  async displayProjects() {
+    if (this.projects.length === 0) {
+      this.loadingProjects = true;
+      const ds = await this.datasourceSrv.loadDatasource(this.current.name);
+      try {
+        this.projects = await ds.doRequest(`/cloudresourcemanager/v1/projects`);
+      } catch (error) {
+        console.log(error);
+      }
+    }
   }
 }

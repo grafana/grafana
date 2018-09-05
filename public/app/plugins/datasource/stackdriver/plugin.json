@@ -25,6 +25,18 @@
           "private_key": "{{.SecureJsonData.privateKey}}"
         }
       }
+    },
+    {
+      "path": "cloudresourcemanager",
+      "method": "GET",
+      "url": "https://cloudresourcemanager.googleapis.com",
+      "jwtTokenAuth": {
+        "params": {
+          "token_uri": "{{.JsonData.tokenUri}}",
+          "client_email": "{{.JsonData.clientEmail}}",
+          "private_key": "{{.SecureJsonData.privateKey}}"
+        }
+      }
     }
   ]
 }
