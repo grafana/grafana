@@ -7,11 +7,11 @@ export class LinkSrv {
   constructor(private templateSrv, private timeSrv) {}
 
   getLinkUrl(link) {
-    var url = this.templateSrv.replace(link.url || '');
-    var params = {};
+    const url = this.templateSrv.replace(link.url || '');
+    const params = {};
 
     if (link.keepTime) {
-      var range = this.timeSrv.timeRangeForUrl();
+      const range = this.timeSrv.timeRangeForUrl();
       params['from'] = range.from;
       params['to'] = range.to;
     }
@@ -24,7 +24,7 @@ export class LinkSrv {
   }
 
   addParamsToUrl(url, params) {
-    var paramsArray = [];
+    const paramsArray = [];
 
     _.each(params, function(value, key) {
       if (value === null) {
@@ -50,7 +50,7 @@ export class LinkSrv {
 
   appendToQueryString(url, stringToAppend) {
     if (!_.isUndefined(stringToAppend) && stringToAppend !== null && stringToAppend !== '') {
-      var pos = url.indexOf('?');
+      const pos = url.indexOf('?');
       if (pos !== -1) {
         if (url.length - pos > 1) {
           url += '&';
@@ -65,14 +65,14 @@ export class LinkSrv {
   }
 
   getAnchorInfo(link) {
-    var info: any = {};
+    const info: any = {};
     info.href = this.getLinkUrl(link);
     info.title = this.templateSrv.replace(link.title || '');
     return info;
   }
 
   getPanelLinkAnchorInfo(link, scopedVars) {
-    var info: any = {};
+    const info: any = {};
     if (link.type === 'absolute') {
       info.target = link.targetBlank ? '_blank' : '_self';
       info.href = this.templateSrv.replace(link.url || '', scopedVars);
@@ -87,14 +87,14 @@ export class LinkSrv {
       info.target = link.targetBlank ? '_blank' : '';
     } else {
       info.title = this.templateSrv.replace(link.title || '', scopedVars);
-      var slug = kbn.slugifyForUrl(link.dashboard || '');
+      const slug = kbn.slugifyForUrl(link.dashboard || '');
       info.href = 'dashboard/db/' + slug + '?';
     }
 
-    var params = {};
+    const params = {};
 
     if (link.keepTime) {
-      var range = this.timeSrv.timeRangeForUrl();
+      const range = this.timeSrv.timeRangeForUrl();
       params['from'] = range.from;
       params['to'] = range.to;
     }

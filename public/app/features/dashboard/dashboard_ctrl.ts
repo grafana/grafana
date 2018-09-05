@@ -102,7 +102,7 @@ export class DashboardCtrl implements PanelContainer {
   }
 
   setWindowTitleAndTheme() {
-    window.document.title = config.window_title_prefix + this.dashboard.title;
+    window.document.title = config.windowTitlePrefix + this.dashboard.title;
   }
 
   showJsonEditor(evt, options) {
@@ -144,7 +144,7 @@ export class DashboardCtrl implements PanelContainer {
   removePanel(panel: PanelModel, ask: boolean) {
     // confirm deletion
     if (ask !== false) {
-      var text2, confirmText;
+      let text2, confirmText;
 
       if (panel.alert) {
         text2 = 'Panel includes an alert rule, removing panel will also remove alert rule';

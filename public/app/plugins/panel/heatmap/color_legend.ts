@@ -200,7 +200,7 @@ function drawSimpleColorLegend(elem, colorScale) {
     const valuesRange = d3.range(0, legendWidth, rangeStep);
 
     const legend = d3.select(legendElem.get(0));
-    var legendRects = legend.selectAll('.heatmap-color-legend-rect').data(valuesRange);
+    const legendRects = legend.selectAll('.heatmap-color-legend-rect').data(valuesRange);
 
     legendRects
       .enter()
@@ -239,7 +239,7 @@ function drawSimpleOpacityLegend(elem, options) {
 
     const rangeStep = 10;
     const valuesRange = d3.range(0, legendWidth, rangeStep);
-    var legendRects = legend.selectAll('.heatmap-opacity-legend-rect').data(valuesRange);
+    const legendRects = legend.selectAll('.heatmap-opacity-legend-rect').data(valuesRange);
 
     legendRects
       .enter()

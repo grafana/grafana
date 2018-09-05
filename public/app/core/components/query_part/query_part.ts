@@ -74,7 +74,7 @@ export class QueryPart {
       return;
     }
 
-    var text = this.def.type + '(';
+    let text = this.def.type + '(';
     text += this.params.join(', ');
     text += ')';
     this.text = text;
@@ -82,9 +82,9 @@ export class QueryPart {
 }
 
 export function functionRenderer(part, innerExpr) {
-  var str = part.def.type + '(';
-  var parameters = _.map(part.params, (value, index) => {
-    var paramType = part.def.params[index];
+  const str = part.def.type + '(';
+  const parameters = _.map(part.params, (value, index) => {
+    const paramType = part.def.params[index];
     if (paramType.type === 'time') {
       if (value === 'auto') {
         value = '$__interval';

@@ -7,7 +7,7 @@ import { importPluginModule } from './plugin_loader';
 
 import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
 
-/** @ngInject **/
+/** @ngInject */
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
   function getTemplate(component) {
     if (component.template) {
@@ -69,7 +69,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     };
 
     const panelInfo = config.panels[scope.panel.type];
-    var panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
+    let panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
     if (panelInfo) {
       panelCtrlPromise = importPluginModule(panelInfo.module).then(function(panelModule) {
         return panelModule.PanelCtrl;

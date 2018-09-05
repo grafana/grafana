@@ -77,15 +77,15 @@ export class KeybindingSrv {
 
     appEvents.emit('hide-modal');
 
-    if (!this.modalOpen) {
-      if (this.timepickerOpen) {
-        this.$rootScope.appEvent('closeTimepicker');
-        this.timepickerOpen = false;
-      } else {
-        this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
-      }
-    } else {
+    if (this.modalOpen) {
       this.modalOpen = false;
+      return;
+    }
+
+    if (this.timepickerOpen) {
+      this.$rootScope.appEvent('closeTimepicker');
+      this.timepickerOpen = false;
+      return;
     }
 
     // close settings view
@@ -93,6 +93,16 @@ export class KeybindingSrv {
     if (search.editview) {
       delete search.editview;
       this.$location.search(search);
+      return;
+    }
+
+    if (search.fullscreen) {
+      this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      return;
+    }
+
+    if (search.kiosk) {
+      this.$rootScope.appEvent('toggle-kiosk-mode', { exit: true });
     }
   }
 

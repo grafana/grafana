@@ -15,7 +15,7 @@ export class Emitter {
     this.emitter.on(name, handler);
 
     if (scope) {
-      var unbind = scope.$on('$destroy', () => {
+      const unbind = scope.$on('$destroy', () => {
         this.emitter.off(name, handler);
         unbind();
       });

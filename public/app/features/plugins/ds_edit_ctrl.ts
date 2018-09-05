@@ -4,7 +4,7 @@ import config from 'app/core/config';
 import { coreModule, appEvents } from 'app/core/core';
 import { store } from 'app/stores/store';
 
-var datasourceTypes = [];
+let datasourceTypes = [];
 
 const defaults = {
   name: '',
@@ -16,7 +16,7 @@ const defaults = {
   secureJsonData: {},
 };
 
-var datasourceCreated = false;
+let datasourceCreated = false;
 
 export class DataSourceEditCtrl {
   isNew: boolean;
