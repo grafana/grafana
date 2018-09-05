@@ -266,7 +266,8 @@ The number of days the keep me logged in / remember me cookie lasts.
 
 ### secret_key
 
-Used for signing keep me logged in / remember me cookies.
+Used for signing some datasource settings like secrets and passwords. Cannot be changed without requiring an update
+to datasource settings to re-encode them.
 
 ### disable_gravatar
 

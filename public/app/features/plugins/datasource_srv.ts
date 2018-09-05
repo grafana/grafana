@@ -95,7 +95,7 @@ export class DatasourceSrv {
   }
 
   getMetricSources(options) {
-    var metricSources = [];
+    const metricSources = [];
 
     _.each(config.datasources, function(value, key) {
       if (value.meta && value.meta.metrics) {
@@ -136,18 +136,18 @@ export class DatasourceSrv {
 
   addDataSourceVariables(list) {
     // look for data source variables
-    for (var i = 0; i < this.templateSrv.variables.length; i++) {
-      var variable = this.templateSrv.variables[i];
+    for (let i = 0; i < this.templateSrv.variables.length; i++) {
+      const variable = this.templateSrv.variables[i];
       if (variable.type !== 'datasource') {
         continue;
       }
 
-      var first = variable.current.value;
+      let first = variable.current.value;
       if (first === 'default') {
         first = config.defaultDatasource;
       }
 
-      var ds = config.datasources[first];
+      const ds = config.datasources[first];
 
       if (ds) {
         const key = `$${variable.name}`;

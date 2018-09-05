@@ -49,7 +49,7 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 		fmt.Sprintf("width=%v", opts.Width),
 		fmt.Sprintf("height=%v", opts.Height),
 		fmt.Sprintf("png=%v", pngPath),
-		fmt.Sprintf("domain=%v", rs.getLocalDomain()),
+		fmt.Sprintf("domain=%v", rs.domain),
 		fmt.Sprintf("timeout=%v", opts.Timeout.Seconds()),
 		fmt.Sprintf("renderKey=%v", renderKey),
 	}

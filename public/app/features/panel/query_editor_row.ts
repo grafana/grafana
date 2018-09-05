@@ -87,7 +87,7 @@ export class QueryRowCtrl {
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 function queryEditorRowDirective() {
   return {
     restrict: 'E',

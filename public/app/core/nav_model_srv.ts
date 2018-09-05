@@ -38,8 +38,8 @@ export class NavModelSrv {
   }
 
   getNav(...args) {
-    var children = this.navItems;
-    var nav = new NavModel();
+    let children = this.navItems;
+    const nav = new NavModel();
 
     for (const id of args) {
       // if its a number then it's the index to use for main
@@ -69,7 +69,7 @@ export class NavModelSrv {
   }
 
   getNotFoundNav() {
-    var node = {
+    const node = {
       text: 'Page not found',
       icon: 'fa fa-fw fa-warning',
       subTitle: '404 Error',

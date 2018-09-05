@@ -1,14 +1,14 @@
 import { OpenTsQueryCtrl } from '../query_ctrl';
 
 describe('OpenTsQueryCtrl', () => {
-  const ctx = <any>{
+  const ctx = {
     target: { target: '' },
     datasource: {
       tsdbVersion: '',
       getAggregators: () => Promise.resolve([]),
       getFilterTypes: () => Promise.resolve([]),
     },
-  };
+  } as any;
 
   ctx.panelCtrl = {
     panel: {

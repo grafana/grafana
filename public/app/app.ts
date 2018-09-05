@@ -105,9 +105,9 @@ export class GrafanaApp {
       'react',
     ];
 
-    const module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
+    const moduleTypes = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
-    _.each(module_types, type => {
+    _.each(moduleTypes, type => {
       const moduleName = 'grafana.' + type;
       this.useModule(angular.module(moduleName, []));
     });

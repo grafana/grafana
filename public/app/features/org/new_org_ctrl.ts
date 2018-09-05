@@ -2,7 +2,7 @@ import angular from 'angular';
 import config from 'app/core/config';
 
 export class NewOrgCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $http, backendSrv, navModelSrv) {
     $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs', 1);
     $scope.newOrg = { name: '' };

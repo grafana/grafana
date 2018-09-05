@@ -173,6 +173,12 @@ export class Explore extends React.Component<any, ExploreState> {
       datasource.init();
     }
 
+    // Keep queries but reset edit state
+    const nextQueries = this.state.queries.map(q => ({
+      ...q,
+      edited: false,
+    }));
+
     this.setState(
       {
         datasource,
@@ -182,6 +188,7 @@ export class Explore extends React.Component<any, ExploreState> {
         supportsLogs,
         supportsTable,
         datasourceLoading: false,
+        queries: nextQueries,
       },
       () => datasourceError === null && this.onSubmit()
     );

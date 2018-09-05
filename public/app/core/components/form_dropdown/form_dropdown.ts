@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
 
-function typeaheadMatcher(item) {
-  var str = this.query;
+function typeaheadMatcher(this: any, item) {
+  let str = this.query;
   if (str === '') {
     return true;
   }
@@ -36,7 +36,7 @@ export class FormDropdownCtrl {
   startOpen: any;
   debounce: number;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private $scope, $element, private $sce, private templateSrv, private $q) {
     this.inputElement = $element.find('input').first();
     this.linkElement = $element.find('a').first();
