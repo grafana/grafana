@@ -37,12 +37,14 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
         };
 
         let i = 0;
-        let f = files[i];
-        for (i; f; i++) {
+        let file = files[i];
+
+        while (file) {
           const reader = new FileReader();
           reader.onload = readerOnload();
-          reader.readAsText(f);
-          f = files[i];
+          reader.readAsText(file);
+          i += 1;
+          file = files[i];
         }
       }
 
