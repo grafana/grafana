@@ -14,7 +14,7 @@ class Query {
 }
 
 export class ManageDashboardsCtrl {
-  public sections: any[];
+  sections: any[];
 
   query: Query;
   navModel: any;

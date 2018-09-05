@@ -8,11 +8,11 @@ import coreModule from 'app/core/core_module';
 class AdminSettingsCtrl {
   navModel: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, backendSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'admin', 'server-settings', 1);
 
-    backendSrv.get('/api/admin/settings').then(function(settings) {
+    backendSrv.get('/api/admin/settings').then(settings => {
       $scope.settings = settings;
     });
   }
@@ -21,7 +21,7 @@ class AdminSettingsCtrl {
 class AdminHomeCtrl {
   navModel: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'admin', 1);
   }

@@ -174,7 +174,7 @@ describe('TimeSeries', function() {
   });
 
   describe('can detect if series contains ms precision', function() {
-    var fakedata;
+    let fakedata;
 
     beforeEach(function() {
       fakedata = testData;
@@ -194,7 +194,7 @@ describe('TimeSeries', function() {
   });
 
   describe('series overrides', function() {
-    var series;
+    let series;
     beforeEach(function() {
       series = new TimeSeries(testData);
     });
@@ -313,7 +313,7 @@ describe('TimeSeries', function() {
   });
 
   describe('value formatter', function() {
-    var series;
+    let series;
     beforeEach(function() {
       series = new TimeSeries(testData);
     });

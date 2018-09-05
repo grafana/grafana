@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 
-export var iconMap = {
+export let iconMap = {
   'external link': 'fa-external-link',
   dashboard: 'fa-th-large',
   question: 'fa-question',

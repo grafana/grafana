@@ -20,7 +20,7 @@ function dashLink($compile, $sanitize, linkSrv) {
     restrict: 'E',
     link: function(scope, elem) {
       const link = scope.link;
-      var template =
+      let template =
         '<div class="gf-form">' +
         '<a class="pointer gf-form-label" data-placement="bottom"' +
         (link.asDropdown ? ' ng-click="fillDropdown(link)" data-toggle="dropdown"' : '') +

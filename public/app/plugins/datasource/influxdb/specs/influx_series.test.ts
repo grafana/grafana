@@ -1,7 +1,7 @@
 import InfluxSeries from '../influx_series';
 
-describe('when generating timeseries from influxdb response', function() {
-  describe('given multiple fields for series', function() {
+describe('when generating timeseries from influxdb response', () => {
+  describe('given multiple fields for series', () => {
     const options = {
       alias: '',
       series: [
@@ -13,8 +13,8 @@ describe('when generating timeseries from influxdb response', function() {
         },
       ],
     };
-    describe('and no alias', function() {
-      it('should generate multiple datapoints for each column', function() {
+    describe('and no alias', () => {
+      it('should generate multiple datapoints for each column', () => {
         const series = new InfluxSeries(options);
         const result = series.getTimeSeries();
 
@@ -39,8 +39,8 @@ describe('when generating timeseries from influxdb response', function() {
       });
     });
 
-    describe('and simple alias', function() {
-      it('should use alias', function() {
+    describe('and simple alias', () => {
+      it('should use alias', () => {
         options.alias = 'new series';
         const series = new InfluxSeries(options);
         const result = series.getTimeSeries();
@@ -51,8 +51,8 @@ describe('when generating timeseries from influxdb response', function() {
       });
     });
 
-    describe('and alias patterns', function() {
-      it('should replace patterns', function() {
+    describe('and alias patterns', () => {
+      it('should replace patterns', () => {
         options.alias = 'alias: $m -> $tag_server ([[measurement]])';
         const series = new InfluxSeries(options);
         const result = series.getTimeSeries();
@@ -64,7 +64,7 @@ describe('when generating timeseries from influxdb response', function() {
     });
   });
 
-  describe('given measurement with default fieldname', function() {
+  describe('given measurement with default fieldname', () => {
     const options = {
       series: [
         {
@@ -82,8 +82,8 @@ describe('when generating timeseries from influxdb response', function() {
       ],
     };
 
-    describe('and no alias', function() {
-      it('should generate label with no field', function() {
+    describe('and no alias', () => {
+      it('should generate label with no field', () => {
         const series = new InfluxSeries(options);
         const result = series.getTimeSeries();
 
@@ -93,7 +93,7 @@ describe('when generating timeseries from influxdb response', function() {
     });
   });
 
-  describe('given two series', function() {
+  describe('given two series', () => {
     const options = {
       alias: '',
       series: [
@@ -112,8 +112,8 @@ describe('when generating timeseries from influxdb response', function() {
       ],
     };
 
-    describe('and no alias', function() {
-      it('should generate two time series', function() {
+    describe('and no alias', () => {
+      it('should generate two time series', () => {
         const series = new InfluxSeries(options);
         const result = series.getTimeSeries();
 
@@ -132,8 +132,8 @@ describe('when generating timeseries from influxdb response', function() {
       });
     });
 
-    describe('and simple alias', function() {
-      it('should use alias', function() {
+    describe('and simple alias', () => {
+      it('should use alias', () => {
         options.alias = 'new series';
         const series = new InfluxSeries(options);
         const result = series.getTimeSeries();
@@ -142,8 +142,8 @@ describe('when generating timeseries from influxdb response', function() {
       });
     });
 
-    describe('and alias patterns', function() {
-      it('should replace patterns', function() {
+    describe('and alias patterns', () => {
+      it('should replace patterns', () => {
         options.alias = 'alias: $m -> $tag_server ([[measurement]])';
         const series = new InfluxSeries(options);
         const result = series.getTimeSeries();
@@ -154,7 +154,7 @@ describe('when generating timeseries from influxdb response', function() {
     });
   });
 
-  describe('given measurement with dots', function() {
+  describe('given measurement with dots', () => {
     const options = {
       alias: '',
       series: [
@@ -167,7 +167,7 @@ describe('when generating timeseries from influxdb response', function() {
       ],
     };
 
-    it('should replace patterns', function() {
+    it('should replace patterns', () => {
       options.alias = 'alias: $1 -> [[3]]';
       const series = new InfluxSeries(options);
       const result = series.getTimeSeries();
@@ -176,7 +176,7 @@ describe('when generating timeseries from influxdb response', function() {
     });
   });
 
-  describe('given table response', function() {
+  describe('given table response', () => {
     const options = {
       alias: '',
       series: [
@@ -189,7 +189,7 @@ describe('when generating timeseries from influxdb response', function() {
       ],
     };
 
-    it('should return table', function() {
+    it('should return table', () => {
       const series = new InfluxSeries(options);
       const table = series.getTable();
 
@@ -200,7 +200,7 @@ describe('when generating timeseries from influxdb response', function() {
     });
   });
 
-  describe('given table response from SHOW CARDINALITY', function() {
+  describe('given table response from SHOW CARDINALITY', () => {
     const options = {
       alias: '',
       series: [
@@ -212,7 +212,7 @@ describe('when generating timeseries from influxdb response', function() {
       ],
     };
 
-    it('should return table', function() {
+    it('should return table', () => {
       const series = new InfluxSeries(options);
       const table = series.getTable();
 
@@ -223,8 +223,8 @@ describe('when generating timeseries from influxdb response', function() {
     });
   });
 
-  describe('given annotation response', function() {
-    describe('with empty tagsColumn', function() {
+  describe('given annotation response', () => {
+    describe('with empty tagsColumn', () => {
       const options = {
         alias: '',
         annotation: {},
@@ -238,7 +238,7 @@ describe('when generating timeseries from influxdb response', function() {
         ],
       };
 
-      it('should multiple tags', function() {
+      it('should multiple tags', () => {
         const series = new InfluxSeries(options);
         const annotations = series.getAnnotations();
 
@@ -246,7 +246,7 @@ describe('when generating timeseries from influxdb response', function() {
       });
     });
 
-    describe('given annotation response', function() {
+    describe('given annotation response', () => {
       const options = {
         alias: '',
         annotation: {
@@ -262,7 +262,7 @@ describe('when generating timeseries from influxdb response', function() {
         ],
       };
 
-      it('should multiple tags', function() {
+      it('should multiple tags', () => {
         const series = new InfluxSeries(options);
         const annotations = series.getAnnotations();
 

@@ -21,7 +21,7 @@ angular.module('grafana.directives', []);
 angular.module('grafana.filters', []);
 angular.module('grafana.routes', ['ngRoute']);
 
-const context = (<any>require).context('../', true, /specs\.(tsx?|js)/);
+const context = (require as any).context('../', true, /specs\.(tsx?|js)/);
 for (const key of context.keys()) {
   context(key);
 }

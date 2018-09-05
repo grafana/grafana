@@ -96,13 +96,17 @@ func main() {
 
 func listenToSystemSignals(server *GrafanaServerImpl) {
 	signalChan := make(chan os.Signal, 1)
-	ignoreChan := make(chan os.Signal, 1)
+	sighupChan := make(chan os.Signal, 1)
 
-	signal.Notify(ignoreChan, syscall.SIGHUP)
+	signal.Notify(sighupChan, syscall.SIGHUP)
 	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	select {
-	case sig := <-signalChan:
-		server.Shutdown(fmt.Sprintf("System signal: %s", sig))
+	for {
+		select {
+		case _ = <-sighupChan:
+			log.Reload()
+		case sig := <-signalChan:
+			server.Shutdown(fmt.Sprintf("System signal: %s", sig))
+		}
 	}
 }

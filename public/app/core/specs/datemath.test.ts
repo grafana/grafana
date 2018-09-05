@@ -55,8 +55,8 @@ describe('DateMath', () => {
   });
 
   describe('subtraction', () => {
-    var now;
-    var anchored;
+    let now;
+    let anchored;
 
     beforeEach(() => {
       clock = sinon.useFakeTimers(unix);
@@ -83,7 +83,7 @@ describe('DateMath', () => {
   });
 
   describe('rounding', () => {
-    var now;
+    let now;
 
     beforeEach(() => {
       clock = sinon.useFakeTimers(unix);

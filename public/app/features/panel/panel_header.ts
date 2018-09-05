@@ -80,7 +80,7 @@ function createMenuTemplate(ctrl) {
   return html;
 }
 
-/** @ngInject **/
+/** @ngInject */
 function panelHeader($compile) {
   return {
     restrict: 'E',

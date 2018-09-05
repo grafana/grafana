@@ -1,7 +1,7 @@
 import { Parser } from '../parser';
 
-describe('when parsing', function() {
-  it('simple metric expression', function() {
+describe('when parsing', () => {
+  it('simple metric expression', () => {
     const parser = new Parser('metric.test.*.asd.count');
     const rootNode = parser.getAst();
 
@@ -10,7 +10,7 @@ describe('when parsing', function() {
     expect(rootNode.segments[0].value).toBe('metric');
   });
 
-  it('simple metric expression with numbers in segments', function() {
+  it('simple metric expression with numbers in segments', () => {
     const parser = new Parser('metric.10.15_20.5');
     const rootNode = parser.getAst();
 
@@ -21,7 +21,7 @@ describe('when parsing', function() {
     expect(rootNode.segments[3].value).toBe('5');
   });
 
-  it('simple metric expression with curly braces', function() {
+  it('simple metric expression with curly braces', () => {
     const parser = new Parser('metric.se1-{count, max}');
     const rootNode = parser.getAst();
 
@@ -30,7 +30,7 @@ describe('when parsing', function() {
     expect(rootNode.segments[1].value).toBe('se1-{count,max}');
   });
 
-  it('simple metric expression with curly braces at start of segment and with post chars', function() {
+  it('simple metric expression with curly braces at start of segment and with post chars', () => {
     const parser = new Parser('metric.{count, max}-something.count');
     const rootNode = parser.getAst();
 
@@ -39,14 +39,14 @@ describe('when parsing', function() {
     expect(rootNode.segments[1].value).toBe('{count,max}-something');
   });
 
-  it('simple function', function() {
+  it('simple function', () => {
     const parser = new Parser('sum(test)');
     const rootNode = parser.getAst();
     expect(rootNode.type).toBe('function');
     expect(rootNode.params.length).toBe(1);
   });
 
-  it('simple function2', function() {
+  it('simple function2', () => {
     const parser = new Parser('offset(test.metric, -100)');
     const rootNode = parser.getAst();
     expect(rootNode.type).toBe('function');
@@ -54,7 +54,7 @@ describe('when parsing', function() {
     expect(rootNode.params[1].type).toBe('number');
   });
 
-  it('simple function with string arg', function() {
+  it('simple function with string arg', () => {
     const parser = new Parser("randomWalk('test')");
     const rootNode = parser.getAst();
     expect(rootNode.type).toBe('function');
@@ -62,7 +62,7 @@ describe('when parsing', function() {
     expect(rootNode.params[0].type).toBe('string');
   });
 
-  it('function with multiple args', function() {
+  it('function with multiple args', () => {
     const parser = new Parser("sum(test, 1, 'test')");
     const rootNode = parser.getAst();
 
@@ -73,7 +73,7 @@ describe('when parsing', function() {
     expect(rootNode.params[2].type).toBe('string');
   });
 
-  it('function with nested function', function() {
+  it('function with nested function', () => {
     const parser = new Parser('sum(scaleToSeconds(test, 1))');
     const rootNode = parser.getAst();
 
@@ -86,7 +86,7 @@ describe('when parsing', function() {
     expect(rootNode.params[0].params[1].type).toBe('number');
   });
 
-  it('function with multiple series', function() {
+  it('function with multiple series', () => {
     const parser = new Parser('sum(test.test.*.count, test.timers.*.count)');
     const rootNode = parser.getAst();
 
@@ -96,7 +96,7 @@ describe('when parsing', function() {
     expect(rootNode.params[1].type).toBe('metric');
   });
 
-  it('function with templated series', function() {
+  it('function with templated series', () => {
     const parser = new Parser('sum(test.[[server]].count)');
     const rootNode = parser.getAst();
 
@@ -106,7 +106,7 @@ describe('when parsing', function() {
     expect(rootNode.params[0].segments[1].value).toBe('[[server]]');
   });
 
-  it('invalid metric expression', function() {
+  it('invalid metric expression', () => {
     const parser = new Parser('metric.test.*.asd.');
     const rootNode = parser.getAst();
 
@@ -114,7 +114,7 @@ describe('when parsing', function() {
     expect(rootNode.pos).toBe(19);
   });
 
-  it('invalid function expression missing closing parenthesis', function() {
+  it('invalid function expression missing closing parenthesis', () => {
     const parser = new Parser('sum(test');
     const rootNode = parser.getAst();
 
@@ -122,7 +122,7 @@ describe('when parsing', function() {
     expect(rootNode.pos).toBe(9);
   });
 
-  it('unclosed string in function', function() {
+  it('unclosed string in function', () => {
     const parser = new Parser("sum('test)");
     const rootNode = parser.getAst();
 
@@ -130,13 +130,13 @@ describe('when parsing', function() {
     expect(rootNode.pos).toBe(11);
   });
 
-  it('handle issue #69', function() {
+  it('handle issue #69', () => {
     const parser = new Parser('cactiStyle(offset(scale(net.192-168-1-1.192-168-1-9.ping_value.*,0.001),-100))');
     const rootNode = parser.getAst();
     expect(rootNode.type).toBe('function');
   });
 
-  it('handle float function arguments', function() {
+  it('handle float function arguments', () => {
     const parser = new Parser('scale(test, 0.002)');
     const rootNode = parser.getAst();
     expect(rootNode.type).toBe('function');
@@ -144,7 +144,7 @@ describe('when parsing', function() {
     expect(rootNode.params[1].value).toBe(0.002);
   });
 
-  it('handle curly brace pattern at start', function() {
+  it('handle curly brace pattern at start', () => {
     const parser = new Parser('{apps}.test');
     const rootNode = parser.getAst();
     expect(rootNode.type).toBe('metric');
@@ -152,7 +152,7 @@ describe('when parsing', function() {
     expect(rootNode.segments[1].value).toBe('test');
   });
 
-  it('series parameters', function() {
+  it('series parameters', () => {
     const parser = new Parser('asPercent(#A, #B)');
     const rootNode = parser.getAst();
     expect(rootNode.type).toBe('function');
@@ -161,7 +161,7 @@ describe('when parsing', function() {
     expect(rootNode.params[1].value).toBe('#B');
   });
 
-  it('series parameters, issue 2788', function() {
+  it('series parameters, issue 2788', () => {
     const parser = new Parser("summarize(diffSeries(#A, #B), '10m', 'sum', false)");
     const rootNode = parser.getAst();
     expect(rootNode.type).toBe('function');
@@ -170,7 +170,7 @@ describe('when parsing', function() {
     expect(rootNode.params[3].type).toBe('bool');
   });
 
-  it('should parse metric expression with ip number segments', function() {
+  it('should parse metric expression with ip number segments', () => {
     const parser = new Parser('5.10.123.5');
     const rootNode = parser.getAst();
     expect(rootNode.segments[0].value).toBe('5');

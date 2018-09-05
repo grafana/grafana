@@ -179,8 +179,8 @@ export class SettingsCtrl {
   }
 
   deleteDashboard() {
-    var confirmText = '';
-    var text2 = this.dashboard.title;
+    let confirmText = '';
+    let text2 = this.dashboard.title;
 
     const alerts = _.sumBy(this.dashboard.panels, panel => {
       return panel.alert ? 1 : 0;

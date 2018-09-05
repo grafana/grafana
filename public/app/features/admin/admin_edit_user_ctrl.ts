@@ -9,72 +9,72 @@ export class AdminEditUserCtrl {
     $scope.permissions = {};
     $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-users', 1);
 
-    $scope.init = function() {
+    $scope.init = () => {
       if ($routeParams.id) {
         $scope.getUser($routeParams.id);
         $scope.getUserOrgs($routeParams.id);
       }
     };
 
-    $scope.getUser = function(id) {
-      backendSrv.get('/api/users/' + id).then(function(user) {
+    $scope.getUser = id => {
+      backendSrv.get('/api/users/' + id).then(user => {
         $scope.user = user;
         $scope.user_id = id;
         $scope.permissions.isGrafanaAdmin = user.isGrafanaAdmin;
       });
     };
 
-    $scope.setPassword = function() {
+    $scope.setPassword = () => {
       if (!$scope.passwordForm.$valid) {
         return;
       }
 
       const payload = { password: $scope.password };
-      backendSrv.put('/api/admin/users/' + $scope.user_id + '/password', payload).then(function() {
+      backendSrv.put('/api/admin/users/' + $scope.user_id + '/password', payload).then(() => {
         $location.path('/admin/users');
       });
     };
 
-    $scope.updatePermissions = function() {
+    $scope.updatePermissions = () => {
       const payload = $scope.permissions;
 
-      backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload).then(function() {
+      backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload).then(() => {
         $location.path('/admin/users');
       });
     };
 
-    $scope.create = function() {
+    $scope.create = () => {
       if (!$scope.userForm.$valid) {
         return;
       }
 
-      backendSrv.post('/api/admin/users', $scope.user).then(function() {
+      backendSrv.post('/api/admin/users', $scope.user).then(() => {
         $location.path('/admin/users');
       });
     };
 
-    $scope.getUserOrgs = function(id) {
-      backendSrv.get('/api/users/' + id + '/orgs').then(function(orgs) {
+    $scope.getUserOrgs = id => {
+      backendSrv.get('/api/users/' + id + '/orgs').then(orgs => {
         $scope.orgs = orgs;
       });
     };
 
-    $scope.update = function() {
+    $scope.update = () => {
       if (!$scope.userForm.$valid) {
         return;
       }
 
-      backendSrv.put('/api/users/' + $scope.user_id, $scope.user).then(function() {
+      backendSrv.put('/api/users/' + $scope.user_id, $scope.user).then(() => {
         $location.path('/admin/users');
       });
     };
 
-    $scope.updateOrgUser = function(orgUser) {
-      backendSrv.patch('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id, orgUser).then(function() {});
+    $scope.updateOrgUser = orgUser => {
+      backendSrv.patch('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id, orgUser).then(() => {});
     };
 
-    $scope.removeOrgUser = function(orgUser) {
-      backendSrv.delete('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id).then(function() {
+    $scope.removeOrgUser = orgUser => {
+      backendSrv.delete('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id).then(() => {
         $scope.getUser($scope.user_id);
         $scope.getUserOrgs($scope.user_id);
       });
@@ -82,19 +82,19 @@ export class AdminEditUserCtrl {
 
     $scope.orgsSearchCache = [];
 
-    $scope.searchOrgs = function(queryStr, callback) {
+    $scope.searchOrgs = (queryStr, callback) => {
       if ($scope.orgsSearchCache.length > 0) {
         callback(_.map($scope.orgsSearchCache, 'name'));
         return;
       }
 
-      backendSrv.get('/api/orgs', { query: '' }).then(function(result) {
+      backendSrv.get('/api/orgs', { query: '' }).then(result => {
         $scope.orgsSearchCache = result;
         callback(_.map(result, 'name'));
       });
     };
 
-    $scope.addOrgUser = function() {
+    $scope.addOrgUser = () => {
       if (!$scope.addOrgForm.$valid) {
         return;
       }
@@ -108,7 +108,7 @@ export class AdminEditUserCtrl {
 
       $scope.newOrg.loginOrEmail = $scope.user.login;
 
-      backendSrv.post('/api/orgs/' + orgInfo.id + '/users/', $scope.newOrg).then(function() {
+      backendSrv.post('/api/orgs/' + orgInfo.id + '/users/', $scope.newOrg).then(() => {
         $scope.getUser($scope.user_id);
         $scope.getUserOrgs($scope.user_id);
       });
