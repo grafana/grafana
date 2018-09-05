@@ -10,7 +10,7 @@ import (
 
 func TestAuthenticateUser(t *testing.T) {
 	Convey("Authenticate user", t, func() {
-		authScenario("When a user authenticates without a password", func(sc *authScenarioContext) {
+		authScenario("When a user authenticates without setting a password", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(nil, sc)
 			mockLoginUsingGrafanaDB(nil, sc)
 			mockLoginUsingLdap(false, nil, sc)
@@ -24,7 +24,7 @@ func TestAuthenticateUser(t *testing.T) {
 			Convey("login should fail", func() {
 				So(sc.grafanaLoginWasCalled, ShouldBeFalse)
 				So(sc.ldapLoginWasCalled, ShouldBeFalse)
-				So(err, ShouldEqual, ErrPasswordTooShort)
+				So(err, ShouldEqual, ErrPasswordEmpty)
 			})
 		})
 
