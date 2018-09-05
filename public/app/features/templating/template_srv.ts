@@ -77,7 +77,7 @@ export class TemplateSrv {
     if (value instanceof Array && value.length === 0) {
       return '__empty__';
     }
-    const quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, val => {
       return '"' + luceneEscape(val) + '"';
     });
     return '(' + quotedValues.join(' OR ') + ')';
@@ -248,7 +248,7 @@ export class TemplateSrv {
   }
 
   fillVariableValuesForUrl(params, scopedVars) {
-    _.each(this.variables, function(variable) {
+    _.each(this.variables, variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {
           return;
@@ -264,7 +264,7 @@ export class TemplateSrv {
   }
 
   distributeVariable(value, variable) {
-    value = _.map(value, function(val, index) {
+    value = _.map(value, (val, index) => {
       if (index !== 0) {
         return variable + '=' + val;
       } else {
