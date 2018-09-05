@@ -115,7 +115,9 @@ export class AlertRuleList extends PureComponent<Props, any> {
           </div>
           <section>
             <ol className="alert-rule-list">
-              {alertRules.map(rule => <AlertRuleItem rule={rule} key={rule.id} search={search} />)}
+              {alertRules.map(rule => (
+                <AlertRuleItem rule={rule} key={rule.id} search={search} togglePauseAlertRule={() => {}} />
+              ))}
             </ol>
           </section>
         </div>

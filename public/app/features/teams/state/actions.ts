@@ -22,7 +22,7 @@ const teamsLoaded = (teams: Team[]): LoadTeamsAction => ({
 
 export function loadTeams(): ThunkResult<void> {
   return async dispatch => {
-    const teams = await getBackendSrv().get('/api/teams/search/', { perpage: 50, page: 1 });
-    dispatch(teamsLoaded(teams));
+    const response = await getBackendSrv().get('/api/teams/search', { perpage: 1000, page: 1 });
+    dispatch(teamsLoaded(response.teams));
   };
 }

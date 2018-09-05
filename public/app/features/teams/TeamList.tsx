@@ -1,44 +1,38 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { NavStore } from 'app/stores/NavStore/NavStore';
-import { TeamsStore, Team } from 'app/stores/TeamsStore/TeamsStore';
-import { BackendSrv } from 'app/core/services/backend_srv';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import { NavModel, Team } from '../../types';
 import { loadTeams } from './state/actions';
 import { getTeams } from './state/selectors';
+import { getNavModel } from 'app/core/selectors/navModel';
 
-interface Props {
-  nav: typeof NavStore.Type;
-  teams: typeof TeamsStore.Type;
-  backendSrv: BackendSrv;
+export interface Props {
+  navModel: NavModel;
+  teams: Team[];
+  loadTeams: typeof loadTeams;
+  search: string;
 }
 
-@inject('nav', 'teams')
-@observer
-export class TeamList extends React.Component<Props, any> {
-  constructor(props) {
-    super(props);
-
-    this.props.nav.load('cfg', 'teams');
+export class TeamList extends PureComponent<Props, any> {
+  componentDidMount() {
     this.fetchTeams();
   }
 
-  fetchTeams() {
-    this.props.teams.loadTeams();
+  async fetchTeams() {
+    await this.props.loadTeams();
   }
 
-  deleteTeam(team: Team) {
-    this.props.backendSrv.delete('/api/teams/' + team.id).then(this.fetchTeams.bind(this));
-  }
-
-  onSearchQueryChange = evt => {
-    this.props.teams.setSearchQuery(evt.target.value);
+  deleteTeam = (team: Team) => {
+    console.log('delete team', team);
   };
 
-  renderTeamMember(team: Team): JSX.Element {
+  onSearchQueryChange = event => {
+    console.log('set search', event.target.value);
+  };
+
+  renderTeamMember(team: Team) {
     const teamUrl = `org/teams/edit/${team.id}`;
 
     return (
@@ -65,10 +59,11 @@ export class TeamList extends React.Component<Props, any> {
   }
 
   render() {
-    const { nav, teams } = this.props;
+    const { navModel, teams, search } = this.props;
+
     return (
       <div>
-        <PageHeader model={nav as any} />
+        <PageHeader model={navModel as NavModel} />
         <div className="page-container page-body">
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
@@ -77,7 +72,7 @@ export class TeamList extends React.Component<Props, any> {
                   type="text"
                   className="gf-form-input"
                   placeholder="Search teams"
-                  value={teams.search}
+                  value={search}
                   onChange={this.onSearchQueryChange}
                 />
                 <i className="gf-form-input-icon fa fa-search" />
@@ -102,7 +97,7 @@ export class TeamList extends React.Component<Props, any> {
                   <th style={{ width: '1%' }} />
                 </tr>
               </thead>
-              <tbody>{teams.filteredTeams.map(team => this.renderTeamMember(team))}</tbody>
+              <tbody>{teams.map(team => this.renderTeamMember(team))}</tbody>
             </table>
           </div>
         </div>
@@ -113,14 +108,14 @@ export class TeamList extends React.Component<Props, any> {
 
 function mapStateToProps(state) {
   return {
-    teams: getTeams(state),
+    navModel: getNavModel(state.navIndex, 'teams'),
+    teams: getTeams(state.teams),
+    search: '',
   };
 }
 
-function mapDispatchToProps() {
-  return {
-    loadTeams,
-  };
-}
+const mapDispatchToProps = {
+  loadTeams,
+};
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamList));

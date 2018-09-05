@@ -1,0 +1,204 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="page-action-bar"
+    >
+      <div
+        className="gf-form gf-form--grow"
+      >
+        <label
+          className="gf-form--has-input-icon gf-form--grow"
+        >
+          <input
+            className="gf-form-input"
+            onChange={[Function]}
+            placeholder="Search teams"
+            type="text"
+            value=""
+          />
+          <i
+            className="gf-form-input-icon fa fa-search"
+          />
+        </label>
+      </div>
+      <div
+        className="page-action-bar__spacer"
+      />
+      <a
+        className="btn btn-success"
+        href="org/teams/new"
+      >
+        <i
+          className="fa fa-plus"
+        />
+         New team
+      </a>
+    </div>
+    <div
+      className="admin-list-table"
+    >
+      <table
+        className="filter-table filter-table--hover form-inline"
+      >
+        <thead>
+          <tr>
+            <th />
+            <th>
+              Name
+            </th>
+            <th>
+              Email
+            </th>
+            <th>
+              Members
+            </th>
+            <th
+              style={
+                Object {
+                  "width": "1%",
+                }
+              }
+            />
+          </tr>
+        </thead>
+        <tbody />
+      </table>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Render should render teams table 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="page-action-bar"
+    >
+      <div
+        className="gf-form gf-form--grow"
+      >
+        <label
+          className="gf-form--has-input-icon gf-form--grow"
+        >
+          <input
+            className="gf-form-input"
+            onChange={[Function]}
+            placeholder="Search teams"
+            type="text"
+            value=""
+          />
+          <i
+            className="gf-form-input-icon fa fa-search"
+          />
+        </label>
+      </div>
+      <div
+        className="page-action-bar__spacer"
+      />
+      <a
+        className="btn btn-success"
+        href="org/teams/new"
+      >
+        <i
+          className="fa fa-plus"
+        />
+         New team
+      </a>
+    </div>
+    <div
+      className="admin-list-table"
+    >
+      <table
+        className="filter-table filter-table--hover form-inline"
+      >
+        <thead>
+          <tr>
+            <th />
+            <th>
+              Name
+            </th>
+            <th>
+              Email
+            </th>
+            <th>
+              Members
+            </th>
+            <th
+              style={
+                Object {
+                  "width": "1%",
+                }
+              }
+            />
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            key="1"
+          >
+            <td
+              className="width-4 text-center link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                <img
+                  className="filter-table__avatar"
+                  src="some/url/"
+                />
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                test
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                test@test.com
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                1
+              </a>
+            </td>
+            <td
+              className="text-right"
+            >
+              <DeleteButton
+                onConfirmDelete={[Function]}
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+`;

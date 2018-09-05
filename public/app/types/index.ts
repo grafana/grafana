@@ -2,9 +2,6 @@
 // Location
 //
 
-import { TeamGroupModel, TeamMemberModel } from '../stores/TeamsStore/TeamsStore';
-import { types } from 'mobx-state-tree';
-
 export interface LocationUpdate {
   path?: string;
   query?: UrlQueryMap;
