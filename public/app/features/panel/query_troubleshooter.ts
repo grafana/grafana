@@ -170,8 +170,8 @@ export function queryTroubleshooter() {
       panelCtrl: '=',
       isOpen: '=',
     },
-    link: function(scope, elem, attrs, ctrl) {
-      ctrl.renderJsonExplorer = function(data) {
+    link: (scope, elem, attrs, ctrl) => {
+      ctrl.renderJsonExplorer = data => {
         const jsonElem = elem.find('.query-troubleshooter-json');
 
         ctrl.jsonExplorer = new JsonExplorer(data, 3, {

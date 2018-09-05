@@ -9,12 +9,23 @@ describe('PostgreSQLDatasource', () => {
   const templateSrv = {
     replace: jest.fn(text => text),
   };
+  const raw = {
+    from: moment.utc('2018-04-25 10:00'),
+    to: moment.utc('2018-04-25 11:00'),
+  };
   const ctx = {
     backendSrv,
+    timeSrvMock: {
+      timeRange: () => ({
+        from: raw.from,
+        to: raw.to,
+        raw: raw,
+      }),
+    },
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv);
+    ctx.ds = new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv, ctx.timeSrvMock);
   });
 
   describe('When performing annotationQuery', () => {
@@ -219,6 +230,7 @@ describe('PostgreSQLDatasource', () => {
       it('should return a quoted value', () => {
         ctx.variable.multi = true;
         expect(ctx.ds.interpolateVariable("a'bc", ctx.variable)).toEqual("'a''bc'");
+        expect(ctx.ds.interpolateVariable("a'b'c", ctx.variable)).toEqual("'a''b''c'");
       });
     });
 

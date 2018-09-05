@@ -33,9 +33,9 @@ export class Settings {
   constructor(options) {
     const defaults = {
       datasources: {},
-      window_title_prefix: 'Grafana - ',
+      windowTitlePrefix: 'Grafana - ',
       panels: {},
-      new_panel_title: 'Panel Title',
+      newPanelTitle: 'Panel Title',
       playlist_timespan: '1m',
       unsaved_changes_warning: true,
       appSubUrl: '',

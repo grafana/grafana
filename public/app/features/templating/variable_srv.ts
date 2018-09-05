@@ -122,12 +122,13 @@ export class VariableSrv {
     }
 
     const g = this.createGraph();
-    const promises = g
-      .getNode(variable.name)
-      .getOptimizedInputEdges()
-      .map(e => {
+    const node = g.getNode(variable.name);
+    let promises = [];
+    if (node) {
+      promises = node.getOptimizedInputEdges().map(e => {
         return this.updateOptions(this.variables.find(v => v.name === e.inputNode.name));
       });
+    }
 
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
@@ -174,10 +175,10 @@ export class VariableSrv {
         selected = variable.options[0];
       } else {
         selected = {
-          value: _.map(selected, function(val) {
+          value: _.map(selected, val => {
             return val.value;
           }),
-          text: _.map(selected, function(val) {
+          text: _.map(selected, val => {
             return val.text;
           }).join(' + '),
         };
@@ -249,7 +250,7 @@ export class VariableSrv {
     const params = this.$location.search();
 
     // remove variable params
-    _.each(params, function(value, key) {
+    _.each(params, (value, key) => {
       if (key.indexOf('var-') === 0) {
         delete params[key];
       }

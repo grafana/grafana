@@ -11,7 +11,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
   };
   $scope.editor = { index: $scope.tabIndex || 0 };
 
-  $scope.init = function() {
+  $scope.init = () => {
     $scope.modeSharePanel = $scope.panel ? true : false;
 
     $scope.tabs = [{ title: 'Link', src: 'shareLink.html' }];
@@ -34,7 +34,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
     $scope.buildUrl();
   };
 
-  $scope.buildUrl = function() {
+  $scope.buildUrl = () => {
     let baseUrl = $location.absUrl();
     const queryStart = baseUrl.indexOf('?');
 
@@ -90,7 +90,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
 
   // This function will try to return the proper full name of the local timezone
   // Chrome does not handle the timezone offset (but phantomjs does)
-  $scope.getLocalTimeZone = function() {
+  $scope.getLocalTimeZone = () => {
     const utcOffset = '&tz=UTC' + encodeURIComponent(moment().format('Z'));
 
     // Older browser does not the internationalization API
@@ -111,7 +111,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
     return '&tz=' + encodeURIComponent(options.timeZone);
   };
 
-  $scope.getShareUrl = function() {
+  $scope.getShareUrl = () => {
     return $scope.shareUrl;
   };
 }
