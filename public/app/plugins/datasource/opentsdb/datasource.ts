@@ -408,11 +408,11 @@ export default class OpenTsDatasource {
       };
 
       if (target.counterMax && target.counterMax.length) {
-        query.rateOptions.counterMax = parseInt(target.counterMax);
+        query.rateOptions.counterMax = parseInt(target.counterMax, 10);
       }
 
       if (target.counterResetValue && target.counterResetValue.length) {
-        query.rateOptions.resetValue = parseInt(target.counterResetValue);
+        query.rateOptions.resetValue = parseInt(target.counterResetValue, 10);
       }
 
       if (tsdbVersion >= 2) {

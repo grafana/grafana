@@ -51,7 +51,7 @@
     "one-line": [true, "check-open-brace", "check-catch", "check-else"],
     "only-arrow-functions": [true, "allow-declarations", "allow-named-functions"],
     "prefer-const": true,
-    "radix": false,
+    "radix": true,
     "typedef-whitespace": [
       true,
       {
