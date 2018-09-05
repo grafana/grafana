@@ -25,7 +25,7 @@ export class PluginEditCtrl {
   }
 
   static getPluginNavModel(model: any, activeSlug?: string) {
-    let navModel = {
+    const navModel = {
       main: {
         img: model.info.logos.large,
         subTitle: model.info.author.name,
