@@ -3,6 +3,7 @@ package pluginproxy
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -16,13 +17,13 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/oauth2/jwt"
 
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/oauth2/jwt"
 )
 
 var (
@@ -350,68 +351,92 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 		}
 	}
 
+	if proxy.route.JwtTokenAuth != nil {
+		logger.Info("getJwtAccessToken", "JwtAccessToken", proxy.route.JwtTokenAuth)
+		if token, err := proxy.getJwtAccessToken(data); err != nil {
+			logger.Error("Failed to get access token", "error", err)
+		} else {
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		}
+	}
+
 	logger.Info("Requesting", "url", req.URL.String())
 }
 
 func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
-	conf := jwt.Config{
-		Email:      "raintank-production-stackdrive@raintank-production.iam.gserviceaccount.com",
-		PrivateKey: []byte("-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCb1u1Srw8ICWfX\nb+hh0qyRoWJzHkf4jxdpOjjqiaYqlipf3fCWoyNgHvQSmX2trYbb1Kg+8Nv9/iaz\n6el48MvOlRN6WbcMfhFoT8AKkdjYD3DM+vK3C3uXmWeVMHzQimjECFWsX4WRU4fj\nLJ44B3svFvShe3bRJpt2e5LdfjcEQER7Bvte/zQi8v1jloHmcptyz8wb9NddVHs9\nINwFbrSaUiQnoJTDSIYEMiKDTvZHRenmLz/RexjG5RXbdA+I9ZB5EASoEbG+7Ssc\nsn+Bhu/J29s/+NVM5sYgcjOm54NxCYFwYlApbroa0+KcDDCs4DzgzA41sOcvBWIX\nOZuQRD6BAgMBAAECggEAGXUo28MBP5zZu9XqLmDOFBQ7Evc1ZqNpfaUnOxk1beuO\nDI8jCFiqJL+pu4gbgc3BJBQ/T9jk9z8Xb3iczUb45ExyHCCfyIinq1Sr2I4u0Ezl\nbnboQ4K6s+85fqOnICIcLzn1VO1d0nnEzxWw2xJNy0mCuQaESHJ4Hwjc2xYNQsJD\newfeAQh2bUw7R4xyIJieP5a0fQbZWAENbVKstyfd9NJNM+6wUmwXR4ALbLM31f1n\nExbHfUe8TLp892ZgeSL+C0C31xDqkqi/DfUOFpBt79Rr5p3++rDEe98NKrDmw6yz\nbprZHBslzx612md2L/ljKQROs3tHl6BvGfFtQMOjSQKBgQDXidmYq5FQwRiVkl4r\ny8WzNbflbdfMRxetaPwR7lPWgiyGgU54Y0xUAaCy1bbpmJkfRcxJuSBYpensV9x2\nXwAI8vzuJcmteVAeZ59YYJYOA+AdT8MQW7aCeUK5qgLgpO0dt4wCK4xERdhbQdvC\nMMCu3UfgeVNyo+EhTqM97VuHTwKBgQC5GB8PwM8H7NxaPZhTfy7S54OZHdhoUpTc\nZ+qWTSG6QgjHDzNaqZ+p6ehDCnO9EyuwpYHXcFIavlmSxszUPNy6f3TosvKcvm6q\n5CFzdt4fgev3cgGB+P1mT1gyi6UjntWuAj1fFvxh+o87kq9v4p6YVX+woll10CaH\n++O3QNlpLwKBgQCRV5qM0by26M8MJVwtSkaxdxrfsjdfv9zeibnY2Y5dSwB9Xvqs\nQcF5sHNNxMGIOeefZ/C/EgAW5yKbxg+bHqqmXjxi1sZtnS2CozuXW+Iz5zccbOnL\nwRyMVPrCujsggvaGIHxgBj+a1kJ0Hy/yfe+guwS6APZditbIIAACRWmADwKBgAuA\nHC32ZOaxKN/Sg+xsMpSYHe0dlZylxOoM6t573GSeRb1YjHBNqcX86pl/xMEyt7w6\nDF8+c1uGCDq+b2ugfHZ6BOGQfNKQYn/rvMhX0mVSxT6SrtVMizIYK/q4AoK8E7rE\nGNwXqYbM8qlY692fzwrYBR8Md1KCpGI+nF9+gAOxAoGAAwJO+jr44SRldSSsli0d\nDbGRmlMc093MebjwNsO2NGoF8uTRyYIzchP2l57PMPKFX/r5IcchjVh3wHWwtzMS\nhB8zfRDj7RFjW0H8U1Qf5k2ID3ACJtxnt+o744Lggqzf9puf4RKwwAjIwJy2lhbi\nyA+63fAHMAwG+k22IkBqcu4=\n-----END PRIVATE KEY-----\n"),
-		Scopes:     []string{"https://www.googleapis.com/auth/monitoring.read"},
-		TokenURL:   "https://oauth2.googleapis.com/token",
+	if cachedToken, found := tokenCache[proxy.getAccessTokenCacheKey()]; found {
+		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
+			logger.Info("Using token from cache")
+			return cachedToken.AccessToken, nil
+		}
 	}
+
+	urlInterpolated, err := interpolateString(proxy.route.TokenAuth.Url, data)
+	if err != nil {
+		return "", err
+	}
+
+	params := make(url.Values)
+	for key, value := range proxy.route.TokenAuth.Params {
+		interpolatedParam, err := interpolateString(value, data)
+		if err != nil {
+			return "", err
+		}
+		params.Add(key, interpolatedParam)
+	}
+
+	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
+	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
+
+	resp, err := client.Do(getTokenReq)
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	var token jwtToken
+	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
+		return "", err
+	}
+
+	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
+	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
+	tokenCache[proxy.getAccessTokenCacheKey()] = &token
+
+	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
+	return token.AccessToken, nil
+}
+
+func (proxy *DataSourceProxy) getJwtAccessToken(data templateData) (string, error) {
+	conf := new(jwt.Config)
+
+	if val, ok := proxy.route.JwtTokenAuth.Params["client_email"]; ok {
+		interpolatedVal, err := interpolateString(val, data)
+		if err != nil {
+			return "", err
+		}
+		conf.Email = interpolatedVal
+	}
+
+	if val, ok := proxy.route.JwtTokenAuth.Params["private_key"]; ok {
+		interpolatedVal, err := interpolateString(val, data)
+		if err != nil {
+			return "", err
+		}
+		conf.PrivateKey = []byte(interpolatedVal)
+	}
+	conf.Scopes = []string{"https://www.googleapis.com/auth/monitoring.read"}
+	conf.TokenURL = "https://oauth2.googleapis.com/token"
+
 	ctx := context.Background()
 	tokenSrc := conf.TokenSource(ctx)
-	// logger.Info("Accesstoken", tokenSrc.Token.AccessToken)
 	token, err := tokenSrc.Token()
-	if err != nil {
-		logger.Info("GetToken", "Error", err)
+	if err == nil {
+		return "", err
 	}
-	logger.Info("GetToken", "Token", token.AccessToken)
 	return token.AccessToken, nil
-	// if cachedToken, found := tokenCache[proxy.getAccessTokenCacheKey()]; found {
-	// 	if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
-	// 		logger.Info("Using token from cache")
-	// 		return cachedToken.AccessToken, nil
-	// 	}
-	// }
-
-	// urlInterpolated, err := interpolateString(proxy.route.TokenAuth.Url, data)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// params := make(url.Values)
-	// for key, value := range proxy.route.TokenAuth.Params {
-	// 	interpolatedParam, err := interpolateString(value, data)
-	// 	if err != nil {
-	// 		return "", err
-	// 	}
-	// 	params.Add(key, interpolatedParam)
-	// }
-
-	// getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
-	// getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	// getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
-
-	// resp, err := client.Do(getTokenReq)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// defer resp.Body.Close()
-
-	// var token jwtToken
-	// if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
-	// 	return "", err
-	// }
-
-	// expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
-	// token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
-	// tokenCache[proxy.getAccessTokenCacheKey()] = &token
-
-	// logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
-	// return token.AccessToken, nil
 }
 
 func (proxy *DataSourceProxy) getAccessTokenCacheKey() string {

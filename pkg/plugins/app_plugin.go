@@ -23,12 +23,13 @@ type AppPlugin struct {
 }
 
 type AppPluginRoute struct {
-	Path      string                 `json:"path"`
-	Method    string                 `json:"method"`
-	ReqRole   models.RoleType        `json:"reqRole"`
-	Url       string                 `json:"url"`
-	Headers   []AppPluginRouteHeader `json:"headers"`
-	TokenAuth *JwtTokenAuth          `json:"tokenAuth"`
+	Path         string                 `json:"path"`
+	Method       string                 `json:"method"`
+	ReqRole      models.RoleType        `json:"reqRole"`
+	Url          string                 `json:"url"`
+	Headers      []AppPluginRouteHeader `json:"headers"`
+	TokenAuth    *JwtTokenAuth          `json:"tokenAuth"`
+	JwtTokenAuth *JwtTokenAuth          `json:"jwtTokenAuth"`
 }
 
 type AppPluginRouteHeader struct {
