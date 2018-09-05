@@ -27,6 +27,9 @@ func TestProvsionedSymlinkedFolder(t *testing.T) {
 		t.Error("expected err to be nil")
 	}
 
+	err = reader.startWalkingDisk()
+	So(err, ShouldBeNil)
+
 	want, err := filepath.Abs(containingId)
 
 	if err != nil {
