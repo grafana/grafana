@@ -7,7 +7,7 @@ const template = `
 </div>
 `;
 
-/** @ngInject **/
+/** @ngInject */
 function dashRepeatOptionDirective(variableSrv) {
   return {
     restrict: 'E',
@@ -15,7 +15,7 @@ function dashRepeatOptionDirective(variableSrv) {
     scope: {
       panel: '=',
     },
-    link: function(scope, element) {
+    link: (scope, element) => {
       element.css({ display: 'block', width: '100%' });
 
       scope.variables = variableSrv.variables.map(item => {
@@ -36,7 +36,7 @@ function dashRepeatOptionDirective(variableSrv) {
         scope.panel.repeatDirection = 'h';
       }
 
-      scope.optionChanged = function() {
+      scope.optionChanged = () => {
         if (scope.panel.repeat) {
           scope.panel.repeatDirection = 'h';
         }

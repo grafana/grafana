@@ -22,7 +22,7 @@ export class DatasourceVariable implements Variable {
     skipUrlSync: false,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model, private datasourceSrv, private variableSrv, private templateSrv) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;
@@ -43,14 +43,14 @@ export class DatasourceVariable implements Variable {
   updateOptions() {
     const options = [];
     const sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
-    var regex;
+    let regex;
 
     if (this.regex) {
       regex = this.templateSrv.replace(this.regex, null, 'regex');
       regex = kbn.stringToJsRegex(regex);
     }
 
-    for (var i = 0; i < sources.length; i++) {
+    for (let i = 0; i < sources.length; i++) {
       const source = sources[i];
       // must match on type
       if (source.meta.id !== this.query) {

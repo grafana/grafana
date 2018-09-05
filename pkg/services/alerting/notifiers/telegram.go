@@ -78,7 +78,7 @@ func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	}
 
 	return &TelegramNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		BotToken:     botToken,
 		ChatID:       chatId,
 		UploadImage:  uploadImage,

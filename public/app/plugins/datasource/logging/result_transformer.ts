@@ -26,13 +26,14 @@ export function getSearchMatches(line: string, search: string) {
   }
   const regexp = new RegExp(`(?:${search})`, 'g');
   const matches = [];
-  let match;
-  while ((match = regexp.exec(line))) {
+  let match = regexp.exec(line);
+  while (match) {
     matches.push({
       text: match[0],
       start: match.index,
       length: match[0].length,
     });
+    match = regexp.exec(line);
   }
   return matches;
 }

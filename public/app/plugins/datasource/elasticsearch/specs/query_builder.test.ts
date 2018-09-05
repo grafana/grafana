@@ -19,12 +19,12 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with defaults on es5.x', () => {
-    const builder_5x = new ElasticQueryBuilder({
+    const builder5x = new ElasticQueryBuilder({
       timeField: '@timestamp',
       esVersion: 5,
     });
 
-    const query = builder_5x.build({
+    const query = builder5x.build({
       metrics: [{ type: 'Count', id: '0' }],
       timeField: '@timestamp',
       bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
@@ -134,11 +134,11 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('with filters aggs on es5.x', () => {
-    const builder_5x = new ElasticQueryBuilder({
+    const builder5x = new ElasticQueryBuilder({
       timeField: '@timestamp',
       esVersion: 5,
     });
-    const query = builder_5x.build({
+    const query = builder5x.build({
       metrics: [{ type: 'count', id: '1' }],
       timeField: '@timestamp',
       bucketAggs: [

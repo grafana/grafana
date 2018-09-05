@@ -16,17 +16,17 @@ const LEGEND_VALUE_MARGIN = 0;
 /**
  * Color legend for heatmap editor.
  */
-module.directive('colorLegend', function() {
+module.directive('colorLegend', () => {
   return {
     restrict: 'E',
     template: '<div class="heatmap-color-legend"><svg width="16.5rem" height="24px"></svg></div>',
-    link: function(scope, elem, attrs) {
+    link: (scope, elem, attrs) => {
       const ctrl = scope.ctrl;
       const panel = scope.ctrl.panel;
 
       render();
 
-      ctrl.events.on('render', function() {
+      ctrl.events.on('render', () => {
         render();
       });
 
@@ -52,16 +52,16 @@ module.directive('colorLegend', function() {
 /**
  * Heatmap legend with scale values.
  */
-module.directive('heatmapLegend', function() {
+module.directive('heatmapLegend', () => {
   return {
     restrict: 'E',
     template: `<div class="heatmap-color-legend"><svg width="${LEGEND_WIDTH_PX}px" height="${LEGEND_HEIGHT_PX}px"></svg></div>`,
-    link: function(scope, elem, attrs) {
+    link: (scope, elem, attrs) => {
       const ctrl = scope.ctrl;
       const panel = scope.ctrl.panel;
 
       render();
-      ctrl.events.on('render', function() {
+      ctrl.events.on('render', () => {
         render();
       });
 
@@ -200,7 +200,7 @@ function drawSimpleColorLegend(elem, colorScale) {
     const valuesRange = d3.range(0, legendWidth, rangeStep);
 
     const legend = d3.select(legendElem.get(0));
-    var legendRects = legend.selectAll('.heatmap-color-legend-rect').data(valuesRange);
+    const legendRects = legend.selectAll('.heatmap-color-legend-rect').data(valuesRange);
 
     legendRects
       .enter()
@@ -239,7 +239,7 @@ function drawSimpleOpacityLegend(elem, options) {
 
     const rangeStep = 10;
     const valuesRange = d3.range(0, legendWidth, rangeStep);
-    var legendRects = legend.selectAll('.heatmap-opacity-legend-rect').data(valuesRange);
+    const legendRects = legend.selectAll('.heatmap-opacity-legend-rect').data(valuesRange);
 
     legendRects
       .enter()

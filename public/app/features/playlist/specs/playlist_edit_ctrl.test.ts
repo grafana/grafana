@@ -2,7 +2,7 @@ import '../playlist_edit_ctrl';
 import { PlaylistEditCtrl } from '../playlist_edit_ctrl';
 
 describe('PlaylistEditCtrl', () => {
-  var ctx: any;
+  let ctx: any;
   beforeEach(() => {
     const navModelSrv = {
       getNav: () => {

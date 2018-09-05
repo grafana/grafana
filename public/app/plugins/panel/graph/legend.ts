@@ -3,22 +3,22 @@ import _ from 'lodash';
 import $ from 'jquery';
 import baron from 'baron';
 
-var module = angular.module('grafana.directives');
+const module = angular.module('grafana.directives');
 
-module.directive('graphLegend', function(popoverSrv, $timeout) {
+module.directive('graphLegend', (popoverSrv, $timeout) => {
   return {
-    link: function(scope, elem) {
-      var firstRender = true;
-      var ctrl = scope.ctrl;
-      var panel = ctrl.panel;
-      var data;
-      var seriesList;
-      var i;
-      var legendScrollbar;
+    link: (scope, elem) => {
+      let firstRender = true;
+      const ctrl = scope.ctrl;
+      const panel = ctrl.panel;
+      let data;
+      let seriesList;
+      let i;
+      let legendScrollbar;
       const legendRightDefaultWidth = 10;
       const legendElem = elem.parent();
 
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         destroyScrollbar();
       });
 
@@ -40,11 +40,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           return;
         }
 
-        var el = $(e.currentTarget).find('.fa-minus');
-        var index = getSeriesIndexForElement(el);
-        var series = seriesList[index];
+        const el = $(e.currentTarget).find('.fa-minus');
+        const index = getSeriesIndexForElement(el);
+        const series = seriesList[index];
 
-        $timeout(function() {
+        $timeout(() => {
           popoverSrv.show({
             element: el[0],
             position: 'bottom left',
@@ -55,10 +55,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
             openOn: 'hover',
             model: {
               series: series,
-              toggleAxis: function() {
+              toggleAxis: () => {
                 ctrl.toggleAxis(series);
               },
-              colorSelected: function(color) {
+              colorSelected: color => {
                 ctrl.changeSeriesColor(series, color);
               },
             },
@@ -67,17 +67,17 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function toggleSeries(e) {
-        var el = $(e.currentTarget);
-        var index = getSeriesIndexForElement(el);
-        var seriesInfo = seriesList[index];
+        const el = $(e.currentTarget);
+        const index = getSeriesIndexForElement(el);
+        const seriesInfo = seriesList[index];
         const scrollPosition = legendScrollbar.scroller.scrollTop;
         ctrl.toggleSeries(seriesInfo, e);
         legendScrollbar.scroller.scrollTop = scrollPosition;
       }
 
       function sortLegend(e) {
-        var el = $(e.currentTarget);
-        var stat = el.data('stat');
+        const el = $(e.currentTarget);
+        const stat = el.data('stat');
 
         if (stat !== panel.legend.sort) {
           panel.legend.sortDesc = null;
@@ -100,10 +100,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         if (!panel.legend[statName]) {
           return '';
         }
-        var html = '<th class="pointer" data-stat="' + statName + '">' + statName;
+        let html = '<th class="pointer" data-stat="' + statName + '">' + statName;
 
         if (panel.legend.sort === statName) {
-          var cssClass = panel.legend.sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up';
+          const cssClass = panel.legend.sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up';
           html += ' <span class="' + cssClass + '"></span>';
         }
 
@@ -131,16 +131,16 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
 
         // Set min-width if side style and there is a value, otherwise remove the CSS property
         // Set width so it works with IE11
-        var width: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + 'px' : '';
-        var ieWidth: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth - 1 + 'px' : '';
+        const width: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + 'px' : '';
+        const ieWidth: any = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth - 1 + 'px' : '';
         legendElem.css('min-width', width);
         legendElem.css('width', ieWidth);
 
         elem.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
-        var tableHeaderElem;
+        let tableHeaderElem;
         if (panel.legend.alignAsTable) {
-          var header = '<tr>';
+          let header = '<tr>';
           header += '<th colspan="2" style="text-align:left"></th>';
           if (panel.legend.values) {
             header += getTableHeaderHtml('min');
@@ -154,7 +154,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
 
         if (panel.legend.sort) {
-          seriesList = _.sortBy(seriesList, function(series) {
+          seriesList = _.sortBy(seriesList, series => {
             let sort = series.stats[panel.legend.sort];
             if (sort === null) {
               sort = -Infinity;
@@ -178,13 +178,13 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       function renderSeriesLegendElements() {
         const seriesElements = [];
         for (i = 0; i < seriesList.length; i++) {
-          var series = seriesList[i];
+          const series = seriesList[i];
 
           if (series.hideFromLegend(panel.legend)) {
             continue;
           }
 
-          var html = '<div class="graph-legend-series';
+          let html = '<div class="graph-legend-series';
 
           if (series.yaxis === 2) {
             html += ' graph-legend-series--right-y';
@@ -201,11 +201,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
             '<a class="graph-legend-alias pointer" title="' + series.aliasEscaped + '">' + series.aliasEscaped + '</a>';
 
           if (panel.legend.values) {
-            var avg = series.formatValue(series.stats.avg);
-            var current = series.formatValue(series.stats.current);
-            var min = series.formatValue(series.stats.min);
-            var max = series.formatValue(series.stats.max);
-            var total = series.formatValue(series.stats.total);
+            const avg = series.formatValue(series.stats.avg);
+            const current = series.formatValue(series.stats.current);
+            const min = series.formatValue(series.stats.min);
+            const max = series.formatValue(series.stats.max);
+            const total = series.formatValue(series.stats.total);
 
             if (panel.legend.min) {
               html += '<div class="graph-legend-value min">' + min + '</div>';
@@ -233,10 +233,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       function renderLegendElement(tableHeaderElem) {
         const legendWidth = elem.width();
 
-        var seriesElements = renderSeriesLegendElements();
+        const seriesElements = renderSeriesLegendElements();
 
         if (panel.legend.alignAsTable) {
-          var tbodyElem = $('<tbody></tbody>');
+          const tbodyElem = $('<tbody></tbody>');
           tbodyElem.append(tableHeaderElem);
           tbodyElem.append(seriesElements);
           elem.append(tbodyElem);

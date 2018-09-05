@@ -6,7 +6,7 @@ export class MssqlDatasource {
   name: any;
   responseParser: ResponseParser;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -26,7 +26,7 @@ export class MssqlDatasource {
       return value;
     }
 
-    var quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, val => {
       if (typeof value === 'number') {
         return value;
       }
@@ -37,7 +37,7 @@ export class MssqlDatasource {
   }
 
   query(options) {
-    var queries = _.filter(options.targets, item => {
+    const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
       return {

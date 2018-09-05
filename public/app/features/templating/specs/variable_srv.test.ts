@@ -3,8 +3,8 @@ import { VariableSrv } from '../variable_srv';
 import moment from 'moment';
 import $q from 'q';
 
-describe('VariableSrv', function() {
-  const ctx = <any>{
+describe('VariableSrv', function(this: any) {
+  const ctx = {
     datasourceSrv: {},
     timeSrv: {
       timeRange: () => {},
@@ -29,12 +29,12 @@ describe('VariableSrv', function() {
     $location: {
       search: () => {},
     },
-  };
+  } as any;
 
   function describeUpdateVariable(desc, fn) {
     describe(desc, () => {
       const scenario: any = {};
-      scenario.setup = function(setupFn) {
+      scenario.setup = setupFn => {
         scenario.setupFn = setupFn;
       };
 
@@ -135,7 +135,7 @@ describe('VariableSrv', function() {
   //
   // Query variable update
   //
-  describeUpdateVariable('query variable with empty current object and refresh', function(scenario) {
+  describeUpdateVariable('query variable with empty current object and refresh', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -154,7 +154,7 @@ describe('VariableSrv', function() {
 
   describeUpdateVariable(
     'query variable with multi select and new options does not contain some selected values',
-    function(scenario) {
+    scenario => {
       scenario.setup(() => {
         scenario.variableModel = {
           type: 'query',
@@ -177,7 +177,7 @@ describe('VariableSrv', function() {
 
   describeUpdateVariable(
     'query variable with multi select and new options does not contain any selected values',
-    function(scenario) {
+    scenario => {
       scenario.setup(() => {
         scenario.variableModel = {
           type: 'query',
@@ -198,7 +198,7 @@ describe('VariableSrv', function() {
     }
   );
 
-  describeUpdateVariable('query variable with multi select and $__all selected', function(scenario) {
+  describeUpdateVariable('query variable with multi select and $__all selected', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -219,7 +219,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('query variable with numeric results', function(scenario) {
+  describeUpdateVariable('query variable with numeric results', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -237,7 +237,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('basic query variable', function(scenario) {
+  describeUpdateVariable('basic query variable', scenario => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }];
@@ -255,7 +255,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('and existing value still exists in options', function(scenario) {
+  describeUpdateVariable('and existing value still exists in options', scenario => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.current = { value: 'backend2', text: 'backend2' };
@@ -267,7 +267,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('and regex pattern exists', function(scenario) {
+  describeUpdateVariable('and regex pattern exists', scenario => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.regex = '/apps.*(backend_[0-9]+)/';
@@ -282,7 +282,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('and regex pattern exists and no match', function(scenario) {
+  describeUpdateVariable('and regex pattern exists and no match', scenario => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.regex = '/apps.*(backendasd[0-9]+)/';
@@ -298,7 +298,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('regex pattern without slashes', function(scenario) {
+  describeUpdateVariable('regex pattern without slashes', scenario => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.regex = 'backend_01';
@@ -313,7 +313,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('regex pattern remove duplicates', function(scenario) {
+  describeUpdateVariable('regex pattern remove duplicates', scenario => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.regex = '/backend_01/';
@@ -328,7 +328,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('with include All', function(scenario) {
+  describeUpdateVariable('with include All', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -345,7 +345,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('with include all and custom value', function(scenario) {
+  describeUpdateVariable('with include all and custom value', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -362,7 +362,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('without sort', function(scenario) {
+  describeUpdateVariable('without sort', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -380,7 +380,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('with alphabetical sort (asc)', function(scenario) {
+  describeUpdateVariable('with alphabetical sort (asc)', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -398,7 +398,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('with alphabetical sort (desc)', function(scenario) {
+  describeUpdateVariable('with alphabetical sort (desc)', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -416,7 +416,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('with numerical sort (asc)', function(scenario) {
+  describeUpdateVariable('with numerical sort (asc)', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -434,7 +434,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('with numerical sort (desc)', function(scenario) {
+  describeUpdateVariable('with numerical sort (desc)', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -455,7 +455,7 @@ describe('VariableSrv', function() {
   //
   // datasource variable update
   //
-  describeUpdateVariable('datasource variable with regex filter', function(scenario) {
+  describeUpdateVariable('datasource variable with regex filter', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'datasource',
@@ -486,7 +486,7 @@ describe('VariableSrv', function() {
   //
   // Custom variable update
   //
-  describeUpdateVariable('update custom variable', function(scenario) {
+  describeUpdateVariable('update custom variable', scenario => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'custom',

@@ -101,7 +101,7 @@
     "build": "grunt build",
     "test": "grunt test",
     "test:coverage": "grunt test --coverage=true",
-    "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
+    "lint": "tslint -c tslint.json --project tsconfig.json",
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
     "precommit": "lint-staged && grunt precommit"
