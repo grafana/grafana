@@ -42,7 +42,9 @@ export class PanelModel {
 
     // copy properties from persisted model
     for (const property in model) {
-      this[property] = model[property];
+      if (model.hasOwnProperty(property)) {
+        this[property] = model[property];
+      }
     }
 
     if (!this.gridPos) {

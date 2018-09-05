@@ -11,25 +11,27 @@ export default class ResponseParser {
     }
 
     for (const key in res.data.results) {
-      const queryRes = res.data.results[key];
+      if (res.data.results.hasOwnProperty(key)) {
+        const queryRes = res.data.results[key];
 
-      if (queryRes.series) {
-        for (const series of queryRes.series) {
-          data.push({
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          });
+        if (queryRes.series) {
+          for (const series of queryRes.series) {
+            data.push({
+              target: series.name,
+              datapoints: series.points,
+              refId: queryRes.refId,
+              meta: queryRes.meta,
+            });
+          }
         }
-      }
 
-      if (queryRes.tables) {
-        for (const table of queryRes.tables) {
-          table.type = 'table';
-          table.refId = queryRes.refId;
-          table.meta = queryRes.meta;
-          data.push(table);
+        if (queryRes.tables) {
+          for (const table of queryRes.tables) {
+            table.type = 'table';
+            table.refId = queryRes.refId;
+            table.meta = queryRes.meta;
+            data.push(table);
+          }
         }
       }
     }

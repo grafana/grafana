@@ -23,7 +23,7 @@
     "triple-equals": [true, "allow-null-check"],
     "comment-format": [false, "check-space"],
     "eofline": true,
-    "forin": false,
+    "forin": true,
     "indent": [true, "spaces", 2],
     "jsdoc-format": true,
     "label-position": true,

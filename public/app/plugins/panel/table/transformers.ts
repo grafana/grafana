@@ -52,15 +52,17 @@ transformers['timeseries_to_columns'] = {
     }
 
     for (const time in points) {
-      const point = points[time];
-      const values = [point.time];
+      if (points.hasOwnProperty(time)) {
+        const point = points[time];
+        const values = [point.time];
 
-      for (let i = 0; i < data.length; i++) {
-        const value = point[i];
-        values.push(value);
+        for (let i = 0; i < data.length; i++) {
+          const value = point[i];
+          values.push(value);
+        }
+
+        model.rows.push(values);
       }
-
-      model.rows.push(values);
     }
   },
 };
@@ -282,7 +284,9 @@ transformers['json'] = {
         const doc = series.datapoints[y];
         const flattened = flatten(doc, null);
         for (const propName in flattened) {
-          names[propName] = true;
+          if (flattened.hasOwnProperty(propName)) {
+            names[propName] = true;
+          }
         }
       }
     }

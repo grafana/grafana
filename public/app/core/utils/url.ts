@@ -33,7 +33,9 @@ export function toUrlParams(a) {
         }
       } else if (obj && String(obj) === '[object Object]') {
         for (key in obj) {
-          buildParams(prefix + '[' + key + ']', obj[key]);
+          if (obj.hasOwnProperty(key)) {
+            buildParams(prefix + '[' + key + ']', obj[key]);
+          }
         }
       } else {
         add(prefix, obj);
@@ -44,7 +46,9 @@ export function toUrlParams(a) {
       }
     } else {
       for (key in obj) {
-        buildParams(key, obj[key]);
+        if (obj.hasOwnProperty(key)) {
+          buildParams(key, obj[key]);
+        }
       }
     }
     return s;

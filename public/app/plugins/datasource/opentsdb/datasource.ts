@@ -439,18 +439,22 @@ export default class OpenTsDatasource {
       query.filters = angular.copy(target.filters);
       if (query.filters) {
         for (const filterKey in query.filters) {
-          query.filters[filterKey].filter = this.templateSrv.replace(
-            query.filters[filterKey].filter,
-            options.scopedVars,
-            'pipe'
-          );
+          if (query.filters.hasOwnProperty(filterKey)) {
+            query.filters[filterKey].filter = this.templateSrv.replace(
+              query.filters[filterKey].filter,
+              options.scopedVars,
+              'pipe'
+            );
+          }
         }
       }
     } else {
       query.tags = angular.copy(target.tags);
       if (query.tags) {
         for (const tagKey in query.tags) {
-          query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], options.scopedVars, 'pipe');
+          if (query.tags.hasOwnProperty(tagKey)) {
+            query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], options.scopedVars, 'pipe');
+          }
         }
       }
     }
