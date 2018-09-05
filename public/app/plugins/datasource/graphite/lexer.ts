@@ -941,9 +941,10 @@ Lexer.prototype = {
 
   tokenize: function() {
     const list = [];
-    let token;
-    while ((token = this.next())) {
+    let token = this.next();
+    while (token) {
       list.push(token);
+      token = this.next();
     }
     return list;
   },
