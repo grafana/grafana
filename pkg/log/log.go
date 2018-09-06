@@ -105,7 +105,7 @@ func Critical(skip int, format string, v ...interface{}) {
 }
 
 func Fatal(skip int, format string, v ...interface{}) {
-	Root.Crit(fmt.Sprintf(format, v))
+	Root.Crit(fmt.Sprintf(format, v...))
 	Close()
 	os.Exit(1)
 }

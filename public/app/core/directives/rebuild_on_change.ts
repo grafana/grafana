@@ -5,14 +5,16 @@ function getBlockNodes(nodes) {
   let node = nodes[0];
   const endNode = nodes[nodes.length - 1];
   let blockNodes;
+  node = node.nextSibling;
 
-  for (let i = 1; node !== endNode && (node = node.nextSibling); i++) {
+  for (let i = 1; node !== endNode && node; i++) {
     if (blockNodes || nodes[i] !== node) {
       if (!blockNodes) {
         blockNodes = $([].slice.call(nodes, 0, i));
       }
       blockNodes.push(node);
     }
+    node = node.nextSibling;
   }
 
   return blockNodes || nodes;
@@ -26,7 +28,7 @@ function rebuildOnChange($animate) {
     transclude: true,
     priority: 600,
     restrict: 'E',
-    link: function(scope, elem, attrs, ctrl, transclude) {
+    link: (scope, elem, attrs, ctrl, transclude) => {
       let block, childScope, previousElements;
 
       function cleanUp() {
@@ -40,7 +42,7 @@ function rebuildOnChange($animate) {
         }
         if (block) {
           previousElements = getBlockNodes(block.clone);
-          $animate.leave(previousElements).then(function() {
+          $animate.leave(previousElements).then(() => {
             previousElements = null;
           });
           block = null;
@@ -53,7 +55,7 @@ function rebuildOnChange($animate) {
         }
 
         if (!childScope && (value || attrs.showNull)) {
-          transclude(function(clone, newScope) {
+          transclude((clone, newScope) => {
             childScope = newScope;
             clone[clone.length++] = document.createComment(' end rebuild on change ');
             block = { clone: clone };

@@ -57,13 +57,13 @@ const panelTemplate = `
   </div>
 `;
 
-module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
+module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
   return {
     restrict: 'E',
     template: panelTemplate,
     transclude: true,
     scope: { ctrl: '=' },
-    link: function(scope, elem) {
+    link: (scope, elem) => {
       const panelContainer = elem.find('.panel-container');
       const panelContent = elem.find('.panel-content');
       const cornerInfoElem = elem.find('.panel-info-corner');
@@ -217,7 +217,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
 
           infoDrop = new Drop({
             target: cornerInfoElem[0],
-            content: function() {
+            content: () => {
               return ctrl.getInfoContent({ mode: 'tooltip' });
             },
             classes: ctrl.error ? 'drop-error' : 'drop-help',
@@ -241,7 +241,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
 
-      cornerInfoElem.on('click', function() {
+      cornerInfoElem.on('click', () => {
         infoDrop.close();
         scope.$apply(ctrl.openInspector.bind(ctrl));
       });
@@ -249,7 +249,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
 
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         elem.off();
         cornerInfoElem.off();
 
@@ -265,7 +265,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
   };
 });
 
-module.directive('panelHelpCorner', function($rootScope) {
+module.directive('panelHelpCorner', $rootScope => {
   return {
     restrict: 'E',
     template: `
@@ -275,6 +275,6 @@ module.directive('panelHelpCorner', function($rootScope) {
     </span>
     </span>
     `,
-    link: function(scope, elem) {},
+    link: (scope, elem) => {},
   };
 });

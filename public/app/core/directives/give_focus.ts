@@ -1,18 +1,18 @@
 import coreModule from '../core_module';
 
-coreModule.directive('giveFocus', function() {
-  return function(scope, element, attrs) {
-    element.click(function(e) {
+coreModule.directive('giveFocus', () => {
+  return (scope, element, attrs) => {
+    element.click(e => {
       e.stopPropagation();
     });
 
     scope.$watch(
       attrs.giveFocus,
-      function(newValue) {
+      newValue => {
         if (!newValue) {
           return;
         }
-        setTimeout(function() {
+        setTimeout(() => {
           element.focus();
           const domEl = element[0];
           if (domEl.setSelectionRange) {

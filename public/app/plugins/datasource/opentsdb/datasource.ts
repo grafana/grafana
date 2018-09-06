@@ -56,19 +56,19 @@ export default class OpenTsDatasource {
     }
 
     const groupByTags = {};
-    _.each(queries, function(query) {
+    _.each(queries, query => {
       if (query.filters && query.filters.length > 0) {
-        _.each(query.filters, function(val) {
+        _.each(query.filters, val => {
           groupByTags[val.tagk] = true;
         });
       } else {
-        _.each(query.tags, function(val, key) {
+        _.each(query.tags, (val, key) => {
           groupByTags[key] = true;
         });
       }
     });
 
-    options.targets = _.filter(options.targets, function(query) {
+    options.targets = _.filter(options.targets, query => {
       return query.hide !== true;
     });
 
@@ -97,28 +97,26 @@ export default class OpenTsDatasource {
 
     const queries = _.compact(qs);
 
-    return this.performTimeSeriesQuery(queries, start, end).then(
-      function(results) {
-        if (results.data[0]) {
-          let annotationObject = results.data[0].annotations;
-          if (options.annotation.isGlobal) {
-            annotationObject = results.data[0].globalAnnotations;
-          }
-          if (annotationObject) {
-            _.each(annotationObject, function(annotation) {
-              const event = {
-                text: annotation.description,
-                time: Math.floor(annotation.startTime) * 1000,
-                annotation: options.annotation,
-              };
-
-              eventList.push(event);
-            });
-          }
+    return this.performTimeSeriesQuery(queries, start, end).then(results => {
+      if (results.data[0]) {
+        let annotationObject = results.data[0].annotations;
+        if (options.annotation.isGlobal) {
+          annotationObject = results.data[0].globalAnnotations;
         }
-        return eventList;
-      }.bind(this)
-    );
+        if (annotationObject) {
+          _.each(annotationObject, annotation => {
+            const event = {
+              text: annotation.description,
+              time: Math.floor(annotation.startTime) * 1000,
+              annotation: options.annotation,
+            };
+
+            eventList.push(event);
+          });
+        }
+      }
+      return eventList;
+    });
   }
 
   targetContainsTemplate(target) {
@@ -177,7 +175,7 @@ export default class OpenTsDatasource {
 
   _saveTagKeys(metricData) {
     const tagKeys = Object.keys(metricData.tags);
-    _.each(metricData.aggregateTags, function(tag) {
+    _.each(metricData.aggregateTags, tag => {
       tagKeys.push(tag);
     });
 
@@ -185,7 +183,7 @@ export default class OpenTsDatasource {
   }
 
   _performSuggestQuery(query, type) {
-    return this._get('/api/suggest', { type: type, q: query, max: 1000 }).then(function(result) {
+    return this._get('/api/suggest', { type: type, q: query, max: 1000 }).then(result => {
       return result.data;
     });
   }
@@ -195,7 +193,7 @@ export default class OpenTsDatasource {
       return this.$q.when([]);
     }
 
-    const keysArray = keys.split(',').map(function(key) {
+    const keysArray = keys.split(',').map(key => {
       return key.trim();
     });
     const key = keysArray[0];
@@ -207,10 +205,10 @@ export default class OpenTsDatasource {
 
     const m = metric + '{' + keysQuery + '}';
 
-    return this._get('/api/search/lookup', { m: m, limit: 3000 }).then(function(result) {
+    return this._get('/api/search/lookup', { m: m, limit: 3000 }).then(result => {
       result = result.data.results;
       const tagvs = [];
-      _.each(result, function(r) {
+      _.each(result, r => {
         if (tagvs.indexOf(r.tags[key]) === -1) {
           tagvs.push(r.tags[key]);
         }
@@ -224,11 +222,11 @@ export default class OpenTsDatasource {
       return this.$q.when([]);
     }
 
-    return this._get('/api/search/lookup', { m: metric, limit: 1000 }).then(function(result) {
+    return this._get('/api/search/lookup', { m: metric, limit: 1000 }).then(result => {
       result = result.data.results;
       const tagks = [];
-      _.each(result, function(r) {
-        _.each(r.tags, function(tagv, tagk) {
+      _.each(result, r => {
+        _.each(r.tags, (tagv, tagk) => {
           if (tagks.indexOf(tagk) === -1) {
             tagks.push(tagk);
           }
@@ -271,8 +269,8 @@ export default class OpenTsDatasource {
       return this.$q.reject(err);
     }
 
-    const responseTransform = function(result) {
-      return _.map(result, function(value) {
+    const responseTransform = result => {
+      return _.map(result, value => {
         return { text: value };
       });
     };
@@ -312,7 +310,7 @@ export default class OpenTsDatasource {
   }
 
   testDatasource() {
-    return this._performSuggestQuery('cpu', 'metrics').then(function() {
+    return this._performSuggestQuery('cpu', 'metrics').then(() => {
       return { status: 'success', message: 'Data source is working' };
     });
   }
@@ -322,7 +320,7 @@ export default class OpenTsDatasource {
       return this.aggregatorsPromise;
     }
 
-    this.aggregatorsPromise = this._get('/api/aggregators').then(function(result) {
+    this.aggregatorsPromise = this._get('/api/aggregators').then(result => {
       if (result.data && _.isArray(result.data)) {
         return result.data.sort();
       }
@@ -336,7 +334,7 @@ export default class OpenTsDatasource {
       return this.filterTypesPromise;
     }
 
-    this.filterTypesPromise = this._get('/api/config/filters').then(function(result) {
+    this.filterTypesPromise = this._get('/api/config/filters').then(result => {
       if (result.data) {
         return Object.keys(result.data).sort();
       }
@@ -351,7 +349,7 @@ export default class OpenTsDatasource {
 
     // TSDB returns datapoints has a hash of ts => value.
     // Can't use _.pairs(invert()) because it stringifies keys/values
-    _.each(md.dps, function(v, k) {
+    _.each(md.dps, (v, k) => {
       if (tsdbResolution === 2) {
         dps.push([v, k * 1]);
       } else {
@@ -365,7 +363,7 @@ export default class OpenTsDatasource {
   createMetricLabel(md, target, groupByTags, options) {
     if (target.alias) {
       const scopedVars = _.clone(options.scopedVars || {});
-      _.each(md.tags, function(value, key) {
+      _.each(md.tags, (value, key) => {
         scopedVars['tag_' + key] = { value: value };
       });
       return this.templateSrv.replace(target.alias, scopedVars);
@@ -375,7 +373,7 @@ export default class OpenTsDatasource {
     const tagData = [];
 
     if (!_.isEmpty(md.tags)) {
-      _.each(_.toPairs(md.tags), function(tag) {
+      _.each(_.toPairs(md.tags), tag => {
         if (_.has(groupByTags, tag[0])) {
           tagData.push(tag[0] + '=' + tag[1]);
         }
@@ -410,11 +408,11 @@ export default class OpenTsDatasource {
       };
 
       if (target.counterMax && target.counterMax.length) {
-        query.rateOptions.counterMax = parseInt(target.counterMax);
+        query.rateOptions.counterMax = parseInt(target.counterMax, 10);
       }
 
       if (target.counterResetValue && target.counterResetValue.length) {
-        query.rateOptions.resetValue = parseInt(target.counterResetValue);
+        query.rateOptions.resetValue = parseInt(target.counterResetValue, 10);
       }
 
       if (tsdbVersion >= 2) {

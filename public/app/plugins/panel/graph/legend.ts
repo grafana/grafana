@@ -5,9 +5,9 @@ import baron from 'baron';
 
 const module = angular.module('grafana.directives');
 
-module.directive('graphLegend', function(popoverSrv, $timeout) {
+module.directive('graphLegend', (popoverSrv, $timeout) => {
   return {
-    link: function(scope, elem) {
+    link: (scope, elem) => {
       let firstRender = true;
       const ctrl = scope.ctrl;
       const panel = ctrl.panel;
@@ -18,7 +18,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       const legendRightDefaultWidth = 10;
       const legendElem = elem.parent();
 
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         destroyScrollbar();
       });
 
@@ -44,7 +44,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         const index = getSeriesIndexForElement(el);
         const series = seriesList[index];
 
-        $timeout(function() {
+        $timeout(() => {
           popoverSrv.show({
             element: el[0],
             position: 'bottom left',
@@ -55,10 +55,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
             openOn: 'hover',
             model: {
               series: series,
-              toggleAxis: function() {
+              toggleAxis: () => {
                 ctrl.toggleAxis(series);
               },
-              colorSelected: function(color) {
+              colorSelected: color => {
                 ctrl.changeSeriesColor(series, color);
               },
             },
@@ -154,7 +154,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
 
         if (panel.legend.sort) {
-          seriesList = _.sortBy(seriesList, function(series) {
+          seriesList = _.sortBy(seriesList, series => {
             let sort = series.stats[panel.legend.sort];
             if (sort === null) {
               sort = -Infinity;

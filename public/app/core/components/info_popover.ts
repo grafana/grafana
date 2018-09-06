@@ -7,7 +7,7 @@ export function infoPopover() {
     restrict: 'E',
     template: '<i class="fa fa-info-circle"></i>',
     transclude: true,
-    link: function(scope, elem, attrs, ctrl, transclude) {
+    link: (scope, elem, attrs, ctrl, transclude) => {
       const offset = attrs.offset || '0 -10px';
       const position = attrs.position || 'right middle';
       let classes = 'drop-help drop-hide-out-of-bounds';
@@ -23,7 +23,7 @@ export function infoPopover() {
         elem.addClass('gf-form-help-icon--' + attrs.mode);
       }
 
-      transclude(function(clone, newScope) {
+      transclude((clone, newScope) => {
         const content = document.createElement('div');
         content.className = 'markdown-html';
 
@@ -54,7 +54,7 @@ export function infoPopover() {
         scope.$applyAsync(() => {
           const drop = new Drop(dropOptions);
 
-          const unbind = scope.$on('$destroy', function() {
+          const unbind = scope.$on('$destroy', () => {
             drop.destroy();
             unbind();
           });

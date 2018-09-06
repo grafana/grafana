@@ -7,13 +7,13 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.currentOverrides = [];
   $scope.override = $scope.override || {};
 
-  $scope.addOverrideOption = function(name, propertyName, values) {
+  $scope.addOverrideOption = (name, propertyName, values) => {
     const option = {
       text: name,
       propertyName: propertyName,
       index: $scope.overrideMenu.lenght,
       values: values,
-      submenu: _.map(values, function(value) {
+      submenu: _.map(values, value => {
         return { text: String(value), value: value };
       }),
     };
@@ -21,7 +21,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
     $scope.overrideMenu.push(option);
   };
 
-  $scope.setOverride = function(item, subItem) {
+  $scope.setOverride = (item, subItem) => {
     // handle color overrides
     if (item.propertyName === 'color') {
       $scope.openColorSelector($scope.override['color']);
@@ -41,13 +41,13 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
     $scope.ctrl.render();
   };
 
-  $scope.colorSelected = function(color) {
+  $scope.colorSelected = color => {
     $scope.override['color'] = color;
     $scope.updateCurrentOverrides();
     $scope.ctrl.render();
   };
 
-  $scope.openColorSelector = function(color) {
+  $scope.openColorSelector = color => {
     const fakeSeries = { color: color };
     popoverSrv.show({
       element: $element.find('.dropdown')[0],
@@ -59,27 +59,27 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
         colorSelected: $scope.colorSelected,
         series: fakeSeries,
       },
-      onClose: function() {
+      onClose: () => {
         $scope.ctrl.render();
       },
     });
   };
 
-  $scope.removeOverride = function(option) {
+  $scope.removeOverride = option => {
     delete $scope.override[option.propertyName];
     $scope.updateCurrentOverrides();
     $scope.ctrl.refresh();
   };
 
-  $scope.getSeriesNames = function() {
-    return _.map($scope.ctrl.seriesList, function(series) {
+  $scope.getSeriesNames = () => {
+    return _.map($scope.ctrl.seriesList, series => {
       return series.alias;
     });
   };
 
-  $scope.updateCurrentOverrides = function() {
+  $scope.updateCurrentOverrides = () => {
     $scope.currentOverrides = [];
-    _.each($scope.overrideMenu, function(option) {
+    _.each($scope.overrideMenu, option => {
       const value = $scope.override[option.propertyName];
       if (_.isUndefined(value)) {
         return;
