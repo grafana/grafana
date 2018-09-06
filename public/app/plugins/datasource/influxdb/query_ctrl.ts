@@ -70,7 +70,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     const categories = queryPart.getCategories();
     this.selectMenu = _.reduce(
       categories,
-      function(memo, cat, key) {
+      (memo, cat, key) => {
         const menu = {
           text: key,
           submenu: cat.map(item => {

@@ -227,7 +227,7 @@ export class ElasticResponse {
     if (target.alias) {
       const regex = /\{\{([\s\S]+?)\}\}/g;
 
-      return target.alias.replace(regex, function(match, g1, g2) {
+      return target.alias.replace(regex, (match, g1, g2) => {
         const group = g1 || g2;
 
         if (group.indexOf('term ') === 0) {

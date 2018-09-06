@@ -27,7 +27,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
     target.format = target.format || this.getDefaultFormat();
 
     this.metric = '';
-    this.resolutions = _.map([1, 2, 3, 4, 5, 10], function(f) {
+    this.resolutions = _.map([1, 2, 3, 4, 5, 10], f => {
       return { factor: f, label: '1/' + f };
     });
 

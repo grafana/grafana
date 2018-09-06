@@ -192,6 +192,10 @@
   &:hover,
   &.selected {
     background: $list-item-hover-bg;
+
+    .search-item__body-title {
+      color: $text-color-strong;
+    }
   }
 }
 

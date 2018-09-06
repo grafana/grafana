@@ -138,7 +138,7 @@ const template = `
 </div>
 `;
 
-coreModule.directive('graphThresholdForm', function() {
+coreModule.directive('graphThresholdForm', () => {
   return {
     restrict: 'E',
     template: template,

@@ -1,22 +1,22 @@
 import PostgresQuery from '../postgres_query';
 
-describe('PostgresQuery', function() {
+describe('PostgresQuery', () => {
   const templateSrv = {
     replace: jest.fn(text => text),
   };
 
-  describe('When initializing', function() {
-    it('should not be in SQL mode', function() {
+  describe('When initializing', () => {
+    it('should not be in SQL mode', () => {
       const query = new PostgresQuery({}, templateSrv);
       expect(query.target.rawQuery).toBe(false);
     });
-    it('should be in SQL mode for pre query builder queries', function() {
+    it('should be in SQL mode for pre query builder queries', () => {
       const query = new PostgresQuery({ rawSql: 'SELECT 1' }, templateSrv);
       expect(query.target.rawQuery).toBe(true);
     });
   });
 
-  describe('When generating time column SQL', function() {
+  describe('When generating time column SQL', () => {
     const query = new PostgresQuery({}, templateSrv);
 
     query.target.timeColumn = 'time';
@@ -25,7 +25,7 @@ describe('PostgresQuery', function() {
     expect(query.buildTimeColumn()).toBe('"time" AS "time"');
   });
 
-  describe('When generating time column SQL with group by time', function() {
+  describe('When generating time column SQL with group by time', () => {
     let query = new PostgresQuery(
       { timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'none'] }] },
       templateSrv
@@ -44,7 +44,7 @@ describe('PostgresQuery', function() {
     expect(query.buildTimeColumn(false)).toBe('$__unixEpochGroup(time,5m)');
   });
 
-  describe('When generating metric column SQL', function() {
+  describe('When generating metric column SQL', () => {
     const query = new PostgresQuery({}, templateSrv);
 
     query.target.metricColumn = 'host';
@@ -53,7 +53,7 @@ describe('PostgresQuery', function() {
     expect(query.buildMetricColumn()).toBe('"host" AS metric');
   });
 
-  describe('When generating value column SQL', function() {
+  describe('When generating value column SQL', () => {
     const query = new PostgresQuery({}, templateSrv);
 
     let column = [{ type: 'column', params: ['value'] }];
@@ -76,7 +76,7 @@ describe('PostgresQuery', function() {
     );
   });
 
-  describe('When generating value column SQL with metric column', function() {
+  describe('When generating value column SQL with metric column', () => {
     const query = new PostgresQuery({}, templateSrv);
     query.target.metricColumn = 'host';
 
@@ -110,7 +110,7 @@ describe('PostgresQuery', function() {
     );
   });
 
-  describe('When generating WHERE clause', function() {
+  describe('When generating WHERE clause', () => {
     const query = new PostgresQuery({ where: [] }, templateSrv);
 
     expect(query.buildWhereClause()).toBe('');
@@ -126,7 +126,7 @@ describe('PostgresQuery', function() {
     expect(query.buildWhereClause()).toBe('\nWHERE\n  $__timeFilter(t) AND\n  v = 1');
   });
 
-  describe('When generating GROUP BY clause', function() {
+  describe('When generating GROUP BY clause', () => {
     const query = new PostgresQuery({ group: [], metricColumn: 'none' }, templateSrv);
 
     expect(query.buildGroupClause()).toBe('');
@@ -136,7 +136,7 @@ describe('PostgresQuery', function() {
     expect(query.buildGroupClause()).toBe('\nGROUP BY 1,2');
   });
 
-  describe('When generating complete statement', function() {
+  describe('When generating complete statement', () => {
     const target = {
       timeColumn: 't',
       table: 'table',

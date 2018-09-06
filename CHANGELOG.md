@@ -20,7 +20,6 @@
 
 ### Minor
 
-* **Units**: Adds bitcoin axes unit. [#13125](https://github.com/grafana/grafana/pull/13125)
 * **GrafanaCli**: Fixed issue with grafana-cli install plugin resulting in corrupt http response from source error. Fixes [#13079](https://github.com/grafana/grafana/issues/13079)
 * **Logging**: Reopen log files after receiving a SIGHUP signal [#13112](https://github.com/grafana/grafana/pull/13112), thx [@filewalkwithme](https://github.com/filewalkwithme)
 * **Api**: Delete nonexistent datasource should return 404 [#12313](https://github.com/grafana/grafana/issues/12313), thx [@AustinWinstanley](https://github.com/AustinWinstanley)
@@ -58,6 +57,7 @@
 * **OAuth**: Fix overriding tls_skip_verify_insecure using environment variable [#12747](https://github.com/grafana/grafana/issues/12747), thx [@jangaraj](https://github.com/jangaraj)
 * **Units**: Change units to include characters for power of 2 and 3 [#12744](https://github.com/grafana/grafana/pull/12744), thx [@Worty](https://github.com/Worty)
 * **Units**: Polish złoty currency [#12691](https://github.com/grafana/grafana/pull/12691), thx [@mwegrzynek](https://github.com/mwegrzynek)
+* **Units**: Adds bitcoin axes unit. [#13125](https://github.com/grafana/grafana/pull/13125)
 * **Graph**: Option to hide series from tooltip [#3341](https://github.com/grafana/grafana/issues/3341), thx [@mtanda](https://github.com/mtanda)
 * **UI**: Fix iOS home screen "app" icon and Windows 10 app experience [#12752](https://github.com/grafana/grafana/issues/12752), thx [@andig](https://github.com/andig)
 * **Datasource**: Fix UI issue with secret fields after updating datasource [#11270](https://github.com/grafana/grafana/issues/11270)
@@ -84,6 +84,7 @@ These are new features that's still being worked on and are in an experimental p
 ### Tech
 
 * **Frontend**: Convert all Frontend Karma tests to Jest tests [#12224](https://github.com/grafana/grafana/issues/12224)
+* **Backend**: Upgrade to golang 1.11 [#13030](https://github.com/grafana/grafana/issues/13030)
 
 # 5.2.3 (2018-08-29)
 

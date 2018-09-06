@@ -26,7 +26,7 @@ export class MysqlDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, val => {
       if (typeof value === 'number') {
         return value;
       }
