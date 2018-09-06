@@ -425,7 +425,7 @@ func (proxy *DataSourceProxy) getJwtAccessToken(data templateData) (string, erro
 		}
 		conf.PrivateKey = []byte(interpolatedVal)
 	}
-	conf.Scopes = []string{"https://www.googleapis.com/auth/monitoring.read"}
+	conf.Scopes = []string{"https://www.googleapis.com/auth/monitoring.read", "https://www.googleapis.com/auth/cloudplatformprojects.readonly"}
 	conf.TokenURL = "https://oauth2.googleapis.com/token"
 
 	ctx := context.Background()
@@ -434,6 +434,7 @@ func (proxy *DataSourceProxy) getJwtAccessToken(data templateData) (string, erro
 	if err != nil {
 		return "", err
 	}
+	logger.Info("interpolatedVal", "token.AccessToken", token.AccessToken)
 	return token.AccessToken, nil
 }
 
