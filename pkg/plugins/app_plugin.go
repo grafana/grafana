@@ -37,8 +37,11 @@ type AppPluginRouteHeader struct {
 	Content string `json:"content"`
 }
 
+// JwtTokenAuth struct is both for normal Token Auth and JWT Token Auth with
+// an uploaded JWT file.
 type JwtTokenAuth struct {
 	Url    string            `json:"url"`
+	Scopes []string          `json:"scopes"`
 	Params map[string]string `json:"params"`
 }
 

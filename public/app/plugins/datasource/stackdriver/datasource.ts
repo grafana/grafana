@@ -20,6 +20,11 @@ export default class StackdriverDatasource {
             title: 'Success',
           };
         }
+
+        return {
+          status: 'error',
+          message: 'Returned http status code ' + response.status,
+        };
       })
       .catch(error => {
         let message = 'Stackdriver: ';

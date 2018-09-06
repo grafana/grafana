@@ -2,8 +2,6 @@ package pluginproxy
 
 import (
 	"bytes"
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -17,7 +15,6 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go"
-	"golang.org/x/oauth2/jwt"
 
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
@@ -27,16 +24,9 @@ import (
 )
 
 var (
-	logger     = log.New("data-proxy-log")
-	tokenCache = map[string]*jwtToken{}
-	client     = newHTTPClient()
+	logger = log.New("data-proxy-log")
+	client = newHTTPClient()
 )
-
-type jwtToken struct {
-	ExpiresOn       time.Time `json:"-"`
-	ExpiresOnString string    `json:"expires_on"`
-	AccessToken     string    `json:"access_token"`
-}
 
 type DataSourceProxy struct {
 	ds        *m.DataSource
@@ -342,8 +332,10 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 		logger.Error("Failed to render plugin headers", "error", err)
 	}
 
+	tokenProvider := newAccessTokenProvider(proxy.ds.Id, proxy.route)
+
 	if proxy.route.TokenAuth != nil {
-		if token, err := proxy.getAccessToken(data); err != nil {
+		if token, err := tokenProvider.getAccessToken(data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
@@ -351,95 +343,14 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 	}
 
 	if proxy.route.JwtTokenAuth != nil {
-		if token, err := proxy.getJwtAccessToken(data); err != nil {
+		if token, err := tokenProvider.getJwtAccessToken(proxy.ctx.Req.Context(), data); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
-
 	logger.Info("Requesting", "url", req.URL.String())
-}
 
-func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
-	if cachedToken, found := tokenCache[proxy.getAccessTokenCacheKey()]; found {
-		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
-			logger.Info("Using token from cache")
-			return cachedToken.AccessToken, nil
-		}
-	}
-
-	urlInterpolated, err := interpolateString(proxy.route.TokenAuth.Url, data)
-	if err != nil {
-		return "", err
-	}
-
-	params := make(url.Values)
-	for key, value := range proxy.route.TokenAuth.Params {
-		interpolatedParam, err := interpolateString(value, data)
-		if err != nil {
-			return "", err
-		}
-		params.Add(key, interpolatedParam)
-	}
-
-	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
-	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
-
-	resp, err := client.Do(getTokenReq)
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-
-	var token jwtToken
-	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
-		return "", err
-	}
-
-	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
-	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
-	tokenCache[proxy.getAccessTokenCacheKey()] = &token
-
-	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
-	return token.AccessToken, nil
-}
-
-func (proxy *DataSourceProxy) getJwtAccessToken(data templateData) (string, error) {
-	conf := new(jwt.Config)
-
-	if val, ok := proxy.route.JwtTokenAuth.Params["client_email"]; ok {
-		interpolatedVal, err := interpolateString(val, data)
-		if err != nil {
-			return "", err
-		}
-		conf.Email = interpolatedVal
-	}
-
-	if val, ok := proxy.route.JwtTokenAuth.Params["private_key"]; ok {
-		interpolatedVal, err := interpolateString(val, data)
-		if err != nil {
-			return "", err
-		}
-		conf.PrivateKey = []byte(interpolatedVal)
-	}
-	conf.Scopes = []string{"https://www.googleapis.com/auth/monitoring.read", "https://www.googleapis.com/auth/cloudplatformprojects.readonly"}
-	conf.TokenURL = "https://oauth2.googleapis.com/token"
-
-	ctx := context.Background()
-	tokenSrc := conf.TokenSource(ctx)
-	token, err := tokenSrc.Token()
-	if err != nil {
-		return "", err
-	}
-	logger.Info("interpolatedVal", "token.AccessToken", token.AccessToken)
-	return token.AccessToken, nil
-}
-
-func (proxy *DataSourceProxy) getAccessTokenCacheKey() string {
-	return fmt.Sprintf("%v_%v_%v", proxy.ds.Id, proxy.route.Path, proxy.route.Method)
 }
 
 func interpolateString(text string, data templateData) (string, error) {
