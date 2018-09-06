@@ -1,5 +1,5 @@
 jest.mock('app/features/annotations/all', () => ({
-  EventManager: function() {
+  EventManager: () => {
     return {
       on: () => {},
       addFlotEvents: () => {},
@@ -28,9 +28,9 @@ import moment from 'moment';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
 
-let ctx = <any>{};
+const ctx = {} as any;
 let ctrl;
-let scope = {
+const scope = {
   ctrl: {},
   range: {
     from: moment([2015, 1, 1]),
@@ -40,14 +40,14 @@ let scope = {
 };
 let link;
 
-describe('grafanaGraph', function() {
+describe('grafanaGraph', () => {
   const setupCtx = (beforeRender?) => {
     config.bootData = {
       user: {
         lightTheme: false,
       },
     };
-    GraphCtrl.prototype = <any>{
+    GraphCtrl.prototype = {
       ...MetricsPanelCtrl.prototype,
       ...PanelCtrl.prototype,
       ...GraphCtrl.prototype,
@@ -88,7 +88,7 @@ describe('grafanaGraph', function() {
         from: moment([2015, 1, 1, 10]),
         to: moment([2015, 1, 1, 22]),
       },
-    };
+    } as any;
 
     ctx.data = [];
     ctx.data.push(
@@ -242,8 +242,8 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should apply axis transform, autoscaling (if necessary) and ticks', function() {
-      var axisAutoscale = ctx.plotOptions.yaxes[0];
+    it('should apply axis transform, autoscaling (if necessary) and ticks', () => {
+      const axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).toBe(2);
       expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBeCloseTo(0.001);
@@ -256,7 +256,7 @@ describe('grafanaGraph', function() {
         expect(axisAutoscale.ticks[axisAutoscale.ticks.length - 1]).toBe(10000);
       }
 
-      var axisFixedscale = ctx.plotOptions.yaxes[1];
+      const axisFixedscale = ctx.plotOptions.yaxes[1];
       expect(axisFixedscale.min).toBe(0.05);
       expect(axisFixedscale.max).toBe(1500);
       expect(axisFixedscale.ticks.length).toBe(5);
@@ -277,8 +277,8 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should not set min and max and should create some fake ticks', function() {
-      var axisAutoscale = ctx.plotOptions.yaxes[0];
+    it('should not set min and max and should create some fake ticks', () => {
+      const axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).toBe(2);
       expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBe(undefined);
@@ -303,8 +303,8 @@ describe('grafanaGraph', function() {
         ctx.data[0].yaxis = 1;
       });
     });
-    it('should set min to 0.1 and add a tick for 0.1', function() {
-      var axisAutoscale = ctx.plotOptions.yaxes[0];
+    it('should set min to 0.1 and add a tick for 0.1', () => {
+      const axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).toBe(2);
       expect(axisAutoscale.inverseTransform(-3)).toBeCloseTo(0.001);
       expect(axisAutoscale.min).toBe(0.1);
@@ -330,8 +330,8 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should regenerate ticks so that if fits on the y-axis', function() {
-      var axisAutoscale = ctx.plotOptions.yaxes[0];
+    it('should regenerate ticks so that if fits on the y-axis', () => {
+      const axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.min).toBe(0.1);
       expect(axisAutoscale.ticks.length).toBe(8);
       expect(axisAutoscale.ticks[0]).toBe(0.1);
@@ -339,7 +339,7 @@ describe('grafanaGraph', function() {
       expect(axisAutoscale.max).toBe(262144);
     });
 
-    it('should set axis max to be max tick value', function() {
+    it('should set axis max to be max tick value', () => {
       expect(ctx.plotOptions.yaxes[0].max).toBe(262144);
     });
   });
@@ -353,7 +353,7 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should configure dashed plot with correct options', function() {
+    it('should configure dashed plot with correct options', () => {
       expect(ctx.plotOptions.series.lines.show).toBe(true);
       expect(ctx.plotOptions.series.dashes.lineWidth).toBe(2);
       expect(ctx.plotOptions.series.dashes.show).toBe(true);
@@ -371,7 +371,7 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should set barWidth', function() {
+    it('should set barWidth', () => {
       expect(ctx.plotOptions.series.bars.barWidth).toBe(1 / 1.5);
     });
   });
@@ -388,7 +388,7 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should match second series and fill zero, and enable points', function() {
+    it('should match second series and fill zero, and enable points', () => {
       expect(ctx.plotOptions.series.lines.fill).toBe(0.5);
       expect(ctx.plotData[1].lines.fill).toBe(0.001);
       expect(ctx.plotData[1].points.show).toBe(true);
@@ -403,7 +403,7 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should move zindex 2 last', function() {
+    it('should move zindex 2 last', () => {
       expect(ctx.plotData[0].alias).toBe('series2');
       expect(ctx.plotData[1].alias).toBe('series1');
     });
@@ -416,7 +416,7 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should remove datapoints and disable stack', function() {
+    it('should remove datapoints and disable stack', () => {
       expect(ctx.plotData[0].alias).toBe('series1');
       expect(ctx.plotData[1].data.length).toBe(0);
       expect(ctx.plotData[1].stack).toBe(false);
@@ -431,15 +431,15 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should show percentage', function() {
-      var axis = ctx.plotOptions.yaxes[0];
+    it('should show percentage', () => {
+      const axis = ctx.plotOptions.yaxes[0];
       expect(axis.tickFormatter(100, axis)).toBe('100%');
     });
   });
 
   describe('when panel too narrow to show x-axis dates in same granularity as wide panels', () => {
     //Set width to 10px
-    describe('and the range is less than 24 hours', function() {
+    describe('and the range is less than 24 hours', () => {
       beforeEach(() => {
         setupCtx(() => {
           ctrl.range.from = moment([2015, 1, 1, 10]);
@@ -447,13 +447,13 @@ describe('grafanaGraph', function() {
         });
       });
 
-      it('should format dates as hours minutes', function() {
-        var axis = ctx.plotOptions.xaxis;
+      it('should format dates as hours minutes', () => {
+        const axis = ctx.plotOptions.xaxis;
         expect(axis.timeformat).toBe('%H:%M');
       });
     });
 
-    describe('and the range is less than one year', function() {
+    describe('and the range is less than one year', () => {
       beforeEach(() => {
         setupCtx(() => {
           ctrl.range.from = moment([2015, 1, 1]);
@@ -461,8 +461,8 @@ describe('grafanaGraph', function() {
         });
       });
 
-      it('should format dates as month days', function() {
-        var axis = ctx.plotOptions.xaxis;
+      it('should format dates as month days', () => {
+        const axis = ctx.plotOptions.xaxis;
         expect(axis.timeformat).toBe('%m/%d');
       });
     });
@@ -485,7 +485,7 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should calculate correct histogram', function() {
+    it('should calculate correct histogram', () => {
       expect(ctx.plotData[0].data[0][0]).toBe(100);
       expect(ctx.plotData[0].data[0][1]).toBe(2);
       expect(ctx.plotData[1].data[0][0]).toBe(100);
@@ -510,7 +510,7 @@ describe('grafanaGraph', function() {
       });
     });
 
-    it('should calculate correct histogram', function() {
+    it('should calculate correct histogram', () => {
       expect(ctx.plotData[0].data[0][0]).toBe(100);
       expect(ctx.plotData[0].data[0][1]).toBe(2);
     });

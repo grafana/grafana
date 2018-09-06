@@ -1,12 +1,12 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
 import { observer } from 'mobx-react';
-import { ITeam, ITeamGroup } from 'app/stores/TeamsStore/TeamsStore';
+import { Team, TeamGroup } from 'app/stores/TeamsStore/TeamsStore';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
 
 interface Props {
-  team: ITeam;
+  team: Team;
 }
 
 interface State {
@@ -27,7 +27,7 @@ export class TeamGroupSync extends React.Component<Props, State> {
     this.props.team.loadGroups();
   }
 
-  renderGroup(group: ITeamGroup) {
+  renderGroup(group: TeamGroup) {
     return (
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
@@ -53,7 +53,7 @@ export class TeamGroupSync extends React.Component<Props, State> {
     this.setState({ isAdding: false, newGroupId: '' });
   };
 
-  onRemoveGroup = (group: ITeamGroup) => {
+  onRemoveGroup = (group: TeamGroup) => {
     this.props.team.removeGroup(group.groupId);
   };
 

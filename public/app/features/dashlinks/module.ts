@@ -10,7 +10,7 @@ function dashLinksContainer() {
     restrict: 'E',
     controller: 'DashLinksContainerCtrl',
     template: '<dash-link ng-repeat="link in generatedLinks" link="link"></dash-link>',
-    link: function() {},
+    link: () => {},
   };
 }
 
@@ -18,9 +18,9 @@ function dashLinksContainer() {
 function dashLink($compile, $sanitize, linkSrv) {
   return {
     restrict: 'E',
-    link: function(scope, elem) {
-      var link = scope.link;
-      var template =
+    link: (scope, elem) => {
+      const link = scope.link;
+      let template =
         '<div class="gf-form">' +
         '<a class="pointer gf-form-label" data-placement="bottom"' +
         (link.asDropdown ? ' ng-click="fillDropdown(link)" data-toggle="dropdown"' : '') +
@@ -42,7 +42,7 @@ function dashLink($compile, $sanitize, linkSrv) {
       $compile(elem.contents())(scope);
 
       function update() {
-        var linkInfo = linkSrv.getAnchorInfo(link);
+        const linkInfo = linkSrv.getAnchorInfo(link);
 
         const anchor = elem.find('a');
         const span = elem.find('span');
@@ -84,7 +84,7 @@ function dashLink($compile, $sanitize, linkSrv) {
 export class DashLinksContainerCtrl {
   /** @ngInject */
   constructor($scope, $rootScope, $q, backendSrv, dashboardSrv, linkSrv) {
-    var currentDashId = dashboardSrv.getCurrent().id;
+    const currentDashId = dashboardSrv.getCurrent().id;
 
     function buildLinks(linkDef) {
       if (linkDef.type === 'dashboards') {
@@ -128,18 +128,18 @@ export class DashLinksContainerCtrl {
     }
 
     function updateDashLinks() {
-      var promises = _.map($scope.links, buildLinks);
+      const promises = _.map($scope.links, buildLinks);
 
-      $q.all(promises).then(function(results) {
+      $q.all(promises).then(results => {
         $scope.generatedLinks = _.flatten(results);
       });
     }
 
-    $scope.searchDashboards = function(link, limit) {
-      return backendSrv.search({ tag: link.tags, limit: limit }).then(function(results) {
+    $scope.searchDashboards = (link, limit) => {
+      return backendSrv.search({ tag: link.tags, limit: limit }).then(results => {
         return _.reduce(
           results,
-          function(memo, dash) {
+          (memo, dash) => {
             // do not add current dashboard
             if (dash.id !== currentDashId) {
               memo.push({
@@ -158,9 +158,9 @@ export class DashLinksContainerCtrl {
       });
     };
 
-    $scope.fillDropdown = function(link) {
-      $scope.searchDashboards(link, 100).then(function(results) {
-        _.each(results, function(hit) {
+    $scope.fillDropdown = link => {
+      $scope.searchDashboards(link, 100).then(results => {
+        _.each(results, hit => {
           hit.url = linkSrv.getLinkUrl(hit);
         });
         link.searchHits = results;

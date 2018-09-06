@@ -28,7 +28,7 @@ export class MetricsTabCtrl {
     this.datasources = datasourceSrv.getMetricSources();
     this.panelDsValue = this.panelCtrl.panel.datasource;
 
-    for (let ds of this.datasources) {
+    for (const ds of this.datasources) {
       if (ds.value === this.panelDsValue) {
         this.datasourceInstance = ds;
       }
@@ -92,7 +92,7 @@ export class MetricsTabCtrl {
     this.helpOpen = !this.helpOpen;
 
     this.backendSrv.get(`/api/plugins/${this.datasourceInstance.meta.id}/markdown/query_help`).then(res => {
-      var md = new Remarkable();
+      const md = new Remarkable();
       this.helpHtml = this.$sce.trustAsHtml(md.render(res));
     });
   }
@@ -110,7 +110,7 @@ export class MetricsTabCtrl {
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 export function metricsTabDirective() {
   'use strict';
   return {

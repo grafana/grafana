@@ -3,9 +3,9 @@ import { Emitter } from '../utils/emitter';
 describe('Emitter', () => {
   describe('given 2 subscribers', () => {
     it('should notfiy subscribers', () => {
-      var events = new Emitter();
-      var sub1Called = false;
-      var sub2Called = false;
+      const events = new Emitter();
+      let sub1Called = false;
+      let sub2Called = false;
 
       events.on('test', () => {
         sub1Called = true;
@@ -21,8 +21,8 @@ describe('Emitter', () => {
     });
 
     it('when subscribing twice', () => {
-      var events = new Emitter();
-      var sub1Called = 0;
+      const events = new Emitter();
+      let sub1Called = 0;
 
       function handler() {
         sub1Called += 1;
@@ -37,9 +37,9 @@ describe('Emitter', () => {
     });
 
     it('should handle errors', () => {
-      var events = new Emitter();
-      var sub1Called = 0;
-      var sub2Called = 0;
+      const events = new Emitter();
+      let sub1Called = 0;
+      let sub2Called = 0;
 
       events.on('test', () => {
         sub1Called++;

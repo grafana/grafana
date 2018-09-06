@@ -101,7 +101,7 @@
     "build": "grunt build",
     "test": "grunt test",
     "test:coverage": "grunt test --coverage=true",
-    "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
+    "lint": "tslint -c tslint.json --project tsconfig.json",
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
     "precommit": "lint-staged && grunt precommit"
@@ -169,7 +169,8 @@
     "slate-react": "^0.12.4",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
-    "tinycolor2": "^1.4.1"
+    "tinycolor2": "^1.4.1",
+    "tslint-react": "^3.6.0"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"

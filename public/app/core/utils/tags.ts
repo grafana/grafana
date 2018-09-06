@@ -67,15 +67,15 @@ const TAG_BORDER_COLORS = [
  * @param name tag name
  */
 export function getTagColorsFromName(name: string): { color: string; borderColor: string } {
-  let hash = djb2(name.toLowerCase());
-  let color = TAG_COLORS[Math.abs(hash % TAG_COLORS.length)];
-  let borderColor = TAG_BORDER_COLORS[Math.abs(hash % TAG_BORDER_COLORS.length)];
+  const hash = djb2(name.toLowerCase());
+  const color = TAG_COLORS[Math.abs(hash % TAG_COLORS.length)];
+  const borderColor = TAG_BORDER_COLORS[Math.abs(hash % TAG_BORDER_COLORS.length)];
   return { color, borderColor };
 }
 
 function djb2(str) {
   let hash = 5381;
-  for (var i = 0; i < str.length; i++) {
+  for (let i = 0; i < str.length; i++) {
     hash = (hash << 5) + hash + str.charCodeAt(i); /* hash * 33 + c */
   }
   return hash;

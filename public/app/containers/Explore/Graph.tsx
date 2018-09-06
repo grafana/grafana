@@ -12,10 +12,10 @@ import Legend from './Legend';
 // Copied from graph.ts
 function time_format(ticks, min, max) {
   if (min && max && ticks) {
-    var range = max - min;
-    var secPerTick = range / ticks / 1000;
-    var oneDay = 86400000;
-    var oneYear = 31536000000;
+    const range = max - min;
+    const secPerTick = range / ticks / 1000;
+    const oneDay = 86400000;
+    const oneYear = 31536000000;
 
     if (secPerTick <= 45) {
       return '%H:%M:%S';

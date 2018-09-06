@@ -12,7 +12,7 @@ describe('SearchResultsCtrl', () => {
   let ctrl;
 
   describe('when checking an item that is not checked', () => {
-    let item = { checked: false };
+    const item = { checked: false };
     let selectionChanged = false;
 
     beforeEach(() => {
@@ -31,7 +31,7 @@ describe('SearchResultsCtrl', () => {
   });
 
   describe('when checking an item that is checked', () => {
-    let item = { checked: true };
+    const item = { checked: true };
     let selectionChanged = false;
 
     beforeEach(() => {
@@ -72,7 +72,7 @@ describe('SearchResultsCtrl', () => {
         folderExpanded = true;
       };
 
-      let folder = {
+      const folder = {
         expanded: false,
         toggle: () => Promise.resolve(folder),
       };
@@ -94,7 +94,7 @@ describe('SearchResultsCtrl', () => {
         folderExpanded = true;
       };
 
-      let folder = {
+      const folder = {
         expanded: true,
         toggle: () => Promise.resolve(folder),
       };

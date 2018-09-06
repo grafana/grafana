@@ -87,20 +87,20 @@ export class ChangeTracker {
       return true;
     }
 
-    var meta = this.current.meta;
+    const meta = this.current.meta;
     return !meta.canSave || meta.fromScript || meta.fromFile;
   }
 
   // remove stuff that should not count in diff
   cleanDashboardFromIgnoredChanges(dashData) {
     // need to new up the domain model class to get access to expand / collapse row logic
-    let model = new DashboardModel(dashData);
+    const model = new DashboardModel(dashData);
 
     // Expand all rows before making comparison. This is required because row expand / collapse
     // change order of panel array and panel positions.
     model.expandRows();
 
-    let dash = model.getSaveModelClone();
+    const dash = model.getSaveModelClone();
 
     // ignore time and refresh
     dash.time = 0;
@@ -128,7 +128,7 @@ export class ChangeTracker {
     });
 
     // ignore template variable values
-    _.each(dash.templating.list, function(value) {
+    _.each(dash.templating.list, value => {
       value.current = null;
       value.options = null;
       value.filters = null;
@@ -138,18 +138,18 @@ export class ChangeTracker {
   }
 
   hasChanges() {
-    let current = this.cleanDashboardFromIgnoredChanges(this.current.getSaveModelClone());
-    let original = this.cleanDashboardFromIgnoredChanges(this.original);
+    const current = this.cleanDashboardFromIgnoredChanges(this.current.getSaveModelClone());
+    const original = this.cleanDashboardFromIgnoredChanges(this.original);
 
-    var currentTimepicker = _.find(current.nav, { type: 'timepicker' });
-    var originalTimepicker = _.find(original.nav, { type: 'timepicker' });
+    const currentTimepicker = _.find(current.nav, { type: 'timepicker' });
+    const originalTimepicker = _.find(original.nav, { type: 'timepicker' });
 
     if (currentTimepicker && originalTimepicker) {
       currentTimepicker.now = originalTimepicker.now;
     }
 
-    var currentJson = angular.toJson(current, true);
-    var originalJson = angular.toJson(original, true);
+    const currentJson = angular.toJson(current, true);
+    const originalJson = angular.toJson(original, true);
 
     return currentJson !== originalJson;
   }
@@ -167,8 +167,8 @@ export class ChangeTracker {
   }
 
   saveChanges() {
-    var self = this;
-    var cancel = this.$rootScope.$on('dashboard-saved', () => {
+    const self = this;
+    const cancel = this.$rootScope.$on('dashboard-saved', () => {
       cancel();
       this.$timeout(() => {
         self.gotoNext();
@@ -179,8 +179,8 @@ export class ChangeTracker {
   }
 
   gotoNext() {
-    var baseLen = this.$location.absUrl().length - this.$location.url().length;
-    var nextUrl = this.next.substring(baseLen);
+    const baseLen = this.$location.absUrl().length - this.$location.url().length;
+    const nextUrl = this.next.substring(baseLen);
     this.$location.url(nextUrl);
   }
 }

@@ -2,26 +2,26 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import Drop from 'tether-drop';
 
-/** @ngInject **/
-function popoverSrv($compile, $rootScope, $timeout) {
+/** @ngInject */
+function popoverSrv(this: any, $compile, $rootScope, $timeout) {
   let openDrop = null;
 
-  this.close = function() {
+  this.close = () => {
     if (openDrop) {
       openDrop.close();
     }
   };
 
-  this.show = function(options) {
+  this.show = options => {
     if (openDrop) {
       openDrop.close();
       openDrop = null;
     }
 
-    var scope = _.extend($rootScope.$new(true), options.model);
-    var drop;
+    const scope = _.extend($rootScope.$new(true), options.model);
+    let drop;
 
-    var cleanUp = () => {
+    const cleanUp = () => {
       setTimeout(() => {
         scope.$destroy();
 
@@ -41,7 +41,7 @@ function popoverSrv($compile, $rootScope, $timeout) {
       drop.close();
     };
 
-    var contentElement = document.createElement('div');
+    const contentElement = document.createElement('div');
     contentElement.innerHTML = options.template;
 
     $compile(contentElement)(scope);
@@ -68,7 +68,7 @@ function popoverSrv($compile, $rootScope, $timeout) {
     }, 100);
 
     // return close function
-    return function() {
+    return () => {
       if (drop) {
         drop.close();
       }
