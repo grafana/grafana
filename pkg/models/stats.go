@@ -40,6 +40,15 @@ type GetDataSourceAccessStatsQuery struct {
 	Result []*DataSourceAccessStats
 }
 
+type NotifierUsageStats struct {
+	Type  string
+	Count int64
+}
+
+type GetAlertNotifierUsageStatsQuery struct {
+	Result []*NotifierUsageStats
+}
+
 type AdminStats struct {
 	Users       int `json:"users"`
 	Orgs        int `json:"orgs"`
