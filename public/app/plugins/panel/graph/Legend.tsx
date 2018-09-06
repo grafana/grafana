@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { TimeSeries } from 'app/core/core';
-import withScrollBar from 'app/core/components/ScrollBar/withScrollBar';
+import GrafanaScrollbar from 'app/core/components/ScrollBar/GrafanaScrollbar';
 
 const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -309,5 +309,14 @@ function getOptionSeriesCSSClasses(series, hiddenSeries) {
   return classes.join(' ');
 }
 
-export const Legend = withScrollBar(GraphLegend);
+export class Legend extends React.Component<GraphLegendProps, GraphLegendState> {
+  render() {
+    return (
+      <GrafanaScrollbar>
+        <GraphLegend {...this.props} />
+      </GrafanaScrollbar>
+    );
+  }
+}
+
 export default Legend;
