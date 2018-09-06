@@ -85,7 +85,7 @@ export class PanelObserverScroll implements PanelObserver {
       return element['data-top'];
     }
     const xform = element.style.transform; // translate(0px, 200px)
-    const top = parseInt(xform.substring(xform.lastIndexOf(' ') + 1, xform.lastIndexOf('p')));
+    const top = parseInt(xform.substring(xform.lastIndexOf(' ') + 1, xform.lastIndexOf('p')), 10);
     return (element['data-top'] = top);
   }
 
