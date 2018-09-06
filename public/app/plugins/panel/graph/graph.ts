@@ -22,7 +22,7 @@ import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { GraphLegend, GraphLegendProps } from './Legend';
+import { Legend, GraphLegendProps } from './Legend';
 
 import { GraphCtrl } from './module';
 
@@ -86,7 +86,6 @@ class GraphElement {
     updateLegendValues(this.data, this.panel, graphHeight);
 
     // this.ctrl.events.emit('render-legend');
-    // console.log(this.ctrl);
     const { values, min, max, avg, current, total } = this.panel.legend;
     const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
     const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
@@ -99,7 +98,7 @@ class GraphElement {
       onToggleSeries: this.ctrl.toggleSeries.bind(this.ctrl),
       onToggleSort: this.ctrl.toggleSort.bind(this.ctrl),
     };
-    const legendReactElem = React.createElement(GraphLegend, legendProps);
+    const legendReactElem = React.createElement(Legend, legendProps);
     const legendElem = this.elem.parent().find('.graph-legend');
     ReactDOM.render(legendReactElem, legendElem[0]);
     this.onLegendRenderingComplete();

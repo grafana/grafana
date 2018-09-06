@@ -57,9 +57,6 @@
   padding-top: 6px;
   position: relative;
 
-  // fix for Firefox (white stripe on the right of scrollbar)
-  width: calc(100% - 1px);
-
   .popover-content {
     padding: 0;
   }
@@ -67,11 +64,9 @@
 
 .graph-legend-content {
   position: relative;
-
-  // fix for Firefox (white stripe on the right of scrollbar)
-  width: calc(100% - 1px);
 }
 
+// @TODO: delete unused class
 .graph-legend-scroll {
   position: relative;
   overflow: auto !important;

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { TimeSeries } from 'app/core/core';
+import withScrollBar from 'app/core/components/ScrollBar/withScrollBar';
 
 const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -85,7 +86,7 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLege
     const seriesHideProps = { hideEmpty, hideZero };
     const sortProps = { sort, sortDesc };
     const seriesList = _.filter(this.sortLegend(), series => !series.hideFromLegend(seriesHideProps));
-    const legendCustomClasses = `${this.props.alignAsTable ? 'graph-legend-table' : ''} ${optionalClass}`;
+    const legendClass = `${this.props.alignAsTable ? 'graph-legend-table' : ''} ${optionalClass}`;
 
     // Set min-width if side style and there is a value, otherwise remove the CSS property
     // Set width so it works with IE11
@@ -106,10 +107,8 @@ export class GraphLegend extends React.PureComponent<GraphLegendProps, GraphLege
     };
 
     return (
-      <div className={`graph-legend-content ${legendCustomClasses}`} style={legendStyle}>
-        <div className="graph-legend-scroll">
-          {this.props.alignAsTable ? <LegendTable {...legendProps} /> : <LegendSeriesList {...legendProps} />}
-        </div>
+      <div className={`graph-legend-content ${legendClass}`} style={legendStyle}>
+        {this.props.alignAsTable ? <LegendTable {...legendProps} /> : <LegendSeriesList {...legendProps} />}
       </div>
     );
   }
@@ -309,3 +308,6 @@ function getOptionSeriesCSSClasses(series, hiddenSeries) {
   }
   return classes.join(' ');
 }
+
+export const Legend = withScrollBar(GraphLegend);
+export default Legend;
