@@ -8,6 +8,7 @@ export class PostgresDatasource {
   jsonData: any;
   responseParser: ResponseParser;
   queryModel: PostgresQuery;
+  interval: string;
 
   /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
@@ -16,6 +17,7 @@ export class PostgresDatasource {
     this.jsonData = instanceSettings.jsonData;
     this.responseParser = new ResponseParser(this.$q);
     this.queryModel = new PostgresQuery({});
+    this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
   interpolateVariable(value, variable) {
