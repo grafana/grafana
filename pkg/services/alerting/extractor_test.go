@@ -18,6 +18,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 			return &FakeCondition{}, nil
 		})
 
+		RegisterCondition("multipartQuery", func(model *simplejson.Json, index int) (Condition, error) {
+			return &FakeCondition{}, nil
+		})
+
 		// mock data
 		defaultDs := &m.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true}
 		graphite2Ds := &m.DataSource{Id: 15, OrgId: 1, Name: "graphite2"}

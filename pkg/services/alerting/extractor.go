@@ -123,7 +123,6 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		if err != nil {
 			return nil, fmt.Errorf("panel id is required. err %v", err)
 		}
-
 		// backward compatibility check, can be removed later
 		enabled, hasEnabled := jsonAlert.CheckGet("enabled")
 		if hasEnabled && !enabled.MustBool() {
@@ -134,7 +133,6 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		if err != nil {
 			return nil, ValidationError{Reason: "Could not parse frequency"}
 		}
-
 		alert := &m.Alert{
 			DashboardId: e.Dash.Id,
 			OrgId:       e.OrgID,
@@ -163,16 +161,20 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 				return nil, ValidationError{Reason: reason}
 			}
 		}
-
 		alert.Settings = jsonAlert
 
 		// validate
 		_, err = NewRuleFromDBAlert(alert)
-		if err == nil && alert.ValidToSave() {
-			alerts = append(alerts, alert)
-		} else {
+		if err != nil {
 			return nil, err
 		}
+
+		if !validateAlertFunc(alert) {
+			e.log.Debug("Invalid Alert Data. Dashboard, Org, or Panel ID is not correct", "alertName", alert.Name, "panelId", alert.PanelId)
+			return nil, m.ErrDashboardContainsInvalidAlertData
+		}
+
+		alerts = append(alerts, alert)
 	}
 
 	return alerts, nil
