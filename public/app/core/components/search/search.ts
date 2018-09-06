@@ -130,8 +130,8 @@ export class SearchCtrl {
     }
 
     const max = flattenedResult.length;
-    let newIndex = this.selectedIndex + direction;
-    this.selectedIndex = (newIndex %= max) < 0 ? newIndex + max : newIndex;
+    const newIndex = (this.selectedIndex + direction) % max;
+    this.selectedIndex = newIndex < 0 ? newIndex + max : newIndex;
     const selectedItem = flattenedResult[this.selectedIndex];
 
     if (selectedItem.dashboardIndex === undefined && this.results[selectedItem.folderIndex].id === 0) {

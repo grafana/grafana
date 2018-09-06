@@ -245,7 +245,7 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
     controller: 'ValueSelectDropdownCtrl',
     controllerAs: 'vm',
     bindToController: true,
-    link: function(scope, elem) {
+    link: (scope, elem) => {
       const bodyEl = angular.element($window.document.body);
       const linkEl = elem.find('.variable-value-link');
       const inputEl = elem.find('input');
@@ -258,7 +258,7 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
 
         inputEl.focus();
         $timeout(
-          function() {
+          () => {
             bodyEl.on('click', bodyOnClick);
           },
           0,
@@ -274,7 +274,7 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
 
       function bodyOnClick(e) {
         if (elem.has(e.target).length === 0) {
-          scope.$apply(function() {
+          scope.$apply(() => {
             scope.vm.commitChanges();
           });
         }

@@ -28,7 +28,7 @@ export class GrafanaCtrl {
     setBackendSrv(backendSrv);
     createStore({ backendSrv, datasourceSrv });
 
-    $scope.init = function() {
+    $scope.init = () => {
       $scope.contextSrv = contextSrv;
       $scope.appSubUrl = config.appSubUrl;
       $scope._ = _;
@@ -43,7 +43,7 @@ export class GrafanaCtrl {
 
     $rootScope.colors = colors;
 
-    $scope.initDashboard = function(dashboardData, viewScope) {
+    $scope.initDashboard = (dashboardData, viewScope) => {
       $scope.appEvent('dashboard-fetch-end', dashboardData);
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
     };
@@ -60,7 +60,7 @@ export class GrafanaCtrl {
       callerScope.$on('$destroy', unbind);
     };
 
-    $rootScope.appEvent = function(name, payload) {
+    $rootScope.appEvent = (name, payload) => {
       $rootScope.$emit(name, payload);
       appEvents.emit(name, payload);
     };
@@ -103,7 +103,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       const body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
-      $.fn.modal.Constructor.prototype.enforceFocus = function() {};
+      $.fn.modal.Constructor.prototype.enforceFocus = () => {};
 
       $('.preloader').remove();
 
@@ -123,9 +123,12 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         body.toggleClass('sidemenu-hidden');
       });
 
-      scope.$watch(() => playlistSrv.isPlaying, function(newValue) {
-        elem.toggleClass('view-mode--playlist', newValue === true);
-      });
+      scope.$watch(
+        () => playlistSrv.isPlaying,
+        newValue => {
+          elem.toggleClass('view-mode--playlist', newValue === true);
+        }
+      );
 
       // check if we are in server side render
       if (document.cookie.indexOf('renderKey') !== -1) {
@@ -135,7 +138,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       // tooltip removal fix
       // manage page classes
       let pageClass;
-      scope.$on('$routeChangeSuccess', function(evt, data) {
+      scope.$on('$routeChangeSuccess', (evt, data) => {
         if (pageClass) {
           body.removeClass(pageClass);
         }
@@ -236,7 +239,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       });
 
       // handle document clicks that should hide things
-      body.click(function(evt) {
+      body.click(evt => {
         const target = $(evt.target);
         if (target.parents().length === 0) {
           return;
@@ -248,7 +251,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (clickAutoHide.length) {
           const clickAutoHideParent = clickAutoHide.parent();
           clickAutoHide.detach();
-          setTimeout(function() {
+          setTimeout(() => {
             clickAutoHideParent.append(clickAutoHide);
           }, 100);
         }
@@ -260,7 +263,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         // hide search
         if (body.find('.search-container').length > 0) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
-            scope.$apply(function() {
+            scope.$apply(() => {
               scope.appEvent('hide-dash-search');
             });
           }

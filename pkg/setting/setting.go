@@ -325,7 +325,7 @@ func getCommandLineProperties(args []string) map[string]string {
 		trimmed := strings.TrimPrefix(arg, "cfg:")
 		parts := strings.Split(trimmed, "=")
 		if len(parts) != 2 {
-			log.Fatal(3, "Invalid command line argument", arg)
+			log.Fatal(3, "Invalid command line argument. argument: %v", arg)
 			return nil
 		}
 

@@ -48,7 +48,7 @@ export class ColumnOptionsCtrl {
       if (!this.panelCtrl.table) {
         return [];
       }
-      return _.map(this.panelCtrl.table.columns, function(col: any) {
+      return _.map(this.panelCtrl.table.columns, (col: any) => {
         return col.text;
       });
     };

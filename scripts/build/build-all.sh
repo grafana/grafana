@@ -45,6 +45,10 @@ else
 fi
 echo "Building frontend"
 go run build.go ${OPT} build-frontend
+
+# Load ruby, needed for packing with fpm
+source /etc/profile.d/rvm.sh
+
 echo "Packaging"
 go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only latest
 #removing amd64 phantomjs bin for armv7/arm64 packages

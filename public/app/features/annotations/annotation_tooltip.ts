@@ -20,7 +20,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       event: '=',
       onEdit: '&',
     },
-    link: function(scope, element) {
+    link: (scope, element) => {
       const event = scope.event;
       let title = event.title;
       let text = event.text;

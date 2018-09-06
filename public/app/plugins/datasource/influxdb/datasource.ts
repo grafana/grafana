@@ -23,7 +23,7 @@ export default class InfluxDatasource {
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
     this.type = 'influxdb';
-    this.urls = _.map(instanceSettings.url.split(','), function(url) {
+    this.urls = _.map(instanceSettings.url.split(','), url => {
       return url.trim();
     });
 
@@ -274,7 +274,7 @@ export default class InfluxDatasource {
       result => {
         return result.data;
       },
-      function(err) {
+      err => {
         if (err.status !== 0 || err.status >= 300) {
           if (err.data && err.data.error) {
             throw {
@@ -314,7 +314,7 @@ export default class InfluxDatasource {
 
       const parts = /^now-(\d+)([d|h|m|s])$/.exec(date);
       if (parts) {
-        const amount = parseInt(parts[1]);
+        const amount = parseInt(parts[1], 10);
         const unit = parts[2];
         return 'now() - ' + amount + unit;
       }
