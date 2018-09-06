@@ -22,6 +22,8 @@ export class Settings {
   disableLoginForm: boolean;
   defaultDatasource: string;
   alertingEnabled: boolean;
+  alertingErrorOrTimeout: string;
+  alertingNoDataOrNullValues: string;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   ldapEnabled: boolean;
