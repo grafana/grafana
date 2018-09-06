@@ -52,8 +52,6 @@ This admin flag makes a user a `Super Admin`. This means they can access the `Se
 
 ### Dashboard & Folder Permissions
 
-> Introduced in Grafana v5.0
-
 {{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="500px" class="docs-image--right" >}}
 
 For dashboards and dashboard folders there is a **Permissions** page that make it possible to
