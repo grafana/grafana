@@ -27,6 +27,7 @@ var (
 type fileReader struct {
 	Cfg              *DashboardsAsConfig
 	Path             string
+	cfgPath          string
 	log              log.Logger
 	dashboardService dashboards.DashboardProvisioningService
 }
@@ -61,6 +62,7 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	return &fileReader{
 		Cfg:              cfg,
 		Path:             path,
+		cfgPath:          path,
 		log:              log,
 		dashboardService: dashboards.NewProvisioningService(),
 	}, nil
@@ -94,10 +96,9 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 }
 
 func (fr *fileReader) startWalkingDisk() error {
-	//need to keep track of path given, symlink path,
-	copy := fr.Path
+	copy := fr.cfgPath
 
-	path, err := filepath.EvalSymlinks(fr.Path)
+	path, err := filepath.EvalSymlinks(copy)
 	if err != nil {
 		fr.log.Error("Failed to read content of symlinked path: %s", path)
 	}
@@ -112,6 +113,7 @@ func (fr *fileReader) startWalkingDisk() error {
 			return err
 		}
 	}
+	fr.Path = path
 
 	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardService)
 	if err != nil && err != ErrFolderNameMissing {
