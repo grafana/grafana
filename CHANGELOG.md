@@ -81,7 +81,7 @@
 
 ### New experimental features
 
-These are new features that's still being worked on and are in an experimental phase. We incourage users to try these out and provide any feedback in related issue.
+These are new features that's still being worked on and are in an experimental phase. We encourage users to try these out and provide any feedback in related issue.
 
 * **Dashboard**: Auto fit dashboard panels to optimize space used for current TV / Monitor [#12768](https://github.com/grafana/grafana/issues/12768)
 
