@@ -14,10 +14,6 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const (
-	defaultEmailAttributeName = "email:primary"
-)
-
 type SocialGenericOAuth struct {
 	*SocialBase
 	allowedDomains       []string
@@ -269,15 +265,9 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		return data.Email
 	}
 
-	var emailAttributeName string
-	if s.emailAttributeName == "" {
-		emailAttributeName = defaultEmailAttributeName
-	} else {
-		emailAttributeName = s.emailAttributeName
-	}
-
-	if data.Attributes[emailAttributeName] != nil {
-		return data.Attributes[emailAttributeName][0]
+	emails, ok := data.Attributes[s.emailAttributeName]
+	if ok && len(emails) != 0 {
+		return emails[0]
 	}
 
 	if data.Upn != "" {
