@@ -19,7 +19,7 @@ permissions and org memberships.
 - [Google OAuth]({{< relref "auth/google.md" >}})
 - [GitHub OAuth]({{< relref "auth/github.md" >}})
 - [Gitlab OAuth]({{< relref "auth/gitlab.md" >}})
-- [Generic OAuth]({{< relref "auth/oauth.md" >}}) (Okta2, BitBucket, Azure, OneLogin, Auth0)
+- [Generic OAuth]({{< relref "auth/generic-oauth.md" >}}) (Okta2, BitBucket, Azure, OneLogin, Auth0)
 
 ## LDAP integrations
 

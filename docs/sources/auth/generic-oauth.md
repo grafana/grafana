@@ -4,7 +4,7 @@ description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
 type = "docs"
 [menu.docs]
-name = "Generic OAuth2"
+name = "Generic OAuth"
 identifier = "generic_oauth"
 parent = "authentication"
 weight = 3

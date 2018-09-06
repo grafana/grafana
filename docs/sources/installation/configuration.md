@@ -322,7 +322,7 @@ Defaults to `false`.
 
 ## [auth]
 
-Grafana provides many ways to authenticate users. The docs for authentication has been split in to many differnet pages
+Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
 
 - [Authentication Overview]({{< relref "auth/overview.md" >}}) (anonymous access options, hide login and more)
