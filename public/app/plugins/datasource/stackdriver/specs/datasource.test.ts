@@ -56,4 +56,41 @@ describe('StackdriverDataSource', () => {
       });
     });
   });
+
+  describe('when performing getProjects', () => {
+    describe('and call to resource manager api succeeds', () => {
+      let ds;
+      let result;
+      beforeEach(async () => {
+        const response = {
+          projects: [
+            {
+              projectNumber: '853996325002',
+              projectId: 'test-project',
+              lifecycleState: 'ACTIVE',
+              name: 'Test Project',
+              createTime: '2015-06-02T14:16:08.520Z',
+              parent: {
+                type: 'organization',
+                id: '853996325002',
+              },
+            },
+          ],
+        };
+        const backendSrv = {
+          async datasourceRequest() {
+            return Promise.resolve({ status: 200, data: response });
+          },
+        };
+        ds = new StackdriverDataSource({}, backendSrv);
+        result = await ds.getProjects();
+      });
+
+      it('should return successfully', () => {
+        expect(result.length).toBe(1);
+        expect(result[0].id).toBe('test-project');
+        expect(result[0].name).toBe('Test Project');
+      });
+    });
+  });
 });
