@@ -269,9 +269,9 @@ export class AlertTabCtrl {
         if (!foundTarget) {
           if (firstTarget) {
             if (!condition.query.params[0]) {
-              condition.queryParts[0].query.params = target.refId;
+              condition.queryParts[0].query.params = firstTarget.refId;
             } else {
-              condition.query.params[0] = target.refId;
+              condition.query.params[0] = firstTarget.refId;
             }
             foundTarget = firstTarget;
           } else {
@@ -279,16 +279,17 @@ export class AlertTabCtrl {
           }
         }
 
-      const datasourceName = foundTarget.datasource || this.panel.datasource;
-      this.datasourceSrv.get(datasourceName).then(ds => {
-        if (!ds.meta.alerting) {
-          this.error = 'The datasource does not support alerting queries';
-        } else if (ds.targetContainsTemplate(foundTarget)) {
-          this.error = 'Template variables are not supported in alert queries';
-        } else {
-          this.error = '';
-        }
-      });}
+        const datasourceName = foundTarget.datasource || this.panel.datasource;
+        this.datasourceSrv.get(datasourceName).then(ds => {
+          if (!ds.meta.alerting) {
+            this.error = 'The datasource does not support alerting queries';
+          } else if (ds.targetContainsTemplate(foundTarget)) {
+            this.error = 'Template variables are not supported in alert queries';
+          } else {
+            this.error = '';
+          }
+        });
+      }
     }
   }
 
@@ -363,8 +364,8 @@ export class AlertTabCtrl {
         break;
       }
       case 'get-part-actions': {
-        var result = [];
-        for (var type of alertDef.reducerTypes) {
+        const result = [];
+        for (const type of alertDef.reducerTypes) {
           if (type.value !== conditionModel.source.queryParts[index].reducer.type) {
             result.push(type);
           }
@@ -375,7 +376,7 @@ export class AlertTabCtrl {
   }
 
   scalarChanged(conditionModel) {
-    var scalarInput = (<HTMLInputElement>document.getElementById('scalar')).value;
+    const scalarInput = (document.getElementById('scalar') as HTMLInputElement).value;
     conditionModel.scalarPart = scalarInput;
     conditionModel.source.queryParts[1].scalar = scalarInput;
   }
@@ -459,8 +460,8 @@ export class AlertTabCtrl {
   }
 
   conditionModelTypeChanged(conditionModel, newType: string, index: number, evaluatorType) {
-    var tempDefault = this.buildDefaultCondition(newType);
-    var tempCondition = this.buildConditionModel(tempDefault);
+    const tempDefault = this.buildDefaultCondition(newType);
+    const tempCondition = this.buildConditionModel(tempDefault);
     if (newType === 'multipartQuery') {
       tempCondition.evaluator.type = evaluatorType;
       tempCondition.queryParts[0] = conditionModel.queryPart;
