@@ -321,62 +321,17 @@ Defaults to `false`.
 
 ## [auth]
 
-### disable_login_form
+Grafana provides many ways to authenticate users. The docs for authentication has been split in to many differnet pages
+below.
 
-Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
-
-### disable_signout_menu
-
-Set to true to disable the signout link in the side menu. useful if you use auth.proxy, defaults to false.
-
-<hr>
-
-## [auth.anonymous]
-
-[Read guide here.](/administration/authentication/anonymous-auth)
-
-<hr>
-
-## [auth.github]
-
-[Read guide here.](/administration/authentication/oauth/#auth-github)
-
-<hr>
-
-## [auth.gitlab]
-
-[Read guide here.](/administration/authentication/oauth/#auth-gitlab)
-
-<hr>
-
-## [auth.google]
-
-[Read guide here.](/administration/authentication/oauth/#auth-google)
-
-<hr>
-
-## [auth.generic_oauth]
-
-[Read guide here.](/administration/authentication/oauth/#auth-generic-oauth)
-<hr>
-
-## [auth.basic]
-### enabled
-When enabled is `true` (default) the http api will accept basic authentication.
-
-<hr>
-
-## [auth.ldap]
-
-[Read guide here.](/administration/authentication/ldap/)
-
-<hr>
-
-## [auth.proxy]
-
-[Read guide here.](/administration/authentication/auth-proxy/)
-
-<hr>
+- [Anonymous access]({{< relref "auth/overview.md" >}}) (auth.anonymous)
+- [Google OAuth]({{< relref "auth/google.md" >}}) (auth.google)
+- [GitHub OAuth]({{< relref "auth/github.md" >}}) (auth.github)
+- [Gitlab OAuth]({{< relref "auth/gitlab.md" >}}) (auth.gitlab)
+- [Generic OAuth]({{< relref "auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
+- [Basic Authentication]({{< relref "auth/overview.md" >}}) (auth.basic)
+- [LDAP Authentication]({{< relref "auth/ldap.md" >}}) (auth.ldap)
+- [Auth Proxy]({{< relref "auth/auth-proxy.md" >}}) (auth.proxy)
 
 ## [session]
 
