@@ -11,16 +11,6 @@
 	<div class="gf-form" ng-if="!ctrl.inputDataValid">
 		<textarea rows="10" data-share-panel-url="" class="gf-form-input" ng-model="ctrl.jsonText" ng-paste="ctrl.onPasteJwt($event)"></textarea>
 	</div>
-	<div class="gf-form" ng-if="ctrl.inputDataValid">
-		<span class="gf-form-label width-7">Default Projects</span>
-		<div class="gf-form-select-wrapper max-width-23">
-			<select class="gf-form-input" ng-model="ctrl.defaultProject" ng-options="p.id as p.name for p in ctrl.projects" ng-change="ctrl.userChangedDefaultProject()"></select>
-		</div>
-		<div ng-if="ctrl.loadingProjects">
-			<i class="fa fa-spinner fa-spin"></i>
-			<em>Fetching history list&hellip;</em>
-		</div>
-	</div>
 	<div ng-repeat="valError in ctrl.validationErrors" class="text-error p-l-1">
 		<i class="fa fa-warning"></i>
 		{{valError}}
@@ -32,5 +22,22 @@
 		</div>
 		<br />
 		<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.resetValidationMessages()">Reset form</a>
+	</div>
+	<br />
+	<div class="gf-form-group" ng-if="ctrl.inputDataValid">
+		<div class="gf-form" ng-if="ctrl.inputDataValid">
+			<span class="gf-form-label width-10">Default Project</span>
+			<div class="gf-form-select-wrapper max-width-23">
+				<select class="gf-form-input" ng-model="ctrl.defaultProject" ng-options="p.id as p.name for p in ctrl.projects" ng-change="ctrl.userChangedDefaultProject()"></select>
+			</div>
+			<div ng-if="ctrl.loadingProjects">
+				<i class="fa fa-spinner fa-spin"></i>
+				<em>Fetching projects...&hellip;</em>
+			</div>
+		</div>
+		<div ng-if="ctrl.projectsError" class="text-error p-l-1">
+			<i class="fa fa-warning"></i>
+			{{ctrl.projectsError}}
+		</div>
 	</div>
 </div>

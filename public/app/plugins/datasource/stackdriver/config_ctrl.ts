@@ -6,11 +6,12 @@ export class StackdriverConfigCtrl {
   validationErrors: string[] = [];
   inputDataValid: boolean;
   defaultProject: string;
+  projectsError: string;
   projects: string[];
   loadingProjects: boolean;
 
   /** @ngInject */
-  constructor($scope, datasourceSrv) {
+  constructor(private $scope, datasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.secureJsonData = this.current.secureJsonData || {};
@@ -70,16 +71,39 @@ export class StackdriverConfigCtrl {
     this.validationErrors = [];
     this.inputDataValid = false;
     this.jsonText = '';
+    this.loadingProjects = false;
+    this.projectsError = '';
   }
 
   async displayProjects() {
     if (this.projects.length === 0) {
-      this.loadingProjects = true;
-      const ds = await this.datasourceSrv.loadDatasource(this.current.name);
       try {
-        this.projects = await ds.doRequest(`/cloudresourcemanager/v1/projects`);
+        this.loadingProjects = true;
+        const ds = await this.datasourceSrv.loadDatasource(this.current.name);
+        const response = await ds.doRequest(`/cloudresourcemanager/v1/projects`);
+        this.$scope.$apply(() => {
+          this.projects = response.data.projects.map(p => ({ id: p.projectId, name: p.name }));
+        });
+        console.log(this.projects);
       } catch (error) {
-        console.log(error);
+        let message = 'Projects cannot be fetched: ';
+        message += error.statusText ? error.statusText + ': ' : '';
+        if (error && error.data && error.data.error && error.data.error.message) {
+          if (error.data.error.code === 403) {
+            message += `
+            A list of projects could not be fetched from the Google Cloud Resource Manager API.
+            You might need to enable it first:
+            https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com`;
+          } else {
+            message += error.data.error.code + '. ' + error.data.error.message;
+          }
+        } else {
+          message += 'Cannot connect to Stackdriver API';
+        }
+        this.$scope.$apply(() => {
+          this.loadingProjects = false;
+          this.projectsError = message;
+        });
       }
     }
   }
