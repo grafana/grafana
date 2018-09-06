@@ -1009,3 +1009,11 @@ Defaults to true. Set to false to disable alerting engine and hide Alerting from
 ### execute_alerts
 
 Makes it possible to turn off alert rule execution.
+
+### error_or_timeout
+
+Default setting for new alert rules. Defaults to categories error and timeouts as alerting. (alerting, keep_state)
+
+### nodata_or_nullvalues
+
+Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
