@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`withScrollBar renders correctly 1`] = `
+exports[`GrafanaScrollbar renders correctly 1`] = `
 <div
   className="custom-scrollbars"
   style={
@@ -32,9 +32,9 @@ exports[`withScrollBar renders correctly 1`] = `
       }
     }
   >
-    <div
-      className="my-component"
-    />
+    <p>
+      Scrollable content
+    </p>
   </div>
   <div
     className="track-horizontal"
