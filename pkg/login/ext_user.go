@@ -35,7 +35,7 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 
 		limitReached, err := quota.QuotaReached(cmd.ReqContext, "user")
 		if err != nil {
-			log.Warn("Error getting user quota", "err", err)
+			log.Warn("Error getting user quota. error: %v", err)
 			return ErrGettingUserQuota
 		}
 		if limitReached {
@@ -135,7 +135,7 @@ func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
 		return nil
 	}
 
-	log.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
+	log.Debug2("Syncing user info", "id", user.Id, "update", updateCmd)
 	return bus.Dispatch(updateCmd)
 }
 

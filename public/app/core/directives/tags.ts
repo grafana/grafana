@@ -13,7 +13,7 @@ function setColor(name, element) {
 function tagColorFromName() {
   return {
     scope: { tagColorFromName: '=' },
-    link: function(scope, element) {
+    link: (scope, element) => {
       setColor(scope.tagColorFromName, element);
     },
   };
@@ -29,7 +29,7 @@ function bootstrapTagsinput() {
       return scope.$parent[property];
     }
 
-    return function(item) {
+    return item => {
       return item[property];
     };
   }
@@ -64,7 +64,7 @@ function bootstrapTagsinput() {
         itemText: getItemProperty(scope, attrs.itemtext),
         tagClass: angular.isFunction(scope.$parent[attrs.tagclass])
           ? scope.$parent[attrs.tagclass]
-          : function() {
+          : () => {
               return attrs.tagclass;
             },
       });
@@ -85,7 +85,7 @@ function bootstrapTagsinput() {
         setColor(event.item, tagElement);
       });
 
-      select.on('itemRemoved', function(event) {
+      select.on('itemRemoved', event => {
         const idx = scope.model.indexOf(event.item);
         if (idx !== -1) {
           scope.model.splice(idx, 1);
@@ -97,7 +97,7 @@ function bootstrapTagsinput() {
 
       scope.$watch(
         'model',
-        function() {
+        () => {
           if (!angular.isArray(scope.model)) {
             scope.model = [];
           }

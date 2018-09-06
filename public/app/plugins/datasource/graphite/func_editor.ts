@@ -57,7 +57,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
 
         if (!scheduledRelink) {
           scheduledRelink = true;
-          setTimeout(function() {
+          setTimeout(() => {
             relink();
             scheduledRelink = false;
           }, 200);
@@ -93,7 +93,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
 
         scheduledRelinkIfNeeded();
 
-        $scope.$apply(function() {
+        $scope.$apply(() => {
           ctrl.targetChanged();
         });
 
@@ -113,7 +113,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
         const inputElem = this;
         // happens long before the click event on the typeahead options
         // need to have long delay because the blur
-        cancelBlur = setTimeout(function() {
+        cancelBlur = setTimeout(() => {
           switchToLink(inputElem, paramIndex);
         }, 200);
       }
@@ -135,7 +135,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
 
         let options = paramDef(paramIndex).options;
         if (paramDef(paramIndex).type === 'int') {
-          options = _.map(options, function(val) {
+          options = _.map(options, val => {
             return val.toString();
           });
         }
@@ -144,7 +144,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
           source: options,
           minLength: 0,
           items: 20,
-          updater: function(value) {
+          updater: value => {
             $input.val(value);
             switchToLink($input[0], paramIndex);
             return value;
@@ -185,7 +185,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
           defParams.push(_.assign({}, lastParam, { optional: true }));
         }
 
-        _.each(defParams, function(param, index) {
+        _.each(defParams, (param, index) => {
           if (param.optional && func.params.length < index) {
             return false;
           }
@@ -236,7 +236,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       function ifJustAddedFocusFirstParam() {
         if ($scope.func.added) {
           $scope.func.added = false;
-          setTimeout(function() {
+          setTimeout(() => {
             elem
               .find('.graphite-func-param-link')
               .first()
@@ -250,18 +250,18 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       }
 
       function registerFuncControlsActions() {
-        $funcControls.click(function(e) {
+        $funcControls.click(e => {
           const $target = $(e.target);
           if ($target.hasClass('fa-remove')) {
             toggleFuncControls();
-            $scope.$apply(function() {
+            $scope.$apply(() => {
               ctrl.removeFunction($scope.func);
             });
             return;
           }
 
           if ($target.hasClass('fa-arrow-left')) {
-            $scope.$apply(function() {
+            $scope.$apply(() => {
               _.move(ctrl.queryModel.functions, $scope.$index, $scope.$index - 1);
               ctrl.targetChanged();
             });
@@ -269,7 +269,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
           }
 
           if ($target.hasClass('fa-arrow-right')) {
-            $scope.$apply(function() {
+            $scope.$apply(() => {
               _.move(ctrl.queryModel.functions, $scope.$index, $scope.$index + 1);
               ctrl.targetChanged();
             });

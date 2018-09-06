@@ -27,15 +27,15 @@ export default class InfluxQuery {
   }
 
   updateProjection() {
-    this.selectModels = _.map(this.target.select, function(parts: any) {
+    this.selectModels = _.map(this.target.select, (parts: any) => {
       return _.map(parts, queryPart.create);
     });
     this.groupByParts = _.map(this.target.groupBy, queryPart.create);
   }
 
   updatePersistedParts() {
-    this.target.select = _.map(this.selectModels, function(selectParts) {
-      return _.map(selectParts, function(part: any) {
+    this.target.select = _.map(this.selectModels, selectParts => {
+      return _.map(selectParts, (part: any) => {
         return { type: part.def.type, params: part.params };
       });
     });

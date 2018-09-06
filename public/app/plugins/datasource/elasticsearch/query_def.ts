@@ -145,7 +145,7 @@ export const movingAvgModelSettings = {
 };
 
 export function getMetricAggTypes(esVersion) {
-  return _.filter(metricAggTypes, function(f) {
+  return _.filter(metricAggTypes, f => {
     if (f.minVersion) {
       return f.minVersion <= esVersion;
     } else {
@@ -173,7 +173,7 @@ export function isPipelineAgg(metricType) {
 
 export function getPipelineAggOptions(targets) {
   const result = [];
-  _.each(targets.metrics, function(metric) {
+  _.each(targets.metrics, metric => {
     if (!isPipelineAgg(metric.type)) {
       result.push({ text: describeMetric(metric), value: metric.id });
     }
@@ -185,7 +185,7 @@ export function getPipelineAggOptions(targets) {
 export function getMovingAvgSettings(model, filtered) {
   const filteredResult = [];
   if (filtered) {
-    _.each(movingAvgModelSettings[model], function(setting) {
+    _.each(movingAvgModelSettings[model], setting => {
       if (!setting.isCheckbox) {
         filteredResult.push(setting);
       }
@@ -197,7 +197,7 @@ export function getMovingAvgSettings(model, filtered) {
 
 export function getOrderByOptions(target) {
   const metricRefs = [];
-  _.each(target.metrics, function(metric) {
+  _.each(target.metrics, metric => {
     if (metric.type !== 'count') {
       metricRefs.push({ text: describeMetric(metric), value: metric.id });
     }
