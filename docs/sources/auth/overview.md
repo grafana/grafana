@@ -14,7 +14,7 @@ weight = 1
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user
 permissions and org memberships.
 
-## OAuth2 Integrations
+## OAuth Integrations
 
 - [Google OAuth]({{< relref "auth/google.md" >}})
 - [GitHub OAuth]({{< relref "auth/github.md" >}})

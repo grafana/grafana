@@ -4,7 +4,7 @@ description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
 type = "docs"
 [menu.docs]
-name = "GitHub OAuth2"
+name = "GitHub"
 identifier = "github_oauth2"
 parent = "authentication"
 weight = 4

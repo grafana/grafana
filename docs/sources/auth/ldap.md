@@ -16,29 +16,25 @@ The LDAP integration in Grafana allows your Grafana users to login with their LD
 group memberships and Grafana Organization user roles. Below we detail grafana.ini config file
 settings and ldap.toml config file options.
 
-## [auth.ldap]
+## Enable LDAP
 
-### enabled
-Set to `true` to enable LDAP integration (default: `false`)
-
-### config_file
-Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
-
-### allow_sign_up
-
-Allow sign up should almost always be true (default) to allow new Grafana users to be created (if ldap authentication is ok). If set to
-false only pre-existing Grafana users will be able to login (if ldap authentication is ok).
-
-<hr>
-
-Grafana (2.1 and newer) ships with a strong LDAP integration feature.
-## Configuration
-You turn on LDAP in the [main config file]({{< relref "configuration.md#auth-ldap" >}}) as well as specify the path to the LDAP
+You turn on LDAP in the [main config file]({{< relref "installation/configuration.md" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
-### Example config
+```bash
+[auth.ldap]
+# Set to `true` to enable LDAP integration (default: `false`)
+enabled = true
+# Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
+config_file = /etc/grafana/ldap.toml`
+# Allow sign up should almost always be true (default) to allow new Grafana users to be created (if ldap authentication is ok). If set to
+# false only pre-existing Grafana users will be able to login (if ldap authentication is ok).
+allow_sign_up = true
+```
 
-```toml
+## LDAP Configuration
+
+```bash
 # To troubleshoot and get more log info enable ldap debug logging in grafana.ini
 # [log]
 # filters = ldap:debug
@@ -135,7 +131,7 @@ The search filter and search bases settings are still needed to perform the LDAP
 ## POSIX schema (no memberOf attribute)
 If your ldap server does not support the memberOf attribute add these options:
 
-```toml
+```bash
 ## Group search filter, to retrieve the groups of which the user is a member (only set if memberOf attribute is not available)
 group_search_filter = "(&(objectClass=posixGroup)(memberUid=%s))"
 ## An array of the base DNs to search through for groups. Typically uses ou=groups

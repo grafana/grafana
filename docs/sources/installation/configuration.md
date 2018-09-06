@@ -324,7 +324,7 @@ Defaults to `false`.
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many differnet pages
 below.
 
-- [Anonymous access]({{< relref "auth/overview.md" >}}) (auth.anonymous)
+- [Authentication Overview]({{< relref "auth/overview.md" >}}) (anonymous access options, hide login and more)
 - [Google OAuth]({{< relref "auth/google.md" >}}) (auth.google)
 - [GitHub OAuth]({{< relref "auth/github.md" >}}) (auth.github)
 - [Gitlab OAuth]({{< relref "auth/gitlab.md" >}}) (auth.gitlab)

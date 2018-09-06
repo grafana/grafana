@@ -4,7 +4,7 @@ description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
 type = "docs"
 [menu.docs]
-name = "GitLab OAuth2"
+name = "GitLab"
 identifier = "gitlab_oauth"
 parent = "authentication"
 weight = 5
@@ -45,7 +45,7 @@ section.
 Add the following to your Grafana configuration file to enable GitLab
 authentication:
 
-```ini
+```bash
 [auth.gitlab]
 enabled = false
 allow_sign_up = false
