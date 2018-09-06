@@ -28,7 +28,8 @@
 		<div class="gf-form" ng-if="ctrl.inputDataValid">
 			<span class="gf-form-label width-10">Default Project</span>
 			<div class="gf-form-select-wrapper max-width-23">
-				<select class="gf-form-input" ng-model="ctrl.defaultProject" ng-options="p.id as p.name for p in ctrl.projects" ng-change="ctrl.userChangedDefaultProject()"></select>
+				<select class="gf-form-input" ng-model="ctrl.current.jsonData.defaultProject" ng-options="p.id as p.name for p in ctrl.projects"
+				 ng-change="ctrl.userChangedDefaultProject()"></select>
 			</div>
 			<div ng-if="ctrl.loadingProjects">
 				<i class="fa fa-spinner fa-spin"></i>

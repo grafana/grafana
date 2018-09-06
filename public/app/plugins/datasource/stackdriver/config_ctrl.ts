@@ -7,7 +7,7 @@ export class StackdriverConfigCtrl {
   inputDataValid: boolean;
   defaultProject: string;
   projectsError: string;
-  projects: string[];
+  projects: any[];
   loadingProjects: boolean;
 
   /** @ngInject */
@@ -15,6 +15,7 @@ export class StackdriverConfigCtrl {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.secureJsonData = this.current.secureJsonData || {};
+    this.defaultProject = this.current.jsonData.defaultProject;
     this.projects = [];
   }
 
@@ -80,11 +81,12 @@ export class StackdriverConfigCtrl {
       try {
         this.loadingProjects = true;
         const ds = await this.datasourceSrv.loadDatasource(this.current.name);
-        const response = await ds.doRequest(`/cloudresourcemanager/v1/projects`);
+        this.projects = await ds.getProjects();
         this.$scope.$apply(() => {
-          this.projects = response.data.projects.map(p => ({ id: p.projectId, name: p.name }));
+          if (this.projects.length > 0) {
+            this.current.jsonData.defaultProject = this.current.jsonData.defaultProject || this.projects[0].id;
+          }
         });
-        console.log(this.projects);
       } catch (error) {
         let message = 'Projects cannot be fetched: ';
         message += error.statusText ? error.statusText + ': ' : '';
@@ -100,10 +102,9 @@ export class StackdriverConfigCtrl {
         } else {
           message += 'Cannot connect to Stackdriver API';
         }
-        this.$scope.$apply(() => {
-          this.loadingProjects = false;
-          this.projectsError = message;
-        });
+        this.$scope.$apply(() => (this.projectsError = message));
+      } finally {
+        this.$scope.$apply(() => (this.loadingProjects = false));
       }
     }
   }

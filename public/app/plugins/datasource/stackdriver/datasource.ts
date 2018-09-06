@@ -38,7 +38,12 @@ export default class StackdriverDatasource {
       });
   }
 
-  doRequest(url, maxRetries = 1) {
+  async getProjects() {
+    const response = await this.doRequest(`/cloudresourcemanager/v1/projects`);
+    return response.data.projects.map(p => ({ id: p.projectId, name: p.name }));
+  }
+
+  async doRequest(url, maxRetries = 1) {
     return this.backendSrv
       .datasourceRequest({
         url: this.url + url,
