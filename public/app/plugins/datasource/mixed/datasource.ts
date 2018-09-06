@@ -13,14 +13,14 @@ class MixedDatasource {
         return this.$q([]);
       }
 
-      return this.datasourceSrv.get(dsName).then(function(ds) {
+      return this.datasourceSrv.get(dsName).then(ds => {
         const opt = angular.copy(options);
         opt.targets = targets;
         return ds.query(opt);
       });
     });
 
-    return this.$q.all(promises).then(function(results) {
+    return this.$q.all(promises).then(results => {
       return { data: _.flatten(_.map(results, 'data')) };
     });
   }

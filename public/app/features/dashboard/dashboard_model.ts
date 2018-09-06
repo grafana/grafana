@@ -258,7 +258,7 @@ export class DashboardModel {
   }
 
   sortPanelsByGridPos() {
-    this.panels.sort(function(panelA, panelB) {
+    this.panels.sort((panelA, panelB) => {
       if (panelA.gridPos.y === panelB.gridPos.y) {
         return panelA.gridPos.x - panelB.gridPos.x;
       } else {
@@ -775,8 +775,8 @@ export class DashboardModel {
   getNextQueryLetter(panel) {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    return _.find(letters, function(refId) {
-      return _.every(panel.targets, function(other) {
+    return _.find(letters, refId => {
+      return _.every(panel.targets, other => {
         return other.refId !== refId;
       });
     });

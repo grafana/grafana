@@ -60,7 +60,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	s3_endpoint, _ := endpoints.DefaultResolver().EndpointFor("s3", u.region)
 	key := u.path + util.GetRandomString(20) + ".png"
 	image_url := s3_endpoint.URL + "/" + u.bucket + "/" + key
-	log.Debug("Uploading image to s3", "url = ", image_url)
+	log.Debug("Uploading image to s3. url = %s", image_url)
 
 	file, err := os.Open(imageDiskPath)
 	if err != nil {

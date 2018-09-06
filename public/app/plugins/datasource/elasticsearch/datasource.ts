@@ -59,12 +59,12 @@ export class ElasticDatasource {
     const range = this.timeSrv.timeRange();
     const indexList = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
     if (_.isArray(indexList) && indexList.length) {
-      return this.request('GET', indexList[0] + url).then(function(results) {
+      return this.request('GET', indexList[0] + url).then(results => {
         results.data.$$config = results.config;
         return results.data;
       });
     } else {
-      return this.request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
+      return this.request('GET', this.indexPattern.getIndexForToday() + url).then(results => {
         results.data.$$config = results.config;
         return results.data;
       });
@@ -73,7 +73,7 @@ export class ElasticDatasource {
 
   private post(url, data) {
     return this.request('POST', url, data)
-      .then(function(results) {
+      .then(results => {
         results.data.$$config = results.config;
         return results.data;
       })
@@ -145,7 +145,7 @@ export class ElasticDatasource {
       const list = [];
       const hits = res.responses[0].hits.hits;
 
-      const getFieldFromSource = function(source, fieldName) {
+      const getFieldFromSource = (source, fieldName) => {
         if (!fieldName) {
           return;
         }
@@ -213,7 +213,7 @@ export class ElasticDatasource {
         }
         return { status: 'success', message: 'Index OK. Time field name OK.' };
       },
-      function(err) {
+      err => {
         console.log(err);
         if (err.data && err.data.error) {
           let message = angular.toJson(err.data.error);
@@ -274,13 +274,13 @@ export class ElasticDatasource {
     payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
-    return this.post('_msearch', payload).then(function(res) {
+    return this.post('_msearch', payload).then(res => {
       return new ElasticResponse(sentTargets, res).getTimeSeries();
     });
   }
 
   getFields(query) {
-    return this.get('/_mapping').then(function(result) {
+    return this.get('/_mapping').then(result => {
       const typeMap = {
         float: 'number',
         double: 'number',
@@ -352,7 +352,7 @@ export class ElasticDatasource {
       }
 
       // transform to array
-      return _.map(fields, function(value) {
+      return _.map(fields, value => {
         return value;
       });
     });
@@ -368,13 +368,13 @@ export class ElasticDatasource {
     esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
     esQuery = header + '\n' + esQuery + '\n';
 
-    return this.post('_msearch?search_type=' + searchType, esQuery).then(function(res) {
+    return this.post('_msearch?search_type=' + searchType, esQuery).then(res => {
       if (!res.responses[0].aggregations) {
         return [];
       }
 
       const buckets = res.responses[0].aggregations['1'].buckets;
-      return _.map(buckets, function(bucket) {
+      return _.map(buckets, bucket => {
         return {
           text: bucket.key_as_string || bucket.key,
           value: bucket.key,

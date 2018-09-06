@@ -70,7 +70,7 @@ export class TimeSrv {
     }
 
     if (!isNaN(value)) {
-      const epoch = parseInt(value);
+      const epoch = parseInt(value, 10);
       return moment.utc(epoch);
     }
 

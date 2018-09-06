@@ -436,7 +436,7 @@ export class HeatmapRenderer {
 
   tickValueFormatter(decimals, scaledDecimals = null) {
     const format = this.panel.yAxis.format;
-    return function(value) {
+    return value => {
       try {
         return format !== 'none' ? kbn.valueFormats[format](value, decimals, scaledDecimals) : value;
       } catch (err) {

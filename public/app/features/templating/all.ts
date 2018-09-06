@@ -10,7 +10,7 @@ import { CustomVariable } from './custom_variable';
 import { ConstantVariable } from './constant_variable';
 import { AdhocVariable } from './adhoc_variable';
 
-coreModule.factory('templateSrv', function() {
+coreModule.factory('templateSrv', () => {
   return templateSrv;
 });
 

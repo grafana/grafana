@@ -30,7 +30,7 @@ export function navbarDirective() {
     scope: {
       model: '=',
     },
-    link: function(scope, elem) {},
+    link: (scope, elem) => {},
   };
 }
 

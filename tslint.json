@@ -33,6 +33,7 @@
     "no-angle-bracket-type-assertion": true,
     "no-arg": true,
     "no-bitwise": false,
+    "no-conditional-assignment": true,
     "no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
     "no-construct": true,
     "no-debugger": true,
@@ -48,8 +49,9 @@
     "no-var-keyword": true,
     "object-literal-sort-keys": false,
     "one-line": [true, "check-open-brace", "check-catch", "check-else"],
+    "only-arrow-functions": [true, "allow-declarations", "allow-named-functions"],
     "prefer-const": true,
-    "radix": false,
+    "radix": true,
     "typedef-whitespace": [
       true,
       {

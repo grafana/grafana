@@ -55,11 +55,12 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
 
   // Adding label to existing selectors
   const selectorRegexp = /{([^{]*)}/g;
-  let match = null;
+  let match = selectorRegexp.exec(query);
   const parts = [];
   let lastIndex = 0;
   let suffix = '';
-  while ((match = selectorRegexp.exec(query))) {
+
+  while (match) {
     const prefix = query.slice(lastIndex, match.index);
     const selectorParts = match[1].split(',');
     const labels = selectorParts.reduce((acc, label) => {
@@ -77,6 +78,7 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
     lastIndex = match.index + match[1].length + 2;
     suffix = query.slice(match.index + match[0].length);
     parts.push(prefix, '{', selector, '}');
+    match = selectorRegexp.exec(query);
   }
   parts.push(suffix);
   return parts.join('');
@@ -526,13 +528,13 @@ export class PrometheusDatasource {
     const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
 
     const self = this;
-    return this.performTimeSeriesQuery(query, query.start, query.end).then(function(results) {
+    return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {
       const eventList = [];
       tagKeys = tagKeys.split(',');
 
-      _.each(results.data.data.result, function(series) {
+      _.each(results.data.data.result, series => {
         const tags = _.chain(series.metric)
-          .filter(function(v, k) {
+          .filter((v, k) => {
             return _.includes(tagKeys, k);
           })
           .value();

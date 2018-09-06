@@ -44,7 +44,7 @@ export class UtilSrv {
       backdrop: options.backdrop,
     });
 
-    Promise.resolve(modal).then(function(modalEl) {
+    Promise.resolve(modal).then(modalEl => {
       modalEl.modal('show');
     });
   }
@@ -52,12 +52,12 @@ export class UtilSrv {
   showConfirmModal(payload) {
     const scope = this.$rootScope.$new();
 
-    scope.onConfirm = function() {
+    scope.onConfirm = () => {
       payload.onConfirm();
       scope.dismiss();
     };
 
-    scope.updateConfirmText = function(value) {
+    scope.updateConfirmText = value => {
       scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
     };
 
