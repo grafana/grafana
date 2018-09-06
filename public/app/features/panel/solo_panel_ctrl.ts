@@ -7,12 +7,12 @@ export class SoloPanelCtrl {
   constructor($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv, backendSrv) {
     let panelId;
 
-    $scope.init = function() {
+    $scope.init = () => {
       contextSrv.sidemenu = false;
       appEvents.emit('toggle-sidemenu-hidden');
 
       const params = $location.search();
-      panelId = parseInt(params.panelId);
+      panelId = parseInt(params.panelId, 10);
 
       $scope.onAppEvent('dashboard-initialized', $scope.initPanelScope);
 
@@ -27,13 +27,13 @@ export class SoloPanelCtrl {
         return;
       }
 
-      dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
+      dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(result => {
         result.meta.soloMode = true;
         $scope.initDashboard(result, $scope);
       });
     };
 
-    $scope.initPanelScope = function() {
+    $scope.initPanelScope = () => {
       const panelInfo = $scope.dashboard.getPanelInfoById(panelId);
 
       // fake row ctrl scope

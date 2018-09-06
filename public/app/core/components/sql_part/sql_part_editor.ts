@@ -55,7 +55,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
       }
 
       function inputBlur($input, paramIndex) {
-        cancelBlur = setTimeout(function() {
+        cancelBlur = setTimeout(() => {
           switchToLink($input, paramIndex);
         }, 200);
       }
@@ -95,20 +95,20 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           return;
         }
 
-        const typeaheadSource = function(query, callback) {
+        const typeaheadSource = (query, callback) => {
           if (param.options) {
             let options = param.options;
             if (param.type === 'int') {
-              options = _.map(options, function(val) {
+              options = _.map(options, val => {
                 return val.toString();
               });
             }
             return options;
           }
 
-          $scope.$apply(function() {
-            $scope.handleEvent({ $event: { name: 'get-param-options', param: param } }).then(function(result) {
-              const dynamicOptions = _.map(result, function(op) {
+          $scope.$apply(() => {
+            $scope.handleEvent({ $event: { name: 'get-param-options', param: param } }).then(result => {
+              const dynamicOptions = _.map(result, op => {
                 return op.value;
               });
 
@@ -128,7 +128,7 @@ export function sqlPartEditorDirective($compile, templateSrv) {
           source: typeaheadSource,
           minLength: 0,
           items: 1000,
-          updater: function(value) {
+          updater: value => {
             if (value === part.params[paramIndex]) {
               clearTimeout(cancelBlur);
               $input.focus();
@@ -150,18 +150,18 @@ export function sqlPartEditorDirective($compile, templateSrv) {
         }
       }
 
-      $scope.showActionsMenu = function() {
+      $scope.showActionsMenu = () => {
         $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then(res => {
           $scope.partActions = res;
         });
       };
 
-      $scope.triggerPartAction = function(action) {
+      $scope.triggerPartAction = action => {
         $scope.handleEvent({ $event: { name: 'action', action: action } });
       };
 
       function addElementsAndCompile() {
-        _.each(partDef.params, function(param, index) {
+        _.each(partDef.params, (param, index) => {
           if (param.optional && part.params.length <= index) {
             return;
           }

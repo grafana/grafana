@@ -493,7 +493,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       const bgColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
 
-      const fontScale = parseInt(panel.valueFontSize) / 100;
+      const fontScale = parseInt(panel.valueFontSize, 10) / 100;
       const fontSize = Math.min(dimension / 5, 100) * fontScale;
       // Reduce gauge width if threshold labels enabled
       const gaugeWidthReduceRatio = panel.gauge.thresholdLabels ? 1.5 : 1;
@@ -528,7 +528,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             },
             value: {
               color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
-              formatter: function() {
+              formatter: () => {
                 return getValueText();
               },
               font: {
@@ -617,7 +617,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       data = ctrl.data;
 
       // get thresholds
-      data.thresholds = panel.thresholds.split(',').map(function(strVale) {
+      data.thresholds = panel.thresholds.split(',').map(strVale => {
         return Number(strVale.trim());
       });
       data.colorMap = panel.colors;
@@ -662,16 +662,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       // drilldown link tooltip
       const drilldownTooltip = $('<div id="tooltip" class="">hello</div>"');
 
-      elem.mouseleave(function() {
+      elem.mouseleave(() => {
         if (panel.links.length === 0) {
           return;
         }
-        $timeout(function() {
+        $timeout(() => {
           drilldownTooltip.detach();
         });
       });
 
-      elem.click(function(evt) {
+      elem.click(evt => {
         if (!linkInfo) {
           return;
         }
@@ -688,7 +688,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         if (linkInfo.href.indexOf('http') === 0) {
           window.location.href = linkInfo.href;
         } else {
-          $timeout(function() {
+          $timeout(() => {
             $location.url(linkInfo.href);
           });
         }
@@ -696,7 +696,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         drilldownTooltip.detach();
       });
 
-      elem.mousemove(function(e) {
+      elem.mousemove(e => {
         if (!linkInfo) {
           return;
         }
@@ -708,7 +708,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     hookupDrilldownLinkTooltip();
 
-    this.events.on('render', function() {
+    this.events.on('render', () => {
       render();
       ctrl.renderingCompleted();
     });

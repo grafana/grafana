@@ -22,7 +22,7 @@ export default class InfluxSeries {
 
     _.each(this.series, series => {
       const columns = series.columns.length;
-      const tags = _.map(series.tags, function(value, key) {
+      const tags = _.map(series.tags, (value, key) => {
         return key + ': ' + value;
       });
 
@@ -57,7 +57,7 @@ export default class InfluxSeries {
     const regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
     const segments = series.name.split('.');
 
-    return this.alias.replace(regex, function(match, g1, g2) {
+    return this.alias.replace(regex, (match, g1, g2) => {
       const group = g1 || g2;
       const segIndex = parseInt(group, 10);
 
@@ -124,10 +124,10 @@ export default class InfluxSeries {
           // Remove empty values, then split in different tags for comma separated values
           tags: _.flatten(
             tagsCol
-              .filter(function(t) {
+              .filter(t => {
                 return value[t];
               })
-              .map(function(t) {
+              .map(t => {
                 return value[t].split(',');
               })
           ),
@@ -158,7 +158,7 @@ export default class InfluxSeries {
           table.columns.push({ text: 'Time', type: 'time' });
           j++;
         }
-        _.each(_.keys(series.tags), function(key) {
+        _.each(_.keys(series.tags), key => {
           table.columns.push({ text: key });
         });
         for (; j < series.columns.length; j++) {

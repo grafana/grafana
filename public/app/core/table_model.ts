@@ -26,7 +26,7 @@ export default class TableModel {
       return;
     }
 
-    this.rows.sort(function(a, b) {
+    this.rows.sort((a, b) => {
       a = a[options.col];
       b = b[options.col];
       // Sort null or undefined seperately from comparable values

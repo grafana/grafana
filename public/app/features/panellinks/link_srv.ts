@@ -26,14 +26,14 @@ export class LinkSrv {
   addParamsToUrl(url, params) {
     const paramsArray = [];
 
-    _.each(params, function(value, key) {
+    _.each(params, (value, key) => {
       if (value === null) {
         return;
       }
       if (value === true) {
         paramsArray.push(key);
       } else if (_.isArray(value)) {
-        _.each(value, function(instance) {
+        _.each(value, instance => {
           paramsArray.push(key + '=' + encodeURIComponent(instance));
         });
       } else {

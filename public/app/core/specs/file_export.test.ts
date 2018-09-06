@@ -101,7 +101,7 @@ describe('file_export', () => {
       expect(returnedText).toBe(expectedText);
     });
 
-    it('should decode HTML encoded characters', function() {
+    it('should decode HTML encoded characters', () => {
       const inputTable = {
         columns: [{ text: 'string_value' }],
         rows: [
