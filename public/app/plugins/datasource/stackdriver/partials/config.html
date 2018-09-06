@@ -1,44 +1,59 @@
-<h3>Stackdriver Authentication</h3>
-<div class="gf-form-group" ng-if="!ctrl.inputDataValid">
-	<div class="gf-form">
-		<form>
-			<dash-upload on-upload="ctrl.onUpload(dash)"></dash-upload>
-		</form>
+<div ng-if="!ctrl.current.jsonData.clientEmail && !ctrl.inputDataValid">
+	<div class="gf-form-group" ng-if="!ctrl.inputDataValid">
+		<div class="gf-form">
+			<form>
+				<dash-upload on-upload="ctrl.onUpload(dash)"></dash-upload>
+			</form>
+		</div>
+	</div>
+	<div class="gf-form-group">
+		<h5 class="section-heading" ng-if="!ctrl.inputDataValid">Or paste JSON</h5>
+		<div class="gf-form" ng-if="!ctrl.inputDataValid">
+			<textarea rows="10" data-share-panel-url="" class="gf-form-input" ng-model="ctrl.jsonText" ng-paste="ctrl.onPasteJwt($event)"></textarea>
+		</div>
+		<div ng-repeat="valError in ctrl.validationErrors" class="text-error p-l-1">
+			<i class="fa fa-warning"></i>
+			{{valError}}
+		</div>
 	</div>
 </div>
-<div class="gf-form-group">
-	<h5 class="section-heading" ng-if="!ctrl.inputDataValid">Or paste JSON</h5>
-	<div class="gf-form" ng-if="!ctrl.inputDataValid">
-		<textarea rows="10" data-share-panel-url="" class="gf-form-input" ng-model="ctrl.jsonText" ng-paste="ctrl.onPasteJwt($event)"></textarea>
-	</div>
-	<div ng-repeat="valError in ctrl.validationErrors" class="text-error p-l-1">
-		<i class="fa fa-warning"></i>
-		{{valError}}
-	</div>
-	<div ng-if="ctrl.inputDataValid">
-		<div class="text-success p-l-1">
-			<i class="fa fa-info"></i>
-			Successfully validated input format
+
+<div class="gf-form-group" ng-if="ctrl.inputDataValid || ctrl.current.jsonData.clientEmail">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-9">Token URI</span>
+			<input class="gf-form-input width-30" disabled type="text" ng-model='ctrl.current.jsonData.tokenUri' />
 		</div>
-		<br />
+	</div>
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-9">Client Email</span>
+			<input class="gf-form-input width-30" disabled type="text" ng-model="ctrl.current.jsonData.clientEmail" />
+		</div>
+	</div>
+	<div class="gf-form" ng-if="ctrl.current.secureJsonFields.privateKey">
+		<span class="gf-form-label width-9">Client Secret</span>
+		<input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
+	</div>
+
+
+	<div class="gf-form">
 		<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.resetValidationMessages()">Reset form</a>
 	</div>
 	<br />
-	<div class="gf-form-group" ng-if="ctrl.inputDataValid">
-		<div class="gf-form" ng-if="ctrl.inputDataValid">
-			<span class="gf-form-label width-10">Default Project</span>
-			<div class="gf-form-select-wrapper max-width-23">
-				<select class="gf-form-input" ng-model="ctrl.current.jsonData.defaultProject" ng-options="p.id as p.name for p in ctrl.projects"
-				 ng-change="ctrl.userChangedDefaultProject()"></select>
-			</div>
-			<div ng-if="ctrl.loadingProjects">
-				<i class="fa fa-spinner fa-spin"></i>
-				<em>Fetching projects...&hellip;</em>
-			</div>
+	<div class="gf-form">
+		<span class="gf-form-label width-10">Default Project</span>
+		<div class="gf-form-select-wrapper max-width-23">
+			<select class="gf-form-input" ng-model="ctrl.current.jsonData.defaultProject" ng-options="p.id as p.name for p in ctrl.projects"
+			 ng-change="ctrl.userChangedDefaultProject()"></select>
 		</div>
-		<div ng-if="ctrl.projectsError" class="text-error p-l-1">
-			<i class="fa fa-warning"></i>
-			{{ctrl.projectsError}}
+		<div ng-if="ctrl.loadingProjects">
+			<i class="fa fa-spinner fa-spin"></i>
+			<em>Fetching projects...&hellip;</em>
 		</div>
+	</div>
+	<div ng-if="ctrl.projectsError" class="text-error p-l-1">
+		<i class="fa fa-warning"></i>
+		{{ctrl.projectsError}}
 	</div>
 </div>

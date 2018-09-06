@@ -15,6 +15,8 @@ export class StackdriverConfigCtrl {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.secureJsonData = this.current.secureJsonData || {};
+    this.current.secureJsonFields = this.current.secureJsonFields || {};
+    console.log(this.current.secureJsonFields.privateKey);
     this.defaultProject = this.current.jsonData.defaultProject;
     this.projects = [];
   }
@@ -74,6 +76,10 @@ export class StackdriverConfigCtrl {
     this.jsonText = '';
     this.loadingProjects = false;
     this.projectsError = '';
+
+    this.current.jsonData = {};
+    this.current.secureJsonData = {};
+    this.current.secureJsonFields = {};
   }
 
   async displayProjects() {
