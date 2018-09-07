@@ -12,7 +12,7 @@ export class SoloPanelCtrl {
       appEvents.emit('toggle-sidemenu-hidden');
 
       const params = $location.search();
-      panelId = parseInt(params.panelId);
+      panelId = parseInt(params.panelId, 10);
 
       $scope.onAppEvent('dashboard-initialized', $scope.initPanelScope);
 

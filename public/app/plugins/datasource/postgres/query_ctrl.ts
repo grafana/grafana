@@ -96,7 +96,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   updateProjection() {
-    this.selectParts = _.map(this.target.select, function(parts: any) {
+    this.selectParts = _.map(this.target.select, (parts: any) => {
       return _.map(parts, sqlPart.create).filter(n => n);
     });
     this.whereParts = _.map(this.target.where, sqlPart.create).filter(n => n);
@@ -104,15 +104,15 @@ export class PostgresQueryCtrl extends QueryCtrl {
   }
 
   updatePersistedParts() {
-    this.target.select = _.map(this.selectParts, function(selectParts) {
-      return _.map(selectParts, function(part: any) {
+    this.target.select = _.map(this.selectParts, selectParts => {
+      return _.map(selectParts, (part: any) => {
         return { type: part.def.type, datatype: part.datatype, params: part.params };
       });
     });
-    this.target.where = _.map(this.whereParts, function(part: any) {
+    this.target.where = _.map(this.whereParts, (part: any) => {
       return { type: part.def.type, datatype: part.datatype, name: part.name, params: part.params };
     });
-    this.target.group = _.map(this.groupParts, function(part: any) {
+    this.target.group = _.map(this.groupParts, (part: any) => {
       return { type: part.def.type, datatype: part.datatype, params: part.params };
     });
   }
@@ -355,7 +355,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
     switch (partType) {
       case 'column':
-        const parts = _.map(selectParts, function(part: any) {
+        const parts = _.map(selectParts, (part: any) => {
           return sqlPart.create({ type: part.def.type, params: _.clone(part.params) });
         });
         this.selectParts.push(parts);

@@ -164,8 +164,10 @@ var (
 	Quota QuotaSettings
 
 	// Alerting
-	AlertingEnabled bool
-	ExecuteAlerts   bool
+	AlertingEnabled            bool
+	ExecuteAlerts              bool
+	AlertingErrorOrTimeout     string
+	AlertingNoDataOrNullValues string
 
 	// Explore UI
 	ExploreEnabled bool
@@ -325,7 +327,7 @@ func getCommandLineProperties(args []string) map[string]string {
 		trimmed := strings.TrimPrefix(arg, "cfg:")
 		parts := strings.Split(trimmed, "=")
 		if len(parts) != 2 {
-			log.Fatal(3, "Invalid command line argument", arg)
+			log.Fatal(3, "Invalid command line argument. argument: %v", arg)
 			return nil
 		}
 
@@ -672,6 +674,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+	AlertingErrorOrTimeout = alerting.Key("error_or_timeout").MustString("alerting")
+	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(false)

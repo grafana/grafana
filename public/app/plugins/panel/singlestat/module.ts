@@ -493,7 +493,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       const bgColor = config.bootData.user.lightTheme ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
 
-      const fontScale = parseInt(panel.valueFontSize) / 100;
+      const fontScale = parseInt(panel.valueFontSize, 10) / 100;
       const fontSize = Math.min(dimension / 5, 100) * fontScale;
       // Reduce gauge width if threshold labels enabled
       const gaugeWidthReduceRatio = panel.gauge.thresholdLabels ? 1.5 : 1;

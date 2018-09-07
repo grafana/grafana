@@ -16,7 +16,7 @@ export function parseTime(value, isUtc = false, asString = false) {
     return value;
   }
   if (!isNaN(value)) {
-    const epoch = parseInt(value);
+    const epoch = parseInt(value, 10);
     const m = isUtc ? moment.utc(epoch) : moment(epoch);
     return asString ? m.format(DATE_FORMAT) : m;
   }

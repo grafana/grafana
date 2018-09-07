@@ -10,6 +10,24 @@ import (
 
 func TestAuthenticateUser(t *testing.T) {
 	Convey("Authenticate user", t, func() {
+		authScenario("When a user authenticates without setting a password", func(sc *authScenarioContext) {
+			mockLoginAttemptValidation(nil, sc)
+			mockLoginUsingGrafanaDB(nil, sc)
+			mockLoginUsingLdap(false, nil, sc)
+
+			loginQuery := m.LoginUserQuery{
+				Username: "user",
+				Password: "",
+			}
+			err := AuthenticateUser(&loginQuery)
+
+			Convey("login should fail", func() {
+				So(sc.grafanaLoginWasCalled, ShouldBeFalse)
+				So(sc.ldapLoginWasCalled, ShouldBeFalse)
+				So(err, ShouldEqual, ErrPasswordEmpty)
+			})
+		})
+
 		authScenario("When a user authenticates having too many login attempts", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(ErrTooManyLoginAttempts, sc)
 			mockLoginUsingGrafanaDB(nil, sc)

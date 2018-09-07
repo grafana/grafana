@@ -208,7 +208,7 @@ export class ElasticBucketAggCtrl {
       const id = _.reduce(
         $scope.target.bucketAggs.concat($scope.target.metrics),
         (max, val) => {
-          return parseInt(val.id) > max ? parseInt(val.id) : max;
+          return parseInt(val.id, 10) > max ? parseInt(val.id, 10) : max;
         },
         0
       );
