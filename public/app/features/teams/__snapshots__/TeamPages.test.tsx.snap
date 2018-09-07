@@ -1,0 +1,87 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+</div>
+`;
+
+exports[`Render should render group sync page 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <TeamGroupSync
+      team={
+        Object {
+          "avatarUrl": "some/url/",
+          "email": "test@test.com",
+          "groups": Array [],
+          "id": 1,
+          "memberCount": 1,
+          "members": Array [],
+          "name": "test",
+          "search": "",
+        }
+      }
+    />
+  </div>
+</div>
+`;
+
+exports[`Render should render member page if team not empty 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <TeamMembers
+      team={
+        Object {
+          "avatarUrl": "some/url/",
+          "email": "test@test.com",
+          "groups": Array [],
+          "id": 1,
+          "memberCount": 1,
+          "members": Array [],
+          "name": "test",
+          "search": "",
+        }
+      }
+    />
+  </div>
+</div>
+`;
+
+exports[`Render should render settings page 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <TeamSettings
+      team={
+        Object {
+          "avatarUrl": "some/url/",
+          "email": "test@test.com",
+          "groups": Array [],
+          "id": 1,
+          "memberCount": 1,
+          "members": Array [],
+          "name": "test",
+          "search": "",
+        }
+      }
+    />
+  </div>
+</div>
+`;

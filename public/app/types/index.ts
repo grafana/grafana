@@ -96,7 +96,7 @@ export interface NavModelItem {
   hideFromTabs?: boolean;
   divider?: boolean;
   children?: NavModelItem[];
-  breadcrumbs?: NavModelItem[];
+  breadcrumbs?: { title: string; url: string }[];
   target?: string;
   parentItem?: NavModelItem;
 }
@@ -119,6 +119,11 @@ export interface AlertRulesState {
 
 export interface TeamsState {
   teams: Team[];
+  searchQuery: string;
+}
+
+export interface TeamState {
+  team: Team;
   searchQuery: string;
 }
 

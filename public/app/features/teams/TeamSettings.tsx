@@ -1,30 +1,28 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import { observer } from 'mobx-react';
-import { Team } from 'app/stores/TeamsStore/TeamsStore';
 import { Label } from 'app/core/components/Forms/Forms';
+import { Team } from '../../types';
 
 interface Props {
   team: Team;
 }
 
-@observer
 export class TeamSettings extends React.Component<Props, any> {
   constructor(props) {
     super(props);
   }
 
   onChangeName = evt => {
-    this.props.team.setName(evt.target.value);
+    // this.props.team.setName(evt.target.value);
   };
 
   onChangeEmail = evt => {
-    this.props.team.setEmail(evt.target.value);
+    // this.props.team.setEmail(evt.target.value);
   };
 
   onUpdate = evt => {
     evt.preventDefault();
-    this.props.team.update();
+    // this.props.team.update();
   };
 
   render() {

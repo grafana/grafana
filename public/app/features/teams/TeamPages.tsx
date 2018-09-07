@@ -1,77 +1,106 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 import _ from 'lodash';
 import { hot } from 'react-hot-loader';
-import { inject, observer } from 'mobx-react';
 import config from 'app/core/config';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { NavStore } from 'app/stores/NavStore/NavStore';
-import { TeamsStore, Team } from 'app/stores/TeamsStore/TeamsStore';
-import { ViewStore } from 'app/stores/ViewStore/ViewStore';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
 import TeamGroupSync from './TeamGroupSync';
+import { NavModel, Team } from '../../types';
+import { loadTeam } from './state/actions';
+import { getTeam } from './state/selectors';
+import { getNavModel } from '../../core/selectors/navModel';
+import { getRouteParamsId, getRouteParamsPage } from '../../core/selectors/location';
 
-interface Props {
-  nav: typeof NavStore.Type;
-  teams: typeof TeamsStore.Type;
-  view: typeof ViewStore.Type;
+export interface Props {
+  team: Team;
+  loadTeam: typeof loadTeam;
+  teamId: number;
+  pageName: string;
+  navModel: NavModel;
 }
 
-@inject('nav', 'teams', 'view')
-@observer
-export class TeamPages extends React.Component<Props, any> {
+interface State {
   isSyncEnabled: boolean;
-  currentPage: string;
+}
 
+enum PageTypes {
+  Members = 'members',
+  Settings = 'settings',
+  GroupSync = 'groupsync',
+}
+
+export class TeamPages extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
 
-    this.isSyncEnabled = config.buildInfo.isEnterprise;
-    this.currentPage = this.getCurrentPage();
+    this.state = {
+      isSyncEnabled: config.buildInfo.isEnterprise,
+    };
+  }
 
+  componentDidMount() {
     this.loadTeam();
   }
 
   async loadTeam() {
-    const { teams, nav, view } = this.props;
+    const { loadTeam, teamId } = this.props;
 
-    await teams.loadById(view.routeParams.get('id'));
-
-    nav.initTeamPage(this.getCurrentTeam(), this.currentPage, this.isSyncEnabled);
-  }
-
-  getCurrentTeam(): Team {
-    const { teams, view } = this.props;
-    return teams.map.get(view.routeParams.get('id'));
+    await loadTeam(teamId);
   }
 
   getCurrentPage() {
     const pages = ['members', 'settings', 'groupsync'];
-    const currentPage = this.props.view.routeParams.get('page');
+    const currentPage = this.props.pageName;
     return _.includes(pages, currentPage) ? currentPage : pages[0];
   }
 
-  render() {
-    const { nav } = this.props;
-    const currentTeam = this.getCurrentTeam();
+  renderPage() {
+    const { team } = this.props;
+    const { isSyncEnabled } = this.state;
+    const currentPage = this.getCurrentPage();
 
-    if (!nav.main) {
-      return null;
+    switch (currentPage) {
+      case PageTypes.Members:
+        return <TeamMembers team={team} />;
+
+      case PageTypes.Settings:
+        return <TeamSettings team={team} />;
+
+      case PageTypes.GroupSync:
+        return isSyncEnabled && <TeamGroupSync team={team} />;
     }
+
+    return null;
+  }
+
+  render() {
+    const { team, navModel } = this.props;
 
     return (
       <div>
-        <PageHeader model={nav as any} />
-        {currentTeam && (
-          <div className="page-container page-body">
-            {this.currentPage === 'members' && <TeamMembers team={currentTeam} />}
-            {this.currentPage === 'settings' && <TeamSettings team={currentTeam} />}
-            {this.currentPage === 'groupsync' && this.isSyncEnabled && <TeamGroupSync team={currentTeam} />}
-          </div>
-        )}
+        <PageHeader model={navModel} />
+        {team && Object.keys(team).length !== 0 && <div className="page-container page-body">{this.renderPage()}</div>}
       </div>
     );
   }
 }
 
-export default hot(module)(TeamPages);
+function mapStateToProps(state) {
+  const teamId = getRouteParamsId(state.location);
+  const pageName = getRouteParamsPage(state.location) || 'members';
+
+  return {
+    navModel: getNavModel(state.navIndex, `team-${pageName}-${teamId}`),
+    teamId: teamId,
+    pageName: pageName,
+    team: getTeam(state.team),
+  };
+}
+
+const mapDispatchToProps = {
+  loadTeam,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamPages));

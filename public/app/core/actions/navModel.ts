@@ -1,3 +1,9 @@
+import { NavModelItem } from '../../types';
+
+export enum ActionTypes {
+  UpdateNavIndex = 'UPDATE_NAV_INDEX',
+}
+
 export type Action = UpdateNavIndexAction;
 
 // this action is not used yet
@@ -5,9 +11,11 @@ export type Action = UpdateNavIndexAction;
 // like datasource edit, teams edit page
 
 export interface UpdateNavIndexAction {
-  type: 'UPDATE_NAV_INDEX';
+  type: ActionTypes.UpdateNavIndex;
+  payload: NavModelItem;
 }
 
-export const updateNavIndex = (): UpdateNavIndexAction => ({
-  type: 'UPDATE_NAV_INDEX',
+export const updateNavIndex = (item: NavModelItem): UpdateNavIndexAction => ({
+  type: ActionTypes.UpdateNavIndex,
+  payload: item,
 });

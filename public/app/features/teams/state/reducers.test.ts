@@ -1,5 +1,5 @@
 import { Action, ActionTypes } from './actions';
-import { initialState, teamsReducer } from './reducers';
+import { initialTeamsState, teamsReducer } from './reducers';
 
 describe('teams reducer', () => {
   it('should set teams', () => {
@@ -21,7 +21,7 @@ describe('teams reducer', () => {
       payload,
     };
 
-    const result = teamsReducer(initialState, action);
+    const result = teamsReducer(initialTeamsState, action);
 
     expect(result.teams).toEqual(payload);
   });
@@ -34,7 +34,7 @@ describe('teams reducer', () => {
       payload,
     };
 
-    const result = teamsReducer(initialState, action);
+    const result = teamsReducer(initialTeamsState, action);
 
     expect(result.searchQuery).toEqual('test');
   });

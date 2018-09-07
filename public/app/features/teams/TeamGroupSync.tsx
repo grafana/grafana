@@ -1,9 +1,8 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import { observer } from 'mobx-react';
-import { Team, TeamGroup } from 'app/stores/TeamsStore/TeamsStore';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import { Team, TeamGroup } from '../../types';
 
 interface Props {
   team: Team;
@@ -16,7 +15,6 @@ interface State {
 
 const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;
 
-@observer
 export class TeamGroupSync extends React.Component<Props, State> {
   constructor(props) {
     super(props);
@@ -24,7 +22,7 @@ export class TeamGroupSync extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.props.team.loadGroups();
+    // this.props.team.loadGroups();
   }
 
   renderGroup(group: TeamGroup) {
@@ -49,12 +47,12 @@ export class TeamGroupSync extends React.Component<Props, State> {
   };
 
   onAddGroup = () => {
-    this.props.team.addGroup(this.state.newGroupId);
+    // this.props.team.addGroup(this.state.newGroupId);
     this.setState({ isAdding: false, newGroupId: '' });
   };
 
   onRemoveGroup = (group: TeamGroup) => {
-    this.props.team.removeGroup(group.groupId);
+    // this.props.team.removeGroup(group.groupId);
   };
 
   isNewGroupValid() {
@@ -63,7 +61,7 @@ export class TeamGroupSync extends React.Component<Props, State> {
 
   render() {
     const { isAdding, newGroupId } = this.state;
-    const groups = this.props.team.groups.values();
+    const groups = this.props.team.groups;
 
     return (
       <div>
