@@ -222,6 +222,31 @@ func TestPostgres(t *testing.T) {
 				}
 			})
 
+			Convey("When doing a metric query using timeGroup and $__interval", func() {
+				query := &tsdb.TsdbQuery{
+					Queries: []*tsdb.Query{
+						{
+							Model: simplejson.NewFromAny(map[string]interface{}{
+								"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
+								"format": "time_series",
+							}),
+							RefId: "A",
+						},
+					},
+					TimeRange: &tsdb.TimeRange{
+						From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+						To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
+					},
+				}
+
+				resp, err := endpoint.Query(nil, nil, query)
+				So(err, ShouldBeNil)
+				queryResult := resp.Results["A"]
+				So(queryResult.Error, ShouldBeNil)
+				So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT floor(extract(epoch from time)/1800)*1800 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
+
+			})
+
 			Convey("When doing a metric query using timeGroup with NULL fill enabled", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
