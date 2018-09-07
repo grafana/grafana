@@ -104,7 +104,7 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"@type":    "OpenUri",
 				"name":     "View Rule",
 				"targets": []map[string]interface{}{
-					{ 
+					{
 						"os": "default", "uri": ruleUrl,
 					},
 				},
@@ -114,7 +114,7 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"@type":    "OpenUri",
 				"name":     "View Graph",
 				"targets": []map[string]interface{}{
-					{ 
+					{
 						"os": "default", "uri": evalContext.ImagePublicUrl,
 					},
 				},
