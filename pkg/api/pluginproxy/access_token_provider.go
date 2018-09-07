@@ -139,8 +139,6 @@ var getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token,
 		return nil, err
 	}
 
-	logger.Info("interpolatedVal", "token.AccessToken", token.AccessToken)
-
 	return token, nil
 }
 
