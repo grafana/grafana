@@ -16,7 +16,6 @@ export class StackdriverConfigCtrl {
     this.current.jsonData = this.current.jsonData || {};
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
-    console.log(this.current.secureJsonFields.privateKey);
     this.defaultProject = this.current.jsonData.defaultProject;
     this.projects = [];
   }
