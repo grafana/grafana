@@ -1,16 +1,15 @@
 import React from 'react';
-import renderer from 'react-test-renderer';
+import { mount } from 'enzyme';
+import toJson from 'enzyme-to-json';
 import GrafanaScrollbar from './GrafanaScrollbar';
 
 describe('GrafanaScrollbar', () => {
   it('renders correctly', () => {
-    const tree = renderer
-      .create(
-        <GrafanaScrollbar>
-          <p>Scrollable content</p>
-        </GrafanaScrollbar>
-      )
-      .toJSON();
-    expect(tree).toMatchSnapshot();
+    const tree = mount(
+      <GrafanaScrollbar>
+        <p>Scrollable content</p>
+      </GrafanaScrollbar>
+    );
+    expect(toJson(tree)).toMatchSnapshot();
   });
 });
