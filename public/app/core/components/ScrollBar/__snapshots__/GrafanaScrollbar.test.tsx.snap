@@ -1,86 +1,116 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`GrafanaScrollbar renders correctly 1`] = `
-<div
-  className="custom-scrollbars"
-  style={
-    Object {
-      "height": "auto",
-      "maxHeight": "100%",
-      "minHeight": "100%",
-      "overflow": "hidden",
-      "position": "relative",
-      "width": "100%",
-    }
-  }
+<GrafanaScrollbar
+  autoHide={true}
+  autoHideDuration={200}
+  autoHideTimeout={200}
+  customClassName="custom-scrollbars"
+  hideTracksWhenNotNeeded={false}
 >
-  <div
-    className="view"
-    style={
-      Object {
-        "WebkitOverflowScrolling": "touch",
-        "bottom": undefined,
-        "left": undefined,
-        "marginBottom": 0,
-        "marginRight": 0,
-        "maxHeight": "calc(100% + 0px)",
-        "minHeight": "calc(100% + 0px)",
-        "overflow": "scroll",
-        "position": "relative",
-        "right": undefined,
-        "top": undefined,
-      }
-    }
-  >
-    <p>
-      Scrollable content
-    </p>
-  </div>
-  <div
-    className="track-horizontal"
-    style={
-      Object {
-        "display": "none",
-        "height": 6,
-        "opacity": 0,
-        "position": "absolute",
-        "transition": "opacity 200ms",
-      }
-    }
+  <Scrollbars
+    autoHeight={true}
+    autoHeightMax="100%"
+    autoHeightMin="100%"
+    autoHide={true}
+    autoHideDuration={200}
+    autoHideTimeout={200}
+    className="custom-scrollbars"
+    hideTracksWhenNotNeeded={false}
+    renderThumbHorizontal={[Function]}
+    renderThumbVertical={[Function]}
+    renderTrackHorizontal={[Function]}
+    renderTrackVertical={[Function]}
+    renderView={[Function]}
+    tagName="div"
+    thumbMinSize={30}
+    universal={false}
   >
     <div
-      className="thumb-horizontal"
+      className="custom-scrollbars"
       style={
         Object {
-          "display": "block",
-          "height": "100%",
-          "position": "relative",
-        }
-      }
-    />
-  </div>
-  <div
-    className="track-vertical"
-    style={
-      Object {
-        "display": "none",
-        "opacity": 0,
-        "position": "absolute",
-        "transition": "opacity 200ms",
-        "width": 6,
-      }
-    }
-  >
-    <div
-      className="thumb-vertical"
-      style={
-        Object {
-          "display": "block",
+          "height": "auto",
+          "maxHeight": "100%",
+          "minHeight": "100%",
+          "overflow": "hidden",
           "position": "relative",
           "width": "100%",
         }
       }
-    />
-  </div>
-</div>
+    >
+      <div
+        className="view"
+        key="view"
+        style={
+          Object {
+            "WebkitOverflowScrolling": "touch",
+            "bottom": undefined,
+            "left": undefined,
+            "marginBottom": 0,
+            "marginRight": 0,
+            "maxHeight": "calc(100% + 0px)",
+            "minHeight": "calc(100% + 0px)",
+            "overflow": "scroll",
+            "position": "relative",
+            "right": undefined,
+            "top": undefined,
+          }
+        }
+      >
+        <p>
+          Scrollable content
+        </p>
+      </div>
+      <div
+        className="track-horizontal"
+        key="trackHorizontal"
+        style={
+          Object {
+            "display": "none",
+            "height": 6,
+            "opacity": 0,
+            "position": "absolute",
+            "transition": "opacity 200ms",
+          }
+        }
+      >
+        <div
+          className="thumb-horizontal"
+          style={
+            Object {
+              "display": "block",
+              "height": "100%",
+              "position": "relative",
+            }
+          }
+        />
+      </div>
+      <div
+        className="track-vertical"
+        key="trackVertical"
+        style={
+          Object {
+            "display": "none",
+            "opacity": 0,
+            "position": "absolute",
+            "transition": "opacity 200ms",
+            "width": 6,
+          }
+        }
+      >
+        <div
+          className="thumb-vertical"
+          style={
+            Object {
+              "display": "block",
+              "position": "relative",
+              "width": "100%",
+            }
+          }
+        />
+      </div>
+    </div>
+  </Scrollbars>
+</GrafanaScrollbar>
 `;
