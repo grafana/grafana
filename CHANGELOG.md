@@ -1,5 +1,9 @@
 # 5.3.0 (unreleased)
 
+### Minor
+
+* **Alerting**: Link to view full size image in Microsoft Teams alert notifier [#13121](https://github.com/grafana/grafana/issues/13121), thx [@holiiveira](https://github.com/holiiveira)
+
 # 5.3.0-beta1 (2018-09-06)
 
 ### New Major Features
