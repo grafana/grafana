@@ -24,7 +24,7 @@ export function graphiteAddFunc($compile) {
       $input.appendTo(elem);
       $button.appendTo(elem);
 
-      ctrl.datasource.getFuncDefs().then(function(funcDefs) {
+      ctrl.datasource.getFuncDefs().then(funcDefs => {
         const allFunctions = _.map(funcDefs, 'name').sort();
 
         $scope.functionMenu = createFunctionDropDownMenu(funcDefs);
@@ -34,12 +34,12 @@ export function graphiteAddFunc($compile) {
           source: allFunctions,
           minLength: 1,
           items: 10,
-          updater: function(value) {
-            var funcDef = ctrl.datasource.getFuncDef(value);
+          updater: value => {
+            let funcDef = ctrl.datasource.getFuncDef(value);
             if (!funcDef) {
               // try find close match
               value = value.toLowerCase();
-              funcDef = _.find(allFunctions, function(funcName) {
+              funcDef = _.find(allFunctions, funcName => {
                 return funcName.toLowerCase().indexOf(value) === 0;
               });
 
@@ -48,7 +48,7 @@ export function graphiteAddFunc($compile) {
               }
             }
 
-            $scope.$apply(function() {
+            $scope.$apply(() => {
               ctrl.addFunction(funcDef);
             });
 
@@ -57,20 +57,20 @@ export function graphiteAddFunc($compile) {
           },
         });
 
-        $button.click(function() {
+        $button.click(() => {
           $button.hide();
           $input.show();
           $input.focus();
         });
 
-        $input.keyup(function() {
+        $input.keyup(() => {
           elem.toggleClass('open', $input.val() === '');
         });
 
-        $input.blur(function() {
+        $input.blur(() => {
           // clicking the function dropdown menu won't
           // work if you remove class at once
-          setTimeout(function() {
+          setTimeout(() => {
             $input.val('');
             $input.hide();
             $button.show();
@@ -81,8 +81,8 @@ export function graphiteAddFunc($compile) {
         $compile(elem.contents())($scope);
       });
 
-      var drop;
-      const cleanUpDrop = function() {
+      let drop;
+      const cleanUpDrop = () => {
         if (drop) {
           drop.destroy();
           drop = null;
@@ -90,10 +90,10 @@ export function graphiteAddFunc($compile) {
       };
 
       $(elem)
-        .on('mouseenter', 'ul.dropdown-menu li', function() {
+        .on('mouseenter', 'ul.dropdown-menu li', () => {
           cleanUpDrop();
 
-          var funcDef;
+          let funcDef;
           try {
             funcDef = ctrl.datasource.getFuncDef($('a', this).text());
           } catch (e) {
@@ -101,7 +101,7 @@ export function graphiteAddFunc($compile) {
           }
 
           if (funcDef && funcDef.description) {
-            var shortDesc = funcDef.description;
+            let shortDesc = funcDef.description;
             if (shortDesc.length > 500) {
               shortDesc = shortDesc.substring(0, 497) + '...';
             }
@@ -121,7 +121,7 @@ export function graphiteAddFunc($compile) {
             });
           }
         })
-        .on('mouseout', 'ul.dropdown-menu li', function() {
+        .on('mouseout', 'ul.dropdown-menu li', () => {
           cleanUpDrop();
         });
 
@@ -135,7 +135,7 @@ angular.module('grafana.directives').directive('graphiteAddFunc', graphiteAddFun
 function createFunctionDropDownMenu(funcDefs) {
   const categories = {};
 
-  _.forEach(funcDefs, function(funcDef) {
+  _.forEach(funcDefs, funcDef => {
     if (!funcDef.category) {
       return;
     }
@@ -149,7 +149,7 @@ function createFunctionDropDownMenu(funcDefs) {
   });
 
   return _.sortBy(
-    _.map(categories, function(submenu, category) {
+    _.map(categories, (submenu, category) => {
       return {
         text: category,
         submenu: _.sortBy(submenu, 'text'),

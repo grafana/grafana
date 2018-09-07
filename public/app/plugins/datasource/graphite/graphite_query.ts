@@ -73,7 +73,7 @@ export default class GraphiteQuery {
 
     return _.reduce(
       arr,
-      function(result, segment) {
+      (result, segment) => {
         return result ? result + '.' + segment.value : segment.value;
       },
       ''
@@ -133,7 +133,7 @@ export default class GraphiteQuery {
   }
 
   moveAliasFuncLast() {
-    const aliasFunc = _.find(this.functions, function(func) {
+    const aliasFunc = _.find(this.functions, func => {
       return func.def.name.startsWith('alias');
     });
 
@@ -179,7 +179,7 @@ export default class GraphiteQuery {
     delete targetsByRefId[target.refId];
 
     const nestedSeriesRefRegex = /\#([A-Z])/g;
-    var targetWithNestedQueries = target.target;
+    let targetWithNestedQueries = target.target;
 
     // Use ref count to track circular references
     function countTargetRefs(targetsByRefId, refId) {

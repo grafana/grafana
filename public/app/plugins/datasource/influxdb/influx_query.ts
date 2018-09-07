@@ -27,15 +27,15 @@ export default class InfluxQuery {
   }
 
   updateProjection() {
-    this.selectModels = _.map(this.target.select, function(parts: any) {
+    this.selectModels = _.map(this.target.select, (parts: any) => {
       return _.map(parts, queryPart.create);
     });
     this.groupByParts = _.map(this.target.groupBy, queryPart.create);
   }
 
   updatePersistedParts() {
-    this.target.select = _.map(this.selectModels, function(selectParts) {
-      return _.map(selectParts, function(part: any) {
+    this.target.select = _.map(this.selectModels, selectParts => {
+      return _.map(selectParts, (part: any) => {
         return { type: part.def.type, params: part.params };
       });
     });
@@ -125,9 +125,9 @@ export default class InfluxQuery {
   }
 
   private renderTagCondition(tag, index, interpolate) {
-    var str = '';
-    var operator = tag.operator;
-    var value = tag.value;
+    let str = '';
+    let operator = tag.operator;
+    let value = tag.value;
     if (index > 0) {
       str = (tag.condition || 'AND') + ' ';
     }
@@ -156,8 +156,8 @@ export default class InfluxQuery {
   }
 
   getMeasurementAndPolicy(interpolate) {
-    var policy = this.target.policy;
-    var measurement = this.target.measurement || 'measurement';
+    let policy = this.target.policy;
+    let measurement = this.target.measurement || 'measurement';
 
     if (!measurement.match('^/.*/$')) {
       measurement = '"' + measurement + '"';
@@ -199,11 +199,11 @@ export default class InfluxQuery {
       }
     }
 
-    var query = 'SELECT ';
-    var i, y;
+    let query = 'SELECT ';
+    let i, y;
     for (i = 0; i < this.selectModels.length; i++) {
       const parts = this.selectModels[i];
-      var selectText = '';
+      let selectText = '';
       for (y = 0; y < parts.length; y++) {
         const part = parts[y];
         selectText = part.render(selectText);
@@ -226,7 +226,7 @@ export default class InfluxQuery {
 
     query += '$timeFilter';
 
-    var groupBySection = '';
+    let groupBySection = '';
     for (i = 0; i < this.groupByParts.length; i++) {
       const part = this.groupByParts[i];
       if (i > 0) {

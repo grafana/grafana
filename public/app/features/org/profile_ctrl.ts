@@ -3,7 +3,7 @@ import { coreModule } from 'app/core/core';
 
 export class ProfileCtrl {
   user: any;
-  old_theme: any;
+  oldTheme: any;
   teams: any = [];
   orgs: any = [];
   userForm: any;
@@ -12,7 +12,7 @@ export class ProfileCtrl {
   readonlyLoginFields = config.disableLoginForm;
   navModel: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
     this.getUserTeams();
@@ -54,7 +54,7 @@ export class ProfileCtrl {
 
     this.backendSrv.put('/api/user/', this.user).then(() => {
       this.contextSrv.user.name = this.user.name || this.user.login;
-      if (this.old_theme !== this.user.theme) {
+      if (this.oldTheme !== this.user.theme) {
         window.location.href = config.appSubUrl + this.$location.path();
       }
     });

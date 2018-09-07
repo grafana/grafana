@@ -55,11 +55,12 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
 
   // Adding label to existing selectors
   const selectorRegexp = /{([^{]*)}/g;
-  let match = null;
+  let match = selectorRegexp.exec(query);
   const parts = [];
   let lastIndex = 0;
   let suffix = '';
-  while ((match = selectorRegexp.exec(query))) {
+
+  while (match) {
     const prefix = query.slice(lastIndex, match.index);
     const selectorParts = match[1].split(',');
     const labels = selectorParts.reduce((acc, label) => {
@@ -77,6 +78,7 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
     lastIndex = match.index + match[1].length + 2;
     suffix = query.slice(match.index + match[0].length);
     parts.push(prefix, '{', selector, '}');
+    match = selectorRegexp.exec(query);
   }
   parts.push(suffix);
   return parts.join('');
@@ -109,7 +111,7 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
     }
 
     // Check for monotony
-    const datapoints: [number, number][] = s.datapoints;
+    const datapoints: number[][] = s.datapoints;
     if (datapoints.length > 1) {
       let increasing = false;
       const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {
@@ -384,7 +386,7 @@ export class PrometheusDatasource {
     };
     const range = Math.ceil(end - start);
 
-    var interval = kbn.interval_to_seconds(options.interval);
+    let interval = kbn.interval_to_seconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
     const minInterval = kbn.interval_to_seconds(
       this.templateSrv.replace(target.interval, options.scopedVars) || options.interval
@@ -392,7 +394,7 @@ export class PrometheusDatasource {
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    var scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
+    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
@@ -507,7 +509,7 @@ export class PrometheusDatasource {
   annotationQuery(options) {
     const annotation = options.annotation;
     const expr = annotation.expr || '';
-    var tagKeys = annotation.tagKeys || '';
+    let tagKeys = annotation.tagKeys || '';
     const titleFormat = annotation.titleFormat || '';
     const textFormat = annotation.textFormat || '';
 
@@ -526,13 +528,13 @@ export class PrometheusDatasource {
     const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
 
     const self = this;
-    return this.performTimeSeriesQuery(query, query.start, query.end).then(function(results) {
+    return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {
       const eventList = [];
       tagKeys = tagKeys.split(',');
 
-      _.each(results.data.data.result, function(series) {
+      _.each(results.data.data.result, series => {
         const tags = _.chain(series.metric)
-          .filter(function(v, k) {
+          .filter((v, k) => {
             return _.includes(tagKeys, k);
           })
           .value();

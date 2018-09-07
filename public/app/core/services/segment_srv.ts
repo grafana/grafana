@@ -2,10 +2,10 @@ import _ from 'lodash';
 import coreModule from '../core_module';
 
 /** @ngInject */
-export function uiSegmentSrv($sce, templateSrv) {
+export function uiSegmentSrv(this: any, $sce, templateSrv) {
   const self = this;
 
-  function MetricSegment(options) {
+  function MetricSegment(this: any, options) {
     if (options === '*' || options.value === '*') {
       this.value = '*';
       this.html = $sce.trustAsHtml('<i class="fa fa-asterisk"><i>');
@@ -42,48 +42,48 @@ export function uiSegmentSrv($sce, templateSrv) {
     }
   };
 
-  this.newSelectMeasurement = function() {
+  this.newSelectMeasurement = () => {
     return new MetricSegment({ value: 'select measurement', fake: true });
   };
 
-  this.newFake = function(text, type, cssClass) {
+  this.newFake = (text, type, cssClass) => {
     return new MetricSegment({ value: text, fake: true, type: type, cssClass: cssClass });
   };
 
-  this.newSegment = function(options) {
+  this.newSegment = options => {
     return new MetricSegment(options);
   };
 
-  this.newKey = function(key) {
+  this.newKey = key => {
     return new MetricSegment({ value: key, type: 'key', cssClass: 'query-segment-key' });
   };
 
-  this.newKeyValue = function(value) {
+  this.newKeyValue = value => {
     return new MetricSegment({ value: value, type: 'value', cssClass: 'query-segment-value' });
   };
 
-  this.newCondition = function(condition) {
+  this.newCondition = condition => {
     return new MetricSegment({ value: condition, type: 'condition', cssClass: 'query-keyword' });
   };
 
-  this.newOperator = function(op) {
+  this.newOperator = op => {
     return new MetricSegment({ value: op, type: 'operator', cssClass: 'query-segment-operator' });
   };
 
-  this.newOperators = function(ops) {
-    return _.map(ops, function(op) {
+  this.newOperators = ops => {
+    return _.map(ops, op => {
       return new MetricSegment({ value: op, type: 'operator', cssClass: 'query-segment-operator' });
     });
   };
 
-  this.transformToSegments = function(addTemplateVars, variableTypeFilter) {
-    return function(results) {
-      const segments = _.map(results, function(segment) {
+  this.transformToSegments = (addTemplateVars, variableTypeFilter) => {
+    return results => {
+      const segments = _.map(results, segment => {
         return self.newSegment({ value: segment.text, expandable: segment.expandable });
       });
 
       if (addTemplateVars) {
-        _.each(templateSrv.variables, function(variable) {
+        _.each(templateSrv.variables, variable => {
           if (variableTypeFilter === void 0 || variableTypeFilter === variable.type) {
             segments.unshift(self.newSegment({ type: 'value', value: '$' + variable.name, expandable: true }));
           }
@@ -94,11 +94,11 @@ export function uiSegmentSrv($sce, templateSrv) {
     };
   };
 
-  this.newSelectMetric = function() {
+  this.newSelectMetric = () => {
     return new MetricSegment({ value: 'select metric', fake: true });
   };
 
-  this.newPlusButton = function() {
+  this.newPlusButton = () => {
     return new MetricSegment({
       fake: true,
       html: '<i class="fa fa-plus "></i>',

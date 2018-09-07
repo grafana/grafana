@@ -115,6 +115,24 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
+		var getAlertNotifierUsageStatsQuery *models.GetAlertNotifierUsageStatsQuery
+		bus.AddHandler("test", func(query *models.GetAlertNotifierUsageStatsQuery) error {
+			query.Result = []*models.NotifierUsageStats{
+				{
+					Type:  "slack",
+					Count: 1,
+				},
+				{
+					Type:  "webhook",
+					Count: 2,
+				},
+			}
+
+			getAlertNotifierUsageStatsQuery = query
+
+			return nil
+		})
+
 		var wg sync.WaitGroup
 		var responseBuffer *bytes.Buffer
 		var req *http.Request
@@ -157,6 +175,7 @@ func TestMetrics(t *testing.T) {
 				So(getSystemStatsQuery, ShouldNotBeNil)
 				So(getDataSourceStatsQuery, ShouldNotBeNil)
 				So(getDataSourceAccessStatsQuery, ShouldNotBeNil)
+				So(getAlertNotifierUsageStatsQuery, ShouldNotBeNil)
 				So(req, ShouldNotBeNil)
 				So(req.Method, ShouldEqual, http.MethodPost)
 				So(req.Header.Get("Content-Type"), ShouldEqual, "application/json")
@@ -198,6 +217,9 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.ds_access."+models.DS_PROMETHEUS+".proxy.count").MustInt(), ShouldEqual, 3)
 				So(metrics.Get("stats.ds_access.other.direct.count").MustInt(), ShouldEqual, 6+7)
 				So(metrics.Get("stats.ds_access.other.proxy.count").MustInt(), ShouldEqual, 4+8)
+
+				So(metrics.Get("stats.alert_notifiers.slack.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.alert_notifiers.webhook.count").MustInt(), ShouldEqual, 2)
 			})
 		})
 

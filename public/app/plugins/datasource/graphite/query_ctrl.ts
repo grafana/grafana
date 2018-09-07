@@ -19,7 +19,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   supportsTags: boolean;
   paused: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private uiSegmentSrv, private templateSrv, $timeout) {
     super($scope, $injector);
     this.supportsTags = this.datasource.supportsTags;
@@ -106,7 +106,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   getAltSegments(index, prefix) {
-    var query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
+    let query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
     if (index > 0) {
       query = this.queryModel.getSegmentPathUpTo(index) + '.' + query;
     }
@@ -291,7 +291,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       return;
     }
 
-    for (var i = 0; i < this.segments.length; i++) {
+    for (let i = 0; i < this.segments.length; i++) {
       if (this.segments[i].value.indexOf('*') >= 0) {
         func.params[0] = i;
         func.added = false;

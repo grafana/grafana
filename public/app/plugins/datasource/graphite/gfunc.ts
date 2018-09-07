@@ -964,26 +964,23 @@ export class FuncInstance {
   render(metricExp) {
     const str = this.def.name + '(';
 
-    const parameters = _.map(
-      this.params,
-      function(value, index) {
-        var paramType;
-        if (index < this.def.params.length) {
-          paramType = this.def.params[index].type;
-        } else if (_.get(_.last(this.def.params), 'multiple')) {
-          paramType = _.get(_.last(this.def.params), 'type');
-        }
-        // param types that should never be quoted
-        if (_.includes(['value_or_series', 'boolean', 'int', 'float', 'node'], paramType)) {
-          return value;
-        }
-        // param types that might be quoted
-        if (_.includes(['int_or_interval', 'node_or_tag'], paramType) && _.isFinite(+value)) {
-          return _.toString(+value);
-        }
-        return "'" + value + "'";
-      }.bind(this)
-    );
+    const parameters = _.map(this.params, (value, index) => {
+      let paramType;
+      if (index < this.def.params.length) {
+        paramType = this.def.params[index].type;
+      } else if (_.get(_.last(this.def.params), 'multiple')) {
+        paramType = _.get(_.last(this.def.params), 'type');
+      }
+      // param types that should never be quoted
+      if (_.includes(['value_or_series', 'boolean', 'int', 'float', 'node'], paramType)) {
+        return value;
+      }
+      // param types that might be quoted
+      if (_.includes(['int_or_interval', 'node_or_tag'], paramType) && _.isFinite(+value)) {
+        return _.toString(+value);
+      }
+      return "'" + value + "'";
+    });
 
     // don't send any blank parameters to graphite
     while (parameters[parameters.length - 1] === '') {
@@ -1017,12 +1014,9 @@ export class FuncInstance {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
     if (this._hasMultipleParamsInString(strValue, index)) {
-      _.each(
-        strValue.split(','),
-        function(partVal, idx) {
-          this.updateParam(partVal.trim(), index + idx);
-        }.bind(this)
-      );
+      _.each(strValue.split(','), (partVal, idx) => {
+        this.updateParam(partVal.trim(), index + idx);
+      });
       return;
     }
 
@@ -1041,7 +1035,7 @@ export class FuncInstance {
       return;
     }
 
-    var text = this.def.name + '(';
+    let text = this.def.name + '(';
     text += this.params.join(', ');
     text += ')';
     this.text = text;
@@ -1064,10 +1058,10 @@ function getFuncDef(name, idx?) {
 
 function getFuncDefs(graphiteVersion, idx?) {
   const funcs = {};
-  _.forEach(idx || index, function(funcDef) {
+  _.forEach(idx || index, funcDef => {
     if (isVersionRelatedFunction(funcDef, graphiteVersion)) {
       funcs[funcDef.name] = _.assign({}, funcDef, {
-        params: _.filter(funcDef.params, function(param) {
+        params: _.filter(funcDef.params, param => {
           return isVersionRelatedFunction(param, graphiteVersion);
         }),
       });
@@ -1086,7 +1080,7 @@ function parseFuncDefs(rawDefs) {
       return;
     }
 
-    var description = funcDef.description;
+    let description = funcDef.description;
     if (description) {
       // tidy up some pydoc syntax that rst2html can't handle
       description = description

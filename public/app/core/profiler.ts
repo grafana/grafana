@@ -69,7 +69,7 @@ export class Profiler {
 
       // measure digest performance
       const rootDigestStart = window.performance.now();
-      for (var i = 0; i < 30; i++) {
+      for (let i = 0; i < 30; i++) {
         this.$rootScope.$apply();
       }
 
@@ -78,19 +78,19 @@ export class Profiler {
   }
 
   getTotalWatcherCount() {
-    var count = 0;
-    var scopes = 0;
+    let count = 0;
+    let scopes = 0;
     const root = $(document.getElementsByTagName('body'));
 
-    const f = function(element) {
+    const f = element => {
       if (element.data().hasOwnProperty('$scope')) {
         scopes++;
-        angular.forEach(element.data().$scope.$$watchers, function() {
+        angular.forEach(element.data().$scope.$$watchers, () => {
           count++;
         });
       }
 
-      angular.forEach(element.children(), function(childElement) {
+      angular.forEach(element.children(), childElement => {
         f($(childElement));
       });
     };

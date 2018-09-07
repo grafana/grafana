@@ -4,15 +4,15 @@ import _ from 'lodash';
 
 const $win = $(window);
 
-$.fn.place_tt = (function() {
+$.fn.place_tt = (() => {
   const defaults = {
     offset: 5,
   };
 
-  return function(x, y, opts) {
+  return function(this: any, x, y, opts) {
     opts = $.extend(true, {}, defaults, opts);
 
-    return this.each(function() {
+    return this.each(() => {
       const $tooltip = $(this);
       let width, height;
 
@@ -28,7 +28,7 @@ $.fn.place_tt = (function() {
           .invoke([
             '$compile',
             '$rootScope',
-            function($compile, $rootScope) {
+            ($compile, $rootScope) => {
               const tmpScope = $rootScope.$new(true);
               _.extend(tmpScope, opts.scopeData);
 

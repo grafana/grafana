@@ -164,8 +164,10 @@ var (
 	Quota QuotaSettings
 
 	// Alerting
-	AlertingEnabled bool
-	ExecuteAlerts   bool
+	AlertingEnabled            bool
+	ExecuteAlerts              bool
+	AlertingErrorOrTimeout     string
+	AlertingNoDataOrNullValues string
 
 	// Explore UI
 	ExploreEnabled bool
@@ -197,6 +199,7 @@ type Cfg struct {
 	ImagesDir                        string
 	PhantomDir                       string
 	RendererUrl                      string
+	RendererCallbackUrl              string
 	DisableBruteForceLoginProtection bool
 
 	TempDataLifetime time.Duration
@@ -324,7 +327,7 @@ func getCommandLineProperties(args []string) map[string]string {
 		trimmed := strings.TrimPrefix(arg, "cfg:")
 		parts := strings.Split(trimmed, "=")
 		if len(parts) != 2 {
-			log.Fatal(3, "Invalid command line argument", arg)
+			log.Fatal(3, "Invalid command line argument. argument: %v", arg)
 			return nil
 		}
 
@@ -641,6 +644,18 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// Rendering
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererUrl = renderSec.Key("server_url").String()
+	cfg.RendererCallbackUrl = renderSec.Key("callback_url").String()
+	if cfg.RendererCallbackUrl == "" {
+		cfg.RendererCallbackUrl = AppUrl
+	} else {
+		if cfg.RendererCallbackUrl[len(cfg.RendererCallbackUrl)-1] != '/' {
+			cfg.RendererCallbackUrl += "/"
+		}
+		_, err := url.Parse(cfg.RendererCallbackUrl)
+		if err != nil {
+			log.Fatal(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
+		}
+	}
 	cfg.ImagesDir = filepath.Join(DataPath, "png")
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
@@ -659,6 +674,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+	AlertingErrorOrTimeout = alerting.Key("error_or_timeout").MustString("alerting")
+	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(false)

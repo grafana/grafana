@@ -1,42 +1,43 @@
 +++
-title = "Grafana Authproxy"
+title = "Auth Proxy"
+description = "Grafana Auth Proxy Guide "
+keywords = ["grafana", "configuration", "documentation", "proxy"]
 type = "docs"
-keywords = ["grafana", "tutorials", "authproxy"]
+aliases = ["/tutorials/authproxy/"]
 [menu.docs]
-parent = "tutorials"
-weight = 10
+name = "Auth Proxy"
+identifier = "auth-proxy"
+parent = "authentication"
+weight = 2
 +++
 
-# Grafana Authproxy
+# Auth Proxy Authentication
 
-AuthProxy allows you to offload the authentication of users to a web server (there are many reasons why you’d want to run a web server in front of a production version of Grafana, especially if it’s exposed to the Internet).
+You can configure Grafana to let a http reverse proxy handling authentication. Popular web servers have a very
+extensive list of pluggable authentication modules, and any of them can be used with the AuthProxy feature.
+Below we detail the configuration options for auth proxy.
 
-Popular web servers have a very extensive list of pluggable authentication modules, and any of them can be used with the AuthProxy feature.
-
-The Grafana AuthProxy feature is very simple in design, but it is this simplicity that makes it so powerful.
-
-## Interacting with Grafana’s AuthProxy via curl
-
-The AuthProxy feature can be configured through the Grafana configuration file with the following options:
-
-```js
+```bash
 [auth.proxy]
+# Defaults to false, but set to true to enable this feature
 enabled = true
+# HTTP Header name that will contain the username or email
 header_name = X-WEBAUTH-USER
+# HTTP Header property, defaults to `username` but can also be `email`
 header_property = username
+# Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
 auto_sign_up = true
+# If combined with Grafana LDAP integration define sync interval
 ldap_sync_ttl = 60
+# Limit where auth proxy requests come from by configuring a list of IP addresses.
+# This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 whitelist =
+# Optionally define more headers to sync other user attributes
+# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL``
+headers =
 ```
 
-* **enabled**: this is to toggle the feature on or off
-* **header_name**: this is the HTTP header name that passes the username or email address of the authenticated user to Grafana. Grafana will trust what ever username is contained in this header and automatically log the user in.
-* **header_property**: this tells Grafana whether the value in the header_name is a username or an email address. (In Grafana you can log in using your account username or account email)
-* **auto_sign_up**: If set to true, Grafana will automatically create user accounts in the Grafana DB if one does not exist. If set to false, users who do not exist in the GrafanaDB won’t be able to log in, even though their username and password are valid.
-* **ldap_sync_ttl**: When both auth.proxy and auth.ldap are enabled, user's organisation and role are synchronised from ldap after the http proxy authentication. You can force ldap re-synchronisation after `ldap_sync_ttl` minutes.
-* **whitelist**: Comma separated list of trusted authentication proxies IP.
-
-With a fresh install of Grafana, using the above configuration for the authProxy feature, we can send a simple API call to list all users. The only user that will be present is the default “Admin” user that is added the first time Grafana starts up. As you can see all we need to do to authenticate the request is to provide the “X-WEBAUTH-USER” header.
+## Interacting with Grafana’s AuthProxy via curl
 
 ```bash
 curl -H "X-WEBAUTH-USER: admin"  http://localhost:3000/api/users
@@ -71,7 +72,8 @@ I’ll demonstrate how to use Apache for authenticating users. In this example w
 
 ### Apache BasicAuth
 
-In this example we use Apache as a reverseProxy in front of Grafana. Apache handles the Authentication of users before forwarding requests to the Grafana backend service.
+In this example we use Apache as a reverse proxy in front of Grafana. Apache handles the Authentication of users before forwarding requests to the Grafana backend service.
+
 
 #### Apache configuration
 
@@ -116,38 +118,7 @@ In this example we use Apache as a reverseProxy in front of Grafana. Apache hand
 
 * The last 3 lines are then just standard reverse proxy configuration to direct all authenticated requests to our Grafana server running on port 3000.
 
-#### Grafana configuration
-
-```bash
-############# Users ################
-[users]
- # disable user signup / registration
-allow_sign_up = false
-
-# Set to true to automatically assign new users to the default organization (id 1)
-auto_assign_org = true
-
-# Default role new users will be automatically assigned (if auto_assign_org above is set to true)
- auto_assign_org_role = Editor
-
-
-############ Auth Proxy ########
-[auth.proxy]
-enabled = true
-
-# the Header name that contains the authenticated user.
-header_name = X-WEBAUTH-USER
-
-# does the user authenticate against the proxy using a 'username' or an 'email'
-header_property = username
-
-# automatically add the user to the system if they don't already exist.
-auto_sign_up = true
-```
-
-#### Full walk through using Docker.
-
-##### Grafana Container
+## Full walk through using Docker.
 
 For this example, we use the official Grafana docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/)
 
@@ -166,7 +137,8 @@ header_property = username
 auto_sign_up = true
 ```
 
-* Launch the Grafana container, using our custom grafana.ini to replace `/etc/grafana/grafana.ini`. We don't expose any ports for this container as it will only be connected to by our Apache container.
+Launch the Grafana container, using our custom grafana.ini to replace `/etc/grafana/grafana.ini`. We don't expose
+any ports for this container as it will only be connected to by our Apache container.
 
 ```bash
 docker run -i -v $(pwd)/grafana.ini:/etc/grafana/grafana.ini --name grafana grafana/grafana

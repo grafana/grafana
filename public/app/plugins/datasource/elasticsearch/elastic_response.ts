@@ -9,7 +9,7 @@ export class ElasticResponse {
   }
 
   processMetrics(esAgg, target, seriesList, props) {
-    var metric, y, i, newSeries, bucket, value;
+    let metric, y, i, newSeries, bucket, value;
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -177,7 +177,7 @@ export class ElasticResponse {
   // This is quite complex
   // need to recurise down the nested buckets to build series
   processBuckets(aggs, target, seriesList, table, props, depth) {
-    var bucket, aggDef, esAgg, aggId;
+    let bucket, aggDef, esAgg, aggId;
     const maxDepth = target.bucketAggs.length - 1;
 
     for (aggId in aggs) {
@@ -213,7 +213,7 @@ export class ElasticResponse {
   }
 
   private getMetricName(metric) {
-    var metricDef = _.find(queryDef.metricAggTypes, { value: metric });
+    let metricDef = _.find(queryDef.metricAggTypes, { value: metric });
     if (!metricDef) {
       metricDef = _.find(queryDef.extendedStats, { value: metric });
     }
@@ -222,12 +222,12 @@ export class ElasticResponse {
   }
 
   private getSeriesName(series, target, metricTypeCount) {
-    var metricName = this.getMetricName(series.metric);
+    let metricName = this.getMetricName(series.metric);
 
     if (target.alias) {
       const regex = /\{\{([\s\S]+?)\}\}/g;
 
-      return target.alias.replace(regex, function(match, g1, g2) {
+      return target.alias.replace(regex, (match, g1, g2) => {
         const group = g1 || g2;
 
         if (group.indexOf('term ') === 0) {
@@ -263,7 +263,7 @@ export class ElasticResponse {
       return metricName;
     }
 
-    var name = '';
+    let name = '';
     for (const propName in series.props) {
       name += series.props[propName] + ' ';
     }
@@ -278,7 +278,7 @@ export class ElasticResponse {
   nameSeries(seriesList, target) {
     const metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
 
-    for (var i = 0; i < seriesList.length; i++) {
+    for (let i = 0; i < seriesList.length; i++) {
       const series = seriesList[i];
       series.target = this.getSeriesName(series, target, metricTypeCount);
     }
@@ -292,7 +292,7 @@ export class ElasticResponse {
       total: hits.total,
       filterable: true,
     };
-    var propName, hit, doc, i;
+    let propName, hit, doc, i;
 
     for (i = 0; i < hits.hits.length; i++) {
       hit = hits.hits[i];
@@ -351,7 +351,7 @@ export class ElasticResponse {
   getTimeSeries() {
     const seriesList = [];
 
-    for (var i = 0; i < this.response.responses.length; i++) {
+    for (let i = 0; i < this.response.responses.length; i++) {
       const response = this.response.responses[i];
       if (response.error) {
         throw this.getErrorFromElasticResponse(this.response, response.error);
@@ -371,7 +371,7 @@ export class ElasticResponse {
         this.trimDatapoints(tmpSeriesList, target);
         this.nameSeries(tmpSeriesList, target);
 
-        for (var y = 0; y < tmpSeriesList.length; y++) {
+        for (let y = 0; y < tmpSeriesList.length; y++) {
           seriesList.push(tmpSeriesList[y]);
         }
 

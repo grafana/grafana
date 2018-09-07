@@ -2,32 +2,32 @@
 function outlineFixer() {
   const d: any = document;
 
-  const style_element = d.createElement('STYLE');
-  const dom_events = 'addEventListener' in d;
+  const styleElement = d.createElement('STYLE');
+  const domEvents = 'addEventListener' in d;
 
-  const add_event_listener = function(type, callback) {
+  const addEventListener = (type, callback) => {
     // Basic cross-browser event handling
-    if (dom_events) {
+    if (domEvents) {
       d.addEventListener(type, callback);
     } else {
       d.attachEvent('on' + type, callback);
     }
   };
 
-  const set_css = function(css_text) {
+  const setCss = cssText => {
     // Handle setting of <style> element contents in IE8
-    !!style_element.styleSheet ? (style_element.styleSheet.cssText = css_text) : (style_element.innerHTML = css_text);
+    !!styleElement.styleSheet ? (styleElement.styleSheet.cssText = cssText) : (styleElement.innerHTML = cssText);
   };
 
-  d.getElementsByTagName('HEAD')[0].appendChild(style_element);
+  d.getElementsByTagName('HEAD')[0].appendChild(styleElement);
 
   // Using mousedown instead of mouseover, so that previously focused elements don't lose focus ring on mouse move
-  add_event_listener('mousedown', function() {
-    set_css(':focus{outline:0 !important}::-moz-focus-inner{border:0;}');
+  addEventListener('mousedown', () => {
+    setCss(':focus{outline:0 !important}::-moz-focus-inner{border:0;}');
   });
 
-  add_event_listener('keydown', function() {
-    set_css('');
+  addEventListener('keydown', () => {
+    setCss('');
   });
 }
 

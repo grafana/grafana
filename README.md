@@ -24,7 +24,7 @@ the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.10
+- Go 1.11
 - NodeJS LTS
 
 ### Building the backend

@@ -2,14 +2,14 @@ import angular from 'angular';
 import config from 'app/core/config';
 
 export class NewOrgCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $http, backendSrv, navModelSrv) {
     $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs', 1);
     $scope.newOrg = { name: '' };
 
-    $scope.createOrg = function() {
-      backendSrv.post('/api/orgs/', $scope.newOrg).then(function(result) {
-        backendSrv.post('/api/user/using/' + result.orgId).then(function() {
+    $scope.createOrg = () => {
+      backendSrv.post('/api/orgs/', $scope.newOrg).then(result => {
+        backendSrv.post('/api/user/using/' + result.orgId).then(() => {
           window.location.href = config.appSubUrl + '/org';
         });
       });

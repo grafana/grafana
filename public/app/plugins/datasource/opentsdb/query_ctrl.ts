@@ -19,7 +19,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   addTagMode: boolean;
   addFilterMode: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
 
@@ -88,7 +88,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   getTextValues(metricFindResult) {
-    return _.map(metricFindResult, function(value) {
+    return _.map(metricFindResult, value => {
       return value.text;
     });
   }

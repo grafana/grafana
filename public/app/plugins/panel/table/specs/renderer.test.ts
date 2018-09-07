@@ -163,15 +163,15 @@ describe('when rendering table', () => {
       ],
     };
 
-    const sanitize = function(value) {
+    const sanitize = value => {
       return 'sanitized';
     };
 
     const templateSrv = {
-      replace: function(value, scopedVars) {
+      replace: (value, scopedVars) => {
         if (scopedVars) {
           // For testing variables replacement in link
-          _.each(scopedVars, function(val, key) {
+          _.each(scopedVars, (val, key) => {
             value = value.replace('$' + key, val.value);
           });
         }

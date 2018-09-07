@@ -126,7 +126,7 @@ export class PanelCtrl {
     const editorTab = { title, directiveFn };
 
     if (_.isString(directiveFn)) {
-      editorTab.directiveFn = function() {
+      editorTab.directiveFn = () => {
         return { templateUrl: directiveFn };
       };
     }
@@ -317,7 +317,7 @@ export class PanelCtrl {
   }
 
   getInfoContent(options) {
-    var markdown = this.panel.description;
+    let markdown = this.panel.description;
 
     if (options.mode === 'tooltip') {
       markdown = this.error || this.panel.description;
@@ -327,7 +327,7 @@ export class PanelCtrl {
     const sanitize = this.$injector.get('$sanitize');
     const templateSrv = this.$injector.get('templateSrv');
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
-    var html = '<div class="markdown-html">';
+    let html = '<div class="markdown-html">';
 
     html += new Remarkable().render(interpolatedMarkdown);
 

@@ -7,9 +7,10 @@ export class LoadDashboardCtrl {
     $scope.appEvent('dashboard-fetch-start');
 
     if (!$routeParams.uid && !$routeParams.slug) {
-      backendSrv.get('/api/dashboards/home').then(function(homeDash) {
+      backendSrv.get('/api/dashboards/home').then(homeDash => {
         if (homeDash.redirectUri) {
-          $location.path(homeDash.redirectUri);
+          const newUrl = locationUtil.stripBaseFromUrl(homeDash.redirectUri);
+          $location.path(newUrl);
         } else {
           const meta = homeDash.meta;
           meta.canSave = meta.canShare = meta.canStar = false;
@@ -29,7 +30,7 @@ export class LoadDashboardCtrl {
       return;
     }
 
-    dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
+    dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(result => {
       if (result.meta.url) {
         const url = locationUtil.stripBaseFromUrl(result.meta.url);
 
@@ -40,9 +41,8 @@ export class LoadDashboardCtrl {
         }
       }
 
-      if ($routeParams.autofitpanels) {
-        result.meta.autofitpanels = true;
-      }
+      result.meta.autofitpanels = $routeParams.autofitpanels;
+      result.meta.kiosk = $routeParams.kiosk;
 
       $scope.initDashboard(result, $scope);
     });
