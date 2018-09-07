@@ -63,7 +63,7 @@ export class TeamPages extends PureComponent<Props, State> {
 
     switch (currentPage) {
       case PageTypes.Members:
-        return <TeamMembers team={team} />;
+        return <TeamMembers />;
 
       case PageTypes.Settings:
         return <TeamSettings team={team} />;
@@ -95,7 +95,7 @@ function mapStateToProps(state) {
     navModel: getNavModel(state.navIndex, `team-${pageName}-${teamId}`),
     teamId: teamId,
     pageName: pageName,
-    team: getTeam(state.team),
+    team: getTeam(state.team, teamId),
   };
 }
 

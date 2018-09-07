@@ -30,3 +30,13 @@ export const getMockTeam = (): Team => {
     groups: [],
   };
 };
+
+export const getMockTeamMember = () => {
+  return {
+    userId: 1,
+    teamId: 1,
+    avatarUrl: 'some/url/',
+    email: 'test@test.com',
+    login: 'testUser',
+  };
+};

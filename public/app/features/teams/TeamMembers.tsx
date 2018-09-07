@@ -1,12 +1,21 @@
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 import { Team, TeamMember } from '../../types';
+import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
+import { getSearchMemberQuery, getTeam } from './state/selectors';
+import { getRouteParamsId } from '../../core/selectors/location';
 
 interface Props {
   team: Team;
+  searchMemberQuery: string;
+  loadTeamMembers: typeof loadTeamMembers;
+  addTeamMember: typeof addTeamMember;
+  removeTeamMember: typeof removeTeamMember;
+  setSearchMemberQuery: typeof setSearchMemberQuery;
 }
 
 interface State {
@@ -21,20 +30,29 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    // this.props.team.loadMembers();
+    this.props.loadTeamMembers();
   }
 
-  onSearchQueryChange = evt => {
-    // this.props.team.setSearchQuery(evt.target.value);
+  onSearchQueryChange = event => {
+    this.props.setSearchMemberQuery(event.target.value);
   };
 
   removeMember(member: TeamMember) {
-    // this.props.team.removeMember(member);
+    this.props.removeTeamMember(member.userId);
   }
 
-  removeMemberConfirmed(member: TeamMember) {
-    // this.props.team.removeMember(member);
-  }
+  onToggleAdding = () => {
+    this.setState({ isAdding: !this.state.isAdding });
+  };
+
+  onUserSelected = (user: User) => {
+    this.setState({ newTeamMember: user });
+  };
+
+  onAddUserToTeam = async () => {
+    this.props.addTeamMember(this.state.newTeamMember.id);
+    this.setState({ newTeamMember: null });
+  };
 
   renderMember(member: TeamMember) {
     return (
@@ -51,23 +69,9 @@ export class TeamMembers extends PureComponent<Props, State> {
     );
   }
 
-  onToggleAdding = () => {
-    this.setState({ isAdding: !this.state.isAdding });
-  };
-
-  onUserSelected = (user: User) => {
-    this.setState({ newTeamMember: user });
-  };
-
-  onAddUserToTeam = async () => {
-    // await this.props.team.addMember(this.state.newTeamMember.id);
-    // await this.props.team.loadMembers();
-    // this.setState({ newTeamMember: null });
-  };
-
   render() {
     const { newTeamMember, isAdding } = this.state;
-    const { team } = this.props;
+    const { team, searchMemberQuery } = this.props;
     const newTeamMemberValue = newTeamMember && newTeamMember.id.toString();
 
     return (
@@ -79,7 +83,7 @@ export class TeamMembers extends PureComponent<Props, State> {
                 type="text"
                 className="gf-form-input"
                 placeholder="Search members"
-                value={team.search}
+                value={searchMemberQuery}
                 onChange={this.onSearchQueryChange}
               />
               <i className="gf-form-input-icon fa fa-search" />
@@ -129,4 +133,20 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 }
 
-export default hot(module)(TeamMembers);
+function mapStateToProps(state) {
+  const teamId = getRouteParamsId(state.location);
+
+  return {
+    team: getTeam(state.team, teamId),
+    searchMemberQuery: getSearchMemberQuery(state.team),
+  };
+}
+
+const mapDispatchToProps = {
+  loadTeamMembers,
+  addTeamMember,
+  removeTeamMember,
+  setSearchMemberQuery,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamMembers));

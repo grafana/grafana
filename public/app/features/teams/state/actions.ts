@@ -1,6 +1,6 @@
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { NavModelItem, StoreState, Team } from '../../../types';
+import { NavModelItem, StoreState, Team, TeamMember } from '../../../types';
 import { updateNavIndex } from '../../../core/actions';
 import { UpdateNavIndexAction } from '../../../core/actions/navModel';
 
@@ -8,6 +8,8 @@ export enum ActionTypes {
   LoadTeams = 'LOAD_TEAMS',
   LoadTeam = 'LOAD_TEAM',
   SetSearchQuery = 'SET_SEARCH_QUERY',
+  SetSearchMemberQuery = 'SET_SEARCH_MEMBER_QUERY',
+  LoadTeamMembers = 'TEAM_MEMBERS_LOADED',
 }
 
 export interface LoadTeamsAction {
@@ -20,12 +22,27 @@ export interface LoadTeamAction {
   payload: Team;
 }
 
+export interface LoadTeamMembersAction {
+  type: ActionTypes.LoadTeamMembers;
+  payload: TeamMember[];
+}
+
 export interface SetSearchQueryAction {
   type: ActionTypes.SetSearchQuery;
   payload: string;
 }
 
-export type Action = LoadTeamsAction | SetSearchQueryAction | LoadTeamAction;
+export interface SetSearchMemberQueryAction {
+  type: ActionTypes.SetSearchMemberQuery;
+  payload: string;
+}
+
+export type Action =
+  | LoadTeamsAction
+  | SetSearchQueryAction
+  | LoadTeamAction
+  | LoadTeamMembersAction
+  | SetSearchMemberQueryAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action | UpdateNavIndexAction>;
 
@@ -37,6 +54,16 @@ const teamsLoaded = (teams: Team[]): LoadTeamsAction => ({
 const teamLoaded = (team: Team): LoadTeamAction => ({
   type: ActionTypes.LoadTeam,
   payload: team,
+});
+
+const teamMembersLoaded = (teamMembers: TeamMember[]): LoadTeamMembersAction => ({
+  type: ActionTypes.LoadTeamMembers,
+  payload: teamMembers,
+});
+
+export const setSearchMemberQuery = (searchQuery: string): SetSearchMemberQueryAction => ({
+  type: ActionTypes.SetSearchMemberQuery,
+  payload: searchQuery,
 });
 
 export const setSearchQuery = (searchQuery: string): SetSearchQueryAction => ({
@@ -85,6 +112,42 @@ export function loadTeam(id: number): ThunkResult<void> {
       .then(response => {
         dispatch(teamLoaded(response));
         dispatch(updateNavIndex(buildNavModel(response)));
+      });
+  };
+}
+
+export function loadTeamMembers(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const team = getStore().team.team;
+
+    await getBackendSrv()
+      .get(`/api/teams/${team.id}/members`)
+      .then(response => {
+        dispatch(teamMembersLoaded(response));
+      });
+  };
+}
+
+export function addTeamMember(id: number): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const team = getStore().team.team;
+
+    await getBackendSrv()
+      .post(`/api/teams/${team.id}/members`, { userId: id })
+      .then(() => {
+        dispatch(loadTeamMembers());
+      });
+  };
+}
+
+export function removeTeamMember(id: number): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const team = getStore().team.team;
+
+    await getBackendSrv()
+      .delete(`/api/teams/${team.id}/members/${id}`)
+      .then(() => {
+        dispatch(loadTeamMembers());
       });
   };
 }

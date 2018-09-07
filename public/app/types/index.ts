@@ -124,7 +124,7 @@ export interface TeamsState {
 
 export interface TeamState {
   team: Team;
-  searchQuery: string;
+  searchMemberQuery: string;
 }
 
 export interface StoreState {
@@ -132,4 +132,5 @@ export interface StoreState {
   location: LocationState;
   alertRules: AlertRulesState;
   teams: TeamsState;
+  team: TeamState;
 }
