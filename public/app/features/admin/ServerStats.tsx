@@ -3,7 +3,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getServerStats, ServerStat } from '../apis';
+import { getServerStats, ServerStat } from './state/apis';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 
 interface Props {

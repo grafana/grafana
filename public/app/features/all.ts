@@ -8,7 +8,7 @@ import './playlist/all';
 import './snapshot/all';
 import './panel/all';
 import './org/all';
-import './admin/admin';
+import './admin';
 import './alerting/NotificationsEditCtrl';
 import './alerting/NotificationsListCtrl';
 import './styleguide/styleguide';

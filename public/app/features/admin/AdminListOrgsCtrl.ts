@@ -1,6 +1,5 @@
-import angular from 'angular';
 
-export class AdminListOrgsCtrl {
+export default class AdminListOrgsCtrl {
   /** @ngInject */
   constructor($scope, backendSrv, navModelSrv) {
     $scope.init = () => {
@@ -33,4 +32,3 @@ export class AdminListOrgsCtrl {
   }
 }
 
-angular.module('grafana.controllers').controller('AdminListOrgsCtrl', AdminListOrgsCtrl);

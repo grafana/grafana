@@ -21,19 +21,19 @@ configure({ adapter: new Adapter() });
 const global = window as any;
 global.$ = global.jQuery = $;
 
-const localStorageMock = (function() {
-  var store = {};
+const localStorageMock = (() => {
+  let store = {};
   return {
-    getItem: function(key) {
+    getItem: key => {
       return store[key];
     },
-    setItem: function(key, value) {
+    setItem: (key, value) => {
       store[key] = value.toString();
     },
-    clear: function() {
+    clear: () => {
       store = {};
     },
-    removeItem: function(key) {
+    removeItem: key => {
       delete store[key];
     },
   };

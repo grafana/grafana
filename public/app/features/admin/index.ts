@@ -1,7 +1,7 @@
-import AdminListUsersCtrl from './admin_list_users_ctrl';
-import './admin_list_orgs_ctrl';
-import './admin_edit_org_ctrl';
-import './admin_edit_user_ctrl';
+import AdminListUsersCtrl from './AdminListUsersCtrl';
+import AdminEditUserCtrl from './AdminEditUserCtrl';
+import AdminListOrgsCtrl from './AdminListOrgsCtrl';
+import AdminEditOrgCtrl from './AdminEditOrgCtrl';
 
 import coreModule from 'app/core/core_module';
 
@@ -27,21 +27,11 @@ class AdminHomeCtrl {
   }
 }
 
-export class AdminStatsCtrl {
-  stats: any;
-  navModel: any;
+coreModule.controller('AdminListUsersCtrl', AdminListUsersCtrl);
+coreModule.controller('AdminEditUserCtrl', AdminEditUserCtrl);
 
-  /** @ngInject */
-  constructor(backendSrv: any, navModelSrv) {
-    this.navModel = navModelSrv.getNav('cfg', 'admin', 'server-stats', 1);
-
-    backendSrv.get('/api/admin/stats').then(stats => {
-      this.stats = stats;
-    });
-  }
-}
+coreModule.controller('AdminListOrgsCtrl', AdminListOrgsCtrl);
+coreModule.controller('AdminEditOrgCtrl', AdminEditOrgCtrl);
 
 coreModule.controller('AdminSettingsCtrl', AdminSettingsCtrl);
 coreModule.controller('AdminHomeCtrl', AdminHomeCtrl);
-coreModule.controller('AdminStatsCtrl', AdminStatsCtrl);
-coreModule.controller('AdminListUsersCtrl', AdminListUsersCtrl);

@@ -1,6 +1,5 @@
-import angular from 'angular';
 
-export class AdminEditOrgCtrl {
+export default class AdminEditOrgCtrl {
   /** @ngInject */
   constructor($scope, $routeParams, backendSrv, $location, navModelSrv) {
     $scope.init = () => {
@@ -48,4 +47,3 @@ export class AdminEditOrgCtrl {
   }
 }
 
-angular.module('grafana.controllers').controller('AdminEditOrgCtrl', AdminEditOrgCtrl);

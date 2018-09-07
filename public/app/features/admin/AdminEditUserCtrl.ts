@@ -1,7 +1,6 @@
-import angular from 'angular';
 import _ from 'lodash';
 
-export class AdminEditUserCtrl {
+export default class AdminEditUserCtrl {
   /** @ngInject */
   constructor($scope, $routeParams, backendSrv, $location, navModelSrv) {
     $scope.user = {};
@@ -117,5 +116,3 @@ export class AdminEditUserCtrl {
     $scope.init();
   }
 }
-
-angular.module('grafana.controllers').controller('AdminEditUserCtrl', AdminEditUserCtrl);

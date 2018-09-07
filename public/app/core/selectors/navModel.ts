@@ -1,7 +1,7 @@
 import { NavModel, NavModelItem, NavIndex } from 'app/types';
 
 function getNotFoundModel(): NavModel {
-  var node: NavModelItem = {
+  const node: NavModelItem = {
     id: 'not-found',
     text: 'Page not found',
     icon: 'fa fa-fw fa-warning',
