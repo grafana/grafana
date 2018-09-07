@@ -27,6 +27,13 @@ func TestSqlEngine(t *testing.T) {
 				So(sql, ShouldEqual, "select 300s ")
 			})
 
+			Convey("interpolate $__interval in $__timeGroup", func() {
+				sql, err := Interpolate(query, timeRange, "select $__timeGroupAlias(time,$__interval)")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "select $__timeGroupAlias(time,300s)")
+			})
+
 			Convey("interpolate $__interval_ms", func() {
 				sql, err := Interpolate(query, timeRange, "select $__interval_ms ")
 				So(err, ShouldBeNil)

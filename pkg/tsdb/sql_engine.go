@@ -127,15 +127,15 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 		queryResult := &QueryResult{Meta: simplejson.New(), RefId: query.RefId}
 		result.Results[query.RefId] = queryResult
 
-		// datasource specific substitutions
-		rawSQL, err := e.macroEngine.Interpolate(query, tsdbQuery.TimeRange, rawSQL)
+		// global substitutions
+		rawSQL, err := Interpolate(query, tsdbQuery.TimeRange, rawSQL)
 		if err != nil {
 			queryResult.Error = err
 			continue
 		}
 
-		// global substitutions
-		rawSQL, err = Interpolate(query, tsdbQuery.TimeRange, rawSQL)
+		// datasource specific substitutions
+		rawSQL, err = e.macroEngine.Interpolate(query, tsdbQuery.TimeRange, rawSQL)
 		if err != nil {
 			queryResult.Error = err
 			continue
@@ -175,7 +175,6 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 // global macros/substitutions for all sql datasources
 func Interpolate(query *Query, timeRange *TimeRange, sql string) (string, error) {
 	rExp, _ := regexp.Compile(`\$__(interval|interval_ms)\b`)
-	var macroError error
 
 	sql = ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
 		switch groups[1] {
@@ -189,10 +188,6 @@ func Interpolate(query *Query, timeRange *TimeRange, sql string) (string, error)
 			return groups[0]
 		}
 	})
-
-	if macroError != nil {
-		return "", macroError
-	}
 
 	return sql, nil
 }
