@@ -44,15 +44,15 @@ export default class PostgresQuery {
   }
 
   quoteIdentifier(value) {
-    return '"' + value.replace(/"/g, '""') + '"';
+    return '"' + String(value).replace(/"/g, '""') + '"';
   }
 
   quoteLiteral(value) {
-    return "'" + value.replace(/'/g, "''") + "'";
+    return "'" + String(value).replace(/'/g, "''") + "'";
   }
 
   escapeLiteral(value) {
-    return value.replace(/'/g, "''");
+    return String(value).replace(/'/g, "''");
   }
 
   hasTimeGroup() {
