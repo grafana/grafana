@@ -96,14 +96,26 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 					},
 				},
 				"text": message,
-				"potentialAction": []map[string]interface{}{
+			},
+		},
+		"potentialAction": []map[string]interface{}{
+			{
+				"@context": "http://schema.org",
+				"@type":    "OpenUri",
+				"name":     "View Rule",
+				"targets": []map[string]interface{}{
 					{
-						"@context": "http://schema.org",
-						"@type":    "ViewAction",
-						"name":     "View Rule",
-						"target": []string{
-							ruleUrl,
-						},
+						"os": "default", "uri": ruleUrl,
+					},
+				},
+			},
+			{
+				"@context": "http://schema.org",
+				"@type":    "OpenUri",
+				"name":     "View Graph",
+				"targets": []map[string]interface{}{
+					{
+						"os": "default", "uri": evalContext.ImagePublicUrl,
 					},
 				},
 			},
