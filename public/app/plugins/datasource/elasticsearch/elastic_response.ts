@@ -37,19 +37,21 @@ export class ElasticResponse {
           const percentiles = firstBucket[metric.id].values;
 
           for (const percentileName in percentiles) {
-            newSeries = {
-              datapoints: [],
-              metric: 'p' + percentileName,
-              props: props,
-              field: metric.field,
-            };
+            if (percentiles.hasOwnProperty(percentileName)) {
+              newSeries = {
+                datapoints: [],
+                metric: 'p' + percentileName,
+                props: props,
+                field: metric.field,
+              };
 
-            for (i = 0; i < esAgg.buckets.length; i++) {
-              bucket = esAgg.buckets[i];
-              const values = bucket[metric.id].values;
-              newSeries.datapoints.push([values[percentileName], bucket.key]);
+              for (i = 0; i < esAgg.buckets.length; i++) {
+                bucket = esAgg.buckets[i];
+                const values = bucket[metric.id].values;
+                newSeries.datapoints.push([values[percentileName], bucket.key]);
+              }
+              seriesList.push(newSeries);
             }
-            seriesList.push(newSeries);
           }
 
           break;
@@ -181,32 +183,36 @@ export class ElasticResponse {
     const maxDepth = target.bucketAggs.length - 1;
 
     for (aggId in aggs) {
-      aggDef = _.find(target.bucketAggs, { id: aggId });
-      esAgg = aggs[aggId];
+      if (aggs.hasOwnProperty(aggId)) {
+        aggDef = _.find(target.bucketAggs, { id: aggId });
+        esAgg = aggs[aggId];
 
-      if (!aggDef) {
-        continue;
-      }
-
-      if (depth === maxDepth) {
-        if (aggDef.type === 'date_histogram') {
-          this.processMetrics(esAgg, target, seriesList, props);
-        } else {
-          this.processAggregationDocs(esAgg, aggDef, target, table, props);
+        if (!aggDef) {
+          continue;
         }
-      } else {
-        for (const nameIndex in esAgg.buckets) {
-          bucket = esAgg.buckets[nameIndex];
-          props = _.clone(props);
-          if (bucket.key !== void 0) {
-            props[aggDef.field] = bucket.key;
+
+        if (depth === maxDepth) {
+          if (aggDef.type === 'date_histogram') {
+            this.processMetrics(esAgg, target, seriesList, props);
           } else {
-            props['filter'] = nameIndex;
+            this.processAggregationDocs(esAgg, aggDef, target, table, props);
           }
-          if (bucket.key_as_string) {
-            props[aggDef.field] = bucket.key_as_string;
+        } else {
+          for (const nameIndex in esAgg.buckets) {
+            if (esAgg.buckets.hasOwnProperty(nameIndex)) {
+              bucket = esAgg.buckets[nameIndex];
+              props = _.clone(props);
+              if (bucket.key !== void 0) {
+                props[aggDef.field] = bucket.key;
+              } else {
+                props['filter'] = nameIndex;
+              }
+              if (bucket.key_as_string) {
+                props[aggDef.field] = bucket.key_as_string;
+              }
+              this.processBuckets(bucket, target, seriesList, table, props, depth + 1);
+            }
           }
-          this.processBuckets(bucket, target, seriesList, table, props, depth + 1);
         }
       }
     }
@@ -265,7 +271,9 @@ export class ElasticResponse {
 
     let name = '';
     for (const propName in series.props) {
-      name += series.props[propName] + ' ';
+      if (series.props.hasOwnProperty(propName)) {
+        name += series.props[propName] + ' ';
+      }
     }
 
     if (metricTypeCount === 1) {
@@ -304,12 +312,16 @@ export class ElasticResponse {
 
       if (hit._source) {
         for (propName in hit._source) {
-          doc[propName] = hit._source[propName];
+          if (hit._source.hasOwnProperty(propName)) {
+            doc[propName] = hit._source[propName];
+          }
         }
       }
 
       for (propName in hit.fields) {
-        doc[propName] = hit.fields[propName];
+        if (hit.fields.hasOwnProperty(propName)) {
+          doc[propName] = hit.fields[propName];
+        }
       }
       series.datapoints.push(doc);
     }
@@ -324,9 +336,11 @@ export class ElasticResponse {
     if (shouldDropFirstAndLast) {
       const trim = histogram.settings.trimEdges;
       for (const prop in aggregations) {
-        const points = aggregations[prop];
-        if (points.datapoints.length > trim * 2) {
-          points.datapoints = points.datapoints.slice(trim, points.datapoints.length - trim);
+        if (aggregations.hasOwnProperty(prop)) {
+          const points = aggregations[prop];
+          if (points.datapoints.length > trim * 2) {
+            points.datapoints = points.datapoints.slice(trim, points.datapoints.length - trim);
+          }
         }
       }
     }

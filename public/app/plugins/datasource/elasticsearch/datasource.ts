@@ -312,28 +312,30 @@ export class ElasticDatasource {
 
       function getFieldsRecursively(obj) {
         for (const key in obj) {
-          const subObj = obj[key];
+          if (obj.hasOwnProperty(key)) {
+            const subObj = obj[key];
 
-          // Check mapping field for nested fields
-          if (_.isObject(subObj.properties)) {
-            fieldNameParts.push(key);
-            getFieldsRecursively(subObj.properties);
-          }
+            // Check mapping field for nested fields
+            if (_.isObject(subObj.properties)) {
+              fieldNameParts.push(key);
+              getFieldsRecursively(subObj.properties);
+            }
 
-          if (_.isObject(subObj.fields)) {
-            fieldNameParts.push(key);
-            getFieldsRecursively(subObj.fields);
-          }
+            if (_.isObject(subObj.fields)) {
+              fieldNameParts.push(key);
+              getFieldsRecursively(subObj.fields);
+            }
 
-          if (_.isString(subObj.type)) {
-            const fieldName = fieldNameParts.concat(key).join('.');
+            if (_.isString(subObj.type)) {
+              const fieldName = fieldNameParts.concat(key).join('.');
 
-            // Hide meta-fields and check field type
-            if (shouldAddField(subObj, key, query)) {
-              fields[fieldName] = {
-                text: fieldName,
-                type: subObj.type,
-              };
+              // Hide meta-fields and check field type
+              if (shouldAddField(subObj, key, query)) {
+                fields[fieldName] = {
+                  text: fieldName,
+                  type: subObj.type,
+                };
+              }
             }
           }
         }
@@ -341,12 +343,16 @@ export class ElasticDatasource {
       }
 
       for (const indexName in result) {
-        const index = result[indexName];
-        if (index && index.mappings) {
-          const mappings = index.mappings;
-          for (const typeName in mappings) {
-            const properties = mappings[typeName].properties;
-            getFieldsRecursively(properties);
+        if (result.hasOwnProperty(indexName)) {
+          const index = result[indexName];
+          if (index && index.mappings) {
+            const mappings = index.mappings;
+            for (const typeName in mappings) {
+              if (mappings.hasOwnProperty(typeName)) {
+                const properties = mappings[typeName].properties;
+                getFieldsRecursively(properties);
+              }
+            }
           }
         }
       }

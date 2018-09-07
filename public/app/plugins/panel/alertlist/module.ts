@@ -43,7 +43,9 @@ class AlertListPanel extends PanelCtrl {
     this.events.on('refresh', this.onRefresh.bind(this));
 
     for (const key in this.panel.stateFilter) {
-      this.stateFilter[this.panel.stateFilter[key]] = true;
+      if (this.panel.stateFilter.hasOwnProperty(key)) {
+        this.stateFilter[this.panel.stateFilter[key]] = true;
+      }
     }
   }
 
