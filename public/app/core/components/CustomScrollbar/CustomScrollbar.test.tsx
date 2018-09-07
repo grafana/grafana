@@ -1,14 +1,14 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
-import GrafanaScrollbar from './GrafanaScrollbar';
+import CustomScrollbar from './CustomScrollbar';
 
-describe('GrafanaScrollbar', () => {
+describe('CustomScrollbar', () => {
   it('renders correctly', () => {
     const tree = renderer
       .create(
-        <GrafanaScrollbar>
+        <CustomScrollbar>
           <p>Scrollable content</p>
-        </GrafanaScrollbar>
+        </CustomScrollbar>
       )
       .toJSON();
     expect(tree).toMatchSnapshot();

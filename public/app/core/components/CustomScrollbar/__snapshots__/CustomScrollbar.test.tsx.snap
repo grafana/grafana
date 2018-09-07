@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`GrafanaScrollbar renders correctly 1`] = `
+exports[`CustomScrollbar renders correctly 1`] = `
 <div
   className="custom-scrollbars"
   style={

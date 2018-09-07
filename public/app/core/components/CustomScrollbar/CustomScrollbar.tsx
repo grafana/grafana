@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 import Scrollbars from 'react-custom-scrollbars';
 
-interface GrafanaScrollBarProps {
+interface Props {
   customClassName?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
@@ -9,19 +9,18 @@ interface GrafanaScrollBarProps {
   hideTracksWhenNotNeeded?: boolean;
 }
 
-const grafanaScrollBarDefaultProps: Partial<GrafanaScrollBarProps> = {
-  customClassName: 'custom-scrollbars',
-  autoHide: true,
-  autoHideTimeout: 200,
-  autoHideDuration: 200,
-  hideTracksWhenNotNeeded: false,
-};
-
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
-class GrafanaScrollbar extends React.Component<GrafanaScrollBarProps> {
-  static defaultProps = grafanaScrollBarDefaultProps;
+class CustomScrollbar extends PureComponent<Props> {
+
+  static defaultProps: Partial<Props> = {
+    customClassName: 'custom-scrollbars',
+    autoHide: true,
+    autoHideTimeout: 200,
+    autoHideDuration: 200,
+    hideTracksWhenNotNeeded: false,
+  };
 
   render() {
     const { customClassName, children, ...scrollProps } = this.props;
@@ -45,4 +44,4 @@ class GrafanaScrollbar extends React.Component<GrafanaScrollBarProps> {
   }
 }
 
-export default GrafanaScrollbar;
+export default CustomScrollbar;
