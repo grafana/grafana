@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { TimeSeries } from 'app/core/core';
-import GrafanaScrollbar from 'app/core/components/ScrollBar/GrafanaScrollbar';
+import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
 
 const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'];
 
@@ -193,7 +193,7 @@ function LegendValue(props: LegendValueProps) {
   return <div className={`graph-legend-value ${valueName}`}>{value}</div>;
 }
 
-function renderLegendValues(props: LegendSeriesItemProps, series, asTable = false): React.ReactElement<any>[] {
+function renderLegendValues(props: LegendSeriesItemProps, series, asTable = false) {
   const legendValueItems = [];
   for (const valueName of LEGEND_STATS) {
     if (props[valueName]) {
@@ -312,9 +312,9 @@ function getOptionSeriesCSSClasses(series, hiddenSeries) {
 export class Legend extends React.Component<GraphLegendProps, GraphLegendState> {
   render() {
     return (
-      <GrafanaScrollbar>
+      <CustomScrollbar>
         <GraphLegend {...this.props} />
-      </GrafanaScrollbar>
+      </CustomScrollbar>
     );
   }
 }
