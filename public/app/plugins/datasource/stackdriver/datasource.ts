@@ -9,6 +9,10 @@ export default class StackdriverDatasource {
     this.doRequest = this.doRequest;
   }
 
+  query() {
+    return Promise.resolve();
+  }
+
   testDatasource() {
     const path = `v3/projects/raintank-production/metricDescriptors`;
     return this.doRequest(`${this.baseUrl}${path}`)
@@ -46,6 +50,16 @@ export default class StackdriverDatasource {
   async getProjects() {
     const response = await this.doRequest(`/cloudresourcemanager/v1/projects`);
     return response.data.projects.map(p => ({ id: p.projectId, name: p.name }));
+  }
+
+  async getMetricTypes(projectId: string) {
+    try {
+      const metricsApiPath = `v3/projects/${projectId}/metricDescriptors`;
+      const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
+      return data.metricDescriptors.map(m => ({ id: m.name, name: m.displayName }));
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async doRequest(url, maxRetries = 1) {

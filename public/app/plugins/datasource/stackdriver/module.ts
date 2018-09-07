@@ -1,5 +1,5 @@
 import StackdriverDatasource from './datasource';
-// import { StackdriverQueryCtrl } from './query_ctrl';
+import { StackdriverQueryCtrl } from './query_ctrl';
 import { StackdriverConfigCtrl } from './config_ctrl';
 
 // class AnnotationsQueryCtrl {
@@ -8,7 +8,7 @@ import { StackdriverConfigCtrl } from './config_ctrl';
 
 export {
   StackdriverDatasource as Datasource,
-  // StackdriverQueryCtrl as QueryCtrl,
+  StackdriverQueryCtrl as QueryCtrl,
   StackdriverConfigCtrl as ConfigCtrl,
   // AnnotationsQueryCtrl,
 };
