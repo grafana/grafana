@@ -129,6 +129,8 @@ Any column except `time` and `metric` is treated as a value column.
 You may return a column named `metric` that is used as metric name for the value column.
 If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
 
+Resultsets of time series queries need to be sorted by time.
+
 **Example with `metric` column:**
 
 ```sql
