@@ -175,21 +175,28 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 // global macros/substitutions for all sql datasources
 func Interpolate(query *Query, timeRange *TimeRange, sql string) (string, error) {
 	rExp, _ := regexp.Compile(`\$__(interval|interval_ms)\b`)
+	var err error
 
 	sql = ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
 		switch groups[1] {
 		case "interval":
-			diff := timeRange.GetToAsSecondsEpoch() - timeRange.GetFromAsSecondsEpoch()
-			return fmt.Sprintf("%ds", diff)
+			interval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+			if err != nil {
+				return sql
+			}
+			return fmt.Sprintf("%.0fs", interval.Seconds())
 		case "interval_ms":
-			diff := timeRange.GetToAsSecondsEpoch() - timeRange.GetFromAsSecondsEpoch()
-			return fmt.Sprintf("%d", diff*1000)
+			interval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+			if err != nil {
+				return sql
+			}
+			return fmt.Sprintf("%.0f", interval.Seconds()*1000)
 		default:
 			return groups[0]
 		}
 	})
 
-	return sql, nil
+	return sql, err
 }
 
 func (e *sqlQueryEndpoint) transformToTable(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error {

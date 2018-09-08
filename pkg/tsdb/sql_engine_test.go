@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -18,27 +20,27 @@ func TestSqlEngine(t *testing.T) {
 			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 			to := from.Add(5 * time.Minute)
 			timeRange := NewFakeTimeRange("5m", "now", to)
-			query := &Query{}
+			query := &Query{DataSource: &models.DataSource{}, Model: simplejson.New()}
 
 			Convey("interpolate $__interval", func() {
 				sql, err := Interpolate(query, timeRange, "select $__interval ")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "select 300s ")
+				So(sql, ShouldEqual, "select 60s ")
 			})
 
 			Convey("interpolate $__interval in $__timeGroup", func() {
 				sql, err := Interpolate(query, timeRange, "select $__timeGroupAlias(time,$__interval)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "select $__timeGroupAlias(time,300s)")
+				So(sql, ShouldEqual, "select $__timeGroupAlias(time,60s)")
 			})
 
 			Convey("interpolate $__interval_ms", func() {
 				sql, err := Interpolate(query, timeRange, "select $__interval_ms ")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "select 300000 ")
+				So(sql, ShouldEqual, "select 60000 ")
 			})
 
 		})

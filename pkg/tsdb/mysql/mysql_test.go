@@ -299,6 +299,7 @@ func TestMySQL(t *testing.T) {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{
+							DataSource: &models.DataSource{},
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
@@ -316,7 +317,7 @@ func TestMySQL(t *testing.T) {
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
-				So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT UNIX_TIMESTAMP(time) DIV 1800 * 1800 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
+				So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
 
 			})
 
