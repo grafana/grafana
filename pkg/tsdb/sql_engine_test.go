@@ -26,14 +26,14 @@ func TestSqlEngine(t *testing.T) {
 				sql, err := Interpolate(query, timeRange, "select $__interval ")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "select 60s ")
+				So(sql, ShouldEqual, "select 1m ")
 			})
 
 			Convey("interpolate $__interval in $__timeGroup", func() {
 				sql, err := Interpolate(query, timeRange, "select $__timeGroupAlias(time,$__interval)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "select $__timeGroupAlias(time,60s)")
+				So(sql, ShouldEqual, "select $__timeGroupAlias(time,1m)")
 			})
 
 			Convey("interpolate $__interval_ms", func() {

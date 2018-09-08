@@ -184,7 +184,7 @@ func Interpolate(query *Query, timeRange *TimeRange, sql string) (string, error)
 			if err != nil {
 				return sql
 			}
-			return fmt.Sprintf("%.0fs", interval.Seconds())
+			return formatDuration(interval)
 		case "interval_ms":
 			interval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 			if err != nil {
