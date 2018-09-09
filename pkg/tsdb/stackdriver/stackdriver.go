@@ -13,6 +13,8 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,7 +38,7 @@ func init() {
 
 func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{}
-
+	logger.Info("tsdbQuery", "tsdbQuery", tsdbQuery)
 	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
 	until := formatTimeRange(tsdbQuery.TimeRange.To)
 	var target string
@@ -73,7 +75,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 		return nil, err
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
 	span.SetTag("target", target)
 	span.SetTag("from", from)
 	span.SetTag("until", until)
@@ -100,14 +102,14 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	result.Results = make(map[string]*tsdb.QueryResult)
 	queryRes := tsdb.NewQueryResult()
 
-	for _, series := range data {
+	for _, series := range data.TimeSeries {
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   series.Target,
-			Points: series.DataPoints,
+			Name: series.Metric.Type,
+			// Points: [],
 		})
 
 		if setting.Env == setting.DEV {
-			glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
+			// glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}
 
@@ -115,23 +117,23 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	return result, nil
 }
 
-func (e *StackdriverExecutor) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
+func (e *StackdriverExecutor) parseResponse(res *http.Response) (StackDriverResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
-		return nil, err
+		return StackDriverResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		glog.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("Request failed status: %v", res.Status)
+		return StackDriverResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
-	var data []TargetResponseDTO
+	var data StackDriverResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		glog.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
-		return nil, err
+		return StackDriverResponse{}, err
 	}
 
 	return data, nil
@@ -141,15 +143,18 @@ func (e *StackdriverExecutor) createRequest(dsInfo *models.DataSource, data url.
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
-	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/v3/projects/raintank-production/timeSeries?&filter=metric.type%20%3D%20%22compute.googleapis.com%2Finstance%2Fcpu%2Fusage_time%22&aggregation.perSeriesAligner=ALIGN_NONE&interval.startTime=2018-09-04T11%3A14%3A02.383Z&interval.endTime=2018-09-04T11%3A16%3A02.383Z", nil)
 	if err != nil {
 		glog.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("Failed to create request. error: %v", err)
 	}
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+	req.Header.Set("Content-Type", "application/json")
+
+	if token, err := pluginproxy.GetAccessTokenFromCache(dsInfo.Id, "stackdriver", "GET"); err != nil {
+		logger.Error("Failed to get access token", "error", err)
+	} else {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	}
 
 	return req, err
