@@ -32,7 +32,8 @@ type jwtToken struct {
 	AccessToken     string    `json:"access_token"`
 }
 
-func newAccessTokenProvider(dsID int64, pluginRoute *plugins.AppPluginRoute) *accessTokenProvider {
+// Access token provider
+func NewAccessTokenProvider(dsID int64, pluginRoute *plugins.AppPluginRoute) *accessTokenProvider {
 	return &accessTokenProvider{
 		datasourceID: dsID,
 		route:        pluginRoute,
@@ -139,9 +140,21 @@ var getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token,
 		return nil, err
 	}
 
+	logger.Info("interpolatedVal", "token.AccessToken", token.AccessToken)
+
 	return token, nil
 }
 
 func (provider *accessTokenProvider) getAccessTokenCacheKey() string {
 	return fmt.Sprintf("%v_%v_%v", provider.datasourceID, provider.route.Path, provider.route.Method)
+}
+
+//Export access token lookup
+func GetAccessTokenFromCache(datasourceID int64, path string, method string) (string, error) {
+	key := fmt.Sprintf("%v_%v_%v", datasourceID, path, method)
+	if cachedToken, found := oauthJwtTokenCache[key]; found {
+		return cachedToken.AccessToken, nil
+	} else {
+		return "", fmt.Errorf("Key doesnt exist")
+	}
 }
