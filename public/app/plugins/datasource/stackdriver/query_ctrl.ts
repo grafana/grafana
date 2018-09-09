@@ -4,21 +4,25 @@ import appEvents from 'app/core/app_events';
 
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
-  project: {
-    id: string;
-    name: string;
+  target: {
+    project: {
+      id: string;
+      name: string;
+    };
+    metricType: string;
   };
-  metricType: string;
   defaultDropdownValue = 'select';
 
   /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
-    this.project = {
-      id: 'default',
-      name: 'loading project...',
+    this.target = {
+      project: {
+        id: 'default',
+        name: 'loading project...',
+      },
+      metricType: this.defaultDropdownValue,
     };
-    this.metricType = this.defaultDropdownValue;
 
     this.getCurrentProject().then(this.getMetricTypes.bind(this));
   }
@@ -27,7 +31,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     try {
       const projects = await this.datasource.getProjects();
       if (projects && projects.length > 0) {
-        this.project = this.project = projects[0];
+        this.target.project = this.target.project = projects[0];
       } else {
         throw new Error('No projects found');
       }
@@ -52,10 +56,10 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
   async getMetricTypes() {
     //projects/raintank-production/metricDescriptors/agent.googleapis.com/agent/api_request_count
-    if (this.project.id !== 'default') {
-      const metricTypes = await this.datasource.getMetricTypes(this.project.id);
-      if (this.metricType === this.defaultDropdownValue && metricTypes.length > 0) {
-        this.$scope.$apply(() => (this.metricType = metricTypes[0].name));
+    if (this.target.project.id !== 'default') {
+      const metricTypes = await this.datasource.getMetricTypes(this.target.project.id);
+      if (this.target.metricType === this.defaultDropdownValue && metricTypes.length > 0) {
+        this.$scope.$apply(() => (this.target.metricType = metricTypes[0].name));
       }
       return metricTypes.map(mt => ({ value: mt.id, text: mt.id }));
     } else {

@@ -2,15 +2,15 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Project</span>
-      <input class="gf-form-input" disabled type="text" ng-model='ctrl.project.name' get-options="ctrl.getProjects()" css-class="min-width-12"
+      <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.project.name' get-options="ctrl.getProjects()" css-class="min-width-12"
       />
     </div>
   </div>
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Metric Type</span>
-      <gf-form-dropdown model="ctrl.metricType" get-options="ctrl.getMetricTypes($query)" class="gf-form-input" disabled type="text"
-        allow-custom="true" lookup-text="true" css-class="min-width-12"></gf-form-dropdown>
+      <gf-form-dropdown model="ctrl.target.metricType" get-options="ctrl.getMetricTypes($query)" class="gf-form-input" disabled
+        type="text" allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="ctrl.refresh()"></gf-form-dropdown>
     </div>
   </div>
 </query-editor-row>
