@@ -1,5 +1,6 @@
 /** @ngInject */
 export default class StackdriverDatasource {
+  id: number;
   url: string;
   baseUrl: string;
 
@@ -7,10 +8,30 @@ export default class StackdriverDatasource {
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
     this.doRequest = this.doRequest;
+    this.id = instanceSettings.id;
   }
 
-  query() {
-    return Promise.resolve();
+  async query(options) {
+    const queries = options.targets.filter(target => !target.hide).map(t => ({
+      queryType: 'raw',
+      refId: t.refId,
+      datasourceId: this.id,
+      metric: t.metricType,
+    }));
+    try {
+      const response = await this.backendSrv.datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries,
+        },
+      });
+      return response;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   testDatasource() {
