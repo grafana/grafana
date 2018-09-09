@@ -332,7 +332,7 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 		logger.Error("Failed to render plugin headers", "error", err)
 	}
 
-	tokenProvider := newAccessTokenProvider(proxy.ds.Id, proxy.route)
+	tokenProvider := NewAccessTokenProvider(proxy.ds.Id, proxy.route)
 
 	if proxy.route.TokenAuth != nil {
 		if token, err := tokenProvider.getAccessToken(data); err != nil {
