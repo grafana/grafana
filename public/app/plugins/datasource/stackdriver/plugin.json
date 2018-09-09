@@ -35,9 +35,7 @@
       "method": "GET",
       "url": "https://cloudresourcemanager.googleapis.com",
       "jwtTokenAuth": {
-        "scopes": [
-          "https://www.googleapis.com/auth/cloudplatformprojects.readonly"
-        ],
+        "scopes": ["https://www.googleapis.com/auth/cloudplatformprojects.readonly"],
         "params": {
           "token_uri": "{{.JsonData.tokenUri}}",
           "client_email": "{{.JsonData.clientEmail}}",
