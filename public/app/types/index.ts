@@ -1,3 +1,7 @@
+import { FolderDTO } from './dashboard';
+
+export { FolderDTO };
+
 //
 // Location
 //

@@ -4,7 +4,7 @@ import './ReactContainer';
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions';
-import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
+import FolderSettingsPage from 'app/features/manage-dashboards/FolderSettingsPage';
 import TeamPages from 'app/containers/Teams/TeamPages';
 import TeamList from 'app/containers/Teams/TeamList';
 
@@ -99,7 +99,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/dashboards/f/:uid/:slug/settings', {
       template: '<react-container />',
       resolve: {
-        component: () => FolderSettings,
+        component: () => FolderSettingsPage,
       },
     })
     .when('/dashboards/f/:uid/:slug', {
