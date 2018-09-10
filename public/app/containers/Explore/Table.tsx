@@ -21,7 +21,7 @@ interface SFCCellProps {
 function Cell(props: SFCCellProps) {
   const { columnIndex, rowIndex, table, value, onClickCell } = props;
   const column = table.columns[columnIndex];
-  if (column && column.filterable && onClickCell) {
+  if (column && column.exploreFilterable && onClickCell) {
     const onClick = event => {
       event.preventDefault();
       onClickCell(column.text, value, columnIndex, rowIndex, table);

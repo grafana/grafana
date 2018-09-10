@@ -4,8 +4,11 @@ interface Column {
   type?: string;
   sort?: boolean;
   desc?: boolean;
+  // used for ad-hoc filtering capabilitites
   filterable?: boolean;
   unit?: string;
+  // used for explore filtering capabilitites
+  exploreFilterable?: boolean;
 }
 
 export default class TableModel {
