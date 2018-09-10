@@ -56,11 +56,10 @@ export class TemplateSrv {
         continue;
       }
 
-      if (variable.datasource === datasourceName) {
+      // null is the "default" datasource
+      if (variable.datasource === null || variable.datasource === datasourceName) {
         filters = filters.concat(variable.filters);
-      }
-
-      if (variable.datasource.indexOf('$') === 0) {
+      } else if (variable.datasource.indexOf('$') === 0) {
         if (this.replace(variable.datasource) === datasourceName) {
           filters = filters.concat(variable.filters);
         }

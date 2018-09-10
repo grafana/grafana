@@ -26,8 +26,10 @@ describe('PrometheusDatasource', () => {
   ctx.backendSrvMock = {};
 
   ctx.templateSrvMock = {
+    getAdhocFilters: () => [],
     replace: a => a,
   };
+
   ctx.timeSrvMock = {
     timeRange: () => {
       return {
@@ -399,6 +401,7 @@ const backendSrv = {
 } as any;
 
 const templateSrv = {
+  getAdhocFilters: () => [],
   replace: jest.fn(str => str),
 };
 

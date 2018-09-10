@@ -32,7 +32,7 @@ const builtInWords = [
   .split('|');
 
 // addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
-export function addLabelToQuery(query: string, key: string, value: string): string {
+export function addLabelToQuery(query: string, key: string, value: string, operator?: string): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
@@ -54,6 +54,7 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
   });
 
   // Adding label to existing selectors
+  const labelOperator = operator || '=';
   const selectorRegexp = /{([^{]*)}/g;
   let match = selectorRegexp.exec(query);
   const parts = [];
@@ -73,7 +74,7 @@ export function addLabelToQuery(query: string, key: string, value: string): stri
     labels[key] = `"${value}"`;
     const selector = Object.keys(labels)
       .sort()
-      .map(key => `${key}=${labels[key]}`)
+      .map(key => `${key}${labelOperator}${labels[key]}`)
       .join(',');
     lastIndex = match.index + match[1].length + 2;
     suffix = query.slice(match.index + match[0].length);
@@ -406,8 +407,21 @@ export class PrometheusDatasource {
     }
     query.step = interval;
 
+    let expr = target.expr;
+
+    // Apply adhoc filters
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    expr = adhocFilters.reduce((acc, filter) => {
+      const { key, operator } = filter;
+      let { value } = filter;
+      if (operator === '=~' || operator === '!~') {
+        value = prometheusSpecialRegexEscape(value);
+      }
+      return addLabelToQuery(expr, key, value, operator);
+    }, expr);
+
     // Only replace vars in expression after having (possibly) updated interval vars
-    query.expr = this.templateSrv.replace(target.expr, scopedVars, this.interpolateQueryExpr);
+    query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
     query.requestId = options.panelId + target.refId;
 
     // Align query interval with step
