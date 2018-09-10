@@ -13,11 +13,12 @@ function panelEditorTab(dynamicDirectiveSrv) {
     },
     directive: scope => {
       const pluginId = scope.ctrl.pluginId;
-      const tabIndex = scope.index;
+      const tabName = scope.editorTab.title.toLowerCase();
 
+      console.log('panelEditorTab', pluginId, tabName);
       if (directiveCache[pluginId]) {
-        if (directiveCache[pluginId][tabIndex]) {
-          return directiveCache[pluginId][tabIndex];
+        if (directiveCache[pluginId][tabName]) {
+          return directiveCache[pluginId][tabName];
         }
       } else {
         directiveCache[pluginId] = [];
@@ -25,10 +26,10 @@ function panelEditorTab(dynamicDirectiveSrv) {
 
       const result = {
         fn: () => scope.editorTab.directiveFn(),
-        name: `panel-editor-tab-${pluginId}${tabIndex}`,
+        name: `panel-editor-tab-${pluginId}${tabName}`,
       };
 
-      directiveCache[pluginId][tabIndex] = result;
+      directiveCache[pluginId][tabName] = result;
 
       return result;
     },

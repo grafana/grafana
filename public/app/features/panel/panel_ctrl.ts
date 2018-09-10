@@ -22,6 +22,7 @@ export class PanelCtrl {
   pluginName: string;
   pluginId: string;
   editorTabs: any;
+  optionTabs: any;
   $scope: any;
   $injector: any;
   $location: any;
@@ -96,9 +97,10 @@ export class PanelCtrl {
 
   initEditMode() {
     this.editorTabs = [];
-    this.addEditorTab('Queries', metricsTabDirective, 0, 'fa fa-database');
-    this.addEditorTab('Visualization', vizTabDirective, 1, 'fa fa-line-chart');
-    this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
+    this.optionTabs = [];
+    this.addCommonTab('Queries', metricsTabDirective, 0, 'fa fa-database');
+    this.addCommonTab('Visualization', vizTabDirective, 1, 'fa fa-line-chart');
+    this.addCommonTab('General', 'public/app/partials/panelgeneral.html');
 
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
@@ -120,7 +122,7 @@ export class PanelCtrl {
     route.updateParams();
   }
 
-  addEditorTab(title, directiveFn, index?, icon?) {
+  addCommonTab(title, directiveFn, index?, icon?) {
     const editorTab = { title, directiveFn, icon };
 
     if (_.isString(directiveFn)) {
@@ -134,6 +136,18 @@ export class PanelCtrl {
     } else {
       this.editorTabs.push(editorTab);
     }
+  }
+
+  addEditorTab(title, directiveFn, index?, icon?) {
+    const editorTab = { title, directiveFn, icon };
+
+    if (_.isString(directiveFn)) {
+      editorTab.directiveFn = () => {
+        return { templateUrl: directiveFn };
+      };
+    }
+
+    this.optionTabs.push(editorTab);
   }
 
   getMenu() {

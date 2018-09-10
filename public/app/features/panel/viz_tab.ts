@@ -27,7 +27,10 @@ const template = `
     <viz-type-picker currentType="ctrl.panelCtrl.panel.type" onTypeChanged="ctrl.onTypeChanged"></viz-type-picker>
   </div>
   <div class="viz-editor-col2">
-    <h5 class="page-heading">Options</h5>
+    <div ng-repeat="tab in ctrl.panelCtrl.optionTabs" >
+      <h5 class="page-heading">{{tab.title}}</h5>
+      <panel-editor-tab editor-tab="tab" ctrl="ctrl.panelCtrl" index="$index"></panel-editor-tab>
+    </div>
   </div>
 </div>
 `;
@@ -37,7 +40,6 @@ export function vizTabDirective() {
   'use strict';
   return {
     restrict: 'E',
-    scope: true,
     template: template,
     controller: VizTabCtrl,
   };
