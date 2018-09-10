@@ -81,7 +81,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards', {
-      templateUrl: 'public/app/features/dashboard/partials/dashboard_list.html',
+      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
       controller: 'DashboardListCtrl',
       controllerAs: 'ctrl',
     })
@@ -240,8 +240,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       pageClass: 'sidemenu-hidden',
     })
     .when('/dashboard/snapshots', {
-      templateUrl: 'public/app/features/snapshot/partials/snapshots.html',
-      controller: 'SnapshotsCtrl',
+      templateUrl: 'public/app/features/manage-dashboards/partials/snapshot_list.html',
+      controller: 'SnapshotListCtrl',
       controllerAs: 'ctrl',
     })
     .when('/plugins', {

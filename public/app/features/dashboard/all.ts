@@ -31,13 +31,11 @@ import './panellinks/module';
 import './dashlinks/module';
 
 import coreModule from 'app/core/core_module';
-import { DashboardListCtrl } from './dashboard_list_ctrl';
 import { FolderDashboardsCtrl } from './folder_dashboards_ctrl';
 import { FolderSettingsCtrl } from './folder_settings_ctrl';
 import { DashboardImportCtrl } from './dashboard_import_ctrl';
 import { CreateFolderCtrl } from './create_folder_ctrl';
 
-coreModule.controller('DashboardListCtrl', DashboardListCtrl);
 coreModule.controller('FolderDashboardsCtrl', FolderDashboardsCtrl);
 coreModule.controller('FolderSettingsCtrl', FolderSettingsCtrl);
 coreModule.controller('DashboardImportCtrl', DashboardImportCtrl);

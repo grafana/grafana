@@ -1,7 +1,6 @@
-import angular from 'angular';
 import _ from 'lodash';
 
-export class SnapshotsCtrl {
+export class SnapshotListCtrl {
   navModel: any;
   snapshots: any;
 
@@ -35,5 +34,3 @@ export class SnapshotsCtrl {
     });
   }
 }
-
-angular.module('grafana.controllers').controller('SnapshotsCtrl', SnapshotsCtrl);
