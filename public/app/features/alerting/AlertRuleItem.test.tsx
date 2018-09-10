@@ -21,7 +21,7 @@ const setup = (propOverrides?: object) => {
       url: 'https://something.something.darkside',
     },
     search: '',
-    togglePauseAlertRule: jest.fn(),
+    onTogglePause: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

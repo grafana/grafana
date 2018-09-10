@@ -7,7 +7,7 @@ import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, AlertRule } from 'app/types';
-import { getAlertRulesAsync, setSearchQuery } from './state/actions';
+import { getAlertRulesAsync, setSearchQuery, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 
 export interface Props {
@@ -16,6 +16,7 @@ export interface Props {
   updateLocation: typeof updateLocation;
   getAlertRulesAsync: typeof getAlertRulesAsync;
   setSearchQuery: typeof setSearchQuery;
+  togglePauseAlertRule: typeof togglePauseAlertRule;
   stateFilter: string;
   search: string;
 }
@@ -71,6 +72,10 @@ export class AlertRuleList extends PureComponent<Props, any> {
     this.props.setSearchQuery(value);
   };
 
+  onTogglePause = (rule: AlertRule) => {
+    this.props.togglePauseAlertRule(rule.id, { paused: rule.state !== 'paused' });
+  };
+
   alertStateFilterOption = ({ text, value }) => {
     return (
       <option key={value} value={value}>
@@ -115,7 +120,14 @@ export class AlertRuleList extends PureComponent<Props, any> {
           </div>
           <section>
             <ol className="alert-rule-list">
-              {alertRules.map(rule => <AlertRuleItem rule={rule} key={rule.id} search={search} />)}
+              {alertRules.map(rule => (
+                <AlertRuleItem
+                  rule={rule}
+                  key={rule.id}
+                  search={search}
+                  onTogglePause={() => this.onTogglePause(rule)}
+                />
+              ))}
             </ol>
           </section>
         </div>
@@ -135,6 +147,7 @@ const mapDispatchToProps = {
   updateLocation,
   getAlertRulesAsync,
   setSearchQuery,
+  togglePauseAlertRule,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(AlertRuleList));
