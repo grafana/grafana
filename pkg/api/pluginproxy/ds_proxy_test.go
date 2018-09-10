@@ -331,18 +331,6 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
-		Convey("When interpolating string", func() {
-			data := templateData{
-				SecureJsonData: map[string]string{
-					"Test": "0asd+asd",
-				},
-			}
-
-			interpolated, err := interpolateString("{{.SecureJsonData.Test}}", data)
-			So(err, ShouldBeNil)
-			So(interpolated, ShouldEqual, "0asd+asd")
-		})
-
 		Convey("When proxying a data source with custom headers specified", func() {
 			plugin := &plugins.DataSourcePlugin{}
 
