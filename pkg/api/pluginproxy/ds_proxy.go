@@ -209,7 +209,7 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		}
 
 		if proxy.route != nil {
-			applyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 		}
 	}
 }

@@ -14,7 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func applyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute, ds *m.DataSource) {
+//ApplyRoute should use the plugin route data to set auth headers and custom headers
+func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute, ds *m.DataSource) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 
 	data := templateData{

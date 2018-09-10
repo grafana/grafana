@@ -3,6 +3,7 @@ package stackdriver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/opentracing/opentracing-go"
@@ -42,9 +44,6 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
-
-	// from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
-	// until := formatTimeRange(tsdbQuery.TimeRange.To)
 	var target string
 
 	startTime, err := tsdbQuery.TimeRange.ParseFrom()
@@ -59,13 +58,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 
 	logger.Info("tsdbQuery", "req.URL.RawQuery", tsdbQuery.TimeRange.From)
 
-	formData := url.Values{
-		"interval.startTime":           []string{startTime.String()},
-		"interval.endTime":             []string{endTime.String()},
-		"aggregation.perSeriesAligner": []string{"ALIGN_NONE"},
-	}
-
-	for i, query := range tsdbQuery.Queries {
+	for _, query := range tsdbQuery.Queries {
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
 			target = fixIntervalFormat(fullTarget)
 		} else {
@@ -73,14 +66,11 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 		}
 
 		if setting.Env == setting.DEV {
-			glog.Debug("Stackdriver request", "params", formData)
+			glog.Debug("Stackdriver request", "params")
 		}
 
-		req, err := e.createRequest(dsInfo, formData)
-
-		RefId := tsdbQuery.Queries[i].RefId
+		req, err := e.createRequest(ctx, dsInfo)
 		metricType := query.Model.Get("metricType").MustString()
-		// formData["metric.type"] = []string{metricType}
 
 		q := req.URL.Query()
 		q.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
@@ -123,9 +113,8 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 			return nil, err
 		}
 
-		// result.Results = make(map[string]*tsdb.QueryResult)
 		queryRes := tsdb.NewQueryResult()
-		queryRes.RefId = RefId
+		queryRes.RefId = query.RefId
 
 		for _, series := range data.TimeSeries {
 			points := make([]tsdb.TimePoint, 0)
@@ -137,7 +126,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 				Points: points,
 			})
 		}
-		result.Results[queryRes.RefId] = queryRes
+		result.Results[query.RefId] = queryRes
 	}
 
 	return result, nil
@@ -165,12 +154,11 @@ func (e *StackdriverExecutor) parseResponse(res *http.Response) (StackDriverResp
 	return data, nil
 }
 
-func (e *StackdriverExecutor) createRequest(dsInfo *models.DataSource, data url.Values) (*http.Request, error) {
+func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
-	//?&filter=metric.type%20%3D%20%22compute.googleapis.com%2Finstance%2Fcpu%2Fusage_time%22&aggregation.perSeriesAligner=ALIGN_NONE&interval.startTime=2018-09-04T11%3A14%3A02.383Z&interval.endTime=2018-09-04T11%3A16%3A02.383Z
-	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/v3/projects/raintank-production/timeSeries", nil)
+	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/", nil)
 	if err != nil {
 		glog.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("Failed to create request. error: %v", err)
@@ -178,11 +166,22 @@ func (e *StackdriverExecutor) createRequest(dsInfo *models.DataSource, data url.
 
 	req.Header.Set("Content-Type", "application/json")
 
-	if token, err := pluginproxy.GetAccessTokenFromCache(dsInfo.Id, "stackdriver", "GET"); err != nil {
-		logger.Error("Failed to get access token", "error", err)
-	} else {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	// find plugin
+	plugin, ok := plugins.DataSources[dsInfo.Type]
+	if !ok {
+		return nil, errors.New("Unable to find datasource plugin Stackdriver")
 	}
+	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/raintank-production/timeSeries")
+
+	var stackdriverRoute *plugins.AppPluginRoute
+	for _, route := range plugin.Routes {
+		if route.Path == "stackdriver" {
+			stackdriverRoute = route
+			break
+		}
+	}
+
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 
 	return req, err
 }
