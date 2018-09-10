@@ -32,7 +32,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     try {
       const projects = await this.datasource.getProjects();
       if (projects && projects.length > 0) {
-        this.target.project = this.target.project = projects[0];
+        this.target.project = projects[0];
       } else {
         throw new Error('No projects found');
       }
