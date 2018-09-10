@@ -1,41 +1,58 @@
 import React from 'react';
-import { hot } from 'react-hot-loader';
+import { connect } from 'react-redux';
 import { Label } from 'app/core/components/Forms/Forms';
 import { Team } from '../../types';
+import { updateTeam } from './state/actions';
+import { getRouteParamsId } from '../../core/selectors/location';
+import { getTeam } from './state/selectors';
 
-interface Props {
+export interface Props {
   team: Team;
+  updateTeam: typeof updateTeam;
 }
 
-export class TeamSettings extends React.Component<Props, any> {
+interface State {
+  name: string;
+  email: string;
+}
+
+export class TeamSettings extends React.Component<Props, State> {
   constructor(props) {
     super(props);
+
+    this.state = {
+      name: props.team.name,
+      email: props.team.email,
+    };
   }
 
-  onChangeName = evt => {
-    // this.props.team.setName(evt.target.value);
+  onChangeName = event => {
+    this.setState({ name: event.target.value });
   };
 
-  onChangeEmail = evt => {
-    // this.props.team.setEmail(evt.target.value);
+  onChangeEmail = event => {
+    this.setState({ email: event.target.value });
   };
 
-  onUpdate = evt => {
-    evt.preventDefault();
-    // this.props.team.update();
+  onUpdate = event => {
+    const { name, email } = this.state;
+    event.preventDefault();
+    this.props.updateTeam(name, email);
   };
 
   render() {
+    const { name, email } = this.state;
+
     return (
       <div>
         <h3 className="page-sub-heading">Team Settings</h3>
-        <form name="teamDetailsForm" className="gf-form-group">
+        <form name="teamDetailsForm" className="gf-form-group" onSubmit={this.onUpdate}>
           <div className="gf-form max-width-30">
             <Label>Name</Label>
             <input
               type="text"
               required
-              value={this.props.team.name}
+              value={name}
               className="gf-form-input max-width-22"
               onChange={this.onChangeName}
             />
@@ -47,14 +64,14 @@ export class TeamSettings extends React.Component<Props, any> {
             <input
               type="email"
               className="gf-form-input max-width-22"
-              value={this.props.team.email}
+              value={email}
               placeholder="team@email.com"
               onChange={this.onChangeEmail}
             />
           </div>
 
           <div className="gf-form-button-row">
-            <button type="submit" className="btn btn-success" onClick={this.onUpdate}>
+            <button type="submit" className="btn btn-success">
               Update
             </button>
           </div>
@@ -64,4 +81,16 @@ export class TeamSettings extends React.Component<Props, any> {
   }
 }
 
-export default hot(module)(TeamSettings);
+function mapStateToProps(state) {
+  const teamId = getRouteParamsId(state.location);
+
+  return {
+    team: getTeam(state.team, teamId),
+  };
+}
+
+const mapDispatchToProps = {
+  updateTeam,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(TeamSettings);

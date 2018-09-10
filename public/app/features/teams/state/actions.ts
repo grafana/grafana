@@ -153,6 +153,20 @@ export function removeTeamMember(id: number): ThunkResult<void> {
   };
 }
 
+export function updateTeam(name: string, email: string): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const team = getStore().team.team;
+    await getBackendSrv()
+      .put(`/api/teams/${team.id}`, {
+        name,
+        email,
+      })
+      .then(() => {
+        dispatch(loadTeam(team.id));
+      });
+  };
+}
+
 export function deleteTeam(id: number): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv()

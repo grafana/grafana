@@ -66,7 +66,7 @@ export class TeamPages extends PureComponent<Props, State> {
         return <TeamMembers />;
 
       case PageTypes.Settings:
-        return <TeamSettings team={team} />;
+        return <TeamSettings />;
 
       case PageTypes.GroupSync:
         return isSyncEnabled && <TeamGroupSync team={team} />;
