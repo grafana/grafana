@@ -32,7 +32,14 @@ allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
 ```
 
-Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
+Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
+
+Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
+
+1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
+2. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
+3. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
+4. If no e-mail address is found in steps (1-3), then the e-mail address of the user is set to the empty string.
 
 ## Set up OAuth2 with Okta
 
