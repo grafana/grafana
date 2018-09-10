@@ -1,5 +1,6 @@
 export const getSearchQuery = state => state.searchQuery;
 export const getSearchMemberQuery = state => state.searchMemberQuery;
+export const getTeamGroups = state => state.groups;
 
 export const getTeam = (state, currentTeamId) => {
   if (state.team.id === parseInt(currentTeamId)) {

@@ -1,8 +1,9 @@
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { NavModelItem, StoreState, Team, TeamMember } from '../../../types';
+import { NavModelItem, StoreState, Team, TeamGroup, TeamMember } from '../../../types';
 import { updateNavIndex } from '../../../core/actions';
 import { UpdateNavIndexAction } from '../../../core/actions/navModel';
+import config from 'app/core/config';
 
 export enum ActionTypes {
   LoadTeams = 'LOAD_TEAMS',
@@ -10,6 +11,7 @@ export enum ActionTypes {
   SetSearchQuery = 'SET_SEARCH_QUERY',
   SetSearchMemberQuery = 'SET_SEARCH_MEMBER_QUERY',
   LoadTeamMembers = 'TEAM_MEMBERS_LOADED',
+  LoadTeamGroups = 'TEAM_GROUPS_LOADED',
 }
 
 export interface LoadTeamsAction {
@@ -27,6 +29,11 @@ export interface LoadTeamMembersAction {
   payload: TeamMember[];
 }
 
+export interface LoadTeamGroupsAction {
+  type: ActionTypes.LoadTeamGroups;
+  payload: TeamGroup[];
+}
+
 export interface SetSearchQueryAction {
   type: ActionTypes.SetSearchQuery;
   payload: string;
@@ -42,7 +49,8 @@ export type Action =
   | SetSearchQueryAction
   | LoadTeamAction
   | LoadTeamMembersAction
-  | SetSearchMemberQueryAction;
+  | SetSearchMemberQueryAction
+  | LoadTeamGroupsAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action | UpdateNavIndexAction>;
 
@@ -59,6 +67,11 @@ const teamLoaded = (team: Team): LoadTeamAction => ({
 const teamMembersLoaded = (teamMembers: TeamMember[]): LoadTeamMembersAction => ({
   type: ActionTypes.LoadTeamMembers,
   payload: teamMembers,
+});
+
+const teamGroupsLoaded = (teamGroups: TeamGroup[]): LoadTeamGroupsAction => ({
+  type: ActionTypes.LoadTeamGroups,
+  payload: teamGroups,
 });
 
 export const setSearchMemberQuery = (searchQuery: string): SetSearchMemberQueryAction => ({
@@ -79,7 +92,7 @@ export function loadTeams(): ThunkResult<void> {
 }
 
 function buildNavModel(team: Team): NavModelItem {
-  return {
+  const navModel = {
     img: team.avatarUrl,
     id: 'team-' + team.id,
     subTitle: 'Manage members & settings',
@@ -103,6 +116,18 @@ function buildNavModel(team: Team): NavModelItem {
       },
     ],
   };
+
+  if (config.buildInfo.isEnterprise) {
+    navModel.children.push({
+      active: false,
+      icon: 'fa fa-fw fa-refresh',
+      id: 'team-settings',
+      text: 'External group sync',
+      url: `org/teams/edit/${team.id}/groupsync`,
+    });
+  }
+
+  return navModel;
 }
 
 export function loadTeam(id: number): ThunkResult<void> {
@@ -117,7 +142,6 @@ export function loadTeam(id: number): ThunkResult<void> {
 }
 
 export function loadTeamMembers(): ThunkResult<void> {
-  console.log('loading team members');
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
 
@@ -163,6 +187,42 @@ export function updateTeam(name: string, email: string): ThunkResult<void> {
       })
       .then(() => {
         dispatch(loadTeam(team.id));
+      });
+  };
+}
+
+export function loadTeamGroups(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const team = getStore().team.team;
+
+    await getBackendSrv()
+      .get(`/api/teams/${team.id}/groups`)
+      .then(response => {
+        dispatch(teamGroupsLoaded(response));
+      });
+  };
+}
+
+export function addTeamGroup(groupId: string): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const team = getStore().team.team;
+
+    await getBackendSrv()
+      .post(`/api/teams/${team.id}/groups`, { groupId: groupId })
+      .then(() => {
+        dispatch(loadTeamGroups());
+      });
+  };
+}
+
+export function removeTeamGroup(groupId: string): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const team = getStore().team.team;
+
+    await getBackendSrv()
+      .delete(`/api/teams/${team.id}/groups/${groupId}`)
+      .then(() => {
+        dispatch(loadTeamGroups());
       });
   };
 }

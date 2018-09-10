@@ -57,7 +57,6 @@ export class TeamPages extends PureComponent<Props, State> {
   }
 
   renderPage() {
-    const { team } = this.props;
     const { isSyncEnabled } = this.state;
     const currentPage = this.getCurrentPage();
 
@@ -69,7 +68,7 @@ export class TeamPages extends PureComponent<Props, State> {
         return <TeamSettings />;
 
       case PageTypes.GroupSync:
-        return isSyncEnabled && <TeamGroupSync team={team} />;
+        return isSyncEnabled && <TeamGroupSync />;
     }
 
     return null;

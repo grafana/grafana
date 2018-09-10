@@ -30,6 +30,9 @@ export const teamReducer = (state = initialTeamState, action: Action): TeamState
 
     case ActionTypes.SetSearchMemberQuery:
       return { ...state, searchMemberQuery: action.payload };
+
+    case ActionTypes.LoadTeamGroups:
+      return { ...state, groups: action.payload };
   }
 
   return state;
