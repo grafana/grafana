@@ -13,17 +13,18 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   };
   defaultDropdownValue = 'select';
 
+  defaults = {
+    project: {
+      id: 'default',
+      name: 'loading project...',
+    },
+    metricType: this.defaultDropdownValue,
+  };
+
   /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
-    this.target = {
-      project: {
-        id: 'default',
-        name: 'loading project...',
-      },
-      metricType: this.defaultDropdownValue,
-    };
-
+    _.defaultsDeep(this.target, this.defaults);
     this.getCurrentProject().then(this.getMetricTypes.bind(this));
   }
 
