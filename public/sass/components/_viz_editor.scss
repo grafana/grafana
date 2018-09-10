@@ -19,12 +19,13 @@
   height: 100%;
 }
 
-.viz-picker-list {
-  padding-top: $spacer;
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
+.viz-picker__search {
+  flex-grow: 0;
+}
+
+.viz-picker__items {
   flex-grow: 1;
+  height: calc(100% - 50px);
 }
 
 .viz-picker__item {
@@ -41,13 +42,15 @@
   display: flex;
   flex-shrink: 0;
   border: 1px solid transparent;
+  @include left-brand-border;
 
   &:hover {
     background: $card-background-hover;
   }
 
   &--selected {
-    border: 1px solid $orange;
+    // border: 1px solid $orange;
+    @include left-brand-border-gradient();
 
     .viz-picker__item-name {
       color: $text-color;

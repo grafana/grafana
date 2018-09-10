@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import config from 'app/core/config';
 import { PanelPlugin } from 'app/types/plugins';
+import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
 import _ from 'lodash';
 
 interface Props {
@@ -49,13 +50,19 @@ export class VizTypePicker extends PureComponent<Props, State> {
   render() {
     return (
       <div className="viz-picker">
-        <div className="gf-form gf-form--grow">
-          <label className="gf-form--has-input-icon gf-form--grow">
-            <input type="text" className="gf-form-input" placeholder="Search type" />
-            <i className="gf-form-input-icon fa fa-search" />
-          </label>
+        <div className="viz-picker__search">
+          <div className="gf-form gf-form--grow">
+            <label className="gf-form--has-input-icon gf-form--grow">
+              <input type="text" className="gf-form-input" placeholder="Search type" />
+              <i className="gf-form-input-icon fa fa-search" />
+            </label>
+          </div>
         </div>
-        <div className="viz-picker-list">{this.state.pluginList.map(this.renderVizPlugin)}</div>
+        <div className="viz-picker__items">
+          <CustomScrollbar>
+            <div className="scroll-margin-helper">{this.state.pluginList.map(this.renderVizPlugin)}</div>
+          </CustomScrollbar>
+        </div>
       </div>
     );
   }

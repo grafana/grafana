@@ -6,6 +6,7 @@ function dashClass($timeout) {
   return {
     link: ($scope, elem) => {
       $scope.ctrl.dashboard.events.on('view-mode-changed', panel => {
+        console.log('view-mode-changed', panel.fullscreen);
         if (panel.fullscreen) {
           elem.addClass('panel-in-fullscreen');
         } else {

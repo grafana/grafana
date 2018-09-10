@@ -11,7 +11,6 @@ export class DashboardViewState {
   panelScopes: any;
   $scope: any;
   dashboard: DashboardModel;
-  editStateChanged: any;
   fullscreenPanel: any;
   oldTimeRange: any;
 
@@ -72,9 +71,6 @@ export class DashboardViewState {
       }
     }
 
-    // remember if editStateChanged
-    this.editStateChanged = (state.edit || false) !== (this.state.edit || false);
-
     _.extend(this.state, state);
     this.dashboard.meta.fullscreen = this.state.fullscreen;
 
@@ -128,17 +124,11 @@ export class DashboardViewState {
         return;
       }
 
-      if (this.fullscreenPanel) {
-        // if already fullscreen
-        if (this.fullscreenPanel === panel && this.editStateChanged === false) {
-          return;
-        } else {
-          this.leaveFullscreen();
-        }
-      }
-
       if (!panel.fullscreen) {
         this.enterFullscreen(panel);
+      } else {
+        // already in fullscreen view just update the view mode
+        this.dashboard.setViewMode(panel, this.state.fullscreen, this.state.edit);
       }
     } else if (this.fullscreenPanel) {
       this.leaveFullscreen();
