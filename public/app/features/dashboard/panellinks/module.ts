@@ -9,7 +9,7 @@ function panelLinksEditor() {
     },
     restrict: 'E',
     controller: 'PanelLinksEditorCtrl',
-    templateUrl: 'public/app/features/panellinks/module.html',
+    templateUrl: 'public/app/features/dashboard/panellinks/module.html',
     link: () => {},
   };
 }
