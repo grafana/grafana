@@ -1,7 +1,6 @@
-import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 
-class StyleGuideCtrl {
+export default class StyleGuideCtrl {
   theme: string;
   buttonNames = ['primary', 'secondary', 'inverse', 'success', 'warning', 'danger'];
   buttonSizes = ['btn-small', '', 'btn-large'];
@@ -27,4 +26,3 @@ class StyleGuideCtrl {
   }
 }
 
-coreModule.controller('StyleGuideCtrl', StyleGuideCtrl);

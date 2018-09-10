@@ -9,4 +9,3 @@ import './org/all';
 import './admin';
 import './alerting/NotificationsEditCtrl';
 import './alerting/NotificationsListCtrl';
-import './styleguide/styleguide';

@@ -3,8 +3,8 @@ import './ReactContainer';
 
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
-import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
 import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions';
+import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
 import TeamPages from 'app/containers/Teams/TeamPages';
 import TeamList from 'app/containers/Teams/TeamList';
 
@@ -262,7 +262,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/styleguide/:page?', {
       controller: 'StyleGuideCtrl',
       controllerAs: 'ctrl',
-      templateUrl: 'public/app/features/styleguide/styleguide.html',
+      templateUrl: 'public/app/features/admin/partials/styleguide.html',
     })
     .when('/alerting', {
       redirectTo: '/alerting/list',
