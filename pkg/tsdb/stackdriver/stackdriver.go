@@ -108,31 +108,19 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 			return nil, err
 		}
 
-		data, err := e.parseResponse(res)
+		data, err := e.unmarshalResponse(res)
 		if err != nil {
 			return nil, err
 		}
 
-		queryRes := tsdb.NewQueryResult()
-		queryRes.RefId = query.RefId
-
-		for _, series := range data.TimeSeries {
-			points := make([]tsdb.TimePoint, 0)
-			for _, point := range series.Points {
-				points = append(points, tsdb.NewTimePoint(null.FloatFrom(point.Value.DoubleValue), float64((point.Interval.EndTime).Unix())*1000))
-			}
-			queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-				Name:   series.Metric.Type,
-				Points: points,
-			})
-		}
+		queryRes, err := e.parseResponse(data, query.RefId)
 		result.Results[query.RefId] = queryRes
 	}
 
 	return result, nil
 }
 
-func (e *StackdriverExecutor) parseResponse(res *http.Response) (StackDriverResponse, error) {
+func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriverResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
@@ -147,11 +135,29 @@ func (e *StackdriverExecutor) parseResponse(res *http.Response) (StackDriverResp
 	var data StackDriverResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		glog.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
+		glog.Info("Failed to unmarshal Stackdriver response", "error", err, "status", res.Status, "body", string(body))
 		return StackDriverResponse{}, err
 	}
 
 	return data, nil
+}
+
+func (e *StackdriverExecutor) parseResponse(data StackDriverResponse, queryRefId string) (*tsdb.QueryResult, error) {
+	queryRes := tsdb.NewQueryResult()
+	queryRes.RefId = queryRefId
+
+	for _, series := range data.TimeSeries {
+		points := make([]tsdb.TimePoint, 0)
+		for _, point := range series.Points {
+			points = append(points, tsdb.NewTimePoint(null.FloatFrom(point.Value.DoubleValue), float64((point.Interval.EndTime).Unix())*1000))
+		}
+		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
+			Name:   series.Metric.Type,
+			Points: points,
+		})
+	}
+
+	return queryRes, nil
 }
 
 func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
