@@ -46,7 +46,7 @@ export class PanelModel {
     this.events = new Emitter();
 
     // copy properties from persisted model
-    for (var property in model) {
+    for (const property in model) {
       this[property] = model[property];
     }
 
@@ -58,7 +58,7 @@ export class PanelModel {
 
   getSaveModel() {
     const model: any = {};
-    for (var property in this) {
+    for (const property in this) {
       if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
         continue;
       }

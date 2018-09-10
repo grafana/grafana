@@ -21,10 +21,12 @@ import (
 
 var Root log15.Logger
 var loggersToClose []DisposableHandler
+var loggersToReload []ReloadableHandler
 var filters map[string]log15.Lvl
 
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
+	loggersToReload = make([]ReloadableHandler, 0)
 	Root = log15.Root()
 	Root.SetHandler(log15.DiscardHandler())
 }
@@ -103,7 +105,7 @@ func Critical(skip int, format string, v ...interface{}) {
 }
 
 func Fatal(skip int, format string, v ...interface{}) {
-	Root.Crit(fmt.Sprintf(format, v))
+	Root.Crit(fmt.Sprintf(format, v...))
 	Close()
 	os.Exit(1)
 }
@@ -113,6 +115,12 @@ func Close() {
 		logger.Close()
 	}
 	loggersToClose = make([]DisposableHandler, 0)
+}
+
+func Reload() {
+	for _, logger := range loggersToReload {
+		logger.Reload()
+	}
 }
 
 func GetLogLevelFor(name string) Lvl {
@@ -230,6 +238,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			fileHandler.Init()
 
 			loggersToClose = append(loggersToClose, fileHandler)
+			loggersToReload = append(loggersToReload, fileHandler)
 			handler = fileHandler
 		case "syslog":
 			sysLogHandler := NewSyslog(sec, format)

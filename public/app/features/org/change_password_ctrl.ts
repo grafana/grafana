@@ -2,14 +2,14 @@ import angular from 'angular';
 import config from 'app/core/config';
 
 export class ChangePasswordCtrl {
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, backendSrv, $location, navModelSrv) {
     $scope.command = {};
     $scope.authProxyEnabled = config.authProxyEnabled;
     $scope.ldapEnabled = config.ldapEnabled;
     $scope.navModel = navModelSrv.getNav('profile', 'change-password', 0);
 
-    $scope.changePassword = function() {
+    $scope.changePassword = () => {
       if (!$scope.userForm.$valid) {
         return;
       }
@@ -19,7 +19,7 @@ export class ChangePasswordCtrl {
         return;
       }
 
-      backendSrv.put('/api/user/password', $scope.command).then(function() {
+      backendSrv.put('/api/user/password', $scope.command).then(() => {
         $location.path('profile');
       });
     };

@@ -23,7 +23,7 @@ export class VizTypePicker extends PureComponent<Props, State> {
   }
 
   getPanelPlugins(filter) {
-    let panels = _.chain(config.panels)
+    const panels = _.chain(config.panels)
       .filter({ hideFromList: false })
       .map(item => item)
       .value();

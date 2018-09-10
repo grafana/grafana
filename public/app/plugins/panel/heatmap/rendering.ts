@@ -9,7 +9,7 @@ import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
 
-let MIN_CARD_SIZE = 1,
+const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
   CARD_ROUND = 0,
   DATA_RANGE_WIDING_FACTOR = 1.2,
@@ -100,7 +100,7 @@ export class HeatmapRenderer {
 
   setElementHeight() {
     try {
-      var height = this.ctrl.height || this.panel.height || this.ctrl.row.height;
+      let height = this.ctrl.height || this.panel.height || this.ctrl.row.height;
       if (_.isString(height)) {
         height = parseInt(height.replace('px', ''), 10);
       }
@@ -117,23 +117,23 @@ export class HeatmapRenderer {
   }
 
   getYAxisWidth(elem) {
-    let axis_text = elem.selectAll('.axis-y text').nodes();
-    let max_text_width = _.max(
-      _.map(axis_text, text => {
+    const axisText = elem.selectAll('.axis-y text').nodes();
+    const maxTextWidth = _.max(
+      _.map(axisText, text => {
         // Use SVG getBBox method
         return text.getBBox().width;
       })
     );
 
-    return max_text_width;
+    return maxTextWidth;
   }
 
   getXAxisHeight(elem) {
-    let axis_line = elem.select('.axis-x line');
-    if (!axis_line.empty()) {
-      let axis_line_position = parseFloat(elem.select('.axis-x line').attr('y2'));
-      let canvas_width = parseFloat(elem.attr('height'));
-      return canvas_width - axis_line_position;
+    const axisLine = elem.select('.axis-x line');
+    if (!axisLine.empty()) {
+      const axisLinePosition = parseFloat(elem.select('.axis-x line').attr('y2'));
+      const canvasWidth = parseFloat(elem.attr('height'));
+      return canvasWidth - axisLinePosition;
     } else {
       // Default height
       return 30;
@@ -146,25 +146,25 @@ export class HeatmapRenderer {
       .domain([this.timeRange.from, this.timeRange.to])
       .range([0, this.chartWidth]);
 
-    let ticks = this.chartWidth / DEFAULT_X_TICK_SIZE_PX;
-    let grafanaTimeFormatter = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
+    const ticks = this.chartWidth / DEFAULT_X_TICK_SIZE_PX;
+    const grafanaTimeFormatter = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
     let timeFormat;
-    let dashboardTimeZone = this.ctrl.dashboard.getTimezone();
+    const dashboardTimeZone = this.ctrl.dashboard.getTimezone();
     if (dashboardTimeZone === 'utc') {
       timeFormat = d3.utcFormat(grafanaTimeFormatter);
     } else {
       timeFormat = d3.timeFormat(grafanaTimeFormatter);
     }
 
-    let xAxis = d3
+    const xAxis = d3
       .axisBottom(this.xScale)
       .ticks(ticks)
       .tickFormat(timeFormat)
       .tickPadding(X_AXIS_TICK_PADDING)
       .tickSize(this.chartHeight);
 
-    let posY = this.margin.top;
-    let posX = this.yAxisWidth;
+    const posY = this.margin.top;
+    const posX = this.yAxisWidth;
     this.heatmap
       .append('g')
       .attr('class', 'axis axis-x')
@@ -180,45 +180,45 @@ export class HeatmapRenderer {
 
   addYAxis() {
     let ticks = Math.ceil(this.chartHeight / DEFAULT_Y_TICK_SIZE_PX);
-    let tick_interval = ticksUtils.tickStep(this.data.heatmapStats.min, this.data.heatmapStats.max, ticks);
-    let { y_min, y_max } = this.wideYAxisRange(this.data.heatmapStats.min, this.data.heatmapStats.max, tick_interval);
+    let tickInterval = ticksUtils.tickStep(this.data.heatmapStats.min, this.data.heatmapStats.max, ticks);
+    let { yMin, yMax } = this.wideYAxisRange(this.data.heatmapStats.min, this.data.heatmapStats.max, tickInterval);
 
     // Rewrite min and max if it have been set explicitly
-    y_min = this.panel.yAxis.min !== null ? this.panel.yAxis.min : y_min;
-    y_max = this.panel.yAxis.max !== null ? this.panel.yAxis.max : y_max;
+    yMin = this.panel.yAxis.min !== null ? this.panel.yAxis.min : yMin;
+    yMax = this.panel.yAxis.max !== null ? this.panel.yAxis.max : yMax;
 
     // Adjust ticks after Y range widening
-    tick_interval = ticksUtils.tickStep(y_min, y_max, ticks);
-    ticks = Math.ceil((y_max - y_min) / tick_interval);
+    tickInterval = ticksUtils.tickStep(yMin, yMax, ticks);
+    ticks = Math.ceil((yMax - yMin) / tickInterval);
 
-    let decimalsAuto = ticksUtils.getPrecision(tick_interval);
+    const decimalsAuto = ticksUtils.getPrecision(tickInterval);
     let decimals = this.panel.yAxis.decimals === null ? decimalsAuto : this.panel.yAxis.decimals;
     // Calculate scaledDecimals for log scales using tick size (as in jquery.flot.js)
-    let flot_tick_size = ticksUtils.getFlotTickSize(y_min, y_max, ticks, decimalsAuto);
-    let scaledDecimals = ticksUtils.getScaledDecimals(decimals, flot_tick_size);
+    const flotTickSize = ticksUtils.getFlotTickSize(yMin, yMax, ticks, decimalsAuto);
+    const scaledDecimals = ticksUtils.getScaledDecimals(decimals, flotTickSize);
     this.ctrl.decimals = decimals;
     this.ctrl.scaledDecimals = scaledDecimals;
 
     // Set default Y min and max if no data
     if (_.isEmpty(this.data.buckets)) {
-      y_max = 1;
-      y_min = -1;
+      yMax = 1;
+      yMin = -1;
       ticks = 3;
       decimals = 1;
     }
 
     this.data.yAxis = {
-      min: y_min,
-      max: y_max,
+      min: yMin,
+      max: yMax,
       ticks: ticks,
     };
 
     this.scope.yScale = this.yScale = d3
       .scaleLinear()
-      .domain([y_min, y_max])
+      .domain([yMin, yMax])
       .range([this.chartHeight, 0]);
 
-    let yAxis = d3
+    const yAxis = d3
       .axisLeft(this.yScale)
       .ticks(ticks)
       .tickFormat(this.tickValueFormatter(decimals, scaledDecimals))
@@ -232,8 +232,8 @@ export class HeatmapRenderer {
       .call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
-    let posY = this.margin.top;
-    let posX = this.getYAxisWidth(this.heatmap) + Y_AXIS_TICK_PADDING;
+    const posY = this.margin.top;
+    const posX = this.getYAxisWidth(this.heatmap) + Y_AXIS_TICK_PADDING;
     this.heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
 
     // Remove vertical line in the right of axis labels (called domain in d3)
@@ -245,67 +245,67 @@ export class HeatmapRenderer {
 
   // Wide Y values range and anjust to bucket size
   wideYAxisRange(min, max, tickInterval) {
-    let y_widing = (max * (this.dataRangeWidingFactor - 1) - min * (this.dataRangeWidingFactor - 1)) / 2;
-    let y_min, y_max;
+    const yWiding = (max * (this.dataRangeWidingFactor - 1) - min * (this.dataRangeWidingFactor - 1)) / 2;
+    let yMin, yMax;
 
     if (tickInterval === 0) {
-      y_max = max * this.dataRangeWidingFactor;
-      y_min = min - min * (this.dataRangeWidingFactor - 1);
-      tickInterval = (y_max - y_min) / 2;
+      yMax = max * this.dataRangeWidingFactor;
+      yMin = min - min * (this.dataRangeWidingFactor - 1);
+      tickInterval = (yMax - yMin) / 2;
     } else {
-      y_max = Math.ceil((max + y_widing) / tickInterval) * tickInterval;
-      y_min = Math.floor((min - y_widing) / tickInterval) * tickInterval;
+      yMax = Math.ceil((max + yWiding) / tickInterval) * tickInterval;
+      yMin = Math.floor((min - yWiding) / tickInterval) * tickInterval;
     }
 
     // Don't wide axis below 0 if all values are positive
-    if (min >= 0 && y_min < 0) {
-      y_min = 0;
+    if (min >= 0 && yMin < 0) {
+      yMin = 0;
     }
 
-    return { y_min, y_max };
+    return { yMin, yMax };
   }
 
   addLogYAxis() {
-    let log_base = this.panel.yAxis.logBase;
-    let { y_min, y_max } = this.adjustLogRange(this.data.heatmapStats.minLog, this.data.heatmapStats.max, log_base);
+    const logBase = this.panel.yAxis.logBase;
+    let { yMin, yMax } = this.adjustLogRange(this.data.heatmapStats.minLog, this.data.heatmapStats.max, logBase);
 
-    y_min =
-      this.panel.yAxis.min && this.panel.yAxis.min !== '0' ? this.adjustLogMin(this.panel.yAxis.min, log_base) : y_min;
-    y_max = this.panel.yAxis.max !== null ? this.adjustLogMax(this.panel.yAxis.max, log_base) : y_max;
+    yMin =
+      this.panel.yAxis.min && this.panel.yAxis.min !== '0' ? this.adjustLogMin(this.panel.yAxis.min, logBase) : yMin;
+    yMax = this.panel.yAxis.max !== null ? this.adjustLogMax(this.panel.yAxis.max, logBase) : yMax;
 
     // Set default Y min and max if no data
     if (_.isEmpty(this.data.buckets)) {
-      y_max = Math.pow(log_base, 2);
-      y_min = 1;
+      yMax = Math.pow(logBase, 2);
+      yMin = 1;
     }
 
     this.scope.yScale = this.yScale = d3
       .scaleLog()
       .base(this.panel.yAxis.logBase)
-      .domain([y_min, y_max])
+      .domain([yMin, yMax])
       .range([this.chartHeight, 0]);
 
-    let domain = this.yScale.domain();
-    let tick_values = this.logScaleTickValues(domain, log_base);
+    const domain = this.yScale.domain();
+    const tickValues = this.logScaleTickValues(domain, logBase);
 
-    let decimalsAuto = ticksUtils.getPrecision(y_min);
-    let decimals = this.panel.yAxis.decimals || decimalsAuto;
+    const decimalsAuto = ticksUtils.getPrecision(yMin);
+    const decimals = this.panel.yAxis.decimals || decimalsAuto;
 
     // Calculate scaledDecimals for log scales using tick size (as in jquery.flot.js)
-    let flot_tick_size = ticksUtils.getFlotTickSize(y_min, y_max, tick_values.length, decimalsAuto);
-    let scaledDecimals = ticksUtils.getScaledDecimals(decimals, flot_tick_size);
+    const flotTickSize = ticksUtils.getFlotTickSize(yMin, yMax, tickValues.length, decimalsAuto);
+    const scaledDecimals = ticksUtils.getScaledDecimals(decimals, flotTickSize);
     this.ctrl.decimals = decimals;
     this.ctrl.scaledDecimals = scaledDecimals;
 
     this.data.yAxis = {
-      min: y_min,
-      max: y_max,
-      ticks: tick_values.length,
+      min: yMin,
+      max: yMax,
+      ticks: tickValues.length,
     };
 
-    let yAxis = d3
+    const yAxis = d3
       .axisLeft(this.yScale)
-      .tickValues(tick_values)
+      .tickValues(tickValues)
       .tickFormat(this.tickValueFormatter(decimals, scaledDecimals))
       .tickSizeInner(0 - this.width)
       .tickSizeOuter(0)
@@ -317,12 +317,12 @@ export class HeatmapRenderer {
       .call(yAxis);
 
     // Calculate Y axis width first, then move axis into visible area
-    let posY = this.margin.top;
-    let posX = this.getYAxisWidth(this.heatmap) + Y_AXIS_TICK_PADDING;
+    const posY = this.margin.top;
+    const posX = this.getYAxisWidth(this.heatmap) + Y_AXIS_TICK_PADDING;
     this.heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
 
     // Set first tick as pseudo 0
-    if (y_min < 1) {
+    if (yMin < 1) {
       this.heatmap
         .select('.axis-y')
         .select('.tick text')
@@ -344,12 +344,12 @@ export class HeatmapRenderer {
       .domain([0, tsBuckets.length - 1])
       .range([this.chartHeight, 0]);
 
-    const tick_values = _.map(tsBuckets, (b, i) => i);
+    const tickValues = _.map(tsBuckets, (b, i) => i);
     const decimalsAuto = _.max(_.map(tsBuckets, ticksUtils.getStringPrecision));
     const decimals = this.panel.yAxis.decimals === null ? decimalsAuto : this.panel.yAxis.decimals;
     this.ctrl.decimals = decimals;
 
-    let tickValueFormatter = this.tickValueFormatter.bind(this);
+    const tickValueFormatter = this.tickValueFormatter.bind(this);
     function tickFormatter(valIndex) {
       let valueFormatted = tsBuckets[valIndex];
       if (!_.isNaN(_.toNumber(valueFormatted)) && valueFormatted !== '') {
@@ -362,9 +362,9 @@ export class HeatmapRenderer {
     const tsBucketsFormatted = _.map(tsBuckets, (v, i) => tickFormatter(i));
     this.data.tsBucketsFormatted = tsBucketsFormatted;
 
-    let yAxis = d3
+    const yAxis = d3
       .axisLeft(this.yScale)
-      .tickValues(tick_values)
+      .tickValues(tickValues)
       .tickFormat(tickFormatter)
       .tickSizeInner(0 - this.width)
       .tickSizeOuter(0)
@@ -389,19 +389,19 @@ export class HeatmapRenderer {
 
   // Adjust data range to log base
   adjustLogRange(min, max, logBase) {
-    let y_min, y_max;
+    let yMin, yMax;
 
-    y_min = this.data.heatmapStats.minLog;
+    yMin = this.data.heatmapStats.minLog;
     if (this.data.heatmapStats.minLog > 1 || !this.data.heatmapStats.minLog) {
-      y_min = 1;
+      yMin = 1;
     } else {
-      y_min = this.adjustLogMin(this.data.heatmapStats.minLog, logBase);
+      yMin = this.adjustLogMin(this.data.heatmapStats.minLog, logBase);
     }
 
     // Adjust max Y value to log base
-    y_max = this.adjustLogMax(this.data.heatmapStats.max, logBase);
+    yMax = this.adjustLogMax(this.data.heatmapStats.max, logBase);
 
-    return { y_min, y_max };
+    return { yMin, yMax };
   }
 
   adjustLogMax(max, base) {
@@ -413,30 +413,30 @@ export class HeatmapRenderer {
   }
 
   logScaleTickValues(domain, base) {
-    let domainMin = domain[0];
-    let domainMax = domain[1];
-    let tickValues = [];
+    const domainMin = domain[0];
+    const domainMax = domain[1];
+    const tickValues = [];
 
     if (domainMin < 1) {
-      let under_one_ticks = Math.floor(ticksUtils.logp(domainMin, base));
-      for (let i = under_one_ticks; i < 0; i++) {
-        let tick_value = Math.pow(base, i);
-        tickValues.push(tick_value);
+      const underOneTicks = Math.floor(ticksUtils.logp(domainMin, base));
+      for (let i = underOneTicks; i < 0; i++) {
+        const tickValue = Math.pow(base, i);
+        tickValues.push(tickValue);
       }
     }
 
-    let ticks = Math.ceil(ticksUtils.logp(domainMax, base));
+    const ticks = Math.ceil(ticksUtils.logp(domainMax, base));
     for (let i = 0; i <= ticks; i++) {
-      let tick_value = Math.pow(base, i);
-      tickValues.push(tick_value);
+      const tickValue = Math.pow(base, i);
+      tickValues.push(tickValue);
     }
 
     return tickValues;
   }
 
   tickValueFormatter(decimals, scaledDecimals = null) {
-    let format = this.panel.yAxis.format;
-    return function(value) {
+    const format = this.panel.yAxis.format;
+    return value => {
       try {
         return format !== 'none' ? kbn.valueFormats[format](value, decimals, scaledDecimals) : value;
       } catch (err) {
@@ -490,7 +490,7 @@ export class HeatmapRenderer {
   }
 
   addHeatmapCanvas() {
-    let heatmap_elem = this.$heatmap[0];
+    const heatmapElem = this.$heatmap[0];
 
     this.width = Math.floor(this.$heatmap.width()) - this.padding.right;
     this.height = Math.floor(this.$heatmap.height()) - this.padding.bottom;
@@ -503,7 +503,7 @@ export class HeatmapRenderer {
     }
 
     this.heatmap = d3
-      .select(heatmap_elem)
+      .select(heatmapElem)
       .append('svg')
       .attr('width', this.width)
       .attr('height', this.height);
@@ -514,18 +514,18 @@ export class HeatmapRenderer {
     this.addAxes();
 
     if (this.panel.yAxis.logBase !== 1 && this.panel.dataFormat !== 'tsbuckets') {
-      let log_base = this.panel.yAxis.logBase;
-      let domain = this.yScale.domain();
-      let tick_values = this.logScaleTickValues(domain, log_base);
-      this.data.buckets = mergeZeroBuckets(this.data.buckets, _.min(tick_values));
+      const logBase = this.panel.yAxis.logBase;
+      const domain = this.yScale.domain();
+      const tickValues = this.logScaleTickValues(domain, logBase);
+      this.data.buckets = mergeZeroBuckets(this.data.buckets, _.min(tickValues));
     }
 
-    let cardsData = this.data.cards;
-    let maxValueAuto = this.data.cardStats.max;
-    let maxValue = this.panel.color.max || maxValueAuto;
-    let minValue = this.panel.color.min || 0;
+    const cardsData = this.data.cards;
+    const maxValueAuto = this.data.cardStats.max;
+    const maxValue = this.panel.color.max || maxValueAuto;
+    const minValue = this.panel.color.min || 0;
 
-    let colorScheme = _.find(this.ctrl.colorSchemes, {
+    const colorScheme = _.find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
     this.colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
@@ -549,7 +549,7 @@ export class HeatmapRenderer {
       .style('stroke-width', 0)
       .style('opacity', this.getCardOpacity.bind(this));
 
-    let $cards = this.$heatmap.find('.heatmap-card');
+    const $cards = this.$heatmap.find('.heatmap-card');
     $cards
       .on('mouseenter', event => {
         this.tooltip.mouseOverBucket = true;
@@ -562,12 +562,12 @@ export class HeatmapRenderer {
   }
 
   highlightCard(event) {
-    let color = d3.select(event.target).style('fill');
-    let highlightColor = d3.color(color).darker(2);
-    let strokeColor = d3.color(color).brighter(4);
-    let current_card = d3.select(event.target);
+    const color = d3.select(event.target).style('fill');
+    const highlightColor = d3.color(color).darker(2);
+    const strokeColor = d3.color(color).brighter(4);
+    const currentCard = d3.select(event.target);
     this.tooltip.originalFillColor = color;
-    current_card
+    currentCard
       .style('fill', highlightColor.toString())
       .style('stroke', strokeColor.toString())
       .style('stroke-width', 1);
@@ -582,12 +582,12 @@ export class HeatmapRenderer {
   }
 
   setCardSize() {
-    let xGridSize = Math.floor(this.xScale(this.data.xBucketSize) - this.xScale(0));
+    const xGridSize = Math.floor(this.xScale(this.data.xBucketSize) - this.xScale(0));
     let yGridSize = Math.floor(this.yScale(this.yScale.invert(0) - this.data.yBucketSize));
 
     if (this.panel.yAxis.logBase !== 1) {
-      let base = this.panel.yAxis.logBase;
-      let splitFactor = this.data.yBucketSize || 1;
+      const base = this.panel.yAxis.logBase;
+      const splitFactor = this.data.yBucketSize || 1;
       yGridSize = Math.floor((this.yScale(1) - this.yScale(base)) / splitFactor);
     }
 
@@ -611,8 +611,8 @@ export class HeatmapRenderer {
     let w;
     if (this.xScale(d.x) < 0) {
       // Cut card left to prevent overlay
-      let cutted_width = this.xScale(d.x) + this.cardWidth;
-      w = cutted_width > 0 ? cutted_width : 0;
+      const cuttedWidth = this.xScale(d.x) + this.cardWidth;
+      w = cuttedWidth > 0 ? cuttedWidth : 0;
     } else if (this.xScale(d.x) + this.cardWidth > this.chartWidth) {
       // Cut card right to prevent overlay
       w = this.chartWidth - this.xScale(d.x) - this.cardPadding;
@@ -639,7 +639,7 @@ export class HeatmapRenderer {
   }
 
   getCardHeight(d) {
-    let y = this.yScale(d.y) + this.chartTop - this.cardHeight - this.cardPadding;
+    const y = this.yScale(d.y) + this.chartTop - this.cardHeight - this.cardPadding;
     let h = this.cardHeight;
 
     if (this.panel.yAxis.logBase !== 1 && d.y === 0) {
@@ -703,10 +703,10 @@ export class HeatmapRenderer {
     this.mouseUpHandler = null;
     this.selection.active = false;
 
-    let selectionRange = Math.abs(this.selection.x2 - this.selection.x1);
+    const selectionRange = Math.abs(this.selection.x2 - this.selection.x1);
     if (this.selection.x2 >= 0 && selectionRange > MIN_SELECTION_WIDTH) {
-      let timeFrom = this.xScale.invert(Math.min(this.selection.x1, this.selection.x2) - this.yAxisWidth);
-      let timeTo = this.xScale.invert(Math.max(this.selection.x1, this.selection.x2) - this.yAxisWidth);
+      const timeFrom = this.xScale.invert(Math.min(this.selection.x1, this.selection.x2) - this.yAxisWidth);
+      const timeTo = this.xScale.invert(Math.max(this.selection.x1, this.selection.x2) - this.yAxisWidth);
 
       this.ctrl.timeSrv.setTime({
         from: moment.utc(timeFrom),
@@ -744,9 +744,9 @@ export class HeatmapRenderer {
   }
 
   getEventPos(event, offset) {
-    let x = this.xScale.invert(offset.x - this.yAxisWidth).valueOf();
-    let y = this.yScale.invert(offset.y - this.chartTop);
-    let pos = {
+    const x = this.xScale.invert(offset.x - this.yAxisWidth).valueOf();
+    const y = this.yScale.invert(offset.y - this.chartTop);
+    const pos = {
       pageX: event.pageX,
       pageY: event.pageY,
       x: x,
@@ -776,8 +776,8 @@ export class HeatmapRenderer {
   drawSelection(posX1, posX2) {
     if (this.heatmap) {
       this.heatmap.selectAll('.heatmap-selection').remove();
-      let selectionX = Math.min(posX1, posX2);
-      let selectionWidth = Math.abs(posX1 - posX2);
+      const selectionX = Math.min(posX1, posX2);
+      const selectionWidth = Math.abs(posX1 - posX2);
 
       if (selectionWidth > MIN_SELECTION_WIDTH) {
         this.heatmap
@@ -823,7 +823,7 @@ export class HeatmapRenderer {
 
   drawSharedCrosshair(pos) {
     if (this.heatmap && this.ctrl.dashboard.graphTooltip !== 0) {
-      let posX = this.xScale(pos.x) + this.yAxisWidth;
+      const posX = this.xScale(pos.x) + this.yAxisWidth;
       this.drawCrosshair(posX);
     }
   }

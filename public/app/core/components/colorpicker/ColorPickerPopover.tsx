@@ -28,7 +28,7 @@ export class ColorPickerPopover extends React.Component<Props, any> {
   }
 
   setColor(color) {
-    let newColor = tinycolor(color);
+    const newColor = tinycolor(color);
     if (newColor.isValid()) {
       this.setState({
         color: newColor.toString(),
@@ -43,20 +43,20 @@ export class ColorPickerPopover extends React.Component<Props, any> {
   }
 
   spectrumColorSelected(color) {
-    let rgbColor = color.toRgbString();
+    const rgbColor = color.toRgbString();
     this.setColor(rgbColor);
   }
 
   onColorStringChange(e) {
-    let colorString = e.target.value;
+    const colorString = e.target.value;
     this.setState({
       colorString: colorString,
     });
 
-    let newColor = tinycolor(colorString);
+    const newColor = tinycolor(colorString);
     if (newColor.isValid()) {
       // Update only color state
-      let newColorString = newColor.toString();
+      const newColorString = newColor.toString();
       this.setState({
         color: newColorString,
       });
@@ -65,7 +65,7 @@ export class ColorPickerPopover extends React.Component<Props, any> {
   }
 
   onColorStringBlur(e) {
-    let colorString = e.target.value;
+    const colorString = e.target.value;
     this.setColor(colorString);
   }
 
@@ -73,7 +73,7 @@ export class ColorPickerPopover extends React.Component<Props, any> {
     this.pickerNavElem.find('li:first').addClass('active');
     this.pickerNavElem.on('show', e => {
       // use href attr (#name => name)
-      let tab = e.target.hash.slice(1);
+      const tab = e.target.hash.slice(1);
       this.setState({
         tab: tab,
       });

@@ -21,7 +21,7 @@ export class SubmenuCtrl {
   }
 
   openEditView(editview) {
-    var search = _.extend(this.$location.search(), { editview: editview });
+    const search = _.extend(this.$location.search(), { editview: editview });
     this.$location.search(search);
   }
 }

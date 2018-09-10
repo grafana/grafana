@@ -21,9 +21,9 @@ export class QueriesTab extends React.Component<Props, any> {
       return;
     }
 
-    let loader = getAngularLoader();
-    var template = '<metrics-tab />';
-    let scopeProps = {
+    const loader = getAngularLoader();
+    const template = '<metrics-tab />';
+    const scopeProps = {
       ctrl: {
         panel: this.props.panel,
         dashboard: this.props.dashboard,

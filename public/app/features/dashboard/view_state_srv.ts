@@ -17,20 +17,20 @@ export class DashboardViewState {
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout) {
-    var self = this;
+    const self = this;
     self.state = {};
     self.panelScopes = [];
     self.$scope = $scope;
     self.dashboard = $scope.dashboard;
 
-    $scope.onAppEvent('$routeUpdate', function() {
-      var urlState = self.getQueryStringState();
+    $scope.onAppEvent('$routeUpdate', () => {
+      const urlState = self.getQueryStringState();
       if (self.needsSync(urlState)) {
         self.update(urlState, true);
       }
     });
 
-    $scope.onAppEvent('panel-change-view', function(evt, payload) {
+    $scope.onAppEvent('panel-change-view', (evt, payload) => {
       self.update(payload);
     });
 
@@ -45,8 +45,8 @@ export class DashboardViewState {
   }
 
   getQueryStringState() {
-    var state = this.$location.search();
-    state.panelId = parseInt(state.panelId) || null;
+    const state = this.$location.search();
+    state.panelId = parseInt(state.panelId, 10) || null;
     state.fullscreen = state.fullscreen ? true : null;
     state.edit = state.edit === 'true' || state.edit === true || null;
     state.editview = state.editview || null;
@@ -55,7 +55,7 @@ export class DashboardViewState {
   }
 
   serializeToUrl() {
-    var urlState = _.clone(this.state);
+    const urlState = _.clone(this.state);
     urlState.fullscreen = this.state.fullscreen ? true : null;
     urlState.edit = this.state.edit ? true : null;
     return urlState;
@@ -108,9 +108,9 @@ export class DashboardViewState {
   }
 
   toggleCollapsedPanelRow(panelId) {
-    for (let panel of this.dashboard.panels) {
+    for (const panel of this.dashboard.panels) {
       if (panel.collapsed) {
-        for (let rowPanel of panel.panels) {
+        for (const rowPanel of panel.panels) {
           if (rowPanel.id === panelId) {
             this.dashboard.toggleRow(panel);
             return;
@@ -122,7 +122,7 @@ export class DashboardViewState {
 
   syncState() {
     if (this.dashboard.meta.fullscreen) {
-      var panel = this.dashboard.getPanelById(this.state.panelId);
+      const panel = this.dashboard.getPanelById(this.state.panelId);
 
       if (!panel) {
         return;
@@ -178,7 +178,7 @@ export class DashboardViewState {
 /** @ngInject */
 export function dashboardViewStateSrv($location, $timeout) {
   return {
-    create: function($scope) {
+    create: $scope => {
       return new DashboardViewState($scope, $location, $timeout);
     },
   };

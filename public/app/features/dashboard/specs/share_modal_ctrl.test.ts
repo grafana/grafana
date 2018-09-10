@@ -1,10 +1,10 @@
 import '../shareModalCtrl';
 import { ShareModalCtrl } from '../shareModalCtrl';
 import config from 'app/core/config';
-import { LinkSrv } from 'app/features/panellinks/link_srv';
+import { LinkSrv } from 'app/features/dashboard/panellinks/link_srv';
 
 describe('ShareModalCtrl', () => {
-  var ctx = <any>{
+  const ctx = {
     timeSrv: {
       timeRange: () => {
         return { from: new Date(1000), to: new Date(2000) };
@@ -26,9 +26,9 @@ describe('ShareModalCtrl', () => {
     templateSrv: {
       fillVariableValuesForUrl: () => {},
     },
-  };
+  } as any;
 
-  (<any>window).Intl.DateTimeFormat = () => {
+  (window as any).Intl.DateTimeFormat = () => {
     return {
       resolvedOptions: () => {
         return { timeZone: 'UTC' };
@@ -68,8 +68,8 @@ describe('ShareModalCtrl', () => {
       ctx.scope.panel = { id: 22 };
 
       ctx.scope.init();
-      var base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
-      var params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
       expect(ctx.scope.imageUrl).toContain(base + params);
     });
 
@@ -79,8 +79,8 @@ describe('ShareModalCtrl', () => {
       ctx.scope.panel = { id: 22 };
 
       ctx.scope.init();
-      var base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
-      var params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      const base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
       expect(ctx.scope.imageUrl).toContain(base + params);
     });
 
@@ -136,7 +136,7 @@ describe('ShareModalCtrl', () => {
       ctx.$location.absUrl = () => 'http://server/#!/test';
       ctx.scope.options.includeTemplateVars = true;
 
-      ctx.templateSrv.fillVariableValuesForUrl = function(params) {
+      ctx.templateSrv.fillVariableValuesForUrl = params => {
         params['var-app'] = 'mupp';
         params['var-server'] = 'srv-01';
       };

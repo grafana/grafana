@@ -11,7 +11,7 @@ export class AngularLoader {
   constructor(private $compile, private $rootScope) {}
 
   load(elem, scopeProps, template): AngularComponent {
-    var scope = this.$rootScope.$new();
+    const scope = this.$rootScope.$new();
 
     _.assign(scope, scopeProps);
 

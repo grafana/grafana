@@ -27,7 +27,7 @@ export const ViewStore = types
       if (clear) {
         self.query.clear();
       }
-      for (let key of Object.keys(query)) {
+      for (const key of Object.keys(query)) {
         if (query[key]) {
           self.query.set(key, query[key]);
         } else {
@@ -39,7 +39,7 @@ export const ViewStore = types
     // needed to get route parameters like slug from the url
     function updateRouteParams(routeParams: any) {
       self.routeParams.clear();
-      for (let key of Object.keys(routeParams)) {
+      for (const key of Object.keys(routeParams)) {
         if (routeParams[key]) {
           self.routeParams.set(key, routeParams[key]);
         }

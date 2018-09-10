@@ -77,7 +77,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.state = { animated: false };
 
     // subscribe to dashboard events
-    let dashboard = this.props.dashboard;
+    const dashboard = this.props.dashboard;
     dashboard.on('panel-added', this.triggerForceUpdate.bind(this));
     dashboard.on('panel-removed', this.triggerForceUpdate.bind(this));
     dashboard.on('repeats-processed', this.triggerForceUpdate.bind(this));
@@ -91,8 +91,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     const layout = [];
     this.panelMap = {};
 
-    for (let panel of this.props.dashboard.panels) {
-      let stringId = panel.id.toString();
+    for (const panel of this.props.dashboard.panels) {
+      const stringId = panel.id.toString();
       this.panelMap[stringId] = panel;
 
       if (!panel.gridPos) {
@@ -100,7 +100,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         continue;
       }
 
-      let panelPos: any = {
+      const panelPos: any = {
         i: stringId,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
@@ -174,10 +174,10 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     const panelElements = [];
     console.log('render panels');
 
-    for (let panel of this.props.dashboard.panels) {
+    for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
       panelElements.push(
-        <div key={panel.id.toString()} className={panelClasses}>
+        <div key={panel.id.toString()} className={panelClasses} id={`panel-${panel.id}`}>
           <DashboardPanel panel={panel} dashboard={this.props.dashboard} panelType={panel.type} />
         </div>
       );

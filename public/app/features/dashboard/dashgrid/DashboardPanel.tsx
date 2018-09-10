@@ -94,9 +94,9 @@ export class DashboardPanel extends React.Component<Props, State> {
       return;
     }
 
-    let loader = getAngularLoader();
-    var template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
-    let scopeProps = { panel: this.props.panel, dashboard: this.props.dashboard };
+    const loader = getAngularLoader();
+    const template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
+    const scopeProps = { panel: this.props.panel, dashboard: this.props.dashboard };
     this.angularPanel = loader.load(this.element, scopeProps, template);
   }
 

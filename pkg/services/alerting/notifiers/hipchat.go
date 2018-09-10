@@ -59,7 +59,7 @@ func NewHipChatNotifier(model *models.AlertNotification) (alerting.Notifier, err
 	roomId := model.Settings.Get("roomid").MustString()
 
 	return &HipChatNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		ApiKey:       apikey,
 		RoomId:       roomId,

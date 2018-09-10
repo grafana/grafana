@@ -5,7 +5,7 @@ export class UserInviteCtrl {
   invite: any;
   inviteForm: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $location) {
     this.navModel = navModelSrv.getNav('cfg', 'users', 0);
 

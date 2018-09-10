@@ -9,7 +9,7 @@ class TestDataDatasource {
   }
 
   query(options) {
-    var queries = _.filter(options.targets, item => {
+    const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
       return {
@@ -35,11 +35,11 @@ class TestDataDatasource {
         queries: queries,
       })
       .then(res => {
-        var data = [];
+        const data = [];
 
         if (res.results) {
           _.forEach(res.results, queryRes => {
-            for (let series of queryRes.series) {
+            for (const series of queryRes.series) {
               data.push({
                 target: series.name,
                 datapoints: series.points,

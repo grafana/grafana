@@ -10,8 +10,7 @@ export interface PanelProps extends OuterProps {
   data: any[];
 }
 
-export interface DataPanel extends ComponentClass<OuterProps> {
-}
+export interface DataPanel extends ComponentClass<OuterProps> {}
 
 interface State {
   isLoading: boolean;
@@ -20,7 +19,7 @@ interface State {
 
 export const DataPanelWrapper = (ComposedComponent: ComponentClass<PanelProps>) => {
   class Wrapper extends Component<OuterProps, State> {
-    public static defaultProps = {
+    static defaultProps = {
       isVisible: true,
     };
 
@@ -33,12 +32,12 @@ export const DataPanelWrapper = (ComposedComponent: ComponentClass<PanelProps>) 
       };
     }
 
-    public componentDidMount() {
+    componentDidMount() {
       console.log('data panel mount');
       this.issueQueries();
     }
 
-    public issueQueries = async () => {
+    issueQueries = async () => {
       const { isVisible } = this.props;
 
       if (!isVisible) {
@@ -49,14 +48,12 @@ export const DataPanelWrapper = (ComposedComponent: ComponentClass<PanelProps>) 
 
       await new Promise(resolve => {
         setTimeout(() => {
-
-          this.setState({ isLoading: false, data: [{value: 10}] });
-
+          this.setState({ isLoading: false, data: [{ value: 10 }] });
         }, 500);
       });
     };
 
-    public render() {
+    render() {
       const { data, isLoading } = this.state;
       console.log('data panel render');
 
@@ -82,4 +79,3 @@ export const DataPanelWrapper = (ComposedComponent: ComponentClass<PanelProps>) 
 
   return Wrapper;
 };
-

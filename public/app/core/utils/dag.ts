@@ -26,8 +26,8 @@ export class Edge {
 
   unlink() {
     let pos;
-    let inode = this.inputNode;
-    let onode = this.outputNode;
+    const inode = this.inputNode;
+    const onode = this.outputNode;
 
     if (!(inode && onode)) {
       return;
@@ -96,12 +96,12 @@ export class Node {
   }
 
   getOptimizedInputEdges(): Edge[] {
-    let toBeRemoved = [];
+    const toBeRemoved = [];
     this.inputEdges.forEach(e => {
-      let inputEdgesNodes = e.inputNode.inputEdges.map(e => e.inputNode);
+      const inputEdgesNodes = e.inputNode.inputEdges.map(e => e.inputNode);
 
       inputEdgesNodes.forEach(n => {
-        let edgeToRemove = n.getEdgeTo(this.name);
+        const edgeToRemove = n.getEdgeTo(this.name);
         if (edgeToRemove) {
           toBeRemoved.push(edgeToRemove);
         }
@@ -124,7 +124,7 @@ export class Graph {
   }
 
   createNodes(names: string[]): Node[] {
-    let nodes = [];
+    const nodes = [];
     names.forEach(name => {
       nodes.push(this.createNode(name));
     });
@@ -134,8 +134,8 @@ export class Graph {
   link(input: string | string[] | Node | Node[], output: string | string[] | Node | Node[]): Edge[] {
     let inputArr = [];
     let outputArr = [];
-    let inputNodes = [];
-    let outputNodes = [];
+    const inputNodes = [];
+    const outputNodes = [];
 
     if (input instanceof Array) {
       inputArr = input;
@@ -167,7 +167,7 @@ export class Graph {
       }
     }
 
-    let edges = [];
+    const edges = [];
     inputNodes.forEach(input => {
       outputNodes.forEach(output => {
         edges.push(this.createEdge().link(input, output));

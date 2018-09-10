@@ -4,9 +4,9 @@ import config from 'app/core/config';
 import { coreModule, appEvents } from 'app/core/core';
 import { store } from 'app/stores/store';
 
-var datasourceTypes = [];
+let datasourceTypes = [];
 
-var defaults = {
+const defaults = {
   name: '',
   type: 'graphite',
   url: '',
@@ -16,7 +16,7 @@ var defaults = {
   secureJsonData: {},
 };
 
-var datasourceCreated = false;
+let datasourceCreated = false;
 
 export class DataSourceEditCtrl {
   isNew: boolean;
@@ -200,7 +200,7 @@ export class DataSourceEditCtrl {
 
 coreModule.controller('DataSourceEditCtrl', DataSourceEditCtrl);
 
-coreModule.directive('datasourceHttpSettings', function() {
+coreModule.directive('datasourceHttpSettings', () => {
   return {
     scope: {
       current: '=',
@@ -209,15 +209,15 @@ coreModule.directive('datasourceHttpSettings', function() {
     },
     templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html',
     link: {
-      pre: function($scope, elem, attrs) {
+      pre: ($scope, elem, attrs) => {
         // do not show access option if direct access is disabled
         $scope.showAccessOption = $scope.noDirectAccess !== 'true';
         $scope.showAccessHelp = false;
-        $scope.toggleAccessHelp = function() {
+        $scope.toggleAccessHelp = () => {
           $scope.showAccessHelp = !$scope.showAccessHelp;
         };
 
-        $scope.getSuggestUrls = function() {
+        $scope.getSuggestUrls = () => {
           return [$scope.suggestUrl];
         };
       },

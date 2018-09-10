@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react';
-import { NavModel, NavModelItem } from '../../nav_model_srv';
+import { NavModel, NavModelItem } from 'app/types';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
 import { toJS } from 'mobx';
@@ -15,8 +15,8 @@ const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string 
   });
 
   const gotoUrl = evt => {
-    var element = evt.target;
-    var url = element.options[element.selectedIndex].value;
+    const element = evt.target;
+    const url = element.options[element.selectedIndex].value;
     appEvents.emit('location-change', { href: url });
   };
 

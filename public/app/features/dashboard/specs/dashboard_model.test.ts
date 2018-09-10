@@ -4,54 +4,54 @@ import { PanelModel } from '../panel_model';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
-describe('DashboardModel', function() {
-  describe('when creating new dashboard model defaults only', function() {
-    var model;
+describe('DashboardModel', () => {
+  describe('when creating new dashboard model defaults only', () => {
+    let model;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({}, {});
     });
 
-    it('should have title', function() {
+    it('should have title', () => {
       expect(model.title).toBe('No Title');
     });
 
-    it('should have meta', function() {
+    it('should have meta', () => {
       expect(model.meta.canSave).toBe(true);
       expect(model.meta.canShare).toBe(true);
     });
 
-    it('should have default properties', function() {
+    it('should have default properties', () => {
       expect(model.panels.length).toBe(0);
     });
   });
 
-  describe('when getting next panel id', function() {
-    var model;
+  describe('when getting next panel id', () => {
+    let model;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({
         panels: [{ id: 5 }],
       });
     });
 
-    it('should return max id + 1', function() {
+    it('should return max id + 1', () => {
       expect(model.getNextPanelId()).toBe(6);
     });
   });
 
-  describe('getSaveModelClone', function() {
+  describe('getSaveModelClone', () => {
     it('should sort keys', () => {
-      var model = new DashboardModel({});
-      var saveModel = model.getSaveModelClone();
-      var keys = _.keys(saveModel);
+      const model = new DashboardModel({});
+      const saveModel = model.getSaveModelClone();
+      const keys = _.keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
       expect(keys[1]).toBe('autoUpdate');
     });
 
     it('should remove add panel panels', () => {
-      var model = new DashboardModel({});
+      const model = new DashboardModel({});
       model.addPanel({
         type: 'add-panel',
       });
@@ -61,28 +61,28 @@ describe('DashboardModel', function() {
       model.addPanel({
         type: 'add-panel',
       });
-      var saveModel = model.getSaveModelClone();
-      var panels = saveModel.panels;
+      const saveModel = model.getSaveModelClone();
+      const panels = saveModel.panels;
 
       expect(panels.length).toBe(1);
     });
   });
 
-  describe('row and panel manipulation', function() {
-    var dashboard;
+  describe('row and panel manipulation', () => {
+    let dashboard;
 
-    beforeEach(function() {
+    beforeEach(() => {
       dashboard = new DashboardModel({});
     });
 
-    it('adding panel should new up panel model', function() {
+    it('adding panel should new up panel model', () => {
       dashboard.addPanel({ type: 'test', title: 'test' });
 
       expect(dashboard.panels[0] instanceof PanelModel).toBe(true);
     });
 
-    it('duplicate panel should try to add to the right if there is space', function() {
-      var panel = { id: 10, gridPos: { x: 0, y: 0, w: 6, h: 2 } };
+    it('duplicate panel should try to add to the right if there is space', () => {
+      const panel = { id: 10, gridPos: { x: 0, y: 0, w: 6, h: 2 } };
 
       dashboard.addPanel(panel);
       dashboard.duplicatePanel(dashboard.panels[0]);
@@ -95,8 +95,8 @@ describe('DashboardModel', function() {
       });
     });
 
-    it('duplicate panel should remove repeat data', function() {
-      var panel = {
+    it('duplicate panel should remove repeat data', () => {
+      const panel = {
         id: 10,
         gridPos: { x: 0, y: 0, w: 6, h: 2 },
         repeat: 'asd',
@@ -111,29 +111,29 @@ describe('DashboardModel', function() {
     });
   });
 
-  describe('Given editable false dashboard', function() {
-    var model;
+  describe('Given editable false dashboard', () => {
+    let model;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({ editable: false });
     });
 
-    it('Should set meta canEdit and canSave to false', function() {
+    it('Should set meta canEdit and canSave to false', () => {
       expect(model.meta.canSave).toBe(false);
       expect(model.meta.canEdit).toBe(false);
     });
 
-    it('getSaveModelClone should remove meta', function() {
-      var clone = model.getSaveModelClone();
+    it('getSaveModelClone should remove meta', () => {
+      const clone = model.getSaveModelClone();
       expect(clone.meta).toBe(undefined);
     });
   });
 
-  describe('when loading dashboard with old influxdb query schema', function() {
-    var model;
-    var target;
+  describe('when loading dashboard with old influxdb query schema', () => {
+    let model;
+    let target;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({
         panels: [
           {
@@ -185,7 +185,7 @@ describe('DashboardModel', function() {
       target = model.panels[0].targets[0];
     });
 
-    it('should update query schema', function() {
+    it('should update query schema', () => {
       expect(target.fields).toBe(undefined);
       expect(target.select.length).toBe(2);
       expect(target.select[0].length).toBe(4);
@@ -196,10 +196,10 @@ describe('DashboardModel', function() {
     });
   });
 
-  describe('when creating dashboard model with missing list for annoations or templating', function() {
-    var model;
+  describe('when creating dashboard model with missing list for annoations or templating', () => {
+    let model;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({
         annotations: {
           enable: true,
@@ -210,54 +210,54 @@ describe('DashboardModel', function() {
       });
     });
 
-    it('should add empty list', function() {
+    it('should add empty list', () => {
       expect(model.annotations.list.length).toBe(1);
       expect(model.templating.list.length).toBe(0);
     });
 
-    it('should add builtin annotation query', function() {
+    it('should add builtin annotation query', () => {
       expect(model.annotations.list[0].builtIn).toBe(1);
       expect(model.templating.list.length).toBe(0);
     });
   });
 
-  describe('Formatting epoch timestamp when timezone is set as utc', function() {
-    var dashboard;
+  describe('Formatting epoch timestamp when timezone is set as utc', () => {
+    let dashboard;
 
-    beforeEach(function() {
+    beforeEach(() => {
       dashboard = new DashboardModel({ timezone: 'utc' });
     });
 
-    it('Should format timestamp with second resolution by default', function() {
+    it('Should format timestamp with second resolution by default', () => {
       expect(dashboard.formatDate(1234567890000)).toBe('2009-02-13 23:31:30');
     });
 
-    it('Should format timestamp with second resolution even if second format is passed as parameter', function() {
+    it('Should format timestamp with second resolution even if second format is passed as parameter', () => {
       expect(dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss')).toBe('2009-02-13 23:31:30');
     });
 
-    it('Should format timestamp with millisecond resolution if format is passed as parameter', function() {
+    it('Should format timestamp with millisecond resolution if format is passed as parameter', () => {
       expect(dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss.SSS')).toBe('2009-02-13 23:31:30.007');
     });
   });
 
-  describe('updateSubmenuVisibility with empty lists', function() {
-    var model;
+  describe('updateSubmenuVisibility with empty lists', () => {
+    let model;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({});
       model.updateSubmenuVisibility();
     });
 
-    it('should not enable submmenu', function() {
+    it('should not enable submmenu', () => {
       expect(model.meta.submenuEnabled).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with annotation', function() {
-    var model;
+  describe('updateSubmenuVisibility with annotation', () => {
+    let model;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({
         annotations: {
           list: [{}],
@@ -266,15 +266,15 @@ describe('DashboardModel', function() {
       model.updateSubmenuVisibility();
     });
 
-    it('should enable submmenu', function() {
+    it('should enable submmenu', () => {
       expect(model.meta.submenuEnabled).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with template var', function() {
-    var model;
+  describe('updateSubmenuVisibility with template var', () => {
+    let model;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({
         templating: {
           list: [{}],
@@ -283,15 +283,15 @@ describe('DashboardModel', function() {
       model.updateSubmenuVisibility();
     });
 
-    it('should enable submmenu', function() {
+    it('should enable submmenu', () => {
       expect(model.meta.submenuEnabled).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden template var', function() {
-    var model;
+  describe('updateSubmenuVisibility with hidden template var', () => {
+    let model;
 
-    beforeEach(function() {
+    beforeEach(() => {
       model = new DashboardModel({
         templating: {
           list: [{ hide: 2 }],
@@ -300,15 +300,15 @@ describe('DashboardModel', function() {
       model.updateSubmenuVisibility();
     });
 
-    it('should not enable submmenu', function() {
+    it('should not enable submmenu', () => {
       expect(model.meta.submenuEnabled).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden annotation toggle', function() {
-    var dashboard;
+  describe('updateSubmenuVisibility with hidden annotation toggle', () => {
+    let dashboard;
 
-    beforeEach(function() {
+    beforeEach(() => {
       dashboard = new DashboardModel({
         annotations: {
           list: [{ hide: true }],
@@ -317,15 +317,15 @@ describe('DashboardModel', function() {
       dashboard.updateSubmenuVisibility();
     });
 
-    it('should not enable submmenu', function() {
+    it('should not enable submmenu', () => {
       expect(dashboard.meta.submenuEnabled).toBe(false);
     });
   });
 
-  describe('When collapsing row', function() {
-    var dashboard;
+  describe('When collapsing row', () => {
+    let dashboard;
 
-    beforeEach(function() {
+    beforeEach(() => {
       dashboard = new DashboardModel({
         panels: [
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 } },
@@ -338,36 +338,36 @@ describe('DashboardModel', function() {
       dashboard.toggleRow(dashboard.panels[1]);
     });
 
-    it('should remove panels and put them inside collapsed row', function() {
+    it('should remove panels and put them inside collapsed row', () => {
       expect(dashboard.panels.length).toBe(3);
       expect(dashboard.panels[1].panels.length).toBe(2);
     });
 
-    describe('and when removing row and its panels', function() {
-      beforeEach(function() {
+    describe('and when removing row and its panels', () => {
+      beforeEach(() => {
         dashboard.removeRow(dashboard.panels[1], true);
       });
 
-      it('should remove row and its panels', function() {
+      it('should remove row and its panels', () => {
         expect(dashboard.panels.length).toBe(2);
       });
     });
 
-    describe('and when removing only the row', function() {
-      beforeEach(function() {
+    describe('and when removing only the row', () => {
+      beforeEach(() => {
         dashboard.removeRow(dashboard.panels[1], false);
       });
 
-      it('should only remove row', function() {
+      it('should only remove row', () => {
         expect(dashboard.panels.length).toBe(4);
       });
     });
   });
 
-  describe('When expanding row', function() {
-    var dashboard;
+  describe('When expanding row', () => {
+    let dashboard;
 
-    beforeEach(function() {
+    beforeEach(() => {
       dashboard = new DashboardModel({
         panels: [
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
@@ -387,16 +387,16 @@ describe('DashboardModel', function() {
       dashboard.toggleRow(dashboard.panels[1]);
     });
 
-    it('should add panels back', function() {
+    it('should add panels back', () => {
       expect(dashboard.panels.length).toBe(5);
     });
 
-    it('should add them below row in array', function() {
+    it('should add them below row in array', () => {
       expect(dashboard.panels[2].id).toBe(3);
       expect(dashboard.panels[3].id).toBe(4);
     });
 
-    it('should position them below row', function() {
+    it('should position them below row', () => {
       expect(dashboard.panels[2].gridPos).toMatchObject({
         x: 0,
         y: 7,
@@ -405,7 +405,7 @@ describe('DashboardModel', function() {
       });
     });
 
-    it('should move panels below down', function() {
+    it('should move panels below down', () => {
       expect(dashboard.panels[4].gridPos).toMatchObject({
         x: 0,
         y: 9,
@@ -414,22 +414,22 @@ describe('DashboardModel', function() {
       });
     });
 
-    describe('and when removing row and its panels', function() {
-      beforeEach(function() {
+    describe('and when removing row and its panels', () => {
+      beforeEach(() => {
         dashboard.removeRow(dashboard.panels[1], true);
       });
 
-      it('should remove row and its panels', function() {
+      it('should remove row and its panels', () => {
         expect(dashboard.panels.length).toBe(2);
       });
     });
 
-    describe('and when removing only the row', function() {
-      beforeEach(function() {
+    describe('and when removing only the row', () => {
+      beforeEach(() => {
         dashboard.removeRow(dashboard.panels[1], false);
       });
 
-      it('should only remove row', function() {
+      it('should only remove row', () => {
         expect(dashboard.panels.length).toBe(4);
       });
     });
@@ -457,16 +457,16 @@ describe('DashboardModel', function() {
     });
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
-      let options = { saveTimerange: false };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveTimerange: false };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.time.from).toBe('now-6h');
       expect(saveModel.time.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
-      let options = { saveTimerange: true };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveTimerange: true };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.time.from).toBe('now-3h');
       expect(saveModel.time.to).toBe('now-1h');
@@ -478,16 +478,16 @@ describe('DashboardModel', function() {
     });
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
-      let options = { saveTimerange: false };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveTimerange: false };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.time.from).toBe('now-6h');
       expect(saveModel.time.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
-      let options = { saveTimerange: true };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveTimerange: true };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.time.from).toBe('now-3h');
       expect(saveModel.time.to).toBe('now-1h');
@@ -542,8 +542,8 @@ describe('DashboardModel', function() {
     it('getSaveModelClone should return original variable when saveVariables=false', () => {
       model.templating.list[0].current.text = 'server_002';
 
-      let options = { saveVariables: false };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveVariables: false };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_001');
     });
@@ -551,8 +551,8 @@ describe('DashboardModel', function() {
     it('getSaveModelClone should return updated variable when saveVariables=true', () => {
       model.templating.list[0].current.text = 'server_002';
 
-      let options = { saveVariables: true };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveVariables: true };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_002');
     });
@@ -620,8 +620,8 @@ describe('DashboardModel', function() {
     it('getSaveModelClone should return original variable when saveVariables=false', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
-      let options = { saveVariables: false };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveVariables: false };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 20');
     });
@@ -629,8 +629,8 @@ describe('DashboardModel', function() {
     it('getSaveModelClone should return updated variable when saveVariables=true', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
-      let options = { saveVariables: true };
-      let saveModel = model.getSaveModelClone(options);
+      const options = { saveVariables: true };
+      const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 1');
     });

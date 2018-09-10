@@ -1,3 +1,5 @@
+import { NavModel, NavModelItem } from 'app/types';
+
 export const backendSrv = {
   get: jest.fn(),
   getDashboard: jest.fn(),
@@ -7,13 +9,43 @@ export const backendSrv = {
 };
 
 export function createNavTree(...args) {
-  let root = [];
+  const root = [];
   let node = root;
-  for (let arg of args) {
-    let child = { id: arg, url: `/url/${arg}`, text: `${arg}-Text`, children: [] };
+  for (const arg of args) {
+    const child = { id: arg, url: `/url/${arg}`, text: `${arg}-Text`, children: [] };
     node.push(child);
     node = child.children;
   }
 
   return root;
+}
+
+export function createNavModel(title: string, ...tabs: string[]): NavModel {
+  const node: NavModelItem = {
+    id: title,
+    text: title,
+    icon: 'fa fa-fw fa-warning',
+    subTitle: 'subTitle',
+    url: title,
+    children: [],
+    breadcrumbs: [],
+  };
+
+  for (const tab of tabs) {
+    node.children.push({
+      id: tab,
+      icon: 'icon',
+      subTitle: 'subTitle',
+      url: title,
+      text: title,
+      active: false,
+    });
+  }
+
+  node.children[0].active = true;
+
+  return {
+    node: node,
+    main: node,
+  };
 }

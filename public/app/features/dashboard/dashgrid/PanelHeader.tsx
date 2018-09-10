@@ -33,9 +33,9 @@ export class PanelHeader extends React.Component<PanelHeaderProps, any> {
   };
 
   render() {
-    let isFullscreen = false;
-    let isLoading = false;
-    let panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
+    const isFullscreen = false;
+    const isLoading = false;
+    const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
 
     return (
       <div className={panelHeaderClass}>

@@ -2,7 +2,7 @@ import flatten from 'app/core/utils/flatten';
 
 describe('flatten', () => {
   it('should return flatten object', () => {
-    var flattened = flatten(
+    const flattened = flatten(
       {
         level1: 'level1-value',
         deeper: {

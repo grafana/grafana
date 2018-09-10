@@ -72,6 +72,7 @@ email =  "email"
 [[servers.group_mappings]]
 group_dn = "cn=admins,ou=groups,dc=grafana,dc=org"
 org_role = "Admin"
+grafana_admin = true
 # The Grafana organization database id, optional, if left out the default org (id 1) will be used
 # org_id = 1
 

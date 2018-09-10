@@ -23,7 +23,7 @@ function panelEditorTab(dynamicDirectiveSrv) {
         directiveCache[pluginId] = [];
       }
 
-      let result = {
+      const result = {
         fn: () => scope.editorTab.directiveFn(),
         name: `panel-editor-tab-${pluginId}${tabIndex}`,
       };

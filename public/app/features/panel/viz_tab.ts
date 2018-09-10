@@ -21,7 +21,7 @@ export class VizTabCtrl {
   };
 }
 
-let template = `
+const template = `
 <div class="viz-editor">
   <div class="viz-editor-col1">
     <viz-type-picker currentType="ctrl.panelCtrl.panel.type" onTypeChanged="ctrl.onTypeChanged"></viz-type-picker>
@@ -32,7 +32,7 @@ let template = `
 </div>
 `;
 
-/** @ngInject **/
+/** @ngInject */
 export function vizTabDirective() {
   'use strict';
   return {

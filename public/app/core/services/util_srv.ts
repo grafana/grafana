@@ -33,7 +33,7 @@ export class UtilSrv {
       this.modalScope = this.$rootScope.$new();
     }
 
-    var modal = this.$modal({
+    const modal = this.$modal({
       modalClass: options.modalClass,
       template: options.src,
       templateHtml: options.templateHtml,
@@ -44,20 +44,20 @@ export class UtilSrv {
       backdrop: options.backdrop,
     });
 
-    Promise.resolve(modal).then(function(modalEl) {
+    Promise.resolve(modal).then(modalEl => {
       modalEl.modal('show');
     });
   }
 
   showConfirmModal(payload) {
-    var scope = this.$rootScope.$new();
+    const scope = this.$rootScope.$new();
 
-    scope.onConfirm = function() {
+    scope.onConfirm = () => {
       payload.onConfirm();
       scope.dismiss();
     };
 
-    scope.updateConfirmText = function(value) {
+    scope.updateConfirmText = value => {
       scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
     };
 

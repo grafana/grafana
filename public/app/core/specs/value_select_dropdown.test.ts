@@ -3,7 +3,7 @@ import { ValueSelectDropdownCtrl } from '../directives/value_select_dropdown';
 import q from 'q';
 
 describe('SelectDropdownCtrl', () => {
-  let tagValuesMap: any = {};
+  const tagValuesMap: any = {};
 
   ValueSelectDropdownCtrl.prototype.onUpdated = jest.fn();
   let ctrl;
