@@ -44,15 +44,15 @@ export default class PostgresQuery {
   }
 
   quoteIdentifier(value) {
-    return '"' + value.replace(/"/g, '""') + '"';
+    return '"' + String(value).replace(/"/g, '""') + '"';
   }
 
   quoteLiteral(value) {
-    return "'" + value.replace(/'/g, "''") + "'";
+    return "'" + String(value).replace(/'/g, "''") + "'";
   }
 
   escapeLiteral(value) {
-    return value.replace(/'/g, "''");
+    return String(value).replace(/'/g, "''");
   }
 
   hasTimeGroup() {
@@ -187,7 +187,8 @@ export default class PostgresQuery {
             case 'increase':
               curr = query;
               prev = 'lag(' + curr + ') OVER (' + over + ')';
-              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
+              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
+              query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
               break;
             case 'rate':
               let timeColumn = this.target.timeColumn;
@@ -197,7 +198,8 @@ export default class PostgresQuery {
 
               curr = query;
               prev = 'lag(' + curr + ') OVER (' + over + ')';
-              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev + ' ELSE ' + curr + ' END)';
+              query = '(CASE WHEN ' + curr + ' >= ' + prev + ' THEN ' + curr + ' - ' + prev;
+              query += ' WHEN ' + prev + ' IS NULL THEN NULL ELSE ' + curr + ' END)';
               query += '/extract(epoch from ' + timeColumn + ' - lag(' + timeColumn + ') OVER (' + over + '))';
               break;
             default:
@@ -279,6 +281,9 @@ export default class PostgresQuery {
     query += this.buildGroupClause();
 
     query += '\nORDER BY 1';
+    if (this.hasMetricColumn()) {
+      query += ',2';
+    }
 
     return query;
   }
