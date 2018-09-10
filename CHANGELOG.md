@@ -1,3 +1,9 @@
+# 5.4.0 (unreleased)
+
+### Minor
+
+* **OAuth**: Allow oauth email attribute name to be configurable [#12986](https://github.com/grafana/grafana/issues/12986), thx [@bobmshannon](https://github.com/bobmshannon)
+
 # 5.3.0 (unreleased)
 
 ### Minor
