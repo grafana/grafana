@@ -10,6 +10,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
@@ -38,87 +39,107 @@ func init() {
 }
 
 func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
-	logger.Info("tsdbQuery", "tsdbQuery", tsdbQuery)
-	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
-	until := formatTimeRange(tsdbQuery.TimeRange.To)
-	var target string
-
-	formData := url.Values{
-		"from":          []string{from},
-		"until":         []string{until},
-		"format":        []string{"json"},
-		"maxDataPoints": []string{"500"},
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	for _, query := range tsdbQuery.Queries {
-		glog.Info("stackdriver", "query", query.Model)
+	// from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
+	// until := formatTimeRange(tsdbQuery.TimeRange.To)
+	var target string
+
+	startTime, err := tsdbQuery.TimeRange.ParseFrom()
+	if err != nil {
+		return nil, err
+	}
+
+	endTime, err := tsdbQuery.TimeRange.ParseTo()
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Info("tsdbQuery", "req.URL.RawQuery", tsdbQuery.TimeRange.From)
+
+	formData := url.Values{
+		"interval.startTime":           []string{startTime.String()},
+		"interval.endTime":             []string{endTime.String()},
+		"aggregation.perSeriesAligner": []string{"ALIGN_NONE"},
+	}
+
+	for i, query := range tsdbQuery.Queries {
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
 			target = fixIntervalFormat(fullTarget)
 		} else {
 			target = fixIntervalFormat(query.Model.Get("target").MustString())
 		}
-	}
-
-	formData["target"] = []string{target}
-
-	if setting.Env == setting.DEV {
-		glog.Debug("Graphite request", "params", formData)
-	}
-
-	req, err := e.createRequest(dsInfo, formData)
-	if err != nil {
-		return nil, err
-	}
-
-	httpClient, err := dsInfo.GetHttpClient()
-	if err != nil {
-		return nil, err
-	}
-
-	span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
-	span.SetTag("target", target)
-	span.SetTag("from", from)
-	span.SetTag("until", until)
-	span.SetTag("datasource_id", dsInfo.Id)
-	span.SetTag("org_id", dsInfo.OrgId)
-
-	defer span.Finish()
-
-	opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.HTTPHeaders,
-		opentracing.HTTPHeadersCarrier(req.Header))
-
-	res, err := ctxhttp.Do(ctx, httpClient, req)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := e.parseResponse(res)
-	if err != nil {
-		return nil, err
-	}
-
-	result.Results = make(map[string]*tsdb.QueryResult)
-	queryRes := tsdb.NewQueryResult()
-
-	for _, series := range data.TimeSeries {
-		points := make([]tsdb.TimePoint, 0)
-		for _, point := range series.Points {
-			points = append(points, tsdb.NewTimePoint(null.FloatFrom(point.Value.DoubleValue), float64((point.Interval.EndTime).Unix())*1000))
-		}
-		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   series.Metric.Type,
-			Points: points,
-		})
 
 		if setting.Env == setting.DEV {
-			glog.Debug("Stackdriver response", "target", points, "datapoints", len(points))
+			glog.Debug("Stackdriver request", "params", formData)
 		}
+
+		req, err := e.createRequest(dsInfo, formData)
+
+		RefId := tsdbQuery.Queries[i].RefId
+		metricType := query.Model.Get("metricType").MustString()
+		// formData["metric.type"] = []string{metricType}
+
+		q := req.URL.Query()
+		q.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
+		q.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
+		q.Add("aggregation.perSeriesAligner", "ALIGN_NONE")
+		q.Add("filter", metricType)
+		req.URL.RawQuery = q.Encode()
+		logger.Info("tsdbQuery", "req.URL.RawQuery", req.URL.RawQuery)
+
+		if err != nil {
+			return nil, err
+		}
+
+		httpClient, err := dsInfo.GetHttpClient()
+		if err != nil {
+			return nil, err
+		}
+
+		span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
+		span.SetTag("target", target)
+		span.SetTag("from", tsdbQuery.TimeRange.From)
+		span.SetTag("until", tsdbQuery.TimeRange.To)
+		span.SetTag("datasource_id", dsInfo.Id)
+		span.SetTag("org_id", dsInfo.OrgId)
+
+		defer span.Finish()
+
+		opentracing.GlobalTracer().Inject(
+			span.Context(),
+			opentracing.HTTPHeaders,
+			opentracing.HTTPHeadersCarrier(req.Header))
+
+		res, err := ctxhttp.Do(ctx, httpClient, req)
+		if err != nil {
+			return nil, err
+		}
+
+		data, err := e.parseResponse(res)
+		if err != nil {
+			return nil, err
+		}
+
+		// result.Results = make(map[string]*tsdb.QueryResult)
+		queryRes := tsdb.NewQueryResult()
+		queryRes.RefId = RefId
+
+		for _, series := range data.TimeSeries {
+			points := make([]tsdb.TimePoint, 0)
+			for _, point := range series.Points {
+				points = append(points, tsdb.NewTimePoint(null.FloatFrom(point.Value.DoubleValue), float64((point.Interval.EndTime).Unix())*1000))
+			}
+			queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
+				Name:   series.Metric.Type,
+				Points: points,
+			})
+		}
+		result.Results[queryRes.RefId] = queryRes
 	}
 
-	result.Results["A"] = queryRes
 	return result, nil
 }
 
@@ -148,7 +169,8 @@ func (e *StackdriverExecutor) createRequest(dsInfo *models.DataSource, data url.
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
-	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/v3/projects/raintank-production/timeSeries?&filter=metric.type%20%3D%20%22compute.googleapis.com%2Finstance%2Fcpu%2Fusage_time%22&aggregation.perSeriesAligner=ALIGN_NONE&interval.startTime=2018-09-04T11%3A14%3A02.383Z&interval.endTime=2018-09-04T11%3A16%3A02.383Z", nil)
+	//?&filter=metric.type%20%3D%20%22compute.googleapis.com%2Finstance%2Fcpu%2Fusage_time%22&aggregation.perSeriesAligner=ALIGN_NONE&interval.startTime=2018-09-04T11%3A14%3A02.383Z&interval.endTime=2018-09-04T11%3A16%3A02.383Z
+	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/v3/projects/raintank-production/timeSeries", nil)
 	if err != nil {
 		glog.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("Failed to create request. error: %v", err)
