@@ -57,12 +57,9 @@ export class PanelCtrl {
     });
   }
 
-  init() {
-    this.dashboard.panelInitialized(this.panel);
-  }
-
   panelDidMount() {
     this.events.emit('component-did-mount');
+    this.dashboard.panelInitialized(this.panel);
   }
 
   renderingCompleted() {
@@ -248,6 +245,7 @@ export class PanelCtrl {
   }
 
   render(payload?) {
+    console.log('panel_ctrl:render');
     this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }
