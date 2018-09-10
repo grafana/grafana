@@ -174,6 +174,36 @@ allowed_organizations =
     allowed_organizations =
     ```
 
+## Set up OAuth2 with Centrify
+
+1.  Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
+
+2.  Create a memorable unique Application ID, e.g. "grafana", "grafana_aws", etc.
+
+3.  Put in other basic configuration (name, description, logo, category)
+
+4.  On the Trust tab, generate a long password and put it into the OpenID Connect Client Secret field.
+
+5.  Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
+
+6.  Add an authorized Redirect URI like https://your-grafana-server/login/generic_oauth
+
+7.  Set up permissions, policies, etc. just like any other Centrify app
+
+8.  Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = Centrify
+    enabled = true
+    allow_sign_up = true
+    client_id = <OpenID Connect Client ID from Centrify>
+    client_secret = <your generated OpenID Connect Client Sercret"
+    scopes = openid email name
+    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
+    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
+    ```
+
 <hr>
 
 
