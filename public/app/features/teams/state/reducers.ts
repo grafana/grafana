@@ -1,8 +1,13 @@
-import { Team, TeamsState, TeamState } from '../../../types';
+import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from '../../../types';
 import { Action, ActionTypes } from './actions';
 
 export const initialTeamsState: TeamsState = { teams: [], searchQuery: '' };
-export const initialTeamState: TeamState = { team: {} as Team, searchMemberQuery: '' };
+export const initialTeamState: TeamState = {
+  team: {} as Team,
+  members: [] as TeamMember[],
+  groups: [] as TeamGroup[],
+  searchMemberQuery: '',
+};
 
 export const teamsReducer = (state = initialTeamsState, action: Action): TeamsState => {
   switch (action.type) {
@@ -21,7 +26,7 @@ export const teamReducer = (state = initialTeamState, action: Action): TeamState
       return { ...state, team: action.payload };
 
     case ActionTypes.LoadTeamMembers:
-      return { ...state, team: { ...state.team, members: action.payload } };
+      return { ...state, members: action.payload };
 
     case ActionTypes.SetSearchMemberQuery:
       return { ...state, searchMemberQuery: action.payload };

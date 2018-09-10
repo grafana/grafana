@@ -41,10 +41,10 @@ export class TeamPages extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.loadTeam();
+    this.fetchTeam();
   }
 
-  async loadTeam() {
+  async fetchTeam() {
     const { loadTeam, teamId } = this.props;
 
     await loadTeam(teamId);

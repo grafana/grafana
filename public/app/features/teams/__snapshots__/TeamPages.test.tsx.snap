@@ -21,12 +21,9 @@ exports[`Render should render group sync page 1`] = `
         Object {
           "avatarUrl": "some/url/",
           "email": "test@test.com",
-          "groups": Array [],
           "id": 1,
           "memberCount": 1,
-          "members": Array [],
           "name": "test",
-          "search": "",
         }
       }
     />
@@ -42,20 +39,7 @@ exports[`Render should render member page if team not empty 1`] = `
   <div
     className="page-container page-body"
   >
-    <TeamMembers
-      team={
-        Object {
-          "avatarUrl": "some/url/",
-          "email": "test@test.com",
-          "groups": Array [],
-          "id": 1,
-          "memberCount": 1,
-          "members": Array [],
-          "name": "test",
-          "search": "",
-        }
-      }
-    />
+    <Connect(TeamMembers) />
   </div>
 </div>
 `;
@@ -73,12 +57,9 @@ exports[`Render should render settings page 1`] = `
         Object {
           "avatarUrl": "some/url/",
           "email": "test@test.com",
-          "groups": Array [],
           "id": 1,
           "memberCount": 1,
-          "members": Array [],
           "name": "test",
-          "search": "",
         }
       }
     />

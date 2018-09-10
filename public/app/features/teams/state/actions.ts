@@ -117,6 +117,7 @@ export function loadTeam(id: number): ThunkResult<void> {
 }
 
 export function loadTeamMembers(): ThunkResult<void> {
+  console.log('loading team members');
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
 

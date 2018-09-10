@@ -63,9 +63,6 @@ export interface Team {
   avatarUrl: string;
   email: string;
   memberCount: number;
-  search?: string;
-  members?: TeamMember[];
-  groups?: TeamGroup[];
 }
 
 export interface TeamMember {
@@ -124,6 +121,8 @@ export interface TeamsState {
 
 export interface TeamState {
   team: Team;
+  members: TeamMember[];
+  groups: TeamGroup[];
   searchMemberQuery: string;
 }
 

@@ -1,16 +1,14 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
-import { Team, TeamMember } from '../../types';
+import { TeamMember } from '../../types';
 import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
-import { getSearchMemberQuery, getTeam } from './state/selectors';
-import { getRouteParamsId } from '../../core/selectors/location';
+import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
 
-interface Props {
-  team: Team;
+export interface Props {
+  members: TeamMember[];
   searchMemberQuery: string;
   loadTeamMembers: typeof loadTeamMembers;
   addTeamMember: typeof addTeamMember;
@@ -37,7 +35,7 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.props.setSearchMemberQuery(event.target.value);
   };
 
-  removeMember(member: TeamMember) {
+  onRemoveMember(member: TeamMember) {
     this.props.removeTeamMember(member.userId);
   }
 
@@ -63,7 +61,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         <td>{member.login}</td>
         <td>{member.email}</td>
         <td className="text-right">
-          <DeleteButton onConfirmDelete={() => this.removeMember(member)} />
+          <DeleteButton onConfirmDelete={() => this.onRemoveMember(member)} />
         </td>
       </tr>
     );
@@ -71,7 +69,7 @@ export class TeamMembers extends PureComponent<Props, State> {
 
   render() {
     const { newTeamMember, isAdding } = this.state;
-    const { team, searchMemberQuery } = this.props;
+    const { searchMemberQuery, members } = this.props;
     const newTeamMemberValue = newTeamMember && newTeamMember.id.toString();
 
     return (
@@ -125,7 +123,7 @@ export class TeamMembers extends PureComponent<Props, State> {
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
-            <tbody>{team.members && team.members.map(member => this.renderMember(member))}</tbody>
+            <tbody>{members && members.map(member => this.renderMember(member))}</tbody>
           </table>
         </div>
       </div>
@@ -134,10 +132,8 @@ export class TeamMembers extends PureComponent<Props, State> {
 }
 
 function mapStateToProps(state) {
-  const teamId = getRouteParamsId(state.location);
-
   return {
-    team: getTeam(state.team, teamId),
+    members: getTeamMembers(state.team),
     searchMemberQuery: getSearchMemberQuery(state.team),
   };
 }
@@ -149,4 +145,4 @@ const mapDispatchToProps = {
   setSearchMemberQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamMembers));
+export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);

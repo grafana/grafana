@@ -31,22 +31,42 @@ describe('teams reducer', () => {
 });
 
 describe('team reducer', () => {
+  it('should set team', () => {
+    const payload = getMockTeam();
+
+    const action: Action = {
+      type: ActionTypes.LoadTeam,
+      payload,
+    };
+
+    const result = teamReducer(initialTeamState, action);
+
+    expect(result.team).toEqual(payload);
+  });
+
   it('should set team members', () => {
     const mockTeamMember = getMockTeamMember();
-    const mockTeam = getMockTeam();
-    const state = {
-      ...initialTeamState,
-      team: mockTeam,
-    };
 
     const action: Action = {
       type: ActionTypes.LoadTeamMembers,
       payload: [mockTeamMember],
     };
 
-    const result = teamReducer(state, action);
-    const expectedState = { team: { ...mockTeam, members: [mockTeamMember] }, searchQuery: '' };
+    const result = teamReducer(initialTeamState, action);
 
-    expect(result).toEqual(expectedState);
+    expect(result.members).toEqual([mockTeamMember]);
+  });
+
+  it('should set member search query', () => {
+    const payload = 'member';
+
+    const action: Action = {
+      type: ActionTypes.SetSearchMemberQuery,
+      payload,
+    };
+
+    const result = teamReducer(initialTeamState, action);
+
+    expect(result.searchMemberQuery).toEqual('member');
   });
 });

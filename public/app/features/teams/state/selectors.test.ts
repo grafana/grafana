@@ -1,8 +1,8 @@
-import { getTeams } from './selectors';
-import { getMultipleMockTeams } from '../__mocks__/teamMocks';
-import { TeamsState } from '../../../types';
+import { getTeam, getTeams } from './selectors';
+import { getMockTeam, getMultipleMockTeams } from '../__mocks__/teamMocks';
+import { TeamsState, TeamState } from '../../../types';
 
-describe('Team selectors', () => {
+describe('Teams selectors', () => {
   describe('Get teams', () => {
     const mockTeams = getMultipleMockTeams(5);
 
@@ -20,6 +20,20 @@ describe('Team selectors', () => {
       const teams = getTeams(mockState);
 
       expect(teams.length).toEqual(1);
+    });
+  });
+});
+
+describe('Team selectors', () => {
+  describe('Get team', () => {
+    const mockTeam = getMockTeam();
+
+    it('should return team if matching with location team', () => {
+      const mockState: TeamState = { team: mockTeam, searchMemberQuery: '' };
+
+      const team = getTeam(mockState, '1');
+
+      expect(team).toEqual(mockTeam);
     });
   });
 });
