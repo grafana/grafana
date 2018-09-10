@@ -1,6 +1,6 @@
-import { FolderDTO } from './dashboard';
+import { FolderDTO, FolderState } from './dashboard';
 
-export { FolderDTO };
+export { FolderDTO, FolderState };
 
 //
 // Location
@@ -136,4 +136,5 @@ export interface StoreState {
   alertRules: AlertRulesState;
   teams: TeamsState;
   team: TeamState;
+  folder: FolderState;
 }
