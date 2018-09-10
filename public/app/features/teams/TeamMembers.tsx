@@ -1,13 +1,19 @@
-import React from 'react';
-import { hot } from 'react-hot-loader';
-import { observer } from 'mobx-react';
-import { Team, TeamMember } from 'app/stores/TeamsStore/TeamsStore';
+import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import { TeamMember } from '../../types';
+import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
+import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
 
-interface Props {
-  team: Team;
+export interface Props {
+  members: TeamMember[];
+  searchMemberQuery: string;
+  loadTeamMembers: typeof loadTeamMembers;
+  addTeamMember: typeof addTeamMember;
+  removeTeamMember: typeof removeTeamMember;
+  setSearchMemberQuery: typeof setSearchMemberQuery;
 }
 
 interface State {
@@ -15,42 +21,22 @@ interface State {
   newTeamMember?: User;
 }
 
-@observer
-export class TeamMembers extends React.Component<Props, State> {
+export class TeamMembers extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
     this.state = { isAdding: false, newTeamMember: null };
   }
 
   componentDidMount() {
-    this.props.team.loadMembers();
+    this.props.loadTeamMembers();
   }
 
-  onSearchQueryChange = evt => {
-    this.props.team.setSearchQuery(evt.target.value);
+  onSearchQueryChange = event => {
+    this.props.setSearchMemberQuery(event.target.value);
   };
 
-  removeMember(member: TeamMember) {
-    this.props.team.removeMember(member);
-  }
-
-  removeMemberConfirmed(member: TeamMember) {
-    this.props.team.removeMember(member);
-  }
-
-  renderMember(member: TeamMember) {
-    return (
-      <tr key={member.userId}>
-        <td className="width-4 text-center">
-          <img className="filter-table__avatar" src={member.avatarUrl} />
-        </td>
-        <td>{member.login}</td>
-        <td>{member.email}</td>
-        <td className="text-right">
-          <DeleteButton onConfirmDelete={() => this.removeMember(member)} />
-        </td>
-      </tr>
-    );
+  onRemoveMember(member: TeamMember) {
+    this.props.removeTeamMember(member.userId);
   }
 
   onToggleAdding = () => {
@@ -62,16 +48,29 @@ export class TeamMembers extends React.Component<Props, State> {
   };
 
   onAddUserToTeam = async () => {
-    await this.props.team.addMember(this.state.newTeamMember.id);
-    await this.props.team.loadMembers();
+    this.props.addTeamMember(this.state.newTeamMember.id);
     this.setState({ newTeamMember: null });
   };
 
+  renderMember(member: TeamMember) {
+    return (
+      <tr key={member.userId}>
+        <td className="width-4 text-center">
+          <img className="filter-table__avatar" src={member.avatarUrl} />
+        </td>
+        <td>{member.login}</td>
+        <td>{member.email}</td>
+        <td className="text-right">
+          <DeleteButton onConfirmDelete={() => this.onRemoveMember(member)} />
+        </td>
+      </tr>
+    );
+  }
+
   render() {
     const { newTeamMember, isAdding } = this.state;
-    const members = this.props.team.filteredMembers;
+    const { searchMemberQuery, members } = this.props;
     const newTeamMemberValue = newTeamMember && newTeamMember.id.toString();
-    const { team } = this.props;
 
     return (
       <div>
@@ -82,7 +81,7 @@ export class TeamMembers extends React.Component<Props, State> {
                 type="text"
                 className="gf-form-input"
                 placeholder="Search members"
-                value={team.search}
+                value={searchMemberQuery}
                 onChange={this.onSearchQueryChange}
               />
               <i className="gf-form-input-icon fa fa-search" />
@@ -124,7 +123,7 @@ export class TeamMembers extends React.Component<Props, State> {
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
-            <tbody>{members.map(member => this.renderMember(member))}</tbody>
+            <tbody>{members && members.map(member => this.renderMember(member))}</tbody>
           </table>
         </div>
       </div>
@@ -132,4 +131,18 @@ export class TeamMembers extends React.Component<Props, State> {
   }
 }
 
-export default hot(module)(TeamMembers);
+function mapStateToProps(state) {
+  return {
+    members: getTeamMembers(state.team),
+    searchMemberQuery: getSearchMemberQuery(state.team),
+  };
+}
+
+const mapDispatchToProps = {
+  loadTeamMembers,
+  addTeamMember,
+  removeTeamMember,
+  setSearchMemberQuery,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);

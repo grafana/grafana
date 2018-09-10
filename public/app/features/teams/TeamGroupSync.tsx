@@ -1,12 +1,16 @@
-import React from 'react';
-import { hot } from 'react-hot-loader';
-import { observer } from 'mobx-react';
-import { Team, TeamGroup } from 'app/stores/TeamsStore/TeamsStore';
+import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import { TeamGroup } from '../../types';
+import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
+import { getTeamGroups } from './state/selectors';
 
-interface Props {
-  team: Team;
+export interface Props {
+  groups: TeamGroup[];
+  loadTeamGroups: typeof loadTeamGroups;
+  addTeamGroup: typeof addTeamGroup;
+  removeTeamGroup: typeof removeTeamGroup;
 }
 
 interface State {
@@ -16,15 +20,39 @@ interface State {
 
 const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;
 
-@observer
-export class TeamGroupSync extends React.Component<Props, State> {
+export class TeamGroupSync extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
     this.state = { isAdding: false, newGroupId: '' };
   }
 
   componentDidMount() {
-    this.props.team.loadGroups();
+    this.fetchTeamGroups();
+  }
+
+  async fetchTeamGroups() {
+    await this.props.loadTeamGroups();
+  }
+
+  onToggleAdding = () => {
+    this.setState({ isAdding: !this.state.isAdding });
+  };
+
+  onNewGroupIdChanged = evt => {
+    this.setState({ newGroupId: evt.target.value });
+  };
+
+  onAddGroup = () => {
+    this.props.addTeamGroup(this.state.newGroupId);
+    this.setState({ isAdding: false, newGroupId: '' });
+  };
+
+  onRemoveGroup = (group: TeamGroup) => {
+    this.props.removeTeamGroup(group.groupId);
+  };
+
+  isNewGroupValid() {
+    return this.state.newGroupId.length > 1;
   }
 
   renderGroup(group: TeamGroup) {
@@ -40,30 +68,9 @@ export class TeamGroupSync extends React.Component<Props, State> {
     );
   }
 
-  onToggleAdding = () => {
-    this.setState({ isAdding: !this.state.isAdding });
-  };
-
-  onNewGroupIdChanged = evt => {
-    this.setState({ newGroupId: evt.target.value });
-  };
-
-  onAddGroup = () => {
-    this.props.team.addGroup(this.state.newGroupId);
-    this.setState({ isAdding: false, newGroupId: '' });
-  };
-
-  onRemoveGroup = (group: TeamGroup) => {
-    this.props.team.removeGroup(group.groupId);
-  };
-
-  isNewGroupValid() {
-    return this.state.newGroupId.length > 1;
-  }
-
   render() {
     const { isAdding, newGroupId } = this.state;
-    const groups = this.props.team.groups.values();
+    const groups = this.props.groups;
 
     return (
       <div>
@@ -146,4 +153,16 @@ export class TeamGroupSync extends React.Component<Props, State> {
   }
 }
 
-export default hot(module)(TeamGroupSync);
+function mapStateToProps(state) {
+  return {
+    groups: getTeamGroups(state.team),
+  };
+}
+
+const mapDispatchToProps = {
+  loadTeamGroups,
+  addTeamGroup,
+  removeTeamGroup,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(TeamGroupSync);

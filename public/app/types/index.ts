@@ -58,6 +58,31 @@ export interface AlertRule {
 }
 
 //
+// Teams
+//
+
+export interface Team {
+  id: number;
+  name: string;
+  avatarUrl: string;
+  email: string;
+  memberCount: number;
+}
+
+export interface TeamMember {
+  userId: number;
+  teamId: number;
+  avatarUrl: string;
+  email: string;
+  login: string;
+}
+
+export interface TeamGroup {
+  groupId: string;
+  teamId: number;
+}
+
+//
 // NavModel
 //
 
@@ -72,7 +97,7 @@ export interface NavModelItem {
   hideFromTabs?: boolean;
   divider?: boolean;
   children?: NavModelItem[];
-  breadcrumbs?: NavModelItem[];
+  breadcrumbs?: Array<{ title: string; url: string }>;
   target?: string;
   parentItem?: NavModelItem;
 }
@@ -93,8 +118,22 @@ export interface AlertRulesState {
   searchQuery: string;
 }
 
+export interface TeamsState {
+  teams: Team[];
+  searchQuery: string;
+}
+
+export interface TeamState {
+  team: Team;
+  members: TeamMember[];
+  groups: TeamGroup[];
+  searchMemberQuery: string;
+}
+
 export interface StoreState {
   navIndex: NavIndex;
   location: LocationState;
   alertRules: AlertRulesState;
+  teams: TeamsState;
+  team: TeamState;
 }
