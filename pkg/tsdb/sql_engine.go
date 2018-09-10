@@ -180,17 +180,21 @@ func Interpolate(query *Query, timeRange *TimeRange, sql string) (string, error)
 	sql = ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
 		switch groups[1] {
 		case "interval":
-			interval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+			minInterval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 			if err != nil {
 				return sql
 			}
-			return formatDuration(interval)
+			calculator := NewIntervalCalculator(nil)
+			interval := calculator.Calculate(timeRange, minInterval)
+			return interval.Text
 		case "interval_ms":
-			interval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+			minInterval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 			if err != nil {
 				return sql
 			}
-			return fmt.Sprintf("%.0f", interval.Seconds()*1000)
+			calculator := NewIntervalCalculator(nil)
+			interval := calculator.Calculate(timeRange, minInterval)
+			return fmt.Sprintf("%d", interval.Milliseconds())
 		default:
 			return groups[0]
 		}
