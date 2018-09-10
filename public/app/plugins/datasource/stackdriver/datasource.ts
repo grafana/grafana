@@ -13,13 +13,12 @@ export default class StackdriverDatasource {
 
   async query(options) {
     const queries = options.targets.filter(target => !target.hide).map(t => ({
-      queryType: 'raw',
       refId: t.refId,
       datasourceId: this.id,
-      metric: t.metricType,
+      metricType: `metric.type="${t.metricType}"`,
     }));
     try {
-      const response = await this.backendSrv.datasourceRequest({
+      const { data } = await this.backendSrv.datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
         data: {
@@ -28,7 +27,18 @@ export default class StackdriverDatasource {
           queries,
         },
       });
-      return response;
+
+      const result = [];
+
+      if (data.results) {
+        Object['values'](data.results).forEach(queryRes => {
+          queryRes.series.forEach(series => {
+            result.push({ target: series.name, datapoints: series.points });
+          });
+        });
+      }
+
+      return { data: result };
     } catch (error) {
       console.log(error);
     }
@@ -77,7 +87,7 @@ export default class StackdriverDatasource {
     try {
       const metricsApiPath = `v3/projects/${projectId}/metricDescriptors`;
       const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
-      return data.metricDescriptors.map(m => ({ id: m.name, name: m.displayName }));
+      return data.metricDescriptors.map(m => ({ id: m.type, name: m.displayName }));
     } catch (error) {
       console.log(error);
     }
