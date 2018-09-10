@@ -27,6 +27,8 @@ import './dashgrid/RowOptions';
 import './folder_picker/folder_picker';
 import './move_to_folder_modal/move_to_folder';
 import './settings/settings';
+import './panellinks/module';
+import './dashlinks/module';
 
 import coreModule from 'app/core/core_module';
 import { DashboardListCtrl } from './dashboard_list_ctrl';
