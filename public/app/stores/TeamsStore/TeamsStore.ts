@@ -31,7 +31,7 @@ export const TeamModel = types
     groups: types.optional(types.map(TeamGroupModel), {}),
   })
   .views(self => ({
-    get filteredMembers() {
+    get filteredMembers(this: Team) {
       const members = this.members.values();
       const regex = new RegExp(self.search, 'i');
       return members.filter(member => {
@@ -121,7 +121,7 @@ export const TeamsStore = types
     search: types.optional(types.string, ''),
   })
   .views(self => ({
-    get filteredTeams() {
+    get filteredTeams(this: any) {
       const teams = this.map.values();
       const regex = new RegExp(self.search, 'i');
       return teams.filter(team => {

@@ -1,23 +1,15 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
 import Highlighter from 'react-highlight-words';
 import classNames from 'classnames/bind';
-import { togglePauseAlertRule } from './state/actions';
 import { AlertRule } from '../../types';
 
 export interface Props {
   rule: AlertRule;
   search: string;
-  togglePauseAlertRule: typeof togglePauseAlertRule;
+  onTogglePause: () => void;
 }
 
-class AlertRuleItem extends PureComponent<Props, any> {
-  togglePaused = () => {
-    const { rule } = this.props;
-
-    this.props.togglePauseAlertRule(rule.id, { paused: rule.state !== 'paused' });
-  };
-
+class AlertRuleItem extends PureComponent<Props> {
   renderText(text: string) {
     return (
       <Highlighter
@@ -29,7 +21,7 @@ class AlertRuleItem extends PureComponent<Props, any> {
   }
 
   render() {
-    const { rule } = this.props;
+    const { rule, onTogglePause } = this.props;
 
     const stateClass = classNames({
       fa: true,
@@ -61,7 +53,7 @@ class AlertRuleItem extends PureComponent<Props, any> {
           <button
             className="btn btn-small btn-inverse alert-list__btn width-2"
             title="Pausing an alert rule prevents it from executing"
-            onClick={this.togglePaused}
+            onClick={onTogglePause}
           >
             <i className={stateClass} />
           </button>
@@ -74,6 +66,4 @@ class AlertRuleItem extends PureComponent<Props, any> {
   }
 }
 
-export default connect(null, {
-  togglePauseAlertRule,
-})(AlertRuleItem);
+export default AlertRuleItem;

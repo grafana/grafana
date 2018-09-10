@@ -20,6 +20,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			So(AdminUser, ShouldEqual, "admin")
+			So(cfg.RendererCallbackUrl, ShouldEqual, "http://localhost:3000/")
 		})
 
 		Convey("Should be able to override via environment variables", func() {
@@ -176,6 +177,16 @@ func TestLoadingSettings(t *testing.T) {
 
 			hostname, _ := os.Hostname()
 			So(InstanceName, ShouldEqual, hostname)
+		})
+
+		Convey("Reading callback_url should add trailing slash", func() {
+			cfg := NewCfg()
+			cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:rendering.callback_url=http://myserver/renderer"},
+			})
+
+			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
 		})
 
 	})

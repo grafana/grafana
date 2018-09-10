@@ -9,7 +9,7 @@ import _ from 'lodash';
 // http://www.fileformat.info/info/unicode/category/Lo/list.htm
 // http://www.fileformat.info/info/unicode/category/Nl/list.htm
 
-var unicodeLetterTable = [
+const unicodeLetterTable = [
   170,
   170,
   181,
@@ -898,9 +898,9 @@ var unicodeLetterTable = [
   195101,
 ];
 
-var identifierStartTable = [];
+const identifierStartTable = [];
 
-for (var i = 0; i < 128; i++) {
+for (let i = 0; i < 128; i++) {
   identifierStartTable[i] =
     (i >= 48 && i <= 57) || // 0-9
     i === 36 || // $
@@ -920,9 +920,9 @@ for (var i = 0; i < 128; i++) {
     (i >= 97 && i <= 122); // a-z
 }
 
-var identifierPartTable = identifierStartTable;
+const identifierPartTable = identifierStartTable;
 
-export function Lexer(expression) {
+export function Lexer(this: any, expression) {
   this.input = expression;
   this.char = 1;
   this.from = 1;
@@ -940,10 +940,11 @@ Lexer.prototype = {
   },
 
   tokenize: function() {
-    var list = [];
-    var token;
-    while ((token = this.next())) {
+    const list = [];
+    let token = this.next();
+    while (token) {
       list.push(token);
+      token = this.next();
     }
     return list;
   },
@@ -964,7 +965,7 @@ Lexer.prototype = {
       }
     }
 
-    var match = this.scanStringLiteral();
+    let match = this.scanStringLiteral();
     if (match) {
       return match;
     }
@@ -1007,9 +1008,9 @@ Lexer.prototype = {
    * (true/false) and NullLiteral (null).
    */
   scanIdentifier: function() {
-    var id = '';
-    var index = 0;
-    var type, char;
+    let id = '';
+    let index = 0;
+    let type, char;
 
     // Detects any character in the Unicode categories "Uppercase
     // letter (Lu)", "Lowercase letter (Ll)", "Titlecase letter
@@ -1020,7 +1021,7 @@ Lexer.prototype = {
     // Google's Traceur.
 
     function isUnicodeLetter(code) {
-      for (var i = 0; i < unicodeLetterTable.length; ) {
+      for (let i = 0; i < unicodeLetterTable.length; ) {
         if (code < unicodeLetterTable[i++]) {
           return false;
         }
@@ -1037,7 +1038,7 @@ Lexer.prototype = {
       return /^[0-9a-fA-F]$/.test(str);
     }
 
-    var readUnicodeEscapeSequence = _.bind(function() {
+    const readUnicodeEscapeSequence = _.bind(function(this: any) {
       /*jshint validthis:true */
       index += 1;
 
@@ -1045,11 +1046,11 @@ Lexer.prototype = {
         return null;
       }
 
-      var ch1 = this.peek(index + 1);
-      var ch2 = this.peek(index + 2);
-      var ch3 = this.peek(index + 3);
-      var ch4 = this.peek(index + 4);
-      var code;
+      const ch1 = this.peek(index + 1);
+      const ch2 = this.peek(index + 2);
+      const ch3 = this.peek(index + 3);
+      const ch4 = this.peek(index + 4);
+      let code;
 
       if (isHexDigit(ch1) && isHexDigit(ch2) && isHexDigit(ch3) && isHexDigit(ch4)) {
         code = parseInt(ch1 + ch2 + ch3 + ch4, 16);
@@ -1065,10 +1066,10 @@ Lexer.prototype = {
       return null;
     }, this);
 
-    var getIdentifierStart = _.bind(function() {
+    const getIdentifierStart = _.bind(function(this: any) {
       /*jshint validthis:true */
-      var chr = this.peek(index);
-      var code = chr.charCodeAt(0);
+      const chr = this.peek(index);
+      const code = chr.charCodeAt(0);
 
       if (chr === '*') {
         index += 1;
@@ -1096,10 +1097,10 @@ Lexer.prototype = {
       return null;
     }, this);
 
-    var getIdentifierPart = _.bind(function() {
+    const getIdentifierPart = _.bind(function(this: any) {
       /*jshint validthis:true */
-      var chr = this.peek(index);
-      var code = chr.charCodeAt(0);
+      const chr = this.peek(index);
+      const code = chr.charCodeAt(0);
 
       if (code === 92) {
         return readUnicodeEscapeSequence();
@@ -1168,11 +1169,11 @@ Lexer.prototype = {
    * scanNumericLiteral function in the Esprima parser's source code.
    */
   scanNumericLiteral: function(): any {
-    var index = 0;
-    var value = '';
-    var length = this.input.length;
-    var char = this.peek(index);
-    var bad;
+    let index = 0;
+    let value = '';
+    const length = this.input.length;
+    let char = this.peek(index);
+    let bad;
 
     function isDecimalDigit(str) {
       return /^[0-9]$/.test(str);
@@ -1370,7 +1371,7 @@ Lexer.prototype = {
     };
   },
 
-  isPunctuator: function(ch1) {
+  isPunctuator: ch1 => {
     switch (ch1) {
       case '.':
       case '(':
@@ -1385,7 +1386,7 @@ Lexer.prototype = {
   },
 
   scanPunctuator: function() {
-    var ch1 = this.peek();
+    const ch1 = this.peek();
 
     if (this.isPunctuator(ch1)) {
       return {
@@ -1411,14 +1412,14 @@ Lexer.prototype = {
    */
   scanStringLiteral: function() {
     /*jshint loopfunc:true */
-    var quote = this.peek();
+    const quote = this.peek();
 
     // String must start with a quote.
     if (quote !== '"' && quote !== "'") {
       return null;
     }
 
-    var value = '';
+    let value = '';
 
     this.skip();
 
@@ -1434,8 +1435,8 @@ Lexer.prototype = {
         };
       }
 
-      var char = this.peek();
-      var jump = 1; // A length of a jump, after we're done
+      const char = this.peek();
+      const jump = 1; // A length of a jump, after we're done
       // parsing this character.
 
       value += char;

@@ -24,6 +24,21 @@
 	</div>
 </div>
 
+<h3 class="page-heading">MySQL details</h3>
+
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-9">Min time interval</span>
+			<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="1m"></input>
+			<info-popover mode="right-absolute">
+				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example <code>1m</code> if your data is written every minute.
+			</info-popover>
+		</div>
+	</div>
+</div>
+
 <div class="gf-form-group">
 	<div class="grafana-info-box">
 		<h5>User Permission</h5>

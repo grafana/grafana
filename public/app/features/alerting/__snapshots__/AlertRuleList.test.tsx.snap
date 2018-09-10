@@ -101,8 +101,9 @@ exports[`Render should render alert rules 1`] = `
       <ol
         className="alert-rule-list"
       >
-        <Connect(AlertRuleItem)
+        <AlertRuleItem
           key="1"
+          onTogglePause={[Function]}
           rule={
             Object {
               "dashboardId": 7,
@@ -121,8 +122,9 @@ exports[`Render should render alert rules 1`] = `
           }
           search=""
         />
-        <Connect(AlertRuleItem)
+        <AlertRuleItem
           key="3"
+          onTogglePause={[Function]}
           rule={
             Object {
               "dashboardId": 7,

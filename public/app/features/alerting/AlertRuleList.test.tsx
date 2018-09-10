@@ -15,6 +15,7 @@ const setup = (propOverrides?: object) => {
     updateLocation: jest.fn(),
     getAlertRulesAsync: jest.fn(),
     setSearchQuery: jest.fn(),
+    togglePauseAlertRule: jest.fn(),
     stateFilter: '',
     search: '',
   };

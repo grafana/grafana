@@ -8,7 +8,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
   stepIndex: number;
   steps: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private backendSrv, datasourceSrv, private $q) {
     super($scope, $injector);
 
@@ -88,7 +88,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     }
 
     this.stepIndex += 1;
-    var currentStep = this.steps[this.stepIndex];
+    const currentStep = this.steps[this.stepIndex];
     return currentStep.check().then(passed => {
       if (passed) {
         currentStep.cssClass = 'completed';

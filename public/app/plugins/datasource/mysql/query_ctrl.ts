@@ -31,7 +31,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
   lastQueryError: string;
   showHelp: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
 

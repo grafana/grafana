@@ -440,6 +440,16 @@ func sendUsageStats() {
 		metrics["stats.ds_access.other."+access+".count"] = count
 	}
 
+	anStats := models.GetAlertNotifierUsageStatsQuery{}
+	if err := bus.Dispatch(&anStats); err != nil {
+		metricsLogger.Error("Failed to get alert notification stats", "error", err)
+		return
+	}
+
+	for _, stats := range anStats.Result {
+		metrics["stats.alert_notifiers."+stats.Type+".count"] = stats.Count
+	}
+
 	out, _ := json.MarshalIndent(report, "", " ")
 	data := bytes.NewBuffer(out)
 

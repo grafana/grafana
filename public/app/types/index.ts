@@ -93,7 +93,7 @@ export interface NavModelItem {
   hideFromTabs?: boolean;
   divider?: boolean;
   children?: NavModelItem[];
-  breadcrumbs?: { title: string; url: string }[];
+  breadcrumbs?: Array<{ title: string; url: string }>;
   target?: string;
   parentItem?: NavModelItem;
 }

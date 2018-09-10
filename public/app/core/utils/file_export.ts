@@ -84,7 +84,7 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
     formatSpecialHeader(excel) +
     formatRow(
       ['Time'].concat(
-        seriesList.map(function(val) {
+        seriesList.map(val => {
           return val.alias;
         })
       )
@@ -97,7 +97,7 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
     const timestamp = moment(seriesList[0].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat);
     text += formatRow(
       [timestamp].concat(
-        seriesList.map(function(series) {
+        seriesList.map(series => {
           return series.datapoints[i][POINT_VALUE_INDEX];
         })
       ),

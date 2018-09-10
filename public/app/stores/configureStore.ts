@@ -15,5 +15,11 @@ export let store;
 
 export function configureStore() {
   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-  store = createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, createLogger())));
+
+  if (process.env.NODE_ENV !== 'production') {
+    // DEV builds we had the logger middleware
+    store = createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, createLogger())));
+  } else {
+    store = createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk)));
+  }
 }

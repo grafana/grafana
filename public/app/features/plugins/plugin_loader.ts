@@ -65,7 +65,7 @@ System.config({
 });
 
 function exposeToPlugin(name: string, component: any) {
-  System.registerDynamic(name, [], true, function(require, exports, module) {
+  System.registerDynamic(name, [], true, (require, exports, module) => {
     module.exports = component;
   });
 }

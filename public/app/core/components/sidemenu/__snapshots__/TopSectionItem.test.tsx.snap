@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="sidemenu-item dropdown"
+>
+  <a
+    className="sidemenu-link"
+  >
+    <span
+      className="icon-circle sidemenu-icon"
+    >
+      <i />
+    </span>
+  </a>
+</div>
+`;

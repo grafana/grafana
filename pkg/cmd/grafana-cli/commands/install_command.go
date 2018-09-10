@@ -152,7 +152,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		return err
 	}
 
-	r, err := zip.NewReader(bytes.NewReader(body), resp.ContentLength)
+	r, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
 	if err != nil {
 		return err
 	}

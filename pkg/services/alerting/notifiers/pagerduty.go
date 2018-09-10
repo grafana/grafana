@@ -51,7 +51,7 @@ func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error)
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Key:          key,
 		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.pagerduty"),

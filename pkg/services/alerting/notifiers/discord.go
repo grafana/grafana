@@ -39,7 +39,7 @@ func NewDiscordNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &DiscordNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		WebhookURL:   url,
 		log:          log.New("alerting.notifier.discord"),
 	}, nil

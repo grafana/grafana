@@ -1,7 +1,7 @@
 import { Team, TeamMember } from '../../../types';
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
-  let teams: Team[] = [];
+  const teams: Team[] = [];
   for (let i = 1; i <= numberOfTeams; i++) {
     teams.push({
       id: i,
@@ -26,7 +26,7 @@ export const getMockTeam = (): Team => {
 };
 
 export const getMockTeamMembers = (amount: number): TeamMember[] => {
-  let teamMembers: TeamMember[] = [];
+  const teamMembers: TeamMember[] = [];
 
   for (let i = 1; i <= amount; i++) {
     teamMembers.push({

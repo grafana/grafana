@@ -97,7 +97,7 @@ const colorSchemes = [
   { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'dark' },
 ];
 
-const ds_support_histogram_sort = ['prometheus', 'elasticsearch'];
+const dsSupportHistogramSort = ['prometheus', 'elasticsearch'];
 
 export class HeatmapCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -221,7 +221,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     let xBucketSize, yBucketSize, bucketsData, tsBuckets;
 
     // Try to sort series by bucket bound, if datasource doesn't do it.
-    if (!_.includes(ds_support_histogram_sort, panelDatasource)) {
+    if (!_.includes(dsSupportHistogramSort, panelDatasource)) {
       this.series.sort(sortSeriesByLabel);
     }
 

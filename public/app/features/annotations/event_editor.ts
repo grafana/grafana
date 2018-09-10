@@ -12,7 +12,7 @@ export class EventEditorCtrl {
   close: any;
   timeFormated: string;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private annotationsSrv) {
     this.event.panelId = this.panelCtrl.panel.id;
     this.event.dashboardId = this.panelCtrl.dashboard.id;

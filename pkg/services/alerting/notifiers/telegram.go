@@ -78,7 +78,7 @@ func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	}
 
 	return &TelegramNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		BotToken:     botToken,
 		ChatID:       chatId,
 		UploadImage:  uploadImage,
@@ -216,7 +216,7 @@ func appendIfPossible(message string, extra string, sizeLimit int) string {
 	if len(extra)+len(message) <= sizeLimit {
 		return message + extra
 	}
-	log.Debug("Line too long for image caption.", "value", extra)
+	log.Debug("Line too long for image caption. value: %s", extra)
 	return message
 }
 

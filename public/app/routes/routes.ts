@@ -1,14 +1,14 @@
 import './dashboard_loaders';
 import './ReactContainer';
 
-import ServerStats from 'app/features/admin/containers/ServerStats';
+import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
-import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
 import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions';
 import TeamPages from 'app/features/teams/TeamPages';
 import TeamList from 'app/features/teams/TeamList';
+import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
 
-/** @ngInject **/
+/** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
   $locationProvider.html5Mode(true);
 
@@ -81,7 +81,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards', {
-      templateUrl: 'public/app/features/dashboard/partials/dashboard_list.html',
+      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
       controller: 'DashboardListCtrl',
       controllerAs: 'ctrl',
     })
@@ -240,8 +240,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       pageClass: 'sidemenu-hidden',
     })
     .when('/dashboard/snapshots', {
-      templateUrl: 'public/app/features/snapshot/partials/snapshots.html',
-      controller: 'SnapshotsCtrl',
+      templateUrl: 'public/app/features/manage-dashboards/partials/snapshot_list.html',
+      controller: 'SnapshotListCtrl',
       controllerAs: 'ctrl',
     })
     .when('/plugins', {
@@ -262,7 +262,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/styleguide/:page?', {
       controller: 'StyleGuideCtrl',
       controllerAs: 'ctrl',
-      templateUrl: 'public/app/features/styleguide/styleguide.html',
+      templateUrl: 'public/app/features/admin/partials/styleguide.html',
     })
     .when('/alerting', {
       redirectTo: '/alerting/list',

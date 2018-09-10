@@ -31,7 +31,7 @@ export function createNavModel(title: string, ...tabs: string[]): NavModel {
     breadcrumbs: [],
   };
 
-  for (let tab of tabs) {
+  for (const tab of tabs) {
     node.children.push({
       id: tab,
       icon: 'icon',

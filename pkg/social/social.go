@@ -60,21 +60,22 @@ func NewOAuthService() {
 	for _, name := range allOauthes {
 		sec := setting.Raw.Section("auth." + name)
 		info := &setting.OAuthInfo{
-			ClientId:       sec.Key("client_id").String(),
-			ClientSecret:   sec.Key("client_secret").String(),
-			Scopes:         util.SplitString(sec.Key("scopes").String()),
-			AuthUrl:        sec.Key("auth_url").String(),
-			TokenUrl:       sec.Key("token_url").String(),
-			ApiUrl:         sec.Key("api_url").String(),
-			Enabled:        sec.Key("enabled").MustBool(),
-			AllowedDomains: util.SplitString(sec.Key("allowed_domains").String()),
-			HostedDomain:   sec.Key("hosted_domain").String(),
-			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
-			Name:           sec.Key("name").MustString(name),
-			TlsClientCert:  sec.Key("tls_client_cert").String(),
-			TlsClientKey:   sec.Key("tls_client_key").String(),
-			TlsClientCa:    sec.Key("tls_client_ca").String(),
-			TlsSkipVerify:  sec.Key("tls_skip_verify_insecure").MustBool(),
+			ClientId:           sec.Key("client_id").String(),
+			ClientSecret:       sec.Key("client_secret").String(),
+			Scopes:             util.SplitString(sec.Key("scopes").String()),
+			AuthUrl:            sec.Key("auth_url").String(),
+			TokenUrl:           sec.Key("token_url").String(),
+			ApiUrl:             sec.Key("api_url").String(),
+			Enabled:            sec.Key("enabled").MustBool(),
+			EmailAttributeName: sec.Key("email_attribute_name").String(),
+			AllowedDomains:     util.SplitString(sec.Key("allowed_domains").String()),
+			HostedDomain:       sec.Key("hosted_domain").String(),
+			AllowSignup:        sec.Key("allow_sign_up").MustBool(),
+			Name:               sec.Key("name").MustString(name),
+			TlsClientCert:      sec.Key("tls_client_cert").String(),
+			TlsClientKey:       sec.Key("tls_client_key").String(),
+			TlsClientCa:        sec.Key("tls_client_ca").String(),
+			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
 		}
 
 		if !info.Enabled {
@@ -153,6 +154,7 @@ func NewOAuthService() {
 				allowedDomains:       info.AllowedDomains,
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
+				emailAttributeName:   info.EmailAttributeName,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}

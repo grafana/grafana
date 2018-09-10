@@ -80,17 +80,17 @@ function createMenuTemplate(ctrl) {
   return html;
 }
 
-/** @ngInject **/
+/** @ngInject */
 function panelHeader($compile) {
   return {
     restrict: 'E',
     template: template,
-    link: function(scope, elem, attrs) {
+    link: (scope, elem, attrs) => {
       const menuElem = elem.find('.panel-menu');
       let menuScope;
       let isDragged;
 
-      elem.click(function(evt) {
+      elem.click(evt => {
         const targetClass = evt.target.className;
 
         // remove existing scope

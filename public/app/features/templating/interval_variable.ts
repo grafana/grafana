@@ -4,8 +4,8 @@ import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class IntervalVariable implements Variable {
   name: string;
-  auto_count: number;
-  auto_min: number;
+  auto_count: number; // tslint:disable-line variable-name
+  auto_min: number; // tslint:disable-line variable-name
   options: any;
   auto: boolean;
   query: string;
@@ -28,7 +28,7 @@ export class IntervalVariable implements Variable {
     skipUrlSync: false,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;
@@ -65,7 +65,7 @@ export class IntervalVariable implements Variable {
 
   updateOptions() {
     // extract options between quotes and/or comma
-    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), function(text) {
+    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), text => {
       text = text.replace(/["']+/g, '');
       return { text: text.trim(), value: text.trim() };
     });
