@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -103,13 +104,17 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	queryRes := tsdb.NewQueryResult()
 
 	for _, series := range data.TimeSeries {
+		points := make([]tsdb.TimePoint, 0)
+		for _, point := range series.Points {
+			points = append(points, tsdb.NewTimePoint(null.FloatFrom(point.Value.DoubleValue), float64((point.Interval.EndTime).Unix())*1000))
+		}
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name: series.Metric.Type,
-			// Points: [],
+			Name:   series.Metric.Type,
+			Points: points,
 		})
 
 		if setting.Env == setting.DEV {
-			// glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
+			glog.Debug("Stackdriver response", "target", points, "datapoints", len(points))
 		}
 	}
 
