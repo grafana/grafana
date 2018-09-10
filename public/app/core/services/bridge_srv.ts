@@ -1,8 +1,10 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { store } from 'app/stores/store';
+import { store as reduxStore } from 'app/stores/configureStore';
 import { reaction } from 'mobx';
 import locationUtil from 'app/core/utils/location_util';
+import { updateLocation } from 'app/core/actions';
 
 // Services that handles angular -> mobx store sync & other react <-> angular sync
 export class BridgeSrv {
@@ -19,12 +21,30 @@ export class BridgeSrv {
       if (store.view.currentUrl !== angularUrl) {
         store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
       }
+      const state = reduxStore.getState();
+      if (state.location.url !== angularUrl) {
+        reduxStore.dispatch(
+          updateLocation({
+            path: this.$location.path(),
+            query: this.$location.search(),
+            routeParams: this.$route.current.params,
+          })
+        );
+      }
     });
 
     this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
       store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
+      reduxStore.dispatch(
+        updateLocation({
+          path: this.$location.path(),
+          query: this.$location.search(),
+          routeParams: this.$route.current.params,
+        })
+      );
     });
 
+    // listen for mobx store changes and update angular
     reaction(
       () => store.view.currentUrl,
       currentUrl => {
@@ -38,6 +58,19 @@ export class BridgeSrv {
         }
       }
     );
+
+    // Listen for changes in redux location -> update angular location
+    reduxStore.subscribe(() => {
+      const state = reduxStore.getState();
+      const angularUrl = this.$location.url();
+      const url = locationUtil.stripBaseFromUrl(state.location.url);
+      if (angularUrl !== url) {
+        this.$timeout(() => {
+          this.$location.url(url);
+        });
+        console.log('store updating angular $location.url', url);
+      }
+    });
 
     appEvents.on('location-change', payload => {
       const urlWithoutBase = locationUtil.stripBaseFromUrl(payload.href);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react';
-import { NavModel, NavModelItem } from '../../nav_model_srv';
+import { NavModel, NavModelItem } from 'app/types';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
 import { toJS } from 'mobx';
