@@ -83,7 +83,7 @@ func TestDSRouteRule(t *testing.T) {
 			Convey("When matching route path", func() {
 				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method")
 				proxy.route = plugin.Routes[0]
-				proxy.applyRoute(req)
+				applyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
 				Convey("should add headers and update url", func() {
 					So(req.URL.String(), ShouldEqual, "https://www.google.com/some/method")
@@ -94,7 +94,7 @@ func TestDSRouteRule(t *testing.T) {
 			Convey("When matching route path and has dynamic url", func() {
 				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/common/some/method")
 				proxy.route = plugin.Routes[3]
-				proxy.applyRoute(req)
+				applyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
 				Convey("should add headers and interpolate the url", func() {
 					So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com/some/method")
@@ -188,7 +188,7 @@ func TestDSRouteRule(t *testing.T) {
 					client = newFakeHTTPClient(json)
 					proxy1 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
 					proxy1.route = plugin.Routes[0]
-					proxy1.applyRoute(req)
+					applyRoute(proxy1.ctx.Req.Context(), req, proxy1.proxyPath, proxy1.route, proxy1.ds)
 
 					authorizationHeaderCall1 = req.Header.Get("Authorization")
 					So(req.URL.String(), ShouldEqual, "https://api.nr1.io/some/path")
@@ -202,7 +202,7 @@ func TestDSRouteRule(t *testing.T) {
 						client = newFakeHTTPClient(json2)
 						proxy2 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken2")
 						proxy2.route = plugin.Routes[1]
-						proxy2.applyRoute(req)
+						applyRoute(proxy2.ctx.Req.Context(), req, proxy2.proxyPath, proxy2.route, proxy2.ds)
 
 						authorizationHeaderCall2 = req.Header.Get("Authorization")
 
@@ -217,7 +217,7 @@ func TestDSRouteRule(t *testing.T) {
 							client = newFakeHTTPClient([]byte{})
 							proxy3 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
 							proxy3.route = plugin.Routes[0]
-							proxy3.applyRoute(req)
+							applyRoute(proxy3.ctx.Req.Context(), req, proxy3.proxyPath, proxy3.route, proxy3.ds)
 
 							authorizationHeaderCall3 := req.Header.Get("Authorization")
 							So(req.URL.String(), ShouldEqual, "https://api.nr1.io/some/path")

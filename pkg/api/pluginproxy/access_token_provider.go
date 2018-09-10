@@ -32,8 +32,7 @@ type jwtToken struct {
 	AccessToken     string    `json:"access_token"`
 }
 
-// Access token provider
-func NewAccessTokenProvider(dsID int64, pluginRoute *plugins.AppPluginRoute) *accessTokenProvider {
+func newAccessTokenProvider(dsID int64, pluginRoute *plugins.AppPluginRoute) *accessTokenProvider {
 	return &accessTokenProvider{
 		datasourceID: dsID,
 		route:        pluginRoute,
@@ -140,7 +139,7 @@ var getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token,
 		return nil, err
 	}
 
-	logger.Info("interpolatedVal", "token.AccessToken", token.AccessToken)
+	// logger.Info("interpolatedVal", "token.AccessToken", token.AccessToken)
 
 	return token, nil
 }
