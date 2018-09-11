@@ -121,7 +121,7 @@ function buildNavModel(team: Team): NavModelItem {
     navModel.children.push({
       active: false,
       icon: 'fa fa-fw fa-refresh',
-      id: 'team-settings',
+      id: `team-groupsync-${team.id}`,
       text: 'External group sync',
       url: `org/teams/edit/${team.id}/groupsync`,
     });
