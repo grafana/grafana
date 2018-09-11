@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import _ from 'lodash';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import AlertRuleItem from './AlertRuleItem';
 import appEvents from 'app/core/app_events';
@@ -136,9 +137,11 @@ export class AlertRuleList extends PureComponent<Props, any> {
   }
 }
 
+const getAlertItemsDebounced = _.debounce(getAlertRuleItems, 100, { leading: true });
+
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'alert-list'),
-  alertRules: getAlertRuleItems(state.alertRules),
+  alertRules: getAlertItemsDebounced(state.alertRules),
   stateFilter: state.location.query.state,
   search: getSearchQuery(state.alertRules),
 });
