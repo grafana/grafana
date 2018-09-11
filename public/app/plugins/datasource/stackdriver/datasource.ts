@@ -20,26 +20,27 @@ export default class StackdriverDatasource {
 
     const result = [];
 
-    try {
-      const { data } = await this.backendSrv.datasourceRequest({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries,
-        },
-      });
+    const { data } = await this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries,
+      },
+    });
 
-      if (data.results) {
-        Object['values'](data.results).forEach(queryRes => {
-          queryRes.series.forEach(series => {
-            result.push({ target: series.name, datapoints: series.points });
+    if (data.results) {
+      Object['values'](data.results).forEach(queryRes => {
+        queryRes.series.forEach(series => {
+          result.push({
+            target: series.name,
+            datapoints: series.points,
+            refId: queryRes.refId,
+            meta: queryRes.meta,
           });
         });
-      }
-    } catch (error) {
-      console.log(error);
+      });
     }
 
     return { data: result };

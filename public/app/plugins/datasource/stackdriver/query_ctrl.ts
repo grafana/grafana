@@ -2,6 +2,10 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
 
+export interface QueryMeta {
+  rawQuery: string;
+  rawQueryString: string;
+}
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
   target: {
@@ -10,21 +14,31 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       name: string;
     };
     metricType: string;
+    refId: string;
   };
-  defaultDropdownValue = 'select';
+  defaultDropdownValue = 'Select metric';
 
   defaults = {
     project: {
       id: 'default',
       name: 'loading project...',
     },
-    metricType: this.defaultDropdownValue,
+    // metricType: this.defaultDropdownValue,
   };
+
+  showHelp: boolean;
+  showLastQuery: boolean;
+  lastQueryMeta: QueryMeta;
+  lastQueryError?: string;
 
   /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
     _.defaultsDeep(this.target, this.defaults);
+
+    this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
+    this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+
     this.getCurrentProject().then(this.getMetricTypes.bind(this));
   }
 
@@ -65,6 +79,36 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       return metricTypes.map(mt => ({ value: mt.id, text: mt.id }));
     } else {
       return [];
+    }
+  }
+
+  onDataReceived(dataList) {
+    this.lastQueryError = null;
+    this.lastQueryMeta = null;
+
+    const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
+    if (anySeriesFromQuery) {
+      this.lastQueryMeta = anySeriesFromQuery.meta;
+      this.lastQueryMeta.rawQueryString = decodeURIComponent(this.lastQueryMeta.rawQuery);
+    }
+  }
+
+  onDataError(err) {
+    if (err.data && err.data.results) {
+      const queryRes = err.data.results[this.target.refId];
+      if (queryRes) {
+        this.lastQueryMeta = queryRes.meta;
+        this.lastQueryMeta.rawQueryString = decodeURIComponent(this.lastQueryMeta.rawQuery);
+
+        let jsonBody;
+        try {
+          jsonBody = JSON.parse(queryRes.error);
+        } catch {
+          this.lastQueryError = queryRes.error;
+        }
+
+        this.lastQueryError = jsonBody.error.message;
+      }
     }
   }
 }

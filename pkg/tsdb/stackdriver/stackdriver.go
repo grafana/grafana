@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -28,7 +29,8 @@ var slog log.Logger
 
 // StackdriverExecutor executes queries for the Stackdriver datasource
 type StackdriverExecutor struct {
-	HTTPClient *http.Client
+	httpClient *http.Client
+	dsInfo     *models.DataSource
 }
 
 // NewStackdriverExecutor initializes a http client
@@ -39,7 +41,8 @@ func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, 
 	}
 
 	return &StackdriverExecutor{
-		HTTPClient: httpClient,
+		httpClient: httpClient,
+		dsInfo:     dsInfo,
 	}, nil
 }
 
@@ -62,44 +65,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	}
 
 	for _, query := range queries {
-		req, err := e.createRequest(ctx, dsInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		req.URL.RawQuery = query.Params.Encode()
-		slog.Info("tsdbQuery", "req.URL.RawQuery", req.URL.RawQuery)
-
-		httpClient, err := dsInfo.GetHttpClient()
-		if err != nil {
-			return nil, err
-		}
-
-		span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
-		span.SetTag("target", query.Target)
-		span.SetTag("from", tsdbQuery.TimeRange.From)
-		span.SetTag("until", tsdbQuery.TimeRange.To)
-		span.SetTag("datasource_id", dsInfo.Id)
-		span.SetTag("org_id", dsInfo.OrgId)
-
-		defer span.Finish()
-
-		opentracing.GlobalTracer().Inject(
-			span.Context(),
-			opentracing.HTTPHeaders,
-			opentracing.HTTPHeadersCarrier(req.Header))
-
-		res, err := ctxhttp.Do(ctx, httpClient, req)
-		if err != nil {
-			return nil, err
-		}
-
-		data, err := e.unmarshalResponse(res)
-		if err != nil {
-			return nil, err
-		}
-
-		queryRes, err := e.parseResponse(data, query.RefID)
+		queryRes, err := e.executeQuery(ctx, query, tsdbQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -153,6 +119,53 @@ func (e *StackdriverExecutor) parseQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	return stackdriverQueries, nil
 }
 
+func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, error) {
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+
+	req, err := e.createRequest(ctx, e.dsInfo)
+	if err != nil {
+		queryResult.Error = err
+		return queryResult, nil
+	}
+
+	req.URL.RawQuery = query.Params.Encode()
+	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
+	span.SetTag("target", query.Target)
+	span.SetTag("from", tsdbQuery.TimeRange.From)
+	span.SetTag("until", tsdbQuery.TimeRange.To)
+	span.SetTag("datasource_id", e.dsInfo.Id)
+	span.SetTag("org_id", e.dsInfo.OrgId)
+
+	defer span.Finish()
+
+	opentracing.GlobalTracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(req.Header))
+
+	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	if err != nil {
+		queryResult.Error = err
+		return queryResult, nil
+	}
+
+	data, err := e.unmarshalResponse(res)
+	if err != nil {
+		queryResult.Error = err
+		return queryResult, nil
+	}
+
+	err = e.parseResponse(queryResult, data)
+	if err != nil {
+		queryResult.Error = err
+		return queryResult, nil
+	}
+
+	return queryResult, nil
+}
+
 func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriverResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
@@ -161,24 +174,21 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriver
 	}
 
 	if res.StatusCode/100 != 2 {
-		slog.Info("Request failed", "status", res.Status, "body", string(body))
-		return StackDriverResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
+		slog.Error("Request failed", "status", res.Status, "body", string(body))
+		return StackDriverResponse{}, fmt.Errorf(string(body))
 	}
 
 	var data StackDriverResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		slog.Info("Failed to unmarshal Stackdriver response", "error", err, "status", res.Status, "body", string(body))
+		slog.Error("Failed to unmarshal Stackdriver response", "error", err, "status", res.Status, "body", string(body))
 		return StackDriverResponse{}, err
 	}
 
 	return data, nil
 }
 
-func (e *StackdriverExecutor) parseResponse(data StackDriverResponse, queryRefID string) (*tsdb.QueryResult, error) {
-	queryRes := tsdb.NewQueryResult()
-	queryRes.RefId = queryRefID
-
+func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackDriverResponse) error {
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
 		for _, point := range series.Points {
@@ -195,7 +205,7 @@ func (e *StackdriverExecutor) parseResponse(data StackDriverResponse, queryRefID
 		})
 	}
 
-	return queryRes, nil
+	return nil
 }
 
 func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
@@ -227,7 +237,7 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 
-	return req, err
+	return req, nil
 }
 
 func fixIntervalFormat(target string) string {

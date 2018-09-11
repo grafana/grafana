@@ -3,15 +3,23 @@
   "type": "datasource",
   "id": "stackdriver",
   "metrics": true,
-  "alerting": false,
+  "alerting": true,
   "annotations": false,
   "queryOptions": {
     "maxDataPoints": true,
     "cacheTimeout": true
   },
   "info": {
-    "description": "Data Source for Stackdriver",
-    "version": "1.0.0"
+    "description": "Google Stackdriver Datasource for Grafana",
+    "version": "1.0.0",
+    "logos": {
+      "small": "img/stackdriver_logo.png",
+      "large": "img/stackdriver_logo.png"
+    },
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    }
   },
   "routes": [
     {
