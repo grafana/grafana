@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	httpClient http.Client = http.Client{Timeout: time.Duration(10 * time.Second)}
+	httpClient = http.Client{Timeout: 10 * time.Second}
 )
 
 type GrafanaNetPlugin struct {
@@ -24,23 +24,6 @@ type GrafanaNetPlugin struct {
 type GithubLatest struct {
 	Stable  string `json:"stable"`
 	Testing string `json:"testing"`
-}
-
-func StartPluginUpdateChecker() {
-	if !setting.CheckForUpdates {
-		return
-	}
-
-	// do one check directly
-	go checkForUpdates()
-
-	ticker := time.NewTicker(time.Minute * 10)
-	for {
-		select {
-		case <-ticker.C:
-			checkForUpdates()
-		}
-	}
 }
 
 func getAllExternalPluginSlugs() string {
@@ -56,14 +39,18 @@ func getAllExternalPluginSlugs() string {
 	return strings.Join(result, ",")
 }
 
-func checkForUpdates() {
-	log.Trace("Checking for updates")
+func (pm *PluginManager) checkForUpdates() {
+	if !setting.CheckForUpdates {
+		return
+	}
+
+	pm.log.Debug("Checking for updates")
 
 	pluginSlugs := getAllExternalPluginSlugs()
 	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
 
 	if err != nil {
-		log.Trace("Failed to get plugins repo from grafana.net, %v", err.Error())
+		log.Trace("Failed to get plugins repo from grafana.com, %v", err.Error())
 		return
 	}
 
@@ -101,7 +88,7 @@ func checkForUpdates() {
 
 	resp2, err := httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/master/latest.json")
 	if err != nil {
-		log.Trace("Failed to get latest.json repo from github: %v", err.Error())
+		log.Trace("Failed to get latest.json repo from github.com: %v", err.Error())
 		return
 	}
 
@@ -115,7 +102,7 @@ func checkForUpdates() {
 	var githubLatest GithubLatest
 	err = json.Unmarshal(body, &githubLatest)
 	if err != nil {
-		log.Trace("Failed to unmarshal github latest, reading response from github: %v", err.Error())
+		log.Trace("Failed to unmarshal github.com latest, reading response from github.com: %v", err.Error())
 		return
 	}
 

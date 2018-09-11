@@ -34,8 +34,8 @@ const (
 )
 
 var (
-	ErrCannotChangeStateOnPausedAlert error = fmt.Errorf("Cannot change state on pause alert")
-	ErrRequiresNewState               error = fmt.Errorf("update alert state requires a new state.")
+	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("Cannot change state on pause alert")
+	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state.")
 )
 
 func (s AlertStateType) IsValid() bool {
@@ -159,19 +159,17 @@ type SetAlertStateCommand struct {
 	Timestamp time.Time
 }
 
-type DeleteAlertCommand struct {
-	AlertId int64
-}
-
 //Queries
 type GetAlertsQuery struct {
-	OrgId       int64
-	State       []string
-	DashboardId int64
-	PanelId     int64
-	Limit       int64
+	OrgId        int64
+	State        []string
+	DashboardIDs []int64
+	PanelId      int64
+	Limit        int64
+	Query        string
+	User         *SignedInUser
 
-	Result []*Alert
+	Result []*AlertListItemDTO
 }
 
 type GetAllAlertsQuery struct {
@@ -191,10 +189,39 @@ type GetAlertStatesForDashboardQuery struct {
 	Result []*AlertStateInfoDTO
 }
 
+type AlertListItemDTO struct {
+	Id             int64            `json:"id"`
+	DashboardId    int64            `json:"dashboardId"`
+	DashboardUid   string           `json:"dashboardUid"`
+	DashboardSlug  string           `json:"dashboardSlug"`
+	PanelId        int64            `json:"panelId"`
+	Name           string           `json:"name"`
+	State          AlertStateType   `json:"state"`
+	NewStateDate   time.Time        `json:"newStateDate"`
+	EvalDate       time.Time        `json:"evalDate"`
+	EvalData       *simplejson.Json `json:"evalData"`
+	ExecutionError string           `json:"executionError"`
+	Url            string           `json:"url"`
+}
+
 type AlertStateInfoDTO struct {
 	Id           int64          `json:"id"`
 	DashboardId  int64          `json:"dashboardId"`
 	PanelId      int64          `json:"panelId"`
 	State        AlertStateType `json:"state"`
 	NewStateDate time.Time      `json:"newStateDate"`
+}
+
+// "Internal" commands
+
+type UpdateDashboardAlertsCommand struct {
+	UserId    int64
+	OrgId     int64
+	Dashboard *Dashboard
+}
+
+type ValidateDashboardAlertsCommand struct {
+	UserId    int64
+	OrgId     int64
+	Dashboard *Dashboard
 }

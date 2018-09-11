@@ -3,16 +3,15 @@
 .badge {
   display: inline-block;
   padding: 2px 4px;
-  font-size: $font-size-base * .846;
-  font-weight: bold;
+  font-size: $font-size-base * 0.846;
+  font-weight: $font-weight-semi-bold;
   line-height: 14px; // ensure proper line-height if floated
   color: $white;
   vertical-align: baseline;
   white-space: nowrap;
-  text-shadow: 0 -1px 0 rgba(0,0,0,.25);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: $gray-1;
 }
-
 
 // Labels & Badges
 .label-tag {
@@ -22,10 +21,10 @@
   border-radius: 3px;
   text-shadow: none;
   font-size: 13px;
-  padding: 2px 6px;
+  padding: 3px 6px 1px 6px;
   border-width: 1px;
   border-style: solid;
-  box-shadow: 0 0 1px rgba($white,.2);
+  box-shadow: 0 0 1px rgba($white, 0.2);
   .icon-tag {
     position: relative;
     top: 1px;
@@ -34,8 +33,6 @@
 }
 
 .label-tag:hover {
-   opacity: 0.85;
+  opacity: 0.85;
   background-color: darken($purple, 10%);
 }
-
-

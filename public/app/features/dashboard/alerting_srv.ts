@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 
 export class AlertingSrv {
@@ -12,6 +10,4 @@ export class AlertingSrv {
   }
 }
 
-
 coreModule.service('alertingSrv', AlertingSrv);
-

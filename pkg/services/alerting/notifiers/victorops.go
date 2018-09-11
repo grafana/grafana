@@ -51,7 +51,7 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 	}
 
 	return &VictoropsNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		URL:          url,
 		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.victorops"),
@@ -81,27 +81,6 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State == models.AlertStateOK && !this.AutoResolve {
 		this.log.Info("Not alerting VictorOps", "state", evalContext.Rule.State, "auto resolve", this.AutoResolve)
 		return nil
-	}
-
-	fields := make([]map[string]interface{}, 0)
-	fieldLimitCount := 4
-	for index, evt := range evalContext.EvalMatches {
-		fields = append(fields, map[string]interface{}{
-			"title": evt.Metric,
-			"value": evt.Value,
-			"short": true,
-		})
-		if index > fieldLimitCount {
-			break
-		}
-	}
-
-	if evalContext.Error != nil {
-		fields = append(fields, map[string]interface{}{
-			"title": "Error message",
-			"value": evalContext.Error.Error(),
-			"short": false,
-		})
 	}
 
 	messageType := evalContext.Rule.State

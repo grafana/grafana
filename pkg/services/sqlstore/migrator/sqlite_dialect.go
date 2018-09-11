@@ -1,14 +1,19 @@
 package migrator
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/go-xorm/xorm"
+)
 
 type Sqlite3 struct {
 	BaseDialect
 }
 
-func NewSqlite3Dialect() *Sqlite3 {
+func NewSqlite3Dialect(engine *xorm.Engine) *Sqlite3 {
 	d := Sqlite3{}
 	d.BaseDialect.dialect = &d
+	d.BaseDialect.engine = engine
 	d.BaseDialect.driverName = SQLITE
 	return &d
 }
@@ -21,10 +26,6 @@ func (db *Sqlite3) Quote(name string) string {
 	return "`" + name + "`"
 }
 
-func (db *Sqlite3) QuoteStr() string {
-	return "`"
-}
-
 func (db *Sqlite3) AutoIncrStr() string {
 	return "AUTOINCREMENT"
 }
@@ -34,6 +35,10 @@ func (db *Sqlite3) BooleanStr(value bool) string {
 		return "1"
 	}
 	return "0"
+}
+
+func (db *Sqlite3) DateTimeFunc(value string) string {
+	return "datetime(" + value + ")"
 }
 
 func (db *Sqlite3) SqlType(c *Column) string {
@@ -72,4 +77,8 @@ func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {
 	//var unique string
 	idxName := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
+}
+
+func (db *Sqlite3) CleanDB() error {
+	return nil
 }

@@ -1,8 +1,6 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import appEvents  from 'app/core/app_events';
-import {coreModule, JsonExplorer} from 'app/core/core';
+import appEvents from 'app/core/app_events';
+import { coreModule, JsonExplorer } from 'app/core/core';
 
 const template = `
 <div class="query-troubleshooter" ng-if="ctrl.isOpen">
@@ -42,7 +40,7 @@ export class QueryTroubleshooterCtrl {
   mockedResponse: string;
   jsonExplorer: JsonExplorer;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, private $timeout) {
     this.onRequestErrorEventListener = this.onRequestError.bind(this);
     this.onRequestResponseEventListener = this.onRequestResponse.bind(this);
@@ -50,8 +48,8 @@ export class QueryTroubleshooterCtrl {
     appEvents.on('ds-request-response', this.onRequestResponseEventListener);
     appEvents.on('ds-request-error', this.onRequestErrorEventListener);
 
-    $scope.$on('$destroy',  this.removeEventsListeners.bind(this));
-    $scope.$watch('ctrl.isOpen',  this.stateChanged.bind(this));
+    $scope.$on('$destroy', this.removeEventsListeners.bind(this));
+    $scope.$watch('ctrl.isOpen', this.stateChanged.bind(this));
   }
 
   removeEventsListeners() {
@@ -89,7 +87,7 @@ export class QueryTroubleshooterCtrl {
   }
 
   handleMocking(data) {
-    var mockedData;
+    let mockedData;
     try {
       mockedData = JSON.parse(this.mockedResponse);
     } catch (err) {
@@ -169,22 +167,21 @@ export function queryTroubleshooter() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      panelCtrl: "=",
-      isOpen: "=",
+      panelCtrl: '=',
+      isOpen: '=',
     },
-    link: function(scope, elem, attrs, ctrl) {
+    link: (scope, elem, attrs, ctrl) => {
+      ctrl.renderJsonExplorer = data => {
+        const jsonElem = elem.find('.query-troubleshooter-json');
 
-      ctrl.renderJsonExplorer = function(data) {
-        var jsonElem = elem.find('.query-troubleshooter-json');
-
-        ctrl.jsonExplorer =  new JsonExplorer(data, 3, {
+        ctrl.jsonExplorer = new JsonExplorer(data, 3, {
           animateOpen: true,
         });
 
         const html = ctrl.jsonExplorer.render(true);
         jsonElem.html(html);
       };
-    }
+    },
   };
 }
 

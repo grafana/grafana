@@ -1,0 +1,107 @@
+$select-input-height: 35px;
+$select-menu-max-height: 300px;
+$select-item-font-size: $font-size-base;
+$select-item-bg: $dropdownBackground;
+$select-item-fg: $input-color;
+$select-option-bg: $dropdownBackground;
+$select-option-color: $input-color;
+$select-noresults-color: $text-color;
+$select-input-bg: $input-bg;
+$select-input-border-color: $input-border-color;
+$select-menu-box-shadow: $menu-dropdown-shadow;
+$select-text-color: $text-color;
+$select-input-bg-disabled: $input-bg-disabled;
+$select-option-selected-bg: $dropdownLinkBackgroundActive;
+
+@import '../../../node_modules/react-select/scss/default.scss';
+
+@mixin select-control() {
+  width: 100%;
+  margin-right: $gf-form-margin;
+  @include border-radius($input-border-radius-sm);
+  background-color: $input-bg;
+}
+
+@mixin select-control-focus() {
+  border-color: $input-border-focus;
+  outline: none;
+  $shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px $input-box-shadow-focus;
+  @include box-shadow($shadow);
+}
+
+// react-select tweaks
+.gf-form-input--form-dropdown {
+  padding: 0;
+  border: 0;
+  overflow: visible;
+
+  .Select-placeholder {
+    color: $input-color-placeholder;
+  }
+
+  > .Select-control {
+    @include select-control();
+    border-color: $dark-3;
+
+    input {
+      min-width: 1rem;
+    }
+
+    .Select-clear,
+    .Select-arrow {
+      margin-right: 8px;
+    }
+
+    .Select-value {
+      display: inline-block;
+      padding: $input-padding-y $input-padding-x;
+      font-size: $font-size-md;
+      line-height: $input-line-height;
+      vertical-align: baseline;
+      white-space: nowrap;
+    }
+  }
+
+  &.is-open > .Select-control {
+    background: transparent;
+    border-color: $dark-3;
+  }
+
+  &.is-focused > .Select-control {
+    background-color: $input-bg;
+    @include select-control-focus();
+  }
+
+  &.is-focused:not(.is-open) > .Select-control {
+    background-color: $input-bg;
+    @include select-control-focus();
+  }
+
+  .Select-menu-outer {
+    border: 0;
+    width: auto;
+  }
+
+  .Select-option.is-focused {
+    background-color: $dropdownLinkBackgroundHover;
+    color: $dropdownLinkColorHover;
+
+    &::before {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 2px;
+      display: block;
+      content: '';
+      background-image: linear-gradient(to bottom, #ffd500 0%, #ff4400 99%, #ff4400 100%);
+    }
+  }
+}
+
+.gf-form-input--form-dropdown-right {
+  .Select-menu-outer {
+    right: 0;
+    left: unset;
+  }
+}

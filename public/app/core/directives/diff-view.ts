@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import coreModule from '../core_module';
 
@@ -8,8 +6,7 @@ export class DeltaCtrl {
 
   /** @ngInject */
   constructor(private $rootScope) {
-
-    const waitForCompile = (mutations) => {
+    const waitForCompile = mutations => {
       if (mutations.length === 1) {
         this.$rootScope.appEvent('json-diff-ready');
       }
@@ -72,7 +69,7 @@ export function linkJson() {
       link: '@lineLink',
       switchView: '&',
     },
-    template: `<a class="diff-linenum btn btn-inverse btn-small" ng-click="ctrl.goToLine(link)">Line {{ line }}</a>`
+    template: `<a class="diff-linenum btn btn-inverse btn-small" ng-click="ctrl.goToLine(link)">Line {{ line }}</a>`,
   };
 }
 coreModule.directive('diffLinkJson', linkJson);

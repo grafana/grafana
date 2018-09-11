@@ -1,27 +1,20 @@
-// Copyright (c) 2016 Uber Technologies, Inc.
-
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Copyright (c) 2017-2018 Uber Technologies, Inc.
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package jaeger
 
 import (
-	"strings"
 	"sync"
 	"time"
 
@@ -87,7 +80,7 @@ func (s *Span) SetOperationName(operationName string) opentracing.Span {
 // SetTag implements SetTag() of opentracing.Span
 func (s *Span) SetTag(key string, value interface{}) opentracing.Span {
 	s.observer.OnSetTag(key, value)
-	if key == string(ext.SamplingPriority) && setSamplingPriority(s, value) {
+	if key == string(ext.SamplingPriority) && !setSamplingPriority(s, value) {
 		return s
 	}
 	s.Lock()
@@ -167,7 +160,6 @@ func (s *Span) appendLog(lr opentracing.LogRecord) {
 
 // SetBaggageItem implements SetBaggageItem() of opentracing.SpanContext
 func (s *Span) SetBaggageItem(key, value string) opentracing.Span {
-	key = normalizeBaggageKey(key)
 	s.Lock()
 	defer s.Unlock()
 	s.tracer.setBaggage(s, key, value)
@@ -176,7 +168,6 @@ func (s *Span) SetBaggageItem(key, value string) opentracing.Span {
 
 // BaggageItem implements BaggageItem() of opentracing.SpanContext
 func (s *Span) BaggageItem(key string) string {
-	key = normalizeBaggageKey(key)
 	s.RLock()
 	defer s.RUnlock()
 	return s.context.baggage[key]
@@ -211,6 +202,8 @@ func (s *Span) FinishWithOptions(options opentracing.FinishOptions) {
 
 // Context implements opentracing.Span API
 func (s *Span) Context() opentracing.SpanContext {
+	s.Lock()
+	defer s.Unlock()
 	return s.context
 }
 
@@ -232,23 +225,25 @@ func (s *Span) OperationName() string {
 	return s.operationName
 }
 
+func (s *Span) serviceName() string {
+	return s.tracer.serviceName
+}
+
+// setSamplingPriority returns true if the flag was updated successfully, false otherwise.
 func setSamplingPriority(s *Span, value interface{}) bool {
 	s.Lock()
 	defer s.Unlock()
-	if val, ok := value.(uint16); ok {
-		if val > 0 {
-			s.context.flags = s.context.flags | flagDebug | flagSampled
-		} else {
-			s.context.flags = s.context.flags & (^flagSampled)
-		}
+	val, ok := value.(uint16)
+	if !ok {
+		return false
+	}
+	if val == 0 {
+		s.context.flags = s.context.flags & (^flagSampled)
+		return true
+	}
+	if s.tracer.isDebugAllowed(s.operationName) {
+		s.context.flags = s.context.flags | flagDebug | flagSampled
 		return true
 	}
 	return false
-}
-
-// Converts end-user baggage key into internal representation.
-// Used for both read and write access to baggage items.
-func normalizeBaggageKey(key string) string {
-	// TODO(yurishkuro) normalizeBaggageKey: cache the results in some bounded LRU cache
-	return strings.Replace(strings.ToLower(key), "_", "-", -1)
 }

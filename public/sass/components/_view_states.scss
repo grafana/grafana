@@ -1,75 +1,49 @@
-@mixin hide-controls() {
-  .add-row-panel-hint,
-  .dash-row-menu-container {
-    display: none;
-  }
-  .resize-panel-handle,
-  .panel-drop-zone {
-    visibility: hidden;
-  }
-}
-
-.hide-controls {
-  @include hide-controls();
-}
-
-.page-kiosk-mode {
-  @include hide-controls();
-  dashnav {
-    display: none;
-  }
-}
-
-.playlist-active,
-.user-activity-low {
+.view-mode--inactive {
+  .react-resizable-handle,
   .add-row-panel-hint,
   .dash-row-menu-container,
-  .resize-panel-handle,
-  .panel-drop-zone
-  .dashnav-refresh-action,
-  .dashnav-zoom-out,
-  .dashnav-action-icons,
+  .navbar-buttons--actions,
   .panel-info-corner--info,
-  .panel-info-corner--links,
-  .dashnav-move-timeframe  {
-    opacity: 0;
-    transition: all 1.5s ease-in-out 1s;
-  }
-
-  // navbar buttons
-  .navbar-brand-btn,
-  .navbar-inner {
-    border-color: transparent;
-    background: transparent;
-    transition: all 1.5s ease-in-out 1s;
-    .fa {
-      opacity: 0;
-      transition: all 1.5s ease-in-out 1s;
-    }
+  .panel-info-corner--links {
+    display: none;
   }
 
   .navbar-page-btn {
-    border-color: transparent;
-    background: transparent;
-    transform: translate3d(-50px, 0, 0);
-    transition: all 1.5s ease-in-out 1s;
-    .icon-gf {
+    transform: translate3d(-36px, 0, 0);
+    i {
       opacity: 0;
-      transition: all 1.5s ease-in-out 1s;
     }
   }
 
-  .gf-timepicker-nav-btn {
-    transform: translate3d(40px, 0, 0);
-    transition: transform 1.5s ease-in-out 1s;
+  .navbar-button--zoom,
+  .navbar-button--refresh {
+    display: none;
   }
 }
 
-.playlist-active {
-  .dash-playlist-actions  {
-    .fa {
-      opacity: 1;
-      color: $text-color-faint !important;
-    }
+.view-mode--playlist {
+  @extend .view-mode--inactive;
+}
+
+.view-mode--tv {
+  @extend .view-mode--inactive;
+
+  .submenu-controls {
+    display: none;
+  }
+}
+
+.view-mode--kiosk {
+  @extend .view-mode--tv;
+
+  .sidemenu,
+  .navbar {
+    display: none;
+  }
+  .scroll-canvas--dashboard {
+    height: 100%;
+  }
+  .submenu-controls {
+    display: none;
   }
 }

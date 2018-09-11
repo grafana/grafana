@@ -1,6 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
-
-import EventEmitter from 'eventemitter3';
+import { EventEmitter } from 'eventemitter3';
 
 export class Emitter {
   emitter: any;
@@ -17,7 +15,7 @@ export class Emitter {
     this.emitter.on(name, handler);
 
     if (scope) {
-      var unbind = scope.$on('$destroy', () => {
+      const unbind = scope.$on('$destroy', () => {
         this.emitter.off(name, handler);
         unbind();
       });

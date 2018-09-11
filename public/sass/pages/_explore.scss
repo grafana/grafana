@@ -1,0 +1,169 @@
+.explore {
+  width: 100%;
+
+  &-container {
+    padding: 2rem;
+  }
+
+  &-wrapper {
+    display: flex;
+
+    > .explore-split {
+      width: 50%;
+    }
+  }
+
+  // Push split button a bit
+  .explore-first-button {
+    margin-left: 15px;
+  }
+
+  // Graph panel needs a bit extra padding at top
+  .panel-container {
+    padding: $panel-padding;
+    padding-top: 10px;
+  }
+
+  // Make sure wrap buttons around on small screens
+  .navbar {
+    flex-wrap: wrap;
+    height: auto;
+  }
+
+  .navbar-page-btn {
+    margin-right: 1rem;
+
+    // Explore icon in header
+    .fa {
+      font-size: 100%;
+      opacity: 0.75;
+      margin-right: 0.5em;
+    }
+  }
+
+  // Toggle mode
+  .navbar-button.active {
+    color: $btn-active-text-color;
+    background-color: $btn-active-bg;
+  }
+
+  .navbar-button--no-icon {
+    line-height: 18px;
+  }
+
+  .result-options {
+    margin-top: 2 * $panel-margin;
+  }
+
+  .elapsed-time {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 3.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+  }
+
+  .graph-legend {
+    flex-wrap: wrap;
+  }
+
+  .datasource-picker {
+    min-width: 10rem;
+  }
+
+  .timepicker {
+    display: flex;
+
+    &-rangestring {
+      margin-left: 0.5em;
+    }
+  }
+
+  .run-icon {
+    margin-left: 0.5em;
+    transform: rotate(90deg);
+  }
+
+  .relative {
+    position: relative;
+  }
+
+  .link {
+    text-decoration: underline;
+  }
+}
+
+.explore + .explore {
+  border-left: 1px dotted $table-border;
+}
+
+.query-row {
+  display: flex;
+
+  & + & {
+    margin-top: 0.5rem;
+  }
+}
+
+.query-row-tools {
+  width: 6rem;
+}
+
+.query-row-field {
+  margin-right: 3px;
+  width: 100%;
+}
+
+.explore {
+  .logs {
+    .logs-entries {
+      display: grid;
+      grid-column-gap: 1rem;
+      grid-row-gap: 0.1rem;
+      grid-template-columns: 4px minmax(100px, max-content) 1fr;
+      font-family: $font-family-monospace;
+    }
+
+    .logs-row-match-highlight {
+      background-color: lighten($blue, 20%);
+    }
+
+    .logs-row-level {
+      background-color: transparent;
+      margin: 6px 0;
+      border-radius: 2px;
+      opacity: 0.8;
+    }
+
+    .logs-row-level-crit,
+    .logs-row-level-error,
+    .logs-row-level-err {
+      background-color: $red;
+    }
+
+    .logs-row-level-warn {
+      background-color: $orange;
+    }
+
+    .logs-row-level-info {
+      background-color: $green;
+    }
+  }
+}
+
+// Prometheus-specifics, to be extracted to datasource soon
+
+.explore {
+  .prom-query-field {
+    display: flex;
+  }
+
+  .prom-query-field-wrapper {
+    width: 100%;
+  }
+
+  .prom-query-field-info {
+    margin: 0.25em 0.5em 0.5em;
+  }
+}

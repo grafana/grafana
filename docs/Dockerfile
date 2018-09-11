@@ -9,5 +9,6 @@ FROM grafana/docs-base:latest
 
 COPY config.toml /site
 COPY awsconfig /site
+COPY versions.json /site/static/js
 
 VOLUME ["/site/content"]

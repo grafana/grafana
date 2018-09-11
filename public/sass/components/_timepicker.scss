@@ -1,29 +1,30 @@
-.nav.gf-timepicker-nav {
-  margin-right: 0;
-}
-
 .timepicker-timestring {
   font-weight: normal;
 }
 
+.gf-timepicker-nav {
+  flex-wrap: nowrap;
+  display: flex;
+}
+
 .gf-timepicker-nav-btn {
-  overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: hidden;
 }
 
 .gf-timepicker-dropdown {
-  margin: -8px -10px 10px 5px;
+  position: absolute;
+  top: $navbarHeight;
+  right: 0;
   padding: 10px 20px;
-  float: right;
-  background-color: $panel-bg;
-  @include box-shadow($navbarDropdownShadow);
+  background-color: $page-bg;
+  border-radius: 0 0 0 4px;
+  box-shadow: $search-shadow;
 }
 
 .gf-timepicker-absolute-section {
   width: 290px;
   float: left;
-  border-right: 1px solid $divider-border-color;
   padding: 0 10px;
   select {
     width: 183px;
@@ -41,7 +42,7 @@
   font-size: 75%;
   padding: 3px;
   border-radius: 2px;
-  font-weight: bold;
+  font-weight: 500;
   margin-left: 4px;
 }
 
@@ -59,7 +60,7 @@
     li.active {
       border-bottom: 1px solid $blue;
       margin: 3px 0;
-      font-weight: bold;
+      font-weight: 500;
     }
   }
 }
@@ -70,12 +71,10 @@
   td {
     padding: 1px;
   }
-  button.btn-sm {
+  button {
     @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
-    font-size: $font-size-sm;
     background-image: none;
     border: none;
-    padding: 5px 11px;
     color: $text-color;
     &.active span {
       color: $blue;
@@ -85,11 +84,21 @@
       color: $orange;
       font-weight: bold;
     }
+    &.btn-sm {
+      font-size: $font-size-sm;
+      padding: 5px 11px;
+    }
+    &:hover {
+      color: $text-color-strong;
+    }
+    &[disabled] {
+      color: $text-color;
+    }
   }
 }
 
 .input-datetime-format {
-  color: $link-color-disabled
+  color: $link-color-disabled;
 }
 
 .fa {
@@ -102,10 +111,10 @@
 }
 
 .fa-chevron-left::before {
-  content: "\f053";
+  content: '\f053';
 }
 .fa-chevron-right::before {
-  content: "\f054";
+  content: '\f054';
 }
 
 .glyphicon-chevron-right {
@@ -116,16 +125,4 @@
 .glyphicon-chevron-left {
   @extend .fa;
   @extend .fa-chevron-left;
-}
-
-.gf-timepicker-time-control {
-  font-size: $font-size-sm;
-  a {
-    padding: 18px 7px 13px !important;
-  }
-}
-
-.dashnav-move-timeframe  {
-  position: relative;
-  top: 1px;
 }

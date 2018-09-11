@@ -156,7 +156,7 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-  "email": "user@mygraf.com"
+  "email": "user@mygraf.com",
   "name": "admin",
   "login": "admin",
   "theme": "light",
@@ -359,6 +359,39 @@ Content-Type: application/json
     "orgId":1,
     "name":"Main Org.",
     "role":"Admin"
+  }
+]
+```
+
+## Teams that the actual User is member of
+
+`GET /api/user/teams`
+
+Return a list of all teams that the current user is member of.
+
+**Example Request**:
+
+```http
+GET /api/user/teams HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "id": 1,
+    "orgId": 1,
+    "name": "MyTestTeam",
+    "email": "",
+    "avatarUrl": "\/avatar\/3f49c15916554246daa714b9bd0ee398",
+    "memberCount": 1
   }
 ]
 ```

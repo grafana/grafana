@@ -1,0 +1,103 @@
+.add-panel-container {
+  height: 100%;
+}
+
+.add-panel {
+  height: 100%;
+
+  .baron__root {
+    height: calc(100% - 43px);
+  }
+}
+
+.add-panel__header {
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
+
+  .gicon {
+    font-size: 30px;
+    margin-right: $spacer;
+  }
+}
+
+.add-panel__close {
+  margin-left: auto;
+  background-color: transparent;
+  border: 0;
+  font-size: 16px;
+  margin-right: -10px;
+}
+
+.add-panel__title {
+  font-size: $font-size-md;
+  margin-right: $spacer*2;
+}
+
+.add-panel__sub-title {
+  font-style: italic;
+  color: $text-muted;
+  position: relative;
+  top: 1px;
+}
+
+.add-panel__items {
+  padding: 3px 8px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  overflow: auto;
+  height: 100%;
+  align-content: flex-start;
+  justify-content: space-around;
+  position: relative;
+}
+
+.add-panel__item {
+  background: $card-background;
+  box-shadow: $card-shadow;
+
+  border-radius: 3px;
+  padding: $spacer/3 $spacer;
+  width: 31%;
+  height: 60px;
+  text-align: center;
+  margin: $gf-form-margin;
+  cursor: pointer;
+
+  &.active,
+  &:hover {
+    background: $card-background-hover;
+  }
+}
+
+.add-panel__item-name {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: $font-size-sm;
+}
+
+.add-panel__item-img {
+  height: calc(100% - 15px);
+}
+
+.add-panel__item-icon {
+  padding: 2px;
+}
+
+.add-panel__searchbar {
+  width: 100%;
+  margin-bottom: 10px;
+  margin-top: 7px;
+}
+
+.add-panel__no-panels {
+  color: $text-color-weak;
+  font-style: italic;
+  width: 100%;
+  padding: 3px 8px;
+}

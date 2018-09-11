@@ -21,6 +21,8 @@
  * data-tab-size           - Tab size, default is 2.
  * data-behaviours-enabled - Specifies whether to use behaviors or not. "Behaviors" in this case is the auto-pairing of
  *                           special characters, like quotation marks, parenthesis, or brackets.
+ * data-snippets-enabled   - Specifies whether to use snippets or not. "Snippets" are small pieces of code that can be
+ *                           inserted via the completion box.
  *
  * Keybindings:
  * Ctrl-Enter (Command-Enter): run onChange() function
@@ -36,39 +38,45 @@ import 'brace/mode/text';
 import 'brace/snippets/text';
 import 'brace/mode/sql';
 import 'brace/snippets/sql';
+import 'brace/mode/sqlserver';
+import 'brace/snippets/sqlserver';
 import 'brace/mode/markdown';
 import 'brace/snippets/markdown';
+import 'brace/mode/json';
+import 'brace/snippets/json';
 
-const DEFAULT_THEME_DARK = "ace/theme/grafana-dark";
-const DEFAULT_THEME_LIGHT = "ace/theme/textmate";
-const DEFAULT_MODE = "text";
+const DEFAULT_THEME_DARK = 'ace/theme/grafana-dark';
+const DEFAULT_THEME_LIGHT = 'ace/theme/textmate';
+const DEFAULT_MODE = 'text';
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
 const DEFAULT_BEHAVIOURS = true;
+const DEFAULT_SNIPPETS = true;
 
-let editorTemplate = `<div></div>`;
+const editorTemplate = `<div></div>`;
 
 function link(scope, elem, attrs) {
   // Options
-  let langMode = attrs.mode || DEFAULT_MODE;
-  let maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
-  let showGutter = attrs.showGutter !== undefined;
-  let tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
-  let behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIOURS;
+  const langMode = attrs.mode || DEFAULT_MODE;
+  const maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
+  const showGutter = attrs.showGutter !== undefined;
+  const tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
+  const behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIOURS;
+  const snippetsEnabled = attrs.snippetsEnabled ? attrs.snippetsEnabled === 'true' : DEFAULT_SNIPPETS;
 
   // Initialize editor
-  let aceElem = elem.get(0);
-  let codeEditor = ace.edit(aceElem);
-  let editorSession = codeEditor.getSession();
+  const aceElem = elem.get(0);
+  const codeEditor = ace.edit(aceElem);
+  const editorSession = codeEditor.getSession();
 
-  let editorOptions = {
+  const editorOptions = {
     maxLines: maxLines,
     showGutter: showGutter,
     tabSize: tabSize,
     behavioursEnabled: behavioursEnabled,
     highlightActiveLine: false,
     showPrintMargin: false,
-    autoScrollEditorIntoView: true // this is needed if editor is inside scrollable page
+    autoScrollEditorIntoView: true, // this is needed if editor is inside scrollable page
   };
 
   // Set options
@@ -76,7 +84,7 @@ function link(scope, elem, attrs) {
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
-  (<any>codeEditor.renderer).setScrollMargin(15, 15);
+  (codeEditor.renderer as any).setScrollMargin(15, 15);
   codeEditor.renderer.setPadding(10);
 
   setThemeMode();
@@ -84,34 +92,34 @@ function link(scope, elem, attrs) {
   setEditorContent(scope.content);
 
   // Add classes
-  elem.addClass("gf-code-editor");
-  let textarea = elem.find("textarea");
+  elem.addClass('gf-code-editor');
+  const textarea = elem.find('textarea');
   textarea.addClass('gf-form-input');
 
   if (scope.codeEditorFocus) {
-    setTimeout(function () {
+    setTimeout(() => {
       textarea.focus();
-      var domEl = textarea[0];
+      const domEl = textarea[0];
       if (domEl.setSelectionRange) {
-        var pos = textarea.val().length * 2;
+        const pos = textarea.val().length * 2;
         domEl.setSelectionRange(pos, pos);
       }
     }, 100);
   }
 
   // Event handlers
-  editorSession.on('change', (e) => {
+  editorSession.on('change', e => {
     scope.$apply(() => {
-      let newValue = codeEditor.getValue();
+      const newValue = codeEditor.getValue();
       scope.content = newValue;
     });
   });
 
   // Sync with outer scope - update editor content if model has been changed from outside of directive.
   scope.$watch('content', (newValue, oldValue) => {
-    let editorValue = codeEditor.getValue();
+    const editorValue = codeEditor.getValue();
     if (newValue !== editorValue && newValue !== oldValue) {
-      scope.$$postDigest(function() {
+      scope.$$postDigest(() => {
         setEditorContent(newValue);
       });
     }
@@ -121,35 +129,35 @@ function link(scope, elem, attrs) {
     scope.onChange();
   });
 
-  scope.$on("$destroy", () => {
+  scope.$on('$destroy', () => {
     codeEditor.destroy();
   });
 
   // Keybindings
   codeEditor.commands.addCommand({
     name: 'executeQuery',
-    bindKey: {win: 'Ctrl-Enter', mac: 'Command-Enter'},
+    bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
     exec: () => {
       scope.onChange();
-    }
+    },
   });
 
   function setLangMode(lang) {
-    ace.acequire("ace/ext/language_tools");
+    ace.acequire('ace/ext/language_tools');
     codeEditor.setOptions({
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
-      enableSnippets: true
+      enableSnippets: snippetsEnabled,
     });
 
     if (scope.getCompleter()) {
       // make copy of array as ace seems to share completers array between instances
-      const anyEditor = <any>codeEditor;
+      const anyEditor = codeEditor as any;
       anyEditor.completers = anyEditor.completers.slice();
       anyEditor.completers.push(scope.getCompleter());
     }
 
-    let aceModeName = `ace/mode/${lang}`;
+    const aceModeName = `ace/mode/${lang}`;
     editorSession.setMode(aceModeName);
   }
 
@@ -173,13 +181,13 @@ export function codeEditorDirective() {
     restrict: 'E',
     template: editorTemplate,
     scope: {
-      content: "=",
-      datasource: "=",
-      codeEditorFocus: "<",
-      onChange: "&",
-      getCompleter: "&"
+      content: '=',
+      datasource: '=',
+      codeEditorFocus: '<',
+      onChange: '&',
+      getCompleter: '&',
     },
-    link: link
+    link: link,
   };
 }
 

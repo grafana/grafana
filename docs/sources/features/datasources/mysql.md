@@ -12,6 +12,8 @@ weight = 7
 # Using MySQL in Grafana
 
 > Only available in Grafana v4.3+.
+>
+> Starting from Grafana v5.1 you can name the time column *time* in addition to earlier supported *time_sec*. Usage of *time_sec*  will eventually be deprecated.
 
 Grafana ships with a built-in MySQL data source plugin that allow you to query any visualize
 data from a MySQL compatible database.
@@ -22,6 +24,35 @@ data from a MySQL compatible database.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
 4. Select *MySQL* from the *Type* dropdown.
+
+### Data source options
+
+Name | Description
+------------ | -------------
+*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Default* | Default data source means that it will be pre-selected for new panels.
+*Host* | The IP address/hostname and optional port of your MySQL instance.
+*Database* | Name of your MySQL database.
+*User* | Database user's login/username
+*Password* | Database user's password
+
+### Min time interval
+
+A lower limit for the [$__interval](/reference/templating/#the-interval-variable) and [$__interval_ms](/reference/templating/#the-interval-ms-variable) variables.
+Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+Identifier | Description
+------------ | -------------
+`y`   | year
+`M`   | month
+`w`   | week
+`d`   | day
+`h`   | hour
+`m`   | minute
+`s`   | second
+`ms`  | millisecond
 
 ### Database User Permissions (Important!)
 
@@ -45,7 +76,21 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 
 Macro example | Description
 ------------ | -------------
-*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > FROM_UNIXTIME(1494410783) AND dateColumn < FROM_UNIXTIME(1494497183)*
+*$__time(dateColumn)* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
+*$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
+*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'*
+*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
+*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
+*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),*
+*$__timeGroup(dateColumn,'5m', 0)* | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
+*$__timeGroup(dateColumn,'5m', NULL)* | Same as above but NULL will be used as value for missing points.
+*$__timeGroup(dateColumn,'5m', previous)* | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
+*$__timeGroupAlias(dateColumn,'5m')* | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
+*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
+*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
+*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
+*$__unixEpochGroup(dateColumn,'5m', [fillmode])* | Same as $__timeGroup but for times stored as unix timestamp (only available in Grafana 5.3+).
+*$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])* | Same as above but also adds a column alias (only available in Grafana 5.3+).
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -77,26 +122,53 @@ The resulting table panel:
 
 ![](/img/docs/v43/mysql_table.png)
 
-### Time series queries
+## Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then there are some requirements for
-what your query returns.
+If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch.
+Any column except `time` and `metric` is treated as a value column.
+You may return a column named `metric` that is used as metric name for the value column.
+If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
 
-- Must be a column named `time_sec` representing a unix epoch in seconds.
-- Must be a column named `value` representing the time series value.
-- Must be a column named `metric` representing the time series name.
+Resultsets of time series queries need to be sorted by time.
 
-Example:
+**Example with `metric` column:**
 
 ```sql
 SELECT
-  min(UNIX_TIMESTAMP(time_date_time)) as time_sec,
-  max(value_double) as value,
-  metric1 as metric
+  $__timeGroup(time_date_time,'5m'),
+  min(value_double),
+  'min' as metric
 FROM test_data
-WHERE   $__timeFilter(time_date_time)
-GROUP BY metric1, UNIX_TIMESTAMP(time_date_time) DIV 300
-ORDER BY time_sec asc
+WHERE $__timeFilter(time_date_time)
+GROUP BY time
+ORDER BY time
+```
+
+**Example using the fill parameter in the $__timeGroup macro to convert null values to be zero instead:**
+
+```sql
+SELECT
+  $__timeGroup(createdAt,'5m',0),
+  sum(value_double) as value,
+  measurement
+FROM test_data
+WHERE
+  $__timeFilter(createdAt)
+GROUP BY time, measurement
+ORDER BY time
+```
+
+**Example with multiple columns:**
+
+```sql
+SELECT
+  $__timeGroup(time_date_time,'5m'),
+  min(value_double) as min_value,
+  max(value_double) as max_value
+FROM test_data
+WHERE $__timeFilter(time_date_time)
+GROUP BY time
+ORDER BY time
 ```
 
 Currently, there is no support for a dynamic group by time based on time range & panel width.
@@ -160,7 +232,7 @@ There are two syntaxes:
 
 ```sql
 SELECT
-  UNIX_TIMESTAMP(atimestamp) as time_sec,
+  UNIX_TIMESTAMP(atimestamp) as time,
   aint as value,
   avarchar as metric
 FROM my_table
@@ -172,7 +244,7 @@ ORDER BY atimestamp ASC
 
 ```sql
 SELECT
-  UNIX_TIMESTAMP(atimestamp) as time_sec,
+  UNIX_TIMESTAMP(atimestamp) as time,
   aint as value,
   avarchar as metric
 FROM my_table
@@ -180,28 +252,68 @@ WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp ASC
 ```
 
+#### Disabling Quoting for Multi-value Variables
+
+Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. Do disable quoting, use the csv formatting option for variables:
+
+`${servers:csv}`
+
+Read more about variable formatting options in the [Variables]({{< relref "reference/templating.md#advanced-formatting-options" >}}) documentation.
+
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
-An example query:
+**Example query using time column with epoch values:**
 
 ```sql
 SELECT
-  UNIX_TIMESTAMP(atimestamp) as time_sec,
-  value as text,
+  epoch_time as time,
+  metric1 as text,
   CONCAT(tag1, ',', tag2) as tags
-FROM my_table
-WHERE $__timeFilter(atimestamp)
-ORDER BY atimestamp ASC
+FROM
+  public.test_data
+WHERE
+  $__unixEpochFilter(epoch_time)
+```
+
+**Example query using time column of native sql date/time data type:**
+
+```sql
+SELECT
+  native_date_time as time,
+  metric1 as text,
+  CONCAT(tag1, ',', tag2) as tags
+FROM
+  public.test_data
+WHERE
+  $__timeFilter(native_date_time)
 ```
 
 Name | Description
 ------------ | -------------
-time_sec | The name of the date/time field.
+time | The name of the date/time field. Could be a column with a native sql date/time data type or epoch value.
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 
 ## Alerting
 
 Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule conditions.
+
+## Configure the Datasource with Provisioning
+
+It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+
+Here are some provisioning examples for this datasource.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: MySQL
+    type: mysql
+    url: localhost:3306
+    database: grafana
+    user: grafana
+    password: password
+```

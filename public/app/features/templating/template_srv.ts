@@ -2,21 +2,26 @@ import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 
 function luceneEscape(value) {
-  return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, "\\$1");
+  return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 
 export class TemplateSrv {
   variables: any[];
 
-  private regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
+  /*
+   * This regex matches 3 types of variable reference with an optional format specifier
+   * \$(\w+)                          $var1
+   * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
+   * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
+   */
+  private regex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?::(\w+))?}/g;
   private index = {};
   private grafanaVariables = {};
   private builtIns = {};
-  private filters = {};
 
   constructor() {
-    this.builtIns['__interval'] = {text: '1s', value: '1s'};
-    this.builtIns['__interval_ms'] = {text: '100', value: '100'};
+    this.builtIns['__interval'] = { text: '1s', value: '1s' };
+    this.builtIns['__interval_ms'] = { text: '100', value: '100' };
   }
 
   init(variables) {
@@ -26,12 +31,11 @@ export class TemplateSrv {
 
   updateTemplateData() {
     this.index = {};
-    this.filters = {};
 
-    for (var i = 0; i < this.variables.length; i++) {
-      var variable = this.variables[i];
+    for (let i = 0; i < this.variables.length; i++) {
+      const variable = this.variables[i];
 
-      if (!variable.current || !variable.current.isNone && !variable.current.value) {
+      if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
         continue;
       }
 
@@ -44,10 +48,10 @@ export class TemplateSrv {
   }
 
   getAdhocFilters(datasourceName) {
-    var filters = [];
+    let filters = [];
 
-    for (var i = 0; i < this.variables.length; i++) {
-      var variable = this.variables[i];
+    for (let i = 0; i < this.variables.length; i++) {
+      const variable = this.variables[i];
       if (variable.type !== 'adhoc') {
         continue;
       }
@@ -70,8 +74,11 @@ export class TemplateSrv {
     if (typeof value === 'string') {
       return luceneEscape(value);
     }
-    var quotedValues = _.map(value, function(val) {
-      return '\"' + luceneEscape(val) + '\"';
+    if (value instanceof Array && value.length === 0) {
+      return '__empty__';
+    }
+    const quotedValues = _.map(value, val => {
+      return '"' + luceneEscape(val) + '"';
     });
     return '(' + quotedValues.join(' OR ') + ')';
   }
@@ -85,30 +92,39 @@ export class TemplateSrv {
     }
 
     switch (format) {
-      case "regex": {
+      case 'regex': {
         if (typeof value === 'string') {
           return kbn.regexEscape(value);
         }
 
-        var escapedValues = _.map(value, kbn.regexEscape);
+        const escapedValues = _.map(value, kbn.regexEscape);
+        if (escapedValues.length === 1) {
+          return escapedValues[0];
+        }
         return '(' + escapedValues.join('|') + ')';
       }
-      case "lucene": {
+      case 'lucene': {
         return this.luceneFormat(value);
       }
-      case "pipe": {
+      case 'pipe': {
         if (typeof value === 'string') {
           return value;
         }
         return value.join('|');
       }
-      case "distributed": {
+      case 'distributed': {
         if (typeof value === 'string') {
           return value;
         }
         return this.distributeVariable(value, variable.name);
       }
-      default:  {
+      case 'csv': {
+        if (_.isArray(value)) {
+          return value.join(',');
+        }
+        return value;
+      }
+      default: {
         if (_.isArray(value)) {
           return '{' + value.join(',') + '}';
         }
@@ -123,7 +139,7 @@ export class TemplateSrv {
 
   getVariableName(expression) {
     this.regex.lastIndex = 0;
-    var match = this.regex.exec(expression);
+    const match = this.regex.exec(expression);
     if (!match) {
       return null;
     }
@@ -131,17 +147,19 @@ export class TemplateSrv {
   }
 
   variableExists(expression) {
-    var name = this.getVariableName(expression);
-    return name && (this.index[name] !== void 0);
+    const name = this.getVariableName(expression);
+    return name && this.index[name] !== void 0;
   }
 
   highlightVariablesAsHtml(str) {
-    if (!str || !_.isString(str)) { return str; }
+    if (!str || !_.isString(str)) {
+      return str;
+    }
 
     str = _.escape(str);
     this.regex.lastIndex = 0;
-    return str.replace(this.regex, (match, g1, g2) => {
-      if (this.index[g1 || g2] || this.builtIns[g1 || g2]) {
+    return str.replace(this.regex, (match, var1, var2, fmt2, var3) => {
+      if (this.index[var1 || var2 || var3] || this.builtIns[var1 || var2 || var3]) {
         return '<span class="template-variable">' + match + '</span>';
       }
       return match;
@@ -152,26 +170,28 @@ export class TemplateSrv {
     if (variable.allValue) {
       return variable.allValue;
     }
-    var values = [];
-    for (var i = 1; i < variable.options.length; i++) {
+    const values = [];
+    for (let i = 1; i < variable.options.length; i++) {
       values.push(variable.options[i].value);
     }
     return values;
   }
 
   replace(target, scopedVars?, format?) {
-    if (!target) { return target; }
+    if (!target) {
+      return target;
+    }
 
-    var variable, systemValue, value;
+    let variable, systemValue, value, fmt;
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, g1, g2) => {
-      variable = this.index[g1 || g2];
-
+    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fmt3) => {
+      variable = this.index[var1 || var2 || var3];
+      fmt = fmt2 || fmt3 || format;
       if (scopedVars) {
-        value = scopedVars[g1 || g2];
+        value = scopedVars[var1 || var2 || var3];
         if (value) {
-          return this.formatValue(value.value, format, variable);
+          return this.formatValue(value.value, fmt, variable);
         }
       }
 
@@ -181,60 +201,72 @@ export class TemplateSrv {
 
       systemValue = this.grafanaVariables[variable.current.value];
       if (systemValue) {
-        return this.formatValue(systemValue, format, variable);
+        return this.formatValue(systemValue, fmt, variable);
       }
 
       value = variable.current.value;
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
-        // skip formating of custom all values
+        // skip formatting of custom all values
         if (variable.allValue) {
-          return value;
+          return this.replace(value);
         }
       }
 
-      var res = this.formatValue(value, format, variable);
+      const res = this.formatValue(value, fmt, variable);
       return res;
     });
   }
 
   isAllValue(value) {
-    return value === '$__all' || Array.isArray(value) && value[0] === '$__all';
+    return value === '$__all' || (Array.isArray(value) && value[0] === '$__all');
   }
 
   replaceWithText(target, scopedVars) {
-    if (!target) { return target; }
+    if (!target) {
+      return target;
+    }
 
-    var variable;
+    let variable;
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, g1, g2) => {
+    return target.replace(this.regex, (match, var1, var2, fmt2, var3) => {
       if (scopedVars) {
-        var option = scopedVars[g1 || g2];
-        if (option) { return option.text; }
+        const option = scopedVars[var1 || var2 || var3];
+        if (option) {
+          return option.text;
+        }
       }
 
-      variable = this.index[g1 || g2];
-      if (!variable) { return match; }
+      variable = this.index[var1 || var2 || var3];
+      if (!variable) {
+        return match;
+      }
 
       return this.grafanaVariables[variable.current.value] || variable.current.text;
     });
   }
 
   fillVariableValuesForUrl(params, scopedVars) {
-    _.each(this.variables, function(variable) {
+    _.each(this.variables, variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
+        if (scopedVars[variable.name].skipUrlSync) {
+          return;
+        }
         params['var-' + variable.name] = scopedVars[variable.name].value;
       } else {
+        if (variable.skipUrlSync) {
+          return;
+        }
         params['var-' + variable.name] = variable.getValueForUrl();
       }
     });
   }
 
   distributeVariable(value, variable) {
-    value = _.map(value, function(val, index) {
+    value = _.map(value, (val, index) => {
       if (index !== 0) {
-        return variable + "=" + val;
+        return variable + '=' + val;
       } else {
         return val;
       }
@@ -242,3 +274,5 @@ export class TemplateSrv {
     return value.join(',');
   }
 }
+
+export default new TemplateSrv();

@@ -1,13 +1,14 @@
-import config from 'app/core/config';
 import $ from 'jquery';
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
-import {PanelCtrl} from 'app/features/panel/panel_ctrl';
 
+import config from 'app/core/config';
+import kbn from 'app/core/utils/kbn';
+import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
+import { encodePathComponent } from 'app/core/utils/location_util';
 
-import {metricsTabDirective} from './metrics_tab';
+import { metricsTabDirective } from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -15,6 +16,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   datasourceName: any;
   $q: any;
   $timeout: any;
+  contextSrv: any;
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
@@ -36,6 +38,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     // make metrics tab the default
     this.editorTabIndex = 1;
     this.$q = $injector.get('$q');
+    this.contextSrv = $injector.get('contextSrv');
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
@@ -65,19 +68,24 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   private onMetricsPanelRefresh() {
     // ignore fetching data if another panel is in fullscreen
-    if (this.otherPanelInFullscreenMode()) { return; }
+    if (this.otherPanelInFullscreenMode()) {
+      return;
+    }
 
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
       this.updateTimeRange();
-      var data = this.panel.snapshotData;
-      // backward compatability
+      let data = this.panel.snapshotData;
+      // backward compatibility
       if (!_.isArray(data)) {
         data = data.data;
       }
 
-      this.events.emit('data-snapshot-load', data);
-      return;
+      // Defer panel rendering till the next digest cycle.
+      // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.
+      return this.$timeout(() => {
+        this.events.emit('data-snapshot-load', data);
+      });
     }
 
     // // ignore if we have data stream
@@ -91,35 +99,35 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // load datasource service
     this.setTimeQueryStart();
-    this.datasourceSrv.get(this.panel.datasource)
-    .then(this.updateTimeRange.bind(this))
-    .then(this.issueQueries.bind(this))
-    .then(this.handleQueryResult.bind(this))
-    .catch(err => {
-      // if cancelled  keep loading set to true
-      if (err.cancelled) {
-        console.log('Panel request cancelled', err);
-        return;
-      }
-
-      this.loading = false;
-      this.error = err.message || "Request Error";
-      this.inspector = {error: err};
-
-      if (err.data) {
-        if (err.data.message) {
-          this.error = err.data.message;
+    this.datasourceSrv
+      .get(this.panel.datasource)
+      .then(this.updateTimeRange.bind(this))
+      .then(this.issueQueries.bind(this))
+      .then(this.handleQueryResult.bind(this))
+      .catch(err => {
+        // if cancelled  keep loading set to true
+        if (err.cancelled) {
+          console.log('Panel request cancelled', err);
+          return;
         }
-        if (err.data.error) {
-          this.error = err.data.error;
-        }
-      }
 
-      this.events.emit('data-error', err);
-      console.log('Panel data error:', err);
-    });
+        this.loading = false;
+        this.error = err.message || 'Request Error';
+        this.inspector = { error: err };
+
+        if (err.data) {
+          if (err.data.message) {
+            this.error = err.data.message;
+          }
+          if (err.data.error) {
+            this.error = err.data.error;
+          }
+        }
+
+        this.events.emit('data-error', err);
+        console.log('Panel data error:', err);
+      });
   }
-
 
   setTimeQueryStart() {
     this.timing.queryStart = new Date().getTime();
@@ -130,7 +138,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   updateTimeRange(datasource?) {
-    this.datasource = datasource || this.datasource;
+    this.datasource = datasource || this.datasource;
     this.range = this.timeSrv.timeRange();
 
     this.applyPanelTimeOverrides();
@@ -138,7 +146,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.panel.maxDataPoints) {
       this.resolution = this.panel.maxDataPoints;
     } else {
-      this.resolution = Math.ceil($(window).width() * (this.panel.span / 12));
+      this.resolution = Math.ceil($(window).width() * (this.panel.gridPos.w / 24));
     }
 
     this.calculateInterval();
@@ -147,7 +155,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   calculateInterval() {
-    var intervalOverride = this.panel.interval;
+    let intervalOverride = this.panel.interval;
 
     // if no panel interval check datasource
     if (intervalOverride) {
@@ -156,7 +164,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       intervalOverride = this.datasource.interval;
     }
 
-    var res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
+    const res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
     this.interval = res.interval;
     this.intervalMs = res.intervalMs;
   }
@@ -166,15 +174,15 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // check panel time overrrides
     if (this.panel.timeFrom) {
-      var timeFromInterpolated = this.templateSrv.replace(this.panel.timeFrom, this.panel.scopedVars);
-      var timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
+      const timeFromInterpolated = this.templateSrv.replace(this.panel.timeFrom, this.panel.scopedVars);
+      const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
       if (timeFromInfo.invalid) {
         this.timeInfo = 'invalid time override';
         return;
       }
 
       if (_.isString(this.range.raw.from)) {
-        var timeFromDate = dateMath.parse(timeFromInfo.from);
+        const timeFromDate = dateMath.parse(timeFromInfo.from);
         this.timeInfo = timeFromInfo.display;
         this.range.from = timeFromDate;
         this.range.to = dateMath.parse(timeFromInfo.to);
@@ -184,18 +192,18 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     if (this.panel.timeShift) {
-      var timeShiftInterpolated = this.templateSrv.replace(this.panel.timeShift, this.panel.scopedVars);
-      var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
+      const timeShiftInterpolated = this.templateSrv.replace(this.panel.timeShift, this.panel.scopedVars);
+      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
       if (timeShiftInfo.invalid) {
         this.timeInfo = 'invalid timeshift';
         return;
       }
 
-      var timeShift = '-' + timeShiftInterpolated;
+      const timeShift = '-' + timeShiftInterpolated;
       this.timeInfo += ' timeshift ' + timeShift;
       this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
       this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
-      this.range.raw = {from: this.range.from, to: this.range.to};
+      this.range.raw = { from: this.range.from, to: this.range.to };
     }
 
     if (this.panel.hideTimeOverride) {
@@ -212,14 +220,15 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // make shallow copy of scoped vars,
     // and add built in variables interval and interval_ms
-    var scopedVars = Object.assign({}, this.panel.scopedVars, {
-      "__interval":     {text: this.interval,   value: this.interval},
-      "__interval_ms":  {text: this.intervalMs, value: this.intervalMs},
+    const scopedVars = Object.assign({}, this.panel.scopedVars, {
+      __interval: { text: this.interval, value: this.interval },
+      __interval_ms: { text: this.intervalMs, value: this.intervalMs },
     });
 
-    var metricsQuery = {
+    const metricsQuery = {
       timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
+      dashboardId: this.dashboard.id,
       range: this.range,
       rangeRaw: this.range.raw,
       interval: this.interval,
@@ -227,7 +236,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       targets: this.panel.targets,
       maxDataPoints: this.resolution,
       scopedVars: scopedVars,
-      cacheTimeout: this.panel.cacheTimeout
+      cacheTimeout: this.panel.cacheTimeout,
     };
 
     return datasource.query(metricsQuery);
@@ -249,7 +258,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     if (!result || !result.data) {
       console.log('Data source query result invalid, missing data field:', result);
-      result = {data: []};
+      result = { data: [] };
     }
 
     this.events.emit('data-received', result.data);
@@ -264,21 +273,21 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     this.dataStream = stream;
     this.dataSubscription = stream.subscribe({
-      next: (data) => {
+      next: data => {
         console.log('dataSubject next!');
         if (data.range) {
           this.range = data.range;
         }
         this.events.emit('data-received', data.data);
       },
-      error: (error) => {
+      error: error => {
         this.events.emit('data-error', error);
         console.log('panel: observer got error');
       },
       complete: () => {
         console.log('panel: observer got complete');
         this.dataStream = null;
-      }
+      },
     });
   }
 
@@ -303,6 +312,29 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.refresh();
   }
 
+  getAdditionalMenuItems() {
+    const items = [];
+    if (config.exploreEnabled && this.contextSrv.isEditor && this.datasource && this.datasource.supportsExplore) {
+      items.push({
+        text: 'Explore',
+        click: 'ctrl.explore();',
+        icon: 'fa fa-fw fa-rocket',
+        shortcut: 'x',
+      });
+    }
+    return items;
+  }
+
+  explore() {
+    const range = this.timeSrv.timeRangeForUrl();
+    const state = {
+      ...this.datasource.getExploreState(this.panel),
+      range,
+    };
+    const exploreState = encodePathComponent(JSON.stringify(state));
+    this.$location.url(`/explore?state=${exploreState}`);
+  }
+
   addQuery(target) {
     target.refId = this.dashboard.getNextQueryLetter(this.panel);
 
@@ -311,16 +343,16 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   removeQuery(target) {
-    var index = _.indexOf(this.panel.targets, target);
+    const index = _.indexOf(this.panel.targets, target);
     this.panel.targets.splice(index, 1);
     this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
     this.refresh();
   }
 
   moveQuery(target, direction) {
-    var index = _.indexOf(this.panel.targets, target);
+    const index = _.indexOf(this.panel.targets, target);
     _.move(this.panel.targets, index, index + direction);
   }
 }
 
-export {MetricsPanelCtrl};
+export { MetricsPanelCtrl };

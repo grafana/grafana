@@ -1,0 +1,27 @@
+<page-header model="ctrl.navModel"></page-header>
+
+<div class="page-container page-body">
+
+	<h3 class="page-heading">Buttons</h3>
+
+	<div class="tab-pane">
+		<div ng-repeat="variant in ctrl.buttonVariants" class="row">
+			<div ng-repeat="btnSize in ctrl.buttonSizes" class="style-guide-button-list p-a-2 col-md-4">
+				<button ng-repeat="buttonName in ctrl.buttonNames" class="btn btn{{variant}}{{buttonName}} {{btnSize}}">
+					btn{{variant}}{{buttonName}}
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<h3 class="page-heading">Forms</h3>
+
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<label class="gf-form-label">Label</label>
+			<input type="text" class="gf-form-input" />
+		</div>
+	</div>
+
+</div>
+

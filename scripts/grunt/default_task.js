@@ -9,13 +9,9 @@ module.exports = function(grunt) {
   ]);
 
   grunt.registerTask('test', [
-    'clean:build',
-    'jscs',
-    'jshint',
     'sasslint',
     'exec:tslint',
     "exec:jest",
-    'karma:test',
     'no-only-tests'
   ]);
 

@@ -43,7 +43,7 @@ func NewKafkaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &KafkaNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Endpoint:     endpoint,
 		Topic:        topic,
 		log:          log.New("alerting.notifier.kafka"),

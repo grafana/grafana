@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,8 +11,10 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -23,6 +26,7 @@ var (
 	Apps         map[string]*AppPlugin
 	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
+	Renderer     *RendererPlugin
 
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
@@ -34,28 +38,37 @@ type PluginScanner struct {
 	errors     []error
 }
 
-func Init() error {
+type PluginManager struct {
+	log log.Logger
+}
+
+func init() {
+	registry.RegisterService(&PluginManager{})
+}
+
+func (pm *PluginManager) Init() error {
+	pm.log = log.New("plugins")
 	plog = log.New("plugins")
 
-	DataSources = make(map[string]*DataSourcePlugin)
-	StaticRoutes = make([]*PluginStaticRoute, 0)
-	Panels = make(map[string]*PanelPlugin)
-	Apps = make(map[string]*AppPlugin)
-	Plugins = make(map[string]*PluginBase)
+	DataSources = map[string]*DataSourcePlugin{}
+	StaticRoutes = []*PluginStaticRoute{}
+	Panels = map[string]*PanelPlugin{}
+	Apps = map[string]*AppPlugin{}
+	Plugins = map[string]*PluginBase{}
 	PluginTypes = map[string]interface{}{
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
+		"renderer":   RendererPlugin{},
 	}
 
-	plog.Info("Starting plugin search")
+	pm.log.Info("Starting plugin search")
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
 
 	// check if plugins dir exists
 	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
-		plog.Warn("Plugin dir does not exist", "dir", setting.PluginsPath)
 		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
-			plog.Warn("Failed to create plugin dir", "dir", setting.PluginsPath, "error", err)
+			plog.Error("Failed to create plugin dir", "dir", setting.PluginsPath, "error", err)
 		} else {
 			plog.Info("Plugin dir created", "dir", setting.PluginsPath)
 			scan(setting.PluginsPath)
@@ -70,21 +83,58 @@ func Init() error {
 	for _, panel := range Panels {
 		panel.initFrontendPlugin()
 	}
-	for _, panel := range DataSources {
-		panel.initFrontendPlugin()
+
+	for _, ds := range DataSources {
+		ds.initFrontendPlugin()
 	}
+
 	for _, app := range Apps {
 		app.initApp()
 	}
 
-	go StartPluginUpdateChecker()
-	go updateAppDashboards()
+	return nil
+}
+
+func (pm *PluginManager) startBackendPlugins(ctx context.Context) error {
+	for _, ds := range DataSources {
+		if ds.Backend {
+			if err := ds.startBackendPlugin(ctx, plog); err != nil {
+				pm.log.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
+			}
+		}
+	}
 
 	return nil
 }
 
+func (pm *PluginManager) Run(ctx context.Context) error {
+	pm.startBackendPlugins(ctx)
+	pm.updateAppDashboards()
+	pm.checkForUpdates()
+
+	ticker := time.NewTicker(time.Minute * 10)
+	run := true
+
+	for run {
+		select {
+		case <-ticker.C:
+			pm.checkForUpdates()
+		case <-ctx.Done():
+			run = false
+			break
+		}
+	}
+
+	// kil backend plugins
+	for _, p := range DataSources {
+		p.Kill()
+	}
+
+	return ctx.Err()
+}
+
 func checkPluginPaths() error {
-	for _, section := range setting.Cfg.Sections() {
+	for _, section := range setting.Raw.Sections() {
 		if strings.HasPrefix(section.Name(), "plugin.") {
 			path := section.Key("path").String()
 			if path != "" {
@@ -157,11 +207,11 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	}
 
 	var loader PluginLoader
-	if pluginGoType, exists := PluginTypes[pluginCommon.Type]; !exists {
+	pluginGoType, exists := PluginTypes[pluginCommon.Type]
+	if !exists {
 		return errors.New("Unknown plugin type " + pluginCommon.Type)
-	} else {
-		loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 	}
+	loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 
 	reader.Seek(0, 0)
 	return loader.Load(jsonParser, currentDir)
@@ -182,9 +232,9 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 		return make([]byte, 0), nil
 	}
 
-	if data, err := ioutil.ReadFile(path); err != nil {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
 		return nil, err
-	} else {
-		return data, nil
 	}
+	return data, nil
 }

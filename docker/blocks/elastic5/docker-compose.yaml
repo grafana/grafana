@@ -6,3 +6,10 @@
     ports:
       - "10200:9200"
       - "10300:9300"
+
+  fake-elastic5-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: elasticsearch
+      FD_PORT: 10200

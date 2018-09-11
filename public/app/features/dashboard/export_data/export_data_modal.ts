@@ -5,9 +5,9 @@ import appEvents from 'app/core/app_events';
 export class ExportDataModalCtrl {
   private data: any[];
   private panel: string;
-  asRows: Boolean = true;
+  asRows = true;
   dateTimeFormat = 'YYYY-MM-DDTHH:mm:ssZ';
-  excel: false;
+  excel = false;
 
   export() {
     if (this.panel === 'table') {
@@ -36,9 +36,9 @@ export function exportDataModal() {
     controllerAs: 'ctrl',
     scope: {
       panel: '<',
-      data: '<' // The difference to '=' is that the bound properties are not watched
+      data: '<', // The difference to '=' is that the bound properties are not watched
     },
-    bindToController: true
+    bindToController: true,
   };
 }
 

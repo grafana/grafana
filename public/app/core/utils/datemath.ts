@@ -1,19 +1,23 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import moment from 'moment';
 
-var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+const units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
 export function parse(text, roundUp?, timezone?) {
-  if (!text) { return undefined; }
-  if (moment.isMoment(text)) { return text; }
-  if (_.isDate(text)) { return moment(text); }
+  if (!text) {
+    return undefined;
+  }
+  if (moment.isMoment(text)) {
+    return text;
+  }
+  if (_.isDate(text)) {
+    return moment(text);
+  }
 
-  var time;
-  var mathString = '';
-  var index;
-  var parseString;
+  let time;
+  let mathString = '';
+  let index;
+  let parseString;
 
   if (text.substring(0, 3) === 'now') {
     if (timezone === 'utc') {
@@ -43,7 +47,7 @@ export function parse(text, roundUp?, timezone?) {
 }
 
 export function isValid(text) {
-  var date = parse(text);
+  const date = parse(text);
   if (!date) {
     return false;
   }
@@ -56,15 +60,15 @@ export function isValid(text) {
 }
 
 export function parseDateMath(mathString, time, roundUp?) {
-  var dateTime = time;
-  var i = 0;
-  var len = mathString.length;
+  const dateTime = time;
+  let i = 0;
+  const len = mathString.length;
 
   while (i < len) {
-    var c = mathString.charAt(i++);
-    var type;
-    var num;
-    var unit;
+    const c = mathString.charAt(i++);
+    let type;
+    let num;
+    let unit;
 
     if (c === '/') {
       type = 0;
@@ -81,10 +85,12 @@ export function parseDateMath(mathString, time, roundUp?) {
     } else if (mathString.length === 2) {
       num = mathString.charAt(i);
     } else {
-      var numFrom = i;
+      const numFrom = i;
       while (!isNaN(mathString.charAt(i))) {
         i++;
-        if (i > 10) { return undefined; }
+        if (i > 10) {
+          return undefined;
+        }
       }
       num = parseInt(mathString.substring(numFrom, i), 10);
     }
@@ -115,4 +121,3 @@ export function parseDateMath(mathString, time, roundUp?) {
   }
   return dateTime;
 }
-

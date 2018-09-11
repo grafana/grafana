@@ -2,6 +2,7 @@ package version
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -37,7 +38,7 @@ func init() {
 	}
 
 	ops := make([]string, 0, len(constraintOperators))
-	for k, _ := range constraintOperators {
+	for k := range constraintOperators {
 		ops = append(ops, regexp.QuoteMeta(k))
 	}
 
@@ -113,6 +114,26 @@ func parseSingle(v string) (*Constraint, error) {
 	}, nil
 }
 
+func prereleaseCheck(v, c *Version) bool {
+	switch vPre, cPre := v.Prerelease() != "", c.Prerelease() != ""; {
+	case cPre && vPre:
+		// A constraint with a pre-release can only match a pre-release version
+		// with the same base segments.
+		return reflect.DeepEqual(c.Segments64(), v.Segments64())
+
+	case !cPre && vPre:
+		// A constraint without a pre-release can only match a version without a
+		// pre-release.
+		return false
+
+	case cPre && !vPre:
+		// OK, except with the pessimistic operator
+	case !cPre && !vPre:
+		// OK
+	}
+	return true
+}
+
 //-------------------------------------------------------------------
 // Constraint functions
 //-------------------------------------------------------------------
@@ -126,31 +147,58 @@ func constraintNotEqual(v, c *Version) bool {
 }
 
 func constraintGreaterThan(v, c *Version) bool {
-	return v.Compare(c) == 1
+	return prereleaseCheck(v, c) && v.Compare(c) == 1
 }
 
 func constraintLessThan(v, c *Version) bool {
-	return v.Compare(c) == -1
+	return prereleaseCheck(v, c) && v.Compare(c) == -1
 }
 
 func constraintGreaterThanEqual(v, c *Version) bool {
-	return v.Compare(c) >= 0
+	return prereleaseCheck(v, c) && v.Compare(c) >= 0
 }
 
 func constraintLessThanEqual(v, c *Version) bool {
-	return v.Compare(c) <= 0
+	return prereleaseCheck(v, c) && v.Compare(c) <= 0
 }
 
 func constraintPessimistic(v, c *Version) bool {
-	if v.LessThan(c) {
+	// Using a pessimistic constraint with a pre-release, restricts versions to pre-releases
+	if !prereleaseCheck(v, c) || (c.Prerelease() != "" && v.Prerelease() == "") {
 		return false
 	}
 
+	// If the version being checked is naturally less than the constraint, then there
+	// is no way for the version to be valid against the constraint
+	if v.LessThan(c) {
+		return false
+	}
+	// We'll use this more than once, so grab the length now so it's a little cleaner
+	// to write the later checks
+	cs := len(c.segments)
+
+	// If the version being checked has less specificity than the constraint, then there
+	// is no way for the version to be valid against the constraint
+	if cs > len(v.segments) {
+		return false
+	}
+
+	// Check the segments in the constraint against those in the version. If the version
+	// being checked, at any point, does not have the same values in each index of the
+	// constraints segments, then it cannot be valid against the constraint.
 	for i := 0; i < c.si-1; i++ {
 		if v.segments[i] != c.segments[i] {
 			return false
 		}
 	}
 
+	// Check the last part of the segment in the constraint. If the version segment at
+	// this index is less than the constraints segment at this index, then it cannot
+	// be valid against the constraint
+	if c.segments[cs-1] > v.segments[cs-1] {
+		return false
+	}
+
+	// If nothing has rejected the version by now, it's valid
 	return true
 }

@@ -1,12 +1,10 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import './bucket_agg';
 import './metric_agg';
 
 import angular from 'angular';
 import _ from 'lodash';
 import * as queryDef from './query_def';
-import {QueryCtrl} from 'app/plugins/sdk';
+import { QueryCtrl } from 'app/plugins/sdk';
 
 export class ElasticQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -14,7 +12,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
   esVersion: any;
   rawQueryOld: string;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private $rootScope, private uiSegmentSrv) {
     super($scope, $injector);
 
@@ -23,14 +21,15 @@ export class ElasticQueryCtrl extends QueryCtrl {
   }
 
   getFields(type) {
-    var jsonStr = angular.toJson({find: 'fields', type: type});
-    return this.datasource.metricFindQuery(jsonStr)
-    .then(this.uiSegmentSrv.transformToSegments(false))
-    .catch(this.handleQueryError.bind(this));
+    const jsonStr = angular.toJson({ find: 'fields', type: type });
+    return this.datasource
+      .metricFindQuery(jsonStr)
+      .then(this.uiSegmentSrv.transformToSegments(false))
+      .catch(this.handleQueryError.bind(this));
   }
 
   queryUpdated() {
-    var newJson = angular.toJson(this.datasource.queryBuilder.build(this.target), true);
+    const newJson = angular.toJson(this.datasource.queryBuilder.build(this.target), true);
     if (this.rawQueryOld && newJson !== this.rawQueryOld) {
       this.refresh();
     }
@@ -40,11 +39,11 @@ export class ElasticQueryCtrl extends QueryCtrl {
   }
 
   getCollapsedText() {
-    var metricAggs = this.target.metrics;
-    var bucketAggs = this.target.bucketAggs;
-    var metricAggTypes = queryDef.getMetricAggTypes(this.esVersion);
-    var bucketAggTypes = queryDef.bucketAggTypes;
-    var text = '';
+    const metricAggs = this.target.metrics;
+    const bucketAggs = this.target.bucketAggs;
+    const metricAggTypes = queryDef.getMetricAggTypes(this.esVersion);
+    const bucketAggTypes = queryDef.bucketAggTypes;
+    let text = '';
 
     if (this.target.query) {
       text += 'Query: ' + this.target.query + ', ';
@@ -53,7 +52,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
     text += 'Metrics: ';
 
     _.each(metricAggs, (metric, index) => {
-      var aggDef = _.find(metricAggTypes, {value: metric.type});
+      const aggDef = _.find(metricAggTypes, { value: metric.type });
       text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += metric.field;
@@ -66,7 +65,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
         text += ' Group by: ';
       }
 
-      var aggDef = _.find(bucketAggTypes, {value: bucketAgg.type});
+      const aggDef = _.find(bucketAggTypes, { value: bucketAgg.type });
       text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += bucketAgg.field;

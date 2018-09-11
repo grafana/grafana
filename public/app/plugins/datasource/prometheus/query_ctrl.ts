@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
-import {QueryCtrl} from 'app/plugins/sdk';
-import {PromCompleter} from './completer';
+import { QueryCtrl } from 'app/plugins/sdk';
+import { PromCompleter } from './completer';
 import './mode-prometheus';
 import './snippets/prometheus';
 
@@ -21,19 +21,20 @@ class PrometheusQueryCtrl extends QueryCtrl {
   constructor($scope, $injector, private templateSrv) {
     super($scope, $injector);
 
-    var target = this.target;
+    const target = this.target;
     target.expr = target.expr || '';
-    target.intervalFactor = target.intervalFactor || 2;
+    target.intervalFactor = target.intervalFactor || 1;
     target.format = target.format || this.getDefaultFormat();
 
     this.metric = '';
-    this.resolutions = _.map([1,2,3,4,5,10], function(f) {
-      return {factor: f, label: '1/' + f};
+    this.resolutions = _.map([1, 2, 3, 4, 5, 10], f => {
+      return { factor: f, label: '1/' + f };
     });
 
     this.formats = [
-      {text: 'Time series', value: 'time_series'},
-      {text: 'Table', value: 'table'},
+      { text: 'Time series', value: 'time_series' },
+      { text: 'Table', value: 'table' },
+      { text: 'Heatmap', value: 'heatmap' },
     ];
 
     this.instant = false;
@@ -42,13 +43,16 @@ class PrometheusQueryCtrl extends QueryCtrl {
   }
 
   getCompleter(query) {
-    return new PromCompleter(this.datasource);
+    return new PromCompleter(this.datasource, this.templateSrv);
   }
 
   getDefaultFormat() {
     if (this.panelCtrl.panel.type === 'table') {
       return 'table';
+    } else if (this.panelCtrl.panel.type === 'heatmap') {
+      return 'heatmap';
     }
+
     return 'time_series';
   }
 
@@ -61,22 +65,28 @@ class PrometheusQueryCtrl extends QueryCtrl {
   }
 
   updateLink() {
-    var range = this.panelCtrl.range;
+    const range = this.panelCtrl.range;
     if (!range) {
       return;
     }
 
-    var rangeDiff = Math.ceil((range.to.valueOf() - range.from.valueOf()) / 1000);
-    var endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
-    var expr = {
-      'g0.expr': this.templateSrv.replace(this.target.expr, this.panelCtrl.panel.scopedVars, this.datasource.interpolateQueryExpr),
+    const rangeDiff = Math.ceil((range.to.valueOf() - range.from.valueOf()) / 1000);
+    const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
+    const expr = {
+      'g0.expr': this.templateSrv.replace(
+        this.target.expr,
+        this.panelCtrl.panel.scopedVars,
+        this.datasource.interpolateQueryExpr
+      ),
       'g0.range_input': rangeDiff + 's',
       'g0.end_input': endTime,
       'g0.step_input': this.target.step,
       'g0.stacked': this.panelCtrl.panel.stack ? 1 : 0,
-      'g0.tab': 0
+      'g0.tab': 0,
     };
-    var args = _.map(expr, (v, k) => { return k + '=' + encodeURIComponent(v); }).join('&');
+    const args = _.map(expr, (v, k) => {
+      return k + '=' + encodeURIComponent(v);
+    }).join('&');
     this.linkToPrometheus = this.datasource.directUrl + '/graph?' + args;
   }
 
@@ -85,4 +95,4 @@ class PrometheusQueryCtrl extends QueryCtrl {
   }
 }
 
-export {PrometheusQueryCtrl};
+export { PrometheusQueryCtrl };

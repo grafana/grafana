@@ -1,12 +1,13 @@
 .page-dashboard .footer {
-	display: none;
+  display: none;
 }
 
 .footer {
   color: $footer-link-color;
   padding: 5rem 0 1rem 0;
-  font-size: $font-size-xs;
-  width: 98%;  /* was causing horiz scrollbars - need to examine */
+  font-size: $font-size-sm;
+  position: relative;
+  width: 98%; /* was causing horiz scrollbars - need to examine */
 
   a {
     color: $footer-link-color;
@@ -33,6 +34,22 @@
     &::after {
       padding-left: 0;
       content: '';
+    }
+  }
+}
+
+.login-page {
+  .footer {
+    padding: 1rem 0 1rem 0;
+  }
+}
+
+@include media-breakpoint-up(md) {
+  .login-page {
+    .footer {
+      bottom: $spacer;
+      position: absolute;
+      padding: 5rem 0 1rem 0;
     }
   }
 }

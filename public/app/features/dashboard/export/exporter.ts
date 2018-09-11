@@ -1,41 +1,34 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import _ from 'lodash';
-import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
+import { DashboardModel } from '../dashboard_model';
 
 export class DashboardExporter {
+  constructor(private datasourceSrv) {}
 
-  constructor(private datasourceSrv) {
-  }
-
-  makeExportable(dashboard) {
-    var dynSrv = new DynamicDashboardSrv();
-
+  makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
     // this is done on the live real dashboard instance, not on a clone
     // so we need to undo this
     // this is pretty hacky and needs to be changed
-    dynSrv.init(dashboard);
-    dynSrv.process({cleanUpOnly: true});
+    dashboard.cleanUpRepeats();
 
-    var saveModel = dashboard.getSaveModelClone();
+    const saveModel = dashboard.getSaveModelClone();
     saveModel.id = null;
 
     // undo repeat cleanup
-    dynSrv.process();
+    dashboard.processRepeats();
 
-    var inputs = [];
-    var requires = {};
-    var datasources = {};
-    var promises = [];
-    var variableLookup: any = {};
+    const inputs = [];
+    const requires = {};
+    const datasources = {};
+    const promises = [];
+    const variableLookup: any = {};
 
-    for (let variable of saveModel.templating.list) {
+    for (const variable of saveModel.templating.list) {
       variableLookup[variable.name] = variable;
     }
 
-    var templateizeDatasourceUsage = obj => {
+    const templateizeDatasourceUsage = obj => {
       // ignore data source properties that contain a variable
       if (obj.datasource && obj.datasource.indexOf('$') === 0) {
         if (variableLookup[obj.datasource.substring(1)]) {
@@ -43,60 +36,71 @@ export class DashboardExporter {
         }
       }
 
-      promises.push(this.datasourceSrv.get(obj.datasource).then(ds => {
-        if (ds.meta.builtIn) {
-          return;
+      promises.push(
+        this.datasourceSrv.get(obj.datasource).then(ds => {
+          if (ds.meta.builtIn) {
+            return;
+          }
+
+          const refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+          datasources[refName] = {
+            name: refName,
+            label: ds.name,
+            description: '',
+            type: 'datasource',
+            pluginId: ds.meta.id,
+            pluginName: ds.meta.name,
+          };
+          obj.datasource = '${' + refName + '}';
+
+          requires['datasource' + ds.meta.id] = {
+            type: 'datasource',
+            id: ds.meta.id,
+            name: ds.meta.name,
+            version: ds.meta.info.version || '1.0.0',
+          };
+        })
+      );
+    };
+
+    const processPanel = panel => {
+      if (panel.datasource !== undefined) {
+        templateizeDatasourceUsage(panel);
+      }
+
+      if (panel.targets) {
+        for (const target of panel.targets) {
+          if (target.datasource !== undefined) {
+            templateizeDatasourceUsage(target);
+          }
         }
+      }
 
-        var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
-        datasources[refName] = {
-          name: refName,
-          label: ds.name,
-          description: '',
-          type: 'datasource',
-          pluginId: ds.meta.id,
-          pluginName: ds.meta.name,
+      const panelDef = config.panels[panel.type];
+      if (panelDef) {
+        requires['panel' + panelDef.id] = {
+          type: 'panel',
+          id: panelDef.id,
+          name: panelDef.name,
+          version: panelDef.info.version,
         };
-        obj.datasource = '${' + refName  +'}';
-
-        requires['datasource' + ds.meta.id] = {
-          type: 'datasource',
-          id: ds.meta.id,
-          name: ds.meta.name,
-          version: ds.meta.info.version || "1.0.0",
-        };
-      }));
+      }
     };
 
     // check up panel data sources
-    for (let row of saveModel.rows) {
-      for (let panel of row.panels) {
-        if (panel.datasource !== undefined) {
-          templateizeDatasourceUsage(panel);
-        }
+    for (const panel of saveModel.panels) {
+      processPanel(panel);
 
-        if (panel.targets) {
-          for (let target of panel.targets) {
-            if (target.datasource !== undefined) {
-              templateizeDatasourceUsage(target);
-            }
-          }
-        }
-
-        var panelDef = config.panels[panel.type];
-        if (panelDef) {
-          requires['panel' + panelDef.id] = {
-            type: 'panel',
-            id: panelDef.id,
-            name: panelDef.name,
-            version: panelDef.info.version,
-          };
+      // handle collapsed rows
+      if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
+        for (const rowPanel of panel.panels) {
+          processPanel(rowPanel);
         }
       }
     }
 
     // templatize template vars
-    for (let variable of saveModel.templating.list) {
+    for (const variable of saveModel.templating.list) {
       if (variable.type === 'query') {
         templateizeDatasourceUsage(variable);
         variable.options = [];
@@ -106,7 +110,7 @@ export class DashboardExporter {
     }
 
     // templatize annotations vars
-    for (let annotationDef of saveModel.annotations.list) {
+    for (const annotationDef of saveModel.annotations.list) {
       templateizeDatasourceUsage(annotationDef);
     }
 
@@ -115,49 +119,48 @@ export class DashboardExporter {
       type: 'grafana',
       id: 'grafana',
       name: 'Grafana',
-      version: config.buildInfo.version
+      version: config.buildInfo.version,
     };
 
-    return Promise.all(promises).then(() => {
-      _.each(datasources, (value, key) => {
-        inputs.push(value);
-      });
+    return Promise.all(promises)
+      .then(() => {
+        _.each(datasources, (value, key) => {
+          inputs.push(value);
+        });
 
-      // templatize constants
-      for (let variable of saveModel.templating.list) {
-        if (variable.type === 'constant') {
-          var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
-          inputs.push({
-            name: refName,
-            type: 'constant',
-            label: variable.label || variable.name,
-            value: variable.current.value,
-            description: '',
-          });
-          // update current and option
-          variable.query = '${' + refName + '}';
-          variable.options[0] = variable.current = {
-            value: variable.query,
-            text: variable.query,
-          };
+        // templatize constants
+        for (const variable of saveModel.templating.list) {
+          if (variable.type === 'constant') {
+            const refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
+            inputs.push({
+              name: refName,
+              type: 'constant',
+              label: variable.label || variable.name,
+              value: variable.current.value,
+              description: '',
+            });
+            // update current and option
+            variable.query = '${' + refName + '}';
+            variable.options[0] = variable.current = {
+              value: variable.query,
+              text: variable.query,
+            };
+          }
         }
-      }
 
-      // make inputs and requires a top thing
-      var newObj = {};
-      newObj["__inputs"] = inputs;
-      newObj["__requires"] = _.sortBy(requires, ['id']);
+        // make inputs and requires a top thing
+        const newObj = {};
+        newObj['__inputs'] = inputs;
+        newObj['__requires'] = _.sortBy(requires, ['id']);
 
-      _.defaults(newObj, saveModel);
-      return newObj;
-
-    }).catch(err => {
-      console.log('Export failed:', err);
-      return {
-        error: err
-      };
-    });
+        _.defaults(newObj, saveModel);
+        return newObj;
+      })
+      .catch(err => {
+        console.log('Export failed:', err);
+        return {
+          error: err,
+        };
+      });
   }
-
 }
-

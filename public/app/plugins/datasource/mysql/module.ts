@@ -1,7 +1,5 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import {MysqlDatasource} from './datasource';
-import {MysqlQueryCtrl} from './query_ctrl';
+import { MysqlDatasource } from './datasource';
+import { MysqlQueryCtrl } from './query_ctrl';
 
 class MysqlConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -22,7 +20,7 @@ class MysqlAnnotationsQueryCtrl {
 
   annotation: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor() {
     this.annotation.rawQuery = this.annotation.rawQuery || defaultQuery;
   }
@@ -35,4 +33,3 @@ export {
   MysqlConfigCtrl as ConfigCtrl,
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
-

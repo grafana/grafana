@@ -9,34 +9,27 @@
 			<span class="gf-form-label width-7">Description</span>
 			<textarea class="gf-form-input width-25" rows="3" ng-model="ctrl.panel.description"  placeholder="Panel description, supports markdown & links"></textarea>
 		</div>
+    <gf-form-switch class="gf-form" label-class="width-7" switch-class="max-width-6" label="Transparent" checked="ctrl.panel.transparent" on-change="ctrl.render()"></gf-form-switch>
 	</div>
 
-	<div class="section gf-form-group">
-		<h5 class="section-heading">Dimensions</h5>
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Repeat</h5>
 		<div class="gf-form">
-			<span class="gf-form-label width-7">Span</span>
-			<select class="gf-form-input width-6" ng-model="ctrl.panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
+			<span class="gf-form-label width-9">For each value of</span>
+			<dash-repeat-option panel="ctrl.panel"></dash-repeat-option>
 		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-7">Height</span>
-			<input type="text" class="gf-form-input width-6" ng-model='ctrl.panel.height' placeholder="100px"></input>
-		</div>
-		<gf-form-switch class="gf-form" label-class="width-7" switch-class="max-width-6" label="Transparent" checked="ctrl.panel.transparent" on-change="ctrl.render()"></gf-form-switch>
-	</div>
-
-	<div class="section gf-form-group">
-		<h5 class="section-heading">Templating</h5>
-		<div class="gf-form">
-			<span class="gf-form-label width-8">Repeat Panel</span>
-			<dash-repeat-option model="ctrl.panel"></dash-repeat-option>
-		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-8">Min span</span>
-			<select class="gf-form-input" ng-model="ctrl.panel.minSpan" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10,11,12]">
+    <div class="gf-form" ng-show="ctrl.panel.repeat">
+			<span class="gf-form-label width-9">Direction</span>
+			<select class="gf-form-input" ng-model="ctrl.panel.repeatDirection" ng-options="f.value as f.text for f in [{value: 'v', text: 'Vertical'}, {value: 'h', text: 'Horizontal'}]">
 				<option value=""></option>
 			</select>
 		</div>
-	</div>
+		<div class="gf-form" ng-show="ctrl.panel.repeat && ctrl.panel.repeatDirection == 'h'">
+			<span class="gf-form-label width-9">Min width</span>
+			<select class="gf-form-input" ng-model="ctrl.panel.minSpan" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]">
+				<option value=""></option>
+			</select>
+		</div>
 	</div>
 
 	<panel-links-editor panel="ctrl.panel"></panel-links-editor>

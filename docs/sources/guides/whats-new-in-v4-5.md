@@ -12,7 +12,7 @@ weight = -4
 
 # What's New in Grafana v4.5
 
-## Hightlights
+## Highlights
 
 ### New prometheus query editor
 
@@ -62,7 +62,7 @@ Datas source selection & options & help are now above your metric queries.
 ### Minor Changes
 
 * **InfluxDB**: Change time range filter for absolute time ranges to be inclusive instead of exclusive [#8319](https://github.com/grafana/grafana/issues/8319), thx [@Oxydros](https://github.com/Oxydros)
-* **InfluxDB**: Added paranthesis around tag filters in queries [#9131](https://github.com/grafana/grafana/pull/9131)
+* **InfluxDB**: Added parenthesis around tag filters in queries [#9131](https://github.com/grafana/grafana/pull/9131)
 
 ## Bug Fixes
 

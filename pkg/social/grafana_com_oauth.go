@@ -11,7 +11,7 @@ import (
 )
 
 type SocialGrafanaCom struct {
-	*oauth2.Config
+	*SocialBase
 	url                  string
 	allowedOrganizations []string
 	allowSignup          bool
@@ -49,8 +49,9 @@ func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool 
 	return false
 }
 
-func (s *SocialGrafanaCom) UserInfo(client *http.Client) (*BasicUserInfo, error) {
+func (s *SocialGrafanaCom) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
+		Id    int         `json:"id"`
 		Name  string      `json:"name"`
 		Login string      `json:"username"`
 		Email string      `json:"email"`
@@ -69,6 +70,7 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client) (*BasicUserInfo, error)
 	}
 
 	userInfo := &BasicUserInfo{
+		Id:    fmt.Sprintf("%d", data.Id),
 		Name:  data.Name,
 		Login: data.Login,
 		Email: data.Email,

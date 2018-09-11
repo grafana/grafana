@@ -4,77 +4,39 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/tsdb"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestInfluxdbQueryPart(t *testing.T) {
-	Convey("Influxdb query parts", t, func() {
+	tcs := []struct {
+		mode     string
+		input    string
+		params   []string
+		expected string
+	}{
+		{mode: "field", params: []string{"value"}, input: "value", expected: `"value"`},
+		{mode: "derivative", params: []string{"10s"}, input: "mean(value)", expected: `derivative(mean(value), 10s)`},
+		{mode: "bottom", params: []string{"3"}, input: "value", expected: `bottom(value, 3)`},
+		{mode: "time", params: []string{"$interval"}, input: "", expected: `time($interval)`},
+		{mode: "time", params: []string{"auto"}, input: "", expected: `time($__interval)`},
+		{mode: "spread", params: []string{}, input: "value", expected: `spread(value)`},
+		{mode: "math", params: []string{"/ 100"}, input: "mean(value)", expected: `mean(value) / 100`},
+		{mode: "alias", params: []string{"test"}, input: "mean(value)", expected: `mean(value) AS "test"`},
+		{mode: "count", params: []string{}, input: "distinct(value)", expected: `count(distinct(value))`},
+		{mode: "mode", params: []string{}, input: "value", expected: `mode(value)`},
+	}
 
-		queryContext := &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("5m", "now")}
-		query := &Query{}
+	queryContext := &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("5m", "now")}
+	query := &Query{}
 
-		Convey("render field ", func() {
-			part, err := NewQueryPart("field", []string{"value"})
-			So(err, ShouldBeNil)
+	for _, tc := range tcs {
+		part, err := NewQueryPart(tc.mode, tc.params)
+		if err != nil {
+			t.Errorf("Expected NewQueryPart to not return an error. error: %v", err)
+		}
 
-			res := part.Render(query, queryContext, "value")
-			So(res, ShouldEqual, `"value"`)
-		})
-
-		Convey("render nested part", func() {
-			part, err := NewQueryPart("derivative", []string{"10s"})
-			So(err, ShouldBeNil)
-
-			res := part.Render(query, queryContext, "mean(value)")
-			So(res, ShouldEqual, "derivative(mean(value), 10s)")
-		})
-
-		Convey("render bottom", func() {
-			part, err := NewQueryPart("bottom", []string{"3"})
-			So(err, ShouldBeNil)
-
-			res := part.Render(query, queryContext, "value")
-			So(res, ShouldEqual, "bottom(value, 3)")
-		})
-
-		Convey("render time with $interval", func() {
-			part, err := NewQueryPart("time", []string{"$interval"})
-			So(err, ShouldBeNil)
-
-			res := part.Render(query, queryContext, "")
-			So(res, ShouldEqual, "time($interval)")
-		})
-
-		Convey("render time with auto", func() {
-			part, err := NewQueryPart("time", []string{"auto"})
-			So(err, ShouldBeNil)
-
-			res := part.Render(query, queryContext, "")
-			So(res, ShouldEqual, "time($__interval)")
-		})
-
-		Convey("render spread", func() {
-			part, err := NewQueryPart("spread", []string{})
-			So(err, ShouldBeNil)
-
-			res := part.Render(query, queryContext, "value")
-			So(res, ShouldEqual, `spread(value)`)
-		})
-
-		Convey("render suffix", func() {
-			part, err := NewQueryPart("math", []string{"/ 100"})
-			So(err, ShouldBeNil)
-
-			res := part.Render(query, queryContext, "mean(value)")
-			So(res, ShouldEqual, "mean(value) / 100")
-		})
-
-		Convey("render alias", func() {
-			part, err := NewQueryPart("alias", []string{"test"})
-			So(err, ShouldBeNil)
-
-			res := part.Render(query, queryContext, "mean(value)")
-			So(res, ShouldEqual, `mean(value) AS "test"`)
-		})
-	})
+		res := part.Render(query, queryContext, tc.input)
+		if res != tc.expected {
+			t.Errorf("expected %v to render into %s", tc, tc.expected)
+		}
+	}
 }

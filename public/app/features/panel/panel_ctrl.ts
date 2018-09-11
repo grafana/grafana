@@ -1,20 +1,20 @@
 import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
-import {profiler} from 'app/core/profiler';
+import { appEvents, profiler } from 'app/core/core';
+import { PanelModel } from 'app/features/dashboard/panel_model';
 import Remarkable from 'remarkable';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, LS_PANEL_COPY_KEY } from 'app/core/constants';
+import store from 'app/core/store';
 
-const TITLE_HEIGHT = 25;
-const EMPTY_TITLE_HEIGHT = 9;
-const PANEL_PADDING = 5;
+const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
 
-import {Emitter} from 'app/core/core';
+import { Emitter } from 'app/core/core';
 
 export class PanelCtrl {
   panel: any;
   error: any;
-  row: any;
   dashboard: any;
   editorTabIndex: number;
   pluginName: string;
@@ -22,6 +22,7 @@ export class PanelCtrl {
   editorTabs: any;
   $scope: any;
   $injector: any;
+  $location: any;
   $timeout: any;
   fullscreen: boolean;
   inspector: any;
@@ -35,36 +36,35 @@ export class PanelCtrl {
 
   constructor($scope, $injector) {
     this.$injector = $injector;
+    this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
-    this.events = new Emitter();
+    this.events = this.panel.events;
     this.timing = {};
 
-    var plugin = config.panels[this.panel.type];
+    const plugin = config.panels[this.panel.type];
     if (plugin) {
       this.pluginId = plugin.id;
       this.pluginName = plugin.name;
     }
 
-    $scope.$on("refresh", () => this.refresh());
-    $scope.$on("render", () => this.render());
-    $scope.$on("$destroy", () => {
+    $scope.$on('refresh', () => this.refresh());
+    $scope.$on('component-did-mount', () => this.panelDidMount());
+
+    $scope.$on('$destroy', () => {
       this.events.emit('panel-teardown');
       this.events.removeAllListeners();
     });
-
-    // we should do something interesting
-    // with newly added panels
-    if (this.panel.isNew) {
-      delete this.panel.isNew;
-    }
   }
 
   init() {
-    this.calculatePanelHeight();
-    this.publishAppEvent('panel-initialized', {scope: this.$scope});
     this.events.emit('panel-initialized');
+    this.publishAppEvent('panel-initialized', { scope: this.$scope });
+  }
+
+  panelDidMount() {
+    this.events.emit('component-did-mount');
   }
 
   renderingCompleted() {
@@ -72,7 +72,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-   this.events.emit('refresh', null);
+    this.events.emit('refresh', null);
   }
 
   publishAppEvent(evtName, evt) {
@@ -81,7 +81,9 @@ export class PanelCtrl {
 
   changeView(fullscreen, edit) {
     this.publishAppEvent('panel-change-view', {
-      fullscreen: fullscreen, edit: edit, panelId: this.panel.id
+      fullscreen: fullscreen,
+      edit: edit,
+      panelId: this.panel.id,
     });
   }
 
@@ -103,7 +105,7 @@ export class PanelCtrl {
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
 
-    var urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
+    const urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
     if (urlTab) {
       this.editorTabs.forEach((tab, i) => {
         if (tab.title.toLowerCase() === urlTab) {
@@ -115,17 +117,17 @@ export class PanelCtrl {
 
   changeTab(newIndex) {
     this.editorTabIndex = newIndex;
-    var route = this.$injector.get('$route');
+    const route = this.$injector.get('$route');
     route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
     route.updateParams();
   }
 
   addEditorTab(title, directiveFn, index?) {
-    var editorTab = {title, directiveFn};
+    const editorTab = { title, directiveFn };
 
     if (_.isString(directiveFn)) {
-      editorTab.directiveFn = function() {
-        return {templateUrl: directiveFn};
+      editorTab.directiveFn = () => {
+        return { templateUrl: directiveFn };
       };
     }
     if (index) {
@@ -136,20 +138,85 @@ export class PanelCtrl {
   }
 
   getMenu() {
-    let menu = [];
-    menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
-    menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
-    if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
-      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    const menu = [];
+    menu.push({
+      text: 'View',
+      click: 'ctrl.viewPanel();',
+      icon: 'fa fa-fw fa-eye',
+      shortcut: 'v',
+    });
+
+    if (this.dashboard.meta.canEdit) {
+      menu.push({
+        text: 'Edit',
+        click: 'ctrl.editPanel();',
+        role: 'Editor',
+        icon: 'fa fa-fw fa-edit',
+        shortcut: 'e',
+      });
     }
-    menu.push({text: 'Share', click: 'ctrl.sharePanel(); dismiss();'});
+
+    menu.push({
+      text: 'Share',
+      click: 'ctrl.sharePanel();',
+      icon: 'fa fa-fw fa-share',
+      shortcut: 'p s',
+    });
+
+    // Additional items from sub-class
+    menu.push(...this.getAdditionalMenuItems());
+
+    const extendedMenu = this.getExtendedMenu();
+    menu.push({
+      text: 'More ...',
+      click: '',
+      icon: 'fa fa-fw fa-cube',
+      submenu: extendedMenu,
+    });
+
+    if (this.dashboard.meta.canEdit) {
+      menu.push({ divider: true, role: 'Editor' });
+      menu.push({
+        text: 'Remove',
+        click: 'ctrl.removePanel();',
+        role: 'Editor',
+        icon: 'fa fa-fw fa-trash',
+        shortcut: 'p r',
+      });
+    }
+
     return menu;
   }
 
   getExtendedMenu() {
-    var actions = [{text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();'}];
-    this.events.emit('init-panel-actions', actions);
-    return actions;
+    const menu = [];
+    if (!this.fullscreen && this.dashboard.meta.canEdit) {
+      menu.push({
+        text: 'Duplicate',
+        click: 'ctrl.duplicate()',
+        role: 'Editor',
+        shortcut: 'p d',
+      });
+
+      menu.push({
+        text: 'Copy',
+        click: 'ctrl.copyPanel()',
+        role: 'Editor',
+      });
+    }
+
+    menu.push({
+      text: 'Panel JSON',
+      click: 'ctrl.editPanelJson(); dismiss();',
+    });
+
+    this.events.emit('init-panel-actions', menu);
+    return menu;
+  }
+
+  // Override in sub-class to add items before extended menu
+  getAdditionalMenuItems() {
+    return [];
   }
 
   otherPanelInFullscreenMode() {
@@ -158,78 +225,81 @@ export class PanelCtrl {
 
   calculatePanelHeight() {
     if (this.fullscreen) {
-      var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.4);
-      var fullscreenHeight = Math.floor(docHeight * 0.8);
+      const docHeight = $(window).height();
+      const editHeight = Math.floor(docHeight * 0.4);
+      const fullscreenHeight = Math.floor(docHeight * 0.8);
       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
-      this.containerHeight = this.panel.height || this.row.height;
-      if (_.isString(this.containerHeight)) {
-        this.containerHeight = parseInt(this.containerHeight.replace('px', ''), 10);
-      }
+      this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
 
-    this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
+    if (this.panel.soloMode) {
+      this.containerHeight = $(window).height();
+    }
+
+    this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
   }
 
   render(payload?) {
-    // ignore if other panel is in fullscreen mode
-    if (this.otherPanelInFullscreenMode()) {
-      return;
-    }
-
-    this.calculatePanelHeight();
     this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }
 
   duplicate() {
-    this.dashboard.duplicatePanel(this.panel, this.row);
+    this.dashboard.duplicatePanel(this.panel);
     this.$timeout(() => {
       this.$scope.$root.$broadcast('render');
     });
   }
 
-  updateColumnSpan(span) {
-    this.panel.span = Math.min(Math.max(Math.floor(this.panel.span + span), 1), 12);
-    this.row.panelSpanChanged();
-
-    this.$timeout(() => {
-      this.render();
-    });
-  }
-
   removePanel() {
-    this.row.removePanel(this.panel);
+    this.publishAppEvent('panel-remove', {
+      panelId: this.panel.id,
+    });
   }
 
   editPanelJson() {
-    this.publishAppEvent('show-json-editor', {
-      object: this.panel,
-      updateHandler: this.replacePanel.bind(this)
+    const editScope = this.$scope.$root.$new();
+    editScope.object = this.panel.getSaveModel();
+    editScope.updateHandler = this.replacePanel.bind(this);
+    editScope.enableCopy = true;
+
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/partials/edit_json.html',
+      scope: editScope,
     });
+  }
+
+  copyPanel() {
+    store.set(LS_PANEL_COPY_KEY, JSON.stringify(this.panel.getSaveModel()));
+    appEvents.emit('alert-success', ['Panel copied. Open Add Panel to paste']);
   }
 
   replacePanel(newPanel, oldPanel) {
-    var index = _.indexOf(this.row.panels, oldPanel);
-    this.row.panels.splice(index, 1);
-
-    // adding it back needs to be done in next digest
-    this.$timeout(() => {
-      newPanel.id = oldPanel.id;
-      newPanel.span = oldPanel.span;
-      this.row.panels.splice(index, 0, newPanel);
+    const dashboard = this.dashboard;
+    const index = _.findIndex(dashboard.panels, panel => {
+      return panel.id === oldPanel.id;
     });
+
+    const deletedPanel = dashboard.panels.splice(index, 1);
+    this.dashboard.events.emit('panel-removed', deletedPanel);
+
+    newPanel = new PanelModel(newPanel);
+    newPanel.id = oldPanel.id;
+
+    dashboard.panels.splice(index, 0, newPanel);
+    dashboard.sortPanelsByGridPos();
+    dashboard.events.emit('panel-added', newPanel);
   }
 
   sharePanel() {
-    var shareScope = this.$scope.$new();
+    const shareScope = this.$scope.$new();
     shareScope.panel = this.panel;
     shareScope.dashboard = this.dashboard;
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/features/dashboard/partials/shareModal.html',
-      scope: shareScope
+      scope: shareScope,
     });
   }
 
@@ -247,41 +317,50 @@ export class PanelCtrl {
   }
 
   getInfoContent(options) {
-    var markdown = this.panel.description;
+    let markdown = this.panel.description;
 
     if (options.mode === 'tooltip') {
       markdown = this.error || this.panel.description;
     }
 
-    var linkSrv = this.$injector.get('linkSrv');
-    var templateSrv = this.$injector.get('templateSrv');
-    var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
-    var html = '<div class="markdown-html">';
+    const linkSrv = this.$injector.get('linkSrv');
+    const sanitize = this.$injector.get('$sanitize');
+    const templateSrv = this.$injector.get('templateSrv');
+    const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
+    let html = '<div class="markdown-html">';
 
     html += new Remarkable().render(interpolatedMarkdown);
 
     if (this.panel.links && this.panel.links.length > 0) {
       html += '<ul>';
-      for (let link of this.panel.links) {
-        var info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
-        html += '<li><a class="panel-menu-link" href="' + info.href + '" target="' + info.target + '">' + info.title + '</a></li>';
+      for (const link of this.panel.links) {
+        const info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
+        html +=
+          '<li><a class="panel-menu-link" href="' +
+          info.href +
+          '" target="' +
+          info.target +
+          '">' +
+          info.title +
+          '</a></li>';
       }
       html += '</ul>';
     }
 
-    return html + '</div>';
+    html += '</div>';
+    return sanitize(html);
   }
 
   openInspector() {
-    var modalScope = this.$scope.$new();
+    const modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
     modalScope.dashboard = this.dashboard;
-    modalScope.panelInfoHtml = this.getInfoContent({mode: 'inspector'});
+    modalScope.panelInfoHtml = this.getInfoContent({ mode: 'inspector' });
 
     modalScope.inspector = $.extend(true, {}, this.inspector);
     this.publishAppEvent('show-modal', {
       src: 'public/app/features/dashboard/partials/inspector.html',
-      scope: modalScope
+      scope: modalScope,
     });
   }
 }

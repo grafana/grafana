@@ -1,22 +1,16 @@
-// Copyright (c) 2016 Uber Technologies, Inc.
+// Copyright (c) 2017 Uber Technologies, Inc.
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// http://www.apache.org/licenses/LICENSE-2.0
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package jaeger
 
@@ -25,6 +19,7 @@ import (
 	"math"
 	"net/url"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/uber/jaeger-client-go/log"
@@ -338,6 +333,7 @@ func (s *adaptiveSampler) Close() {
 	for _, sampler := range s.samplers {
 		sampler.Close()
 	}
+	s.defaultSampler.Close()
 }
 
 func (s *adaptiveSampler) Equal(other Sampler) bool {
@@ -378,13 +374,16 @@ func (s *adaptiveSampler) update(strategies *sampling.PerOperationSamplingStrate
 // for the appropriate sampling strategy, constructs a corresponding sampler and
 // delegates to it for sampling decisions.
 type RemotelyControlledSampler struct {
+	// These fields must be first in the struct because `sync/atomic` expects 64-bit alignment.
+	// Cf. https://github.com/uber/jaeger-client-go/issues/155, https://goo.gl/zW7dgq
+	closed int64 // 0 - not closed, 1 - closed
+
 	sync.RWMutex
 	samplerOptions
 
 	serviceName string
-	timer       *time.Ticker
 	manager     sampling.SamplingManager
-	pollStopped sync.WaitGroup
+	doneChan    chan *sync.WaitGroup
 }
 
 type httpSamplingManager struct {
@@ -411,10 +410,9 @@ func NewRemotelyControlledSampler(
 	sampler := &RemotelyControlledSampler{
 		samplerOptions: options,
 		serviceName:    serviceName,
-		timer:          time.NewTicker(options.samplingRefreshInterval),
 		manager:        &httpSamplingManager{serverURL: options.samplingServerURL},
+		doneChan:       make(chan *sync.WaitGroup),
 	}
-
 	go sampler.pollController()
 	return sampler
 }
@@ -454,11 +452,15 @@ func (s *RemotelyControlledSampler) IsSampled(id TraceID, operation string) (boo
 
 // Close implements Close() of Sampler.
 func (s *RemotelyControlledSampler) Close() {
-	s.RLock()
-	s.timer.Stop()
-	s.RUnlock()
+	if swapped := atomic.CompareAndSwapInt64(&s.closed, 0, 1); !swapped {
+		s.logger.Error("Repeated attempt to close the sampler is ignored")
+		return
+	}
 
-	s.pollStopped.Wait()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	s.doneChan <- &wg
+	wg.Wait()
 }
 
 // Equal implements Equal() of Sampler.
@@ -476,15 +478,33 @@ func (s *RemotelyControlledSampler) Equal(other Sampler) bool {
 }
 
 func (s *RemotelyControlledSampler) pollController() {
-	// in unit tests we re-assign the timer Ticker, so need to lock to avoid data races
-	s.Lock()
-	timer := s.timer
-	s.Unlock()
+	ticker := time.NewTicker(s.samplingRefreshInterval)
+	defer ticker.Stop()
+	s.pollControllerWithTicker(ticker)
+}
 
-	for range timer.C {
-		s.updateSampler()
+func (s *RemotelyControlledSampler) pollControllerWithTicker(ticker *time.Ticker) {
+	for {
+		select {
+		case <-ticker.C:
+			s.updateSampler()
+		case wg := <-s.doneChan:
+			wg.Done()
+			return
+		}
 	}
-	s.pollStopped.Add(1)
+}
+
+func (s *RemotelyControlledSampler) getSampler() Sampler {
+	s.Lock()
+	defer s.Unlock()
+	return s.sampler
+}
+
+func (s *RemotelyControlledSampler) setSampler(sampler Sampler) {
+	s.Lock()
+	defer s.Unlock()
+	s.sampler = sampler
 }
 
 func (s *RemotelyControlledSampler) updateSampler() {

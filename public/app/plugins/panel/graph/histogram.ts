@@ -7,12 +7,12 @@ import TimeSeries from 'app/core/time_series2';
  */
 export function getSeriesValues(dataList: TimeSeries[]): number[] {
   const VALUE_INDEX = 0;
-  let values = [];
+  const values = [];
 
   // Count histogam stats
   for (let i = 0; i < dataList.length; i++) {
-    let series = dataList[i];
-    let datapoints = series.datapoints;
+    const series = dataList[i];
+    const datapoints = series.datapoints;
     for (let j = 0; j < datapoints.length; j++) {
       if (datapoints[j][VALUE_INDEX] !== null) {
         values.push(datapoints[j][VALUE_INDEX]);
@@ -29,24 +29,55 @@ export function getSeriesValues(dataList: TimeSeries[]): number[] {
  * @param values
  * @param bucketSize
  */
-export function convertValuesToHistogram(values: number[], bucketSize: number): any[] {
-  let histogram = {};
+export function convertValuesToHistogram(values: number[], bucketSize: number, min: number, max: number): any[] {
+  const histogram = {};
 
-  for (let i = 0; i < values.length; i++) {
-    let bound = getBucketBound(values[i], bucketSize);
-    if (histogram[bound]) {
-      histogram[bound] = histogram[bound] + 1;
-    } else {
-      histogram[bound] = 1;
-    }
+  const minBound = getBucketBound(min, bucketSize);
+  const maxBound = getBucketBound(max, bucketSize);
+  let bound = minBound;
+  let n = 0;
+  while (bound <= maxBound) {
+    histogram[bound] = 0;
+    bound = minBound + bucketSize * n;
+    n++;
   }
 
-  let histogam_series = _.map(histogram, (count, bound) => {
+  for (let i = 0; i < values.length; i++) {
+    const bound = getBucketBound(values[i], bucketSize);
+    histogram[bound] = histogram[bound] + 1;
+  }
+
+  const histogamSeries = _.map(histogram, (count, bound) => {
     return [Number(bound), count];
   });
 
   // Sort by Y axis values
-  return _.sortBy(histogam_series, point => point[0]);
+  return _.sortBy(histogamSeries, point => point[0]);
+}
+
+/**
+ * Convert series into array of histogram data.
+ * @param data Array of series
+ * @param bucketSize
+ */
+export function convertToHistogramData(
+  data: any,
+  bucketSize: number,
+  hiddenSeries: any,
+  min: number,
+  max: number
+): any[] {
+  return data.map(series => {
+    const values = getSeriesValues([series]);
+    series.histogram = true;
+    if (!hiddenSeries[series.alias]) {
+      const histogram = convertValuesToHistogram(values, bucketSize, min, max);
+      series.data = histogram;
+    } else {
+      series.data = [];
+    }
+    return series;
+  });
 }
 
 function getBucketBound(value: number, bucketSize: number): number {

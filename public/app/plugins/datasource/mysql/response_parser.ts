@@ -1,22 +1,20 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 export default class ResponseParser {
   constructor(private $q) {}
 
   processQueryResult(res) {
-    var data = [];
+    const data = [];
 
     if (!res.data.results) {
-      return {data: data};
+      return { data: data };
     }
 
-    for (let key in res.data.results) {
-      let queryRes = res.data.results[key];
+    for (const key in res.data.results) {
+      const queryRes = res.data.results[key];
 
       if (queryRes.series) {
-        for (let series of queryRes.series) {
+        for (const series of queryRes.series) {
           data.push({
             target: series.name,
             datapoints: series.points,
@@ -27,7 +25,7 @@ export default class ResponseParser {
       }
 
       if (queryRes.tables) {
-        for (let table of queryRes.tables) {
+        for (const table of queryRes.tables) {
           table.type = 'table';
           table.refId = queryRes.refId;
           table.meta = queryRes.meta;
@@ -36,11 +34,13 @@ export default class ResponseParser {
       }
     }
 
-    return {data: data};
+    return { data: data };
   }
 
   parseMetricFindQueryResult(refId, results) {
-    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) { return []; }
+    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
+      return [];
+    }
 
     const columns = results.data.results[refId].tables[0].columns;
     const rows = results.data.results[refId].tables[0].rows;
@@ -59,7 +59,10 @@ export default class ResponseParser {
 
     for (let i = 0; i < rows.length; i++) {
       if (!this.containsKey(res, rows[i][textColIndex])) {
-        res.push({text: rows[i][textColIndex], value: rows[i][valueColIndex]});
+        res.push({
+          text: rows[i][textColIndex],
+          value: rows[i][valueColIndex],
+        });
       }
     }
 
@@ -72,14 +75,14 @@ export default class ResponseParser {
     for (let i = 0; i < rows.length; i++) {
       for (let j = 0; j < rows[i].length; j++) {
         const value = rows[i][j];
-        if ( res.indexOf( value ) === -1 ) {
+        if (res.indexOf(value) === -1) {
           res.push(value);
         }
       }
     }
 
     return _.map(res, value => {
-      return { text: value};
+      return { text: value };
     });
   }
 
@@ -110,10 +113,12 @@ export default class ResponseParser {
     let tagsColumnIndex = -1;
 
     for (let i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === 'time_sec') {
+      if (table.columns[i].text === 'time_sec' || table.columns[i].text === 'time') {
         timeColumnIndex = i;
       } else if (table.columns[i].text === 'title') {
-        return this.$q.reject({message: 'The title column for annotations is deprecated, now only a column named text is returned'});
+        return this.$q.reject({
+          message: 'The title column for annotations is deprecated, now only a column named text is returned',
+        });
       } else if (table.columns[i].text === 'text') {
         textColumnIndex = i;
       } else if (table.columns[i].text === 'tags') {
@@ -122,7 +127,9 @@ export default class ResponseParser {
     }
 
     if (timeColumnIndex === -1) {
-      return this.$q.reject({message: 'Missing mandatory time column (with time_sec column alias) in annotation query.'});
+      return this.$q.reject({
+        message: 'Missing mandatory time column (with time_sec column alias) in annotation query.',
+      });
     }
 
     const list = [];
@@ -130,9 +137,9 @@ export default class ResponseParser {
       const row = table.rows[i];
       list.push({
         annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]) * 1000,
-        text: row[textColumnIndex],
-        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : []
+        time: Math.floor(row[timeColumnIndex]),
+        text: row[textColumnIndex] ? row[textColumnIndex].toString() : '',
+        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });
     }
 

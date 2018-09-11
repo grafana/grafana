@@ -1,5 +1,5 @@
 export function assignModelProperties(target, source, defaults, removeDefaults?) {
-  for (var key in defaults) {
+  for (const key in defaults) {
     if (!defaults.hasOwnProperty(key)) {
       continue;
     }
@@ -7,4 +7,3 @@ export function assignModelProperties(target, source, defaults, removeDefaults?)
     target[key] = source[key] === undefined ? defaults[key] : source[key];
   }
 }
-

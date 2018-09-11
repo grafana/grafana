@@ -1,26 +1,36 @@
 import config from 'app/core/config';
-import {coreModule} from 'app/core/core';
+import { coreModule } from 'app/core/core';
 
 export class ProfileCtrl {
   user: any;
-  old_theme: any;
+  oldTheme: any;
+  teams: any = [];
   orgs: any = [];
   userForm: any;
+  showTeamsList = false;
   showOrgsList = false;
   readonlyLoginFields = config.disableLoginForm;
   navModel: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
+    this.getUserTeams();
     this.getUserOrgs();
-    this.navModel = navModelSrv.getProfileNav();
+    this.navModel = navModelSrv.getNav('profile', 'profile-settings', 0);
   }
 
   getUser() {
     this.backendSrv.get('/api/user').then(user => {
       this.user = user;
       this.user.theme = user.theme || 'dark';
+    });
+  }
+
+  getUserTeams() {
+    this.backendSrv.get('/api/user/teams').then(teams => {
+      this.teams = teams;
+      this.showTeamsList = this.teams.length > 0;
     });
   }
 
@@ -38,16 +48,17 @@ export class ProfileCtrl {
   }
 
   update() {
-    if (!this.userForm.$valid) { return; }
+    if (!this.userForm.$valid) {
+      return;
+    }
 
     this.backendSrv.put('/api/user/', this.user).then(() => {
       this.contextSrv.user.name = this.user.name || this.user.login;
-      if (this.old_theme !== this.user.theme) {
+      if (this.oldTheme !== this.user.theme) {
         window.location.href = config.appSubUrl + this.$location.path();
       }
     });
   }
-
 }
 
 coreModule.controller('ProfileCtrl', ProfileCtrl);

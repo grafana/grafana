@@ -12,7 +12,7 @@ import (
 )
 
 func updateTestDashboard(dashboard *m.Dashboard, data map[string]interface{}) {
-	data["title"] = dashboard.Title
+	data["id"] = dashboard.Id
 
 	saveCmd := m.SaveDashboardCommand{
 		OrgId:     dashboard.OrgId,
@@ -29,7 +29,7 @@ func TestGetDashboardVersion(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Get a Dashboard ID and version ID", func() {
-			savedDash := insertTestDashboard("test dash 26", 1, "diff")
+			savedDash := insertTestDashboard("test dash 26", 1, 0, false, "diff")
 
 			query := m.GetDashboardVersionQuery{
 				DashboardId: savedDash.Id,
@@ -44,7 +44,7 @@ func TestGetDashboardVersion(t *testing.T) {
 
 			dashCmd := m.GetDashboardQuery{
 				OrgId: savedDash.OrgId,
-				Slug:  savedDash.Slug,
+				Uid:   savedDash.Uid,
 			}
 
 			err = GetDashboard(&dashCmd)
@@ -70,7 +70,7 @@ func TestGetDashboardVersion(t *testing.T) {
 func TestGetDashboardVersions(t *testing.T) {
 	Convey("Testing dashboard versions retrieval", t, func() {
 		InitTestDB(t)
-		savedDash := insertTestDashboard("test dash 43", 1, "diff-all")
+		savedDash := insertTestDashboard("test dash 43", 1, 0, false, "diff-all")
 
 		Convey("Get all versions for a given Dashboard ID", func() {
 			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
@@ -110,7 +110,7 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		versionsToWrite := 10
 		setting.DashboardVersionsToKeep = versionsToKeep
 
-		savedDash := insertTestDashboard("test dash 53", 1, "diff-all")
+		savedDash := insertTestDashboard("test dash 53", 1, 0, false, "diff-all")
 		for i := 0; i < versionsToWrite-1; i++ {
 			updateTestDashboard(savedDash, map[string]interface{}{
 				"tags": "different-tag",
@@ -136,10 +136,30 @@ func TestDeleteExpiredVersions(t *testing.T) {
 			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
 			So(err, ShouldBeNil)
 
-			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
 			GetDashboardVersions(&query)
 
 			So(len(query.Result), ShouldEqual, versionsToWrite)
+		})
+
+		Convey("Don't delete more than MAX_VERSIONS_TO_DELETE per iteration", func() {
+			versionsToWriteBigNumber := MAX_VERSIONS_TO_DELETE + versionsToWrite
+			for i := 0; i < versionsToWriteBigNumber-versionsToWrite; i++ {
+				updateTestDashboard(savedDash, map[string]interface{}{
+					"tags": "different-tag",
+				})
+			}
+
+			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
+			So(err, ShouldBeNil)
+
+			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWriteBigNumber}
+			GetDashboardVersions(&query)
+
+			// Ensure we have at least versionsToKeep versions
+			So(len(query.Result), ShouldBeGreaterThanOrEqualTo, versionsToKeep)
+			// Ensure we haven't deleted more than MAX_VERSIONS_TO_DELETE rows
+			So(versionsToWriteBigNumber-len(query.Result), ShouldBeLessThanOrEqualTo, MAX_VERSIONS_TO_DELETE)
 		})
 	})
 }

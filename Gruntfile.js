@@ -1,4 +1,3 @@
-/* jshint node:true */
 'use strict';
 module.exports = function (grunt) {
   var os = require('os');
@@ -11,6 +10,10 @@ module.exports = function (grunt) {
     tempDir: 'tmp',
     platform: process.platform.replace('win32', 'windows'),
   };
+
+  if (grunt.option('platform')) {
+    config.platform = grunt.option('platform');
+  }
 
   if (grunt.option('arch')) {
     config.arch = grunt.option('arch');

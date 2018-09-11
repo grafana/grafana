@@ -1,8 +1,5 @@
-///<reference path="../../../headers/common.d.ts" />
-
-
 import _ from 'lodash';
-import {transformers} from './transformers';
+import { transformers } from './transformers';
 
 export class TablePanelEditorCtrl {
   panel: any;
@@ -30,16 +27,16 @@ export class TablePanelEditorCtrl {
     this.columnsHelpMessage = '';
 
     switch (this.panel.transform) {
-      case "timeseries_aggregations": {
+      case 'timeseries_aggregations': {
         this.canSetColumns = true;
         break;
       }
-      case "json": {
+      case 'json': {
         this.canSetColumns = true;
         break;
       }
-      case "table": {
-        this.columnsHelpMessage = "Columns and their order are determined by the data query";
+      case 'table': {
+        this.columnsHelpMessage = 'Columns and their order are determined by the data query';
       }
     }
   }
@@ -48,21 +45,21 @@ export class TablePanelEditorCtrl {
     if (!this.panelCtrl.dataRaw) {
       return this.$q.when([]);
     }
-    var columns = this.transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
-    var segments = _.map(columns, (c: any) => this.uiSegmentSrv.newSegment({value: c.text}));
+    const columns = this.transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
+    const segments = _.map(columns, (c: any) => this.uiSegmentSrv.newSegment({ value: c.text }));
     return this.$q.when(segments);
   }
 
   addColumn() {
-    var columns = transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
-    var column = _.find(columns, {text: this.addColumnSegment.value});
+    const columns = transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
+    const column = _.find(columns, { text: this.addColumnSegment.value });
 
     if (column) {
       this.panel.columns.push(column);
       this.render();
     }
 
-    var plusButton = this.uiSegmentSrv.newPlusButton();
+    const plusButton = this.uiSegmentSrv.newPlusButton();
     this.addColumnSegment.html = plusButton.html;
     this.addColumnSegment.value = plusButton.value;
   }
@@ -70,7 +67,7 @@ export class TablePanelEditorCtrl {
   transformChanged() {
     this.panel.columns = [];
     if (this.panel.transform === 'timeseries_aggregations') {
-      this.panel.columns.push({text: 'Avg', value: 'avg'});
+      this.panel.columns.push({ text: 'Avg', value: 'avg' });
     }
 
     this.updateTransformHints();

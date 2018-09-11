@@ -339,7 +339,20 @@ func DialOpen(d Dialer, name string) (_ driver.Conn, err error) {
 	if err != nil {
 		return nil, err
 	}
-	cn.ssl(o)
+
+	err = cn.ssl(o)
+	if err != nil {
+		return nil, err
+	}
+
+	// cn.startup panics on error. Make sure we don't leak cn.c.
+	panicking := true
+	defer func() {
+		if panicking {
+			cn.c.Close()
+		}
+	}()
+
 	cn.buf = bufio.NewReader(cn.c)
 	cn.startup(o)
 
@@ -347,6 +360,7 @@ func DialOpen(d Dialer, name string) (_ driver.Conn, err error) {
 	if timeout, ok := o["connect_timeout"]; ok && timeout != "0" {
 		err = cn.c.SetDeadline(time.Time{})
 	}
+	panicking = false
 	return cn, err
 }
 
@@ -1019,30 +1033,35 @@ func (cn *conn) recv1() (t byte, r *readBuf) {
 	return t, r
 }
 
-func (cn *conn) ssl(o values) {
-	upgrade := ssl(o)
+func (cn *conn) ssl(o values) error {
+	upgrade, err := ssl(o)
+	if err != nil {
+		return err
+	}
+
 	if upgrade == nil {
 		// Nothing to do
-		return
+		return nil
 	}
 
 	w := cn.writeBuf(0)
 	w.int32(80877103)
-	if err := cn.sendStartupPacket(w); err != nil {
-		panic(err)
+	if err = cn.sendStartupPacket(w); err != nil {
+		return err
 	}
 
 	b := cn.scratch[:1]
-	_, err := io.ReadFull(cn.c, b)
+	_, err = io.ReadFull(cn.c, b)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if b[0] != 'S' {
-		panic(ErrSSLNotSupported)
+		return ErrSSLNotSupported
 	}
 
-	cn.c = upgrade(cn.c)
+	cn.c, err = upgrade(cn.c)
+	return err
 }
 
 // isDriverSetting returns true iff a setting is purely for configuring the

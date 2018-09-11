@@ -13,12 +13,12 @@ export function spectrumPicker() {
     scope: true,
     replace: true,
     template: '<color-picker color="ngModel.$viewValue" onChange="onColorChange"></color-picker>',
-    link: function(scope, element, attrs, ngModel) {
+    link: (scope, element, attrs, ngModel) => {
       scope.ngModel = ngModel;
-      scope.onColorChange = (color) => {
+      scope.onColorChange = color => {
         ngModel.$setViewValue(color);
       };
-    }
+    },
   };
 }
 coreModule.directive('spectrumPicker', spectrumPicker);

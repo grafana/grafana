@@ -27,7 +27,9 @@ and the conditions that need to be met for the alert to change state and trigger
 ## Execution
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `OpenTSDB`, `MySQL`, `Postgres` and `Cloudwatch`.
+of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `Elasticsearch`, `InfluxDB`, `OpenTSDB`, `MySQL`, `Postgres` and `Cloudwatch`.
+
+> Alerting support for Elasticsearch is only available in Grafana v5.2 and above.
 
 ### Clustering
 
@@ -59,7 +61,7 @@ avg() OF query(A, 5m, now) IS BELOW 14
 ```
 
 - `avg()` Controls how the values for **each** series should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
-- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `5m, now` means 5 minutes from now to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes from now to 2 minutes from now. This is useful if you want to ignore the last 2 minutes of data.
+- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `5m, now` means 5 minutes ago to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes ago to 2 minutes ago. This is useful if you want to ignore the last 2 minutes of data.
 - `IS BELOW 14`  Defines the type of threshold and the threshold value.  You can click on `IS BELOW` to change the type of threshold.
 
 The query used in an alert rule cannot contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.
@@ -86,6 +88,11 @@ So as you can see from the above scenario Grafana will not send out notification
 to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series
 we plan to track state **per series** in a future release.
 
+> Starting with Grafana v5.3 you can configure reminders to be sent for triggered alerts. This will send additional notifications
+> when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will
+> be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage
+> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here](/alerting/notifications/#send-reminders).
+
 ### No Data / Null values
 
 Below your conditions you can configure how the rule evaluation engine should handle queries that return no data or only null values.
@@ -110,7 +117,7 @@ to `Keep Last State` in order to basically ignore them.
 
 ## Notifications
 
-In alert tab you can also specify alert rule notifications along with a detailed messsage about the alert rule.
+In alert tab you can also specify alert rule notifications along with a detailed message about the alert rule.
 The message can contain anything, information about how you might solve the issue, link to runbook, etc.
 
 The actual notifications are configured and shared between multiple alerts. Read the
@@ -152,6 +159,8 @@ filters = alerting.scheduler:debug \
           tsdb.prometheus:debug \
           tsdb.opentsdb:debug \
           tsdb.influxdb:debug \
+          tsdb.elasticsearch:debug \
+          tsdb.elasticsearch.client:debug \
 ```
 
 If you want to log raw query sent to your TSDB and raw response in log you also have to set grafana.ini option `app_mode` to

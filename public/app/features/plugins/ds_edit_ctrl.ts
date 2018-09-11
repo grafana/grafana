@@ -1,22 +1,22 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-
+import { toJS } from 'mobx';
 import config from 'app/core/config';
-import {coreModule, appEvents} from 'app/core/core';
+import { coreModule, appEvents } from 'app/core/core';
+import { store } from 'app/stores/store';
 
-var datasourceTypes = [];
+let datasourceTypes = [];
 
-var defaults = {
+const defaults = {
   name: '',
   type: 'graphite',
   url: '',
   access: 'proxy',
   jsonData: {},
   secureJsonFields: {},
+  secureJsonData: {},
 };
 
-var datasourceCreated = false;
+let datasourceCreated = false;
 
 export class DataSourceEditCtrl {
   isNew: boolean;
@@ -25,26 +25,18 @@ export class DataSourceEditCtrl {
   types: any;
   testing: any;
   datasourceMeta: any;
-  tabIndex: number;
-  hasDashboards: boolean;
   editForm: any;
   gettingStarted: boolean;
   navModel: any;
 
   /** @ngInject */
-  constructor(
-    private $q,
-    private backendSrv,
-    private $routeParams,
-    private $location,
-    private datasourceSrv,
-    private navModelSrv,
-  ) {
+  constructor(private $q, private backendSrv, private $routeParams, private $location, private datasourceSrv) {
+    if (store.nav.main === null) {
+      store.nav.load('cfg', 'datasources');
+    }
 
-    this.navModel = this.navModelSrv.getDatasourceNav(0);
-    this.isNew = true;
+    this.navModel = toJS(store.nav);
     this.datasources = [];
-    this.tabIndex = 0;
 
     this.loadDatasourceTypes().then(() => {
       if (this.$routeParams.id) {
@@ -56,6 +48,7 @@ export class DataSourceEditCtrl {
   }
 
   initNewDatasourceModel() {
+    this.isNew = true;
     this.current = _.cloneDeep(defaults);
 
     // We are coming from getting started
@@ -73,7 +66,7 @@ export class DataSourceEditCtrl {
       return this.$q.when(null);
     }
 
-    return this.backendSrv.get('/api/plugins', {enabled: 1, type: 'datasource'}).then(plugins => {
+    return this.backendSrv.get('/api/plugins', { enabled: 1, type: 'datasource' }).then(plugins => {
       datasourceTypes = plugins;
       this.types = plugins;
     });
@@ -83,30 +76,39 @@ export class DataSourceEditCtrl {
     this.backendSrv.get('/api/datasources/' + id).then(ds => {
       this.isNew = false;
       this.current = ds;
+
       if (datasourceCreated) {
         datasourceCreated = false;
         this.testDatasource();
       }
+
       return this.typeChanged();
     });
   }
 
   userChangedType() {
     // reset model but keep name & default flag
-    this.current = _.defaults({
-      id: this.current.id,
-      name: this.current.name,
-      isDefault: this.current.isDefault,
-      type: this.current.type,
-    }, _.cloneDeep(defaults));
+    this.current = _.defaults(
+      {
+        id: this.current.id,
+        name: this.current.name,
+        isDefault: this.current.isDefault,
+        type: this.current.type,
+      },
+      _.cloneDeep(defaults)
+    );
     this.typeChanged();
   }
 
+  updateNav() {
+    store.nav.initDatasourceEditNav(this.current, this.datasourceMeta, 'datasource-settings');
+    this.navModel = toJS(store.nav);
+  }
+
   typeChanged() {
-    this.hasDashboards = false;
     return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
       this.datasourceMeta = pluginInfo;
-      this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'});
+      this.updateNav();
     });
   }
 
@@ -124,23 +126,28 @@ export class DataSourceEditCtrl {
         return;
       }
 
-      this.testing = {done: false, status: 'error'};
+      this.testing = { done: false, status: 'error' };
 
       // make test call in no backend cache context
-      this.backendSrv.withNoBackendCache(() => {
-        return datasource.testDatasource().then(result => {
-          this.testing.message = result.message;
-          this.testing.status = result.status;
-        }).catch(err => {
-          if (err.statusText) {
-            this.testing.message = 'HTTP Error ' + err.statusText;
-          } else {
-            this.testing.message = err.message;
-          }
+      this.backendSrv
+        .withNoBackendCache(() => {
+          return datasource
+            .testDatasource()
+            .then(result => {
+              this.testing.message = result.message;
+              this.testing.status = result.status;
+            })
+            .catch(err => {
+              if (err.statusText) {
+                this.testing.message = 'HTTP Error ' + err.statusText;
+              } else {
+                this.testing.message = err.message;
+              }
+            });
+        })
+        .finally(() => {
+          this.testing.done = true;
         });
-      }).finally(() => {
-        this.testing.done = true;
-      });
     });
   }
 
@@ -154,8 +161,9 @@ export class DataSourceEditCtrl {
     }
 
     if (this.current.id) {
-      return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then((result) => {
+      return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(result => {
         this.current = result.datasource;
+        this.updateNav();
         this.updateFrontendSettings().then(() => {
           this.testDatasource();
         });
@@ -181,30 +189,38 @@ export class DataSourceEditCtrl {
     appEvents.emit('confirm-modal', {
       title: 'Delete',
       text: 'Are you sure you want to delete this datasource?',
-      yesText: "Delete",
-      icon: "fa-trash",
+      yesText: 'Delete',
+      icon: 'fa-trash',
       onConfirm: () => {
         this.confirmDelete();
-      }
+      },
     });
   }
 }
 
 coreModule.controller('DataSourceEditCtrl', DataSourceEditCtrl);
 
-coreModule.directive('datasourceHttpSettings', function() {
+coreModule.directive('datasourceHttpSettings', () => {
   return {
     scope: {
-      current: "=",
-      suggestUrl: "@",
+      current: '=',
+      suggestUrl: '@',
+      noDirectAccess: '@',
     },
     templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html',
     link: {
-      pre: function($scope, elem, attrs) {
-        $scope.getSuggestUrls = function() {
+      pre: ($scope, elem, attrs) => {
+        // do not show access option if direct access is disabled
+        $scope.showAccessOption = $scope.noDirectAccess !== 'true';
+        $scope.showAccessHelp = false;
+        $scope.toggleAccessHelp = () => {
+          $scope.showAccessHelp = !$scope.showAccessHelp;
+        };
+
+        $scope.getSuggestUrls = () => {
           return [$scope.suggestUrl];
         };
-      }
-    }
+      },
+    },
   };
 });

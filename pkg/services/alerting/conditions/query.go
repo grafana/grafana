@@ -53,7 +53,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 		reducedValue := c.Reducer.Reduce(series)
 		evalMatch := c.Evaluator.Eval(reducedValue)
 
-		if reducedValue.Valid == false {
+		if !reducedValue.Valid {
 			emptySerieCount++
 		}
 

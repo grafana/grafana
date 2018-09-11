@@ -13,7 +13,7 @@ weight = 7
 
 Grafana provides numerous ways to manage the time ranges of the data being visualized, both at the Dashboard-level and the Panel-level.
 
-<img class="no-shadow" src="/img/docs/whatsnew_2_5/timepicker.png">
+<img class="no-shadow" src="/img/docs/v50/timepicker.png" width="700px">
 
 In the top right, you have the master Dashboard time picker (it's in between the 'Zoom out' and the 'Refresh' links).
 
@@ -39,11 +39,11 @@ Week to date | `now/w` | `now`
 Previous Month | `now-1M/M` | `now-1M/M`
 
 
-## Dashboard-Level Time Picker Settings
+## Dashboard Time Options
 
-There are two settings available from the Dashboard Settings area, allowing customization of the auto-refresh intervals and the definition of `now`.
+There are two settings available in the Dashboard Settings General tab, allowing customization of the auto-refresh intervals and the definition of `now`.
 
-<img class="no-shadow" src="/img/docs/v2/TimePicker-TimeOptions.png">
+<img class="no-shadow" src="/img/docs/v50/time_options.png" width="500px">
 
 ### Auto-Refresh Options
 
@@ -59,11 +59,11 @@ Users often ask, [when will then be now](https://www.youtube.com/watch?v=VeZ9HhH
 
 You can override the relative time range for individual panels, causing them to be different than what is selected in the Dashboard time picker in the upper right. This allows you to show metrics from different time periods or days at the same time.
 
-<img class="no-shadow" src="/img/docs/v2/panel_time_override.jpg">
+{{< docs-imagebox img="/img/docs/v50/panel_time_override.png" max-width="500px" >}}
 
 You control these overrides in panel editor mode and the tab `Time Range`.
 
-<img class="no-shadow" src="/img/docs/v2/time_range_tab.jpg">
+{{< docs-imagebox img="/img/docs/v50/time_range_tab.png" max-width="500px" >}}
 
 When you zoom or change the Dashboard time to a custom absolute time range, all panel overrides will be disabled. The panel relative time override is only active when the dashboard time is also relative. The panel timeshift override is always active, even when the dashboard time is absolute.
 

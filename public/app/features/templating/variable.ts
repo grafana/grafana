@@ -1,5 +1,5 @@
 import kbn from 'app/core/utils/kbn';
-import {assignModelProperties} from 'app/core/utils/model_utils';
+import { assignModelProperties } from 'app/core/utils/model_utils';
 
 export interface Variable {
   setValue(option);
@@ -10,26 +10,19 @@ export interface Variable {
   getSaveModel();
 }
 
-export var variableTypes = {};
-export {
-  assignModelProperties
-};
+export let variableTypes = {};
+export { assignModelProperties };
 
 export function containsVariable(...args: any[]) {
-  var variableName = args[args.length-1];
-  var str = args[0] || '';
+  let variableName = args[args.length - 1];
+  let str = args[0] || '';
 
-  for (var i = 1; i < args.length-1; i++) {
+  for (let i = 1; i < args.length - 1; i++) {
     str += ' ' + args[i] || '';
   }
 
   variableName = kbn.regexEscape(variableName);
-  var findVarRegex = new RegExp('\\$(' + variableName + ')(?:\\W|$)|\\[\\[(' + variableName + ')\\]\\]', 'g');
-  var match = findVarRegex.exec(str);
+  const findVarRegex = new RegExp('\\$(' + variableName + ')(?:\\W|$)|\\[\\[(' + variableName + ')\\]\\]', 'g');
+  const match = findVarRegex.exec(str);
   return match !== null;
 }
-
-
-
-
-

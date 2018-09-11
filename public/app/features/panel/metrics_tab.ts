@@ -1,6 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
-
-import {DashboardModel} from '../dashboard/model';
+import { DashboardModel } from '../dashboard/dashboard_model';
 import Remarkable from 'remarkable';
 
 export class MetricsTabCtrl {
@@ -30,13 +28,13 @@ export class MetricsTabCtrl {
     this.datasources = datasourceSrv.getMetricSources();
     this.panelDsValue = this.panelCtrl.panel.datasource;
 
-    for (let ds of this.datasources) {
+    for (const ds of this.datasources) {
       if (ds.value === this.panelDsValue) {
         this.datasourceInstance = ds;
       }
     }
 
-    this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
+    this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
 
     // update next ref id
     this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
@@ -51,11 +49,15 @@ export class MetricsTabCtrl {
   }
 
   getOptions(includeBuiltin) {
-    return Promise.resolve(this.datasources.filter(value => {
-      return includeBuiltin || !value.meta.builtIn;
-    }).map(ds => {
-      return {value: ds.value, text: ds.name, datasource: ds};
-    }));
+    return Promise.resolve(
+      this.datasources
+        .filter(value => {
+          return includeBuiltin || !value.meta.builtIn;
+        })
+        .map(ds => {
+          return { value: ds.value, text: ds.name, datasource: ds };
+        })
+    );
   }
 
   datasourceChanged(option) {
@@ -73,12 +75,15 @@ export class MetricsTabCtrl {
       return;
     }
 
-    this.panelCtrl.addQuery({isNew: true, datasource: option.datasource.name});
-    this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
+    this.panelCtrl.addQuery({
+      isNew: true,
+      datasource: option.datasource.name,
+    });
+    this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
   }
 
   addQuery() {
-    this.panelCtrl.addQuery({isNew: true});
+    this.panelCtrl.addQuery({ isNew: true });
   }
 
   toggleHelp() {
@@ -87,7 +92,7 @@ export class MetricsTabCtrl {
     this.helpOpen = !this.helpOpen;
 
     this.backendSrv.get(`/api/plugins/${this.datasourceInstance.meta.id}/markdown/query_help`).then(res => {
-      var md = new Remarkable();
+      const md = new Remarkable();
       this.helpHtml = this.$sce.trustAsHtml(md.render(res));
     });
   }
@@ -105,7 +110,7 @@ export class MetricsTabCtrl {
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 export function metricsTabDirective() {
   'use strict';
   return {
@@ -115,4 +120,3 @@ export function metricsTabDirective() {
     controller: MetricsTabCtrl,
   };
 }
-

@@ -39,7 +39,7 @@ func NewLINENotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &LineNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Token:        token,
 		log:          log.New("alerting.notifier.line"),
 	}, nil
@@ -90,7 +90,7 @@ func (this *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send notification to LINE", "error", err, "body", string(body))
+		this.log.Error("Failed to send notification to LINE", "error", err, "body", body)
 		return err
 	}
 

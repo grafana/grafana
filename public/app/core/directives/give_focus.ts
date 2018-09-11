@@ -1,26 +1,28 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from '../core_module';
 
-coreModule.directive('giveFocus', function() {
-  return function(scope, element, attrs) {
-    element.click(function(e) {
+coreModule.directive('giveFocus', () => {
+  return (scope, element, attrs) => {
+    element.click(e => {
       e.stopPropagation();
     });
 
-    scope.$watch(attrs.giveFocus, function (newValue) {
-      if (!newValue) {
-        return;
-      }
-      setTimeout(function() {
-        element.focus();
-        var domEl = element[0];
-        if (domEl.setSelectionRange) {
-          var pos = element.val().length * 2;
-          domEl.setSelectionRange(pos, pos);
+    scope.$watch(
+      attrs.giveFocus,
+      newValue => {
+        if (!newValue) {
+          return;
         }
-      }, 200);
-    }, true);
+        setTimeout(() => {
+          element.focus();
+          const domEl = element[0];
+          if (domEl.setSelectionRange) {
+            const pos = element.val().length * 2;
+            domEl.setSelectionRange(pos, pos);
+          }
+        }, 200);
+      },
+      true
+    );
   };
 });
 

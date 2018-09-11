@@ -1,7 +1,6 @@
 import _ from 'lodash';
 
 class GrafanaDatasource {
-
   /** @ngInject */
   constructor(private backendSrv, private $q, private templateSrv) {}
 
@@ -14,11 +13,11 @@ class GrafanaDatasource {
         maxDataPoints: options.maxDataPoints,
       })
       .then(res => {
-        var data = [];
+        const data = [];
 
         if (res.results) {
           _.forEach(res.results, queryRes => {
-            for (let series of queryRes.series) {
+            for (const series of queryRes.series) {
               data.push({
                 target: series.name,
                 datapoints: series.points,
@@ -27,14 +26,13 @@ class GrafanaDatasource {
           });
         }
 
-        return {data: data};
+        return { data: data };
       });
   }
 
   metricFindQuery(options) {
-    return this.$q.when({data: []});
+    return this.$q.when({ data: [] });
   }
-
 
   annotationQuery(options) {
     const params: any = {
@@ -69,4 +67,4 @@ class GrafanaDatasource {
   }
 }
 
-export {GrafanaDatasource};
+export { GrafanaDatasource };

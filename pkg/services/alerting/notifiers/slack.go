@@ -58,7 +58,7 @@ func init() {
           data-placement="right">
         </input>
         <info-popover mode="right-absolute">
-          Provide a bot token to use the Slack file.upload API (starts with "xoxb")
+          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify #channel-name or @username in Recipient for this to work 
         </info-popover>
       </div>
     `,
@@ -78,7 +78,7 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	return &SlackNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		Recipient:    recipient,
 		Mention:      mention,
@@ -129,7 +129,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := this.Mention
-	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
+	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
 	image_url := ""

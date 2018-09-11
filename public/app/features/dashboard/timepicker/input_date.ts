@@ -5,10 +5,10 @@ export function inputDateDirective() {
   return {
     restrict: 'A',
     require: 'ngModel',
-    link: function($scope, $elem, attrs, ngModel) {
-      var format = 'YYYY-MM-DD HH:mm:ss';
+    link: ($scope, $elem, attrs, ngModel) => {
+      const format = 'YYYY-MM-DD HH:mm:ss';
 
-      var fromUser = function(text) {
+      const fromUser = text => {
         if (text.indexOf('now') !== -1) {
           if (!dateMath.isValid(text)) {
             ngModel.$setValidity('error', false);
@@ -18,7 +18,7 @@ export function inputDateDirective() {
           return text;
         }
 
-        var parsed;
+        let parsed;
         if ($scope.ctrl.isUtc) {
           parsed = moment.utc(text, format);
         } else {
@@ -34,7 +34,7 @@ export function inputDateDirective() {
         return parsed;
       };
 
-      var toUser = function(currentValue) {
+      const toUser = currentValue => {
         if (moment.isMoment(currentValue)) {
           return currentValue.format(format);
         } else {

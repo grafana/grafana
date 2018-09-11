@@ -99,10 +99,7 @@ func (w *FileLogWriter) StartLogger() error {
 		return err
 	}
 	w.mw.SetFd(fd)
-	if err = w.initFd(); err != nil {
-		return err
-	}
-	return nil
+	return w.initFd()
 }
 
 func (w *FileLogWriter) docheck(size int) {
@@ -238,4 +235,21 @@ func (w *FileLogWriter) Close() {
 // flush file means sync file from disk.
 func (w *FileLogWriter) Flush() {
 	w.mw.fd.Sync()
+}
+
+// Reload file logger
+func (w *FileLogWriter) Reload() {
+	// block Logger's io.Writer
+	w.mw.Lock()
+	defer w.mw.Unlock()
+
+	// Close
+	fd := w.mw.fd
+	fd.Close()
+
+	// Open again
+	err := w.StartLogger()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Reload StartLogger: %s\n", err)
+	}
 }

@@ -1,0 +1,84 @@
+@import '~react-grid-layout/css/styles.css';
+@import '~react-resizable/css/styles.css';
+
+.panel-in-fullscreen {
+  .react-grid-layout {
+    height: 100% !important;
+  }
+
+  .react-grid-item {
+    display: none !important;
+    transition-property: none !important;
+  }
+
+  .panel--fullscreen {
+    display: block !important;
+    position: unset !important;
+    width: 100% !important;
+    height: 100% !important;
+    transform: translate(0px, 0px) !important;
+  }
+
+  // Disable grid interaction indicators in fullscreen panels
+
+  .panel-header:hover {
+    background-color: inherit;
+  }
+
+  .panel-title-container {
+    cursor: pointer;
+  }
+
+  .react-resizable-handle {
+    display: none;
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .react-grid-layout {
+    height: 100% !important;
+  }
+
+  .react-grid-item {
+    display: none;
+    transition-property: none !important;
+  }
+
+  .panel {
+    display: block !important;
+    position: unset !important;
+    width: 100% !important;
+    transform: translate(0px, 0px) !important;
+    margin-bottom: 1rem;
+  }
+}
+
+.theme-dark {
+  .react-grid-item > .react-resizable-handle::after {
+    border-right: 2px solid $gray-1;
+    border-bottom: 2px solid $gray-1;
+  }
+}
+
+.theme-light {
+  .react-grid-item > .react-resizable-handle::after {
+    border-right: 2px solid $gray-3;
+    border-bottom: 2px solid $gray-3;
+  }
+}
+
+// Hack for preventing panel menu overlapping.
+.react-grid-item.resizing.panel,
+.react-grid-item.panel.dropdown-menu-open,
+.react-grid-item.react-draggable-dragging.panel {
+  z-index: $zindex-dropdown;
+}
+
+// Disable animation on initial rendering and enable it when component has been mounted.
+.react-grid-item.cssTransforms.panel {
+  transition-property: none;
+}
+
+.animated .react-grid-item.cssTransforms.panel {
+  transition-property: transform;
+}

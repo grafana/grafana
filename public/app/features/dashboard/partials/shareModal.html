@@ -2,7 +2,8 @@
 
 	<div class="modal-header">
 		<h2 class="modal-header-title">
-			{{modalTitle}}
+			<i class="fa fa-share-square-o"></i>
+			<span class="p-l-1">{{modalTitle}}</span>
 		</h2>
 
 		<ul class="gf-tabs">
@@ -62,7 +63,7 @@
 		</gf-form-switch>
 		<div class="gf-form">
 			<span class="gf-form-label width-12">Theme</span>
-			<div class="gf-form-select-wrapper width-6">
+			<div class="gf-form-select-wrapper width-10">
 				<select class="gf-form-input" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
 			</div>
 		</div>

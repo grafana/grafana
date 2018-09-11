@@ -1,8 +1,10 @@
 node_modules
 npm-debug.log
+yarn-error.log
 coverage/
 .aws-config.json
 awsconfig
+/.awcache
 /dist
 /public/build
 /public/views/index.html
@@ -10,8 +12,8 @@ awsconfig
 /public_gen
 /public/vendor/npm
 /tmp
-vendor/phantomjs/phantomjs
-vendor/phantomjs/phantomjs.exe
+tools/phantomjs/phantomjs
+tools/phantomjs/phantomjs.exe
 profile.out
 coverage.txt
 
@@ -31,6 +33,7 @@ public/css/*.min.css
 *.tmp
 .DS_Store
 .vscode/
+.vs/
 
 /data/*
 /bin/*
@@ -40,16 +43,25 @@ fig.yml
 docker-compose.yml
 docker-compose.yaml
 /conf/provisioning/**/custom.yaml
+/conf/provisioning/**/dev.yaml
+/conf/ldap_dev.toml
 profile.cov
 /grafana
+/local
 .notouch
+/Makefile.local
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
+/pkg/extensions
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
 /packaging/**/*.deb
+/packaging/**/*.tar.gz
+
+# Ignore OSX indexing
+.DS_Store
 
 /vendor/**/*.py
 /vendor/**/*.xml
@@ -57,3 +69,6 @@ debug.test
 /vendor/**/*_test.go
 /vendor/**/.editorconfig
 /vendor/**/appengine*
+*.orig
+
+/devenv/bulk-dashboards/*.json
