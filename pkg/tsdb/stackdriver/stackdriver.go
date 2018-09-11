@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"path"
 	"regexp"
-	"strings"
 	"time"
 
 	"golang.org/x/net/context/ctxhttp"
@@ -27,11 +26,18 @@ import (
 )
 
 type StackdriverExecutor struct {
-	HttpClient *http.Client
+	HTTPClient *http.Client
 }
 
-func NewStackdriverExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	return &StackdriverExecutor{}, nil
+func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	httpClient, err := dsInfo.GetHttpClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return &StackdriverExecutor{
+		HTTPClient: httpClient,
+	}, nil
 }
 
 var glog = log.New("tsdb.stackdriver")
@@ -40,49 +46,27 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
 }
 
+// Query takes in the frontend queries, parses them into the Stackdriver query format
+// executes the queries against the Stackdriver API and parses the response into
+// the time series or table format
 func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
-	var target string
 
-	startTime, err := tsdbQuery.TimeRange.ParseFrom()
+	queries, err := e.parseQueries(tsdbQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	endTime, err := tsdbQuery.TimeRange.ParseTo()
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Info("tsdbQuery", "req.URL.RawQuery", tsdbQuery.TimeRange.From)
-
-	for _, query := range tsdbQuery.Queries {
-		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
-			target = fixIntervalFormat(fullTarget)
-		} else {
-			target = fixIntervalFormat(query.Model.Get("target").MustString())
-		}
-
-		if setting.Env == setting.DEV {
-			glog.Debug("Stackdriver request", "params")
-		}
-
+	for _, query := range queries {
 		req, err := e.createRequest(ctx, dsInfo)
-		metricType := query.Model.Get("metricType").MustString()
-
-		q := req.URL.Query()
-		q.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
-		q.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
-		q.Add("aggregation.perSeriesAligner", "ALIGN_NONE")
-		q.Add("filter", metricType)
-		req.URL.RawQuery = q.Encode()
-		logger.Info("tsdbQuery", "req.URL.RawQuery", req.URL.RawQuery)
-
 		if err != nil {
 			return nil, err
 		}
+
+		req.URL.RawQuery = query.Params.Encode()
+		logger.Info("tsdbQuery", "req.URL.RawQuery", req.URL.RawQuery)
 
 		httpClient, err := dsInfo.GetHttpClient()
 		if err != nil {
@@ -90,7 +74,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 		}
 
 		span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
-		span.SetTag("target", target)
+		span.SetTag("target", query.Target)
 		span.SetTag("from", tsdbQuery.TimeRange.From)
 		span.SetTag("until", tsdbQuery.TimeRange.To)
 		span.SetTag("datasource_id", dsInfo.Id)
@@ -113,11 +97,58 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 			return nil, err
 		}
 
-		queryRes, err := e.parseResponse(data, query.RefId)
-		result.Results[query.RefId] = queryRes
+		queryRes, err := e.parseResponse(data, query.RefID)
+		if err != nil {
+			return nil, err
+		}
+		result.Results[query.RefID] = queryRes
 	}
 
 	return result, nil
+}
+
+func (e *StackdriverExecutor) parseQueries(tsdbQuery *tsdb.TsdbQuery) ([]*StackdriverQuery, error) {
+	stackdriverQueries := []*StackdriverQuery{}
+
+	startTime, err := tsdbQuery.TimeRange.ParseFrom()
+	if err != nil {
+		return nil, err
+	}
+
+	endTime, err := tsdbQuery.TimeRange.ParseTo()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, query := range tsdbQuery.Queries {
+		var target string
+
+		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
+			target = fixIntervalFormat(fullTarget)
+		} else {
+			target = fixIntervalFormat(query.Model.Get("target").MustString())
+		}
+
+		metricType := query.Model.Get("metricType").MustString()
+
+		params := url.Values{}
+		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
+		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
+		params.Add("aggregation.perSeriesAligner", "ALIGN_NONE")
+		params.Add("filter", metricType)
+
+		if setting.Env == setting.DEV {
+			glog.Debug("Stackdriver request", "params", params)
+		}
+
+		stackdriverQueries = append(stackdriverQueries, &StackdriverQuery{
+			Target: target,
+			Params: params,
+			RefID:  query.RefId,
+		})
+	}
+
+	return stackdriverQueries, nil
 }
 
 func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriverResponse, error) {
@@ -142,9 +173,9 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriver
 	return data, nil
 }
 
-func (e *StackdriverExecutor) parseResponse(data StackDriverResponse, queryRefId string) (*tsdb.QueryResult, error) {
+func (e *StackdriverExecutor) parseResponse(data StackDriverResponse, queryRefID string) (*tsdb.QueryResult, error) {
 	queryRes := tsdb.NewQueryResult()
-	queryRes.RefId = queryRefId
+	queryRes.RefId = queryRefID
 
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
@@ -190,13 +221,6 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, stackdriverRoute, dsInfo)
 
 	return req, err
-}
-
-func formatTimeRange(input string) string {
-	if input == "now" {
-		return input
-	}
-	return strings.Replace(strings.Replace(strings.Replace(input, "now", "", -1), "m", "min", -1), "M", "mon", -1)
 }
 
 func fixIntervalFormat(target string) string {

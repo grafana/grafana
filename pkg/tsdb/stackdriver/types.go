@@ -1,6 +1,15 @@
 package stackdriver
 
-import "time"
+import (
+	"net/url"
+	"time"
+)
+
+type StackdriverQuery struct {
+	Target string
+	Params url.Values
+	RefID  string
+}
 
 type StackDriverResponse struct {
 	TimeSeries []struct {
