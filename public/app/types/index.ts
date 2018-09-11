@@ -30,4 +30,5 @@ export interface StoreState {
   alertRules: AlertRulesState;
   teams: TeamsState;
   team: TeamState;
+  folder: FolderState;
 }

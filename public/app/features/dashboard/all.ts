@@ -32,11 +32,9 @@ import './dashlinks/module';
 
 import coreModule from 'app/core/core_module';
 import { FolderDashboardsCtrl } from './folder_dashboards_ctrl';
-import { FolderSettingsCtrl } from './folder_settings_ctrl';
 import { DashboardImportCtrl } from './dashboard_import_ctrl';
 import { CreateFolderCtrl } from './create_folder_ctrl';
 
 coreModule.controller('FolderDashboardsCtrl', FolderDashboardsCtrl);
-coreModule.controller('FolderSettingsCtrl', FolderSettingsCtrl);
 coreModule.controller('DashboardImportCtrl', DashboardImportCtrl);
 coreModule.controller('CreateFolderCtrl', CreateFolderCtrl);

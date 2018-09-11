@@ -16,8 +16,13 @@ export const folderReducer = (state = inititalState, action: Action): FolderStat
     case ActionTypes.LoadFolder:
       return {
         ...action.payload,
-        canSave: false,
         hasChanged: false,
+      };
+    case ActionTypes.SetFolderTitle:
+      return {
+        ...state,
+        title: action.payload,
+        hasChanged: true,
       };
   }
   return state;
