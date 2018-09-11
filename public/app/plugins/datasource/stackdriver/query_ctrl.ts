@@ -23,8 +23,23 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       id: 'default',
       name: 'loading project...',
     },
-    // metricType: this.defaultDropdownValue,
+    metricType: this.defaultDropdownValue,
+    aggregation: 'REDUCE_MEAN',
   };
+
+  aggOptions = [
+    { text: 'none', value: 'REDUCE_NONE' },
+    { text: 'mean', value: 'REDUCE_MEAN' },
+    { text: 'min', value: 'REDUCE_MIN' },
+    { text: 'max', value: 'REDUCE_MAX' },
+    { text: 'sum', value: 'REDUCE_SUM' },
+    { text: 'std. dev.', value: 'REDUCE_STDDEV' },
+    { text: 'count', value: 'REDUCE_COUNT' },
+    { text: '99th percentile', value: 'REDUCE_PERCENTILE_99' },
+    { text: '95th percentile', value: 'REDUCE_PERCENTILE_95' },
+    { text: '50th percentile', value: 'REDUCE_PERCENTILE_50' },
+    { text: '5th percentile', value: 'REDUCE_PERCENTILE_05' },
+  ];
 
   showHelp: boolean;
   showLastQuery: boolean;

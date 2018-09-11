@@ -1,5 +1,6 @@
 import StackdriverDataSource from '../datasource';
 import { metricDescriptors } from './testData';
+import moment from 'moment';
 
 describe('StackdriverDataSource', () => {
   describe('when performing testDataSource', () => {
@@ -90,6 +91,53 @@ describe('StackdriverDataSource', () => {
         expect(result.length).toBe(1);
         expect(result[0].id).toBe('test-project');
         expect(result[0].name).toBe('Test Project');
+      });
+    });
+  });
+
+  describe('When performing query', () => {
+    const options = {
+      range: {
+        from: moment.utc('2017-08-22T20:00:00Z'),
+        to: moment.utc('2017-08-22T23:59:00Z'),
+      },
+      rangeRaw: {
+        from: 'now-4h',
+        to: 'now',
+      },
+      targets: [
+        {
+          refId: 'A',
+        },
+      ],
+    };
+
+    describe('and no time series data is returned', () => {
+      let ds;
+      const response = {
+        results: {
+          A: {
+            refId: 'A',
+            meta: {
+              rawQuery: 'arawquerystring',
+            },
+            series: null,
+            tables: null,
+          },
+        },
+      };
+
+      beforeEach(() => {
+        const backendSrv = {
+          datasourceRequest: async () => Promise.resolve({ status: 200, data: response }),
+        };
+        ds = new StackdriverDataSource({}, backendSrv);
+      });
+
+      it('should return a list of datapoints', () => {
+        return ds.query(options).then(results => {
+          expect(results.data.length).toBe(0);
+        });
       });
     });
   });

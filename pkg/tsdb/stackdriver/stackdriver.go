@@ -59,7 +59,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	queries, err := e.parseQueries(tsdbQuery)
+	queries, err := e.buildQueries(tsdbQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	return result, nil
 }
 
-func (e *StackdriverExecutor) parseQueries(tsdbQuery *tsdb.TsdbQuery) ([]*StackdriverQuery, error) {
+func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*StackdriverQuery, error) {
 	stackdriverQueries := []*StackdriverQuery{}
 
 	startTime, err := tsdbQuery.TimeRange.ParseFrom()
@@ -102,8 +102,8 @@ func (e *StackdriverExecutor) parseQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
-		params.Add("aggregation.perSeriesAligner", "ALIGN_NONE")
-		params.Add("filter", metricType)
+		params.Add("filter", "metric.type=\""+metricType+"\"")
+		setAggParams(&params, query)
 
 		if setting.Env == setting.DEV {
 			slog.Debug("Stackdriver request", "params", params)
@@ -117,6 +117,22 @@ func (e *StackdriverExecutor) parseQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	}
 
 	return stackdriverQueries, nil
+}
+
+func setAggParams(params *url.Values, query *tsdb.Query) {
+	primaryAggregation := query.Model.Get("primaryAggregation").MustString()
+	if primaryAggregation == "" {
+		primaryAggregation = "REDUCE_NONE"
+	}
+
+	if primaryAggregation == "REDUCE_NONE" {
+		params.Add("aggregation.perSeriesAligner", "ALIGN_NONE")
+	} else {
+		params.Add("aggregation.crossSeriesReducer", primaryAggregation)
+		params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
+		params.Add("aggregation.alignmentPeriod", "+60s")
+	}
+
 }
 
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, error) {

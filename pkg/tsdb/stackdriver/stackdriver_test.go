@@ -17,7 +17,7 @@ func TestStackdriver(t *testing.T) {
 	Convey("Stackdriver", t, func() {
 		executor := &StackdriverExecutor{}
 
-		Convey("Parse query from frontend", func() {
+		Convey("Parse queries from frontend and build Stackdriver API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{
 				TimeRange: &tsdb.TimeRange{
@@ -34,17 +34,43 @@ func TestStackdriver(t *testing.T) {
 					},
 				},
 			}
-			queries, err := executor.parseQueries(tsdbQuery)
-			So(err, ShouldBeNil)
 
-			So(len(queries), ShouldEqual, 1)
-			So(queries[0].RefID, ShouldEqual, "A")
-			So(queries[0].Target, ShouldEqual, "target")
-			So(len(queries[0].Params), ShouldEqual, 4)
-			So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
-			So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
-			So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_NONE")
-			So(queries[0].Params["filter"][0], ShouldEqual, "a/metric/type")
+			Convey("and query has no aggregation set", func() {
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
+
+				So(len(queries), ShouldEqual, 1)
+				So(queries[0].RefID, ShouldEqual, "A")
+				So(queries[0].Target, ShouldEqual, "target")
+				So(len(queries[0].Params), ShouldEqual, 4)
+				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
+				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
+				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_NONE")
+				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
+			})
+
+			Convey("and query has aggregation mean set", func() {
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"target":             "target",
+					"metricType":         "a/metric/type",
+					"primaryAggregation": "REDUCE_MEAN",
+				})
+
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
+
+				So(len(queries), ShouldEqual, 1)
+				So(queries[0].RefID, ShouldEqual, "A")
+				So(queries[0].Target, ShouldEqual, "target")
+				So(len(queries[0].Params), ShouldEqual, 6)
+				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
+				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
+				So(queries[0].Params["aggregation.crossSeriesReducer"][0], ShouldEqual, "REDUCE_MEAN")
+				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
+				So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, "+60s")
+				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
+			})
+
 		})
 
 		Convey("Parse stackdriver response in the time series format", func() {

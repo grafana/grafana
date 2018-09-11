@@ -1,13 +1,6 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
   <div class="gf-form-inline">
     <div class="gf-form">
-      <span class="gf-form-label width-9">Project</span>
-      <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.project.name' get-options="ctrl.getProjects()"
-        css-class="min-width-12" />
-    </div>
-  </div>
-  <div class="gf-form-inline">
-    <div class="gf-form">
       <span class="gf-form-label width-9">Metric Type</span>
       <gf-form-dropdown model="ctrl.target.metricType" get-options="ctrl.getMetricTypes($query)" class="min-width-20"
         disabled type="text" allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="ctrl.refresh()"></gf-form-dropdown>
@@ -17,6 +10,24 @@
     </div>
   </div>
   <div class="gf-form-inline">
+    <div class="gf-form gf-form--grow">
+      <label class="gf-form-label query-keyword width-9">Aggregation</label>
+      <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
+        <select class="gf-form-input width-11" ng-model="ctrl.target.aggregation" ng-options="f.value as f.text for f in ctrl.aggOptions"
+          ng-change="ctrl.refresh()"></select>
+      </div>
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Project</span>
+      <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.project.name' get-options="ctrl.getProjects()"
+        css-class="min-width-12" />
+    </div>
     <div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
         Show Help
@@ -45,6 +56,6 @@ Help text for aliasing
     </pre>
   </div>
   <div class="gf-form" ng-show="ctrl.lastQueryError">
-		<pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
-	</div>
+    <pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+  </div>
 </query-editor-row>

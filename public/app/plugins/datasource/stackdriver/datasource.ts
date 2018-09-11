@@ -15,7 +15,8 @@ export default class StackdriverDatasource {
     const queries = options.targets.filter(target => !target.hide).map(t => ({
       refId: t.refId,
       datasourceId: this.id,
-      metricType: `metric.type="${t.metricType}"`,
+      metricType: t.metricType,
+      primaryAggregation: t.aggregation,
     }));
 
     const result = [];
@@ -32,6 +33,9 @@ export default class StackdriverDatasource {
 
     if (data.results) {
       Object['values'](data.results).forEach(queryRes => {
+        if (!queryRes.series) {
+          return;
+        }
         queryRes.series.forEach(series => {
           result.push({
             target: series.name,
