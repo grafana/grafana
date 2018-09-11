@@ -38,11 +38,12 @@ export class TeamGroupSync extends PureComponent<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onNewGroupIdChanged = evt => {
-    this.setState({ newGroupId: evt.target.value });
+  onNewGroupIdChanged = event => {
+    this.setState({ newGroupId: event.target.value });
   };
 
-  onAddGroup = () => {
+  onAddGroup = event => {
+    event.preventDefault();
     this.props.addTeamGroup(this.state.newGroupId);
     this.setState({ isAdding: false, newGroupId: '' });
   };
@@ -93,7 +94,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               <i className="fa fa-close" />
             </button>
             <h5>Add External Group</h5>
-            <div className="gf-form-inline">
+            <form className="gf-form-inline" onSubmit={this.onAddGroup}>
               <div className="gf-form">
                 <input
                   type="text"
@@ -105,16 +106,11 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               </div>
 
               <div className="gf-form">
-                <button
-                  className="btn btn-success gf-form-btn"
-                  onClick={this.onAddGroup}
-                  type="submit"
-                  disabled={!this.isNewGroupValid()}
-                >
+                <button className="btn btn-success gf-form-btn" type="submit" disabled={!this.isNewGroupValid()}>
                   Add group
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </SlideDown>
 
