@@ -13,7 +13,11 @@ describe('grafana data source', () => {
     };
 
     const templateSrvStub = {
-      replace: val => val.replace('$var', 'replaced')
+      replace: val => {
+        return val
+        .replace('$var2', 'replaced|replaced2')
+        .replace('$var', 'replaced');
+      }
     };
 
     const ds = new GrafanaDatasource(backendSrvStub, q, templateSrvStub);
@@ -29,6 +33,21 @@ describe('grafana data source', () => {
 
       it('should interpolate template variables in tags in query options', () => {
         expect(calledBackendSrvParams.tags[0]).toBe('tag1:replaced');
+      });
+    });
+
+    describe('with tags that have multi value template variables', () => {
+      const options = setupAnnotationQueryOptions(
+        {tags: ['$var2']}
+      );
+
+      beforeEach(() => {
+        return ds.annotationQuery(options);
+      });
+
+      it('should interpolate template variables in tags in query options', () => {
+        expect(calledBackendSrvParams.tags[0]).toBe('replaced');
+        expect(calledBackendSrvParams.tags[1]).toBe('replaced2');
       });
     });
 
