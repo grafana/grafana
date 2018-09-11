@@ -7,6 +7,7 @@ import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions
 import TeamPages from 'app/features/teams/TeamPages';
 import TeamList from 'app/features/teams/TeamList';
 import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
+import DashboardListPage from 'app/features/manage-dashboards/DashboardListPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -81,9 +82,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards', {
-      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
-      controller: 'DashboardListCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => DashboardListPage,
+      },
     })
     .when('/dashboards/folder/new', {
       templateUrl: 'public/app/features/dashboard/partials/create_folder.html',
