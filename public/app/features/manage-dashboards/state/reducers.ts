@@ -2,8 +2,8 @@ import { FolderState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 export const inititalState: FolderState = {
+  id: 0,
   uid: 'loading',
-  id: -1,
   title: 'loading',
   url: '',
   canSave: false,
@@ -22,7 +22,7 @@ export const folderReducer = (state = inititalState, action: Action): FolderStat
       return {
         ...state,
         title: action.payload,
-        hasChanged: true,
+        hasChanged: action.payload.trim().length > 0,
       };
   }
   return state;

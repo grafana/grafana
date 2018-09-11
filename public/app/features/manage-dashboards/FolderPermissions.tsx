@@ -2,37 +2,39 @@ import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
-import ContainerProps from 'app/containers/ContainerProps';
+import { connect } from 'react-redux';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import Permissions from 'app/core/components/Permissions/Permissions';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
 import AddPermissions from 'app/core/components/Permissions/AddPermissions';
 import SlideDown from 'app/core/components/Animations/SlideDown';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { NavModel, StoreState, FolderState } from 'app/types';
+import { getFolderByUid, setFolderTitle, saveFolder, deleteFolder } from './state/actions';
 
-@inject('nav', 'folder', 'view', 'permissions')
+export interface Props {
+  navModel: NavModel;
+  getFolderByUid: typeof getFolderByUid;
+  folderUid: string;
+  folder: FolderState;
+}
+
+@inject('permissions')
 @observer
-export class FolderPermissions extends Component<ContainerProps, any> {
+export class FolderPermissions extends Component<Props> {
   constructor(props) {
     super(props);
     this.handleAddPermission = this.handleAddPermission.bind(this);
   }
 
   componentDidMount() {
-    this.loadStore();
+    this.props.getFolderByUid(this.props.folderUid);
   }
 
   componentWillUnmount() {
     const { permissions } = this.props;
     permissions.hideAddPermissions();
-  }
-
-  loadStore() {
-    const { nav, folder, view } = this.props;
-    return folder.load(view.routeParams.get('uid') as string).then(res => {
-      view.updatePathAndQuery(`${res.url}/permissions`, {}, {});
-      return nav.initFolderNav(toJS(folder.folder), 'manage-folder-permissions');
-    });
   }
 
   handleAddPermission() {
@@ -41,17 +43,17 @@ export class FolderPermissions extends Component<ContainerProps, any> {
   }
 
   render() {
-    const { nav, folder, permissions, backendSrv } = this.props;
+    const { navModel, permissions, backendSrv, folder } = this.props;
 
-    if (!folder.folder || !nav.main) {
+    if (folder.id === 0) {
       return <h2>Loading</h2>;
     }
 
-    const dashboardId = folder.folder.id;
+    const dashboardId = folder.id;
 
     return (
       <div>
-        <PageHeader model={nav as any} />
+        <PageHeader model={navModel} />
         <div className="page-container page-body">
           <div className="page-action-bar">
             <h3 className="page-sub-heading">Folder Permissions</h3>
@@ -77,4 +79,17 @@ export class FolderPermissions extends Component<ContainerProps, any> {
   }
 }
 
-export default hot(module)(FolderPermissions);
+const mapStateToProps = (state: StoreState) => {
+  const uid = state.location.routeParams.uid;
+  return {
+    navModel: getNavModel(state.navIndex, `folder-permissions-${uid}`),
+    folderUid: uid,
+    folder: state.folder,
+  };
+};
+
+const mapDispatchToProps = {
+  getFolderByUid,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(FolderPermissions));

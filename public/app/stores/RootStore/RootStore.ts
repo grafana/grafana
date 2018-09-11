@@ -1,7 +1,6 @@
 import { types } from 'mobx-state-tree';
 import { NavStore } from './../NavStore/NavStore';
 import { ViewStore } from './../ViewStore/ViewStore';
-import { FolderStore } from './../FolderStore/FolderStore';
 import { PermissionsStore } from './../PermissionsStore/PermissionsStore';
 
 export const RootStore = types.model({
@@ -15,7 +14,6 @@ export const RootStore = types.model({
     query: {},
     routeParams: {},
   }),
-  folder: types.optional(FolderStore, {}),
 });
 
 type RootStoreType = typeof RootStore.Type;
