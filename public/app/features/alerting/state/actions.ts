@@ -1,15 +1,15 @@
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { AlertRuleApi, StoreState } from 'app/types';
+import { AlertRuleDTO, StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 
 export enum ActionTypes {
   LoadAlertRules = 'LOAD_ALERT_RULES',
-  SetSearchQuery = 'SET_SEARCH_QUERY',
+  SetSearchQuery = 'SET_ALERT_SEARCH_QUERY',
 }
 
 export interface LoadAlertRulesAction {
   type: ActionTypes.LoadAlertRules;
-  payload: AlertRuleApi[];
+  payload: AlertRuleDTO[];
 }
 
 export interface SetSearchQueryAction {
@@ -17,7 +17,7 @@ export interface SetSearchQueryAction {
   payload: string;
 }
 
-export const loadAlertRules = (rules: AlertRuleApi[]): LoadAlertRulesAction => ({
+export const loadAlertRules = (rules: AlertRuleDTO[]): LoadAlertRulesAction => ({
   type: ActionTypes.LoadAlertRules,
   payload: rules,
 });

@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import _ from 'lodash';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -138,12 +137,10 @@ export class TeamList extends PureComponent<Props, any> {
   }
 }
 
-const getTeamsDebounced = _.debounce(getTeams, 100, { leading: true });
-
 function mapStateToProps(state) {
   return {
     navModel: getNavModel(state.navIndex, 'teams'),
-    teams: getTeamsDebounced(state.teams),
+    teams: getTeams(state.teams),
     searchQuery: getSearchQuery(state.teams),
     teamsCount: getTeamsCount(state.teams),
   };

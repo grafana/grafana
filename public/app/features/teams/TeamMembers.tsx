@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import _ from 'lodash';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
@@ -132,11 +131,9 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 }
 
-const getTeamMembersDebounced = _.debounce(getTeamMembers, 100, { leading: true });
-
 function mapStateToProps(state) {
   return {
-    members: getTeamMembersDebounced(state.team),
+    members: getTeamMembers(state.team),
     searchMemberQuery: getSearchMemberQuery(state.team),
   };
 }

@@ -7,8 +7,8 @@ import config from 'app/core/config';
 export enum ActionTypes {
   LoadTeams = 'LOAD_TEAMS',
   LoadTeam = 'LOAD_TEAM',
-  SetSearchQuery = 'SET_SEARCH_QUERY',
-  SetSearchMemberQuery = 'SET_SEARCH_MEMBER_QUERY',
+  SetSearchQuery = 'SET_TEAM_SEARCH_QUERY',
+  SetSearchMemberQuery = 'SET_TEAM_MEMBER_SEARCH_QUERY',
   LoadTeamMembers = 'TEAM_MEMBERS_LOADED',
   LoadTeamGroups = 'TEAM_GROUPS_LOADED',
 }
