@@ -66,7 +66,6 @@ exports[`ServerStats Should render table with stats 1`] = `
               <a
                 className="gf-tabs-link active"
                 href="Admin"
-                target={undefined}
               >
                 <i
                   className="icon"
