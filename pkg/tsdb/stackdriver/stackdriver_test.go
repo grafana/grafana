@@ -91,9 +91,16 @@ func TestStackdriver(t *testing.T) {
 				So(res.Series[0].Name, ShouldEqual, "serviceruntime.googleapis.com/api/request_count")
 				So(len(res.Series[0].Points), ShouldEqual, 3)
 
-				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 1.0666666666667)
-				So(res.Series[0].Points[1][0].Float64, ShouldEqual, 1.05)
-				So(res.Series[0].Points[2][0].Float64, ShouldEqual, 0.05)
+				Convey("timestamps should be in ascending order", func() {
+					So(res.Series[0].Points[0][0].Float64, ShouldEqual, 0.05)
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1536670020000)
+
+					So(res.Series[0].Points[1][0].Float64, ShouldEqual, 1.05)
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1536670080000)
+
+					So(res.Series[0].Points[2][0].Float64, ShouldEqual, 1.0666666666667)
+					So(res.Series[0].Points[2][1].Float64, ShouldEqual, 1536670260000)
+				})
 			})
 
 			Convey("when data from query with no aggregation", func() {
@@ -116,9 +123,9 @@ func TestStackdriver(t *testing.T) {
 					So(res.Series[2].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1")
 
 					So(len(res.Series[0].Points), ShouldEqual, 3)
-					So(res.Series[0].Points[0][0].Float64, ShouldEqual, 9.7730520330369)
+					So(res.Series[0].Points[0][0].Float64, ShouldEqual, 9.8566497180145)
 					So(res.Series[0].Points[1][0].Float64, ShouldEqual, 9.7323568146676)
-					So(res.Series[0].Points[2][0].Float64, ShouldEqual, 9.8566497180145)
+					So(res.Series[0].Points[2][0].Float64, ShouldEqual, 9.7730520330369)
 				})
 			})
 		})

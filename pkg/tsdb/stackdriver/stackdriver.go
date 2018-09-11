@@ -207,7 +207,10 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriver
 func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackDriverResponse) error {
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
-		for _, point := range series.Points {
+
+		// reverse the order to be ascending
+		for i := len(series.Points) - 1; i >= 0; i-- {
+			point := series.Points[i]
 			points = append(points, tsdb.NewTimePoint(null.FloatFrom(point.Value.DoubleValue), float64((point.Interval.EndTime).Unix())*1000))
 		}
 		metricName := series.Metric.Type
