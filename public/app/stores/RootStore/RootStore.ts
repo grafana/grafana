@@ -3,7 +3,6 @@ import { NavStore } from './../NavStore/NavStore';
 import { ViewStore } from './../ViewStore/ViewStore';
 import { FolderStore } from './../FolderStore/FolderStore';
 import { PermissionsStore } from './../PermissionsStore/PermissionsStore';
-import { TeamsStore } from './../TeamsStore/TeamsStore';
 
 export const RootStore = types.model({
   nav: types.optional(NavStore, {}),
@@ -17,9 +16,6 @@ export const RootStore = types.model({
     routeParams: {},
   }),
   folder: types.optional(FolderStore, {}),
-  teams: types.optional(TeamsStore, {
-    map: {},
-  }),
 });
 
 type RootStoreType = typeof RootStore.Type;

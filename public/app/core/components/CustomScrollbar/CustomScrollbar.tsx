@@ -13,7 +13,6 @@ interface Props {
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
 class CustomScrollbar extends PureComponent<Props> {
-
   static defaultProps: Partial<Props> = {
     customClassName: 'custom-scrollbars',
     autoHide: true,
