@@ -40,6 +40,7 @@ class GrafanaDatasource {
       to: options.range.to.valueOf(),
       limit: options.annotation.limit,
       tags: options.annotation.tags,
+      partialMatch: options.annotation.partialMatch,
     };
 
     if (options.annotation.type === 'dashboard') {
