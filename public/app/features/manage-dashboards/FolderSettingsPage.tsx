@@ -120,48 +120,41 @@ export class FolderSettingsPage extends PureComponent<Props> {
   render() {
     const { navModel } = this.props;
 
-    // if (!folder.folder || !nav.main) {
-    //   return <h2>Loading</h2>;
-    // }
-
     return (
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
           <h2 className="page-sub-heading">Folder Settings</h2>
+
+          <div className="section gf-form-group">
+            <form name="folderSettingsForm" onSubmit={this.save.bind(this)}>
+              <div className="gf-form">
+                <label className="gf-form-label width-7">Name</label>
+                <input
+                  type="text"
+                  className="gf-form-input width-30"
+                  value={folder.folder.title}
+                  onChange={this.onTitleChange.bind(this)}
+                />
+              </div>
+              <div className="gf-form-button-row">
+                <button
+                  type="submit"
+                  className="btn btn-success"
+                  disabled={!folder.folder.canSave || !folder.folder.hasChanged}
+                >
+                  <i className="fa fa-save" /> Save
+                </button>
+                <button className="btn btn-danger" onClick={this.delete.bind(this)} disabled={!folder.folder.canSave}>
+                  <i className="fa fa-trash" /> Delete
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     );
   }
-
-  // asd()  {
-  //   <div className="section gf-form-group">
-  //           <form name="folderSettingsForm" onSubmit={this.save.bind(this)}>
-  //             <div className="gf-form">
-  //               <label className="gf-form-label width-7">Name</label>
-  //               <input
-  //                 type="text"
-  //                 className="gf-form-input width-30"
-  //                 value={folder.folder.title}
-  //                 onChange={this.onTitleChange.bind(this)}
-  //               />
-  //             </div>
-  //             <div className="gf-form-button-row">
-  //               <button
-  //                 type="submit"
-  //                 className="btn btn-success"
-  //                 disabled={!folder.folder.canSave || !folder.folder.hasChanged}
-  //               >
-  //                 <i className="fa fa-save" /> Save
-  //               </button>
-  //               <button className="btn btn-danger" onClick={this.delete.bind(this)} disabled={!folder.folder.canSave}>
-  //                 <i className="fa fa-trash" /> Delete
-  //               </button>
-  //             </div>
-  //           </form>
-  //         </div>
-  //
-  // }
 }
 
 const mapStateToProps = (state: StoreState) => {
@@ -170,6 +163,7 @@ const mapStateToProps = (state: StoreState) => {
   return {
     navModel: getNavModel(state.navIndex, `folder-settings-${uid}`),
     folderUid: uid,
+    folder: state.folder,
   };
 };
 
