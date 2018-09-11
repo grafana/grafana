@@ -1,4 +1,4 @@
-import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from '../../../types';
+import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 export const initialTeamsState: TeamsState = { teams: [], searchQuery: '' };

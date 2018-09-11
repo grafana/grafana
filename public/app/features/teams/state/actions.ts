@@ -1,8 +1,7 @@
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { NavModelItem, StoreState, Team, TeamGroup, TeamMember } from '../../../types';
-import { updateNavIndex } from '../../../core/actions';
-import { UpdateNavIndexAction } from '../../../core/actions/navModel';
+import { NavModelItem, StoreState, Team, TeamGroup, TeamMember } from 'app/types';
+import { updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import config from 'app/core/config';
 
 export enum ActionTypes {
