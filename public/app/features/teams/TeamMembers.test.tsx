@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { TeamMembers, Props } from './TeamMembers';
+import { TeamMembers, Props, State } from './TeamMembers';
 import { TeamMember } from '../../types';
 import { getMockTeamMember, getMockTeamMembers } from './__mocks__/teamMocks';
 
@@ -64,8 +64,9 @@ describe('Functions', () => {
 
   describe('on add user to team', () => {
     const { wrapper, instance } = setup();
+    const state = wrapper.state() as State;
 
-    wrapper.state().newTeamMember = {
+    state.newTeamMember = {
       id: 1,
       label: '',
       avatarUrl: '',
