@@ -15,7 +15,6 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,10 +24,14 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
+var slog log.Logger
+
+// StackdriverExecutor executes queries for the Stackdriver datasource
 type StackdriverExecutor struct {
 	HTTPClient *http.Client
 }
 
+// NewStackdriverExecutor initializes a http client
 func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
@@ -40,9 +43,8 @@ func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, 
 	}, nil
 }
 
-var glog = log.New("tsdb.stackdriver")
-
 func init() {
+	slog = log.New("tsdb.stackdriver")
 	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
 }
 
@@ -66,7 +68,7 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 		}
 
 		req.URL.RawQuery = query.Params.Encode()
-		logger.Info("tsdbQuery", "req.URL.RawQuery", req.URL.RawQuery)
+		slog.Info("tsdbQuery", "req.URL.RawQuery", req.URL.RawQuery)
 
 		httpClient, err := dsInfo.GetHttpClient()
 		if err != nil {
@@ -138,7 +140,7 @@ func (e *StackdriverExecutor) parseQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		params.Add("filter", metricType)
 
 		if setting.Env == setting.DEV {
-			glog.Debug("Stackdriver request", "params", params)
+			slog.Debug("Stackdriver request", "params", params)
 		}
 
 		stackdriverQueries = append(stackdriverQueries, &StackdriverQuery{
@@ -159,14 +161,14 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriver
 	}
 
 	if res.StatusCode/100 != 2 {
-		glog.Info("Request failed", "status", res.Status, "body", string(body))
+		slog.Info("Request failed", "status", res.Status, "body", string(body))
 		return StackDriverResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
 	var data StackDriverResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		glog.Info("Failed to unmarshal Stackdriver response", "error", err, "status", res.Status, "body", string(body))
+		slog.Info("Failed to unmarshal Stackdriver response", "error", err, "status", res.Status, "body", string(body))
 		return StackDriverResponse{}, err
 	}
 
@@ -182,8 +184,13 @@ func (e *StackdriverExecutor) parseResponse(data StackDriverResponse, queryRefID
 		for _, point := range series.Points {
 			points = append(points, tsdb.NewTimePoint(null.FloatFrom(point.Value.DoubleValue), float64((point.Interval.EndTime).Unix())*1000))
 		}
+		metricName := series.Metric.Type
+
+		for _, value := range series.Metric.Labels {
+			metricName += " " + value
+		}
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   series.Metric.Type,
+			Name:   metricName,
 			Points: points,
 		})
 	}
@@ -197,7 +204,7 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 
 	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/", nil)
 	if err != nil {
-		glog.Info("Failed to create request", "error", err)
+		slog.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("Failed to create request. error: %v", err)
 	}
 

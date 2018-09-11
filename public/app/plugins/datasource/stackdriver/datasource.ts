@@ -17,6 +17,9 @@ export default class StackdriverDatasource {
       datasourceId: this.id,
       metricType: `metric.type="${t.metricType}"`,
     }));
+
+    const result = [];
+
     try {
       const { data } = await this.backendSrv.datasourceRequest({
         url: '/api/tsdb/query',
@@ -28,8 +31,6 @@ export default class StackdriverDatasource {
         },
       });
 
-      const result = [];
-
       if (data.results) {
         Object['values'](data.results).forEach(queryRes => {
           queryRes.series.forEach(series => {
@@ -37,11 +38,11 @@ export default class StackdriverDatasource {
           });
         });
       }
-
-      return { data: result };
     } catch (error) {
       console.log(error);
     }
+
+    return { data: result };
   }
 
   testDatasource() {

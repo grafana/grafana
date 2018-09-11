@@ -14,18 +14,12 @@ type StackdriverQuery struct {
 type StackDriverResponse struct {
 	TimeSeries []struct {
 		Metric struct {
-			Labels struct {
-				InstanceName string `json:"instance_name"`
-			} `json:"labels"`
-			Type string `json:"type"`
+			Labels map[string]string `json:"labels"`
+			Type   string            `json:"type"`
 		} `json:"metric"`
 		Resource struct {
-			Type   string `json:"type"`
-			Labels struct {
-				InstanceID string `json:"instance_id"`
-				Zone       string `json:"zone"`
-				ProjectID  string `json:"project_id"`
-			} `json:"labels"`
+			Type   string            `json:"type"`
+			Labels map[string]string `json:"labels"`
 		} `json:"resource"`
 		MetricKind string `json:"metricKind"`
 		ValueType  string `json:"valueType"`
