@@ -192,12 +192,7 @@ export class QueryVariable implements Variable {
       options = _.sortBy(options, 'text');
     } else if (sortType === 2) {
       options = _.sortBy(options, opt => {
-        const matches = opt.text.match(/.*?(\d+).*/);
-        if (!matches || matches.length < 2) {
-          return -1;
-        } else {
-          return parseInt(matches[1], 10);
-        }
+        return opt.text.replace(/\d{1,15}/g, n => +n+Math.pow(10,15));
       });
     } else if (sortType === 3) {
       options = _.sortBy(options, opt => {
