@@ -20,10 +20,11 @@ module.exports = merge(common, {
     path: path.resolve(__dirname, '../../public/build'),
     filename: '[name].[hash].js',
     publicPath: "/public/build/",
+    pathinfo: false,
   },
 
   resolve: {
-    extensions: ['.scss', '.ts', '.tsx', '.es6', '.js', '.json', '.svg', '.woff2', '.png'],
+    extensions: ['.scss', '.ts', '.tsx', '.es6', '.js', '.json', '.svg', '.woff2', '.png', '.html'],
   },
 
   devtool: 'eval-source-map',
@@ -37,25 +38,35 @@ module.exports = merge(common, {
     }
   },
 
+  optimization: {
+    removeAvailableModules: false,
+    removeEmptyChunks: false,
+    splitChunks: false,
+  },
+
   module: {
     rules: [
       {
         test: /\.tsx?$/,
         exclude: /node_modules/,
-        use: {
-          loader: 'awesome-typescript-loader',
+        use: [{
+          loader: 'babel-loader',
           options: {
-            useCache: true,
-            useBabel: true,
-            babelOptions: {
-              babelrc: false,
-              plugins: [
-                'syntax-dynamic-import',
-                'react-hot-loader/babel'
-              ]
-            }
+            cacheDirectory: true,
+            babelrc: false,
+            plugins: [
+              'syntax-dynamic-import',
+              'react-hot-loader/babel'
+            ]
+          }
+        },
+        {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true,
+            experimentalWatchApi: true
           },
-        }
+        }],
       },
       {
         test: /\.scss$/,

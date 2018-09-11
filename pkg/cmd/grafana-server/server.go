@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/facebookgo/inject"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
@@ -61,8 +62,8 @@ type GrafanaServerImpl struct {
 	shutdownReason     string
 	shutdownInProgress bool
 
-	RouteRegister api.RouteRegister `inject:""`
-	HttpServer    *api.HTTPServer   `inject:""`
+	RouteRegister routing.RouteRegister `inject:""`
+	HttpServer    *api.HTTPServer       `inject:""`
 }
 
 func (g *GrafanaServerImpl) Run() error {
@@ -75,7 +76,7 @@ func (g *GrafanaServerImpl) Run() error {
 	serviceGraph := inject.Graph{}
 	serviceGraph.Provide(&inject.Object{Value: bus.GetBus()})
 	serviceGraph.Provide(&inject.Object{Value: g.cfg})
-	serviceGraph.Provide(&inject.Object{Value: api.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
+	serviceGraph.Provide(&inject.Object{Value: routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)})
 
 	// self registered services
 	services := registry.GetServices()
@@ -174,7 +175,7 @@ func (g *GrafanaServerImpl) Shutdown(reason string) {
 	g.childRoutines.Wait()
 }
 
-func (g *GrafanaServerImpl) Exit(reason error) {
+func (g *GrafanaServerImpl) Exit(reason error) int {
 	// default exit code is 1
 	code := 1
 
@@ -184,7 +185,7 @@ func (g *GrafanaServerImpl) Exit(reason error) {
 	}
 
 	g.log.Error("Server shutdown", "reason", reason)
-	os.Exit(code)
+	return code
 }
 
 func (g *GrafanaServerImpl) writePIDFile() {

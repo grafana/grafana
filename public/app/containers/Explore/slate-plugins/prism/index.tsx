@@ -1,16 +1,12 @@
 import React from 'react';
 import Prism from 'prismjs';
 
-import Promql from './promql';
-
-Prism.languages.promql = Promql;
-
 const TOKEN_MARK = 'prism-token';
 
-export function configurePrismMetricsTokens(metrics) {
-  Prism.languages.promql.metric = {
-    alias: 'variable',
-    pattern: new RegExp(`(?:^|\\s)(${metrics.join('|')})(?:$|\\s)`),
+export function setPrismTokens(language, field, values, alias = 'variable') {
+  Prism.languages[language][field] = {
+    alias,
+    pattern: new RegExp(`(?:^|\\s)(${values.join('|')})(?:$|\\s)`),
   };
 }
 
@@ -21,7 +17,12 @@ export function configurePrismMetricsTokens(metrics) {
  * (Adapted to handle nested grammar definitions.)
  */
 
-export default function PrismPlugin() {
+export default function PrismPlugin({ definition, language }) {
+  if (definition) {
+    // Don't override exising modified definitions
+    Prism.languages[language] = Prism.languages[language] || definition;
+  }
+
   return {
     /**
      * Render a Slate mark with appropiate CSS class names
@@ -54,7 +55,7 @@ export default function PrismPlugin() {
 
       const texts = node.getTexts().toArray();
       const tstring = texts.map(t => t.text).join('\n');
-      const grammar = Prism.languages.promql;
+      const grammar = Prism.languages[language];
       const tokens = Prism.tokenize(tstring, grammar);
       const decorations = [];
       let startText = texts.shift();

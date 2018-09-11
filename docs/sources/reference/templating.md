@@ -11,7 +11,7 @@ weight = 1
 # Variables
 
 Variables allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
-and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
+and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
 {{< docs-imagebox img="/img/docs/v50/variables_dashboard.png" >}}
@@ -245,7 +245,7 @@ Grafana has global built-in variables that can be used in expressions in the que
 
 ### The $__interval Variable
 
-This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
+This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
 
 Grafana automatically calculates an interval that can be used to group by time in queries. When there are more data points than can be shown on a graph then queries can be made more efficient by grouping by a larger interval. It is more efficient to group by 1 day than by 10s when looking at 3 months of data and the graph will look the same and the query will be faster. The `$__interval` is calculated using the time range and the width of the graph (the number of pixels).
 
@@ -273,29 +273,49 @@ The `$__timeFilter` is used in the MySQL data source.
 
 This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
 
+### The $__range Variable
+
+> Only available in Grafana v5.3+
+
+Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
+
 ## Repeating Panels
 
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
 Grafana to dynamically create new panels or rows based on what values you have selected you can use the *Repeat* feature.
 
-If you have a variable with `Multi-value` or `Include all value` options enabled you can choose one panel or one row and have Grafana repeat that row
-for every selected value. You find this option under the General tab in panel edit mode. Select the variable to repeat by, and a `min span`.
-The `min span` controls how small Grafana will make the panels (if you have many values selected). Grafana will automatically adjust the width of
-each repeated panel so that the whole row is filled. Currently, you cannot mix other panels on a row with a repeated panel.
+If you have a variable with `Multi-value` or `Include all value` options enabled you can choose one panel and have Grafana repeat that panel
+for every selected value. You find the *Repeat* feature under the *General tab* in panel edit mode.
+
+The `direction` controls how the panels will be arranged.
+
+By choosing `horizontal` the panels will be arranged side-by-side. Grafana will automatically adjust the width
+of each repeated panel so that the whole row is filled. Currently, you cannot mix other panels on a row with a repeated
+panel. Each panel will never be smaller that the provided `Min width` if you have many selected values.
+
+By choosing `vertical` the panels will be arranged from top to bottom in a column. The `Min width` doesn't have any effect in this case. The width of the repeated panels will be the same as of the first panel (the original template) being repeated.
 
 Only make changes to the first panel (the original template). To have the changes take effect on all panels you need to trigger a dynamic dashboard re-build.
 You can do this by either changing the variable value (that is the basis for the repeat) or reload the dashboard.
 
 ## Repeating Rows
 
-This option requires you to open the row options view. Hover over the row left side to trigger the row menu, in this menu click `Row Options`. This
-opens the row options view. Here you find a *Repeat* dropdown where you can select the variable to repeat by.
+As seen above with the *Panels* you can also repeat *Rows* if you have variables set with  `Multi-value` or
+`Include all value` selection option.
 
-### URL state
+To enable this feature you need to first add a new *Row* using the *Add Panel* menu. Then by hovering the row title and
+clicking on the cog button, you will access the `Row Options` configuration panel. You can then select the variable
+you want to repeat the row for.
+
+It may be a good idea to use a variable in the row title as well.
+
+Example: [Repeated Rows Dashboard](http://play.grafana.org/dashboard/db/repeated-rows)
+
+## URL state
 
 Variable values are always synced to the URL using the syntax `var-<varname>=value`.
 
-### Examples
+## Examples
 
 - [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
 - [Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)

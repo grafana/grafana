@@ -32,6 +32,7 @@
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
     "aws/credentials/stscreds",
+    "aws/csm",
     "aws/defaults",
     "aws/ec2metadata",
     "aws/endpoints",
@@ -43,6 +44,8 @@
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
@@ -54,8 +57,8 @@
     "service/s3",
     "service/sts"
   ]
-  revision = "c7cd1ebe87257cde9b65112fc876b0339ea0ac30"
-  version = "v1.13.49"
+  revision = "fde4ded7becdeae4d26bf1212916aabba79349b4"
+  version = "v1.14.12"
 
 [[projects]]
   branch = "master"
@@ -226,7 +229,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  branch = "renderer"
+  branch = "master"
   name = "github.com/grafana/grafana-plugin-model"
   packages = [
     "go/datasource",
@@ -331,8 +334,8 @@
 [[projects]]
   name = "github.com/mattn/go-sqlite3"
   packages = ["."]
-  revision = "6c771bb9887719704b210e87e934f08be014bdb1"
-  version = "v1.6.0"
+  revision = "323a32be5a2421b8c7087225079c6c900ec397cd"
+  version = "v1.7.0"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -670,6 +673,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6c7ae4bcbe7fa4430d3bdbf204df1b7c59cba88151fbcefa167ce15e6351b6d3"
+  inputs-digest = "81a37e747b875cf870c1b9486fa3147e704dea7db8ba86f7cb942d3ddc01d3e3"
   solver-name = "gps-cdcl"
   solver-version = 1

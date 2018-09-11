@@ -23,6 +23,7 @@
     @include navbar-alt-look();
   }
 
+  .navbar-buttons--tv,
   .navbar-button--add-panel,
   .navbar-button--star,
   .navbar-button--save,
@@ -45,6 +46,7 @@
 
   .navbar-button--add-panel,
   .navbar-button--star,
+  .navbar-button--tv,
   .navbar-page-btn .fa-caret-down {
     display: none;
   }
@@ -85,6 +87,14 @@
     // icon hidden on smaller screens
     display: none;
   }
+
+  &--folder {
+    color: $text-color-weak;
+
+    @include media-breakpoint-down(md) {
+      display: none;
+    }
+  }
 }
 
 .navbar-buttons {
@@ -96,6 +106,10 @@
 
   &--close {
     display: none;
+    margin-right: 0;
+  }
+
+  &--zoom {
     margin-right: 0;
   }
 }
@@ -111,6 +125,7 @@
   font-weight: $btn-font-weight;
   padding: 6px 11px;
   line-height: 16px;
+  height: 30px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
   margin-right: 3px;
@@ -125,7 +140,7 @@
   }
 
   &--add-panel {
-    padding: 3px 10px;
+    padding: 2px 10px;
 
     .gicon {
       font-size: 22px;
@@ -138,7 +153,7 @@
     .fa {
       font-size: 14px;
       position: relative;
-      top: 2px;
+      top: 1px;
     }
   }
 

@@ -2,18 +2,18 @@ package sqlstore
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
-	"time"
 )
 
 func mockTimeNow() {
 	var timeSeed int64
 	timeNow = func() time.Time {
 		fakeNow := time.Unix(timeSeed, 0)
-		timeSeed += 1
+		timeSeed++
 		return fakeNow
 	}
 }
@@ -30,7 +30,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		testDash := insertTestDashboard("dashboard with alerts", 1, 0, false, "alert")
-
+		evalData, _ := simplejson.NewJson([]byte(`{"test": "test"}`))
 		items := []*m.Alert{
 			{
 				PanelId:     1,
@@ -40,6 +40,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				Message:     "Alerting message",
 				Settings:    simplejson.New(),
 				Frequency:   1,
+				EvalData:    evalData,
 			},
 		}
 
@@ -99,21 +100,32 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Can read properties", func() {
-			alertQuery := m.GetAlertsQuery{DashboardId: testDash.Id, PanelId: 1, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+			alertQuery := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 			err2 := HandleAlertsQuery(&alertQuery)
 
 			alert := alertQuery.Result[0]
 			So(err2, ShouldBeNil)
+			So(alert.Id, ShouldBeGreaterThan, 0)
+			So(alert.DashboardId, ShouldEqual, testDash.Id)
+			So(alert.PanelId, ShouldEqual, 1)
 			So(alert.Name, ShouldEqual, "Alerting title")
 			So(alert.State, ShouldEqual, "pending")
+			So(alert.NewStateDate, ShouldNotBeNil)
+			So(alert.EvalData, ShouldNotBeNil)
+			So(alert.EvalData.Get("test").MustString(), ShouldEqual, "test")
+			So(alert.EvalDate, ShouldNotBeNil)
+			So(alert.ExecutionError, ShouldEqual, "")
+			So(alert.DashboardUid, ShouldNotBeNil)
+			So(alert.DashboardSlug, ShouldEqual, "dashboard-with-alerts")
 		})
 
 		Convey("Viewer cannot read alerts", func() {
-			alertQuery := m.GetAlertsQuery{DashboardId: testDash.Id, PanelId: 1, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_VIEWER}}
+			viewerUser := &m.SignedInUser{OrgRole: m.ROLE_VIEWER, OrgId: 1}
+			alertQuery := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 			err2 := HandleAlertsQuery(&alertQuery)
 
 			So(err2, ShouldBeNil)
-			So(alertQuery.Result, ShouldHaveLength, 0)
+			So(alertQuery.Result, ShouldHaveLength, 1)
 		})
 
 		Convey("Alerts with same dashboard id and panel id should update", func() {
@@ -134,7 +146,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 
 			Convey("Alerts should be updated", func() {
-				query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+				query := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
 				So(err2, ShouldBeNil)
@@ -183,7 +195,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			Convey("Should save 3 dashboards", func() {
 				So(err, ShouldBeNil)
 
-				queryForDashboard := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+				queryForDashboard := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&queryForDashboard)
 
 				So(err2, ShouldBeNil)
@@ -197,7 +209,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				err = SaveAlerts(&cmd)
 
 				Convey("should delete the missing alert", func() {
-					query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+					query := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 					err2 := HandleAlertsQuery(&query)
 					So(err2, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
@@ -232,7 +244,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Alerts should be removed", func() {
-				query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
+				query := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
 				So(testDash.Id, ShouldEqual, 1)

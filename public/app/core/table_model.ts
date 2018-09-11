@@ -1,5 +1,15 @@
+interface Column {
+  text: string;
+  title?: string;
+  type?: string;
+  sort?: boolean;
+  desc?: boolean;
+  filterable?: boolean;
+  unit?: string;
+}
+
 export default class TableModel {
-  columns: any[];
+  columns: Column[];
   rows: any[];
   type: string;
   columnMap: any;
@@ -16,26 +26,19 @@ export default class TableModel {
       return;
     }
 
-    this.rows.sort(function(a, b) {
+    this.rows.sort((a, b) => {
       a = a[options.col];
       b = b[options.col];
-      if (a < b) {
-        return -1;
-      }
-      if (a > b) {
-        return 1;
-      }
-      return 0;
+      // Sort null or undefined seperately from comparable values
+      return +(a == null) - +(b == null) || +(a > b) || -(a < b);
     });
-
-    this.columns[options.col].sort = true;
 
     if (options.desc) {
       this.rows.reverse();
-      this.columns[options.col].desc = true;
-    } else {
-      this.columns[options.col].desc = false;
     }
+
+    this.columns[options.col].sort = true;
+    this.columns[options.col].desc = options.desc;
   }
 
   addColumn(col) {
@@ -43,5 +46,9 @@ export default class TableModel {
       this.columns.push(col);
       this.columnMap[col.text] = col;
     }
+  }
+
+  addRow(row) {
+    this.rows.push(row);
   }
 }

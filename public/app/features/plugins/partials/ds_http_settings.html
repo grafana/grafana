@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="gf-form-inline">
+    <div class="gf-form-inline" ng-if="showAccessOption">
       <div class="gf-form max-width-30">
         <span class="gf-form-label width-7">Access</span>
         <div class="gf-form-select-wrapper max-width-24">
@@ -30,15 +30,15 @@
         </div>
       </div>
       <div class="gf-form">
-        <label class="gf-form-label query-keyword pointer" ng-click="ctrl.showAccessHelp = !ctrl.showAccessHelp">
+        <label class="gf-form-label query-keyword pointer" ng-click="toggleAccessHelp()">
           Help&nbsp;
-          <i class="fa fa-caret-down" ng-show="ctrl.showAccessHelp"></i>
-          <i class="fa fa-caret-right" ng-hide="ctrl.showAccessHelp">&nbsp;</i>
+          <i class="fa fa-caret-down" ng-show="showAccessHelp"></i>
+          <i class="fa fa-caret-right" ng-hide="showAccessHelp">&nbsp;</i>
         </label>
       </div>
     </div>
 
-    <div class="alert alert-info" ng-show="ctrl.showAccessHelp">
+    <div class="alert alert-info" ng-show="showAccessHelp">
       <div class="alert-body">
         <p>
           Access mode controls how requests to the data source will be handled.

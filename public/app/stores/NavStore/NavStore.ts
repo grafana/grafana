@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { types, getEnv } from 'mobx-state-tree';
 import { NavItem } from './NavItem';
+import { Team } from '../TeamsStore/TeamsStore';
 
 export const NavStore = types
   .model('NavStore', {
@@ -11,9 +12,9 @@ export const NavStore = types
     load(...args) {
       let children = getEnv(self).navTree;
       let main, node;
-      let parents = [];
+      const parents = [];
 
-      for (let id of args) {
+      for (const id of args) {
         node = children.find(el => el.id === id);
 
         if (!node) {
@@ -27,7 +28,7 @@ export const NavStore = types
       main = parents[parents.length - 2];
 
       if (main.children) {
-        for (let item of main.children) {
+        for (const item of main.children) {
           item.active = false;
 
           if (item.url === node.url) {
@@ -41,7 +42,7 @@ export const NavStore = types
     },
 
     initFolderNav(folder: any, activeChildId: string) {
-      let main = {
+      const main = {
         icon: 'fa fa-folder-open',
         id: 'manage-folder',
         subTitle: 'Manage folder dashboards & permissions',
@@ -78,13 +79,13 @@ export const NavStore = types
 
     initDatasourceEditNav(ds: any, plugin: any, currentPage: string) {
       let title = 'New';
-      let subTitle = `Type: ${plugin.name}`;
+      const subTitle = `Type: ${plugin.name}`;
 
       if (ds.id) {
         title = ds.name;
       }
 
-      let main = {
+      const main = {
         img: plugin.info.logos.large,
         id: 'ds-edit-' + plugin.id,
         subTitle: subTitle,
@@ -110,6 +111,45 @@ export const NavStore = types
           id: 'datasource-dashboards',
           text: 'Dashboards',
           url: `datasources/edit/${ds.id}/dashboards`,
+        });
+      }
+
+      self.main = NavItem.create(main);
+    },
+
+    initTeamPage(team: Team, tab: string, isSyncEnabled: boolean) {
+      const main = {
+        img: team.avatarUrl,
+        id: 'team-' + team.id,
+        subTitle: 'Manage members & settings',
+        url: '',
+        text: team.name,
+        breadcrumbs: [{ title: 'Teams', url: 'org/teams' }],
+        children: [
+          {
+            active: tab === 'members',
+            icon: 'gicon gicon-team',
+            id: 'team-members',
+            text: 'Members',
+            url: `org/teams/edit/${team.id}/members`,
+          },
+          {
+            active: tab === 'settings',
+            icon: 'fa fa-fw fa-sliders',
+            id: 'team-settings',
+            text: 'Settings',
+            url: `org/teams/edit/${team.id}/settings`,
+          },
+        ],
+      };
+
+      if (isSyncEnabled) {
+        main.children.splice(1, 0, {
+          active: tab === 'groupsync',
+          icon: 'fa fa-fw fa-refresh',
+          id: 'team-settings',
+          text: 'External group sync',
+          url: `org/teams/edit/${team.id}/groupsync`,
         });
       }
 

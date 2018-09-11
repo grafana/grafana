@@ -8,6 +8,8 @@ export class User {
   isSignedIn: any;
   orgRole: any;
   orgId: number;
+  orgName: string;
+  orgCount: number;
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
@@ -34,14 +36,10 @@ export class ContextSrv {
   constructor() {
     this.sidemenu = store.getBool('grafana.sidemenu', true);
 
-    if (!config.buildInfo) {
-      config.buildInfo = {};
-    }
     if (!config.bootData) {
       config.bootData = { user: {}, settings: {} };
     }
 
-    this.version = config.buildInfo.version;
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
@@ -63,9 +61,9 @@ export class ContextSrv {
   }
 }
 
-var contextSrv = new ContextSrv();
+const contextSrv = new ContextSrv();
 export { contextSrv };
 
-coreModule.factory('contextSrv', function() {
+coreModule.factory('contextSrv', () => {
   return contextSrv;
 });

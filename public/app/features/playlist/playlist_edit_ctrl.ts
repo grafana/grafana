@@ -19,36 +19,25 @@ export class PlaylistEditCtrl {
   /** @ngInject */
   constructor(private $scope, private backendSrv, private $location, $route, navModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
-    this.isNew = $route.current.params.id;
+    this.isNew = !$route.current.params.id;
 
     if ($route.current.params.id) {
-      var playlistId = $route.current.params.id;
+      const playlistId = $route.current.params.id;
 
       backendSrv.get('/api/playlists/' + playlistId).then(result => {
         this.playlist = result;
-        this.navModel.node = {
-          text: result.name,
-          icon: this.navModel.node.icon,
-        };
-        this.navModel.breadcrumbs.push(this.navModel.node);
       });
 
       backendSrv.get('/api/playlists/' + playlistId + '/items').then(result => {
         this.playlistItems = result;
       });
-    } else {
-      this.navModel.node = {
-        text: 'New playlist',
-        icon: this.navModel.node.icon,
-      };
-      this.navModel.breadcrumbs.push(this.navModel.node);
     }
   }
 
   filterFoundPlaylistItems() {
     this.filteredDashboards = _.reject(this.dashboardresult, playlistItem => {
       return _.find(this.playlistItems, listPlaylistItem => {
-        return parseInt(listPlaylistItem.value) === playlistItem.id;
+        return parseInt(listPlaylistItem.value, 10) === playlistItem.id;
       });
     });
 
@@ -69,7 +58,7 @@ export class PlaylistEditCtrl {
   }
 
   addTagPlaylistItem(tag) {
-    var playlistItem: any = {
+    const playlistItem: any = {
       value: tag.term,
       type: 'dashboard_by_tag',
       order: this.playlistItems.length + 1,
@@ -88,7 +77,7 @@ export class PlaylistEditCtrl {
   }
 
   savePlaylist(playlist, playlistItems) {
-    var savePromise;
+    let savePromise;
 
     playlist.items = playlistItems;
 
@@ -124,8 +113,8 @@ export class PlaylistEditCtrl {
   }
 
   movePlaylistItem(playlistItem, offset) {
-    var currentPosition = this.playlistItems.indexOf(playlistItem);
-    var newPosition = currentPosition + offset;
+    const currentPosition = this.playlistItems.indexOf(playlistItem);
+    const newPosition = currentPosition + offset;
 
     if (newPosition >= 0 && newPosition < this.playlistItems.length) {
       this.playlistItems.splice(currentPosition, 1);

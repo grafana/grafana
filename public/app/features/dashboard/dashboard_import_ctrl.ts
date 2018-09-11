@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import config from 'app/core/config';
+import locationUtil from 'app/core/utils/location_util';
 
 export class DashboardImportCtrl {
   navModel: any;
@@ -21,6 +22,9 @@ export class DashboardImportCtrl {
   uidValidationError: any;
   autoGenerateUid: boolean;
   autoGenerateUidValue: string;
+  folderId: number;
+  initialFolderTitle: string;
+  isValidFolderSelection: boolean;
 
   /** @ngInject */
   constructor(private backendSrv, private validationSrv, navModelSrv, private $location, $routeParams) {
@@ -31,6 +35,8 @@ export class DashboardImportCtrl {
     this.uidExists = false;
     this.autoGenerateUid = true;
     this.autoGenerateUidValue = 'auto-generated';
+    this.folderId = $routeParams.folderId ? Number($routeParams.folderId) || 0 : null;
+    this.initialFolderTitle = 'Select a folder';
 
     // check gnetId in url
     if ($routeParams.gnetId) {
@@ -46,8 +52,8 @@ export class DashboardImportCtrl {
     this.inputs = [];
 
     if (this.dash.__inputs) {
-      for (let input of this.dash.__inputs) {
-        var inputModel = {
+      for (const input of this.dash.__inputs) {
+        const inputModel = {
           name: input.name,
           label: input.label,
           info: input.description,
@@ -73,7 +79,7 @@ export class DashboardImportCtrl {
   }
 
   setDatasourceOptions(input, inputModel) {
-    var sources = _.filter(config.datasources, val => {
+    const sources = _.filter(config.datasources, val => {
       return val.type === input.pluginId;
     });
 
@@ -90,7 +96,7 @@ export class DashboardImportCtrl {
 
   inputValueChanged() {
     this.inputsValid = true;
-    for (let input of this.inputs) {
+    for (const input of this.inputs) {
       if (!input.value) {
         this.inputsValid = false;
       }
@@ -102,8 +108,9 @@ export class DashboardImportCtrl {
     this.nameExists = false;
 
     this.validationSrv
-      .validateNewDashboardName(0, this.dash.title)
+      .validateNewDashboardName(this.folderId, this.dash.title)
       .then(() => {
+        this.nameExists = false;
         this.hasNameValidationError = false;
       })
       .catch(err => {
@@ -138,8 +145,25 @@ export class DashboardImportCtrl {
       });
   }
 
+  onFolderChange(folder) {
+    this.folderId = folder.id;
+    this.titleChanged();
+  }
+
+  onEnterFolderCreation() {
+    this.inputsValid = false;
+  }
+
+  onExitFolderCreation() {
+    this.inputValueChanged();
+  }
+
+  isValid() {
+    return this.inputsValid && this.folderId !== null;
+  }
+
   saveDashboard() {
-    var inputs = this.inputs.map(input => {
+    const inputs = this.inputs.map(input => {
       return {
         name: input.name,
         type: input.type,
@@ -153,16 +177,18 @@ export class DashboardImportCtrl {
         dashboard: this.dash,
         overwrite: true,
         inputs: inputs,
+        folderId: this.folderId,
       })
       .then(res => {
-        this.$location.url(res.importedUrl);
+        const dashUrl = locationUtil.stripBaseFromUrl(res.importedUrl);
+        this.$location.url(dashUrl);
       });
   }
 
   loadJsonText() {
     try {
       this.parseError = '';
-      var dash = JSON.parse(this.jsonText);
+      const dash = JSON.parse(this.jsonText);
       this.onUpload(dash);
     } catch (err) {
       console.log(err);
@@ -174,8 +200,8 @@ export class DashboardImportCtrl {
   checkGnetDashboard() {
     this.gnetError = '';
 
-    var match = /(^\d+$)|dashboards\/(\d+)/.exec(this.gnetUrl);
-    var dashboardId;
+    const match = /(^\d+$)|dashboards\/(\d+)/.exec(this.gnetUrl);
+    let dashboardId;
 
     if (match && match[1]) {
       dashboardId = match[1];

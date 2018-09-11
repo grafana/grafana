@@ -19,7 +19,7 @@ type scenarioContext struct {
 	givenUser          *m.SignedInUser
 	givenDashboardID   int64
 	givenPermissions   []*m.DashboardAclInfoDTO
-	givenTeams         []*m.Team
+	givenTeams         []*m.TeamDTO
 	updatePermissions  []*m.DashboardAcl
 	expectedFlags      permissionFlags
 	callerFile         string
@@ -33,6 +33,27 @@ func orgRoleScenario(desc string, t *testing.T, role m.RoleType, fn scenarioFunc
 		UserId:  userID,
 		OrgId:   orgID,
 		OrgRole: role,
+	}
+	guard := New(dashboardID, orgID, user)
+	sc := &scenarioContext{
+		t:                t,
+		orgRoleScenario:  desc,
+		givenUser:        user,
+		givenDashboardID: dashboardID,
+		g:                guard,
+	}
+
+	Convey(desc, func() {
+		fn(sc)
+	})
+}
+
+func apiKeyScenario(desc string, t *testing.T, role m.RoleType, fn scenarioFunc) {
+	user := &m.SignedInUser{
+		UserId:   0,
+		OrgId:    orgID,
+		OrgRole:  role,
+		ApiKeyId: 10,
 	}
 	guard := New(dashboardID, orgID, user)
 	sc := &scenarioContext{
@@ -63,11 +84,11 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext, per
 		return nil
 	})
 
-	teams := []*m.Team{}
+	teams := []*m.TeamDTO{}
 
 	for _, p := range permissions {
 		if p.TeamId > 0 {
-			teams = append(teams, &m.Team{Id: p.TeamId})
+			teams = append(teams, &m.TeamDTO{Id: p.TeamId})
 		}
 	}
 

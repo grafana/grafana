@@ -132,19 +132,22 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	}
 
 	jsonObj := map[string]interface{}{
-		"defaultDatasource":       defaultDatasource,
-		"datasources":             datasources,
-		"panels":                  panels,
-		"appSubUrl":               setting.AppSubUrl,
-		"allowOrgCreate":          (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":        setting.AuthProxyEnabled,
-		"ldapEnabled":             setting.LdapEnabled,
-		"alertingEnabled":         setting.AlertingEnabled,
-		"googleAnalyticsId":       setting.GoogleAnalyticsId,
-		"disableLoginForm":        setting.DisableLoginForm,
-		"externalUserMngInfo":     setting.ExternalUserMngInfo,
-		"externalUserMngLinkUrl":  setting.ExternalUserMngLinkUrl,
-		"externalUserMngLinkName": setting.ExternalUserMngLinkName,
+		"defaultDatasource":          defaultDatasource,
+		"datasources":                datasources,
+		"panels":                     panels,
+		"appSubUrl":                  setting.AppSubUrl,
+		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":           setting.AuthProxyEnabled,
+		"ldapEnabled":                setting.LdapEnabled,
+		"alertingEnabled":            setting.AlertingEnabled,
+		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
+		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
+		"exploreEnabled":             setting.ExploreEnabled,
+		"googleAnalyticsId":          setting.GoogleAnalyticsId,
+		"disableLoginForm":           setting.DisableLoginForm,
+		"externalUserMngInfo":        setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
@@ -152,6 +155,7 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
+			"isEnterprise":  setting.IsEnterprise,
 		},
 	}
 

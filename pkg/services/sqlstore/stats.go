@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -12,10 +13,18 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
-	bus.AddHandler("sql", GetSystemUserCountStats)
+	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
+	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
 }
 
 var activeUserTimeLimit = time.Hour * 24 * 30
+
+func GetAlertNotifiersUsageStats(ctx context.Context, query *m.GetAlertNotifierUsageStatsQuery) error {
+	var rawSql = `SELECT COUNT(*) as count, type FROM alert_notification GROUP BY type`
+	query.Result = make([]*m.NotifierUsageStats, 0)
+	err := x.SQL(rawSql).Find(&query.Result)
+	return err
+}
 
 func GetDataSourceStats(query *m.GetDataSourceStatsQuery) error {
 	var rawSql = `SELECT COUNT(*) as count, type FROM data_source GROUP BY type`
@@ -133,15 +142,18 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
 	return err
 }
 
-func GetSystemUserCountStats(query *m.GetSystemUserCountStatsQuery) error {
-	var rawSql = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
-	var stats m.SystemUserCountStats
-	_, err := x.SQL(rawSql).Get(&stats)
-	if err != nil {
+func GetSystemUserCountStats(ctx context.Context, query *m.GetSystemUserCountStatsQuery) error {
+	return withDbSession(ctx, func(sess *DBSession) error {
+
+		var rawSql = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+		var stats m.SystemUserCountStats
+		_, err := sess.SQL(rawSql).Get(&stats)
+		if err != nil {
+			return err
+		}
+
+		query.Result = &stats
+
 		return err
-	}
-
-	query.Result = &stats
-
-	return err
+	})
 }

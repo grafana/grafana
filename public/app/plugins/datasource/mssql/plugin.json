@@ -10,12 +10,17 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "",
-      "large": ""
+      "small": "img/sql_server_logo.svg",
+      "large": "img/sql_server_logo.svg"
     }
   },
 
   "alerting": true,
   "annotations": true,
-  "metrics": true
+  "metrics": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
+
 }

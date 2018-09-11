@@ -45,8 +45,8 @@ func (ns *NotificationService) Init() error {
 	ns.Bus.AddHandler(ns.validateResetPasswordCode)
 	ns.Bus.AddHandler(ns.sendEmailCommandHandler)
 
-	ns.Bus.AddCtxHandler(ns.sendEmailCommandHandlerSync)
-	ns.Bus.AddCtxHandler(ns.SendWebhookSync)
+	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandlerSync)
+	ns.Bus.AddHandlerCtx(ns.SendWebhookSync)
 
 	ns.Bus.AddEventListener(ns.signUpStartedHandler)
 	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
@@ -98,8 +98,6 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
-
-	return nil
 }
 
 func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {

@@ -2,12 +2,14 @@ package api
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/search"
 )
 
 func ValidateOrgAlert(c *m.ReqContext) {
@@ -46,12 +48,64 @@ func GetAlertStatesForDashboard(c *m.ReqContext) Response {
 
 // GET /api/alerts
 func GetAlerts(c *m.ReqContext) Response {
+	dashboardQuery := c.Query("dashboardQuery")
+	dashboardTags := c.QueryStrings("dashboardTag")
+	stringDashboardIDs := c.QueryStrings("dashboardId")
+	stringFolderIDs := c.QueryStrings("folderId")
+
+	dashboardIDs := make([]int64, 0)
+	for _, id := range stringDashboardIDs {
+		dashboardID, err := strconv.ParseInt(id, 10, 64)
+		if err == nil {
+			dashboardIDs = append(dashboardIDs, dashboardID)
+		}
+	}
+
+	if dashboardQuery != "" || len(dashboardTags) > 0 || len(stringFolderIDs) > 0 {
+		folderIDs := make([]int64, 0)
+		for _, id := range stringFolderIDs {
+			folderID, err := strconv.ParseInt(id, 10, 64)
+			if err == nil {
+				folderIDs = append(folderIDs, folderID)
+			}
+		}
+
+		searchQuery := search.Query{
+			Title:        dashboardQuery,
+			Tags:         dashboardTags,
+			SignedInUser: c.SignedInUser,
+			Limit:        1000,
+			OrgId:        c.OrgId,
+			DashboardIds: dashboardIDs,
+			Type:         string(search.DashHitDB),
+			FolderIds:    folderIDs,
+			Permission:   m.PERMISSION_VIEW,
+		}
+
+		err := bus.Dispatch(&searchQuery)
+		if err != nil {
+			return Error(500, "List alerts failed", err)
+		}
+
+		for _, d := range searchQuery.Result {
+			if d.Type == search.DashHitDB && d.Id > 0 {
+				dashboardIDs = append(dashboardIDs, d.Id)
+			}
+		}
+
+		// if we didn't find any dashboards, return empty result
+		if len(dashboardIDs) == 0 {
+			return JSON(200, []*m.AlertListItemDTO{})
+		}
+	}
+
 	query := m.GetAlertsQuery{
-		OrgId:       c.OrgId,
-		DashboardId: c.QueryInt64("dashboardId"),
-		PanelId:     c.QueryInt64("panelId"),
-		Limit:       c.QueryInt64("limit"),
-		User:        c.SignedInUser,
+		OrgId:        c.OrgId,
+		DashboardIDs: dashboardIDs,
+		PanelId:      c.QueryInt64("panelId"),
+		Limit:        c.QueryInt64("limit"),
+		User:         c.SignedInUser,
+		Query:        c.Query("query"),
 	}
 
 	states := c.QueryStrings("state")
@@ -138,14 +192,7 @@ func GetAlertNotifications(c *m.ReqContext) Response {
 	result := make([]*dtos.AlertNotification, 0)
 
 	for _, notification := range query.Result {
-		result = append(result, &dtos.AlertNotification{
-			Id:        notification.Id,
-			Name:      notification.Name,
-			Type:      notification.Type,
-			IsDefault: notification.IsDefault,
-			Created:   notification.Created,
-			Updated:   notification.Updated,
-		})
+		result = append(result, dtos.NewAlertNotification(notification))
 	}
 
 	return JSON(200, result)
@@ -161,7 +208,7 @@ func GetAlertNotificationByID(c *m.ReqContext) Response {
 		return Error(500, "Failed to get alert notifications", err)
 	}
 
-	return JSON(200, query.Result)
+	return JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
 func CreateAlertNotification(c *m.ReqContext, cmd m.CreateAlertNotificationCommand) Response {
@@ -171,7 +218,7 @@ func CreateAlertNotification(c *m.ReqContext, cmd m.CreateAlertNotificationComma
 		return Error(500, "Failed to create alert notification", err)
 	}
 
-	return JSON(200, cmd.Result)
+	return JSON(200, dtos.NewAlertNotification(cmd.Result))
 }
 
 func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationCommand) Response {
@@ -181,7 +228,7 @@ func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationComma
 		return Error(500, "Failed to update alert notification", err)
 	}
 
-	return JSON(200, cmd.Result)
+	return JSON(200, dtos.NewAlertNotification(cmd.Result))
 }
 
 func DeleteAlertNotification(c *m.ReqContext) Response {

@@ -1,4 +1,4 @@
-﻿import { types } from 'mobx-state-tree';
+import { types } from 'mobx-state-tree';
 
 export const NavItem = types.model('NavItem', {
   id: types.identifier(types.string),
@@ -8,6 +8,7 @@ export const NavItem = types.model('NavItem', {
   icon: types.optional(types.string, ''),
   img: types.optional(types.string, ''),
   active: types.optional(types.boolean, false),
+  hideFromTabs: types.optional(types.boolean, false),
   breadcrumbs: types.optional(types.array(types.late(() => Breadcrumb)), []),
   children: types.optional(types.array(types.late(() => NavItem)), []),
 });

@@ -5,6 +5,15 @@ import kbn from 'app/core/utils/kbn';
 import moment from 'moment';
 import angular from 'angular';
 import jquery from 'jquery';
+
+// Experimental module exports
+import prismjs from 'prismjs';
+import slate from 'slate';
+import slateReact from 'slate-react';
+import slatePlain from 'slate-plain-serializer';
+import react from 'react';
+import reactDom from 'react-dom';
+
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
@@ -47,7 +56,7 @@ System.config({
     css: 'vendor/plugin-css/css.js',
   },
   meta: {
-    'plugin*': {
+    '/*': {
       esModule: true,
       authorization: true,
       loader: 'plugin-loader',
@@ -56,7 +65,7 @@ System.config({
 });
 
 function exposeToPlugin(name: string, component: any) {
-  System.registerDynamic(name, [], true, function(require, exports, module) {
+  System.registerDynamic(name, [], true, (require, exports, module) => {
     module.exports = component;
   });
 }
@@ -68,6 +77,14 @@ exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
+
+// Experimental modules
+exposeToPlugin('prismjs', prismjs);
+exposeToPlugin('slate', slate);
+exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('slate-plain-serializer', slatePlain);
+exposeToPlugin('react', react);
+exposeToPlugin('react-dom', reactDom);
 
 // backward compatible path
 exposeToPlugin('vendor/npm/rxjs/Rx', {
@@ -109,6 +126,7 @@ import 'vendor/flot/jquery.flot.stackpercent';
 import 'vendor/flot/jquery.flot.fillbelow';
 import 'vendor/flot/jquery.flot.crosshair';
 import 'vendor/flot/jquery.flot.dashes';
+import 'vendor/flot/jquery.flot.gauge';
 
 const flotDeps = [
   'jquery.flot',
@@ -120,13 +138,14 @@ const flotDeps = [
   'jquery.flot.selection',
   'jquery.flot.stackpercent',
   'jquery.flot.events',
+  'jquery.flot.gauge',
 ];
-for (let flotDep of flotDeps) {
+for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
 export function importPluginModule(path: string): Promise<any> {
-  let builtIn = builtInPlugins[path];
+  const builtIn = builtInPlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);
   }

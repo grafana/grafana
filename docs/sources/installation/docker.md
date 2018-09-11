@@ -20,7 +20,7 @@ $ docker run -d -p 3000:3000 grafana/grafana
 
 ## Configuration
 
-All options defined in conf/grafana.ini can be overridden using environment
+All options defined in `conf/grafana.ini` can be overridden using environment
 variables by using the syntax `GF_<SectionName>_<KeyName>`.
 For example:
 
@@ -38,6 +38,21 @@ The back-end web server has a number of configuration options. Go to the
 [Configuration]({{< relref "configuration.md" >}}) page for details on all
 those options.
 
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect you need to restart Grafana by restarting the Docker container.
+
+### Default Paths
+
+The following settings are hard-coded when launching the Grafana Docker container and can only be overridden using environment variables, not in `conf/grafana.ini`.
+
+Setting               | Default value
+----------------------|---------------------------
+GF_PATHS_CONFIG       | /etc/grafana/grafana.ini
+GF_PATHS_DATA         | /var/lib/grafana
+GF_PATHS_HOME         | /usr/share/grafana
+GF_PATHS_LOGS         | /var/log/grafana
+GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
+GF_PATHS_PROVISIONING | /etc/grafana/provisioning
+
 ## Running a Specific Version of Grafana
 
 ```bash
@@ -48,6 +63,14 @@ $ docker run \
   --name grafana \
   grafana/grafana:5.1.0
 ```
+
+## Running the master branch
+
+For every successful build of the master branch we update the `grafana/grafana:master` tag and create a new tag `grafana/grafana-dev:master-<commit hash>` with the hash of the git commit that was built. This means you can always get the latest version of Grafana.
+
+When running Grafana master in production we **strongly** recommend that you use the `grafana/grafana-dev:master-<commit hash>` tag as that will guarantee that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
+
+For a list of available tags, check out [grafana/grafana](https://hub.docker.com/r/grafana/grafana/tags/) and [grafana/grafana-dev](https://hub.docker.com/r/grafana/grafana-dev/tags/). 
 
 ## Installing Plugins for Grafana
 
@@ -130,6 +153,20 @@ ID=$(id -u) # saves your user id in the ID variable
 docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 grafana/grafana:5.1.0
 ```
 
+## Reading secrets from files (support for Docker Secrets)
+
+> Only available in Grafana v5.2+.
+
+It's possible to supply Grafana with configuration through files. This works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/) as the secrets by default gets mapped into `/run/secrets/<name of secret>` of the container.
+
+You can do this with any of the configuration options in conf/grafana.ini by setting `GF_<SectionName>_<KeyName>__FILE` to the path of the file holding the secret.
+
+Let's say you want to set the admin password this way.
+
+- Admin password secret: `/run/secrets/admin_password`
+- Environment variable: `GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/admin_password`
+
+
 ## Migration from a previous version of the docker container to 5.1 or later
 
 The docker container for Grafana has seen a major rewrite for 5.1.
@@ -147,7 +184,7 @@ The docker container for Grafana has seen a major rewrite for 5.1.
 
 Previously `/var/lib/grafana`, `/etc/grafana` and `/var/log/grafana` were defined as volumes in the `Dockerfile`. This led to the creation of three volumes each time a new instance of the Grafana container started, whether you wanted it or not.
 
-You should always be careful to define your own named volume for storage, but if you depended on these volumes you should be aware that an upgraded container will no longer have them. 
+You should always be careful to define your own named volume for storage, but if you depended on these volumes you should be aware that an upgraded container will no longer have them.
 
 **Warning**: when migrating from an earlier version to 5.1 or later using docker compose and implicit volumes you need to use `docker inspect` to find out which volumes your container is mapped to so that you can map them to the upgraded container as well. You will also have to change file ownership (or user) as documented below.
 
@@ -182,7 +219,7 @@ services:
 
 #### Modifying permissions
 
-The commands below will run bash inside the Grafana container with your volume mapped in. This makes it possible to modify the file ownership to match the new container. Always be careful when modifying permissions. 
+The commands below will run bash inside the Grafana container with your volume mapped in. This makes it possible to modify the file ownership to match the new container. Always be careful when modifying permissions.
 
 ```bash
 $ docker run -ti --user root --volume "<your volume mapping here>" --entrypoint bash grafana/grafana:5.1.0
@@ -193,3 +230,8 @@ chown -R root:root /etc/grafana && \
   chown -R grafana:grafana /var/lib/grafana && \
   chown -R grafana:grafana /usr/share/grafana
 ```
+
+## Logging in for the first time
+
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+Then follow the instructions [here](/guides/getting_started/).

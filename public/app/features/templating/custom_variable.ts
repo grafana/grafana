@@ -7,6 +7,7 @@ export class CustomVariable implements Variable {
   includeAll: boolean;
   multi: boolean;
   current: any;
+  skipUrlSync: boolean;
 
   defaults = {
     type: 'custom',
@@ -19,9 +20,10 @@ export class CustomVariable implements Variable {
     includeAll: false,
     multi: false,
     allValue: null,
+    skipUrlSync: false,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
@@ -37,7 +39,7 @@ export class CustomVariable implements Variable {
 
   updateOptions() {
     // extract options in comma separated string
-    this.options = _.map(this.query.split(/[,]+/), function(text) {
+    this.options = _.map(this.query.split(/[,]+/), text => {
       return { text: text.trim(), value: text.trim() };
     });
 

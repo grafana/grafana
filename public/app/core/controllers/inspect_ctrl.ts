@@ -6,7 +6,7 @@ import coreModule from '../core_module';
 export class InspectCtrl {
   /** @ngInject */
   constructor($scope, $sanitize) {
-    var model = $scope.inspector;
+    const model = $scope.inspector;
 
     $scope.init = function() {
       $scope.editor = { index: 0 };
@@ -28,7 +28,7 @@ export class InspectCtrl {
       }
 
       if (model.error.config && model.error.config.params) {
-        $scope.request_parameters = _.map(model.error.config.params, function(value, key) {
+        $scope.request_parameters = _.map(model.error.config.params, (value, key) => {
           return { key: key, value: value };
         });
       }
@@ -45,7 +45,7 @@ export class InspectCtrl {
         if (_.isString(model.error.config.data)) {
           $scope.request_parameters = this.getParametersFromQueryString(model.error.config.data);
         } else {
-          $scope.request_parameters = _.map(model.error.config.data, function(value, key) {
+          $scope.request_parameters = _.map(model.error.config.data, (value, key) => {
             return { key: key, value: angular.toJson(value, true) };
           });
         }
@@ -53,14 +53,14 @@ export class InspectCtrl {
     };
   }
   getParametersFromQueryString(queryString) {
-    var result = [];
-    var parameters = queryString.split('&');
-    for (var i = 0; i < parameters.length; i++) {
-      var keyValue = parameters[i].split('=');
+    const result = [];
+    const parameters = queryString.split('&');
+    for (let i = 0; i < parameters.length; i++) {
+      const keyValue = parameters[i].split('=');
       if (keyValue[1].length > 0) {
         result.push({
           key: keyValue[0],
-          value: (<any>window).unescape(keyValue[1]),
+          value: (window as any).unescape(keyValue[1]),
         });
       }
     }

@@ -36,7 +36,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.12.65"
+  version = "1.13.56"
 
 [[constraint]]
   branch = "master"
@@ -100,7 +100,7 @@ ignored = [
   version = "1.1.1"
 
 [[constraint]]
-  branch = "renderer"
+  branch = "master"
   name = "github.com/grafana/grafana-plugin-model"
 
 [[constraint]]
@@ -129,7 +129,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/mattn/go-sqlite3"
-  version = "1.6.0"
+  version = "1.7.0"
 
 [[constraint]]
   name = "github.com/opentracing/opentracing-go"

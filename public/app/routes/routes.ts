@@ -1,12 +1,14 @@
 import './dashboard_loaders';
 import './ReactContainer';
 
-import ServerStats from 'app/containers/ServerStats/ServerStats';
-import AlertRuleList from 'app/containers/AlertRuleList/AlertRuleList';
-import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
+import ServerStats from 'app/features/admin/ServerStats';
+import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import FolderPermissions from 'app/containers/ManageDashboards/FolderPermissions';
+import FolderSettings from 'app/containers/ManageDashboards/FolderSettings';
+import TeamPages from 'app/containers/Teams/TeamPages';
+import TeamList from 'app/containers/Teams/TeamList';
 
-/** @ngInject **/
+/** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
   $locationProvider.html5Mode(true);
 
@@ -79,7 +81,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards', {
-      templateUrl: 'public/app/features/dashboard/partials/dashboard_list.html',
+      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_list.html',
       controller: 'DashboardListCtrl',
       controllerAs: 'ctrl',
     })
@@ -110,9 +112,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'FolderDashboardsCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/explore/:initial?', {
+    .when('/explore', {
       template: '<react-container />',
       resolve: {
+        roles: () => ['Editor', 'Admin'],
         component: () => import(/* webpackChunkName: "explore" */ 'app/containers/Explore/Wrapper'),
       },
     })
@@ -139,19 +142,23 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'OrgApiKeysCtrl',
     })
     .when('/org/teams', {
-      templateUrl: 'public/app/features/org/partials/teams.html',
-      controller: 'TeamsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        roles: () => ['Editor', 'Admin'],
+        component: () => TeamList,
+      },
     })
     .when('/org/teams/new', {
       templateUrl: 'public/app/features/org/partials/create_team.html',
       controller: 'CreateTeamCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/org/teams/edit/:id', {
-      templateUrl: 'public/app/features/org/partials/team_details.html',
-      controller: 'TeamDetailsCtrl',
-      controllerAs: 'ctrl',
+    .when('/org/teams/edit/:id/:page?', {
+      template: '<react-container />',
+      resolve: {
+        roles: () => ['Admin'],
+        component: () => TeamPages,
+      },
     })
     .when('/profile', {
       templateUrl: 'public/app/features/org/partials/profile.html',
@@ -233,8 +240,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       pageClass: 'sidemenu-hidden',
     })
     .when('/dashboard/snapshots', {
-      templateUrl: 'public/app/features/snapshot/partials/snapshots.html',
-      controller: 'SnapshotsCtrl',
+      templateUrl: 'public/app/features/manage-dashboards/partials/snapshot_list.html',
+      controller: 'SnapshotListCtrl',
       controllerAs: 'ctrl',
     })
     .when('/plugins', {
@@ -255,7 +262,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/styleguide/:page?', {
       controller: 'StyleGuideCtrl',
       controllerAs: 'ctrl',
-      templateUrl: 'public/app/features/styleguide/styleguide.html',
+      templateUrl: 'public/app/features/admin/partials/styleguide.html',
     })
     .when('/alerting', {
       redirectTo: '/alerting/list',

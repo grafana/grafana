@@ -71,12 +71,13 @@ Puppet | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/pupp
 Ansible | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)
 Chef | [https://github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)
 Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)
+Jsonnet | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)
 
 ## Datasources
 
 > This feature is available from v5.0
 
-It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `delete_datasources`. Grafana will delete datasources listed in `delete_datasources` before inserting/updating those in the `datasource` list.
+It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `deleteDatasources`. Grafana will delete datasources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
 
 ### Running Multiple Grafana Instances
 
@@ -154,8 +155,8 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert | boolean | *All* | Enable TLS authentication using CA cert |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
-| timeInterval | string | Elastic, InfluxDB & Prometheus | Lowest interval/step value that should be used for this data source |
-| esVersion | string | Elastic | Elasticsearch version as an number (2/5/56) |
+| timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |
+| esVersion | number | Elastic | Elasticsearch version as a number (2/5/56) |
 | timeField | string | Elastic | Which field that should be used as timestamp |
 | interval | string | Elastic | Index date time format |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
@@ -165,6 +166,8 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion | string | OpenTSDB | Version |
 | tsdbResolution | string | OpenTSDB | Resolution |
 | sslmode | string | PostgreSQL | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' |
+| postgresVersion | number | PostgreSQL | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10 |
+| timescaledb | boolean | PostgreSQL | Enable usage of TimescaleDB extension |
 
 #### Secure Json Data
 
@@ -197,6 +200,7 @@ providers:
   folder: ''
   type: file
   disableDeletion: false
+  updateIntervalSeconds: 3 #how often Grafana will scan for changed dashboards
   options:
     path: /var/lib/grafana/dashboards
 ```
