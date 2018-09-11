@@ -16,7 +16,7 @@ export interface Props {
   setSearchMemberQuery: typeof setSearchMemberQuery;
 }
 
-interface State {
+export interface State {
   isAdding: boolean;
   newTeamMember?: User;
 }
