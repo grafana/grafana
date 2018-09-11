@@ -57,8 +57,11 @@ class GrafanaDatasource {
         return this.$q.when([]);
       }
       const tags = [];
-      for (let t of params.tags) {
-        tags.push(this.templateSrv.replace(t));
+      for (const t of params.tags) {
+        const renderedValues = this.templateSrv.replace(t, {}, 'pipe');
+        for (const tt of renderedValues.split('|')) {
+          tags.push(tt);
+        }
       }
       params.tags = tags;
     }
