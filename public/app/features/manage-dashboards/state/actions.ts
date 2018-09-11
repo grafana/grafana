@@ -6,6 +6,8 @@ import { updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 
 export enum ActionTypes {
   LoadFolder = 'LOAD_FOLDER',
+  SetFolderTitle = 'SET_FOLDER_TITLE',
+  SaveFolder = 'SAVE_FOLDER',
 }
 
 export interface LoadFolderAction {
@@ -18,7 +20,17 @@ export const loadFolder = (folder: FolderDTO): LoadFolderAction => ({
   payload: folder,
 });
 
-export type Action = LoadFolderAction;
+export interface SetFolderTitleAction {
+  type: ActionTypes.SetFolderTitle;
+  payload: string;
+}
+
+export const setFolderTitle = (newTitle: string): SetFolderTitleAction => ({
+  type: ActionTypes.SetFolderTitle,
+  payload: newTitle,
+});
+
+export type Action = LoadFolderAction | SetFolderTitleAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action | UpdateNavIndexAction>;
 

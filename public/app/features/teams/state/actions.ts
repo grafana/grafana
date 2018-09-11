@@ -1,15 +1,14 @@
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { NavModelItem, StoreState, Team, TeamGroup, TeamMember } from '../../../types';
-import { updateNavIndex } from '../../../core/actions';
-import { UpdateNavIndexAction } from '../../../core/actions/navModel';
+import { NavModelItem, StoreState, Team, TeamGroup, TeamMember } from 'app/types';
+import { updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import config from 'app/core/config';
 
 export enum ActionTypes {
   LoadTeams = 'LOAD_TEAMS',
   LoadTeam = 'LOAD_TEAM',
-  SetSearchQuery = 'SET_SEARCH_QUERY',
-  SetSearchMemberQuery = 'SET_SEARCH_MEMBER_QUERY',
+  SetSearchQuery = 'SET_TEAM_SEARCH_QUERY',
+  SetSearchMemberQuery = 'SET_TEAM_MEMBER_SEARCH_QUERY',
   LoadTeamMembers = 'TEAM_MEMBERS_LOADED',
   LoadTeamGroups = 'TEAM_GROUPS_LOADED',
 }
@@ -121,7 +120,7 @@ function buildNavModel(team: Team): NavModelItem {
     navModel.children.push({
       active: false,
       icon: 'fa fa-fw fa-refresh',
-      id: 'team-settings',
+      id: `team-groupsync-${team.id}`,
       text: 'External group sync',
       url: `org/teams/edit/${team.id}/groupsync`,
     });

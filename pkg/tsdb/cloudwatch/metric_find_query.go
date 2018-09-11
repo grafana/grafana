@@ -466,6 +466,9 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 						return nil, errors.New("invalid attribute path")
 					}
 					v = v.FieldByName(key)
+					if !v.IsValid() {
+						return nil, errors.New("invalid attribute path")
+					}
 				}
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr

@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { AlertRuleApi, AlertRule, AlertRulesState } from 'app/types';
+import { AlertRuleDTO, AlertRule, AlertRulesState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import alertDef from './alertDef';
 
@@ -29,7 +29,7 @@ function convertToAlertRule(rule, state): AlertRule {
 export const alertRulesReducer = (state = initialState, action: Action): AlertRulesState => {
   switch (action.type) {
     case ActionTypes.LoadAlertRules: {
-      const alertRules: AlertRuleApi[] = action.payload;
+      const alertRules: AlertRuleDTO[] = action.payload;
 
       const alertRulesViewModel: AlertRule[] = alertRules.map(rule => {
         return convertToAlertRule(rule, rule.state);

@@ -6,10 +6,6 @@ export enum ActionTypes {
 
 export type Action = UpdateNavIndexAction;
 
-// this action is not used yet
-// kind of just a placeholder, will be need for dynamic pages
-// like datasource edit, teams edit page
-
 export interface UpdateNavIndexAction {
   type: ActionTypes.UpdateNavIndex;
   payload: NavModelItem;

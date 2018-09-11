@@ -6,16 +6,17 @@ import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { NavModel, Team } from '../../types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
-import { getSearchQuery, getTeams } from './state/selectors';
+import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
   teams: Team[];
+  searchQuery: string;
+  teamsCount: number;
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
   setSearchQuery: typeof setSearchQuery;
-  searchQuery: string;
 }
 
 export class TeamList extends PureComponent<Props, any> {
@@ -125,13 +126,12 @@ export class TeamList extends PureComponent<Props, any> {
   }
 
   render() {
-    const { navModel, teams } = this.props;
+    const { navModel, teamsCount } = this.props;
 
     return (
       <div>
         <PageHeader model={navModel} />
-        {teams.length > 0 && this.renderTeamList()}
-        {teams.length === 0 && this.renderEmptyList()}
+        {teamsCount > 0 ? this.renderTeamList() : this.renderEmptyList()}
       </div>
     );
   }
@@ -142,6 +142,7 @@ function mapStateToProps(state) {
     navModel: getNavModel(state.navIndex, 'teams'),
     teams: getTeams(state.teams),
     searchQuery: getSearchQuery(state.teams),
+    teamsCount: getTeamsCount(state.teams),
   };
 }
 

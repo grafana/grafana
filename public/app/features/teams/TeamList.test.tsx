@@ -12,6 +12,7 @@ const setup = (propOverrides?: object) => {
     deleteTeam: jest.fn(),
     setSearchQuery: jest.fn(),
     searchQuery: '',
+    teamsCount: 0,
   };
 
   Object.assign(props, propOverrides);
@@ -34,6 +35,7 @@ describe('Render', () => {
   it('should render teams table', () => {
     const { wrapper } = setup({
       teams: getMultipleMockTeams(5),
+      teamsCount: 5,
     });
 
     expect(wrapper).toMatchSnapshot();

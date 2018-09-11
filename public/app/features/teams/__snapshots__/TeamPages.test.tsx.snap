@@ -16,17 +16,7 @@ exports[`Render should render group sync page 1`] = `
   <div
     className="page-container page-body"
   >
-    <TeamGroupSync
-      team={
-        Object {
-          "avatarUrl": "some/url/",
-          "email": "test@test.com",
-          "id": 1,
-          "memberCount": 1,
-          "name": "test",
-        }
-      }
-    />
+    <Connect(TeamGroupSync) />
   </div>
 </div>
 `;
