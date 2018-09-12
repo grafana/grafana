@@ -31,7 +31,6 @@ export class FolderSettingsPage extends PureComponent<Props> {
     evt.stopPropagation();
 
     await this.props.saveFolder(this.props.folder);
-    appEvents.emit('alert-success', ['Folder saved']);
   };
 
   onDelete = evt => {

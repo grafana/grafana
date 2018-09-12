@@ -1,6 +1,6 @@
 import React from 'react';
 import { FolderSettingsPage, Props } from './FolderSettingsPage';
-import { NavModel, FolderState } from '../../types';
+import { NavModel } from 'app/types';
 import { shallow } from 'enzyme';
 
 const setup = (propOverrides?: object) => {
@@ -12,6 +12,7 @@ const setup = (propOverrides?: object) => {
       uid: '1234',
       title: 'loading',
       canSave: true,
+      url: 'url',
       hasChanged: false,
       version: 1,
     },

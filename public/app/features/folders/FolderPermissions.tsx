@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { inject, observer } from 'mobx-react';
-import { toJS } from 'mobx';
 import { connect } from 'react-redux';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import Permissions from 'app/core/components/Permissions/Permissions';
@@ -11,13 +10,16 @@ import AddPermissions from 'app/core/components/Permissions/AddPermissions';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, FolderState } from 'app/types';
-import { getFolderByUid, setFolderTitle, saveFolder, deleteFolder } from './state/actions';
+import { getFolderByUid } from './state/actions';
+import { PermissionsStore } from 'app/stores/PermissionsStore/PermissionsStore';
 
 export interface Props {
   navModel: NavModel;
   getFolderByUid: typeof getFolderByUid;
   folderUid: string;
   folder: FolderState;
+  permissions: typeof PermissionsStore.Type;
+  backendSrv: any;
 }
 
 @inject('permissions')
