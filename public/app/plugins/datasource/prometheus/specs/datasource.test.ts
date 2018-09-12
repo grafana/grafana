@@ -8,10 +8,14 @@ import {
   PrometheusDatasource,
   prometheusSpecialRegexEscape,
   prometheusRegularEscape,
-  addLabelToQuery,
 } from '../datasource';
 
 jest.mock('../metric_find_query');
+
+const DEFAULT_TEMPLATE_SRV_MOCK = {
+  getAdhocFilters: () => [],
+  replace: a => a,
+};
 
 describe('PrometheusDatasource', () => {
   const ctx: any = {};
@@ -25,9 +29,8 @@ describe('PrometheusDatasource', () => {
 
   ctx.backendSrvMock = {};
 
-  ctx.templateSrvMock = {
-    replace: a => a,
-  };
+  ctx.templateSrvMock = DEFAULT_TEMPLATE_SRV_MOCK;
+
   ctx.timeSrvMock = {
     timeRange: () => {
       return {
@@ -57,6 +60,37 @@ describe('PrometheusDatasource', () => {
       ds.metadataRequest('/foo');
       expect(ctx.backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
       expect(ctx.backendSrvMock.datasourceRequest.mock.calls[0][0].method).toBe('GET');
+    });
+  });
+
+  describe('When using adhoc filters', () => {
+    const DEFAULT_QUERY_EXPRESSION = 'metric{job="foo"} - metric';
+    const target = { expr: DEFAULT_QUERY_EXPRESSION };
+
+    afterEach(() => {
+      ctx.templateSrvMock.getAdhocFilters = DEFAULT_TEMPLATE_SRV_MOCK.getAdhocFilters;
+    });
+
+    it('should not modify expression with no filters', () => {
+      const result = ctx.ds.createQuery(target, { interval: '15s' });
+      expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
+    });
+
+    it('should add filters to expression', () => {
+      ctx.templateSrvMock.getAdhocFilters = () => [
+        {
+          key: 'k1',
+          operator: '=',
+          value: 'v1',
+        },
+        {
+          key: 'k2',
+          operator: '!=',
+          value: 'v2',
+        },
+      ];
+      const result = ctx.ds.createQuery(target, { interval: '15s' });
+      expect(result).toMatchObject({ expr: 'metric{job="foo",k1="v1",k2!="v2"} - metric{k1="v1",k2!="v2"}' });
     });
   });
 
@@ -358,26 +392,6 @@ describe('PrometheusDatasource', () => {
       expect(intervalMs).toEqual({ text: 15000, value: 15000 });
     });
   });
-
-  describe('addLabelToQuery()', () => {
-    expect(() => {
-      addLabelToQuery('foo', '', '');
-    }).toThrow();
-    expect(addLabelToQuery('foo + foo', 'bar', 'baz')).toBe('foo{bar="baz"} + foo{bar="baz"}');
-    expect(addLabelToQuery('foo{}', 'bar', 'baz')).toBe('foo{bar="baz"}');
-    expect(addLabelToQuery('foo{x="yy"}', 'bar', 'baz')).toBe('foo{bar="baz",x="yy"}');
-    expect(addLabelToQuery('foo{x="yy"} + metric', 'bar', 'baz')).toBe('foo{bar="baz",x="yy"} + metric{bar="baz"}');
-    expect(addLabelToQuery('avg(foo) + sum(xx_yy)', 'bar', 'baz')).toBe('avg(foo{bar="baz"}) + sum(xx_yy{bar="baz"})');
-    expect(addLabelToQuery('foo{x="yy"} * metric{y="zz",a="bb"} * metric2', 'bar', 'baz')).toBe(
-      'foo{bar="baz",x="yy"} * metric{a="bb",bar="baz",y="zz"} * metric2{bar="baz"}'
-    );
-    expect(addLabelToQuery('sum by (xx) (foo)', 'bar', 'baz')).toBe('sum by (xx) (foo{bar="baz"})');
-    expect(addLabelToQuery('foo{instance="my-host.com:9100"}', 'bar', 'baz')).toBe(
-      'foo{bar="baz",instance="my-host.com:9100"}'
-    );
-    expect(addLabelToQuery('rate(metric[1m])', 'foo', 'bar')).toBe('rate(metric{foo="bar"}[1m])');
-    expect(addLabelToQuery('metric > 0.001', 'foo', 'bar')).toBe('metric{foo="bar"} > 0.001');
-  });
 });
 
 const SECOND = 1000;
@@ -399,6 +413,7 @@ const backendSrv = {
 } as any;
 
 const templateSrv = {
+  getAdhocFilters: () => [],
   replace: jest.fn(str => str),
 };
 
