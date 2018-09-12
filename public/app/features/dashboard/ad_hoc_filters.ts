@@ -59,16 +59,13 @@ export class AdHocFiltersCtrl {
       let promise = null;
 
       if (segment.type !== 'value') {
-        promise = ds.getTagKeys ? ds.getTagKeys() : Promise.resolve();
+        promise = ds.getTagKeys ? ds.getTagKeys() : Promise.resolve([]);
       } else {
         options.key = this.segments[index - 2].value;
-        promise = ds.getTagValues ? ds.getTagValues(options) : Promise.resolve();
+        promise = ds.getTagValues ? ds.getTagValues(options) : Promise.resolve([]);
       }
 
       return promise.then(results => {
-        if (!results) {
-          return [];
-        }
         results = _.map(results, segment => {
           return this.uiSegmentSrv.newSegment({ value: segment.text });
         });
