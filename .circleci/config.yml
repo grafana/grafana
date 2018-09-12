@@ -81,7 +81,7 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
-      - run: 'go get -u gopkg.in/alecthomas/gometalinter.v2'
+      - run: 'go get -u github.com/alecthomas/gometalinter'
       - run: 'go get -u github.com/tsenart/deadcode'
       - run: 'go get -u github.com/gordonklaus/ineffassign'
       - run: 'go get -u github.com/opennota/check/cmd/structcheck'
@@ -89,7 +89,7 @@ jobs:
       - run: 'go get -u github.com/opennota/check/cmd/varcheck'
       - run:
           name: run linters
-          command: 'gometalinter.v2 --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
+          command: 'gometalinter --enable-gc --vendor --deadline 10m --disable-all --enable=deadcode --enable=ineffassign --enable=structcheck --enable=unconvert --enable=varcheck ./...'
       - run:
           name: run go vet
           command: 'go vet ./pkg/...'

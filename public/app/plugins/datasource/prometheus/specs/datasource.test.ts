@@ -376,6 +376,7 @@ describe('PrometheusDatasource', () => {
       'foo{bar="baz",instance="my-host.com:9100"}'
     );
     expect(addLabelToQuery('rate(metric[1m])', 'foo', 'bar')).toBe('rate(metric{foo="bar"}[1m])');
+    expect(addLabelToQuery('metric > 0.001', 'foo', 'bar')).toBe('metric{foo="bar"} > 0.001');
   });
 });
 
