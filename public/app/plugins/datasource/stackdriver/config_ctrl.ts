@@ -5,25 +5,20 @@ export class StackdriverConfigCtrl {
   jsonText: string;
   validationErrors: string[] = [];
   inputDataValid: boolean;
-  defaultProject: string;
-  projectsError: string;
-  projects: any[];
-  loadingProjects: boolean;
 
   /** @ngInject */
-  constructor(private $scope, datasourceSrv) {
+  constructor(datasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
-    this.defaultProject = this.current.jsonData.defaultProject;
-    this.projects = [];
   }
 
   save(jwt) {
     this.current.secureJsonData.privateKey = jwt.private_key;
     this.current.jsonData.tokenUri = jwt.token_uri;
     this.current.jsonData.clientEmail = jwt.client_email;
+    this.current.jsonData.defaultProject = jwt.project_id;
   }
 
   validateJwt(jwt) {
@@ -43,16 +38,15 @@ export class StackdriverConfigCtrl {
     if (this.validationErrors.length === 0) {
       this.inputDataValid = true;
       return true;
-    } else {
-      return false;
     }
+
+    return false;
   }
 
   onUpload(json) {
     this.jsonText = '';
     if (this.validateJwt(json)) {
       this.save(json);
-      this.displayProjects();
     }
   }
 
@@ -61,7 +55,6 @@ export class StackdriverConfigCtrl {
       const json = JSON.parse(e.originalEvent.clipboardData.getData('text/plain') || this.jsonText);
       if (this.validateJwt(json)) {
         this.save(json);
-        this.displayProjects();
       }
     } catch (error) {
       this.resetValidationMessages();
@@ -73,44 +66,9 @@ export class StackdriverConfigCtrl {
     this.validationErrors = [];
     this.inputDataValid = false;
     this.jsonText = '';
-    this.loadingProjects = false;
-    this.projectsError = '';
 
     this.current.jsonData = {};
     this.current.secureJsonData = {};
     this.current.secureJsonFields = {};
-  }
-
-  async displayProjects() {
-    if (this.projects.length === 0) {
-      try {
-        this.loadingProjects = true;
-        const ds = await this.datasourceSrv.loadDatasource(this.current.name);
-        this.projects = await ds.getProjects();
-        this.$scope.$apply(() => {
-          if (this.projects.length > 0) {
-            this.current.jsonData.defaultProject = this.current.jsonData.defaultProject || this.projects[0].id;
-          }
-        });
-      } catch (error) {
-        let message = 'Projects cannot be fetched: ';
-        message += error.statusText ? error.statusText + ': ' : '';
-        if (error && error.data && error.data.error && error.data.error.message) {
-          if (error.data.error.code === 403) {
-            message += `
-            A list of projects could not be fetched from the Google Cloud Resource Manager API.
-            You might need to enable it first:
-            https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com`;
-          } else {
-            message += error.data.error.code + '. ' + error.data.error.message;
-          }
-        } else {
-          message += 'Cannot connect to Stackdriver API';
-        }
-        this.$scope.$apply(() => (this.projectsError = message));
-      } finally {
-        this.$scope.$apply(() => (this.loadingProjects = false));
-      }
-    }
   }
 }

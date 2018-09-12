@@ -12,7 +12,7 @@ weight = 11
 
 # Using Google Stackdriver in Grafana
 
-Grafana ships with built in support for Google Stackdriver. You just have to add it as a datasource and you will be ready to build dashboards for your Stackdriver metrics.
+Grafana ships with built-in support for Google Stackdriver. You just have to add it as a datasource and you will be ready to build dashboards for your Stackdriver metrics.
 
 ## Adding the data source to Grafana
 
@@ -56,11 +56,14 @@ Click on the links above and click the `Enable` button:
 3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
     ![Create service account key](/img/docs/v54/stackdriver_create_service_account_key.png)
-4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the Monitoring Viewer role from the `Role` dropdown:
+4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
     ![Choose role](/img/docs/v54/stackdriver_service_account_choose_role.png)
 5. Click the Create button. A Json Web Token (JWT) file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
-6. Upload it to Grafana on the datasource Configuration page.
+6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
+     ![Choose role](/img/docs/v54/stackdriver_grafana_upload_key.png)
+7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
+     ![Choose role](/img/docs/v54/stackdriver_grafana_key_uploaded.png)
 
 ## Metric Query Editor
 
