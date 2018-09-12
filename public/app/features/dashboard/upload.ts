@@ -1,11 +1,12 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
+import angular from 'angular';
 
 const template = `
 <input type="file" id="dashupload" name="dashupload" class="hide" onchange="angular.element(this).scope().file_selected"/>
 <label class="btn btn-success" for="dashupload">
   <i class="fa fa-upload"></i>
-  Upload .json File
+  {{btnText}}
 </label>
 `;
 
@@ -16,8 +17,11 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
     template: template,
     scope: {
       onUpload: '&',
+      btnText: '@?',
     },
     link: (scope, elem) => {
+      scope.btnText = angular.isDefined(scope.btnText) ? scope.btnText : 'Upload .json File';
+
       function file_selected(evt) {
         const files = evt.target.files; // FileList object
         const readerOnload = () => {
