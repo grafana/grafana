@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 class GrafanaDatasource {
   /** @ngInject */
-  constructor(private backendSrv, private $q) {}
+  constructor(private backendSrv, private $q, private templateSrv) {}
 
   query(options) {
     return this.backendSrv
@@ -56,6 +56,7 @@ class GrafanaDatasource {
       if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
         return this.$q.when([]);
       }
+      params.tags = _.map(options.annotations.tags, tag => this.templateSrv.replace(tag));
     }
 
     return this.backendSrv.get('/api/annotations', params);
