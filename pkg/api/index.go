@@ -91,6 +91,9 @@ func setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, error) {
 	if themeURLParam == "light" {
 		data.User.LightTheme = true
 		data.Theme = "light"
+	} else if themeURLParam == "dark" {
+		data.User.LightTheme = false
+		data.Theme = "dark"
 	}
 
 	if hasEditPermissionInFoldersQuery.Result {

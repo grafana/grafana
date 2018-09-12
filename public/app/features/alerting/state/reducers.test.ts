@@ -1,9 +1,9 @@
 import { ActionTypes, Action } from './actions';
 import { alertRulesReducer, initialState } from './reducers';
-import { AlertRuleApi } from '../../../types';
+import { AlertRuleDTO } from 'app/types';
 
 describe('Alert rules', () => {
-  const payload: AlertRuleApi[] = [
+  const payload: AlertRuleDTO[] = [
     {
       id: 2,
       dashboardId: 7,

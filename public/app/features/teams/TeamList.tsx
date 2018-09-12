@@ -1,42 +1,42 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { NavStore } from 'app/stores/NavStore/NavStore';
-import { TeamsStore, Team } from 'app/stores/TeamsStore/TeamsStore';
-import { BackendSrv } from 'app/core/services/backend_srv';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { NavModel, Team } from '../../types';
+import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
+import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
+import { getNavModel } from 'app/core/selectors/navModel';
 
-interface Props {
-  nav: typeof NavStore.Type;
-  teams: typeof TeamsStore.Type;
-  backendSrv: BackendSrv;
+export interface Props {
+  navModel: NavModel;
+  teams: Team[];
+  searchQuery: string;
+  teamsCount: number;
+  loadTeams: typeof loadTeams;
+  deleteTeam: typeof deleteTeam;
+  setSearchQuery: typeof setSearchQuery;
 }
 
-@inject('nav', 'teams')
-@observer
-export class TeamList extends React.Component<Props, any> {
-  constructor(props) {
-    super(props);
-
-    this.props.nav.load('cfg', 'teams');
+export class TeamList extends PureComponent<Props, any> {
+  componentDidMount() {
     this.fetchTeams();
   }
 
-  fetchTeams() {
-    this.props.teams.loadTeams();
+  async fetchTeams() {
+    await this.props.loadTeams();
   }
 
-  deleteTeam(team: Team) {
-    this.props.backendSrv.delete('/api/teams/' + team.id).then(this.fetchTeams.bind(this));
-  }
-
-  onSearchQueryChange = evt => {
-    this.props.teams.setSearchQuery(evt.target.value);
+  deleteTeam = (team: Team) => {
+    this.props.deleteTeam(team.id);
   };
 
-  renderTeamMember(team: Team): JSX.Element {
+  onSearchQueryChange = event => {
+    this.props.setSearchQuery(event.target.value);
+  };
+
+  renderTeam(team: Team) {
     const teamUrl = `org/teams/edit/${team.id}`;
 
     return (
@@ -62,7 +62,28 @@ export class TeamList extends React.Component<Props, any> {
     );
   }
 
-  renderTeamList(teams) {
+  renderEmptyList() {
+    return (
+      <div className="page-container page-body">
+        <EmptyListCTA
+          model={{
+            title: "You haven't created any teams yet.",
+            buttonIcon: 'fa fa-plus',
+            buttonLink: 'org/teams/new',
+            buttonTitle: ' New team',
+            proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
+            proTipLink: '',
+            proTipLinkTitle: '',
+            proTipTarget: '_blank',
+          }}
+        />
+      </div>
+    );
+  }
+
+  renderTeamList() {
+    const { teams, searchQuery } = this.props;
+
     return (
       <div className="page-container page-body">
         <div className="page-action-bar">
@@ -72,7 +93,7 @@ export class TeamList extends React.Component<Props, any> {
                 type="text"
                 className="gf-form-input"
                 placeholder="Search teams"
-                value={teams.search}
+                value={searchQuery}
                 onChange={this.onSearchQueryChange}
               />
               <i className="gf-form-input-icon fa fa-search" />
@@ -97,49 +118,38 @@ export class TeamList extends React.Component<Props, any> {
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
-            <tbody>{teams.filteredTeams.map(team => this.renderTeamMember(team))}</tbody>
+            <tbody>{teams.map(team => this.renderTeam(team))}</tbody>
           </table>
         </div>
       </div>
     );
   }
 
-  renderEmptyList() {
-    return (
-      <div className="page-container page-body">
-        <EmptyListCTA
-          model={{
-            title: "You haven't created any teams yet.",
-            buttonIcon: 'fa fa-plus',
-            buttonLink: 'org/teams/new',
-            buttonTitle: ' New team',
-            proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
-            proTipLink: '',
-            proTipLinkTitle: '',
-            proTipTarget: '_blank',
-          }}
-        />
-      </div>
-    );
-  }
-
   render() {
-    const { nav, teams } = this.props;
-    let view;
-
-    if (teams.filteredTeams.length > 0) {
-      view = this.renderTeamList(teams);
-    } else {
-      view = this.renderEmptyList();
-    }
+    const { navModel, teamsCount } = this.props;
 
     return (
       <div>
-        <PageHeader model={nav as any} />
-        {view}
+        <PageHeader model={navModel} />
+        {teamsCount > 0 ? this.renderTeamList() : this.renderEmptyList()}
       </div>
     );
   }
 }
 
-export default hot(module)(TeamList);
+function mapStateToProps(state) {
+  return {
+    navModel: getNavModel(state.navIndex, 'teams'),
+    teams: getTeams(state.teams),
+    searchQuery: getSearchQuery(state.teams),
+    teamsCount: getTeamsCount(state.teams),
+  };
+}
+
+const mapDispatchToProps = {
+  loadTeams,
+  deleteTeam,
+  setSearchQuery,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamList));

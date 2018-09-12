@@ -1,13 +1,17 @@
-export type Action = UpdateNavIndexAction;
+import { NavModelItem } from '../../types';
 
-// this action is not used yet
-// kind of just a placeholder, will be need for dynamic pages
-// like datasource edit, teams edit page
-
-export interface UpdateNavIndexAction {
-  type: 'UPDATE_NAV_INDEX';
+export enum ActionTypes {
+  UpdateNavIndex = 'UPDATE_NAV_INDEX',
 }
 
-export const updateNavIndex = (): UpdateNavIndexAction => ({
-  type: 'UPDATE_NAV_INDEX',
+export type Action = UpdateNavIndexAction;
+
+export interface UpdateNavIndexAction {
+  type: ActionTypes.UpdateNavIndex;
+  payload: NavModelItem;
+}
+
+export const updateNavIndex = (item: NavModelItem): UpdateNavIndexAction => ({
+  type: ActionTypes.UpdateNavIndex,
+  payload: item,
 });

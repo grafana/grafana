@@ -1,3 +1,4 @@
 import { updateLocation } from './location';
+import { updateNavIndex, UpdateNavIndexAction } from './navModel';
 
-export { updateLocation };
+export { updateLocation, updateNavIndex, UpdateNavIndexAction };
