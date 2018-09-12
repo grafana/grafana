@@ -1,4 +1,4 @@
-import { FolderDTO, NavModelItem } from 'app/types';
+import { FolderDTO, NavModelItem, NavModel } from 'app/types';
 
 export function buildNavModel(folder: FolderDTO): NavModelItem {
   return {
@@ -31,5 +31,23 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
         url: `${folder.url}/settings`,
       },
     ],
+  };
+}
+
+export function getLoadingNav(tabIndex: number): NavModel {
+  const main = buildNavModel({
+    id: 1,
+    uid: 'loading',
+    title: 'Loading',
+    url: 'url',
+    canSave: false,
+    version: 0,
+  });
+
+  main.children[tabIndex].active = true;
+
+  return {
+    main: main,
+    node: main.children[tabIndex],
   };
 }

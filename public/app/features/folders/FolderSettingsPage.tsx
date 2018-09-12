@@ -6,6 +6,7 @@ import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, FolderState } from 'app/types';
 import { getFolderByUid, setFolderTitle, saveFolder, deleteFolder } from './state/actions';
+import { getLoadingNav } from './state/navModel';
 
 export interface Props {
   navModel: NavModel;
@@ -86,8 +87,9 @@ export class FolderSettingsPage extends PureComponent<Props> {
 
 const mapStateToProps = (state: StoreState) => {
   const uid = state.location.routeParams.uid;
+
   return {
-    navModel: getNavModel(state.navIndex, `folder-settings-${uid}`),
+    navModel: getNavModel(state.navIndex, `folder-settings-${uid}`, getLoadingNav(2)),
     folderUid: uid,
     folder: state.folder,
   };

@@ -15,7 +15,7 @@ function getNotFoundModel(): NavModel {
   };
 }
 
-export function getNavModel(navIndex: NavIndex, id: string): NavModel {
+export function getNavModel(navIndex: NavIndex, id: string, fallback?: NavModel): NavModel {
   if (navIndex[id]) {
     const node = navIndex[id];
     const main = {
@@ -33,7 +33,11 @@ export function getNavModel(navIndex: NavIndex, id: string): NavModel {
       node: node,
       main: main,
     };
-  } else {
-    return getNotFoundModel();
   }
+
+  if (fallback) {
+    return fallback;
+  }
+
+  return getNotFoundModel();
 }

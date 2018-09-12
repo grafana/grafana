@@ -12,6 +12,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel, StoreState, FolderState } from 'app/types';
 import { getFolderByUid } from './state/actions';
 import { PermissionsStore } from 'app/stores/PermissionsStore/PermissionsStore';
+import { getLoadingNav } from './state/navModel';
 
 export interface Props {
   navModel: NavModel;
@@ -48,7 +49,7 @@ export class FolderPermissions extends Component<Props> {
     const { navModel, permissions, backendSrv, folder } = this.props;
 
     if (folder.id === 0) {
-      return <h2>Loading</h2>;
+      return <PageHeader model={navModel} />;
     }
 
     const dashboardId = folder.id;
@@ -84,7 +85,7 @@ export class FolderPermissions extends Component<Props> {
 const mapStateToProps = (state: StoreState) => {
   const uid = state.location.routeParams.uid;
   return {
-    navModel: getNavModel(state.navIndex, `folder-permissions-${uid}`),
+    navModel: getNavModel(state.navIndex, `folder-permissions-${uid}`, getLoadingNav(1)),
     folderUid: uid,
     folder: state.folder,
   };
