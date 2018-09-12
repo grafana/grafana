@@ -2,7 +2,7 @@ import { Team, TeamsState, TeamState, TeamGroup, TeamMember } from './teams';
 import { AlertRuleDTO, AlertRule, AlertRulesState } from './alerting';
 import { LocationState, LocationUpdate, UrlQueryMap, UrlQueryValue } from './location';
 import { NavModel, NavModelItem, NavIndex } from './navModel';
-import { DashboardListItem, ManageDashboardState } from './manageDashboard';
+import { DashboardListItem, DashboardQuery, ManageDashboard, ManageDashboardState } from './manageDashboard';
 
 export {
   Team,
@@ -21,6 +21,8 @@ export {
   UrlQueryMap,
   UrlQueryValue,
   DashboardListItem,
+  DashboardQuery,
+  ManageDashboard,
   ManageDashboardState,
 };
 
@@ -30,5 +32,5 @@ export interface StoreState {
   alertRules: AlertRulesState;
   teams: TeamsState;
   team: TeamState;
-  manageDasboards: ManageDashboardState;
+  manageDashboards: ManageDashboardState;
 }

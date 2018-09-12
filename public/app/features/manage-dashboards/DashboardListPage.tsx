@@ -1,10 +1,12 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { NavModel, StoreState } from 'app/types';
+import { NavModel } from 'app/types';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import ActionBar from './ActionBar';
+import Filters from './Filters';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { getFolderId, getHasFilters, getSections } from './state/selectors';
 
 interface Props {
   navModel: NavModel;
@@ -13,29 +15,37 @@ interface Props {
   folderId: number;
 }
 
-interface State {}
-
-export class DashboardListPage extends PureComponent<Props, State> {
-  constructor(props) {
-    super(props);
-
-    this.state = {};
-  }
-
+export class DashboardListPage extends PureComponent<Props, any> {
   render() {
     const { navModel, folderId, hasFilters, sections } = this.props;
 
     return (
-      <div className="page-container page-body">
+      <div>
         <PageHeader model={navModel} />
-        <div className="dashboard-list">{/*folderId && !hasFilters && sections.length === 0 &&*/ <ActionBar />}</div>
+        <div className="page-container page-body">
+          {folderId !== null &&
+            !hasFilters &&
+            sections.length === 0 && (
+              <div className="dashboard-list">
+                <ActionBar />
+                {hasFilters && <Filters />}
+              </div>
+            )}
+        </div>
       </div>
     );
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'manage-dashboards'),
-});
+function mapStateToProps(state) {
+  const manageDashboardsState = state.manageDashboards;
+
+  return {
+    navModel: getNavModel(state.navIndex, 'manage-dashboards'),
+    hasFilters: getHasFilters(manageDashboardsState),
+    sections: getSections(manageDashboardsState),
+    folderId: getFolderId(manageDashboardsState),
+  };
+}
 
 export default hot(module)(connect(mapStateToProps)(DashboardListPage));

@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { searchDashboards } from './state/actions';
+import { updateSearchQuery } from './state/actions';
+import { getSearchQuery } from './state/selectors';
 
 export interface Props {
   searchQuery: string;
@@ -9,7 +10,7 @@ export interface Props {
   canSave: boolean;
   isEditor: boolean;
   folderId: number;
-  searchDashboards: typeof searchDashboards;
+  updateSearchQuery: typeof updateSearchQuery;
 }
 
 export interface State {
@@ -28,7 +29,7 @@ export class ActionBar extends PureComponent<Props, State> {
   onSearchQueryChange = event => {
     this.setState({ searchQuery: event.target.value });
 
-    this.props.searchDashboards(event.target.value);
+    this.props.updateSearchQuery(event.target.value);
   };
 
   createDashboardUrl = () => {
@@ -88,11 +89,13 @@ export class ActionBar extends PureComponent<Props, State> {
 }
 
 function mapStateToProps(state) {
-  return {};
+  return {
+    searchQuery: getSearchQuery(state.manageDashboards),
+  };
 }
 
 const mapDispatchToProps = {
-  searchDashboards,
+  updateSearchQuery,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ActionBar));
