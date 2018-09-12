@@ -50,7 +50,5 @@ export function toUrlParams(a) {
     return s;
   };
 
-  return buildParams('', a)
-    .join('&')
-    .replace(/%20/g, '+');
+  return buildParams('', a).join('&');
 }
