@@ -31,6 +31,7 @@ type InternalMetricsService struct {
 	enabled         bool
 	intervalSeconds int64
 	graphiteCfg     *graphitebridge.Config
+	oauthProviders  map[string]bool
 }
 
 func (im *InternalMetricsService) Init() error {
@@ -61,7 +62,7 @@ func (im *InternalMetricsService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-onceEveryDayTick.C:
-			sendUsageStats()
+			sendUsageStats(im.oauthProviders)
 		case <-everyMinuteTicker.C:
 			updateTotalStats()
 		case <-ctx.Done():

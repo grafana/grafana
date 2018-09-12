@@ -147,11 +147,19 @@ func TestMetrics(t *testing.T) {
 		}))
 		usageStatsURL = ts.URL
 
-		sendUsageStats()
+		oauthProviders := map[string]bool{
+			"github":        true,
+			"gitlab":        true,
+			"google":        true,
+			"generic_oauth": true,
+			"grafana_com":   true,
+		}
+
+		sendUsageStats(oauthProviders)
 
 		Convey("Given reporting not enabled and sending usage stats", func() {
 			setting.ReportingEnabled = false
-			sendUsageStats()
+			sendUsageStats(oauthProviders)
 
 			Convey("Should not gather stats or call http endpoint", func() {
 				So(getSystemStatsQuery, ShouldBeNil)
@@ -164,8 +172,13 @@ func TestMetrics(t *testing.T) {
 		Convey("Given reporting enabled and sending usage stats", func() {
 			setting.ReportingEnabled = true
 			setting.BuildVersion = "5.0.0"
+			setting.AnonymousEnabled = true
+			setting.BasicAuthEnabled = true
+			setting.LdapEnabled = true
+			setting.AuthProxyEnabled = true
+
 			wg.Add(1)
-			sendUsageStats()
+			sendUsageStats(oauthProviders)
 
 			Convey("Should gather stats and call http endpoint", func() {
 				if waitTimeout(&wg, 2*time.Second) {
@@ -220,6 +233,16 @@ func TestMetrics(t *testing.T) {
 
 				So(metrics.Get("stats.alert_notifiers.slack.count").MustInt(), ShouldEqual, 1)
 				So(metrics.Get("stats.alert_notifiers.webhook.count").MustInt(), ShouldEqual, 2)
+
+				So(metrics.Get("stats.auth_enabled.anonymous.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.auth_enabled.basic_auth.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.auth_enabled.ldap.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.auth_enabled.auth_proxy.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.auth_enabled.oauth_github.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.auth_enabled.oauth_gitlab.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.auth_enabled.oauth_google.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.auth_enabled.oauth_generic_oauth.count").MustInt(), ShouldEqual, 1)
+				So(metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt(), ShouldEqual, 1)
 			})
 		})
 
