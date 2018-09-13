@@ -2,10 +2,16 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
 
+export interface LabelType {
+  key: string;
+  value: string;
+}
+
 export interface QueryMeta {
   rawQuery: string;
   rawQueryString: string;
-  metricLabels: any;
+  metricLabels: LabelType[];
+  resourceLabels: LabelType[];
 }
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -59,18 +65,22 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   showLastQuery: boolean;
   lastQueryMeta: QueryMeta;
   lastQueryError?: string;
+  metricLabels: LabelType[];
+  resourceLabels: LabelType[];
 
   /** @ngInject */
-  constructor($scope, $injector, private uiSegmentSrv) {
+  constructor($scope, $injector, private uiSegmentSrv, private timeSrv) {
     super($scope, $injector);
     _.defaultsDeep(this.target, this.defaults);
 
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
 
-    this.getCurrentProject().then(this.getMetricTypes.bind(this));
+    this.getCurrentProject()
+      .then(this.getMetricTypes.bind(this))
+      .then(this.getLabels.bind(this));
 
-    this.groupBySegments = _.map(this.target.aggregation.groupBys, groupBy => {
+    this.groupBySegments = this.target.aggregation.groupBys.map(groupBy => {
       return uiSegmentSrv.getSegmentForValue(groupBy);
     });
     this.ensurePlusButton(this.groupBySegments);
@@ -116,12 +126,47 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     }
   }
 
-  getGroupBys() {
-    const segments = _.map(Object.keys(this.lastQueryMeta.metricLabels), (label: string) => {
-      return this.uiSegmentSrv.newSegment({ value: label, expandable: false });
+  async getLabels() {
+    const data = await this.datasource.getTimeSeries({
+      targets: [
+        {
+          refId: this.target.refId,
+          datasourceId: this.datasource.id,
+          metricType: this.target.metricType,
+          aggregation: {
+            crossSeriesReducer: 'REDUCE_NONE',
+          },
+          view: 'HEADERS',
+        },
+      ],
+      range: this.timeSrv.timeRange(),
     });
 
-    return Promise.resolve(segments);
+    this.metricLabels = data.results[this.target.refId].meta.metricLabels;
+    this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
+  }
+
+  async onMetricTypeChange() {
+    this.refresh();
+    this.getLabels();
+  }
+
+  getGroupBys() {
+    const metricLabels = Object.keys(this.metricLabels).map(l => {
+      return this.uiSegmentSrv.newSegment({
+        value: `metric.label.${l}`,
+        expandable: false,
+      });
+    });
+
+    const resourceLabels = Object.keys(this.resourceLabels).map(l => {
+      return this.uiSegmentSrv.newSegment({
+        value: `resource.label.${l}`,
+        expandable: false,
+      });
+    });
+
+    return Promise.resolve([...metricLabels, ...resourceLabels]);
   }
 
   groupByChanged(segment, index) {
@@ -136,6 +181,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       []
     );
     this.ensurePlusButton(this.groupBySegments);
+    this.refresh();
   }
 
   ensurePlusButton(segments) {

@@ -11,16 +11,15 @@ export default class StackdriverDatasource {
     this.id = instanceSettings.id;
   }
 
-  async query(options) {
+  async getTimeSeries(options) {
     const queries = options.targets.filter(target => !target.hide).map(t => ({
       refId: t.refId,
       datasourceId: this.id,
       metricType: t.metricType,
-      primaryAggregation: t.aggregation.crossSeriesReducer,
-      groupBys: t.aggregation.groupBys,
+      primaryAggregation: 'REDUCE_MEAN', //t.aggregation.crossSeriesReducer,
+      // groupBys: t.aggregation.groupBys,
+      view: t.view || 'FULL',
     }));
-
-    const result = [];
 
     const { data } = await this.backendSrv.datasourceRequest({
       url: '/api/tsdb/query',
@@ -31,7 +30,12 @@ export default class StackdriverDatasource {
         queries,
       },
     });
+    return data;
+  }
 
+  async query(options) {
+    const result = [];
+    const data = await this.getTimeSeries(options);
     if (data.results) {
       Object['values'](data.results).forEach(queryRes => {
         if (!queryRes.series) {
