@@ -619,9 +619,9 @@ describe('PrometheusDatasource', () => {
       beforeEach(async () => {
         options.annotation.useValueForTime = false;
         backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-        ctx.ds = new PrometheusDatasource(instanceSettings, q, <any>backendSrv, templateSrv, timeSrv);
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
 
-        await ctx.ds.annotationQuery(options).then(function (data) {
+        await ctx.ds.annotationQuery(options).then(data => {
           results = data;
         });
       });
@@ -639,9 +639,9 @@ describe('PrometheusDatasource', () => {
       beforeEach(async () => {
         options.annotation.useValueForTime = true;
         backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-        ctx.ds = new PrometheusDatasource(instanceSettings, q, <any>backendSrv, templateSrv, timeSrv);
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
 
-        await ctx.ds.annotationQuery(options).then(function (data) {
+        await ctx.ds.annotationQuery(options).then(data => {
           results = data;
         });
       });
