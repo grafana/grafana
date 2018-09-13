@@ -48,7 +48,7 @@ export class ColumnOptionsCtrl {
       if (!this.panelCtrl.table) {
         return [];
       }
-      return _.map(this.panelCtrl.table.columns, function(col: any) {
+      return _.map(this.panelCtrl.table.columns, (col: any) => {
         return col.text;
       });
     };
@@ -81,7 +81,7 @@ export class ColumnOptionsCtrl {
 
     const styles = this.panel.styles;
     const stylesCount = styles.length;
-    var indexToInsert = stylesCount;
+    let indexToInsert = stylesCount;
 
     // check if last is a catch all rule, then add it before that one
     if (stylesCount > 0) {

@@ -1,10 +1,10 @@
 import '../shareModalCtrl';
 import { ShareModalCtrl } from '../shareModalCtrl';
 import config from 'app/core/config';
-import { LinkSrv } from 'app/features/panellinks/link_srv';
+import { LinkSrv } from 'app/features/dashboard/panellinks/link_srv';
 
 describe('ShareModalCtrl', () => {
-  const ctx = <any>{
+  const ctx = {
     timeSrv: {
       timeRange: () => {
         return { from: new Date(1000), to: new Date(2000) };
@@ -26,9 +26,9 @@ describe('ShareModalCtrl', () => {
     templateSrv: {
       fillVariableValuesForUrl: () => {},
     },
-  };
+  } as any;
 
-  (<any>window).Intl.DateTimeFormat = () => {
+  (window as any).Intl.DateTimeFormat = () => {
     return {
       resolvedOptions: () => {
         return { timeZone: 'UTC' };
@@ -136,7 +136,7 @@ describe('ShareModalCtrl', () => {
       ctx.$location.absUrl = () => 'http://server/#!/test';
       ctx.scope.options.includeTemplateVars = true;
 
-      ctx.templateSrv.fillVariableValuesForUrl = function(params) {
+      ctx.templateSrv.fillVariableValuesForUrl = params => {
         params['var-app'] = 'mupp';
         params['var-server'] = 'srv-01';
       };

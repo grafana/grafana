@@ -61,7 +61,7 @@ const rangeOptions = [
 const absoluteFormat = 'MMM D, YYYY HH:mm:ss';
 
 const rangeIndex = {};
-_.each(rangeOptions, function(frame) {
+_.each(rangeOptions, frame => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 
@@ -111,7 +111,7 @@ export function describeTextRange(expr: any) {
   const parts = /^now([-+])(\d+)(\w)/.exec(expr);
   if (parts) {
     const unit = parts[3];
-    const amount = parseInt(parts[2]);
+    const amount = parseInt(parts[2], 10);
     const span = spans[unit];
     if (span) {
       opt.display = isLast ? 'Last ' : 'Next ';

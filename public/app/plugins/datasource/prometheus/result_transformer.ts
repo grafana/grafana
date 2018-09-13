@@ -37,7 +37,7 @@ export class ResultTransformer {
 
     metricLabel = this.createMetricLabel(metricData.metric, options);
 
-    const stepMs = parseInt(options.step) * 1000;
+    const stepMs = parseInt(options.step, 10) * 1000;
     let baseTimestamp = start * 1000;
 
     if (metricData.values === undefined) {
@@ -45,9 +45,9 @@ export class ResultTransformer {
     }
 
     for (const value of metricData.values) {
-      let dp_value = parseFloat(value[1]);
-      if (_.isNaN(dp_value)) {
-        dp_value = null;
+      let dpValue = parseFloat(value[1]);
+      if (_.isNaN(dpValue)) {
+        dpValue = null;
       }
 
       const timestamp = parseFloat(value[0]) * 1000;
@@ -55,7 +55,7 @@ export class ResultTransformer {
         dps.push([null, t]);
       }
       baseTimestamp = timestamp + stepMs;
-      dps.push([dp_value, timestamp]);
+      dps.push([dpValue, timestamp]);
     }
 
     const endTimestamp = end * 1000;
@@ -73,7 +73,7 @@ export class ResultTransformer {
 
   transformMetricDataToTable(md, resultCount: number, refId: string) {
     const table = new TableModel();
-    var i, j;
+    let i, j;
     const metricLabels = {};
 
     if (md.length === 0) {
@@ -81,7 +81,7 @@ export class ResultTransformer {
     }
 
     // Collect all labels across all metrics
-    _.each(md, function(series) {
+    _.each(md, series => {
       for (const label in series.metric) {
         if (!metricLabels.hasOwnProperty(label)) {
           metricLabels[label] = 1;
@@ -92,7 +92,7 @@ export class ResultTransformer {
     // Sort metric labels, create columns for them and record their index
     const sortedLabels = _.keys(metricLabels).sort();
     table.columns.push({ text: 'Time', type: 'time' });
-    _.each(sortedLabels, function(label, labelIndex) {
+    _.each(sortedLabels, (label, labelIndex) => {
       metricLabels[label] = labelIndex + 1;
       table.columns.push({ text: label, filterable: !label.startsWith('__') });
     });
@@ -100,7 +100,7 @@ export class ResultTransformer {
     table.columns.push({ text: valueText });
 
     // Populate rows, set value to empty string when label not present.
-    _.each(md, function(series) {
+    _.each(md, series => {
       if (series.value) {
         series.values = [series.value];
       }
@@ -150,7 +150,7 @@ export class ResultTransformer {
 
   renderTemplate(aliasPattern, aliasData) {
     const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-    return aliasPattern.replace(aliasRegex, function(match, g1) {
+    return aliasPattern.replace(aliasRegex, (match, g1) => {
       if (aliasData[g1]) {
         return aliasData[g1];
       }
@@ -161,7 +161,7 @@ export class ResultTransformer {
   getOriginalMetricName(labelData) {
     const metricName = labelData.__name__ || '';
     delete labelData.__name__;
-    const labelPart = _.map(_.toPairs(labelData), function(label) {
+    const labelPart = _.map(_.toPairs(labelData), label => {
       return label[0] + '="' + label[1] + '"';
     }).join(',');
     return metricName + '{' + labelPart + '}';

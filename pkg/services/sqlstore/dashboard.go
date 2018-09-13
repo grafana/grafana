@@ -295,7 +295,8 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 					FROM dashboard
 					INNER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id
 					WHERE dashboard.org_id=?
-					GROUP BY term`
+					GROUP BY term
+					ORDER BY term`
 
 	query.Result = make([]*m.DashboardTagCloudItem, 0)
 	sess := x.Sql(sql, query.OrgId)

@@ -7,6 +7,8 @@ import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import { BackendSrv } from 'app/core/services/backend_srv';
 
+import addLabelToQuery from './add_label_to_query';
+
 export function alignRange(start, end, step) {
   const alignedEnd = Math.ceil(end / step) * step;
   const alignedStart = Math.floor(start / step) * step;
@@ -14,72 +16,6 @@ export function alignRange(start, end, step) {
     end: alignedEnd,
     start: alignedStart,
   };
-}
-
-const keywords = 'by|without|on|ignoring|group_left|group_right';
-
-// Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
-const builtInWords = [
-  keywords,
-  'count|count_values|min|max|avg|sum|stddev|stdvar|bottomk|topk|quantile',
-  'true|false|null|__name__|job',
-  'abs|absent|ceil|changes|clamp_max|clamp_min|count_scalar|day_of_month|day_of_week|days_in_month|delta|deriv',
-  'drop_common_labels|exp|floor|histogram_quantile|holt_winters|hour|idelta|increase|irate|label_replace|ln|log2',
-  'log10|minute|month|predict_linear|rate|resets|round|scalar|sort|sort_desc|sqrt|time|vector|year|avg_over_time',
-  'min_over_time|max_over_time|sum_over_time|count_over_time|quantile_over_time|stddev_over_time|stdvar_over_time',
-]
-  .join('|')
-  .split('|');
-
-// addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
-export function addLabelToQuery(query: string, key: string, value: string): string {
-  if (!key || !value) {
-    throw new Error('Need label to add to query.');
-  }
-
-  // Add empty selector to bare metric name
-  let previousWord;
-  query = query.replace(/(\w+)\b(?![\(\]{=",])/g, (match, word, offset) => {
-    // Check if inside a selector
-    const nextSelectorStart = query.slice(offset).indexOf('{');
-    const nextSelectorEnd = query.slice(offset).indexOf('}');
-    const insideSelector = nextSelectorEnd > -1 && (nextSelectorStart === -1 || nextSelectorStart > nextSelectorEnd);
-    // Handle "sum by (key) (metric)"
-    const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
-    previousWord = word;
-    if (!insideSelector && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
-      return `${word}{}`;
-    }
-    return word;
-  });
-
-  // Adding label to existing selectors
-  const selectorRegexp = /{([^{]*)}/g;
-  let match = null;
-  const parts = [];
-  let lastIndex = 0;
-  let suffix = '';
-  while ((match = selectorRegexp.exec(query))) {
-    const prefix = query.slice(lastIndex, match.index);
-    const selectorParts = match[1].split(',');
-    const labels = selectorParts.reduce((acc, label) => {
-      const labelParts = label.split('=');
-      if (labelParts.length === 2) {
-        acc[labelParts[0]] = labelParts[1];
-      }
-      return acc;
-    }, {});
-    labels[key] = `"${value}"`;
-    const selector = Object.keys(labels)
-      .sort()
-      .map(key => `${key}=${labels[key]}`)
-      .join(',');
-    lastIndex = match.index + match[1].length + 2;
-    suffix = query.slice(match.index + match[0].length);
-    parts.push(prefix, '{', selector, '}');
-  }
-  parts.push(suffix);
-  return parts.join('');
 }
 
 export function determineQueryHints(series: any[], datasource?: any): any[] {
@@ -109,7 +45,7 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
     }
 
     // Check for monotony
-    const datapoints: [number, number][] = s.datapoints;
+    const datapoints: number[][] = s.datapoints;
     if (datapoints.length > 1) {
       let increasing = false;
       const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {
@@ -384,7 +320,7 @@ export class PrometheusDatasource {
     };
     const range = Math.ceil(end - start);
 
-    var interval = kbn.interval_to_seconds(options.interval);
+    let interval = kbn.interval_to_seconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
     const minInterval = kbn.interval_to_seconds(
       this.templateSrv.replace(target.interval, options.scopedVars) || options.interval
@@ -392,7 +328,7 @@ export class PrometheusDatasource {
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    var scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
+    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
@@ -404,8 +340,21 @@ export class PrometheusDatasource {
     }
     query.step = interval;
 
+    let expr = target.expr;
+
+    // Apply adhoc filters
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    expr = adhocFilters.reduce((acc, filter) => {
+      const { key, operator } = filter;
+      let { value } = filter;
+      if (operator === '=~' || operator === '!~') {
+        value = prometheusSpecialRegexEscape(value);
+      }
+      return addLabelToQuery(acc, key, value, operator);
+    }, expr);
+
     // Only replace vars in expression after having (possibly) updated interval vars
-    query.expr = this.templateSrv.replace(target.expr, scopedVars, this.interpolateQueryExpr);
+    query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
     query.requestId = options.panelId + target.refId;
 
     // Align query interval with step
@@ -507,7 +456,7 @@ export class PrometheusDatasource {
   annotationQuery(options) {
     const annotation = options.annotation;
     const expr = annotation.expr || '';
-    var tagKeys = annotation.tagKeys || '';
+    let tagKeys = annotation.tagKeys || '';
     const titleFormat = annotation.titleFormat || '';
     const textFormat = annotation.textFormat || '';
 
@@ -526,13 +475,13 @@ export class PrometheusDatasource {
     const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
 
     const self = this;
-    return this.performTimeSeriesQuery(query, query.start, query.end).then(function(results) {
+    return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {
       const eventList = [];
       tagKeys = tagKeys.split(',');
 
-      _.each(results.data.data.result, function(series) {
+      _.each(results.data.data.result, series => {
         const tags = _.chain(series.metric)
-          .filter(function(v, k) {
+          .filter((v, k) => {
             return _.includes(tagKeys, k);
           })
           .value();

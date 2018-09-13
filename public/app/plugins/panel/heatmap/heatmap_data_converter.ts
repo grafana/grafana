@@ -253,25 +253,25 @@ function pushToXBuckets(buckets, point, bucketNum, seriesName) {
   }
 
   // Add series name to point for future identification
-  const point_ext = _.concat(point, seriesName);
+  const pointExt = _.concat(point, seriesName);
 
   if (buckets[bucketNum] && buckets[bucketNum].values) {
     buckets[bucketNum].values.push(value);
-    buckets[bucketNum].points.push(point_ext);
+    buckets[bucketNum].points.push(pointExt);
   } else {
     buckets[bucketNum] = {
       x: bucketNum,
       values: [value],
-      points: [point_ext],
+      points: [pointExt],
     };
   }
 }
 
 function pushToYBuckets(buckets, bucketNum, value, point, bounds) {
-  var count = 1;
+  let count = 1;
   // Use the 3rd argument as scale/count
   if (point.length > 3) {
-    count = parseInt(point[2]);
+    count = parseInt(point[2], 10);
   }
   if (buckets[bucketNum]) {
     buckets[bucketNum].values.push(value);
@@ -335,17 +335,17 @@ function getLogScaleBucketBounds(value, yBucketSplitFactor, logBase) {
     return { bottom: 0, top: 0 };
   }
 
-  const value_log = logp(value, logBase);
+  const valueLog = logp(value, logBase);
   let pow, powTop;
   if (yBucketSplitFactor === 1 || !yBucketSplitFactor) {
-    pow = Math.floor(value_log);
+    pow = Math.floor(valueLog);
     powTop = pow + 1;
   } else {
-    const additional_bucket_size = 1 / yBucketSplitFactor;
-    let additional_log = value_log - Math.floor(value_log);
-    additional_log = Math.floor(additional_log / additional_bucket_size) * additional_bucket_size;
-    pow = Math.floor(value_log) + additional_log;
-    powTop = pow + additional_bucket_size;
+    const additionalBucketSize = 1 / yBucketSplitFactor;
+    let additionalLog = valueLog - Math.floor(valueLog);
+    additionalLog = Math.floor(additionalLog / additionalBucketSize) * additionalBucketSize;
+    pow = Math.floor(valueLog) + additionalLog;
+    powTop = pow + additionalBucketSize;
   }
   bottom = Math.pow(logBase, pow);
   top = Math.pow(logBase, powTop);
@@ -427,46 +427,46 @@ function getDistance(a: number, b: number, logBase = 1): number {
  * @param objB
  */
 function isHeatmapDataEqual(objA: any, objB: any): boolean {
-  let is_eql = !emptyXOR(objA, objB);
+  let isEql = !emptyXOR(objA, objB);
 
   _.forEach(objA, (xBucket: XBucket, x) => {
     if (objB[x]) {
       if (emptyXOR(xBucket.buckets, objB[x].buckets)) {
-        is_eql = false;
+        isEql = false;
         return false;
       }
 
       _.forEach(xBucket.buckets, (yBucket: YBucket, y) => {
         if (objB[x].buckets && objB[x].buckets[y]) {
           if (objB[x].buckets[y].values) {
-            is_eql = _.isEqual(_.sortBy(yBucket.values), _.sortBy(objB[x].buckets[y].values));
-            if (!is_eql) {
+            isEql = _.isEqual(_.sortBy(yBucket.values), _.sortBy(objB[x].buckets[y].values));
+            if (!isEql) {
               return false;
             } else {
               return true;
             }
           } else {
-            is_eql = false;
+            isEql = false;
             return false;
           }
         } else {
-          is_eql = false;
+          isEql = false;
           return false;
         }
       });
 
-      if (!is_eql) {
+      if (!isEql) {
         return false;
       } else {
         return true;
       }
     } else {
-      is_eql = false;
+      isEql = false;
       return false;
     }
   });
 
-  return is_eql;
+  return isEql;
 }
 
 function emptyXOR(foo: any, bar: any): boolean {

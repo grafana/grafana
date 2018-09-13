@@ -9,9 +9,9 @@ for (let i = 0; i < links.length; i++) {
 }
 
 const isWebkit = !!window.navigator.userAgent.match(/AppleWebKit\/([^ ;]*)/);
-const webkitLoadCheck = function(link, callback) {
-  setTimeout(function() {
-    for (var i = 0; i < document.styleSheets.length; i++) {
+const webkitLoadCheck = (link, callback) => {
+  setTimeout(() => {
+    for (let i = 0; i < document.styleSheets.length; i++) {
       const sheet = document.styleSheets[i];
       if (sheet.href === link.href) {
         return callback();
@@ -21,19 +21,19 @@ const webkitLoadCheck = function(link, callback) {
   }, 10);
 };
 
-const noop = function() {};
+const noop = () => {};
 
-const loadCSS = function(url) {
-  return new Promise(function(resolve, reject) {
+const loadCSS = url => {
+  return new Promise((resolve, reject) => {
     const link = document.createElement('link');
-    const timeout = setTimeout(function() {
+    const timeout = setTimeout(() => {
       reject('Unable to load CSS');
     }, waitSeconds * 1000);
 
-    const _callback = function(error) {
+    const _callback = error => {
       clearTimeout(timeout);
       link.onload = link.onerror = noop;
-      setTimeout(function() {
+      setTimeout(() => {
         if (error) {
           reject(error);
         } else {
@@ -47,14 +47,14 @@ const loadCSS = function(url) {
     link.href = url;
 
     if (!isWebkit) {
-      link.onload = function() {
+      link.onload = () => {
         _callback(undefined);
       };
     } else {
       webkitLoadCheck(link, _callback);
     }
 
-    link.onerror = function(evt: any) {
+    link.onerror = (evt: any) => {
       _callback(evt.error || new Error('Error loading CSS file.'));
     };
 
@@ -68,7 +68,7 @@ export function fetch(load): any {
   }
 
   // don't reload styles loaded in the head
-  for (var i = 0; i < linkHrefs.length; i++) {
+  for (let i = 0; i < linkHrefs.length; i++) {
     if (load.address === linkHrefs[i]) {
       return '';
     }

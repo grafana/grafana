@@ -5,12 +5,14 @@ export class MssqlDatasource {
   id: any;
   name: any;
   responseParser: ResponseParser;
+  interval: string;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
+    this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
   interpolateVariable(value, variable) {
@@ -26,7 +28,7 @@ export class MssqlDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, val => {
       if (typeof value === 'number') {
         return value;
       }

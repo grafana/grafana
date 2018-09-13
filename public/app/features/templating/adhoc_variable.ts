@@ -15,7 +15,7 @@ export class AdhocVariable implements Variable {
     skipUrlSync: false,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model) {
     assignModelProperties(this, model, this.defaults);
   }

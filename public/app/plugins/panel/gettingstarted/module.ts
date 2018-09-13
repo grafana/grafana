@@ -8,7 +8,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
   stepIndex: number;
   steps: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private backendSrv, datasourceSrv, private $q) {
     super($scope, $injector);
 

@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
-import alertDef from '../alerting/alert_def';
+import alertDef from '../alerting/state/alertDef';
 
-/** @ngInject **/
+/** @ngInject */
 export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, $compile) {
   function sanitizeString(str) {
     try {
@@ -20,14 +20,14 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       event: '=',
       onEdit: '&',
     },
-    link: function(scope, element) {
+    link: (scope, element) => {
       const event = scope.event;
-      var title = event.title;
-      var text = event.text;
+      let title = event.title;
+      let text = event.text;
       const dashboard = dashboardSrv.getCurrent();
 
-      var tooltip = '<div class="graph-annotation">';
-      var titleStateClass = '';
+      let tooltip = '<div class="graph-annotation">';
+      let titleStateClass = '';
 
       if (event.alertId) {
         const stateModel = alertDef.getStateDisplayModel(event.newState);
@@ -42,7 +42,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
         title = '';
       }
 
-      var header = `<div class="graph-annotation__header">`;
+      let header = `<div class="graph-annotation__header">`;
       if (event.login) {
         header += `<div class="graph-annotation__user" bs-tooltip="'Created by ${event.login}'"><img src="${
           event.avatarUrl

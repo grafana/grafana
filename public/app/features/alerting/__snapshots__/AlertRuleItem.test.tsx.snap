@@ -1,0 +1,85 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<li
+  className="alert-rule-item"
+>
+  <span
+    className="alert-rule-item__icon state class"
+  >
+    <i
+      className="icon"
+    />
+  </span>
+  <div
+    className="alert-rule-item__body"
+  >
+    <div
+      className="alert-rule-item__header"
+    >
+      <div
+        className="alert-rule-item__name"
+      >
+        <a
+          href="https://something.something.darkside?panelId=1&fullscreen=true&edit=true&tab=alert"
+        >
+          <Highlighter
+            highlightClassName="highlight-search-match"
+            searchWords={
+              Array [
+                "",
+              ]
+            }
+            textToHighlight="Some rule"
+          />
+        </a>
+      </div>
+      <div
+        className="alert-rule-item__text"
+      >
+        <span
+          className="state class"
+        >
+          <Highlighter
+            highlightClassName="highlight-search-match"
+            searchWords={
+              Array [
+                "",
+              ]
+            }
+            textToHighlight="state text"
+          />
+        </span>
+        <span
+          className="alert-rule-item__time"
+        >
+           for 
+          age
+        </span>
+      </div>
+    </div>
+  </div>
+  <div
+    className="alert-rule-item__actions"
+  >
+    <button
+      className="btn btn-small btn-inverse alert-list__btn width-2"
+      onClick={[MockFunction]}
+      title="Pausing an alert rule prevents it from executing"
+    >
+      <i
+        className="fa fa-pause"
+      />
+    </button>
+    <a
+      className="btn btn-small btn-inverse alert-list__btn width-2"
+      href="https://something.something.darkside?panelId=1&fullscreen=true&edit=true&tab=alert"
+      title="Edit alert rule"
+    >
+      <i
+        className="icon-gf icon-gf-settings"
+      />
+    </a>
+  </div>
+</li>
+`;

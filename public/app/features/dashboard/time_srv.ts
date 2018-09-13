@@ -13,7 +13,7 @@ export class TimeSrv {
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private $rootScope, private $timeout, private $location, private timer, private contextSrv) {
     // default time
     this.time = { from: '6h', to: 'now' };
@@ -70,7 +70,7 @@ export class TimeSrv {
     }
 
     if (!isNaN(value)) {
-      const epoch = parseInt(value);
+      const epoch = parseInt(value, 10);
       return moment.utc(epoch);
     }
 

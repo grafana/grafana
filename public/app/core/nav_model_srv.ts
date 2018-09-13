@@ -38,7 +38,7 @@ export class NavModelSrv {
   }
 
   getNav(...args) {
-    var children = this.navItems;
+    let children = this.navItems;
     const nav = new NavModel();
 
     for (const id of args) {

@@ -1,10 +1,10 @@
 package alerting
 
 import (
+	"context"
 	"errors"
 	"fmt"
-
-	"golang.org/x/sync/errgroup"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -58,17 +58,47 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 	return n.sendNotifications(context, notifiers)
 }
 
-func (n *notificationService) sendNotifications(context *EvalContext, notifiers []Notifier) error {
-	g, _ := errgroup.WithContext(context.Ctx)
-
+func (n *notificationService) sendNotifications(evalContext *EvalContext, notifiers []Notifier) error {
 	for _, notifier := range notifiers {
-		not := notifier //avoid updating scope variable in go routine
-		n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
-		metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
-		g.Go(func() error { return not.Notify(context) })
+		not := notifier
+
+		err := bus.InTransaction(evalContext.Ctx, func(ctx context.Context) error {
+			n.log.Debug("trying to send notification", "id", not.GetNotifierId())
+
+			// Verify that we can send the notification again
+			// but this time within the same transaction.
+			if !evalContext.IsTestRun && !not.ShouldNotify(context.Background(), evalContext) {
+				return nil
+			}
+
+			n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+			metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
+
+			//send notification
+			success := not.Notify(evalContext) == nil
+
+			if evalContext.IsTestRun {
+				return nil
+			}
+
+			//write result to db.
+			cmd := &m.RecordNotificationJournalCommand{
+				OrgId:      evalContext.Rule.OrgId,
+				AlertId:    evalContext.Rule.Id,
+				NotifierId: not.GetNotifierId(),
+				SentAt:     time.Now().Unix(),
+				Success:    success,
+			}
+
+			return bus.DispatchCtx(ctx, cmd)
+		})
+
+		if err != nil {
+			n.log.Error("failed to send notification", "id", not.GetNotifierId())
+		}
 	}
 
-	return g.Wait()
+	return nil
 }
 
 func (n *notificationService) uploadImage(context *EvalContext) (err error) {
@@ -110,7 +140,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	return nil
 }
 
-func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, context *EvalContext) (NotifierSlice, error) {
+func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, evalContext *EvalContext) (NotifierSlice, error) {
 	query := &m.GetAlertNotificationsToSendQuery{OrgId: orgId, Ids: notificationIds}
 
 	if err := bus.Dispatch(query); err != nil {
@@ -123,7 +153,8 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 		if err != nil {
 			return nil, err
 		}
-		if not.ShouldNotify(context) {
+
+		if not.ShouldNotify(evalContext.Ctx, evalContext) {
 			result = append(result, not)
 		}
 	}

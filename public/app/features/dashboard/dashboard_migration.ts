@@ -18,7 +18,7 @@ export class DashboardMigrator {
   }
 
   updateSchema(old) {
-    var i, j, k, n;
+    let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
     this.dashboard.schemaVersion = 16;
@@ -36,7 +36,7 @@ export class DashboardMigrator {
         }
       }
 
-      panelUpgrades.push(function(panel) {
+      panelUpgrades.push(panel => {
         // rename panel type
         if (panel.type === 'graphite') {
           panel.type = 'graph';
@@ -83,8 +83,8 @@ export class DashboardMigrator {
     // schema version 3 changes
     if (oldVersion < 3) {
       // ensure panel ids
-      var maxId = this.dashboard.getNextPanelId();
-      panelUpgrades.push(function(panel) {
+      let maxId = this.dashboard.getNextPanelId();
+      panelUpgrades.push(panel => {
         if (!panel.id) {
           panel.id = maxId;
           maxId += 1;
@@ -95,11 +95,11 @@ export class DashboardMigrator {
     // schema version 4 changes
     if (oldVersion < 4) {
       // move aliasYAxis changes
-      panelUpgrades.push(function(panel) {
+      panelUpgrades.push(panel => {
         if (panel.type !== 'graph') {
           return;
         }
-        _.each(panel.aliasYAxis, function(value, key) {
+        _.each(panel.aliasYAxis, (value, key) => {
           panel.seriesOverrides = [{ alias: key, yaxis: value }];
         });
         delete panel.aliasYAxis;
@@ -140,28 +140,25 @@ export class DashboardMigrator {
       }
 
       // ensure query refIds
-      panelUpgrades.push(function(panel) {
-        _.each(
-          panel.targets,
-          function(target) {
-            if (!target.refId) {
-              target.refId = this.dashboard.getNextQueryLetter(panel);
-            }
-          }.bind(this)
-        );
+      panelUpgrades.push(panel => {
+        _.each(panel.targets, target => {
+          if (!target.refId) {
+            target.refId = this.dashboard.getNextQueryLetter(panel);
+          }
+        });
       });
     }
 
     if (oldVersion < 8) {
-      panelUpgrades.push(function(panel) {
-        _.each(panel.targets, function(target) {
+      panelUpgrades.push(panel => {
+        _.each(panel.targets, target => {
           // update old influxdb query schema
           if (target.fields && target.tags && target.groupBy) {
             if (target.rawQuery) {
               delete target.fields;
               delete target.fill;
             } else {
-              target.select = _.map(target.fields, function(field) {
+              target.select = _.map(target.fields, field => {
                 const parts = [];
                 parts.push({ type: 'field', params: [field.name] });
                 parts.push({ type: field.func, params: [] });
@@ -174,7 +171,7 @@ export class DashboardMigrator {
                 return parts;
               });
               delete target.fields;
-              _.each(target.groupBy, function(part) {
+              _.each(target.groupBy, part => {
                 if (part.type === 'time' && part.interval) {
                   part.params = [part.interval];
                   delete part.interval;
@@ -198,7 +195,7 @@ export class DashboardMigrator {
     // schema version 9 changes
     if (oldVersion < 9) {
       // move aliasYAxis changes
-      panelUpgrades.push(function(panel) {
+      panelUpgrades.push(panel => {
         if (panel.type !== 'singlestat' && panel.thresholds !== '') {
           return;
         }
@@ -217,12 +214,12 @@ export class DashboardMigrator {
     // schema version 10 changes
     if (oldVersion < 10) {
       // move aliasYAxis changes
-      panelUpgrades.push(function(panel) {
+      panelUpgrades.push(panel => {
         if (panel.type !== 'table') {
           return;
         }
 
-        _.each(panel.styles, function(style) {
+        _.each(panel.styles, style => {
           if (style.thresholds && style.thresholds.length >= 3) {
             const k = style.thresholds;
             k.shift();
@@ -234,7 +231,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      _.each(this.dashboard.templating.list, function(templateVariable) {
+      _.each(this.dashboard.templating.list, templateVariable => {
         if (templateVariable.refresh) {
           templateVariable.refresh = 1;
         }
@@ -251,7 +248,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update graph yaxes changes
-      panelUpgrades.push(function(panel) {
+      panelUpgrades.push(panel => {
         if (panel.type !== 'graph') {
           return;
         }
@@ -300,7 +297,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 13) {
       // update graph yaxes changes
-      panelUpgrades.push(function(panel) {
+      panelUpgrades.push(panel => {
         if (panel.type !== 'graph') {
           return;
         }

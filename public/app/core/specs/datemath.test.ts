@@ -55,8 +55,8 @@ describe('DateMath', () => {
   });
 
   describe('subtraction', () => {
-    var now;
-    var anchored;
+    let now;
+    let anchored;
 
     beforeEach(() => {
       clock = sinon.useFakeTimers(unix);
@@ -83,7 +83,7 @@ describe('DateMath', () => {
   });
 
   describe('rounding', () => {
-    var now;
+    let now;
 
     beforeEach(() => {
       clock = sinon.useFakeTimers(unix);
@@ -91,11 +91,11 @@ describe('DateMath', () => {
     });
 
     _.each(spans, span => {
-      it('should round now to the beginning of the ' + span, function() {
+      it('should round now to the beginning of the ' + span, () => {
         expect(dateMath.parse('now/' + span).format(format)).toEqual(now.startOf(span).format(format));
       });
 
-      it('should round now to the end of the ' + span, function() {
+      it('should round now to the end of the ' + span, () => {
         expect(dateMath.parse('now/' + span, true).format(format)).toEqual(now.endOf(span).format(format));
       });
     });
@@ -114,18 +114,18 @@ describe('DateMath', () => {
     });
   });
 
-  describe('relative time to date parsing', function() {
-    it('should handle negative time', function() {
+  describe('relative time to date parsing', () => {
+    it('should handle negative time', () => {
       const date = dateMath.parseDateMath('-2d', moment([2014, 1, 5]));
       expect(date.valueOf()).toEqual(moment([2014, 1, 3]).valueOf());
     });
 
-    it('should handle multiple math expressions', function() {
+    it('should handle multiple math expressions', () => {
       const date = dateMath.parseDateMath('-2d-6h', moment([2014, 1, 5]));
       expect(date.valueOf()).toEqual(moment([2014, 1, 2, 18]).valueOf());
     });
 
-    it('should return false when invalid expression', function() {
+    it('should return false when invalid expression', () => {
       const date = dateMath.parseDateMath('2', moment([2014, 1, 5]));
       expect(date).toEqual(undefined);
     });

@@ -12,13 +12,14 @@ export class Analytics {
       dataType: 'script',
       cache: true,
     });
-    const ga = ((<any>window).ga =
-      (<any>window).ga ||
+    const ga = ((window as any).ga =
+      (window as any).ga ||
+      //tslint:disable-next-line:only-arrow-functions
       function() {
         (ga.q = ga.q || []).push(arguments);
       });
     ga.l = +new Date();
-    ga('create', (<any>config).googleAnalyticsId, 'auto');
+    ga('create', (config as any).googleAnalyticsId, 'auto');
     ga('set', 'anonymizeIp', true);
     return ga;
   }
@@ -26,7 +27,7 @@ export class Analytics {
   init() {
     this.$rootScope.$on('$viewContentLoaded', () => {
       const track = { page: this.$location.url() };
-      const ga = (<any>window).ga || this.gaInit();
+      const ga = (window as any).ga || this.gaInit();
       ga('set', track);
       ga('send', 'pageview');
     });
@@ -35,7 +36,7 @@ export class Analytics {
 
 /** @ngInject */
 function startAnalytics(googleAnalyticsSrv) {
-  if ((<any>config).googleAnalyticsId) {
+  if ((config as any).googleAnalyticsId) {
     googleAnalyticsSrv.init();
   }
 }

@@ -13,7 +13,7 @@ export class ThresholdManager {
   constructor(private panelCtrl) {}
 
   getHandleHtml(handleIndex, model, valueStr) {
-    var stateClass = model.colorMode;
+    let stateClass = model.colorMode;
     if (model.colorMode === 'custom') {
       stateClass = 'critical';
     }
@@ -33,8 +33,8 @@ export class ThresholdManager {
     const handleElem = $(evt.currentTarget).parents('.alert-handle-wrapper');
     const handleIndex = $(evt.currentTarget).data('handleIndex');
 
-    var lastY = null;
-    var posTop;
+    let lastY = null;
+    let posTop;
     const plot = this.plot;
     const panelCtrl = this.panelCtrl;
     const model = this.thresholds[handleIndex];
@@ -52,8 +52,8 @@ export class ThresholdManager {
 
     function stopped() {
       // calculate graph level
-      var graphValue = plot.c2p({ left: 0, top: posTop }).y;
-      graphValue = parseInt(graphValue.toFixed(0));
+      let graphValue = plot.c2p({ left: 0, top: posTop }).y;
+      graphValue = parseInt(graphValue.toFixed(0), 10);
       model.value = graphValue;
 
       handleElem.off('mousemove', dragging);
@@ -61,7 +61,7 @@ export class ThresholdManager {
       handleElem.off('mouseleave', dragging);
 
       // trigger digest and render
-      panelCtrl.$scope.$apply(function() {
+      panelCtrl.$scope.$apply(() => {
         panelCtrl.render();
         panelCtrl.events.emit('threshold-changed', {
           threshold: model,
@@ -86,8 +86,8 @@ export class ThresholdManager {
   renderHandle(handleIndex, defaultHandleTopPos) {
     const model = this.thresholds[handleIndex];
     const value = model.value;
-    var valueStr = value;
-    var handleTopPos = 0;
+    let valueStr = value;
+    let handleTopPos = 0;
 
     // handle no value
     if (!_.isNumber(value)) {
@@ -111,7 +111,7 @@ export class ThresholdManager {
 
   prepare(elem, data) {
     this.hasSecondYAxis = false;
-    for (var i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
       if (data[i].yaxis > 1) {
         this.hasSecondYAxis = true;
         break;
@@ -158,9 +158,9 @@ export class ThresholdManager {
       return;
     }
 
-    var gtLimit = Infinity;
-    var ltLimit = -Infinity;
-    var i, threshold, other;
+    let gtLimit = Infinity;
+    let ltLimit = -Infinity;
+    let i, threshold, other;
 
     for (i = 0; i < panel.thresholds.length; i++) {
       threshold = panel.thresholds[i];
@@ -168,7 +168,7 @@ export class ThresholdManager {
         continue;
       }
 
-      var limit;
+      let limit;
       switch (threshold.op) {
         case 'gt': {
           limit = gtLimit;
@@ -196,7 +196,7 @@ export class ThresholdManager {
         }
       }
 
-      var fillColor, lineColor;
+      let fillColor, lineColor;
       switch (threshold.colorMode) {
         case 'critical': {
           fillColor = 'rgba(234, 112, 112, 0.12)';

@@ -22,18 +22,18 @@ export class DashboardViewState {
     self.$scope = $scope;
     self.dashboard = $scope.dashboard;
 
-    $scope.onAppEvent('$routeUpdate', function() {
+    $scope.onAppEvent('$routeUpdate', () => {
       const urlState = self.getQueryStringState();
       if (self.needsSync(urlState)) {
         self.update(urlState, true);
       }
     });
 
-    $scope.onAppEvent('panel-change-view', function(evt, payload) {
+    $scope.onAppEvent('panel-change-view', (evt, payload) => {
       self.update(payload);
     });
 
-    $scope.onAppEvent('panel-initialized', function(evt, payload) {
+    $scope.onAppEvent('panel-initialized', (evt, payload) => {
       self.registerPanel(payload.scope);
     });
 
@@ -49,7 +49,7 @@ export class DashboardViewState {
 
   getQueryStringState() {
     const state = this.$location.search();
-    state.panelId = parseInt(state.panelId) || null;
+    state.panelId = parseInt(state.panelId, 10) || null;
     state.fullscreen = state.fullscreen ? true : null;
     state.edit = state.edit === 'true' || state.edit === true || null;
     state.editview = state.editview || null;
@@ -156,7 +156,7 @@ export class DashboardViewState {
   }
 
   getPanelScope(id) {
-    return _.find(this.panelScopes, function(panelScope) {
+    return _.find(this.panelScopes, panelScope => {
       return panelScope.ctrl.panel.id === id;
     });
   }
@@ -176,7 +176,7 @@ export class DashboardViewState {
       return false;
     }
 
-    this.$timeout(function() {
+    this.$timeout(() => {
       if (self.oldTimeRange !== ctrl.range) {
         self.$rootScope.$broadcast('refresh');
       } else {
@@ -216,7 +216,7 @@ export class DashboardViewState {
       }
     }
 
-    const unbind = panelScope.$on('$destroy', function() {
+    const unbind = panelScope.$on('$destroy', () => {
       self.panelScopes = _.without(self.panelScopes, panelScope);
       unbind();
     });
@@ -226,7 +226,7 @@ export class DashboardViewState {
 /** @ngInject */
 export function dashboardViewStateSrv($location, $timeout, $rootScope) {
   return {
-    create: function($scope) {
+    create: $scope => {
       return new DashboardViewState($scope, $location, $timeout, $rootScope);
     },
   };

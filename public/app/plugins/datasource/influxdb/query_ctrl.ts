@@ -19,7 +19,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   measurementSegment: any;
   removeTagFilterSegment: any;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
     this.target = this.target;
@@ -70,7 +70,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
     const categories = queryPart.getCategories();
     this.selectMenu = _.reduce(
       categories,
-      function(memo, cat, key) {
+      (memo, cat, key) => {
         const menu = {
           text: key,
           submenu: cat.map(item => {
@@ -279,7 +279,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       }
     }
 
-    var query, addTemplateVars;
+    let query, addTemplateVars;
     if (segment.type === 'key' || segment.type === 'plus-button') {
       query = this.queryBuilder.buildExploreQuery('TAG_KEYS');
       addTemplateVars = false;
@@ -343,8 +343,8 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   rebuildTargetTagConditions() {
     const tags = [];
-    var tagIndex = 0;
-    var tagOperator = '';
+    let tagIndex = 0;
+    let tagOperator = '';
 
     _.each(this.tagSegments, (segment2, index) => {
       if (segment2.type === 'key') {

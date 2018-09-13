@@ -16,12 +16,12 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
     scope: {
       onUpload: '&',
     },
-    link: function(scope) {
+    link: scope => {
       function file_selected(evt) {
         const files = evt.target.files; // FileList object
-        const readerOnload = function() {
-          return function(e) {
-            var dash;
+        const readerOnload = () => {
+          return e => {
+            let dash;
             try {
               dash = JSON.parse(e.target.result);
             } catch (err) {
@@ -30,16 +30,21 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
               return;
             }
 
-            scope.$apply(function() {
+            scope.$apply(() => {
               scope.onUpload({ dash: dash });
             });
           };
         };
 
-        for (var i = 0, f; (f = files[i]); i++) {
+        let i = 0;
+        let file = files[i];
+
+        while (file) {
           const reader = new FileReader();
           reader.onload = readerOnload();
-          reader.readAsText(f);
+          reader.readAsText(file);
+          i += 1;
+          file = files[i];
         }
       }
 

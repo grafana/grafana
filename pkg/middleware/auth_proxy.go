@@ -36,7 +36,7 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 
 	// initialize session
 	if err := ctx.Session.Start(ctx.Context); err != nil {
-		log.Error(3, "Failed to start session", err)
+		log.Error(3, "Failed to start session. error %v", err)
 		return false
 	}
 
@@ -146,12 +146,12 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	if getRequestUserId(ctx) > 0 && getRequestUserId(ctx) != query.Result.UserId {
 		// remove session
 		if err := ctx.Session.Destory(ctx.Context); err != nil {
-			log.Error(3, "Failed to destroy session, err")
+			log.Error(3, "Failed to destroy session. error: %v", err)
 		}
 
 		// initialize a new session
 		if err := ctx.Session.Start(ctx.Context); err != nil {
-			log.Error(3, "Failed to start session", err)
+			log.Error(3, "Failed to start session. error: %v", err)
 		}
 	}
 

@@ -1,4 +1,4 @@
-var templates = (<any>require).context('../', true, /\.html$/);
-templates.keys().forEach(function(key) {
+let templates = (require as any).context('../', true, /\.html$/);
+templates.keys().forEach(key => {
   templates(key);
 });

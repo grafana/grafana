@@ -84,7 +84,7 @@ function link(scope, elem, attrs) {
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
-  (<any>codeEditor.renderer).setScrollMargin(15, 15);
+  (codeEditor.renderer as any).setScrollMargin(15, 15);
   codeEditor.renderer.setPadding(10);
 
   setThemeMode();
@@ -97,7 +97,7 @@ function link(scope, elem, attrs) {
   textarea.addClass('gf-form-input');
 
   if (scope.codeEditorFocus) {
-    setTimeout(function() {
+    setTimeout(() => {
       textarea.focus();
       const domEl = textarea[0];
       if (domEl.setSelectionRange) {
@@ -119,7 +119,7 @@ function link(scope, elem, attrs) {
   scope.$watch('content', (newValue, oldValue) => {
     const editorValue = codeEditor.getValue();
     if (newValue !== editorValue && newValue !== oldValue) {
-      scope.$$postDigest(function() {
+      scope.$$postDigest(() => {
         setEditorContent(newValue);
       });
     }
@@ -152,7 +152,7 @@ function link(scope, elem, attrs) {
 
     if (scope.getCompleter()) {
       // make copy of array as ace seems to share completers array between instances
-      const anyEditor = <any>codeEditor;
+      const anyEditor = codeEditor as any;
       anyEditor.completers = anyEditor.completers.slice();
       anyEditor.completers.push(scope.getCompleter());
     }
