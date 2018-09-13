@@ -28,7 +28,6 @@ func init() {
 type InternalMetricsService struct {
 	Cfg *setting.Cfg `inject:""`
 
-	enabled         bool
 	intervalSeconds int64
 	graphiteCfg     *graphitebridge.Config
 }

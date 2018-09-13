@@ -233,6 +233,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
+	if !hs.Cfg.MetricsEndpointEnabled {
+		return
+	}
+
 	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/metrics" {
 		return
 	}

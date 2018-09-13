@@ -16,12 +16,7 @@ func (im *InternalMetricsService) readSettings() error {
 		return fmt.Errorf("Unable to find metrics config section %v", err)
 	}
 
-	im.enabled = section.Key("enabled").MustBool(false)
 	im.intervalSeconds = section.Key("interval_seconds").MustInt64(10)
-
-	if !im.enabled {
-		return nil
-	}
 
 	if err := im.parseGraphiteSettings(); err != nil {
 		return fmt.Errorf("Unable to parse metrics graphite section, %v", err)
