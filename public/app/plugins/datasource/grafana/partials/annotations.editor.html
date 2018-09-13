@@ -26,11 +26,11 @@
 	</div>
 	<div class="gf-form-inline">
 		<div class="gf-form" ng-if="ctrl.annotation.type === 'tags'">
-			<gf-form-switch 
-				class="gf-form" 
-				label="Partial match" 
-				label-class="width-9" 
-				checked="ctrl.annotation.partialMatch" 
+			<gf-form-switch
+				class="gf-form"
+				label="Match any"
+				label-class="width-9"
+				checked="ctrl.annotation.matchAny"
 				on-change="ctrl.refresh()"
 				tooltip="By default Grafana will only show annotation that matches all tags in the query. Enabling this will make Grafana return any annotation with the tags you specify."></gf-form-switch>
 		</div>

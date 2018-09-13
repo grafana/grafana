@@ -14,17 +14,17 @@ import (
 func GetAnnotations(c *m.ReqContext) Response {
 
 	query := &annotations.ItemQuery{
-		From:         c.QueryInt64("from"),
-		To:           c.QueryInt64("to"),
-		OrgId:        c.OrgId,
-		UserId:       c.QueryInt64("userId"),
-		AlertId:      c.QueryInt64("alertId"),
-		DashboardId:  c.QueryInt64("dashboardId"),
-		PanelId:      c.QueryInt64("panelId"),
-		Limit:        c.QueryInt64("limit"),
-		Tags:         c.QueryStrings("tags"),
-		Type:         c.Query("type"),
-		PartialMatch: c.QueryBool("partialMatch"),
+		From:        c.QueryInt64("from"),
+		To:          c.QueryInt64("to"),
+		OrgId:       c.OrgId,
+		UserId:      c.QueryInt64("userId"),
+		AlertId:     c.QueryInt64("alertId"),
+		DashboardId: c.QueryInt64("dashboardId"),
+		PanelId:     c.QueryInt64("panelId"),
+		Limit:       c.QueryInt64("limit"),
+		Tags:        c.QueryStrings("tags"),
+		Type:        c.Query("type"),
+		MatchAny:    c.QueryBool("matchAny"),
 	}
 
 	repo := annotations.GetRepository()

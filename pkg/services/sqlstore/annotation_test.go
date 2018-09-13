@@ -199,11 +199,11 @@ func TestAnnotations(t *testing.T) {
 
 			Convey("Should find two annotations using partial match", func() {
 				items, err := repo.Find(&annotations.ItemQuery{
-					OrgId:        1,
-					From:         1,
-					To:           25,
-					PartialMatch: true,
-					Tags:         []string{"rollback", "deploy"},
+					OrgId:    1,
+					From:     1,
+					To:       25,
+					MatchAny: true,
+					Tags:     []string{"rollback", "deploy"},
 				})
 
 				So(err, ShouldBeNil)
