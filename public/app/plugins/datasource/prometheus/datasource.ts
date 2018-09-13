@@ -579,7 +579,7 @@ export class PrometheusDatasource {
   }
 
   getTimeRange(): { start: number; end: number } {
-    let range = this.timeSrv.timeRange();
+    const range = this.timeSrv.timeRange();
     return {
       start: this.getPrometheusTime(range.from, false),
       end: this.getPrometheusTime(range.to, true),
