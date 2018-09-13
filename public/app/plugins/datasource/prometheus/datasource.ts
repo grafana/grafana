@@ -7,6 +7,8 @@ import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import { BackendSrv } from 'app/core/services/backend_srv';
 
+import addLabelToQuery from './add_label_to_query';
+
 export function alignRange(start, end, step) {
   const alignedEnd = Math.ceil(end / step) * step;
   const alignedStart = Math.floor(start / step) * step;
@@ -14,74 +16,6 @@ export function alignRange(start, end, step) {
     end: alignedEnd,
     start: alignedStart,
   };
-}
-
-const keywords = 'by|without|on|ignoring|group_left|group_right';
-
-// Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
-const builtInWords = [
-  keywords,
-  'count|count_values|min|max|avg|sum|stddev|stdvar|bottomk|topk|quantile',
-  'true|false|null|__name__|job',
-  'abs|absent|ceil|changes|clamp_max|clamp_min|count_scalar|day_of_month|day_of_week|days_in_month|delta|deriv',
-  'drop_common_labels|exp|floor|histogram_quantile|holt_winters|hour|idelta|increase|irate|label_replace|ln|log2',
-  'log10|minute|month|predict_linear|rate|resets|round|scalar|sort|sort_desc|sqrt|time|vector|year|avg_over_time',
-  'min_over_time|max_over_time|sum_over_time|count_over_time|quantile_over_time|stddev_over_time|stdvar_over_time',
-]
-  .join('|')
-  .split('|');
-
-// addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
-export function addLabelToQuery(query: string, key: string, value: string): string {
-  if (!key || !value) {
-    throw new Error('Need label to add to query.');
-  }
-
-  // Add empty selector to bare metric name
-  let previousWord;
-  query = query.replace(/([A-Za-z]\w*)\b(?![\(\]{=",])/g, (match, word, offset) => {
-    // Check if inside a selector
-    const nextSelectorStart = query.slice(offset).indexOf('{');
-    const nextSelectorEnd = query.slice(offset).indexOf('}');
-    const insideSelector = nextSelectorEnd > -1 && (nextSelectorStart === -1 || nextSelectorStart > nextSelectorEnd);
-    // Handle "sum by (key) (metric)"
-    const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
-    previousWord = word;
-    if (!insideSelector && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
-      return `${word}{}`;
-    }
-    return word;
-  });
-
-  // Adding label to existing selectors
-  const selectorRegexp = /{([^{]*)}/g;
-  let match = selectorRegexp.exec(query);
-  const parts = [];
-  let lastIndex = 0;
-  let suffix = '';
-
-  while (match) {
-    const prefix = query.slice(lastIndex, match.index);
-    const selectorParts = match[1].split(',');
-    const labels = selectorParts.reduce((acc, label) => {
-      const labelParts = label.split('=');
-      if (labelParts.length === 2) {
-        acc[labelParts[0]] = labelParts[1];
-      }
-      return acc;
-    }, {});
-    labels[key] = `"${value}"`;
-    const selector = Object.keys(labels)
-      .sort()
-      .map(key => `${key}=${labels[key]}`)
-      .join(',');
-    lastIndex = match.index + match[1].length + 2;
-    suffix = query.slice(match.index + match[0].length);
-    parts.push(prefix, '{', selector, '}');
-    match = selectorRegexp.exec(query);
-  }
-  parts.push(suffix);
-  return parts.join('');
 }
 
 export function determineQueryHints(series: any[], datasource?: any): any[] {
@@ -406,8 +340,21 @@ export class PrometheusDatasource {
     }
     query.step = interval;
 
+    let expr = target.expr;
+
+    // Apply adhoc filters
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    expr = adhocFilters.reduce((acc, filter) => {
+      const { key, operator } = filter;
+      let { value } = filter;
+      if (operator === '=~' || operator === '!~') {
+        value = prometheusSpecialRegexEscape(value);
+      }
+      return addLabelToQuery(acc, key, value, operator);
+    }, expr);
+
     // Only replace vars in expression after having (possibly) updated interval vars
-    query.expr = this.templateSrv.replace(target.expr, scopedVars, this.interpolateQueryExpr);
+    query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
     query.requestId = options.panelId + target.refId;
 
     // Align query interval with step
@@ -629,6 +576,14 @@ export class PrometheusDatasource {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() / 1000);
+  }
+
+  getTimeRange(): { start: number; end: number } {
+    const range = this.timeSrv.timeRange();
+    return {
+      start: this.getPrometheusTime(range.from, false),
+      end: this.getPrometheusTime(range.to, true),
+    };
   }
 
   getOriginalMetricName(labelData) {
