@@ -1,17 +1,23 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import Permissions from 'app/core/components/Permissions/Permissions';
 import Tooltip from 'app/core/components/Tooltip/Tooltip';
-import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
-import AddPermissions from 'app/core/components/Permissions/AddPermissions';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { NavModel, StoreState, FolderState, DashboardAcl, PermissionLevel } from 'app/types';
-import { getFolderByUid, getFolderPermissions, updateFolderPermission, removeFolderPermission } from './state/actions';
+import { NavModel, StoreState, FolderState } from 'app/types';
+import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
+import {
+  getFolderByUid,
+  getFolderPermissions,
+  updateFolderPermission,
+  removeFolderPermission,
+  addFolderPermission,
+} from './state/actions';
 import { getLoadingNav } from './state/navModel';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
+import AddPermission from 'app/core/components/PermissionList/AddPermission';
+import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
 
 export interface Props {
   navModel: NavModel;
@@ -21,13 +27,14 @@ export interface Props {
   getFolderPermissions: typeof getFolderPermissions;
   updateFolderPermission: typeof updateFolderPermission;
   removeFolderPermission: typeof removeFolderPermission;
+  addFolderPermission: typeof addFolderPermission;
 }
 
 export interface State {
   isAdding: boolean;
 }
 
-export class FolderPermissions extends Component<Props, State> {
+export class FolderPermissions extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
 
@@ -53,6 +60,14 @@ export class FolderPermissions extends Component<Props, State> {
     this.props.updateFolderPermission(item, level);
   };
 
+  onAddPermission = (newItem: NewDashboardAclItem) => {
+    return this.props.addFolderPermission(newItem);
+  };
+
+  onCancelAddPermission = () => {
+    this.setState({ isAdding: false });
+  };
+
   render() {
     const { navModel, folder } = this.props;
     const { isAdding } = this.state;
@@ -61,8 +76,7 @@ export class FolderPermissions extends Component<Props, State> {
       return <PageHeader model={navModel} />;
     }
 
-    const dashboardId = folder.id;
-    const folderInfo = { title: folder.tile, url: folder.url, id: folder.id };
+    const folderInfo = { title: folder.title, url: folder.url, id: folder.id };
 
     return (
       <div>
@@ -78,6 +92,9 @@ export class FolderPermissions extends Component<Props, State> {
               <i className="fa fa-plus" /> Add Permission
             </button>
           </div>
+          <SlideDown in={isAdding}>
+            <AddPermission onAddPermission={this.onAddPermission} onCancel={this.onCancelAddPermission} />
+          </SlideDown>
           <PermissionList
             items={folder.permissions}
             onRemoveItem={this.onRemoveItem}
@@ -105,6 +122,7 @@ const mapDispatchToProps = {
   getFolderPermissions,
   updateFolderPermission,
   removeFolderPermission,
+  addFolderPermission,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(FolderPermissions));

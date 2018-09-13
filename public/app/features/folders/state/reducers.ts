@@ -1,4 +1,5 @@
-import { FolderState, DashboardAcl, DashboardAclDTO } from 'app/types';
+import { FolderState } from 'app/types';
+import { DashboardAcl, DashboardAclDTO } from 'app/types/acl';
 import { Action, ActionTypes } from './actions';
 
 export const inititalState: FolderState = {

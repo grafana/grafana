@@ -43,11 +43,38 @@ export interface DashboardPermissionInfo {
   description: string;
 }
 
+export interface NewDashboardAclItem {
+  teamId: number;
+  userId: number;
+  role: string;
+  permission: PermissionLevel;
+  type: AclTarget;
+}
+
 export enum PermissionLevel {
   View = 1,
   Edit = 2,
   Admin = 4,
 }
+
+export enum AclTarget {
+  Team = 'team',
+  User = 'user',
+  Viewer = 'viewer',
+  Editor = 'editor',
+}
+
+export interface AclTargetInfo {
+  value: AclTarget;
+  text: string;
+}
+
+export const dashboardAclTargets: AclTargetInfo[] = [
+  { value: AclTarget.Team, text: 'Team' },
+  { value: AclTarget.User, text: 'User' },
+  { value: AclTarget.Viewer, text: 'Everyone With Viewer Role' },
+  { value: AclTarget.Editor, text: 'Everyone With Editor Role' },
+];
 
 export const dashboardPermissionLevels: DashboardPermissionInfo[] = [
   { value: PermissionLevel.View, label: 'View', description: 'Can view dashboards.' },

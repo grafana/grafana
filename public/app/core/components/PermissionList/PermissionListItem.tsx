@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import DescriptionPicker from 'app/core/components/Picker/DescriptionPicker';
-import { dashboardPermissionLevels } from 'app/types/acl';
-import { DashboardAcl, FolderInfo, PermissionLevel } from 'app/types';
+import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
+import { FolderInfo } from 'app/types';
 
 const setClassNameHelper = inherited => {
   return inherited ? 'gf-form-disabled' : '';

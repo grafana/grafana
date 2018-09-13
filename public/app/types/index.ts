@@ -3,7 +3,6 @@ import { AlertRuleDTO, AlertRule, AlertRulesState } from './alerting';
 import { LocationState, LocationUpdate, UrlQueryMap, UrlQueryValue } from './location';
 import { NavModel, NavModelItem, NavIndex } from './navModel';
 import { FolderDTO, FolderState, FolderInfo } from './folder';
-import { DashboardAcl, DashboardAclDTO, PermissionLevel, DashboardAclUpdateDTO } from './acl';
 
 export {
   Team,
@@ -24,10 +23,6 @@ export {
   FolderDTO,
   FolderState,
   FolderInfo,
-  DashboardAcl,
-  DashboardAclDTO,
-  DashboardAclUpdateDTO,
-  PermissionLevel,
 };
 
 export interface StoreState {

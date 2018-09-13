@@ -1,14 +1,15 @@
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
+import { FolderDTO, FolderState } from 'app/types';
 import {
-  FolderDTO,
-  FolderState,
   DashboardAcl,
   DashboardAclDTO,
   PermissionLevel,
   DashboardAclUpdateDTO,
-} from 'app/types';
+  NewDashboardAclItem,
+} from 'app/types/acl';
+
 import { updateNavIndex, updateLocation } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import appEvents from 'app/core/app_events';
@@ -135,6 +136,30 @@ export function removeFolderPermission(itemToDelete: DashboardAcl): ThunkResult<
       }
       itemsToUpdate.push(toUpdateItem(item));
     }
+
+    await getBackendSrv().post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
+    await dispatch(getFolderPermissions(folder.uid));
+  };
+}
+
+export function addFolderPermission(newItem: NewDashboardAclItem): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const folder = getStore().folder;
+    const itemsToUpdate = [];
+
+    for (const item of folder.permissions) {
+      if (item.inherited) {
+        continue;
+      }
+      itemsToUpdate.push(toUpdateItem(item));
+    }
+
+    itemsToUpdate.push({
+      userId: newItem.userId,
+      teamId: newItem.teamId,
+      role: item.role,
+      permission: item.permission,
+    });
 
     await getBackendSrv().post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
     await dispatch(getFolderPermissions(folder.uid));

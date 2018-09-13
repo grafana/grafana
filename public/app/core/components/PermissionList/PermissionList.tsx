@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import PermissionsListItem from './PermissionListItem';
 import DisabledPermissionsListItem from './DisabledPermissionListItem';
-import { DashboardAcl, FolderInfo } from 'app/types';
+import { FolderInfo } from 'app/types';
+import { DashboardAcl } from 'app/types/acl';
 
 export interface Props {
   items: DashboardAcl[];
