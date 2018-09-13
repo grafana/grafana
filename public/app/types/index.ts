@@ -3,6 +3,7 @@ import { AlertRuleDTO, AlertRule, AlertRulesState } from './alerting';
 import { LocationState, LocationUpdate, UrlQueryMap, UrlQueryValue } from './location';
 import { NavModel, NavModelItem, NavIndex } from './navModel';
 import { FolderDTO, FolderState, FolderInfo } from './folder';
+import { DashboardState } from './dashboard';
 
 export {
   Team,
@@ -32,4 +33,5 @@ export interface StoreState {
   teams: TeamsState;
   team: TeamState;
   folder: FolderState;
+  dashboard: DashboardState;
 }

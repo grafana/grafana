@@ -5,12 +5,14 @@ import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import teamsReducers from 'app/features/teams/state/reducers';
 import foldersReducers from 'app/features/folders/state/reducers';
+import dashboardReducers from 'app/features/dashboard/state/reducers';
 
 const rootReducer = combineReducers({
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
   ...foldersReducers,
+  ...dashboardReducers,
 });
 
 export let store;
