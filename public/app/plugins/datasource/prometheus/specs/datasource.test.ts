@@ -581,7 +581,7 @@ describe('PrometheusDatasource', () => {
   describe('When performing annotationQuery', () => {
     let results;
 
-    const options = {
+    const options: any = {
       annotation: {
         expr: 'ALERTS{alertstate="firing"}',
         tagKeys: 'job',
@@ -594,41 +594,61 @@ describe('PrometheusDatasource', () => {
       },
     };
 
-    beforeEach(async () => {
-      const response = {
-        status: 'success',
+    const response = {
+      status: 'success',
+      data: {
         data: {
-          data: {
-            resultType: 'matrix',
-            result: [
-              {
-                metric: {
-                  __name__: 'ALERTS',
-                  alertname: 'InstanceDown',
-                  alertstate: 'firing',
-                  instance: 'testinstance',
-                  job: 'testjob',
-                },
-                values: [[123, '1']],
+          resultType: 'matrix',
+          result: [
+            {
+              metric: {
+                __name__: 'ALERTS',
+                alertname: 'InstanceDown',
+                alertstate: 'firing',
+                instance: 'testinstance',
+                job: 'testjob',
               },
-            ],
-          },
+              values: [[123, '1']],
+            },
+          ],
         },
-      };
+      },
+    };
 
-      backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+    describe('not use useValueForTime', () => {
+      beforeEach(async () => {
+        options.annotation.useValueForTime = false;
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
 
-      await ctx.ds.annotationQuery(options).then(data => {
-        results = data;
+        await ctx.ds.annotationQuery(options).then(data => {
+          results = data;
+        });
+      });
+
+      it('should return annotation list', () => {
+        expect(results.length).toBe(1);
+        expect(results[0].tags).toContain('testjob');
+        expect(results[0].title).toBe('InstanceDown');
+        expect(results[0].text).toBe('testinstance');
+        expect(results[0].time).toBe(123 * 1000);
       });
     });
-    it('should return annotation list', () => {
-      expect(results.length).toBe(1);
-      expect(results[0].tags).toContain('testjob');
-      expect(results[0].title).toBe('InstanceDown');
-      expect(results[0].text).toBe('testinstance');
-      expect(results[0].time).toBe(123 * 1000);
+
+    describe('use useValueForTime', () => {
+      beforeEach(async () => {
+        options.annotation.useValueForTime = true;
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+
+        await ctx.ds.annotationQuery(options).then(data => {
+          results = data;
+        });
+      });
+
+      it('should return annotation list', () => {
+        expect(results[0].time).toEqual(1);
+      });
     });
   });
 

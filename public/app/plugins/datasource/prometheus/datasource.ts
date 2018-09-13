@@ -487,14 +487,20 @@ export class PrometheusDatasource {
           .value();
 
         for (const value of series.values) {
-          if (value[1] === '1') {
+          const valueIsTrue = value[1] === '1'; // e.g. ALERTS
+          if (valueIsTrue || annotation.useValueForTime) {
             const event = {
               annotation: annotation,
-              time: Math.floor(parseFloat(value[0])) * 1000,
               title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
               tags: tags,
               text: self.resultTransformer.renderTemplate(textFormat, series.metric),
             };
+
+            if (annotation.useValueForTime) {
+              event['time'] = Math.floor(parseFloat(value[1]));
+            } else {
+              event['time'] = Math.floor(parseFloat(value[0])) * 1000;
+            }
 
             eventList.push(event);
           }
