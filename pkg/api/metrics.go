@@ -25,7 +25,7 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 		return Error(400, "Query missing datasourceId", nil)
 	}
 
-	ds, err := hs.getDatasourceByID(datasourceId, c)
+	ds, err := hs.getDatasourceFromCache(datasourceId, c)
 	if err != nil {
 		return Error(500, "Unable to load datasource meta data", err)
 	}

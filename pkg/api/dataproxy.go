@@ -13,7 +13,7 @@ import (
 
 const HeaderNameNoBackendCache = "X-Grafana-NoCache"
 
-func (hs *HTTPServer) getDatasourceByID(id int64, c *m.ReqContext) (*m.DataSource, error) {
+func (hs *HTTPServer) getDatasourceFromCache(id int64, c *m.ReqContext) (*m.DataSource, error) {
 	nocache := c.Req.Header.Get(HeaderNameNoBackendCache) == "true"
 	cacheKey := fmt.Sprintf("ds-%d", id)
 
@@ -38,7 +38,7 @@ func (hs *HTTPServer) getDatasourceByID(id int64, c *m.ReqContext) (*m.DataSourc
 func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
 
-	ds, err := hs.getDatasourceByID(c.ParamsInt64(":id"), c)
+	ds, err := hs.getDatasourceFromCache(c.ParamsInt64(":id"), c)
 	if err != nil {
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
 		return
