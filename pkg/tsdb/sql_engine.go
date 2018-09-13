@@ -44,6 +44,8 @@ var engineCache = engineCacheType{
 	versions: make(map[int64]int),
 }
 
+var sqlIntervalCalculator = NewIntervalCalculator(nil)
+
 var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
 	return xorm.NewEngine(driverName, connectionString)
 }
@@ -173,34 +175,17 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 }
 
 // global macros/substitutions for all sql datasources
-func Interpolate(query *Query, timeRange *TimeRange, sql string) (string, error) {
-	rExp, _ := regexp.Compile(`\$__(interval|interval_ms)\b`)
-	var err error
+var Interpolate = func(query *Query, timeRange *TimeRange, sql string) (string, error) {
+	minInterval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+	if err != nil {
+		return sql, nil
+	}
+	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
 
-	sql = ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-		switch groups[1] {
-		case "interval":
-			minInterval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
-			if err != nil {
-				return sql
-			}
-			calculator := NewIntervalCalculator(nil)
-			interval := calculator.Calculate(timeRange, minInterval)
-			return interval.Text
-		case "interval_ms":
-			minInterval, err := GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
-			if err != nil {
-				return sql
-			}
-			calculator := NewIntervalCalculator(nil)
-			interval := calculator.Calculate(timeRange, minInterval)
-			return fmt.Sprintf("%d", interval.Milliseconds())
-		default:
-			return groups[0]
-		}
-	})
+	sql = strings.Replace(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10), -1)
+	sql = strings.Replace(sql, "$__interval", interval.Text, -1)
 
-	return sql, err
+	return sql, nil
 }
 
 func (e *sqlQueryEndpoint) transformToTable(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error {
@@ -630,7 +615,13 @@ func SetupFillmode(query *Query, interval time.Duration, fillmode string) error 
 	return nil
 }
 
-func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
+type SqlMacroEngineBase struct{}
+
+func NewSqlMacroEngineBase() *SqlMacroEngineBase {
+	return &SqlMacroEngineBase{}
+}
+
+func (m *SqlMacroEngineBase) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
 	result := ""
 	lastIndex := 0
 

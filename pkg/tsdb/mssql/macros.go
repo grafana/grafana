@@ -13,12 +13,13 @@ const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type msSqlMacroEngine struct {
+	*tsdb.SqlMacroEngineBase
 	timeRange *tsdb.TimeRange
 	query     *tsdb.Query
 }
 
 func newMssqlMacroEngine() tsdb.SqlMacroEngine {
-	return &msSqlMacroEngine{}
+	return &msSqlMacroEngine{SqlMacroEngineBase: tsdb.NewSqlMacroEngineBase()}
 }
 
 func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
@@ -27,7 +28,7 @@ func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
-	sql = tsdb.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
