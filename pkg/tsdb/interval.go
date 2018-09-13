@@ -50,7 +50,7 @@ func NewIntervalCalculator(opt *IntervalOptions) *intervalCalculator {
 }
 
 func (i *Interval) Milliseconds() int64 {
-	return i.Value.Nanoseconds() / 1e6
+	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
 func (ic *intervalCalculator) Calculate(timerange *TimeRange, minInterval time.Duration) Interval {
