@@ -108,6 +108,7 @@ describe('StackdriverDataSource', () => {
       targets: [
         {
           refId: 'A',
+          aggregation: {},
         },
       ],
     };
