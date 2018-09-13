@@ -5,6 +5,7 @@ import appEvents from 'app/core/app_events';
 export interface QueryMeta {
   rawQuery: string;
   rawQueryString: string;
+  metricLabels: any;
 }
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -15,6 +16,12 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     };
     metricType: string;
     refId: string;
+    aggregation: {
+      crossSeriesReducer: string;
+      alignmentPeriod: string;
+      perSeriesAligner: string;
+      groupBys: string[];
+    };
   };
   defaultDropdownValue = 'Select metric';
 
@@ -24,8 +31,15 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       name: 'loading project...',
     },
     metricType: this.defaultDropdownValue,
-    aggregation: 'REDUCE_MEAN',
+    aggregation: {
+      crossSeriesReducer: 'REDUCE_MEAN',
+      alignmentPeriod: '',
+      perSeriesAligner: '',
+      groupBys: [],
+    },
   };
+
+  groupBySegments: any[];
 
   aggOptions = [
     { text: 'none', value: 'REDUCE_NONE' },
@@ -47,7 +61,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   lastQueryError?: string;
 
   /** @ngInject */
-  constructor($scope, $injector) {
+  constructor($scope, $injector, private uiSegmentSrv) {
     super($scope, $injector);
     _.defaultsDeep(this.target, this.defaults);
 
@@ -55,6 +69,11 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
 
     this.getCurrentProject().then(this.getMetricTypes.bind(this));
+
+    this.groupBySegments = _.map(this.target.aggregation.groupBys, groupBy => {
+      return uiSegmentSrv.getSegmentForValue(groupBy);
+    });
+    this.ensurePlusButton(this.groupBySegments);
   }
 
   async getCurrentProject() {
@@ -94,6 +113,37 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       return metricTypes.map(mt => ({ value: mt.id, text: mt.id }));
     } else {
       return [];
+    }
+  }
+
+  getGroupBys() {
+    const segments = _.map(Object.keys(this.lastQueryMeta.metricLabels), (label: string) => {
+      return this.uiSegmentSrv.newSegment({ value: label, expandable: false });
+    });
+
+    return Promise.resolve(segments);
+  }
+
+  groupByChanged(segment, index) {
+    this.target.aggregation.groupBys = _.reduce(
+      this.groupBySegments,
+      function(memo, seg) {
+        if (!seg.fake) {
+          memo.push(seg.value);
+        }
+        return memo;
+      },
+      []
+    );
+    this.ensurePlusButton(this.groupBySegments);
+  }
+
+  ensurePlusButton(segments) {
+    const count = segments.length;
+    const lastSegment = segments[Math.max(count - 1, 0)];
+
+    if (!lastSegment || lastSegment.type !== 'plus-button') {
+      segments.push(this.uiSegmentSrv.newPlusButton());
     }
   }
 

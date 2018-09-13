@@ -133,6 +133,12 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 		params.Add("aggregation.alignmentPeriod", "+60s")
 	}
 
+	groupBys := query.Model.Get("groupBys").MustArray()
+	if len(groupBys) > 0 {
+		for i := 0; i < len(groupBys); i++ {
+			params.Add("aggregation.groupByFields", groupBys[i].(string))
+		}
+	}
 }
 
 func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *StackdriverQuery, tsdbQuery *tsdb.TsdbQuery) (*tsdb.QueryResult, error) {
@@ -205,6 +211,9 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriver
 }
 
 func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackDriverResponse) error {
+	metricLabels := make(map[string][]string)
+	// resourceLabels := make(map[string][]string)
+
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
 
@@ -215,14 +224,20 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		}
 		metricName := series.Metric.Type
 
-		for _, value := range series.Metric.Labels {
+		for key, value := range series.Metric.Labels {
+			metricLabels[key] = append(metricLabels[key], value)
 			metricName += " " + value
 		}
+
+		// queryRes.Meta.Set("resourceLabels", series.Resource.Labels)
+
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 			Name:   metricName,
 			Points: points,
 		})
 	}
+
+	queryRes.Meta.Set("metricLabels", metricLabels)
 
 	return nil
 }

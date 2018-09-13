@@ -71,6 +71,29 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
 			})
 
+			Convey("and query has group bys", func() {
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"target":             "target",
+					"metricType":         "a/metric/type",
+					"primaryAggregation": "REDUCE_NONE",
+					"groupBys":           []interface{}{"metric.label.group1", "metric.label.group2"},
+				})
+
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
+
+				So(len(queries), ShouldEqual, 1)
+				So(queries[0].RefID, ShouldEqual, "A")
+				So(queries[0].Target, ShouldEqual, "target")
+				So(len(queries[0].Params), ShouldEqual, 5)
+				So(queries[0].Params["interval.startTime"][0], ShouldEqual, "2018-03-15T13:00:00Z")
+				So(queries[0].Params["interval.endTime"][0], ShouldEqual, "2018-03-15T13:34:00Z")
+				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_NONE")
+				So(queries[0].Params["aggregation.groupByFields"][0], ShouldEqual, "metric.label.group1")
+				So(queries[0].Params["aggregation.groupByFields"][1], ShouldEqual, "metric.label.group2")
+				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
+			})
+
 		})
 
 		Convey("Parse stackdriver response in the time series format", func() {
@@ -126,6 +149,11 @@ func TestStackdriver(t *testing.T) {
 					So(res.Series[0].Points[0][0].Float64, ShouldEqual, 9.8566497180145)
 					So(res.Series[0].Points[1][0].Float64, ShouldEqual, 9.7323568146676)
 					So(res.Series[0].Points[2][0].Float64, ShouldEqual, 9.7730520330369)
+				})
+
+				Convey("Should add meta for labels to the response", func() {
+					instanceName := res.Meta.Get("metricLabels").MustMap()["instance_name"]
+					So(instanceName, ShouldNotBeNil)
 				})
 			})
 		})

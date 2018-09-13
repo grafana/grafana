@@ -16,7 +16,8 @@ export default class StackdriverDatasource {
       refId: t.refId,
       datasourceId: this.id,
       metricType: t.metricType,
-      primaryAggregation: t.aggregation,
+      primaryAggregation: t.aggregation.crossSeriesReducer,
+      groupBys: t.aggregation.groupBys,
     }));
 
     const result = [];
