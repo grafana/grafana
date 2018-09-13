@@ -2,16 +2,17 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
 
-export interface LabelType {
-  key: string;
-  value: string;
-}
-
 export interface QueryMeta {
   rawQuery: string;
   rawQueryString: string;
   metricLabels: { [key: string]: string[] };
   resourceLabels: { [key: string]: string[] };
+}
+
+export interface Filter {
+  key: string;
+  operator: string;
+  value: string;
 }
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -28,6 +29,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       perSeriesAligner: string;
       groupBys: string[];
     };
+    filters: Filter[];
   };
   defaultDropdownValue = 'Select metric';
 
@@ -43,9 +45,12 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       perSeriesAligner: '',
       groupBys: [],
     },
+    filters: [],
   };
 
   groupBySegments: any[];
+  filterSegments: any[];
+  removeSegment: any;
 
   aggOptions = [
     { text: 'none', value: 'REDUCE_NONE' },
@@ -65,9 +70,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   showLastQuery: boolean;
   lastQueryMeta: QueryMeta;
   lastQueryError?: string;
-  metricLabels: LabelType[];
-  resourceLabels: LabelType[];
-  removeSegment: any;
+  metricLabels: { [key: string]: string[] };
+  resourceLabels: { [key: string]: string[] };
 
   /** @ngInject */
   constructor($scope, $injector, private uiSegmentSrv, private timeSrv) {
@@ -81,11 +85,23 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       .then(this.getMetricTypes.bind(this))
       .then(this.getLabels.bind(this));
 
+    this.initSegments();
+  }
+
+  initSegments() {
     this.groupBySegments = this.target.aggregation.groupBys.map(groupBy => {
-      return uiSegmentSrv.getSegmentForValue(groupBy);
+      return this.uiSegmentSrv.getSegmentForValue(groupBy);
     });
-    this.removeSegment = uiSegmentSrv.newSegment({ fake: true, value: '-- remove group by --' });
+    this.removeSegment = this.uiSegmentSrv.newSegment({ fake: true, value: '-- remove group by --' });
     this.ensurePlusButton(this.groupBySegments);
+
+    this.filterSegments = [];
+    this.target.filters.forEach(f => {
+      this.filterSegments.push(this.uiSegmentSrv.newKey(f.key));
+      this.filterSegments.push(this.uiSegmentSrv.newOperator(f.operator));
+      this.filterSegments.push(this.uiSegmentSrv.newKeyValue(f.value));
+    });
+    this.ensurePlusButton(this.filterSegments);
   }
 
   async getCurrentProject() {
@@ -153,7 +169,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.getLabels();
   }
 
-  getGroupBys() {
+  getGroupBys(removeText?: string) {
     const metricLabels = Object.keys(this.metricLabels)
       .filter(ml => {
         return this.target.aggregation.groupBys.indexOf('metric.label.' + ml) === -1;
@@ -176,6 +192,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         });
       });
 
+    this.removeSegment.value = removeText || '-- remove group by --';
     return Promise.resolve([...metricLabels, ...resourceLabels, this.removeSegment]);
   }
 
@@ -196,6 +213,45 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.target.aggregation.groupBys = this.groupBySegments.reduce(reducer, []);
     this.ensurePlusButton(this.groupBySegments);
     this.refresh();
+  }
+
+  getFilters(segment, index) {
+    if (segment.type === 'condition') {
+      return [this.uiSegmentSrv.newSegment('AND')];
+    }
+
+    if (segment.type === 'operator') {
+      return this.uiSegmentSrv.newOperators(['=', '!=', '=~', '!=~']);
+    }
+
+    if (segment.type === 'key' || segment.type === 'plus-button') {
+      return this.getGroupBys('-- remove filter --');
+    }
+
+    if (segment.type === 'value') {
+      const filterKey = this.filterSegments[index - 2].value;
+
+      if (this.metricLabels[filterKey]) {
+        return this.getValuesForFilterKey(this.metricLabels[filterKey]);
+      }
+
+      if (this.resourceLabels[filterKey]) {
+        return this.getValuesForFilterKey(this.resourceLabels[filterKey]);
+      }
+    }
+
+    return [];
+  }
+
+  getValuesForFilterKey(labels: any[]) {
+    const filterValues = labels.map(l => {
+      return this.uiSegmentSrv.newSegment({
+        value: `${l}`,
+        expandable: false,
+      });
+    });
+
+    return filterValues;
   }
 
   ensurePlusButton(segments) {
