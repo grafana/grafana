@@ -2,6 +2,7 @@ import { Team, TeamsState, TeamState, TeamGroup, TeamMember } from './teams';
 import { AlertRuleDTO, AlertRule, AlertRulesState } from './alerting';
 import { LocationState, LocationUpdate, UrlQueryMap, UrlQueryValue } from './location';
 import { NavModel, NavModelItem, NavIndex } from './navModel';
+import { FolderDTO, FolderState } from './folder';
 
 export {
   Team,
@@ -19,6 +20,8 @@ export {
   NavIndex,
   UrlQueryMap,
   UrlQueryValue,
+  FolderDTO,
+  FolderState,
 };
 
 export interface StoreState {
@@ -27,4 +30,5 @@ export interface StoreState {
   alertRules: AlertRulesState;
   teams: TeamsState;
   team: TeamState;
+  folder: FolderState;
 }

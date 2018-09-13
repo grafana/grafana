@@ -4,11 +4,13 @@ import { createLogger } from 'redux-logger';
 import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import teamsReducers from 'app/features/teams/state/reducers';
+import foldersReducers from 'app/features/folders/state/reducers';
 
 const rootReducer = combineReducers({
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
+  ...foldersReducers,
 });
 
 export let store;

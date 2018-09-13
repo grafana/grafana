@@ -252,16 +252,6 @@ export class BackendSrv {
     return this.post('/api/folders', payload);
   }
 
-  updateFolder(folder, options) {
-    options = options || {};
-
-    return this.put(`/api/folders/${folder.uid}`, {
-      title: folder.title,
-      version: folder.version,
-      overwrite: options.overwrite === true,
-    });
-  }
-
   deleteFolder(uid: string, showSuccessAlert) {
     return this.request({ method: 'DELETE', url: `/api/folders/${uid}`, showSuccessAlert: showSuccessAlert === true });
   }
