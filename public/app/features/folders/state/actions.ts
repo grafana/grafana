@@ -157,8 +157,8 @@ export function addFolderPermission(newItem: NewDashboardAclItem): ThunkResult<v
     itemsToUpdate.push({
       userId: newItem.userId,
       teamId: newItem.teamId,
-      role: item.role,
-      permission: item.permission,
+      role: newItem.role,
+      permission: newItem.permission,
     });
 
     await getBackendSrv().post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
