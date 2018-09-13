@@ -10,8 +10,8 @@ export interface LabelType {
 export interface QueryMeta {
   rawQuery: string;
   rawQueryString: string;
-  metricLabels: LabelType[];
-  resourceLabels: LabelType[];
+  metricLabels: { [key: string]: string[] };
+  resourceLabels: { [key: string]: string[] };
 }
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -152,34 +152,42 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   }
 
   getGroupBys() {
-    const metricLabels = Object.keys(this.metricLabels).map(l => {
-      return this.uiSegmentSrv.newSegment({
-        value: `metric.label.${l}`,
-        expandable: false,
+    const metricLabels = Object.keys(this.metricLabels)
+      .filter(ml => {
+        return this.target.aggregation.groupBys.indexOf('metric.label.' + ml) === -1;
+      })
+      .map(l => {
+        return this.uiSegmentSrv.newSegment({
+          value: `metric.label.${l}`,
+          expandable: false,
+        });
       });
-    });
 
-    const resourceLabels = Object.keys(this.resourceLabels).map(l => {
-      return this.uiSegmentSrv.newSegment({
-        value: `resource.label.${l}`,
-        expandable: false,
+    const resourceLabels = Object.keys(this.resourceLabels)
+      .filter(ml => {
+        return this.target.aggregation.groupBys.indexOf('resource.label.' + ml) === -1;
+      })
+      .map(l => {
+        return this.uiSegmentSrv.newSegment({
+          value: `resource.label.${l}`,
+          expandable: false,
+        });
       });
-    });
 
     return Promise.resolve([...metricLabels, ...resourceLabels]);
   }
 
-  groupByChanged(segment, index) {
-    this.target.aggregation.groupBys = _.reduce(
-      this.groupBySegments,
-      function(memo, seg) {
-        if (!seg.fake) {
-          memo.push(seg.value);
-        }
-        return memo;
-      },
-      []
-    );
+  groupByChanged(segment) {
+    segment.type = 'value';
+
+    const reducer = (memo, seg) => {
+      if (!seg.fake) {
+        memo.push(seg.value);
+      }
+      return memo;
+    };
+
+    this.target.aggregation.groupBys = this.groupBySegments.reduce(reducer, []);
     this.ensurePlusButton(this.groupBySegments);
     this.refresh();
   }

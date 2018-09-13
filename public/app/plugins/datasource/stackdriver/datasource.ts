@@ -16,8 +16,8 @@ export default class StackdriverDatasource {
       refId: t.refId,
       datasourceId: this.id,
       metricType: t.metricType,
-      primaryAggregation: 'REDUCE_MEAN', //t.aggregation.crossSeriesReducer,
-      // groupBys: t.aggregation.groupBys,
+      primaryAggregation: t.aggregation.crossSeriesReducer,
+      groupBys: t.aggregation.groupBys,
       view: t.view || 'FULL',
     }));
 
