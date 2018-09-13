@@ -212,7 +212,7 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriver
 
 func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackDriverResponse) error {
 	metricLabels := make(map[string][]string)
-	// resourceLabels := make(map[string][]string)
+	resourceLabels := make(map[string][]string)
 
 	for _, series := range data.TimeSeries {
 		points := make([]tsdb.TimePoint, 0)
@@ -225,11 +225,17 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		metricName := series.Metric.Type
 
 		for key, value := range series.Metric.Labels {
-			metricLabels[key] = append(metricLabels[key], value)
+			if !containsLabel(metricLabels[key], value) {
+				metricLabels[key] = append(metricLabels[key], value)
+			}
 			metricName += " " + value
 		}
 
-		// queryRes.Meta.Set("resourceLabels", series.Resource.Labels)
+		for key, value := range series.Resource.Labels {
+			if !containsLabel(resourceLabels[key], value) {
+				resourceLabels[key] = append(resourceLabels[key], value)
+			}
+		}
 
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 			Name:   metricName,
@@ -237,9 +243,19 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 		})
 	}
 
+	queryRes.Meta.Set("resourceLabels", resourceLabels)
 	queryRes.Meta.Set("metricLabels", metricLabels)
 
 	return nil
+}
+
+func containsLabel(labels []string, newLabel string) bool {
+	for _, val := range labels {
+		if val == newLabel {
+			return true
+		}
+	}
+	return false
 }
 
 func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {

@@ -152,8 +152,22 @@ func TestStackdriver(t *testing.T) {
 				})
 
 				Convey("Should add meta for labels to the response", func() {
-					instanceName := res.Meta.Get("metricLabels").MustMap()["instance_name"]
-					So(instanceName, ShouldNotBeNil)
+					metricLabels := res.Meta.Get("metricLabels").Interface().(map[string][]string)
+					So(metricLabels, ShouldNotBeNil)
+					So(len(metricLabels["instance_name"]), ShouldEqual, 3)
+					So(metricLabels["instance_name"][0], ShouldEqual, "collector-asia-east-1")
+					So(metricLabels["instance_name"][1], ShouldEqual, "collector-europe-west-1")
+					So(metricLabels["instance_name"][2], ShouldEqual, "collector-us-east-1")
+
+					resourceLabels := res.Meta.Get("resourceLabels").Interface().(map[string][]string)
+					So(resourceLabels, ShouldNotBeNil)
+					So(len(resourceLabels["zone"]), ShouldEqual, 3)
+					So(resourceLabels["zone"][0], ShouldEqual, "asia-east1-a")
+					So(resourceLabels["zone"][1], ShouldEqual, "europe-west1-b")
+					So(resourceLabels["zone"][2], ShouldEqual, "us-east1-b")
+
+					So(len(resourceLabels["project_id"]), ShouldEqual, 1)
+					So(resourceLabels["project_id"][0], ShouldEqual, "grafana-prod")
 				})
 			})
 		})
