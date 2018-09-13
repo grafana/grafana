@@ -1,0 +1,51 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="dashboard-list"
+    >
+      <Connect(ActionBar) />
+      <div
+        className="search-results"
+      >
+        <em
+          className="muted"
+        >
+          No dashboards found.
+        </em>
+      </div>
+      <div
+        className="search-results-container"
+      />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Render should show filters if true 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="dashboard-list"
+    >
+      <Connect(ActionBar) />
+      <Connect(Filters) />
+      <div
+        className="search-results-container"
+      />
+    </div>
+  </div>
+</div>
+`;

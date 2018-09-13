@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { contextSrv } from '../../../core/services/context_srv';
-import { DashboardListItem, ManageDashboardState } from 'app/types';
+import { DashboardSection, ManageDashboardState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 export const initialState: ManageDashboardState = {
@@ -16,23 +16,23 @@ export const initialState: ManageDashboardState = {
     folderUid: '',
     hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders,
     isEditor: contextSrv.isEditor,
-    sections: [],
     selectedStarredFilter: '',
     selectedTagFilter: '',
   },
-  listItems: [] as DashboardListItem[],
+  sections: [] as DashboardSection[],
   dashboardQuery: {
     query: '',
     mode: 'tree',
     tag: [],
     starred: false,
-    skipRecent: false,
-    skipStarred: false,
+    skipRecent: true,
+    skipStarred: true,
     folderIds: [],
   },
 };
 
 export const manageDashboardsReducer = (state = initialState, action: Action): ManageDashboardState => {
+  let newSections = [] as DashboardSection[];
   switch (action.type) {
     case ActionTypes.SetDashboardSearchQuery:
       return { ...state, dashboardQuery: { ...state.dashboardQuery, query: action.payload } };
@@ -52,8 +52,30 @@ export const manageDashboardsReducer = (state = initialState, action: Action): M
         dashboardQuery: { ...state.dashboardQuery, tag: [], starred: false, query: '' },
       };
 
-    case ActionTypes.SearchDashboards:
-      return { ...state, listItems: action.payload };
+    case ActionTypes.LoadSections:
+      return { ...state, sections: action.payload };
+
+    case ActionTypes.LoadSectionItems:
+      newSections = state.sections.map(section => {
+        if (section.id === action.payload.id) {
+          return { ...section, expanded: true, items: action.payload.items };
+        }
+
+        return section;
+      });
+
+      return { ...state, sections: newSections };
+
+    case ActionTypes.CollapseSection:
+      newSections = state.sections.map(section => {
+        if (section.id === action.payload) {
+          return { ...section, expanded: false, items: [] };
+        }
+
+        return section;
+      });
+
+      return { ...state, sections: newSections };
   }
 
   return state;

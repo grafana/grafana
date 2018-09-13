@@ -11,6 +11,7 @@ import colors from 'app/core/utils/colors';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { configureStore } from 'app/stores/configureStore';
+import { SearchSrv, setSearchSrv } from '../services/search_srv';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -23,11 +24,13 @@ export class GrafanaCtrl {
     contextSrv,
     bridgeSrv,
     backendSrv: BackendSrv,
+    searchSrv: SearchSrv,
     datasourceSrv: DatasourceSrv
   ) {
     // sets singleston instances for angular services so react components can access them
     configureStore();
     setBackendSrv(backendSrv);
+    setSearchSrv(searchSrv);
     createStore({ backendSrv, datasourceSrv });
 
     $scope.init = () => {

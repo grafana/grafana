@@ -201,3 +201,17 @@ export class SearchSrv {
 }
 
 coreModule.service('searchSrv', SearchSrv);
+
+//
+// Code below is to expore the service to react components
+//
+
+let singletonInstance: SearchSrv;
+
+export function setSearchSrv(instance: SearchSrv) {
+  singletonInstance = instance;
+}
+
+export function getSearchSrv(): SearchSrv {
+  return singletonInstance;
+}

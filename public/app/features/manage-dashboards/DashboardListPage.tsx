@@ -1,21 +1,32 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { NavModel } from 'app/types';
+import { DashboardSection, NavModel } from 'app/types';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import ActionBar from './ActionBar';
 import Filters from './Filters';
+import Section from './Section';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getFolderId, getHasFilters, getSections } from './state/selectors';
+import { loadSections } from './state/actions';
+import { getSections, getFolderId, getHasFilters } from './state/selectors';
 
-interface Props {
+export interface Props {
   navModel: NavModel;
   hasFilters: boolean;
-  sections: [];
+  sections: DashboardSection[];
   folderId: number;
+  loadDashboardListItems: typeof loadSections;
 }
 
 export class DashboardListPage extends PureComponent<Props, any> {
+  componentDidMount() {
+    this.fetchSections();
+  }
+
+  async fetchSections() {
+    await this.props.loadDashboardListItems();
+  }
+
   render() {
     const { navModel, folderId, hasFilters, sections } = this.props;
 
@@ -23,14 +34,29 @@ export class DashboardListPage extends PureComponent<Props, any> {
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
-          {folderId !== null &&
-            !hasFilters &&
-            sections.length === 0 && (
-              <div className="dashboard-list">
-                <ActionBar />
-                {hasFilters && <Filters />}
-              </div>
-            )}
+          <div className="dashboard-list">
+            <ActionBar />
+            {hasFilters && <Filters />}
+            {hasFilters &&
+              sections.length !== 0 && (
+                <div className="search-results">
+                  <em className="muted">No dashboards matching your query were found.</em>
+                </div>
+              )}
+            {folderId !== null &&
+              !hasFilters &&
+              sections.length === 0 && (
+                <div className="search-results">
+                  <em className="muted">No dashboards found.</em>
+                </div>
+              )}
+            <div className="search-results-container">
+              {sections.length > 0 &&
+                sections.map((section, index) => {
+                  return <Section section={section} key={index} />;
+                })}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -48,4 +74,8 @@ function mapStateToProps(state) {
   };
 }
 
-export default hot(module)(connect(mapStateToProps)(DashboardListPage));
+const mapDispatchToProps = {
+  loadDashboardListItems: loadSections,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardListPage));

@@ -1,5 +1,4 @@
 export interface ManageDashboard {
-  sections: any[];
   selectAllChecked: boolean;
 
   // enable/disable actions depending on the folders or dashboards selected
@@ -26,15 +25,30 @@ export interface ManageDashboard {
   hasEditPermissionInFolders: boolean;
 }
 
-export interface DashboardListItem {
+export interface DashboardSection {
+  id: number;
+  uid: string;
+  title: string;
+  expanded: boolean;
+  items: DashboardSectionItem[];
+  url: string;
+  icon: string;
+  score: number;
+}
+
+export interface DashboardSectionItem {
   id: number;
   uid: string;
   title: string;
   uri: string;
   url: string;
   type: string;
-  tags: [];
+  tags: string[];
   isStarred: boolean;
+  folderId: number;
+  folderUid: string;
+  folderTitle: string;
+  folderUrl: string;
 }
 
 export interface DashboardQuery {
@@ -50,5 +64,5 @@ export interface DashboardQuery {
 export interface ManageDashboardState {
   manageDashboard: ManageDashboard;
   dashboardQuery: DashboardQuery;
-  listItems: DashboardListItem[];
+  sections: DashboardSection[];
 }
