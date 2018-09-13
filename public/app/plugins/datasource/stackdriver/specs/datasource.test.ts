@@ -141,4 +141,37 @@ describe('StackdriverDataSource', () => {
       });
     });
   });
+
+  describe('when performing getMetricTypes', () => {
+    describe('and call to stackdriver api succeeds', () => {});
+    let ds;
+    let result;
+    beforeEach(async () => {
+      const backendSrv = {
+        async datasourceRequest() {
+          return Promise.resolve({
+            data: {
+              metricDescriptors: [
+                {
+                  displayName: 'test metric name 1',
+                  type: 'test metric type 1',
+                },
+                {
+                  displayName: 'test metric name 2',
+                  type: 'test metric type 2',
+                },
+              ],
+            },
+          });
+        },
+      };
+      ds = new StackdriverDataSource({}, backendSrv);
+      result = await ds.getMetricTypes();
+    });
+    it('should return successfully', () => {
+      expect(result.length).toBe(2);
+      expect(result[0].id).toBe('test metric type 1');
+      expect(result[0].name).toBe('test metric name 1');
+    });
+  });
 });
