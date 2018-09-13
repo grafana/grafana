@@ -1,3 +1,5 @@
+import { DashboardAcl } from './acl';
+
 export interface FolderDTO {
   id: number;
   uid: string;
@@ -12,7 +14,14 @@ export interface FolderState {
   uid: string;
   title: string;
   url: string;
-  version: number;
   canSave: boolean;
   hasChanged: boolean;
+  version: number;
+  permissions: DashboardAcl[];
+}
+
+export interface FolderInfo {
+  id: number;
+  title: string;
+  url: string;
 }

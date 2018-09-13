@@ -1,7 +1,14 @@
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
-import { FolderDTO, FolderState } from 'app/types';
+import {
+  FolderDTO,
+  FolderState,
+  DashboardAcl,
+  DashboardAclDTO,
+  PermissionLevel,
+  DashboardAclUpdateDTO,
+} from 'app/types';
 import { updateNavIndex, updateLocation } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import appEvents from 'app/core/app_events';
@@ -10,6 +17,7 @@ export enum ActionTypes {
   LoadFolder = 'LOAD_FOLDER',
   SetFolderTitle = 'SET_FOLDER_TITLE',
   SaveFolder = 'SAVE_FOLDER',
+  LoadFolderPermissions = 'LOAD_FOLDER_PERMISSONS',
 }
 
 export interface LoadFolderAction {
@@ -22,6 +30,15 @@ export interface SetFolderTitleAction {
   payload: string;
 }
 
+export interface LoadFolderPermissionsAction {
+  type: ActionTypes.LoadFolderPermissions;
+  payload: DashboardAcl[];
+}
+
+export type Action = LoadFolderAction | SetFolderTitleAction | LoadFolderPermissionsAction;
+
+type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
+
 export const loadFolder = (folder: FolderDTO): LoadFolderAction => ({
   type: ActionTypes.LoadFolder,
   payload: folder,
@@ -32,10 +49,10 @@ export const setFolderTitle = (newTitle: string): SetFolderTitleAction => ({
   payload: newTitle,
 });
 
-export type Action = LoadFolderAction | SetFolderTitleAction;
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
-
+export const loadFolderPermissions = (items: DashboardAclDTO[]): LoadFolderPermissionsAction => ({
+  type: ActionTypes.LoadFolderPermissions,
+  payload: items,
+});
 
 export function getFolderByUid(uid: string): ThunkResult<void> {
   return async dispatch => {
@@ -63,5 +80,63 @@ export function deleteFolder(uid: string): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().deleteFolder(uid, true);
     dispatch(updateLocation({ path: `dashboards` }));
+  };
+}
+
+export function getFolderPermissions(uid: string): ThunkResult<void> {
+  return async dispatch => {
+    const permissions = await getBackendSrv().get(`/api/folders/${uid}/permissions`);
+    dispatch(loadFolderPermissions(permissions));
+  };
+}
+
+function toUpdateItem(item: DashboardAcl): DashboardAclUpdateDTO {
+  return {
+    userId: item.userId,
+    teamId: item.teamId,
+    role: item.role,
+    permission: item.permission,
+  };
+}
+
+export function updateFolderPermission(itemToUpdate: DashboardAcl, level: PermissionLevel): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const folder = getStore().folder;
+    const itemsToUpdate = [];
+
+    for (const item of folder.permissions) {
+      if (item.inherited) {
+        continue;
+      }
+
+      const updated = toUpdateItem(itemToUpdate);
+
+      // if this is the item we want to update, update it's permisssion
+      if (itemToUpdate === item) {
+        updated.permission = level;
+      }
+
+      itemsToUpdate.push(updated);
+    }
+
+    await getBackendSrv().post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
+    await dispatch(getFolderPermissions(folder.uid));
+  };
+}
+
+export function removeFolderPermission(itemToDelete: DashboardAcl): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const folder = getStore().folder;
+    const itemsToUpdate = [];
+
+    for (const item of folder.permissions) {
+      if (item.inherited || item === itemToDelete) {
+        continue;
+      }
+      itemsToUpdate.push(toUpdateItem(item));
+    }
+
+    await getBackendSrv().post(`/api/folders/${folder.uid}/permissions`, { items: itemsToUpdate });
+    await dispatch(getFolderPermissions(folder.uid));
   };
 }
