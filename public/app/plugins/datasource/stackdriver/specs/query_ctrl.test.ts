@@ -17,9 +17,10 @@ describe('StackdriverQueryCtrl', () => {
     });
 
     it('should populate group bys segments', () => {
-      expect(result.length).toBe(2);
+      expect(result.length).toBe(3);
       expect(result[0].value).toBe('metric.label.metric-key-1');
       expect(result[1].value).toBe('resource.label.resource-key-1');
+      expect(result[2].value).toBe('-- remove group by --');
     });
   });
 
@@ -39,21 +40,36 @@ describe('StackdriverQueryCtrl', () => {
     });
 
     it('should not be used to populate group bys segments', () => {
-      expect(result.length).toBe(2);
+      expect(result.length).toBe(3);
       expect(result[0].value).toBe('metric.label.metric-key-2');
       expect(result[1].value).toBe('resource.label.resource-key-2');
+      expect(result[2].value).toBe('-- remove group by --');
     });
   });
 
   describe('when a group by is selected', () => {
     beforeEach(() => {
+      const removeSegment = { fake: true, value: '-- remove group by --' };
       const segment = { value: 'groupby1' };
-      ctrl.groupBySegments = [segment];
+      ctrl.groupBySegments = [segment, removeSegment];
       ctrl.groupByChanged(segment);
     });
 
     it('should be added to group bys list', () => {
       expect(ctrl.target.aggregation.groupBys.length).toBe(1);
+    });
+  });
+
+  describe('when a selected group by is removed', () => {
+    beforeEach(() => {
+      const removeSegment = { fake: true, value: '-- remove group by --' };
+      const segment = { value: 'groupby1' };
+      ctrl.groupBySegments = [segment, removeSegment];
+      ctrl.groupByChanged(removeSegment);
+    });
+
+    it('should be added to group bys list', () => {
+      expect(ctrl.target.aggregation.groupBys.length).toBe(0);
     });
   });
 });

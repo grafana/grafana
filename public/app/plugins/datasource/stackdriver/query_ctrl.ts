@@ -67,6 +67,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   lastQueryError?: string;
   metricLabels: LabelType[];
   resourceLabels: LabelType[];
+  removeSegment: any;
 
   /** @ngInject */
   constructor($scope, $injector, private uiSegmentSrv, private timeSrv) {
@@ -83,6 +84,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.groupBySegments = this.target.aggregation.groupBys.map(groupBy => {
       return uiSegmentSrv.getSegmentForValue(groupBy);
     });
+    this.removeSegment = uiSegmentSrv.newSegment({ fake: true, value: '-- remove group by --' });
     this.ensurePlusButton(this.groupBySegments);
   }
 
@@ -174,11 +176,15 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         });
       });
 
-    return Promise.resolve([...metricLabels, ...resourceLabels]);
+    return Promise.resolve([...metricLabels, ...resourceLabels, this.removeSegment]);
   }
 
-  groupByChanged(segment) {
-    segment.type = 'value';
+  groupByChanged(segment, index) {
+    if (segment.value === this.removeSegment.value) {
+      this.groupBySegments.splice(index, 1);
+    } else {
+      segment.type = 'value';
+    }
 
     const reducer = (memo, seg) => {
       if (!seg.fake) {
