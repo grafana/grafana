@@ -240,11 +240,12 @@ func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 		}
 
 		entity := m.TeamMember{
-			OrgId:   cmd.OrgId,
-			TeamId:  cmd.TeamId,
-			UserId:  cmd.UserId,
-			Created: time.Now(),
-			Updated: time.Now(),
+			OrgId:    cmd.OrgId,
+			TeamId:   cmd.TeamId,
+			UserId:   cmd.UserId,
+			External: cmd.External,
+			Created:  time.Now(),
+			Updated:  time.Now(),
 		}
 
 		_, err := sess.Insert(&entity)
@@ -289,7 +290,10 @@ func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 	if query.UserId != 0 {
 		sess.Where("team_member.user_id=?", query.UserId)
 	}
-	sess.Cols("user.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login")
+	if query.External {
+		sess.Where("team_member.external=?", dialect.BooleanStr(true))
+	}
+	sess.Cols("team_member.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login", "team_member.external")
 	sess.Asc("user.login", "user.email")
 
 	err := sess.Find(&query.Result)
