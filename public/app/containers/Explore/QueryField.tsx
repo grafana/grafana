@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Block, Change, Document, Text, Value } from 'slate';
+import { Change, Value } from 'slate';
 import { Editor } from 'slate-react';
 import Plain from 'slate-plain-serializer';
 
@@ -9,28 +9,13 @@ import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
 
 import Typeahead from './Typeahead';
+import { makeFragment, makeValue } from './Value';
 
 export const TYPEAHEAD_DEBOUNCE = 300;
 
 function flattenSuggestions(s: any[]): any[] {
   return s ? s.reduce((acc, g) => acc.concat(g.items), []) : [];
 }
-
-export const makeFragment = (text: string): Document => {
-  const lines = text.split('\n').map(line =>
-    Block.create({
-      type: 'paragraph',
-      nodes: [Text.create(line)],
-    })
-  );
-
-  const fragment = Document.create({
-    nodes: lines,
-  });
-  return fragment;
-};
-
-export const getInitialValue = (value: string): Value => Value.create({ document: makeFragment(value) });
 
 export interface Suggestion {
   /**
@@ -113,6 +98,7 @@ interface TypeaheadFieldProps {
   onWillApplySuggestion?: (suggestion: string, state: TypeaheadFieldState) => string;
   placeholder?: string;
   portalPrefix?: string;
+  syntax?: string;
 }
 
 export interface TypeaheadFieldState {
@@ -156,7 +142,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
       typeaheadIndex: 0,
       typeaheadPrefix: '',
       typeaheadText: '',
-      value: getInitialValue(props.initialValue || ''),
+      value: makeValue(props.initialValue || '', props.syntax),
     };
   }
 
@@ -175,7 +161,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
   componentWillReceiveProps(nextProps) {
     // initialValue is null in case the user typed
     if (nextProps.initialValue !== null && nextProps.initialValue !== this.props.initialValue) {
-      this.setState({ value: getInitialValue(nextProps.initialValue) });
+      this.setState({ value: makeValue(nextProps.initialValue, nextProps.syntax) });
     }
   }
 
@@ -272,7 +258,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
   }, TYPEAHEAD_DEBOUNCE);
 
   applyTypeahead(change: Change, suggestion: Suggestion): Change {
-    const { cleanText, onWillApplySuggestion } = this.props;
+    const { cleanText, onWillApplySuggestion, syntax } = this.props;
     const { typeaheadPrefix, typeaheadText } = this.state;
     let suggestionText = suggestion.insertText || suggestion.label;
     const move = suggestion.move || 0;
@@ -293,7 +279,7 @@ class QueryField extends React.Component<TypeaheadFieldProps, TypeaheadFieldStat
 
     // If new-lines, apply suggestion as block
     if (suggestionText.match(/\n/)) {
-      const fragment = makeFragment(suggestionText);
+      const fragment = makeFragment(suggestionText, syntax);
       return change
         .deleteBackward(backward)
         .deleteForward(forward)
