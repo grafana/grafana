@@ -7,6 +7,7 @@ import {
   DashboardSectionItem,
   DashboardQuery,
   ManageDashboard,
+  SectionsState,
   ManageDashboardState,
 } from './manageDashboard';
 
@@ -30,6 +31,7 @@ export {
   DashboardSection,
   DashboardSectionItem,
   ManageDashboard,
+  SectionsState,
   ManageDashboardState,
 };
 

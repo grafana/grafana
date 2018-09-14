@@ -29,6 +29,102 @@ exports[`Render should render component 1`] = `
 </div>
 `;
 
+exports[`Render should render sections 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="dashboard-list"
+    >
+      <Connect(ActionBar) />
+      <div
+        className="search-results-container"
+      >
+        <Connect(Section)
+          key="0"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 1,
+              "items": Array [],
+              "score": 1,
+              "title": "Such a cool folder",
+              "uid": "asdf1",
+              "url": "some/url/1",
+            }
+          }
+        />
+        <Connect(Section)
+          key="1"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 2,
+              "items": Array [],
+              "score": 2,
+              "title": "Such a cool folder",
+              "uid": "asdf2",
+              "url": "some/url/2",
+            }
+          }
+        />
+        <Connect(Section)
+          key="2"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 3,
+              "items": Array [],
+              "score": 3,
+              "title": "Such a cool folder",
+              "uid": "asdf3",
+              "url": "some/url/3",
+            }
+          }
+        />
+        <Connect(Section)
+          key="3"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 4,
+              "items": Array [],
+              "score": 4,
+              "title": "Such a cool folder",
+              "uid": "asdf4",
+              "url": "some/url/4",
+            }
+          }
+        />
+        <Connect(Section)
+          key="4"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 5,
+              "items": Array [],
+              "score": 5,
+              "title": "Such a cool folder",
+              "uid": "asdf5",
+              "url": "some/url/5",
+            }
+          }
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
 exports[`Render should show filters if true 1`] = `
 <div>
   <PageHeader
@@ -41,10 +137,116 @@ exports[`Render should show filters if true 1`] = `
       className="dashboard-list"
     >
       <Connect(ActionBar) />
-      <Connect(Filters) />
+      <Connect(ActiveFilters) />
       <div
         className="search-results-container"
       />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Render should show no matching sections to filtering 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <div
+      className="dashboard-list"
+    >
+      <Connect(ActionBar) />
+      <Connect(ActiveFilters) />
+      <div
+        className="search-results"
+      >
+        <em
+          className="muted"
+        >
+          No dashboards matching your query were found.
+        </em>
+      </div>
+      <div
+        className="search-results-container"
+      >
+        <Connect(Section)
+          key="0"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 1,
+              "items": Array [],
+              "score": 1,
+              "title": "Such a cool folder",
+              "uid": "asdf1",
+              "url": "some/url/1",
+            }
+          }
+        />
+        <Connect(Section)
+          key="1"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 2,
+              "items": Array [],
+              "score": 2,
+              "title": "Such a cool folder",
+              "uid": "asdf2",
+              "url": "some/url/2",
+            }
+          }
+        />
+        <Connect(Section)
+          key="2"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 3,
+              "items": Array [],
+              "score": 3,
+              "title": "Such a cool folder",
+              "uid": "asdf3",
+              "url": "some/url/3",
+            }
+          }
+        />
+        <Connect(Section)
+          key="3"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 4,
+              "items": Array [],
+              "score": 4,
+              "title": "Such a cool folder",
+              "uid": "asdf4",
+              "url": "some/url/4",
+            }
+          }
+        />
+        <Connect(Section)
+          key="4"
+          section={
+            Object {
+              "expanded": false,
+              "icon": "cool-icon",
+              "id": 5,
+              "items": Array [],
+              "score": 5,
+              "title": "Such a cool folder",
+              "uid": "asdf5",
+              "url": "some/url/5",
+            }
+          }
+        />
+      </div>
     </div>
   </div>
 </div>

@@ -12,6 +12,8 @@ export enum ActionTypes {
   ClearFilters = 'CLEAR_FILTERS',
   LoadSectionItems = 'LOAD_SECTIONS_ITEMS',
   CollapseSection = 'COLLAPSE_SECTION',
+  SetSectionItemSelected = 'SET_ITEM_SELECTED',
+  SetSectionSelected = 'SET_SECTION_SELECTED',
 }
 
 interface LoadSectionsAction {
@@ -50,6 +52,19 @@ interface CollapseSectionAction {
   payload: number;
 }
 
+interface SetSectionSelectedAction {
+  type: ActionTypes.SetSectionSelected;
+  payload: number;
+}
+
+interface SetSectionItemSelectedAction {
+  type: ActionTypes.SetSectionItemSelected;
+  payload: {
+    folderId: number;
+    itemId: number;
+  };
+}
+
 export type Action =
   | LoadSectionsAction
   | SetSearchDashboardSearchQueryAction
@@ -57,7 +72,9 @@ export type Action =
   | RemoveTagAction
   | ClearFiltersAction
   | LoadSectionItemsAction
-  | CollapseSectionAction;
+  | CollapseSectionAction
+  | SetSectionSelectedAction
+  | SetSectionItemSelectedAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -95,6 +112,19 @@ export const clearFilters = (): ClearFiltersAction => ({
 export const collapseSection = (sectionId: number): CollapseSectionAction => ({
   type: ActionTypes.CollapseSection,
   payload: sectionId,
+});
+
+export const setSectionSelected = (folderId: number): SetSectionSelectedAction => ({
+  type: ActionTypes.SetSectionSelected,
+  payload: folderId,
+});
+
+export const setSectionItemSelected = (folderId: number, itemId: number): SetSectionItemSelectedAction => ({
+  type: ActionTypes.SetSectionItemSelected,
+  payload: {
+    folderId,
+    itemId,
+  },
 });
 
 export function loadSections(): ThunkResult<void> {

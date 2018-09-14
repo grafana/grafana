@@ -1,0 +1,134 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render add dashboard if user has permissions 1`] = `
+<div
+  className="page-action-bar page-action-bar--narrow"
+>
+  <label
+    className="gf-form gf-form--grow gf-form--has-input-icon"
+  >
+    <input
+      autoComplete="false"
+      autoCorrect="false"
+      className="gf-form-input max-width-30"
+      give-focus="true"
+      onChange={[Function]}
+      placeholder="Find Dashboard by name"
+      spellCheck={false}
+      tabIndex={1}
+      type="text"
+      value=""
+    />
+    <i
+      className="gf-form-input-icon fa fa-search"
+    />
+  </label>
+  <div
+    className="page-action-bar__spacer"
+  />
+  <a
+    className="btn btn-success"
+    href="dashboard/new "
+  >
+    <i
+      className="fa fa-plus"
+    />
+    Dashboard
+  </a>
+  <Component />
+  <a
+    className="btn btn-success"
+    href="dashboard/import"
+  >
+    <i
+      className="fa fa-plus"
+    />
+    Import
+  </a>
+</div>
+`;
+
+exports[`Render should render component 1`] = `
+<div
+  className="page-action-bar page-action-bar--narrow"
+>
+  <label
+    className="gf-form gf-form--grow gf-form--has-input-icon"
+  >
+    <input
+      autoComplete="false"
+      autoCorrect="false"
+      className="gf-form-input max-width-30"
+      give-focus="true"
+      onChange={[Function]}
+      placeholder="Find Dashboard by name"
+      spellCheck={false}
+      tabIndex={1}
+      type="text"
+      value=""
+    />
+    <i
+      className="gf-form-input-icon fa fa-search"
+    />
+  </label>
+  <div
+    className="page-action-bar__spacer"
+  />
+  <a
+    className="btn btn-success"
+    href="dashboard/import"
+  >
+    <i
+      className="fa fa-plus"
+    />
+    Import
+  </a>
+</div>
+`;
+
+exports[`Render should render import dashboard if user has permissions 1`] = `
+<div
+  className="page-action-bar page-action-bar--narrow"
+>
+  <label
+    className="gf-form gf-form--grow gf-form--has-input-icon"
+  >
+    <input
+      autoComplete="false"
+      autoCorrect="false"
+      className="gf-form-input max-width-30"
+      give-focus="true"
+      onChange={[Function]}
+      placeholder="Find Dashboard by name"
+      spellCheck={false}
+      tabIndex={1}
+      type="text"
+      value=""
+    />
+    <i
+      className="gf-form-input-icon fa fa-search"
+    />
+  </label>
+  <div
+    className="page-action-bar__spacer"
+  />
+  <a
+    className="btn btn-success"
+    href="dashboards/folder/new"
+  >
+    <i
+      className="fa fa-plus"
+    />
+    Folder
+  </a>
+  <a
+    className="btn btn-success"
+    href="dashboard/import"
+  >
+    <i
+      className="fa fa-plus"
+    />
+    Import
+  </a>
+</div>
+`;

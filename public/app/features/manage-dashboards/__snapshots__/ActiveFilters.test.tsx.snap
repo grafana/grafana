@@ -1,0 +1,163 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="page-action-bar page-action-bar--narrow"
+>
+  <div
+    className="gf-form-inline"
+  >
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label"
+      >
+        <div
+          bs-tooltip="'Clear current search query and filters'"
+          className="pointer"
+          onClick={[Function]}
+        >
+          <i
+            className="fa fa-remove"
+          />
+           Clear
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Render should render starred 1`] = `
+<div
+  className="page-action-bar page-action-bar--narrow"
+>
+  <div
+    className="gf-form-inline"
+  >
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label"
+      >
+        <div
+          className="pointer"
+          onClick={[Function]}
+        >
+          <i
+            className="fa fa-fw fa-check"
+          />
+           Starred
+        </div>
+      </label>
+    </div>
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label"
+      >
+        <div
+          bs-tooltip="'Clear current search query and filters'"
+          className="pointer"
+          onClick={[Function]}
+        >
+          <i
+            className="fa fa-remove"
+          />
+           Clear
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Render should render tags 1`] = `
+<div
+  className="page-action-bar page-action-bar--narrow"
+>
+  <div
+    className="gf-form-inline"
+  >
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label width-4"
+      >
+        Tags
+      </label>
+      <div
+        className="gf-form-input gf-form-input--plaintext"
+      >
+        <span
+          key="blue-0"
+        >
+          <div
+            className="tag label label-tag"
+            onClick={[Function]}
+            tag-color-from-name="tagName"
+          >
+            <i
+              className="fa fa-remove"
+            />
+             
+            blue
+          </div>
+        </span>
+        <span
+          key="green-1"
+        >
+          <div
+            className="tag label label-tag"
+            onClick={[Function]}
+            tag-color-from-name="tagName"
+          >
+            <i
+              className="fa fa-remove"
+            />
+             
+            green
+          </div>
+        </span>
+        <span
+          key="red-2"
+        >
+          <div
+            className="tag label label-tag"
+            onClick={[Function]}
+            tag-color-from-name="tagName"
+          >
+            <i
+              className="fa fa-remove"
+            />
+             
+            red
+          </div>
+        </span>
+      </div>
+    </div>
+    <div
+      className="gf-form"
+    >
+      <label
+        className="gf-form-label"
+      >
+        <div
+          bs-tooltip="'Clear current search query and filters'"
+          className="pointer"
+          onClick={[Function]}
+        >
+          <i
+            className="fa fa-remove"
+          />
+           Clear
+        </div>
+      </label>
+    </div>
+  </div>
+</div>
+`;

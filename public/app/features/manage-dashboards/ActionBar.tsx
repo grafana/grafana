@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { updateSearchQuery } from './state/actions';
-import { getSearchQuery } from './state/selectors';
+import { getCanSave, getFolderId, getHasEditPermissionInFolders, getIsEditor, getSearchQuery } from './state/selectors';
 
 export interface Props {
   searchQuery: string;
@@ -13,22 +13,8 @@ export interface Props {
   updateSearchQuery: typeof updateSearchQuery;
 }
 
-export interface State {
-  searchQuery: string;
-}
-
-export class ActionBar extends PureComponent<Props, State> {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      searchQuery: '',
-    };
-  }
-
+export class ActionBar extends PureComponent<Props> {
   onSearchQueryChange = event => {
-    this.setState({ searchQuery: event.target.value });
-
     this.props.updateSearchQuery(event.target.value);
   };
 
@@ -71,7 +57,7 @@ export class ActionBar extends PureComponent<Props, State> {
             Dashboard
           </a>
         )}
-        {folderId &&
+        {folderId !== undefined &&
           isEditor && (
             <a className="btn btn-success" href="dashboards/folder/new">
               <i className="fa fa-plus" />
@@ -91,6 +77,10 @@ export class ActionBar extends PureComponent<Props, State> {
 function mapStateToProps(state) {
   return {
     searchQuery: getSearchQuery(state.manageDashboards),
+    hasEditPermissionInFolders: getHasEditPermissionInFolders(state.manageDashboards),
+    canSave: getCanSave(state.manageDashboards),
+    isEditor: getIsEditor(state.manageDashboards),
+    folderId: getFolderId(state.manageDashboards),
   };
 }
 

@@ -30,10 +30,12 @@ export interface DashboardSection {
   uid: string;
   title: string;
   expanded: boolean;
-  items: DashboardSectionItem[];
   url: string;
   icon: string;
   score: number;
+  hideHeader: boolean;
+  checked: boolean;
+  items: DashboardSectionItem[];
 }
 
 export interface DashboardSectionItem {
@@ -49,6 +51,7 @@ export interface DashboardSectionItem {
   folderUid: string;
   folderTitle: string;
   folderUrl: string;
+  checked: boolean;
 }
 
 export interface DashboardQuery {
@@ -61,8 +64,15 @@ export interface DashboardQuery {
   folderIds: number[];
 }
 
+export interface SectionsState {
+  sections: DashboardSection[];
+}
+
 export interface ManageDashboardState {
   manageDashboard: ManageDashboard;
   dashboardQuery: DashboardQuery;
+}
+
+export interface SectionState {
   sections: DashboardSection[];
 }

@@ -1,0 +1,393 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="search-section"
+>
+  <div
+    className="search-section__header pointer "
+    onClick={[Function]}
+  >
+    <div
+      onClick={[Function]}
+    >
+      <FormSwitch
+        label=""
+        onChange={[Function]}
+        switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
+      />
+    </div>
+    <i
+      className="search-section__header__icon cool-icon"
+    />
+    <span
+      className="search-section__header__text"
+    >
+      Such a cool folder
+    </span>
+    <a
+      className="search-section__header__link"
+      href="some/url/1"
+    >
+      <i
+        className="fa fa-cog"
+      />
+    </a>
+    <i
+      className="fa fa-angle-right search-section__header__toggle"
+    />
+  </div>
+</div>
+`;
+
+exports[`Render should render items 1`] = `
+<div
+  className="search-section"
+>
+  <div
+    className="search-section__header pointer "
+    onClick={[Function]}
+  >
+    <div
+      onClick={[Function]}
+    >
+      <FormSwitch
+        label=""
+        onChange={[Function]}
+        switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
+      />
+    </div>
+    <i
+      className="search-section__header__icon cool-icon"
+    />
+    <span
+      className="search-section__header__text"
+    >
+      Such a cool folder
+    </span>
+    <a
+      className="search-section__header__link"
+      href="some/url/1"
+    >
+      <i
+        className="fa fa-cog"
+      />
+    </a>
+    <i
+      className="fa fa-angle-down search-section__header__toggle"
+    />
+  </div>
+  <a
+    className="search-item search-item--indent"
+    href="some/url/0"
+    key="0"
+  >
+    <div
+      onClick={[Function]}
+    >
+      <FormSwitch
+        label=""
+        onChange={[Function]}
+        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
+      />
+    </div>
+    <span
+      className="search-item__icon"
+    >
+      <i
+        className="gicon mini gicon-dashboard-list"
+      />
+    </span>
+    <span
+      className="search-item__body"
+      onClick={[Function]}
+    >
+      <div
+        className="search-item__body-title"
+      >
+        item-0
+      </div>
+    </span>
+    <span
+      className="search-item__tags"
+    >
+      <span
+        className="label label-tag"
+        key="0"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        blue
+      </span>
+      <span
+        className="label label-tag"
+        key="1"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        green
+      </span>
+    </span>
+  </a>
+  <a
+    className="search-item search-item--indent"
+    href="some/url/1"
+    key="1"
+  >
+    <div
+      onClick={[Function]}
+    >
+      <FormSwitch
+        label=""
+        onChange={[Function]}
+        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
+      />
+    </div>
+    <span
+      className="search-item__icon"
+    >
+      <i
+        className="gicon mini gicon-dashboard-list"
+      />
+    </span>
+    <span
+      className="search-item__body"
+      onClick={[Function]}
+    >
+      <div
+        className="search-item__body-title"
+      >
+        item-1
+      </div>
+    </span>
+    <span
+      className="search-item__tags"
+    >
+      <span
+        className="label label-tag"
+        key="0"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        blue
+      </span>
+      <span
+        className="label label-tag"
+        key="1"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        green
+      </span>
+    </span>
+  </a>
+  <a
+    className="search-item search-item--indent"
+    href="some/url/2"
+    key="2"
+  >
+    <div
+      onClick={[Function]}
+    >
+      <FormSwitch
+        label=""
+        onChange={[Function]}
+        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
+      />
+    </div>
+    <span
+      className="search-item__icon"
+    >
+      <i
+        className="gicon mini gicon-dashboard-list"
+      />
+    </span>
+    <span
+      className="search-item__body"
+      onClick={[Function]}
+    >
+      <div
+        className="search-item__body-title"
+      >
+        item-2
+      </div>
+    </span>
+    <span
+      className="search-item__tags"
+    >
+      <span
+        className="label label-tag"
+        key="0"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        blue
+      </span>
+      <span
+        className="label label-tag"
+        key="1"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        green
+      </span>
+    </span>
+  </a>
+  <a
+    className="search-item search-item--indent"
+    href="some/url/3"
+    key="3"
+  >
+    <div
+      onClick={[Function]}
+    >
+      <FormSwitch
+        label=""
+        onChange={[Function]}
+        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
+      />
+    </div>
+    <span
+      className="search-item__icon"
+    >
+      <i
+        className="gicon mini gicon-dashboard-list"
+      />
+    </span>
+    <span
+      className="search-item__body"
+      onClick={[Function]}
+    >
+      <div
+        className="search-item__body-title"
+      >
+        item-3
+      </div>
+    </span>
+    <span
+      className="search-item__tags"
+    >
+      <span
+        className="label label-tag"
+        key="0"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        blue
+      </span>
+      <span
+        className="label label-tag"
+        key="1"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        green
+      </span>
+    </span>
+  </a>
+  <a
+    className="search-item search-item--indent"
+    href="some/url/4"
+    key="4"
+  >
+    <div
+      onClick={[Function]}
+    >
+      <FormSwitch
+        label=""
+        onChange={[Function]}
+        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
+      />
+    </div>
+    <span
+      className="search-item__icon"
+    >
+      <i
+        className="gicon mini gicon-dashboard-list"
+      />
+    </span>
+    <span
+      className="search-item__body"
+      onClick={[Function]}
+    >
+      <div
+        className="search-item__body-title"
+      >
+        item-4
+      </div>
+    </span>
+    <span
+      className="search-item__tags"
+    >
+      <span
+        className="label label-tag"
+        key="0"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        blue
+      </span>
+      <span
+        className="label label-tag"
+        key="1"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        green
+      </span>
+    </span>
+  </a>
+  <a
+    className="search-item search-item--indent"
+    href="some/url/5"
+    key="5"
+  >
+    <div
+      onClick={[Function]}
+    >
+      <FormSwitch
+        label=""
+        onChange={[Function]}
+        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
+      />
+    </div>
+    <span
+      className="search-item__icon"
+    >
+      <i
+        className="gicon mini gicon-dashboard-list"
+      />
+    </span>
+    <span
+      className="search-item__body"
+      onClick={[Function]}
+    >
+      <div
+        className="search-item__body-title"
+      >
+        item-5
+      </div>
+    </span>
+    <span
+      className="search-item__tags"
+    >
+      <span
+        className="label label-tag"
+        key="0"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        blue
+      </span>
+      <span
+        className="label label-tag"
+        key="1"
+        onClick={[Function]}
+        tag-color-from-name="tag"
+      >
+        green
+      </span>
+    </span>
+  </a>
+</div>
+`;

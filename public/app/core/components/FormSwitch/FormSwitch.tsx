@@ -6,7 +6,7 @@ export interface Props {
   checked?: boolean;
   labelClass?: string;
   switchClass?: string;
-  onChange: (value: any) => any;
+  onChange: () => any;
 }
 
 export interface State {
@@ -18,9 +18,8 @@ export class FormSwitch extends PureComponent<Props, State> {
     id: _.uniqueId(),
   };
 
-  internalOnChange = event => {
-    const checked = event.target.checked;
-    this.props.onChange(checked);
+  internalOnChange = () => {
+    this.props.onChange();
   };
 
   render() {

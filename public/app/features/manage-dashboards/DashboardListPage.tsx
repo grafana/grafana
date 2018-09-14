@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { DashboardSection, NavModel } from 'app/types';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import ActionBar from './ActionBar';
-import Filters from './Filters';
+import ActiveFilters from './ActiveFilters';
 import Section from './Section';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { loadSections } from './state/actions';
@@ -36,7 +36,7 @@ export class DashboardListPage extends PureComponent<Props, any> {
         <div className="page-container page-body">
           <div className="dashboard-list">
             <ActionBar />
-            {hasFilters && <Filters />}
+            {hasFilters && <ActiveFilters />}
             {hasFilters &&
               sections.length !== 0 && (
                 <div className="search-results">
@@ -69,7 +69,7 @@ function mapStateToProps(state) {
   return {
     navModel: getNavModel(state.navIndex, 'manage-dashboards'),
     hasFilters: getHasFilters(manageDashboardsState),
-    sections: getSections(manageDashboardsState),
+    sections: getSections(state.sections),
     folderId: getFolderId(manageDashboardsState),
   };
 }

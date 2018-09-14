@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { contextSrv } from '../../../core/services/context_srv';
-import { DashboardSection, ManageDashboardState } from 'app/types';
+import { DashboardSection, ManageDashboardState, SectionsState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 export const initialState: ManageDashboardState = {
@@ -19,7 +19,6 @@ export const initialState: ManageDashboardState = {
     selectedStarredFilter: '',
     selectedTagFilter: '',
   },
-  sections: [] as DashboardSection[],
   dashboardQuery: {
     query: '',
     mode: 'tree',
@@ -32,7 +31,6 @@ export const initialState: ManageDashboardState = {
 };
 
 export const manageDashboardsReducer = (state = initialState, action: Action): ManageDashboardState => {
-  let newSections = [] as DashboardSection[];
   switch (action.type) {
     case ActionTypes.SetDashboardSearchQuery:
       return { ...state, dashboardQuery: { ...state.dashboardQuery, query: action.payload } };
@@ -51,7 +49,19 @@ export const manageDashboardsReducer = (state = initialState, action: Action): M
         ...state,
         dashboardQuery: { ...state.dashboardQuery, tag: [], starred: false, query: '' },
       };
+  }
 
+  return state;
+};
+
+const initialSectionsState: SectionsState = {
+  sections: [] as DashboardSection[],
+};
+
+export const sectionsReducer = (state = initialSectionsState, action: Action): SectionsState => {
+  let newSections = [] as DashboardSection[];
+
+  switch (action.type) {
     case ActionTypes.LoadSections:
       return { ...state, sections: action.payload };
 
@@ -76,6 +86,35 @@ export const manageDashboardsReducer = (state = initialState, action: Action): M
       });
 
       return { ...state, sections: newSections };
+
+    case ActionTypes.SetSectionItemSelected:
+      newSections = state.sections.map(section => {
+        if (section.id === action.payload.folderId) {
+          const newItems = section.items.map(item => {
+            if (item.id === action.payload.itemId) {
+              return { ...item, checked: true };
+            }
+
+            return item;
+          });
+
+          return { ...section, items: newItems };
+        }
+
+        return section;
+      });
+
+      return { ...state, sections: newSections };
+
+    case ActionTypes.SetSectionSelected:
+      newSections = state.sections.map(section => {
+        if (section.id === action.payload) {
+          return { ...section, checked: !section.checked };
+        }
+        return section;
+      });
+
+      return { ...state, sections: newSections };
   }
 
   return state;
@@ -83,4 +122,5 @@ export const manageDashboardsReducer = (state = initialState, action: Action): M
 
 export default {
   manageDashboards: manageDashboardsReducer,
+  sections: sectionsReducer,
 };

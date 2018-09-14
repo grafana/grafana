@@ -11,7 +11,7 @@ export interface Props {
   clearFilters: typeof clearFilters;
 }
 
-export class Filters extends PureComponent<Props, any> {
+export class ActiveFilters extends PureComponent<Props, any> {
   removeTag = tagName => {
     this.props.removeTag(tagName);
   };
@@ -26,6 +26,7 @@ export class Filters extends PureComponent<Props, any> {
 
   render() {
     const { query } = this.props;
+
     return (
       <div className="page-action-bar page-action-bar--narrow">
         <div className="gf-form-inline">
@@ -33,9 +34,9 @@ export class Filters extends PureComponent<Props, any> {
             <div className="gf-form">
               <label className="gf-form-label width-4">Tags</label>
               <div className="gf-form-input gf-form-input--plaintext">
-                {query.tag.map(tagName => {
+                {query.tag.map((tagName, index) => {
                   return (
-                    <span>
+                    <span key={`${tagName}-${index}`}>
                       <div
                         onClick={() => {
                           this.removeTag(tagName);
@@ -90,4 +91,4 @@ const mapDispatchToProps = {
   clearFilters,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Filters);
+export default connect(mapStateToProps, mapDispatchToProps)(ActiveFilters);

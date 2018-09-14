@@ -2,16 +2,18 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { DashboardSection } from 'app/types';
 import FormSwitch from 'app/core/components/FormSwitch/FormSwitch';
-import { collapseSection, loadSectionItems } from './state/actions';
+import { SectionItem } from './SectionItem';
+import { collapseSection, loadSectionItems, setSectionSelected } from './state/actions';
 
-interface Props {
+export interface Props {
   section: DashboardSection;
   loadSectionItems: typeof loadSectionItems;
   collapseSection: typeof collapseSection;
+  setSectionSelected: typeof setSectionSelected;
 }
 
 export class Section extends PureComponent<Props> {
-  toggleFolderExpand = () => {
+  toggleFolder = () => {
     const { section, loadSectionItems, collapseSection } = this.props;
 
     if (section.expanded) {
@@ -21,13 +23,11 @@ export class Section extends PureComponent<Props> {
     }
   };
 
-  toggleSelection = () => {};
+  toggleSectionSelected = () => {
+    const { section } = this.props;
+  };
 
-  selectionChanged = event => {};
-
-  onItemClick = item => {};
-
-  selectTag = (tag, event) => {};
+  selectionChanged = () => {};
 
   render() {
     const { section } = this.props;
@@ -36,16 +36,14 @@ export class Section extends PureComponent<Props> {
       <div className="search-section">
         <div
           className={`search-section__header pointer ${section.selected ? 'selected' : ''}`}
-          onClick={this.toggleFolderExpand}
+          onClick={this.toggleFolder}
         >
-          <div onClick={this.toggleSelection}>
-            <FormSwitch
-              label=""
-              onChange={this.selectionChanged}
-              checked={section.checked}
-              switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
-            />
-          </div>
+          <FormSwitch
+            label=""
+            onChange={this.toggleSectionSelected}
+            checked={section.checked}
+            switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
+          />
           <i className={`search-section__header__icon ${section.icon}`} />
           <span className="search-section__header__text">{section.title}</span>
           {section.url && (
@@ -59,44 +57,7 @@ export class Section extends PureComponent<Props> {
         {section.hideHeader && <div className="search-section__header" />}
         {section.expanded &&
           section.items.map((item, index) => {
-            return (
-              <a
-                className={`search-item search-item--indent${item.selected ? 'selected' : ''}`}
-                href={item.url}
-                key={index}
-              >
-                <div onClick={this.toggleSelection}>
-                  <FormSwitch
-                    label=""
-                    onChange={this.selectionChanged}
-                    checked={item.checked}
-                    switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
-                  />
-                </div>
-                <span className="search-item__icon">
-                  <i className="gicon mini gicon-dashboard-list" />
-                </span>
-                <span className="search-item__body" onClick={() => this.onItemClick(item)}>
-                  <div className="search-item__body-title">{item.title}</div>
-                </span>
-                <span className="search-item__tags">
-                  {item.tags.map((tag, index) => {
-                    return (
-                      <span
-                        key={index}
-                        onClick={event => {
-                          this.selectTag(tag, event);
-                        }}
-                        tag-color-from-name="tag"
-                        className="label label-tag"
-                      >
-                        {tag}
-                      </span>
-                    );
-                  })}
-                </span>
-              </a>
-            );
+            return <SectionItem item={item} key={`${item.id}-${index}`} />;
           })}
       </div>
     );
@@ -110,6 +71,7 @@ function mapStateToProps() {
 const mapDispatchToProps = {
   collapseSection,
   loadSectionItems,
+  setSectionSelected,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Section);
