@@ -1,3 +1,9 @@
+export enum OrgRole {
+  Viewer = 'Viewer',
+  Editor = 'Editor',
+  Admin = 'Admin',
+}
+
 export interface DashboardAclDTO {
   id?: number;
   dashboardId?: number;
@@ -7,8 +13,7 @@ export interface DashboardAclDTO {
   teamId?: number;
   team?: string;
   permission?: PermissionLevel;
-  permissionName?: string;
-  role?: string;
+  role?: OrgRole;
   icon?: string;
   inherited?: boolean;
 }
@@ -16,7 +21,7 @@ export interface DashboardAclDTO {
 export interface DashboardAclUpdateDTO {
   userId: number;
   teamId: number;
-  role: string;
+  role: OrgRole;
   permission: PermissionLevel;
 }
 
@@ -29,8 +34,7 @@ export interface DashboardAcl {
   teamId?: number;
   team?: string;
   permission?: PermissionLevel;
-  permissionName?: string;
-  role?: string;
+  role?: OrgRole;
   icon?: string;
   name?: string;
   inherited?: boolean;
@@ -46,7 +50,7 @@ export interface DashboardPermissionInfo {
 export interface NewDashboardAclItem {
   teamId: number;
   userId: number;
-  role: string;
+  role: OrgRole;
   permission: PermissionLevel;
   type: AclTarget;
 }
@@ -58,10 +62,10 @@ export enum PermissionLevel {
 }
 
 export enum AclTarget {
-  Team = 'team',
-  User = 'user',
-  Viewer = 'viewer',
-  Editor = 'editor',
+  Team = 'Team',
+  User = 'User',
+  Viewer = 'Viewer',
+  Editor = 'Editor',
 }
 
 export interface AclTargetInfo {

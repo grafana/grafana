@@ -68,7 +68,7 @@ export function updateDashboardPermission(
       itemsToUpdate.push(updated);
     }
 
-    await getBackendSrv().post(`/api/dashboard/id/${dashboardId}/permissions`, { items: itemsToUpdate });
+    await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
     await dispatch(getDashboardPermissions(dashboardId));
   };
 }

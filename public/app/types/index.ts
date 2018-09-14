@@ -4,6 +4,7 @@ import { LocationState, LocationUpdate, UrlQueryMap, UrlQueryValue } from './loc
 import { NavModel, NavModelItem, NavIndex } from './navModel';
 import { FolderDTO, FolderState, FolderInfo } from './folder';
 import { DashboardState } from './dashboard';
+import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 
 export {
   Team,
@@ -24,6 +25,10 @@ export {
   FolderDTO,
   FolderState,
   FolderInfo,
+  DashboardState,
+  DashboardAcl,
+  OrgRole,
+  PermissionLevel,
 };
 
 export interface StoreState {

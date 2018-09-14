@@ -8,6 +8,7 @@ import {
   AclTarget,
   PermissionLevel,
   NewDashboardAclItem,
+  OrgRole,
 } from 'app/types/acl';
 
 export interface Props {
@@ -25,7 +26,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     return {
       userId: 0,
       teamId: 0,
-      role: '',
+      role: OrgRole.Viewer,
       type: AclTarget.Team,
       permission: PermissionLevel.View,
     };

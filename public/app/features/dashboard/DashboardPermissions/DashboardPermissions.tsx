@@ -4,17 +4,25 @@ import Tooltip from 'app/core/components/Tooltip/Tooltip';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { StoreState, FolderInfo } from 'app/types';
 import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
-import { getDashboardPermissions } from '../state/actions';
+import {
+  getDashboardPermissions,
+  addDashboardPermission,
+  removeDashboardPermission,
+  updateDashboardPermission,
+} from '../state/actions';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
-import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
+import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
 import { store } from 'app/stores/configureStore';
 
 export interface Props {
   dashboardId: number;
   folder?: FolderInfo;
-  getDashboardPermissions: typeof getDashboardPermissions;
   permissions: DashboardAcl[];
+  getDashboardPermissions: typeof getDashboardPermissions;
+  updateDashboardPermission: typeof updateDashboardPermission;
+  removeDashboardPermission: typeof removeDashboardPermission;
+  addDashboardPermission: typeof addDashboardPermission;
 }
 
 export interface State {
@@ -39,15 +47,15 @@ export class DashboardPermissions extends PureComponent<Props, State> {
   };
 
   onRemoveItem = (item: DashboardAcl) => {
-    // this.props.removeFolderPermission(item);
+    this.props.removeDashboardPermission(this.props.dashboardId, item);
   };
 
   onPermissionChanged = (item: DashboardAcl, level: PermissionLevel) => {
-    // this.props.updateFolderPermission(item, level);
+    this.props.updateDashboardPermission(this.props.dashboardId, item, level);
   };
 
   onAddPermission = (newItem: NewDashboardAclItem) => {
-    // return this.props.addFolderPermission(newItem);
+    return this.props.addDashboardPermission(this.props.dashboardId, newItem);
   };
 
   onCancelAddPermission = () => {
@@ -101,6 +109,9 @@ const mapStateToProps = (state: StoreState) => ({
 
 const mapDispatchToProps = {
   getDashboardPermissions,
+  addDashboardPermission,
+  removeDashboardPermission,
+  updateDashboardPermission,
 };
 
 export default connectWithStore(DashboardPermissions, mapStateToProps, mapDispatchToProps);
