@@ -19,6 +19,7 @@ export default class StackdriverDatasource {
       primaryAggregation: t.aggregation.crossSeriesReducer,
       groupBys: t.aggregation.groupBys,
       view: t.view || 'FULL',
+      filters: t.filters,
     }));
 
     const { data } = await this.backendSrv.datasourceRequest({

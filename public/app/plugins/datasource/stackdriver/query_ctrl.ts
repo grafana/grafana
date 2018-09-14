@@ -9,11 +9,6 @@ export interface QueryMeta {
   resourceLabels: { [key: string]: string[] };
 }
 
-export interface Filter {
-  key: string;
-  operator: string;
-  value: string;
-}
 export class StackdriverQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
   target: {
@@ -29,9 +24,12 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       perSeriesAligner: string;
       groupBys: string[];
     };
-    filters: Filter[];
+    filters: string[];
   };
-  defaultDropdownValue = 'Select metric';
+  defaultDropdownValue = 'select metric';
+  defaultFilterValue = 'select value';
+  defaultRemoveGroupByValue = '-- remove group by --';
+  defaultRemoveFilterValue = '-- remove filter --';
 
   defaults = {
     project: {
@@ -96,10 +94,21 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.ensurePlusButton(this.groupBySegments);
 
     this.filterSegments = [];
-    this.target.filters.forEach(f => {
-      this.filterSegments.push(this.uiSegmentSrv.newKey(f.key));
-      this.filterSegments.push(this.uiSegmentSrv.newOperator(f.operator));
-      this.filterSegments.push(this.uiSegmentSrv.newKeyValue(f.value));
+    this.target.filters.forEach((f, index) => {
+      switch (index % 4) {
+        case 0:
+          this.filterSegments.push(this.uiSegmentSrv.newKey(f));
+          break;
+        case 1:
+          this.filterSegments.push(this.uiSegmentSrv.newOperator(f));
+          break;
+        case 2:
+          this.filterSegments.push(this.uiSegmentSrv.newKeyValue(f));
+          break;
+        case 3:
+          this.filterSegments.push(this.uiSegmentSrv.newCondition(f));
+          break;
+      }
     });
     this.ensurePlusButton(this.filterSegments);
   }
@@ -169,9 +178,12 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.getLabels();
   }
 
-  getGroupBys(segment, index, removeText?: string) {
+  getGroupBys(segment, index, removeText?: string, removeUsed = true) {
     const metricLabels = Object.keys(this.metricLabels)
       .filter(ml => {
+        if (!removeUsed) {
+          return true;
+        }
         return this.target.aggregation.groupBys.indexOf('metric.label.' + ml) === -1;
       })
       .map(l => {
@@ -183,6 +195,10 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
     const resourceLabels = Object.keys(this.resourceLabels)
       .filter(ml => {
+        if (!removeUsed) {
+          return true;
+        }
+
         return this.target.aggregation.groupBys.indexOf('resource.label.' + ml) === -1;
       })
       .map(l => {
@@ -192,7 +208,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         });
       });
 
-    this.removeSegment.value = removeText || '-- remove group by --';
+    this.removeSegment.value = removeText || this.defaultRemoveGroupByValue;
     return Promise.resolve([...metricLabels, ...resourceLabels, this.removeSegment]);
   }
 
@@ -215,7 +231,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.refresh();
   }
 
-  getFilters(segment, index) {
+  async getFilters(segment, index) {
     if (segment.type === 'condition') {
       return [this.uiSegmentSrv.newSegment('AND')];
     }
@@ -225,18 +241,19 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     }
 
     if (segment.type === 'key' || segment.type === 'plus-button') {
-      return this.getGroupBys(null, null, '-- remove filter --');
+      return this.getGroupBys(null, null, this.defaultRemoveFilterValue, false);
     }
 
     if (segment.type === 'value') {
       const filterKey = this.filterSegments[index - 2].value;
+      const shortKey = filterKey.substring(filterKey.indexOf('.label.') + 7);
 
-      if (this.metricLabels[filterKey]) {
-        return this.getValuesForFilterKey(this.metricLabels[filterKey]);
+      if (filterKey.startsWith('metric.label.') && this.metricLabels.hasOwnProperty(shortKey)) {
+        return this.getValuesForFilterKey(this.metricLabels[shortKey]);
       }
 
-      if (this.resourceLabels[filterKey]) {
-        return this.getValuesForFilterKey(this.resourceLabels[filterKey]);
+      if (filterKey.startsWith('resource.label.') && this.resourceLabels.hasOwnProperty(shortKey)) {
+        return this.getValuesForFilterKey(this.resourceLabels[shortKey]);
       }
     }
 
@@ -252,6 +269,42 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     });
 
     return filterValues;
+  }
+
+  filterSegmentUpdated(segment, index) {
+    if (segment.type === 'plus-button') {
+      this.addNewFilterSegments(segment, index);
+    } else if (segment.type === 'key' && segment.value === this.defaultRemoveFilterValue) {
+      this.removeFilterSegment(index);
+      this.ensurePlusButton(this.filterSegments);
+    } else if (segment.type === 'value' && segment.value !== this.defaultFilterValue) {
+      this.ensurePlusButton(this.filterSegments);
+    }
+
+    this.target.filters = this.filterSegments.filter(s => s.type !== 'plus-button').map(seg => seg.value);
+    this.refresh();
+  }
+
+  addNewFilterSegments(segment, index) {
+    if (index > 2) {
+      this.filterSegments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
+    }
+    segment.type = 'key';
+    this.filterSegments.push(this.uiSegmentSrv.newOperator('='));
+    this.filterSegments.push(this.uiSegmentSrv.newFake(this.defaultFilterValue, 'value', 'query-segment-value'));
+  }
+
+  removeFilterSegment(index) {
+    this.filterSegments.splice(index, 3);
+    // remove trailing condition
+    if (index > 2 && this.filterSegments[index - 1].type === 'condition') {
+      this.filterSegments.splice(index - 1, 1);
+    }
+
+    // remove condition if it is first segment
+    if (index === 0 && this.filterSegments[0].type === 'condition') {
+      this.filterSegments.splice(0, 1);
+    }
   }
 
   ensurePlusButton(segments) {
