@@ -84,7 +84,10 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       this.getCurrentProject()
         .then(this.getMetricTypes.bind(this))
         .then(this.getLabels.bind(this))
-        .then(resolve);
+        .then(resolve)
+        .catch(err => {
+          console.log(err);
+        });
     });
 
     this.initSegments();
@@ -149,7 +152,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     if (this.target.project.id !== 'default') {
       const metricTypes = await this.datasource.getMetricTypes(this.target.project.id);
       if (this.target.metricType === this.defaultDropdownValue && metricTypes.length > 0) {
-        this.$scope.$apply(() => (this.target.metricType = metricTypes[0].name));
+        this.$scope.$apply(() => (this.target.metricType = metricTypes[0].id));
       }
       return metricTypes.map(mt => ({ value: mt.id, text: mt.id }));
     } else {
@@ -183,7 +186,9 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   }
 
   async getGroupBys(segment, index, removeText?: string, removeUsed = true) {
-    await this.initPromise;
+    if (!this.metricLabels || Object.keys(this.metricLabels).length === 0) {
+      await this.initPromise;
+    }
     const metricLabels = Object.keys(this.metricLabels)
       .filter(ml => {
         if (!removeUsed) {
@@ -212,6 +217,11 @@ export class StackdriverQueryCtrl extends QueryCtrl {
           expandable: false,
         });
       });
+
+    const noValueOrPlusButton = !segment || segment.type === 'plus-button';
+    if (noValueOrPlusButton && metricLabels.length === 0 && resourceLabels.length === 0) {
+      return Promise.resolve([]);
+    }
 
     this.removeSegment.value = removeText || this.defaultRemoveGroupByValue;
     return Promise.resolve([...metricLabels, ...resourceLabels, this.removeSegment]);
