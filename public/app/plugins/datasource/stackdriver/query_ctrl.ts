@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
+import { primitiveSymbol } from 'mobx/lib/utils/utils';
 
 export interface QueryMeta {
   rawQuery: string;
@@ -30,6 +31,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   defaultFilterValue = 'select value';
   defaultRemoveGroupByValue = '-- remove group by --';
   defaultRemoveFilterValue = '-- remove filter --';
+  initPromise: Promise<any>;
 
   defaults = {
     project: {
@@ -79,9 +81,12 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
 
-    this.getCurrentProject()
-      .then(this.getMetricTypes.bind(this))
-      .then(this.getLabels.bind(this));
+    this.initPromise = new Promise(async resolve => {
+      this.getCurrentProject()
+        .then(this.getMetricTypes.bind(this))
+        .then(this.getLabels.bind(this))
+        .then(resolve);
+    });
 
     this.initSegments();
   }
@@ -178,7 +183,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.getLabels();
   }
 
-  getGroupBys(segment, index, removeText?: string, removeUsed = true) {
+  async getGroupBys(segment, index, removeText?: string, removeUsed = true) {
+    await this.initPromise;
     const metricLabels = Object.keys(this.metricLabels)
       .filter(ml => {
         if (!removeUsed) {
