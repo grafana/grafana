@@ -63,7 +63,7 @@ export class TeamPages extends PureComponent<Props, State> {
 
     switch (currentPage) {
       case PageTypes.Members:
-        return <TeamMembers />;
+        return <TeamMembers syncEnabled={isSyncEnabled} />;
 
       case PageTypes.Settings:
         return <TeamSettings />;

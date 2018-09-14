@@ -29,7 +29,9 @@ exports[`Render should render member page if team not empty 1`] = `
   <div
     className="page-container page-body"
   >
-    <Connect(TeamMembers) />
+    <Connect(TeamMembers)
+      syncEnabled={true}
+    />
   </div>
 </div>
 `;

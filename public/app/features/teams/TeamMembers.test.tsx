@@ -12,6 +12,7 @@ const setup = (propOverrides?: object) => {
     loadTeamMembers: jest.fn(),
     addTeamMember: jest.fn(),
     removeTeamMember: jest.fn(),
+    syncEnabled: false,
   };
 
   Object.assign(props, propOverrides);
@@ -35,6 +36,15 @@ describe('Render', () => {
   it('should render team members', () => {
     const { wrapper } = setup({
       members: getMockTeamMembers(5),
+    });
+
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it('should render team members when sync enabled', () => {
+    const { wrapper } = setup({
+      members: getMockTeamMembers(5),
+      syncEnabled: true,
     });
 
     expect(wrapper).toMatchSnapshot();
