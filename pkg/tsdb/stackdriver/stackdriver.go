@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strings"
 	"time"
 
 	"golang.org/x/net/context/ctxhttp"
@@ -98,11 +99,24 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		}
 
 		metricType := query.Model.Get("metricType").MustString()
+		filterParts := query.Model.Get("filters").MustArray()
+
+		filterString := ""
+		for i, part := range filterParts {
+			mod := i % 4
+			if part == "AND" {
+				filterString += " "
+			} else if mod == 2 {
+				filterString += fmt.Sprintf(`"%s"`, part)
+			} else {
+				filterString += part.(string)
+			}
+		}
 
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
-		params.Add("filter", "metric.type=\""+metricType+"\"")
+		params.Add("filter", strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " "))
 		params.Add("view", query.Model.Get("view").MustString())
 		setAggParams(&params, query)
 

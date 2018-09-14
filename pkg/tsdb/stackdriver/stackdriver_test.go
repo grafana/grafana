@@ -51,6 +51,19 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
 			})
 
+			Convey("and query has filters", func() {
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"target":     "target",
+					"metricType": "a/metric/type",
+					"filters":    []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
+				})
+
+				queries, err := executor.buildQueries(tsdbQuery)
+				So(err, ShouldBeNil)
+				So(len(queries), ShouldEqual, 1)
+				So(queries[0].Params["filter"][0], ShouldEqual, `metric.type="a/metric/type" key="value" key2="value2"`)
+			})
+
 			Convey("and query has aggregation mean set", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"target":             "target",
