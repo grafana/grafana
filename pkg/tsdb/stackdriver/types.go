@@ -11,7 +11,7 @@ type StackdriverQuery struct {
 	RefID  string
 }
 
-type StackDriverResponse struct {
+type StackdriverResponse struct {
 	TimeSeries []struct {
 		Metric struct {
 			Labels map[string]string `json:"labels"`

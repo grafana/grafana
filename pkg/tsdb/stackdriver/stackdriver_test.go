@@ -117,7 +117,7 @@ func TestStackdriver(t *testing.T) {
 
 		Convey("Parse stackdriver response in the time series format", func() {
 			Convey("when data from query aggregated to one time series", func() {
-				var data StackDriverResponse
+				var data StackdriverResponse
 
 				jsonBody, err := ioutil.ReadFile("./test-data/1-series-response-agg-one-metric.json")
 				So(err, ShouldBeNil)
@@ -146,7 +146,7 @@ func TestStackdriver(t *testing.T) {
 			})
 
 			Convey("when data from query with no aggregation", func() {
-				var data StackDriverResponse
+				var data StackdriverResponse
 
 				jsonBody, err := ioutil.ReadFile("./test-data/2-series-response-no-agg.json")
 				So(err, ShouldBeNil)

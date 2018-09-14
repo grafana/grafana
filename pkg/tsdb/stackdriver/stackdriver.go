@@ -203,29 +203,29 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 	return queryResult, nil
 }
 
-func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackDriverResponse, error) {
+func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (StackdriverResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
-		return StackDriverResponse{}, err
+		return StackdriverResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
-		return StackDriverResponse{}, fmt.Errorf(string(body))
+		return StackdriverResponse{}, fmt.Errorf(string(body))
 	}
 
-	var data StackDriverResponse
+	var data StackdriverResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		slog.Error("Failed to unmarshal Stackdriver response", "error", err, "status", res.Status, "body", string(body))
-		return StackDriverResponse{}, err
+		return StackdriverResponse{}, err
 	}
 
 	return data, nil
 }
 
-func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackDriverResponse) error {
+func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse) error {
 	metricLabels := make(map[string][]string)
 	resourceLabels := make(map[string][]string)
 
