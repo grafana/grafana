@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
-import { primitiveSymbol } from 'mobx/lib/utils/utils';
 
 export interface QueryMeta {
   rawQuery: string;
@@ -336,7 +335,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   onDataError(err) {
     if (err.data && err.data.results) {
       const queryRes = err.data.results[this.target.refId];
-      if (queryRes) {
+      if (queryRes && queryRes.error) {
         this.lastQueryMeta = queryRes.meta;
         this.lastQueryMeta.rawQueryString = decodeURIComponent(this.lastQueryMeta.rawQuery);
 
