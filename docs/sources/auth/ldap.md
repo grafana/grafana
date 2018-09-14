@@ -121,9 +121,11 @@ If your ldap server does not support the memberOf attribute add these options:
 group_search_filter = "(&(objectClass=posixGroup)(memberUid=%s))"
 ## An array of the base DNs to search through for groups. Typically uses ou=groups
 group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
+## the %s in the search filter will be replaced with the attribute defined below
+group_search_filter_user_attribute = "uid"
 ```
 
-Also change set `member_of = "cn"` in the `[servers.attributes]` section.
+Also set `member_of = "dn"` in the `[servers.attributes]` section.
 
 ### Group Mappings
 
@@ -177,10 +179,10 @@ Multiple DN templates can be searched by combining filters with the LDAP OR-oper
 ```bash
 group_search_filter = "(member:1.2.840.113556.1.4.1941:=CN=%s,[user container/OU])"
 group_search_filter = "(|(member:1.2.840.113556.1.4.1941:=CN=%s,[user container/OU])(member:1.2.840.113556.1.4.1941:=CN=%s,[another user container/OU]))"
+group_search_filter_user_attribute = "cn"
 ```
 
-For troubleshooting, by changing `member_of` in `[servers.attributes]` to "distinguishedName" it will show you more accurate group memberships when [debug is enabled](#troubleshooting).
-
+For troubleshooting, by changing `member_of` in `[servers.attributes]` to "dn" it will show you more accurate group memberships when [debug is enabled](#troubleshooting).
 
 ## Configuration examples
 
