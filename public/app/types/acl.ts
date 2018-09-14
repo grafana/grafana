@@ -50,7 +50,7 @@ export interface DashboardPermissionInfo {
 export interface NewDashboardAclItem {
   teamId: number;
   userId: number;
-  role: OrgRole;
+  role?: OrgRole;
   permission: PermissionLevel;
   type: AclTarget;
 }

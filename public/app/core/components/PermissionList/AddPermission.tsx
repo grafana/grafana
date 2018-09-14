@@ -26,28 +26,34 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     return {
       userId: 0,
       teamId: 0,
-      role: OrgRole.Viewer,
       type: AclTarget.Team,
       permission: PermissionLevel.View,
     };
   }
 
   onTypeChanged = evt => {
-    this.setState({ type: evt.target.value as AclTarget });
+    const type = evt.target.value as AclTarget;
+
+    switch (type) {
+      case AclTarget.User:
+      case AclTarget.Team:
+        this.setState({ type: type, userId: 0, teamId: 0, role: undefined });
+        break;
+      case AclTarget.Editor:
+        this.setState({ type: type, userId: 0, teamId: 0, role: OrgRole.Editor });
+        break;
+      case AclTarget.Viewer:
+        this.setState({ type: type, userId: 0, teamId: 0, role: OrgRole.Viewer });
+        break;
+    }
   };
 
   onUserSelected = (user: User) => {
-    this.setState({
-      userId: user ? user.id : 0,
-      teamId: 0,
-    });
+    this.setState({ userId: user ? user.id : 0 });
   };
 
   onTeamSelected = (team: Team) => {
-    this.setState({
-      userId: 0,
-      teamId: team ? team.id : 0,
-    });
+    this.setState({ teamId: team ? team.id : 0 });
   };
 
   onPermissionChanged = (permission: OptionWithDescription) => {
