@@ -169,7 +169,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.getLabels();
   }
 
-  getGroupBys(removeText?: string) {
+  getGroupBys(segment, index, removeText?: string) {
     const metricLabels = Object.keys(this.metricLabels)
       .filter(ml => {
         return this.target.aggregation.groupBys.indexOf('metric.label.' + ml) === -1;
@@ -225,7 +225,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     }
 
     if (segment.type === 'key' || segment.type === 'plus-button') {
-      return this.getGroupBys('-- remove filter --');
+      return this.getGroupBys(null, null, '-- remove filter --');
     }
 
     if (segment.type === 'value') {
