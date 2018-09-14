@@ -326,15 +326,19 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 
 			a.log.Info("Searching for user's groups", "filter", filter)
 
+			// support old way of reading settings
+			groupIdAttribute := a.server.Attr.MemberOf
+			// but prefer dn attribute if default settings are used
+			if groupIdAttribute == "" || groupIdAttribute == "memberOf" {
+				groupIdAttribute = "dn"
+			}
+
 			groupSearchReq := ldap.SearchRequest{
 				BaseDN:       groupSearchBase,
 				Scope:        ldap.ScopeWholeSubtree,
 				DerefAliases: ldap.NeverDerefAliases,
-				Attributes: []string{
-					// Here MemberOf would be the thing that identifies the group, which is normally 'cn'
-					a.server.Attr.MemberOf,
-				},
-				Filter: filter,
+				Attributes:   []string{groupIdAttribute},
+				Filter:       filter,
 			}
 
 			groupSearchResult, err = a.conn.Search(&groupSearchReq)
@@ -344,7 +348,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 
 			if len(groupSearchResult.Entries) > 0 {
 				for i := range groupSearchResult.Entries {
-					memberOf = append(memberOf, getLdapAttrN(a.server.Attr.MemberOf, groupSearchResult, i))
+					memberOf = append(memberOf, getLdapAttrN(groupIdAttribute, groupSearchResult, i))
 				}
 				break
 			}
