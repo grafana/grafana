@@ -83,7 +83,6 @@ describe('folder reducer', () => {
 
     it('should add permissions to state', async () => {
       expect(state.permissions.length).toBe(5);
-      expect(state.permissions.length).toBe(5);
     });
 
     it('should be sorted by sort rank and alphabetically', async () => {
