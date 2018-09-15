@@ -1,21 +1,20 @@
-import React, { Component } from 'react';
-import PermissionsListItem from './PermissionsListItem';
-import DisabledPermissionsListItem from './DisabledPermissionsListItem';
-import { observer } from 'mobx-react';
-import { FolderInfo } from './FolderInfo';
+import React, { PureComponent } from 'react';
+import PermissionsListItem from './PermissionListItem';
+import DisabledPermissionsListItem from './DisabledPermissionListItem';
+import { FolderInfo } from 'app/types';
+import { DashboardAcl } from 'app/types/acl';
 
 export interface Props {
-  permissions: any[];
-  removeItem: any;
-  permissionChanged: any;
-  fetching: boolean;
+  items: DashboardAcl[];
+  onRemoveItem: (item: DashboardAcl) => void;
+  onPermissionChanged: any;
+  isFetching: boolean;
   folderInfo?: FolderInfo;
 }
 
-@observer
-class PermissionsList extends Component<Props, any> {
+class PermissionList extends PureComponent<Props> {
   render() {
-    const { permissions, removeItem, permissionChanged, fetching, folderInfo } = this.props;
+    const { items, onRemoveItem, onPermissionChanged, isFetching, folderInfo } = this.props;
 
     return (
       <table className="filter-table gf-form-group">
@@ -28,19 +27,18 @@ class PermissionsList extends Component<Props, any> {
               icon: 'fa fa-fw fa-street-view',
             }}
           />
-          {permissions.map((item, idx) => {
+          {items.map((item, idx) => {
             return (
               <PermissionsListItem
                 key={idx + 1}
                 item={item}
-                itemIndex={idx}
-                removeItem={removeItem}
-                permissionChanged={permissionChanged}
+                onRemoveItem={onRemoveItem}
+                onPermissionChanged={onPermissionChanged}
                 folderInfo={folderInfo}
               />
             );
           })}
-          {fetching === true && permissions.length < 1 ? (
+          {isFetching === true && items.length < 1 ? (
             <tr>
               <td colSpan={4}>
                 <em>Loading permissions...</em>
@@ -48,7 +46,7 @@ class PermissionsList extends Component<Props, any> {
             </tr>
           ) : null}
 
-          {fetching === false && permissions.length < 1 ? (
+          {isFetching === false && items.length < 1 ? (
             <tr>
               <td colSpan={4}>
                 <em>No permissions are set. Will only be accessible by admins.</em>
@@ -61,4 +59,4 @@ class PermissionsList extends Component<Props, any> {
   }
 }
 
-export default PermissionsList;
+export default PermissionList;

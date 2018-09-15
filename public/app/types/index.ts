@@ -2,7 +2,9 @@ import { Team, TeamsState, TeamState, TeamGroup, TeamMember } from './teams';
 import { AlertRuleDTO, AlertRule, AlertRulesState } from './alerting';
 import { LocationState, LocationUpdate, UrlQueryMap, UrlQueryValue } from './location';
 import { NavModel, NavModelItem, NavIndex } from './navModel';
-import { FolderDTO, FolderState } from './folder';
+import { FolderDTO, FolderState, FolderInfo } from './folder';
+import { DashboardState } from './dashboard';
+import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 
 export {
   Team,
@@ -22,6 +24,11 @@ export {
   UrlQueryValue,
   FolderDTO,
   FolderState,
+  FolderInfo,
+  DashboardState,
+  DashboardAcl,
+  OrgRole,
+  PermissionLevel,
 };
 
 export interface StoreState {
@@ -31,4 +38,5 @@ export interface StoreState {
   teams: TeamsState;
   team: TeamState;
   folder: FolderState;
+  dashboard: DashboardState;
 }

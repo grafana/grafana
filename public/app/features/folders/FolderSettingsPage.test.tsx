@@ -15,6 +15,7 @@ const setup = (propOverrides?: object) => {
       url: 'url',
       hasChanged: false,
       version: 1,
+      permissions: [],
     },
     getFolderByUid: jest.fn(),
     setFolderTitle: jest.fn(),
