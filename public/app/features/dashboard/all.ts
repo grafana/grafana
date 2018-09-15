@@ -32,7 +32,7 @@ import './dashlinks/module';
 
 // angular wrappers
 import { react2AngularDirective } from 'app/core/utils/react2angular';
-import DashboardPermissions from './DashboardPermissions/DashboardPermissions';
+import DashboardPermissions from './permissions/DashboardPermissions';
 
 react2AngularDirective('dashboardPermissions', DashboardPermissions, ['dashboardId', 'folder']);
 
