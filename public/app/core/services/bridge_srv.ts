@@ -1,8 +1,6 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { store } from 'app/stores/store';
-import { store as reduxStore } from 'app/stores/configureStore';
-import { reaction } from 'mobx';
+import { store } from 'app/store/configureStore';
 import locationUtil from 'app/core/utils/location_util';
 import { updateLocation } from 'app/core/actions';
 
@@ -18,12 +16,9 @@ export class BridgeSrv {
   init() {
     this.$rootScope.$on('$routeUpdate', (evt, data) => {
       const angularUrl = this.$location.url();
-      if (store.view.currentUrl !== angularUrl) {
-        store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
-      }
-      const state = reduxStore.getState();
+      const state = store.getState();
       if (state.location.url !== angularUrl) {
-        reduxStore.dispatch(
+        store.dispatch(
           updateLocation({
             path: this.$location.path(),
             query: this.$location.search(),
@@ -34,8 +29,7 @@ export class BridgeSrv {
     });
 
     this.$rootScope.$on('$routeChangeSuccess', (evt, data) => {
-      store.view.updatePathAndQuery(this.$location.path(), this.$location.search(), this.$route.current.params);
-      reduxStore.dispatch(
+      store.dispatch(
         updateLocation({
           path: this.$location.path(),
           query: this.$location.search(),
@@ -44,24 +38,9 @@ export class BridgeSrv {
       );
     });
 
-    // listen for mobx store changes and update angular
-    reaction(
-      () => store.view.currentUrl,
-      currentUrl => {
-        const angularUrl = this.$location.url();
-        const url = locationUtil.stripBaseFromUrl(currentUrl);
-        if (angularUrl !== url) {
-          this.$timeout(() => {
-            this.$location.url(url);
-          });
-          console.log('store updating angular $location.url', url);
-        }
-      }
-    );
-
     // Listen for changes in redux location -> update angular location
-    reduxStore.subscribe(() => {
-      const state = reduxStore.getState();
+    store.subscribe(() => {
+      const state = store.getState();
       const angularUrl = this.$location.url();
       const url = locationUtil.stripBaseFromUrl(state.location.url);
       if (angularUrl !== url) {

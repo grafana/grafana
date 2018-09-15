@@ -13,7 +13,7 @@ import {
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
-import { store } from 'app/stores/configureStore';
+import { store } from 'app/store/configureStore';
 
 export interface Props {
   dashboardId: number;
@@ -65,7 +65,6 @@ export class DashboardPermissions extends PureComponent<Props, State> {
   render() {
     const { permissions, folder } = this.props;
     const { isAdding } = this.state;
-    console.log('DashboardPermissions', this.props);
 
     return (
       <div>
