@@ -240,7 +240,7 @@ func UpdateUser(cmd *m.UpdateUserCommand) error {
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
+		if _, err := sess.ID(cmd.UserId).Update(&user); err != nil {
 			return err
 		}
 
@@ -264,7 +264,7 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 			Updated:  time.Now(),
 		}
 
-		_, err := sess.Id(cmd.UserId).Update(&user)
+		_, err := sess.ID(cmd.UserId).Update(&user)
 		return err
 	})
 }
@@ -279,7 +279,7 @@ func UpdateUserLastSeenAt(cmd *m.UpdateUserLastSeenAtCommand) error {
 			LastSeenAt: time.Now(),
 		}
 
-		_, err := sess.Id(cmd.UserId).Update(&user)
+		_, err := sess.ID(cmd.UserId).Update(&user)
 		return err
 	})
 }
@@ -310,7 +310,7 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 		OrgId: orgID,
 	}
 
-	_, err := sess.Id(userID).Update(&user)
+	_, err := sess.ID(userID).Update(&user)
 	return err
 }
 
@@ -472,11 +472,11 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		user := m.User{}
-		sess.Id(cmd.UserId).Get(&user)
+		sess.ID(cmd.UserId).Get(&user)
 
 		user.IsAdmin = cmd.IsGrafanaAdmin
 		sess.UseBool("is_admin")
-		_, err := sess.Id(user.Id).Update(&user)
+		_, err := sess.ID(user.Id).Update(&user)
 		return err
 	})
 }
@@ -490,7 +490,7 @@ func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
 			Updated:    time.Now(),
 		}
 
-		_, err := sess.Id(cmd.UserId).Cols("help_flags1").Update(&user)
+		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
 		return err
 	})
 }

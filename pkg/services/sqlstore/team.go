@@ -74,7 +74,7 @@ func UpdateTeam(cmd *m.UpdateTeamCommand) error {
 
 		sess.MustCols("email")
 
-		affectedRows, err := sess.Id(cmd.Id).Update(&team)
+		affectedRows, err := sess.ID(cmd.Id).Update(&team)
 
 		if err != nil {
 			return err
