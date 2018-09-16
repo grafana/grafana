@@ -113,7 +113,7 @@ export class PromCompleter {
         _.uniq(
           _.flatten(
             result.map(r => {
-              return Object.keys(r.metric);
+              return Object.keys(r);
             })
           )
         ),
@@ -151,7 +151,7 @@ export class PromCompleter {
       const labelValues = this.transformToCompletions(
         _.uniq(
           result.map(r => {
-            return r.metric[labelName];
+            return r[labelName];
           })
         ),
         'label value'
@@ -191,7 +191,7 @@ export class PromCompleter {
             _.uniq(
               _.flatten(
                 result.map(r => {
-                  return Object.keys(r.metric);
+                  return Object.keys(r);
                 })
               )
             ),
@@ -233,7 +233,7 @@ export class PromCompleter {
               _.uniq(
                 _.flatten(
                   result.map(r => {
-                    return Object.keys(r.metric);
+                    return Object.keys(r);
                   })
                 )
               ),
@@ -249,7 +249,7 @@ export class PromCompleter {
               _.uniq(
                 _.flatten(
                   result.map(r => {
-                    return Object.keys(r.metric);
+                    return Object.keys(r);
                   })
                 )
               ),
@@ -264,7 +264,7 @@ export class PromCompleter {
     return Promise.resolve([]);
   }
 
-  getLabelNameAndValueForExpression(expr, type) {
+  getLabelNameAndValueForExpression(expr: string, type: string): Promise<any> {
     if (this.labelQueryCache[expr]) {
       return Promise.resolve(this.labelQueryCache[expr]);
     }
@@ -276,9 +276,11 @@ export class PromCompleter {
       }
       query = '{__name__' + op + '"' + expr + '"}';
     }
-    return this.datasource.performInstantQuery({ expr: query }, new Date().getTime() / 1000).then(response => {
-      this.labelQueryCache[expr] = response.data.data.result;
-      return response.data.data.result;
+    const { start, end } = this.datasource.getTimeRange();
+    const url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + start + '&end=' + end;
+    return this.datasource.metadataRequest(url).then(response => {
+      this.labelQueryCache[expr] = response.data.data;
+      return response.data.data;
     });
   }
 

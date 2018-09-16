@@ -7,10 +7,11 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
 import TeamGroupSync from './TeamGroupSync';
-import { NavModel, Team } from '../../types';
+import { NavModel, Team } from 'app/types';
 import { loadTeam } from './state/actions';
 import { getTeam } from './state/selectors';
-import { getNavModel } from '../../core/selectors/navModel';
+import { getTeamLoadingNav } from './state/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId, getRouteParamsPage } from '../../core/selectors/location';
 
 export interface Props {
@@ -89,9 +90,10 @@ export class TeamPages extends PureComponent<Props, State> {
 function mapStateToProps(state) {
   const teamId = getRouteParamsId(state.location);
   const pageName = getRouteParamsPage(state.location) || 'members';
+  const teamLoadingNav = getTeamLoadingNav(pageName);
 
   return {
-    navModel: getNavModel(state.navIndex, `team-${pageName}-${teamId}`),
+    navModel: getNavModel(state.navIndex, `team-${pageName}-${teamId}`, teamLoadingNav),
     teamId: teamId,
     pageName: pageName,
     team: getTeam(state.team, teamId),

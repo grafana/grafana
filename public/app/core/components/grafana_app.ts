@@ -6,11 +6,10 @@ import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
 import Drop from 'tether-drop';
-import { createStore } from 'app/stores/store';
 import colors from 'app/core/utils/colors';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { configureStore } from 'app/stores/configureStore';
+import { configureStore } from 'app/store/configureStore';
 import { SearchSrv, setSearchSrv } from '../services/search_srv';
 
 export class GrafanaCtrl {
@@ -31,7 +30,6 @@ export class GrafanaCtrl {
     configureStore();
     setBackendSrv(backendSrv);
     setSearchSrv(searchSrv);
-    createStore({ backendSrv, datasourceSrv });
 
     $scope.init = () => {
       $scope.contextSrv = contextSrv;
