@@ -26,7 +26,7 @@ func GetPluginSettings(query *m.GetPluginSettingsQuery) error {
 		params = append(params, query.OrgId)
 	}
 
-	sess := x.Sql(sql, params...)
+	sess := x.SQL(sql, params...)
 	query.Result = make([]*m.PluginSettingInfoDTO, 0)
 	return sess.Find(&query.Result)
 }

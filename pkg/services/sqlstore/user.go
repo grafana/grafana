@@ -372,11 +372,11 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 
 	sess := x.Table("user")
 	if query.UserId > 0 {
-		sess.Sql(rawSql+"WHERE u.id=?", query.UserId)
+		sess.SQL(rawSql+"WHERE u.id=?", query.UserId)
 	} else if query.Login != "" {
-		sess.Sql(rawSql+"WHERE u.login=?", query.Login)
+		sess.SQL(rawSql+"WHERE u.login=?", query.Login)
 	} else if query.Email != "" {
-		sess.Sql(rawSql+"WHERE u.email=?", query.Email)
+		sess.SQL(rawSql+"WHERE u.email=?", query.Email)
 	}
 
 	var user m.SignedInUser
