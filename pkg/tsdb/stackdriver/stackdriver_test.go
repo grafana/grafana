@@ -64,6 +64,33 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["filter"][0], ShouldEqual, `metric.type="a/metric/type" key="value" key2="value2"`)
 			})
 
+			Convey("and alignmentPeriod is set to auto", func() {
+				Convey("and IntervalMs is larger than 60", func() {
+					tsdbQuery.Queries[0].IntervalMs = 1000
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "auto",
+						"filters":         []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+1000s`)
+				})
+				Convey("and IntervalMs is less than 60", func() {
+					tsdbQuery.Queries[0].IntervalMs = 30
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"target":          "target",
+						"alignmentPeriod": "auto",
+						"filters":         []interface{}{"key", "=", "value", "AND", "key2", "=", "value2"},
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+60s`)
+				})
+			})
+
 			Convey("and query has aggregation mean set", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"target":             "target",

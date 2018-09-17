@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -138,6 +140,7 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 	primaryAggregation := query.Model.Get("primaryAggregation").MustString()
 	secondaryAggregation := query.Model.Get("secondaryAggregation").MustString()
 	perSeriesAligner := query.Model.Get("perSeriesAligner").MustString()
+	alignmentPeriod := query.Model.Get("alignmentPeriod").MustString()
 
 	if primaryAggregation == "" {
 		primaryAggregation = "REDUCE_NONE"
@@ -154,9 +157,15 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 	if secondaryAggregation == "" {
 		secondaryAggregation = "REDUCE_NONE"
 	}
+
+	if alignmentPeriod == "auto" {
+		alignmentPeriodValue := int(math.Max(float64(query.IntervalMs), 60.0))
+		alignmentPeriod = "+" + strconv.Itoa(alignmentPeriodValue) + "s"
+	}
+
 	params.Add("aggregation.crossSeriesReducer", primaryAggregation)
 	params.Add("aggregation.perSeriesAligner", perSeriesAligner)
-	params.Add("aggregation.alignmentPeriod", "+60s")
+	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
 	// params.Add("aggregation.secondaryAggregation.crossSeriesReducer", secondaryAggregation)
 
 	groupBys := query.Model.Get("groupBys").MustArray()
