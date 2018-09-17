@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
+import { aggOptions, alignOptions } from './constants';
 
 export interface QueryMeta {
   rawQuery: string;
@@ -20,6 +21,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     refId: string;
     aggregation: {
       crossSeriesReducer: string;
+      secondaryCrossSeriesReducer: string;
       alignmentPeriod: string;
       perSeriesAligner: string;
       groupBys: string[];
@@ -40,30 +42,21 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     metricType: this.defaultDropdownValue,
     aggregation: {
       crossSeriesReducer: 'REDUCE_MEAN',
+      secondaryCrossSeriesReducer: 'REDUCE_NONE',
       alignmentPeriod: '',
-      perSeriesAligner: '',
+      perSeriesAligner: 'ALIGN_MEAN',
       groupBys: [],
     },
     filters: [],
+    showAggregationOptions: false,
   };
 
   groupBySegments: any[];
   filterSegments: any[];
   removeSegment: any;
 
-  aggOptions = [
-    { text: 'none', value: 'REDUCE_NONE' },
-    { text: 'mean', value: 'REDUCE_MEAN' },
-    { text: 'min', value: 'REDUCE_MIN' },
-    { text: 'max', value: 'REDUCE_MAX' },
-    { text: 'sum', value: 'REDUCE_SUM' },
-    { text: 'std. dev.', value: 'REDUCE_STDDEV' },
-    { text: 'count', value: 'REDUCE_COUNT' },
-    { text: '99th percentile', value: 'REDUCE_PERCENTILE_99' },
-    { text: '95th percentile', value: 'REDUCE_PERCENTILE_95' },
-    { text: '50th percentile', value: 'REDUCE_PERCENTILE_50' },
-    { text: '5th percentile', value: 'REDUCE_PERCENTILE_05' },
-  ];
+  aggOptions = [];
+  alignOptions = [];
 
   showHelp: boolean;
   showLastQuery: boolean;
@@ -79,6 +72,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+    this.alignOptions = alignOptions;
+    this.aggOptions = aggOptions;
 
     this.getCurrentProject()
       .then(this.getMetricTypes.bind(this))

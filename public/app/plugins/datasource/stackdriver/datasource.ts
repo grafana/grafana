@@ -20,6 +20,7 @@ export default class StackdriverDatasource {
         if (!t.hasOwnProperty('aggregation')) {
           t.aggregation = {
             crossSeriesReducer: 'REDUCE_MEAN',
+            secondaryCrossSeriesReducer: 'REDUCE_NONE',
             groupBys: [],
           };
         }
@@ -28,6 +29,8 @@ export default class StackdriverDatasource {
           datasourceId: this.id,
           metricType: t.metricType,
           primaryAggregation: t.aggregation.crossSeriesReducer,
+          secondaryAggregation: t.aggregation.secondaryCrossSeriesReducer,
+          perSeriesAligner: t.aggregation.perSeriesAligner,
           groupBys: t.aggregation.groupBys,
           view: t.view || 'FULL',
           filters: t.filters,
