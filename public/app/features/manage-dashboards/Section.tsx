@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { DashboardSection } from 'app/types';
 import FormSwitch from 'app/core/components/FormSwitch/FormSwitch';
-import { SectionItem } from './SectionItem';
+import SectionItem from './SectionItem';
 import { collapseSection, loadSectionItems, setSectionSelected } from './state/actions';
 
 export interface Props {
@@ -25,9 +25,9 @@ export class Section extends PureComponent<Props> {
 
   toggleSectionSelected = () => {
     const { section } = this.props;
-  };
 
-  selectionChanged = () => {};
+    this.props.setSectionSelected(section.id);
+  };
 
   render() {
     const { section } = this.props;
@@ -35,7 +35,7 @@ export class Section extends PureComponent<Props> {
     return (
       <div className="search-section">
         <div
-          className={`search-section__header pointer ${section.selected ? 'selected' : ''}`}
+          className={`search-section__header pointer ${section.checked ? 'selected' : ''}`}
           onClick={this.toggleFolder}
         >
           <FormSwitch

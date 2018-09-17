@@ -6,6 +6,7 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import ActionBar from './ActionBar';
 import ActiveFilters from './ActiveFilters';
 import Section from './Section';
+import SectionActions from './SectionActions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { loadSections } from './state/actions';
 import { getSections, getFolderId, getHasFilters } from './state/selectors';
@@ -50,6 +51,7 @@ export class DashboardListPage extends PureComponent<Props, any> {
                   <em className="muted">No dashboards found.</em>
                 </div>
               )}
+            {sections.length > 0 && <SectionActions />}
             <div className="search-results-container">
               {sections.length > 0 &&
                 sections.map((section, index) => {

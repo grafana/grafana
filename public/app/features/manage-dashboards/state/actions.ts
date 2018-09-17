@@ -14,6 +14,7 @@ export enum ActionTypes {
   CollapseSection = 'COLLAPSE_SECTION',
   SetSectionItemSelected = 'SET_ITEM_SELECTED',
   SetSectionSelected = 'SET_SECTION_SELECTED',
+  SetAllSectionsAndItemsSelected = 'SET_ALL_SECTIONS_AND_ITEMS_SELECTED',
 }
 
 interface LoadSectionsAction {
@@ -65,6 +66,11 @@ interface SetSectionItemSelectedAction {
   };
 }
 
+interface SetAllSectionsAndItemsSelectedAction {
+  type: ActionTypes.SetAllSectionsAndItemsSelected;
+  payload: boolean;
+}
+
 export type Action =
   | LoadSectionsAction
   | SetSearchDashboardSearchQueryAction
@@ -74,7 +80,8 @@ export type Action =
   | LoadSectionItemsAction
   | CollapseSectionAction
   | SetSectionSelectedAction
-  | SetSectionItemSelectedAction;
+  | SetSectionItemSelectedAction
+  | SetAllSectionsAndItemsSelectedAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -125,6 +132,11 @@ export const setSectionItemSelected = (folderId: number, itemId: number): SetSec
     folderId,
     itemId,
   },
+});
+
+export const setSectionAndItemsSelected = (state: boolean): SetAllSectionsAndItemsSelectedAction => ({
+  type: ActionTypes.SetAllSectionsAndItemsSelected,
+  payload: state,
 });
 
 export function loadSections(): ThunkResult<void> {
