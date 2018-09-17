@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { contextSrv } from '../../../core/services/context_srv';
-import { DashboardSection, ManageDashboardState, SectionsState } from 'app/types';
+import { DashboardSection, DashboardSectionItem, ManageDashboardState, SectionsState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
 export const initialState: ManageDashboardState = {
@@ -10,8 +10,6 @@ export const initialState: ManageDashboardState = {
     canDelete: false,
     canSave: false,
     hasFilters: false,
-    tagFilterOptions: [],
-    starredFilterOptions: [{ text: 'Filter by Starred', disabled: true }, { text: 'Yes' }, { text: 'No' }],
     folderId: 0,
     folderUid: '',
     hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders,
@@ -56,10 +54,13 @@ export const manageDashboardsReducer = (state = initialState, action: Action): M
 
 const initialSectionsState: SectionsState = {
   sections: [] as DashboardSection[],
+  allChecked: false,
+  dashboardTags: [],
 };
 
 export const sectionsReducer = (state = initialSectionsState, action: Action): SectionsState => {
   let newSections = [] as DashboardSection[];
+  let newItems = [] as DashboardSectionItem[];
 
   switch (action.type) {
     case ActionTypes.LoadSections:
@@ -90,7 +91,7 @@ export const sectionsReducer = (state = initialSectionsState, action: Action): S
     case ActionTypes.SetSectionItemSelected:
       newSections = state.sections.map(section => {
         if (section.id === action.payload.folderId) {
-          const newItems = section.items.map(item => {
+          newItems = section.items.map(item => {
             if (item.id === action.payload.itemId) {
               return { ...item, checked: true };
             }
@@ -115,6 +116,20 @@ export const sectionsReducer = (state = initialSectionsState, action: Action): S
       });
 
       return { ...state, sections: newSections };
+
+    case ActionTypes.SetAllSectionsAndItemsSelected:
+      newSections = state.sections.map(section => {
+        newItems = section.items.map(item => {
+          return { ...item, checked: action.payload };
+        });
+
+        return { ...section, checked: action.payload, items: newItems };
+      });
+
+      return { ...state, sections: newSections, allChecked: action.payload };
+
+    case ActionTypes.LoadDashboardTags:
+      return { ...state, dashboardTags: action.payload };
   }
 
   return state;

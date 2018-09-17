@@ -7,9 +7,7 @@ export interface ManageDashboard {
 
   // filter variables
   hasFilters: boolean;
-  tagFilterOptions: any[];
   selectedTagFilter: any;
-  starredFilterOptions: any[]; //[{ text: 'Filter by Starred', disabled: true }, { text: 'Yes' }, { text: 'No' }];
   selectedStarredFilter: any;
 
   // used when managing dashboards for a specific folder
@@ -66,13 +64,11 @@ export interface DashboardQuery {
 
 export interface SectionsState {
   sections: DashboardSection[];
+  allChecked: boolean;
+  dashboardTags: any[];
 }
 
 export interface ManageDashboardState {
   manageDashboard: ManageDashboard;
   dashboardQuery: DashboardQuery;
-}
-
-export interface SectionState {
-  sections: DashboardSection[];
 }

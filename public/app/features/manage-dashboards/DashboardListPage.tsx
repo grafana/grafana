@@ -16,7 +16,7 @@ export interface Props {
   hasFilters: boolean;
   sections: DashboardSection[];
   folderId: number;
-  loadDashboardListItems: typeof loadSections;
+  loadSections: typeof loadSections;
 }
 
 export class DashboardListPage extends PureComponent<Props, any> {
@@ -25,7 +25,7 @@ export class DashboardListPage extends PureComponent<Props, any> {
   }
 
   async fetchSections() {
-    await this.props.loadDashboardListItems();
+    await this.props.loadSections();
   }
 
   render() {
@@ -77,7 +77,7 @@ function mapStateToProps(state) {
 }
 
 const mapDispatchToProps = {
-  loadDashboardListItems: loadSections,
+  loadSections,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardListPage));

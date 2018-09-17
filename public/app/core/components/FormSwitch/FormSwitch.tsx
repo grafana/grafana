@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 export interface Props {
   label: string;
-  checked?: boolean;
+  checked: boolean;
   labelClass?: string;
   switchClass?: string;
   onChange: (event) => any;

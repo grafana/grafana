@@ -15,6 +15,7 @@ export enum ActionTypes {
   SetSectionItemSelected = 'SET_ITEM_SELECTED',
   SetSectionSelected = 'SET_SECTION_SELECTED',
   SetAllSectionsAndItemsSelected = 'SET_ALL_SECTIONS_AND_ITEMS_SELECTED',
+  LoadDashboardTags = 'LOAD_DASHBOARD_TAGS',
 }
 
 interface LoadSectionsAction {
@@ -71,6 +72,11 @@ interface SetAllSectionsAndItemsSelectedAction {
   payload: boolean;
 }
 
+interface LoadDashboardTagsAction {
+  type: ActionTypes.LoadDashboardTags;
+  payload: any[];
+}
+
 export type Action =
   | LoadSectionsAction
   | SetSearchDashboardSearchQueryAction
@@ -81,7 +87,8 @@ export type Action =
   | CollapseSectionAction
   | SetSectionSelectedAction
   | SetSectionItemSelectedAction
-  | SetAllSectionsAndItemsSelectedAction;
+  | SetAllSectionsAndItemsSelectedAction
+  | LoadDashboardTagsAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -101,6 +108,11 @@ const sectionItemsLoaded = (items: DashboardSectionItem[], id: number): LoadSect
 const setDashboardSearchQuery = (searchQuery: string): SetSearchDashboardSearchQueryAction => ({
   type: ActionTypes.SetDashboardSearchQuery,
   payload: searchQuery,
+});
+
+const dashboardTagsLoaded = (tags: any[]): LoadDashboardTagsAction => ({
+  type: ActionTypes.LoadDashboardTags,
+  payload: tags,
 });
 
 export const removeStarredFilter = (): RemoveStarredFilterAction => ({
@@ -134,7 +146,7 @@ export const setSectionItemSelected = (folderId: number, itemId: number): SetSec
   },
 });
 
-export const setSectionAndItemsSelected = (state: boolean): SetAllSectionsAndItemsSelectedAction => ({
+export const setSectionsAndItemsSelected = (state: boolean): SetAllSectionsAndItemsSelectedAction => ({
   type: ActionTypes.SetAllSectionsAndItemsSelected,
   payload: state,
 });
@@ -144,6 +156,9 @@ export function loadSections(): ThunkResult<void> {
     const query = getDashboardQuery(getStore().manageDashboards);
     const response = await getSearchSrv().search(query);
     dispatch(sectionsLoaded(response));
+
+    const tags = await getSearchSrv().getDashboardTags();
+    dispatch(dashboardTagsLoaded(tags));
   };
 }
 
