@@ -136,17 +136,28 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 
 func setAggParams(params *url.Values, query *tsdb.Query) {
 	primaryAggregation := query.Model.Get("primaryAggregation").MustString()
+	secondaryAggregation := query.Model.Get("secondaryAggregation").MustString()
+	perSeriesAligner := query.Model.Get("perSeriesAligner").MustString()
+
 	if primaryAggregation == "" {
 		primaryAggregation = "REDUCE_NONE"
 	}
 
-	if primaryAggregation == "REDUCE_NONE" {
-		params.Add("aggregation.perSeriesAligner", "ALIGN_NONE")
-	} else {
-		params.Add("aggregation.crossSeriesReducer", primaryAggregation)
-		params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
-		params.Add("aggregation.alignmentPeriod", "+60s")
+	if secondaryAggregation == "" {
+		secondaryAggregation = "REDUCE_NONE"
 	}
+
+	if perSeriesAligner == "" {
+		perSeriesAligner = "ALIGN_MEAN"
+	}
+
+	if secondaryAggregation == "" {
+		secondaryAggregation = "REDUCE_NONE"
+	}
+	params.Add("aggregation.crossSeriesReducer", primaryAggregation)
+	params.Add("aggregation.perSeriesAligner", perSeriesAligner)
+	params.Add("aggregation.alignmentPeriod", "+60s")
+	// params.Add("aggregation.secondaryAggregation.crossSeriesReducer", secondaryAggregation)
 
 	groupBys := query.Model.Get("groupBys").MustArray()
 	if len(groupBys) > 0 {
@@ -166,6 +177,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 	}
 
 	req.URL.RawQuery = query.Params.Encode()
+	fmt.Println("req.URL.RawQuery: ", req.URL.RawQuery)
 	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
