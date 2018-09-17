@@ -31,6 +31,7 @@ export default class StackdriverDatasource {
           primaryAggregation: t.aggregation.crossSeriesReducer,
           secondaryAggregation: t.aggregation.secondaryCrossSeriesReducer,
           perSeriesAligner: t.aggregation.perSeriesAligner,
+          alignmentPeriod: t.aggregation.alignmentPeriod,
           groupBys: t.aggregation.groupBys,
           view: t.view || 'FULL',
           filters: t.filters,

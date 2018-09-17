@@ -33,3 +33,15 @@ export const aggOptions = [
   { text: '50th percentile', value: 'REDUCE_PERCENTILE_50' },
   { text: '5th percentile', value: 'REDUCE_PERCENTILE_05' },
 ];
+
+export const alignmentPeriods = [
+  { text: 'auto', value: 'auto' },
+  { text: '1m', value: '+60s' },
+  { text: '5m', value: '+300s' },
+  { text: '30m', value: '+1800s' },
+  { text: '1h', value: '+3600s' },
+  { text: '6h', value: '+21600s' },
+  { text: '1d', value: '+86400s' },
+  { text: '1w', value: '+604800s' },
+  { text: '1m', value: '+18748800s' },
+];

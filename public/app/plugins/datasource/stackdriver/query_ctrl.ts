@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
-import { aggOptions, alignOptions } from './constants';
+import * as options from './constants';
+// mport BaseComponent, * as extras from './A';
 
 export interface QueryMeta {
   rawQuery: string;
@@ -33,6 +34,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   defaultRemoveGroupByValue = '-- remove group by --';
   defaultRemoveFilterValue = '-- remove filter --';
   loadLabelsPromise: Promise<any>;
+  stackdriverConstants;
 
   defaults = {
     project: {
@@ -43,7 +45,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     aggregation: {
       crossSeriesReducer: 'REDUCE_MEAN',
       secondaryCrossSeriesReducer: 'REDUCE_NONE',
-      alignmentPeriod: '',
+      alignmentPeriod: 'auto',
       perSeriesAligner: 'ALIGN_MEAN',
       groupBys: [],
     },
@@ -54,10 +56,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   groupBySegments: any[];
   filterSegments: any[];
   removeSegment: any;
-
-  aggOptions = [];
-  alignOptions = [];
-
   showHelp: boolean;
   showLastQuery: boolean;
   lastQueryMeta: QueryMeta;
@@ -72,8 +70,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
-    this.alignOptions = alignOptions;
-    this.aggOptions = aggOptions;
+    this.stackdriverConstants = options;
 
     this.getCurrentProject()
       .then(this.getMetricTypes.bind(this))
