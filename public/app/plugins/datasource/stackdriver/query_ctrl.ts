@@ -30,7 +30,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   defaultFilterValue = 'select value';
   defaultRemoveGroupByValue = '-- remove group by --';
   defaultRemoveFilterValue = '-- remove filter --';
-  initPromise: Promise<any>;
+  loadLabelsPromise: Promise<any>;
 
   defaults = {
     project: {
@@ -80,15 +80,9 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
 
-    this.initPromise = new Promise(async resolve => {
-      this.getCurrentProject()
-        .then(this.getMetricTypes.bind(this))
-        .then(this.getLabels.bind(this))
-        .then(resolve)
-        .catch(err => {
-          console.log(err);
-        });
-    });
+    this.getCurrentProject()
+      .then(this.getMetricTypes.bind(this))
+      .then(this.getLabels.bind(this));
 
     this.initSegments();
   }
@@ -161,23 +155,30 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   }
 
   async getLabels() {
-    const data = await this.datasource.getTimeSeries({
-      targets: [
-        {
-          refId: this.target.refId,
-          datasourceId: this.datasource.id,
-          metricType: this.target.metricType,
-          aggregation: {
-            crossSeriesReducer: 'REDUCE_NONE',
-          },
-          view: 'HEADERS',
-        },
-      ],
-      range: this.timeSrv.timeRange(),
-    });
+    this.loadLabelsPromise = new Promise(async resolve => {
+      try {
+        const data = await this.datasource.getTimeSeries({
+          targets: [
+            {
+              refId: this.target.refId,
+              datasourceId: this.datasource.id,
+              metricType: this.target.metricType,
+              aggregation: {
+                crossSeriesReducer: 'REDUCE_NONE',
+              },
+              view: 'HEADERS',
+            },
+          ],
+          range: this.timeSrv.timeRange(),
+        });
 
-    this.metricLabels = data.results[this.target.refId].meta.metricLabels;
-    this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
+        this.metricLabels = data.results[this.target.refId].meta.metricLabels;
+        this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
+        resolve();
+      } catch (error) {
+        resolve();
+      }
+    });
   }
 
   async onMetricTypeChange() {
@@ -186,9 +187,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   }
 
   async getGroupBys(segment, index, removeText?: string, removeUsed = true) {
-    if (!this.metricLabels || Object.keys(this.metricLabels).length === 0) {
-      await this.initPromise;
-    }
+    await this.loadLabelsPromise;
     const metricLabels = Object.keys(this.metricLabels)
       .filter(ml => {
         if (!removeUsed) {
@@ -256,7 +255,17 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     }
 
     if (segment.type === 'key' || segment.type === 'plus-button') {
-      return this.getGroupBys(null, null, this.defaultRemoveFilterValue, false);
+      if (
+        this.metricLabels &&
+        Object.keys(this.metricLabels).length === 0 &&
+        segment.value &&
+        segment.value !== this.defaultRemoveFilterValue
+      ) {
+        this.removeSegment.value = this.defaultRemoveFilterValue;
+        return Promise.resolve([this.removeSegment]);
+      } else {
+        return this.getGroupBys(null, null, this.defaultRemoveFilterValue, false);
+      }
     }
 
     if (segment.type === 'value') {
@@ -339,6 +348,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     if (anySeriesFromQuery) {
       this.lastQueryMeta = anySeriesFromQuery.meta;
       this.lastQueryMeta.rawQueryString = decodeURIComponent(this.lastQueryMeta.rawQuery);
+    } else {
     }
   }
 
@@ -359,5 +369,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         this.lastQueryError = jsonBody.error.message;
       }
     }
+    console.error(err);
   }
 }
