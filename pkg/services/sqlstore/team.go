@@ -74,7 +74,7 @@ func UpdateTeam(cmd *m.UpdateTeamCommand) error {
 
 		sess.MustCols("email")
 
-		affectedRows, err := sess.Id(cmd.Id).Update(&team)
+		affectedRows, err := sess.ID(cmd.Id).Update(&team)
 
 		if err != nil {
 			return err
@@ -169,7 +169,7 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 		sql.WriteString(dialect.LimitOffset(int64(query.Limit), int64(offset)))
 	}
 
-	if err := x.Sql(sql.String(), params...).Find(&query.Result.Teams); err != nil {
+	if err := x.SQL(sql.String(), params...).Find(&query.Result.Teams); err != nil {
 		return err
 	}
 
@@ -196,7 +196,7 @@ func GetTeamById(query *m.GetTeamByIdQuery) error {
 	sql.WriteString(` WHERE team.org_id = ? and team.id = ?`)
 
 	var team m.TeamDTO
-	exists, err := x.Sql(sql.String(), query.OrgId, query.Id).Get(&team)
+	exists, err := x.SQL(sql.String(), query.OrgId, query.Id).Get(&team)
 
 	if err != nil {
 		return err
@@ -220,7 +220,7 @@ func GetTeamsByUser(query *m.GetTeamsByUserQuery) error {
 	sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
 	sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
-	err := x.Sql(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
+	err := x.SQL(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
 	return err
 }
 
