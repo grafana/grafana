@@ -242,6 +242,15 @@
 			</div>
 		</div>
 
+		<div ng-if="current.type === 'script'" class="gf-form-group">
+			<h5 class="section-heading">Script</h5>
+			<h6>function(options){</h6>
+			<div class="gf-form">
+				<textarea class="gf-form-input" ng-model='current.query' rows=10 ng-blur="runQuery()" placeholder="your code here" onkeydown="if(event.keyCode===9){var v=this.value,s=this.selectionStart,e=this.selectionEnd;this.value=v.substring(0, s)+'\t'+v.substring(e);this.selectionStart=this.selectionEnd=s+1;return false;}"></textarea>
+			</div>
+			<h6>}</h6>
+		</div>
+
 		<div class="section gf-form-group" ng-show="variableTypes[current.type].supportsMulti">
 			<h5 class="section-heading">Selection Options</h5>
 			<div class="section">
@@ -302,4 +311,3 @@
 
 	</form>
 </div>
-
