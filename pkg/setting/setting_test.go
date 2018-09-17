@@ -130,7 +130,7 @@ func TestLoadingSettings(t *testing.T) {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
-					Config:   filepath.Join(HomePath, "tests/config-files/override_windows.ini"),
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:paths.data=c:\tmp\data`},
 				})
 
