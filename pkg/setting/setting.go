@@ -203,6 +203,8 @@ type Cfg struct {
 	DisableBruteForceLoginProtection bool
 
 	TempDataLifetime time.Duration
+
+	MetricsEndpointEnabled bool
 }
 
 type CommandLineArgs struct {
@@ -659,6 +661,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.ImagesDir = filepath.Join(DataPath, "png")
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
+	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

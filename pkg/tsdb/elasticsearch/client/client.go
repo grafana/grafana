@@ -138,7 +138,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		}
 
 		body := string(reqBody)
-		body = strings.Replace(body, "$__interval_ms", strconv.FormatInt(r.interval.Value.Nanoseconds()/int64(time.Millisecond), 10), -1)
+		body = strings.Replace(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10), -1)
 		body = strings.Replace(body, "$__interval", r.interval.Text, -1)
 
 		payload.WriteString(body + "\n")

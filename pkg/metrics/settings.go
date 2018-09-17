@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/social"
+
 	"github.com/grafana/grafana/pkg/metrics/graphitebridge"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,16 +18,13 @@ func (im *InternalMetricsService) readSettings() error {
 		return fmt.Errorf("Unable to find metrics config section %v", err)
 	}
 
-	im.enabled = section.Key("enabled").MustBool(false)
 	im.intervalSeconds = section.Key("interval_seconds").MustInt64(10)
-
-	if !im.enabled {
-		return nil
-	}
 
 	if err := im.parseGraphiteSettings(); err != nil {
 		return fmt.Errorf("Unable to parse metrics graphite section, %v", err)
 	}
+
+	im.oauthProviders = social.GetOAuthProviders(im.Cfg)
 
 	return nil
 }

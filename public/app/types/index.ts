@@ -10,6 +10,11 @@ import {
   SectionsState,
   ManageDashboardState,
 } from './manageDashboard';
+import { FolderDTO, FolderState, FolderInfo } from './folders';
+import { DashboardState } from './dashboard';
+import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
+import { DataSource } from './datasources';
+import { PluginMeta } from './plugins';
 
 export {
   Team,
@@ -33,6 +38,15 @@ export {
   ManageDashboard,
   SectionsState,
   ManageDashboardState,
+  FolderDTO,
+  FolderState,
+  FolderInfo,
+  DashboardState,
+  DashboardAcl,
+  OrgRole,
+  PermissionLevel,
+  DataSource,
+  PluginMeta,
 };
 
 export interface StoreState {
@@ -42,4 +56,6 @@ export interface StoreState {
   teams: TeamsState;
   team: TeamState;
   manageDashboards: ManageDashboardState;
+  folder: FolderState;
+  dashboard: DashboardState;
 }

@@ -544,7 +544,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       elem.append(plotCanvas);
 
       const plotSeries = {
-        data: [[0, data.valueRounded]],
+        data: [[0, data.value]],
       };
 
       $.plot(plotCanvas, [plotSeries], options);
