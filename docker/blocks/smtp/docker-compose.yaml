@@ -1,4 +1,0 @@
-  snmpd:
-    image: namshi/smtp
-    ports:
-      - "25:25"
