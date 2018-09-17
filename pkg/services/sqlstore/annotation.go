@@ -211,7 +211,12 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
             )
       `, strings.Join(keyValueFilters, " OR "))
 
-			sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
+			if query.MatchAny {
+				sql.WriteString(fmt.Sprintf(" AND (%s) > 0 ", tagsSubQuery))
+			} else {
+				sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
+			}
+
 		}
 	}
 
