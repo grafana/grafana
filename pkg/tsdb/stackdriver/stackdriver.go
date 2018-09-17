@@ -163,6 +163,12 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 		alignmentPeriod = "+" + strconv.Itoa(alignmentPeriodValue) + "s"
 	}
 
+	re := regexp.MustCompile("[0-9]+")
+	aa, err := strconv.ParseInt(re.FindString(alignmentPeriod), 10, 64)
+	if err != nil || aa > 3600 {
+		alignmentPeriod = "+3600s"
+	}
+
 	params.Add("aggregation.crossSeriesReducer", primaryAggregation)
 	params.Add("aggregation.perSeriesAligner", perSeriesAligner)
 	params.Add("aggregation.alignmentPeriod", alignmentPeriod)

@@ -91,6 +91,30 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 
+			Convey("and alignmentPeriod is set in frontend", func() {
+				Convey("and alignment period is too big", func() {
+					tsdbQuery.Queries[0].IntervalMs = 1000
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"alignmentPeriod": "+360000s",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
+				})
+
+				Convey("and alignment period is within accepted range", func() {
+					tsdbQuery.Queries[0].IntervalMs = 1000
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"alignmentPeriod": "+600s",
+					})
+
+					queries, err := executor.buildQueries(tsdbQuery)
+					So(err, ShouldBeNil)
+					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+600s`)
+				})
+			})
+
 			Convey("and query has aggregation mean set", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"target":             "target",
