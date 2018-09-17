@@ -16,6 +16,7 @@ export enum ActionTypes {
   SetSectionSelected = 'SET_SECTION_SELECTED',
   SetAllSectionsAndItemsSelected = 'SET_ALL_SECTIONS_AND_ITEMS_SELECTED',
   LoadDashboardTags = 'LOAD_DASHBOARD_TAGS',
+  AddTagFilter = 'ADD_TAG_FILTER',
 }
 
 interface LoadSectionsAction {
@@ -77,6 +78,11 @@ interface LoadDashboardTagsAction {
   payload: any[];
 }
 
+interface AddTagFilterAction {
+  type: ActionTypes.AddTagFilter;
+  payload: string;
+}
+
 export type Action =
   | LoadSectionsAction
   | SetSearchDashboardSearchQueryAction
@@ -88,7 +94,8 @@ export type Action =
   | SetSectionSelectedAction
   | SetSectionItemSelectedAction
   | SetAllSectionsAndItemsSelectedAction
-  | LoadDashboardTagsAction;
+  | LoadDashboardTagsAction
+  | AddTagFilterAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -115,11 +122,16 @@ const dashboardTagsLoaded = (tags: any[]): LoadDashboardTagsAction => ({
   payload: tags,
 });
 
+const tagFilterAdded = (tag: string): AddTagFilterAction => ({
+  type: ActionTypes.AddTagFilter,
+  payload: tag,
+});
+
 export const removeStarredFilter = (): RemoveStarredFilterAction => ({
   type: ActionTypes.RemoveStarredFilter,
 });
 
-export const removeTag = (tag: string): RemoveTagAction => ({
+export const tagFilterRemoved = (tag: string): RemoveTagAction => ({
   type: ActionTypes.RemoveTag,
   payload: tag,
 });
@@ -176,6 +188,20 @@ export function loadSectionItems(sectionId: number): ThunkResult<void> {
 export function updateSearchQuery(query: string): ThunkResult<void> {
   return async dispatch => {
     dispatch(setDashboardSearchQuery(query));
+    dispatch(loadSections());
+  };
+}
+
+export function addTagFilter(tag: string): ThunkResult<void> {
+  return dispatch => {
+    dispatch(tagFilterAdded(tag));
+    dispatch(loadSections());
+  };
+}
+
+export function removeTagFilter(tag: string): ThunkResult<void> {
+  return dispatch => {
+    dispatch(tagFilterRemoved(tag));
     dispatch(loadSections());
   };
 }

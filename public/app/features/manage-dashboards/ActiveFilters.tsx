@@ -1,19 +1,19 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { DashboardQuery } from 'app/types';
-import { removeStarredFilter, removeTag, clearFilters } from './state/actions';
+import { removeStarredFilter, removeTagFilter, clearFilters } from './state/actions';
 import { getDashboardQuery } from './state/selectors';
 
 export interface Props {
   query: DashboardQuery;
   removeStarredFilter: typeof removeStarredFilter;
-  removeTag: typeof removeTag;
+  removeTagFilter: typeof removeTagFilter;
   clearFilters: typeof clearFilters;
 }
 
 export class ActiveFilters extends PureComponent<Props, any> {
   removeTag = tagName => {
-    this.props.removeTag(tagName);
+    this.props.removeTagFilter(tagName);
   };
 
   removeStarred = () => {
@@ -87,7 +87,7 @@ function mapStateToProps(state) {
 
 const mapDispatchToProps = {
   removeStarredFilter,
-  removeTag,
+  removeTagFilter,
   clearFilters,
 };
 

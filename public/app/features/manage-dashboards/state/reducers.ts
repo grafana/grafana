@@ -3,7 +3,7 @@ import { contextSrv } from '../../../core/services/context_srv';
 import { DashboardSection, DashboardSectionItem, ManageDashboardState, SectionsState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 
-export const initialState: ManageDashboardState = {
+export const initialManageDashboardState: ManageDashboardState = {
   manageDashboard: {
     selectAllChecked: false,
     canMove: false,
@@ -28,7 +28,13 @@ export const initialState: ManageDashboardState = {
   },
 };
 
-export const manageDashboardsReducer = (state = initialState, action: Action): ManageDashboardState => {
+const initialSectionsState: SectionsState = {
+  sections: [] as DashboardSection[],
+  allChecked: false,
+  dashboardTags: [],
+};
+
+export const manageDashboardsReducer = (state = initialManageDashboardState, action: Action): ManageDashboardState => {
   switch (action.type) {
     case ActionTypes.SetDashboardSearchQuery:
       return { ...state, dashboardQuery: { ...state.dashboardQuery, query: action.payload } };
@@ -37,9 +43,15 @@ export const manageDashboardsReducer = (state = initialState, action: Action): M
       return { ...state, dashboardQuery: { ...state.dashboardQuery, starred: false } };
 
     case ActionTypes.RemoveTag:
+      const tag = state.dashboardQuery.tag.filter(tag => {
+        if (tag !== action.payload) {
+          return tag;
+        }
+      });
+
       return {
         ...state,
-        dashboardQuery: { ...state.dashboardQuery, tag: _.without(state.dashboardQuery.tag, action.payload) },
+        dashboardQuery: { ...state.dashboardQuery, tag: tag },
       };
 
     case ActionTypes.ClearFilters:
@@ -47,15 +59,17 @@ export const manageDashboardsReducer = (state = initialState, action: Action): M
         ...state,
         dashboardQuery: { ...state.dashboardQuery, tag: [], starred: false, query: '' },
       };
+
+    case ActionTypes.AddTagFilter:
+      const tags = state.dashboardQuery.tag;
+      if (tags.indexOf(action.payload) === -1) {
+        tags.push(action.payload);
+      }
+
+      return { ...state, dashboardQuery: { ...state.dashboardQuery, tag: tags } };
   }
 
   return state;
-};
-
-const initialSectionsState: SectionsState = {
-  sections: [] as DashboardSection[],
-  allChecked: false,
-  dashboardTags: [],
 };
 
 export const sectionsReducer = (state = initialSectionsState, action: Action): SectionsState => {

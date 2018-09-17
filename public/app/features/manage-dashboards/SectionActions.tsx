@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import FormSwitch from 'app/core/components/FormSwitch/FormSwitch';
-import { setSectionsAndItemsSelected } from './state/actions';
+import { addTagFilter, setSectionsAndItemsSelected, setSelectedStarredFilter } from './state/actions';
 import {
   getAllChecked,
   getCanDelete,
@@ -19,6 +19,7 @@ export interface Props {
   setSectionsAndItemsSelected: typeof setSectionsAndItemsSelected;
   allChecked: boolean;
   tagFilterOptions: any[];
+  addTagFilter: typeof addTagFilter;
 }
 
 interface State {
@@ -38,7 +39,9 @@ export class SectionActions extends PureComponent<Props, State> {
 
   onStarredFilterChange = event => {};
 
-  onTagFilterChange = event => {};
+  onTagFilterChange = event => {
+    this.props.addTagFilter(event.target.value);
+  };
 
   moveTo = () => {};
 
@@ -128,6 +131,7 @@ function mapStateToProps(state) {
 }
 
 const mapDispatchToProps = {
+  addTagFilter,
   setSectionsAndItemsSelected,
 };
 
