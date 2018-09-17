@@ -1,8 +1,0 @@
-  elasticsearch1:
-    image: elasticsearch:1.7.6
-    command: elasticsearch -Des.network.host=0.0.0.0
-    ports:
-      - "11200:9200"
-      - "11300:9300"
-    volumes:
-      - ./blocks/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
