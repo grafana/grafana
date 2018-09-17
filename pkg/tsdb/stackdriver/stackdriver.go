@@ -158,7 +158,7 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 		secondaryAggregation = "REDUCE_NONE"
 	}
 
-	if alignmentPeriod == "auto" {
+	if alignmentPeriod == "auto" || alignmentPeriod == "" {
 		alignmentPeriodValue := int(math.Max(float64(query.IntervalMs), 60.0))
 		alignmentPeriod = "+" + strconv.Itoa(alignmentPeriodValue) + "s"
 	}
