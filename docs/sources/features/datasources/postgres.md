@@ -71,6 +71,8 @@ Make sure the user does not get any unwanted privileges from the public role.
 
 ## Query Editor
 
+> Only available in Grafana v5.3+.
+
 {{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
 
 You find the PostgreSQL query editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
@@ -85,7 +87,7 @@ When you enter edit mode for the first time or add a new query Grafana will try 
 In the FROM field, Grafana will suggest tables that are in the `search_path` of the database user. To select a table or view not in your `search_path`
 you can manually enter a fully qualified name (schema.table) like `public.metrics`.
 
-The Time column field refers to the name of the column holding your time values. Selecting a value for the Metric column field is optional. If a value is selected, the Metric column field will be used as the series name. 
+The Time column field refers to the name of the column holding your time values. Selecting a value for the Metric column field is optional. If a value is selected, the Metric column field will be used as the series name.
 
 The metric column suggestions will only contain columns with a text datatype (char,varchar,text).
 If you want to use a column with a different datatype as metric column you may enter the column name with a cast: `ip::text`.
@@ -123,7 +125,7 @@ If you add any grouping, all selected columns need to have an aggregate function
 
 #### Gap Filling
 
-Grafana can fill in missing values when you group by time. The time function accepts two arguments. The first argument is the time window that you would like to group by, and the second argument is the value you want Grafana to fill missing items with. 
+Grafana can fill in missing values when you group by time. The time function accepts two arguments. The first argument is the time window that you would like to group by, and the second argument is the value you want Grafana to fill missing items with.
 
 ### Text Editor Mode (RAW)
 You can switch to the raw query editor mode by clicking the hamburger icon and selecting `Switch editor mode` or by clicking `Edit SQL` below the query.
@@ -274,7 +276,7 @@ SELECT hostname FROM host  WHERE region IN($region)
 
 ### Using Variables in Queries
 
-From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically. If your template variables are strings, do not wrap them in quotes in where clauses. 
+From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically. If your template variables are strings, do not wrap them in quotes in where clauses.
 
 From Grafana 4.7.0, template variable values are only quoted when the template variable is a `multi-value`.
 
