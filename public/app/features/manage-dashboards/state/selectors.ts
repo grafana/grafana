@@ -1,5 +1,6 @@
 export const getSearchQuery = state => state.dashboardQuery.query;
 export const getDashboardQuery = state => state.dashboardQuery;
+export const getFilterOnStarred = state => state.dashboardQuery.starred;
 export const getHasFilters = state => {
   return state.dashboardQuery.tag.length > 0 || state.dashboardQuery.starred;
 };
@@ -8,7 +9,6 @@ export const getFolderId = state => state.manageDashboard.folderId;
 export const getHasEditPermissionInFolders = state => state.manageDashboard.hasEditPermissionInFolders;
 export const getCanSave = state => state.manageDashboard.canSave;
 export const getIsEditor = state => state.manageDashboard.isEditor;
-export const getSelectedStarredFilter = state => state.manageDashboard.selectedStarredFilter;
 export const getSelectedTagFilter = state => state.manageDashboard.selectedTagFilter;
 
 export const getSections = state => state.sections;

@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { contextSrv } from '../../../core/services/context_srv';
 import { DashboardSection, DashboardSectionItem, ManageDashboardState, SectionsState } from 'app/types';
 import { Action, ActionTypes } from './actions';
@@ -14,7 +13,7 @@ export const initialManageDashboardState: ManageDashboardState = {
     folderUid: '',
     hasEditPermissionInFolders: contextSrv.hasEditPermissionInFolders,
     isEditor: contextSrv.isEditor,
-    selectedStarredFilter: '',
+    filterOnStarred: false,
     selectedTagFilter: '',
   },
   dashboardQuery: {
@@ -39,9 +38,6 @@ export const manageDashboardsReducer = (state = initialManageDashboardState, act
     case ActionTypes.SetDashboardSearchQuery:
       return { ...state, dashboardQuery: { ...state.dashboardQuery, query: action.payload } };
 
-    case ActionTypes.RemoveStarredFilter:
-      return { ...state, dashboardQuery: { ...state.dashboardQuery, starred: false } };
-
     case ActionTypes.RemoveTag:
       const tag = state.dashboardQuery.tag.filter(tag => {
         if (tag !== action.payload) {
@@ -62,11 +58,15 @@ export const manageDashboardsReducer = (state = initialManageDashboardState, act
 
     case ActionTypes.AddTagFilter:
       const tags = state.dashboardQuery.tag;
+
       if (tags.indexOf(action.payload) === -1) {
         tags.push(action.payload);
       }
 
       return { ...state, dashboardQuery: { ...state.dashboardQuery, tag: tags } };
+
+    case ActionTypes.SetStarredFilter:
+      return { ...state, dashboardQuery: { ...state.dashboardQuery, starred: action.payload } };
   }
 
   return state;

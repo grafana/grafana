@@ -17,6 +17,7 @@ export enum ActionTypes {
   SetAllSectionsAndItemsSelected = 'SET_ALL_SECTIONS_AND_ITEMS_SELECTED',
   LoadDashboardTags = 'LOAD_DASHBOARD_TAGS',
   AddTagFilter = 'ADD_TAG_FILTER',
+  SetStarredFilter = 'SET_STARRED_FILTER',
 }
 
 interface LoadSectionsAction {
@@ -27,10 +28,6 @@ interface LoadSectionsAction {
 interface SetSearchDashboardSearchQueryAction {
   type: ActionTypes.SetDashboardSearchQuery;
   payload: string;
-}
-
-interface RemoveStarredFilterAction {
-  type: ActionTypes.RemoveStarredFilter;
 }
 
 interface RemoveTagAction {
@@ -83,10 +80,14 @@ interface AddTagFilterAction {
   payload: string;
 }
 
+interface AddStarredFilterAction {
+  type: ActionTypes.SetStarredFilter;
+  payload: boolean;
+}
+
 export type Action =
   | LoadSectionsAction
   | SetSearchDashboardSearchQueryAction
-  | RemoveStarredFilterAction
   | RemoveTagAction
   | ClearFiltersAction
   | LoadSectionItemsAction
@@ -95,7 +96,8 @@ export type Action =
   | SetSectionItemSelectedAction
   | SetAllSectionsAndItemsSelectedAction
   | LoadDashboardTagsAction
-  | AddTagFilterAction;
+  | AddTagFilterAction
+  | AddStarredFilterAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -127,8 +129,9 @@ const tagFilterAdded = (tag: string): AddTagFilterAction => ({
   payload: tag,
 });
 
-export const removeStarredFilter = (): RemoveStarredFilterAction => ({
-  type: ActionTypes.RemoveStarredFilter,
+const setStarredFilter = (state: boolean): AddStarredFilterAction => ({
+  type: ActionTypes.SetStarredFilter,
+  payload: state,
 });
 
 export const tagFilterRemoved = (tag: string): RemoveTagAction => ({
@@ -136,7 +139,7 @@ export const tagFilterRemoved = (tag: string): RemoveTagAction => ({
   payload: tag,
 });
 
-export const clearFilters = (): ClearFiltersAction => ({
+const filtersCleared = (): ClearFiltersAction => ({
   type: ActionTypes.ClearFilters,
 });
 
@@ -202,6 +205,20 @@ export function addTagFilter(tag: string): ThunkResult<void> {
 export function removeTagFilter(tag: string): ThunkResult<void> {
   return dispatch => {
     dispatch(tagFilterRemoved(tag));
+    dispatch(loadSections());
+  };
+}
+
+export function toggleStarredFilter(state: boolean): ThunkResult<void> {
+  return dispatch => {
+    dispatch(setStarredFilter(state));
+    dispatch(loadSections());
+  };
+}
+
+export function clearFilters(): ThunkResult<void> {
+  return dispatch => {
+    dispatch(filtersCleared());
     dispatch(loadSections());
   };
 }

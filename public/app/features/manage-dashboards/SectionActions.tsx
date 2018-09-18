@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import FormSwitch from 'app/core/components/FormSwitch/FormSwitch';
-import { addTagFilter, setSectionsAndItemsSelected, setSelectedStarredFilter } from './state/actions';
+import { addTagFilter, setSectionsAndItemsSelected, toggleStarredFilter } from './state/actions';
 import {
   getAllChecked,
   getCanDelete,
   getCanMove,
-  getSelectedStarredFilter,
+  getFilterOnStarred,
   getSelectedTagFilter,
   getTagFilterOptions,
 } from './state/selectors';
@@ -20,24 +20,21 @@ export interface Props {
   allChecked: boolean;
   tagFilterOptions: any[];
   addTagFilter: typeof addTagFilter;
+  toggleStarredFilter: typeof toggleStarredFilter;
+  filterOnStarred: boolean;
 }
 
-interface State {
-  starredFilterOptions: any[];
-}
-
-export class SectionActions extends PureComponent<Props, State> {
-  state = {
-    starredFilterOptions: [{ text: 'Filter by Starred', disabled: true }, { text: 'Yes' }, { text: 'No' }],
-    tagFilterOptions: [],
-  };
-
+export class SectionActions extends PureComponent<Props> {
   onSelectAllChanged = () => {
     const { allChecked, setSectionsAndItemsSelected } = this.props;
     setSectionsAndItemsSelected(!allChecked);
   };
 
-  onStarredFilterChange = event => {};
+  onStarredFilterChange = () => {
+    const { filterOnStarred } = this.props;
+
+    this.props.toggleStarredFilter(!filterOnStarred);
+  };
 
   onTagFilterChange = event => {
     this.props.addTagFilter(event.target.value);
@@ -48,9 +45,7 @@ export class SectionActions extends PureComponent<Props, State> {
   delete = () => {};
 
   render() {
-    const { allChecked, canMove, canDelete, selectedStarredFilter, selectedTagFilter, tagFilterOptions } = this.props;
-
-    const { starredFilterOptions } = this.state;
+    const { allChecked, canMove, canDelete, filterOnStarred, selectedTagFilter, tagFilterOptions } = this.props;
 
     return (
       <div className="search-results">
@@ -64,20 +59,14 @@ export class SectionActions extends PureComponent<Props, State> {
           <div>
             {!(canMove || canDelete) && (
               <div className="search-results-filter-row__filters">
-                <div className="gf-form-select-wrapper">
-                  <select
-                    className="search-results-filter-row__filters-item gf-form-input"
-                    value={selectedStarredFilter}
+                <div style={{ display: 'flex', alignItems: 'center', fontSize: '14px' }}>
+                  Filter by starred
+                  <FormSwitch
+                    label=""
+                    checked={filterOnStarred}
                     onChange={this.onStarredFilterChange}
-                  >
-                    {starredFilterOptions.map((option, index) => {
-                      return (
-                        <option value={option.text} key={`${option.text}-${index}`}>
-                          {option.text}
-                        </option>
-                      );
-                    })}
-                  </select>
+                    switchClass="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
+                  />
                 </div>
                 <div className="gf-form-select-wrapper">
                   <select
@@ -124,14 +113,15 @@ function mapStateToProps(state) {
     allChecked: getAllChecked(state.sections),
     canDelete: getCanDelete(state),
     canMove: getCanMove(state),
-    selectedStarredFilter: getSelectedStarredFilter(state.manageDashboards),
     selectedTagFilter: getSelectedTagFilter(state.manageDashboards),
     tagFilterOptions: getTagFilterOptions(state.sections),
+    filterOnStarred: getFilterOnStarred(state.manageDashboards),
   };
 }
 
 const mapDispatchToProps = {
   addTagFilter,
+  toggleStarredFilter,
   setSectionsAndItemsSelected,
 };
 

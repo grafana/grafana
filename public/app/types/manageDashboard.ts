@@ -8,7 +8,7 @@ export interface ManageDashboard {
   // filter variables
   hasFilters: boolean;
   selectedTagFilter: any;
-  selectedStarredFilter: any;
+  filterOnStarred: boolean;
 
   // used when managing dashboards for a specific folder
   folderId?: number;

@@ -19,8 +19,6 @@ export class FormSwitch extends PureComponent<Props, State> {
   };
 
   internalOnChange = event => {
-    console.log(event);
-    event.stopPropagation();
     this.props.onChange(event);
   };
 

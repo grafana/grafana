@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { DashboardQuery } from 'app/types';
-import { removeStarredFilter, removeTagFilter, clearFilters } from './state/actions';
+import { toggleStarredFilter, removeTagFilter, clearFilters } from './state/actions';
 import { getDashboardQuery } from './state/selectors';
 
 export interface Props {
   query: DashboardQuery;
-  removeStarredFilter: typeof removeStarredFilter;
+  toggleFilterOnStarred: typeof toggleStarredFilter;
   removeTagFilter: typeof removeTagFilter;
   clearFilters: typeof clearFilters;
 }
@@ -17,7 +17,7 @@ export class ActiveFilters extends PureComponent<Props, any> {
   };
 
   removeStarred = () => {
-    this.props.removeStarredFilter();
+    this.props.toggleFilterOnStarred(false);
   };
 
   clearFilters = () => {
@@ -86,7 +86,7 @@ function mapStateToProps(state) {
 }
 
 const mapDispatchToProps = {
-  removeStarredFilter,
+  toggleFilterOnStarred: toggleStarredFilter,
   removeTagFilter,
   clearFilters,
 };
