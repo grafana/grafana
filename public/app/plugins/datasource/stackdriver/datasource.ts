@@ -3,12 +3,14 @@ export default class StackdriverDatasource {
   id: number;
   url: string;
   baseUrl: string;
+  projectName: string;
 
   constructor(instanceSettings, private backendSrv) {
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
     this.doRequest = this.doRequest;
     this.id = instanceSettings.id;
+    this.projectName = instanceSettings.jsonData.defaultProject || '';
   }
 
   async getTimeSeries(options) {
@@ -73,7 +75,7 @@ export default class StackdriverDatasource {
   }
 
   testDatasource() {
-    const path = `v3/projects/raintank-production/metricDescriptors`;
+    const path = `v3/projects/${this.projectName}/metricDescriptors`;
     return this.doRequest(`${this.baseUrl}${path}`)
       .then(response => {
         if (response.status === 200) {

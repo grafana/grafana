@@ -3,6 +3,11 @@ import { metricDescriptors } from './testData';
 import moment from 'moment';
 
 describe('StackdriverDataSource', () => {
+  const instanceSettings = {
+    jsonData: {
+      projectName: 'testproject',
+    },
+  };
   describe('when performing testDataSource', () => {
     describe('and call to stackdriver api succeeds', () => {
       let ds;
@@ -13,7 +18,7 @@ describe('StackdriverDataSource', () => {
             return Promise.resolve({ status: 200 });
           },
         };
-        ds = new StackdriverDataSource({}, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv);
         result = await ds.testDatasource();
       });
       it('should return successfully', () => {
@@ -28,7 +33,7 @@ describe('StackdriverDataSource', () => {
         const backendSrv = {
           datasourceRequest: async () => Promise.resolve({ status: 200, data: metricDescriptors }),
         };
-        ds = new StackdriverDataSource({}, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv);
         result = await ds.testDatasource();
       });
       it('should return status success', () => {
@@ -47,7 +52,7 @@ describe('StackdriverDataSource', () => {
               data: { error: { code: 400, message: 'Field interval.endTime had an invalid value' } },
             }),
         };
-        ds = new StackdriverDataSource({}, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv);
         result = await ds.testDatasource();
       });
 
@@ -83,7 +88,7 @@ describe('StackdriverDataSource', () => {
             return Promise.resolve({ status: 200, data: response });
           },
         };
-        ds = new StackdriverDataSource({}, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv);
         result = await ds.getProjects();
       });
 
@@ -132,7 +137,7 @@ describe('StackdriverDataSource', () => {
         const backendSrv = {
           datasourceRequest: async () => Promise.resolve({ status: 200, data: response }),
         };
-        ds = new StackdriverDataSource({}, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv);
       });
 
       it('should return a list of datapoints', () => {
@@ -166,7 +171,7 @@ describe('StackdriverDataSource', () => {
           });
         },
       };
-      ds = new StackdriverDataSource({}, backendSrv);
+      ds = new StackdriverDataSource(instanceSettings, backendSrv);
       result = await ds.getMetricTypes();
     });
     it('should return successfully', () => {

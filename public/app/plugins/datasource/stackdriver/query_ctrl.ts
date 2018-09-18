@@ -134,7 +134,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   }
 
   async getMetricTypes() {
-    //projects/raintank-production/metricDescriptors/agent.googleapis.com/agent/api_request_count
+    //projects/your-project-name/metricDescriptors/agent.googleapis.com/agent/api_request_count
     if (this.target.project.id !== 'default') {
       const metricTypes = await this.datasource.getMetricTypes(this.target.project.id);
       if (this.target.metricType === this.defaultDropdownValue && metricTypes.length > 0) {

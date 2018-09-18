@@ -401,6 +401,7 @@ function createTarget(existingFilters?: string[]) {
     refId: 'A',
     aggregation: {
       crossSeriesReducer: '',
+      secondaryCrossSeriesReducer: '',
       alignmentPeriod: '',
       perSeriesAligner: '',
       groupBys: [],

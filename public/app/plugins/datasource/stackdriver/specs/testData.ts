@@ -1,6 +1,6 @@
 export const metricDescriptors = [
   {
-    name: 'projects/raintank-production/metricDescriptors/agent.googleapis.com/agent/api_request_count',
+    name: 'projects/grafana-prod/metricDescriptors/agent.googleapis.com/agent/api_request_count',
     labels: [
       {
         key: 'state',
@@ -20,7 +20,7 @@ export const metricDescriptors = [
     },
   },
   {
-    name: 'projects/raintank-production/metricDescriptors/agent.googleapis.com/agent/log_entry_count',
+    name: 'projects/grafana-prod/metricDescriptors/agent.googleapis.com/agent/log_entry_count',
     labels: [
       {
         key: 'response_code',

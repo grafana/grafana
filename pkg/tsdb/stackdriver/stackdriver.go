@@ -138,7 +138,6 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 
 func setAggParams(params *url.Values, query *tsdb.Query) {
 	primaryAggregation := query.Model.Get("primaryAggregation").MustString()
-	secondaryAggregation := query.Model.Get("secondaryAggregation").MustString()
 	perSeriesAligner := query.Model.Get("perSeriesAligner").MustString()
 	alignmentPeriod := query.Model.Get("alignmentPeriod").MustString()
 
@@ -146,16 +145,8 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 		primaryAggregation = "REDUCE_NONE"
 	}
 
-	if secondaryAggregation == "" {
-		secondaryAggregation = "REDUCE_NONE"
-	}
-
 	if perSeriesAligner == "" {
 		perSeriesAligner = "ALIGN_MEAN"
-	}
-
-	if secondaryAggregation == "" {
-		secondaryAggregation = "REDUCE_NONE"
 	}
 
 	if alignmentPeriod == "auto" || alignmentPeriod == "" {
@@ -172,7 +163,6 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 	params.Add("aggregation.crossSeriesReducer", primaryAggregation)
 	params.Add("aggregation.perSeriesAligner", perSeriesAligner)
 	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
-	// params.Add("aggregation.secondaryAggregation.crossSeriesReducer", secondaryAggregation)
 
 	groupBys := query.Model.Get("groupBys").MustArray()
 	if len(groupBys) > 0 {
@@ -317,7 +307,8 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	if !ok {
 		return nil, errors.New("Unable to find datasource plugin Stackdriver")
 	}
-	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/raintank-production/timeSeries")
+	projectName := dsInfo.JsonData.Get("defaultProject").MustString()
+	proxyPass := fmt.Sprintf("stackdriver%s", "v3/projects/"+projectName+"/timeSeries")
 
 	var stackdriverRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
