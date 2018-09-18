@@ -2,7 +2,8 @@ import React from 'react';
 import classNames from 'classnames';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { store } from 'app/stores/store';
+import { store } from 'app/store/configureStore';
+import { updateLocation } from 'app/core/actions';
 
 interface PanelHeaderProps {
   panel: PanelModel;
@@ -11,24 +12,26 @@ interface PanelHeaderProps {
 
 export class PanelHeader extends React.Component<PanelHeaderProps, any> {
   onEditPanel = () => {
-    store.view.updateQuery(
-      {
-        panelId: this.props.panel.id,
-        edit: true,
-        fullscreen: true,
-      },
-      false
+    store.dispatch(
+      updateLocation({
+        query: {
+          panelId: this.props.panel.id,
+          edit: true,
+          fullscreen: true,
+        },
+      })
     );
   };
 
   onViewPanel = () => {
-    store.view.updateQuery(
-      {
-        panelId: this.props.panel.id,
-        fullscreen: true,
-        edit: false,
-      },
-      false
+    store.dispatch(
+      updateLocation({
+        query: {
+          panelId: this.props.panel.id,
+          edit: false,
+          fullscreen: true,
+        },
+      })
     );
   };
 

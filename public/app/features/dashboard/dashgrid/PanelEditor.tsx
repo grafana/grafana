@@ -2,11 +2,11 @@ import React from 'react';
 import classNames from 'classnames';
 import { PanelModel } from '../panel_model';
 import { DashboardModel } from '../dashboard_model';
-import { store } from 'app/stores/store';
-import { observer } from 'mobx-react';
+import { store } from 'app/store/configureStore';
 import { QueriesTab } from './QueriesTab';
 import { PanelPlugin, PluginExports } from 'app/types/plugins';
 import { VizTypePicker } from './VizTypePicker';
+import { updateLocation } from 'app/core/actions';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -22,7 +22,6 @@ interface PanelEditorTab {
   icon: string;
 }
 
-@observer
 export class PanelEditor extends React.Component<PanelEditorProps, any> {
   tabs: PanelEditorTab[];
 
@@ -65,7 +64,11 @@ export class PanelEditor extends React.Component<PanelEditorProps, any> {
   }
 
   onChangeTab = (tab: PanelEditorTab) => {
-    store.view.updateQuery({ tab: tab.id }, false);
+    store.dispatch(
+      updateLocation({
+        query: { tab: tab.id },
+      })
+    );
   };
 
   render() {
