@@ -49,13 +49,12 @@ func (e *Error) Error() string {
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
+	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", "grafana_com"}
 )
 
 func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
-
-	allOauthes := []string{"github", "gitlab", "google", "generic_oauth", "grafananet", "grafana_com"}
 
 	for _, name := range allOauthes {
 		sec := setting.Raw.Section("auth." + name)
@@ -183,4 +182,27 @@ func NewOAuthService() {
 			}
 		}
 	}
+}
+
+// GetOAuthProviders returns available oauth providers and if they're enabled or not
+var GetOAuthProviders = func(cfg *setting.Cfg) map[string]bool {
+	result := map[string]bool{}
+
+	if cfg == nil || cfg.Raw == nil {
+		return result
+	}
+
+	for _, name := range allOauthes {
+		if name == "grafananet" {
+			name = "grafana_com"
+		}
+
+		sec := cfg.Raw.Section("auth." + name)
+		if sec == nil {
+			continue
+		}
+		result[name] = sec.Key("enabled").MustBool()
+	}
+
+	return result
 }

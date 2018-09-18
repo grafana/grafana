@@ -1,5 +1,5 @@
-import { Action } from 'app/core/actions/navModel';
-import { NavModelItem, NavIndex } from 'app/types';
+import { Action, ActionTypes } from 'app/core/actions/navModel';
+import { NavIndex, NavModelItem } from 'app/types';
 import config from 'app/core/config';
 
 export function buildInitialState(): NavIndex {
@@ -25,5 +25,19 @@ function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?
 export const initialState: NavIndex = buildInitialState();
 
 export const navIndexReducer = (state = initialState, action: Action): NavIndex => {
+  switch (action.type) {
+    case ActionTypes.UpdateNavIndex:
+      const newPages = {};
+      const payload = action.payload;
+
+      for (const node of payload.children) {
+        newPages[node.id] = {
+          ...node,
+          parentItem: payload,
+        };
+      }
+
+      return { ...state, ...newPages };
+  }
   return state;
 };

@@ -1,6 +1,7 @@
-import { toJS } from 'mobx';
 import { coreModule } from 'app/core/core';
-import { store } from 'app/stores/store';
+import { store } from 'app/store/configureStore';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { buildNavModel } from './state/navModel';
 
 export class DataSourceDashboardsCtrl {
   datasourceMeta: any;
@@ -9,11 +10,8 @@ export class DataSourceDashboardsCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, private $routeParams) {
-    if (store.nav.main === null) {
-      store.nav.load('cfg', 'datasources');
-    }
-
-    this.navModel = toJS(store.nav);
+    const state = store.getState();
+    this.navModel = getNavModel(state.navIndex, 'datasources');
 
     if (this.$routeParams.id) {
       this.getDatasourceById(this.$routeParams.id);
@@ -30,8 +28,7 @@ export class DataSourceDashboardsCtrl {
   }
 
   updateNav() {
-    store.nav.initDatasourceEditNav(this.current, this.datasourceMeta, 'datasource-dashboards');
-    this.navModel = toJS(store.nav);
+    this.navModel = buildNavModel(this.current, this.datasourceMeta, 'datasource-dashboards');
   }
 
   getPluginInfo() {

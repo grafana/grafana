@@ -6,12 +6,11 @@ import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
 import Drop from 'tether-drop';
-import { createStore } from 'app/stores/store';
 import colors from 'app/core/utils/colors';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/angular_loader';
-import { configureStore } from 'app/stores/configureStore';
+import { configureStore } from 'app/store/configureStore';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -29,11 +28,8 @@ export class GrafanaCtrl {
   ) {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
-    // sets singleston instances for angular services so react components can access them
-    configureStore();
     setBackendSrv(backendSrv);
-    // create store with env services
-    createStore({ backendSrv, datasourceSrv });
+    configureStore();
 
     $scope.init = () => {
       $scope.contextSrv = contextSrv;

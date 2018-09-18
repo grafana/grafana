@@ -8,10 +8,14 @@ import {
   PrometheusDatasource,
   prometheusSpecialRegexEscape,
   prometheusRegularEscape,
-  addLabelToQuery,
 } from '../datasource';
 
 jest.mock('../metric_find_query');
+
+const DEFAULT_TEMPLATE_SRV_MOCK = {
+  getAdhocFilters: () => [],
+  replace: a => a,
+};
 
 describe('PrometheusDatasource', () => {
   const ctx: any = {};
@@ -25,9 +29,8 @@ describe('PrometheusDatasource', () => {
 
   ctx.backendSrvMock = {};
 
-  ctx.templateSrvMock = {
-    replace: a => a,
-  };
+  ctx.templateSrvMock = DEFAULT_TEMPLATE_SRV_MOCK;
+
   ctx.timeSrvMock = {
     timeRange: () => {
       return {
@@ -57,6 +60,37 @@ describe('PrometheusDatasource', () => {
       ds.metadataRequest('/foo');
       expect(ctx.backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
       expect(ctx.backendSrvMock.datasourceRequest.mock.calls[0][0].method).toBe('GET');
+    });
+  });
+
+  describe('When using adhoc filters', () => {
+    const DEFAULT_QUERY_EXPRESSION = 'metric{job="foo"} - metric';
+    const target = { expr: DEFAULT_QUERY_EXPRESSION };
+
+    afterEach(() => {
+      ctx.templateSrvMock.getAdhocFilters = DEFAULT_TEMPLATE_SRV_MOCK.getAdhocFilters;
+    });
+
+    it('should not modify expression with no filters', () => {
+      const result = ctx.ds.createQuery(target, { interval: '15s' });
+      expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
+    });
+
+    it('should add filters to expression', () => {
+      ctx.templateSrvMock.getAdhocFilters = () => [
+        {
+          key: 'k1',
+          operator: '=',
+          value: 'v1',
+        },
+        {
+          key: 'k2',
+          operator: '!=',
+          value: 'v2',
+        },
+      ];
+      const result = ctx.ds.createQuery(target, { interval: '15s' });
+      expect(result).toMatchObject({ expr: 'metric{job="foo",k1="v1",k2!="v2"} - metric{k1="v1",k2!="v2"}' });
     });
   });
 
@@ -358,25 +392,6 @@ describe('PrometheusDatasource', () => {
       expect(intervalMs).toEqual({ text: 15000, value: 15000 });
     });
   });
-
-  describe('addLabelToQuery()', () => {
-    expect(() => {
-      addLabelToQuery('foo', '', '');
-    }).toThrow();
-    expect(addLabelToQuery('foo + foo', 'bar', 'baz')).toBe('foo{bar="baz"} + foo{bar="baz"}');
-    expect(addLabelToQuery('foo{}', 'bar', 'baz')).toBe('foo{bar="baz"}');
-    expect(addLabelToQuery('foo{x="yy"}', 'bar', 'baz')).toBe('foo{bar="baz",x="yy"}');
-    expect(addLabelToQuery('foo{x="yy"} + metric', 'bar', 'baz')).toBe('foo{bar="baz",x="yy"} + metric{bar="baz"}');
-    expect(addLabelToQuery('avg(foo) + sum(xx_yy)', 'bar', 'baz')).toBe('avg(foo{bar="baz"}) + sum(xx_yy{bar="baz"})');
-    expect(addLabelToQuery('foo{x="yy"} * metric{y="zz",a="bb"} * metric2', 'bar', 'baz')).toBe(
-      'foo{bar="baz",x="yy"} * metric{a="bb",bar="baz",y="zz"} * metric2{bar="baz"}'
-    );
-    expect(addLabelToQuery('sum by (xx) (foo)', 'bar', 'baz')).toBe('sum by (xx) (foo{bar="baz"})');
-    expect(addLabelToQuery('foo{instance="my-host.com:9100"}', 'bar', 'baz')).toBe(
-      'foo{bar="baz",instance="my-host.com:9100"}'
-    );
-    expect(addLabelToQuery('rate(metric[1m])', 'foo', 'bar')).toBe('rate(metric{foo="bar"}[1m])');
-  });
 });
 
 const SECOND = 1000;
@@ -398,6 +413,7 @@ const backendSrv = {
 } as any;
 
 const templateSrv = {
+  getAdhocFilters: () => [],
   replace: jest.fn(str => str),
 };
 
@@ -565,7 +581,7 @@ describe('PrometheusDatasource', () => {
   describe('When performing annotationQuery', () => {
     let results;
 
-    const options = {
+    const options: any = {
       annotation: {
         expr: 'ALERTS{alertstate="firing"}',
         tagKeys: 'job',
@@ -578,41 +594,61 @@ describe('PrometheusDatasource', () => {
       },
     };
 
-    beforeEach(async () => {
-      const response = {
-        status: 'success',
+    const response = {
+      status: 'success',
+      data: {
         data: {
-          data: {
-            resultType: 'matrix',
-            result: [
-              {
-                metric: {
-                  __name__: 'ALERTS',
-                  alertname: 'InstanceDown',
-                  alertstate: 'firing',
-                  instance: 'testinstance',
-                  job: 'testjob',
-                },
-                values: [[123, '1']],
+          resultType: 'matrix',
+          result: [
+            {
+              metric: {
+                __name__: 'ALERTS',
+                alertname: 'InstanceDown',
+                alertstate: 'firing',
+                instance: 'testinstance',
+                job: 'testjob',
               },
-            ],
-          },
+              values: [[123, '1']],
+            },
+          ],
         },
-      };
+      },
+    };
 
-      backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+    describe('not use useValueForTime', () => {
+      beforeEach(async () => {
+        options.annotation.useValueForTime = false;
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
 
-      await ctx.ds.annotationQuery(options).then(data => {
-        results = data;
+        await ctx.ds.annotationQuery(options).then(data => {
+          results = data;
+        });
+      });
+
+      it('should return annotation list', () => {
+        expect(results.length).toBe(1);
+        expect(results[0].tags).toContain('testjob');
+        expect(results[0].title).toBe('InstanceDown');
+        expect(results[0].text).toBe('testinstance');
+        expect(results[0].time).toBe(123 * 1000);
       });
     });
-    it('should return annotation list', () => {
-      expect(results.length).toBe(1);
-      expect(results[0].tags).toContain('testjob');
-      expect(results[0].title).toBe('InstanceDown');
-      expect(results[0].text).toBe('testinstance');
-      expect(results[0].time).toBe(123 * 1000);
+
+    describe('use useValueForTime', () => {
+      beforeEach(async () => {
+        options.annotation.useValueForTime = true;
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+
+        await ctx.ds.annotationQuery(options).then(data => {
+          results = data;
+        });
+      });
+
+      it('should return annotation list', () => {
+        expect(results[0].time).toEqual(1);
+      });
     });
   });
 
