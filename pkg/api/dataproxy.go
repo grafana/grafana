@@ -54,6 +54,15 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	}
 
 	proxyPath := c.Params("*")
+
+	// Check for a trailing slash
+	if len(proxyPath) > 1 {
+		path := c.Req.URL.Path
+		if path[len(path)-1] == '/' && path[len(path)-2] != '/' {
+			proxyPath += "/"
+		}
+	}
+
 	proxy := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath)
 	proxy.HandleRequest()
 }
