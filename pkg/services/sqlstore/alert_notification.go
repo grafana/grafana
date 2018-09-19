@@ -239,11 +239,8 @@ func RecordNotificationJournal(ctx context.Context, cmd *m.RecordNotificationJou
 			Success:    cmd.Success,
 		}
 
-		if _, err := sess.Insert(journalEntry); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Insert(journalEntry)
+		return err
 	})
 }
 
