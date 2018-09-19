@@ -30,7 +30,7 @@ func TestPluginScans(t *testing.T) {
 	Convey("When reading app plugin definition", t, func() {
 		setting.Raw = ini.Empty()
 		sec, _ := setting.Raw.NewSection("plugin.nginx-app")
-		sec.NewKey("path", "../../tests/test-app")
+		sec.NewKey("path", "testdata/test-app")
 
 		pm := &PluginManager{}
 		err := pm.Init()
