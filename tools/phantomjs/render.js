@@ -56,8 +56,14 @@
 
         if (panelsRendered || totalWaitMs > timeoutMs) {
           var bb = page.evaluate(function () {
-            return document.getElementsByClassName("main-view")[0].getBoundingClientRect();
+            return document.getElementsByClassName("dashboard-container")[0].getBoundingClientRect();
           });
+          
+          // reset viewport to render full page
+          page.viewportSize = {
+            width: bb.width,
+            height: bb.height
+          };
 
           page.clipRect = {
             top:    bb.top,
