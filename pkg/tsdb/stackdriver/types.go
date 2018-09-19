@@ -6,9 +6,10 @@ import (
 )
 
 type StackdriverQuery struct {
-	Target string
-	Params url.Values
-	RefID  string
+	Target   string
+	Params   url.Values
+	RefID    string
+	GroupBys []string
 }
 
 type StackdriverResponse struct {

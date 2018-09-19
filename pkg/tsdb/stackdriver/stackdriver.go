@@ -126,10 +126,17 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 			slog.Debug("Stackdriver request", "params", params)
 		}
 
+		groupBys := query.Model.Get("groupBys").MustArray()
+		groupBysAsStrings := make([]string, 0)
+		for _, groupBy := range groupBys {
+			groupBysAsStrings = append(groupBysAsStrings, groupBy.(string))
+		}
+
 		stackdriverQueries = append(stackdriverQueries, &StackdriverQuery{
-			Target: target,
-			Params: params,
-			RefID:  query.RefId,
+			Target:   target,
+			Params:   params,
+			RefID:    query.RefId,
+			GroupBys: groupBysAsStrings,
 		})
 	}
 
@@ -182,7 +189,6 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 	}
 
 	req.URL.RawQuery = query.Params.Encode()
-	fmt.Println("req.URL.RawQuery: ", req.URL.RawQuery)
 	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
@@ -211,7 +217,7 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 		return queryResult, nil
 	}
 
-	err = e.parseResponse(queryResult, data)
+	err = e.parseResponse(queryResult, data, query)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, nil
@@ -242,7 +248,7 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 	return data, nil
 }
 
-func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse) error {
+func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data StackdriverResponse, query *StackdriverQuery) error {
 	metricLabels := make(map[string][]string)
 	resourceLabels := make(map[string][]string)
 
@@ -260,12 +266,18 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			if !containsLabel(metricLabels[key], value) {
 				metricLabels[key] = append(metricLabels[key], value)
 			}
-			metricName += " " + value
+			if len(query.GroupBys) == 0 || containsLabel(query.GroupBys, "metric.label."+key) {
+				metricName += " " + value
+			}
 		}
 
 		for key, value := range series.Resource.Labels {
 			if !containsLabel(resourceLabels[key], value) {
 				resourceLabels[key] = append(resourceLabels[key], value)
+			}
+
+			if containsLabel(query.GroupBys, "resource.label."+key) {
+				metricName += " " + value
 			}
 		}
 
@@ -277,6 +289,7 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 
 	queryRes.Meta.Set("resourceLabels", resourceLabels)
 	queryRes.Meta.Set("metricLabels", metricLabels)
+	queryRes.Meta.Set("groupBys", query.GroupBys)
 
 	return nil
 }

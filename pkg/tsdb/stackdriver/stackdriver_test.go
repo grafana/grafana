@@ -168,16 +168,13 @@ func TestStackdriver(t *testing.T) {
 
 		Convey("Parse stackdriver response in the time series format", func() {
 			Convey("when data from query aggregated to one time series", func() {
-				var data StackdriverResponse
-
-				jsonBody, err := ioutil.ReadFile("./test-data/1-series-response-agg-one-metric.json")
-				So(err, ShouldBeNil)
-				err = json.Unmarshal(jsonBody, &data)
+				data, err := loadTestFile("./test-data/1-series-response-agg-one-metric.json")
 				So(err, ShouldBeNil)
 				So(len(data.TimeSeries), ShouldEqual, 1)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				err = executor.parseResponse(res, data)
+				query := &StackdriverQuery{}
+				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
 				So(len(res.Series), ShouldEqual, 1)
@@ -197,16 +194,13 @@ func TestStackdriver(t *testing.T) {
 			})
 
 			Convey("when data from query with no aggregation", func() {
-				var data StackdriverResponse
-
-				jsonBody, err := ioutil.ReadFile("./test-data/2-series-response-no-agg.json")
-				So(err, ShouldBeNil)
-				err = json.Unmarshal(jsonBody, &data)
+				data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
 				So(err, ShouldBeNil)
 				So(len(data.TimeSeries), ShouldEqual, 3)
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-				err = executor.parseResponse(res, data)
+				query := &StackdriverQuery{}
+				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
 				Convey("Should add labels to metric name", func() {
@@ -214,7 +208,9 @@ func TestStackdriver(t *testing.T) {
 					So(res.Series[0].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-asia-east-1")
 					So(res.Series[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-europe-west-1")
 					So(res.Series[2].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1")
+				})
 
+				Convey("Should parse to time series", func() {
 					So(len(res.Series[0].Points), ShouldEqual, 3)
 					So(res.Series[0].Points[0][0].Float64, ShouldEqual, 9.8566497180145)
 					So(res.Series[0].Points[1][0].Float64, ShouldEqual, 9.7323568146676)
@@ -240,6 +236,38 @@ func TestStackdriver(t *testing.T) {
 					So(resourceLabels["project_id"][0], ShouldEqual, "grafana-prod")
 				})
 			})
+
+			Convey("when data from query with no aggregation and group bys", func() {
+				data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 3)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &StackdriverQuery{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+				err = executor.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+
+				Convey("Should add instance name and zone labels to metric name", func() {
+					So(len(res.Series), ShouldEqual, 3)
+					So(res.Series[0].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-asia-east-1 asia-east1-a")
+					So(res.Series[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-europe-west-1 europe-west1-b")
+					So(res.Series[2].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1 us-east1-b")
+				})
+			})
 		})
 	})
+}
+
+func loadTestFile(path string) (StackdriverResponse, error) {
+	var data StackdriverResponse
+
+	jsonBody, err := ioutil.ReadFile(path)
+	if err != nil {
+		return data, err
+	}
+	err = json.Unmarshal(jsonBody, &data)
+	if err != nil {
+		return data, err
+	}
+	return data, nil
 }
