@@ -140,6 +140,15 @@ exports[`Render should show filters if true 1`] = `
       <Connect(ActionBar) />
       <Connect(ActiveFilters) />
       <div
+        className="search-results"
+      >
+        <em
+          className="muted"
+        >
+          No dashboards matching your query were found.
+        </em>
+      </div>
+      <div
         className="search-results-container"
       />
     </div>
@@ -160,15 +169,6 @@ exports[`Render should show no matching sections to filtering 1`] = `
     >
       <Connect(ActionBar) />
       <Connect(ActiveFilters) />
-      <div
-        className="search-results"
-      >
-        <em
-          className="muted"
-        >
-          No dashboards matching your query were found.
-        </em>
-      </div>
       <Connect(SectionActions) />
       <div
         className="search-results-container"

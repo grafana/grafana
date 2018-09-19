@@ -14,23 +14,14 @@ export interface Props {
 
 export class SectionItem extends PureComponent<Props> {
   toggleSectionItemSelection = event => {
-    event.preventDefault();
     event.stopPropagation();
-
     const { item, setSectionItemSelected } = this.props;
 
     setSectionItemSelected(item);
   };
 
-  onItemClick = event => {
-    event.stopPropagation();
-    console.log('clicked an item');
-  };
-
   selectTag = (tag, event) => {
     event.stopPropagation();
-    event.preventDefault();
-
     this.props.addTagFilter(tag);
   };
 
@@ -42,7 +33,7 @@ export class SectionItem extends PureComponent<Props> {
     const { item } = this.props;
 
     return (
-      <a className={`search-item search-item--indent${item.checked ? 'selected' : ''}`} href={item.url} target="_self">
+      <a className={`search-item search-item--indent ${item.checked ? 'selected' : ''}`} href={item.url} target="_self">
         <FormSwitch
           label=""
           onChange={event => this.toggleSectionItemSelection(event)}
@@ -58,7 +49,12 @@ export class SectionItem extends PureComponent<Props> {
         <span className="search-item__tags">
           {item.tags.map((tag, index) => {
             return (
-              <span key={index} tag-color-from-name="tag" className="label label-tag">
+              <span
+                key={index}
+                tag-color-from-name="tag"
+                className="label label-tag"
+                onClick={event => this.selectTag(tag, event)}
+              >
                 {tag}
               </span>
             );

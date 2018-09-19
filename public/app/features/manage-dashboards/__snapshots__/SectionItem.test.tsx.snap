@@ -1,0 +1,53 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<a
+  className="search-item search-item--indent "
+  href="some/url/0"
+  target="_self"
+>
+  <FormSwitch
+    label=""
+    onChange={[Function]}
+    switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
+  />
+  <span
+    className="search-item__icon"
+    onClick={[Function]}
+  >
+    <i
+      className="gicon mini gicon-dashboard-list"
+    />
+  </span>
+  <span
+    className="search-item__body"
+    onClick={[Function]}
+  >
+    <div
+      className="search-item__body-title"
+    >
+      item-0
+    </div>
+  </span>
+  <span
+    className="search-item__tags"
+  >
+    <span
+      className="label label-tag"
+      key="0"
+      onClick={[Function]}
+      tag-color-from-name="tag"
+    >
+      blue
+    </span>
+    <span
+      className="label label-tag"
+      key="1"
+      onClick={[Function]}
+      tag-color-from-name="tag"
+    >
+      green
+    </span>
+  </span>
+</a>
+`;

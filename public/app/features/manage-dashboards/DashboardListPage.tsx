@@ -39,7 +39,7 @@ export class DashboardListPage extends PureComponent<Props, any> {
             <ActionBar />
             {hasFilters && <ActiveFilters />}
             {hasFilters &&
-              sections.length !== 0 && (
+              sections.length === 0 && (
                 <div className="search-results">
                   <em className="muted">No dashboards matching your query were found.</em>
                 </div>
