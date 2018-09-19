@@ -39,11 +39,7 @@ export const manageDashboardsReducer = (state = initialManageDashboardState, act
       return { ...state, dashboardQuery: { ...state.dashboardQuery, query: action.payload } };
 
     case ActionTypes.RemoveTag:
-      const tag = state.dashboardQuery.tag.filter(tag => {
-        if (tag !== action.payload) {
-          return tag;
-        }
-      });
+      const tag = state.dashboardQuery.tag.filter(tag => tag !== action.payload);
 
       return {
         ...state,
@@ -81,9 +77,13 @@ export const sectionsReducer = (state = initialSectionsState, action: Action): S
       return { ...state, sections: action.payload };
 
     case ActionTypes.LoadSectionItems:
+      const items = action.payload.items.map(item => {
+        return { ...item, checked: false };
+      });
+
       newSections = state.sections.map(section => {
         if (section.id === action.payload.id) {
-          return { ...section, expanded: true, items: action.payload.items };
+          return { ...section, expanded: true, items: items };
         }
 
         return section;
@@ -107,7 +107,7 @@ export const sectionsReducer = (state = initialSectionsState, action: Action): S
         if (section.id === action.payload.folderId) {
           newItems = section.items.map(item => {
             if (item.id === action.payload.itemId) {
-              return { ...item, checked: true };
+              return { ...item, checked: action.payload.state };
             }
 
             return item;

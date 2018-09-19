@@ -52,10 +52,15 @@ export interface DashboardSectionItem {
   checked: boolean;
 }
 
+export interface DashboardTag {
+  term: string;
+  count: number;
+}
+
 export interface DashboardQuery {
   query: string;
   mode: string;
-  tag: any[];
+  tag: string[];
   starred: boolean;
   skipRecent: boolean;
   skipStarred: boolean;
@@ -65,7 +70,7 @@ export interface DashboardQuery {
 export interface SectionsState {
   sections: DashboardSection[];
   allChecked: boolean;
-  dashboardTags: any[];
+  dashboardTags: DashboardTag[];
 }
 
 export interface ManageDashboardState {

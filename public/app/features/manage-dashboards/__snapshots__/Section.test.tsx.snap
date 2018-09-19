@@ -8,15 +8,11 @@ exports[`Render should render component 1`] = `
     className="search-section__header pointer "
     onClick={[Function]}
   >
-    <div
-      onClick={[Function]}
-    >
-      <FormSwitch
-        label=""
-        onChange={[Function]}
-        switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
-      />
-    </div>
+    <FormSwitch
+      label=""
+      onChange={[Function]}
+      switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
+    />
     <i
       className="search-section__header__icon cool-icon"
     />
@@ -48,15 +44,11 @@ exports[`Render should render items 1`] = `
     className="search-section__header pointer "
     onClick={[Function]}
   >
-    <div
-      onClick={[Function]}
-    >
-      <FormSwitch
-        label=""
-        onChange={[Function]}
-        switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
-      />
-    </div>
+    <FormSwitch
+      label=""
+      onChange={[Function]}
+      switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
+    />
     <i
       className="search-section__header__icon cool-icon"
     />
@@ -77,317 +69,137 @@ exports[`Render should render items 1`] = `
       className="fa fa-angle-down search-section__header__toggle"
     />
   </div>
-  <a
-    className="search-item search-item--indent"
-    href="some/url/0"
-    key="0"
-  >
-    <div
-      onClick={[Function]}
-    >
-      <FormSwitch
-        label=""
-        onChange={[Function]}
-        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
-      />
-    </div>
-    <span
-      className="search-item__icon"
-    >
-      <i
-        className="gicon mini gicon-dashboard-list"
-      />
-    </span>
-    <span
-      className="search-item__body"
-      onClick={[Function]}
-    >
-      <div
-        className="search-item__body-title"
-      >
-        item-0
-      </div>
-    </span>
-    <span
-      className="search-item__tags"
-    >
-      <span
-        className="label label-tag"
-        key="0"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        blue
-      </span>
-      <span
-        className="label label-tag"
-        key="1"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        green
-      </span>
-    </span>
-  </a>
-  <a
-    className="search-item search-item--indent"
-    href="some/url/1"
-    key="1"
-  >
-    <div
-      onClick={[Function]}
-    >
-      <FormSwitch
-        label=""
-        onChange={[Function]}
-        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
-      />
-    </div>
-    <span
-      className="search-item__icon"
-    >
-      <i
-        className="gicon mini gicon-dashboard-list"
-      />
-    </span>
-    <span
-      className="search-item__body"
-      onClick={[Function]}
-    >
-      <div
-        className="search-item__body-title"
-      >
-        item-1
-      </div>
-    </span>
-    <span
-      className="search-item__tags"
-    >
-      <span
-        className="label label-tag"
-        key="0"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        blue
-      </span>
-      <span
-        className="label label-tag"
-        key="1"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        green
-      </span>
-    </span>
-  </a>
-  <a
-    className="search-item search-item--indent"
-    href="some/url/2"
-    key="2"
-  >
-    <div
-      onClick={[Function]}
-    >
-      <FormSwitch
-        label=""
-        onChange={[Function]}
-        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
-      />
-    </div>
-    <span
-      className="search-item__icon"
-    >
-      <i
-        className="gicon mini gicon-dashboard-list"
-      />
-    </span>
-    <span
-      className="search-item__body"
-      onClick={[Function]}
-    >
-      <div
-        className="search-item__body-title"
-      >
-        item-2
-      </div>
-    </span>
-    <span
-      className="search-item__tags"
-    >
-      <span
-        className="label label-tag"
-        key="0"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        blue
-      </span>
-      <span
-        className="label label-tag"
-        key="1"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        green
-      </span>
-    </span>
-  </a>
-  <a
-    className="search-item search-item--indent"
-    href="some/url/3"
-    key="3"
-  >
-    <div
-      onClick={[Function]}
-    >
-      <FormSwitch
-        label=""
-        onChange={[Function]}
-        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
-      />
-    </div>
-    <span
-      className="search-item__icon"
-    >
-      <i
-        className="gicon mini gicon-dashboard-list"
-      />
-    </span>
-    <span
-      className="search-item__body"
-      onClick={[Function]}
-    >
-      <div
-        className="search-item__body-title"
-      >
-        item-3
-      </div>
-    </span>
-    <span
-      className="search-item__tags"
-    >
-      <span
-        className="label label-tag"
-        key="0"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        blue
-      </span>
-      <span
-        className="label label-tag"
-        key="1"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        green
-      </span>
-    </span>
-  </a>
-  <a
-    className="search-item search-item--indent"
-    href="some/url/4"
-    key="4"
-  >
-    <div
-      onClick={[Function]}
-    >
-      <FormSwitch
-        label=""
-        onChange={[Function]}
-        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
-      />
-    </div>
-    <span
-      className="search-item__icon"
-    >
-      <i
-        className="gicon mini gicon-dashboard-list"
-      />
-    </span>
-    <span
-      className="search-item__body"
-      onClick={[Function]}
-    >
-      <div
-        className="search-item__body-title"
-      >
-        item-4
-      </div>
-    </span>
-    <span
-      className="search-item__tags"
-    >
-      <span
-        className="label label-tag"
-        key="0"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        blue
-      </span>
-      <span
-        className="label label-tag"
-        key="1"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        green
-      </span>
-    </span>
-  </a>
-  <a
-    className="search-item search-item--indent"
-    href="some/url/5"
-    key="5"
-  >
-    <div
-      onClick={[Function]}
-    >
-      <FormSwitch
-        label=""
-        onChange={[Function]}
-        switchClass="gf-form-switch--transparent gf-form-switch--search-result__item"
-      />
-    </div>
-    <span
-      className="search-item__icon"
-    >
-      <i
-        className="gicon mini gicon-dashboard-list"
-      />
-    </span>
-    <span
-      className="search-item__body"
-      onClick={[Function]}
-    >
-      <div
-        className="search-item__body-title"
-      >
-        item-5
-      </div>
-    </span>
-    <span
-      className="search-item__tags"
-    >
-      <span
-        className="label label-tag"
-        key="0"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        blue
-      </span>
-      <span
-        className="label label-tag"
-        key="1"
-        onClick={[Function]}
-        tag-color-from-name="tag"
-      >
-        green
-      </span>
-    </span>
-  </a>
+  <Connect(SectionItem)
+    item={
+      Object {
+        "folderId": 1,
+        "folderTitle": "folderur",
+        "folderUid": "folder-1",
+        "folderUrl": "some/folderUrl/1",
+        "id": 0,
+        "isStarred": false,
+        "tags": Array [
+          "blue",
+          "green",
+        ],
+        "title": "item-0",
+        "type": "",
+        "uid": "id-0",
+        "uri": "",
+        "url": "some/url/0",
+      }
+    }
+    key="0-0"
+  />
+  <Connect(SectionItem)
+    item={
+      Object {
+        "folderId": 1,
+        "folderTitle": "folderur",
+        "folderUid": "folder-1",
+        "folderUrl": "some/folderUrl/1",
+        "id": 1,
+        "isStarred": false,
+        "tags": Array [
+          "blue",
+          "green",
+        ],
+        "title": "item-1",
+        "type": "",
+        "uid": "id-1",
+        "uri": "",
+        "url": "some/url/1",
+      }
+    }
+    key="1-1"
+  />
+  <Connect(SectionItem)
+    item={
+      Object {
+        "folderId": 1,
+        "folderTitle": "folderur",
+        "folderUid": "folder-1",
+        "folderUrl": "some/folderUrl/1",
+        "id": 2,
+        "isStarred": false,
+        "tags": Array [
+          "blue",
+          "green",
+        ],
+        "title": "item-2",
+        "type": "",
+        "uid": "id-2",
+        "uri": "",
+        "url": "some/url/2",
+      }
+    }
+    key="2-2"
+  />
+  <Connect(SectionItem)
+    item={
+      Object {
+        "folderId": 1,
+        "folderTitle": "folderur",
+        "folderUid": "folder-1",
+        "folderUrl": "some/folderUrl/1",
+        "id": 3,
+        "isStarred": false,
+        "tags": Array [
+          "blue",
+          "green",
+        ],
+        "title": "item-3",
+        "type": "",
+        "uid": "id-3",
+        "uri": "",
+        "url": "some/url/3",
+      }
+    }
+    key="3-3"
+  />
+  <Connect(SectionItem)
+    item={
+      Object {
+        "folderId": 1,
+        "folderTitle": "folderur",
+        "folderUid": "folder-1",
+        "folderUrl": "some/folderUrl/1",
+        "id": 4,
+        "isStarred": false,
+        "tags": Array [
+          "blue",
+          "green",
+        ],
+        "title": "item-4",
+        "type": "",
+        "uid": "id-4",
+        "uri": "",
+        "url": "some/url/4",
+      }
+    }
+    key="4-4"
+  />
+  <Connect(SectionItem)
+    item={
+      Object {
+        "folderId": 1,
+        "folderTitle": "folderur",
+        "folderUid": "folder-1",
+        "folderUrl": "some/folderUrl/1",
+        "id": 5,
+        "isStarred": false,
+        "tags": Array [
+          "blue",
+          "green",
+        ],
+        "title": "item-5",
+        "type": "",
+        "uid": "id-5",
+        "uri": "",
+        "url": "some/url/5",
+      }
+    }
+    key="5-5"
+  />
 </div>
 `;

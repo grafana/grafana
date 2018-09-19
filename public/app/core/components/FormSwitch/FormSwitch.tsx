@@ -19,11 +19,11 @@ export class FormSwitch extends PureComponent<Props, State> {
   };
 
   internalOnChange = event => {
-    this.props.onChange(event);
+    event.stopPropagation();
   };
 
   render() {
-    const { labelClass, switchClass, label, checked } = this.props;
+    const { labelClass, switchClass, label, checked, onChange } = this.props;
     const labelId = `check-${this.state.id}`;
     const labelClassName = `gf-form-label ${labelClass} pointer`;
     const switchClassName = `gf-form-switch ${switchClass}`;
@@ -36,8 +36,8 @@ export class FormSwitch extends PureComponent<Props, State> {
           </label>
         )}
         <div className={switchClassName}>
-          <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
-          <label htmlFor={labelId} data-on="Yes" data-off="No" />
+          <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} onClick={onChange} />
+          <label htmlFor={labelId} />
         </div>
       </div>
     );

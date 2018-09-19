@@ -1,0 +1,155 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="search-results"
+>
+  <div
+    className="search-results-filter-row"
+  >
+    <FormSwitch
+      checked={false}
+      label=""
+      onChange={[Function]}
+      switchClass="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
+    />
+    <div>
+      <div
+        className="search-results-filter-row__filters"
+      >
+        <div
+          style={
+            Object {
+              "alignItems": "center",
+              "display": "flex",
+              "fontSize": "14px",
+            }
+          }
+        >
+          Filter by starred
+          <FormSwitch
+            checked={false}
+            label=""
+            onChange={[Function]}
+            switchClass="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
+          />
+        </div>
+        <div
+          className="gf-form-select-wrapper"
+        >
+          <select
+            className="search-results-filter-row__filters-item gf-form-input"
+            onChange={[Function]}
+            value=""
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Render should render move and delete buttons 1`] = `
+<div
+  className="search-results"
+>
+  <div
+    className="search-results-filter-row"
+  >
+    <FormSwitch
+      checked={false}
+      label=""
+      onChange={[Function]}
+      switchClass="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
+    />
+    <div>
+      <div
+        className="gf-form-button-row"
+      >
+        <button
+          className="btn gf-form-button btn-inverse"
+          disabled={false}
+          onClick={[Function]}
+          type="button"
+        >
+          <i
+            className="fa fa-exchange"
+          />
+            Move
+        </button>
+        <button
+          className="btn gf-form-button btn-danger"
+          disabled={false}
+          onClick={[Function]}
+          type="button"
+        >
+          <i
+            className="fa fa-trash"
+          />
+            Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Render should render tag filter options 1`] = `
+<div
+  className="search-results"
+>
+  <div
+    className="search-results-filter-row"
+  >
+    <FormSwitch
+      checked={false}
+      label=""
+      onChange={[Function]}
+      switchClass="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
+    />
+    <div>
+      <div
+        className="search-results-filter-row__filters"
+      >
+        <div
+          style={
+            Object {
+              "alignItems": "center",
+              "display": "flex",
+              "fontSize": "14px",
+            }
+          }
+        >
+          Filter by starred
+          <FormSwitch
+            checked={false}
+            label=""
+            onChange={[Function]}
+            switchClass="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
+          />
+        </div>
+        <div
+          className="gf-form-select-wrapper"
+        >
+          <select
+            className="search-results-filter-row__filters-item gf-form-input"
+            onChange={[Function]}
+            value=""
+          >
+            <option
+              key="mysql-0"
+            >
+              mysql
+            </option>
+            <option
+              key="nosql-1"
+            >
+              nosql
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

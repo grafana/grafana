@@ -14,6 +14,14 @@ export const getSelectedTagFilter = state => state.manageDashboard.selectedTagFi
 export const getSections = state => state.sections;
 export const getAllChecked = state => state.allChecked;
 export const getTagFilterOptions = state => [{ term: 'Filter By Tag', disabled: true }].concat(state.dashboardTags);
+export const getSelectedDashboards = state => {
+  const dashboards = [];
+  state.sections.map(section => {
+    dashboards.push(section.items.filter(item => item.checked));
+  });
+
+  return dashboards;
+};
 
 export const getCanDelete = state => {
   let numberOfSelectedSections = 0;

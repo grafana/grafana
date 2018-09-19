@@ -1,12 +1,15 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import appEvents from '../../core/app_events';
 import FormSwitch from 'app/core/components/FormSwitch/FormSwitch';
-import { addTagFilter, setSectionsAndItemsSelected, toggleStarredFilter } from './state/actions';
+import { DashboardSectionItem } from '../../types';
+import { addTagFilter, setSectionsAndItemsSelected, toggleStarredFilter, loadSections } from './state/actions';
 import {
   getAllChecked,
   getCanDelete,
   getCanMove,
   getFilterOnStarred,
+  getSelectedDashboards,
   getSelectedTagFilter,
   getTagFilterOptions,
 } from './state/selectors';
@@ -14,7 +17,6 @@ import {
 export interface Props {
   canMove: boolean;
   canDelete: boolean;
-  selectedStarredFilter: string;
   selectedTagFilter: string;
   setSectionsAndItemsSelected: typeof setSectionsAndItemsSelected;
   allChecked: boolean;
@@ -22,6 +24,8 @@ export interface Props {
   addTagFilter: typeof addTagFilter;
   toggleStarredFilter: typeof toggleStarredFilter;
   filterOnStarred: boolean;
+  selectedDashboards: DashboardSectionItem[];
+  loadSections: typeof loadSections;
 }
 
 export class SectionActions extends PureComponent<Props> {
@@ -40,7 +44,23 @@ export class SectionActions extends PureComponent<Props> {
     this.props.addTagFilter(event.target.value);
   };
 
-  moveTo = () => {};
+  moveTo = () => {
+    const { selectedDashboards, loadSections } = this.props;
+
+    const template =
+      '<move-to-folder-modal dismiss="dismiss()" ' +
+      'dashboards="model.dashboards" after-save="model.afterSave()">' +
+      '</move-to-folder-modal>`';
+
+    appEvents.emit('show-modal', {
+      templateHtml: template,
+      modalClass: 'modal--narrow',
+      model: {
+        dashboards: selectedDashboards,
+        afterSave: loadSections,
+      },
+    });
+  };
 
   delete = () => {};
 
@@ -116,6 +136,7 @@ function mapStateToProps(state) {
     selectedTagFilter: getSelectedTagFilter(state.manageDashboards),
     tagFilterOptions: getTagFilterOptions(state.sections),
     filterOnStarred: getFilterOnStarred(state.manageDashboards),
+    selectedDashboards: getSelectedDashboards(state.sections),
   };
 }
 
@@ -123,6 +144,7 @@ const mapDispatchToProps = {
   addTagFilter,
   toggleStarredFilter,
   setSectionsAndItemsSelected,
+  loadSections,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(SectionActions);

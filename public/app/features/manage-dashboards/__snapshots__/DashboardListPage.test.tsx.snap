@@ -41,6 +41,7 @@ exports[`Render should render sections 1`] = `
       className="dashboard-list"
     >
       <Connect(ActionBar) />
+      <Connect(SectionActions) />
       <div
         className="search-results-container"
       >
@@ -168,6 +169,7 @@ exports[`Render should show no matching sections to filtering 1`] = `
           No dashboards matching your query were found.
         </em>
       </div>
+      <Connect(SectionActions) />
       <div
         className="search-results-container"
       >

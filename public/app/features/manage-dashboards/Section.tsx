@@ -23,7 +23,9 @@ export class Section extends PureComponent<Props> {
     }
   };
 
-  toggleSectionSelected = () => {
+  toggleSectionSelected = event => {
+    event.stopPropagation();
+
     const { section } = this.props;
 
     this.props.setSectionSelected(section.id);
@@ -40,7 +42,7 @@ export class Section extends PureComponent<Props> {
         >
           <FormSwitch
             label=""
-            onChange={this.toggleSectionSelected}
+            onChange={event => this.toggleSectionSelected(event)}
             checked={section.checked}
             switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
           />

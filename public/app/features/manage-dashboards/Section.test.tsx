@@ -8,6 +8,7 @@ const setup = (propOverrides?: object) => {
     section: getMockSection(),
     loadSectionItems: jest.fn(),
     collapseSection: jest.fn(),
+    setSectionSelected: jest.fn(),
   };
 
   Object.assign(props, propOverrides);

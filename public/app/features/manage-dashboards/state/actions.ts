@@ -62,6 +62,7 @@ interface SetSectionItemSelectedAction {
   payload: {
     folderId: number;
     itemId: number;
+    state: boolean;
   };
 }
 
@@ -153,11 +154,12 @@ export const setSectionSelected = (folderId: number): SetSectionSelectedAction =
   payload: folderId,
 });
 
-export const setSectionItemSelected = (folderId: number, itemId: number): SetSectionItemSelectedAction => ({
+export const setSectionItemSelected = (item: DashboardSectionItem): SetSectionItemSelectedAction => ({
   type: ActionTypes.SetSectionItemSelected,
   payload: {
-    folderId,
-    itemId,
+    folderId: item.folderId,
+    itemId: item.id,
+    state: !item.checked,
   },
 });
 

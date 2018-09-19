@@ -10,7 +10,7 @@ const setup = (propOverrides?: object) => {
     hasFilters: false,
     sections: [] as DashboardSection[],
     folderId: 0,
-    loadDashboardListItems: jest.fn(),
+    loadSections: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
