@@ -40,8 +40,8 @@ public/css/*.min.css
 
 conf/custom.ini
 fig.yml
-docker-compose.yml
-docker-compose.yaml
+devenv/docker-compose.yml
+devenv/docker-compose.yaml
 /conf/provisioning/**/custom.yaml
 /conf/provisioning/**/dev.yaml
 /conf/ldap_dev.toml
