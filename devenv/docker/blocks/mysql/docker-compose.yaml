@@ -1,0 +1,18 @@
+  mysql:
+    image: mysql:5.6
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: grafana
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all]
+
+  fake-mysql-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: mysql
+      FD_PORT: 3306
+
