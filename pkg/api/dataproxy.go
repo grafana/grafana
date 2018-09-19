@@ -55,10 +55,11 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 
 	proxyPath := c.Params("*")
 
-	// Check for a trailing slash
+	// Check for a trailing slash, and pass it to the proxy
+	// macaron does not include trailing slashes when resolving a wildcard path
 	if len(proxyPath) > 1 {
 		path := c.Req.URL.Path
-		if path[len(path)-1] == '/' && path[len(path)-2] != '/' {
+		if path[len(path)-1] == '/' && proxyPath[len(proxyPath)-1] != '/' {
 			proxyPath += "/"
 		}
 	}
