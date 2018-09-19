@@ -28,6 +28,7 @@ describe('addLabelToQuery()', () => {
     expect(addLabelToQuery('foo{instance="my-host.com:9100"}', 'bar', 'baz')).toBe(
       'foo{bar="baz",instance="my-host.com:9100"}'
     );
+    expect(addLabelToQuery('foo:metric:rate1m', 'bar', 'baz')).toBe('foo:metric:rate1m{bar="baz"}');
     expect(addLabelToQuery('foo{list="a,b,c"}', 'bar', 'baz')).toBe('foo{bar="baz",list="a,b,c"}');
   });
 
