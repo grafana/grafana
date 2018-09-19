@@ -1,6 +1,6 @@
   graphite:
     build:
-      context: blocks/graphite1
+      context: docker/blocks/graphite1
       args:
         version: master
     ports:

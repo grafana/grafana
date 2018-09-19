@@ -1,5 +1,5 @@
   collectd:
-    build: blocks/collectd
+    build: docker/blocks/collectd
     environment:
       HOST_NAME: myserver
       GRAPHITE_HOST: graphite

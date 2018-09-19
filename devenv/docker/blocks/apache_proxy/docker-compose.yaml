@@ -5,5 +5,5 @@
 # root_url = %(protocol)s://%(domain)s:10081/grafana/
 
   apacheproxy:
-    build: blocks/apache_proxy
+    build: docker/blocks/apache_proxy
     network_mode: host

@@ -1,6 +1,6 @@
   mssql:
     build:
-      context: blocks/mssql/build
+      context: docker/blocks/mssql/build
     environment:
       ACCEPT_EULA: Y
       MSSQL_SA_PASSWORD: Password!

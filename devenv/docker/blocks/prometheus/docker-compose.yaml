@@ -1,5 +1,5 @@
   prometheus:
-    build: blocks/prometheus
+    build: docker/blocks/prometheus
     network_mode: host
     ports:
       - "9090:9090"
@@ -25,7 +25,7 @@
       - "9093:9093"
 
   prometheus-random-data:
-    build: blocks/prometheus_random_data
+    build: docker/blocks/prometheus_random_data
     network_mode: host
     ports:
       - "8081:8080"

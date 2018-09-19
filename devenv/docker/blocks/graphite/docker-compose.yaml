@@ -1,5 +1,5 @@
   graphite09:
-    build: blocks/graphite
+    build: docker/blocks/graphite
     ports:
       - "8080:80"
       - "2003:2003"
