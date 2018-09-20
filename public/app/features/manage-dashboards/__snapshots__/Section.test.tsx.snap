@@ -9,12 +9,13 @@ exports[`Render should render component 1`] = `
     onClick={[Function]}
   >
     <FormSwitch
+      checked={false}
       label=""
       onChange={[Function]}
       switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
     />
     <i
-      className="search-section__header__icon cool-icon"
+      className="search-section__header__icon fa fa-folder"
     />
     <span
       className="search-section__header__text"
@@ -45,12 +46,13 @@ exports[`Render should render items 1`] = `
     onClick={[Function]}
   >
     <FormSwitch
+      checked={false}
       label=""
       onChange={[Function]}
       switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
     />
     <i
-      className="search-section__header__icon cool-icon"
+      className="search-section__header__icon fa fa-folder-open"
     />
     <span
       className="search-section__header__text"
@@ -72,6 +74,7 @@ exports[`Render should render items 1`] = `
   <Connect(SectionItem)
     item={
       Object {
+        "checked": false,
         "folderId": 1,
         "folderTitle": "folderur",
         "folderUid": "folder-1",
@@ -94,6 +97,7 @@ exports[`Render should render items 1`] = `
   <Connect(SectionItem)
     item={
       Object {
+        "checked": false,
         "folderId": 1,
         "folderTitle": "folderur",
         "folderUid": "folder-1",
@@ -116,6 +120,7 @@ exports[`Render should render items 1`] = `
   <Connect(SectionItem)
     item={
       Object {
+        "checked": false,
         "folderId": 1,
         "folderTitle": "folderur",
         "folderUid": "folder-1",
@@ -138,6 +143,7 @@ exports[`Render should render items 1`] = `
   <Connect(SectionItem)
     item={
       Object {
+        "checked": false,
         "folderId": 1,
         "folderTitle": "folderur",
         "folderUid": "folder-1",
@@ -160,6 +166,7 @@ exports[`Render should render items 1`] = `
   <Connect(SectionItem)
     item={
       Object {
+        "checked": false,
         "folderId": 1,
         "folderTitle": "folderur",
         "folderUid": "folder-1",
@@ -182,6 +189,7 @@ exports[`Render should render items 1`] = `
   <Connect(SectionItem)
     item={
       Object {
+        "checked": false,
         "folderId": 1,
         "folderTitle": "folderur",
         "folderUid": "folder-1",

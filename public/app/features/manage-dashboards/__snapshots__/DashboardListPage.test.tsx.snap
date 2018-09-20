@@ -49,7 +49,9 @@ exports[`Render should render sections 1`] = `
           key="0"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 1,
               "items": Array [],
@@ -64,7 +66,9 @@ exports[`Render should render sections 1`] = `
           key="1"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 2,
               "items": Array [],
@@ -79,7 +83,9 @@ exports[`Render should render sections 1`] = `
           key="2"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 3,
               "items": Array [],
@@ -94,7 +100,9 @@ exports[`Render should render sections 1`] = `
           key="3"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 4,
               "items": Array [],
@@ -109,7 +117,9 @@ exports[`Render should render sections 1`] = `
           key="4"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 5,
               "items": Array [],
@@ -177,7 +187,9 @@ exports[`Render should show no matching sections to filtering 1`] = `
           key="0"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 1,
               "items": Array [],
@@ -192,7 +204,9 @@ exports[`Render should show no matching sections to filtering 1`] = `
           key="1"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 2,
               "items": Array [],
@@ -207,7 +221,9 @@ exports[`Render should show no matching sections to filtering 1`] = `
           key="2"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 3,
               "items": Array [],
@@ -222,7 +238,9 @@ exports[`Render should show no matching sections to filtering 1`] = `
           key="3"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 4,
               "items": Array [],
@@ -237,7 +255,9 @@ exports[`Render should show no matching sections to filtering 1`] = `
           key="4"
           section={
             Object {
+              "checked": false,
               "expanded": false,
+              "hideHeader": false,
               "icon": "cool-icon",
               "id": 5,
               "items": Array [],

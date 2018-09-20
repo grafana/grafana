@@ -17,7 +17,11 @@ export const getTagFilterOptions = state => [{ term: 'Filter By Tag', disabled: 
 export const getSelectedDashboards = state => {
   const dashboards = [];
   state.sections.map(section => {
-    dashboards.push(section.items.filter(item => item.checked));
+    section.items.filter(item => {
+      if (item.checked) {
+        dashboards.push(item);
+      }
+    });
   });
 
   return dashboards;
@@ -25,14 +29,14 @@ export const getSelectedDashboards = state => {
 
 export const getCanDelete = state => {
   let numberOfSelectedSections = 0;
-  state.sections.sections.map(section => {
+  state.sections.map(section => {
     if (section.checked) {
       numberOfSelectedSections++;
     }
   });
 
   let numberOfSelectedSectionItems = 0;
-  state.sections.sections.map(section => {
+  state.sections.map(section => {
     section.items.map(item => {
       if (item.checked) {
         numberOfSelectedSectionItems++;
@@ -44,7 +48,7 @@ export const getCanDelete = state => {
 };
 export const getCanMove = state => {
   let numberOfSelectedSectionItems = 0;
-  state.sections.sections.map(section => {
+  state.sections.map(section => {
     section.items.map(item => {
       if (item.checked) {
         numberOfSelectedSectionItems++;

@@ -131,8 +131,8 @@ export class SectionActions extends PureComponent<Props> {
 function mapStateToProps(state) {
   return {
     allChecked: getAllChecked(state.sections),
-    canDelete: getCanDelete(state),
-    canMove: getCanMove(state),
+    canDelete: getCanDelete(state.sections),
+    canMove: getCanMove(state.sections),
     selectedTagFilter: getSelectedTagFilter(state.manageDashboards),
     tagFilterOptions: getTagFilterOptions(state.sections),
     filterOnStarred: getFilterOnStarred(state.manageDashboards),

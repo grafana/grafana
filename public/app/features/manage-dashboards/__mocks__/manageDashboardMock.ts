@@ -13,10 +13,20 @@ export const getMockSections = (amount: number): DashboardSection[] => {
       url: `some/url/${i}`,
       icon: 'cool-icon',
       score: i,
+      hideHeader: false,
+      checked: false,
     });
   }
 
   return sections;
+};
+
+export const getMockSectionsWithItems = (amount: number): DashboardSection[] => {
+  return getMockSections(amount).map(section => {
+    section.items = getMockSectionItems(amount);
+
+    return section;
+  });
 };
 
 export const getMockSection = (): DashboardSection => {
@@ -29,6 +39,8 @@ export const getMockSection = (): DashboardSection => {
     url: 'some/url/1',
     icon: 'cool-icon',
     score: 1,
+    hideHeader: false,
+    checked: false,
   };
 };
 
@@ -49,6 +61,7 @@ export const getMockSectionItems = (amount: number): DashboardSectionItem[] => {
       folderUid: 'folder-1',
       folderTitle: 'folderur',
       folderUrl: 'some/folderUrl/1',
+      checked: false,
     });
   }
 
