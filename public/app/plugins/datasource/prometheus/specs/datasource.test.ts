@@ -247,6 +247,12 @@ describe('PrometheusDatasource', () => {
       });
     });
 
+    it('returns no rate hint for a monotonously increasing series that already has a rate', () => {
+      const series = [{ datapoints: [[23, 1000], [24, 1001]], query: 'rate(metric[1m])', responseIndex: 0 }];
+      const hints = determineQueryHints(series);
+      expect(hints).toEqual([null]);
+    });
+
     it('returns a rate hint w/o action for a complex monotonously increasing series', () => {
       const series = [{ datapoints: [[23, 1000], [24, 1001]], query: 'sum(metric)', responseIndex: 0 }];
       const hints = determineQueryHints(series);
