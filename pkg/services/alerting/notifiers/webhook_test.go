@@ -22,7 +22,7 @@ func TestWebhookNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewWebHookNotifier(model)
+				_, err := NewTwilioNotifier(model)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -39,7 +39,7 @@ func TestWebhookNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewWebHookNotifier(model)
+				not, err := NewTwilioNotifier(model)
 				webhookNotifier := not.(*WebhookNotifier)
 
 				So(err, ShouldBeNil)
