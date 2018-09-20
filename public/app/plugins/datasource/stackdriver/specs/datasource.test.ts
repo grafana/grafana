@@ -1,6 +1,7 @@
 import StackdriverDataSource from '../datasource';
 import { metricDescriptors } from './testData';
 import moment from 'moment';
+import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('StackdriverDataSource', () => {
   const instanceSettings = {
@@ -8,6 +9,8 @@ describe('StackdriverDataSource', () => {
       projectName: 'testproject',
     },
   };
+  const templateSrv = new TemplateSrvStub();
+
   describe('when performing testDataSource', () => {
     describe('and call to stackdriver api succeeds', () => {
       let ds;
@@ -18,7 +21,7 @@ describe('StackdriverDataSource', () => {
             return Promise.resolve({ status: 200 });
           },
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
         result = await ds.testDatasource();
       });
       it('should return successfully', () => {
@@ -33,7 +36,7 @@ describe('StackdriverDataSource', () => {
         const backendSrv = {
           datasourceRequest: async () => Promise.resolve({ status: 200, data: metricDescriptors }),
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
         result = await ds.testDatasource();
       });
       it('should return status success', () => {
@@ -52,7 +55,7 @@ describe('StackdriverDataSource', () => {
               data: { error: { code: 400, message: 'Field interval.endTime had an invalid value' } },
             }),
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
         result = await ds.testDatasource();
       });
 
@@ -88,7 +91,7 @@ describe('StackdriverDataSource', () => {
             return Promise.resolve({ status: 200, data: response });
           },
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
         result = await ds.getProjects();
       });
 
@@ -137,7 +140,7 @@ describe('StackdriverDataSource', () => {
         const backendSrv = {
           datasourceRequest: async () => Promise.resolve({ status: 200, data: response }),
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
       });
 
       it('should return a list of datapoints', () => {
@@ -171,13 +174,48 @@ describe('StackdriverDataSource', () => {
           });
         },
       };
-      ds = new StackdriverDataSource(instanceSettings, backendSrv);
+      ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
       result = await ds.getMetricTypes();
     });
     it('should return successfully', () => {
       expect(result.length).toBe(2);
       expect(result[0].id).toBe('test metric type 1');
       expect(result[0].name).toBe('test metric name 1');
+    });
+  });
+
+  describe('when interpolating a template variable for group bys', () => {
+    let interpolated;
+
+    describe('and is single value variable', () => {
+      beforeEach(() => {
+        templateSrv.data = {
+          test: 'groupby1',
+        };
+        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv);
+        interpolated = ds.interpolateGroupBys(['[[test]]'], {});
+      });
+
+      it('should replace the variable with the value', () => {
+        expect(interpolated.length).toBe(1);
+        expect(interpolated[0]).toBe('groupby1');
+      });
+    });
+
+    describe('and is multi value variable', () => {
+      beforeEach(() => {
+        templateSrv.data = {
+          test: 'groupby1,groupby2',
+        };
+        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv);
+        interpolated = ds.interpolateGroupBys(['[[test]]'], {});
+      });
+
+      it('should replace the variable with an array of group bys', () => {
+        expect(interpolated.length).toBe(2);
+        expect(interpolated[0]).toBe('groupby1');
+        expect(interpolated[1]).toBe('groupby2');
+      });
     });
   });
 });

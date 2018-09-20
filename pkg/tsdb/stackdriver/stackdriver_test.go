@@ -254,6 +254,24 @@ func TestStackdriver(t *testing.T) {
 					So(res.Series[2].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1 us-east1-b")
 				})
 			})
+
+			Convey("when data from query with no aggregation and alias by", func() {
+				data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 3)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &StackdriverQuery{AliasBy: "{{metric.label.instance_name}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+				err = executor.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+
+				Convey("Should use alias by formatting and only show instance name", func() {
+					So(len(res.Series), ShouldEqual, 3)
+					So(res.Series[0].Name, ShouldEqual, "collector-asia-east-1")
+					So(res.Series[1].Name, ShouldEqual, "collector-europe-west-1")
+					So(res.Series[2].Name, ShouldEqual, "collector-us-east-1")
+				})
+			})
 		})
 	})
 }

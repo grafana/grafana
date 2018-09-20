@@ -22,12 +22,12 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     refId: string;
     aggregation: {
       crossSeriesReducer: string;
-      secondaryCrossSeriesReducer: string;
       alignmentPeriod: string;
       perSeriesAligner: string;
       groupBys: string[];
     };
     filters: string[];
+    aliasBy: string;
   };
   defaultDropdownValue = 'select metric';
   defaultFilterValue = 'select value';
@@ -44,13 +44,13 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     metricType: this.defaultDropdownValue,
     aggregation: {
       crossSeriesReducer: 'REDUCE_MEAN',
-      secondaryCrossSeriesReducer: 'REDUCE_NONE',
       alignmentPeriod: 'auto',
       perSeriesAligner: 'ALIGN_MEAN',
       groupBys: [],
     },
     filters: [],
     showAggregationOptions: false,
+    aliasBy: '',
   };
 
   groupBySegments: any[];
@@ -64,7 +64,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   resourceLabels: { [key: string]: string[] };
 
   /** @ngInject */
-  constructor($scope, $injector, private uiSegmentSrv, private timeSrv) {
+  constructor($scope, $injector, private uiSegmentSrv, private timeSrv, private templateSrv) {
     super($scope, $injector);
     _.defaultsDeep(this.target, this.defaults);
 
@@ -154,7 +154,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
             {
               refId: this.target.refId,
               datasourceId: this.datasource.id,
-              metricType: this.target.metricType,
+              metricType: this.templateSrv.replace(this.target.metricType),
               aggregation: {
                 crossSeriesReducer: 'REDUCE_NONE',
               },
@@ -261,7 +261,11 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     }
 
     if (segment.type === 'value') {
-      const filterKey = this.filterSegments[index - 2].value;
+      const filterKey = this.templateSrv.replace(this.filterSegments[index - 2].value);
+      if (!filterKey || !this.metricLabels || Object.keys(this.metricLabels).length === 0) {
+        return [];
+      }
+
       const shortKey = filterKey.substring(filterKey.indexOf('.label.') + 7);
 
       if (filterKey.startsWith('metric.label.') && this.metricLabels.hasOwnProperty(shortKey)) {

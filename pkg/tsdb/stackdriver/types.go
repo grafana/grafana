@@ -10,6 +10,7 @@ type StackdriverQuery struct {
 	Params   url.Values
 	RefID    string
 	GroupBys []string
+	AliasBy  string
 }
 
 type StackdriverResponse struct {

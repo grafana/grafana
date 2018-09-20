@@ -1,4 +1,5 @@
 import { StackdriverQueryCtrl } from '../query_ctrl';
+import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('StackdriverQueryCtrl', () => {
   let ctrl;
@@ -388,7 +389,7 @@ function createCtrlWithFakes(existingFilters?: string[]) {
       return { type: 'condition', value: val };
     },
   };
-  return new StackdriverQueryCtrl(null, null, fakeSegmentServer, null);
+  return new StackdriverQueryCtrl(null, null, fakeSegmentServer, null, new TemplateSrvStub());
 }
 
 function createTarget(existingFilters?: string[]) {
@@ -401,11 +402,11 @@ function createTarget(existingFilters?: string[]) {
     refId: 'A',
     aggregation: {
       crossSeriesReducer: '',
-      secondaryCrossSeriesReducer: '',
       alignmentPeriod: '',
       perSeriesAligner: '',
       groupBys: [],
     },
     filters: existingFilters || [],
+    aliasBy: '',
   };
 }

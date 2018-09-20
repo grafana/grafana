@@ -5,7 +5,7 @@ export default class StackdriverDatasource {
   baseUrl: string;
   projectName: string;
 
-  constructor(instanceSettings, private backendSrv) {
+  constructor(instanceSettings, private backendSrv, private templateSrv) {
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
     this.doRequest = this.doRequest;
@@ -22,21 +22,22 @@ export default class StackdriverDatasource {
         if (!t.hasOwnProperty('aggregation')) {
           t.aggregation = {
             crossSeriesReducer: 'REDUCE_MEAN',
-            secondaryCrossSeriesReducer: 'REDUCE_NONE',
             groupBys: [],
           };
         }
         return {
           refId: t.refId,
           datasourceId: this.id,
-          metricType: t.metricType,
-          primaryAggregation: t.aggregation.crossSeriesReducer,
-          secondaryAggregation: t.aggregation.secondaryCrossSeriesReducer,
-          perSeriesAligner: t.aggregation.perSeriesAligner,
-          alignmentPeriod: t.aggregation.alignmentPeriod,
-          groupBys: t.aggregation.groupBys,
+          metricType: this.templateSrv.replace(t.metricType, options.scopedVars || {}),
+          primaryAggregation: this.templateSrv.replace(t.aggregation.crossSeriesReducer, options.scopedVars || {}),
+          perSeriesAligner: this.templateSrv.replace(t.aggregation.perSeriesAligner, options.scopedVars || {}),
+          alignmentPeriod: this.templateSrv.replace(t.aggregation.alignmentPeriod, options.scopedVars || {}),
+          groupBys: this.interpolateGroupBys(t.aggregation.groupBys, options.scopedVars),
           view: t.view || 'FULL',
-          filters: t.filters,
+          filters: (t.filters || []).map(f => {
+            return this.templateSrv.replace(f, options.scopedVars || {});
+          }),
+          aliasBy: this.templateSrv.replace(t.aliasBy, options.scopedVars || {}),
         };
       });
 
@@ -50,6 +51,19 @@ export default class StackdriverDatasource {
       },
     });
     return data;
+  }
+
+  interpolateGroupBys(groupBys: string[], scopedVars): string[] {
+    let interpolatedGroupBys = [];
+    (groupBys || []).forEach(gb => {
+      const interpolated = this.templateSrv.replace(gb, scopedVars || {}, 'csv').split(',');
+      if (Array.isArray(interpolated)) {
+        interpolatedGroupBys = interpolatedGroupBys.concat(interpolated);
+      } else {
+        interpolatedGroupBys.push(interpolated);
+      }
+    });
+    return interpolatedGroupBys;
   }
 
   async query(options) {
