@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { DashboardSection, DashboardSectionItem, StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 import { getSearchSrv } from '../../../core/services/search_srv';
@@ -7,7 +8,6 @@ import { getBackendSrv } from '../../../core/services/backend_srv';
 export enum ActionTypes {
   LoadSections = 'SECTIONS_LOADED',
   SetDashboardSearchQuery = 'SET_DASHBOARD_SEARCH_QUERY',
-  RemoveStarredFilter = 'REMOVE_STARRED_FILTER',
   RemoveTag = 'REMOVE_TAG',
   ClearFilters = 'CLEAR_FILTERS',
   LoadSectionItems = 'LOAD_SECTIONS_ITEMS',
@@ -193,7 +193,7 @@ export function loadSectionItems(sectionId: number): ThunkResult<void> {
 export function updateSearchQuery(query: string): ThunkResult<void> {
   return async dispatch => {
     dispatch(setDashboardSearchQuery(query));
-    dispatch(loadSections());
+    dispatch(debouncedLoadSections);
   };
 }
 
@@ -224,3 +224,5 @@ export function clearFilters(): ThunkResult<void> {
     dispatch(loadSections());
   };
 }
+
+const debouncedLoadSections = _.debounce(loadSections(), 500);
