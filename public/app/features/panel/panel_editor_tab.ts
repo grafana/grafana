@@ -13,9 +13,8 @@ function panelEditorTab(dynamicDirectiveSrv) {
     },
     directive: scope => {
       const pluginId = scope.ctrl.pluginId;
-      const tabName = scope.editorTab.title.toLowerCase();
+      const tabName = scope.editorTab.title.toLowerCase().replace(' ', '-');
 
-      console.log('panelEditorTab', pluginId, tabName);
       if (directiveCache[pluginId]) {
         if (directiveCache[pluginId][tabName]) {
           return directiveCache[pluginId][tabName];

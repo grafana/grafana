@@ -22,18 +22,42 @@ export class VizTabCtrl {
 }
 
 const template = `
-<div class="viz-editor">
-  <div class="viz-editor-col1">
-    <viz-type-picker currentType="ctrl.panelCtrl.panel.type" onTypeChanged="ctrl.onTypeChanged"></viz-type-picker>
-  </div>
-  <div class="viz-editor-col2">
-    <div ng-repeat="tab in ctrl.panelCtrl.optionTabs" >
-      <h5 class="page-heading">{{tab.title}}</h5>
-      <panel-editor-tab editor-tab="tab" ctrl="ctrl.panelCtrl" index="$index"></panel-editor-tab>
-    </div>
-  </div>
-</div>
-`;
+<div class="gf-form-group ">
+  <div class="gf-form-query">
+    <div class="gf-form">
+      <label class="gf-form-label">
+        <img src="public/app/plugins/panel/graph/img/icn-graph-panel.svg" style="width: 16px; height: 16px" />
+        Graph
+        <i class="fa fa-caret-down" />
+      </label>
+		</div>
+
+		<div class="gf-form gf-form--grow">
+			<label class="gf-form-label gf-form-label--grow"></label>
+		</div>
+	</div>
+
+	<br />
+	<br />
+
+  <div class="query-editor-rows gf-form-group">
+	  <div ng-repeat="tab in ctrl.panelCtrl.optionTabs">
+	    <div class="gf-form-query">
+		    <div class="gf-form gf-form-query-letter-cell">
+			    <label class="gf-form-label">
+				    <span class="gf-form-query-letter-cell-carret">
+					    <i class="fa fa-caret-down"></i>
+				    </span>
+				    <span class="gf-form-query-letter-cell-letter">{{tab.title}}</span>
+          </label>
+			  </div>
+        <div class="gf-form gf-form--grow">
+			    <label class="gf-form-label gf-form-label--grow"></label>
+		    </div>
+			</div>
+		</div>
+	</div>
+</div>`;
 
 /** @ngInject */
 export function vizTabDirective() {
@@ -46,5 +70,4 @@ export function vizTabDirective() {
 }
 
 react2AngularDirective('vizTypePicker', VizTypePicker, ['currentType', ['onTypeChanged', { watchDepth: 'reference' }]]);
-
 coreModule.directive('vizTab', vizTabDirective);

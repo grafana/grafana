@@ -56,7 +56,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
+    // this.addCommonTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 
   private onMetricsPanelRefresh() {
