@@ -43,6 +43,22 @@ export default function BracesPlugin() {
           return true;
         }
 
+        case 'Backspace': {
+          const text = value.anchorText.text;
+          const offset = value.anchorOffset;
+          const previousChar = text[offset - 1];
+          const nextChar = text[offset];
+          if (BRACES[previousChar] && BRACES[previousChar] === nextChar) {
+            event.preventDefault();
+            // Remove closing brace if directly following
+            change
+              .deleteBackward()
+              .deleteForward()
+              .focus();
+            return true;
+          }
+        }
+
         default: {
           break;
         }
