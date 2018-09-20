@@ -46,7 +46,7 @@ export function determineQueryHints(series: any[], datasource?: any): any[] {
 
     // Check for monotony
     const datapoints: number[][] = s.datapoints;
-    if (datapoints.length > 1) {
+    if (query.indexOf('rate(') === -1 && datapoints.length > 1) {
       let increasing = false;
       const monotonic = datapoints.filter(dp => dp[0] !== null).every((dp, index) => {
         if (index === 0) {
