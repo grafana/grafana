@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import classNames from 'classnames/bind';
 import { DashboardSection } from 'app/types';
 import FormSwitch from 'app/core/components/FormSwitch/FormSwitch';
 import SectionItem from './SectionItem';
@@ -34,6 +35,12 @@ export class Section extends PureComponent<Props> {
   render() {
     const { section } = this.props;
 
+    const folderStyle = classNames({
+      'search-section__header__icon': true,
+      'fa fa-folder-open': section.expanded,
+      'fa fa-folder': !section.expanded,
+    });
+
     return (
       <div className="search-section">
         <div
@@ -46,7 +53,7 @@ export class Section extends PureComponent<Props> {
             checked={section.checked}
             switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
           />
-          <i className={`search-section__header__icon ${section.icon}`} />
+          <i className={folderStyle} />
           <span className="search-section__header__text">{section.title}</span>
           {section.url && (
             <a href={section.url} className="search-section__header__link">
