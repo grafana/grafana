@@ -1,5 +1,3 @@
-import './panellinks/module';
-import './dashlinks/module';
 import './annotations/all';
 import './templating/all';
 import './plugins/all';

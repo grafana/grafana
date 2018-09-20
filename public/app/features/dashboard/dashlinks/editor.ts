@@ -66,7 +66,7 @@ function dashLinksEditor() {
   return {
     restrict: 'E',
     controller: DashLinkEditorCtrl,
-    templateUrl: 'public/app/features/dashlinks/editor.html',
+    templateUrl: 'public/app/features/dashboard/dashlinks/editor.html',
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
