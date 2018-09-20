@@ -203,3 +203,8 @@ ignored = [
 [[constraint]]
   name = "github.com/denisenkom/go-mssqldb"
   revision = "270bc3860bb94dd3a3ffd047377d746c5e276726"
+
+
+[[constraint]]
+  name = "github.com/sfreiberg/gotwilio"
+  revision = "f446a6ddc88051bf1d4c1f950e8691c7f6d6364d"
