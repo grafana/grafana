@@ -14,7 +14,7 @@ export class PrefsControlCtrl {
   ];
   themes: any = [{ value: '', text: 'Default' }, { value: 'dark', text: 'Dark' }, { value: 'light', text: 'Light' }];
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private backendSrv, private $location) {}
 
   $onInit() {
@@ -29,7 +29,7 @@ export class PrefsControlCtrl {
       return;
     }
 
-    var cmd = {
+    const cmd = {
       theme: this.prefs.theme,
       timezone: this.prefs.timezone,
       homeDashboardId: this.prefs.homeDashboardId,
@@ -41,7 +41,7 @@ export class PrefsControlCtrl {
   }
 }
 
-var template = `
+const template = `
 <form name="ctrl.prefsForm" class="section gf-form-group">
   <h3 class="page-heading">Preferences</h3>
 

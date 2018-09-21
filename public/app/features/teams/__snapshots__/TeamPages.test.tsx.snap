@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+</div>
+`;
+
+exports[`Render should render group sync page 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <Connect(TeamGroupSync) />
+  </div>
+</div>
+`;
+
+exports[`Render should render member page if team not empty 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <Connect(TeamMembers)
+      syncEnabled={true}
+    />
+  </div>
+</div>
+`;
+
+exports[`Render should render settings page 1`] = `
+<div>
+  <PageHeader
+    model={Object {}}
+  />
+  <div
+    className="page-container page-body"
+  >
+    <Connect(TeamSettings) />
+  </div>
+</div>
+`;

@@ -71,6 +71,7 @@
     .typeahead-item-hint {
       font-size: $font-size-xs;
       color: $text-color;
+      white-space: normal;
     }
   }
 }

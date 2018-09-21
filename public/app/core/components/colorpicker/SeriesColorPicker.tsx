@@ -2,13 +2,13 @@ import React from 'react';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 
-export interface IProps {
+export interface Props {
   series: any;
   onColorChange: (color: string) => void;
   onToggleAxis: () => void;
 }
 
-export class SeriesColorPicker extends React.Component<IProps, any> {
+export class SeriesColorPicker extends React.Component<Props, any> {
   constructor(props) {
     super(props);
     this.onColorChange = this.onColorChange.bind(this);

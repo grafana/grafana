@@ -120,6 +120,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Put("/", bind(m.UpdateUserCommand{}), Wrap(UpdateSignedInUser))
 			userRoute.Post("/using/:id", Wrap(UserSetUsingOrg))
 			userRoute.Get("/orgs", Wrap(GetSignedInUserOrgList))
+			userRoute.Get("/teams", Wrap(GetSignedInUserTeamList))
 
 			userRoute.Post("/stars/dashboard/:id", Wrap(StarDashboard))
 			userRoute.Delete("/stars/dashboard/:id", Wrap(UnstarDashboard))
@@ -319,7 +320,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/search/", Search)
 
 		// metrics
-		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), Wrap(QueryMetrics))
+		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), Wrap(hs.QueryMetrics))
 		apiRoute.Get("/tsdb/testdata/scenarios", Wrap(GetTestDataScenarios))
 		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, Wrap(GenerateSQLTestData))
 		apiRoute.Get("/tsdb/testdata/random-walk", Wrap(GetTestDataRandomWalk))

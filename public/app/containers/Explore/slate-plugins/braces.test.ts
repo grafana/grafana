@@ -44,4 +44,31 @@ describe('braces', () => {
     handler(event, change);
     expect(Plain.serialize(change.value)).toEqual('(foo) (bar)() ugh');
   });
+
+  it('adds closing braces outside a selector', () => {
+    const change = Plain.deserialize('sumrate(metric{namespace="dev", cluster="c1"}[2m])').change();
+    let event;
+    change.move(3);
+    event = new window.KeyboardEvent('keydown', { key: '(' });
+    handler(event, change);
+    expect(Plain.serialize(change.value)).toEqual('sum(rate(metric{namespace="dev", cluster="c1"}[2m]))');
+  });
+
+  it('removes closing brace when opening brace is removed', () => {
+    const change = Plain.deserialize('time()').change();
+    let event;
+    change.move(5);
+    event = new window.KeyboardEvent('keydown', { key: 'Backspace' });
+    handler(event, change);
+    expect(Plain.serialize(change.value)).toEqual('time');
+  });
+
+  it('keeps closing brace when opening brace is removed and inner values exist', () => {
+    const change = Plain.deserialize('time(value)').change();
+    let event;
+    change.move(5);
+    event = new window.KeyboardEvent('keydown', { key: 'Backspace' });
+    const handled = handler(event, change);
+    expect(handled).toBeFalsy();
+  });
 });

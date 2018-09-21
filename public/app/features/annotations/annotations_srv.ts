@@ -25,7 +25,7 @@ export class AnnotationsSrv {
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        var annotations = _.flattenDeep(results[0]);
+        let annotations = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
@@ -40,7 +40,7 @@ export class AnnotationsSrv {
         annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
-        var alertState = _.find(results[1], { panelId: options.panel.id });
+        const alertState = _.find(results[1], { panelId: options.panel.id });
 
         return {
           annotations: annotations,
@@ -82,16 +82,16 @@ export class AnnotationsSrv {
   }
 
   getGlobalAnnotations(options) {
-    var dashboard = options.dashboard;
+    const dashboard = options.dashboard;
 
     if (this.globalAnnotationsPromise) {
       return this.globalAnnotationsPromise;
     }
 
-    var range = this.timeSrv.timeRange();
-    var promises = [];
+    const range = this.timeSrv.timeRange();
+    const promises = [];
 
-    for (let annotation of dashboard.annotations.list) {
+    for (const annotation of dashboard.annotations.list) {
       if (!annotation.enable) {
         continue;
       }
@@ -155,7 +155,7 @@ export class AnnotationsSrv {
       delete annotation.snapshotData;
     }
 
-    for (var item of results) {
+    for (const item of results) {
       item.source = annotation;
     }
     return results;

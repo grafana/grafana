@@ -1,5 +1,15 @@
+interface Column {
+  text: string;
+  title?: string;
+  type?: string;
+  sort?: boolean;
+  desc?: boolean;
+  filterable?: boolean;
+  unit?: string;
+}
+
 export default class TableModel {
-  columns: any[];
+  columns: Column[];
   rows: any[];
   type: string;
   columnMap: any;
@@ -16,7 +26,7 @@ export default class TableModel {
       return;
     }
 
-    this.rows.sort(function(a, b) {
+    this.rows.sort((a, b) => {
       a = a[options.col];
       b = b[options.col];
       // Sort null or undefined seperately from comparable values

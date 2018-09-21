@@ -428,12 +428,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/shurcooL/sanitized_anchor_name"
-  packages = ["."]
-  revision = "86672fcb3f950f35f2e675df2240550f2a50762f"
-
-[[projects]]
   name = "github.com/smartystreets/assertions"
   packages = [
     ".",
@@ -679,6 +673,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cb8e7fd81f23ec987fc4d5dd9d31ae0f1164bc2f30cbea2fe86e0d97dd945beb"
+  inputs-digest = "81a37e747b875cf870c1b9486fa3147e704dea7db8ba86f7cb942d3ddc01d3e3"
   solver-name = "gps-cdcl"
   solver-version = 1

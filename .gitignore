@@ -40,8 +40,8 @@ public/css/*.min.css
 
 conf/custom.ini
 fig.yml
-docker-compose.yml
-docker-compose.yaml
+devenv/docker-compose.yml
+devenv/docker-compose.yaml
 /conf/provisioning/**/custom.yaml
 /conf/provisioning/**/dev.yaml
 /conf/ldap_dev.toml
@@ -58,6 +58,7 @@ debug.test
 /examples/*/dist
 /packaging/**/*.rpm
 /packaging/**/*.deb
+/packaging/**/*.tar.gz
 
 # Ignore OSX indexing
 .DS_Store
@@ -70,4 +71,4 @@ debug.test
 /vendor/**/appengine*
 *.orig
 
-/devenv/dashboards/bulk-testing/*.json
+/devenv/bulk-dashboards/*.json

@@ -21,7 +21,7 @@ func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
 		var user m.User
-		if exists, err := sess.Id(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return m.ErrUserNotFound
@@ -85,7 +85,7 @@ func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
 
 		orgUser.Role = cmd.Role
 		orgUser.Updated = time.Now()
-		_, err = sess.Id(orgUser.Id).Update(&orgUser)
+		_, err = sess.ID(orgUser.Id).Update(&orgUser)
 		if err != nil {
 			return err
 		}
@@ -138,7 +138,7 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
 		var user m.User
-		if exists, err := sess.Id(cmd.UserId).Get(&user); err != nil {
+		if exists, err := sess.ID(cmd.UserId).Get(&user); err != nil {
 			return err
 		} else if !exists {
 			return m.ErrUserNotFound

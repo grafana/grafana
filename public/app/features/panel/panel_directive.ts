@@ -3,9 +3,9 @@ import $ from 'jquery';
 import Drop from 'tether-drop';
 import baron from 'baron';
 
-var module = angular.module('grafana.directives');
+const module = angular.module('grafana.directives');
 
-var panelTemplate = `
+const panelTemplate = `
   <div class="panel-container">
     <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.fullscreen}">
       <span class="panel-info-corner">
@@ -54,26 +54,26 @@ var panelTemplate = `
   </div>
 `;
 
-module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
+module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
   return {
     restrict: 'E',
     template: panelTemplate,
     transclude: true,
     scope: { ctrl: '=' },
-    link: function(scope, elem) {
-      var panelContainer = elem.find('.panel-container');
-      var panelContent = elem.find('.panel-content');
-      var cornerInfoElem = elem.find('.panel-info-corner');
-      var ctrl = scope.ctrl;
-      var infoDrop;
-      var panelScrollbar;
+    link: (scope, elem) => {
+      const panelContainer = elem.find('.panel-container');
+      const panelContent = elem.find('.panel-content');
+      const cornerInfoElem = elem.find('.panel-info-corner');
+      const ctrl = scope.ctrl;
+      let infoDrop;
+      let panelScrollbar;
 
       // the reason for handling these classes this way is for performance
       // limit the watchers on panels etc
-      var transparentLastState = false;
-      var lastHasAlertRule = false;
-      var lastAlertState;
-      var hasAlertRule;
+      let transparentLastState = false;
+      let lastHasAlertRule = false;
+      let lastAlertState;
+      let hasAlertRule;
 
       function mouseEnter() {
         panelContainer.toggleClass('panel-hover-highlight', true);
@@ -112,8 +112,8 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
             </div>
           `;
 
-          let scrollRoot = panelContent;
-          let scroller = panelContent.find(':first').find(':first');
+          const scrollRoot = panelContent;
+          const scroller = panelContent.find(':first').find(':first');
 
           scrollRoot.addClass(scrollRootClass);
           $(scrollBarHTML).appendTo(scrollRoot);
@@ -174,7 +174,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       });
 
       function updatePanelCornerInfo() {
-        var cornerMode = ctrl.getInfoMode();
+        const cornerMode = ctrl.getInfoMode();
         cornerInfoElem[0].className = 'panel-info-corner panel-info-corner--' + cornerMode;
 
         if (cornerMode) {
@@ -184,7 +184,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
 
           infoDrop = new Drop({
             target: cornerInfoElem[0],
-            content: function() {
+            content: () => {
               return ctrl.getInfoContent({ mode: 'tooltip' });
             },
             classes: ctrl.error ? 'drop-error' : 'drop-help',
@@ -208,7 +208,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
 
-      cornerInfoElem.on('click', function() {
+      cornerInfoElem.on('click', () => {
         infoDrop.close();
         scope.$apply(ctrl.openInspector.bind(ctrl));
       });
@@ -216,7 +216,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
 
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         elem.off();
         cornerInfoElem.off();
 
@@ -232,7 +232,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
   };
 });
 
-module.directive('panelHelpCorner', function($rootScope) {
+module.directive('panelHelpCorner', $rootScope => {
   return {
     restrict: 'E',
     template: `
@@ -242,6 +242,6 @@ module.directive('panelHelpCorner', function($rootScope) {
     </span>
     </span>
     `,
-    link: function(scope, elem) {},
+    link: (scope, elem) => {},
   };
 });

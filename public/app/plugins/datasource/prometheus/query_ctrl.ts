@@ -21,13 +21,13 @@ class PrometheusQueryCtrl extends QueryCtrl {
   constructor($scope, $injector, private templateSrv) {
     super($scope, $injector);
 
-    var target = this.target;
+    const target = this.target;
     target.expr = target.expr || '';
     target.intervalFactor = target.intervalFactor || 1;
     target.format = target.format || this.getDefaultFormat();
 
     this.metric = '';
-    this.resolutions = _.map([1, 2, 3, 4, 5, 10], function(f) {
+    this.resolutions = _.map([1, 2, 3, 4, 5, 10], f => {
       return { factor: f, label: '1/' + f };
     });
 
@@ -65,14 +65,14 @@ class PrometheusQueryCtrl extends QueryCtrl {
   }
 
   updateLink() {
-    var range = this.panelCtrl.range;
+    const range = this.panelCtrl.range;
     if (!range) {
       return;
     }
 
-    var rangeDiff = Math.ceil((range.to.valueOf() - range.from.valueOf()) / 1000);
-    var endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
-    var expr = {
+    const rangeDiff = Math.ceil((range.to.valueOf() - range.from.valueOf()) / 1000);
+    const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
+    const expr = {
       'g0.expr': this.templateSrv.replace(
         this.target.expr,
         this.panelCtrl.panel.scopedVars,
@@ -84,7 +84,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
       'g0.stacked': this.panelCtrl.panel.stack ? 1 : 0,
       'g0.tab': 0,
     };
-    var args = _.map(expr, (v, k) => {
+    const args = _.map(expr, (v, k) => {
       return k + '=' + encodeURIComponent(v);
     }).join('&');
     this.linkToPrometheus = this.datasource.directUrl + '/graph?' + args;

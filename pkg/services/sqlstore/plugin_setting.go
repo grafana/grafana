@@ -26,7 +26,7 @@ func GetPluginSettings(query *m.GetPluginSettingsQuery) error {
 		params = append(params, query.OrgId)
 	}
 
-	sess := x.Sql(sql, params...)
+	sess := x.SQL(sql, params...)
 	query.Result = make([]*m.PluginSettingInfoDTO, 0)
 	return sess.Find(&query.Result)
 }
@@ -100,7 +100,7 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 		pluginSetting.Pinned = cmd.Pinned
 		pluginSetting.PluginVersion = cmd.PluginVersion
 
-		_, err = sess.Id(pluginSetting.Id).Update(&pluginSetting)
+		_, err = sess.ID(pluginSetting.Id).Update(&pluginSetting)
 		return err
 	})
 }

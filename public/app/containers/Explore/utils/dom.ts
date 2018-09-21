@@ -1,6 +1,6 @@
 // Node.closest() polyfill
 if ('Element' in window && !Element.prototype.closest) {
-  Element.prototype.closest = function(s) {
+  Element.prototype.closest = function(this: any, s) {
     const matches = (this.document || this.ownerDocument).querySelectorAll(s);
     let el = this;
     let i;
@@ -9,7 +9,8 @@ if ('Element' in window && !Element.prototype.closest) {
       i = matches.length;
       // eslint-disable-next-line
       while (--i >= 0 && matches.item(i) !== el) {}
-    } while (i < 0 && (el = el.parentElement));
+      el = el.parentElement;
+    } while (i < 0 && el);
     return el;
   };
 }

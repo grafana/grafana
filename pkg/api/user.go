@@ -111,6 +111,21 @@ func GetSignedInUserOrgList(c *m.ReqContext) Response {
 	return getUserOrgList(c.UserId)
 }
 
+// GET /api/user/teams
+func GetSignedInUserTeamList(c *m.ReqContext) Response {
+	query := m.GetTeamsByUserQuery{OrgId: c.OrgId, UserId: c.UserId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to get user teams", err)
+	}
+
+	for _, team := range query.Result {
+		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+	}
+
+	return JSON(200, query.Result)
+}
+
 // GET /api/user/:id/orgs
 func GetUserOrgList(c *m.ReqContext) Response {
 	return getUserOrgList(c.ParamsInt64(":id"))
