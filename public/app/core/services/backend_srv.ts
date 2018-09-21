@@ -361,7 +361,7 @@ export class BackendSrv {
 coreModule.service('backendSrv', BackendSrv);
 
 //
-// Code below is to expore the service to react components
+// Code below is to expose the service to react components
 //
 
 let singletonInstance: BackendSrv;
