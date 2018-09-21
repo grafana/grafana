@@ -45,7 +45,7 @@ func (rs *RenderingService) Init() error {
 
 	// set value used for domain attribute of renderKey cookie
 	if rs.Cfg.RendererUrl != "" {
-		// RendererCallbackUrl has already been passed, it wont generate an error.
+		// RendererCallbackUrl has already been passed, it won't generate an error.
 		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
 		rs.domain = u.Hostname()
 	} else if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
