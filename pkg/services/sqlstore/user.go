@@ -271,9 +271,6 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 
 func UpdateUserLastSeenAt(cmd *m.UpdateUserLastSeenAtCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if cmd.UserId <= 0 {
-		}
-
 		user := m.User{
 			Id:         cmd.UserId,
 			LastSeenAt: time.Now(),
