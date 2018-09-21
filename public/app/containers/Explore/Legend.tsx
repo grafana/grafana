@@ -5,7 +5,9 @@ const LegendItem = ({ series }) => (
     <div className="graph-legend-icon">
       <i className="fa fa-minus pointer" style={{ color: series.color }} />
     </div>
-    <a className="graph-legend-alias pointer">{series.alias}</a>
+    <a className="graph-legend-alias pointer" title={series.alias}>
+      {series.alias}
+    </a>
   </div>
 );
 

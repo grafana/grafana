@@ -255,6 +255,8 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
 
   // Keep this DOM-free for testing
   getTypeahead({ prefix, wrapperClasses, text }: PromTypeaheadInput): TypeaheadOutput {
+    // Syntax spans have 3 classes by default. More indicate a recognized token
+    const tokenRecognized = wrapperClasses.length > 3;
     // Determine candidates by CSS context
     if (_.includes(wrapperClasses, 'context-range')) {
       // Suggestions for metric[|]
@@ -266,7 +268,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
       return this.getAggregationTypeahead.apply(this, arguments);
     } else if (
       // Non-empty but not inside known token
-      (prefix && !_.includes(wrapperClasses, 'token')) ||
+      (prefix && !tokenRecognized) ||
       (prefix === '' && !text.match(/^[)\s]+$/)) || // Empty context or after ')'
       text.match(/[+\-*/^%]/) // After binary operator
     ) {

@@ -1,6 +1,6 @@
   postgrestest:
     build:
-      context: blocks/postgres_tests
+      context: docker/blocks/postgres_tests
     environment:
       POSTGRES_USER: grafanatest
       POSTGRES_PASSWORD: grafanatest

@@ -1,5 +1,5 @@
   mysql_opendata:
-    build: blocks/mysql_opendata
+    build: docker/blocks/mysql_opendata
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: testdata
