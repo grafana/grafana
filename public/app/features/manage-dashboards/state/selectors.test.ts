@@ -1,4 +1,10 @@
-import { getCanDelete, getCanMove, getHasFilters, getSelectedDashboards } from './selectors';
+import {
+  getCanDelete,
+  getCanMove,
+  getHasFilters,
+  getSelectedDashboards,
+  getSelectedFoldersAndDashboards,
+} from './selectors';
 import { getMockSectionsWithItems } from '../__mocks__/manageDashboardMock';
 import { DashboardQuery, ManageDashboardState, SectionsState } from '../../../types';
 import { DashboardTag } from '../../../types/manageDashboard';
@@ -138,5 +144,30 @@ describe('Manage dashboard selectors', () => {
 
       expect(result.length).toEqual(2);
     });
+  });
+});
+
+describe('Get selected dashboards and folders', () => {
+  const mockSections = getMockSectionsWithItems(5);
+  mockSections[0].checked = true;
+  mockSections[0].items[0].checked = true;
+  mockSections[2].checked = true;
+  mockSections[3].items[2].checked = true;
+  mockSections[3].items[1].checked = true;
+
+  const mockState: SectionsState = {
+    sections: mockSections,
+    allChecked: false,
+    dashboardTags: [] as DashboardTag[],
+  };
+
+  const result = getSelectedFoldersAndDashboards(mockState);
+
+  it('should have 2 selected folders', () => {
+    expect(result.folders.length).toEqual(2);
+  });
+
+  it('should have 3 selected dashboards', () => {
+    expect(result.dashboards.length).toEqual(3);
   });
 });

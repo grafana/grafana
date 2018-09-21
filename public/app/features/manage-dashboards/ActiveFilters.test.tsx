@@ -15,8 +15,8 @@ const defaultQuery = {
 const setup = (propOverrides?: object) => {
   const props: Props = {
     query: defaultQuery,
-    removeStarredFilter: jest.fn(),
-    removeTag: jest.fn(),
+    toggleFilterOnStarred: jest.fn(),
+    removeTagFilter: jest.fn(),
     clearFilters: jest.fn(),
   };
 

@@ -16,28 +16,39 @@ export const getAllChecked = state => state.allChecked;
 export const getTagFilterOptions = state => [{ term: 'Filter By Tag', disabled: true }].concat(state.dashboardTags);
 export const getSelectedDashboards = state => {
   const dashboards = [];
-  state.sections.map(section => {
-    section.items.filter(item => {
-      if (item.checked) {
-        dashboards.push(item);
-      }
-    });
+
+  state.sections.forEach(section => {
+    dashboards.push(...selectedDashboardsUid(section.items));
   });
 
   return dashboards;
 };
 
+export const getSelectedFoldersAndDashboards = state => {
+  const folders = [];
+  const dashboards = [];
+
+  state.sections.forEach(section => {
+    if (section.checked) {
+      folders.push(section.uid);
+    }
+
+    dashboards.push(...selectedDashboardsUid(section.items));
+  });
+
+  return { folders, dashboards };
+};
+
 export const getCanDelete = state => {
   let numberOfSelectedSections = 0;
-  state.sections.map(section => {
+  let numberOfSelectedSectionItems = 0;
+
+  state.sections.forEach(section => {
     if (section.checked) {
       numberOfSelectedSections++;
     }
-  });
 
-  let numberOfSelectedSectionItems = 0;
-  state.sections.map(section => {
-    section.items.map(item => {
+    section.items.forEach(item => {
       if (item.checked) {
         numberOfSelectedSectionItems++;
       }
@@ -46,10 +57,11 @@ export const getCanDelete = state => {
 
   return numberOfSelectedSections > 0 || numberOfSelectedSectionItems > 0;
 };
+
 export const getCanMove = state => {
   let numberOfSelectedSectionItems = 0;
-  state.sections.map(section => {
-    section.items.map(item => {
+  state.sections.forEach(section => {
+    section.items.forEach(item => {
       if (item.checked) {
         numberOfSelectedSectionItems++;
       }
@@ -57,4 +69,12 @@ export const getCanMove = state => {
   });
 
   return numberOfSelectedSectionItems > 0;
+};
+
+const selectedDashboardsUid = items => {
+  return items.filter(item => {
+    if (item.checked) {
+      return item.uid;
+    }
+  });
 };

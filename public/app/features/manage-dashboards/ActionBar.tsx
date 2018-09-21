@@ -53,21 +53,18 @@ export class ActionBar extends PureComponent<Props> {
         <div className="page-action-bar__spacer" />
         {(hasEditPermissionInFolders || canSave) && (
           <a className="btn btn-success" href={this.createDashboardUrl()}>
-            <i className="fa fa-plus" />
-            Dashboard
+            <i className="fa fa-plus" /> Dashboard
           </a>
         )}
         {folderId !== undefined &&
           isEditor && (
             <a className="btn btn-success" href="dashboards/folder/new">
-              <i className="fa fa-plus" />
-              Folder
+              <i className="fa fa-plus" /> Folder
             </a>
           )}
         {hasEditPermissionInFolders || canSave}
         <a className="btn btn-success" href={this.importDashboardUrl()}>
-          <i className="fa fa-plus" />
-          Import
+          <i className="fa fa-plus" /> Import
         </a>
       </div>
     );

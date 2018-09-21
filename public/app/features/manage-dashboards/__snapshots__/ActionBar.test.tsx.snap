@@ -33,7 +33,7 @@ exports[`Render should render add dashboard if user has permissions 1`] = `
     <i
       className="fa fa-plus"
     />
-    Dashboard
+     Dashboard
   </a>
   <Component />
   <a
@@ -43,7 +43,7 @@ exports[`Render should render add dashboard if user has permissions 1`] = `
     <i
       className="fa fa-plus"
     />
-    Import
+     Import
   </a>
 </div>
 `;
@@ -81,7 +81,7 @@ exports[`Render should render component 1`] = `
     <i
       className="fa fa-plus"
     />
-    Import
+     Import
   </a>
 </div>
 `;
@@ -119,7 +119,7 @@ exports[`Render should render import dashboard if user has permissions 1`] = `
     <i
       className="fa fa-plus"
     />
-    Folder
+     Folder
   </a>
   <a
     className="btn btn-success"
@@ -128,7 +128,7 @@ exports[`Render should render import dashboard if user has permissions 1`] = `
     <i
       className="fa fa-plus"
     />
-    Import
+     Import
   </a>
 </div>
 `;

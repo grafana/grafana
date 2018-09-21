@@ -225,4 +225,11 @@ export function clearFilters(): ThunkResult<void> {
   };
 }
 
+export function deleteFoldersAndDashboards(folders: string[], dashboards: string[]): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().deleteFoldersAndDashboards(folders, dashboards);
+    dispatch(loadSections());
+  };
+}
+
 const debouncedLoadSections = _.debounce(loadSections(), 500);

@@ -2,14 +2,20 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import appEvents from '../../core/app_events';
 import FormSwitch from 'app/core/components/FormSwitch/FormSwitch';
-import { DashboardSectionItem } from '../../types';
-import { addTagFilter, setSectionsAndItemsSelected, toggleStarredFilter, loadSections } from './state/actions';
+import {
+  addTagFilter,
+  deleteFoldersAndDashboards,
+  setSectionsAndItemsSelected,
+  toggleStarredFilter,
+  loadSections,
+} from './state/actions';
 import {
   getAllChecked,
   getCanDelete,
   getCanMove,
   getFilterOnStarred,
   getSelectedDashboards,
+  getSelectedFoldersAndDashboards,
   getSelectedTagFilter,
   getTagFilterOptions,
 } from './state/selectors';
@@ -24,8 +30,10 @@ export interface Props {
   addTagFilter: typeof addTagFilter;
   toggleStarredFilter: typeof toggleStarredFilter;
   filterOnStarred: boolean;
-  selectedDashboards: DashboardSectionItem[];
+  selectedDashboards: string[];
   loadSections: typeof loadSections;
+  selectedFoldersAndDashboards: { folders: string[]; dashboards: string[] };
+  deleteFoldersAndDashboards: typeof deleteFoldersAndDashboards;
 }
 
 export class SectionActions extends PureComponent<Props> {
@@ -44,13 +52,13 @@ export class SectionActions extends PureComponent<Props> {
     this.props.addTagFilter(event.target.value);
   };
 
-  moveTo = () => {
+  moveSelectedDashboards = () => {
     const { selectedDashboards, loadSections } = this.props;
 
     const template =
       '<move-to-folder-modal dismiss="dismiss()" ' +
       'dashboards="model.dashboards" after-save="model.afterSave()">' +
-      '</move-to-folder-modal>`';
+      '</move-to-folder-modal>';
 
     appEvents.emit('show-modal', {
       templateHtml: template,
@@ -62,7 +70,35 @@ export class SectionActions extends PureComponent<Props> {
     });
   };
 
-  delete = () => {};
+  delete = () => {
+    const { selectedFoldersAndDashboards, deleteFoldersAndDashboards } = this.props;
+    const { folders, dashboards } = selectedFoldersAndDashboards;
+
+    const folderCount = folders.length;
+    const dashCount = dashboards.length;
+    let text = 'Do you want to delete the ';
+    let text2;
+
+    if (folderCount > 0 && dashCount > 0) {
+      text += `selected folder${folderCount === 1 ? '' : 's'} and dashboard${dashCount === 1 ? '' : 's'}?`;
+      text2 = `All dashboards of the selected folder${folderCount === 1 ? '' : 's'} will also be deleted`;
+    } else if (folderCount > 0) {
+      text += `selected folder${folderCount === 1 ? '' : 's'} and all its dashboards?`;
+    } else {
+      text += `selected dashboard${dashCount === 1 ? '' : 's'}?`;
+    }
+
+    appEvents.emit('confirm-modal', {
+      title: 'Delete',
+      text: text,
+      text2: text2,
+      icon: 'fa-trash',
+      yesText: 'Delete',
+      onConfirm: () => {
+        deleteFoldersAndDashboards(folders, dashboards);
+      },
+    });
+  };
 
   render() {
     const { allChecked, canMove, canDelete, filterOnStarred, selectedTagFilter, tagFilterOptions } = this.props;
@@ -107,7 +143,7 @@ export class SectionActions extends PureComponent<Props> {
                   type="button"
                   className="btn gf-form-button btn-inverse"
                   disabled={!canMove}
-                  onClick={this.moveTo}
+                  onClick={this.moveSelectedDashboards}
                 >
                   <i className="fa fa-exchange" />&nbsp;&nbsp;Move
                 </button>
@@ -137,6 +173,7 @@ function mapStateToProps(state) {
     tagFilterOptions: getTagFilterOptions(state.sections),
     filterOnStarred: getFilterOnStarred(state.manageDashboards),
     selectedDashboards: getSelectedDashboards(state.sections),
+    selectedFoldersAndDashboards: getSelectedFoldersAndDashboards(state.sections),
   };
 }
 
@@ -145,6 +182,7 @@ const mapDispatchToProps = {
   toggleStarredFilter,
   setSectionsAndItemsSelected,
   loadSections,
+  deleteFoldersAndDashboards,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(SectionActions);
