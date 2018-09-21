@@ -44,7 +44,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		logger.Error("Failed to render plugin headers", "error", err)
 	}
 
-	tokenProvider := newAccessTokenProvider(ds.Id, route)
+	tokenProvider := newAccessTokenProvider(ds, route)
 
 	if route.TokenAuth != nil {
 		if token, err := tokenProvider.getAccessToken(data); err != nil {

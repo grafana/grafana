@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	. "github.com/smartystreets/goconvey/convey"
 	"golang.org/x/oauth2"
@@ -41,11 +42,13 @@ func TestAccessToken(t *testing.T) {
 			},
 		}
 
+		ds := &models.DataSource{Id: 1, Version: 2}
+
 		Convey("should fetch token using jwt private key", func() {
 			getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
 				return &oauth2.Token{AccessToken: "abc"}, nil
 			}
-			provider := newAccessTokenProvider(1, pluginRoute)
+			provider := newAccessTokenProvider(ds, pluginRoute)
 			token, err := provider.getJwtAccessToken(context.Background(), templateData)
 			So(err, ShouldBeNil)
 
@@ -64,7 +67,7 @@ func TestAccessToken(t *testing.T) {
 				return &oauth2.Token{AccessToken: "abc"}, nil
 			}
 
-			provider := newAccessTokenProvider(1, pluginRoute)
+			provider := newAccessTokenProvider(ds, pluginRoute)
 			_, err := provider.getJwtAccessToken(context.Background(), templateData)
 			So(err, ShouldBeNil)
 		})
@@ -75,7 +78,7 @@ func TestAccessToken(t *testing.T) {
 					AccessToken: "abc",
 					Expiry:      time.Now().Add(1 * time.Minute)}, nil
 			}
-			provider := newAccessTokenProvider(1, pluginRoute)
+			provider := newAccessTokenProvider(ds, pluginRoute)
 			token1, err := provider.getJwtAccessToken(context.Background(), templateData)
 			So(err, ShouldBeNil)
 			So(token1, ShouldEqual, "abc")
