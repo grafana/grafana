@@ -314,7 +314,7 @@ func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("grafana-sd-plugin/%s", setting.BuildVersion))
+	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
