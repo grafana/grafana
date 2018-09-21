@@ -50,7 +50,7 @@
 
       function checkIsReady() {
         var panelsRendered = page.evaluate(function() {
-          var panelCount = document.querySelectorAll('.panel').length;
+          var panelCount = document.querySelectorAll('plugin-component').length;
           return window.panelsRendered >= panelCount;
         });
 
