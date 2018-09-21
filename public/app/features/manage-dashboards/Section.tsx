@@ -28,9 +28,7 @@ export class Section extends PureComponent<Props> {
     }
   };
 
-  toggleSectionSelected = event => {
-    event.stopPropagation();
-
+  toggleSectionSelected = () => {
     const { section } = this.props;
 
     this.props.setSectionSelected(section.id);
@@ -47,18 +45,17 @@ export class Section extends PureComponent<Props> {
 
     return (
       <div className="search-section">
-        <div
-          className={`search-section__header pointer ${section.checked ? 'selected' : ''}`}
-          onClick={this.toggleFolder}
-        >
+        <div className={`search-section__header pointer ${section.checked ? 'selected' : ''}`}>
           <FormSwitch
             label=""
-            onChange={event => this.toggleSectionSelected(event)}
+            onChange={this.toggleSectionSelected}
             checked={section.checked}
             switchClass="gf-form-switch--transparent gf-form-switch--search-result__section"
           />
           <i className={folderStyle} />
-          <span className="search-section__header__text">{section.title}</span>
+          <span className="search-section__header__text" onClick={this.toggleFolder}>
+            {section.title}
+          </span>
           {section.url && (
             <a href={section.url} className="search-section__header__link">
               <i className="fa fa-cog" />
@@ -77,14 +74,12 @@ export class Section extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps() {
-  return {};
-}
-
 const mapDispatchToProps = {
   collapseSection,
   loadSectionItems,
   setSectionSelected,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Section);
+export default connect(() => {
+  return {};
+}, mapDispatchToProps)(Section);
