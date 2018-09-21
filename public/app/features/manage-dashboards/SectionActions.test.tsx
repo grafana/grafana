@@ -2,7 +2,6 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import appEvents from '../../core/app_events';
 import { Props, SectionActions } from './SectionActions';
-import { getMockSectionItems } from './__mocks__/manageDashboardMock';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
@@ -97,9 +96,7 @@ describe('Functions', () => {
   });
 
   describe('Move selected dashboards', () => {
-    const mockSelectedDashboards = getMockSectionItems(5);
-    mockSelectedDashboards[0].checked = true;
-    mockSelectedDashboards[1].checked = true;
+    const mockSelectedDashboards = ['dashboard-1', 'dashboard-2', 'dashboard-3'];
 
     const { instance } = setup({
       selectedDashboards: mockSelectedDashboards,

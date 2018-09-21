@@ -104,7 +104,7 @@ export const sectionsReducer = (state = initialSectionsState, action: Action): S
 
     case ActionTypes.SetSectionItemSelected:
       newSections = state.sections.map(section => {
-        if (section.id === action.payload.folderId) {
+        if (section.id === action.payload.folderId || action.payload.folderId === undefined) {
           newItems = section.items.map(item => {
             if (item.id === action.payload.itemId) {
               return { ...item, checked: action.payload.state };

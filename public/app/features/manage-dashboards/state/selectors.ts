@@ -48,11 +48,7 @@ export const getCanDelete = state => {
       numberOfSelectedSections++;
     }
 
-    section.items.forEach(item => {
-      if (item.checked) {
-        numberOfSelectedSectionItems++;
-      }
-    });
+    numberOfSelectedSectionItems = selectedDashboardsUid(section.items).length;
   });
 
   return numberOfSelectedSections > 0 || numberOfSelectedSectionItems > 0;
@@ -60,21 +56,22 @@ export const getCanDelete = state => {
 
 export const getCanMove = state => {
   let numberOfSelectedSectionItems = 0;
+
   state.sections.forEach(section => {
-    section.items.forEach(item => {
-      if (item.checked) {
-        numberOfSelectedSectionItems++;
-      }
-    });
+    numberOfSelectedSectionItems = selectedDashboardsUid(section.items).length;
   });
 
   return numberOfSelectedSectionItems > 0;
 };
 
 const selectedDashboardsUid = items => {
-  return items.filter(item => {
+  const uIds = [];
+
+  items.forEach(item => {
     if (item.checked) {
-      return item.uid;
+      uIds.push(item.uid);
     }
   });
+
+  return uIds;
 };

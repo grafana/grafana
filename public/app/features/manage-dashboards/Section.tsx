@@ -17,6 +17,10 @@ export class Section extends PureComponent<Props> {
   toggleFolder = () => {
     const { section, loadSectionItems, collapseSection } = this.props;
 
+    if (section.id === 0) {
+      return;
+    }
+
     if (section.expanded) {
       collapseSection(section.id);
     } else {
