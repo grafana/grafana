@@ -5,6 +5,7 @@
   "metrics": true,
   "alerting": true,
   "annotations": false,
+  "state": "beta",
   "queryOptions": {
     "maxDataPoints": true,
     "cacheTimeout": true
