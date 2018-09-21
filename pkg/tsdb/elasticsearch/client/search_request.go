@@ -110,7 +110,7 @@ func (b *SearchRequestBuilder) Query() *QueryBuilder {
 	return b.queryBuilder
 }
 
-// Agg initaite and returns a new aggregation builder
+// Agg initiate and returns a new aggregation builder
 func (b *SearchRequestBuilder) Agg() AggBuilder {
 	aggBuilder := newAggBuilder()
 	b.aggBuilders = append(b.aggBuilders, aggBuilder)
