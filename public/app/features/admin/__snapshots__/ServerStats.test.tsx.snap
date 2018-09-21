@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`DashboardList Should render table with stats 1`] = `
+exports[`ServerStats Should render table with stats 1`] = `
 <div>
   <div
     className="page-header-canvas"

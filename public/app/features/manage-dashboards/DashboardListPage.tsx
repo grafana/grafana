@@ -55,7 +55,7 @@ export class DashboardListPage extends PureComponent<Props, any> {
             <div className="search-results-container">
               {sections.length > 0 &&
                 sections.map((section, index) => {
-                  return <Section section={section} key={`${section.title}${index}`} />;
+                  return <Section section={section} key={`${section.title}-${index}`} />;
                 })}
             </div>
           </div>

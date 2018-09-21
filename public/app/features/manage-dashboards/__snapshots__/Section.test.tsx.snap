@@ -6,7 +6,6 @@ exports[`Render should render component 1`] = `
 >
   <div
     className="search-section__header pointer "
-    onClick={[Function]}
   >
     <FormSwitch
       checked={false}
@@ -19,6 +18,7 @@ exports[`Render should render component 1`] = `
     />
     <span
       className="search-section__header__text"
+      onClick={[Function]}
     >
       Such a cool folder
     </span>
@@ -43,7 +43,6 @@ exports[`Render should render items 1`] = `
 >
   <div
     className="search-section__header pointer "
-    onClick={[Function]}
   >
     <FormSwitch
       checked={false}
@@ -56,6 +55,7 @@ exports[`Render should render items 1`] = `
     />
     <span
       className="search-section__header__text"
+      onClick={[Function]}
     >
       Such a cool folder
     </span>

@@ -46,7 +46,7 @@ exports[`Render should render sections 1`] = `
         className="search-results-container"
       >
         <Connect(Section)
-          key="0"
+          key="Such a cool folder-0"
           section={
             Object {
               "checked": false,
@@ -63,7 +63,7 @@ exports[`Render should render sections 1`] = `
           }
         />
         <Connect(Section)
-          key="1"
+          key="Such a cool folder-1"
           section={
             Object {
               "checked": false,
@@ -80,7 +80,7 @@ exports[`Render should render sections 1`] = `
           }
         />
         <Connect(Section)
-          key="2"
+          key="Such a cool folder-2"
           section={
             Object {
               "checked": false,
@@ -97,7 +97,7 @@ exports[`Render should render sections 1`] = `
           }
         />
         <Connect(Section)
-          key="3"
+          key="Such a cool folder-3"
           section={
             Object {
               "checked": false,
@@ -114,7 +114,7 @@ exports[`Render should render sections 1`] = `
           }
         />
         <Connect(Section)
-          key="4"
+          key="Such a cool folder-4"
           section={
             Object {
               "checked": false,
@@ -184,7 +184,7 @@ exports[`Render should show no matching sections to filtering 1`] = `
         className="search-results-container"
       >
         <Connect(Section)
-          key="0"
+          key="Such a cool folder-0"
           section={
             Object {
               "checked": false,
@@ -201,7 +201,7 @@ exports[`Render should show no matching sections to filtering 1`] = `
           }
         />
         <Connect(Section)
-          key="1"
+          key="Such a cool folder-1"
           section={
             Object {
               "checked": false,
@@ -218,7 +218,7 @@ exports[`Render should show no matching sections to filtering 1`] = `
           }
         />
         <Connect(Section)
-          key="2"
+          key="Such a cool folder-2"
           section={
             Object {
               "checked": false,
@@ -235,7 +235,7 @@ exports[`Render should show no matching sections to filtering 1`] = `
           }
         />
         <Connect(Section)
-          key="3"
+          key="Such a cool folder-3"
           section={
             Object {
               "checked": false,
@@ -252,7 +252,7 @@ exports[`Render should show no matching sections to filtering 1`] = `
           }
         />
         <Connect(Section)
-          key="4"
+          key="Such a cool folder-4"
           section={
             Object {
               "checked": false,

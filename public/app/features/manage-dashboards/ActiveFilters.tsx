@@ -61,7 +61,6 @@ export class ActiveFilters extends PureComponent<Props, any> {
               </label>
             </div>
           )}
-
           <div className="gf-form">
             <label className="gf-form-label">
               <div
