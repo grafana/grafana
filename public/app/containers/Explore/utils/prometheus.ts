@@ -32,7 +32,7 @@ const labelRegexp = /\b\w+="[^"\n]*?"/g;
 export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
     // Special matcher for metrics
-    if (query.match(/^\w+$/)) {
+    if (query.match(/^[A-Za-z:][\w:]*$/)) {
       return {
         selector: `{__name__="${query}"}`,
         labelKeys: ['__name__'],
@@ -76,7 +76,7 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 
   // Add metric if there is one before the selector
   const metricPrefix = query.slice(0, prefixOpen);
-  const metricMatch = metricPrefix.match(/\w+$/);
+  const metricMatch = metricPrefix.match(/[A-Za-z:][\w:]*$/);
   if (metricMatch) {
     labels['__name__'] = `"${metricMatch[0]}"`;
   }

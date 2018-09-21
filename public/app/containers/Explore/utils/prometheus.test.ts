@@ -57,5 +57,8 @@ describe('parseSelector()', () => {
 
     parsed = parseSelector('baz{foo="bar"}', 12);
     expect(parsed.selector).toBe('{__name__="baz",foo="bar"}');
+
+    parsed = parseSelector('bar:metric:1m{}', 14);
+    expect(parsed.selector).toBe('{__name__="bar:metric:1m"}');
   });
 });
