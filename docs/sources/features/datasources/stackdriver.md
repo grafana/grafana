@@ -59,7 +59,7 @@ Click on the links above and click the `Enable` button:
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
     ![Choose role](/img/docs/v54/stackdriver_service_account_choose_role.png)
-5. Click the Create button. A Json Web Token (JWT) file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
+5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
      ![Choose role](/img/docs/v54/stackdriver_grafana_upload_key.png)
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
