@@ -25,7 +25,8 @@ export class SectionItem extends PureComponent<Props> {
     this.props.addTagFilter(tag);
   };
 
-  navigateToDashboard = () => {
+  navigateToDashboard = event => {
+    event.preventDefault();
     this.props.updateLocation({ path: this.props.item.url });
   };
 
