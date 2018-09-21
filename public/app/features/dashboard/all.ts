@@ -30,6 +30,12 @@ import './settings/settings';
 import './panellinks/module';
 import './dashlinks/module';
 
+// angular wrappers
+import { react2AngularDirective } from 'app/core/utils/react2angular';
+import DashboardPermissions from './permissions/DashboardPermissions';
+
+react2AngularDirective('dashboardPermissions', DashboardPermissions, ['dashboardId', 'folder']);
+
 import coreModule from 'app/core/core_module';
 import { FolderDashboardsCtrl } from './folder_dashboards_ctrl';
 import { DashboardImportCtrl } from './dashboard_import_ctrl';

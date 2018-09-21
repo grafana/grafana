@@ -1,8 +1,9 @@
 import _ from 'lodash';
-import { toJS } from 'mobx';
 import config from 'app/core/config';
 import { coreModule, appEvents } from 'app/core/core';
-import { store } from 'app/stores/store';
+import { store } from 'app/store/configureStore';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { buildNavModel } from './state/navModel';
 
 let datasourceTypes = [];
 
@@ -31,11 +32,8 @@ export class DataSourceEditCtrl {
 
   /** @ngInject */
   constructor(private $q, private backendSrv, private $routeParams, private $location, private datasourceSrv) {
-    if (store.nav.main === null) {
-      store.nav.load('cfg', 'datasources');
-    }
-
-    this.navModel = toJS(store.nav);
+    const state = store.getState();
+    this.navModel = getNavModel(state.navIndex, 'datasources');
     this.datasources = [];
 
     this.loadDatasourceTypes().then(() => {
@@ -101,8 +99,7 @@ export class DataSourceEditCtrl {
   }
 
   updateNav() {
-    store.nav.initDatasourceEditNav(this.current, this.datasourceMeta, 'datasource-settings');
-    this.navModel = toJS(store.nav);
+    this.navModel = buildNavModel(this.current, this.datasourceMeta, 'datasource-settings');
   }
 
   typeChanged() {

@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
 import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember } from '../../types';
 import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
 import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
@@ -14,6 +15,7 @@ export interface Props {
   addTeamMember: typeof addTeamMember;
   removeTeamMember: typeof removeTeamMember;
   setSearchMemberQuery: typeof setSearchMemberQuery;
+  syncEnabled: boolean;
 }
 
 export interface State {
@@ -52,7 +54,19 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.setState({ newTeamMember: null });
   };
 
-  renderMember(member: TeamMember) {
+  renderLabels(labels: string[]) {
+    if (!labels) {
+      return <td />;
+    }
+
+    return (
+      <td>
+        {labels.map(label => <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />)}
+      </td>
+    );
+  }
+
+  renderMember(member: TeamMember, syncEnabled: boolean) {
     return (
       <tr key={member.userId}>
         <td className="width-4 text-center">
@@ -60,6 +74,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
+        {syncEnabled ? this.renderLabels(member.labels) : ''}
         <td className="text-right">
           <DeleteButton onConfirmDelete={() => this.onRemoveMember(member)} />
         </td>
@@ -69,7 +84,7 @@ export class TeamMembers extends PureComponent<Props, State> {
 
   render() {
     const { newTeamMember, isAdding } = this.state;
-    const { searchMemberQuery, members } = this.props;
+    const { searchMemberQuery, members, syncEnabled } = this.props;
     const newTeamMemberValue = newTeamMember && newTeamMember.id.toString();
 
     return (
@@ -120,10 +135,11 @@ export class TeamMembers extends PureComponent<Props, State> {
                 <th />
                 <th>Name</th>
                 <th>Email</th>
+                {syncEnabled ? <th /> : ''}
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
-            <tbody>{members && members.map(member => this.renderMember(member))}</tbody>
+            <tbody>{members && members.map(member => this.renderMember(member, syncEnabled))}</tbody>
           </table>
         </div>
       </div>

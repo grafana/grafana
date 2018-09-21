@@ -21,6 +21,7 @@ type ItemQuery struct {
 	RegionId     int64    `json:"regionId"`
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
+	MatchAny     bool     `json:"matchAny"`
 
 	Limit int64 `json:"limit"`
 }

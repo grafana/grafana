@@ -3,10 +3,11 @@ import moment from 'moment';
 import React from 'react';
 import { Value } from 'slate';
 import Cascader from 'rc-cascader';
+import PluginPrism from 'slate-prism';
+import Prism from 'prismjs';
 
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from './utils/dom';
-import PluginPrism, { setPrismTokens } from './slate-plugins/prism/index';
 import PrismPromql, { FUNCTIONS } from './slate-plugins/prism/promql';
 import BracesPlugin from './slate-plugins/braces';
 import RunnerPlugin from './slate-plugins/runner';
@@ -27,7 +28,7 @@ const HISTOGRAM_SELECTOR = '{le!=""}'; // Returns all timeseries for histograms
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 const METRIC_MARK = 'metric';
-const PRISM_LANGUAGE = 'promql';
+const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
 export const wrapLabel = (label: string) => ({ label });
@@ -35,6 +36,15 @@ export const setFunctionMove = (suggestion: Suggestion): Suggestion => {
   suggestion.move = -1;
   return suggestion;
 };
+
+// Syntax highlighting
+Prism.languages[PRISM_SYNTAX] = PrismPromql;
+function setPrismTokens(language, field, values, alias = 'variable') {
+  Prism.languages[language][field] = {
+    alias,
+    pattern: new RegExp(`(?:^|\\s)(${values.join('|')})(?:$|\\s)`),
+  };
+}
 
 export function addHistoryMetadata(item: Suggestion, history: any[]): Suggestion {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
@@ -164,7 +174,10 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     this.plugins = [
       BracesPlugin(),
       RunnerPlugin({ handler: props.onPressEnter }),
-      PluginPrism({ definition: PrismPromql, language: PRISM_LANGUAGE }),
+      PluginPrism({
+        onlyIn: node => node.type === 'code_block',
+        getSyntax: node => 'promql',
+      }),
     ];
 
     this.state = {
@@ -221,7 +234,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     if (!this.state.metrics) {
       return;
     }
-    setPrismTokens(PRISM_LANGUAGE, METRIC_MARK, this.state.metrics);
+    setPrismTokens(PRISM_SYNTAX, METRIC_MARK, this.state.metrics);
   };
 
   onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
@@ -242,6 +255,8 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
 
   // Keep this DOM-free for testing
   getTypeahead({ prefix, wrapperClasses, text }: PromTypeaheadInput): TypeaheadOutput {
+    // Syntax spans have 3 classes by default. More indicate a recognized token
+    const tokenRecognized = wrapperClasses.length > 3;
     // Determine candidates by CSS context
     if (_.includes(wrapperClasses, 'context-range')) {
       // Suggestions for metric[|]
@@ -253,7 +268,7 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
       return this.getAggregationTypeahead.apply(this, arguments);
     } else if (
       // Non-empty but not inside known token
-      (prefix && !_.includes(wrapperClasses, 'token')) ||
+      (prefix && !tokenRecognized) ||
       (prefix === '' && !text.match(/^[)\s]+$/)) || // Empty context or after ')'
       text.match(/[+\-*/^%]/) // After binary operator
     ) {

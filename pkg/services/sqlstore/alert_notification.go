@@ -119,7 +119,7 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 	}
 
 	results := make([]*m.AlertNotification, 0)
-	if err := sess.Sql(sql.String(), params...).Find(&results); err != nil {
+	if err := sess.SQL(sql.String(), params...).Find(&results); err != nil {
 		return err
 	}
 
@@ -239,11 +239,8 @@ func RecordNotificationJournal(ctx context.Context, cmd *m.RecordNotificationJou
 			Success:    cmd.Success,
 		}
 
-		if _, err := sess.Insert(journalEntry); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := sess.Insert(journalEntry)
+		return err
 	})
 }
 
