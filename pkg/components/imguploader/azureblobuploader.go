@@ -274,10 +274,10 @@ func (a *Auth) canonicalizedHeaders(req *http.Request) string {
 		}
 	}
 
-	splitted := strings.Split(buffer.String(), "\n")
-	sort.Strings(splitted)
+	split := strings.Split(buffer.String(), "\n")
+	sort.Strings(split)
 
-	return strings.Join(splitted, "\n")
+	return strings.Join(split, "\n")
 }
 
 /*
@@ -313,8 +313,8 @@ func (a *Auth) canonicalizedResource(req *http.Request) string {
 		buffer.WriteString(fmt.Sprintf("\n%s:%s", key, strings.Join(values, ",")))
 	}
 
-	splitted := strings.Split(buffer.String(), "\n")
-	sort.Strings(splitted)
+	split := strings.Split(buffer.String(), "\n")
+	sort.Strings(split)
 
-	return strings.Join(splitted, "\n")
+	return strings.Join(split, "\n")
 }

@@ -120,7 +120,6 @@ func main() {
 				createLinuxPackages()
 			}
 
-
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)
 			createRpmPackages()
@@ -417,7 +416,7 @@ func test(pkg string) {
 func build(binaryName, pkg string, tags []string) {
 	binary := fmt.Sprintf("./bin/%s-%s/%s", goos, goarch, binaryName)
 	if isDev {
-		//dont include os and arch in output path in dev environment
+		//don't include os and arch in output path in dev environment
 		binary = fmt.Sprintf("./bin/%s", binaryName)
 	}
 
