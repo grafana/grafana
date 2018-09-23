@@ -76,7 +76,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label query-keyword width-9">Alias By</span>
-      <input type="text" class="gf-form-input width-12" ng-model="ctrl.target.aliasBy" />
+      <input type="text" class="gf-form-input width-30" ng-model="ctrl.target.aliasBy" />
     </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>
@@ -111,8 +111,20 @@
     <pre class="gf-form-pre">{{ctrl.lastQueryMeta.rawQueryString}}</pre>
   </div>
   <div class="gf-form" ng-show="ctrl.showHelp">
-    <pre class="gf-form-pre alert alert-info">
-Help text for aliasing
+    <pre class="gf-form-pre alert alert-info"><h6>Alias Patterns</h6>
+  Format the legend keys any way you want by using alias patterns.
+
+  Example: <code ng-non-bindable>{{metric.name}} - {{metric.label.instance_name}}</code>
+  Result: cpu/usage_time - server1-europe-west-1
+
+  Patterns:
+  <code ng-non-bindable>{{metric.type}}</code> = metric type e.g. compute.googleapis.com/instance/cpu/usage_time
+  <code ng-non-bindable>{{metric.name}}</code> = name part of metric e.g. cpu/usage_time
+  <code ng-non-bindable>{{metric.category}}</code> = category part of metric e.g. instance
+  <code ng-non-bindable>{{metric.service}}</code> = service part of metric e.g. compute
+
+  <code ng-non-bindable>{{metric.label.label_name}}</code> = Metric label metadata e.g. metric.label.instance_name
+  <code ng-non-bindable>{{resource.label.label_name}}</code> = Resource label metadata e.g. resource.label.zone
     </pre>
   </div>
   <div class="gf-form" ng-show="ctrl.lastQueryError">

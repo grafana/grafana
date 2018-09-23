@@ -28,7 +28,12 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-var slog log.Logger
+var (
+	slog                  log.Logger
+	legendKeyFormat       *regexp.Regexp
+	longMetricNameFormat  *regexp.Regexp
+	shortMetricNameFormat *regexp.Regexp
+)
 
 // StackdriverExecutor executes queries for the Stackdriver datasource
 type StackdriverExecutor struct {
@@ -52,6 +57,9 @@ func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, 
 func init() {
 	slog = log.New("tsdb.stackdriver")
 	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewStackdriverExecutor)
+	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	longMetricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/([\w\d_]+)/(.+)`)
+	shortMetricNameFormat = regexp.MustCompile(`([\w\d_]+)\.googleapis\.com/(.+)`)
 }
 
 // Query takes in the frontend queries, parses them into the Stackdriver query format
@@ -132,11 +140,14 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 			groupBysAsStrings = append(groupBysAsStrings, groupBy.(string))
 		}
 
+		aliasBy := query.Model.Get("aliasBy").MustString()
+
 		stackdriverQueries = append(stackdriverQueries, &StackdriverQuery{
 			Target:   target,
 			Params:   params,
 			RefID:    query.RefId,
 			GroupBys: groupBysAsStrings,
+			AliasBy:  aliasBy,
 		})
 	}
 
@@ -260,14 +271,15 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			point := series.Points[i]
 			points = append(points, tsdb.NewTimePoint(null.FloatFrom(point.Value.DoubleValue), float64((point.Interval.EndTime).Unix())*1000))
 		}
-		metricName := series.Metric.Type
+
+		defaultMetricName := series.Metric.Type
 
 		for key, value := range series.Metric.Labels {
 			if !containsLabel(metricLabels[key], value) {
 				metricLabels[key] = append(metricLabels[key], value)
 			}
 			if len(query.GroupBys) == 0 || containsLabel(query.GroupBys, "metric.label."+key) {
-				metricName += " " + value
+				defaultMetricName += " " + value
 			}
 		}
 
@@ -277,9 +289,11 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			}
 
 			if containsLabel(query.GroupBys, "resource.label."+key) {
-				metricName += " " + value
+				defaultMetricName += " " + value
 			}
 		}
+
+		metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, series.Metric.Labels, series.Resource.Labels, query)
 
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 			Name:   metricName,
@@ -301,6 +315,74 @@ func containsLabel(labels []string, newLabel string) bool {
 		}
 	}
 	return false
+}
+
+func formatLegendKeys(metricType string, defaultMetricName string, metricLabels map[string]string, resourceLabels map[string]string, query *StackdriverQuery) string {
+	if query.AliasBy == "" {
+		return defaultMetricName
+	}
+
+	result := legendKeyFormat.ReplaceAllFunc([]byte(query.AliasBy), func(in []byte) []byte {
+		metaPartName := strings.Replace(string(in), "{{", "", 1)
+		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
+		metaPartName = strings.TrimSpace(metaPartName)
+
+		if metaPartName == "metric.type" {
+			return []byte(metricType)
+		}
+
+		metricPart := replaceWithMetricPart(metaPartName, metricType)
+
+		if metricPart != nil {
+			return metricPart
+		}
+
+		metaPartName = strings.Replace(metaPartName, "metric.label.", "", 1)
+
+		if val, exists := metricLabels[metaPartName]; exists {
+			return []byte(val)
+		}
+
+		metaPartName = strings.Replace(metaPartName, "resource.label.", "", 1)
+
+		if val, exists := resourceLabels[metaPartName]; exists {
+			return []byte(val)
+		}
+
+		return in
+	})
+
+	return string(result)
+}
+
+func replaceWithMetricPart(metaPartName string, metricType string) []byte {
+	// https://cloud.google.com/monitoring/api/v3/metrics-details#label_names
+	longMatches := longMetricNameFormat.FindStringSubmatch(metricType)
+	shortMatches := shortMetricNameFormat.FindStringSubmatch(metricType)
+
+	if metaPartName == "metric.name" {
+		if len(longMatches) > 0 {
+			return []byte(longMatches[3])
+		} else if len(shortMatches) > 0 {
+			return []byte(shortMatches[2])
+		}
+	}
+
+	if metaPartName == "metric.category" {
+		if len(longMatches) > 0 {
+			return []byte(longMatches[2])
+		}
+	}
+
+	if metaPartName == "metric.service" {
+		if len(longMatches) > 0 {
+			return []byte(longMatches[1])
+		} else if len(shortMatches) > 0 {
+			return []byte(shortMatches[1])
+		}
+	}
+
+	return nil
 }
 
 func (e *StackdriverExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {

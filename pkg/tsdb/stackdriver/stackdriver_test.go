@@ -30,6 +30,7 @@ func TestStackdriver(t *testing.T) {
 							"target":     "target",
 							"metricType": "a/metric/type",
 							"view":       "FULL",
+							"aliasBy":    "testalias",
 						}),
 						RefId: "A",
 					},
@@ -49,6 +50,7 @@ func TestStackdriver(t *testing.T) {
 				So(queries[0].Params["aggregation.perSeriesAligner"][0], ShouldEqual, "ALIGN_MEAN")
 				So(queries[0].Params["filter"][0], ShouldEqual, "metric.type=\"a/metric/type\"")
 				So(queries[0].Params["view"][0], ShouldEqual, "FULL")
+				So(queries[0].AliasBy, ShouldEqual, "testalias")
 			})
 
 			Convey("and query has filters", func() {
@@ -255,23 +257,41 @@ func TestStackdriver(t *testing.T) {
 				})
 			})
 
-			// Convey("when data from query with no aggregation and alias by", func() {
-			// 	data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
-			// 	So(err, ShouldBeNil)
-			// 	So(len(data.TimeSeries), ShouldEqual, 3)
+			Convey("when data from query with no aggregation and alias by", func() {
+				data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 3)
 
-			// 	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-			// 	query := &StackdriverQuery{AliasBy: "{{metric.label.instance_name}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
-			// 	err = executor.parseResponse(res, data, query)
-			// 	So(err, ShouldBeNil)
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 
-			// 	Convey("Should use alias by formatting and only show instance name", func() {
-			// 		So(len(res.Series), ShouldEqual, 3)
-			// 		So(res.Series[0].Name, ShouldEqual, "collector-asia-east-1")
-			// 		So(res.Series[1].Name, ShouldEqual, "collector-europe-west-1")
-			// 		So(res.Series[2].Name, ShouldEqual, "collector-us-east-1")
-			// 	})
-			// })
+				Convey("and the alias pattern is for metric type, a metric label and a resource label", func() {
+
+					query := &StackdriverQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+
+					Convey("Should use alias by formatting and only show instance name", func() {
+						So(len(res.Series), ShouldEqual, 3)
+						So(res.Series[0].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time - collector-asia-east-1 - asia-east1-a")
+						So(res.Series[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time - collector-europe-west-1 - europe-west1-b")
+						So(res.Series[2].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time - collector-us-east-1 - us-east1-b")
+					})
+				})
+
+				Convey("and the alias pattern is for metric name", func() {
+
+					query := &StackdriverQuery{AliasBy: "metric {{metric.name}} service {{metric.service}} category {{metric.category}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
+					err = executor.parseResponse(res, data, query)
+					So(err, ShouldBeNil)
+
+					Convey("Should use alias by formatting and only show instance name", func() {
+						So(len(res.Series), ShouldEqual, 3)
+						So(res.Series[0].Name, ShouldEqual, "metric cpu/usage_time service compute category instance")
+						So(res.Series[1].Name, ShouldEqual, "metric cpu/usage_time service compute category instance")
+						So(res.Series[2].Name, ShouldEqual, "metric cpu/usage_time service compute category instance")
+					})
+				})
+			})
 		})
 	})
 }

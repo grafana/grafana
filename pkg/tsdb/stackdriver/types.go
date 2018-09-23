@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// StackdriverQuery is the query that Grafana sends from the frontend
 type StackdriverQuery struct {
 	Target   string
 	Params   url.Values
@@ -13,6 +14,7 @@ type StackdriverQuery struct {
 	AliasBy  string
 }
 
+// StackdriverResponse is the data returned from the external Google Stackdriver API
 type StackdriverResponse struct {
 	TimeSeries []struct {
 		Metric struct {
