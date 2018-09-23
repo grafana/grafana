@@ -12,15 +12,15 @@ describe('StackdriverQueryCtrl', () => {
     });
 
     it('should initialize filter segments using the target filter values', () => {
-      expect(ctrl.filterSegments.length).toBe(8);
-      expect(ctrl.filterSegments[0].type).toBe('key');
-      expect(ctrl.filterSegments[1].type).toBe('operator');
-      expect(ctrl.filterSegments[2].type).toBe('value');
-      expect(ctrl.filterSegments[3].type).toBe('condition');
-      expect(ctrl.filterSegments[4].type).toBe('key');
-      expect(ctrl.filterSegments[5].type).toBe('operator');
-      expect(ctrl.filterSegments[6].type).toBe('value');
-      expect(ctrl.filterSegments[7].type).toBe('plus-button');
+      expect(ctrl.filterSegments.filterSegments.length).toBe(8);
+      expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
+      expect(ctrl.filterSegments.filterSegments[1].type).toBe('operator');
+      expect(ctrl.filterSegments.filterSegments[2].type).toBe('value');
+      expect(ctrl.filterSegments.filterSegments[3].type).toBe('condition');
+      expect(ctrl.filterSegments.filterSegments[4].type).toBe('key');
+      expect(ctrl.filterSegments.filterSegments[5].type).toBe('operator');
+      expect(ctrl.filterSegments.filterSegments[6].type).toBe('value');
+      expect(ctrl.filterSegments.filterSegments[7].type).toBe('plus-button');
     });
   });
 
@@ -106,7 +106,7 @@ describe('StackdriverQueryCtrl', () => {
         result = await ctrl.getFilters(segment, 0);
       });
 
-      it('should populate group bys segments', () => {
+      it('should populate condition segments', () => {
         expect(result.length).toBe(1);
         expect(result[0].value).toBe('AND');
       });
@@ -142,7 +142,7 @@ describe('StackdriverQueryCtrl', () => {
         result = await ctrl.getFilters(segment, 0);
       });
 
-      it('should populate group bys segments', () => {
+      it('should populate filter key segments', () => {
         expect(result.length).toBe(5);
         expect(result[0].value).toBe('metric.label.metric-key-1');
         expect(result[1].value).toBe('metric.label.metric-key-2');
@@ -163,13 +163,16 @@ describe('StackdriverQueryCtrl', () => {
           'resource-key-2': ['resource-value-2'],
         };
 
-        ctrl.filterSegments = [{ type: 'key', value: 'metric.label.metric-key-1' }, { type: 'operator', value: '=' }];
+        ctrl.filterSegments.filterSegments = [
+          { type: 'key', value: 'metric.label.metric-key-1' },
+          { type: 'operator', value: '=' },
+        ];
 
         const segment = { type: 'value' };
         result = await ctrl.getFilters(segment, 2);
       });
 
-      it('should populate group bys segments', () => {
+      it('should populate filter value segments', () => {
         expect(result.length).toBe(1);
         expect(result[0].value).toBe('metric-value-1');
       });
@@ -179,18 +182,18 @@ describe('StackdriverQueryCtrl', () => {
       describe('and there are no other filters', () => {
         beforeEach(() => {
           const segment = { value: 'filterkey1', type: 'plus-button' };
-          ctrl.filterSegments = [segment];
+          ctrl.filterSegments.filterSegments = [segment];
           ctrl.filterSegmentUpdated(segment, 0);
         });
 
         it('should transform the plus button segment to a key segment', () => {
-          expect(ctrl.filterSegments[0].type).toBe('key');
+          expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
         });
 
         it('should add an operator, value segment and plus button segment', () => {
-          expect(ctrl.filterSegments.length).toBe(3);
-          expect(ctrl.filterSegments[1].type).toBe('operator');
-          expect(ctrl.filterSegments[2].type).toBe('value');
+          expect(ctrl.filterSegments.filterSegments.length).toBe(3);
+          expect(ctrl.filterSegments.filterSegments[1].type).toBe('operator');
+          expect(ctrl.filterSegments.filterSegments[2].type).toBe('value');
         });
       });
     });
@@ -201,15 +204,20 @@ describe('StackdriverQueryCtrl', () => {
           const existingOperatorSegment = { value: '=', type: 'operator' };
           const existingValueSegment = { value: 'filtervalue', type: 'value' };
           const plusSegment = { value: '', type: 'plus-button' };
-          ctrl.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment, plusSegment];
+          ctrl.filterSegments.filterSegments = [
+            existingKeySegment,
+            existingOperatorSegment,
+            existingValueSegment,
+            plusSegment,
+          ];
           ctrl.filterSegmentUpdated(existingKeySegment, 0);
         });
 
         it('should not add any new segments', () => {
-          expect(ctrl.filterSegments.length).toBe(4);
-          expect(ctrl.filterSegments[0].type).toBe('key');
-          expect(ctrl.filterSegments[1].type).toBe('operator');
-          expect(ctrl.filterSegments[2].type).toBe('value');
+          expect(ctrl.filterSegments.filterSegments.length).toBe(4);
+          expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
+          expect(ctrl.filterSegments.filterSegments[1].type).toBe('operator');
+          expect(ctrl.filterSegments.filterSegments[2].type).toBe('value');
         });
       });
       describe('and user clicks on value segment and value not equal to fake value', () => {
@@ -217,16 +225,16 @@ describe('StackdriverQueryCtrl', () => {
           const existingKeySegment = { value: 'filterkey1', type: 'key' };
           const existingOperatorSegment = { value: '=', type: 'operator' };
           const existingValueSegment = { value: 'filtervalue', type: 'value' };
-          ctrl.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment];
+          ctrl.filterSegments.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment];
           ctrl.filterSegmentUpdated(existingValueSegment, 2);
         });
 
         it('should ensure that plus segment exists', () => {
-          expect(ctrl.filterSegments.length).toBe(4);
-          expect(ctrl.filterSegments[0].type).toBe('key');
-          expect(ctrl.filterSegments[1].type).toBe('operator');
-          expect(ctrl.filterSegments[2].type).toBe('value');
-          expect(ctrl.filterSegments[3].type).toBe('plus-button');
+          expect(ctrl.filterSegments.filterSegments.length).toBe(4);
+          expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
+          expect(ctrl.filterSegments.filterSegments[1].type).toBe('operator');
+          expect(ctrl.filterSegments.filterSegments[2].type).toBe('value');
+          expect(ctrl.filterSegments.filterSegments[3].type).toBe('plus-button');
         });
       });
 
@@ -235,15 +243,15 @@ describe('StackdriverQueryCtrl', () => {
           const existingKeySegment = { value: 'filterkey1', type: 'key' };
           const existingOperatorSegment = { value: '=', type: 'operator' };
           const existingValueSegment = { value: ctrl.defaultFilterValue, type: 'value' };
-          ctrl.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment];
+          ctrl.filterSegments.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment];
           ctrl.filterSegmentUpdated(existingValueSegment, 2);
         });
 
         it('should not add plus segment', () => {
-          expect(ctrl.filterSegments.length).toBe(3);
-          expect(ctrl.filterSegments[0].type).toBe('key');
-          expect(ctrl.filterSegments[1].type).toBe('operator');
-          expect(ctrl.filterSegments[2].type).toBe('value');
+          expect(ctrl.filterSegments.filterSegments.length).toBe(3);
+          expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
+          expect(ctrl.filterSegments.filterSegments[1].type).toBe('operator');
+          expect(ctrl.filterSegments.filterSegments[2].type).toBe('value');
         });
       });
       describe('and user removes key segment', () => {
@@ -252,13 +260,18 @@ describe('StackdriverQueryCtrl', () => {
           const existingOperatorSegment = { value: '=', type: 'operator' };
           const existingValueSegment = { value: 'filtervalue', type: 'value' };
           const plusSegment = { value: '', type: 'plus-button' };
-          ctrl.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment, plusSegment];
+          ctrl.filterSegments.filterSegments = [
+            existingKeySegment,
+            existingOperatorSegment,
+            existingValueSegment,
+            plusSegment,
+          ];
           ctrl.filterSegmentUpdated(existingKeySegment, 0);
         });
 
         it('should remove filter segments', () => {
-          expect(ctrl.filterSegments.length).toBe(1);
-          expect(ctrl.filterSegments[0].type).toBe('plus-button');
+          expect(ctrl.filterSegments.filterSegments.length).toBe(1);
+          expect(ctrl.filterSegments.filterSegments[0].type).toBe('plus-button');
         });
       });
 
@@ -270,7 +283,7 @@ describe('StackdriverQueryCtrl', () => {
           const existingValueSegment = { value: 'filtervalue', type: 'value' };
           const conditionSegment = { value: 'AND', type: 'condition' };
           const plusSegment = { value: '', type: 'plus-button' };
-          ctrl.filterSegments = [
+          ctrl.filterSegments.filterSegments = [
             existingKeySegment1,
             existingOperatorSegment,
             existingValueSegment,
@@ -284,11 +297,11 @@ describe('StackdriverQueryCtrl', () => {
         });
 
         it('should remove filter segments and the condition segment', () => {
-          expect(ctrl.filterSegments.length).toBe(4);
-          expect(ctrl.filterSegments[0].type).toBe('key');
-          expect(ctrl.filterSegments[1].type).toBe('operator');
-          expect(ctrl.filterSegments[2].type).toBe('value');
-          expect(ctrl.filterSegments[3].type).toBe('plus-button');
+          expect(ctrl.filterSegments.filterSegments.length).toBe(4);
+          expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
+          expect(ctrl.filterSegments.filterSegments[1].type).toBe('operator');
+          expect(ctrl.filterSegments.filterSegments[2].type).toBe('value');
+          expect(ctrl.filterSegments.filterSegments[3].type).toBe('plus-button');
         });
       });
 
@@ -300,7 +313,7 @@ describe('StackdriverQueryCtrl', () => {
           const existingValueSegment = { value: 'filtervalue', type: 'value' };
           const conditionSegment = { value: 'AND', type: 'condition' };
           const plusSegment = { value: '', type: 'plus-button' };
-          ctrl.filterSegments = [
+          ctrl.filterSegments.filterSegments = [
             existingKeySegment1,
             existingOperatorSegment,
             existingValueSegment,
@@ -314,11 +327,11 @@ describe('StackdriverQueryCtrl', () => {
         });
 
         it('should remove filter segments and the condition segment', () => {
-          expect(ctrl.filterSegments.length).toBe(4);
-          expect(ctrl.filterSegments[0].type).toBe('key');
-          expect(ctrl.filterSegments[1].type).toBe('operator');
-          expect(ctrl.filterSegments[2].type).toBe('value');
-          expect(ctrl.filterSegments[3].type).toBe('plus-button');
+          expect(ctrl.filterSegments.filterSegments.length).toBe(4);
+          expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
+          expect(ctrl.filterSegments.filterSegments[1].type).toBe('operator');
+          expect(ctrl.filterSegments.filterSegments[2].type).toBe('value');
+          expect(ctrl.filterSegments.filterSegments[3].type).toBe('plus-button');
         });
       });
 
@@ -328,19 +341,24 @@ describe('StackdriverQueryCtrl', () => {
           const existingOperatorSegment = { value: '=', type: 'operator' };
           const existingValueSegment = { value: 'filtervalue', type: 'value' };
           const plusSegment = { value: 'filterkey2', type: 'plus-button' };
-          ctrl.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment, plusSegment];
+          ctrl.filterSegments.filterSegments = [
+            existingKeySegment,
+            existingOperatorSegment,
+            existingValueSegment,
+            plusSegment,
+          ];
           ctrl.filterSegmentUpdated(plusSegment, 3);
         });
 
         it('should condition segment and new filter segments', () => {
-          expect(ctrl.filterSegments.length).toBe(7);
-          expect(ctrl.filterSegments[0].type).toBe('key');
-          expect(ctrl.filterSegments[1].type).toBe('operator');
-          expect(ctrl.filterSegments[2].type).toBe('value');
-          expect(ctrl.filterSegments[3].type).toBe('condition');
-          expect(ctrl.filterSegments[4].type).toBe('key');
-          expect(ctrl.filterSegments[5].type).toBe('operator');
-          expect(ctrl.filterSegments[6].type).toBe('value');
+          expect(ctrl.filterSegments.filterSegments.length).toBe(7);
+          expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
+          expect(ctrl.filterSegments.filterSegments[1].type).toBe('operator');
+          expect(ctrl.filterSegments.filterSegments[2].type).toBe('value');
+          expect(ctrl.filterSegments.filterSegments[3].type).toBe('condition');
+          expect(ctrl.filterSegments.filterSegments[4].type).toBe('key');
+          expect(ctrl.filterSegments.filterSegments[5].type).toBe('operator');
+          expect(ctrl.filterSegments.filterSegments[6].type).toBe('value');
         });
       });
     });

@@ -1,4 +1,4 @@
-<query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
+<query-editor-row query-ctrl="ctrl" has-text-edit-mode="false">
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Metric Type</span>
@@ -12,7 +12,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label query-keyword width-9">Filter</span>
-      <div class="gf-form" ng-repeat="segment in ctrl.filterSegments">
+      <div class="gf-form" ng-repeat="segment in ctrl.filterSegments.filterSegments">
         <metric-segment segment="segment" get-options="ctrl.getFilters(segment, $index)" on-change="ctrl.filterSegmentUpdated(segment, $index)"></metric-segment>
       </div>
     </div>

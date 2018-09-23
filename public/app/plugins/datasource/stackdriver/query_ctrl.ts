@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
 import * as options from './constants';
-// mport BaseComponent, * as extras from './A';
+import { FilterSegments, DefaultRemoveFilterValue } from './filter_segments';
 
 export interface QueryMeta {
   rawQuery: string;
@@ -54,7 +54,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   };
 
   groupBySegments: any[];
-  filterSegments: any[];
   removeSegment: any;
   showHelp: boolean;
   showLastQuery: boolean;
@@ -62,6 +61,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   lastQueryError?: string;
   metricLabels: { [key: string]: string[] };
   resourceLabels: { [key: string]: string[] };
+  filterSegments: any;
 
   /** @ngInject */
   constructor($scope, $injector, private uiSegmentSrv, private timeSrv, private templateSrv) {
@@ -86,24 +86,13 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.removeSegment = this.uiSegmentSrv.newSegment({ fake: true, value: '-- remove group by --' });
     this.ensurePlusButton(this.groupBySegments);
 
-    this.filterSegments = [];
-    this.target.filters.forEach((f, index) => {
-      switch (index % 4) {
-        case 0:
-          this.filterSegments.push(this.uiSegmentSrv.newKey(f));
-          break;
-        case 1:
-          this.filterSegments.push(this.uiSegmentSrv.newOperator(f));
-          break;
-        case 2:
-          this.filterSegments.push(this.uiSegmentSrv.newKeyValue(f));
-          break;
-        case 3:
-          this.filterSegments.push(this.uiSegmentSrv.newCondition(f));
-          break;
-      }
-    });
-    this.ensurePlusButton(this.filterSegments);
+    this.filterSegments = new FilterSegments(
+      this.uiSegmentSrv,
+      this.target,
+      this.getGroupBys.bind(this, null, null, DefaultRemoveFilterValue, false),
+      this.getFilterValues.bind(this)
+    );
+    this.filterSegments.buildSegmentModel();
   }
 
   async getCurrentProject() {
@@ -238,93 +227,32 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   }
 
   async getFilters(segment, index) {
-    if (segment.type === 'condition') {
-      return [this.uiSegmentSrv.newSegment('AND')];
+    const hasNoFilterKeys = this.metricLabels && Object.keys(this.metricLabels).length === 0;
+    return this.filterSegments.getFilters(segment, index, hasNoFilterKeys);
+  }
+
+  getFilterValues(index) {
+    const filterKey = this.templateSrv.replace(this.filterSegments.filterSegments[index - 2].value);
+    if (!filterKey || !this.metricLabels || Object.keys(this.metricLabels).length === 0) {
+      return [];
     }
 
-    if (segment.type === 'operator') {
-      return this.uiSegmentSrv.newOperators(['=', '!=', '=~', '!=~']);
+    const shortKey = filterKey.substring(filterKey.indexOf('.label.') + 7);
+
+    if (filterKey.startsWith('metric.label.') && this.metricLabels.hasOwnProperty(shortKey)) {
+      return this.metricLabels[shortKey];
     }
 
-    if (segment.type === 'key' || segment.type === 'plus-button') {
-      if (
-        this.metricLabels &&
-        Object.keys(this.metricLabels).length === 0 &&
-        segment.value &&
-        segment.value !== this.defaultRemoveFilterValue
-      ) {
-        this.removeSegment.value = this.defaultRemoveFilterValue;
-        return Promise.resolve([this.removeSegment]);
-      } else {
-        return this.getGroupBys(null, null, this.defaultRemoveFilterValue, false);
-      }
-    }
-
-    if (segment.type === 'value') {
-      const filterKey = this.templateSrv.replace(this.filterSegments[index - 2].value);
-      if (!filterKey || !this.metricLabels || Object.keys(this.metricLabels).length === 0) {
-        return [];
-      }
-
-      const shortKey = filterKey.substring(filterKey.indexOf('.label.') + 7);
-
-      if (filterKey.startsWith('metric.label.') && this.metricLabels.hasOwnProperty(shortKey)) {
-        return this.getValuesForFilterKey(this.metricLabels[shortKey]);
-      }
-
-      if (filterKey.startsWith('resource.label.') && this.resourceLabels.hasOwnProperty(shortKey)) {
-        return this.getValuesForFilterKey(this.resourceLabels[shortKey]);
-      }
+    if (filterKey.startsWith('resource.label.') && this.resourceLabels.hasOwnProperty(shortKey)) {
+      return this.resourceLabels[shortKey];
     }
 
     return [];
   }
 
-  getValuesForFilterKey(labels: any[]) {
-    const filterValues = labels.map(l => {
-      return this.uiSegmentSrv.newSegment({
-        value: `${l}`,
-        expandable: false,
-      });
-    });
-
-    return filterValues;
-  }
-
   filterSegmentUpdated(segment, index) {
-    if (segment.type === 'plus-button') {
-      this.addNewFilterSegments(segment, index);
-    } else if (segment.type === 'key' && segment.value === this.defaultRemoveFilterValue) {
-      this.removeFilterSegment(index);
-      this.ensurePlusButton(this.filterSegments);
-    } else if (segment.type === 'value' && segment.value !== this.defaultFilterValue) {
-      this.ensurePlusButton(this.filterSegments);
-    }
-
-    this.target.filters = this.filterSegments.filter(s => s.type !== 'plus-button').map(seg => seg.value);
+    this.target.filters = this.filterSegments.filterSegmentUpdated(segment, index);
     this.refresh();
-  }
-
-  addNewFilterSegments(segment, index) {
-    if (index > 2) {
-      this.filterSegments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
-    }
-    segment.type = 'key';
-    this.filterSegments.push(this.uiSegmentSrv.newOperator('='));
-    this.filterSegments.push(this.uiSegmentSrv.newFake(this.defaultFilterValue, 'value', 'query-segment-value'));
-  }
-
-  removeFilterSegment(index) {
-    this.filterSegments.splice(index, 3);
-    // remove trailing condition
-    if (index > 2 && this.filterSegments[index - 1].type === 'condition') {
-      this.filterSegments.splice(index - 1, 1);
-    }
-
-    // remove condition if it is first segment
-    if (index === 0 && this.filterSegments[0].type === 'condition') {
-      this.filterSegments.splice(0, 1);
-    }
   }
 
   ensurePlusButton(segments) {
