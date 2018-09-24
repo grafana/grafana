@@ -62,7 +62,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   filterSegments: any;
 
   /** @ngInject */
-  constructor($scope, $injector, private uiSegmentSrv, private timeSrv, private templateSrv) {
+  constructor($scope, $injector, private uiSegmentSrv, private templateSrv) {
     super($scope, $injector);
     _.defaultsDeep(this.target, this.defaults);
 
@@ -130,25 +130,13 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   async getLabels() {
     this.loadLabelsPromise = new Promise(async resolve => {
       try {
-        const data = await this.datasource.getTimeSeries({
-          targets: [
-            {
-              refId: this.target.refId,
-              datasourceId: this.datasource.id,
-              metricType: this.templateSrv.replace(this.target.metricType),
-              aggregation: {
-                crossSeriesReducer: 'REDUCE_NONE',
-              },
-              view: 'HEADERS',
-            },
-          ],
-          range: this.timeSrv.timeRange(),
-        });
+        const data = await this.datasource.getLabels(this.target.metricType, this.target.refId);
 
         this.metricLabels = data.results[this.target.refId].meta.metricLabels;
         this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
         resolve();
       } catch (error) {
+        appEvents.emit('ds-request-error', 'Error loading metric labels for ' + this.target.metricType);
         resolve();
       }
     });

@@ -5,7 +5,7 @@ export default class StackdriverDatasource {
   baseUrl: string;
   projectName: string;
 
-  constructor(instanceSettings, private backendSrv, private templateSrv) {
+  constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
     this.doRequest = this.doRequest;
@@ -52,6 +52,23 @@ export default class StackdriverDatasource {
       },
     });
     return data;
+  }
+
+  async getLabels(metricType, refId) {
+    return await this.getTimeSeries({
+      targets: [
+        {
+          refId: refId,
+          datasourceId: this.id,
+          metricType: this.templateSrv.replace(metricType),
+          aggregation: {
+            crossSeriesReducer: 'REDUCE_NONE',
+          },
+          view: 'HEADERS',
+        },
+      ],
+      range: this.timeSrv.timeRange(),
+    });
   }
 
   interpolateGroupBys(groupBys: string[], scopedVars): string[] {
