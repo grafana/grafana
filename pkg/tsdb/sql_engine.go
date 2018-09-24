@@ -116,9 +116,7 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 		Results: make(map[string]*QueryResult),
 	}
 
-	session := e.engine.NewSession()
-	defer session.Close()
-	db := session.DB()
+	var wg sync.WaitGroup
 
 	for _, query := range tsdbQuery.Queries {
 		rawSQL := query.Model.Get("rawSql").MustString()
@@ -145,31 +143,41 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 
 		queryResult.Meta.Set("sql", rawSQL)
 
-		rows, err := db.Query(rawSQL)
-		if err != nil {
-			queryResult.Error = err
-			continue
-		}
+		wg.Add(1)
 
-		defer rows.Close()
+		go func(rawSQL string, query *Query, queryResult *QueryResult) {
+			defer wg.Done()
+			session := e.engine.NewSession()
+			defer session.Close()
+			db := session.DB()
 
-		format := query.Model.Get("format").MustString("time_series")
-
-		switch format {
-		case "time_series":
-			err := e.transformToTimeSeries(query, rows, queryResult, tsdbQuery)
+			rows, err := db.Query(rawSQL)
 			if err != nil {
 				queryResult.Error = err
-				continue
+				return
 			}
-		case "table":
-			err := e.transformToTable(query, rows, queryResult, tsdbQuery)
-			if err != nil {
-				queryResult.Error = err
-				continue
+
+			defer rows.Close()
+
+			format := query.Model.Get("format").MustString("time_series")
+
+			switch format {
+			case "time_series":
+				err := e.transformToTimeSeries(query, rows, queryResult, tsdbQuery)
+				if err != nil {
+					queryResult.Error = err
+					return
+				}
+			case "table":
+				err := e.transformToTable(query, rows, queryResult, tsdbQuery)
+				if err != nil {
+					queryResult.Error = err
+					return
+				}
 			}
-		}
+		}(rawSQL, query, queryResult)
 	}
+	wg.Wait()
 
 	return result, nil
 }
