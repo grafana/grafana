@@ -2,6 +2,7 @@ import './dashboard_loaders';
 import './ReactContainer';
 
 import ServerStats from 'app/features/admin/ServerStats';
+import AddUserPage from 'app/features/users/AddUserPage';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import TeamPages from 'app/features/teams/TeamPages';
 import TeamList from 'app/features/teams/TeamList';
@@ -132,10 +133,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'OrgUsersCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/org/users/invite', {
-      templateUrl: 'public/app/features/org/partials/invite.html',
-      controller: 'UserInviteCtrl',
-      controllerAs: 'ctrl',
+    .when('/org/users/add', {
+      template: '<react-container />',
+      resolve: {
+        roles: () => ['Admin'],
+        component: () => AddUserPage,
+      },
     })
     .when('/org/apikeys', {
       templateUrl: 'public/app/features/org/partials/orgApiKeys.html',
