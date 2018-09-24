@@ -31,6 +31,7 @@ func TestStackdriver(t *testing.T) {
 							"metricType": "a/metric/type",
 							"view":       "FULL",
 							"aliasBy":    "testalias",
+							"type":       "timeSeriesQuery",
 						}),
 						RefId: "A",
 					},
