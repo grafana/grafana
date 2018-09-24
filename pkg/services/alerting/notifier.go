@@ -113,6 +113,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		Timeout: alertTimeout / 2,
 		OrgId:   context.Rule.OrgId,
 		OrgRole: m.ROLE_ADMIN,
+		IsAlert: true,
 	}
 
 	ref, err := context.GetDashboardUID()

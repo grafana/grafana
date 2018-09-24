@@ -22,6 +22,7 @@ type Opts struct {
 	Path     string
 	Encoding string
 	Timezone string
+	IsAlert  bool
 }
 
 type RenderResult struct {

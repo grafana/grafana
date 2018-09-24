@@ -196,10 +196,13 @@ type Cfg struct {
 	Smtp SmtpSettings
 
 	// Rendering
-	ImagesDir                        string
-	PhantomDir                       string
-	RendererUrl                      string
-	RendererCallbackUrl              string
+	ImagesDir             string
+	PhantomDir            string
+	RendererUrl           string
+	RendererCallbackUrl   string
+	RendererLimit         int
+	RendererLimitAlerting int
+
 	DisableBruteForceLoginProtection bool
 
 	TempDataLifetime time.Duration
@@ -645,6 +648,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	// Rendering
 	renderSec := iniFile.Section("rendering")
+	cfg.RendererLimit = renderSec.Key("concurrent_limit").MustInt(10)
+	cfg.RendererLimitAlerting = renderSec.Key("concurrent_limit").MustInt(5)
+
 	cfg.RendererUrl = renderSec.Key("server_url").String()
 	cfg.RendererCallbackUrl = renderSec.Key("callback_url").String()
 	if cfg.RendererCallbackUrl == "" {

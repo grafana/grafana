@@ -100,7 +100,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			}
 		}
 	}
-	handler.notifier.SendIfNeeded(evalContext)
 
+	handler.notifier.SendIfNeeded(evalContext)
 	return nil
 }
