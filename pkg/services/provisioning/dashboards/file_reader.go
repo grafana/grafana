@@ -27,7 +27,6 @@ var (
 type fileReader struct {
 	Cfg              *DashboardsAsConfig
 	Path             string
-	cfgPath          string
 	log              log.Logger
 	dashboardService dashboards.DashboardProvisioningService
 }
@@ -44,6 +43,10 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")
 	}
 
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.Error("Cannot read directory", "error", err)
+	}
+
 	copy := path
 	path, err := filepath.Abs(path)
 	if err != nil {
@@ -55,21 +58,17 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Info("falling back to original path due to Abs failure")
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		log.Error("Cannot read directory", "error", err)
-	}
-
 	return &fileReader{
 		Cfg:              cfg,
 		Path:             path,
-		cfgPath:          path,
 		log:              log,
 		dashboardService: dashboards.NewProvisioningService(),
 	}, nil
 }
 
 func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	if err := fr.startWalkingDisk(); err != nil {
+	path := fr.evalSymlinkPath(fr.Path)
+	if err := fr.startWalkingDisk(path); err != nil {
 		fr.log.Error("failed to search for dashboards", "error", err)
 	}
 
@@ -83,7 +82,8 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 			if !running { // avoid walking the filesystem in parallel. in-case fs is very slow.
 				running = true
 				go func() {
-					if err := fr.startWalkingDisk(); err != nil {
+					path := fr.evalSymlinkPath(fr.Path)
+					if err := fr.startWalkingDisk(path); err != nil {
 						fr.log.Error("failed to search for dashboards", "error", err)
 					}
 					running = false
@@ -95,25 +95,13 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 	}
 }
 
-func (fr *fileReader) startWalkingDisk() error {
-	copy := fr.cfgPath
+func (fr *fileReader) startWalkingDisk(dashPath string) error {
 
-	path, err := filepath.EvalSymlinks(copy)
-	if err != nil {
-		fr.log.Error("Failed to read content of symlinked path: %s", path)
-	}
-
-	if path == "" {
-		path = copy
-		fr.log.Info("falling back to original path due to EvalSymlink failure")
-	}
-
-	if _, err := os.Stat(path); err != nil {
+	if _, err := os.Stat(dashPath); err != nil {
 		if os.IsNotExist(err) {
 			return err
 		}
 	}
-	fr.Path = path
 
 	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardService)
 	if err != nil && err != ErrFolderNameMissing {
@@ -126,7 +114,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	}
 
 	filesFoundOnDisk := map[string]os.FileInfo{}
-	err = filepath.Walk(path, createWalkFn(filesFoundOnDisk))
+	err = filepath.Walk(dashPath, createWalkFn(filesFoundOnDisk))
 	if err != nil {
 		return err
 	}
@@ -281,6 +269,20 @@ func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
 	}
 
 	return fileinfo, err
+}
+
+func (fr *fileReader) evalSymlinkPath(path string) string {
+
+	sympath, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		fr.log.Error("Failed to read content of symlinked path: %s", path)
+	}
+
+	if sympath == "" {
+		sympath = path
+		fr.log.Info("falling back to original path due to EvalSymlink failure")
+	}
+	return sympath
 }
 
 func createWalkFn(filesOnDisk map[string]os.FileInfo) filepath.WalkFunc {
