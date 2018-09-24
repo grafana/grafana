@@ -40,6 +40,8 @@ Do you use Grafana alerting and have some notifications that are more important 
 
 Grafana 5.3 comes with a new graphical query builder for Postgres. Bringing Postgres integration more in line with some the other datasources and making it easier for both advanced and beginners to work with timeseries in Postgres.
 
+{{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
+
 ## Improved OAuth support for Gitlab
 
 Grafana 5.3 now supports filtering to specific groups when using Gitlab OAuth. This is makes it possible to use Gitlab OAuth with Grafana in a shared environment without giving access to Grafana to everyone.
