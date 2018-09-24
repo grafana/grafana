@@ -68,7 +68,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 
 			// Verify that we can send the notification again
 			// but this time within the same transaction.
-			if !evalContext.IsTestRun && !not.ShouldNotify(context.Background(), evalContext) {
+			if !evalContext.IsTestRun && !not.ShouldNotify(ctx, evalContext) {
 				return nil
 			}
 
