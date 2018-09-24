@@ -21,7 +21,7 @@ bulkAlertingDashboard() {
 		COUNTER=0
 		MAX=100
 		while [  $COUNTER -lt $MAX ]; do
-				jsonnet -o "bulk_alerting_dashboards/alerting_dashboard${COUNTER}.json" -e "local bulkDash = import 'bulk_alerting_dashboards/bulkdash_alerting.jsonnet'; bulkDash + {  uid: 'uid-${COUNTER}',  title: 'alerting-title-${COUNTER}' }"
+				jsonnet -o "bulk_alerting_dashboards/alerting_dashboard${COUNTER}.json" -e "local bulkDash = import 'bulk_alerting_dashboards/bulkdash_alerting.jsonnet'; bulkDash + {  uid: 'bd-${COUNTER}',  title: 'alerting-title-${COUNTER}' }"
 				let COUNTER=COUNTER+1
 		done
 
