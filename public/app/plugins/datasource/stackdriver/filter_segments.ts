@@ -1,9 +1,9 @@
 export const DefaultRemoveFilterValue = '-- remove filter --';
+export const DefaultFilterValue = 'select value';
 
 export class FilterSegments {
   filterSegments: any[];
   removeSegment: any;
-  defaultFilterValue = 'select value';
 
   constructor(private uiSegmentSrv, private target, private getFilterKeysFunc, private getFilterValuesFunc) {}
 
@@ -76,7 +76,7 @@ export class FilterSegments {
     }
     segment.type = 'key';
     this.filterSegments.push(this.uiSegmentSrv.newOperator('='));
-    this.filterSegments.push(this.uiSegmentSrv.newFake(this.defaultFilterValue, 'value', 'query-segment-value'));
+    this.filterSegments.push(this.uiSegmentSrv.newFake(DefaultFilterValue, 'value', 'query-segment-value'));
   }
 
   removeFilterSegment(index) {
@@ -107,7 +107,7 @@ export class FilterSegments {
     } else if (segment.type === 'key' && segment.value === DefaultRemoveFilterValue) {
       this.removeFilterSegment(index);
       this.ensurePlusButton(this.filterSegments);
-    } else if (segment.type === 'value' && segment.value !== this.defaultFilterValue) {
+    } else if (segment.type === 'value' && segment.value !== DefaultFilterValue) {
       this.ensurePlusButton(this.filterSegments);
     }
 

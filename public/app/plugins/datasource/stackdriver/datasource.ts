@@ -38,6 +38,7 @@ export default class StackdriverDatasource {
             return this.templateSrv.replace(f, options.scopedVars || {});
           }),
           aliasBy: this.templateSrv.replace(t.aliasBy, options.scopedVars || {}),
+          type: 'timeSeriesQuery',
         };
       });
 
@@ -125,6 +126,16 @@ export default class StackdriverDatasource {
   async getProjects() {
     const response = await this.doRequest(`/cloudresourcemanager/v1/projects`);
     return response.data.projects.map(p => ({ id: p.projectId, name: p.name }));
+  }
+
+  async getDefaultProject() {
+    const projects = await this.getProjects();
+    if (projects && projects.length > 0) {
+      const test = projects.filter(p => p.id === this.projectName)[0];
+      return test;
+    } else {
+      throw new Error('No projects found');
+    }
   }
 
   async getMetricTypes(projectId: string) {

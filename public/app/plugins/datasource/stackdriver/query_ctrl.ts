@@ -30,9 +30,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     aliasBy: string;
   };
   defaultDropdownValue = 'select metric';
-  defaultFilterValue = 'select value';
   defaultRemoveGroupByValue = '-- remove group by --';
-  defaultRemoveFilterValue = '-- remove filter --';
   loadLabelsPromise: Promise<any>;
   stackdriverConstants;
 
@@ -75,7 +73,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.getCurrentProject()
       .then(this.getMetricTypes.bind(this))
       .then(this.getLabels.bind(this));
-
     this.initSegments();
   }
 
@@ -97,12 +94,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
   async getCurrentProject() {
     try {
-      const projects = await this.datasource.getProjects();
-      if (projects && projects.length > 0) {
-        this.target.project = projects[0];
-      } else {
-        throw new Error('No projects found');
-      }
+      this.target.project = await this.datasource.getDefaultProject();
     } catch (error) {
       let message = 'Projects cannot be fetched: ';
       message += error.statusText ? error.statusText + ': ' : '';

@@ -1,5 +1,6 @@
 import { StackdriverQueryCtrl } from '../query_ctrl';
 import { TemplateSrvStub } from 'test/specs/helpers';
+import { DefaultRemoveFilterValue, DefaultFilterValue } from '../filter_segments';
 
 describe('StackdriverQueryCtrl', () => {
   let ctrl;
@@ -242,7 +243,7 @@ describe('StackdriverQueryCtrl', () => {
         beforeEach(() => {
           const existingKeySegment = { value: 'filterkey1', type: 'key' };
           const existingOperatorSegment = { value: '=', type: 'operator' };
-          const existingValueSegment = { value: ctrl.defaultFilterValue, type: 'value' };
+          const existingValueSegment = { value: DefaultFilterValue, type: 'value' };
           ctrl.filterSegments.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment];
           ctrl.filterSegmentUpdated(existingValueSegment, 2);
         });
@@ -256,7 +257,7 @@ describe('StackdriverQueryCtrl', () => {
       });
       describe('and user removes key segment', () => {
         beforeEach(() => {
-          const existingKeySegment = { value: ctrl.defaultRemoveFilterValue, type: 'key' };
+          const existingKeySegment = { value: DefaultRemoveFilterValue, type: 'key' };
           const existingOperatorSegment = { value: '=', type: 'operator' };
           const existingValueSegment = { value: 'filtervalue', type: 'value' };
           const plusSegment = { value: '', type: 'plus-button' };
@@ -277,8 +278,8 @@ describe('StackdriverQueryCtrl', () => {
 
       describe('and user removes key segment and there is a previous filter', () => {
         beforeEach(() => {
-          const existingKeySegment1 = { value: ctrl.defaultRemoveFilterValue, type: 'key' };
-          const existingKeySegment2 = { value: ctrl.defaultRemoveFilterValue, type: 'key' };
+          const existingKeySegment1 = { value: DefaultRemoveFilterValue, type: 'key' };
+          const existingKeySegment2 = { value: DefaultRemoveFilterValue, type: 'key' };
           const existingOperatorSegment = { value: '=', type: 'operator' };
           const existingValueSegment = { value: 'filtervalue', type: 'value' };
           const conditionSegment = { value: 'AND', type: 'condition' };
@@ -307,8 +308,8 @@ describe('StackdriverQueryCtrl', () => {
 
       describe('and user removes key segment and there is a filter after it', () => {
         beforeEach(() => {
-          const existingKeySegment1 = { value: ctrl.defaultRemoveFilterValue, type: 'key' };
-          const existingKeySegment2 = { value: ctrl.defaultRemoveFilterValue, type: 'key' };
+          const existingKeySegment1 = { value: DefaultRemoveFilterValue, type: 'key' };
+          const existingKeySegment2 = { value: DefaultRemoveFilterValue, type: 'key' };
           const existingOperatorSegment = { value: '=', type: 'operator' };
           const existingValueSegment = { value: 'filtervalue', type: 'value' };
           const conditionSegment = { value: 'AND', type: 'condition' };
