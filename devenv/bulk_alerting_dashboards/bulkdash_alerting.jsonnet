@@ -43,7 +43,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "Prometheus",
+      "datasource": "gdev-prometheus",
       "fill": 1,
       "gridPos": {
         "h": 9,
