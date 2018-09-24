@@ -147,12 +147,14 @@ interface PromQueryFieldProps {
   onQueryChange?: (value: string, override?: boolean) => void;
   portalPrefix?: string;
   request?: (url: string) => any;
+  supportsLogs?: boolean; // To be removed after Logging gets its own query field
 }
 
 interface PromQueryFieldState {
   histogramMetrics: string[];
   labelKeys: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
+  logLabelOptions: any[];
   metrics: string[];
   metricsByPrefix: CascaderOption[];
 }
@@ -184,15 +186,40 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
       histogramMetrics: props.histogramMetrics || [],
       labelKeys: props.labelKeys || {},
       labelValues: props.labelValues || {},
+      logLabelOptions: [],
       metrics: props.metrics || [],
       metricsByPrefix: props.metricsByPrefix || [],
     };
   }
 
   componentDidMount() {
-    this.fetchMetricNames();
-    this.fetchHistogramMetrics();
+    // Temporarily reused by logging
+    const { supportsLogs } = this.props;
+    if (supportsLogs) {
+      this.fetchLogLabels();
+    } else {
+      // Usual actions
+      this.fetchMetricNames();
+      this.fetchHistogramMetrics();
+    }
   }
+
+  onChangeLogLabels = (values: string[], selectedOptions: CascaderOption[]) => {
+    let query;
+    if (selectedOptions.length === 1) {
+      if (selectedOptions[0].children.length === 0) {
+        query = selectedOptions[0].value;
+      } else {
+        // Ignore click on group
+        return;
+      }
+    } else {
+      const key = selectedOptions[0].value;
+      const value = selectedOptions[1].value;
+      query = `{${key}="${value}"}`;
+    }
+    this.onChangeQuery(query, true);
+  };
 
   onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;
@@ -401,7 +428,8 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     }
 
     // Query labels for selector
-    if (selector && !this.state.labelValues[selector]) {
+    // Temporarily add skip for logging
+    if (selector && !this.state.labelValues[selector] && !this.props.supportsLogs) {
       if (selector === EMPTY_SELECTOR) {
         // Query label values for default labels
         refresher = Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
@@ -428,6 +456,38 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
         this.setState({ histogramMetrics });
       }
     });
+  }
+
+  // Temporarily here while reusing this field for logging
+  async fetchLogLabels() {
+    const url = '/api/prom/label';
+    try {
+      const res = await this.request(url);
+      const body = await (res.data || res.json());
+      const labelKeys = body.data.slice().sort();
+      const labelKeysBySelector = {
+        ...this.state.labelKeys,
+        [EMPTY_SELECTOR]: labelKeys,
+      };
+      const labelValuesByKey = {};
+      const logLabelOptions = [];
+      for (const key of labelKeys) {
+        const valuesUrl = `/api/prom/label/${key}/values`;
+        const res = await this.request(valuesUrl);
+        const body = await (res.data || res.json());
+        const values = body.data.slice().sort();
+        labelValuesByKey[key] = values;
+        logLabelOptions.push({
+          label: key,
+          value: key,
+          children: values.map(value => ({ label: value, value })),
+        });
+      }
+      const labelValues = { [EMPTY_SELECTOR]: labelValuesByKey };
+      this.setState({ labelKeys: labelKeysBySelector, labelValues, logLabelOptions });
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   async fetchLabelValues(key: string) {
@@ -484,8 +544,8 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
   }
 
   render() {
-    const { error, hint } = this.props;
-    const { histogramMetrics, metricsByPrefix } = this.state;
+    const { error, hint, supportsLogs } = this.props;
+    const { histogramMetrics, logLabelOptions, metricsByPrefix } = this.state;
     const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
     const metricsOptions = [
       { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions },
@@ -495,9 +555,15 @@ class PromQueryField extends React.Component<PromQueryFieldProps, PromQueryField
     return (
       <div className="prom-query-field">
         <div className="prom-query-field-tools">
-          <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-            <button className="btn navbar-button navbar-button--tight">Metrics</button>
-          </Cascader>
+          {supportsLogs ? (
+            <Cascader options={logLabelOptions} onChange={this.onChangeLogLabels}>
+              <button className="btn navbar-button navbar-button--tight">Log labels</button>
+            </Cascader>
+          ) : (
+            <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
+              <button className="btn navbar-button navbar-button--tight">Metrics</button>
+            </Cascader>
+          )}
         </div>
         <div className="prom-query-field-wrapper">
           <div className="slate-query-field-wrapper">

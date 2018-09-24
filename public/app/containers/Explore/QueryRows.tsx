@@ -44,7 +44,7 @@ class QueryRow extends PureComponent<any, {}> {
   };
 
   render() {
-    const { edited, history, query, queryError, queryHint, request } = this.props;
+    const { edited, history, query, queryError, queryHint, request, supportsLogs } = this.props;
     return (
       <div className="query-row">
         <div className="query-row-field">
@@ -58,6 +58,7 @@ class QueryRow extends PureComponent<any, {}> {
             onPressEnter={this.onPressEnter}
             onQueryChange={this.onChangeQuery}
             request={request}
+            supportsLogs={supportsLogs}
           />
         </div>
         <div className="query-row-tools">
