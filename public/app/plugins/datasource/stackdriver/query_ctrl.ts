@@ -136,7 +136,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
         resolve();
       } catch (error) {
-        appEvents.emit('ds-request-error', 'Error loading metric labels for ' + this.target.metricType);
+        console.log(error.data.message);
+        appEvents.emit('alert-error', ['Error', 'Error loading metric labels for ' + this.target.metricType]);
         resolve();
       }
     });
@@ -149,7 +150,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
   async getGroupBys(segment, index, removeText?: string, removeUsed = true) {
     await this.loadLabelsPromise;
-    const metricLabels = Object.keys(this.metricLabels)
+
+    const metricLabels = Object.keys(this.metricLabels || {})
       .filter(ml => {
         if (!removeUsed) {
           return true;
@@ -163,7 +165,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         });
       });
 
-    const resourceLabels = Object.keys(this.resourceLabels)
+    const resourceLabels = Object.keys(this.resourceLabels || {})
       .filter(ml => {
         if (!removeUsed) {
           return true;
