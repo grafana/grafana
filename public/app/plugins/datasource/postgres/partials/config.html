@@ -38,6 +38,24 @@
 	</div>
 </div>
 
+<div class="gf-form-group">
+  <div class="gf-form max-width-30">
+    <span class="gf-form-label width-11">Max open connections</span>
+    <input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.maxOpenConns" placeholder="unlimited"></input>
+  </div>
+  <div class="gf-form max-width-30">
+    <span class="gf-form-label width-11">Max idle connections</span>
+    <input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.maxIdleConns" placeholder="2"></input>
+  </div>
+  <div class="gf-form max-width-30">
+    <span class="gf-form-label width-11">Connection lifetime</span>
+    <input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.connMaxLifetime" placeholder="14400"></input>
+			<info-popover mode="right-absolute">
+        The connection lifetime in seconds.
+			</info-popover>
+  </div>
+</div>
+
 <h3 class="page-heading">PostgreSQL details</h3>
 
 <div class="gf-form-group">

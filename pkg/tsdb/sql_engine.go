@@ -98,8 +98,12 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, rowTransfo
 		return nil, err
 	}
 
-	engine.SetMaxOpenConns(10)
-	engine.SetMaxIdleConns(10)
+	maxOpenConns := config.Datasource.JsonData.Get("maxOpenConns").MustInt(0)
+	engine.SetMaxOpenConns(maxOpenConns)
+	maxIdleConns := config.Datasource.JsonData.Get("maxIdleConns").MustInt(2)
+	engine.SetMaxIdleConns(maxIdleConns)
+	connMaxLifetime := config.Datasource.JsonData.Get("connMaxLifetime").MustInt(14400)
+	engine.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second)
 
 	engineCache.versions[config.Datasource.Id] = config.Datasource.Version
 	engineCache.cache[config.Datasource.Id] = engine
