@@ -224,51 +224,24 @@ $btn-service-icon-width: 35px;
 //Toggle button
 
 .toggle-btn {
-  &-left {
-    border-radius: 2px 0 0 2px;
-    border-left: 1px solid #dae0e8;
-    border-top: 1px solid #dae0e8;
-    border-bottom: 1px solid #dae0e8;
-    margin: 0;
-    box-shadow: $card-shadow;
-    &--active {
-      background-color: #fff;
-      //background-color: $btn-secondary-bg;
-      //color: #fff;
-      background-color: lighten($input-label-bg, 5%);
-      color: $link-color;
-      &:hover {
-        cursor: default;
-      }
-    }
-    &--inactive {
-      //@include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
-      background: $input-label-bg;
-      color: $text-color-weak;
-    }
-  }
-  &-right {
-    border-radius: 0 2px 2px 0;
-    border-right: 1px solid #dae0e8;
-    border-top: 1px solid #dae0e8;
-    border-bottom: 1px solid #dae0e8;
-    margin-left: 0 !important;
-    box-shadow: $card-shadow;
+  background: $input-label-bg;
+  color: $text-color-weak;
+  box-shadow: $card-shadow;
 
-    &--active {
-      background-color: #fff;
-      //background-color: $btn-secondary-bg;
-      //color: #FFF;
-      background-color: lighten($input-label-bg, 5%);
-      color: $link-color;
-      &:hover {
-        cursor: default;
-      }
-    }
-    &--inactive {
-      //@include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
-      background: $input-label-bg;
-      color: $text-color-weak;
+  &:nth-child(1) {
+    border-radius: 2px 0 0 2px;
+    margin: 0;
+  }
+  &:nth-child(2) {
+    border-radius: 0 2px 2px 0;
+    margin-left: 0 !important;
+  }
+
+  &.active {
+    background-color: lighten($input-label-bg, 5%);
+    color: $link-color;
+    &:hover {
+      cursor: default;
     }
   }
 }

@@ -8,14 +8,14 @@
     </label>
 
     <div ng-if="ctrl.pendingInvites.length" style="margin-left: 1rem">
-      <button class="btn toggle-btn-left toggle-btn-left--active" ng-if="!ctrl.showInvites">
+      <button class="btn toggle-btn active" ng-if="!ctrl.showInvites">
         Users
-      </button><button class="btn toggle-btn-right toggle-btn-right--inactive" ng-if="!ctrl.showInvites" ng-click="ctrl.showInvites = true">
+      </button><button class="btn toggle-btn" ng-if="!ctrl.showInvites" ng-click="ctrl.showInvites = true">
         Pending Invites ({{ctrl.pendingInvites.length}})
       </button>
-      <button class="btn toggle-btn-left toggle-btn-left--inactive" ng-if="ctrl.showInvites" ng-click="ctrl.showInvites = false">
+      <button class="btn toggle-btn" ng-if="ctrl.showInvites" ng-click="ctrl.showInvites = false">
         Users
-      </button><button class="btn toggle-btn-right toggle-btn-right--active" ng-if="ctrl.showInvites">
+      </button><button class="btn toggle-btn active" ng-if="ctrl.showInvites">
         Pending Invites ({{ctrl.pendingInvites.length}})
       </button>
     </div>
