@@ -66,7 +66,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   filterSegments: any;
 
   /** @ngInject */
-  constructor($scope, $injector, private uiSegmentSrv, private timeSrv, private templateSrv) {
+  constructor($scope, $injector, private uiSegmentSrv, private templateSrv) {
     super($scope, $injector);
     _.defaultsDeep(this.target, this.defaults);
 
@@ -133,20 +133,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
   async getLabels() {
     this.loadLabelsPromise = new Promise(async resolve => {
       try {
-        const data = await this.datasource.getTimeSeries({
-          targets: [
-            {
-              refId: this.target.refId,
-              datasourceId: this.datasource.id,
-              metricType: this.templateSrv.replace(this.target.metricType),
-              aggregation: {
-                crossSeriesReducer: 'REDUCE_NONE',
-              },
-              view: 'HEADERS',
-            },
-          ],
-          range: this.timeSrv.timeRange(),
-        });
+        const data = await this.datasource.getLabels(this.target.metricType, this.target.refId);
 
         this.metricLabels = data.results[this.target.refId].meta.metricLabels;
         this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
@@ -155,6 +142,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         this.target.metricKind = data.results[this.target.refId].meta.metricKind;
         resolve();
       } catch (error) {
+        console.log(error.data.message);
+        appEvents.emit('alert-error', ['Error', 'Error loading metric labels for ' + this.target.metricType]);
         resolve();
       }
     });
@@ -167,7 +156,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
   async getGroupBys(segment, index, removeText?: string, removeUsed = true) {
     await this.loadLabelsPromise;
-    const metricLabels = Object.keys(this.metricLabels)
+
+    const metricLabels = Object.keys(this.metricLabels || {})
       .filter(ml => {
         if (!removeUsed) {
           return true;
@@ -181,7 +171,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
         });
       });
 
-    const resourceLabels = Object.keys(this.resourceLabels)
+    const resourceLabels = Object.keys(this.resourceLabels || {})
       .filter(ml => {
         if (!removeUsed) {
           return true;

@@ -66,6 +66,23 @@ func init() {
 // executes the queries against the Stackdriver API and parses the response into
 // the time series or table format
 func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	var result *tsdb.Response
+	var err error
+	queryType := tsdbQuery.Queries[0].Model.Get("type").MustString("")
+
+	switch queryType {
+	case "annotationQuery":
+		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
+	case "timeSeriesQuery":
+		fallthrough
+	default:
+		result, err = e.executeTimeSeriesQuery(ctx, tsdbQuery)
+	}
+
+	return result, err
+}
+
+func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	result := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}

@@ -408,7 +408,7 @@ function createCtrlWithFakes(existingFilters?: string[]) {
       return { type: 'condition', value: val };
     },
   };
-  return new StackdriverQueryCtrl(null, null, fakeSegmentServer, null, new TemplateSrvStub());
+  return new StackdriverQueryCtrl(null, null, fakeSegmentServer, new TemplateSrvStub());
 }
 
 function createTarget(existingFilters?: string[]) {

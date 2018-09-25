@@ -10,6 +10,7 @@ describe('StackdriverDataSource', () => {
     },
   };
   const templateSrv = new TemplateSrvStub();
+  const timeSrv = {};
 
   describe('when performing testDataSource', () => {
     describe('and call to stackdriver api succeeds', () => {
@@ -21,7 +22,7 @@ describe('StackdriverDataSource', () => {
             return Promise.resolve({ status: 200 });
           },
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
       it('should return successfully', () => {
@@ -36,7 +37,7 @@ describe('StackdriverDataSource', () => {
         const backendSrv = {
           datasourceRequest: async () => Promise.resolve({ status: 200, data: metricDescriptors }),
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
       it('should return status success', () => {
@@ -55,7 +56,7 @@ describe('StackdriverDataSource', () => {
               data: { error: { code: 400, message: 'Field interval.endTime had an invalid value' } },
             }),
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
 
@@ -91,7 +92,7 @@ describe('StackdriverDataSource', () => {
             return Promise.resolve({ status: 200, data: response });
           },
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.getProjects();
       });
 
@@ -140,7 +141,7 @@ describe('StackdriverDataSource', () => {
         const backendSrv = {
           datasourceRequest: async () => Promise.resolve({ status: 200, data: response }),
         };
-        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
+        ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
       });
 
       it('should return a list of datapoints', () => {
@@ -174,7 +175,7 @@ describe('StackdriverDataSource', () => {
           });
         },
       };
-      ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv);
+      ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
       result = await ds.getMetricTypes();
     });
     it('should return successfully', () => {
@@ -192,7 +193,7 @@ describe('StackdriverDataSource', () => {
         templateSrv.data = {
           test: 'groupby1',
         };
-        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv);
+        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
@@ -207,7 +208,7 @@ describe('StackdriverDataSource', () => {
         templateSrv.data = {
           test: 'groupby1,groupby2',
         };
-        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv);
+        const ds = new StackdriverDataSource(instanceSettings, {}, templateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
