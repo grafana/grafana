@@ -26,11 +26,13 @@ export default class RadioButton extends PureComponent<RadioButtonProps> {
 
   render() {
     return (
-      <label className="gf-form">
-        <span className="gf-form-label">{this.props.radioLabel}</span>
-        <div className="radio-button">
-          {this.renderInput()}
-          <span className="circle" />
+      <label className="radio-button">
+        <span className="radio-label">{this.props.radioLabel}</span>
+        {this.renderInput()}
+        <div className="radio-input-box">
+          <div className="ring">
+            <div className="sphere" />
+          </div>
         </div>
       </label>
     );

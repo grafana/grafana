@@ -1,0 +1,104 @@
+.radio-group {
+  display: flex;
+}
+
+.radio-button {
+  display: flex;
+  cursor: pointer;
+
+  & input {
+    display: none;
+  }
+
+  :checked + .radio-input-box {
+    &:after {
+      transform: scale(1);
+    }
+  }
+}
+
+.radio-label {
+  background-color: $input-label-bg;
+  border: $input-btn-border-width solid $input-label-border-color;
+  border-radius: $label-border-radius;
+  border-right: none;
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semi-bold;
+  padding: $input-padding-y $input-padding-x;
+}
+
+.radio-input-box {
+  padding: 8px 10px;
+  height: 36px;
+  width: 64px;
+  background-color: #fff;
+  border: 1px solid #dde4ed;
+  //border-left: none;
+  border-radius: 0 3px 3px 0;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /*&:before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    right: 24px;
+    top: 50%;
+    margin-top: -10px;
+    border: 2px solid #ff7941;
+    //border-radius: 50%;
+  }
+
+  &:after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    transform: scale(0);
+    top: 50%;
+    margin-top: -5px;
+    right: 26px;
+    background: #ff7941;
+    //border-radius: 50%;
+    transition: .15s ease-in-out;
+    transform-origin: center;
+  }*/
+
+  & .ring {
+    content: '';
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    //position: absolute;
+    width: 20px;
+    height: 20px;
+    //right: 24px;
+    //top: 50%;
+    //margin-top: -10px;
+    //border: 2px solid #ff7941;
+    //border-radius: 50%;
+    background-color: pink;
+
+    & .sphere {
+      content: '';
+      display: block;
+      //position: absolute;
+      width: 10px;
+      height: 10px;
+      transform: scale(1);
+      //top: 50%;
+      //margin-top: -5px;
+      //right: 26px;
+      background: #ff7941;
+      //border-radius: 50%;
+      transition: 0.15s ease-in-out;
+      transform-origin: center;
+    }
+  }
+}
