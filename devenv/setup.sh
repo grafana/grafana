@@ -11,7 +11,7 @@ bulkDashboard() {
 				let COUNTER=COUNTER+1
 		done
 
-		ln -s -f -r ./bulk-dashboards/bulk-dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
+		ln -s -f ../../../devenv/bulk-dashboards/bulk-dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
 }
 
 bulkAlertingDashboard() {
@@ -25,7 +25,7 @@ bulkAlertingDashboard() {
 				let COUNTER=COUNTER+1
 		done
 
-		ln -s -f -r ./bulk_alerting_dashboards/bulk_alerting_dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
+		ln -s -f ../../../devenv/bulk_alerting_dashboards/bulk_alerting_dashboards.yaml ../conf/provisioning/dashboards/custom.yaml
 }
 
 requiresJsonnet() {
