@@ -22,7 +22,7 @@ Setting up Grafana for high availability is fairly simple. It comes down to two 
 
 First, you need to do is to setup MySQL or Postgres on another server and configure Grafana to use that database.
 You can find the configuration for doing that in the [[database]]({{< relref "configuration.md" >}}#database) section in the grafana config.
-Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on for the database your using.
+Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on for the database you're using.
 
 ## User sessions
 
