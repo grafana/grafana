@@ -159,7 +159,7 @@ export default class StackdriverDatasource {
     try {
       const metricsApiPath = `v3/projects/${projectId}/metricDescriptors`;
       const { data } = await this.doRequest(`${this.baseUrl}${metricsApiPath}`);
-      return data.metricDescriptors.map(m => ({ id: m.type, name: m.displayName }));
+      return data.metricDescriptors;
     } catch (error) {
       console.log(error);
     }
