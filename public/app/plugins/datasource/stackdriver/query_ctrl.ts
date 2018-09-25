@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
-import * as options from './constants';
 import { FilterSegments, DefaultRemoveFilterValue } from './filter_segments';
+import './query_aggregation_ctrl';
 
 export interface QueryMeta {
   rawQuery: string;
@@ -55,8 +55,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     valueType: '',
   };
 
-  alignOptions: any[];
-  aggOptions: any[];
   groupBySegments: any[];
   removeSegment: any;
   showHelp: boolean;
@@ -74,9 +72,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
-    this.stackdriverConstants = options;
-    this.aggOptions = options.aggOptions;
-    this.alignOptions = options.alignOptions;
 
     this.getCurrentProject()
       .then(this.getMetricTypes.bind(this))
@@ -155,6 +150,9 @@ export class StackdriverQueryCtrl extends QueryCtrl {
 
         this.metricLabels = data.results[this.target.refId].meta.metricLabels;
         this.resourceLabels = data.results[this.target.refId].meta.resourceLabels;
+
+        this.target.valueType = data.results[this.target.refId].meta.valueType;
+        this.target.metricKind = data.results[this.target.refId].meta.metricKind;
         resolve();
       } catch (error) {
         resolve();
@@ -264,31 +262,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     }
   }
 
-  getAlignOptions() {
-    return !this.target.valueType
-      ? options.alignOptions
-      : options.alignOptions.filter(i => {
-          return (
-            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
-          );
-        });
-  }
-
-  getAggOptions() {
-    if (this.target.aggregation.perSeriesAligner === 'ALIGN_NONE') {
-      this.target.aggregation.crossSeriesReducer = options.aggOptions[0].value;
-      return options.aggOptions.slice(0, 1);
-    }
-
-    return !this.target.metricKind
-      ? options.aggOptions
-      : options.aggOptions.filter(i => {
-          return (
-            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
-          );
-        });
-  }
-
   onDataReceived(dataList) {
     this.lastQueryError = null;
     this.lastQueryMeta = null;
@@ -297,8 +270,6 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     if (anySeriesFromQuery) {
       this.lastQueryMeta = anySeriesFromQuery.meta;
       this.lastQueryMeta.rawQueryString = decodeURIComponent(this.lastQueryMeta.rawQuery);
-      this.target.valueType = anySeriesFromQuery.meta.valueType;
-      this.target.metricKind = anySeriesFromQuery.meta.metricKind;
     }
   }
 

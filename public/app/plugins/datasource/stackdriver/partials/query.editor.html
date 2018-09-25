@@ -31,48 +31,7 @@
       <div class="gf-form-label gf-form-label--grow"></div>
     </div>
   </div>
-  <div class="gf-form-inline">
-    <div class="gf-form">
-      <label class="gf-form-label query-keyword width-9">Aggregation</label>
-      <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-        <select class="gf-form-input width-12" ng-model="ctrl.target.aggregation.crossSeriesReducer" ng-options="f.value as f.text for f in ctrl.getAggOptions()"
-          ng-change="ctrl.refresh()"></select>
-      </div>
-    </div>
-    <div class="gf-form gf-form--grow">
-      <label class="gf-form-label gf-form-label--grow">
-        <a ng-click="ctrl.target.showAggregationOptions = !ctrl.target.showAggregationOptions">
-          <i class="fa fa-caret-down" ng-show="ctrl.target.showAggregationOptions"></i>
-          <i class="fa fa-caret-right" ng-hide="ctrl.target.showAggregationOptions"></i>
-          Advanced Options
-        </a>
-      </label>
-    </div>
-  </div>
-  <div class="gf-form-group" ng-if="ctrl.target.showAggregationOptions">
-    <div class="gf-form offset-width-9">
-      <label class="gf-form-label query-keyword width-12">Aligner</label>
-      <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-        <select class="gf-form-input width-14" ng-model="ctrl.target.aggregation.perSeriesAligner" ng-options="f.value as f.text for f in ctrl.getAlignOptions()"
-          ng-change="ctrl.refresh()"></select>
-      </div>
-
-      <div class="gf-form gf-form--grow">
-        <div class="gf-form-label gf-form-label--grow"></div>
-      </div>
-    </div>
-    <div class="gf-form offset-width-9">
-      <label class="gf-form-label query-keyword width-12">Alignment Period</label>
-      <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-        <select class="gf-form-input width-14" ng-model="ctrl.target.aggregation.alignmentPeriod" ng-options="f.value as f.text for f in ctrl.stackdriverConstants.alignmentPeriods"
-          ng-change="ctrl.refresh()"></select>
-      </div>
-
-      <div class="gf-form gf-form--grow">
-        <div class="gf-form-label gf-form-label--grow"></div>
-      </div>
-    </div>
-  </div>
+  <stackdriver-aggregation target="ctrl.target" refresh="ctrl.refresh()"></stackdriver-aggregation>
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label query-keyword width-9">Alias By</span>
