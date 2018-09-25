@@ -9,7 +9,7 @@ import { loadPlugins } from './state/actions';
 import { getNavModel } from '../../core/selectors/navModel';
 import { getLayoutMode, getPlugins } from './state/selectors';
 
-interface Props {
+export interface Props {
   navModel: NavModel;
   plugins: Plugin[];
   layoutMode: string;
