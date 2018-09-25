@@ -20,6 +20,7 @@ import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { GraphCtrl } from './module';
 
@@ -709,6 +710,31 @@ class GraphElement {
     };
   }
 
+  getMonthDayFormat() {
+    if (contextSrv.user.monthDayFormat && contextSrv.user.monthDayFormat !== 'browser') {
+      return contextSrv.user.monthDayFormat;
+    }
+
+    if (!this.toLocaleDateStringSupportsLocales()) {
+      return '%m/%d';
+    }
+
+    const language = navigator.languages ? navigator.languages[0] : navigator.language || 'en-US';
+    return new Date(Date.UTC(1977, 11, 20, 0, 0, 0))
+      .toLocaleDateString(language, { month: 'numeric', day: 'numeric' })
+      .replace('12', '%m')
+      .replace('20', '%d');
+  }
+
+  toLocaleDateStringSupportsLocales() {
+    try {
+      new Date().toLocaleDateString('i');
+    } catch (e) {
+      return e.name === 'RangeError';
+    }
+    return false;
+  }
+
   time_format(ticks, min, max) {
     if (min && max && ticks) {
       const range = max - min;
@@ -725,10 +751,10 @@ class GraphElement {
         return '%H:%M';
       }
       if (secPerTick <= 80000) {
-        return '%m/%d %H:%M';
+        return this.getMonthDayFormat() + ' %H:%M';
       }
       if (secPerTick <= 2419200 || range <= oneYear) {
-        return '%m/%d';
+        return this.getMonthDayFormat();
       }
       return '%Y-%m';
     }

@@ -14,10 +14,12 @@ export class User {
   helpFlags1: number;
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
+  monthDayFormat: string;
 
   constructor() {
     if (config.bootData.user) {
       _.extend(this, config.bootData.user);
+      this.monthDayFormat = 'browser'; // '%d/%m'; // '%d.%m';
     }
   }
 }
