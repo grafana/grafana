@@ -23,7 +23,6 @@ describe('StackdriverAggregationCtrl', () => {
 
         it('should populate all alignment options except two', () => {
           const result = ctrl.getAlignOptions();
-          console.log(result.map(o => o.value));
           expect(result.length).toBe(10);
           expect(result.map(o => o.value)).toEqual(
             expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
