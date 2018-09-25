@@ -6,7 +6,7 @@ import { FolderDTO, FolderState, FolderInfo } from './folders';
 import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { DataSource } from './datasources';
-import { PluginMeta } from './plugins';
+import { PluginMeta, Plugin, PluginInfo, PluginsState } from './plugins';
 
 export {
   Team,
@@ -33,6 +33,9 @@ export {
   PermissionLevel,
   DataSource,
   PluginMeta,
+  PluginInfo,
+  Plugin,
+  PluginsState,
 };
 
 export interface StoreState {
