@@ -28,6 +28,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     };
     filters: string[];
     aliasBy: string;
+    metricKind: any;
+    valueType: any;
   };
   defaultDropdownValue = 'select metric';
   defaultRemoveGroupByValue = '-- remove group by --';
@@ -49,8 +51,12 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     filters: [],
     showAggregationOptions: false,
     aliasBy: '',
+    metricKind: '',
+    valueType: '',
   };
 
+  alignOptions: any[];
+  aggOptions: any[];
   groupBySegments: any[];
   removeSegment: any;
   showHelp: boolean;
@@ -69,6 +75,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
     this.stackdriverConstants = options;
+    this.aggOptions = options.aggOptions;
+    this.alignOptions = options.alignOptions;
 
     this.getCurrentProject()
       .then(this.getMetricTypes.bind(this))
@@ -256,6 +264,31 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     }
   }
 
+  getAlignOptions() {
+    return !this.target.valueType
+      ? options.alignOptions
+      : options.alignOptions.filter(i => {
+          return (
+            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
+          );
+        });
+  }
+
+  getAggOptions() {
+    if (this.target.aggregation.perSeriesAligner === 'ALIGN_NONE') {
+      this.target.aggregation.crossSeriesReducer = options.aggOptions[0].value;
+      return options.aggOptions.slice(0, 1);
+    }
+
+    return !this.target.metricKind
+      ? options.aggOptions
+      : options.aggOptions.filter(i => {
+          return (
+            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
+          );
+        });
+  }
+
   onDataReceived(dataList) {
     this.lastQueryError = null;
     this.lastQueryMeta = null;
@@ -264,7 +297,8 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     if (anySeriesFromQuery) {
       this.lastQueryMeta = anySeriesFromQuery.meta;
       this.lastQueryMeta.rawQueryString = decodeURIComponent(this.lastQueryMeta.rawQuery);
-    } else {
+      this.target.valueType = anySeriesFromQuery.meta.valueType;
+      this.target.metricKind = anySeriesFromQuery.meta.metricKind;
     }
   }
 

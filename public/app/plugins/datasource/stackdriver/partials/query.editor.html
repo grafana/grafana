@@ -2,8 +2,8 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Metric Type</span>
-      <gf-form-dropdown model="ctrl.target.metricType" get-options="ctrl.getMetricTypes($query)" class="min-width-20" disabled
-        type="text" allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="ctrl.onMetricTypeChange()"></gf-form-dropdown>
+      <gf-form-dropdown model="ctrl.target.metricType" get-options="ctrl.getMetricTypes($query)" class="min-width-20"
+        disabled type="text" allow-custom="true" lookup-text="true" css-class="min-width-12" on-change="ctrl.onMetricTypeChange()"></gf-form-dropdown>
     </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>
@@ -35,7 +35,7 @@
     <div class="gf-form">
       <label class="gf-form-label query-keyword width-9">Aggregation</label>
       <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-        <select class="gf-form-input width-12" ng-model="ctrl.target.aggregation.crossSeriesReducer" ng-options="f.value as f.text for f in ctrl.stackdriverConstants.aggOptions"
+        <select class="gf-form-input width-12" ng-model="ctrl.target.aggregation.crossSeriesReducer" ng-options="f.value as f.text for f in ctrl.getAggOptions()"
           ng-change="ctrl.refresh()"></select>
       </div>
     </div>
@@ -53,7 +53,7 @@
     <div class="gf-form offset-width-9">
       <label class="gf-form-label query-keyword width-12">Aligner</label>
       <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-        <select class="gf-form-input width-14" ng-model="ctrl.target.aggregation.perSeriesAligner" ng-options="f.value as f.text for f in ctrl.stackdriverConstants.alignOptions"
+        <select class="gf-form-input width-14" ng-model="ctrl.target.aggregation.perSeriesAligner" ng-options="f.value as f.text for f in ctrl.getAlignOptions()"
           ng-change="ctrl.refresh()"></select>
       </div>
 
@@ -85,8 +85,8 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Project</span>
-      <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.project.name' get-options="ctrl.getProjects()" css-class="min-width-12"
-      />
+      <input class="gf-form-input" disabled type="text" ng-model='ctrl.target.project.name' get-options="ctrl.getProjects()"
+        css-class="min-width-12" />
     </div>
     <div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">

@@ -299,6 +299,9 @@ func (e *StackdriverExecutor) parseResponse(queryRes *tsdb.QueryResult, data Sta
 			Name:   metricName,
 			Points: points,
 		})
+
+		queryRes.Meta.Set("metricKind", series.MetricKind)
+		queryRes.Meta.Set("valueType", series.ValueType)
 	}
 
 	queryRes.Meta.Set("resourceLabels", resourceLabels)
