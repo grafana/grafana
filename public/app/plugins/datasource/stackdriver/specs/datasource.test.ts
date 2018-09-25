@@ -180,8 +180,8 @@ describe('StackdriverDataSource', () => {
     });
     it('should return successfully', () => {
       expect(result.length).toBe(2);
-      expect(result[0].id).toBe('test metric type 1');
-      expect(result[0].name).toBe('test metric name 1');
+      expect(result[0].type).toBe('test metric type 1');
+      expect(result[0].displayName).toBe('test metric name 1');
     });
   });
 
