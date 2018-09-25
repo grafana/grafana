@@ -7,6 +7,7 @@ import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { DataSource } from './datasources';
 import { PluginMeta } from './plugins';
+import { ApiKey, ApiKeysState } from './apiKeys';
 
 export {
   Team,
@@ -33,6 +34,8 @@ export {
   PermissionLevel,
   DataSource,
   PluginMeta,
+  ApiKey,
+  ApiKeysState,
 };
 
 export interface StoreState {
