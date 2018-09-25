@@ -166,6 +166,7 @@ var (
 	// Alerting
 	AlertingEnabled            bool
 	ExecuteAlerts              bool
+	AlertingRenderLimit        int
 	AlertingErrorOrTimeout     string
 	AlertingNoDataOrNullValues string
 
@@ -648,9 +649,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	// Rendering
 	renderSec := iniFile.Section("rendering")
-	cfg.RendererLimit = renderSec.Key("concurrent_limit").MustInt(10)
-	cfg.RendererLimitAlerting = renderSec.Key("concurrent_limit").MustInt(5)
-
 	cfg.RendererUrl = renderSec.Key("server_url").String()
 	cfg.RendererCallbackUrl = renderSec.Key("callback_url").String()
 	if cfg.RendererCallbackUrl == "" {
@@ -683,6 +681,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 	AlertingErrorOrTimeout = alerting.Key("error_or_timeout").MustString("alerting")
 	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
 

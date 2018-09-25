@@ -90,16 +90,8 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return err
 }
 
-func (rs *RenderingService) getLimit(isAlerting bool) int {
-	if isAlerting {
-		return rs.Cfg.RendererLimitAlerting
-	} else {
-		return rs.Cfg.RendererLimit
-	}
-}
-
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
-	if rs.inProgressCount > rs.getLimit(opts.IsAlert) {
+	if rs.inProgressCount > opts.ConcurrentLimit {
 		return &RenderResult{
 			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
 		}, nil

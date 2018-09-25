@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
 
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -108,12 +109,12 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	}
 
 	renderOpts := rendering.Opts{
-		Width:   1000,
-		Height:  500,
-		Timeout: alertTimeout / 2,
-		OrgId:   context.Rule.OrgId,
-		OrgRole: m.ROLE_ADMIN,
-		IsAlert: true,
+		Width:           1000,
+		Height:          500,
+		Timeout:         alertTimeout / 2,
+		OrgId:           context.Rule.OrgId,
+		OrgRole:         m.ROLE_ADMIN,
+		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
 
 	ref, err := context.GetDashboardUID()
