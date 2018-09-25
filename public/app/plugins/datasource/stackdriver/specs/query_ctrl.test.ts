@@ -427,5 +427,8 @@ function createTarget(existingFilters?: string[]) {
     },
     filters: existingFilters || [],
     aliasBy: '',
+    metricService: '',
+    metricKind: '',
+    valueType: '',
   };
 }

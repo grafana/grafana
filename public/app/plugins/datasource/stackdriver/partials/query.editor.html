@@ -55,7 +55,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label query-keyword width-9">Alias By</span>
-      <input type="text" class="gf-form-input width-30" ng-model="ctrl.target.aliasBy" />
+      <input type="text" class="gf-form-input width-30" ng-model="ctrl.target.aliasBy" ng-change="ctrl.refresh()" ng-model-options="{ debounce: 500 }" />
     </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>
