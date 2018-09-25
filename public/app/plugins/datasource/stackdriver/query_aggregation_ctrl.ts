@@ -22,7 +22,7 @@ export class StackdriverAggregationCtrl {
   aggOptions: any[];
   refresh: () => void;
 
-  constructor(private $scope) {
+  constructor($scope) {
     this.aggOptions = options.aggOptions;
     this.alignOptions = options.alignOptions;
     $scope.alignmentPeriods = options.alignmentPeriods;
@@ -33,14 +33,14 @@ export class StackdriverAggregationCtrl {
     this.refresh = $scope.refresh;
   }
 
-  onAlignmentChange(newVal) {
+  onAlignmentChange(newVal: string) {
     if (newVal === 'ALIGN_NONE') {
       this.target.aggregation.crossSeriesReducer = 'REDUCE_NONE';
     }
     this.refresh();
   }
 
-  onAggregationChange(newVal) {
+  onAggregationChange(newVal: string) {
     if (newVal !== 'REDUCE_NONE') {
       const newAlignmentOption = options.alignOptions.find(o => o.value !== 'ALIGN_NONE');
       this.target.aggregation.perSeriesAligner = newAlignmentOption ? newAlignmentOption.value : '';
