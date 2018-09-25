@@ -39,7 +39,7 @@ class TeamPicker extends Component<IProps, any> {
     const { toggleLoading, backendSrv } = this.props;
 
     toggleLoading(true);
-    return backendSrv.get(`/api/teams/search?perpage=10&page=1&query=${query}`).then(result => {
+    return backendSrv.get(`/api/teams/search?perpage=100&page=1&query=${query}`).then(result => {
       const teams = result.teams.map(team => {
         return {
           id: team.id,
