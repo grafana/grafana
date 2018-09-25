@@ -41,8 +41,13 @@ export class StackdriverAggregationCtrl {
   }
 
   onAggregationChange(newVal: string) {
-    if (newVal !== 'REDUCE_NONE') {
-      const newAlignmentOption = options.alignOptions.find(o => o.value !== 'ALIGN_NONE');
+    if (newVal !== 'REDUCE_NONE' && this.target.aggregation.perSeriesAligner === 'ALIGN_NONE') {
+      const newAlignmentOption = options.alignOptions.find(
+        o =>
+          o.value !== 'ALIGN_NONE' &&
+          o.valueTypes.indexOf(this.target.valueType) !== -1 &&
+          o.metricKinds.indexOf(this.target.metricKind) !== -1
+      );
       this.target.aggregation.perSeriesAligner = newAlignmentOption ? newAlignmentOption.value : '';
     }
     this.refresh();
