@@ -4,6 +4,8 @@ import { getBackendSrv } from '../../../core/services/backend_srv';
 
 export enum ActionTypes {
   LoadPlugins = 'LOAD_PLUGINS',
+  SetPluginsSearchQuery = 'SET_PLUGIN_SEARCH_QUERY',
+  SetLayoutMode = 'SET_LAYOUT_MODE',
 }
 
 export interface LoadPluginsAction {
@@ -11,12 +13,32 @@ export interface LoadPluginsAction {
   payload: Plugin[];
 }
 
-export const pluginsLoaded = (plugins: Plugin[]): LoadPluginsAction => ({
+export interface SetPluginsSearchQueryAction {
+  type: ActionTypes.SetPluginsSearchQuery;
+  payload: string;
+}
+
+export interface SetLayoutModeAction {
+  type: ActionTypes.SetLayoutMode;
+  payload: string;
+}
+
+export const setLayoutMode = (mode: string): SetLayoutModeAction => ({
+  type: ActionTypes.SetLayoutMode,
+  payload: mode,
+});
+
+export const setPluginsSearchQuery = (query: string): SetPluginsSearchQueryAction => ({
+  type: ActionTypes.SetPluginsSearchQuery,
+  payload: query,
+});
+
+const pluginsLoaded = (plugins: Plugin[]): LoadPluginsAction => ({
   type: ActionTypes.LoadPlugins,
   payload: plugins,
 });
 
-export type Action = LoadPluginsAction;
+export type Action = LoadPluginsAction | SetPluginsSearchQueryAction | SetLayoutModeAction;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 

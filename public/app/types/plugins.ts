@@ -46,4 +46,6 @@ export interface Plugin {
 
 export interface PluginsState {
   plugins: Plugin[];
+  searchQuery: string;
+  layoutMode: string;
 }

@@ -7,11 +7,12 @@ import PluginList from './PluginList';
 import { NavModel, Plugin } from '../../types';
 import { loadPlugins } from './state/actions';
 import { getNavModel } from '../../core/selectors/navModel';
-import { getPlugins } from './state/selectors';
+import { getLayoutMode, getPlugins } from './state/selectors';
 
 interface Props {
   navModel: NavModel;
   plugins: Plugin[];
+  layoutMode: string;
   loadPlugins: typeof loadPlugins;
 }
 
@@ -25,14 +26,14 @@ export class PluginListPage extends PureComponent<Props> {
   }
 
   render() {
-    const { navModel, plugins } = this.props;
+    const { navModel, plugins, layoutMode } = this.props;
 
     return (
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
           <PluginActionBar searchQuery="" onQueryChange={() => {}} />
-          {plugins && <PluginList plugins={plugins} layout="grid" />}
+          {plugins && <PluginList plugins={plugins} layout={layoutMode} />}
         </div>
       </div>
     );
@@ -43,6 +44,7 @@ function mapStateToProps(state) {
   return {
     navModel: getNavModel(state.navIndex, 'plugins'),
     plugins: getPlugins(state.plugins),
+    layoutMode: getLayoutMode(state.plugins),
   };
 }
 
