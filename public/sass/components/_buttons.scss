@@ -228,11 +228,11 @@ $btn-service-icon-width: 35px;
   color: $text-color-weak;
   box-shadow: $card-shadow;
 
-  &:nth-child(1) {
+  &:first-child {
     border-radius: 2px 0 0 2px;
     margin: 0;
   }
-  &:nth-child(2) {
+  &:last-child {
     border-radius: 0 2px 2px 0;
     margin-left: 0 !important;
   }
