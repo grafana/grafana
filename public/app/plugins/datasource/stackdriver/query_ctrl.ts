@@ -19,7 +19,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       name: string;
     };
     metricType: string;
-    resourceType: string;
+    service: string;
     refId: string;
     aggregation: {
       crossSeriesReducer: string;
@@ -33,7 +33,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     valueType: any;
   };
   defaultDropdownValue = 'select metric';
-  defaultMetricResourcesValue = 'all';
+  defaultServiceValue = 'all';
   defaultRemoveGroupByValue = '-- remove group by --';
   loadLabelsPromise: Promise<any>;
   stackdriverConstants;
@@ -44,7 +44,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
       name: 'loading project...',
     },
     metricType: this.defaultDropdownValue,
-    resourceType: this.defaultMetricResourcesValue,
+    service: this.defaultServiceValue,
     metric: '',
     aggregation: {
       crossSeriesReducer: 'REDUCE_MEAN',
@@ -133,40 +133,40 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     }
   }
 
-  getResourceTypes() {
-    const defaultValue = { value: this.defaultMetricResourcesValue, text: this.defaultMetricResourcesValue };
-    const resources = this.metricDescriptors.map(m => {
-      const [resource] = m.type.split('/');
-      const [service] = resource.split('.');
+  getServices() {
+    const defaultValue = { value: this.defaultServiceValue, text: this.defaultServiceValue };
+    const services = this.metricDescriptors.map(m => {
+      const [service] = m.type.split('/');
+      const [serviceShortName] = service.split('.');
       return {
-        value: resource,
-        text: service,
+        value: service,
+        text: serviceShortName,
       };
     });
-    return resources.length > 0 ? [defaultValue, ..._.uniqBy(resources, 'value')] : [];
+    return services.length > 0 ? [defaultValue, ..._.uniqBy(services, 'value')] : [];
   }
 
   getMetrics() {
     const metrics = this.metricDescriptors.map(m => {
-      const [resource] = m.type.split('/');
-      const [service] = resource.split('.');
+      const [service] = m.type.split('/');
+      const [serviceShortName] = service.split('.');
       return {
-        resource,
-        value: m.type,
         service,
+        value: m.type,
+        serviceShortName,
         text: m.displayName,
         title: m.description,
       };
     });
 
-    if (this.target.resourceType === this.defaultMetricResourcesValue) {
+    if (this.target.service === this.defaultServiceValue) {
       return metrics.map(m => ({ ...m, text: `${m.service} - ${m.text}` }));
     } else {
-      return metrics.filter(m => m.resource === this.target.resourceType);
+      return metrics.filter(m => m.service === this.target.service);
     }
   }
 
-  onResourceTypeChange(resource) {
+  onServiceChange() {
     this.metrics = this.getMetrics();
     if (!this.metrics.find(m => m.value === this.target.metricType)) {
       this.target.metricType = this.defaultDropdownValue;
