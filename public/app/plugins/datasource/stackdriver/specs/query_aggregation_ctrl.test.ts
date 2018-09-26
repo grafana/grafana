@@ -16,7 +16,7 @@ describe('StackdriverAggregationCtrl', () => {
           ctrl.setAggOptions();
           expect(ctrl.$scope.aggOptions.length).toBe(11);
           expect(ctrl.$scope.aggOptions.map(o => o.value)).toEqual(
-            expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
+            expect['not'].arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
           );
         });
 
@@ -24,7 +24,7 @@ describe('StackdriverAggregationCtrl', () => {
           ctrl.setAlignOptions();
           expect(ctrl.$scope.alignOptions.length).toBe(10);
           expect(ctrl.$scope.alignOptions.map(o => o.value)).toEqual(
-            expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
+            expect['not'].arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
           );
         });
       });
