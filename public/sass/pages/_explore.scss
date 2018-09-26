@@ -57,15 +57,15 @@
 
   .time-series-disclaimer {
     width: 300px;
-    margin: 10px auto;
+    margin: $panel-margin auto;
     padding: 10px 0;
-    border-radius: 4px;
+    border-radius: $border-radius;
     text-align: center;
     background-color: $panel-bg;
 
     .disclaimer-icon {
       color: $yellow;
-      margin-right: 5px;
+      margin-right: $panel-margin/2;
     }
 
     .show-all-time-series {
