@@ -1,6 +1,8 @@
 import angular from 'angular';
 import _ from 'lodash';
 import * as options from './constants';
+import * as options from './constants';
+import kbn from 'app/core/utils/kbn';
 
 export class StackdriverAggregation {
   constructor() {
@@ -10,6 +12,7 @@ export class StackdriverAggregation {
       restrict: 'E',
       scope: {
         target: '=',
+        alignmentPeriod: '<',
         refresh: '&',
       },
     };
@@ -24,6 +27,7 @@ export class StackdriverAggregationCtrl {
     $scope.alignmentPeriods = options.alignmentPeriods;
     $scope.onAlignmentChange = this.onAlignmentChange.bind(this);
     $scope.onAggregationChange = this.onAggregationChange.bind(this);
+    $scope.formatAlignmentText = this.formatAlignmentText.bind(this);
     $scope.$on('metricTypeChanged', this.setAlignOptions.bind(this));
   }
 
@@ -76,6 +80,13 @@ export class StackdriverAggregationCtrl {
       const newValue = this.$scope.aggOptions.find(o => o.value !== 'REDUCE_NONE');
       this.$scope.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
     }
+  }
+
+  formatAlignmentText() {
+    const selectedAlignment = this.$scope.alignOptions.find(
+      ap => ap.value === this.$scope.target.aggregation.perSeriesAligner
+    );
+    return `${kbn.secondsToHms(this.$scope.alignmentPeriod)} interval (${selectedAlignment.text})`;
   }
 }
 

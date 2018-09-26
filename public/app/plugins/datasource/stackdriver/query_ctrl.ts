@@ -5,6 +5,7 @@ import { FilterSegments, DefaultRemoveFilterValue } from './filter_segments';
 import './query_aggregation_ctrl';
 
 export interface QueryMeta {
+  alignmentPeriod: string;
   rawQuery: string;
   rawQueryString: string;
   metricLabels: { [key: string]: string[] };

@@ -116,6 +116,8 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		return nil, err
 	}
 
+	durationSeconds := int(endTime.Sub(startTime).Seconds())
+
 	for _, query := range tsdbQuery.Queries {
 		var target string
 
@@ -145,7 +147,7 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 		params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 		params.Add("filter", strings.Trim(fmt.Sprintf(`metric.type="%s" %s`, metricType, filterString), " "))
 		params.Add("view", query.Model.Get("view").MustString())
-		setAggParams(&params, query)
+		setAggParams(&params, query, durationSeconds)
 
 		if setting.Env == setting.DEV {
 			slog.Debug("Stackdriver request", "params", params)
@@ -171,7 +173,7 @@ func (e *StackdriverExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*Stackd
 	return stackdriverQueries, nil
 }
 
-func setAggParams(params *url.Values, query *tsdb.Query) {
+func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 	primaryAggregation := query.Model.Get("primaryAggregation").MustString()
 	perSeriesAligner := query.Model.Get("perSeriesAligner").MustString()
 	alignmentPeriod := query.Model.Get("alignmentPeriod").MustString()
@@ -185,8 +187,19 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 	}
 
 	if alignmentPeriod == "grafana-auto" || alignmentPeriod == "" {
-		alignmentPeriodValue := int(math.Max(float64(query.IntervalMs), 60.0))
+		alignmentPeriodValue := int(math.Max(float64(query.IntervalMs)/1000, 60.0))
 		alignmentPeriod = "+" + strconv.Itoa(alignmentPeriodValue) + "s"
+	}
+
+	if alignmentPeriod == "stackdriver-auto" {
+		alignmentPeriodValue := int(math.Max(float64(durationSeconds), 60.0))
+		if alignmentPeriodValue <= 60*60*5 {
+			alignmentPeriod = "+60s"
+		} else if alignmentPeriodValue <= 60*60*23 {
+			alignmentPeriod = "+300s"
+		} else {
+			alignmentPeriod = "+3600s"
+		}
 	}
 
 	re := regexp.MustCompile("[0-9]+")
@@ -218,6 +231,15 @@ func (e *StackdriverExecutor) executeQuery(ctx context.Context, query *Stackdriv
 
 	req.URL.RawQuery = query.Params.Encode()
 	queryResult.Meta.Set("rawQuery", req.URL.RawQuery)
+	alignmentPeriod, ok := req.URL.Query()["aggregation.alignmentPeriod"]
+
+	if ok {
+		re := regexp.MustCompile("[0-9]+")
+		seconds, err := strconv.ParseInt(re.FindString(alignmentPeriod[0]), 10, 64)
+		if err == nil {
+			queryResult.Meta.Set("alignmentPeriod", seconds)
+		}
+	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "stackdriver query")
 	span.SetTag("target", query.Target)

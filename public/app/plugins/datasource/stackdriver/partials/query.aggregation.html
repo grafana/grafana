@@ -28,15 +28,19 @@
       <div class="gf-form-label gf-form-label--grow"></div>
     </div>
   </div>
-  <div class="gf-form offset-width-9">
-    <label class="gf-form-label query-keyword width-12">Alignment Period</label>
+</div>
+<div class="gf-form-inline">
+  <div class="gf-form">
+    <label class="gf-form-label query-keyword width-9">Alignment Period</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <select class="gf-form-input width-14" ng-model="target.aggregation.alignmentPeriod" ng-options="f.value as f.text for f in alignmentPeriods"
+      <select class="gf-form-input width-12" ng-model="target.aggregation.alignmentPeriod" ng-options="f.value as f.text for f in alignmentPeriods"
         ng-change="refresh()"></select>
     </div>
+  </div>
 
-    <div class="gf-form gf-form--grow">
-      <div class="gf-form-label gf-form-label--grow"></div>
-    </div>
+  <div class="gf-form gf-form--grow">
+    <label ng-if="alignmentPeriod" class="gf-form-label gf-form-label--grow">
+      {{formatAlignmentText()}}
+    </label>
   </div>
 </div>

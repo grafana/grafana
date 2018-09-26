@@ -41,7 +41,7 @@
       <div class="gf-form-label gf-form-label--grow"></div>
     </div>
   </div>
-  <stackdriver-aggregation target="ctrl.target" refresh="ctrl.refresh()"></stackdriver-aggregation>
+  <stackdriver-aggregation target="ctrl.target" alignment-period="ctrl.lastQueryMeta.alignmentPeriod" refresh="ctrl.refresh()"></stackdriver-aggregation>
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label query-keyword width-9">Alias By</span>
