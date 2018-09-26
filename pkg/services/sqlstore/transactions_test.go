@@ -39,7 +39,7 @@ func TestTransaction(t *testing.T) {
 			So(err, ShouldEqual, models.ErrInvalidApiKey)
 		})
 
-		Convey("wont update if one handler fails", func() {
+		Convey("won't update if one handler fails", func() {
 			err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
 				err := DeleteApiKeyCtx(ctx, deleteApiKeyCmd)
 				if err != nil {

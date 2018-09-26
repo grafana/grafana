@@ -15,51 +15,105 @@ import (
 )
 
 func TestShouldSendAlertNotification(t *testing.T) {
+	tnow := time.Now()
+
 	tcs := []struct {
 		name         string
 		prevState    m.AlertStateType
 		newState     m.AlertStateType
-		expected     bool
 		sendReminder bool
+		frequency    time.Duration
+		journals     []m.AlertNotificationJournal
+
+		expect bool
 	}{
 		{
-			name:      "pending -> ok should not trigger an notification",
-			newState:  m.AlertStatePending,
-			prevState: m.AlertStateOK,
-			expected:  false,
+			name:         "pending -> ok should not trigger an notification",
+			newState:     m.AlertStatePending,
+			prevState:    m.AlertStateOK,
+			sendReminder: false,
+			journals:     []m.AlertNotificationJournal{},
+
+			expect: false,
 		},
 		{
-			name:      "ok -> alerting should trigger an notification",
-			newState:  m.AlertStateOK,
-			prevState: m.AlertStateAlerting,
-			expected:  true,
+			name:         "ok -> alerting should trigger an notification",
+			newState:     m.AlertStateOK,
+			prevState:    m.AlertStateAlerting,
+			sendReminder: false,
+			journals:     []m.AlertNotificationJournal{},
+
+			expect: true,
 		},
 		{
-			name:      "ok -> pending should not trigger an notification",
-			newState:  m.AlertStateOK,
-			prevState: m.AlertStatePending,
-			expected:  false,
+			name:         "ok -> pending should not trigger an notification",
+			newState:     m.AlertStateOK,
+			prevState:    m.AlertStatePending,
+			sendReminder: false,
+			journals:     []m.AlertNotificationJournal{},
+
+			expect: false,
 		},
 		{
 			name:         "ok -> ok should not trigger an notification",
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateOK,
-			expected:     false,
 			sendReminder: false,
+			journals:     []m.AlertNotificationJournal{},
+
+			expect: false,
 		},
 		{
-			name:         "ok -> alerting should not trigger an notification",
+			name:         "ok -> alerting should trigger an notification",
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateAlerting,
-			expected:     true,
 			sendReminder: true,
+			journals:     []m.AlertNotificationJournal{},
+
+			expect: true,
 		},
 		{
 			name:         "ok -> ok with reminder should not trigger an notification",
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateOK,
-			expected:     false,
 			sendReminder: true,
+			journals:     []m.AlertNotificationJournal{},
+
+			expect: false,
+		},
+		{
+			name:         "alerting -> alerting with reminder and no journaling should trigger",
+			newState:     m.AlertStateAlerting,
+			prevState:    m.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			journals:     []m.AlertNotificationJournal{},
+
+			expect: true,
+		},
+		{
+			name:         "alerting -> alerting with reminder and successful recent journal event should not trigger",
+			newState:     m.AlertStateAlerting,
+			prevState:    m.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			journals: []m.AlertNotificationJournal{
+				{SentAt: tnow.Add(-time.Minute).Unix(), Success: true},
+			},
+
+			expect: false,
+		},
+		{
+			name:         "alerting -> alerting with reminder and failed recent journal event should trigger",
+			newState:     m.AlertStateAlerting,
+			prevState:    m.AlertStateAlerting,
+			frequency:    time.Minute * 10,
+			sendReminder: true,
+			expect:       true,
+			journals: []m.AlertNotificationJournal{
+				{SentAt: tnow.Add(-time.Minute).Unix(), Success: false}, // recent failed notification
+				{SentAt: tnow.Add(-time.Hour).Unix(), Success: true},    // old successful notification
+			},
 		},
 	}
 
@@ -69,8 +123,8 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		})
 
 		evalContext.Rule.State = tc.prevState
-		if defaultShouldNotify(evalContext, true, 0, time.Now()) != tc.expected {
-			t.Errorf("failed %s. expected %+v to return %v", tc.name, tc, tc.expected)
+		if defaultShouldNotify(evalContext, true, tc.frequency, tc.journals) != tc.expect {
+			t.Errorf("failed test %s.\n expected \n%+v \nto return: %v", tc.name, tc, tc.expect)
 		}
 	}
 }
@@ -86,16 +140,6 @@ func TestShouldNotifyWhenNoJournalingIsFound(t *testing.T) {
 			Settings: simplejson.New(),
 		})
 		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{})
-
-		Convey("should notify if no journaling is found", func() {
-			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetLatestNotificationQuery) error {
-				return m.ErrJournalingNotFound
-			})
-
-			if !notifier.ShouldNotify(context.Background(), evalContext) {
-				t.Errorf("should send notifications when ErrJournalingNotFound is returned")
-			}
-		})
 
 		Convey("should not notify query returns error", func() {
 			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetLatestNotificationQuery) error {

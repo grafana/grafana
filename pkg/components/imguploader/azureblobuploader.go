@@ -52,7 +52,7 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	}
 	randomFileName := util.GetRandomString(30) + ".png"
 	// upload image
-	az.log.Debug("Uploading image to azure_blob", "conatiner_name", az.container_name, "blob_name", randomFileName)
+	az.log.Debug("Uploading image to azure_blob", "container_name", az.container_name, "blob_name", randomFileName)
 	resp, err := blob.FileUpload(az.container_name, randomFileName, file)
 	if err != nil {
 		return "", err
@@ -274,10 +274,10 @@ func (a *Auth) canonicalizedHeaders(req *http.Request) string {
 		}
 	}
 
-	splitted := strings.Split(buffer.String(), "\n")
-	sort.Strings(splitted)
+	split := strings.Split(buffer.String(), "\n")
+	sort.Strings(split)
 
-	return strings.Join(splitted, "\n")
+	return strings.Join(split, "\n")
 }
 
 /*
@@ -313,8 +313,8 @@ func (a *Auth) canonicalizedResource(req *http.Request) string {
 		buffer.WriteString(fmt.Sprintf("\n%s:%s", key, strings.Join(values, ",")))
 	}
 
-	splitted := strings.Split(buffer.String(), "\n")
-	sort.Strings(splitted)
+	split := strings.Split(buffer.String(), "\n")
+	sort.Strings(split)
 
-	return strings.Join(splitted, "\n")
+	return strings.Join(split, "\n")
 }

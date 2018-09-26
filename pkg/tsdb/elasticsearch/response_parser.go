@@ -92,7 +92,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 		} else {
 			for _, b := range esAgg.Get("buckets").MustArray() {
 				bucket := simplejson.NewFromAny(b)
-				newProps := make(map[string]string, 0)
+				newProps := make(map[string]string)
 
 				for k, v := range props {
 					newProps[k] = v
@@ -122,7 +122,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 
 			for _, bucketKey := range bucketKeys {
 				bucket := simplejson.NewFromAny(buckets[bucketKey])
-				newProps := make(map[string]string, 0)
+				newProps := make(map[string]string)
 
 				for k, v := range props {
 					newProps[k] = v
@@ -314,7 +314,6 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 			switch metric.Type {
 			case "count":
 				addMetricValue(&values, rp.getMetricName(metric.Type), castToNullFloat(bucket.Get("doc_count")))
-				break
 			case "extended_stats":
 				metaKeys := make([]string, 0)
 				meta := metric.Meta.MustMap()
@@ -355,7 +354,6 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 				}
 
 				addMetricValue(&values, metricName, castToNullFloat(bucket.GetPath(metric.ID, "value")))
-				break
 			}
 		}
 
