@@ -35,6 +35,7 @@ func getPreferencesFor(orgID int64, userID int64) Response {
 		Theme:           prefsQuery.Result.Theme,
 		HomeDashboardID: prefsQuery.Result.HomeDashboardId,
 		Timezone:        prefsQuery.Result.Timezone,
+		MonthDayFormat:  prefsQuery.Result.MonthDayFormat,
 	}
 
 	return JSON(200, &dto)
@@ -52,6 +53,7 @@ func updatePreferencesFor(orgID int64, userID int64, dtoCmd *dtos.UpdatePrefsCmd
 		Theme:           dtoCmd.Theme,
 		Timezone:        dtoCmd.Timezone,
 		HomeDashboardId: dtoCmd.HomeDashboardID,
+		MonthDayFormat:  dtoCmd.MonthDayFormat,
 	}
 
 	if err := bus.Dispatch(&saveCmd); err != nil {

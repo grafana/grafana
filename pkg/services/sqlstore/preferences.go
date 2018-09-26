@@ -30,6 +30,7 @@ func GetPreferencesWithDefaults(query *m.GetPreferencesWithDefaultsQuery) error 
 	res := &m.Preferences{
 		Theme:           setting.DefaultTheme,
 		Timezone:        "browser",
+		MonthDayFormat:  "browser",
 		HomeDashboardId: 0,
 	}
 
@@ -42,6 +43,9 @@ func GetPreferencesWithDefaults(query *m.GetPreferencesWithDefaultsQuery) error 
 		}
 		if p.HomeDashboardId != 0 {
 			res.HomeDashboardId = p.HomeDashboardId
+		}
+		if p.MonthDayFormat != "" {
+			res.MonthDayFormat = p.MonthDayFormat
 		}
 	}
 
@@ -81,6 +85,7 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 				UserId:          cmd.UserId,
 				OrgId:           cmd.OrgId,
 				HomeDashboardId: cmd.HomeDashboardId,
+				MonthDayFormat:  cmd.MonthDayFormat,
 				Timezone:        cmd.Timezone,
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
@@ -90,6 +95,7 @@ func SavePreferences(cmd *m.SavePreferencesCommand) error {
 			return err
 		}
 		prefs.HomeDashboardId = cmd.HomeDashboardId
+		prefs.MonthDayFormat = cmd.MonthDayFormat
 		prefs.Timezone = cmd.Timezone
 		prefs.Theme = cmd.Theme
 		prefs.Updated = time.Now()

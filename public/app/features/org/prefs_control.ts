@@ -7,6 +7,12 @@ export class PrefsControlCtrl {
   prefsForm: any;
   mode: string;
 
+  monthDayFormats: any = [
+    { value: '', text: 'Default' },
+    { value: 'browser', text: 'Local browser formatting' },
+    { value: 'mm/dd', text: 'mm/dd' },
+    { value: 'dd/mm', text: 'dd/mm' },
+  ];
   timezones: any = [
     { value: '', text: 'Default' },
     { value: 'browser', text: 'Local browser time' },
@@ -32,6 +38,7 @@ export class PrefsControlCtrl {
     const cmd = {
       theme: this.prefs.theme,
       timezone: this.prefs.timezone,
+      monthDayFormat: this.prefs.monthDayFormat,
       homeDashboardId: this.prefs.homeDashboardId,
     };
 
@@ -67,6 +74,13 @@ const template = `
     <label class="gf-form-label width-11">Timezone</label>
     <div class="gf-form-select-wrapper max-width-20">
       <select class="gf-form-input" ng-model="ctrl.prefs.timezone" ng-options="f.value as f.text for f in ctrl.timezones"></select>
+    </div>
+  </div>
+
+  <div class="gf-form">
+    <label class="gf-form-label width-11">Month/Day Formatting in Graphs</label>
+    <div class="gf-form-select-wrapper max-width-20">
+      <select class="gf-form-input" ng-model="ctrl.prefs.monthDayFormat" ng-options="f.value as f.text for f in ctrl.monthDayFormats"></select>
     </div>
   </div>
 
