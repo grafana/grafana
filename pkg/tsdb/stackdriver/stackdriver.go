@@ -190,8 +190,8 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 	}
 
 	re := regexp.MustCompile("[0-9]+")
-	aa, err := strconv.ParseInt(re.FindString(alignmentPeriod), 10, 64)
-	if err != nil || aa > 3600 {
+	seconds, err := strconv.ParseInt(re.FindString(alignmentPeriod), 10, 64)
+	if err != nil || seconds > 3600 {
 		alignmentPeriod = "+3600s"
 	}
 
