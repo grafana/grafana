@@ -3,6 +3,7 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import { Graph } from 'app/core/utils/dag';
+import appEvents from 'app/core/app_events';
 
 export class VariableSrv {
   dashboard: any;
@@ -11,7 +12,7 @@ export class VariableSrv {
   /** @ngInject */
   constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
     // update time variant variables
-    $rootScope.$on('refresh', this.onDashboardRefresh.bind(this), $rootScope);
+    $rootScope.$on('time-range-changed', this.onTimeRangeChanged.bind(this), $rootScope);
     $rootScope.$on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this), $rootScope);
   }
 
@@ -21,6 +22,7 @@ export class VariableSrv {
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
     this.templateSrv.init(this.variables);
+    this.dashboard.updateVariablesOnTimeRangeChange = this.variables.some(v => v.refresh === 2);
 
     // init variables
     for (const variable of this.variables) {
@@ -39,11 +41,7 @@ export class VariableSrv {
       });
   }
 
-  onDashboardRefresh(evt, payload) {
-    if (payload && payload.fromVariableValueUpdated) {
-      return Promise.resolve({});
-    }
-
+  onTimeRangeChanged() {
     const promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
       const previousOptions = variable.options.slice();
 
@@ -51,10 +49,17 @@ export class VariableSrv {
         if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
           this.$rootScope.$emit('template-variable-value-updated');
         }
+      }).catch(err => {
+        if (err.data && err.data.message) {
+          err.message = err.data.message;
+        }
+        appEvents.emit('alert-error', ['Templating', 'Template variable $' + variable.name + ' could not be updated: ' + err.message]);
       });
     });
 
-    return this.$q.all(promises);
+    return this.$q.all(promises).then(() => {
+      this.$rootScope.$broadcast('refresh');
+    });
   }
 
   processVariable(variable, queryParams) {
@@ -102,6 +107,9 @@ export class VariableSrv {
     this.variables.push(variable);
     this.templateSrv.updateTemplateData();
     this.dashboard.updateSubmenuVisibility();
+    if (variable.refresh === 2) {
+      this.dashboard.updateVariablesOnTimeRangeChange = true;
+    }
   }
 
   removeVariable(variable) {
@@ -109,6 +117,11 @@ export class VariableSrv {
     this.variables.splice(index, 1);
     this.templateSrv.updateTemplateData();
     this.dashboard.updateSubmenuVisibility();
+    this.dashboard.updateVariablesOnTimeRangeChange = this.variables.some(v => v.refresh === 2);
+  }
+
+  updateVariable(variable) {
+    this.dashboard.updateVariablesOnTimeRangeChange = this.variables.some(v => v.refresh === 2);
   }
 
   updateOptions(variable) {
@@ -133,7 +146,7 @@ export class VariableSrv {
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
         this.$rootScope.$emit('template-variable-value-updated');
-        this.$rootScope.$broadcast('refresh', { fromVariableValueUpdated: true });
+        this.$rootScope.$broadcast('refresh');
       }
     });
   }

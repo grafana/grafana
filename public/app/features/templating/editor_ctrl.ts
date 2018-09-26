@@ -122,6 +122,7 @@ export class VariableEditorCtrl {
 
     $scope.update = () => {
       if ($scope.isValid()) {
+        variableSrv.updateVariable($scope.current);
         $scope.runQuery().then(() => {
           $scope.reset();
           $scope.mode = 'list';

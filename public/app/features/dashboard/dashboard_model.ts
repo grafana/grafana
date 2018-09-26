@@ -44,6 +44,7 @@ export class DashboardModel {
   iteration: number;
   meta: any;
   events: Emitter;
+  updateVariablesOnTimeRangeChange: boolean;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -52,6 +53,7 @@ export class DashboardModel {
     templating: true, // needs special handling
     originalTime: true,
     originalTemplating: true,
+    updateVariablesOnTimeRangeChange: true, // variableSrv sets this
   };
 
   constructor(data, meta?) {

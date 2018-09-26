@@ -142,7 +142,11 @@ export class TimeSrv {
   }
 
   refreshDashboard() {
-    this.$rootScope.$broadcast('refresh');
+    if (this.dashboard.updateVariablesOnTimeRangeChange) {
+      this.$rootScope.appEvent('time-range-changed');
+    } else {
+      this.$rootScope.$broadcast('refresh');
+    }
   }
 
   private startNextRefreshTimer(afterMs) {
@@ -184,7 +188,6 @@ export class TimeSrv {
       this.$location.search(urlParams);
     }
 
-    this.$rootScope.appEvent('time-range-changed', this.time);
     this.$timeout(this.refreshDashboard.bind(this), 0);
   }
 
