@@ -48,10 +48,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     await this.props.loadApiKeys();
   }
 
-  onDeleteApiKey(id: number) {
-    return () => {
-      this.props.deleteApiKey(id);
-    };
+  onDeleteApiKey(key: ApiKey) {
+    this.props.deleteApiKey(key.id);
   }
 
   onSearchQueryChange = evt => {
@@ -111,8 +109,6 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             </div>
 
             <div className="page-action-bar__spacer" />
-
-            {/* <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}> */}
             <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
               <i className="fa fa-plus" /> Add API Key
             </button>
@@ -180,7 +176,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                       <td>{key.name}</td>
                       <td>{key.role}</td>
                       <td>
-                        <a onClick={this.onDeleteApiKey(key.id)} className="btn btn-danger btn-mini">
+                        <a onClick={this.onDeleteApiKey(key)} className="btn btn-danger btn-mini">
                           <i className="fa fa-remove" />
                         </a>
                       </td>
