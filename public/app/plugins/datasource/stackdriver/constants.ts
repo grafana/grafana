@@ -251,5 +251,4 @@ export const alignmentPeriods = [
   { text: '6h', value: '+21600s' },
   { text: '1d', value: '+86400s' },
   { text: '1w', value: '+604800s' },
-  { text: '1m', value: '+18748800s' },
 ];
