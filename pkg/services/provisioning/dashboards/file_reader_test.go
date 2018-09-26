@@ -98,7 +98,9 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 
-				err = reader.startWalkingDisk()
+				path := reader.evalSymlinkPath(reader.Path)
+
+				err = reader.startWalkingDisk(path)
 				So(err, ShouldBeNil)
 
 				folders := 0
@@ -129,7 +131,9 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 
-				err = reader.startWalkingDisk()
+				path := reader.evalSymlinkPath(reader.Path)
+
+				err = reader.startWalkingDisk(path)
 				So(err, ShouldBeNil)
 
 				So(len(fakeService.inserted), ShouldEqual, 1)
@@ -141,7 +145,9 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 
-				err = reader.startWalkingDisk()
+				path := reader.evalSymlinkPath(reader.Path)
+
+				err = reader.startWalkingDisk(path)
 				So(err, ShouldBeNil)
 
 				So(len(fakeService.inserted), ShouldEqual, 1)

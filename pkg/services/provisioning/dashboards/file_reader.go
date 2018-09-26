@@ -53,14 +53,9 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Error("Could not create absolute path ", "path", path)
 	}
 
-	path, err = filepath.EvalSymlinks(path)
-	if err != nil {
-		log.Error("Failed to read content of symlinked path: %s", path)
-	}
-
 	if path == "" {
 		path = copy
-		log.Info("falling back to original path due to EvalSymlink/Abs failure")
+		log.Info("falling back to original path due to Abs failure")
 	}
 
 	return &fileReader{
@@ -72,7 +67,8 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 }
 
 func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	if err := fr.startWalkingDisk(); err != nil {
+	path := fr.evalSymlinkPath(fr.Path)
+	if err := fr.startWalkingDisk(path); err != nil {
 		fr.log.Error("failed to search for dashboards", "error", err)
 	}
 
@@ -86,7 +82,8 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 			if !running { // avoid walking the filesystem in parallel. in-case fs is very slow.
 				running = true
 				go func() {
-					if err := fr.startWalkingDisk(); err != nil {
+					path := fr.evalSymlinkPath(fr.Path)
+					if err := fr.startWalkingDisk(path); err != nil {
 						fr.log.Error("failed to search for dashboards", "error", err)
 					}
 					running = false
@@ -98,8 +95,9 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 	}
 }
 
-func (fr *fileReader) startWalkingDisk() error {
-	if _, err := os.Stat(fr.Path); err != nil {
+func (fr *fileReader) startWalkingDisk(dashPath string) error {
+
+	if _, err := os.Stat(dashPath); err != nil {
 		if os.IsNotExist(err) {
 			return err
 		}
@@ -116,7 +114,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	}
 
 	filesFoundOnDisk := map[string]os.FileInfo{}
-	err = filepath.Walk(fr.Path, createWalkFn(filesFoundOnDisk))
+	err = filepath.Walk(dashPath, createWalkFn(filesFoundOnDisk))
 	if err != nil {
 		return err
 	}
@@ -271,6 +269,20 @@ func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
 	}
 
 	return fileinfo, err
+}
+
+func (fr *fileReader) evalSymlinkPath(path string) string {
+
+	sympath, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		fr.log.Error("Failed to read content of symlinked path: %s", path)
+	}
+
+	if sympath == "" {
+		sympath = path
+		fr.log.Info("falling back to original path due to EvalSymlink failure")
+	}
+	return sympath
 }
 
 func createWalkFn(filesOnDisk map[string]os.FileInfo) filepath.WalkFunc {
