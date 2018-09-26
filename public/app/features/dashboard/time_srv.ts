@@ -88,6 +88,7 @@ export class TimeSrv {
     // if absolute ignore refresh option saved to dashboard
     if (params.to && params.to.indexOf('now') === -1) {
       this.refresh = false;
+      this.dashboard.refresh = false;
     }
     // but if refresh explicitly set then use that
     if (params.refresh) {
