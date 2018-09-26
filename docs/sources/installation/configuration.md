@@ -566,3 +566,11 @@ Default setting for new alert rules. Defaults to categorize error and timeouts a
 > Available in 5.3  and above
 
 Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
+
+# concurrent_render_limit
+
+> Available in 5.3  and above
+
+Alert notifications can include images, but rendering many images at the same time can overload the server.
+This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
+value is `5`.

@@ -210,12 +210,20 @@
 
 .search-item__body-title {
   color: $list-item-link-color;
+  line-height: 14px;
+}
+
+.search-item__body-folder-title {
+  color: $text-color-weak;
+  font-size: $font-size-xs;
+  line-height: 11px;
 }
 
 .search-item__icon {
   padding: 5px;
   flex: 0 0 auto;
   font-size: 19px;
+  line-height: 22px;
   padding: 5px 2px 5px 10px;
 }
 
