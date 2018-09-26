@@ -23,7 +23,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		newState     m.AlertStateType
 		sendReminder bool
 		frequency    time.Duration
-		journals     []m.AlertNotificationJournal
+		journals     *m.AlertNotificationState
 
 		expect bool
 	}{
@@ -32,7 +32,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStatePending,
 			prevState:    m.AlertStateOK,
 			sendReminder: false,
-			journals:     []m.AlertNotificationJournal{},
+			journals:     &m.AlertNotificationState{},
 
 			expect: false,
 		},
@@ -41,7 +41,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateAlerting,
 			sendReminder: false,
-			journals:     []m.AlertNotificationJournal{},
+			journals:     &m.AlertNotificationState{},
 
 			expect: true,
 		},
@@ -50,7 +50,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStatePending,
 			sendReminder: false,
-			journals:     []m.AlertNotificationJournal{},
+			journals:     &m.AlertNotificationState{},
 
 			expect: false,
 		},
@@ -59,7 +59,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateOK,
 			sendReminder: false,
-			journals:     []m.AlertNotificationJournal{},
+			journals:     &m.AlertNotificationState{},
 
 			expect: false,
 		},
@@ -68,7 +68,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateAlerting,
 			sendReminder: true,
-			journals:     []m.AlertNotificationJournal{},
+			journals:     &m.AlertNotificationState{},
 
 			expect: true,
 		},
@@ -77,7 +77,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			newState:     m.AlertStateOK,
 			prevState:    m.AlertStateOK,
 			sendReminder: true,
-			journals:     []m.AlertNotificationJournal{},
+			journals:     &m.AlertNotificationState{},
 
 			expect: false,
 		},
@@ -87,7 +87,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			prevState:    m.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
-			journals:     []m.AlertNotificationJournal{},
+			journals:     &m.AlertNotificationState{},
 
 			expect: true,
 		},
@@ -97,9 +97,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			prevState:    m.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
-			journals: []m.AlertNotificationJournal{
-				{SentAt: tnow.Add(-time.Minute).Unix(), Success: true},
-			},
+			journals:     &m.AlertNotificationState{SentAt: tnow.Add(-time.Minute).Unix()},
 
 			expect: false,
 		},
@@ -110,10 +108,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			frequency:    time.Minute * 10,
 			sendReminder: true,
 			expect:       true,
-			journals: []m.AlertNotificationJournal{
-				{SentAt: tnow.Add(-time.Minute).Unix(), Success: false}, // recent failed notification
-				{SentAt: tnow.Add(-time.Hour).Unix(), Success: true},    // old successful notification
-			},
+			journals:     &m.AlertNotificationState{SentAt: tnow.Add(-time.Hour).Unix()},
 		},
 	}
 
@@ -142,7 +137,7 @@ func TestShouldNotifyWhenNoJournalingIsFound(t *testing.T) {
 		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{})
 
 		Convey("should not notify query returns error", func() {
-			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetLatestNotificationQuery) error {
+			bus.AddHandlerCtx("", func(ctx context.Context, q *m.GetNotificationStateQuery) error {
 				return errors.New("some kind of error unknown error")
 			})
 

@@ -42,22 +42,23 @@ func NewNotifierBase(model *models.AlertNotification) NotifierBase {
 	}
 }
 
-func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequency time.Duration, journals []models.AlertNotificationJournal) bool {
+func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequency time.Duration, notificationState *models.AlertNotificationState) bool {
 	// Only notify on state change.
 	if context.PrevAlertState == context.Rule.State && !sendReminder {
 		return false
 	}
 
 	// get last successfully sent notification
-	lastNotify := time.Time{}
-	for _, j := range journals {
-		if j.Success {
-			lastNotify = time.Unix(j.SentAt, 0)
-			break
-		}
-	}
+	// lastNotify := time.Time{}
+	// for _, j := range journals {
+	// 	if j.Success {
+	// 		lastNotify = time.Unix(j.SentAt, 0)
+	// 		break
+	// 	}
+	// }
 
 	// Do not notify if interval has not elapsed
+	lastNotify := time.Unix(notificationState.SentAt, 0)
 	if sendReminder && !lastNotify.IsZero() && lastNotify.Add(frequency).After(time.Now()) {
 		return false
 	}
@@ -77,7 +78,7 @@ func defaultShouldNotify(context *alerting.EvalContext, sendReminder bool, frequ
 
 // ShouldNotify checks this evaluation should send an alert notification
 func (n *NotifierBase) ShouldNotify(ctx context.Context, c *alerting.EvalContext) bool {
-	cmd := &models.GetLatestNotificationQuery{
+	cmd := &models.GetNotificationStateQuery{
 		OrgId:      c.Rule.OrgId,
 		AlertId:    c.Rule.Id,
 		NotifierId: n.Id,

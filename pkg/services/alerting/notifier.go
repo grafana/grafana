@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -68,30 +66,31 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 
 			// Verify that we can send the notification again
 			// but this time within the same transaction.
-			if !evalContext.IsTestRun && !not.ShouldNotify(ctx, evalContext) {
-				return nil
-			}
+			// if !evalContext.IsTestRun && !not.ShouldNotify(ctx, evalContext) {
+			// 	return nil
+			// }
 
-			n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
-			metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
+			// n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+			// metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
 
-			//send notification
-			success := not.Notify(evalContext) == nil
+			// //send notification
+			// // success := not.Notify(evalContext) == nil
 
-			if evalContext.IsTestRun {
-				return nil
-			}
+			// if evalContext.IsTestRun {
+			// 	return nil
+			// }
 
 			//write result to db.
-			cmd := &m.RecordNotificationJournalCommand{
-				OrgId:      evalContext.Rule.OrgId,
-				AlertId:    evalContext.Rule.Id,
-				NotifierId: not.GetNotifierId(),
-				SentAt:     time.Now().Unix(),
-				Success:    success,
-			}
+			// cmd := &m.RecordNotificationJournalCommand{
+			// 	OrgId:      evalContext.Rule.OrgId,
+			// 	AlertId:    evalContext.Rule.Id,
+			// 	NotifierId: not.GetNotifierId(),
+			// 	SentAt:     time.Now().Unix(),
+			// 	Success:    success,
+			// }
 
-			return bus.DispatchCtx(ctx, cmd)
+			// return bus.DispatchCtx(ctx, cmd)
+			return nil
 		})
 
 		if err != nil {
