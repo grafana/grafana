@@ -69,7 +69,7 @@ func TestStackdriver(t *testing.T) {
 
 			Convey("and alignmentPeriod is set to grafana-auto", func() {
 				Convey("and IntervalMs is larger than 60", func() {
-					tsdbQuery.Queries[0].IntervalMs = 1000
+					tsdbQuery.Queries[0].IntervalMs = 1000000
 					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 						"target":          "target",
 						"alignmentPeriod": "grafana-auto",
