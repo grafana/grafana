@@ -17,10 +17,6 @@ export class StackdriverAggregation {
 }
 
 export class StackdriverAggregationCtrl {
-  target: any;
-  alignOptions: any[];
-  aggOptions: any[];
-
   constructor(private $scope) {
     $scope.aggOptions = options.aggOptions;
     this.setAggOptions();
