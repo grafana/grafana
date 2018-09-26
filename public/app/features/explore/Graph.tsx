@@ -9,6 +9,8 @@ import TimeSeries from 'app/core/time_series2';
 
 import Legend from './Legend';
 
+const MAX_NUMBER_OF_TIME_SERIES = 20;
+
 // Copied from graph.ts
 function time_format(ticks, min, max) {
   if (min && max && ticks) {
@@ -74,7 +76,7 @@ class Graph extends Component<any, any> {
   getGraphData() {
     const { data } = this.props;
 
-    return this.state.showAllTimeSeries ? data : data.slice(0, 20);
+    return this.state.showAllTimeSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
   }
 
   componentDidMount() {
