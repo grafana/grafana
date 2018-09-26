@@ -194,6 +194,7 @@ export class StackdriverQueryCtrl extends QueryCtrl {
     const { valueType, metricKind } = this.metricDescriptors.find(m => m.type === this.target.metricType);
     this.target.valueType = valueType;
     this.target.metricKind = metricKind;
+    this.$scope.$broadcast('metricTypeChange');
     this.refresh();
     this.getLabels();
   }

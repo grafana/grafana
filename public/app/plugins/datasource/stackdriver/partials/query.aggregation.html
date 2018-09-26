@@ -2,7 +2,7 @@
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-9">Aggregation</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <select class="gf-form-input width-12" ng-model="target.aggregation.crossSeriesReducer" ng-options="f.value as f.text for f in getAggOptions()"
+      <select class="gf-form-input width-12" ng-model="target.aggregation.crossSeriesReducer" ng-options="f.value as f.text for f in aggOptions"
         ng-change="onAggregationChange(target.aggregation.crossSeriesReducer)"></select>
     </div>
   </div>
@@ -20,7 +20,7 @@
   <div class="gf-form offset-width-9">
     <label class="gf-form-label query-keyword width-12">Aligner</label>
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-      <select class="gf-form-input width-14" ng-model="target.aggregation.perSeriesAligner" ng-options="f.value as f.text for f in getAlignOptions()"
+      <select class="gf-form-input width-14" ng-model="target.aggregation.perSeriesAligner" ng-options="f.value as f.text for f in alignOptions"
         ng-change="onAlignmentChange(target.aggregation.perSeriesAligner)"></select>
     </div>
 

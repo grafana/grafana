@@ -20,57 +20,65 @@ export class StackdriverAggregationCtrl {
   target: any;
   alignOptions: any[];
   aggOptions: any[];
-  refresh: () => void;
 
-  constructor($scope) {
-    this.aggOptions = options.aggOptions;
-    this.alignOptions = options.alignOptions;
-    $scope.alignmentPeriods = options.alignmentPeriods;
-    $scope.getAlignOptions = this.getAlignOptions;
-    $scope.getAggOptions = this.getAggOptions;
-    $scope.onAlignmentChange = this.onAlignmentChange;
-    $scope.onAggregationChange = this.onAggregationChange;
-    this.refresh = $scope.refresh;
+  constructor(private $scope) {
+    $scope.aggOptions = options.aggOptions;
+    this.setAggOptions();
+    this.setAlignOptions();
+    $scope.onAlignmentChange = this.onAlignmentChange.bind(this);
+    $scope.onAggregationChange = this.onAggregationChange.bind(this);
+    $scope.$on('metricTypeChange', this.setAlignOptions.bind(this));
   }
 
   onAlignmentChange(newVal: string) {
     if (newVal === 'ALIGN_NONE') {
-      this.target.aggregation.crossSeriesReducer = 'REDUCE_NONE';
+      this.$scope.target.aggregation.crossSeriesReducer = 'REDUCE_NONE';
     }
-    this.refresh();
+    this.$scope.refresh();
   }
 
   onAggregationChange(newVal: string) {
-    if (newVal !== 'REDUCE_NONE' && this.target.aggregation.perSeriesAligner === 'ALIGN_NONE') {
+    if (newVal !== 'REDUCE_NONE' && this.$scope.target.aggregation.perSeriesAligner === 'ALIGN_NONE') {
       const newAlignmentOption = options.alignOptions.find(
         o =>
           o.value !== 'ALIGN_NONE' &&
-          o.valueTypes.indexOf(this.target.valueType) !== -1 &&
-          o.metricKinds.indexOf(this.target.metricKind) !== -1
+          o.valueTypes.indexOf(this.$scope.target.valueType) !== -1 &&
+          o.metricKinds.indexOf(this.$scope.target.metricKind) !== -1
       );
-      this.target.aggregation.perSeriesAligner = newAlignmentOption ? newAlignmentOption.value : '';
+      this.$scope.target.aggregation.perSeriesAligner = newAlignmentOption ? newAlignmentOption.value : '';
     }
-    this.refresh();
+    this.$scope.refresh();
   }
 
-  getAlignOptions() {
-    return !this.target.valueType
+  setAlignOptions() {
+    this.$scope.alignOptions = !this.$scope.target.valueType
       ? []
       : options.alignOptions.filter(i => {
           return (
-            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
+            i.valueTypes.indexOf(this.$scope.target.valueType) !== -1 &&
+            i.metricKinds.indexOf(this.$scope.target.metricKind) !== -1
           );
         });
+    if (!this.$scope.alignOptions.find(o => o.value === this.$scope.target.aggregation.perSeriesAligner)) {
+      const newValue = this.$scope.alignOptions.find(o => o.value !== 'ALIGN_NONE');
+      this.$scope.target.aggregation.perSeriesAligner = newValue ? newValue.value : '';
+    }
   }
 
-  getAggOptions() {
-    return !this.target.metricKind
+  setAggOptions() {
+    this.$scope.aggOptions = !this.$scope.target.metricKind
       ? []
       : options.aggOptions.filter(i => {
           return (
-            i.valueTypes.indexOf(this.target.valueType) !== -1 && i.metricKinds.indexOf(this.target.metricKind) !== -1
+            i.valueTypes.indexOf(this.$scope.target.valueType) !== -1 &&
+            i.metricKinds.indexOf(this.$scope.target.metricKind) !== -1
           );
         });
+
+    if (!this.$scope.aggOptions.find(o => o.value === this.$scope.target.aggregation.crossSeriesReducer)) {
+      const newValue = this.$scope.aggOptions.find(o => o.value !== 'REDUCE_NONE');
+      this.$scope.target.aggregation.crossSeriesReducer = newValue ? newValue.value : '';
+    }
   }
 }
 
