@@ -32,7 +32,7 @@ export class PluginListPage extends PureComponent<Props> {
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
-          <PluginActionBar searchQuery="" onQueryChange={() => {}} />
+          <PluginActionBar />
           {plugins && <PluginList plugins={plugins} layout={layoutMode} />}
         </div>
       </div>

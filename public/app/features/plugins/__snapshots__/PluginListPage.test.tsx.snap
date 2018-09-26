@@ -8,10 +8,7 @@ exports[`Render should render component 1`] = `
   <div
     className="page-container page-body"
   >
-    <Connect(PluginActionBar)
-      onQueryChange={[Function]}
-      searchQuery=""
-    />
+    <Connect(PluginActionBar) />
     <PluginList
       layout="grid"
       plugins={Array []}
