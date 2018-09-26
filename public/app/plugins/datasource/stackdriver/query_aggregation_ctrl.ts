@@ -21,6 +21,7 @@ export class StackdriverAggregationCtrl {
     $scope.aggOptions = options.aggOptions;
     this.setAggOptions();
     this.setAlignOptions();
+    $scope.alignmentPeriods = options.alignmentPeriods;
     $scope.onAlignmentChange = this.onAlignmentChange.bind(this);
     $scope.onAggregationChange = this.onAggregationChange.bind(this);
     $scope.$on('metricTypeChanged', this.setAlignOptions.bind(this));
