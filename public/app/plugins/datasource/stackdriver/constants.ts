@@ -243,7 +243,8 @@ export const aggOptions = [
 ];
 
 export const alignmentPeriods = [
-  { text: 'auto', value: 'auto' },
+  { text: 'grafana auto', value: 'grafana-auto' },
+  { text: 'stackdriver auto', value: 'stackdriver-auto' },
   { text: '1m', value: '+60s' },
   { text: '5m', value: '+300s' },
   { text: '30m', value: '+1800s' },

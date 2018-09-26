@@ -184,7 +184,7 @@ func setAggParams(params *url.Values, query *tsdb.Query) {
 		perSeriesAligner = "ALIGN_MEAN"
 	}
 
-	if alignmentPeriod == "auto" || alignmentPeriod == "" {
+	if alignmentPeriod == "grafana-auto" || alignmentPeriod == "" {
 		alignmentPeriodValue := int(math.Max(float64(query.IntervalMs), 60.0))
 		alignmentPeriod = "+" + strconv.Itoa(alignmentPeriodValue) + "s"
 	}
