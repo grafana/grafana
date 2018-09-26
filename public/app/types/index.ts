@@ -7,7 +7,7 @@ import { DashboardState } from './dashboard';
 import { DashboardAcl, OrgRole, PermissionLevel } from './acl';
 import { DataSource } from './datasources';
 import { PluginMeta } from './plugins';
-import { ApiKey, ApiKeysState } from './apiKeys';
+import { ApiKey, ApiKeysState, NewApiKey } from './apiKeys';
 import { User } from './user';
 
 export {
@@ -37,6 +37,7 @@ export {
   PluginMeta,
   ApiKey,
   ApiKeysState,
+  NewApiKey,
   User,
 };
 

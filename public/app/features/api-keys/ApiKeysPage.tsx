@@ -1,12 +1,13 @@
 ﻿import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { NavModel, ApiKey } from '../../types';
+import { NavModel, ApiKey, NewApiKey, OrgRole } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { getApiKeys } from './state/selectors';
+import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
 // import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { loadApiKeys, deleteApiKey } from './state/actions';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import SlideDown from 'app/core/components/Animations/SlideDown';
 
 export interface Props {
   navModel: NavModel;
@@ -14,12 +15,31 @@ export interface Props {
   searchQuery: string;
   loadApiKeys: typeof loadApiKeys;
   deleteApiKey: typeof deleteApiKey;
-  // loadTeams: typeof loadTeams;
-  // deleteTeam: typeof deleteTeam;
-  // setSearchQuery: typeof setSearchQuery;
+  setSearchQuery: typeof setSearchQuery;
+  addApiKey: typeof addApiKey;
 }
 
+export interface State {
+  isAdding: boolean;
+  newApiKey: NewApiKey;
+}
+
+enum ApiKeyStateProps {
+  Name = 'name',
+  Role = 'role',
+}
+
+const initialApiKeyState = {
+  name: '',
+  role: OrgRole.Viewer,
+};
+
 export class ApiKeysPage extends PureComponent<Props, any> {
+  constructor(props) {
+    super(props);
+    this.state = { isAdding: false, newApiKey: initialApiKeyState };
+  }
+
   componentDidMount() {
     this.fetchApiKeys();
   }
@@ -28,19 +48,120 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     await this.props.loadApiKeys();
   }
 
-  deleteApiKey(id: number) {
+  onDeleteApiKey(id: number) {
     return () => {
       this.props.deleteApiKey(id);
     };
   }
 
+  onSearchQueryChange = evt => {
+    this.props.setSearchQuery(evt.target.value);
+  };
+
+  onToggleAdding = () => {
+    this.setState({ isAdding: !this.state.isAdding });
+  };
+
+  onAddApiKey = async evt => {
+    evt.preventDefault();
+    this.props.addApiKey(this.state.newApiKey);
+    this.setState((prevState: State) => {
+      return {
+        ...prevState,
+        newApiKey: initialApiKeyState,
+      };
+    });
+  };
+
+  onApiKeyStateUpdate = (evt, prop: string) => {
+    const value = evt.currentTarget.value;
+    this.setState((prevState: State) => {
+      const newApiKey = {
+        ...prevState.newApiKey,
+      };
+      newApiKey[prop] = value;
+
+      return {
+        ...prevState,
+        newApiKey: newApiKey,
+      };
+    });
+  };
+
   render() {
-    const { navModel, apiKeys } = this.props;
+    const { newApiKey, isAdding } = this.state;
+    const { navModel, apiKeys, searchQuery } = this.props;
 
     return (
       <div>
         <PageHeader model={navModel} />
         <div className="page-container page-body">
+          <div className="page-action-bar">
+            <div className="gf-form gf-form--grow">
+              <label className="gf-form--has-input-icon gf-form--grow">
+                <input
+                  type="text"
+                  className="gf-form-input"
+                  placeholder="Search keys"
+                  value={searchQuery}
+                  onChange={this.onSearchQueryChange}
+                />
+                <i className="gf-form-input-icon fa fa-search" />
+              </label>
+            </div>
+
+            <div className="page-action-bar__spacer" />
+
+            {/* <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}> */}
+            <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
+              <i className="fa fa-plus" /> Add API Key
+            </button>
+          </div>
+
+          <SlideDown in={isAdding}>
+            <div className="cta-form">
+              <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
+                <i className="fa fa-close" />
+              </button>
+              <h5>Add API Key</h5>
+              <form className="gf-form-group" onSubmit={this.onAddApiKey}>
+                <div className="gf-form-inline">
+                  <div className="gf-form max-width-21">
+                    <span className="gf-form-label">Key name</span>
+                    <input
+                      type="text"
+                      className="gf-form-input"
+                      value={newApiKey.name}
+                      placeholder="Name"
+                      onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Name)}
+                    />
+                  </div>
+                  <div className="gf-form">
+                    <span className="gf-form-label">Role</span>
+                    <span className="gf-form-select-wrapper">
+                      <select
+                        className="gf-form-input gf-size-auto"
+                        value={newApiKey.role}
+                        onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Role)}
+                      >
+                        {Object.keys(OrgRole).map(role => {
+                          return (
+                            <option key={role} label={role} value={role}>
+                              {role}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </span>
+                  </div>
+                  <div className="gf-form">
+                    <button className="btn gf-form-btn btn-success">Add</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </SlideDown>
+
           <h3 className="page-heading">Existing Keys</h3>
           <table className="filter-table">
             <thead>
@@ -59,7 +180,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                       <td>{key.name}</td>
                       <td>{key.role}</td>
                       <td>
-                        <a onClick={this.deleteApiKey(key.id)} className="btn btn-danger btn-mini">
+                        <a onClick={this.onDeleteApiKey(key.id)} className="btn btn-danger btn-mini">
                           <i className="fa fa-remove" />
                         </a>
                       </td>
@@ -78,7 +199,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 function mapStateToProps(state) {
   return {
     navModel: getNavModel(state.navIndex, 'apikeys'),
-    apiKeys: state.apiKeys.keys,
+    apiKeys: getApiKeys(state.apiKeys),
+    searchQuery: state.apiKeys.searchQuery,
     //   searchQuery: getSearchQuery(state.teams),
   };
 }
@@ -86,9 +208,8 @@ function mapStateToProps(state) {
 const mapDispatchToProps = {
   loadApiKeys,
   deleteApiKey,
-  // loadTeams,
-  // deleteTeam,
-  // setSearchQuery,
+  setSearchQuery,
+  addApiKey,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ApiKeysPage));

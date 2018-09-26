@@ -1,10 +1,10 @@
 ﻿import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StoreState, ApiKey } from 'app/types';
-import { updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 
 export enum ActionTypes {
   LoadApiKeys = 'LOAD_API_KEYS',
+  SetApiKeysSearchQuery = 'SET_API_KEYS_SEARCH_QUERY',
 }
 
 export interface LoadApiKeysAction {
@@ -12,14 +12,26 @@ export interface LoadApiKeysAction {
   payload: ApiKey[];
 }
 
-export type Action = LoadApiKeysAction;
+export interface SetSearchQueryAction {
+  type: ActionTypes.SetApiKeysSearchQuery;
+  payload: string;
+}
 
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action | UpdateNavIndexAction>;
+export type Action = LoadApiKeysAction | SetSearchQueryAction;
+
+type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
 const apiKeysLoaded = (apiKeys: ApiKey[]): LoadApiKeysAction => ({
   type: ActionTypes.LoadApiKeys,
   payload: apiKeys,
 });
+
+export function addApiKey(apiKey: ApiKey): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post('/api/auth/keys', apiKey);
+    dispatch(loadApiKeys());
+  };
+}
 
 export function loadApiKeys(): ThunkResult<void> {
   return async dispatch => {
@@ -35,3 +47,8 @@ export function deleteApiKey(id: number): ThunkResult<void> {
       .then(dispatch(loadApiKeys()));
   };
 }
+
+export const setSearchQuery = (searchQuery: string): SetSearchQueryAction => ({
+  type: ActionTypes.SetApiKeysSearchQuery,
+  payload: searchQuery,
+});

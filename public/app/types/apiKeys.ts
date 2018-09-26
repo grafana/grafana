@@ -6,6 +6,12 @@ export interface ApiKey {
   role: OrgRole;
 }
 
+export interface NewApiKey {
+  name: string;
+  role: OrgRole;
+}
+
 export interface ApiKeysState {
   keys: ApiKey[];
+  searchQuery: string;
 }
