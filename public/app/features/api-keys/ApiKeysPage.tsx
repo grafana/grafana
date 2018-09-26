@@ -176,7 +176,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                       <td>{key.name}</td>
                       <td>{key.role}</td>
                       <td>
-                        <a onClick={this.onDeleteApiKey(key)} className="btn btn-danger btn-mini">
+                        <a onClick={() => this.onDeleteApiKey(key)} className="btn btn-danger btn-mini">
                           <i className="fa fa-remove" />
                         </a>
                       </td>
@@ -197,7 +197,6 @@ function mapStateToProps(state) {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
-    //   searchQuery: getSearchQuery(state.teams),
   };
 }
 
