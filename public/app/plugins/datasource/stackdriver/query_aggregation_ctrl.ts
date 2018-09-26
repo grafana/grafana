@@ -23,7 +23,7 @@ export class StackdriverAggregationCtrl {
     this.setAlignOptions();
     $scope.onAlignmentChange = this.onAlignmentChange.bind(this);
     $scope.onAggregationChange = this.onAggregationChange.bind(this);
-    $scope.$on('metricTypeChange', this.setAlignOptions.bind(this));
+    $scope.$on('metricTypeChanged', this.setAlignOptions.bind(this));
   }
 
   onAlignmentChange(newVal: string) {
